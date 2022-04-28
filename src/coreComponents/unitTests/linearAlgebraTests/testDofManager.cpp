@@ -1071,6 +1071,39 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, DofManagerRestrictorTest, HypreInterface,
 INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, DofManagerRestrictorTest, PetscInterface, );
 #endif
 
+TEST( DofManagerRegions, aggregateInitialization )
+{
+  // The DofManager::Regions and DofManager::SubComponent are sometimes constructed by using aggregate initialization.
+  // The danger is that this feature implicitly depends on the order of the parameters of the `struct`.
+  // Any reordering of those parameters would result in a bug.
+  // This test aims at protecting against any change in this implicit convention.
+  // C++20's new feature "designated initializers" would probably make this test useless.
+
+  {
+    DofManager::Regions regions0;
+    regions0.meshBodyName = "meshBodyName";
+    regions0.meshLevelName = "meshLevelName";
+    regions0.regionNames = { "regionName0", "regionName1" };
+
+    DofManager::Regions const regions1{ regions0.meshBodyName, regions0.meshLevelName, regions0.regionNames };
+
+    ASSERT_EQ( regions0.meshBodyName, regions1.meshBodyName );
+    ASSERT_EQ( regions0.meshLevelName, regions1.meshLevelName );
+    ASSERT_EQ( regions0.regionNames, regions1.regionNames );
+  }
+
+  {
+    DofManager::SubComponent subComponent0;
+    subComponent0.fieldName = "fieldName";
+    subComponent0.mask = DofManager::CompMask( 7, true );
+
+    DofManager::SubComponent subComponent1{ subComponent0.fieldName, subComponent0.mask };
+
+    ASSERT_EQ( subComponent0.fieldName, subComponent1.fieldName );
+    ASSERT_EQ( subComponent0.mask.numComp(), subComponent1.mask.numComp() );
+  }
+}
+
 int main( int argc, char * * argv )
 {
   geosx::testing::LinearAlgebraTestScope scope( argc, argv );

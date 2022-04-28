@@ -27,6 +27,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
+#include "finiteElement/PDEUtilities.hpp"
 #include "LvArray/src/tensorOps.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/EdgeManager.hpp"
@@ -103,6 +104,7 @@ public:
    * @struct MeshData
    * @brief Variables used to initialize the class.
    */
+  template< typename SUBREGION_TYPE >
   struct MeshData
   {
     /**
@@ -122,16 +124,16 @@ public:
    * @param cellSubRegion The cell sub-region for which the element has to be initialized.
    * @param meshData The struct to be filled according to the @p LEAF class needs.
    */
-  template< typename LEAF >
+  template< typename LEAF, typename SUBREGION_TYPE >
   static void initialize( NodeManager const & nodeManager,
                           EdgeManager const & edgeManager,
                           FaceManager const & faceManager,
-                          CellElementSubRegion const & cellSubRegion,
-                          typename LEAF::MeshData & meshData
+                          SUBREGION_TYPE const & cellSubRegion,
+                          typename LEAF::template MeshData< SUBREGION_TYPE > & meshData
                           )
   {
-    LEAF::fillMeshData( nodeManager, edgeManager, faceManager, cellSubRegion,
-                        meshData );
+    LEAF::template fillMeshData< SUBREGION_TYPE >( nodeManager, edgeManager, faceManager, cellSubRegion,
+                                                   meshData );
   }
 
   /**
@@ -142,10 +144,10 @@ public:
    * @param meshData A MeshData object previously filled.
    * @param stack Object that holds stack variables.
    */
-  template< typename LEAF >
+  template< typename LEAF, typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
   void setup( localIndex const & cellIndex,
-              typename LEAF::MeshData const & meshData,
+              typename LEAF::template MeshData< SUBREGION_TYPE > const & meshData,
               typename LEAF::StackVariables & stack ) const
   {
     LEAF::setupStack( cellIndex, meshData, stack );
@@ -166,6 +168,25 @@ public:
   virtual localIndex getNumSupportPoints() const = 0;
 
   /**
+   * @brief An helper struct to determine the function space.
+   * @tparam N The number of components per support point (i.e., 1 if
+   *   scalar variable, 3 if vector variable)
+   */
+  template< int N >
+  struct FunctionSpaceHelper
+  {};
+
+  /**
+   * @brief Getter for the function space.
+   * @tparam The number of components per support point (i.e., 1 if
+   *   scalar variable, 3 if vector variable)
+   * @return The function space.
+   */
+  template< int N >
+  GEOSX_HOST_DEVICE
+  constexpr static PDEUtilities::FunctionSpace getFunctionSpace();
+
+  /**
    * @brief Getter for the number of support points per element.
    * @tparam LEAF Type of the derived finite element implementation.
    * @param stack Stack variables created by a call to @ref setup.
@@ -180,17 +201,12 @@ public:
 
   /**
    * @brief Get the maximum number of support points for this element.
-   * @details This should be used to pre-allocate objects whose size depend on the number of support
-   * points.
-   * @tparam LEAF Type of the derived finite element implementation.
-   * @return A constant expression of the number of maximum support points for this element.
+   * @details This should be used to know the size of pre-allocated objects whose size depend on the
+   * number of support points.
+   * @return The number of maximum support points for this element.
    */
-  template< typename LEAF >
   GEOSX_HOST_DEVICE
-  static constexpr localIndex getMaxSupportPoints()
-  {
-    return LEAF::maxSupportPoints;
-  }
+  virtual localIndex getMaxSupportPoints() const = 0;
 
   /**
    * @brief Get the shape function gradients.
@@ -207,8 +223,8 @@ public:
   GEOSX_HOST_DEVICE
   real64 getGradN( localIndex const k,
                    localIndex const q,
-                   real64 const (&X)[LEAF::numNodes][3],
-                   real64 ( &gradN )[LEAF::numNodes][3] ) const;
+                   real64 const (&X)[LEAF::maxSupportPoints][3],
+                   real64 ( &gradN )[LEAF::maxSupportPoints][3] ) const;
 
   /**
    * @brief Get the shape function gradients.
@@ -226,9 +242,9 @@ public:
   GEOSX_HOST_DEVICE
   real64 getGradN( localIndex const k,
                    localIndex const q,
-                   real64 const (&X)[LEAF::numNodes][3],
+                   real64 const (&X)[LEAF::maxSupportPoints][3],
                    typename LEAF::StackVariables const & stack,
-                   real64 ( &gradN )[LEAF::numNodes][3] ) const;
+                   real64 ( &gradN )[LEAF::maxSupportPoints][3] ) const;
 
   /**
    * @brief Get the shape function gradients.
@@ -246,7 +262,26 @@ public:
   real64 getGradN( localIndex const k,
                    localIndex const q,
                    int const X,
-                   real64 ( &gradN )[LEAF::numNodes][3] ) const;
+                   real64 ( &gradN )[LEAF::maxSupportPoints][3] ) const;
+  /**
+   * @brief Get the shape function gradients.
+   * @tparam LEAF Type of the derived finite element implementation.
+   * @param k The element index.
+   * @param q The quadrature point index.
+   * @param X dummy variable.
+   * @param stack Stack variables relative to the element @p k created by a call to @ref setup.
+   * @param gradN Return array of the shape function gradients.
+   * @return The determinant of the Jacobian transformation matrix.
+   *
+   * This function returns pre-calculated shape function gradients.
+   */
+  template< typename LEAF >
+  GEOSX_HOST_DEVICE
+  real64 getGradN( localIndex const k,
+                   localIndex const q,
+                   int const X,
+                   typename LEAF::StackVariables const & stack,
+                   real64 ( &gradN )[LEAF::maxSupportPoints][3] ) const;
 
   /**
    * @brief Add stabilization of grad-grad bilinear form to input matrix.
@@ -539,7 +574,7 @@ public:
                            getNumQuadraturePoints(),
                            "2nd-dimension of gradN array does not match number of quadrature points" );
     GEOSX_ERROR_IF_NE_MSG( source.size( 2 ),
-                           getNumSupportPoints(),
+                           getMaxSupportPoints(),
                            "3rd-dimension of gradN array does not match number of support points" );
     GEOSX_ERROR_IF_NE_MSG( source.size( 3 ),
                            3,
@@ -588,20 +623,46 @@ protected:
   arrayView2d< real64 const > m_viewDetJ;
 };
 
-
 /// @cond Doxygen_Suppress
 
 //*************************************************************************************************
 //***** Definitions *******************************************************************************
 //*************************************************************************************************
 
+template<>
+struct FiniteElementBase::FunctionSpaceHelper< 1 >
+{
+  GEOSX_HOST_DEVICE
+  constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
+  {
+    return PDEUtilities::FunctionSpace::H1;
+  }
+};
+
+template<>
+struct FiniteElementBase::FunctionSpaceHelper< 3 >
+{
+  GEOSX_HOST_DEVICE
+  constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
+  {
+    return PDEUtilities::FunctionSpace::H1vector;
+  }
+};
+
+template< int N >
+GEOSX_HOST_DEVICE
+constexpr PDEUtilities::FunctionSpace FiniteElementBase::getFunctionSpace()
+{
+  return FunctionSpaceHelper< N >::getFunctionSpace();
+}
+
 template< typename LEAF >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 FiniteElementBase::getGradN( localIndex const k,
                                     localIndex const q,
-                                    real64 const (&X)[LEAF::numNodes][3],
-                                    real64 (& gradN)[LEAF::numNodes][3] ) const
+                                    real64 const (&X)[LEAF::maxSupportPoints][3],
+                                    real64 (& gradN)[LEAF::maxSupportPoints][3] ) const
 {
   GEOSX_UNUSED_VAR( k );
   return LEAF::calcGradN( q, X, gradN );
@@ -612,9 +673,9 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 FiniteElementBase::getGradN( localIndex const k,
                                     localIndex const q,
-                                    real64 const (&X)[LEAF::numNodes][3],
+                                    real64 const (&X)[LEAF::maxSupportPoints][3],
                                     typename LEAF::StackVariables const & stack,
-                                    real64 ( & gradN )[LEAF::numNodes][3] ) const
+                                    real64 ( & gradN )[LEAF::maxSupportPoints][3] ) const
 {
   GEOSX_UNUSED_VAR( k );
   return LEAF::calcGradN( q, X, stack, gradN );
@@ -626,11 +687,28 @@ GEOSX_FORCE_INLINE
 real64 FiniteElementBase::getGradN( localIndex const k,
                                     localIndex const q,
                                     int const X,
-                                    real64 (& gradN)[LEAF::numNodes][3] ) const
+                                    real64 (& gradN)[LEAF::maxSupportPoints][3] ) const
 {
   GEOSX_UNUSED_VAR( X );
 
-  LvArray::tensorOps::copy< LEAF::numNodes, 3 >( gradN, m_viewGradN[ k ][ q ] );
+  LvArray::tensorOps::copy< LEAF::maxSupportPoints, 3 >( gradN, m_viewGradN[ k ][ q ] );
+
+  return m_viewDetJ( k, q );
+}
+
+template< typename LEAF >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 FiniteElementBase::getGradN( localIndex const k,
+                                    localIndex const q,
+                                    int const X,
+                                    typename LEAF::StackVariables const & stack,
+                                    real64 (& gradN)[LEAF::maxSupportPoints][3] ) const
+{
+  GEOSX_UNUSED_VAR( X );
+  GEOSX_UNUSED_VAR( stack );
+
+  LvArray::tensorOps::copy< LEAF::maxSupportPoints, 3 >( gradN, m_viewGradN[ k ][ q ] );
 
   return m_viewDetJ( k, q );
 }

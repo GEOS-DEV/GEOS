@@ -73,7 +73,6 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"
-        targetRegions="{ reservoir }"
         />
     </FiniteVolume>
   </NumericalMethods>

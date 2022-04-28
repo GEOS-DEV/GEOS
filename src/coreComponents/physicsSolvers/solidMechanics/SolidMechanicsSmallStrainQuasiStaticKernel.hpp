@@ -23,7 +23,7 @@
 namespace geosx
 {
 
-namespace SolidMechanicsLagrangianFEMKernels
+namespace solidMechanicsLagrangianFEMKernels
 {
 
 /**
@@ -68,9 +68,10 @@ public:
                                                   3,
                                                   3 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
@@ -336,7 +337,7 @@ using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
                                                          arrayView1d< real64 > const,
                                                          real64 const (&)[3] >;
 
-} // namespace SolidMechanicsLagrangianFEMKernels
+} // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
 

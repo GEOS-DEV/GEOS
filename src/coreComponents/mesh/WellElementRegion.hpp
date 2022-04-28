@@ -71,14 +71,14 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static const string catalogName()
+  static string catalogName()
   { return "WellElementRegion"; }
 
   /**
    * @copydoc catalogName()
    */
-  virtual const string getCatalogName() const override final
-  { return WellElementRegion::catalogName(); }
+  virtual string getCatalogName() const override final
+  { return catalogName(); }
 
   ///@}
 

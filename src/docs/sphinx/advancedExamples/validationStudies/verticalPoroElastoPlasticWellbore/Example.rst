@@ -8,7 +8,7 @@ Vertical PoroElasto-Plastic Wellbore Problem
 
 **Context**
 
-The main objective of this example is to demonstrate how to use the internal wellbore mesh generator and poromechanical solvers in GEOSX to tackle wellbore problems in porous media. In this example, a poroplastic model is applied to find the solution of rock deformation within the vicinity of a vertical wellbore, considering elastoplastic deformation, fluid diffusion and poromechanical coupling effect. To do so, a single phase flow solver is fully coupled with a Lagrangian mechanics solver and the Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is chosen as the material model for the solid domain. We first solve this problem with a poroelastic model and verify the modeling results with the corresponding analytical solutions. Then, the verified case is modified to test a poroplastic version, whose results are compared with the ones obtained from the poroelastic case to highlight the impact of plasticity in this specific problem.
+The main objective of this example is to demonstrate how to use the internal wellbore mesh generator and poromechanical solvers in GEOSX to tackle wellbore problems in porous media. In this example, a poroplastic model is applied to find the solution of rock deformation within the vicinity of a vertical wellbore, considering elastoplastic deformation, fluid diffusion and poromechanical coupling effect. To do so, a single phase flow solver is fully coupled with a Lagrangian mechanics solver and the Extended Drucker-Prager model (see :ref:`DruckerPragerExtended`) is chosen as the material model for the solid domain. We first solve this problem with a poroelastic model and verify the modeling results with the corresponding analytical solutions. Then, the verified case is modified to test a poroplastic version, whose results are compared with the ones obtained from the poroelastic case to highlight the impact of plasticity in this specific problem.
  
 
 **Objectives**
@@ -48,7 +48,7 @@ Description of the case
 We simulate the wellbore problem subjected to anisotropic horizontal stress (:math:`\sigma_h` and :math:`\sigma_H`) and vertical stress (:math:`\sigma_v`), as shown below. This is a vertical wellbore, which is drilled in a porous medium. By changing the wellbore supporting pressure, the mechanical deformation of the reservoir rock will be induced and evolve with time, due to fluid diffusion and coupling effect. Considering inelastic constitutive behavior, the reservoir rock in the near wellbore region will experience elastoplastic deformation and a plastic zone will be developed and expand with time. To setup the base case, a poroelastic version is employed to find the poroelastic solutions of this wellbore problem, which are verified with the analytical solution `(Detournay and Cheng, 1993)  <https://www.sciencedirect.com/science/article/pii/B9780080406152500113>`__ from the literature. Following that, a poroplastic version is built and used to obtain the temporal and spatial solutions of pore pressure, displacement and stress fields around the wellbore, considering induced plastic deformation. 
 
 
-.. _problemSketchFig:
+.. _problemSketchVerticalPoroWellboreFig:
 .. figure:: PoroDP_wellSketch.png
    :align: center
    :width: 500
@@ -66,7 +66,7 @@ Mesh
 
 The following figure shows the generated mesh that is used for solving this wellbore problem
 
-.. _problemSketchFig:
+.. _problemMeshVerticalPoroWellboreFig:
 .. figure:: PoroDP_WellMesh.png
    :align: center
    :width: 500
@@ -167,7 +167,7 @@ Here, we use a two-point flux approximation scheme (``singlePhaseTPFA``), as des
 Constitutive laws
 --------------------
 
-For this test problem, the solid and fluid materials are named as ``rock`` and ``water`` respectively, whose mechanical properties are specified in the ``Constitutive`` section. In this example, different material models, linear elastic isotropic model (see :ref:`LinearElasticIsotropic`) and Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`), are used to solve the mechanical deformation, which is the only difference between the poroelastic and poroplastic cases in this example.
+For this test problem, the solid and fluid materials are named as ``rock`` and ``water`` respectively, whose mechanical properties are specified in the ``Constitutive`` section. In this example, different material models, linear elastic isotropic model (see :ref:`ElasticIsotropic`) and Extended Drucker-Prager model (see :ref:`DruckerPragerExtended`), are used to solve the mechanical deformation, which is the only difference between the poroelastic and poroplastic cases in this example.
 
 
 For the poroelastic case, ``PorousElasticIsotropic`` model is used to describe the linear elastic isotropic response of ``rock`` to loading. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the flow of ``water`` upon injection:
@@ -287,7 +287,7 @@ As defined in the ``Events`` section, we run this simulation for 497640 seconds.
 
 Using the poroelastic solver, below figure shows the prediction of pore pressure distribution upon fluid injection.
 
-.. _problemVerificationFig1:
+.. _problemVerificationVerticalPoroWellboreFig1:
 .. figure:: PoroElastic_PP.png
    :align: center
    :width: 1000
@@ -299,7 +299,7 @@ Using the poroelastic solver, below figure shows the prediction of pore pressure
 For the above poroelastic example, an analytical solution `(Detournay and Cheng, 1993)  <https://www.sciencedirect.com/science/article/pii/B9780080406152500113>`__ is hereby employed to verify the accuracy of the numerical results. Following figure shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of pore pressure, radial displacement, effective radial and tangential stresses along the minimum horizontal stress direction (x-axis). One can observe that GEOSX results correlate very well with the analytical solutions for the poroelastic case. 
 
 
-.. _problemVerificationFig2:
+.. _problemVerificationVerticalPoroWellboreFig2:
 .. figure:: PoroElastic_X.png
    :align: center
    :width: 1000
@@ -312,7 +312,7 @@ For the above poroelastic example, an analytical solution `(Detournay and Cheng,
 For the same 3D wellbore problem, the poroplastic case is thereafter tested and compared with the poroelastic one. The figure below shows the distribution of :math:`\sigma_{yy}` in the near wellbore region for both cases. As expected, a relaxation of the tangential stress along the direction of minimum horizontal stress is detected, which can be attributed to the plastic response of the rock.
 
 
-.. _problemVerificationFig3:
+.. _problemVerificationVerticalPoroWellboreFig3:
 .. figure:: PoroDP_Stress.png
    :align: center
    :width: 1000
@@ -324,7 +324,7 @@ For the same 3D wellbore problem, the poroplastic case is thereafter tested and 
 By using python scripts, we can extract the simulation results along any direction and provide detailed comparisons between different cases. Here, the pore pressure, radial displacement, radial and tangential effective stresses along the direction of minimum horizontal stress are obtained at different time steps and plotted against the corresponding ones of the poroelastic case. Because of fluid diffusion and coupling effect, following figure shows that these solutions evolve with time for both cases. As mentioned above, a plastic zone is developed in the vicinity of the wellbore, due to stress concentration. As for the far field region, these two cases become almost identical, with the rock deformation governed by poroelasticity.    
 
 
-.. _problemVerificationFig4:
+.. _problemVerificationVerticalPoroWellboreFig4:
 .. figure:: PoroDP_X.png
    :align: center
    :width: 1000

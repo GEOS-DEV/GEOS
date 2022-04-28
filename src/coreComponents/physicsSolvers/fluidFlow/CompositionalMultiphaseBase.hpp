@@ -105,10 +105,10 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  solveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
+  solveLinearSystem( DofManager const & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override;
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
@@ -138,19 +138,25 @@ public:
 
   /**
    * @brief Update all relevant relperm models using current values of phase volume fraction
-   * @param castedRelPerm the group storing the required fields
+   * @param dataGroup the group storing the required fields
    */
-  void updateRelPermModel( ObjectManagerBase & castedRelPerm ) const;
+  void updateRelPermModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Update all relevant capillary pressure models using current values of phase volume fraction
-   * @param castedCapPres the group storing the required fields
+   * @param dataGroup the group storing the required fields
    */
-  void updateCapPressureModel( ObjectManagerBase & castedCapPres ) const;
+  void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
+
+  /**
+   * @brief Update all relevant solid internal energy models using current values of temperature
+   * @param dataGroup the group storing the required fields
+   */
+  void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
-   * @param domain the domain containing the mesh and fields
+   * @param dataGroup the group storing the required field
    */
   virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
@@ -159,16 +165,22 @@ public:
   virtual void updateState( DomainPartition & domain ) override final;
 
   /**
-   * @brief Get the number of fluid components (species)
+   * @brief Getter for the number of fluid components (species)
    * @return the number of components
    */
-  localIndex numFluidComponents() const { return m_numComponents; }
+  integer numFluidComponents() const { return m_numComponents; }
 
   /**
-   * @brief Get the number of fluid phases
+   * @brief Getter for the number of fluid phases
    * @return the number of phases
    */
-  localIndex numFluidPhases() const { return m_numPhases; }
+  integer numFluidPhases() const { return m_numPhases; }
+
+  /**
+   * @brief Getter for the name of the reference fluid model name
+   * @return the name of the reference fluid
+   */
+  string referenceFluidModelName() const { return m_referenceFluidModelName; }
 
   /**
    * @brief assembles the accumulation and volume balance terms for all cells
@@ -213,6 +225,8 @@ public:
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
 
+    static constexpr char const * isThermalString()  { return "isThermal"; }
+
     static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
 
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
@@ -220,6 +234,8 @@ public:
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
 
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
+
+    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
 
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
@@ -305,6 +321,14 @@ public:
 
 protected:
 
+  /**
+   * @brief Utility function that checks the consistency of the constitutive models
+   * @param[in] domain the domain partition
+   * This function will produce an error if one of the constitutive models
+   * (fluid, relperm) is incompatible with the reference fluid model.
+   */
+  void validateConstitutiveModels( DomainPartition const & domain ) const;
+
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
@@ -316,6 +340,9 @@ protected:
    */
   void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
+
+  /// flag to specify whether the sparsity pattern needs to be rebuilt
+  bool m_systemSetupDone;
 
   /// the max number of fluid phases
   integer m_numPhases;
@@ -333,10 +360,10 @@ protected:
   integer m_computeCFLNumbers;
 
   /// flag to determine whether or not to apply capillary pressure
-  integer m_capPressureFlag;
+  integer m_hasCapPressure;
 
   /// flag to determine whether or not this is a thermal simulation
-  integer m_thermalFlag;
+  integer m_isThermal;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;

@@ -76,7 +76,7 @@ A positive hardening parameter will allow the cohesion to grow, shifting the coh
 A negative hardening parameter will cause the cohesion to shrink, though negative cohesion values are not allowed.
 Once all cohesion has been lost, the cohesion will remain at zero, so the cone vertex is fixed at the origin. 
 In either case, the friction and dilation angles remain constant.  
-See the :ref:`_ExtendedDruckerPrager` model for an alternative version of hardening behavior.
+See the :ref:`DruckerPragerExtended <DruckerPragerExtended>` model for an alternative version of hardening behavior.
 
 Parameters
 ~~~~~~~~~~~~~~~~~~~~
@@ -101,6 +101,9 @@ Example
                               defaultCohesion="10.0" />
   </Constitutive>
 
+
+
+.. _J2Plasticity:
 
 Variant: J2 plasticity
 ~~~~~~~~~~~~~~~~~~~~~~~~

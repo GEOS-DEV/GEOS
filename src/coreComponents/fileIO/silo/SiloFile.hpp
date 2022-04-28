@@ -709,7 +709,7 @@ private:
 /**
  * Namespace to hold some utilities needed by the functions in SiloFile.
  */
-namespace SiloFileUtilities
+namespace siloFileUtilities
 {
 /**
  * @tparam OUTTYPE the type of data to write out (int,float,real64)

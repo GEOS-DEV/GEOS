@@ -15,11 +15,11 @@ Preprints and Early-Views
        | A Franceschini, L Gazzola, M Ferronato
        | arXiv preprint
        | `arXiv:2112.12397 <https://arxiv.org/abs/2112.12397>`_
-
-   * - | **An aggregation-based nonlinear multigrid solver for two-phase flow and transport in porous media**
-       | CS Lee, F Hamon, N Castelletto, PS Vassilevski, JA White
+       
+   * - | **Deep learning-accelerated 3D carbon storage reservoir pressure forecasting based on data assimilation using surface displacement from InSAR**
+       | H Tang, P Fu, H Jo, S Jiang, CS Sherman, F Hamon, NA Azzolina, JP Morris
        | arXiv preprint
-       | `arXiv:2109.07546 <https://arxiv.org/abs/2109.07546>`_
+       | `arXiv:2201.08543 <https://arxiv.org/abs/2201.08543>`_
 
 
 2022
@@ -33,11 +33,21 @@ Preprints and Early-Views
        | SBM Bosma, FP Hamon, BT Mallison, HA Tchelepi
        | Computer Methods in Applied Mechanics and Engineering
        | `doi:10.1016/j.cma.2021.114288 <https://doi.org/10.1016/j.cma.2021.114288>`_
+
+   * - | **An aggregation-based nonlinear multigrid solver for two-phase flow and transport in porous media**
+       | CS Lee, F Hamon, N Castelletto, PS Vassilevski, JA White
+       | Computers & Mathematics with Applications
+       | `doi:10.1016/j.camwa.2022.03.026 <https://doi.org/10.1016/j.camwa.2022.03.026>`_  
        
    * - | **Phase-field modeling of rock fractures with roughness**
        | F Fei, J Choo, C Liu, JA White
        | International Journal for Numerical and Analytical Methods in Geomechanics 
        | `doi:10.1002/nag.3317 <https://doi.org/10.1002/nag.3317>`_
+
+   * - | **Scalable preconditioning for the stabilized contact mechanics problem**
+       | A Franceschini, N Castelletto, JA White, HA Tchelepi
+       | Journal of Computational Physics 
+       | `doi:10.1016/j.jcp.2022.111150 <https://doi.org/10.1016/j.jcp.2022.111150>`_
 
    * - | **Enhanced Relaxed Physical Factorization preconditioner for coupled poromechanics**
        | M Frigo, N Castelletto, M Ferronato
@@ -115,12 +125,12 @@ Preprints and Early-Views
        | SIAM Journal on Scientific Computing 
        | `doi:10.1137/19M1256117 <https://doi.org/10.1137/19M1256117>`_
 
-   * - | **Multi-stage preconditioners for thermal–compositional–reactive flow in porous media**.
+   * - | **Multi-stage preconditioners for thermal–compositional–reactive flow in porous media**
        | MA Cremon, N Castelletto, JA White
        | Journal of Computational Physics
        | `doi:10.1016/j.jcp.2020.109607 <https://doi.org/10.1016/j.jcp.2020.109607>`_
 
-   * - | **Algebraically stabilized Lagrange multiplier method for frictional contact mechanics with hydraulically active fractures**.
+   * - | **Algebraically stabilized Lagrange multiplier method for frictional contact mechanics with hydraulically active fractures**
        | A Franceschini, N Castelletto, JA White, HA Tchelepi
        | Computer Methods in Applied Mechanics and Engineering 
        | `doi:10.1016/j.cma.2020.113161 <https://doi.org/10.1016/j.cma.2020.113161>`_

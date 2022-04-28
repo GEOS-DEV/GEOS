@@ -30,7 +30,7 @@
       name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }""/>
+      targetRegions="{ Domain }"/>
 
     <SinglePhaseFVM
       name="flowSolver"
@@ -38,7 +38,7 @@
       targetRegions="{ Domain, Fracture }"/>
 
     <EmbeddedSurfaceGenerator
-      name="SurfaceGenerator""
+      name="SurfaceGenerator"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="2"
@@ -163,10 +163,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm, fracturePerm, fractureContact }"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -351,7 +348,7 @@
     <VTK
       name="vtkOutput"
       plotLevel="3"
-      writeBinaryData="1"/>
+      format="binary"/>
 
    <TimeHistory
       name="timeHistoryOutput"

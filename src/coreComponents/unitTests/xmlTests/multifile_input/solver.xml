@@ -1,14 +1,12 @@
 <?xml version="1.0" ?>
 
 <Problem>
-
   <Solvers>
     <SolidMechanics_LagrangianFEM
       name="lagsolve"
       cflFactor="0.25"
       discretization="FE1"
-      targetRegions="{ Region2 }"
-      />
+      targetRegions="{ Region2 }"/>
   </Solvers>
 
   <Events
@@ -42,5 +40,4 @@
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
   </Constitutive>
-
 </Problem>

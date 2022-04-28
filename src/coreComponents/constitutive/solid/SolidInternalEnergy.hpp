@@ -35,12 +35,12 @@ public:
 
   SolidInternalEnergyUpdates( arrayView2d< real64 > const & internalEnergy,
                               arrayView2d< real64 > const & dInternalEnergy_dTemperature,
-                              real64 const & specificHeatCapacity,
+                              real64 const & volumetricHeatCapacity,
                               real64 const & referenceTemperature,
                               real64 const & referenceInternalEnergy ):
     m_internalEnergy( internalEnergy ),
     m_dInternalEnergy_dTemperature( dInternalEnergy_dTemperature ),
-    m_specificHeatCapacity( specificHeatCapacity ),
+    m_volumetricHeatCapacity( volumetricHeatCapacity ),
     m_referenceTemperature( referenceTemperature ),
     m_referenceInternalEnergy( referenceInternalEnergy )
   {}
@@ -59,8 +59,8 @@ public:
                 real64 & internalEnergy,
                 real64 & dInternalEnergy_dTemperature ) const
   {
-    internalEnergy = m_referenceInternalEnergy + m_specificHeatCapacity * ( temperature - m_referenceTemperature );
-    dInternalEnergy_dTemperature =  m_specificHeatCapacity;
+    internalEnergy = m_referenceInternalEnergy + m_volumetricHeatCapacity * ( temperature - m_referenceTemperature );
+    dInternalEnergy_dTemperature =  m_volumetricHeatCapacity;
   }
 
 private:
@@ -71,8 +71,8 @@ private:
   /// Derivative of the solid internal energy w.r.t. the temperature
   arrayView2d< real64 > m_dInternalEnergy_dTemperature;
 
-  /// Solid specific heat capacity
-  real64 m_specificHeatCapacity;
+  /// Solid volumetric heat capacity
+  real64 m_volumetricHeatCapacity;
 
   /// Reference temperature
   real64 m_referenceTemperature;
@@ -97,9 +97,9 @@ public:
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * internalEnergyString() { return "internalEnergy"; }
-    static constexpr char const * oldInternalEnergyString() { return "oldInternalEnergy"; }
+    static constexpr char const * oldInternalEnergyString() { return "internalEnergy_n"; }
     static constexpr char const * dInternalEnergy_dTemperatureString() { return "dInternalEnergy_dTemperature"; }
-    static constexpr char const * specificHeatCapacityString() { return "specificHeatCapacity"; }
+    static constexpr char const * volumetricHeatCapacityString() { return "volumetricHeatCapacity"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
     static constexpr char const * referenceInternalEnergyString() { return "referenceInternalEnergy"; }
   } viewKeys;
@@ -114,7 +114,7 @@ public:
   {
     return KernelWrapper( m_internalEnergy,
                           m_dInternalEnergy_dTemperature,
-                          m_specificHeatCapacity,
+                          m_volumetricHeatCapacity,
                           m_referenceTemperature,
                           m_referenceInternalEnergy );
   }
@@ -127,10 +127,10 @@ public:
   arrayView2d< real64 const > const  getInternalEnergy() const { return m_internalEnergy; }
 
   /**
-   * @brief Const/non-mutable accessor for oldInternalEnergy.
+   * @brief Const/non-mutable accessor for internalEnergy_n.
    * @return Accessor
    */
-  arrayView2d< real64 const > const  getOldInternalEnergy() const { return m_oldInternalEnergy; }
+  arrayView2d< real64 const > const  getInternalEnergy_n() const { return m_internalEnergy_n; }
 
   /**
    * @brief Const/non-mutable accessor for dInternalEnergy_dTemperature.
@@ -147,13 +147,13 @@ private:
   array2d< real64 > m_internalEnergy;
 
   /// Old solid internal energy
-  array2d< real64 > m_oldInternalEnergy;
+  array2d< real64 > m_internalEnergy_n;
 
   /// Derivative of the solid internal energy w.r.t. the temperature
   array2d< real64 > m_dInternalEnergy_dTemperature;
 
-  /// Solid specific heat capacity
-  real64 m_specificHeatCapacity;
+  /// Solid volumetric heat capacity
+  real64 m_volumetricHeatCapacity;
 
   /// Reference temperature
   real64 m_referenceTemperature;

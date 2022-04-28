@@ -48,7 +48,7 @@
   </Solvers>
 
   <Mesh>
-    <PAMELAMeshGenerator
+    <PAMELAMesh
       name="Mode2Notched"
       file="Mode2CrackMesh/geo.msh"/>
 

@@ -28,8 +28,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        
-        targetRegions="{ Bot }"/>
+      />
     </FiniteVolume>
   </NumericalMethods>
 

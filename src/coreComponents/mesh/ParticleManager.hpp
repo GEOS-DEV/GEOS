@@ -100,14 +100,14 @@ public:
    * @brief The function is to return the name of the ParticleManager in the object catalog
    * @return string that contains the catalog name used to register/lookup this class in  the object catalog
    */
-  static const string catalogName()
+  static string catalogName()
   { return "ParticleManager"; }
 
   /**
    * @brief Virtual access to catalogName()
    * @return string that contains the catalog name used to register/lookup this class in the object catalog
    */
-  virtual const string getCatalogName() const override final
+  virtual string getCatalogName() const override final
   { return ParticleManager::catalogName(); }
 
   /**

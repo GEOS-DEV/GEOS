@@ -146,11 +146,21 @@ then
     for p in "${LINK_SCRIPTS[@]}"
     do
         echo "  $p"
+
+        pp=
         if [ -f "$MOD_PATH/$p" ]
         then
-            ln -s $MOD_PATH/$p $BIN_DIR/$p 
+            pp="$MOD_PATH/$p"
         else
+            pp="$(which $p)"
+        fi
+
+        if [ -z "$pp" ]
+        then
             echo "  (could not find where $p is installed)"      
+        else
+            echo "  (found $p as $pp)"
+            ln -s $pp $BIN_DIR/$p 
         fi
     done
 

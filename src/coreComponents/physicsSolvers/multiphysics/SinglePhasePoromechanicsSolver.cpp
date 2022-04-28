@@ -233,7 +233,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    PoromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
+    poromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
                                                                   pDofKey,
                                                                   dofManager.rankOffset(),
                                                                   localMatrix,
@@ -324,13 +324,13 @@ void SinglePhasePoromechanicsSolver::createPreconditioner()
   }
 }
 
-void SinglePhasePoromechanicsSolver::solveSystem( DofManager const & dofManager,
-                                                  ParallelMatrix & matrix,
-                                                  ParallelVector & rhs,
-                                                  ParallelVector & solution )
+void SinglePhasePoromechanicsSolver::solveLinearSystem( DofManager const & dofManager,
+                                                        ParallelMatrix & matrix,
+                                                        ParallelVector & rhs,
+                                                        ParallelVector & solution )
 {
   solution.zero();
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void SinglePhasePoromechanicsSolver::applySystemSolution( DofManager const & dofManager,

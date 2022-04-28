@@ -95,7 +95,7 @@ numerical solver parameters such as the linear and nonlinear tolerances, the pre
 Mesh
 -------
 
-Here, we use the ``PAMELAMeshGenerator`` to load the mesh (see :ref:`ImportingExternalMesh`).
+Here, we use the ``PAMELAMesh`` to load the mesh (see :ref:`ImportingExternalMesh`).
 The syntax to import external meshes is simple : in the XML file,
 the mesh ``file`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified ``name`` label for the mesh object.
 
@@ -306,7 +306,7 @@ One can notice the correct load of the field function among the starting output 
 
 .. code-block:: console
 
-        Adding Mesh: PAMELAMeshGenerator, SyntheticMesh
+        Adding Mesh: PAMELAMesh, SyntheticMesh
         Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
         Adding Geometric Object: Box, all
         Adding Geometric Object: Box, source

@@ -19,22 +19,29 @@
 #ifndef GEOSX_MESH_GENERATORS_PAMELAMESHGENERATOR_HPP
 #define GEOSX_MESH_GENERATORS_PAMELAMESHGENERATOR_HPP
 
-#include "mesh/generators/MeshGeneratorBase.hpp"
+#include "mesh/generators/ExternalMeshGeneratorBase.hpp"
+
+#include "Elements/Polyhedron.hpp"
 
 namespace PAMELA
 {
-/// Forward declare Mesh class for unique_ptr member
+/// Forward declare PAMELA types for use in member declarations
 class Mesh;
+template< typename > struct Part;
+template< typename > struct SubPart;
 }
 
 namespace geosx
 {
 
+class ElementRegionBase;
+class ElementSubRegionBase;
+
 /**
  *  @class PAMELAMeshGenerator
  *  @brief The PAMELAMeshGenerator class provides a class implementation of PAMELA generated meshes.
  */
-class PAMELAMeshGenerator final : public MeshGeneratorBase
+class PAMELAMeshGenerator final : public ExternalMeshGeneratorBase
 {
 public:
 /**
@@ -49,26 +56,18 @@ public:
  * @brief Return the name of the PAMELAMeshGenerator in object Catalog.
  * @return string that contains the key name to PAMELAMeshGenerator in the Catalog
  */
-  static string catalogName() { return "PAMELAMeshGenerator"; }
+  static string catalogName() { return "PAMELAMesh"; }
 
 ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     constexpr static char const * filePathString() { return "file"; }
     constexpr static char const * scaleString() { return "scale"; }
+    constexpr static char const * translateString() { return "translate"; }
     constexpr static char const * fieldsToImportString() { return "fieldsToImport"; }
     constexpr static char const * fieldNamesInGEOSXString() { return "fieldNamesInGEOSX"; }
-    constexpr static char const * reverseZString() { return "reverseZ"; }
   };
 /// @endcond
-
-  /**
-   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
-   * @param childKey the catalog key of the new geometric object to create
-   * @param childName the name of the new geometric object in the repository
-   * @return the group child
-   */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   virtual void generateMesh( DomainPartition & domain ) override;
 
@@ -76,34 +75,15 @@ public:
 
   virtual void freeResources() override;
 
-protected:
-
-  /**
-   * @brief This function provides capability to post process input values prior to
-   * any other initialization operations.
-   */
-  void postProcessInput() final;
-
-
 private:
+
+  void importFieldsOnSubRegion( PAMELA::Part< PAMELA::Polyhedron * > & srcRegion,
+                                PAMELA::SubPart< PAMELA::Polyhedron * > & srcSubRegion,
+                                ElementRegionBase const & dstRegion,
+                                ElementSubRegionBase & dstSubRegion ) const;
 
   /// Unique Pointer to the Mesh in the data structure of PAMELA.
   std::unique_ptr< PAMELA::Mesh > m_pamelaMesh;
-
-  /// Names of the fields to be copied from PAMELA to GEOSX data structure
-  string_array m_fieldsToImport;
-
-  /// Path to the mesh file
-  Path m_filePath;
-
-  /// Scale factor that will be applied to the point coordinates
-  real64 m_scale;
-
-  /// String array of the GEOSX user declared fields
-  string_array m_fieldNamesInGEOSX;
-
-  /// z pointing direction flag, 0 (default) is upward, 1 is downward
-  integer m_isZReverse;
 
   /// Map of cell block (subregion) names to PAMELA region names
   std::unordered_map< string, string > m_cellBlockRegions;

@@ -51,7 +51,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="5000.0"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
@@ -93,7 +93,7 @@
       compressibility="5e-10"
       viscosibility="0.0"/>
 
-    <CompressibleSolidConstantPermeability
+    <CompressibleSolidCarmanKozenyPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
@@ -108,9 +108,11 @@
       referencePressure="0.0"
       compressibility="1.0e-9"/>
 
-    <ConstantPermeability
+    <CarmanKozenyPermeability
       name="channelPerm"
-      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+      particleDiameter="5e-6"
+      sphericity="0.9"/>
+
   </Constitutive>
 
   <FieldSpecifications>
@@ -149,12 +151,13 @@
       aquiferInnerRadius="2000"
       aquiferAngle="20"
       setNames="{ aquifer }"/>
-      
+
   </FieldSpecifications>
 
   <Outputs>
     <VTK
-      name="siloOutput"/>
+      name="vtkOutput"
+      plotFileRoot="staircase_3d"/>
 
     <Restart
       name="restartOutput"/>

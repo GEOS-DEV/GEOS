@@ -24,7 +24,7 @@
 namespace geosx
 {
 
-namespace SinglePhaseWellKernels
+namespace singlePhaseWellKernels
 {
 
 /******************************** ControlEquationHelper ********************************/
@@ -32,7 +32,7 @@ namespace SinglePhaseWellKernels
 GEOSX_HOST_DEVICE
 void
 ControlEquationHelper::
-  switchControl( WellControls::Type const & wellType,
+  switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  real64 const & targetBHP,
                  real64 const & targetRate,
@@ -56,7 +56,7 @@ ControlEquationHelper::
   else // rate control
   {
     // the control is viable if the reference pressure is below/above the max/min pressure
-    if( wellType == WellControls::Type::PRODUCER )
+    if( isProducer )
     {
       // targetBHP specifies a min pressure here
       controlIsViable = ( currentBHP >= targetBHP - EPS );
@@ -152,7 +152,6 @@ FluxKernel::
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & connRate,
-          arrayView1d< real64 const > const & dConnRate,
           real64 const & dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
@@ -173,7 +172,7 @@ FluxKernel::
     localIndex const iwelemNext = nextWellElemIndex[iwelem];
 
     // there is nothing to upwind for single-phase flow
-    real64 const currentConnRate = connRate[iwelem] + dConnRate[iwelem];
+    real64 const currentConnRate = connRate[iwelem];
     real64 const flux = dt * currentConnRate;
     real64 const dFlux_dRate = dt;
 
@@ -246,14 +245,13 @@ PressureRelationKernel::
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & wellElemPressure,
-          arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const > const & wellElemDensity,
           arrayView2d< real64 const > const & dWellElemDensity_dPres,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
   // static well control data
-  WellControls::Type const wellType = wellControls.getType();
+  bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
   real64 const targetBHP = wellControls.getTargetBHP( timeAtEndOfStep );
   real64 const targetRate = wellControls.getTargetTotalRate( timeAtEndOfStep );
@@ -282,7 +280,7 @@ PressureRelationKernel::
     if( iwelemNext < 0 && isLocallyOwned ) // if iwelemNext < 0, form control equation
     {
       WellControls::Control newControl = currentControl;
-      ControlEquationHelper::switchControl( wellType,
+      ControlEquationHelper::switchControl( isProducer,
                                             currentControl,
                                             targetBHP,
                                             targetRate,
@@ -323,8 +321,8 @@ PressureRelationKernel::
       real64 const gravD = wellElemGravCoef[iwelemNext] - wellElemGravCoef[iwelem];
 
       // compute the current pressure in the two well elements
-      real64 const pressureCurrent = wellElemPressure[iwelem] + dWellElemPressure[iwelem];
-      real64 const pressureNext    = wellElemPressure[iwelemNext] + dWellElemPressure[iwelemNext];
+      real64 const pressureCurrent = wellElemPressure[iwelem];
+      real64 const pressureNext    = wellElemPressure[iwelemNext];
 
       // compute momentum flux and derivatives
       real64 const localPresRel = pressureNext - pressureCurrent - avgDensity * gravD;
@@ -357,14 +355,12 @@ GEOSX_HOST_DEVICE
 void
 PerforationKernel::
   compute( real64 const & resPressure,
-           real64 const & dResPressure,
            real64 const & resDensity,
            real64 const & dResDensity_dPres,
            real64 const & resViscosity,
            real64 const & dResViscosity_dPres,
            real64 const & wellElemGravCoef,
            real64 const & wellElemPressure,
-           real64 const & dWellElemPressure,
            real64 const & wellElemDensity,
            real64 const & dWellElemDensity_dPres,
            real64 const & wellElemViscosity,
@@ -387,7 +383,7 @@ PerforationKernel::
 
 
   // get reservoir variables
-  pressure[TAG::RES] = resPressure + dResPressure;
+  pressure[TAG::RES] = resPressure;
   dPressure_dP[TAG::RES] = 1;
 
   // TODO: add a buoyancy term for the reservoir side here
@@ -399,7 +395,7 @@ PerforationKernel::
 
 
   // get well variables
-  pressure[TAG::WELL] = wellElemPressure + dWellElemPressure;
+  pressure[TAG::WELL] = wellElemPressure;
   dPressure_dP[TAG::WELL] = 1.0;
 
   real64 const gravD = ( perfGravCoef - wellElemGravCoef );
@@ -416,6 +412,7 @@ PerforationKernel::
     potDif += multiplier[i] * trans * pressure[i];
     dPerfRate_dPres[i] = multiplier[i] * trans * dPressure_dP[i];
   }
+
 
   // choose upstream cell based on potential difference
   localIndex const k_up = (potDif >= 0) ? TAG::RES : TAG::WELL;
@@ -461,14 +458,12 @@ void
 PerforationKernel::
   launch( localIndex const size,
           ElementViewConst< arrayView1d< real64 const > > const & resPressure,
-          ElementViewConst< arrayView1d< real64 const > > const & dResPressure,
           ElementViewConst< arrayView2d< real64 const > > const & resDensity,
           ElementViewConst< arrayView2d< real64 const > > const & dResDensity_dPres,
           ElementViewConst< arrayView2d< real64 const > > const & resViscosity,
           ElementViewConst< arrayView2d< real64 const > > const & dResViscosity_dPres,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 const > const & wellElemPressure,
-          arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const > const & wellElemDensity,
           arrayView2d< real64 const > const & dWellElemDensity_dPres,
           arrayView2d< real64 const > const & wellElemViscosity,
@@ -495,14 +490,12 @@ PerforationKernel::
     localIndex const iwelem = perfWellElemIndex[iperf];
 
     compute( resPressure[er][esr][ei],
-             dResPressure[er][esr][ei],
              resDensity[er][esr][ei][0],
              dResDensity_dPres[er][esr][ei][0],
              resViscosity[er][esr][ei][0],
              dResViscosity_dPres[er][esr][ei][0],
              wellElemGravCoef[iwelem],
              wellElemPressure[iwelem],
-             dWellElemPressure[iwelem],
              wellElemDensity[iwelem][0],
              dWellElemDensity_dPres[iwelem][0],
              wellElemViscosity[iwelem][0],
@@ -528,7 +521,7 @@ AccumulationKernel::
           arrayView1d< real64 const > const & wellElemVolume,
           arrayView2d< real64 const > const & wellElemDensity,
           arrayView2d< real64 const > const & dWellElemDensity_dPres,
-          arrayView1d< real64 const > const & wellElemDensityOld,
+          arrayView1d< real64 const > const & wellElemDensity_n,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
@@ -543,7 +536,7 @@ AccumulationKernel::
     localIndex const eqnRowIndex = wellElemDofNumber[iwelem] + ROFFSET::MASSBAL - rankOffset;
     globalIndex const presDofColIndex = wellElemDofNumber[iwelem] + COFFSET::DPRES;
 
-    real64 const localAccum = wellElemVolume[iwelem] * ( wellElemDensity[iwelem][0] - wellElemDensityOld[iwelem] );
+    real64 const localAccum = wellElemVolume[iwelem] * ( wellElemDensity[iwelem][0] - wellElemDensity_n[iwelem] );
     real64 const localAccumJacobian = wellElemVolume[iwelem] * dWellElemDensity_dPres[iwelem][0];
 
     // add contribution to global residual and jacobian (no need for atomics here)
@@ -567,63 +560,103 @@ PresInitializationKernel::
           arrayView1d< localIndex const > const & resElementRegion,
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
+          arrayView1d< real64 const > const & perfGravCoef,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 > const & wellElemPressure )
 {
   real64 const targetBHP = wellControls.getTargetBHP( currentTime );
   real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
+  real64 const initialPressureCoef = wellControls.getInitialPressureCoefficient();
   WellControls::Control const currentControl = wellControls.getControl();
-  WellControls::Type const wellType = wellControls.getType();
+  bool const isProducer = wellControls.isProducer();
 
-  // loop over all perforations to compute an average density
+
+
+  // Step 1: we loop over all the perforations on this rank to compute the following quantities:
+  //   - Sum of densities over the perforated reservoir elements
+  // In passing, we save the min gravCoef difference between the reference depth and the perforation depth
+  // Note that we use gravCoef instead of depth for the (unlikely) case in which the gravityVector is not aligned with z
+
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumDensity( 0 );
-  RAJA::ReduceMin< parallelDeviceReduce, real64 > minResPressure( 1e10 );
-  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxResPressure( 0 );
+  RAJA::ReduceMin< parallelDeviceReduce, real64 > localMinGravCoefDiff( 1e9 );
+
   forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
   {
-
     // get the reservoir (sub)region and element indices
     localIndex const er = resElementRegion[iperf];
     localIndex const esr = resElementSubRegion[iperf];
     localIndex const ei = resElementIndex[iperf];
 
+    // save the min gravCoef difference between the reference depth and the perforation depth (times g)
+    localMinGravCoefDiff.min( LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] ) );
+
+    // increment the fluid density
     sumDensity += resDensity[er][esr][ei][0];
-    minResPressure.min( resPressure[er][esr][ei] );
-    maxResPressure.max( resPressure[er][esr][ei] );
   } );
-  real64 const pres = ( wellControls.getType() == WellControls::Type::PRODUCER )
-                    ? MpiWrapper::min( minResPressure.get() )
-                    : MpiWrapper::max( maxResPressure.get() );
+  real64 const minGravCoefDiff = MpiWrapper::min( localMinGravCoefDiff.get() );
+
+
+
+  // Step 2: we assign average quantities over the well (i.e., over all the ranks)
+
   real64 const avgDensity = MpiWrapper::sum( sumDensity.get() ) / numPerforations;
 
-  real64 pressureControl = 0.0;
-  real64 const gravCoefControl = refWellElemGravCoef;
-  // initialize the pressure in the element where the BHP is controlled)
+
+
+  // Step 3: we compute the approximate pressure at the reference depth
+  // We make a distinction between pressure-controlled wells and rate-controlled wells
+
+  real64 refPres = 0.0;
+
+  // if the well is controlled by pressure, initialize the reference pressure at the target pressure
   if( currentControl == WellControls::Control::BHP )
   {
-    // if pressure constraint, initialize the pressure at the constraint
-    pressureControl = targetBHP;
+    refPres = targetBHP;
   }
-  else // rate control
+  // if the well is controlled by rate, initialize the reference pressure using the pressure at the closest perforation
+  else
   {
-    // initialize the pressure in the element where the BHP is controlled slightly
-    // above/below the target pressure depending on well type.
-    // note: the targetBHP is not used here because we sometimes set targetBHP to a very large (unrealistic) value
-    //       to keep the well in rate control during the full simulation, and we don't want this large targetBHP to
-    //       be used for initialization
-    pressureControl = ( wellType == WellControls::Type::PRODUCER )
-                    ? 0.5 * pres
-                    : 2.0 * pres;
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > localRefPres( 1e9 );
+    real64 const alpha = ( isProducer ) ? 1 - initialPressureCoef : 1 + initialPressureCoef;
+
+    forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+    {
+      // get the reservoir (sub)region and element indices
+      localIndex const er = resElementRegion[iperf];
+      localIndex const esr = resElementSubRegion[iperf];
+      localIndex const ei = resElementIndex[iperf];
+
+      // get the perforation pressure and save the estimated reference pressure
+      real64 const gravCoefDiff = LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] );
+      if( isZero( gravCoefDiff - minGravCoefDiff ) )
+      {
+        localRefPres.min( alpha * resPressure[er][esr][ei] + avgDensity * ( refWellElemGravCoef - perfGravCoef[iperf] ) );
+      }
+    } );
+    refPres = MpiWrapper::min( localRefPres.get() );
   }
 
-  GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
 
-  // estimate the pressures in the well elements using this avgDensity
+
+  // Step 4: we are ready to assign the primary variables on the well elements:
+  //  - pressure: hydrostatic pressure using our crude approximation of the total mass density
+
+  RAJA::ReduceMax< parallelDeviceReduce, integer > foundNegativePressure( 0 );
+
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
-    wellElemPressure[iwelem] = pressureControl
-                               + avgDensity * ( wellElemGravCoef[iwelem] - gravCoefControl );
+    wellElemPressure[iwelem] = refPres + avgDensity * ( wellElemGravCoef[iwelem] - refWellElemGravCoef );
+
+    if( wellElemPressure[iwelem] <= 0 )
+    {
+      foundNegativePressure.max( 1 );
+    }
   } );
+
+
+  GEOSX_THROW_IF( foundNegativePressure.get() == 1,
+                  "Invalid well initialization: negative pressure was found",
+                  InputError );
 }
 
 /******************************** RateInitializationKernel ********************************/
@@ -638,7 +671,7 @@ RateInitializationKernel::
 {
   real64 const targetRate = wellControls.getTargetTotalRate( currentTime );
   WellControls::Control const control = wellControls.getControl();
-  WellControls::Type const wellType = wellControls.getType();
+  bool const isProducer = wellControls.isProducer();
 
   // Estimate the connection rates
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
@@ -647,7 +680,7 @@ RateInitializationKernel::
     {
       // if BHP constraint set rate below the absolute max rate
       // with the appropriate sign (negative for prod, positive for inj)
-      if( wellType == WellControls::Type::PRODUCER )
+      if( isProducer )
       {
         connRate[iwelem] = LvArray::math::max( 0.1 * targetRate * wellElemDens[iwelem][0], -1e3 );
       }
@@ -664,6 +697,6 @@ RateInitializationKernel::
 }
 
 
-} // end namespace SinglePhaseWellKernels
+} // end namespace singlePhaseWellKernels
 
 } // end namespace geosx

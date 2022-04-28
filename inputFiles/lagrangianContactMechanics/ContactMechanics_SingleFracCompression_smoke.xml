@@ -8,7 +8,7 @@
 
 <!-- SPHINX_MESH -->
   <Mesh>
-    <PAMELAMeshGenerator
+    <PAMELAMesh
       name="CubeHex"
       file="crackInPlane_smoke.msh"/>
   </Mesh>

@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 
 using namespace geosx;
-using namespace geosx::SinglePhaseHybridFVMKernels;
+using namespace geosx::singlePhaseHybridFVMKernels;
 using namespace geosx::testing;
 
 
@@ -32,7 +32,6 @@ static localIndex constexpr NF = 4; // we consider a tetrahedron in this file
 
 void updateDensity( real64 const & refPres,
                     real64 const & elemPres,
-                    real64 const & dElemPres,
                     real64 & elemDens,
                     real64 & dElemDens_dp )
 {
@@ -41,7 +40,7 @@ void updateDensity( real64 const & refPres,
   real64 const refDens = 1000;
 
   // hard-coded relationship between pressure and density
-  elemDens = refDens * exp( compressibility * ( elemPres + dElemPres - refPres ) );
+  elemDens = refDens * exp( compressibility * ( elemPres - refPres ) );
   dElemDens_dp = compressibility * elemDens;
 }
 
@@ -63,22 +62,19 @@ void updateMobility( real64 const & elemDens,
 // the QTPFA transmissibility matrix comes from testHybridFVMInnerProducts
 void setupProblemForTetra( array1d< localIndex > & elemToFaces,
                            array1d< real64 > & facePres,
-                           array1d< real64 > & dFacePres,
                            array1d< real64 > & faceGravCoef,
                            real64 & refPres,
                            real64 & elemPres,
-                           real64 & dElemPres,
                            real64 & elemGravCoef,
                            real64 & elemDens,
                            real64 & dElemDens_dp,
                            arraySlice2d< real64 > const & transMatrix )
 {
   facePres.resize( NF );
-  dFacePres.resize( NF );
-  facePres( 0 ) = 1e5; dFacePres( 0 ) = 0;
-  facePres( 1 ) = 2e5; dFacePres( 1 ) = 0;
-  facePres( 2 ) = 1e4; dFacePres( 2 ) = 0;
-  facePres( 3 ) = 5e4; dFacePres( 3 ) = 0;
+  facePres( 0 ) = 1e5;
+  facePres( 1 ) = 2e5;
+  facePres( 2 ) = 1e4;
+  facePres( 3 ) = 5e4;
 
   elemGravCoef = 5e1;
   faceGravCoef.resize( NF );
@@ -95,8 +91,7 @@ void setupProblemForTetra( array1d< localIndex > & elemToFaces,
 
   elemPres  = 1.2e5;
   refPres   = elemPres;
-  dElemPres = 0;
-  updateDensity( refPres, elemPres, dElemPres, elemDens, dElemDens_dp );
+  updateDensity( refPres, elemPres, elemDens, dElemDens_dp );
 
   // the transmissibility matrix comes from the HybridFVMInnerProduct unit tests
   transMatrix( 0, 0 ) =  5.25e-12;
@@ -196,11 +191,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
 
   array1d< localIndex > elemToFaces;
   array1d< real64 > facePres;
-  array1d< real64 > dFacePres;
   array1d< real64 > faceGravCoef;
   real64 refPres;
   real64 elemPres;
-  real64 dElemPres;
   real64 elemGravCoef;
   real64 elemDens;
   real64 dElemDens_dp;
@@ -208,11 +201,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
 
   setupProblemForTetra( elemToFaces,
                         facePres,
-                        dFacePres,
                         faceGravCoef,
                         refPres,
                         elemPres,
-                        dElemPres,
                         elemGravCoef,
                         elemDens,
                         dElemDens_dp,
@@ -245,11 +236,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   ///////////////////////////////////////
 
   AssemblerKernelHelper::applyGradient< NF >( facePres,
-                                              dFacePres,
                                               faceGravCoef,
                                               elemToFaces,
                                               elemPres,
-                                              dElemPres,
                                               elemGravCoef,
                                               elemDens,
                                               dElemDens_dp,
@@ -277,20 +266,18 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   // 3) Compute finite-difference derivatives with respect to the element pressure //
   ///////////////////////////////////////////////////////////////////////////////////
 
-  real64 const dElemPresPerturb = perturbParameter * (elemPres + perturbParameter);
+  real64 const elemPresPerturb = elemPres + perturbParameter * (elemPres + perturbParameter);
   // we need to update density to account for the perturbation
-  updateDensity( refPres, elemPres, dElemPresPerturb, elemDens, dElemDens_dp );
+  updateDensity( refPres, elemPresPerturb, elemDens, dElemDens_dp );
 
   LvArray::tensorOps::fill< NF >( oneSidedVolFlux, 0 );
   LvArray::tensorOps::fill< NF >( dOneSidedVolFlux_dp, 0 );
   LvArray::tensorOps::fill< NF, NF >( dOneSidedVolFlux_dfp, 0 );
 
   AssemblerKernelHelper::applyGradient< NF >( facePres,
-                                              dFacePres,
                                               faceGravCoef,
                                               elemToFaces,
-                                              elemPres,
-                                              dElemPresPerturb,
+                                              elemPresPerturb,
                                               elemGravCoef,
                                               elemDens,
                                               dElemDens_dp,
@@ -315,7 +302,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
 
   for( localIndex row = 0; row < rhs.size(); ++row )
   {
-    real64 const dR_dp  = ( rhsPerturb[row] - rhs[row] ) / dElemPresPerturb;
+    real64 const dR_dp  = ( rhsPerturb[row] - rhs[row] ) / ( elemPresPerturb - elemPres );
     if( std::fabs( dR_dp ) > 0.0 )
     {
       jacobianFD.addToRow< serialAtomic >( row, &elemDofNumber, &dR_dp, 1 );
@@ -327,22 +314,25 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   /////////////////////////////////////////////////////////////////////////////////
 
   // we need to revert the density to its initial value (it is independent of face pressure)
-  updateDensity( refPres, elemPres, dElemPres, elemDens, dElemDens_dp );
+  updateDensity( refPres, elemPres, elemDens, dElemDens_dp );
+  array1d< real64 > facePresPerturb;
+  facePresPerturb.resize( facePres.size() );
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
-    dFacePres.zero();
-    dFacePres[ifaceLoc] = perturbParameter * (facePres[ifaceLoc] + perturbParameter);
+    for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
+    {
+      facePresPerturb[jfaceLoc] = facePres[jfaceLoc];
+    }
+    facePresPerturb[ifaceLoc] += perturbParameter * (facePres[ifaceLoc] + perturbParameter);
 
     LvArray::tensorOps::fill< NF >( oneSidedVolFlux, 0 );
     LvArray::tensorOps::fill< NF >( dOneSidedVolFlux_dp, 0 );
     LvArray::tensorOps::fill< NF, NF >( dOneSidedVolFlux_dfp, 0 );
 
-    AssemblerKernelHelper::applyGradient< NF >( facePres,
-                                                dFacePres,
+    AssemblerKernelHelper::applyGradient< NF >( facePresPerturb,
                                                 faceGravCoef,
                                                 elemToFaces,
                                                 elemPres,
-                                                dElemPres,
                                                 elemGravCoef,
                                                 elemDens,
                                                 dElemDens_dp,
@@ -367,7 +357,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
 
     for( localIndex row = 0; row < rhs.size(); ++row )
     {
-      real64 const dR_dfp  = ( rhsPerturb[row] - rhs[row] ) / dFacePres[ifaceLoc];
+      real64 const dR_dfp  = ( rhsPerturb[row] - rhs[row] ) / ( facePresPerturb[ifaceLoc] - facePres[ifaceLoc] );
       if( std::fabs( dR_dfp ) > 0.0 )
       {
         jacobianFD.addToRow< serialAtomic >( row, &faceDofNumber[ifaceLoc], &dR_dfp, 1 );
@@ -390,11 +380,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
 
   array1d< localIndex > elemToFaces;
   array1d< real64 > facePres;
-  array1d< real64 > dFacePres;
   array1d< real64 > faceGravCoef;
   real64 refPres;
   real64 elemPres;
-  real64 dElemPres;
   real64 elemGravCoef;
   real64 elemDens;
   real64 dElemDens_dp;
@@ -402,11 +390,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
 
   setupProblemForTetra( elemToFaces,
                         facePres,
-                        dFacePres,
                         faceGravCoef,
                         refPres,
                         elemPres,
-                        dElemPres,
                         elemGravCoef,
                         elemDens,
                         dElemDens_dp,
@@ -473,11 +459,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   ///////////////////////////////////////
 
   AssemblerKernelHelper::applyGradient< NF >( facePres,
-                                              dFacePres,
                                               faceGravCoef,
                                               elemToFaces,
                                               elemPres,
-                                              dElemPres,
                                               elemGravCoef,
                                               elemDens,
                                               dElemDens_dp,
@@ -512,9 +496,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   // 3) Compute finite-difference derivatives with respect to the element pressure //
   ///////////////////////////////////////////////////////////////////////////////////
 
-  real64 const dElemPresPerturb = perturbParameter * (elemPres + perturbParameter);
+  real64 const elemPresPerturb = elemPres + perturbParameter * (elemPres + perturbParameter);
   // we need to update density and mobility to account for the perturbation
-  updateDensity( refPres, elemPres, dElemPresPerturb, elemDens, dElemDens_dp );
+  updateDensity( refPres, elemPresPerturb, elemDens, dElemDens_dp );
   updateMobility( elemDens, dElemDens_dp, mob, dMob_dp );
 
   LvArray::tensorOps::fill< NF >( oneSidedVolFlux, 0 );
@@ -522,11 +506,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   LvArray::tensorOps::fill< NF, NF >( dOneSidedVolFlux_dfp, 0 );
 
   AssemblerKernelHelper::applyGradient< NF >( facePres,
-                                              dFacePres,
                                               faceGravCoef,
                                               elemToFaces,
-                                              elemPres,
-                                              dElemPresPerturb,
+                                              elemPresPerturb,
                                               elemGravCoef,
                                               elemDens,
                                               dElemDens_dp,
@@ -558,7 +540,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
 
   for( localIndex row = 0; row < rhs.size(); ++row )
   {
-    real64 const dR_dp  = ( rhsPerturb[row] - rhs[row] ) / dElemPresPerturb;
+    real64 const dR_dp  = ( rhsPerturb[row] - rhs[row] ) / ( elemPresPerturb - elemPres );
     if( std::fabs( dR_dp ) > 0.0 )
     {
       jacobianFD.addToRow< serialAtomic >( row, &dofNumber, &dR_dp, 1 );
@@ -569,24 +551,27 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   // 4) Compute finite-difference derivatives with respect to the face pressures //
   /////////////////////////////////////////////////////////////////////////////////
 
-  updateDensity( refPres, elemPres, dElemPres, elemDens, dElemDens_dp );
+  updateDensity( refPres, elemPres, elemDens, dElemDens_dp );
   updateMobility( elemDens, dElemDens_dp, mob, dMob_dp );
 
+  array1d< real64 > facePresPerturb;
+  facePresPerturb.resize( NF );
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
-    dFacePres.zero();
-    dFacePres[ifaceLoc] = perturbParameter * (facePres[ifaceLoc] + perturbParameter);
+    for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
+    {
+      facePresPerturb[jfaceLoc] = facePres[jfaceLoc];
+    }
+    facePresPerturb[ifaceLoc] += perturbParameter * (facePres[ifaceLoc] + perturbParameter);
 
     LvArray::tensorOps::fill< NF >( oneSidedVolFlux, 0 );
     LvArray::tensorOps::fill< NF >( dOneSidedVolFlux_dp, 0 );
     LvArray::tensorOps::fill< NF, NF >( dOneSidedVolFlux_dfp, 0 );
 
-    AssemblerKernelHelper::applyGradient< NF >( facePres,
-                                                dFacePres,
+    AssemblerKernelHelper::applyGradient< NF >( facePresPerturb,
                                                 faceGravCoef,
                                                 elemToFaces,
                                                 elemPres,
-                                                dElemPres,
                                                 elemGravCoef,
                                                 elemDens,
                                                 dElemDens_dp,
@@ -618,7 +603,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
 
     for( localIndex row = 0; row < rhs.size(); ++row )
     {
-      real64 const dR_dfp  = ( rhsPerturb[row] - rhs[row] ) / dFacePres[ifaceLoc];
+      real64 const dR_dfp  = ( rhsPerturb[row] - rhs[row] ) / ( facePresPerturb[ifaceLoc] - facePres[ifaceLoc] );
       if( std::fabs( dR_dfp ) > 0.0 )
       {
         jacobianFD.addToRow< serialAtomic >( row, &faceDofNumber[ifaceLoc], &dR_dfp, 1 );
