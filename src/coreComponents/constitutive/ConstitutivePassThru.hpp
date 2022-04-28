@@ -24,7 +24,6 @@
 #include "NullModel.hpp"
 #include "solid/DamageVolDev.hpp"
 #include "solid/DamageSpectral.hpp"
-#include "solid/DamageExtDrivingForce.hpp"
 #include "solid/DruckerPrager.hpp"
 #include "solid/DruckerPragerExtended.hpp"
 #include "solid/ModifiedCamClay.hpp"
@@ -79,8 +78,7 @@ struct ConstitutivePassThru< SolidBase >
   static
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler< DamageExtDrivingForce< ElasticIsotropic >, 
-                                 DamageSpectral< ElasticIsotropic >,
+    ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
                                  DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic >,
                                  DruckerPragerExtended,
@@ -128,8 +126,7 @@ struct ConstitutivePassThru< DamageBase >
   static void execute( ConstitutiveBase & constitutiveRelation,
                        LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler< DamageExtDrivingForce< ElasticIsotropic >, 
-                                 DamageSpectral< ElasticIsotropic >,
+    ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
                                  DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic > >::execute( constitutiveRelation,
                                                                         std::forward< LAMBDA >( lambda ) );
