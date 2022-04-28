@@ -49,11 +49,6 @@ public:
                               Group * const parent );
 
   /**
-   * @brief Destructor for MeshGenerator
-   */
-  virtual ~MeshGeneratorBase();
-
-  /**
    * @brief Return the name of the MeshGenerator in object catalog.
    * @return string that contains the catalog name of the MeshGenerator
    */
@@ -61,6 +56,14 @@ public:
 
   /// using alias for templated Catalog meshGenerator type
   using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, string const &, Group * const >;
+
+  /**
+   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
+   * @param childKey the catalog key of the new geometric object to create
+   * @param childName the name of the new geometric object in the repository
+   * @return the group child
+   */
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /**
    * @brief Accessor for the singleton Catalog object

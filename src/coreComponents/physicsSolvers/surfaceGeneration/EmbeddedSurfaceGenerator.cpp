@@ -175,8 +175,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
           if( isPositive * isNegative == 1 )
           {
             bool added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( cellIndex,
-                                                                         esr,
                                                                          er,
+                                                                         esr,
                                                                          nodeManager,
                                                                          embSurfNodeManager,
                                                                          edgeManager,
@@ -216,50 +216,15 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
-  // Synchronize embedded Surfaces
-  EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
-                                                                    domain.getNeighbors(),
-                                                                    newObjects,
-                                                                    m_mpiCommOrder );
-
-  EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
-
-  auto const & surfaceWithGhostNodes = embeddedSurfaceSubRegion.surfaceWithGhostNodes();
-  arrayView1d< globalIndex > const & parentEdgeGlobalIndex =
-    embSurfNodeManager.getParentEdgeGlobalIndex();
-
-  for( std::size_t i =0; i < surfaceWithGhostNodes.size(); i++ )
-  {
-    localIndex elemIndex = surfaceWithGhostNodes[i].surfaceIndex;
-    std::vector< globalIndex > parentEdges = surfaceWithGhostNodes[i].parentEdgeIndex;
-
-    for( localIndex surfNi = 0; surfNi < surfaceWithGhostNodes[i].numOfNodes; surfNi++ )
-    {
-      globalIndex surfaceNodeParentEdge = parentEdges[ surfNi ];
-
-      for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
-      {
-        if( surfaceNodeParentEdge == parentEdgeGlobalIndex[ ni ] )
-        {
-          embSurfToNodeMap[elemIndex][surfNi] = ni;
-        }
-      }
-    }
-  }
-
-  MpiWrapper::barrier( MPI_COMM_GEOSX );
-
-  // TODO this is kind of brute force to resync everything.
-  EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
-                                                                    domain.getNeighbors(),
-                                                                    newObjects,
-                                                                    m_mpiCommOrder );
-
-  EmebeddedSurfacesParallelSynchronization::synchronizeFracturedElements( meshLevel,
-                                                                          domain.getNeighbors(),
-                                                                          this->m_fractureRegionName );
+  embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
+                                                               domain.getNeighbors(),
+                                                               newObjects,
+                                                               m_mpiCommOrder,
+                                                               this->m_fractureRegionName );
 
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
+
+  EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
 
   // Populate EdgeManager for embedded surfaces.
   EdgeManager & embSurfEdgeManager = meshLevel.getEmbSurfEdgeManager();
@@ -278,9 +243,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 }
 
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
-{
-  // I don't think there is  much to do here.
-}
+{}
 
 real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
@@ -367,7 +330,6 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
   }
 
   arrayView1d< globalIndex > const & nodesLocalToGlobal = embSurfNodeManager.localToGlobalMap();
-
   forAll< serialPolicy >( embSurfNodeManager.size(), [=, &embSurfNodeManager, &globalIndexOffset] ( localIndex const ni )
   {
     nodesLocalToGlobal( ni ) = ni + globalIndexOffset[ thisRank ];

@@ -83,7 +83,9 @@ def format_xml_level(output,
 
             # Format attributes
             for ka in akeys:
-                attribute_dict[ka] = format_attribute(attribute_indent, ka, attribute_dict[ka])
+                # Avoid formatting mathpresso expressions
+                if not (node.tag in ["SymbolicFunction", "CompositeFunction"] and ka == "expression"):
+                    attribute_dict[ka] = format_attribute(attribute_indent, ka, attribute_dict[ka])
 
             for ii in range(0, len(akeys)):
                 k = akeys[ii]

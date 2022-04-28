@@ -245,7 +245,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    PoromechanicsKernels::MultiphaseKernelFactory kernelFactory( displacementDofNumber,
+    poromechanicsKernels::MultiphaseKernelFactory kernelFactory( displacementDofNumber,
                                                                  flowDofKey,
                                                                  dofManager.rankOffset(),
                                                                  gravityVectorData,
@@ -310,15 +310,15 @@ real64 MultiphasePoromechanicsSolver::calculateResidualNorm( DomainPartition con
   return sqrt( momementumResidualNorm * momementumResidualNorm + massResidualNorm * massResidualNorm );
 }
 
-void MultiphasePoromechanicsSolver::solveSystem( DofManager const & dofManager,
-                                                 ParallelMatrix & matrix,
-                                                 ParallelVector & rhs,
-                                                 ParallelVector & solution )
+void MultiphasePoromechanicsSolver::solveLinearSystem( DofManager const & dofManager,
+                                                       ParallelMatrix & matrix,
+                                                       ParallelVector & rhs,
+                                                       ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
   solution.zero();
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void MultiphasePoromechanicsSolver::applySystemSolution( DofManager const & dofManager,
@@ -336,10 +336,12 @@ void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
 {
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   CellElementSubRegion & subRegion )
     {
       m_flowSolver->updateFluidState( subRegion );
     } );

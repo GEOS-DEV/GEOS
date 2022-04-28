@@ -36,7 +36,7 @@
 namespace geosx
 {
 
-namespace ProppantTransportKernels
+namespace proppantTransportKernels
 {
 using namespace constitutive;
 
@@ -47,9 +47,7 @@ struct FluidUpdateKernel
   template< typename FLUID_WRAPPER >
   static void launch( FLUID_WRAPPER const & fluidWrapper,
                       arrayView1d< real64 const > const & pres,
-                      arrayView1d< real64 const > const & dPres,
-                      arrayView2d< real64 const > const & componentConcentration,
-                      arrayView2d< real64 const > const & dComponentConcentration )
+                      arrayView2d< real64 const > const & componentConcentration )
   {
     forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -58,13 +56,13 @@ struct FluidUpdateKernel
 
       for( localIndex c = 0; c < NC; ++c )
       {
-        compConc[c] = componentConcentration[a][c] + dComponentConcentration[a][c];
+        compConc[c] = componentConcentration[a][c];
       }
 
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
         fluidWrapper.updateFluidProperty( a, q,
-                                          pres[a] + dPres[a],
+                                          pres[a],
                                           compConc,
                                           0.0 );
       }
@@ -79,9 +77,7 @@ struct ComponentDensityUpdateKernel
   template< typename FLUID_WRAPPER >
   static void launch( FLUID_WRAPPER const & fluidWrapper,
                       arrayView1d< real64 const > const & pres,
-                      arrayView1d< real64 const > const & dPres,
-                      arrayView2d< real64 const > const & componentConcentration,
-                      arrayView2d< real64 const > const & dComponentConcentration )
+                      arrayView2d< real64 const > const & componentConcentration )
   {
     forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -90,13 +86,13 @@ struct ComponentDensityUpdateKernel
 
       for( localIndex c = 0; c < NC; ++c )
       {
-        compConc[c] = componentConcentration[a][c] + dComponentConcentration[a][c];
+        compConc[c] = componentConcentration[a][c];
       }
 
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
         fluidWrapper.updateComponentDensity( a, q,
-                                             pres[a] + dPres[a],
+                                             pres[a],
                                              compConc );
       }
     } );
@@ -110,7 +106,6 @@ struct ProppantUpdateKernel
   template< typename PROPPANT_WRAPPER >
   static void launch( PROPPANT_WRAPPER const & proppantWrapper,
                       arrayView1d< real64 const > const & proppantConc,
-                      arrayView1d< real64 const > const & dProppantConc,
                       arrayView2d< real64 const > const & fluidDens,
                       arrayView2d< real64 const > const & dFluidDens_dPres,
                       arrayView3d< real64 const > const & dFluidDens_dCompConc,
@@ -121,7 +116,7 @@ struct ProppantUpdateKernel
     forAll< parallelDevicePolicy<> >( proppantWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       proppantWrapper.update( a,
-                              proppantConc[a] + dProppantConc[a],
+                              proppantConc[a],
                               fluidDens[a][0],
                               dFluidDens_dPres[a][0],
                               dFluidDens_dCompConc[a][0],
@@ -137,12 +132,11 @@ struct ProppantUpdateKernel
 struct AccumulationKernel
 {
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   compute( localIndex const NC,
-           real64 const proppantConcOld,
+           real64 const proppantConc_n,
            real64 const proppantConcNew,
-           arraySlice1d< real64 const > const & componentDensOld,
+           arraySlice1d< real64 const > const & componentDens_n,
            arraySlice1d< real64 const > const & componentDensNew,
            arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dCompDens_dPres ),
            arraySlice2d< real64 const > const & dCompDens_dCompConc,
@@ -159,9 +153,9 @@ struct AccumulationKernel
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
+          arrayView1d< real64 const > const & proppantConc_n,
           arrayView1d< real64 const > const & proppantConc,
-          arrayView1d< real64 const > const & dProppantConc,
-          arrayView2d< real64 const > const & componentDensOld,
+          arrayView2d< real64 const > const & componentDens_n,
           arrayView3d< real64 const > const & componentDens,
           arrayView3d< real64 const > const & dCompDens_dPres,
           arrayView4d< real64 const > const & dCompDens_dCompConc,
@@ -182,10 +176,8 @@ struct FluxKernel
     StencilAccessors< extrinsicMeshData::ghostRank,
                       extrinsicMeshData::elementAperture,
                       extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::deltaPressure,
                       extrinsicMeshData::flow::gravityCoefficient,
                       extrinsicMeshData::proppant::proppantConcentration,
-                      extrinsicMeshData::proppant::deltaProppantConcentration,
                       extrinsicMeshData::proppant::isProppantMobile >;
 
   using CellBasedFluxFlowAccessors =
@@ -252,9 +244,7 @@ struct FluxKernel
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
-          ElementViewConst< arrayView1d< real64 const > > const & dPres,
           ElementViewConst< arrayView1d< real64 const > > const & proppantConc,
-          ElementViewConst< arrayView1d< real64 const > > const & dProppantConc,
           ElementViewConst< arrayView3d< real64 const > > const & componentDens,
           ElementViewConst< arrayView3d< real64 const > > const & dComponentDens_dPres,
           ElementViewConst< arrayView4d< real64 const > > const & dComponentDens_dComponentConc,
@@ -303,15 +293,12 @@ struct FluxKernel
    */
   template< localIndex MAX_NUM_FLUX_ELEMS >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   computeJunction( localIndex const numElems,
                    localIndex const numDofPerCell,
                    arraySlice1d< localIndex const > const & stencilElementIndices,
                    arrayView1d< real64 const > const & pres,
-                   arrayView1d< real64 const > const & dPres,
                    arrayView1d< real64 const > const & proppantConc,
-                   arrayView1d< real64 const > const & dProppantConc,
                    arrayView3d< real64 const > const & componentDens,
                    arrayView3d< real64 const > const & dComponentDens_dPres,
                    arrayView4d< real64 const > const & dComponentDens_dComponentConc,
@@ -344,11 +331,10 @@ struct FluxKernel
 
   template< localIndex MAX_NUM_FLUX_ELEMS >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   computeCellBasedFlux( localIndex const numElems,
                         arraySlice1d< localIndex const > const & stencilElementIndices,
-                        arrayView1d< real64 const > const & pres,
+                        arrayView1d< real64 const > const & pres_n,
                         arrayView1d< real64 const > const & gravDepth,
                         arrayView2d< real64 const > const & dens,
                         arrayView2d< real64 const > const & visc,
@@ -420,7 +406,6 @@ struct ProppantPackVolumeKernel
                                   ElementView< arrayView1d< real64 > > const & proppantPackVolFrac );
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   computeProppantPackVolume( localIndex const numElems,
                              real64 const dt,
@@ -449,7 +434,6 @@ struct ProppantPackVolumeKernel
                              arrayView1d< real64 > const & proppantLiftFlux );
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   updateProppantPackVolume( localIndex const numElems,
                             arraySlice1d< localIndex const > const & stencilElementIndices,
@@ -463,7 +447,7 @@ struct ProppantPackVolumeKernel
                             arrayView1d< real64 > const & proppantPackVolFrac );
 };
 
-} // namespace ProppantTransportKernels
+} // namespace proppantTransportKernels
 
 } // namespace geosx
 

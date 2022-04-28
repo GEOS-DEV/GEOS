@@ -556,8 +556,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
     for(int p=0; p<subRegion.size(); p++)
     {
-      auto const & p_x = particleCenter[p]; // auto = LvArray::ArraySlice<double, 1, 0, long>
-      auto const & p_v = particleVelocity[p]; // auto = LvArray::ArraySlice<double, 1, 0, long>
+      auto const & p_x = particleCenter[p]; // auto = LvArray::ArraySlice<double, 1, 0, int>
+      auto const & p_v = particleVelocity[p]; // auto = LvArray::ArraySlice<double, 1, 0, int>
       real64 const & p_m = particleMass[p];
       real64 const & p_Vol = particleVolume[p];
       auto const & p_stress = particleStress[p][0];
@@ -698,7 +698,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       real64 & p_Vol = particleVolume[p];
       real64 const & p_Vol0 = particleVolume0[p];
       real64 & p_rho = particleDensity[p][0];
-      auto const & p_F = particleDeformationGradient[p]; // auto = LvArray::ArraySlice<double, 2, 1, long>
+      auto const & p_F = particleDeformationGradient[p]; // auto = LvArray::ArraySlice<double, 2, 1, int>
       auto const & p_stress = particleStress[p][0];
       real64 p_L[3][3] = { {0} }; // Velocity gradient
       real64 p_FOld[3][3] = { {0} }; // Old particle F

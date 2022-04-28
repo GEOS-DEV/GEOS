@@ -44,11 +44,6 @@ public:
             Group * const parent );
 
   /**
-   * @brief Destructor
-   */
-  virtual ~MeshBody();
-
-  /**
    * @brief Create a new mesh level
    * @param [in] newLevel index of the new mesh level
    * @return reference to the created MeshLevel

@@ -68,13 +68,13 @@ public:
    * @brief The key name for the FaceElementRegion in the object catalog.
    * @return A string containing the key name.
    */
-  static const string catalogName()
+  static string catalogName()
   { return "ParticleRegion"; }
 
   /**
    * @copydoc catalogName()
    */
-  virtual const string getCatalogName() const override final
+  virtual string getCatalogName() const override final
   { return ParticleRegion::catalogName(); }
 
   ///@}

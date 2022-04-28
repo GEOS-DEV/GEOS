@@ -49,7 +49,8 @@ matchStrings = [ 'Error:' ]
 
 # What stings to look for in order to exclude a block
 #exclusionStrings = [ 'sizedFromParent', 'different shapes' ]
-exclusionStrings = [ 'sizedFromParent', 'different shapes', 'but not the' ]
+#exclusionStrings = [ 'sizedFromParent', 'different shapes', 'but not the' ]
+exclusionStrings = [ 'has a child', 'different shapes', 'different types' ]
 
 
 directory = args.directory
@@ -71,19 +72,20 @@ for fileName in findFiles(directory, extension):
 
                 
                 for j in range(1,numTrailingLines+1):
+                    if i+j >= len(lines):
+                        matchBlock += '  ***** No closing line. file truncated? Filters may not be properly applied! *****'
+                        break
                     matchBlock += '  ' + lines[i+j]
-                    if ('********************************************************************************' in lines[i+j]):
+                    
+                    if ('******************************************************************************' in lines[i+j]):
                         break
                 i += j
-#                print( j )
-
-
+                                
                 if not any( excludeString in matchBlock for excludeString in exclusionStrings):
                     filteredErrors += matchBlock
-
         
     if( len( filteredErrors ) ):
-        print( "Found unfiltered diff in: ", fileName )
+        print( "\nFound unfiltered diff in: ", fileName )
         print( filteredErrors, flush=True )
 
 #for i in range(1,1+1):

@@ -92,11 +92,25 @@ Element: CO2BrineEzrokhiFluid
 .. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid.rst
 
 
+.. _XML_CO2BrineEzrokhiThermalFluid:
+
+Element: CO2BrineEzrokhiThermalFluid
+====================================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiThermalFluid.rst
+
+
 .. _XML_CO2BrinePhillipsFluid:
 
 Element: CO2BrinePhillipsFluid
 ==============================
 .. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid.rst
+
+
+.. _XML_CO2BrinePhillipsThermalFluid:
+
+Element: CO2BrinePhillipsThermalFluid
+=====================================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsThermalFluid.rst
 
 
 .. _XML_CarmanKozenyPermeability:
@@ -484,13 +498,6 @@ Element: LaplaceFEM
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM.rst
 
 
-.. _XML_LaplaceVEM:
-
-Element: LaplaceVEM
-===================
-.. include:: ../../coreComponents/schema/docs/LaplaceVEM.rst
-
-
 .. _XML_LinearSolverParameters:
 
 Element: LinearSolverParameters
@@ -554,11 +561,11 @@ Element: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs.rst
 
 
-.. _XML_PAMELAMeshGenerator:
+.. _XML_PAMELAMesh:
 
-Element: PAMELAMeshGenerator
-============================
-.. include:: ../../coreComponents/schema/docs/PAMELAMeshGenerator.rst
+Element: PAMELAMesh
+===================
+.. include:: ../../coreComponents/schema/docs/PAMELAMesh.rst
 
 
 .. _XML_PVTDriver:
@@ -827,6 +834,13 @@ Element: SlipDependentPermeability
 .. include:: ../../coreComponents/schema/docs/SlipDependentPermeability.rst
 
 
+.. _XML_SolidInternalEnergy:
+
+Element: SolidInternalEnergy
+============================
+.. include:: ../../coreComponents/schema/docs/SolidInternalEnergy.rst
+
+
 .. _XML_SolidMechanicsEmbeddedFractures:
 
 Element: SolidMechanicsEmbeddedFractures
@@ -918,6 +932,13 @@ Element: TableRelativePermeability
 .. include:: ../../coreComponents/schema/docs/TableRelativePermeability.rst
 
 
+.. _XML_TableRelativePermeabilityHysteresis:
+
+Element: TableRelativePermeabilityHysteresis
+============================================
+.. include:: ../../coreComponents/schema/docs/TableRelativePermeabilityHysteresis.rst
+
+
 .. _XML_Tasks:
 
 Element: Tasks
@@ -965,6 +986,13 @@ Element: TwoPointFluxApproximation
 Element: VTK
 ============
 .. include:: ../../coreComponents/schema/docs/VTK.rst
+
+
+.. _XML_VTKMesh:
+
+Element: VTKMesh
+================
+.. include:: ../../coreComponents/schema/docs/VTKMesh.rst
 
 
 .. _XML_VanGenuchtenBakerRelativePermeability:
@@ -1104,11 +1132,25 @@ Datastructure: CO2BrineEzrokhiFluid
 .. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid_other.rst
 
 
+.. _DATASTRUCTURE_CO2BrineEzrokhiThermalFluid:
+
+Datastructure: CO2BrineEzrokhiThermalFluid
+==========================================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiThermalFluid_other.rst
+
+
 .. _DATASTRUCTURE_CO2BrinePhillipsFluid:
 
 Datastructure: CO2BrinePhillipsFluid
 ====================================
 .. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid_other.rst
+
+
+.. _DATASTRUCTURE_CO2BrinePhillipsThermalFluid:
+
+Datastructure: CO2BrinePhillipsThermalFluid
+===========================================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsThermalFluid_other.rst
 
 
 .. _DATASTRUCTURE_CarmanKozenyPermeability:
@@ -1510,13 +1552,6 @@ Datastructure: LaplaceFEM
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM_other.rst
 
 
-.. _DATASTRUCTURE_LaplaceVEM:
-
-Datastructure: LaplaceVEM
-=========================
-.. include:: ../../coreComponents/schema/docs/LaplaceVEM_other.rst
-
-
 .. _DATASTRUCTURE_Level0:
 
 Datastructure: Level0
@@ -1594,11 +1629,11 @@ Datastructure: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs_other.rst
 
 
-.. _DATASTRUCTURE_PAMELAMeshGenerator:
+.. _DATASTRUCTURE_PAMELAMesh:
 
-Datastructure: PAMELAMeshGenerator
-==================================
-.. include:: ../../coreComponents/schema/docs/PAMELAMeshGenerator_other.rst
+Datastructure: PAMELAMesh
+=========================
+.. include:: ../../coreComponents/schema/docs/PAMELAMesh_other.rst
 
 
 .. _DATASTRUCTURE_PVTDriver:
@@ -1867,6 +1902,13 @@ Datastructure: SlipDependentPermeability
 .. include:: ../../coreComponents/schema/docs/SlipDependentPermeability_other.rst
 
 
+.. _DATASTRUCTURE_SolidInternalEnergy:
+
+Datastructure: SolidInternalEnergy
+==================================
+.. include:: ../../coreComponents/schema/docs/SolidInternalEnergy_other.rst
+
+
 .. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:
 
 Datastructure: SolidMechanicsEmbeddedFractures
@@ -1958,6 +2000,13 @@ Datastructure: TableRelativePermeability
 .. include:: ../../coreComponents/schema/docs/TableRelativePermeability_other.rst
 
 
+.. _DATASTRUCTURE_TableRelativePermeabilityHysteresis:
+
+Datastructure: TableRelativePermeabilityHysteresis
+==================================================
+.. include:: ../../coreComponents/schema/docs/TableRelativePermeabilityHysteresis_other.rst
+
+
 .. _DATASTRUCTURE_Tasks:
 
 Datastructure: Tasks
@@ -2005,6 +2054,13 @@ Datastructure: TwoPointFluxApproximation
 Datastructure: VTK
 ==================
 .. include:: ../../coreComponents/schema/docs/VTK_other.rst
+
+
+.. _DATASTRUCTURE_VTKMesh:
+
+Datastructure: VTKMesh
+======================
+.. include:: ../../coreComponents/schema/docs/VTKMesh_other.rst
 
 
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:

@@ -9,7 +9,7 @@
 
   <!-- SPHINX_TUT_EXT_HEX_MESH -->
   <Mesh>
-    <PAMELAMeshGenerator
+    <PAMELAMesh
       name="CubeHex"
       file="cube_10x10x10_hex.msh"/>
   </Mesh>

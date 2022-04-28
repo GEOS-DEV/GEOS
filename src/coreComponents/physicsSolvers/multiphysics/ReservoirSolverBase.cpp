@@ -35,6 +35,7 @@ using namespace constitutive;
 ReservoirSolverBase::ReservoirSolverBase( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
+  m_systemSetupDone( false ),
   m_flowSolverName(),
   m_wellSolverName()
 {
@@ -106,7 +107,11 @@ real64 ReservoirSolverBase::solverStep( real64 const & time_n,
   real64 dt_return = dt;
 
   // setup the coupled linear system
-  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+  if( !m_systemSetupDone )
+  {
+    setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+    m_systemSetupDone = true;
+  }
 
   // setup reservoir and well systems
   implicitStepSetup( time_n, dt, domain );
@@ -285,21 +290,6 @@ void ReservoirSolverBase::assembleSystem( real64 const time_n,
                                 localMatrix,
                                 localRhs );
 
-  /*
-   * This redundant call to UpdateStateAll is here to make sure that we compute the
-   * perforation rates AFTER the reservoir phase compositions have been moved to device.
-   *
-   * An issue with ElementViewAccessors is that if the outer arrays are already on device,
-   * but an inner array gets touched and updated on host, capturing outer arrays in a device kernel
-   * DOES NOT call move() on the inner array (see implementation of NewChaiBuffer::moveNested()).
-   * Here we force the move by launching a dummy kernel.
-   *
-   * If the perforation rates are computed BEFORE the reservoir phase compositions have been
-   * moved to device, the calculation is wrong. the problem should go away when fluid updates
-   * are executed on device.
-   */
-  m_wellSolver->updateState( domain );
-
   // assemble J_WW (excluding perforation rates)
   m_wellSolver->assembleSystem( time_n, dt,
                                 domain,
@@ -344,16 +334,16 @@ real64 ReservoirSolverBase::calculateResidualNorm( DomainPartition const & domai
   return sqrt( reservoirResidualNorm * reservoirResidualNorm + wellResidualNorm * wellResidualNorm );
 }
 
-void ReservoirSolverBase::solveSystem( DofManager const & dofManager,
-                                       ParallelMatrix & matrix,
-                                       ParallelVector & rhs,
-                                       ParallelVector & solution )
+void ReservoirSolverBase::solveLinearSystem( DofManager const & dofManager,
+                                             ParallelMatrix & matrix,
+                                             ParallelVector & rhs,
+                                             ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
   rhs.scale( -1.0 );
   solution.zero();
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 bool ReservoirSolverBase::checkSystemSolution( DomainPartition const & domain,
@@ -410,8 +400,9 @@ real64 ReservoirSolverBase::scalingForSystemSolution( DomainPartition const & do
   real64 const flowScalingFactor = m_flowSolver->scalingForSystemSolution( domain, dofManager, localSolution );
   real64 const wellScalingFactor = m_wellSolver->scalingForSystemSolution( domain, dofManager, localSolution );
 
-  GEOSX_LOG_LEVEL_RANK_0( 2, "Scaling factor for the reservoir: " << flowScalingFactor
-                                                                  << "; for the well(s): " << wellScalingFactor );
+  GEOSX_LOG_LEVEL_RANK_0( 2, getName() << ": "
+                                       << "Scaling factor for the reservoir: " << flowScalingFactor
+                                       << "; for the well(s): " << wellScalingFactor );
 
   return LvArray::math::min( flowScalingFactor, wellScalingFactor );
 }

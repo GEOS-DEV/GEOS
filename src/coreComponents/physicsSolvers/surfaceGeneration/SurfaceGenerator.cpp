@@ -312,7 +312,9 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
     m_originalNodetoEdges = nodeManager.edgeList();
     m_originalFaceToEdges = faceManager.edgeList();
 
-    nodeManager.registerWrapper( "usedFaces", &m_usedFacesForNode );
+    string const usedFacesLabel = "usedFaces";
+    nodeManager.registerWrapper( usedFacesLabel, &m_usedFacesForNode );
+    nodeManager.excludeWrappersFromPacking( { usedFacesLabel } );
     m_usedFacesForNode.resize( nodeManager.size() );
 
     localIndex const numFaces = faceManager.size();
@@ -614,7 +616,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly
     /// communicated
-    ParallelTopologyChange::synchronizeTopologyChange( &mesh,
+    parallelTopologyChange::synchronizeTopologyChange( &mesh,
                                                        neighbors,
                                                        modifiedObjects,
                                                        receivedObjects,
@@ -934,7 +936,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 {
   arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
 
-  localIndex const parentNodeIndex = ObjectManagerBase::getParentRecusive( parentNodeIndices, nodeID );
+  localIndex const parentNodeIndex = ObjectManagerBase::getParentRecursive( parentNodeIndices, nodeID );
 
   arrayView1d< localIndex const > const & parentFaceIndices = faceManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
   arrayView1d< localIndex const > const & childFaceIndices = faceManager.getExtrinsicData< extrinsicMeshData::ChildIndex >();
@@ -2097,7 +2099,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
                                                         getSubRegion< CellElementSubRegion >( faceToSubRegionMap[iFace][0] );
             arrayView2d< real64 const > const subRegionElemCenter = elementSubRegion.getElementCenter();
 
-            faceManager.sortFaceNodes( X, subRegionElemCenter[ elementIndex ], faceToNodeMap[ iFace ], faceToNodeMap.sizeOfArray( iFace ) );
+            FaceManager::sortFaceNodes( X, subRegionElemCenter[ elementIndex ], faceToNodeMap[ iFace ] );
 
             //Face normal need to be updated here
             real64 fCenter[ 3 ];
@@ -2927,7 +2929,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
                 real64 temp[ 3 ] = {0};
                 real64 xEle[ 3 ]  = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( elementCenter[ei] );
 
-                SolidMechanicsLagrangianFEMKernels::ExplicitKernel::
+                solidMechanicsLagrangianFEMKernels::ExplicitKernel::
                   calculateSingleNodalForce( ei,
                                              n,
                                              numQuadraturePoints,
@@ -3751,7 +3753,7 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
             // times for the same element.
 
             //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-            SolidMechanicsLagrangianFEMKernels::ExplicitKernel::
+            solidMechanicsLagrangianFEMKernels::ExplicitKernel::
               calculateSingleNodalForce( ei,
                                          n,
                                          numQuadraturePoints,

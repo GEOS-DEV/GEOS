@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
+<!-- SPHINX_FIELD_CASE_REGION -->
   <ElementRegions>
     <CellElementRegion
       name="Reservoir"
@@ -12,7 +13,9 @@
       cellBlocks="{ Overburden_TETRA, Underburden_TETRA }"
       materialList="{ water, rock }"/>
   </ElementRegions>
+<!-- SPHINX_FIELD_CASE_REGION_END -->
 
+<!-- SPHINX_FIELD_CASE_CONSTITUTIVE -->
   <Constitutive>
     <CompressibleSinglePhaseFluid
       name="water"
@@ -41,15 +44,19 @@
       name="rockPerm"
       permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-16 }"/>
   </Constitutive>
+<!-- SPHINX_FIELD_CASE_CONSTITUTIVE_END -->
 
+<!-- SPHINX_FIELD_CASE_NUMERICAL -->
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        targetRegions="{ Reservoir }"/>
+      />
     </FiniteVolume>
   </NumericalMethods>
+<!-- SPHINX_FIELD_CASE_NUMERICAL_END -->
 
+<!-- SPHINX_FIELD_CASE_SOLVER -->
   <Solvers>
     <SinglePhaseFVM
       name="SinglePhaseFlow"
@@ -64,7 +71,9 @@
         krylovTol="1.0e-10"/>
     </SinglePhaseFVM>
   </Solvers>
+<!-- SPHINX_FIELD_CASE_SOLVER_END -->
 
+<!-- SPHINX_FIELD_CASE_GEOMETRY -->
   <Geometry>
     <Box
       name="all"
@@ -81,7 +90,9 @@
       xMin="{ 6500, 1500, -5000 }"
       xMax="{ 7000, 2000, 0 }"/>
   </Geometry>
+<!-- SPHINX_FIELD_CASE_GEOMETRY_END -->
 
+<!-- SPHINX_FIELD_CASE_FIELD -->
   <FieldSpecifications>
 
     <FieldSpecification
@@ -138,12 +149,16 @@
       scale="5e7"
       setNames="{ sink }"/>
   </FieldSpecifications>
+<!-- SPHINX_FIELD_CASE_FIELD_END -->
 
+<!-- SPHINX_FIELD_CASE_OUTPUT -->
   <Outputs>
     <VTK
       name="reservoir_with_properties"/>
   </Outputs>
+<!-- SPHINX_FIELD_CASE_OUTPUT_END -->
 
+<!-- SPHINX_FIELD_CASE_TFUNC -->
   <Functions>
     <TableFunction
       name="timeInj"
@@ -178,5 +193,6 @@
       voxelFile="tables_FieldCaseTuto/permz.geos"
       interpolation="nearest"/>
   </Functions>
+<!-- SPHINX_FIELD_CASE_TFUNC_END -->
 
 </Problem>

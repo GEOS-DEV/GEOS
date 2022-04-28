@@ -18,10 +18,10 @@
 
 #include "MeshBody.hpp"
 #include "MeshLevel.hpp"
-#include "generators/CellBlockManager.hpp"
 
 namespace geosx
 {
+
 using namespace dataRepository;
 
 MeshBody::MeshBody( string const & name,
@@ -32,13 +32,6 @@ MeshBody::MeshBody( string const & name,
 {
   m_hasParticles = false; // By default we assume no particles in a mesh body... SJP
 }
-
-MeshBody::~MeshBody()
-{
-  // TODO Auto-generated destructor stub
-}
-
-
 
 MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel )
 {

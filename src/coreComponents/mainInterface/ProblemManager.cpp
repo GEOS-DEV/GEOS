@@ -12,6 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+
 // Source includes
 #include "ProblemManager.hpp"
 #include "GeosxState.hpp"
@@ -416,6 +418,37 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
     MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
 
+
+
+    //   domain.getMeshBodies().forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+    //   {
+    //     string const meshBodyName = meshBody.getName();
+    //     GEOSX_LOG_RANK_0( "MeshBody "<<meshBodyName );
+    //     ElementRegionManager & elementManager = meshBody.getMeshLevel( 0 ).getElemManager();
+
+    //     xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( elementManager.getName().c_str());
+    //     for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
+    //     {
+
+    //       string const regionName = regionNode.attribute( "name" ).value();
+    //       string const
+    //       regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( domain.getMeshBodies(),
+    //                                                                   regionNode.attribute( "meshBody" ).value() );
+
+
+
+    //       string const cellBlocks = regionNode.attribute( "cellBlocks" ).value();
+
+    //       if( regionMeshBodyName==meshBodyName )
+    //       {
+    //         Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
+    //         newRegion->processInputFileRecursive( regionNode );
+    //       }
+
+    //     }
+    //   } );
+    // }
+
     Group & meshBodies = domain.getMeshBodies();
 
     // Parse element regions
@@ -596,9 +629,9 @@ void ProblemManager::generateMesh()
 
         elemManager.generateMesh( cellBlockManager );
 
-        nodeManager.setGeometricalRelations( cellBlockManager );
+      nodeManager.setGeometricalRelations( cellBlockManager, elemManager );
         edgeManager.setGeometricalRelations( cellBlockManager );
-        faceManager.setGeometricalRelations( cellBlockManager, nodeManager );
+      faceManager.setGeometricalRelations( cellBlockManager, elemManager, nodeManager );
 
         nodeManager.constructGlobalToLocalMap( cellBlockManager );
 
@@ -614,9 +647,6 @@ void ProblemManager::generateMesh()
         nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
         edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
         faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
-
-        nodeManager.buildRegionMaps( elemManager );
-        faceManager.buildRegionMaps( elemManager );
 
         // Node and edge managers rely on the boundary information provided by the face manager.
         // This is why `faceManager.setDomainBoundaryObjects` is called first.
@@ -687,7 +717,7 @@ void ProblemManager::applyNumericalMethods()
   setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
 }
 
-map< std::tuple< string, string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies ) // Need to modify this to handle particles. We'll assign a single quadrature point to each particle. -SJP
+map< std::tuple< string, string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
 {
 
   NumericalMethodsManager const &
@@ -719,6 +749,8 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
         {
           NodeManager & nodeManager = meshLevel.getNodeManager();
           ElementRegionManager & elemManager = meshLevel.getElemManager();
+          FaceManager const & faceManager = meshLevel.getFaceManager();
+          EdgeManager const & edgeManager = meshLevel.getEdgeManager();
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
           for( auto const & regionName : regionNames )
@@ -736,15 +768,24 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
                   finiteElement::FiniteElementBase &
                   fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
                          setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).reference();
+                subRegion.excludeWrappersFromPacking( { discretizationName } );
 
                   finiteElement::dispatch3D( fe,
                                              [&] ( auto & finiteElement )
                   {
                     using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
+                  using SUBREGION_TYPE = TYPEOFREF( subRegion );
+
+                  typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
+                  finiteElement::FiniteElementBase::initialize< FE_TYPE, SUBREGION_TYPE >( nodeManager,
+                                                                                           edgeManager,
+                                                                                           faceManager,
+                                                                                           subRegion,
+                                                                                           meshData );
 
                     localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-                    feDiscretization->calculateShapeFunctionGradients( X, &subRegion, finiteElement );
+                  feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
 
                     localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
                                                                                                 regionName,
@@ -890,7 +931,13 @@ DomainPartition const & ProblemManager::getDomainPartition() const
 
 void ProblemManager::applyInitialConditions()
 {
-  m_fieldSpecificationManager->applyInitialConditions( getDomainPartition() );
+  getDomainPartition().forMeshBodies( [&] ( MeshBody & meshBody )
+  {
+    meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
+    {
+      m_fieldSpecificationManager->applyInitialConditions( meshLevel );
+    } );
+  } );
   initializePostInitialConditions();
 }
 
