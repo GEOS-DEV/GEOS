@@ -76,6 +76,22 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Count for output pressure at receivers" );
 
+  registerWrapper( viewKeyStruct::forwardString(), &m_forward ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Set to false to compute backward propagation" );
+
+  registerWrapper( viewKeyStruct::saveFieldsString(), &m_saveFields ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set to true to save fields during forward and restore them during backward" );
+
+
+  registerWrapper( viewKeyStruct::shotIndexString(), &m_shotIndex ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set the current shot for temporary files" );
+
 }
 
 WaveSolverBase::~WaveSolverBase()
@@ -126,4 +142,23 @@ real64 WaveSolverBase::evaluateRicker( real64 const & time_n, real64 const & f0,
   return pulse;
 }
 
+real64 WaveSolverBase::solverStep( real64 const & time_n,
+                                   real64 const & dt,
+                                   integer const cycleNumber,
+                                   DomainPartition & domain )
+{
+  return explicitStep( time_n, dt, cycleNumber, domain );
+}
+
+real64 WaveSolverBase::explicitStep( real64 const & time_n,
+                                     real64 const & dt,
+                                     integer const cycleNumber,
+                                     DomainPartition & domain)
+{
+  if (m_forward) {
+    return explicitStepForward( time_n, dt, cycleNumber, domain, m_saveFields );
+  } else {
+    return explicitStepBackward( time_n, dt, cycleNumber, domain, m_saveFields );
+  }
+}
 } /* namespace geosx */
