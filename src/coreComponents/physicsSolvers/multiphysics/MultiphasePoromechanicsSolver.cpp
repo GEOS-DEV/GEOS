@@ -50,9 +50,9 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
                                                               Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
-  m_flowSolverName(),
-  m_useStab( 0 ), 
-  m_computeMacroElements( 0 )
+  m_flowSolverName()
+  // m_useStab( 0 ), 
+  // m_computeMacroElements( 0 )
 
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
@@ -63,15 +63,22 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
 
-  registerWrapper( viewKeyStruct::useStabFlagString(), &m_useStab ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Use pressure jump stabilization in flux" );
+  // registerWrapper( viewKeyStruct::useStabFlagString(), &m_useStab ).
+  //   setApplyDefaultValue( 0 ).
+  //   setInputFlag( InputFlags::OPTIONAL ).
+  //   setDescription( "Use pressure jump stabilization in flux" );
 
-  registerWrapper( viewKeyStruct::computeMacroElementsFlagString(), &m_computeMacroElements ).
-    setApplyDefaultValue( 0 ).
+  // registerWrapper( viewKeyStruct::computeMacroElementsFlagString(), &m_computeMacroElements ).
+  //   setApplyDefaultValue( 0 ).
+  //   setInputFlag( InputFlags::OPTIONAL ).
+  //   setDescription( "Compute macroelements for pressure jump stabilization in flux" );
+
+  registerWrapper( viewKeyStruct::stabilizationTypeString(), &m_stabilizationType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Compute macroelements for pressure jump stabilization in flux" );
+    setDescription( "Stabilization type. Options are:\n" +
+                    toString( StabilizationType::None ) + " - Add no stabilization to mass equation,\n" +
+                    toString( StabilizationType::Global ) + " - Add stabilization to all faces,\n" +
+                    toString( StabilizationType::Local ) + " - Add stabilization only to interiors of macro elements." );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -146,7 +153,7 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
 
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
-  if ( m_computeMacroElements )
+  if ( m_stabilizationType == StabilizationType::Local )
   {
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -378,7 +385,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
   } );
 
   // Face-based contributions
-  if( m_useStab )
+  if( m_stabilizationType == StabilizationType::Global ||  m_stabilizationType == StabilizationType::Local)
   {
     m_flowSolver->assembleStabilizedFluxTerms( dt,
                                                domain,

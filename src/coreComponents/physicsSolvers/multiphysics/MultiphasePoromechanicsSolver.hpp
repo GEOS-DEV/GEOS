@@ -117,12 +117,21 @@ public:
 
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
 
-    constexpr static char const * useStabFlagString() { return "useStab"; }
+    // constexpr static char const * useStabFlagString() { return "useStab"; }
 
     // String key for the member level field for the element macroelement ID number.
     // static constexpr char const * elementMacroIDString() { return "elementMacroID"; }
 
-    constexpr static char const * computeMacroElementsFlagString() { return "computeMacroElements"; }
+    // constexpr static char const * computeMacroElementsFlagString() { return "computeMacroElements"; }
+
+    constexpr static char const * stabilizationTypeString() { return "stabilizationType"; }
+  };
+
+  enum class StabilizationType : integer
+  {
+    None,  
+    Global,  
+    Local,  
   };
 
 protected:
@@ -142,11 +151,17 @@ protected:
   // pointer to the solid mechanics sub-solver
   SolidMechanicsLagrangianFEM * m_solidSolver;
 
-  integer m_useStab;
+  StabilizationType m_stabilizationType;
 
-  integer m_computeMacroElements;
+  // integer m_useStab;
+  // integer m_computeMacroElements;
 
 };
+
+ENUM_STRINGS( MultiphasePoromechanicsSolver::StabilizationType,
+              "None",
+              "Global",
+              "Local" );
 
 } /* namespace geosx */
 
