@@ -103,7 +103,7 @@ extensions = [
     'sphinxcontrib.plantuml',
 ]
 plantuml = "/usr/bin/plantuml"
-plantuml_output_format = "svg"
+plantuml_output_format = "svg_img"
 
 plot_html_show_source_link = True
 plot_html_show_formats = False
