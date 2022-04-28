@@ -100,8 +100,7 @@ public:
                           CRSMatrixView< real64, globalIndex const > const inputMatrix,
                           arrayView1d< real64 > const inputRhs,
                           string const fieldName,
-                          int const localDissipationOption, 
-                          int const extDrivingForceOption ):
+                          int const localDissipationOption ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -115,8 +114,7 @@ public:
           inputRhs ),
     m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_localDissipationOption( localDissipationOption ),
-    m_extDrivingForceOption( extDrivingForceOption )
+    m_localDissipationOption( localDissipationOption )
   {}
 
   //***************************************************************************
@@ -193,7 +191,7 @@ public:
     real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
     real64 const ell = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
-    real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();
+    real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
     real64 const extDrivingForce = m_constitutiveUpdate.getExtDrivingForce( k, q ); 
 
     //Interpolate d and grad_d
@@ -213,33 +211,21 @@ public:
       D = fmax( threshold, strainEnergyDensity );
     }
 
-    real64 drivingForceThreshold = 3./16. * Gc / ell;
-
-    if ( m_extDrivingForceOption == 1 )
-      drivingForceThreshold += 0.5 * extDrivingForce;  
-
-    if ( D < drivingForceThreshold )
-      D = drivingForceThreshold; 
-
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       if( m_localDissipationOption == 1 )
       {
         stack.localResidual[ a ] += detJ * ( - 3 * N[a] / 16  
                                              - 0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) 
-                                             - (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * N[a] );  
-
-        if ( m_extDrivingForceOption == 1 )
-          stack.localResidual[ a ] -= detJ * ( 0.5 * ell * extDrivingForce/Gc * N[a] ); 
+                                             - (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * N[a]
+                                             - 0.5 * ell * extDrivingForce/Gc * N[a] );  
       }
       else
       {
         stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage 
                                              + (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) 
-                                             + N[a] * (ell*D/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) ) ); 
-
-        if ( m_extDrivingForceOption == 1 )
-          stack.localResidual[ a ] -= detJ * ( ell * extDrivingForce/Gc * N[a] ); 
+                                             + N[a] * (ell*D/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) )
+                                             + ell * extDrivingForce/Gc * N[a] ); 
 
       }
       for( localIndex b = 0; b < numNodesPerElem; ++b )
@@ -303,8 +289,6 @@ protected:
 
   int const m_localDissipationOption;
 
-  int const m_extDrivingForceOption; 
-
 };
 
 using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDamageKernel,
@@ -313,7 +297,6 @@ using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDa
                                                                     CRSMatrixView< real64, globalIndex const > const,
                                                                     arrayView1d< real64 > const,
                                                                     string const,
-                                                                    int,
                                                                     int >;
 
 } // namespace geosx

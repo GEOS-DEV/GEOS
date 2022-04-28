@@ -35,7 +35,11 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_extDrivingForce(), 
   m_lengthScale(),
   m_criticalFractureEnergy(),
-  m_criticalStrainEnergy()
+  m_criticalStrainEnergy(),
+  m_extDrivingForceSwitch(), 
+  m_tensileStrength(), 
+  m_compressStrength(),
+  m_deltaCoefficient()
 {
   this->registerWrapper( viewKeyStruct::damageString(), &m_damage ).
     setApplyDefaultValue( 0.0 ).
@@ -63,6 +67,25 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::criticalStrainEnergyString(), &m_criticalStrainEnergy ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Critical stress in a 1d tension test" );
+
+  this->registerWrapper( viewKeyStruct::extDrivingForceSwitchString(), &m_extDrivingForceSwitch ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Whether to have external driving force. Can be True or False" );
+
+  this->registerWrapper( viewKeyStruct::tensileStrengthString(), &m_tensileStrength ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Tensile strength from the uniaxial tension test" );
+
+  this->registerWrapper( viewKeyStruct::compressStrengthString(), &m_compressStrength ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Compressive strength from the uniaxial compression test" );
+
+  this->registerWrapper( viewKeyStruct::deltaCoefficientString(), &m_deltaCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Coefficient in the calculation of the external driving force" );
 }
 
 
@@ -70,6 +93,11 @@ template< typename BASE >
 void Damage< BASE >::postProcessInput()
 {
   BASE::postProcessInput();
+
+  if( m_extDrivingForceSwitch != "True" and m_extDrivingForceSwitch != "False" )
+  {
+    GEOSX_ERROR( "invalid external driving force option - must be True or False" );
+  }
 }
 
 template< typename BASE >
