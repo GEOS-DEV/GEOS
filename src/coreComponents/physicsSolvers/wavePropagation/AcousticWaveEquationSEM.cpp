@@ -517,9 +517,8 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
          (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= time_n && m_indexSeismoTrace < m_nsamplesSeismoTrace; 
 	 m_indexSeismoTrace++ )
     {
-      std::cout << m_dtSeismoTrace*m_indexSeismoTrace << std::endl;
+      std::cout << m_dtSeismoTrace*m_indexSeismoTrace << " " << m_indexSeismoTrace << std::endl;
       computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, p_np1, p_n, p_rcvs);
-      m_indexSeismoTrace++;
     }
 	    
     // prepare next step
@@ -554,9 +553,8 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
          (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= time_n && m_indexSeismoTrace < m_nsamplesSeismoTrace; 
 	 m_indexSeismoTrace++ )
     {
-      std::cout << m_dtSeismoTrace*m_indexSeismoTrace << std::endl;
+      std::cout << m_dtSeismoTrace*m_indexSeismoTrace << " " << m_indexSeismoTrace << std::endl;
       computeSeismoTrace( time_n, 0, timeSeismo, m_indexSeismoTrace, p_np1, p_n, p_rcvs );
-      m_indexSeismoTrace++;
     }
   } );
 }
