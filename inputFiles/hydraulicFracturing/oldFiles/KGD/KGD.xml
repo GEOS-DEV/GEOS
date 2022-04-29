@@ -9,7 +9,6 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ }"
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
@@ -26,7 +25,6 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <LinearSolverParameters
         solverType="gmres"
@@ -36,10 +34,7 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
+      targetRegions="{ Fracture }">
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-12"/>
@@ -49,7 +44,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
-      solidMaterialNames="{ rock }"
+      
       rockToughness="0.01e6"/>
   </Solvers>
 
@@ -139,8 +134,6 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
         meanPermCoefficient="0.8"/>
     </FiniteVolume>
   </NumericalMethods>
@@ -188,7 +181,7 @@
       referencePressure="0.0"
       compressibility="0.0"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="1.0e0"
       apertureTableName="apertureTable"/>

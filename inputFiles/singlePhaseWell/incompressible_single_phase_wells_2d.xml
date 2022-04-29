@@ -18,16 +18,12 @@
       name="singlePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
       targetRegions="{ Region1 }"/>
 
     <SinglePhaseWell
       name="singlePhaseWell"
       logLevel="1"
-      fluidNames="{ water }"
-      targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }">
+      targetRegions="{wellRegion1, wellRegion2, wellRegion3 }">
       <WellControls
         name="wellControls1"
         type="producer"
@@ -45,6 +41,7 @@
       <WellControls
         name="wellControls3"
         type="injector"
+	initialPressureCoefficient="0.01"
         control="totalVolRate"
         referenceElevation="0.5"
         targetBHP="1e7"
@@ -157,9 +154,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        />
     </FiniteVolume>
   </NumericalMethods>
 

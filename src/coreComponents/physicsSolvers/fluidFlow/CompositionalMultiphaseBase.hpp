@@ -105,10 +105,10 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  solveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
+  solveLinearSystem( DofManager const & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override;
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
@@ -117,14 +117,6 @@ public:
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain ) override;
-
-  virtual void
-  computeStatistics( real64 const & time,
-                     real64 const & dt,
-                     integer cycleNumber,
-                     DomainPartition & domain,
-                     bool outputStatisticsToScreen ) override;
-
 
   /**
    * @brief Recompute component fractions from primary variables (component densities)
@@ -136,47 +128,59 @@ public:
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param dataGroup the group storing the required fields
    */
-  void updatePhaseVolumeFraction( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const;
+  void updatePhaseVolumeFraction( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void updateFluidModel( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const;
+  void updateFluidModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Update all relevant relperm models using current values of phase volume fraction
-   * @param castedRelPerm the group storing the required fields
+   * @param dataGroup the group storing the required fields
    */
-  void updateRelPermModel( ObjectManagerBase & castedRelPerm, localIndex const targetIndex ) const;
+  void updateRelPermModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Update all relevant capillary pressure models using current values of phase volume fraction
-   * @param castedCapPres the group storing the required fields
+   * @param dataGroup the group storing the required fields
    */
-  void updateCapPressureModel( ObjectManagerBase & castedCapPres, localIndex const targetIndex ) const;
+  void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
+
+  /**
+   * @brief Update all relevant solid internal energy models using current values of temperature
+   * @param dataGroup the group storing the required fields
+   */
+  void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
-   * @param domain the domain containing the mesh and fields
+   * @param dataGroup the group storing the required field
    */
-  virtual void updatePhaseMobility( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const = 0;
+  virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
-  void updateFluidState( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const;
+  void updateFluidState( ObjectManagerBase & dataGroup ) const;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
   /**
-   * @brief Get the number of fluid components (species)
+   * @brief Getter for the number of fluid components (species)
    * @return the number of components
    */
-  localIndex numFluidComponents() const { return m_numComponents; }
+  integer numFluidComponents() const { return m_numComponents; }
 
   /**
-   * @brief Get the number of fluid phases
+   * @brief Getter for the number of fluid phases
    * @return the number of phases
    */
-  localIndex numFluidPhases() const { return m_numPhases; }
+  integer numFluidPhases() const { return m_numPhases; }
+
+  /**
+   * @brief Getter for the name of the reference fluid model name
+   * @return the name of the reference fluid
+   */
+  string referenceFluidModelName() const { return m_referenceFluidModelName; }
 
   /**
    * @brief assembles the accumulation and volume balance terms for all cells
@@ -211,12 +215,6 @@ public:
 
   /**@}*/
 
-  arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
-
-  arrayView1d< string const > capPresModelNames() const { return m_capPressureModelNames; }
-
-  arrayView1d< string const > thermalConductivityModelNames() const { return m_thermalConductivityModelNames; }
-
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
     static constexpr char const * elemDofFieldString() { return "compositionalVariables"; }
@@ -227,11 +225,17 @@ public:
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
 
+    static constexpr char const * isThermalString()  { return "isThermal"; }
+
+    static constexpr char const * computeStatisticsString() { return "computeStatistics"; }
+
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
 
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
 
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
+
+    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
 
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
@@ -265,7 +269,7 @@ public:
    * from prescribed intermediate values (i.e. global densities from global fractions)
    * and any applicable hydrostatic equilibration of the domain
    */
-  void initializeFluidState( MeshLevel & mesh );
+  void initializeFluidState( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
 
   /**
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
@@ -276,7 +280,7 @@ public:
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param domain the domain containing the mesh and fields
    */
-  void backupFields( MeshLevel & mesh ) const;
+  void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const;
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -326,13 +330,22 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
 
+
+  /**
+   * @brief Compute CFL numbers and reservoir statistics
+   * @param dt the time step size
+   * @param domain the domain partition
+   */
+  virtual void computeStatistics( real64 const dt,
+                                  DomainPartition & domain );
+
   /**
    * @brief Compute some statistics on the reservoir (average field pressure, average field temperature)
    * @param[in] mesh the mesh level object
-   * @param[in] outputToTerminal flag to decide whether this function outputs to terminal or not
+   * @param[in] regionNames the array of target region Names
    */
-  void computeReservoirStatistics( MeshLevel const & mesh,
-                                   bool const outputToTerminal );
+  void computeReservoirStatistics( MeshLevel & mesh,
+                                   arrayView1d< string const > const & regionNames );
 
   /**
    * @brief Sets all the negative component densities (if any) to zero.
@@ -344,27 +357,28 @@ public:
 
 protected:
 
+  /**
+   * @brief Utility function that checks the consistency of the constitutive models
+   * @param[in] domain the domain partition
+   * This function will produce an error if one of the constitutive models
+   * (fluid, relperm) is incompatible with the reference fluid model.
+   */
+  void validateConstitutiveModels( DomainPartition const & domain ) const;
+
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
 
-  /**
-   * @brief Checks constitutive models for consistency
-   * @param[in] cm reference to the global constitutive model manager
-   */
-  void validateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const;
-
-  /**
-   * @brief Checks aquifer boundary condition for consistency
-   * @param[in] cm reference to the global constitutive model manager
-   */
-  void validateAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
   /**
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
    * @param[in] cm reference to the global constitutive model manager
    */
   void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
+
+
+  /// flag to specify whether the sparsity pattern needs to be rebuilt
+  bool m_systemSetupDone;
 
   /// the max number of fluid phases
   integer m_numPhases;
@@ -378,20 +392,11 @@ protected:
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 
-  /// name of the rel perm constitutive model
-  array1d< string > m_relPermModelNames;
-
   /// flag to determine whether or not to apply capillary pressure
-  integer m_capPressureFlag;
-
-  /// name of the cap pressure constitutive model
-  array1d< string > m_capPressureModelNames;
+  integer m_hasCapPressure;
 
   /// flag to determine whether or not this is a thermal simulation
-  integer m_thermalFlag;
-
-  /// name of the thermal conductivity model
-  array1d< string > m_thermalConductivityModelNames;
+  integer m_isThermal;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
@@ -402,7 +407,13 @@ protected:
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
 
+  /// name of the fluid constitutive model used as a reference for component/phase description
+  string m_referenceFluidModelName;
+
   // Statistics
+
+  /// flag to specify whether reservoir statistics are computed or not
+  integer m_computeStatistics;
 
   /// average pressure in the reservoir
   real64 m_averagePressure;
@@ -427,6 +438,10 @@ protected:
 
   /// phase pore volumes at reservoir conditions
   array1d< real64 > m_phasePoreVolume;
+
+private:
+
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
 

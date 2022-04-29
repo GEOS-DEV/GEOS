@@ -68,6 +68,7 @@ public:
     static constexpr auto lineSearchActionString        = "lineSearchAction";
     static constexpr auto lineSearchMaxCutsString       = "lineSearchMaxCuts";
     static constexpr auto lineSearchCutFactorString     = "lineSearchCutFactor";
+    static constexpr auto lineSearchInterpolationTypeString   = "lineSearchInterpolationType";
 
     static constexpr auto newtonTolString               = "newtonTol";
     static constexpr auto newtonMaxIterString           = "newtonMaxIter";
@@ -83,10 +84,11 @@ public:
     static constexpr auto minNumNewtonIterationsString  = "minNumberOfNewtonIterations";
     static constexpr auto timeStepCutFactorString       = "timestepCutFactor";
 
-    // simulation statistics
+    static constexpr auto numConfigurationAttemptsString    = "numConfigurationAttempts";
+    static constexpr auto maxNumConfigurationAttemptsString = "maxNumConfigurationAttempts";
+
     static constexpr auto totalSuccessfulNewtonNumIterationsString = "totalSuccessfulNewtonNumIterations";
     static constexpr auto totalWastedNewtonNumIterationsString     = "numberWastedNewtonNumIterations";
-
   } viewKeys;
 
 
@@ -121,8 +123,21 @@ public:
     Require, ///< Use line search. If smaller residual than starting residual is not achieved, cut time step.
   };
 
+  /**
+   * @brief Indicates the handling of line each interpolation strategy.
+   */
+  enum class LineSearchInterpolationType : integer
+  {
+    Linear,    ///< linear decrease of line search scaling factor.
+    Parabolic, ///< use parabolic interpolation to define line search scaling factor.
+  };
+
+
   /// Flag to apply a line search.
   LineSearchAction m_lineSearchAction;
+
+  /// Flag to pick the type of linesearch
+  LineSearchInterpolationType m_lineSearchInterpType;
 
   /// The maximum number of line search cuts to attempt.
   integer m_lineSearchMaxCuts;
@@ -163,6 +178,12 @@ public:
   /// Number of times that the time-step had to be cut
   integer m_numdtAttempts;
 
+  /// number of times that the configuration had to be changed
+  integer m_numConfigurationAttempts;
+
+  /// Max number of times that the configuration can be changed
+  integer m_maxNumConfigurationAttempts;
+
   // Simulation statistics
 
   /// Total number of successful Newton iterations
@@ -177,6 +198,10 @@ ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,
               "None",
               "Attempt",
               "Require" );
+
+ENUM_STRINGS( NonlinearSolverParameters::LineSearchInterpolationType,
+              "Linear",
+              "Parabolic" );
 
 } /* namespace geosx */
 

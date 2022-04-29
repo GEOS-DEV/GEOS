@@ -187,4 +187,4 @@ TableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolati
 
 REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, string const &, Group * const )
 
-} /* namespace ANST */
+} // end of namespace geosx

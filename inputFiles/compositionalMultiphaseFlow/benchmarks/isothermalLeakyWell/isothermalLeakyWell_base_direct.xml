@@ -8,14 +8,10 @@
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
-      fluidNames="{ fluid }"
-      solidNames="{ rock, rock, rockWell, rockWell }"
-      permeabilityNames="{ rockPerm, rockPerm, rockPermWell, rockPermWell }"
-      relPermNames="{ relperm }"
       temperature="313.15"
       initialDt="1"
       useMass="1"
-      computeCFLNumbers="1"
+      computeStatistics="1"
       targetRegions="{ aquiferTop, aquiferBottom, injectionWell, leakyWell }">
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
@@ -63,9 +59,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

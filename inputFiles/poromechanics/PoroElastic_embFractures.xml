@@ -10,7 +10,6 @@
       fracturesSolverName="fractureMechSolver"
       fluidSolverName="flowSolver"
       solidSolverName="matrixMechSolver"
-      porousMaterialNames="{ porousRock, fractureFilling }"
       logLevel="1">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"/>
@@ -20,7 +19,7 @@
 
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
-      targetRegions="{ Domain }"
+      targetRegions="{ Domain, Fracture }"
       solidSolverName="matrixMechSolver"
       fractureRegionName="Fracture"
       contactRelationName="fractureContact"/>
@@ -30,19 +29,15 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"/>
+      />
 
     <SinglePhaseFVM
       name="flowSolver"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ porousRock, fractureFilling }"
-      permeabilityNames="{ rockPerm, fracturePerm }"/>
+      targetRegions="{ Domain, Fracture }"/>
 
     <EmbeddedSurfaceGenerator
-      name="SurfaceGenerator"
-      solidMaterialNames="{ rock }"
+      name="SurfaceGenerator"      
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="2"
@@ -103,10 +98,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm, fracturePerm, fractureContact }"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -254,7 +246,7 @@
       name="vtkOutput"
       plotFileRoot="PoroElastic_embedded"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <Restart
       name="restartOutput"/>

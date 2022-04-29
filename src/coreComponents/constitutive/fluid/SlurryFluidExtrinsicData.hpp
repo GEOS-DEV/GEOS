@@ -30,22 +30,6 @@ namespace extrinsicMeshData
 namespace slurryfluid
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( density,
-                           "density",
-                           array2d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Density" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dDensity_dPressure,
-                           "dDens_dPres",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of density with respect to pressure" );
-
 EXTRINSIC_MESH_DATA_TRAIT( dDensity_dProppantConcentration,
                            "dDens_dProppantConc",
                            array2d< real64 >,
@@ -109,22 +93,6 @@ EXTRINSIC_MESH_DATA_TRAIT( dFluidDensity_dComponentConcentration,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Derivative of fluid density with respect to component concentration" );
-
-EXTRINSIC_MESH_DATA_TRAIT( viscosity,
-                           "viscosity",
-                           array2d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Viscosity" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dViscosity_dPressure,
-                           "dVisc_dPres",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Derivative of viscosity with respect to pressure" );
 
 EXTRINSIC_MESH_DATA_TRAIT( dViscosity_dProppantConcentration,
                            "dVisc_dProppantConc",

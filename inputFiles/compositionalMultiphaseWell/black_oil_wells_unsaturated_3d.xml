@@ -23,19 +23,13 @@
       logLevel="1"
       discretization="fluidHM"
       targetRegions="{ region }"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      relPermNames="{ relperm }"
-      permeabilityNames="{ rockPerm }"
-      computeCFLNumbers="1"
+      computeStatistics="1"
       temperature="297.15"
       useMass="1"/>
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }"
-      fluidNames="{ fluid }"
-      relPermNames="{ relperm }"
       maxRelativePressureChange="0.1"
       maxCompFractionChange="0.1"
       useMass="1">
@@ -140,8 +134,7 @@
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="fluidHM"
-        innerProductType="TPFA"
-        coefficientName="permeability"/>
+        innerProductType="TPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

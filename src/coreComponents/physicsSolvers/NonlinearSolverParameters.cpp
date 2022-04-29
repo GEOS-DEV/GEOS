@@ -38,6 +38,13 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
                     "* Attempt - Use line search. Allow exit from line search without achieving smaller residual than starting residual.\n"
                     "* Require - Use line search. If smaller residual than starting resdual is not achieved, cut time step." );
 
+  registerWrapper( viewKeysStruct::lineSearchInterpolationTypeString, &m_lineSearchInterpType ).
+    setApplyDefaultValue( LineSearchInterpolationType::Linear ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Strategy to cut the solution update during the line search. Options are: \n "
+                    "* Linear\n"
+                    "* Parabolic" );
+
   registerWrapper( viewKeysStruct::lineSearchMaxCutsString, &m_lineSearchMaxCuts ).
     setApplyDefaultValue( 4 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -101,9 +108,13 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum number of time sub-steps allowed for the solver" );
 
+  registerWrapper( viewKeysStruct::maxNumConfigurationAttemptsString, &m_maxNumConfigurationAttempts ).
+    setApplyDefaultValue( 10 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Max number of times that the configuration can be changed" );
+
   registerWrapper( viewKeysStruct::totalSuccessfulNewtonNumIterationsString, &m_totalSuccessfulNewtonNumIterations );
   registerWrapper( viewKeysStruct::totalWastedNewtonNumIterationsString, &m_totalWastedNewtonNumIterations );
-
 }
 
 void NonlinearSolverParameters::postProcessInput()

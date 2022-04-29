@@ -32,10 +32,6 @@
       name="compositionalMultiphaseFlow"
       targetRegions="{ reservoir }"
       discretization="fluidTPFA"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="368.15"
       maxCompFractionChange="0.2"
       logLevel="1"
@@ -44,8 +40,6 @@
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion }"
-      fluidNames="{ fluid }"
-      relPermNames="{ relperm }"
       logLevel="1"
       useMass="1">
       <WellControls
@@ -79,10 +73,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"
-        targetRegions="{ reservoir }"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        />
     </FiniteVolume>
   </NumericalMethods>
   <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL_END -->

@@ -312,7 +312,7 @@ template< typename T >
 std::enable_if_t< !bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pullDataFromConduitNode( T & var, conduit::Node const & node )
 {
-  conduit::Node const & valuesNode = node.fetch_child( "__values__" );
+  conduit::Node const & valuesNode = node.child( "__values__" );
 
   // Get the number of bytes in the array and a pointer to the array.
   localIndex const byteSize = valuesNode.dtype().number_of_elements();
@@ -366,7 +366,7 @@ template< typename T >
 std::enable_if_t< bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pullDataFromConduitNode( T & var, conduit::Node const & node )
 {
-  conduit::Node const & valuesNode = node.fetch_child( "__values__" );
+  conduit::Node const & valuesNode = node.child( "__values__" );
 
   localIndex const byteSize = LvArray::integerConversion< localIndex >( valuesNode.dtype().strided_bytes() );
   localIndex const numElements = numElementsFromByteSize< T >( byteSize );
@@ -381,7 +381,7 @@ template< typename T >
 std::enable_if_t< bufferOps::can_memcpy< T > >
 pullDataFromConduitNode( SortedArray< T > & var, conduit::Node const & node )
 {
-  conduit::Node const & valuesNode = node.fetch_child( "__values__" );
+  conduit::Node const & valuesNode = node.child( "__values__" );
 
   localIndex const byteSize = LvArray::integerConversion< localIndex >( valuesNode.dtype().strided_bytes() );
   localIndex const numElements = numElementsFromByteSize< T >( byteSize );
@@ -453,7 +453,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   constexpr int totalNumDimensions = NDIM + hasImplicitDimension;
 
   // Check that the permutations match.
-  conduit::Node const & permutationNode = node.fetch_child( "__permutation__" );
+  conduit::Node const & permutationNode = node.child( "__permutation__" );
   GEOSX_ERROR_IF_NE( permutationNode.dtype().number_of_elements(), totalNumDimensions );
 
   constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
@@ -471,7 +471,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   }
 
   // Now pull out the dimensions and resize the array.
-  conduit::Node const & dimensionNode = node.fetch_child( "__dimensions__" );
+  conduit::Node const & dimensionNode = node.child( "__dimensions__" );
   GEOSX_ERROR_IF_NE( dimensionNode.dtype().number_of_elements(), totalNumDimensions );
   camp::idx_t const * const dims = dimensionNode.value();
 
@@ -483,7 +483,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   var.resize( NDIM, dims );
 
   // Finally memcpy
-  conduit::Node const & valuesNode = node.fetch_child( "__values__" );
+  conduit::Node const & valuesNode = node.child( "__values__" );
   localIndex numBytesFromArray =  var.size() * sizeof( T );
   GEOSX_ERROR_IF_NE( numBytesFromArray, valuesNode.dtype().strided_bytes() );
   std::memcpy( var.data(), valuesNode.data_ptr(), numBytesFromArray );
@@ -706,7 +706,10 @@ PackByIndex( buffer_unit_type * & buffer, T & var, IDX & idx )
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
 PackByIndex( buffer_unit_type * &, T &, IDX & )
-{ return 0; }
+{
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") by index. Operation not supported." );
+  return 0;
+}
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_packable_by_index< T >, localIndex >
@@ -716,7 +719,10 @@ UnpackByIndex( buffer_unit_type const * & buffer, T & var, IDX & idx )
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
 UnpackByIndex( buffer_unit_type const * &, T &, IDX & )
-{ return 0; }
+{
+  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index. Operation not supported." );
+  return 0;
+}
 
 
 template< bool DO_PACKING, typename T >
@@ -729,8 +735,7 @@ template< bool DO_PACKING, typename T >
 inline std::enable_if_t< !bufferOps::is_container< T > && !bufferOps::can_memcpy< T >, localIndex >
 PackDevice( buffer_unit_type * &, T const &, parallelDeviceEvents & )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() <<
-               ") on device but type is not packable on device." );
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
   return 0;
 }
 
@@ -743,8 +748,7 @@ template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 PackByIndexDevice( buffer_unit_type * &, T const &, IDX &, parallelDeviceEvents & )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() <<
-               ") on device but type is not packable by index." );
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
   return 0;
 }
 
@@ -756,7 +760,10 @@ UnpackDevice( buffer_unit_type const * & buffer, T const & var, parallelDeviceEv
 template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
-{ return 0; }
+{
+  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
+  return 0;
+}
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
@@ -766,7 +773,10 @@ UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX &, parallelDeviceEvents & )
-{ return 0; }
+{
+  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
+  return 0;
+}
 
 
 template< bool DO_PACKING, typename T >
@@ -783,7 +793,7 @@ template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 PackDataByIndexDevice( buffer_unit_type * &, T const &, IDX &, parallelDeviceEvents & )
 {
-  GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable by index." );
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
   return 0;
 }
 
@@ -795,7 +805,10 @@ UnpackDataDevice( buffer_unit_type const * & buffer, T const & var, parallelDevi
 template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackDataDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
-{ return 0; }
+{
+  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
+  return 0;
+}
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
@@ -805,7 +818,11 @@ UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX &
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelDeviceEvents & )
-{ return 0; }
+{
+  GEOSX_LOG( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
+  return 0;
+}
+
 #if defined(GEOSX_USE_PYGEOSX)
 
 template< typename T >
@@ -820,7 +837,7 @@ createPythonObject( T & )
 
 #endif
 
-} // namespace WrapperHelpers
+} // namespace wrapperHelpers
 } // namespace dataRepository
 } // namespace geosx
 

@@ -31,14 +31,6 @@ namespace constitutive
 SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Default value for density." );
-
-  registerWrapper( viewKeyStruct::defaultViscosityString(), &m_defaultViscosity ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Default value for viscosity." );
-
   registerExtrinsicData( extrinsicMeshData::singlefluid::density{}, &m_density );
   registerExtrinsicData( extrinsicMeshData::singlefluid::dDensity_dPressure{}, &m_dDensity_dPressure );
   registerExtrinsicData( extrinsicMeshData::singlefluid::initialDensity{}, &m_initialDensity );
@@ -51,8 +43,6 @@ SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
 void SingleFluidBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
-  getExtrinsicData< extrinsicMeshData::singlefluid::density >().setApplyDefaultValue( m_defaultDensity );
-  getExtrinsicData< extrinsicMeshData::singlefluid::viscosity >().setApplyDefaultValue( m_defaultViscosity );
 }
 
 void SingleFluidBase::initializeState() const
@@ -72,6 +62,7 @@ void SingleFluidBase::initializeState() const
   } );
 }
 
+//START_SPHINX_INCLUDE_00
 void SingleFluidBase::allocateConstitutiveData( Group & parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
@@ -86,6 +77,7 @@ void SingleFluidBase::allocateConstitutiveData( Group & parent,
   m_viscosity.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_dViscosity_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
 }
+//END_SPHINX_INCLUDE_00
 
 } //namespace constitutive
 

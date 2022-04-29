@@ -116,7 +116,7 @@ public:
                      arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void
-  updatePhaseMobility( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const override;
+  updatePhaseMobility( ObjectManagerBase & dataGroup ) const override;
 
   virtual void
   applyAquiferBC( real64 const time,
@@ -126,29 +126,19 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
 
+  virtual void
+  computeStatistics( real64 const dt,
+                     DomainPartition & domain ) override;
 
   virtual void
-  computeStatistics( real64 const & time,
-                     real64 const & dt,
-                     integer cycleNumber,
-                     DomainPartition & domain,
-                     bool outputStatisticsToScreen ) override;
+  initializePreSubGroups() override;
 
-  /**
-   * @brief Compute the largest CFL number in the domain
-   * @param dt the time step size
-   * @param domain the domain containing the mesh and fields
-   * @param outputToTerminal flag to decide whether this function outputs to terminal or not
-   */
-  void
-  computeCFLNumbers( real64 const & dt,
-                     DomainPartition & domain,
-                     bool const outputToTerminal );
-
-
-  virtual void initializePreSubGroups() override;
 
 private:
+
+  void computeCFLNumbers( real64 const & dt,
+                          DomainPartition & domain );
+
 
   // no data needed here, see CompositionalMultiphaseBase
 

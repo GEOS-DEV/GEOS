@@ -43,6 +43,8 @@ public:
    */
   static string catalogName() { return "MultiphasePoromechanics"; }
 
+  virtual void registerDataOnMesh( Group & MeshBodies ) override;
+
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
@@ -81,10 +83,10 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
-  solveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
+  solveLinearSystem( DofManager const & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -96,13 +98,6 @@ public:
   implicitStepComplete( real64 const & time_n,
                         real64 const & dt,
                         DomainPartition & domain ) override;
-
-  virtual void
-  computeStatistics( real64 const & time,
-                     real64 const & dt,
-                     integer cycleNumber,
-                     DomainPartition & domain,
-                     bool outputStatisticsToScreen ) override;
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
@@ -123,16 +118,14 @@ public:
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
   };
 
-  arrayView1d< string const > porousMaterialNames() const { return m_porousMaterialNames; }
-
 protected:
 
   virtual void postProcessInput() override;
 
+  virtual void initializePreSubGroups() override;
+
   string m_solidSolverName;
   string m_flowSolverName;
-
-  array1d< string > m_porousMaterialNames;
 
   // pointer to the flow sub-solver
   CompositionalMultiphaseBase * m_flowSolver;

@@ -45,7 +45,7 @@ void RegisterAndApplyField( DomainPartition & domain,
   fieldSpec.initialCondition( true );
   fieldSpec.addSetName( "all" );
 
-  fieldSpecificationManager.apply( 0., domain, "", "",
+  fieldSpecificationManager.apply( 0., domain.getMeshBody( 0 ).getMeshLevel( 0 ), "", "",
                                    [&] ( FieldSpecificationBase const & bc,
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
@@ -67,7 +67,7 @@ TEST( FieldSpecification, Recursive )
   DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( "body" );
-  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
+  MeshLevel & meshLevel0 = meshBody.getMeshLevels().registerGroup< MeshLevel >( string( "Level0" ));
 
   ElementRegionManager & elemManager = meshLevel0.getElemManager();
   CellElementRegion & reg0 = dynamicCast< CellElementRegion & >( *elemManager.createChild( "CellElementRegion", "reg0" ) );

@@ -200,6 +200,11 @@ void PackCollection::buildMetaCollectors( )
     {
       coordField = ElementSubRegionBase::viewKeyStruct::elementCenterString();
     }
+    else
+    {
+      GEOSX_ERROR( "Data collection for \"" << m_objectPath << "\" is unimplemented." );
+    }
+
     string metaName( "coordinates" );
     std::unique_ptr< PackCollection > coordCollector = std::make_unique< PackCollection >( metaName, this );
     coordCollector->getWrapper< string >( PackCollection::viewKeysStruct::objectPathString() ).reference() = m_objectPath;
@@ -230,7 +235,7 @@ void PackCollection::collect( DomainPartition & domain,
     if( ( (m_onlyOnSetChange != 0) && m_setChanged ) || (m_onlyOnSetChange == 0) )
     {
 
-      target.packByIndex( buffer, m_setsIndices[ collectionIdx ], false, true, events );
+      target.packByIndex< true >( buffer, m_setsIndices[collectionIdx], false, true, events );
     }
   }
   // if we're not collecting from a set of indices, we're collecting the entire object
@@ -239,7 +244,7 @@ void PackCollection::collect( DomainPartition & domain,
   //  non-mesh objects (that don't somehow have index sets) are packed in their entirety
   else if( !m_targetIsMeshObject && m_setNames.size() == 0 )
   {
-    target.pack( buffer, false, true, events );
+    target.pack< true >( buffer, false, true, events );
   }
   m_setChanged = false;
   GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );

@@ -9,13 +9,13 @@
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
       logLevel="1"
-      activeSetMaxIter="10"
       targetRegions="{ Region, Fracture }"
       contactRelationName="fractureMaterial">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         logLevel="2"
         newtonMaxIter="10"
+        maxNumConfigurationAttempts="10"
         lineSearchAction="Require"
         lineSearchMaxCuts="2"
         maxTimeStepCuts="2"/>
@@ -30,8 +30,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{ Region, Fracture }"
-      solidMaterialNames="{ rock }">
+      targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="5"/>
@@ -45,7 +44,7 @@
       logLevel="0"
       fractureRegion="Fracture"
       targetRegions="{ Region }"
-      solidMaterialNames="{ rock }"
+      
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>
@@ -60,9 +59,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="TPFAstabilization"
-        fieldName="traction"
-        coefficientName="custom"/>
+        name="TPFAstabilization"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -173,7 +170,7 @@
     <VTK
       name="vtkOutput"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <TimeHistory
       name="timeHistoryOutput"
