@@ -118,11 +118,6 @@ public:
                      real64 const & dt,
                      DomainPartition & domain ) override;
 
-  virtual void
-  implicitStepComplete( real64 const & time,
-                        real64 const & dt,
-                        DomainPartition & domain ) override;
-
   /**@}*/
 
   /**
@@ -165,15 +160,17 @@ public:
    */
   void updateTotalMassDensity( WellElementSubRegion & subRegion ) const;
 
+  /**
+   * @brief Recompute the perforation rates for all the wells
+   * @param domain the domain containing the mesh and fields
+   */
+  virtual void computePerforationRates( DomainPartition & domain ) override;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param meshLevel the mesh level
    * @param subRegion the well subregion containing all the primary and dependent fields
-   * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateSubRegionState( MeshLevel const & meshLevel,
-                                     WellElementSubRegion & subRegion ) override;
+  virtual void updateSubRegionState( WellElementSubRegion & subRegion ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
@@ -315,27 +312,17 @@ protected:
 
   /**
    * @brief Checks injection streams for validity (compositions sum to one)
-   * @param meshLevel reference to the mesh
+   * @param subRegion the well subRegion
    */
   void validateInjectionStreams( WellElementSubRegion const & subRegion ) const;
 
   /**
    * @brief Make sure that the well constraints are compatible
-   * @param meshLevel the mesh level object (to loop over wells)
-   * @param fluid the fluid model (to get the target phase index)
+   * @param subRegion the well subRegion
    */
   void validateWellConstraints( WellElementSubRegion const & subRegion );
 
 private:
-
-  /**
-   * @brief Compute all the perforation rates for this well
-   * @param meshLevel the mesh level
-   * @param subRegion the well element region for which the fields are resized
-   * @param targetIndex index of the target region
-   */
-  void computePerforationRates( MeshLevel const & meshLevel,
-                                WellElementSubRegion & subRegion );
 
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
