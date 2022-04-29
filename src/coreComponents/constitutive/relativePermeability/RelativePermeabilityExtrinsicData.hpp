@@ -43,6 +43,14 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseRelPerm,
                            WRITE_AND_READ,
                            "Phase relative permeability" );
 
+EXTRINSIC_MESH_DATA_TRAIT( phaseRelPermOld,
+                           "phaseRelPermOld",
+                           array3dLayoutRelPerm,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Phase relative permeability at previous time" );
+
 EXTRINSIC_MESH_DATA_TRAIT( dPhaseRelPerm_dPhaseVolFraction,
                            "dPhaseRelPerm_dPhaseVolFraction",
                            array4dLayoutRelPerm_dS,

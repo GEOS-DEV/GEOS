@@ -77,6 +77,8 @@ public:
   using PorosityAccessors = StencilMaterialAccessors< PorosityBase,
                                                       extrinsicMeshData::porosity::biotCoefficient >;
 
+  using RelPermAccessors = StencilMaterialAccessors< RelativePermeabilityBase, extrinsicMeshData::relperm::phaseRelPermOld >;
+
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
   using AbstractBase::m_hasCapPressure;
@@ -132,6 +134,7 @@ public:
                            PermeabilityAccessors const & permeabilityAccessors,
                            SolidAccessors const & solidAccessors,
                            PorosityAccessors const & porosityAccessors,
+                           RelPermAccessors const & relPermAccessors,
                            real64 const & dt,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
@@ -151,6 +154,7 @@ public:
     m_phaseCompFracOld( stabCompFlowAccessors.get( extrinsicMeshData::flow::phaseComponentFractionOld {} )),
     m_phaseVolFracOld( stabCompFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFractionOld {} )),
     m_elementMacroID( stabCompFlowAccessors.get( extrinsicMeshData::flow::elementMacroID {} )),
+    m_phaseRelPermOld( relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPermOld {} )),
     m_bulkModulus( solidAccessors.get( extrinsicMeshData::solid::bulkModulus {} )),
     m_shearModulus( solidAccessors.get( extrinsicMeshData::solid::shearModulus {} )),
     m_biotCoefficient( porosityAccessors.get( extrinsicMeshData::porosity::biotCoefficient {} )),
@@ -257,9 +261,10 @@ public:
         {
 
         
-          real64 laggedUpwind = m_phaseDensOld[er_up_stab ][esr_up_stab ][ei_up_stab ][ip]
+          real64 const laggedUpwind = m_phaseDensOld[er_up_stab ][esr_up_stab ][ei_up_stab ][ip]
                               * m_phaseCompFracOld[er_up_stab ][esr_up_stab ][ei_up_stab ][ip][ic]
-                              * m_phaseVolFracOld[er_up_stab ][esr_up_stab ][ei_up_stab ][ip];
+                              * m_phaseRelPermOld[er_up_stab ][esr_up_stab ][ei_up_stab ][ip][ic];
+                              // * (m_phaseVolFracOld[er_up_stab ][esr_up_stab ][ei_up_stab ][ip] - 0.2)/0.6;
 
           stack.stabFlux[ic] += dPresGradStab * laggedUpwind;
         
@@ -312,6 +317,7 @@ protected:
   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_COMP > > const m_phaseCompFracOld;
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseVolFracOld;
   ElementViewConst< arrayView1d< integer const > > const m_elementMacroID;
+  ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const m_phaseRelPermOld;
 
   ElementViewConst< arrayView1d< real64 const > > const m_bulkModulus;
   ElementViewConst< arrayView1d< real64 const > > const m_shearModulus;
@@ -376,10 +382,11 @@ public:
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::SolidAccessors solidAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PorosityAccessors porosityAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors,
-                          capPressureAccessors, permeabilityAccessors, solidAccessors, porosityAccessors,
+                          capPressureAccessors, permeabilityAccessors, solidAccessors, porosityAccessors, relPermAccessors,
                           dt, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );

@@ -648,6 +648,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
     relPermMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac ); // this needs to happen before calling updateRelPermModel
     updateRelPermModel( subRegion );
+    relPermMaterial.saveConvergedState();
 
     string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
     MultiFluidBase & fluidMaterial = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );

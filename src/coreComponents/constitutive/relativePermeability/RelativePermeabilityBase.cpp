@@ -43,6 +43,8 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
   registerExtrinsicData( extrinsicMeshData::relperm::phaseRelPerm{}, &m_phaseRelPerm );
   registerExtrinsicData( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{}, &m_dPhaseRelPerm_dPhaseVolFrac );
 
+  registerExtrinsicData( extrinsicMeshData::relperm::phaseRelPermOld{}, &m_phaseRelPermOld );
+
 }
 
 void RelativePermeabilityBase::postProcessInput()
@@ -89,6 +91,7 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
   integer const numPhases = numFluidPhases();
 
   m_phaseRelPerm.resize( size, numPts, numPhases );
+  m_phaseRelPermOld.resize( size, numPts, numPhases );
   m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases );
 }
 
@@ -96,6 +99,18 @@ void RelativePermeabilityBase::setLabels()
 {
   getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm >().
     setDimLabels( 2, m_phaseNames );
+  getExtrinsicData< extrinsicMeshData::relperm::phaseRelPermOld >().
+    setDimLabels( 2, m_phaseNames );
+}
+
+void RelativePermeabilityBase::saveConvergedState( ) const
+{
+
+  // ConstitutiveBase::saveConvergedState();
+
+  arrayView3d< real64 const, relperm::USD_RELPERM > phaseRelPerm = m_phaseRelPerm.toViewConst();
+  arrayView3d< real64, relperm::USD_RELPERM > phaseRelPermOld = m_phaseRelPermOld.toView();
+  phaseRelPermOld.setValues< parallelDevicePolicy<> >( phaseRelPerm ); 
 }
 
 void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
