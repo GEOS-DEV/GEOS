@@ -30,12 +30,12 @@ class CoupledReservoirAndWellsBase : public CoupledSolver< RESERVOIR_SOLVER, WEL
 {
 public:
 
-  using AbstractBase = CoupledSolver< RESERVOIR_SOLVER, WELL_SOLVER >;
-  using AbstractBase::m_solvers;
-  using AbstractBase::m_dofManager;
-  using AbstractBase::m_localMatrix;
-  using AbstractBase::m_rhs;
-  using AbstractBase::m_solution;
+  using Base = CoupledSolver< RESERVOIR_SOLVER, WELL_SOLVER >;
+  using Base::m_solvers;
+  using Base::m_dofManager;
+  using Base::m_localMatrix;
+  using Base::m_rhs;
+  using Base::m_solution;
 
   enum class SolverType : integer
   {
@@ -127,6 +127,9 @@ public:
 
 
 protected:
+
+  virtual void
+  postProcessInput() override;
 
   virtual void
   initializePostInitialConditionsPreSubGroups() override;

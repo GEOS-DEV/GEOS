@@ -56,6 +56,42 @@ public:
   /// deleted move operator
   CoupledSolver & operator=( CoupledSolver && ) = delete;
 
+
+  /**
+   * @brief Utility function to set the subsolvers pointers using the names provided by the user
+   * @tparam NAMES the parameter pack for the solver names
+   * @param[in] names the solver names
+   */
+  template< typename ... NAMES >
+  void
+  setSubSolvers( NAMES && ... names )
+  {
+    static_assert( sizeof...(NAMES) == sizeof...(SOLVERS), "Invalid number of sub-solver names" );
+
+    auto solverNames = std::tie( names ... ); // makes a tuple
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
+    {
+      using SolverPtr = TYPEOFREF( solver );
+      using SolverType = TYPEOFPTR( SolverPtr {} );
+      string const & name = std::get< idx() >( solverNames );
+      solver = this->getParent().template getGroupPointer< SolverType >( name );
+      GEOSX_THROW_IF( solver == nullptr,
+                      GEOSX_FMT( "Could not find solver '{}' of type {}",
+                                 name, LvArray::system::demangleType< SolverType >() ),
+                      InputError );
+    } );
+  }
+
+  /**
+   * @brief Utility function to set the coupling between degrees of freedom
+   * @param[in] domain the domain partition
+   * @param[in] dofManager the dof manager
+   */
+  virtual void
+  setCoupling( DomainPartition const & domain,
+               DofManager & dofManager ) const
+  { GEOSX_UNUSED_VAR( domain, dofManager ); }
+
   /**
    * @defgroup Solver Interface Functions
    *
@@ -63,16 +99,16 @@ public:
    */
   /**@{*/
 
-  virtual void
+  void
   setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override
   {
-    forEachArgInTuple( std::tuple< SOLVERS *... >{}, [&]( auto t, auto idx )
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      GEOSX_UNUSED_VAR( t );
-      auto & solver = std::get< idx() >( m_solvers );
       solver->setupDofs( domain, dofManager );
     } );
+
+    setCoupling( domain, dofManager );
   }
 
   virtual void
@@ -80,10 +116,8 @@ public:
                      real64 const & dt,
                      DomainPartition & domain ) override
   {
-    forEachArgInTuple( std::tuple< SOLVERS *... >{}, [&]( auto t, auto idx )
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      GEOSX_UNUSED_VAR( t );
-      auto & solver = std::get< idx() >( m_solvers );
       solver->implicitStepSetup( time_n, dt, domain );
     } );
   }
@@ -93,10 +127,8 @@ public:
                         real64 const & dt,
                         DomainPartition & domain ) override
   {
-    forEachArgInTuple( std::tuple< SOLVERS *... >{}, [&]( auto t, auto idx )
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      GEOSX_UNUSED_VAR( t );
-      auto & solver = std::get< idx() >( m_solvers );
       solver->implicitStepComplete( time_n, dt, domain );
     } );
   }
@@ -107,10 +139,8 @@ public:
                        real64 const scalingFactor,
                        DomainPartition & domain ) override
   {
-    forEachArgInTuple( std::tuple< SOLVERS *... >{}, [&]( auto t, auto idx )
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      GEOSX_UNUSED_VAR( t );
-      auto & solver = std::get< idx() >( m_solvers );
       solver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
     } );
   }
@@ -118,10 +148,8 @@ public:
   virtual void
   updateState( DomainPartition & domain ) override
   {
-    forEachArgInTuple( std::tuple< SOLVERS *... >{}, [&]( auto t, auto idx )
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      GEOSX_UNUSED_VAR( t );
-      auto & solver = std::get< idx() >( m_solvers );
       solver->updateState( domain );
     } );
   }
@@ -129,10 +157,8 @@ public:
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override
   {
-    forEachArgInTuple( std::tuple< SOLVERS *... >{}, [&]( auto t, auto idx )
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      GEOSX_UNUSED_VAR( t );
-      auto & solver = std::get< idx() >( m_solvers );
       solver->resetStateToBeginningOfStep( domain );
     } );
   }
@@ -170,10 +196,8 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override
   {
     real64 norm = 0.0;
-    forEachArgInTuple( std::tuple< SOLVERS *... >{}, [&]( auto t, auto idx )
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      GEOSX_UNUSED_VAR( t );
-      auto & solver = std::get< idx() >( m_solvers );
       real64 const singlePhysicsNorm = solver->calculateResidualNorm( domain, dofManager, localRhs );
       norm += singlePhysicsNorm * singlePhysicsNorm;
     } );
@@ -188,10 +212,8 @@ public:
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override
   {
-    forEachArgInTuple( std::tuple< SOLVERS *... >{}, [&]( auto t, auto idx )
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      GEOSX_UNUSED_VAR( t );
-      auto & solver = std::get< idx() >( m_solvers );
       solver->applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
     } );
   }
@@ -203,10 +225,8 @@ public:
                        real64 const scalingFactor ) override
   {
     bool validSolution = true;
-    forEachArgInTuple( std::tuple< SOLVERS *... >{}, [&]( auto t, auto idx )
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      GEOSX_UNUSED_VAR( t );
-      auto & solver = std::get< idx() >( m_solvers );
       bool const validSinglePhysicsSolution = solver->checkSystemSolution( domain, dofManager, localSolution, scalingFactor );
       validSolution = validSolution && validSinglePhysicsSolution;
     } );
@@ -219,10 +239,8 @@ public:
                             arrayView1d< real64 const > const & localSolution ) override
   {
     real64 scalingFactor = 1e9;
-    forEachArgInTuple( std::tuple< SOLVERS *... >{}, [&]( auto t, auto idx )
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      GEOSX_UNUSED_VAR( t );
-      auto & solver = std::get< idx() >( m_solvers );
       real64 const singlePhysicsScalingFactor = solver->scalingForSystemSolution( domain, dofManager, localSolution );
       scalingFactor = LvArray::math::min( scalingFactor, singlePhysicsScalingFactor );
     } );

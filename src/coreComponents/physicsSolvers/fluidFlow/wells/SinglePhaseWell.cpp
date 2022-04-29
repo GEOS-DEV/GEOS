@@ -27,7 +27,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/WellElementSubRegion.hpp"
-#include "mesh/PerforationData.hpp"
+#include "mesh/PerforationExtrinsicData.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
@@ -336,11 +336,11 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const resElementRegion =
-        perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
+        perforationData.getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const resElementSubRegion =
-        perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
+        perforationData.getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const resElementIndex =
-        perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+        perforationData.getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       arrayView1d< real64 const > const & perfGravCoef =
         perforationData.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
@@ -615,9 +615,9 @@ void SinglePhaseWell::computePerforationRates( DomainPartition & domain )
       arrayView1d< real64 const > const perfGravCoef =
         perforationData->getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
       arrayView1d< localIndex const > const perfWellElemIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
       arrayView1d< real64 const > const perfTransmissibility =
-        perforationData->getReference< array1d< real64 > >( PerforationData::viewKeyStruct::wellTransmissibilityString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellTransmissibility >();
 
       arrayView1d< real64 > const perfRate =
         perforationData->getExtrinsicData< extrinsicMeshData::well::perforationRate >();
@@ -626,12 +626,11 @@ void SinglePhaseWell::computePerforationRates( DomainPartition & domain )
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const resElementRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const resElementSubRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const resElementIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
-
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       PerforationKernel::launch( perforationData->size(),
                                  resSinglePhaseFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),

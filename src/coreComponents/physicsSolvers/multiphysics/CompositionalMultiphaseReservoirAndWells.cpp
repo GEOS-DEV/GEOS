@@ -21,6 +21,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
+#include "mesh/PerforationExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
@@ -41,11 +42,13 @@ namespace
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER > class
   CompositionalCatalogNames {};
 
+// Class specialization for a RESERVOIR_SOLVER set to CompositionalMultiphaseFVM
 template<> class CompositionalCatalogNames< CompositionalMultiphaseFVM >
 {
 public:
   static string name() { return "CompositionalMultiphaseReservoirFVM"; }
 };
+// Class specialization for a RESERVOIR_SOLVER set to CompositionalMultiphaseHybridFVM
 template<> class CompositionalCatalogNames< CompositionalMultiphaseHybridFVM >
 {
 public:
@@ -82,16 +85,6 @@ CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
 postProcessInput()
 {
   Base::postProcessInput();
-
-  COMPOSITIONAL_RESERVOIR_SOLVER * reservoirSolver =
-    &this->getParent().template getGroup< COMPOSITIONAL_RESERVOIR_SOLVER >( m_reservoirSolverName );
-  std::get< toUnderlying< typename Base::SolverType >( Base::SolverType::Reservoir ) >( m_solvers ) = reservoirSolver;
-
-  CompositionalMultiphaseWell * wellSolver =
-    &this->getParent().template getGroup< CompositionalMultiphaseWell >( m_wellSolverName );
-  std::get< toUnderlying< typename Base::SolverType >( Base::SolverType::Well ) >( m_solvers ) = wellSolver;
-
-  Base::getWellSolver()->setFlowSolverName( m_reservoirSolverName );
 
   integer const & useMassFlow = Base::getReservoirSolver()->template getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
   integer const & useMassWell = Base::getWellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
@@ -161,16 +154,15 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 
       // get the well element indices corresponding to each perforation
       arrayView1d< localIndex const > const & perfWellElemIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const & resElementSubRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const & resElementIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
-
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       // Insert the entries corresponding to reservoir-well perforations
       // This will fill J_WR, and J_RW
@@ -287,15 +279,15 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
         perforationData->getExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dComp >();
 
       arrayView1d< localIndex const > const & perfWellElemIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const & resElementSubRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const & resElementIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       RAJA::ReduceSum< parallelDeviceReduce, integer > numCrossflowPerforations( 0 );
 

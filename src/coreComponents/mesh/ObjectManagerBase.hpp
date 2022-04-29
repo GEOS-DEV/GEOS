@@ -593,6 +593,24 @@ public:
   }
 
   /**
+   * @brief Helper function to register extrinsic data
+   * @tparam TRAIT the type of extrinsic data
+   * @param[in] extrinsicDataTrait the extrinsic data struct corresponding to the object being registered
+   * @param[in] newObject a pointer to the object that is being registered
+   * @return A reference to the newly registered/created Wrapper
+   */
+  template< typename TRAIT >
+  dataRepository::Wrapper< typename TRAIT::type > & registerExtrinsicData( TRAIT const & extrinsicDataTrait,
+                                                                           typename TRAIT::type * newObject )
+  {
+    return registerWrapper( extrinsicDataTrait.key(), newObject ).
+             setApplyDefaultValue( extrinsicDataTrait.defaultValue() ).
+             setPlotLevel( TRAIT::plotLevel ).
+             setRestartFlags( TRAIT::restartFlag ).
+             setDescription( TRAIT::description );
+  }
+
+  /**
    * @brief Register a collection of data with this ObjectManagerBase using a
    *   dataRepository::Wrapper.
    * @tparam MESH_DATA_TRAIT0 The first of the trait structs that holds the

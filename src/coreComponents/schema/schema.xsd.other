@@ -2120,19 +2120,19 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--location => (no description available)-->
+		<!--location => For each perforation, physical location (x,y,z coordinates)-->
 		<xsd:attribute name="location" type="real64_array2d" />
 		<!--numPerforationsGlobal => (no description available)-->
 		<xsd:attribute name="numPerforationsGlobal" type="globalIndex" />
-		<!--reservoirElementIndex => (no description available)-->
+		<!--reservoirElementIndex => For each perforation, element index of the perforated element-->
 		<xsd:attribute name="reservoirElementIndex" type="integer_array" />
-		<!--reservoirElementRegion => (no description available)-->
+		<!--reservoirElementRegion => For each perforation, elementRegion index of the perforated element-->
 		<xsd:attribute name="reservoirElementRegion" type="integer_array" />
-		<!--reservoirElementSubregion => (no description available)-->
-		<xsd:attribute name="reservoirElementSubregion" type="integer_array" />
-		<!--wellElementIndex => (no description available)-->
+		<!--reservoirElementSubRegion => For each perforation, elementSubRegion index of the perforated element-->
+		<xsd:attribute name="reservoirElementSubRegion" type="integer_array" />
+		<!--wellElementIndex => For each perforation, index of the well element-->
 		<xsd:attribute name="wellElementIndex" type="integer_array" />
-		<!--wellTransmissibility => (no description available)-->
+		<!--wellTransmissibility => For each perforation, well transmissibility-->
 		<xsd:attribute name="wellTransmissibility" type="real64_array" />
 	</xsd:complexType>
 </xsd:schema>

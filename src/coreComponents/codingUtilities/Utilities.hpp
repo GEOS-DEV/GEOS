@@ -230,6 +230,14 @@ void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func, std::inde
   using expander = int[];
   (void) expander { 0, ( (void)func( std::get< Is >( tuple ), std::integral_constant< size_t, Is >{} ), 0 )... };
 }
+
+template< class F, class ... Ts, std::size_t ... Is >
+void forEachArgInTuple( std::tuple< Ts ... > & tuple, F && func, std::index_sequence< Is ... > )
+{
+  using expander = int[];
+  (void) expander { 0, ( (void)func( std::get< Is >( tuple ), std::integral_constant< size_t, Is >{} ), 0 )... };
+}
+
 }
 
 /**
@@ -244,6 +252,22 @@ void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func, std::inde
  */
 template< class F, class ... Ts >
 void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func )
+{
+  internal::forEachArgInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
+}
+
+/**
+ * @brief Visit every element in a tuple applying a function.
+ * @tparam F type of function
+ * @tparam Ts types of tuple elements
+ * @param tuple the target tuple
+ * @param func the function to apply
+ *
+ * The function will be called with a reference to the tuple element and
+ * a compile-time (std::integral_constant) index of the tuple element.
+ */
+template< class F, class ... Ts >
+void forEachArgInTuple( std::tuple< Ts ... > & tuple, F && func )
 {
   internal::forEachArgInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
 }

@@ -20,6 +20,7 @@
 #include "SinglePhaseReservoirAndWells.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "mesh/PerforationExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellExtrinsicData.hpp"
@@ -71,24 +72,6 @@ template< typename SINGLEPHASE_RESERVOIR_SOLVER >
 SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
 ~SinglePhaseReservoirAndWells()
 {}
-
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
-void
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
-postProcessInput()
-{
-  Base::postProcessInput();
-
-  SINGLEPHASE_RESERVOIR_SOLVER * reservoirSolver =
-    &this->getParent().template getGroup< SINGLEPHASE_RESERVOIR_SOLVER >( m_reservoirSolverName );
-  std::get< toUnderlying< typename Base::SolverType >( Base::SolverType::Reservoir ) >( m_solvers ) = reservoirSolver;
-
-  SinglePhaseWell * wellSolver =
-    &this->getParent().template getGroup< SinglePhaseWell >( m_wellSolverName );
-  std::get< toUnderlying< typename Base::SolverType >( Base::SolverType::Well ) >( m_solvers ) = wellSolver;
-
-  Base::getWellSolver()->setFlowSolverName( m_reservoirSolverName );
-}
 
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >
 void
@@ -145,15 +128,15 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 
       // get the well element indices corresponding to each perforation
       arrayView1d< localIndex const > const & perfWellElemIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const & resElementSubRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const & resElementIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       // Insert the entries corresponding to reservoir-well perforations
       // This will fill J_WR, and J_RW
@@ -243,15 +226,15 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
         perforationData->getExtrinsicData< extrinsicMeshData::well::dPerforationRate_dPres >();
 
       arrayView1d< localIndex const > const perfWellElemIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const resElementRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const resElementSubRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const resElementIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       // loop over the perforations and add the rates to the residual and jacobian
       forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )

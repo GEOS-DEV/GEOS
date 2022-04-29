@@ -21,6 +21,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "mainInterface/ProblemManager.hpp"
+#include "mesh/PerforationExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
@@ -40,7 +41,7 @@ template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
 CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
 CoupledReservoirAndWellsBase( const string & name,
                               Group * const parent )
-  : AbstractBase( name, parent ),
+  : Base( name, parent ),
   m_reservoirSolverName(),
   m_wellSolverName()
 {
@@ -65,18 +66,27 @@ CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
 template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
 RESERVOIR_SOLVER *
 CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
-getReservoirSolver() const { return std::get< toUnderlying< SolverType >( SolverType::Reservoir ) >( m_solvers ); }
+getReservoirSolver() const { return std::get< toUnderlying( SolverType::Reservoir ) >( m_solvers ); }
 
 template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
 WELL_SOLVER *
 CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
-getWellSolver() const { return std::get< toUnderlying< SolverType >( SolverType::Well ) >( m_solvers ); }
+getWellSolver() const { return std::get< toUnderlying( SolverType::Well ) >( m_solvers ); }
+
+template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
+void CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
+postProcessInput()
+{
+  Base::setSubSolvers( m_reservoirSolverName, m_wellSolverName );
+
+  getWellSolver()->setFlowSolverName( m_reservoirSolverName );
+}
 
 template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
 void CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
 initializePostInitialConditionsPreSubGroups()
 {
-  AbstractBase::initializePostInitialConditionsPreSubGroups( );
+  Base::initializePostInitialConditionsPreSubGroups( );
 
   DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -138,12 +148,15 @@ addCouplingNumNonzeros( DomainPartition & domain,
 
       // get the well element indices corresponding to each perforation
       arrayView1d< localIndex const > const & perfWellElemIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
-      arrayView1d< localIndex const > const & resElementRegion = perforationData->getMeshElements().m_toElementRegion;
-      arrayView1d< localIndex const > const & resElementSubRegion = perforationData->getMeshElements().m_toElementSubRegion;
-      arrayView1d< localIndex const > const & resElementIndex = perforationData->getMeshElements().m_toElementIndex;
+      arrayView1d< localIndex const > const & resElementRegion =
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
+      arrayView1d< localIndex const > const & resElementSubRegion =
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
+      arrayView1d< localIndex const > const & resElementIndex =
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       // Loop over perforations and increase row lengths for reservoir and well elements accordingly
       forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
@@ -195,7 +208,7 @@ setupSystem( DomainPartition & domain,
 
   dofManager.setDomain( domain );
 
-  AbstractBase::setupDofs( domain, dofManager );
+  Base::setupDofs( domain, dofManager );
   dofManager.reorderByRank();
 
   // Set the sparsity pattern without reservoir-well coupling
