@@ -35,8 +35,6 @@ public:
   using Base = CoupledReservoirAndWellsBase< COMPOSITIONAL_RESERVOIR_SOLVER,
                                              CompositionalMultiphaseWell >;
   using Base::getLogLevel;
-  using Base::m_reservoirSolverName;
-  using Base::m_wellSolverName;
   using Base::m_solvers;
   using Base::m_linearSolverParameters;
 

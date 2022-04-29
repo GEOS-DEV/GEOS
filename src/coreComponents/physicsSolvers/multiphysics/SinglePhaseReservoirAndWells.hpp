@@ -34,8 +34,6 @@ public:
 
   using Base = CoupledReservoirAndWellsBase< SINGLEPHASE_RESERVOIR_SOLVER,
                                              SinglePhaseWell >;
-  using Base::m_reservoirSolverName;
-  using Base::m_wellSolverName;
   using Base::m_solvers;
   using Base::m_linearSolverParameters;
 

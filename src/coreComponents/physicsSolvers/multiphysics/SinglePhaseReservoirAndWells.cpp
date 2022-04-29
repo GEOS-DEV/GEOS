@@ -36,6 +36,7 @@ using namespace constitutive;
 namespace
 {
 
+// This is meant to be specialized to work, see below
 template< typename SINGLEPHASE_RESERVOIR_SOLVER > class
   SinglePhaseCatalogNames {};
 

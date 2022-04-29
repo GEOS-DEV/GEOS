@@ -39,6 +39,7 @@ using namespace constitutive;
 namespace
 {
 
+// This is meant to be specialized to work, see below
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER > class
   CompositionalCatalogNames {};
 

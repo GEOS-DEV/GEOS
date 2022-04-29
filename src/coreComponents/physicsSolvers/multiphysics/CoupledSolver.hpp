@@ -41,8 +41,14 @@ public:
   CoupledSolver( const string & name,
                  Group * const parent )
     : SolverBase( name, parent )
-  {}
-
+  {
+    forEachArgInTuple( m_solvers, [&]( auto solver, auto idx )
+    {
+      using SolverType = TYPEOFPTR( solver );
+      string const key = SolverType::coupledSolverAttributePrefix() + "SolverName";
+      registerWrapper( key, &m_names[idx()] ).setInputFlag( dataRepository::InputFlags::REQUIRED );
+    } );
+  }
 
   /// deleted copy constructor
   CoupledSolver( CoupledSolver const & ) = delete;
@@ -59,28 +65,22 @@ public:
 
   /**
    * @brief Utility function to set the subsolvers pointers using the names provided by the user
-   * @tparam NAMES the parameter pack for the solver names
-   * @param[in] names the solver names
    */
-  template< typename ... NAMES >
   void
-  setSubSolvers( NAMES && ... names )
+  setSubSolvers()
   {
-    static_assert( sizeof...(NAMES) == sizeof...(SOLVERS), "Invalid number of sub-solver names" );
-
-    auto solverNames = std::tie( names ... ); // makes a tuple
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
     {
       using SolverPtr = TYPEOFREF( solver );
       using SolverType = TYPEOFPTR( SolverPtr {} );
-      string const & name = std::get< idx() >( solverNames );
-      solver = this->getParent().template getGroupPointer< SolverType >( name );
+      solver = this->getParent().template getGroupPointer< SolverType >( m_names[idx()] );
       GEOSX_THROW_IF( solver == nullptr,
                       GEOSX_FMT( "Could not find solver '{}' of type {}",
-                                 name, LvArray::system::demangleType< SolverType >() ),
+                                 m_names[idx()], LvArray::system::demangleType< SolverType >() ),
                       InputError );
     } );
   }
+
 
   /**
    * @brief Utility function to set the coupling between degrees of freedom
@@ -88,8 +88,8 @@ public:
    * @param[in] dofManager the dof manager
    */
   virtual void
-  setCoupling( DomainPartition const & domain,
-               DofManager & dofManager ) const
+  setupCoupling( DomainPartition const & domain,
+                 DofManager & dofManager ) const
   { GEOSX_UNUSED_VAR( domain, dofManager ); }
 
   /**
@@ -108,7 +108,7 @@ public:
       solver->setupDofs( domain, dofManager );
     } );
 
-    setCoupling( domain, dofManager );
+    setupCoupling( domain, dofManager );
   }
 
   virtual void
@@ -251,7 +251,18 @@ public:
 
 protected:
 
+  virtual void
+  postProcessInput() override
+  {
+    setSubSolvers();
+  }
+
+  /// Pointers of the single-physics solvers
   std::tuple< SOLVERS *... > m_solvers;
+
+  /// Names of the single-physics solvers
+  std::array< string, sizeof...( SOLVERS ) > m_names;
+
 };
 
 } /* namespace geosx */

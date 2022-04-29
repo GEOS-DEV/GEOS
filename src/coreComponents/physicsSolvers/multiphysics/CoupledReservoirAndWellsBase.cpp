@@ -19,80 +19,25 @@
 
 #include "CoupledReservoirAndWellsBase.hpp"
 
-#include "common/TimingMacros.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "mesh/PerforationExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVM.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
 namespace geosx
 {
 
-using namespace dataRepository;
-using namespace constitutive;
-
-template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
-CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
-CoupledReservoirAndWellsBase( const string & name,
-                              Group * const parent )
-  : Base( name, parent ),
-  m_reservoirSolverName(),
-  m_wellSolverName()
+namespace coupledReservoirAndWellsInternal
 {
-  this->template registerWrapper( viewKeyStruct::reservoirSolverNameString(), &m_reservoirSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the flow solver to use in the reservoir-well system solver" );
 
-  this->template registerWrapper( viewKeyStruct::wellSolverNameString(), &m_wellSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the well solver to use in the reservoir-well system solver" );
-
-  this->template getWrapper< string >( viewKeyStruct::discretizationString() ).
-    setInputFlag( InputFlags::FALSE );
-
-}
-
-template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
-CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
-~CoupledReservoirAndWellsBase()
-{}
-
-template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
-RESERVOIR_SOLVER *
-CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
-getReservoirSolver() const { return std::get< toUnderlying( SolverType::Reservoir ) >( m_solvers ); }
-
-template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
-WELL_SOLVER *
-CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
-getWellSolver() const { return std::get< toUnderlying( SolverType::Well ) >( m_solvers ); }
-
-template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
-void CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
-postProcessInput()
+void
+initializePostInitialConditionsPreSubGroups( SolverBase * const solver )
 {
-  Base::setSubSolvers( m_reservoirSolverName, m_wellSolverName );
 
-  getWellSolver()->setFlowSolverName( m_reservoirSolverName );
-}
+  DomainPartition & domain = solver->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
-void CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
-initializePostInitialConditionsPreSubGroups()
-{
-  Base::initializePostInitialConditionsPreSubGroups( );
-
-  DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  this->template forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                               MeshLevel & meshLevel,
-                                                               arrayView1d< string const > const & regionNames )
+  solver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                        MeshLevel & meshLevel,
+                                                        arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
 
@@ -101,7 +46,7 @@ initializePostInitialConditionsPreSubGroups()
                                                                                 WellElementSubRegion & subRegion )
     {
       array1d< array1d< arrayView3d< real64 const > > > const permeability =
-        elemManager.constructMaterialExtrinsicAccessor< PermeabilityBase, extrinsicMeshData::permeability::permeability >();
+        elemManager.constructMaterialExtrinsicAccessor< constitutive::PermeabilityBase, extrinsicMeshData::permeability::permeability >();
 
       PerforationData * const perforationData = subRegion.getPerforationData();
 
@@ -111,23 +56,24 @@ initializePostInitialConditionsPreSubGroups()
   } );
 }
 
-template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
-void CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
-addCouplingNumNonzeros( DomainPartition & domain,
+void
+addCouplingNumNonzeros( SolverBase const * const solver,
+                        DomainPartition & domain,
                         DofManager & dofManager,
-                        arrayView1d< localIndex > const & rowLengths ) const
+                        arrayView1d< localIndex > const & rowLengths,
+                        integer const resNumDof,
+                        integer const wellNumDof,
+                        string const & resElemDofName,
+                        string const & wellElemDofName )
 {
-  integer const resNDOF = getWellSolver()->numDofPerResElement();
-  integer const wellNDOF = getWellSolver()->numDofPerWellElement();
-
-  this->template forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                               MeshLevel const & meshLevel,
-                                                               arrayView1d< string const > const & regionNames )
+  solver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                        MeshLevel const & meshLevel,
+                                                        arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
-    string const wellDofKey = dofManager.getKey( getWellSolver()->wellElementDofName() );
-    string const resDofKey = dofManager.getKey( getWellSolver()->resElementDofName() );
+    string const wellDofKey = dofManager.getKey( wellElemDofName );
+    string const resDofKey = dofManager.getKey( resElemDofName );
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resElemDofNumber =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
@@ -171,11 +117,11 @@ addCouplingNumNonzeros( DomainPartition & domain,
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( resElemDofNumber[er][esr][ei] - rankOffset );
           GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GE( rowLengths.size(), localRow + resNDOF );
+          GEOSX_ASSERT_GE( rowLengths.size(), localRow + resNumDof );
 
-          for( integer idof = 0; idof < resNDOF; ++idof )
+          for( integer idof = 0; idof < resNumDof; ++idof )
           {
-            rowLengths[localRow + idof] += wellNDOF;
+            rowLengths[localRow + idof] += wellNumDof;
           }
         }
 
@@ -183,11 +129,11 @@ addCouplingNumNonzeros( DomainPartition & domain,
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( wellElemDofNumber[iwelem] - rankOffset );
           GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GE( rowLengths.size(), localRow + wellNDOF );
+          GEOSX_ASSERT_GE( rowLengths.size(), localRow + wellNumDof );
 
-          for( integer idof = 0; idof < wellNDOF; ++idof )
+          for( integer idof = 0; idof < wellNumDof; ++idof )
           {
-            rowLengths[localRow + idof] += resNDOF;
+            rowLengths[localRow + idof] += resNumDof;
           }
         }
       } );
@@ -195,110 +141,45 @@ addCouplingNumNonzeros( DomainPartition & domain,
   } );
 }
 
-template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
-void CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
-setupSystem( DomainPartition & domain,
-             DofManager & dofManager,
-             CRSMatrix< real64, globalIndex > & localMatrix,
-             ParallelVector & rhs,
-             ParallelVector & solution,
-             bool const )
-{
-  GEOSX_MARK_FUNCTION;
-
-  dofManager.setDomain( domain );
-
-  Base::setupDofs( domain, dofManager );
-  dofManager.reorderByRank();
-
-  // Set the sparsity pattern without reservoir-well coupling
-  SparsityPattern< globalIndex > patternDiag;
-  dofManager.setSparsityPattern( patternDiag );
-
-  // Get the original row lengths (diagonal blocks only)
-  array1d< localIndex > rowLengths( patternDiag.numRows() );
-  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
-  {
-    rowLengths[localRow] = patternDiag.numNonZeros( localRow );
-  }
-
-  // Add the number of nonzeros induced by coupling on perforations
-  addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
-
-  // Create a new pattern with enough capacity for coupled matrix
-  SparsityPattern< globalIndex > pattern;
-  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
-
-  // Copy the original nonzeros
-  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
-  {
-    globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
-  }
-
-  // Add the nonzeros from coupling
-  addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
-
-  // Finally, steal the pattern into a CRS matrix
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  localMatrix.setName( this->getName() + "/localMatrix" );
-
-  rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
-
-  solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
-}
-
-template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
-void CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
-assembleSystem( real64 const time_n,
-                real64 const dt,
-                DomainPartition & domain,
-                DofManager const & dofManager,
-                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                arrayView1d< real64 > const & localRhs )
+void
+assembleSinglePhysicsSystems( SolverBase * const reservoirSolver,
+                              SolverBase * const wellSolver,
+                              real64 const time_n,
+                              real64 const dt,
+                              DomainPartition & domain,
+                              DofManager const & dofManager,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs )
 {
   // assemble J_RR (excluding perforation rates)
-  getReservoirSolver()->assembleSystem( time_n, dt,
-                                        domain,
-                                        dofManager,
-                                        localMatrix,
-                                        localRhs );
-
-  // assemble J_WW (excluding perforation rates)
-  getWellSolver()->assembleSystem( time_n, dt,
+  reservoirSolver->assembleSystem( time_n, dt,
                                    domain,
                                    dofManager,
                                    localMatrix,
                                    localRhs );
 
-  // assemble perforation rates in J_WR, J_RW, J_RR and J_WW
-  assembleCouplingTerms( time_n, dt,
-                         domain,
-                         dofManager,
-                         localMatrix,
-                         localRhs );
+  // assemble J_WW (excluding perforation rates)
+  wellSolver->assembleSystem( time_n, dt,
+                              domain,
+                              dofManager,
+                              localMatrix,
+                              localRhs );
 }
 
-template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
-void CoupledReservoirAndWellsBase< RESERVOIR_SOLVER, WELL_SOLVER >::
-solveLinearSystem( DofManager const & dofManager,
+
+void
+solveLinearSystem( SolverBase * const solver,
+                   DofManager const & dofManager,
                    ParallelMatrix & matrix,
                    ParallelVector & rhs,
                    ParallelVector & solution )
 {
-  GEOSX_MARK_FUNCTION;
-
   rhs.scale( -1.0 );
   solution.zero();
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
+  solver->SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
-template class CoupledReservoirAndWellsBase< SinglePhaseFVM< SinglePhaseBase >, SinglePhaseWell >;
-template class CoupledReservoirAndWellsBase< SinglePhaseHybridFVM, SinglePhaseWell >;
-template class CoupledReservoirAndWellsBase< CompositionalMultiphaseFVM, CompositionalMultiphaseWell >;
-template class CoupledReservoirAndWellsBase< CompositionalMultiphaseHybridFVM, CompositionalMultiphaseWell >;
 
+}
 
 } /* namespace geosx */

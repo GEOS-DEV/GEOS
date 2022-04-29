@@ -38,6 +38,9 @@ class WellSolverBase : public SolverBase
 {
 public:
 
+  /// String used to form the solverName used to register single-physics solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "well"; }
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
