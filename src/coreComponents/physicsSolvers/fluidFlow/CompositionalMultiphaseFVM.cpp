@@ -154,7 +154,7 @@ void CompositionalMultiphaseFVM::computeStatistics( real64 const dt,
 
 
 void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
-                                                    DomainPartition & domain )
+                                                    DomainPartition & domain ) const
 {
   GEOSX_MARK_FUNCTION;
 

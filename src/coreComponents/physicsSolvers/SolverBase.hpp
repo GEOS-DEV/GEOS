@@ -713,12 +713,6 @@ protected:
   real64 m_maxStableDt;
   real64 m_nextDt;
 
-  /// flag indicating whether reservoir statistics or not will be computed or not
-  integer m_computeStatistics;
-
-  /// flag indicating the frequency of the terminal outputs
-  integer m_statisticsOutputFrequency;
-
   /// name of the FV discretization object in the data repository
   string m_discretizationName;
 

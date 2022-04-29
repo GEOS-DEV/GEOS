@@ -137,7 +137,7 @@ public:
 private:
 
   void computeCFLNumbers( real64 const & dt,
-                          DomainPartition & domain );
+                          DomainPartition & domain ) const;
 
 
   // no data needed here, see CompositionalMultiphaseBase
