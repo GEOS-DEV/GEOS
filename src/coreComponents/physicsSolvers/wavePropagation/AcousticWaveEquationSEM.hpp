@@ -86,16 +86,11 @@ public:
    * @param rhs the right hand side vector to be computed
    */
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) override;
-
-  /**
-   * @brief Compute the pressure at each receiver coordinate in one time step
-   * @param time_n the time of evaluation of the seismoTrace
-   * @param dt time step of simulation
-   * @param iseismo the index number of of the seismo trace
-   * @param pressure_np1 the array to save the pressure value at the receiver position
-   * @param pressure_n the array to save the pressure value at the receiver position
+  
+  /** 
+   * @brief Overridden from ExecutableGroup. Used to write las seismogram if needed.
    */
-  virtual void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n ) override;
+  virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain );
 
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
@@ -133,32 +128,6 @@ private:
    * @param domain the partition domain
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
-
-  /**
-   * @brief Save the seismo trace in file
-   * @param iseismo index number of the seismo trace
-   * @param valPressure value of the pressure for iseismo
-   * @param filename name of the output file
-   */
-  void saveSeismo( localIndex iseismo, real64 valPressure, string const & filename ) override;
-
-  /// Indices of the nodes (in the right order) for each source point
-  array2d< localIndex > m_sourceNodeIds;
-
-  /// Constant part of the source for the nodes listed in m_sourceNodeIds
-  array2d< real64 > m_sourceConstants;
-
-  /// Flag that indicates whether the source is local or not to the MPI rank
-  array1d< localIndex > m_sourceIsLocal;
-
-  /// Indices of the element nodes (in the right order) for each receiver point
-  array2d< localIndex > m_receiverNodeIds;
-
-  /// Basis function evaluated at the receiver for the nodes listed in m_receiverNodeIds
-  array2d< real64 > m_receiverConstants;
-
-  /// Flag that indicates whether the receiver is local or not to the MPI rank
-  array1d< localIndex > m_receiverIsLocal;
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real64 > m_pressureNp1AtReceivers;

@@ -30,6 +30,15 @@ namespace geosx
 class WaveSolverBase : public SolverBase
 {
 public:
+
+  using EXEC_POLICY = parallelDevicePolicy< 32 >;
+  using ATOMIC_POLICY = parallelDeviceAtomic;
+
+  /**
+   * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
+   */
+  static constexpr real64 epsilonLoc = 1e-8;
+
   WaveSolverBase( const std::string & name,
                   Group * const parent );
 
@@ -64,6 +73,25 @@ public:
 
 protected:
 
+  /// Indices of the nodes (in the right order) for each source point
+  array2d< localIndex > m_sourceNodeIds;
+
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds
+  array2d< real64 > m_sourceConstants;
+
+  /// Flag that indicates whether the source is local or not to the MPI rank
+  array1d< localIndex > m_sourceIsLocal;
+
+  /// Indices of the element nodes (in the right order) for each receiver point
+  array2d< localIndex > m_receiverNodeIds;
+
+  /// Basis function evaluated at the receiver for the nodes listed in m_receiverNodeIds
+  array2d< real64 > m_receiverConstants;
+
+  /// Flag that indicates whether the receiver is local or not to the MPI rank
+  array1d< localIndex > m_receiverIsLocal;
+
+
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
    * @param time the time to apply the BC
@@ -96,17 +124,28 @@ protected:
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) = 0;
 
   /**
-   * @brief Compute the pressure at each receiver coordinate in one time step
-   * @param iseismo index number of the seismo trace
-   * @param val_np1 the array to save the value at the receiver position
+   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the pressure values at the last two timesteps. 
+   * @param time_n the time corresponding to the pressure values pressure_n
+   * @param dt the simulation timestep
+   * @param timeSeismo the time at which the seismogram is computed 
+   * @param iSeismo the index of the seismogram time in the seismogram array
+   * @param pressure_np1 the pressure values at time_n + dt
+   * @param pressure_n the pressure values at time_n
    */
-  virtual void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n ) = 0;
-
+  void computeSeismoTrace( real64 const time_n, 
+	                   real64 const dt, 
+			   real64 const timeSeismo, 
+			   localIndex iSeismo, 
+			   arrayView1d< real64 > const var_at_np1, 
+			   arrayView1d< real64 > const var_at_n, 
+			   arrayView2d< real64 > const var_rcvs );
+  
   /**
-   * @brief Save the sismo trace in file
+   * @brief Temporary debug function. Saves the sismo trace to a file.
    * @param iseismo index number of the seismo trace
    */
-  virtual void saveSeismo( localIndex const iseismo, real64 valPressure, string const & filename ) = 0;
+  void saveSeismo( localIndex const iseismo, real64 val, string const & filename );
+
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
@@ -133,8 +172,6 @@ protected:
 
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
-
-
 
 };
 
