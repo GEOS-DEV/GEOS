@@ -19,8 +19,6 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
 
-#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
-
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
 namespace geosx
@@ -199,7 +197,7 @@ public:
     }
     // Add stabilization to block diagonal parts of the local jacobian
     // (this is a no-operation with FEM classes)
-    real64 const twiceShear = 2.0 * m_constitutiveUpdate.getShearModulus(k);
+    real64 const twiceShear = 2.0 * m_constitutiveUpdate.getShearModulus( k );
     m_finiteElementSpace.template addGradGradStabilizationMatrix
     < FE_TYPE,
       real64 ( & ) [numNodesPerElem *numDofPerTestSupportPoint]
