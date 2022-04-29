@@ -119,6 +119,37 @@ protected:
   m_stoichMatrix[10][6] = 1;
   m_stoichMatrix[10][3] = 1;
 
+  arrayView1d<real64>  m_inputTotalConc;	
+  m_inputTotalConc.resize( m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
+// Not sure if this works
+  m_inputTotalConc[0:6] = 0	// This won't work because H+ cannot be 0
+  m_inputTotalConc[0] = pow( 10.0, -7 )
+
+
+  arrayView1d<real64>  m_log10PrimaryConc;	
+  m_log10PrimaryConc.resize( m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
+// Not sure if this is the right place to give the initial guess
+  m_log10PrimaryConc = m_inputTotalConc
+
+  arrayView1d<real64>  m_log10SecConc;	
+  m_log10SecConc.resize( m_numSecSpecies );	// Not sure if this is the correct way of allocating the size
+// Not sure if this works
+  m_log10SecConc[0:10] = 0;
+
+  arrayView2d<real64>  dLog10SecConc_dLog10PrimaryConc;	
+  dLog10SecConc_dLog10PrimaryConc.resize( m_numSecSpecies, m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
+// Not sure if this works
+  dLog10SecConc_dLog10PrimaryConc[0:10][0:6] = 0;
+
+  arrayView1d<real64>  m_totalConc;	
+  m_totalConc.resize( m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
+// Not sure if this works
+  m_totalConc = m_inputTotalConc
+
+  arrayView2d<real64>  dTotalConc_dLog10PrimaryConc;	
+  dTotalConc_dLog10PrimaryConc.resize( m_numPrimarySpecies, m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
+// Not sure if this works
+  dTotalConc_dLog10PrimaryConc[0:6][0:6] = 0;
 
 };
 
