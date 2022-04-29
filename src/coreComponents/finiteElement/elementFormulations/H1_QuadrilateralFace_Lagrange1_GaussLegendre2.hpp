@@ -186,6 +186,27 @@ public:
                                         localIndex const rowOffset,
                                         localIndex const colOffset );
 
+  /**
+   * @brief Adds a grad-grad stabilization evaluated at @p dofs to @p targetVector.
+   * @detail This method is intended to be used with @p targetVector being the residual and @p dofs
+   * being the degrees of freedom of the previous solution.
+   * @tparam VECTORTYPE The type of @p targetVector.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @param dofs The degrees of freedom of the function where the stabilization operator has to be
+   * evaluated.
+   * @param targetVector The vector where values have to be added.
+   * @param scaleFactor Scaling of the stabilization matrix.
+   * @param offset Starting position of @p targetVector from which additions have to start.
+   */
+  template< typename VECTORTYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void addEvaluatedGradGradStabilization( StackVariables const & stack,
+                                                 real64 const ( &dofs )[maxSupportPoints],
+                                                 VECTORTYPE & targetVector,
+                                                 real64 const scaleFactor,
+                                                 localIndex const offset );
+
 private:
   /// The area of the element in the parent configuration.
   constexpr static real64 parentArea = 4.0;
@@ -277,6 +298,23 @@ void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   GEOSX_UNUSED_VAR( scaleFactor );
   GEOSX_UNUSED_VAR( rowOffset );
   GEOSX_UNUSED_VAR( colOffset );
+}
+
+template< typename VECTORTYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+  addEvaluatedGradGradStabilization( StackVariables const & stack,
+                                     real64 const ( &dofs )[maxSupportPoints],
+                                     VECTORTYPE & targetVector,
+                                     real64 const scaleFactor,
+                                     localIndex const offset )
+{
+  GEOSX_UNUSED_VAR( stack );
+  GEOSX_UNUSED_VAR( dofs );
+  GEOSX_UNUSED_VAR( targetVector );
+  GEOSX_UNUSED_VAR( scaleFactor );
+  GEOSX_UNUSED_VAR( offset );
 }
 
 GEOSX_HOST_DEVICE

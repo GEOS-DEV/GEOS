@@ -214,9 +214,9 @@ public:
    * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables as filled by @ref setupStack.
    * @param matrix The matrix that needs to be stabilized.
-   * @param scaleFactor Optional scaling of the stabilization matrix.
-   * @param rowOffset Optional row index from which to start adding.
-   * @param colOffset Optional column index from which to start adding.
+   * @param scaleFactor Scaling of the stabilization matrix.
+   * @param rowOffset Row index from which to start adding.
+   * @param colOffset Column index from which to start adding.
    */
   template< typename MATRIXTYPE, bool UPPER >
   GEOSX_HOST_DEVICE
@@ -233,6 +233,36 @@ public:
       for( localIndex j = startCol; j < stack.numSupportPoints; ++j )
       {
         matrix[rowOffset + i][colOffset + j] += scaleFactor * stack.stabilizationMatrix[i][j];
+      }
+    }
+  }
+
+  /**
+   * @brief Adds a grad-grad stabilization evaluated at @p dofs to @p targetVector.
+   * @detail This method is intended to be used with @p targetVector being the residual and @p dofs
+   * being the degrees of freedom of the previous solution.
+   * @tparam VECTORTYPE The type of @p targetVector.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @param dofs The degrees of freedom of the function where the stabilization operator has to be
+   * evaluated.
+   * @param targetVector The vector where values have to be added.
+   * @param scaleFactor Scaling of the stabilization matrix.
+   * @param offset Starting position of @p targetVector from which additions have to start.
+   */
+  template< typename VECTORTYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void addEvaluatedGradGradStabilization( StackVariables const & stack,
+                                                 real64 const ( &dofs )[maxSupportPoints],
+                                                 VECTORTYPE & targetVector,
+                                                 real64 const scaleFactor,
+                                                 localIndex const offset )
+  {
+    for( localIndex i = 0; i < stack.numSupportPoints; ++i )
+    {
+      for( localIndex j = 0; j < stack.numSupportPoints; ++j )
+      {
+        targetVector[offset + i] += scaleFactor * stack.stabilizationMatrix[i][j] * dofs[j];
       }
     }
   }
