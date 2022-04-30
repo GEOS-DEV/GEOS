@@ -187,11 +187,27 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
   propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolver" );
   real64 time_n = time;
+  // run for 1s (100 steps)
   for( int i=0; i<100; i++ )
   {
     propagator->solverStep(time_n, dt, i, domain);
     time_n += dt;
   }
+  // cleanup (triggers calculation of last seismograms data points)
+  propagator->cleanup(time_n, 100, 0, 0, domain);
+
+  // retrieve seismo
+  arrayView2d< real64 > const p_rcvs = propagator->getReference< array2d< real64 > >( AcousticWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
+
+  // check number of seismos and trace length
+  ASSERT_EQ( p_rcvs.size( 1 ), 1);
+  ASSERT_EQ( p_rcvs.size( 0 ), 11); 
+
+  // check seismo content
+  for(int i=0; i<11; i++ )
+  {
+    std::cout << p_rcvs[i][0] << std::endl;
+  } 
 
 }
 
