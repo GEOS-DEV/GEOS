@@ -204,9 +204,10 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   ASSERT_EQ( p_rcvs.size( 0 ), 11); 
 
   // check seismo content
+  real64 expected[] = {0, 0.000154869, 0.00287235, 0.018094, 0.0409127, -0.00192847, -0.103807, -0.0808633, 0.0672482, 0.121415, 0.01187031};
   for(int i=0; i<11; i++ )
   {
-    std::cout << p_rcvs[i][0] << std::endl;
+    ASSERT_TRUE( std::abs(p_rcvs[i][0] - expected[i]) < 0.00001);
   } 
 
 }
