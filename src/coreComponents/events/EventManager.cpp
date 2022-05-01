@@ -147,7 +147,7 @@ bool EventManager::run( DomainPartition & domain )
 #endif
     }
 
-    GEOSX_LOG_RANK_0( "Time: " << m_time << "s, dt:" << m_dt << "s, Cycle: " << m_cycle );
+    GEOSX_LOG_RANK_0( "Time: " << m_time << "s, dt: " << m_dt << "s, Cycle: " << m_cycle );
 
     // Execute
     for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )

@@ -551,7 +551,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     arrayView3d< real64, solid::STRESS_USD > const particleStress = constitutiveRelation.getStress();
     if(cycleNumber ==0)
     {
-      particleStress.zero(); // Zero out particle stress on first time step
+      particleStress.zero(); // Zero out particle stress on first time step TODO I thought the constitutive constructor handled this
     }
 
     for(int p=0; p<subRegion.size(); p++)
@@ -567,15 +567,15 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       std::vector<real64> weights; // shape function value for each node
       std::vector< std::vector<real64> > gradWeights; // shape function gradient value for each node; 1st index = direction, 2nd index = node
       gradWeights.resize(3);
-      subRegion.getAllWeights(p,
-                              p_x,
-                              m_xLocalMin,
-                              m_hx,
-                              m_ijkMap,
-                              g_X,
-                              nodeIDs,      // output
-                              weights,      // output
-                              gradWeights); // output
+      subRegion.getAllWeights( p,
+                               p_x,
+                               m_xLocalMin,
+                               m_hx,
+                               m_ijkMap,
+                               g_X,
+                               nodeIDs,       // output
+                               weights,       // output
+                               gradWeights ); // output
 
       // Update grid values
       for(size_t i=0; i<nodeIDs.size(); i++)
@@ -721,15 +721,15 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       std::vector<real64> weights; // shape function value for each node
       std::vector< std::vector<real64> > gradWeights; // shape function gradient value for each node; 1st index = direction, 2nd index = node
       gradWeights.resize(3);
-      subRegion.getAllWeights(p,
-                              p_x,
-                              m_xLocalMin,
-                              m_hx,
-                              m_ijkMap,
-                              g_X,
-                              nodeIDs,      // output
-                              weights,      // output
-                              gradWeights); // output
+      subRegion.getAllWeights( p,
+                               p_x,
+                               m_xLocalMin,
+                               m_hx,
+                               m_ijkMap,
+                               g_X,
+                               nodeIDs,       // output
+                               weights,       // output
+                               gradWeights ); // output
 
       // Particle-to-grid map
       for(size_t i=0; i<nodeIDs.size(); i++)
