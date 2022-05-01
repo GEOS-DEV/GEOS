@@ -134,7 +134,7 @@ std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type,
     case PAMELA::ELEMENTS::TYPE::VTK_QUAD: return { };
     case PAMELA::ELEMENTS::TYPE::VTK_TETRA: return { 0, 1, 2, 3 };
     case PAMELA::ELEMENTS::TYPE::VTK_PYRAMID: return { 0, 1, 3, 2, 4 };
-    case PAMELA::ELEMENTS::TYPE::VTK_WEDGE: return { 0, 3, 2, 5, 1, 4 };
+    case PAMELA::ELEMENTS::TYPE::VTK_WEDGE: return { 0, 3, 1, 4, 2, 5 };
     case PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON:
     {
       // if the reverseZ option is on, we have to switch the node ordering
