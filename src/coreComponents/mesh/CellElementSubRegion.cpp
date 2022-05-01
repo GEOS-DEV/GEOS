@@ -337,6 +337,9 @@ void CellElementSubRegion::
     }
   }
 
+  GEOSX_ERROR_IF( m_elementVolume[k] <= 0.0,
+                  GEOSX_FMT( "Negative volume for element {} type {} in subregion {}",
+                             k, m_elementType, getName() ) );
   LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
 }
 
