@@ -126,21 +126,20 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
 
+protected:
+
   virtual void
   computeStatistics( real64 const dt,
-                     DomainPartition & domain ) override;
+                     DomainPartition & domain ) const override;
 
   virtual void
   initializePreSubGroups() override;
 
-
 private:
 
-  void computeCFLNumbers( real64 const & dt,
-                          DomainPartition & domain ) const;
-
-
-  // no data needed here, see CompositionalMultiphaseBase
+  void
+  computeCFLNumbers( real64 const & dt,
+                     DomainPartition & domain ) const;
 
 };
 

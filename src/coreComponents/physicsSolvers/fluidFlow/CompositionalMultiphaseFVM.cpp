@@ -145,8 +145,13 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 }
 
 void CompositionalMultiphaseFVM::computeStatistics( real64 const dt,
-                                                    DomainPartition & domain )
+                                                    DomainPartition & domain ) const
 {
+  if( !m_computeStatistics )
+  {
+    return;
+  }
+
   CompositionalMultiphaseBase::computeStatistics( dt, domain );
 
   computeCFLNumbers( dt, domain );

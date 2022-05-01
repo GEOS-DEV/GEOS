@@ -98,18 +98,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
 
-  // Statistics
-
-  this->registerWrapper( viewKeyStruct::averagePressureString(), &m_averagePressure );
-  this->registerWrapper( viewKeyStruct::minimumPressureString(), &m_minimumPressure );
-  this->registerWrapper( viewKeyStruct::maximumPressureString(), &m_maximumPressure );
-  this->registerWrapper( viewKeyStruct::averageTemperatureString(), &m_averageTemperature );
-  this->registerWrapper( viewKeyStruct::minimumTemperatureString(), &m_minimumTemperature );
-  this->registerWrapper( viewKeyStruct::maximumTemperatureString(), &m_maximumTemperature );
-  this->registerWrapper( viewKeyStruct::totalPoreVolumeString(), &m_totalPoreVolume );
-  this->registerWrapper( viewKeyStruct::phasePoreVolumeString(), &m_phasePoreVolume ).
-    setSizedFromParent( 0 );
-
 }
 
 void CompositionalMultiphaseBase::postProcessInput()
@@ -248,6 +236,13 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
           reference().resizeDimension< 1 >( m_numPhases );
       }
 
+      subRegion.registerExtrinsicData< phaseVolumeFraction_n >( getName() ).
+        reference().resizeDimension< 1 >( m_numPhases );
+      subRegion.registerExtrinsicData< phaseMobility_n >( getName() ).
+        reference().resizeDimension< 1 >( m_numPhases );
+
+      // unless the previous quantities, the following ones are for output only
+      // and will only be registered/computed if the flag computeStatistics is true
       if( m_computeStatistics )
       {
         subRegion.registerExtrinsicData< phaseOutflux >( getName() ).
@@ -257,12 +252,6 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         subRegion.registerExtrinsicData< phaseCFLNumber >( getName() );
         subRegion.registerExtrinsicData< componentCFLNumber >( getName() );
       }
-
-      subRegion.registerExtrinsicData< phaseVolumeFraction_n >( getName() ).
-        reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< phaseMobility_n >( getName() ).
-        reference().resizeDimension< 1 >( m_numPhases );
-
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -270,6 +259,25 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       faceManager.registerExtrinsicData< facePressure >( getName() );
     }
 
+    // below, we register additional scalars on the target ElementRegions
+    // these quantities are also for output only, hence the conditional registration
+    if( m_computeStatistics )
+    {
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      for( integer i = 0; i < regionNames.size(); ++i )
+      {
+        ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
+
+        region.registerWrapper< real64 >( viewKeyStruct::averagePressureString() );
+        region.registerWrapper< real64 >( viewKeyStruct::minimumPressureString() );
+        region.registerWrapper< real64 >( viewKeyStruct::maximumPressureString() );
+        region.registerWrapper< real64 >( viewKeyStruct::totalPoreVolumeString() );
+        region.registerWrapper< real64 >( viewKeyStruct::totalUncompactedPoreVolumeString() );
+        region.registerWrapper< array1d< real64 > >( viewKeyStruct::phasePoreVolumeString() ).
+          setSizedFromParent( 0 ).reference().
+          resizeDimension< 0 >( m_numPhases );
+      }
+    }
   } );
 }
 
@@ -433,9 +441,6 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
 
   // 3. Initialize and validate the aquifer boundary condition
   initializeAquiferBC( cm );
-
-  // 4. Resize the array storing phase pore volumes
-  m_phasePoreVolume.resize( m_numPhases );
 
 }
 
@@ -1066,62 +1071,66 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
     initializeFluidState( mesh, regionNames );
 
     // Compute some statistics on the initial state
-    computeReservoirStatistics( mesh, regionNames );
+    if( m_computeStatistics )
+    {
+      computeRegionStatistics( mesh, regionNames );
+    }
 
   } );
 
 }
 
 void CompositionalMultiphaseBase::computeStatistics( real64 const dt,
-                                                     DomainPartition & domain )
+                                                     DomainPartition & domain ) const
 {
+  if( !m_computeStatistics )
+  {
+    return;
+  }
+
   GEOSX_UNUSED_VAR( dt );
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-    computeReservoirStatistics( mesh, regionNames );
+    computeRegionStatistics( mesh, regionNames );
   } );
 }
 
-void CompositionalMultiphaseBase::computeReservoirStatistics( MeshLevel & mesh,
-                                                              arrayView1d< string const > const & regionNames )
+void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
+                                                           arrayView1d< string const > const & regionNames ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  m_averagePressure = 0.0;
-  m_maximumPressure = 0.0;
-  m_minimumPressure = LvArray::NumericLimits< real64 >::max;
-
-  m_averageTemperature = 0.0;
-  m_maximumTemperature = 0.0;
-  m_minimumTemperature = LvArray::NumericLimits< real64 >::max;
-
-  real64 totalUncompactedPoreVolume = 0.0;
-  for( integer ip = 0; ip < m_numPhases; ++ip )
+  // Step 1: initialize the average/min/max quantities
+  ElementRegionManager & elemManager = mesh.getElemManager();
+  for( integer i = 0; i < regionNames.size(); ++i )
   {
-    m_phasePoreVolume[ip] = 0.0;
+    ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
+
+    real64 & avgPres = region.getReference< real64 >( viewKeyStruct::averagePressureString() );
+    real64 & minPres = region.getReference< real64 >( viewKeyStruct::minimumPressureString() );
+    real64 & maxPres = region.getReference< real64 >( viewKeyStruct::maximumPressureString() );
+    avgPres = 0.0; maxPres = 0.0; minPres = LvArray::NumericLimits< real64 >::max;
+
+    real64 & totalPoreVol = region.getReference< real64 >( viewKeyStruct::totalPoreVolumeString() );
+    real64 & totalUncompactedPoreVol = region.getReference< real64 >( viewKeyStruct::totalUncompactedPoreVolumeString() );
+    totalPoreVol = 0.0; totalUncompactedPoreVol = 0.0;
+
+    arrayView1d< real64 > const & phasePoreVol =
+      region.getReference< array1d< real64 > >( viewKeyStruct::phasePoreVolumeString() );
+    phasePoreVol.setValues< serialPolicy >( 0.0 );
   }
 
-  mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
-                                                                ElementSubRegionBase & subRegion )
+  // Step 2: increment the average/min/max quantities for all the subRegions
+  elemManager.forElementSubRegions( regionNames, [&]( localIndex const,
+                                                      ElementSubRegionBase & subRegion )
   {
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPressureNumerator( 0.0 );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPressure( 0.0 );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPressure( LvArray::NumericLimits< real64 >::max );
-
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgTemperatureNumerator( 0.0 );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTemperature( 0.0 );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinTemperature( LvArray::NumericLimits< real64 >::max );
-
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalUncompactedPoreVolume( 0.0 );
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionPhaseDynamicPoreVolume[MultiFluidBase::MAX_NUM_PHASES]{};
 
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
     arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-    arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
       subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
 
@@ -1130,89 +1139,79 @@ void CompositionalMultiphaseBase::computeReservoirStatistics( MeshLevel & mesh,
     arrayView1d< real64 const > const refPorosity = solid.getReferencePorosity();
     arrayView2d< real64 const > const porosity = solid.getPorosity();
 
-    integer numPhases = m_numPhases;
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    real64 subRegionAvgPresNumerator = 0.0;
+    real64 subRegionMinPres = 0.0;
+    real64 subRegionMaxPres = 0.0;
+    real64 subRegionTotalUncompactedPoreVol = 0.0;
+    stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionPhaseDynamicPoreVol( m_numPhases );
+
+    isothermalCompositionalMultiphaseBaseKernels::
+      StatisticsKernel::
+      launch< parallelDevicePolicy<> >( subRegion.size(),
+                                        m_numPhases,
+                                        elemGhostRank,
+                                        volume,
+                                        pres,
+                                        refPorosity,
+                                        porosity,
+                                        phaseVolFrac,
+                                        subRegionMinPres,
+                                        subRegionAvgPresNumerator,
+                                        subRegionMaxPres,
+                                        subRegionTotalUncompactedPoreVol,
+                                        subRegionPhaseDynamicPoreVol.toSlice() );
+
+    ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
+    real64 & minPres = region.getReference< real64 >( viewKeyStruct::minimumPressureString() );
+    real64 & avgPres = region.getReference< real64 >( viewKeyStruct::averagePressureString() );
+    real64 & maxPres = region.getReference< real64 >( viewKeyStruct::maximumPressureString() );
+
+    real64 & totalUncompactedPoreVol = region.getReference< real64 >( viewKeyStruct::totalUncompactedPoreVolumeString() );
+    arrayView1d< real64 > const & phasePoreVol =
+      region.getReference< array1d< real64 > >( viewKeyStruct::phasePoreVolumeString() );
+
+    avgPres += subRegionAvgPresNumerator;
+    if( subRegionMinPres < minPres )
     {
-      if( elemGhostRank[ei] >= 0 )
-      {
-        return;
-      }
-
-      // To match our "reference", we have to use reference porosity here, not the actual porosity when we compute averages
-      real64 const uncompactedPoreVolume = volume[ei] * refPorosity[ei];
-      real64 const dynamicPoreVolume = volume[ei] * porosity[ei][0];
-
-      subRegionAvgPressureNumerator += uncompactedPoreVolume * pres[ei];
-      subRegionMaxPressure.max( pres[ei] );
-      subRegionMinPressure.min( pres[ei] );
-
-      subRegionAvgTemperatureNumerator += uncompactedPoreVolume * temp[ei]; // for real thermal change pore volume to volume
-      subRegionMaxTemperature.max( temp[ei] );
-      subRegionMinTemperature.min( temp[ei] );
-
-      subRegionTotalUncompactedPoreVolume += uncompactedPoreVolume;
-      for( integer ip = 0; ip < numPhases; ++ip )
-      {
-        subRegionPhaseDynamicPoreVolume[ip] += dynamicPoreVolume * phaseVolFrac[ei][ip];
-      }
-    } );
-
-    m_averagePressure += subRegionAvgPressureNumerator.get();
-    if( subRegionMinPressure.get() < m_minimumPressure )
-    {
-      m_minimumPressure = subRegionMinPressure.get();
+      minPres = subRegionMinPres;
     }
-    if( subRegionMaxPressure.get() > m_maximumPressure )
+    if( subRegionMaxPres > maxPres )
     {
-      m_maximumPressure = subRegionMaxPressure.get();
-    }
-
-    m_averageTemperature += subRegionAvgTemperatureNumerator.get();
-    if( subRegionMinTemperature.get() < m_minimumTemperature )
-    {
-      m_minimumTemperature = subRegionMinTemperature.get();
-    }
-    if( subRegionMaxTemperature.get() > m_maximumTemperature )
-    {
-      m_maximumTemperature = subRegionMaxTemperature.get();
+      maxPres = subRegionMaxPres;
     }
 
-    totalUncompactedPoreVolume += subRegionTotalUncompactedPoreVolume.get();
+    totalUncompactedPoreVol += subRegionTotalUncompactedPoreVol;
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
-      m_phasePoreVolume[ip] += subRegionPhaseDynamicPoreVolume[ip].get();
+      phasePoreVol[ip] += subRegionPhaseDynamicPoreVol[ip];
     }
-
   } );
 
-  m_averagePressure = MpiWrapper::sum( m_averagePressure );
-  m_minimumPressure = MpiWrapper::min( m_minimumPressure );
-  m_maximumPressure = MpiWrapper::max( m_maximumPressure );
-
-  m_averageTemperature = MpiWrapper::sum( m_averageTemperature );
-  m_minimumTemperature = MpiWrapper::min( m_minimumTemperature );
-  m_maximumTemperature = MpiWrapper::max( m_maximumTemperature );
-
-  m_totalPoreVolume = 0.0;
-  totalUncompactedPoreVolume = MpiWrapper::sum( totalUncompactedPoreVolume );
-  for( integer ip = 0; ip < m_numPhases; ++ip )
+  // Step 3: synchronize the results over the MPI ranks
+  for( integer i = 0; i < regionNames.size(); ++i )
   {
-    m_phasePoreVolume[ip] = MpiWrapper::sum( m_phasePoreVolume[ip] );
-    m_totalPoreVolume += m_phasePoreVolume[ip];
+    ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
+
+    real64 & avgPres = region.getReference< real64 >( viewKeyStruct::averagePressureString() );
+    real64 & minPres = region.getReference< real64 >( viewKeyStruct::minimumPressureString() );
+    real64 & maxPres = region.getReference< real64 >( viewKeyStruct::maximumPressureString() );
+    real64 & totalPoreVol = region.getReference< real64 >( viewKeyStruct::totalPoreVolumeString() );
+    real64 & totalUncompactedPoreVol = region.getReference< real64 >( viewKeyStruct::totalUncompactedPoreVolumeString() );
+    arrayView1d< real64 > const & phasePoreVol =
+      region.getReference< array1d< real64 > >( viewKeyStruct::phasePoreVolumeString() );
+
+    minPres = MpiWrapper::min( minPres );
+    maxPres = MpiWrapper::max( maxPres );
+    totalUncompactedPoreVol = MpiWrapper::sum( totalUncompactedPoreVol );
+    totalPoreVol = 0.0;
+    for( integer ip = 0; ip < m_numPhases; ++ip )
+    {
+      phasePoreVol[ip] = MpiWrapper::sum( phasePoreVol[ip] );
+      totalPoreVol += phasePoreVol[ip];
+    }
+    avgPres = MpiWrapper::sum( avgPres );
+    avgPres /= totalUncompactedPoreVol;
   }
-
-  m_averagePressure /= totalUncompactedPoreVolume;
-  m_averageTemperature /= totalUncompactedPoreVolume;
-
-  // if( outputToTerminal )
-  // {
-  //   GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Pressure (min, average, max): " << m_minimumPressure << ", " << m_averagePressure << ", "
-  // << m_maximumPressure << " Pa" );
-  //   GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Temperature (min, average, max): " << m_minimumTemperature << ", " << m_averageTemperature
-  // << ", " << m_maximumTemperature << " K" );
-  //   GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Total dynamic pore volume: " << m_totalPoreVolume << " rm^3" );
-  //   GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Phase dynamic pore volumes: " << m_phasePoreVolume << " rm^3" );
-  // }
 }
 
 real64 CompositionalMultiphaseBase::solverStep( real64 const & time_n,
@@ -1239,10 +1238,7 @@ real64 CompositionalMultiphaseBase::solverStep( real64 const & time_n,
   implicitStepComplete( time_n, dt_return, domain );
 
   // compute some statistics on the reservoir (CFL, average field pressure, averege field temperature)
-  if( m_computeStatistics )
-  {
-    computeStatistics( dt_return, domain );
-  }
+  computeStatistics( dt_return, domain );
 
   return dt_return;
 }

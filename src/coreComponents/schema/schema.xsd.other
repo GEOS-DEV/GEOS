@@ -505,52 +505,20 @@
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--averagePressure => (no description available)-->
-		<xsd:attribute name="averagePressure" type="real64" />
-		<!--averageTemperature => (no description available)-->
-		<xsd:attribute name="averageTemperature" type="real64" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--maximumPressure => (no description available)-->
-		<xsd:attribute name="maximumPressure" type="real64" />
-		<!--maximumTemperature => (no description available)-->
-		<xsd:attribute name="maximumTemperature" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
-		<!--minimumPressure => (no description available)-->
-		<xsd:attribute name="minimumPressure" type="real64" />
-		<!--minimumTemperature => (no description available)-->
-		<xsd:attribute name="minimumTemperature" type="real64" />
-		<!--phasePoreVolume => (no description available)-->
-		<xsd:attribute name="phasePoreVolume" type="real64_array" />
-		<!--totalPoreVolume => (no description available)-->
-		<xsd:attribute name="totalPoreVolume" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--averagePressure => (no description available)-->
-		<xsd:attribute name="averagePressure" type="real64" />
-		<!--averageTemperature => (no description available)-->
-		<xsd:attribute name="averageTemperature" type="real64" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--maximumPressure => (no description available)-->
-		<xsd:attribute name="maximumPressure" type="real64" />
-		<!--maximumTemperature => (no description available)-->
-		<xsd:attribute name="maximumTemperature" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
-		<!--minimumPressure => (no description available)-->
-		<xsd:attribute name="minimumPressure" type="real64" />
-		<!--minimumTemperature => (no description available)-->
-		<xsd:attribute name="minimumTemperature" type="real64" />
-		<!--phasePoreVolume => (no description available)-->
-		<xsd:attribute name="phasePoreVolume" type="real64_array" />
-		<!--totalPoreVolume => (no description available)-->
-		<xsd:attribute name="totalPoreVolume" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

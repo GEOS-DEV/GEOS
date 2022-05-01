@@ -227,8 +227,6 @@ public:
 
     static constexpr char const * isThermalString()  { return "isThermal"; }
 
-    static constexpr char const * computeStatisticsString() { return "computeStatistics"; }
-
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
 
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
@@ -241,7 +239,9 @@ public:
 
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
 
-    // reservoir statistics
+    // reservoir region statistics
+
+    static constexpr char const * computeStatisticsString() { return "computeStatistics"; }
 
     static constexpr char const * averagePressureString() { return "averagePressure"; }
 
@@ -249,13 +249,9 @@ public:
 
     static constexpr char const * minimumPressureString() { return "minimumPressure"; }
 
-    static constexpr char const * averageTemperatureString() { return "averageTemperature"; }
-
-    static constexpr char const * maximumTemperatureString() { return "maximumTemperature"; }
-
-    static constexpr char const * minimumTemperatureString() { return "minimumTemperature"; }
-
     static constexpr char const * totalPoreVolumeString() { return "totalPoreVolume"; }
+
+    static constexpr char const * totalUncompactedPoreVolumeString() { return "totalUncompactedPoreVolume"; }
 
     static constexpr char const * phasePoreVolumeString() { return "phasePoreVolume"; }
 
@@ -332,22 +328,6 @@ public:
 
 
   /**
-   * @brief Compute CFL numbers and reservoir statistics
-   * @param dt the time step size
-   * @param domain the domain partition
-   */
-  virtual void computeStatistics( real64 const dt,
-                                  DomainPartition & domain );
-
-  /**
-   * @brief Compute some statistics on the reservoir (average field pressure, average field temperature)
-   * @param[in] mesh the mesh level object
-   * @param[in] regionNames the array of target region Names
-   */
-  void computeReservoirStatistics( MeshLevel & mesh,
-                                   arrayView1d< string const > const & regionNames );
-
-  /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
    */
@@ -357,6 +337,10 @@ public:
 
 protected:
 
+  virtual void postProcessInput() override;
+
+  virtual void initializePreSubGroups() override;
+
   /**
    * @brief Utility function that checks the consistency of the constitutive models
    * @param[in] domain the domain partition
@@ -365,17 +349,27 @@ protected:
    */
   void validateConstitutiveModels( DomainPartition const & domain ) const;
 
-  virtual void postProcessInput() override;
-
-  virtual void initializePreSubGroups() override;
-
-
   /**
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
    * @param[in] cm reference to the global constitutive model manager
    */
   void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
+  /**
+   * @brief Compute CFL numbers and reservoir statistics
+   * @param dt the time step size
+   * @param domain the domain partition
+   */
+  virtual void computeStatistics( real64 const dt,
+                                  DomainPartition & domain ) const;
+
+  /**
+   * @brief Compute some statistics on the reservoir (average field pressure, average field temperature)
+   * @param[in] mesh the mesh level object
+   * @param[in] regionNames the array of target region Names
+   */
+  void computeRegionStatistics( MeshLevel & mesh,
+                                arrayView1d< string const > const & regionNames ) const;
 
   /// flag to specify whether the sparsity pattern needs to be rebuilt
   bool m_systemSetupDone;
@@ -388,6 +382,9 @@ protected:
 
   /// the input temperature
   real64 m_inputTemperature;
+
+  /// flag to decide whether statistics (avg pressure, CFL) are computed or not
+  integer m_computeStatistics;
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
@@ -409,35 +406,6 @@ protected:
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
-
-  // Statistics
-
-  /// flag to specify whether reservoir statistics are computed or not
-  integer m_computeStatistics;
-
-  /// average pressure in the reservoir
-  real64 m_averagePressure;
-
-  /// minimum pressure in the reservoir
-  real64 m_minimumPressure;
-
-  /// maximum pressure in the reservoir
-  real64 m_maximumPressure;
-
-  /// average temperature in the reservoir
-  real64 m_averageTemperature;
-
-  /// minimum temperature in the reservoir
-  real64 m_minimumTemperature;
-
-  /// maximum temperature in the reservoir
-  real64 m_maximumTemperature;
-
-  /// total reservoir pore volume at reservoir conditions
-  real64 m_totalPoreVolume;
-
-  /// phase pore volumes at reservoir conditions
-  array1d< real64 > m_phasePoreVolume;
 
 private:
 
