@@ -59,7 +59,7 @@ bool VTKVTMWriter::hasSubBlock( string const & blockName, string const & subBloc
   for( xmlWrapper::xmlNode childNode : vtkMultiBlockNode.children() )
   {
     string childName = childNode.attribute( "name" ).value();
-    if( childName == blockName )
+    if( childName == subBlockName )
     {
       hasChild = true;
     }

@@ -728,12 +728,6 @@ namespace geosx
       subRegion.particleUnpack( receiveBuffer[n], newParticleStartingIndices[n], numberOfIncomingParticles[n] );
     }
 
-//    for(localIndex n=0; n<nn; n++ )
-//    {
-//      lArray1d receiveElements;
-//      const char* _buffer = reinterpret_cast<char*>(receiveBuffer[n].data());  // Recast into form needed by Unpack:
-//      particleManager.Unpack(_buffer,receiveElements);                         // Unpack particles and create/overwrite as needed
-//    }
   }
 
 }

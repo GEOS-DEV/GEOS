@@ -94,12 +94,12 @@ unsigned int ParticleSubRegionBase::particlePack( buffer_type & buffer,
   // Pack particle fields
   if(!doPack) // doPack == false, so we're just getting the size
   {
-    packedSize += this->packSize( {}, localIndices, 0, false, events );
+    packedSize += this->packSize( localIndices, 0, false, events );
   }
   else // doPack == true, perform the pack
   {
     buffer_unit_type* bufferPtr = buffer.data();
-    packedSize += this->pack( bufferPtr, {}, localIndices, 0, false, events );
+    packedSize += this->pack( bufferPtr, localIndices, 0, false, events );
   }
 
   return packedSize;
