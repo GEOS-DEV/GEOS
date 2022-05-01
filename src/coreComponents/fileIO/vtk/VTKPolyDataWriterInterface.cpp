@@ -359,7 +359,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
   cellTypes.reserve( numElems );
 
   auto const offsets = vtkSmartPointer< vtkIdTypeArray >::New();
-  offsets->SetNumberOfTuples( numElems );
+  offsets->SetNumberOfTuples( numElems + 1 );
 
   auto const connectivity = vtkSmartPointer< vtkIdTypeArray >::New();
   connectivity->SetNumberOfTuples( numConns );
@@ -388,6 +388,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
     elemOffset += subRegion.size();
     connOffset += subRegion.size() * nodesPerElem;
   } );
+  offsets->SetTypedComponent( elemOffset, 0, connOffset );
 
   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
   cellsArray->SetData( offsets, connectivity );
@@ -932,17 +933,14 @@ void VTKPolyDataWriterInterface::writeParticleRegions( real64 const time,
 {
   particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion const & region )
   {
-    if( region.getNumberOfParticles< ParticleSubRegion >() != 0 )
-    {
-      vtkSmartPointer< vtkUnstructuredGrid > const ug = vtkUnstructuredGrid::New();
-      auto VTKPoints = getVtkPoints( region );
-      ug->SetPoints( VTKPoints );
-      auto VTKCells = getVtkCells( region );
-      ug->SetCells( VTKCells.first.data(), VTKCells.second );
-      writeTimestamp( *ug, time );
-      writeParticleFields< ParticleSubRegion >( region, *ug->GetCellData() );
-      writeUnstructuredGrid( cycle, region.getName(), *ug );
-    }
+    vtkSmartPointer< vtkUnstructuredGrid > const ug = vtkUnstructuredGrid::New();
+    auto VTKPoints = getVtkPoints( region );
+    ug->SetPoints( VTKPoints );
+    auto VTKCells = getVtkCells( region );
+    ug->SetCells( VTKCells.first.data(), VTKCells.second );
+    writeTimestamp( *ug, time );
+    writeParticleFields< ParticleSubRegion >( region, *ug->GetCellData() );
+    writeUnstructuredGrid( cycle, region.getName(), *ug );
   } );
 }
 
@@ -993,7 +991,7 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
   
   auto addElementRegion = [&]( ElementRegionBase const & region )
   {
-    if( !vtmWriter.hasSubBlock( meshBodyName, region.getCatalogName() ) ) // TODO: Fix hasSubBlock
+    if( !vtmWriter.hasSubBlock( meshBodyName, region.getCatalogName() ) )
     {
       vtmWriter.addSubBlock( meshBodyName, region.getCatalogName() );
     }
@@ -1007,7 +1005,7 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
   
   auto addParticleRegion = [&]( ParticleRegionBase const & region )
   {
-    if( !vtmWriter.hasSubBlock( meshBodyName, region.getCatalogName() ) ) // TODO: Fix hasSubBlock
+    if( !vtmWriter.hasSubBlock( meshBodyName, region.getCatalogName() ) )
     {
       vtmWriter.addSubBlock( meshBodyName, region.getCatalogName() );
     }
@@ -1083,7 +1081,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
     writeParticleRegions( time, cycle, particleManager );
     if(rank == 0 )
     {
-      writeVtmFile( time, meshBodyName, elemManager, particleManager, vtmWriter );
+      writeVtmFile( cycle, meshBodyName, elemManager, particleManager, vtmWriter );
     }
   }
 
