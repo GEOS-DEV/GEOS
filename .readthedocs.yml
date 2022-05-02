@@ -11,7 +11,7 @@ build:
     nodejs: 16
     python: 3.7
   jobs:
-    post_create_environment:
+    post_install:
     - npm install -g @mermaid-js/mermaid-cli
 
 # Optionally set the version of Python and requirements required to build your docs
