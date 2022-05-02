@@ -31,14 +31,6 @@ class WaveSolverBase : public SolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
-  using ATOMIC_POLICY = parallelDeviceAtomic;
-
-  /**
-   * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
-   */
-  static constexpr real64 epsilonLoc = 1e-8;
-
   WaveSolverBase( const std::string & name,
                   Group * const parent );
 
@@ -72,25 +64,6 @@ public:
 
 
 protected:
-
-  /// Indices of the nodes (in the right order) for each source point
-  array2d< localIndex > m_sourceNodeIds;
-
-  /// Constant part of the source for the nodes listed in m_sourceNodeIds
-  array2d< real64 > m_sourceConstants;
-
-  /// Flag that indicates whether the source is local or not to the MPI rank
-  array1d< localIndex > m_sourceIsLocal;
-
-  /// Indices of the element nodes (in the right order) for each receiver point
-  array2d< localIndex > m_receiverNodeIds;
-
-  /// Basis function evaluated at the receiver for the nodes listed in m_receiverNodeIds
-  array2d< real64 > m_receiverConstants;
-
-  /// Flag that indicates whether the receiver is local or not to the MPI rank
-  array1d< localIndex > m_receiverIsLocal;
-
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
@@ -132,19 +105,22 @@ protected:
    * @param pressure_np1 the pressure values at time_n + dt
    * @param pressure_n the pressure values at time_n
    */
-  void computeSeismoTrace( real64 const time_n, 
-	                   real64 const dt, 
-			   real64 const timeSeismo, 
-			   localIndex iSeismo, 
-			   arrayView1d< real64 > const var_at_np1, 
-			   arrayView1d< real64 > const var_at_n, 
-			   arrayView2d< real64 > const var_rcvs );
+  virtual void computeSeismoTrace( real64 const time_n, 
+	                           real64 const dt, 
+	        		   real64 const timeSeismo, 
+	        		   localIndex iSeismo, 
+	        		   arrayView1d< real64 > const var_at_np1, 
+	        		   arrayView1d< real64 > const var_at_n, 
+	        		   arrayView2d< real64 > const var_rcvs ) = 0;
   
   /**
    * @brief Temporary debug function. Saves the sismo trace to a file.
-   * @param iseismo index number of the seismo trace
+   * @param iSeismo index number of the seismo trace
+   * @param val value to be written in seismo 
+   * @param filename name of the output file
    */
-  void saveSeismo( localIndex const iseismo, real64 val, string const & filename );
+  virtual void saveSeismo( localIndex const iSeismo, real64 val, string const & filename ) = 0;
+
 
 
   /// Coordinates of the sources in the mesh
