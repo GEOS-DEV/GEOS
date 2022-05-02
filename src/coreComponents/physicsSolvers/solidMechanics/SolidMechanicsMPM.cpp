@@ -22,6 +22,9 @@
 #include "SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
 #include "SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp"
 
+#include "chrono"
+#include "thread"
+
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -397,7 +400,9 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
-void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X, ParticleManager & particleManager, SpatialPartition & partition)
+void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X,
+                                   ParticleManager & particleManager,
+                                   SpatialPartition & partition)
 {
   // Get global domain extent
   for(int i=0; i<g_X.size()/3; i++)
@@ -607,16 +612,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   std::vector< NeighborCommunicator > & neighbors = domain.getNeighbors();
   m_iComm.resize( neighbors.size() );
 
-  // (2) Additive sync
-  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
-  parallelDeviceEvents packEvents;
-  CommunicationTools::getInstance().asyncPack( fieldNames, mesh, neighbors, m_iComm, true, packEvents );
-  waitAllDeviceEvents( packEvents );
-  CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, true, packEvents );
-  parallelDeviceEvents unpackEvents;
-  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, m_iComm, true, unpackEvents, MPI_SUM ); // needs an extra argument to indicate additive unpack
-
-  // (3) Swap send and receive indices
+  // (2) Swap send and receive indices so we can sum from ghost to master
   for(size_t n=0; n<neighbors.size(); n++)
   {
     int const neighborRank = neighbors[n].neighborRank();
@@ -627,7 +623,27 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     nodeGhostsToReceive = temp;
   }
 
-  // (4) Perform sync
+  // (3) Additive sync
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
+  parallelDeviceEvents packEvents;
+  CommunicationTools::getInstance().asyncPack( fieldNames, mesh, neighbors, m_iComm, true, packEvents );
+  waitAllDeviceEvents( packEvents );
+  CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, true, packEvents );
+  parallelDeviceEvents unpackEvents;
+  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, m_iComm, true, unpackEvents, MPI_SUM ); // needs an extra argument to indicate additive unpack
+
+  // (4) Swap send and receive indices back so we can sync from master to ghost
+  for(size_t n=0; n<neighbors.size(); n++)
+  {
+    int const neighborRank = neighbors[n].neighborRank();
+    array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
+    array1d< localIndex > & nodeGhostsToSend = nodeManager.getNeighborData( neighborRank ).ghostsToSend();
+    array1d< localIndex > temp = nodeGhostsToSend;
+    nodeGhostsToSend = nodeGhostsToReceive;
+    nodeGhostsToReceive = temp;
+  }
+
+  // (5) Perform sync
   CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
   parallelDeviceEvents packEvents2;
   CommunicationTools::getInstance().asyncPack( fieldNames, mesh, neighbors, m_iComm, true, packEvents2 );
