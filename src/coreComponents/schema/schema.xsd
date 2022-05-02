@@ -642,7 +642,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="nz" type="integer_array" use="required" />
 		<!--positionTolerance => A position tolerance to verify if a node belong to a nodeset-->
 		<xsd:attribute name="positionTolerance" type="real64" default="1e-10" />
-		<!--trianglePattern => Pattern by which to decompose the hex mesh into prisms (more explanation required)-->
+		<!--trianglePattern => Pattern by which to decompose the hex mesh into wedges-->
 		<xsd:attribute name="trianglePattern" type="integer" default="0" />
 		<!--xBias => Bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->
 		<xsd:attribute name="xBias" type="real64_array" default="{1}" />
@@ -721,7 +721,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="theta" type="real64_array" use="required" />
 		<!--trajectory => Coordinates defining the wellbore trajectory-->
 		<xsd:attribute name="trajectory" type="real64_array2d" default="{{0}}" />
-		<!--trianglePattern => Pattern by which to decompose the hex mesh into prisms (more explanation required)-->
+		<!--trianglePattern => Pattern by which to decompose the hex mesh into wedges-->
 		<xsd:attribute name="trianglePattern" type="integer" default="0" />
 		<!--useCartesianOuterBoundary => Enforce a Cartesian aligned outer boundary on the outer block starting with the radial block specified in this value-->
 		<xsd:attribute name="useCartesianOuterBoundary" type="integer" default="1000000" />
@@ -761,7 +761,9 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="file" type="path" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--regionAttribute => Translate the coordinates of the vertices by a given vector-->
+		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
+		<xsd:attribute name="partitionRefinement" type="integer" default="1" />
+		<!--regionAttribute => Name of the VTK cell attribute to use as region marker-->
 		<xsd:attribute name="regionAttribute" type="string" default="attribute" />
 		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
@@ -1158,6 +1160,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
@@ -1188,6 +1192,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
@@ -1958,6 +1964,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="ProppantSolidProppantPermeability" type="ProppantSolidProppantPermeabilityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
+			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
 			<xsd:element name="TableCapillaryPressure" type="TableCapillaryPressureType" />
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
 			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
@@ -2226,7 +2233,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 	<xsd:complexType name="ConstantThermalConductivityType">
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
-		<!--thermalConductivityComponents => xx, yy, and zz components of a diagonal thermal conductivity tensor [W/(m.K)]-->
+		<!--thermalConductivityComponents => xx, yy, and zz components of a diagonal thermal conductivity tensor [J/(s.m.K)]-->
 		<xsd:attribute name="thermalConductivityComponents" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
@@ -2238,6 +2245,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
 		<!--cohesion => Cohesion-->
 		<xsd:attribute name="cohesion" type="real64" use="required" />
+		<!--displacementJumpThreshold => A threshold valued to determine whether a fracture is open or not.-->
+		<xsd:attribute name="displacementJumpThreshold" type="real64" default="2.22045e-16" />
 		<!--frictionCoefficient => Friction coefficient-->
 		<xsd:attribute name="frictionCoefficient" type="real64" use="required" />
 		<!--penaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->
@@ -2508,6 +2517,8 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="apertureTableName" type="string" use="required" />
 		<!--apertureTolerance => Value to be used to avoid floating point errors in expressions involving aperture. For example in the case of dividing by the actual aperture (not the effective aperture that results from the aperture function) this value may be used to avoid the 1/0 error. Note that this value may have some physical significance in its usage, as it may be used to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the 1/0 error.-->
 		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
+		<!--displacementJumpThreshold => A threshold valued to determine whether a fracture is open or not.-->
+		<xsd:attribute name="displacementJumpThreshold" type="real64" default="2.22045e-16" />
 		<!--penaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->
 		<xsd:attribute name="penaltyStiffness" type="real64" default="0" />
 		<!--shearStiffness => Value of the shear elastic stiffness. Units of Pressure/length-->
@@ -2762,6 +2773,16 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="maxPermMultiplier" type="real64" use="required" />
 		<!--shearDispThreshold => Threshold of shear displacement.-->
 		<xsd:attribute name="shearDispThreshold" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidInternalEnergyType">
+		<!--referenceInternalEnergy => Internal energy at the reference temperature [J/kg]-->
+		<xsd:attribute name="referenceInternalEnergy" type="real64" use="required" />
+		<!--referenceTemperature => Reference temperature [K]-->
+		<xsd:attribute name="referenceTemperature" type="real64" use="required" />
+		<!--volumetricHeatCapacity => Solid volumetric heat capacity [J/(kg.K)]-->
+		<xsd:attribute name="volumetricHeatCapacity" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

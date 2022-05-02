@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CompositionalMultiphaseFVMKernels.hpp
+ * @file IsothermalCompositionalMultiphaseFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
@@ -35,14 +35,14 @@
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 namespace geosx
 {
 
-namespace compositionalMultiphaseFVMKernels
+namespace isothermalCompositionalMultiphaseFVMKernels
 {
 
 using namespace constitutive;
@@ -56,11 +56,11 @@ using namespace constitutive;
  * @brief Define the interface for the property kernel in charge of computing the phase mobilities
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class PhaseMobilityKernel : public compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
+class PhaseMobilityKernel : public isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
 public:
 
-  using Base = compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+  using Base = isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
   using Base::numComp;
 
   /// Compile time value for the number of phases
@@ -97,10 +97,10 @@ public:
    * @param[in] ei the element index
    * @param[in] phaseMobilityKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = compositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei,
-                FUNC && phaseMobilityKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                FUNC && phaseMobilityKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 
@@ -240,7 +240,7 @@ public:
   {
     if( numPhase == 2 )
     {
-      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
@@ -249,7 +249,7 @@ public:
     }
     else if( numPhase == 3 )
     {
-      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
@@ -258,6 +258,7 @@ public:
     }
   }
 };
+
 
 /******************************** FaceBasedAssemblyKernel ********************************/
 
@@ -284,7 +285,6 @@ public:
     StencilAccessors< extrinsicMeshData::ghostRank,
                       extrinsicMeshData::flow::gravityCoefficient,
                       extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::deltaPressure,
                       extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity,
                       extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
                       extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity,
@@ -313,11 +313,11 @@ public:
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
-   * @param[in] dofNumberAccessor
-   * @param[in] compFlowAccessors
-   * @param[in] multiFluidAccessors
-   * @param[in] capPressureAccessors
-   * @param[in] permeabilityAccessors
+   * @param[in] dofNumberAccessor accessor for the dof numbers
+   * @param[in] compFlowAccessors accessor for wrappers registered by the solver
+   * @param[in] multiFluidAccessors accessor for wrappers registered by the multifluid model
+   * @param[in] capPressureAccessors accessor for wrappers registered by the cap pressure model
+   * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -363,7 +363,6 @@ protected:
 
   /// Views on pressure
   ElementViewConst< arrayView1d< real64 const > > const m_pres;
-  ElementViewConst< arrayView1d< real64 const > > const m_dPres;
 
   /// Views on derivatives of phase volume fractions and comp fractions
   ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const m_dCompFrac_dCompDens;
@@ -573,20 +572,16 @@ public:
 
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian
-   * @tparam FUNC1 the type of the function that can be used to customize the computation of the phase fluxes
-   * @tparam FUNC2 the type of the function that can be used to customize the assembly into the local Jacobian
+   * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
-   * @param[in] phaseFluxKernelOp the function used to customize the computation of the phase fluxes
-   * @param[in] localFluxJacobianKernelOp the function used to customize the computation of the assembly into the local Jacobian
+   * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  template< typename FUNC1 = compositionalMultiphaseBaseKernels::NoOpFunc,
-            typename FUNC2 = compositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC1 && phaseFluxKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{},
-                    FUNC2 && localFluxJacobianKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && compFluxKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 
@@ -683,9 +678,9 @@ public:
           }
         }
 
-        presGrad += stack.transmissibility[0][i] * (m_pres[er][esr][ei] + m_dPres[er][esr][ei] - capPressure);
+        presGrad += stack.transmissibility[0][i] * (m_pres[er][esr][ei] - capPressure);
         dPresGrad_dP[i] += stack.transmissibility[0][i] * (1 - dCapPressure_dP)
-                           + stack.dTrans_dPres[0][i] * (m_pres[er][esr][ei] + m_dPres[er][esr][ei] - capPressure);
+                           + stack.dTrans_dPres[0][i] * (m_pres[er][esr][ei] - capPressure);
         for( integer jc = 0; jc < numComp; ++jc )
         {
           dPresGrad_dC[i][jc] += -stack.transmissibility[0][i] * dCapPressure_dC[jc];
@@ -811,8 +806,7 @@ public:
 
       // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
       // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
-      // note: more variables may need to be passed, but it is hard to tell which ones will be needed for now
-      phaseFluxKernelOp( ip, er_up, esr_up, ei_up, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
+      compFluxKernelOp( ip, k_up, er_up, esr_up, ei_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
     }
 
@@ -821,30 +815,23 @@ public:
     // populate local flux vector and derivatives
     for( integer ic = 0; ic < numComp; ++ic )
     {
-      stack.localFlux[ic]           =  m_dt * stack.compFlux[ic];
-      stack.localFlux[numComp + ic] = -m_dt * stack.compFlux[ic];
+      stack.localFlux[ic]          =  m_dt * stack.compFlux[ic];
+      stack.localFlux[numEqn + ic] = -m_dt * stack.compFlux[ic];
 
       for( integer ke = 0; ke < stack.stencilSize; ++ke )
       {
         localIndex const localDofIndexPres = ke * numDof;
-        stack.localFluxJacobian[ic][localDofIndexPres]           =  m_dt * stack.dCompFlux_dP[ke][ic];
-        stack.localFluxJacobian[numComp + ic][localDofIndexPres] = -m_dt * stack.dCompFlux_dP[ke][ic];
+        stack.localFluxJacobian[ic][localDofIndexPres]          =  m_dt * stack.dCompFlux_dP[ke][ic];
+        stack.localFluxJacobian[numEqn + ic][localDofIndexPres] = -m_dt * stack.dCompFlux_dP[ke][ic];
 
         for( integer jc = 0; jc < numComp; ++jc )
         {
           localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-          stack.localFluxJacobian[ic][localDofIndexComp]           =  m_dt * stack.dCompFlux_dC[ke][ic][jc];
-          stack.localFluxJacobian[numComp + ic][localDofIndexComp] = -m_dt * stack.dCompFlux_dC[ke][ic][jc];
+          stack.localFluxJacobian[ic][localDofIndexComp]          =  m_dt * stack.dCompFlux_dC[ke][ic][jc];
+          stack.localFluxJacobian[numEqn + ic][localDofIndexComp] = -m_dt * stack.dCompFlux_dC[ke][ic][jc];
         }
       }
     }
-
-    // call the lambda to allow assembly into the localFluxJacobian
-    // possible uses: - assemble the derivatives of compFlux wrt temperature into localFluxJacobian;
-    //                - assemble energyFlux into localFlux and localFluxJacobian
-    // TODO: this second kernelOp becomes unnecessary if we increment the residual/jacobian directly in the phase loop
-    localFluxJacobianKernelOp( stack.localFlux, stack.localFluxJacobian );
-
   }
 
   /**
@@ -852,20 +839,24 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
+  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
   void complete( localIndex const iconn,
-                 StackVariables & stack ) const
+                 StackVariables & stack,
+                 FUNC && assemblyKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
     using namespace compositionalMultiphaseUtilities;
 
     // Apply equation/variable change transformation(s)
     stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
-    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof*stack.stencilSize, stack.numFluxElems,
+    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numFluxElems,
                                                              stack.localFluxJacobian, work );
-    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.numFluxElems,
+    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numFluxElems,
                                                                stack.localFlux );
 
-    // Add to residual/jacobian
+    // add contribution to residual and jacobian into:
+    // - the component mass balance equations (i = 0 to i = numComp-1)
+    // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
     for( integer i = 0; i < stack.numFluxElems; ++i )
     {
       if( m_ghostRank[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] < 0 )
@@ -877,13 +868,16 @@ public:
 
         for( integer ic = 0; ic < numComp; ++ic )
         {
-          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + ic], stack.localFlux[i * numComp + ic] );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + ic], stack.localFlux[i * numEqn + ic] );
           m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
             ( localRow + ic,
             stack.dofColIndices.data(),
-            stack.localFluxJacobian[i * numComp + ic].dataIfContiguous(),
+            stack.localFluxJacobian[i * numEqn + ic].dataIfContiguous(),
             stack.stencilSize * numDof );
         }
+
+        // call the lambda to assemble additional terms, such as thermal terms
+        assemblyKernelOp( i, localRow );
       }
     }
   }
@@ -913,7 +907,7 @@ public:
     } );
   }
 
-private:
+protected:
 
   // Stencil information
 
@@ -963,7 +957,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
+    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC()+1;
@@ -1140,7 +1134,7 @@ struct AquiferBCKernel
   using CompFlowAccessors =
     StencilAccessors< extrinsicMeshData::ghostRank,
                       extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::deltaPressure,
+                      extrinsicMeshData::flow::pressure_n,
                       extrinsicMeshData::flow::gravityCoefficient,
                       extrinsicMeshData::flow::phaseVolumeFraction,
                       extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
@@ -1189,7 +1183,7 @@ struct AquiferBCKernel
           arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac,
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
-          ElementViewConst< arrayView1d< real64 const > > const & dPres,
+          ElementViewConst< arrayView1d< real64 const > > const & pres_n,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
@@ -1206,9 +1200,9 @@ struct AquiferBCKernel
 
 };
 
-} // namespace compositionalMultiphaseFVMKernels
+} // namespace isothermalCompositionalMultiphaseFVMKernels
 
 } // namespace geosx
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEFVMKERNELS_HPP
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP

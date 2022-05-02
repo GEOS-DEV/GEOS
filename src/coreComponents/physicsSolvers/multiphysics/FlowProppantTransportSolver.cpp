@@ -72,10 +72,10 @@ void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
                                                  arrayView1d< string const > const & regionNames )
     {
       m_proppantSolver->resizeFractureFields( mesh, regionNames );
+      // We need re-apply initial conditions to fractures after they are generated
+      FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::getInstance();
+      boundaryConditionManager.applyInitialConditions( mesh );
     } );
-    // We need re-apply initial conditions to fractures after they are generated
-    FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::getInstance();
-    boundaryConditionManager.applyInitialConditions( domain );
   }
 
   m_flowSolver->setupSystem( domain,
@@ -97,7 +97,6 @@ void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
   m_proppantSolver->implicitStepSetup( time_n, dt, domain );
 
   m_proppantSolver->preStepUpdate( time_n, dt, domain );
-
 }
 
 void FlowProppantTransportSolver::postStepUpdate( real64 const & time_n,

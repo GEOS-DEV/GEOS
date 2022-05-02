@@ -818,6 +818,13 @@ Element: SlipDependentPermeability
 .. include:: ../../coreComponents/schema/docs/SlipDependentPermeability.rst
 
 
+.. _XML_SolidInternalEnergy:
+
+Element: SolidInternalEnergy
+============================
+.. include:: ../../coreComponents/schema/docs/SolidInternalEnergy.rst
+
+
 .. _XML_SolidMechanicsEmbeddedFractures:
 
 Element: SolidMechanicsEmbeddedFractures
@@ -1857,6 +1864,13 @@ Datastructure: SinglePhaseWell
 Datastructure: SlipDependentPermeability
 ========================================
 .. include:: ../../coreComponents/schema/docs/SlipDependentPermeability_other.rst
+
+
+.. _DATASTRUCTURE_SolidInternalEnergy:
+
+Datastructure: SolidInternalEnergy
+==================================
+.. include:: ../../coreComponents/schema/docs/SolidInternalEnergy_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:

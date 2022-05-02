@@ -66,14 +66,14 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::pressure >( getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::deltaPressure >( getName() ).
+      subRegion.registerExtrinsicData< extrinsicMeshData::well::pressure_n >( getName() );
+      subRegion.registerExtrinsicData< extrinsicMeshData::well::pressure >( getName() ).
         setRestartFlags( RestartFlags::WRITE_AND_READ );
 
+      subRegion.registerExtrinsicData< extrinsicMeshData::well::connectionRate_n >( getName() );
       subRegion.registerExtrinsicData< extrinsicMeshData::well::connectionRate >( getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::deltaConnectionRate >( getName() );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::densityOld >( getName() );
+      subRegion.registerExtrinsicData< extrinsicMeshData::well::density_n >( getName() );
 
       PerforationData & perforationData = *subRegion.getPerforationData();
       perforationData.registerExtrinsicData< extrinsicMeshData::well::perforationRate >( getName() );
@@ -158,8 +158,6 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
 
   arrayView1d< real64 const > const pres =
     subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-  arrayView1d< real64 const > const dPres =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
 
   arrayView1d< real64 const > const wellElemGravCoef =
     subRegion.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
@@ -183,7 +181,6 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
 
   // bring everything back to host, capture the scalars by reference
   forAll< serialPolicy >( 1, [pres,
-                              dPres,
                               dens,
                               dDens_dPres,
                               wellElemGravCoef,
@@ -192,7 +189,7 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
                               &iwelemRef,
                               &refGravCoef] ( localIndex const )
   {
-    currentBHP = pres[iwelemRef] + dPres[iwelemRef] + dens[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
+    currentBHP = pres[iwelemRef] + dens[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
     dCurrentBHP_dPres = 1.0 + dDens_dPres[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
   } );
 }
@@ -213,13 +210,8 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
 
   arrayView1d< real64 const > const pres =
     subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-  arrayView1d< real64 const > const dPres =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
-
   arrayView1d< real64 const > const & connRate =
     subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
-  arrayView1d< real64 const > const & dConnRate =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::deltaConnectionRate >();
 
   // fluid data
 
@@ -249,9 +241,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
     // bring everything back to host, capture the scalars by reference
     forAll< serialPolicy >( 1, [fluidWrapper,
                                 pres,
-                                dPres,
                                 connRate,
-                                dConnRate,
                                 dens,
                                 dDens_dPres,
                                 &useSurfaceConditions,
@@ -272,12 +262,12 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
       }
       else
       {
-        real64 const refPres = pres[iwelemRef] + dPres[iwelemRef];
+        real64 const refPres = pres[iwelemRef];
         fluidWrapper.update( iwelemRef, 0, refPres );
       }
 
       real64 const densInv = 1.0 / dens[iwelemRef][0];
-      currentVolRate = ( connRate[iwelemRef] + dConnRate[iwelemRef] ) * densInv;
+      currentVolRate = connRate[iwelemRef] * densInv;
       dCurrentVolRate_dPres = -( useSurfaceConditions ==  0 ) * dDens_dPres[iwelemRef][0] * currentVolRate * densInv;
       dCurrentVolRate_dRate = densInv;
 
@@ -290,7 +280,6 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-  arrayView1d< real64 const > const dPres = subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   SingleFluidBase & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
@@ -298,7 +287,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, dPres );
+    singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres );
   } );
 }
 
@@ -390,6 +379,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
                                         0.0, // initialization done at t = 0
                                         wellElemDens,
                                         connRate );
+
     } );
 
   } );
@@ -427,15 +417,12 @@ void SinglePhaseWell::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n
       // get a reference to the primary variables on well elements
       arrayView1d< real64 const > const connRate =
         subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
-      arrayView1d< real64 const > const dConnRate =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::deltaConnectionRate >();
 
       FluxKernel::launch( subRegion.size(),
                           dofManager.rankOffset(),
                           wellElemDofNumber,
                           nextWellElemIndex,
                           connRate,
-                          dConnRate,
                           dt,
                           localMatrix,
                           localRhs );
@@ -478,8 +465,6 @@ void SinglePhaseWell::assemblePressureRelations( DomainPartition const & domain,
       // get primary variables on well elements
       arrayView1d< real64 const > const & wellElemPressure =
         subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-      arrayView1d< real64 const > const & dWellElemPressure =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
 
       // get well constitutive data
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -498,7 +483,6 @@ void SinglePhaseWell::assemblePressureRelations( DomainPartition const & domain,
                                         wellElemGravCoef,
                                         nextWellElemIndex,
                                         wellElemPressure,
-                                        dWellElemPressure,
                                         wellElemDensity,
                                         dWellElemDensity_dPres,
                                         localMatrix,
@@ -561,8 +545,8 @@ void SinglePhaseWell::assembleAccumulationTerms( DomainPartition const & domain,
 
       arrayView1d< real64 const > const wellElemVolume = subRegion.getElementVolume();
 
-      arrayView1d< real64 const > const wellElemDensityOld =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::densityOld >();
+      arrayView1d< real64 const > const wellElemDensity_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::density_n >();
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
@@ -576,7 +560,7 @@ void SinglePhaseWell::assembleAccumulationTerms( DomainPartition const & domain,
                                   wellElemVolume,
                                   wellElemDensity,
                                   dWellElemDensity_dPres,
-                                  wellElemDensityOld,
+                                  wellElemDensity_n,
                                   localMatrix,
                                   localRhs );
 
@@ -616,8 +600,6 @@ void SinglePhaseWell::computePerforationRates( MeshLevel const & meshLevel,
   // get well primary variables on well elements
   arrayView1d< real64 const > const wellElemPressure =
     subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-  arrayView1d< real64 const > const dWellElemPressure =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
 
   // get well constitutive data
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -654,14 +636,12 @@ void SinglePhaseWell::computePerforationRates( MeshLevel const & meshLevel,
 
   PerforationKernel::launch( perforationData->size(),
                              resSinglePhaseFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
-                             resSinglePhaseFlowAccessors.get( extrinsicMeshData::flow::deltaPressure{} ),
                              resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::density{} ),
                              resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::dDensity_dPressure{} ),
                              resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::viscosity{} ),
                              resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::dViscosity_dPressure{} ),
                              wellElemGravCoef,
                              wellElemPressure,
-                             dWellElemPressure,
                              wellElemDensity,
                              dWellElemDensity_dPres,
                              wellElemViscosity,
@@ -702,25 +682,24 @@ SinglePhaseWell::calculateResidualNorm( DomainPartition const & domain,
       arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
 
       arrayView1d< real64 const > const wellElemVolume = subRegion.getElementVolume();
-      arrayView1d< real64 const > const wellElemDensityOld =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::densityOld >();
+      arrayView1d< real64 const > const wellElemDensity_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::density_n >();
 
       WellControls const & wellControls = getWellControls( subRegion );
 
-      ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                  parallelDeviceReduce >( localRhs,
-                                                          dofManager.rankOffset(),
-                                                          subRegion.isLocallyOwned(),
-                                                          subRegion.getTopWellElementIndex(),
-                                                          wellControls,
-                                                          wellElemDofNumber,
-                                                          wellElemGhostRank,
-                                                          wellElemVolume,
-                                                          wellElemDensityOld,
-                                                          m_currentTime + m_currentDt, // residual normalized with rate of the end of the
-                                                                                       // time interval
-                                                          m_currentDt,
-                                                          &localResidualNorm );
+      ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
+                                                            dofManager.rankOffset(),
+                                                            subRegion.isLocallyOwned(),
+                                                            subRegion.getTopWellElementIndex(),
+                                                            wellControls,
+                                                            wellElemDofNumber,
+                                                            wellElemGhostRank,
+                                                            wellElemVolume,
+                                                            wellElemDensity_n,
+                                                            m_currentTime + m_currentDt, // residual normalized with rate of the end of the
+                                                            // time interval
+                                                            m_currentDt,
+                                                            &localResidualNorm );
 
     } );
   } );
@@ -758,19 +737,16 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition const & domain,
       // get a reference to the primary variables on well elements
       arrayView1d< real64 const > const & wellElemPressure =
         subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-      arrayView1d< real64 const > const & dWellElemPressure =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
 
       // here we can reuse the flow solver kernel checking that pressures are positive
       localIndex const subRegionSolutionCheck =
-        singlePhaseWellKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
-                                                             parallelDeviceReduce >( localSolution,
-                                                                                     dofManager.rankOffset(),
-                                                                                     wellElemDofNumber,
-                                                                                     wellElemGhostRank,
-                                                                                     wellElemPressure,
-                                                                                     dWellElemPressure,
-                                                                                     scalingFactor );
+        singlePhaseWellKernels::
+          SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
+                                                                 dofManager.rankOffset(),
+                                                                 wellElemDofNumber,
+                                                                 wellElemGhostRank,
+                                                                 wellElemPressure,
+                                                                 scalingFactor );
 
       if( subRegionSolutionCheck == 0 )
       {
@@ -790,19 +766,19 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
 {
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
-                               extrinsicMeshData::well::deltaPressure::key(),
+                               extrinsicMeshData::well::pressure::key(),
                                scalingFactor,
                                { m_numDofPerWellElement, 0, 1 } );
 
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
-                               extrinsicMeshData::well::deltaConnectionRate::key(),
+                               extrinsicMeshData::well::connectionRate::key(),
                                scalingFactor,
                                { m_numDofPerWellElement, 1, m_numDofPerWellElement } );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( extrinsicMeshData::well::deltaPressure::key() );
-  fieldNames["elems"].emplace_back( extrinsicMeshData::well::deltaConnectionRate::key() );
+  fieldNames["elems"].emplace_back( extrinsicMeshData::well::pressure::key() );
+  fieldNames["elems"].emplace_back( extrinsicMeshData::well::connectionRate::key() );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
@@ -833,18 +809,18 @@ void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
                                                                    WellElementSubRegion & subRegion )
     {
       // get a reference to the primary variables on well elements
-      arrayView1d< real64 > const & dWellElemPressure =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
-      arrayView1d< real64 > const & dConnRate =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::deltaConnectionRate >();
+      arrayView1d< real64 > const & wellElemPressure =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+      arrayView1d< real64 const > const & wellElemPressure_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::pressure_n >();
+      wellElemPressure.setValues< parallelDevicePolicy<> >( wellElemPressure_n );
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-      {
-        dWellElemPressure[iwelem] = 0;
-        dConnRate[iwelem] = 0;
-      } );
+      arrayView1d< real64 > const & connRate =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
+      arrayView1d< real64 const > const & connRate_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate_n >();
+      connRate.setValues< parallelDevicePolicy<> >( connRate_n );
     } );
-
   } );
 
   // call constitutive models
@@ -864,12 +840,12 @@ void SinglePhaseWell::backupFields( MeshLevel & mesh, arrayView1d< string const 
     string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
     SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );    arrayView2d< real64 const > const wellElemDensity = fluid.density();
 
-    arrayView1d< real64 > const & wellElemDensityOld =
-      subRegion.getExtrinsicData< extrinsicMeshData::well::densityOld >();
+    arrayView1d< real64 > const & wellElemDensity_n =
+      subRegion.getExtrinsicData< extrinsicMeshData::well::density_n >();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      wellElemDensityOld[ei] = wellElemDensity[ei][0];
+      wellElemDensity_n[ei] = wellElemDensity[ei][0];
     } );
   } );
 }
@@ -891,41 +867,21 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
+      arrayView1d< real64 const > const wellElemPressure = subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+      arrayView1d< real64 > const wellElemPressure_n = subRegion.getExtrinsicData< extrinsicMeshData::well::pressure_n >();
+      wellElemPressure_n.setValues< parallelDevicePolicy<> >( wellElemPressure );
+
+      arrayView1d< real64 const > const connRate = subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
+      arrayView1d< real64 > const connRate_n = subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate_n >();
+      connRate_n.setValues< parallelDevicePolicy<> >( connRate );
+
       validateWellConstraints( subRegion );
+
+      updateSubRegionState( mesh, subRegion );
     } );
   } );
 }
 
-
-void SinglePhaseWell::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
-                                            real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                            DomainPartition & domain )
-{
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
-  {
-
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   WellElementSubRegion & subRegion )
-    {
-      // get a reference to the primary variables on well elements
-      arrayView1d< real64 > const wellElemPressure = subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-      arrayView1d< real64 const > const dWellElemPressure = subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
-      arrayView1d< real64 > const connRate = subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
-      arrayView1d< real64 const > const dConnRate = subRegion.getExtrinsicData< extrinsicMeshData::well::deltaConnectionRate >();
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-      {
-        wellElemPressure[iwelem] += dWellElemPressure[iwelem];
-        connRate[iwelem]         += dConnRate[iwelem];
-      } );
-    } );
-  } );
-}
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseWell, string const &, Group * const )
 }// namespace geosx

@@ -36,7 +36,7 @@ using namespace geosx::dataRepository;
 template< class V >
 void TestMeshImport( string const & meshFilePath, V const & validate )
 {
-  string const meshNode = "<Mesh ><VTKMesh name=\"mesh\" file=\"" + meshFilePath + "\" /></Mesh>";
+  string const meshNode = GEOSX_FMT( R"(<Mesh><VTKMesh name="mesh" file="{}" partitionRefinement="0"/></Mesh>)", meshFilePath );
   xmlWrapper::xmlDocument xmlDocument;
   xmlDocument.load_buffer( meshNode.c_str(), meshNode.size() );
   xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );
@@ -189,24 +189,51 @@ TEST( VTKImport, medley )
     }
 
     // Pyramid
-    ASSERT_EQ( zone0.getElemToNodes().size( 1 ), 5 );
+    auto elementToNodes = zone0.getElemToNodes();
+    ASSERT_EQ( elementToNodes.size( 1 ), 5 );
     ASSERT_EQ( zone0.getElemToEdges().size( 1 ), 8 );
     ASSERT_EQ( zone0.getElemToFaces().size( 1 ), 5 );
+    EXPECT_EQ( elementToNodes( 0, 0 ), 1 );
+    EXPECT_EQ( elementToNodes( 0, 1 ), 4 );
+    EXPECT_EQ( elementToNodes( 0, 2 ), 2 );
+    EXPECT_EQ( elementToNodes( 0, 3 ), 3 );
+    EXPECT_EQ( elementToNodes( 0, 4 ), 0 );
 
     // Hexahedron
-    ASSERT_EQ( zone1.getElemToNodes().size( 1 ), 8 );
+    elementToNodes = zone1.getElemToNodes();
+    ASSERT_EQ( elementToNodes.size( 1 ), 8 );
     ASSERT_EQ( zone1.getElemToEdges().size( 1 ), 12 );
     ASSERT_EQ( zone1.getElemToFaces().size( 1 ), 6 );
+    EXPECT_EQ( elementToNodes( 0, 0 ), 1 );
+    EXPECT_EQ( elementToNodes( 0, 1 ), 2 );
+    EXPECT_EQ( elementToNodes( 0, 2 ), 4 );
+    EXPECT_EQ( elementToNodes( 0, 3 ), 3 );
+    EXPECT_EQ( elementToNodes( 0, 4 ), 5 );
+    EXPECT_EQ( elementToNodes( 0, 5 ), 6 );
+    EXPECT_EQ( elementToNodes( 0, 6 ), 8 );
+    EXPECT_EQ( elementToNodes( 0, 7 ), 7 );
 
     // Wedges
-    ASSERT_EQ( zone2.getElemToNodes().size( 1 ), 6 );
+    elementToNodes = zone2.getElemToNodes();
+    ASSERT_EQ( elementToNodes.size( 1 ), 6 );
     ASSERT_EQ( zone2.getElemToEdges().size( 1 ), 9 );
     ASSERT_EQ( zone2.getElemToFaces().size( 1 ), 5 );
+    EXPECT_EQ( elementToNodes( 0, 0 ), 5 );
+    EXPECT_EQ( elementToNodes( 0, 1 ), 8 );
+    EXPECT_EQ( elementToNodes( 0, 2 ), 9 );
+    EXPECT_EQ( elementToNodes( 0, 3 ), 10 );
+    EXPECT_EQ( elementToNodes( 0, 4 ), 6 );
+    EXPECT_EQ( elementToNodes( 0, 5 ), 7 );
 
     // Tetrahedron
-    ASSERT_EQ( zone3.getElemToNodes().size( 1 ), 4 );
+    elementToNodes = zone3.getElemToNodes();
+    ASSERT_EQ( elementToNodes.size( 1 ), 4 );
     ASSERT_EQ( zone3.getElemToEdges().size( 1 ), 6 );
     ASSERT_EQ( zone3.getElemToFaces().size( 1 ), 4 );
+    EXPECT_EQ( elementToNodes( 0, 0 ), 7 );
+    EXPECT_EQ( elementToNodes( 0, 1 ), 8 );
+    EXPECT_EQ( elementToNodes( 0, 2 ), 10 );
+    EXPECT_EQ( elementToNodes( 0, 3 ), 11 );
 
     for( auto const & z: { &zone0, &zone1, &zone2, &zone3 } )
     {
