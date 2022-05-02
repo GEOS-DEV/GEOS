@@ -319,7 +319,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
   cellTypes.reserve( numElems );
 
   auto const offsets = vtkSmartPointer< vtkIdTypeArray >::New();
-  offsets->SetNumberOfTuples( numElems );
+  offsets->SetNumberOfTuples( numElems + 1 );
 
   auto const connectivity = vtkSmartPointer< vtkIdTypeArray >::New();
   connectivity->SetNumberOfTuples( numConns );
@@ -348,6 +348,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
     elemOffset += subRegion.size();
     connOffset += subRegion.size() * nodesPerElem;
   } );
+  offsets->SetTypedComponent( elemOffset, 0, connOffset );
 
   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
   cellsArray->SetData( offsets, connectivity );
