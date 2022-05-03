@@ -89,7 +89,7 @@ The initial stress is specified by ``initialStress="-10.e6"``. To ensure the sta
 This stress has a negative value due to the negative sign convention for compressive stress in GEOSX.
 
 
-``steps="200" `` defines the number of load steps and ``output="simulationResults.txt"`` specifies an output file to which the simulation results will be written. 
+``steps="200"`` defines the number of load steps and ``output="simulationResults.txt"`` specifies an output file to which the simulation results will be written. 
 
 
 .. literalinclude:: ../../../../../inputFiles/solidMechanics/triaxialDriver_ExtendedDruckerPrager.xml
