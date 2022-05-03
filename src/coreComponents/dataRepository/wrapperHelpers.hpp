@@ -772,7 +772,7 @@ UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX &, parallelDeviceEvents &, MPI_Op op=MPI_REPLACE  )
+UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX &, parallelDeviceEvents &, MPI_Op )
 {
   GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
   return 0;
@@ -817,7 +817,7 @@ UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX &
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelDeviceEvents &, MPI_Op op )
+UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelDeviceEvents &, MPI_Op )
 {
   GEOSX_LOG( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
   return 0;

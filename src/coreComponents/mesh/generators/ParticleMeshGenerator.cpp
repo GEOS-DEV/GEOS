@@ -102,9 +102,6 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
                                             // Looping over the particleTypeMap with an iterator does not respect this ordering since a map automatically sorts by its keys.
   map <std::string, int> materialMap;
 
-  // Get MPI rank
-  int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-
   // Get and process header and particle files
   std::ifstream headerFile(m_headerFilePath);
   std::ifstream particleFile(m_particleFilePath);
