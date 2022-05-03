@@ -106,7 +106,7 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
         setRestartFlags( RestartFlags::NO_WRITE ).
         setSizedFromParent( 0 );
 
-        subRegion.registerExtrinsicData <extrinsicMeshData::flow::elementMacroID> (getName());
+      subRegion.registerExtrinsicData< extrinsicMeshData::flow::elementMacroID >( getName());
     } );
   } );
 }
@@ -138,30 +138,30 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
 
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
-  if ( m_stabilizationType == StabilizationType::Local )
+  if( m_stabilizationType == StabilizationType::Local )
   {
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+    DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
-  {
+    forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                  MeshLevel & mesh,
+                                                  arrayView1d< string const > const & regionNames )
+    {
 
-    ElementRegionManager & elemManager = mesh.getElemManager();
+      ElementRegionManager & elemManager = mesh.getElemManager();
 
-      GEOSX_UNUSED_VAR(regionNames);
+      GEOSX_UNUSED_VAR( regionNames );
 
       NodeManager const & nodeManager = mesh.getNodeManager();
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > elemMacroID =
-            elemManager.constructViewAccessor< array1d< integer >, arrayView1d< integer > >( extrinsicMeshData::flow::elementMacroID::key() );
+        elemManager.constructViewAccessor< array1d< integer >, arrayView1d< integer > >( extrinsicMeshData::flow::elementMacroID::key() );
 
       array1d< integer > nodeVisited( nodeManager.size() );
-      nodeVisited.setValues< serialPolicy>( 0 );
+      nodeVisited.setValues< serialPolicy >( 0 );
       arrayView1d< integer > const nodeVisitedView = nodeVisited.toView();
 
-      arrayView1d<integer const> const bdryNodes = nodeManager.getDomainBoundaryIndicator();
+      arrayView1d< integer const > const bdryNodes = nodeManager.getDomainBoundaryIndicator();
 
       ArrayOfArraysView< localIndex const > elemRegionList = nodeManager.elementRegionList();
       ArrayOfArraysView< localIndex const > elemSubRegionList = nodeManager.elementSubRegionList();
@@ -172,12 +172,12 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
       forAll< serialPolicy >( nodeManager.size(), [&] GEOSX_HOST_DEVICE ( localIndex const a )
       {
 
-        if (bdryNodes[a] == 1) 
+        if( bdryNodes[a] == 1 )
         {
           nodeVisitedView[a] = 1;
         }
 
-        if (nodeVisitedView[a] != 1) 
+        if( nodeVisitedView[a] != 1 )
         {
 
           for( localIndex k = 0; k < elemRegionList[a].size(); ++k )
@@ -189,17 +189,17 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
 
             elemMacroID[er][esr][ei] = currentID;
 
-            // get the elemToNodes maps 
+            // get the elemToNodes maps
             ElementRegionBase const & region = elemManager.getRegion( er );
             CellElementSubRegion const & subRegion = region.getSubRegion< CellElementSubRegion, localIndex >( esr );
-            arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = subRegion.nodeList(); 
+            arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = subRegion.nodeList();
 
             // get the nodes connected to this element
             for( localIndex l = 0; l < elemsToNodes[ei].size(); ++l )
             {
-              localIndex const iNode = elemsToNodes[ei][l]; 
+              localIndex const iNode = elemsToNodes[ei][l];
               nodeVisitedView[iNode] = 1;
-            }     
+            }
           }
 
           ++currentID;
@@ -208,17 +208,18 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
       } );
 
 
-  // part 2 - assign any unassigned cell
-  // loop through all elements and check if each has been assigned a macroelement (ie, when you index into ID it should be >0)
-  // If not, check elements that share a face and add it to one of their macroelements
-  // If no neighbors in a macroelement, reconsider this element at the end of the loop
+      // part 2 - assign any unassigned cell
+      // loop through all elements and check if each has been assigned a macroelement (ie, when you index into ID it should be >0)
+      // If not, check elements that share a face and add it to one of their macroelements
+      // If no neighbors in a macroelement, reconsider this element at the end of the loop
 
-  // This may not be strictly necessary, per our discussions. Any clumps of elements that were not visited have ID of -1, and therefore will
-  // also be treated as macro elements. The main issue may be if there are a lot of single element macro elements in the mesh, but we 
-  // will have to see how it works. 
+      // This may not be strictly necessary, per our discussions. Any clumps of elements that were not visited have ID of -1, and therefore
+      // will
+      // also be treated as macro elements. The main issue may be if there are a lot of single element macro elements in the mesh, but we
+      // will have to see how it works.
 
 
-  } );
+    } );
 
   }
 
@@ -370,7 +371,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
   } );
 
   // Face-based contributions
-  if( m_stabilizationType == StabilizationType::Global ||  m_stabilizationType == StabilizationType::Local)
+  if( m_stabilizationType == StabilizationType::Global ||  m_stabilizationType == StabilizationType::Local )
   {
     m_flowSolver->assembleStabilizedFluxTerms( dt,
                                                domain,

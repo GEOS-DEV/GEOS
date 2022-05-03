@@ -67,9 +67,9 @@ public:
   using StabCompFlowAccessors = StencilAccessors< extrinsicMeshData::flow::elementMacroID,
                                                   extrinsicMeshData::flow::pressure_n >;
 
-  using StabMultiFluidAccessors = StencilMaterialAccessors< MultiFluidBase,                                               
-                                                  extrinsicMeshData::multifluid::phaseDensity_n,
-                                                  extrinsicMeshData::multifluid::phaseCompFraction_n >;
+  using StabMultiFluidAccessors = StencilMaterialAccessors< MultiFluidBase,
+                                                            extrinsicMeshData::multifluid::phaseDensity_n,
+                                                            extrinsicMeshData::multifluid::phaseCompFraction_n >;
 
   using SolidAccessors = StencilMaterialAccessors< SolidBase,
                                                    extrinsicMeshData::solid::bulkModulus,
@@ -239,7 +239,7 @@ public:
         localIndex const ei  = m_sei( iconn, i );
 
         stencilMacroElements[i] = m_elementMacroID[er][esr][ei];
-        
+
         tauStab = tauC * 9.0 * (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (32.0 * (10.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
 
         dPresGradStab += tauStab * m_stabWeights( iconn, i ) * (m_pres[er][esr][ei] - m_pres_n[er][esr][ei]); // jump in dp, not p
@@ -254,19 +254,19 @@ public:
       localIndex const esr_up_stab  = m_sesri( iconn, k_up_stab );
       localIndex const ei_up_stab   = m_sei( iconn, k_up_stab );
 
-      if (stencilMacroElements[0] == stencilMacroElements[1] )
+      if( stencilMacroElements[0] == stencilMacroElements[1] )
       {
 
         for( integer ic = 0; ic < numComp; ++ic )
         {
 
-        
+
           real64 const laggedUpwind = m_phaseDens_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip]
-                              * m_phaseCompFrac_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip][ic]
-                              * m_phaseRelPerm_n[er_up_stab ][esr_up_stab ][ei_up_stab ][ip][ic];
+                                      * m_phaseCompFrac_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip][ic]
+                                      * m_phaseRelPerm_n[er_up_stab ][esr_up_stab ][ei_up_stab ][ip][ic];
 
           stack.stabFlux[ic] += dPresGradStab * laggedUpwind;
-        
+
           for( integer ke = 0; ke < stack.stencilSize; ++ke )
           {
             stack.dStabFlux_dP[ke][ic] += tauStab * m_stabWeights( iconn, ke ) * laggedUpwind;
@@ -312,7 +312,7 @@ public:
 
 protected:
 
-  ElementViewConst< arrayView1d< real64 const> > const m_pres_n; 
+  ElementViewConst< arrayView1d< real64 const > > const m_pres_n;
 
   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseDens_n;
   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_phaseCompFrac_n;

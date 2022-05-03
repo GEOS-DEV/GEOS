@@ -122,9 +122,9 @@ public:
 
   enum class StabilizationType : integer
   {
-    None,  
-    Global,  
-    Local,  
+    None,
+    Global,
+    Local,
   };
 
 protected:
