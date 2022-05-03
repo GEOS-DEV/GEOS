@@ -834,6 +834,13 @@ Element: SolidMechanicsLagrangianSSLE
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangianSSLE.rst
 
 
+.. _XML_SolidMechanicsPostEquilibrationStep:
+
+Element: SolidMechanicsPostEquilibrationStep
+============================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsPostEquilibrationStep.rst
+
+
 .. _XML_SolidMechanics_LagrangianFEM:
 
 Element: SolidMechanics_LagrangianFEM
@@ -1872,6 +1879,13 @@ Datastructure: SolidMechanicsEmbeddedFractures
 Datastructure: SolidMechanicsLagrangianSSLE
 ===========================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangianSSLE_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanicsPostEquilibrationStep:
+
+Datastructure: SolidMechanicsPostEquilibrationStep
+==================================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsPostEquilibrationStep_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanics_LagrangianFEM:

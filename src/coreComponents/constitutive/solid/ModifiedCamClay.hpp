@@ -441,6 +441,8 @@ public:
 
   virtual void saveConvergedState() const override;
 
+  virtual void applyPostEquilibrationStep() const override;
+
   /**
    * @name Static Factory Catalog members and functions
    */

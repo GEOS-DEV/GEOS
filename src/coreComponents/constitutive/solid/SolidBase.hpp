@@ -606,6 +606,9 @@ public:
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
 
+  /// Resets some quantities in the solid model after the equilibration step (relevant for plasticity models only)
+  virtual void applyPostEquilibrationStep() const {};
+
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
