@@ -14,7 +14,6 @@ build:
     python: "3.7"
   jobs:
     post_install:
-      - echo '{ "args": [ "--no-sandbox" ] }' ">" /tmp/puppeteer-config.json
       - npm install -g npm
       - npm install -g @mermaid-js/mermaid-cli
 
