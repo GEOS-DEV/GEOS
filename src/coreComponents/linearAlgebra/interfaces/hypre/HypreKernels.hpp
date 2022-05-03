@@ -253,8 +253,8 @@ struct AddEntriesRestrictedKernel
     }
 
     // Allocate contiguous memory to store sorted column permutations of each row
-    array1d< HYPRE_Int > const src_permutation( hypre_CSRMatrixNumNonzeros( src_mat ) );
-    array1d< HYPRE_Int > const dst_permutation( hypre_CSRMatrixNumNonzeros( dst_mat ) );
+    array1d< HYPRE_Int > const src_permutation( src.nnz );
+    array1d< HYPRE_Int > const dst_permutation( dst.nnz );
 
     // Each thread adds one row of src into dst
     forAll< hypre::execPolicy >( dst.nrow,

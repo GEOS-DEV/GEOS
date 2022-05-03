@@ -819,11 +819,10 @@ void HypreMatrix::rescaleRows( arrayView1d< globalIndex const > const & rowIndic
 void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
                                            integer const dofsPerNode ) const
 {
-  localIndex const maxRowEntries = maxRowLength();
-  GEOSX_LAI_ASSERT_EQ( maxRowEntries % dofsPerNode, 0 );
+  GEOSX_LAI_ASSERT( ready() );
 
   CRSMatrix< real64, globalIndex > tempMat;
-  tempMat.resize( numLocalRows(), numGlobalCols(), maxRowEntries / dofsPerNode );
+  tempMat.resize( numLocalRows(), numGlobalCols(), ( maxRowLengthLocal() + dofsPerNode - 1 ) / dofsPerNode );
   CRSMatrixView< real64, globalIndex > const tempMatView = tempMat.toView();
 
   globalIndex const firstLocalRow = ilower();
@@ -938,7 +937,7 @@ void HypreMatrix::clampEntries( real64 const lo,
   hypre::clampMatrixEntries( hypre_ParCSRMatrixOffd( m_parcsr_mat ), lo, hi, false );
 }
 
-localIndex HypreMatrix::maxRowLength() const
+localIndex HypreMatrix::maxRowLengthLocal() const
 {
   GEOSX_LAI_ASSERT( assembled() );
 
@@ -951,7 +950,7 @@ localIndex HypreMatrix::maxRowLength() const
     localMaxRowLength.max( (ia_diag[localRow + 1] - ia_diag[localRow]) + (ia_offd[localRow + 1] - ia_offd[localRow] ) );
   } );
 
-  return MpiWrapper::max( localMaxRowLength.get(), comm() );
+  return localMaxRowLength.get();
 }
 
 localIndex HypreMatrix::rowLength( globalIndex const globalRowIndex ) const
@@ -986,6 +985,16 @@ void HypreMatrix::getRowLengths( arrayView1d< localIndex > const & lengths ) con
   forAll< hypre::execPolicy >( numLocalRows(), [=] GEOSX_HYPRE_DEVICE ( localIndex const localRow )
   {
     lengths[localRow] = (ia_diag[localRow + 1] - ia_diag[localRow]) + (ia_offd[localRow + 1] - ia_offd[localRow]);
+  } );
+}
+
+void HypreMatrix::getRowLocalLengths( arrayView1d< localIndex > const & lengths ) const
+{
+  GEOSX_LAI_ASSERT( assembled() );
+  HYPRE_Int const * const ia_diag = hypre_CSRMatrixI( hypre_ParCSRMatrixDiag( m_parcsr_mat ) );
+  forAll< hypre::execPolicy >( numLocalRows(), [=] GEOSX_HYPRE_DEVICE ( localIndex const localRow )
+  {
+    lengths[localRow] = ia_diag[localRow + 1] - ia_diag[localRow];
   } );
 }
 
@@ -1083,6 +1092,25 @@ void HypreMatrix::extract( CRSMatrixView< real64, globalIndex const > const & lo
         globalIndex const col = colMap[offd.colind[k]];
         localMat.addToRow< serialAtomic >( localRow, &col, &offd.values[k], 1 );
       }
+    }
+  } );
+}
+
+void HypreMatrix::extractLocal( CRSMatrixView< real64, localIndex > const & localMat ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT_EQ( localMat.numRows(), numLocalRows() );
+  GEOSX_LAI_ASSERT_EQ( localMat.numColumns(), numGlobalCols() );
+
+  hypre::CSRData< true > const diag{ hypre_ParCSRMatrixDiag( unwrapped() ) };
+  forAll< hypre::execPolicy >( localMat.numRows(),
+                               [localMat, diag] GEOSX_HYPRE_DEVICE ( localIndex const localRow )
+  {
+    localMat.removeNonZeros( localRow, localMat.getColumns( localRow ), localMat.numNonZeros( localRow ) );
+    GEOSX_ASSERT_GE( localMat.nonZeroCapacity( localRow ), diag.rowptr[localRow + 1] - diag.rowptr[localRow] );
+    for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
+    {
+      localMat.insertNonZero( localRow, diag.colind[k], diag.values[k] );
     }
   } );
 }
@@ -1364,14 +1392,17 @@ void HypreMatrix::write( string const & filename,
           hypre::CSRData< true > csr{ fullMatrix };
           std::ofstream os( filename, std::ios_base::app );
           GEOSX_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
+
           char str[64];
+          int const width = static_cast< int >( std::log10( std::max( csr.nrow, csr.ncol ) ) ) + 1;
 
           for( HYPRE_Int i = 0; i < csr.nrow; i++ )
           {
             for( HYPRE_Int k = csr.rowptr[i]; k < csr.rowptr[i + 1]; k++ )
             {
               // MatrixMarket row/col indices are 1-based
-              GEOSX_FMT_TO( str, sizeof( str ), "{} {} {:>28.16e}\n", i + 1, csr.colind[k] + 1, csr.values[k] );
+              GEOSX_FMT_TO( str, sizeof( str ), "{1:>{0}} {2:>{0}} {3:>24.16e}\n",
+                            width, i + 1, csr.colind[k] + 1, csr.values[k] );
               os << str;
             }
           }

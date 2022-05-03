@@ -23,42 +23,10 @@
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 #include "linearAlgebra/utilities/BlockOperator.hpp"
 #include "linearAlgebra/utilities/BlockVector.hpp"
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
 namespace geosx
 {
-
-/**
- * @brief Type of Schur complement approximation used
- *
- * @todo Need more descriptive names for options
- */
-enum class SchurComplementOption
-{
-  None,                  //!< No Schur complement - just block-GS/block-Jacobi preconditioner
-  FirstBlockDiagonal,    //!< Approximate first block with its diagonal
-  RowsumDiagonalProbing, //!< Rowsum-preserving diagonal approximation constructed with probing
-  FirstBlockUserDefined  //!< User defined preconditioner for the first block
-};
-
-/**
- * @brief Type of block row scaling to apply
- */
-enum class BlockScalingOption
-{
-  None,          //!< No scaling
-  FrobeniusNorm, //!< Equilibrate Frobenius norm of the diagonal blocks
-  UserProvided   //!< User-provided scaling
-};
-
-/**
- * @brief Shape of the block preconditioner
- */
-enum class BlockShapeOption
-{
-  Diagonal,            //!< (D)^{-1}
-  UpperTriangular,     //!< (DU)^{-1}
-  LowerUpperTriangular //!< (LDU)^{-1}
-};
 
 /*
  * Since formulas in Doxygen are broken with 1.8.13 and certain versions of ghostscript,
@@ -116,9 +84,7 @@ public:
    * @param schurOption type of Schur complement approximation to use
    * @param scalingOption type of scaling to apply to blocks
    */
-  explicit BlockPreconditioner( BlockShapeOption const shapeOption,
-                                SchurComplementOption const schurOption,
-                                BlockScalingOption const scalingOption );
+  explicit BlockPreconditioner( LinearSolverParameters::Block params );
 
   /**
    * @brief Setup data for one of the two blocks.
@@ -157,8 +123,6 @@ public:
    */
   ///@{
 
-  using PreconditionerBase< LAI >::setup;
-
   /**
    * @brief Compute the preconditioner from a matrix
    * @param mat the matrix to precondition
@@ -178,6 +142,11 @@ public:
 
   ///@}
 
+  BlockOperator< Vector, Matrix > const & blocks() const
+  {
+    return m_matBlocks;
+  }
+
 private:
 
   /**
@@ -196,14 +165,8 @@ private:
    */
   void computeSchurComplement();
 
-  /// Shape of the block preconditioner
-  BlockShapeOption m_shapeOption;
-
-  /// Type of Schur complement to construct
-  SchurComplementOption m_schurOption;
-
-  /// Whether to scale blocks to equilibrate norms
-  BlockScalingOption m_scalingOption;
+  /// Block preconditioner parameters
+  LinearSolverParameters::Block m_params;
 
   /// Description of dof components making up each of the two main blocks
   std::array< std::vector< DofManager::SubComponent >, 2 > m_blockDofs{};

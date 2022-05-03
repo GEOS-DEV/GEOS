@@ -90,6 +90,14 @@ template< typename T >
 using typeHelper_t = typename typeHelper< T >::type;
 }
 
+EXTRINSIC_MESH_DATA_TRAIT( StructuredIndex,
+                           "structuredIndex",
+                           array2d< integer >,
+                           -1,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Structured cell index provided by mesh generator" );
+
 EXTRINSIC_MESH_DATA_TRAIT( ghostRank,
                            "ghostRank",
                            array1d< integer >,

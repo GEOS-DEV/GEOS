@@ -63,18 +63,6 @@ public:
   SolidMechanicsLagrangianFEM( const string & name,
                                Group * const parent );
 
-
-  SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM const & ) = delete;
-  SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM && ) = default;
-
-  SolidMechanicsLagrangianFEM & operator=( SolidMechanicsLagrangianFEM const & ) = delete;
-  SolidMechanicsLagrangianFEM & operator=( SolidMechanicsLagrangianFEM && ) = delete;
-
-  /**
-   * destructor
-   */
-  virtual ~SolidMechanicsLagrangianFEM() override;
-
   /**
    * @return The string that may be used to generate a new instance from the SolverBase::CatalogInterface::CatalogType
    */
@@ -122,6 +110,9 @@ public:
                ParallelVector & solution,
                bool const setSparsity = false ) override;
 
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const override;
+
   virtual void
   assembleSystem( real64 const time,
                   real64 const dt,
@@ -129,6 +120,11 @@ public:
                   DofManager const & dofManager,
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
+
+  virtual void solveLinearSystem( DofManager const & dofManager,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -265,18 +261,7 @@ public:
 
   real64 & getMaxForce() { return m_maxForce; }
 
-  arrayView1d< ParallelVector > const & getRigidBodyModes() const
-  {
-    return m_rigidBodyModes;
-  }
-
-  array1d< ParallelVector > & getRigidBodyModes()
-  {
-    return m_rigidBodyModes;
-  }
-
 protected:
-  virtual void postProcessInput() override final;
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
@@ -294,8 +279,8 @@ protected:
   string m_contactRelationName;
   MPI_iCommData m_iComm;
 
-  /// Rigid body modes
-  array1d< ParallelVector > m_rigidBodyModes;
+  /// Rigid body modes; TODO remove mutable hack
+  mutable array1d< ParallelVector > m_rigidBodyModes;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

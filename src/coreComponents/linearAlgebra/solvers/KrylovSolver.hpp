@@ -12,6 +12,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+/**
+ * @file KrylovSolver.hpp
+ */
+
 #ifndef GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
 #define GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
 

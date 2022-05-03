@@ -59,36 +59,6 @@ FluxApproximationBase::getCatalog()
   return catalog;
 }
 
-void FluxApproximationBase::initializePreSubGroups()
-{
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  domain.forMeshBodies( [&]( MeshBody & meshBody )
-  {
-    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
-    {
-      // Proceed with regular procedure only if the MeshLevel is not a shallow copy
-      if( !(mesh.isShallowCopy() ) )
-      {
-        // Group structure: mesh1/finiteVolumeStencils/myTPFA
-
-        Group & stencilParentGroup = mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
-        Group & stencilGroup = stencilParentGroup.registerGroup( getName() );
-
-        registerCellStencil( stencilGroup );
-
-        registerFractureStencil( stencilGroup );
-      }
-      else
-      {
-        Group & parentMesh = mesh.getShallowParent();
-        Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
-        mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );
-      }
-    } );
-  } );
-}
-
 void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 {
   GEOSX_MARK_FUNCTION;
@@ -96,8 +66,9 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  domain.forMeshBodies( [&]( MeshBody & meshBody )
+  for( auto const & meshBodyRegions : m_targetRegions )
   {
+    MeshBody & meshBody = domain.getMeshBody( meshBodyRegions.first );
     m_lengthScale = meshBody.getGlobalLengthScale();
     meshBody.forMeshLevels( [&]( MeshLevel & mesh )
     {
@@ -106,8 +77,12 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
       {
         // Group structure: mesh1/finiteVolumeStencils/myTPFA
 
-        Group & stencilParentGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
-        Group & stencilGroup = stencilParentGroup.getGroup( getName() );
+        Group & stencilParentGroup = mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
+        Group & stencilGroup = stencilParentGroup.registerGroup( getName() );
+
+        registerCellStencil( stencilGroup );
+        registerFractureStencil( stencilGroup );
+
         // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
         // TODO: Apply() should take a MeshLevel directly
         fsManager.apply< FaceManager >( 0.0, // time = 0
@@ -159,8 +134,14 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
         // Compute the aquifer stencil weights
         computeAquiferStencil( domain, mesh );
       }
+      else
+      {
+        Group & parentMesh = mesh.getShallowParent();
+        Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
+        mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );
+      }
     } );
-  } );
+  }
 }
 
 void FluxApproximationBase::setFieldName( string const & name )

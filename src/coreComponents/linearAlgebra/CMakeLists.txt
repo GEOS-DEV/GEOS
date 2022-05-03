@@ -14,6 +14,22 @@ set( linearAlgebra_headers
      interfaces/VectorBase.hpp
      interfaces/dense/BlasLapackFunctions.h
      interfaces/dense/BlasLapackLA.hpp
+     multiscale/LevelBuilderBase.hpp
+     multiscale/MultiscalePreconditioner.hpp
+     multiscale/mesh/DofManager.hpp
+     multiscale/mesh/MeshData.hpp
+     multiscale/mesh/MeshLevel.hpp
+     multiscale/mesh/MeshObjectManager.hpp
+     multiscale/mesh/MeshUtils.hpp
+     multiscale/mesh/coarsening/CartesianPartitioner.hpp
+     multiscale/mesh/coarsening/Coarsening.hpp
+     multiscale/mesh/coarsening/GraphPartitioner.hpp
+     multiscale/mesh/coarsening/PartitionerBase.hpp
+     multiscale/mesh/coarsening/SemistructuredPartitioner.hpp
+     multiscale/msrsb/MsrsbLevelBuilderBase.hpp
+     multiscale/msrsb/MsrsbLevelBuilderCoupled.hpp
+     multiscale/msrsb/MsrsbLevelBuilder.hpp
+     multiscale/msrsb/MsrsbUtils.hpp
      solvers/BicgstabSolver.hpp
      solvers/BlockPreconditioner.hpp
      solvers/CgSolver.hpp
@@ -24,6 +40,7 @@ set( linearAlgebra_headers
      solvers/PreconditionerIdentity.hpp
      solvers/PreconditionerJacobi.hpp
      solvers/PreconditionerNull.hpp
+     solvers/RichardsonSolver.hpp
      solvers/SeparateComponentPreconditioner.hpp
      utilities/Arnoldi.hpp
      utilities/BlockOperator.hpp
@@ -47,11 +64,27 @@ set( linearAlgebra_headers
 set( linearAlgebra_sources
      DofManager.cpp
      interfaces/dense/BlasLapackLA.cpp
+     multiscale/LevelBuilderBase.cpp
+     multiscale/MultiscalePreconditioner.cpp
+     multiscale/mesh/DofManager.cpp
+     multiscale/mesh/MeshLevel.cpp
+     multiscale/mesh/MeshObjectManager.cpp
+     multiscale/mesh/MeshUtils.cpp
+     multiscale/mesh/coarsening/CartesianPartitioner.cpp
+     multiscale/mesh/coarsening/Coarsening.cpp
+     multiscale/mesh/coarsening/GraphPartitioner.cpp
+     multiscale/mesh/coarsening/PartitionerBase.cpp
+     multiscale/mesh/coarsening/SemistructuredPartitioner.cpp
+     multiscale/msrsb/MsrsbLevelBuilderBase.cpp
+     multiscale/msrsb/MsrsbLevelBuilderCoupled.cpp
+     multiscale/msrsb/MsrsbLevelBuilder.cpp
+     multiscale/msrsb/MsrsbUtils.cpp
      solvers/BicgstabSolver.cpp
      solvers/BlockPreconditioner.cpp
      solvers/CgSolver.cpp
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
+     solvers/RichardsonSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
    )
 
@@ -162,9 +195,18 @@ if ( ENABLE_CUDA )
     list( APPEND dependencyList cuda )
 endif()
 
-# We depend on METIS for multiscale coarsening
+# Optionally depend on METIS for multiscale coarsening
 if( ENABLE_METIS )
+    list( APPEND linearAlgebra_headers multiscale/mesh/coarsening/MetisInterface.hpp )
+    list( APPEND linearAlgebra_sources multiscale/mesh/coarsening/MetisInterface.cpp )
     list( APPEND dependencyList metis )
+endif()
+
+# Optionally depend on SCOTCH for multiscale coarsening
+if( ENABLE_SCOTCH )
+    list( APPEND linearAlgebra_headers multiscale/mesh/coarsening/ScotchInterface.hpp )
+    list( APPEND linearAlgebra_sources multiscale/mesh/coarsening/ScotchInterface.cpp )
+    list( APPEND dependencyList scotch )
 endif()
 
 blt_add_library( NAME       linearAlgebra

@@ -42,7 +42,6 @@ set( mesh_headers
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
      generators/MeshGeneratorBase.hpp
-     generators/ParMETISInterface.hpp
      generators/PrismUtilities.hpp
      mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp
@@ -97,8 +96,6 @@ set( mesh_sources
      generators/InternalWellGenerator.cpp
      generators/InternalWellboreGenerator.cpp
      generators/MeshGeneratorBase.cpp
-     generators/ParMETISInterface.cpp
-     generators/PTScotchInterface.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp
      mpiCommunications/MPI_iCommData.cpp
@@ -114,7 +111,7 @@ set( mesh_sources
      utilities/ComputationalGeometry.cpp
      )
 
-set( dependencyList schema dataRepository constitutive finiteElement parmetis metis )
+set( dependencyList schema dataRepository constitutive finiteElement )
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
@@ -136,6 +133,12 @@ if( ENABLE_VTK )
     if( ENABLE_MPI )
       set( dependencyList ${dependencyList} VTK::IOParallelXML VTK::ParallelMPI )
     endif()
+endif()
+
+if( ENABLE_PARMETIS )
+    set( mesh_headers ${mesh_headers} generators/ParMETISInterface.hpp )
+    set( mesh_sources ${mesh_sources} generators/ParMETISInterface.cpp )
+    set( dependencyList ${dependencyList} parmetis metis )
 endif()
 
 if( ENABLE_SCOTCH )

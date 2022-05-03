@@ -696,17 +696,16 @@ void PetscMatrix::transpose( PetscMatrix & dst ) const
 void PetscMatrix::separateComponentFilter( PetscMatrix & dst,
                                            integer const dofsPerNode ) const
 {
-  localIndex const maxRowEntries = maxRowLength();
-  GEOSX_LAI_ASSERT_EQ( maxRowEntries % dofsPerNode, 0 );
+  GEOSX_LAI_ASSERT( ready() );
 
   CRSMatrix< real64, globalIndex > tempMat;
-  tempMat.resize( numLocalRows(), numGlobalCols(), maxRowEntries / dofsPerNode );
+  tempMat.resize( numLocalRows(), numGlobalCols(), ( maxRowLengthLocal() + dofsPerNode - 1 ) / dofsPerNode );
   CRSMatrixView< real64, globalIndex > const tempMatView = tempMat.toView();
 
   PetscInt firstRow, lastRow;
   GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( m_mat, &firstRow, &lastRow ) );
 
-  auto const getComponent = [dofsPerNode] ( auto i )
+  auto const getComponent = [dofsPerNode] ( auto const i )
   {
     return LvArray::integerConversion< integer >( i % dofsPerNode );
   };
@@ -846,7 +845,7 @@ void PetscMatrix::clampEntries( real64 const lo,
   } );
 }
 
-localIndex PetscMatrix::maxRowLength() const
+localIndex PetscMatrix::maxRowLengthLocal() const
 {
   GEOSX_LAI_ASSERT( assembled() );
   RAJA::ReduceMax< parallelHostReduce, localIndex > maxLocalLength( 0 );
@@ -855,7 +854,7 @@ localIndex PetscMatrix::maxRowLength() const
   {
     maxLocalLength.max( rowLength( globalRow ) );
   } );
-  return MpiWrapper::max( maxLocalLength.get(), comm() );
+  return maxLocalLength.get();
 }
 
 localIndex PetscMatrix::rowLength( globalIndex const globalRowIndex ) const
@@ -864,7 +863,7 @@ localIndex PetscMatrix::rowLength( globalIndex const globalRowIndex ) const
   PetscInt ncols;
   PetscInt const row = LvArray::integerConversion< PetscInt >( globalRowIndex );
   GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, row, &ncols, nullptr, nullptr ) );
-  localIndex const nnz = ncols;
+  localIndex const nnz = LvArray::integerConversion< localIndex >( ncols );
   GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, row, &ncols, nullptr, nullptr ) );
   return nnz;
 }
@@ -877,6 +876,29 @@ void PetscMatrix::getRowLengths( arrayView1d< localIndex > const & lengths ) con
   forAll< serialPolicy >( numLocalRows(), [=]( localIndex const localRow )
   {
     lengths[localRow] = rowLength( rowOffset + localRow );
+  } );
+}
+
+void PetscMatrix::getRowLocalLengths( arrayView1d< localIndex > const & lengths ) const
+{
+  GEOSX_LAI_ASSERT( assembled() );
+  globalIndex const rowOffset = ilower();
+  PetscInt firtsCol, lastCol;
+  GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRangeColumn( m_mat, &firtsCol, &lastCol ) );
+  auto const isLocalColumn = [firtsCol, lastCol]( PetscInt const c )
+  {
+    return firtsCol <= c && c < lastCol;
+  };
+  // Can't use parallel policy here, because of PETSc's single row checkout policy
+  forAll< serialPolicy >( numLocalRows(), [=]( localIndex const localRow )
+  {
+    PetscInt ncols;
+    PetscInt const * cols;
+    PetscInt const row = LvArray::integerConversion< PetscInt >( localRow + rowOffset );
+    GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, row, &ncols, &cols, nullptr ) );
+    auto const count = std::count_if( cols, cols + ncols, isLocalColumn );
+    GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, row, &ncols, &cols, nullptr ) );
+    lengths[localRow] = LvArray::integerConversion< localIndex >( count );
   } );
 }
 
@@ -962,6 +984,44 @@ void PetscMatrix::extract( CRSMatrixView< real64, globalIndex const > const & lo
     for( int k = 0; k < numEntries; ++k )
     {
       localMat.addToRow< serialAtomic >( localRow, &cols[k], &vals[k], 1 );
+    }
+    GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, row, &numEntries, &cols, &vals ) );
+  }
+}
+
+void PetscMatrix::extractLocal( CRSMatrixView< real64, localIndex > const & localMat ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT_EQ( localMat.numRows(), numLocalRows() );
+  GEOSX_LAI_ASSERT_EQ( localMat.numColumns(), numGlobalCols() );
+
+  PetscInt firstRow, lastRow;
+  GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( m_mat, &firstRow, &lastRow ) );
+
+  PetscInt firstCol, lastCol;
+  GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRangeColumn( m_mat, &firstCol, &lastCol ) );
+  auto const isLocalColumn = [firstCol, lastCol]( PetscInt const c )
+  {
+    return firstCol <= c && c < lastCol;
+  };
+
+  localMat.move( LvArray::MemorySpace::host, false );
+  for( PetscInt row = firstRow; row < lastRow; ++row )
+  {
+    PetscInt numEntries;
+    PetscInt const * cols;
+    PetscReal const * vals;
+    GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, row, &numEntries, &cols, &vals ) );
+    localIndex const localRow = LvArray::integerConversion< localIndex >( row - firstRow );
+
+    localMat.removeNonZeros( localRow, localMat.getColumns( localRow ), localMat.numNonZeros( localRow ) );
+    for( int k = 0; k < numEntries; ++k )
+    {
+      if( isLocalColumn( cols[k] ) )
+      {
+        localIndex const localCol = LvArray::integerConversion< localIndex >( cols[k] - firstCol );
+        localMat.insertNonZero( localRow, localCol, vals[k] );
+      }
     }
     GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, row, &numEntries, &cols, &vals ) );
   }

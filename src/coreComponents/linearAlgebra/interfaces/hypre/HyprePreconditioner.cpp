@@ -83,12 +83,15 @@ void createAMG( LinearSolverParameters const & params,
 
   // Hypre's parameters to use BoomerAMG as a preconditioner
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( precond.ptr, 0.0 ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( precond.ptr, 1 ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( precond.ptr, params.amg.numCycles ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( precond.ptr, params.logLevel >= 3 ? 1 : 0 ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( precond.ptr, params.dofsPerNode ) );
 
   // Set maximum number of multigrid levels (default 25)
-  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxLevels( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.amg.maxLevels ) ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxLevels( precond.ptr, params.amg.maxLevels ) );
+
+  // Set coarse grid max size (coarsening will stop once this limit is reached)
+  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxCoarseSize( precond.ptr, params.amg.maxCoarseSize ) );
 
   // Set type of cycle (1: V-cycle (default); 2: W-cycle)
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleType( precond.ptr, hypre::getAMGCycleType( params.amg.cycleType ) ) );
@@ -133,11 +136,13 @@ void createAMG( LinearSolverParameters const & params,
   // Set smoother to be used (other options available, see hypre's documentation)
   // (default "gaussSeidel", i.e. local symmetric Gauss-Seidel)
 
-  if( params.amg.smootherType == LinearSolverParameters::AMG::SmootherType::ilu0 ||
+  if( params.amg.smootherType == LinearSolverParameters::AMG::SmootherType::ilu ||
       params.amg.smootherType == LinearSolverParameters::AMG::SmootherType::ilut )
   {
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothType( precond.ptr, 5 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetType( precond.ptr, hypre::getILUType( params.amg.smootherType ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetILUType( precond.ptr, hypre::getILUType( params.amg.smootherType ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothNumLevels( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.amg.maxLevels ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothNumSweeps( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.amg.numSweeps ) ) );
   }
   else
   {
@@ -235,6 +240,12 @@ void createILU( LinearSolverParameters const & params,
     GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetDropThreshold( precond.ptr, params.ifact.threshold ) );
   }
 
+  // Disable RCM reordering to avoid problems with mechanics
+  if( params.dofsPerNode > 1 )
+  {
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetLocalReordering( precond.ptr, 0 ) );
+  }
+
   precond.setup = HYPRE_ILUSetup;
   precond.solve = HYPRE_ILUSolve;
   precond.destroy = HYPRE_ILUDestroy;
@@ -247,6 +258,15 @@ void createRelaxation( LinearSolverParameters const & params,
   precond.setup = hypre::relaxationSetup;
   precond.solve = hypre::relaxationSolve;
   precond.destroy = hypre::relaxationDestroy;
+}
+
+void createChebyshev( LinearSolverParameters const & params,
+                      HyprePrecWrapper & precond )
+{
+  GEOSX_LAI_CHECK_ERROR( hypre::chebyshevCreate( precond.ptr, params.chebyshev.order, params.chebyshev.eigNumIter ) );
+  precond.setup = hypre::chebyshevSetup;
+  precond.solve = hypre::chebyshevSolve;
+  precond.destroy = hypre::chebyshevDestroy;
 }
 
 } // namespace
@@ -288,10 +308,14 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
     case LinearSolverParameters::PreconditionerType::bgs:
     case LinearSolverParameters::PreconditionerType::sgs:
     case LinearSolverParameters::PreconditionerType::l1jacobi:
-    case LinearSolverParameters::PreconditionerType::chebyshev:
     case LinearSolverParameters::PreconditionerType::l1sgs:
     {
       createRelaxation( m_params, *m_precond );
+      break;
+    }
+    case LinearSolverParameters::PreconditionerType::chebyshev:
+    {
+      createChebyshev( m_params, *m_precond );
       break;
     }
     case LinearSolverParameters::PreconditionerType::amg:
@@ -305,7 +329,7 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
       hypre::mgr::createMGR( m_params, dofManager, *m_precond, *m_mgrData );
       break;
     }
-    case LinearSolverParameters::PreconditionerType::iluk:
+    case LinearSolverParameters::PreconditionerType::ilu:
     case LinearSolverParameters::PreconditionerType::ilut:
     {
       createILU( m_params, *m_precond );
@@ -355,6 +379,12 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
 
 void HyprePreconditioner::setup( Matrix const & mat )
 {
+  // MGR sometimes crashes when attempting to set up without clearing previous data
+  if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
+  {
+    clear();
+  }
+
   if( !m_precond )
   {
     m_precond = std::make_unique< HyprePrecWrapper >();

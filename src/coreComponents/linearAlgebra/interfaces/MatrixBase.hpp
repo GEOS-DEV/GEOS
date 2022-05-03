@@ -794,12 +794,23 @@ protected:
   ///@{
 
   /**
+   * @brief Returns the number of nonzero entries in the longest local row of the matrix.
+   * @return the max length of a row
+   *
+   * Not collective.
+   */
+  virtual localIndex maxRowLengthLocal() const = 0;
+
+  /**
    * @brief Returns the number of nonzero entries in the longest row of the matrix.
    * @return the max length of a row
    *
    * Collective.
    */
-  virtual localIndex maxRowLength() const = 0;
+  virtual localIndex maxRowLength() const
+  {
+    return MpiWrapper::max( maxRowLengthLocal(), this->comm() );
+  }
 
   /**
    * @brief Get row length via global row index.
@@ -814,6 +825,13 @@ protected:
    * @note The implementation may move the view's buffer to a different memory space.
    */
   virtual void getRowLengths( arrayView1d< localIndex > const & lengths ) const = 0;
+
+  /**
+   * @brief Get the local row lengths of every local row (number of nonzeros in local columns)
+   * @param lengths an array view to be populated with row lengths
+   * @note The implementation may move the view's buffer to a different memory space.
+   */
+  virtual void getRowLocalLengths( arrayView1d< localIndex > const & lengths ) const = 0;
 
   /**
    * @brief Returns a copy of the data in row @p globalRow.
@@ -854,6 +872,28 @@ protected:
     CRSMatrix< real64, globalIndex > localMat;
     localMat.resizeFromRowCapacities< parallelHostPolicy >( numLocalRows(), numGlobalCols(), rowLengths.data() );
     extract( localMat.toView() );
+    return localMat;
+  }
+
+  /**
+   * @brief Extract block of the matrix corresponding to locally owned columns using previously allocated storage
+   * @parma localMat the local matrix
+   * @note the column indices are shifted linearly to the local range
+   */
+  virtual void extractLocal( CRSMatrixView< real64, localIndex > const & localMat ) const = 0;
+
+  /**
+   * @brief Extract block of the matrix corresponding to locally owned columns
+   * @return the local matrix
+   * @note the column indices are shifted linearly to the local range
+   */
+  CRSMatrix< real64, localIndex > extractLocal() const
+  {
+    array1d< localIndex > rowLengths( numLocalRows() );
+    getRowLocalLengths( rowLengths.toView() );
+    CRSMatrix< real64, localIndex > localMat;
+    localMat.resizeFromRowCapacities< parallelHostPolicy >( numLocalRows(), numGlobalCols(), rowLengths.data() );
+    extractLocal( localMat.toView() );
     return localMat;
   }
 

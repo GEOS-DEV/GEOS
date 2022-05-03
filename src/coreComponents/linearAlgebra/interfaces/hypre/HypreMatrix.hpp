@@ -129,6 +129,7 @@ public:
   using MatrixBase::dofManager;
   using MatrixBase::create;
   using MatrixBase::extract;
+  using MatrixBase::extractLocal;
   using MatrixBase::multiplyPtAP;
 
   virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
@@ -295,13 +296,15 @@ public:
                              bool const excludeDiag ) override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreVector>::maxRowLength
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::maxRowLengthLocal
    */
-  virtual localIndex maxRowLength() const override;
+  virtual localIndex maxRowLengthLocal() const override;
 
   virtual localIndex rowLength( globalIndex const globalRowIndex ) const override;
 
   virtual void getRowLengths( arrayView1d< localIndex > const & lengths ) const override;
+
+  virtual void getRowLocalLengths( arrayView1d< localIndex > const & lengths ) const override;
 
   virtual void getRowCopy( globalIndex globalRowIndex,
                            arraySlice1d< globalIndex > const & colIndices,
@@ -312,6 +315,8 @@ public:
   virtual void extract( CRSMatrixView< real64, globalIndex > const & localMat ) const override;
 
   virtual void extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const override;
+
+  virtual void extractLocal( CRSMatrixView< real64, localIndex > const & localMat ) const override;
 
   virtual void getRowSums( HypreVector & dst,
                            RowSumType const rowSumType ) const override;

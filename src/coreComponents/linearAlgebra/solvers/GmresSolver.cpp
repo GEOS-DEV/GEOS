@@ -90,6 +90,20 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
 {
   GEOSX_MARK_FUNCTION;
 
+  // Function to grow K-space on demand
+  auto const addKspaceVector = [&]( integer const n )
+  {
+    for( integer i = m_kspace.size(); i <= n; ++i )
+    {
+      m_kspace.emplace_back( createTempVector( b ) );
+    }
+  };
+
+  // TEMP: evaluate the speed benefit of pre-allocation vs memory waste.
+  // Rationale: LA packages (e.g. hypre) allocate krylov space this during
+  // setup, so we don't want to include it in the timing of the solve.
+  addKspaceVector( m_params.krylov.maxRestart );
+
   Stopwatch watch;
 
   // Define vectors
@@ -115,15 +129,6 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
   // Initialize iteration state
   m_result.status = LinearSolverResult::Status::NotConverged;
   m_residualNorms.clear();
-
-  // Function to grow K-space on demand
-  auto const addKspaceVector = [&]( integer const n )
-  {
-    for( integer i = m_kspace.size(); i <= n; ++i )
-    {
-      m_kspace.emplace_back( createTempVector( b ) );
-    }
-  };
 
   // On subsequent calls to solve(), b must have the same size/distribution
   addKspaceVector( 0 );

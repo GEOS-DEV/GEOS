@@ -124,6 +124,14 @@ public:
 
 private:
 
+  /**
+   * @brief Generate global point/cell IDs and redistribute the mesh among MPI ranks.
+   * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
+   */
+  vtkSmartPointer< vtkDataSet >
+  redistributeMesh( vtkDataSet & loadedMesh,
+                    DomainPartition const & domain ) const;
+
   real64 writeNodes( CellBlockManager & cellBlockManager ) const;
 
   void importNodesets( vtkDataSet & mesh, CellBlockManager & cellBlockManager ) const;
@@ -144,6 +152,7 @@ private:
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * structuredIndexAttributeString() { return "structuredIndexAttribute"; }
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
@@ -158,7 +167,10 @@ private:
   vtkSmartPointer< vtkDataSet > m_vtkMesh;
 
   /// Name of VTK dataset attribute used to mark regions
-  string m_attributeName;
+  string m_regionAttributeName;
+
+  /// Name of VTK cell attribute storing (semi-)structured cell index, if available
+  string m_structuredIndexAttributeName;
 
   /// Names of VTK nodesets to import
   string_array m_nodesetNames;

@@ -42,22 +42,16 @@ class LinearSolverParametersInput : public dataRepository::Group
 {
 public:
 
-  LinearSolverParametersInput() = delete;
-
   /// Constructor
   LinearSolverParametersInput( string const & name, Group * const parent );
-
-  /// Copy constructor
-  LinearSolverParametersInput( LinearSolverParametersInput && ) = default;
-
-  /// Destructor
-  virtual ~LinearSolverParametersInput() override = default;
 
   /// Catalog name
   static string catalogName() { return "LinearSolverParameters"; }
 
   /// Postprocessing of input
   virtual void postProcessInput() override;
+
+  virtual Group * createChild( string const & childKey, string const & childName ) override final;
 
   LinearSolverParameters const & get() const
   { return m_parameters; }
@@ -101,6 +95,16 @@ public:
     /// Krylov weakest tolerance key
     static constexpr char const * krylovWeakTolString() { return "krylovWeakestTol"; }
 
+    /// Relaxation weight key
+    static constexpr char const * relaxationWeightString() { return "relaxationWeight"; }
+
+    /// Chebyshev order key
+    static constexpr char const * chebyshevOrderString() { return "chebyshevOrder"; }
+    /// Number of eigenvalue estimation CG iterations key
+    static constexpr char const * chebyshevEigNumIterString() { return "chebyshevEigNumIter"; }
+
+    /// AMG number of sweeps key
+    static constexpr char const * amgNumCyclesString() { return "amgNumCycles"; }
     /// AMG number of sweeps key
     static constexpr char const * amgNumSweepsString() { return "amgNumSweeps"; }
     /// AMG smoother type key
@@ -111,15 +115,29 @@ public:
     static constexpr char const * amgThresholdString() { return "amgThreshold"; }
     /// AMG near null space type key
     static constexpr char const * amgNullSpaceTypeString() { return "amgNullSpaceType"; }
-
-    static constexpr char const * amgCoarseningString()         { return "amgCoarseningType";           } ///< AMG coarsening key
-    static constexpr char const * amgInterpolationString()      { return "amgInterpolationType";        }   ///< AMG interpolation key
-    static constexpr char const * amgNumFunctionsString()       { return "amgNumFunctions";             }   ///< AMG threshold key
-    static constexpr char const * amgAggresiveNumLevelsString() { return "amgAggresiveCoarseningLevels";}             ///< AMG threshold key
+    /// AMG coarsening key
+    static constexpr char const * amgCoarseningString() { return "amgCoarseningType"; }
+    /// AMG interpolation key
+    static constexpr char const * amgInterpolationString() { return "amgInterpolationType"; }
+    /// AMG number of PDEs key
+    static constexpr char const * amgNumFunctionsString() { return "amgNumFunctions"; }
+    /// AMG number of aggressive coarsening levels
+    static constexpr char const * amgAggresiveNumLevelsString() { return "amgAggresiveCoarseningLevels"; }
+    /// AMG coarse grid threshold key
+    static constexpr char const * amgMaxCoarseSizeString() { return "amgMaxCoarseSize"; }
+    /// AMG coarse grid threshold key
+    static constexpr char const * amgSeparateComponentsString() { return "amgSeparateComponents"; }
     /// ILU fill key
     static constexpr char const * iluFillString() { return "iluFill"; }
     /// ILU threshold key
     static constexpr char const * iluThresholdString() { return "iluThreshold"; }
+  };
+
+  /// Keys appearing in XML
+  struct groupKeyStruct
+  {
+    static constexpr char const * multiscaleString() { return "Multiscale"; }
+    static constexpr char const * blockString() { return "Block"; }
   };
 
 private:

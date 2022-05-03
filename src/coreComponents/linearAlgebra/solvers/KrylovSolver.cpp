@@ -20,6 +20,7 @@
 #include "linearAlgebra/solvers/BicgstabSolver.hpp"
 #include "linearAlgebra/solvers/CgSolver.hpp"
 #include "linearAlgebra/solvers/GmresSolver.hpp"
+#include "linearAlgebra/solvers/RichardsonSolver.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
 namespace geosx
@@ -66,6 +67,12 @@ KrylovSolver< VECTOR >::create( LinearSolverParameters const & parameters,
       return std::make_unique< GmresSolver< Vector > >( parameters,
                                                         matrix,
                                                         precond );
+    }
+    case LinearSolverParameters::SolverType::richardson:
+    {
+      return std::make_unique< RichardsonSolver< Vector > >( parameters,
+                                                             matrix,
+                                                             precond );
     }
     default:
     {

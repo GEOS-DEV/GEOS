@@ -20,6 +20,7 @@
 
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
+#include "linearAlgebra/multiscale/MultiscalePreconditioner.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -34,12 +35,20 @@ using namespace constitutive;
 
 SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & name,
                                                                 Group * const parent )
-  : Base( name, parent )
+  : Base( name, parent ),
+    m_systemScaling( 0 )
 {
-  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
-  m_linearSolverParameters.get().mgr.separateComponents = true;
-  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
-  m_linearSolverParameters.get().dofsPerNode = 3;
+  registerWrapper( viewKeyStruct::linearSystemScalingString(), &m_systemScaling ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( m_systemScaling ).
+    setDescription( "Whether block system scaling should be performed" );
+
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
+  linParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
+  linParams.mgr.separateComponents = true;
+  linParams.mgr.displacementFieldName = keys::TotalDisplacement;
+  linParams.dofsPerNode = 3;
+  linParams.multiscale.label = "poro";
 }
 
 void SinglePhasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
@@ -102,26 +111,25 @@ void SinglePhasePoromechanicsSolver::setupSystem( DomainPartition & domain,
                                                   ParallelVector & solution,
                                                   bool const setSparsity )
 {
-  if( m_precond )
-  {
-    m_precond->clear();
-  }
-
   // setup monolithic coupled system
   SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
-    createPreconditioner();
+    m_precond = createPreconditioner( domain );
   }
 }
 
 void SinglePhasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups()
 {
-  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
+  using StrategyType = LinearSolverParameters::MGR::StrategyType;
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == StrategyType::singlePhaseHybridFVM )
   {
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hybridSinglePhasePoromechanics;
+    linParams.mgr.strategy = StrategyType::hybridSinglePhasePoromechanics;
   }
+  linParams.block.subParams.emplace_back( &solidMechanicsSolver()->getLinearSolverParameters() );
+  linParams.block.subParams.emplace_back( &flowSolver()->getLinearSolverParameters() );
 }
 
 real64 SinglePhasePoromechanicsSolver::solverStep( real64 const & time_n,
@@ -197,31 +205,85 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                               " " );
 }
 
-void SinglePhasePoromechanicsSolver::createPreconditioner()
+std::unique_ptr< PreconditionerBase< LAInterface> >
+SinglePhasePoromechanicsSolver::createPreconditioner( DomainPartition & domain ) const
 {
-  if( m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::block )
+  LinearSolverParameters const & linParams = m_linearSolverParameters.get();
+  switch( linParams.preconditionerType )
   {
-    auto precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::UpperTriangular,
-                                                                           SchurComplementOption::RowsumDiagonalProbing,
-                                                                           BlockScalingOption::FrobeniusNorm );
+    case LinearSolverParameters::PreconditionerType::block:
+    {
+      auto precond = std::make_unique< BlockPreconditioner< LAInterface > >( linParams.block );
 
-    auto mechPrecond = LAInterface::createPreconditioner( solidMechanicsSolver()->getLinearSolverParameters() );
-    precond->setupBlock( 0,
-                         { { keys::TotalDisplacement, { 3, true } } },
-                         std::make_unique< SeparateComponentPreconditioner< LAInterface > >( 3, std::move( mechPrecond ) ) );
+      precond->setupBlock( 0,
+                           { { keys::TotalDisplacement, { 3, true } } },
+                           solidMechanicsSolver()->createPreconditioner( domain ) );
+      precond->setupBlock( 1,
+                           { { SinglePhaseBase::viewKeyStruct::elemDofFieldString(), { 1, true } } },
+                           flowSolver()->createPreconditioner( domain ) );
 
-    auto flowPrecond = LAInterface::createPreconditioner( flowSolver()->getLinearSolverParameters() );
-    precond->setupBlock( 1,
-                         { { extrinsicMeshData::flow::pressure::key(), { 1, true } } },
-                         std::move( flowPrecond ) );
-
-    m_precond = std::move( precond );
+      return precond;
+    }
+    case LinearSolverParameters::PreconditionerType::multiscale:
+    {
+      return std::make_unique< MultiscalePreconditioner< LAInterface > >( linParams, domain );
+    }
+    default:
+    {
+      return SolverBase::createPreconditioner( domain );
+    }
   }
-  else
+}
+
+void SinglePhasePoromechanicsSolver::solveLinearSystem( DofManager const & dofManager,
+                                                        ParallelMatrix & matrix,
+                                                        ParallelVector & rhs,
+                                                        ParallelVector & solution )
+{
+  if( m_systemScaling )
   {
-    //TODO: Revisit this part such that is coherent across physics solver
-    //m_precond = LAInterface::createPreconditioner( m_linearSolverParameters.get() );
+    // Only compute this once and reuse for the entire simulation
+    if( !m_scalingVector.created() )
+    {
+      // TODO: currently only handles displacement and cell pressure blocks, ignores face pressure in HybridFVM
+      DofManager::SubComponent const fields[2] =
+      {
+        { keys::TotalDisplacement, DofManager::CompMask{ 3, true } },
+        { SinglePhaseBase::viewKeyStruct::elemDofFieldString(), DofManager::CompMask{ 1, true } }
+      };
+
+      real64 norms[2];
+      for( integer i = 0; i < 2; ++i )
+      {
+        ParallelMatrix P, A;
+        dofManager.makeRestrictor( { fields[i] }, matrix.comm(), true, P );
+        matrix.multiplyPtAP( P, A );
+        norms[i] = A.normFrobenius();
+      }
+      real64 const scale[2] = { std::min( norms[1] / norms[0], 1.0 ), std::min( norms[0] / norms[1], 1.0 ) };
+
+      m_scalingVector.create( rhs.localSize(), rhs.comm() );
+      m_scalingVector.set( 1.0 );
+
+      localIndex offset = 0;
+      arrayView1d< real64 > const values = m_scalingVector.open();
+      for( integer i = 0; i < 2; ++i )
+      {
+        localIndex const numDof = dofManager.numLocalDofs( fields[i].fieldName );
+        forAll< parallelDevicePolicy<> >( numDof, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+        {
+          values[offset + k] = scale[i];
+        } );
+        offset += numDof;
+      }
+      m_scalingVector.close();
+    }
+
+    matrix.leftScale( m_scalingVector );
+    rhs.pointwiseProduct( m_scalingVector, rhs );
   }
+
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void SinglePhasePoromechanicsSolver::updateState( DomainPartition & domain )
