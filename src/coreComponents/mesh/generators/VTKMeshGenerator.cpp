@@ -885,7 +885,7 @@ void VTKMeshGenerator::
         GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
                                               vtkArray->GetName(), wrapperName, region.getName(), subRegion.getName() ) );
 
-        fieldsToBeSync.addElementFields( {wrapperName}, {region.getName()} );                                      
+        fieldsToBeSync.addElementFields( {wrapperName}, {region.getName()} );
         continue;
       }
       WrapperBase & wrapper = subRegion.getWrapperBase( wrapperName );

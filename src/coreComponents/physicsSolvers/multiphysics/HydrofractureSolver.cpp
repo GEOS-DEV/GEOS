@@ -212,7 +212,7 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
 
         fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key(),
                                            extrinsicMeshData::flow::pressure_n::key(),
-                                           "elementAperture" },
+                                           SurfaceElementSubRegion::viewKeyStruct::elementApertureString() },
                                          { m_surfaceGenerator->getFractureRegionName() } );
 
         fieldsToBeSync.addFields( FieldLocation::Node,
