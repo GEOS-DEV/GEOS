@@ -39,7 +39,7 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
     setApplyDefaultValue( 0.0 ).
     setDescription( "Internal energy of the solid per unit volume [J/m^3]" );
 
-  registerWrapper( viewKeyStruct::oldInternalEnergyString(), &m_oldInternalEnergy ).
+  registerWrapper( viewKeyStruct::oldInternalEnergyString(), &m_internalEnergy_n ).
     setApplyDefaultValue( 0.0 ).
     setDescription( "Internal energy of the solid per unit volume at the previous time-step [J/m^3]" );
 
@@ -65,19 +65,19 @@ void SolidInternalEnergy::allocateConstitutiveData( Group & parent,
 {
   m_internalEnergy.resize( 0, 1 );
   m_dInternalEnergy_dTemperature.resize( 0, 1 );
-  m_oldInternalEnergy.resize( 0, 1 );
+  m_internalEnergy_n.resize( 0, 1 );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 void SolidInternalEnergy::saveConvergedState() const
 {
-  arrayView2d< real64 const > internalEnergy = m_internalEnergy;
-  arrayView2d< real64 >       oldInternalEnergy = m_oldInternalEnergy;
+  arrayView2d< real64 const > internalEnergy   = m_internalEnergy;
+  arrayView2d< real64 >       internalEnergy_n = m_internalEnergy_n;
 
   forAll< parallelDevicePolicy<> >( internalEnergy.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
-    oldInternalEnergy[k][0] = internalEnergy[k][0];
+    internalEnergy_n[k][0] = internalEnergy[k][0];
   } );
 }
 

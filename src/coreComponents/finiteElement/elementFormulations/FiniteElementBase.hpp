@@ -32,7 +32,6 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/EdgeManager.hpp"
 #include "mesh/FaceManager.hpp"
-#include "mesh/CellElementSubRegion.hpp"
 
 namespace geosx
 {

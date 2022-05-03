@@ -72,6 +72,7 @@ CoulombContactUpdates CoulombContact::createKernelWrapper() const
 {
   return CoulombContactUpdates( m_penaltyStiffness,
                                 m_shearStiffness,
+                                m_displacementJumpThreshold,
                                 *m_apertureTable,
                                 m_cohesion,
                                 m_frictionCoefficient,

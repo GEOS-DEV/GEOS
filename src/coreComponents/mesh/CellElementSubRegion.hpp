@@ -364,49 +364,8 @@ private:
    * @param[in] k the index of the element in the subregion
    * @param[in] X an arrayView of (const) node positions
    */
-  inline void calculateCellVolumesKernel( localIndex const k,
-                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
-  {
-    LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
-
-    real64 Xlocal[10][3];
-
-    for( localIndex a = 0; a < m_numNodesPerElement; ++a )
-    {
-      localIndex const nodeIndex = m_toNodesRelation( k, a );
-      LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ nodeIndex ] );
-      LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], X[ nodeIndex ] );
-    }
-    LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
-
-    switch( m_elementType )
-    {
-      case ElementType::Hexahedron:
-      {
-        m_elementVolume[k] = computationalGeometry::hexVolume( Xlocal );
-        break;
-      }
-      case ElementType::Tetrahedron:
-      {
-        m_elementVolume[k] = computationalGeometry::tetVolume( Xlocal );
-        break;
-      }
-      case ElementType::Prism:
-      {
-        m_elementVolume[k] = computationalGeometry::wedgeVolume( Xlocal );
-        break;
-      }
-      case ElementType::Pyramid:
-      {
-        m_elementVolume[k] = computationalGeometry::pyramidVolume( Xlocal );
-        break;
-      }
-      default:
-      {
-        GEOSX_ERROR( "Volume calculation not supported for element type " << m_elementType << " and for CellElementSubRegion " << getName() );
-      }
-    }
-  }
+  void calculateCellVolumesKernel( localIndex const k,
+                                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
 
   void calculateElementCenterAndVolume( localIndex const k,
                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
