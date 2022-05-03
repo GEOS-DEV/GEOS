@@ -174,7 +174,7 @@ protected:
   array3d< real64, relperm::LAYOUT_RELPERM >  m_phaseRelPerm;
   array4d< real64, relperm::LAYOUT_RELPERM_DS >  m_dPhaseRelPerm_dPhaseVolFrac;
 
-  array3d< real64, relperm::LAYOUT_RELPERM >  m_phaseRelPermOld;
+  array3d< real64, relperm::LAYOUT_RELPERM >  m_phaseRelPerm_n;
 };
 
 } // namespace constitutive

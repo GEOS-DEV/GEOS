@@ -19,11 +19,11 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidExtrinsicData.hpp"
-#include "constitutive/solid/porosity/BiotPorosity.hpp"
+// #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/porosity/PorosityExtrinsicData.hpp"
 
 namespace geosx
@@ -45,7 +45,7 @@ using namespace constitutive;
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public compositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
+class FaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -58,17 +58,20 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = compositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
+  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
 
-  using StabCompFlowAccessors = StencilAccessors< extrinsicMeshData::flow::phaseVolumeFractionOld,
-                                                  extrinsicMeshData::flow::phaseDensityOld,
-                                                  extrinsicMeshData::flow::phaseComponentFractionOld,
-                                                  extrinsicMeshData::flow::elementMacroID >;
+  using StabCompFlowAccessors = StencilAccessors< extrinsicMeshData::flow::phaseVolumeFraction_n,
+                                                  extrinsicMeshData::flow::elementMacroID,
+                                                  extrinsicMeshData::flow::pressure_n >;
+
+  using StabMultiFluidAccessors = StencilMaterialAccessors< MultiFluidBase,                                               
+                                                  extrinsicMeshData::multifluid::phaseDensity_n,
+                                                  extrinsicMeshData::multifluid::phaseCompFraction_n >;
 
   using SolidAccessors = StencilMaterialAccessors< SolidBase,
                                                    extrinsicMeshData::solid::bulkModulus,
@@ -77,7 +80,7 @@ public:
   using PorosityAccessors = StencilMaterialAccessors< PorosityBase,
                                                       extrinsicMeshData::porosity::biotCoefficient >;
 
-  using RelPermAccessors = StencilMaterialAccessors< RelativePermeabilityBase, extrinsicMeshData::relperm::phaseRelPermOld >;
+  using RelPermAccessors = StencilMaterialAccessors< RelativePermeabilityBase, extrinsicMeshData::relperm::phaseRelPerm_n >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -93,9 +96,10 @@ public:
   using AbstractBase::m_dCompFrac_dCompDens;
   using AbstractBase::m_dPhaseCapPressure_dPhaseVolFrac;
 
-  using AbstractBase::m_dPres;
+  // using AbstractBase::m_dPres;
+  using AbstractBase::m_pres;
 
-  using Base = compositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -130,6 +134,7 @@ public:
                            CompFlowAccessors const & compFlowAccessors,
                            StabCompFlowAccessors const & stabCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
+                           StabMultiFluidAccessors const & stabMultiFluidAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
                            SolidAccessors const & solidAccessors,
@@ -150,11 +155,12 @@ public:
             dt,
             localMatrix,
             localRhs ),
-    m_phaseDensOld( stabCompFlowAccessors.get( extrinsicMeshData::flow::phaseDensityOld {} ) ),
-    m_phaseCompFracOld( stabCompFlowAccessors.get( extrinsicMeshData::flow::phaseComponentFractionOld {} )),
-    m_phaseVolFracOld( stabCompFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFractionOld {} )),
+    m_phaseDens_n( stabMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity_n {} ) ),
+    m_phaseCompFrac_n( stabMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction_n {} )),
+    m_phaseVolFrac_n( stabCompFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction_n {} )),
     m_elementMacroID( stabCompFlowAccessors.get( extrinsicMeshData::flow::elementMacroID {} )),
-    m_phaseRelPermOld( relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPermOld {} )),
+    m_phaseRelPerm_n( relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm_n {} )),
+    m_pressure_n( stabCompFlowAccessors.get( extrinsicMeshData::flow::pressure_n {} )),
     m_bulkModulus( solidAccessors.get( extrinsicMeshData::solid::bulkModulus {} )),
     m_shearModulus( solidAccessors.get( extrinsicMeshData::solid::shearModulus {} )),
     m_biotCoefficient( porosityAccessors.get( extrinsicMeshData::porosity::biotCoefficient {} )),
@@ -225,7 +231,7 @@ public:
       real64 tauStab = 0.0;
       real64 tauC = 1.0;
 
-      stackArray1d< integer, 2 > stencilMacroElements( 2 );
+      integer stencilMacroElements[ 2 ];
 
       // compute potential difference MPFA-style
       for( integer i = 0; i < stack.stencilSize; ++i )
@@ -240,8 +246,11 @@ public:
         
         tauStab = tauC * 9.0 * (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (32.0 * (10.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
 
-        dPresGradStab += tauStab * m_stabWeights( iconn, i ) * m_dPres[er][esr][ei];
+        dPresGradStab += tauStab * m_stabWeights( iconn, i ) * (m_pres[er][esr][ei] - m_pressure_n[er][esr][ei]); // jump in dp, not p
       }
+
+      // std::cout << "tauStab = " << tauStab <<" \t m_stabWeights = " << m_stabWeights( iconn, 0 ) << " " << m_stabWeights( iconn, 1 ) << std::endl;
+      // std::cout << "dPresGradStab = " << dPresGradStab << std::endl;
 
       // modify stabilization flux
       // multiply dPresGrad with upwind, lagged quantities
@@ -252,19 +261,23 @@ public:
       localIndex const esr_up_stab  = m_sesri( iconn, k_up_stab );
       localIndex const ei_up_stab   = m_sei( iconn, k_up_stab );
 
-      real64 const mobility = m_phaseMob[er_up_stab ][esr_up_stab ][ei_up_stab ][ip];
+      // real64 const mobility = m_phaseMob[er_up_stab ][esr_up_stab ][ei_up_stab ][ip]; // remove mobility
 
-      if (stencilMacroElements[0] == stencilMacroElements[1] && LvArray::math::abs( mobility ) > 1e-20 )
+      // if (stencilMacroElements[0] != stencilMacroElements[1] ) {std::cout << "oops" << std::endl;}
+
+      if (stencilMacroElements[0] == stencilMacroElements[1] /*&& LvArray::math::abs( mobility ) > 1e-20*/ )
       {
 
         for( integer ic = 0; ic < numComp; ++ic )
         {
 
         
-          real64 const laggedUpwind = m_phaseDensOld[er_up_stab ][esr_up_stab ][ei_up_stab ][ip]
-                              * m_phaseCompFracOld[er_up_stab ][esr_up_stab ][ei_up_stab ][ip][ic]
-                              * m_phaseRelPermOld[er_up_stab ][esr_up_stab ][ei_up_stab ][ip][ic];
-                              // * (m_phaseVolFracOld[er_up_stab ][esr_up_stab ][ei_up_stab ][ip] - 0.2)/0.6;
+          real64 const laggedUpwind = m_phaseDens_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip]
+                              * m_phaseCompFrac_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip][ic]
+                              * m_phaseRelPerm_n[er_up_stab ][esr_up_stab ][ei_up_stab ][ip][ic];
+                              // * (m_phaseVolFrac_n[er_up_stab ][esr_up_stab ][ei_up_stab ][ip] - 0.2)/0.6;
+
+          // std::cout << "laggedUpwind = " << laggedUpwind << std::endl;
 
           stack.stabFlux[ic] += dPresGradStab * laggedUpwind;
         
@@ -283,13 +296,13 @@ public:
     {
 
       stack.localFlux[ic]           +=  stack.stabFlux[ic];
-      stack.localFlux[numComp + ic] += -stack.stabFlux[ic];
+      stack.localFlux[numEqn + ic] += -stack.stabFlux[ic];
 
       for( integer ke = 0; ke < stack.stencilSize; ++ke )
       {
         localIndex const localDofIndexPres = ke * numDof;
         stack.localFluxJacobian[ic][localDofIndexPres]           +=  stack.dStabFlux_dP[ke][ic];
-        stack.localFluxJacobian[numComp + ic][localDofIndexPres] += -stack.dStabFlux_dP[ke][ic];
+        stack.localFluxJacobian[numEqn + ic][localDofIndexPres] += -stack.dStabFlux_dP[ke][ic];
 
       }
     }
@@ -313,11 +326,12 @@ public:
 
 protected:
 
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseDensOld;
-  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_COMP > > const m_phaseCompFracOld;
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseVolFracOld;
+  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseDens_n;
+  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_phaseCompFrac_n;
+  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseVolFrac_n;
   ElementViewConst< arrayView1d< integer const > > const m_elementMacroID;
-  ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const m_phaseRelPermOld;
+  ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const m_phaseRelPerm_n;
+  ElementViewConst< arrayView1d< real64 const> > const m_pressure_n; // group by 'type'
 
   ElementViewConst< arrayView1d< real64 const > > const m_bulkModulus;
   ElementViewConst< arrayView1d< real64 const > > const m_shearModulus;
@@ -364,7 +378,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    compositionalMultiphaseBaseKernels::
+    isothermalCompositionalMultiphaseBaseKernels::
       internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
       integer constexpr NUM_COMP = NC();
@@ -378,6 +392,7 @@ public:
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename KERNEL_TYPE::StabCompFlowAccessors stabCompFlowAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::StabMultiFluidAccessors stabMultiFluidAccessors( elemManager, solverName );
       typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::SolidAccessors solidAccessors( elemManager, solverName );
@@ -385,7 +400,7 @@ public:
       typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
-                          compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors,
+                          compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, stabMultiFluidAccessors,
                           capPressureAccessors, permeabilityAccessors, solidAccessors, porosityAccessors, relPermAccessors,
                           dt, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );

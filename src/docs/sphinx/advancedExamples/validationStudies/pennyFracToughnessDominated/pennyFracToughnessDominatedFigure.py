@@ -1,31 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ElementTree
-
-class Penny_toughnessStorageDominated:
-    def __init__(self, E, nu, KIC, mu, Q0, t):
-        Ep = E / ( 1.0 - nu**2.0 )
-        Kp = 8.0 / np.sqrt( 2.0 * np.pi ) * KIC
-        self.t  = t
-        self.Q0 = Q0
-        self.mu = mu
-        self.Ep = Ep
-        self.Kp = Kp
-
-    def analyticalSolution(self):
-        t  = self.t
-        Q0 = self.Q0
-        mu = self.mu        
-        Ep = self.Ep
-        Kp = self.Kp
-        
-        fracRadius = 0.8546 *  ( ( Ep**2.0 * Q0**2.0 * t**2.0 ) / ( Kp**2.0 ))**( 1.0/5.0 )
-
-        inletAperture = 0.6537 * ( ( Kp**4.0 * Q0 * t ) / ( Ep**4.0 ))**( 1.0/5.0 )
-        
-        inletPressure = 0.3004 * ( ( Kp**6.0 ) / ( Ep * Q0 * t ))**( 1.0/5.0 )
-        
-        return [ fracRadius, inletAperture , inletPressure ]
+import HydrofractureSolutions
 
 
 def getParametersFromXML( xmlFilePath ):
@@ -34,6 +10,16 @@ def getParametersFromXML( xmlFilePath ):
     maxTime = float(tree.find('Events').get('maxTime'))
 
     toughness = float( tree.find('Solvers/SurfaceGenerator').get('rockToughness') )
+
+    param = tree.findall('Geometry/Box')
+    found_source = False
+    for elem in param:
+        if elem.get("name") == "source":
+            source = elem.get("xMax")
+            source = [float(i) for i in source[1:-1].split(",")]
+            x_source = round(source[0])
+            found_source = True
+        if found_source: break
 
     tree = ElementTree.parse(xmlFilePath + "_base.xml")
 
@@ -50,18 +36,22 @@ def getParametersFromXML( xmlFilePath ):
 
     injectionRate = -4.0 * float( tree.find('FieldSpecifications/SourceFlux').get('scale') ) / fluidDensity
 
-    return [ maxTime, youngModulus, poissonRatio, toughness, viscosity, injectionRate ]
+    return [ maxTime, youngModulus, poissonRatio, toughness, viscosity, injectionRate, x_source ]
 
 
 def main():
     xmlFilePathPrefix = "../../../../../../inputFiles/hydraulicFracturing/pennyShapedToughnessDominated"   
 
-    tMax, E, nu, KIC, mu, Q0 = getParametersFromXML( xmlFilePathPrefix )
+    tMax, E, nu, KIC, mu, Q0, xSource = getParametersFromXML( xmlFilePathPrefix )
+    Ep = E / ( 1.0 - nu**2.0 )
 
     t = np.arange(0.0, tMax, 0.01*tMax)
-
-    pennyFrac = Penny_toughnessStorageDominated ( E, nu, KIC, mu, Q0, t )
-    fracRadius, inletAperture , inletPressure = pennyFrac.analyticalSolution()
+    radTimes = np.array([tMax])
+    hfsolns = HydrofractureSolutions.PennySolutions()
+    pennyFrac = hfsolns.Solutions( mu, Ep, Q0, KIC, t, radTimes, xSource )
+    inletPressure = pennyFrac[5]
+    fracRadius = pennyFrac[6]
+    inletAperture = pennyFrac[7]
 
     # Load GEOSX results
     t_sim, p0_sim, w0_sim, fracArea_sim = np.loadtxt("model-results.txt", skiprows=1, unpack=True)
@@ -74,7 +64,7 @@ def main():
     lw=8
     mew=2
     malpha = 1.0
-    lablelist = ['Asymptotic ($\mu$ => 0, $C_{L}$ => 0 )', 'GEOSX ($\mu$ => 0, $C_{L}$ => 0 )']
+    lablelist = ['Asymptotic ( $\mu$ => 0, $C_{L}$ => 0 )', 'GEOSX ( $\mu$ => 0, $C_{L}$ => 0 )']
     
     fig, ax = plt.subplots(2,2,figsize=(24, 18))
     cmap = plt.get_cmap("tab10")
@@ -116,7 +106,6 @@ def main():
 
 
     ax[1,1].axis('off')
-
 
     plt.show()
 
