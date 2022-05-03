@@ -8,8 +8,8 @@ Triaxial Driver
 
 **Context**
 
-The main goal of this example is to learn how to use the ``TriaxialDriver`` to examine solid mechanics models by simulating rock mechanics experiments, such as triaxial tests. 
-Necessarily, prior to field scale simulations with testing model, predictions (e.g., stress-strain relationships) obtained from running ``TriaxialDriver`` should be compared with experimental measurements to calibrate material properties.
+In this example, we use the ``TriaxialDriver`` inside GEOSX to simulate rock mechanics experiments, such as triaxial tests.
+The triaxial driver allows to calibrate properties and model parameters against experimental data before using them in field-scale simulations.
 
 
 **Objectives**
@@ -38,7 +38,7 @@ This example also uses a set of table files located at:
   inputFiles/solidMechanics/triaixalDriverTables/
 
 
-A python script for post-processing the simulation results is also provided:
+Last, a Python script for post-processing the results is provided:
 
 .. code-block:: console
 
@@ -49,9 +49,9 @@ A python script for post-processing the simulation results is also provided:
 Description of the case
 ------------------------------------------------------------------
 
-Instead of launching a full finite element simulation to mimic experimental loading conditions, GEOSX provides a ``TriaxialDriver`` module to investigate constitutive behaviors and simulate laboratory tests. The triaxial driver makes it easy to interpret the mechanical response and calibrate the constitutive models with available experimental data. 
+Instead of launching a full finite-element simulation to mimic experimental loading conditions, GEOSX provides a ``TriaxialDriver`` to investigate constitutive behaviors and simulate laboratory tests. The triaxial driver makes it easy to interpret the mechanical response and calibrate the constitutive models against experimental data. 
 
-In this example, the Extended Drucker-Prager model (see :ref:`DruckerPragerExtended`) is applied to solve for elastoplastic deformation of rock samples, when subjected to controlled loading conditions. The strain hardening Extended Drucker-Prager model with an associated plastic flow rule in GEOSX is tested in this example. To replicate a typical triaxial test, table function is hereby employed to specify loading conditions in both axial and radial direction. The resulted strains and stresses in both directions are numerically calculated and can be saved into an output file in a simple ASCII format.
+In this example, the Extended Drucker-Prager model (see :ref:`DruckerPragerExtended`) is used to solve elastoplastic deformations of rock samples when subject to controlled loading conditions. The strain-hardening Extended Drucker-Prager model with an associated plastic flow rule is tested in this example. To replicate a typical triaxial test, we use a table function to specify loading conditions in axial and radial directions. The resulting strains and stresses in both directions are numerically calculated and saved into a simple ASCII output file.
 
 
 For this example, we focus on the ``Task``, the ``Constitutive``, and the ``Functions`` tags.
@@ -60,12 +60,12 @@ For this example, we focus on the ``Task``, the ``Constitutive``, and the ``Func
 Task
 ------------------------------------------------------------------
 
-In GEOSX, the ``TriaxialDriver`` is defined with a particular XML structure. 
+In GEOSX, the ``TriaxialDriver`` is defined with a dedicated XML structure. 
 The ``TriaxialDriver`` is added to a standard XML input deck as a solo task to the ``Tasks`` queue and added as a ``SoloEvent`` to the event queue.
 
-For this example, we simulate the elastoplastic deformation of a confined specimen caused by external load. A homogeneous domain with one solid material is assumed. The material is named as ``ExtendedDruckerPrager``, whose mechanical properties are specified in the ``Constitutive`` section.
+For this example, we simulate the elastoplastic deformation of a confined specimen caused by external load. A homogeneous domain with one solid material is assumed. The material is named ``ExtendedDruckerPrager``, and its mechanical properties are specified in the ``Constitutive`` section.
 
-Different testing modes are available in the ``TriaxialDriver`` to mimic different loading conditions in various core sample tests:
+Different testing modes are available in the ``TriaxialDriver`` to mimic different laboratory loading conditions:
  
 +--------------------+-------------------------+--------------------------+---------------------------+
 | **mode**           | **axial loading**       | **radial loading**       | **initial stress**        |
@@ -83,13 +83,13 @@ Different testing modes are available in the ``TriaxialDriver`` to mimic differe
 A triaxial test is usually conducted on a confined rock sample to determine material properties. 
 As shown, a conventional triaxial test is described using the ``mode="mixedControl"`` testing mode in the ``TriaxialDriver``.
 
-In a triaxial test, the testing sample is under confining pressure (radial stresses) and subjected to increased axial load. Therefore, a stress control ``radialControl="stressFunction"`` is defined in the radial direction to impose confining pressure; whereas a strain control ``axialControl="strainFunction"`` is applied in the axial direction to represent axial compression.
+In a triaxial test, the testing sample is under confining pressure (radial stresses) and subject to increased axial load. Therefore, a stress control ``radialControl="stressFunction"`` is defined in the radial direction to impose confining pressure. A strain control ``axialControl="strainFunction"`` is applied in the axial direction to represent axial compression.
  
-The initial stress is specified by ``initialStress="-10.e6"``. To ensure the static equilibrium at the first timestep, its value should be consistent with the initial set of applied stresses defined in axial or radial loading functions.
+The initial stress is specified by ``initialStress="-10.e6"``. To ensure static equilibrium at the first timestep, its value should be consistent with the initial set of applied stresses defined in axial or radial loading functions.
 This stress has a negative value due to the negative sign convention for compressive stress in GEOSX.
 
 
-``steps="200"`` defines the number of load steps and ``output="simulationResults.txt"`` specifies an output file to which the simulation results will be written. 
+Then, ``steps="200"`` defines the number of load steps and ``output="simulationResults.txt"`` specifies an output file to which the simulation results will be written. 
 
 
 .. literalinclude:: ../../../../../inputFiles/solidMechanics/triaxialDriver_ExtendedDruckerPrager.xml
@@ -98,7 +98,7 @@ This stress has a negative value due to the negative sign convention for compres
     :end-before: <!-- SPHINX_TASK_END -->
 
 
-Besides triaxial test, volumetric and Oedometer tests can be handled by using the ``strainControl`` mode, if properly defining loading controls in axial and radial direction. A volumetric test can be modelled by setting the axial and radial control functions to the same strain function, whereas an oedometer test can be running by constraining the radial strain to zero.
+In addition to triaxial tests, volumetric and oedometer tests can be simulated by changing the ``strainControl`` mode, and by defining loading controls in axial and radial direction accordingly. A volumetric test can be modelled by setting the axial and radial control functions to the same strain function, whereas an oedometer test runs by setting the radial strain to zero.
 
 
 ------------------------------
@@ -107,7 +107,7 @@ Constitutive laws
 
 Any solid material model implemented in GEOSX can be called by the ``TriaxialDriver``.
 
-For this problem, Extended Drucker Prager model ``ExtendedDruckerPrager`` is used to describe the mechanical behavior of an isotropic material, when subjected to external loading.
+For this problem, Extended Drucker Prager model ``ExtendedDruckerPrager`` is used to describe the mechanical behavior of an isotropic material, when subject to external loading.
 As for the material parameters, ``defaultInitialFrictionAngle``, ``defaultResidualFrictionAngle`` and ``defaultCohesion`` denote the initial friction angle, the residual friction angle, and cohesion, respectively, as defined by the Mohr-Coulomb failure envelope.
 As the residual friction angle ``defaultResidualFrictionAngle`` is larger than the initial one ``defaultInitialFrictionAngle``, a strain hardening model is adopted, whose hardening rate is given as ``defaultHardening="0.0001"``. 
 If the residual friction angle is set to be less than the initial one, strain weakening will take place. 
@@ -138,40 +138,40 @@ In this case, users should define two different time history functions (``strain
     :end-before: <!-- SPHINX_FUNCTION_END -->
 
 
-The ``strainFunction`` TableFunction is an example of a 1D interpolated function, which describes the strain as a function of time ``inputVarNames="{ time }"``. This table is defined using a single coordinateFile:
+The ``strainFunction`` TableFunction is an example of a 1D interpolated function, which describes the strain as a function of time ``inputVarNames="{ time }"``. This table is defined using a single coordinate file:
 
 .. literalinclude:: ../../../../../inputFiles/solidMechanics/triaixalDriverTables/time.geos
   :language: none
 
-And a single voxelFile:
+And a single voxel file:
 
 .. literalinclude:: ../../../../../inputFiles/solidMechanics/triaixalDriverTables/axialStrain.geos
   :language: none
 
 
-Similarly, the correlation between the confining stress and time is given through the ``stressFunction``, which is defined using the same coordinateFile:
+Similarly, the correlation between the confining stress and time is given through the ``stressFunction`` defined using the same coordinate file:
 
 .. literalinclude:: ../../../../../inputFiles/solidMechanics/triaixalDriverTables/time.geos
   :language: none
 
-And a different voxelFile:
+And a different voxel file:
 
 .. literalinclude:: ../../../../../inputFiles/solidMechanics/triaixalDriverTables/radialStress.geos
   :language: none
 
 
-For this specific test, the confining stress is kept as a constant, which equals to the ``initialStress``. 
-Instead of monotonic change of axial load, two loading/unloading cycles are defined in the ``strainFunction``. 
-In this way, both plastic loading and elastic unloading can be detected and observed. 
+For this specific test, the confining stress is kept constant and equal to the ``initialStress``. 
+Instead of monotonic changing the axial load, two loading/unloading cycles are specified in the ``strainFunction``. 
+This way, both plastic loading and elastic unloading can be modeled. 
 
-Note that ``stressFunction`` and ``strainFunction`` have negative values for a compressive test.
+Note that by convention in GEOSX, ``stressFunction`` and ``strainFunction`` have negative values for a compressive test.
 
 
 ------------------------------------------------------------------
 Mesh
 ------------------------------------------------------------------
 
-Even discretization is not required for the ``TriaxialDriver``, a dummy mesh should be defined to pass all the necessary checks when initializing GEOSX and running the module. A dummy mesh should be created in the ``Mesh`` section and assigned to the ``cellBlocks`` in the ``ElementRegions`` section. 
+Even if discretization is not required for the ``TriaxialDriver``, a dummy mesh should be defined to pass all the necessary checks when initializing GEOSX and running the module. A dummy mesh should be created in the ``Mesh`` section and assigned to the ``cellBlocks`` in the ``ElementRegions`` section. 
 
 
 .. literalinclude:: ../../../../../inputFiles/solidMechanics/triaxialDriver_ExtendedDruckerPrager.xml
@@ -180,14 +180,14 @@ Even discretization is not required for the ``TriaxialDriver``, a dummy mesh sho
     :end-before: <!-- SPHINX_MESH_END -->
 
 
-Once calibrated, the testing constitutive models can be easily extended for full field scale simulation by adding solver, discretization, and boundary condition blocks to the xml file. And this example can also be running with full GEOSX model and generate identical results as provided by the ``TriaxialDriver``.
+Once calibrated, the testing constitutive models can be easily used in full field-scale simulation by adding solver, discretization, and boundary condition blocks to the xml file. Also, it is possible to run a full GEOSX model and generate identical results as those provided by the ``TriaxialDriver``.
 
 
 ---------------------------------
 Running  TriaxialDriver
 ---------------------------------
 
-The ``TriaxialDriver`` is launched as any other GEOSX simulation by using the following command:
+The ``TriaxialDriver`` is launched like any other GEOSX simulation by using the following command:
 
 .. code-block:: sh
 
@@ -223,8 +223,8 @@ The running log appears to the console to indicate if the case can be successful
 Inspecting results
 ---------------------------------
 
-The simulation results are saved in a text file, which is named as ``simulationResults.txt``.
-This output file is format with a brief header to mark the meaning of each column. Each row corresponds to one timestep of the driver, starting from initial conditions in the first row. 
+The simulation results are saved in a text file, named ``simulationResults.txt``.
+This output file has a brief header explaining the meaning of each column. Each row corresponds to one timestep of the driver, starting from initial conditions in the first row.
 
 
 .. code:: sh
@@ -245,9 +245,9 @@ This output file is format with a brief header to mark the meaning of each colum
   1.0000e-01 -4.0000e-04 1.0000e-04 1.0000e-04 -1.6000e+07 -1.0000e+07 -1.0000e+07 1.0000e+00 0.0000e+00 
   ...
 
-Please note that the file contains two columns for radial strain (``radial_strain_1`` and ``radial_strain_2``) and two columns for radial stress (``radial_stress_1`` and ``radial_stress_2``). For isotropic materials, the stresses and strains along the two radial axes would be the same. However, the stresses and strains in the radial directions could potentially differ for the cases with anisotropic materials and true-triaxial loading conditions.
+Note that the file contains two columns for radial strains (``radial_strain_1`` and ``radial_strain_2``) and two columns for radial stresses (``radial_stress_1`` and ``radial_stress_2``). For isotropic materials, the stresses and strains along the two radial axes would be the same. However, the stresses and strains in the radial directions can differ for cases with anisotropic materials and true-triaxial loading conditions.
 
-This output file can be processed and visualized using any tools. As an example, with the provided python script, the simulated stress-strain curve, p-q diagram and relationship between volumetric strain and axial strain can be plotted, which could be then validated with experimental observations:
+This output file can be processed and visualized using any tools. As an example here, with the provided Python script, the simulated stress-strain curve, p-q diagram and relationship between volumetric strain and axial strain are plotted, and used to validate results against experimental observations:
 
 
 .. plot:: docs/sphinx/basicExamples/triaxialDriver/triaxialDriverFigure.py
