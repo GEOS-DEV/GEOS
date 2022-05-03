@@ -51,8 +51,6 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName()
-  // m_useStab( 0 ), 
-  // m_computeMacroElements( 0 )
 
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
@@ -62,16 +60,6 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
   registerWrapper( viewKeyStruct::fluidSolverNameString(), &m_flowSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
-
-  // registerWrapper( viewKeyStruct::useStabFlagString(), &m_useStab ).
-  //   setApplyDefaultValue( 0 ).
-  //   setInputFlag( InputFlags::OPTIONAL ).
-  //   setDescription( "Use pressure jump stabilization in flux" );
-
-  // registerWrapper( viewKeyStruct::computeMacroElementsFlagString(), &m_computeMacroElements ).
-  //   setApplyDefaultValue( 0 ).
-  //   setInputFlag( InputFlags::OPTIONAL ).
-  //   setDescription( "Compute macroelements for pressure jump stabilization in flux" );
 
   registerWrapper( viewKeyStruct::stabilizationTypeString(), &m_stabilizationType ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -118,9 +106,6 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
         setRestartFlags( RestartFlags::NO_WRITE ).
         setSizedFromParent( 0 );
 
-        // subRegion.registerWrapper< array1d <integer> >( viewKeyStruct::elementMacroIDString() ).
-        // setApplyDefaultValue( -1 ).
-        // setPlotLevel( PlotLevel::LEVEL_1 );
         subRegion.registerExtrinsicData <extrinsicMeshData::flow::elementMacroID> (getName());
     } );
   } );
@@ -212,7 +197,7 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
             // get the nodes connected to this element
             for( localIndex l = 0; l < elemsToNodes[ei].size(); ++l )
             {
-              localIndex const iNode = elemsToNodes[ei][l]; // ensure this is a global index compatible with vector
+              localIndex const iNode = elemsToNodes[ei][l]; 
               nodeVisitedView[iNode] = 1;
             }     
           }

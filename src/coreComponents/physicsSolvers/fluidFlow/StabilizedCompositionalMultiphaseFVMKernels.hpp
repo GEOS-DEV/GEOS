@@ -23,7 +23,6 @@
 
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidExtrinsicData.hpp"
-// #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/porosity/PorosityExtrinsicData.hpp"
 
 namespace geosx
@@ -65,8 +64,7 @@ public:
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
 
-  using StabCompFlowAccessors = StencilAccessors< extrinsicMeshData::flow::phaseVolumeFraction_n,
-                                                  extrinsicMeshData::flow::elementMacroID,
+  using StabCompFlowAccessors = StencilAccessors< extrinsicMeshData::flow::elementMacroID,
                                                   extrinsicMeshData::flow::pressure_n >;
 
   using StabMultiFluidAccessors = StencilMaterialAccessors< MultiFluidBase,                                               
@@ -96,7 +94,6 @@ public:
   using AbstractBase::m_dCompFrac_dCompDens;
   using AbstractBase::m_dPhaseCapPressure_dPhaseVolFrac;
 
-  // using AbstractBase::m_dPres;
   using AbstractBase::m_pres;
 
   using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
@@ -119,9 +116,14 @@ public:
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor accessor for the dofs numbers
    * @param[in] compFlowAccessor accessor for wrappers registered by the solver
+   * @param[in] stabCompFlowAccessor accessor for wrappers registered by the solver needed for stabilization
    * @param[in] multiFluidAccessor accessor for wrappers registered by the multifluid model
+   * @param[in] stabMultiFluidAccessor accessor for wrappers registered by the multifluid model needed for stabilization
    * @param[in] capPressureAccessors accessor for wrappers registered by the cap pressure model
    * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
+   * @param[in] solidAccessors accessor for wrappers registered by the solid model needed for stabilization
+   * @param[in] porosityAccessors accessor for wrappers registered by the porosity model needed for stabilization
+   * @param[in] relPermAccessors accessor for wrappers registered by the relative permeability model needed for stabilization
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -155,12 +157,11 @@ public:
             dt,
             localMatrix,
             localRhs ),
+    m_pres_n( stabCompFlowAccessors.get( extrinsicMeshData::flow::pressure_n {} )),
     m_phaseDens_n( stabMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity_n {} ) ),
     m_phaseCompFrac_n( stabMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction_n {} )),
-    m_phaseVolFrac_n( stabCompFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction_n {} )),
-    m_elementMacroID( stabCompFlowAccessors.get( extrinsicMeshData::flow::elementMacroID {} )),
     m_phaseRelPerm_n( relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm_n {} )),
-    m_pressure_n( stabCompFlowAccessors.get( extrinsicMeshData::flow::pressure_n {} )),
+    m_elementMacroID( stabCompFlowAccessors.get( extrinsicMeshData::flow::elementMacroID {} )),
     m_bulkModulus( solidAccessors.get( extrinsicMeshData::solid::bulkModulus {} )),
     m_shearModulus( solidAccessors.get( extrinsicMeshData::solid::shearModulus {} )),
     m_biotCoefficient( porosityAccessors.get( extrinsicMeshData::porosity::biotCoefficient {} )),
@@ -193,7 +194,7 @@ public:
   };
 
   /**
-   * @brief Compute the local flux contributions to the residual and Jacobian
+   * @brief Compute the local flux contributions to the residual and Jacobian, including stabilization
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
@@ -208,9 +209,7 @@ public:
     // First, we call the base computeFlux to compute:
     //  1) compFlux and its derivatives,
     //
-    // Computing stabilization flux requires quantities already computed in the base computeFlux,
-    // such as potGrad, phaseFlux, and the indices of the upwind cell
-    // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
+    // We use the lambda below (called **inside** the phase loop of the base computeFlux) to compute stabilization terms
     Base::computeFlux( iconn, stack, [&] GEOSX_HOST_DEVICE ( integer const ip,
                                                              localIndex const k_up,
                                                              localIndex const er_up,
@@ -221,8 +220,7 @@ public:
                                                              real64 const (&dPhaseFlux_dP)[maxStencilSize],
                                                              real64 const (&dPhaseFlux_dC)[maxStencilSize][numComp] )
     {
-      GEOSX_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
-      GEOSX_UNUSED_VAR( ip, er_up, esr_up, ei_up );
+      GEOSX_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
 
       // We are in the loop over phases, ip provides the current phase index.
 
@@ -241,16 +239,11 @@ public:
         localIndex const ei  = m_sei( iconn, i );
 
         stencilMacroElements[i] = m_elementMacroID[er][esr][ei];
-
-        // tauStab = (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (4.0 * (4.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
         
         tauStab = tauC * 9.0 * (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (32.0 * (10.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
 
-        dPresGradStab += tauStab * m_stabWeights( iconn, i ) * (m_pres[er][esr][ei] - m_pressure_n[er][esr][ei]); // jump in dp, not p
+        dPresGradStab += tauStab * m_stabWeights( iconn, i ) * (m_pres[er][esr][ei] - m_pres_n[er][esr][ei]); // jump in dp, not p
       }
-
-      // std::cout << "tauStab = " << tauStab <<" \t m_stabWeights = " << m_stabWeights( iconn, 0 ) << " " << m_stabWeights( iconn, 1 ) << std::endl;
-      // std::cout << "dPresGradStab = " << dPresGradStab << std::endl;
 
       // modify stabilization flux
       // multiply dPresGrad with upwind, lagged quantities
@@ -261,11 +254,7 @@ public:
       localIndex const esr_up_stab  = m_sesri( iconn, k_up_stab );
       localIndex const ei_up_stab   = m_sei( iconn, k_up_stab );
 
-      // real64 const mobility = m_phaseMob[er_up_stab ][esr_up_stab ][ei_up_stab ][ip]; // remove mobility
-
-      // if (stencilMacroElements[0] != stencilMacroElements[1] ) {std::cout << "oops" << std::endl;}
-
-      if (stencilMacroElements[0] == stencilMacroElements[1] /*&& LvArray::math::abs( mobility ) > 1e-20*/ )
+      if (stencilMacroElements[0] == stencilMacroElements[1] )
       {
 
         for( integer ic = 0; ic < numComp; ++ic )
@@ -275,9 +264,6 @@ public:
           real64 const laggedUpwind = m_phaseDens_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip]
                               * m_phaseCompFrac_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip][ic]
                               * m_phaseRelPerm_n[er_up_stab ][esr_up_stab ][ei_up_stab ][ip][ic];
-                              // * (m_phaseVolFrac_n[er_up_stab ][esr_up_stab ][ei_up_stab ][ip] - 0.2)/0.6;
-
-          // std::cout << "laggedUpwind = " << laggedUpwind << std::endl;
 
           stack.stabFlux[ic] += dPresGradStab * laggedUpwind;
         
@@ -326,12 +312,13 @@ public:
 
 protected:
 
+  ElementViewConst< arrayView1d< real64 const> > const m_pres_n; 
+
   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseDens_n;
   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_phaseCompFrac_n;
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseVolFrac_n;
-  ElementViewConst< arrayView1d< integer const > > const m_elementMacroID;
   ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const m_phaseRelPerm_n;
-  ElementViewConst< arrayView1d< real64 const> > const m_pressure_n; // group by 'type'
+
+  ElementViewConst< arrayView1d< integer const > > const m_elementMacroID;
 
   ElementViewConst< arrayView1d< real64 const > > const m_bulkModulus;
   ElementViewConst< arrayView1d< real64 const > > const m_shearModulus;
