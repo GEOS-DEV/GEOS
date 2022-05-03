@@ -589,6 +589,10 @@
 					<xsd:selector xpath="SlipDependentPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="ConstitutiveSolidInternalEnergyUniqueName">
+					<xsd:selector xpath="SolidInternalEnergy" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="ConstitutiveTableCapillaryPressureUniqueName">
 					<xsd:selector xpath="TableCapillaryPressure" />
 					<xsd:field xpath="@name" />
