@@ -106,7 +106,7 @@ extensions = [
 mermaid_output_format = "svg"
 with open('/tmp/puppeteer-config.json', 'w') as f:
     f.write('{ "args": [ "--no-sandbox" ] }')
-mermaid_params = ['-p', '/tmp/puppeteer-config.json']
+mermaid_params = ['--backgroundColor', 'transparent', '-p', '/tmp/puppeteer-config.json']
 
 plot_html_show_formats = False
 
