@@ -475,22 +475,13 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
   } );
 
   // Transmissibility 3D/2D
-  // FIXME: changes in assembleHydrofracFluxTerms to be checked
-  m_flowSolver->assembleHydrofracFluxTerms( time_n,
-                                            dt,
-                                            domain,
-                                            dofManager,
-                                            localMatrix,
-                                            localRhs,
-                                            m_contactFlowSolver->getDerivativeFluxResidual_dAperture() );
-
-  // Assemble transmissibility entries
-  m_flowSolver->assemblePoroelasticFluxTerms( time_n, dt,
+  m_flowSolver->assemblePoroelasticFluxTerms( time_n,
+                                              dt,
                                               domain,
                                               dofManager,
                                               localMatrix,
                                               localRhs,
-                                              dofManager.getKey( extrinsicMeshData::flow::pressure::key() ) );
+                                              m_contactFlowSolver->getDerivativeFluxResidual_dAperture() );
 
 }
 

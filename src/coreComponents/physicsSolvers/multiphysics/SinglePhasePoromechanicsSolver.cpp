@@ -283,7 +283,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                               dofManager,
                                               localMatrix,
                                               localRhs,
-                                              " " );
+                                              std::string( " " ) );
 }
 
 void SinglePhasePoromechanicsSolver::applyBoundaryConditions( real64 const time_n,

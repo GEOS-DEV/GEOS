@@ -332,8 +332,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
     ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
       elemManager.constructMaterialArrayViewAccessor< PermeabilityBase, real64, 4 >( extrinsicMeshData::permeability::dPerm_dDispJump::key() );
 
-    //fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
-    fluxApprox.forStencils< CellElementStencilTPFA >( mesh, [&]( auto & stencil )
+    fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
@@ -364,19 +363,15 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
 }
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
-                                                         real64 const dt,
-                                                         DomainPartition const & domain,
-                                                         DofManager const & dofManager,
-                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                         arrayView1d< real64 > const & localRhs,
-                                                         CRSMatrixView< real64, localIndex const > const & dR_dAper )
+void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+                                                           real64 const dt,
+                                                           DomainPartition const & domain,
+                                                           DofManager const & dofManager,
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           arrayView1d< real64 > const & localRhs,
+                                                           CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
   GEOSX_MARK_FUNCTION;
-
-  //std::cout << "SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms" << std::endl;
-
-  //MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -396,8 +391,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
     ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
       elemManager.constructMaterialArrayViewAccessor< PermeabilityBase, real64, 4 >( extrinsicMeshData::permeability::dPerm_dDispJump::key() );
 
-    //fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
-    fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
+    fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
