@@ -33,7 +33,7 @@ using namespace geosx::testing;
 CommandLineOptions g_commandLineOptions;
 
 // This unit test checks the interpolation done to extract seismic traces from a wavefield.
-// It computes a seismogram at a receiver co-located with the source.
+// It computes a seismogram at a receiver co-located with the source and compares it to the surrounding receivers.
 char const * xmlInput =
   "<?xml version=\"1.0\" ?>\n"
   "<Problem>\n"
@@ -188,7 +188,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
     propagator->solverStep( time_n, dt, i, domain );
     time_n += dt;
   }
-  // cleanup (triggers calculation of last seismograms data points)
+  // cleanup (triggers calculation of the remaining seismograms data points)
   propagator->cleanup( 1.0, 10, 0, 0, domain );
 
   // retrieve seismo
@@ -198,8 +198,9 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   ASSERT_EQ( p_rcvs.size( 1 ), 9 );
   ASSERT_EQ( p_rcvs.size( 0 ), 11 );
 
-  // check seismo content
-  // the basis is linear, so the seismograms should
+  // check seismo content. The pressure values cannot be directly checked as the problem is too small.
+  // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
+  // to the average of the others.
   for( int i=0; i<11; i++ )
   {
     if( i > 0 )
