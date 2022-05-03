@@ -316,24 +316,24 @@ public:
    * term.
    * @tparam LEAF Type of the derived finite element implementation.
    * @tparam VECTORTYPE Type of the vector to be filled.
-   * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables created by a call to @ref setup.
-   * @param matrix The input matrix to which values have to be added.
+   * @param dofs The vector of dofs to evaluate the stabilization.
+   * @param targetVector The input vector to which values have to be added.
    * @param scaleFactor Optional scaling of the stabilization matrix.
-   * @param rowOffset Optional row index from which to start adding.
-   * @param colOffset Optional column index from which to start adding.
+   * @param offset Optional index from which to start adding.
    */
   template< typename LEAF, typename VECTORTYPE >
   GEOSX_HOST_DEVICE
   void addEvaluatedGradGradStabilizationVector( typename LEAF::StackVariables const & stack,
-                                                VECTORTYPE & vector,
+                                                real64 const ( &dofs )[LEAF::maxSupportPoints],
+                                                VECTORTYPE & targetVector,
                                                 real64 const scaleFactor = 1.0,
                                                 localIndex const offset = 0 ) const
   {
-    LEAF::template addGradGradStabilization< VECTORTYPE >( stack,
-                                                           vector,
-                                                           scaleFactor,
-                                                           offset );
+    LEAF::template addEvaluatedGradGradStabilization< VECTORTYPE >( stack,
+                                                                    targetVector,
+                                                                    scaleFactor,
+                                                                    offset );
   }
 
   /**
