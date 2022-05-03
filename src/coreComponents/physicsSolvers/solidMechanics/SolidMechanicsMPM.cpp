@@ -498,7 +498,7 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
 
 }
 
-real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
+real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                         real64 const & dt,
                                         const int cycleNumber,
                                         DomainPartition & domain )
@@ -850,6 +850,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
   // Particle repartitioning
   partition.repartitionMasterParticlesToNeighbors( domain, m_iComm );
+
 
   // Calculate stable time step
   real64 wavespeed = 0.0;

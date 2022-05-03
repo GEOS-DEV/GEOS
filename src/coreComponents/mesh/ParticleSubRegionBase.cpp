@@ -127,8 +127,6 @@ void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
 
 void ParticleSubRegionBase::erase(localIndex pp)
 {
-  // Erase from registered particle fields...
-  int oldSize = this->size();
   int newSize = this->size()-1;
 
   // Scalar fields:
@@ -165,8 +163,8 @@ void ParticleSubRegionBase::eraseVector(array2d< real64 > & vector, localIndex i
   temp.erase(3*index+1);
   temp.erase(3*index+0);
   vector.resize(newSize,3);
-  for(int i=0; i<3*newSize; i++) // TODO: This can maybe be optimized to start from index since everything before index should be unchanged.
-  {                              //       Depends on whether resize preserves existing entries.
+  for(int i=0; i<3*newSize; i++) // TODO: This can maybe be optimized to start from 'index' since everything before 'index' should be unchanged.
+  {                              //       Depends on whether 'resize' preserves existing entries.
     vector[i/3][i%3] = temp[i];
   }
 }

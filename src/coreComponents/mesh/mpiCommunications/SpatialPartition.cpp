@@ -724,7 +724,6 @@ namespace geosx
     for(size_t n=0; n<nn; n++ )
     {
       // Unpack the buffer to an array of coordinates.
-      const buffer_unit_type* receiveBufferPtr = receiveBuffer[n].data(); // needed for const cast
       subRegion.particleUnpack( receiveBuffer[n], newParticleStartingIndices[n], numberOfIncomingParticles[n] );
     }
 
