@@ -12,7 +12,7 @@ how instantiations of each class relate to each other in the data hierarchy rath
 type relates to each other in an inheritance diagram.
 
 .. _diagMeshDevFig:
-.. mermaid:: MeshObjectInstantiationHierarchy.mmd
+.. mermaid:: /coreComponents/mesh/docs/MeshObjectInstantiationHierarchy.mmd
    :caption: Instances cardinalities and multiplicities mesh domain.
 
 
