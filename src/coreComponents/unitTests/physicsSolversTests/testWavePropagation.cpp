@@ -32,8 +32,8 @@ using namespace geosx::testing;
 
 CommandLineOptions g_commandLineOptions;
 
-// This unit test checks the interpolation done to extract seismic traces from a wavefield 
-
+// This unit test checks the interpolation done to extract seismic traces from a wavefield. 
+// It computes a seismogram at a receiver co-located with the source.
 char const * xmlInput = 
   "<?xml version=\"1.0\" ?>\n"
   "<Problem>\n"
@@ -43,9 +43,11 @@ char const * xmlInput =
   "      cflFactor=\"0.25\"\n"
   "      discretization=\"FE1\"\n"
   "      targetRegions=\"{ Region }\"\n"
-  "      sourceCoordinates=\"{ { 1005.0, 1005.0, 1005.0 } }\"\n"
-  "      timeSourceFrequency=\"2.0\"\n"
-  "      receiverCoordinates=\"{ { 1105,1005, 1005 } }\"\n"
+  "      sourceCoordinates=\"{ { 50, 50, 50 } }\"\n"
+  "      timeSourceFrequency=\"2\"\n"
+  "      receiverCoordinates=\"{ { 0.1, 0.1, 0.1 }, { 0.1, 0.1, 99.9 }, { 0.1, 99.9, 0.1 }, { 0.1, 99.9, 99.9 },\n"
+  "                              { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },\n"
+  "                              { 50, 50, 50 } }\"\n"
   "      outputSeismoTrace=\"0\"\n"
   "      dtSeismoTrace=\"0.1\"/>\n"
   "  </Solvers>\n"
@@ -53,42 +55,35 @@ char const * xmlInput =
   "    <InternalMesh\n"
   "      name=\"mesh\"\n"
   "      elementTypes=\"{ C3D8 }\"\n"
-  "      xCoords=\"{ 0, 2000 }\"\n"
-  "      yCoords=\"{ 0, 2000 }\"\n"
-  "      zCoords=\"{ 0, 2000 }\"\n"
-  "      nx=\"{ 10 }\"\n"
-  "      ny=\"{ 10 }\"\n"
-  "      nz=\"{ 10 }\"\n"
+  "      xCoords=\"{ 0, 100 }\"\n"
+  "      yCoords=\"{ 0, 100 }\"\n"
+  "      zCoords=\"{ 0, 100 }\"\n"
+  "      nx=\"{ 1 }\"\n"
+  "      ny=\"{ 1 }\"\n"
+  "      nz=\"{ 1 }\"\n"
   "      cellBlockNames=\"{ cb }\"/>\n"
   "  </Mesh>\n"
-  "  <Geometry>\n"
-  "    <Box\n"
-  "      name=\"zpos\"\n"
-  "      xMin=\"{-0.01, -0.01, 1999.99}\"\n"
-  "      xMax=\"{2000.01, 2000.01, 2000.01}\"/>\n"
-  "\n"
-  "  </Geometry>\n"
   "  <Events\n"
   "    maxTime=\"1\">\n"
   "    <PeriodicEvent\n"
   "      name=\"solverApplications\"\n"
-  "      forceDt=\"0.01\"\n"
+  "      forceDt=\"0.1\"\n"
   "      targetExactStartStop=\"0\"\n"
   "      targetExactTimestep=\"0\"\n"
   "      target=\"/Solvers/acousticSolver\"/>\n"
   "    <PeriodicEvent\n"
   "      name=\"waveFieldNp1Collection\"\n"
-  "      timeFrequency=\"0.01\"\n"
+  "      timeFrequency=\"0.1\"\n"
   "      targetExactTimestep=\"0\"\n"
   "      target=\"/Tasks/waveFieldNp1Collection\" />\n"
   "    <PeriodicEvent\n"
   "      name=\"waveFieldNCollection\"\n"
-  "      timeFrequency=\"0.01\"\n"
+  "      timeFrequency=\"0.1\"\n"
   "      targetExactTimestep=\"0\"\n"
   "      target=\"/Tasks/waveFieldNCollection\" />\n"
   "    <PeriodicEvent\n"
   "      name=\"waveFieldNm1Collection\"\n"
-  "      timeFrequency=\"0.01\"\n"
+  "      timeFrequency=\"0.1\"\n"
   "      targetExactTimestep=\"0\"\n"
   "      target=\"/Tasks/waveFieldNm1Collection\" />\n"
   "  </Events>\n"
@@ -170,7 +165,7 @@ protected:
   }
 
   static real64 constexpr time = 0.0;
-  static real64 constexpr dt = 1e-2;
+  static real64 constexpr dt = 1e-1;
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
@@ -187,32 +182,39 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
   propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolver" );
   real64 time_n = time;
-  // run for 1s (100 steps)
-  for( int i=0; i<100; i++ )
+  // run for 1s (10 steps)
+  for( int i=0; i<10; i++ )
   {
     propagator->solverStep(time_n, dt, i, domain);
     time_n += dt;
   }
   // cleanup (triggers calculation of last seismograms data points)
-  propagator->cleanup(time_n, 100, 0, 0, domain);
+  propagator->cleanup(1.0, 10, 0, 0, domain);
 
   // retrieve seismo
   arrayView2d< real64 > const p_rcvs = propagator->getReference< array2d< real64 > >( AcousticWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
 
   // check number of seismos and trace length
-  ASSERT_EQ( p_rcvs.size( 1 ), 1);
+  ASSERT_EQ( p_rcvs.size( 1 ), 9);
   ASSERT_EQ( p_rcvs.size( 0 ), 11); 
 
   // check seismo content
-  real64 expected[] = {0, 0.000154869, 0.00287235, 0.018094, 0.0409127, -0.00192847, -0.103807, -0.0808633, 0.0672482, 0.121415, 0.01187031};
-  for(int i=0; i<11; i++ )
+  // the basis is linear, so the seismograms should 
+  for( int i=0; i<11; i++ )
   {
-    ASSERT_TRUE( std::abs(p_rcvs[i][0] - expected[i]) < 0.00001);
+    if( i > 0 ) 
+    { 
+      ASSERT_TRUE( std::abs(p_rcvs[i][8]) > 0 );
+    }
+    double avg = 0;
+    for( int r=0; r<8; r++ )
+    {
+      avg += p_rcvs[i][r];
+    }
+    avg /=8.0;  
+    ASSERT_TRUE( std::abs(p_rcvs[i][8] - avg) < 0.00001);
   } 
-
 }
-
-
 
 int main( int argc, char * * argv )
 {

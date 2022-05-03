@@ -323,7 +323,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace(  real64 const time_n,
           vtmpN += var_at_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
         }
         // linear interpolation between the pressure value at time_n and time_(n+1)
-        var_rcvs[iSeismo][ircv] = a1*vtmpN + a2*vtmpNp1;
+	var_rcvs[iSeismo][ircv] = a1*vtmpN + a2*vtmpNp1;
       }
     } );
   }
@@ -582,10 +582,9 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     // compute the seismic traces since last step.
     arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
     for( real64 timeSeismo;  
-         (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= time_n && m_indexSeismoTrace < m_nsamplesSeismoTrace; 
+         (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= time_n + dt && m_indexSeismoTrace < m_nsamplesSeismoTrace; 
 	 m_indexSeismoTrace++ )
     {
-      std::cout << m_dtSeismoTrace*m_indexSeismoTrace << " " << m_indexSeismoTrace << std::endl;
       computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, p_np1, p_n, p_rcvs);
     }
 	    
@@ -621,7 +620,6 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
          (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= time_n && m_indexSeismoTrace < m_nsamplesSeismoTrace; 
 	 m_indexSeismoTrace++ )
     {
-      std::cout << m_dtSeismoTrace*m_indexSeismoTrace << " " << m_indexSeismoTrace << std::endl;
       computeSeismoTrace( time_n, 0, timeSeismo, m_indexSeismoTrace, p_np1, p_n, p_rcvs );
     }
   } );
