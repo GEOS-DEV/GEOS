@@ -1,4 +1,3 @@
-# .readthedocs.yml
 # Read the Docs configuration file
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 
@@ -8,14 +7,14 @@ version: 2
 build:
   os: "ubuntu-20.04"
   apt_packages:
-    - npm
+  - npm
   tools:
     nodejs: "16"
     python: "3.7"
   jobs:
     post_install:
-      - npm install -g npm
-      - npm install -g @mermaid-js/mermaid-cli
+    - npm install -g npm
+    - npm install -g @mermaid-js/mermaid-cli
 
 # Optionally set the version of Python and requirements required to build your docs
 python:
@@ -26,10 +25,6 @@ python:
 sphinx:
   configuration: src/conf.py
   builder: html
-
-# Build documentation with MkDocs
-#mkdocs:
-#  configuration: mkdocs.yml
 
 # Optionally build your docs in additional formats such as PDF and ePub
 formats: all
