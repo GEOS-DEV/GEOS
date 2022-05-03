@@ -32,9 +32,9 @@ using namespace geosx::testing;
 
 CommandLineOptions g_commandLineOptions;
 
-// This unit test checks the interpolation done to extract seismic traces from a wavefield. 
+// This unit test checks the interpolation done to extract seismic traces from a wavefield.
 // It computes a seismogram at a receiver co-located with the source.
-char const * xmlInput = 
+char const * xmlInput =
   "<?xml version=\"1.0\" ?>\n"
   "<Problem>\n"
   "  <Solvers>\n"
@@ -169,7 +169,7 @@ protected:
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  AcousticWaveEquationSEM  * propagator;
+  AcousticWaveEquationSEM * propagator;
 };
 
 real64 constexpr AcousticWaveEquationSEMTest::time;
@@ -185,35 +185,35 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   // run for 1s (10 steps)
   for( int i=0; i<10; i++ )
   {
-    propagator->solverStep(time_n, dt, i, domain);
+    propagator->solverStep( time_n, dt, i, domain );
     time_n += dt;
   }
   // cleanup (triggers calculation of last seismograms data points)
-  propagator->cleanup(1.0, 10, 0, 0, domain);
+  propagator->cleanup( 1.0, 10, 0, 0, domain );
 
   // retrieve seismo
   arrayView2d< real64 > const p_rcvs = propagator->getReference< array2d< real64 > >( AcousticWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
 
   // check number of seismos and trace length
-  ASSERT_EQ( p_rcvs.size( 1 ), 9);
-  ASSERT_EQ( p_rcvs.size( 0 ), 11); 
+  ASSERT_EQ( p_rcvs.size( 1 ), 9 );
+  ASSERT_EQ( p_rcvs.size( 0 ), 11 );
 
   // check seismo content
-  // the basis is linear, so the seismograms should 
+  // the basis is linear, so the seismograms should
   for( int i=0; i<11; i++ )
   {
-    if( i > 0 ) 
-    { 
-      ASSERT_TRUE( std::abs(p_rcvs[i][8]) > 0 );
+    if( i > 0 )
+    {
+      ASSERT_TRUE( std::abs( p_rcvs[i][8] ) > 0 );
     }
     double avg = 0;
     for( int r=0; r<8; r++ )
     {
       avg += p_rcvs[i][r];
     }
-    avg /=8.0;  
-    ASSERT_TRUE( std::abs(p_rcvs[i][8] - avg) < 0.00001);
-  } 
+    avg /=8.0;
+    ASSERT_TRUE( std::abs( p_rcvs[i][8] - avg ) < 0.00001 );
+  }
 }
 
 int main( int argc, char * * argv )

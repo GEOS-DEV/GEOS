@@ -292,13 +292,13 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
   } );
 }
 
-void AcousticWaveEquationSEM::computeSeismoTrace(  real64 const time_n, 
-                                                   real64 const dt, 
-                                                   real64 const timeSeismo, 
-                                                   localIndex iSeismo, 
-                                                   arrayView1d< real64 > const var_at_np1, 
-                                                   arrayView1d< real64 > const var_at_n, 
-                                                   arrayView2d< real64 > const var_rcvs )
+void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
+                                                  real64 const dt,
+                                                  real64 const timeSeismo,
+                                                  localIndex iSeismo,
+                                                  arrayView1d< real64 > const var_at_np1,
+                                                  arrayView1d< real64 > const var_at_n,
+                                                  arrayView2d< real64 > const var_rcvs )
 {
   real64 const timeNp1 = time_n+dt;
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
@@ -323,12 +323,12 @@ void AcousticWaveEquationSEM::computeSeismoTrace(  real64 const time_n,
           vtmpN += var_at_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
         }
         // linear interpolation between the pressure value at time_n and time_(n+1)
-	var_rcvs[iSeismo][ircv] = a1*vtmpN + a2*vtmpNp1;
+        var_rcvs[iSeismo][ircv] = a1*vtmpN + a2*vtmpNp1;
       }
     } );
   }
 
-  // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized. 
+  // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
   // Output will then only be done via the previous code.
   if( iSeismo == m_nsamplesSeismoTrace - 1 )
   {
@@ -581,13 +581,13 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
     // compute the seismic traces since last step.
     arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
-    for( real64 timeSeismo;  
-         (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= time_n + dt && m_indexSeismoTrace < m_nsamplesSeismoTrace; 
-	 m_indexSeismoTrace++ )
+    for( real64 timeSeismo;
+         (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= time_n + dt && m_indexSeismoTrace < m_nsamplesSeismoTrace;
+         m_indexSeismoTrace++ )
     {
-      computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, p_np1, p_n, p_rcvs);
+      computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, p_np1, p_n, p_rcvs );
     }
-	    
+
     // prepare next step
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -602,12 +602,12 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   return dt;
 }
 void AcousticWaveEquationSEM::cleanup( real64 const time_n,
-              integer const cycleNumber,
-              integer const eventCounter,
-              real64 const eventProgress,
-              DomainPartition & domain )
+                                       integer const cycleNumber,
+                                       integer const eventCounter,
+                                       real64 const eventProgress,
+                                       DomainPartition & domain )
 {
-    // compute the last seismic traces, if needed
+  // compute the last seismic traces, if needed
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
@@ -616,9 +616,9 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
     arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
     arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
     arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
-    for( real64 timeSeismo;  
-         (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= time_n && m_indexSeismoTrace < m_nsamplesSeismoTrace; 
-	 m_indexSeismoTrace++ )
+    for( real64 timeSeismo;
+         (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= time_n && m_indexSeismoTrace < m_nsamplesSeismoTrace;
+         m_indexSeismoTrace++ )
     {
       computeSeismoTrace( time_n, 0, timeSeismo, m_indexSeismoTrace, p_np1, p_n, p_rcvs );
     }

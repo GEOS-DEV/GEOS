@@ -126,5 +126,4 @@ real64 WaveSolverBase::evaluateRicker( real64 const & time_n, real64 const & f0,
   return pulse;
 }
 
-
 } /* namespace geosx */

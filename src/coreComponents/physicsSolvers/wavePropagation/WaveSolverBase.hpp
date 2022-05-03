@@ -30,7 +30,6 @@ namespace geosx
 class WaveSolverBase : public SolverBase
 {
 public:
-
   WaveSolverBase( const std::string & name,
                   Group * const parent );
 
@@ -97,26 +96,27 @@ protected:
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) = 0;
 
   /**
-   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the pressure values at the last two timesteps. 
+   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the pressure values at the
+   *last two timesteps.
    * @param time_n the time corresponding to the pressure values pressure_n
    * @param dt the simulation timestep
-   * @param timeSeismo the time at which the seismogram is computed 
+   * @param timeSeismo the time at which the seismogram is computed
    * @param iSeismo the index of the seismogram time in the seismogram array
    * @param pressure_np1 the pressure values at time_n + dt
    * @param pressure_n the pressure values at time_n
    */
-  virtual void computeSeismoTrace( real64 const time_n, 
-	                           real64 const dt, 
-	        		   real64 const timeSeismo, 
-	        		   localIndex iSeismo, 
-	        		   arrayView1d< real64 > const var_at_np1, 
-	        		   arrayView1d< real64 > const var_at_n, 
-	        		   arrayView2d< real64 > const var_rcvs ) = 0;
-  
+  virtual void computeSeismoTrace( real64 const time_n,
+                                   real64 const dt,
+                                   real64 const timeSeismo,
+                                   localIndex iSeismo,
+                                   arrayView1d< real64 > const var_at_np1,
+                                   arrayView1d< real64 > const var_at_n,
+                                   arrayView2d< real64 > const var_rcvs ) = 0;
+
   /**
    * @brief Temporary debug function. Saves the sismo trace to a file.
    * @param iSeismo index number of the seismo trace
-   * @param val value to be written in seismo 
+   * @param val value to be written in seismo
    * @param filename name of the output file
    */
   virtual void saveSeismo( localIndex const iSeismo, real64 val, string const & filename ) = 0;
