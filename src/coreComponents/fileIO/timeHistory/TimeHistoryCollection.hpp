@@ -214,60 +214,109 @@ protected:
     }
     else // relative objectPaths use relative lookup identical to fieldSpecification to make xml input spec easier
     {
-      string_array const targetTokens = stringutilities::tokenize( objectPath, "/" );
-      localIndex const targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
+      string_array targetTokens = stringutilities::tokenize( objectPath, "/" );
+      localIndex targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
 
       dataRepository::Group const * targetGroup = nullptr;
       //dataRepository::Group const * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 1 );
 
       int const numMeshBodies = domain.getMeshBodies().numSubGroups();
 
-      GEOSX_ERROR_IF( targetTokenLength>3,
-                      "too many levels in path entry");
+//      GEOSX_ERROR_IF( targetTokenLength>3,
+//                      "too many levels in path entry");
 
-      if( targetTokenLength==3 )
+
+      int startingTokenIndex = 0;
+      if( numMeshBodies==1 )
       {
-        string const meshBodyName = targetTokens[0];
-        MeshBody const & meshBody = domain.getMeshBody( meshBodyName );
-        string const meshLevelName = targetTokens[2];
-        targetGroup = &(meshBody.getMeshLevel( meshLevelName ) );
+        string const singleMeshBodyName = domain.getMeshBody(0).getName();
+        if( targetTokens[0] != singleMeshBodyName )
+        {
+          ++targetTokenLength;
+          targetTokens.insert( 0, &singleMeshBodyName, (&singleMeshBodyName)+1 );
+        }
       }
       else
       {
-        GEOSX_ERROR_IF( numMeshBodies != 1,
-                        "There are multiple mesh bodies, however, the mesh body name not specified in path" );
+        bool bodyFound = false;
+        domain.forMeshBodies( [&]( MeshBody const & meshBody )
+        {
+          if( meshBody.getName()==targetTokens[0] )
+          {
+            bodyFound=true;
+          }
+        } );
 
-        MeshBody const & meshBody = domain.getMeshBody( 0 );
-        if( targetTokenLength==2 )
-        {
-          string const meshLevelName = targetTokens[1];
-          targetGroup = &(meshBody.getMeshLevel( meshLevelName ) );
-        }
-        else //targetTokenLength==1
-        {
-          targetGroup = &(meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ) );
-        }
+        GEOSX_ERROR_IF( !bodyFound,
+                        GEOSX_FMT( "MeshBody ({}) is specified, but not found.",
+                                   targetTokens[0] ) );
       }
 
 
-      for( localIndex pathLevel = 0; pathLevel < targetTokenLength; ++pathLevel )
+
+      string const meshBodyName = targetTokens[0];
+      MeshBody const & meshBody = domain.getMeshBody( meshBodyName );
+
+      // set mesh level in path
+      localIndex const numMeshLevels = meshBody.getMeshLevels().numSubGroups();
+      if( numMeshLevels==1 )
       {
-        dataRepository::Group const * elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
-        if( elemRegionSubGroup != nullptr )
+        string const singleMeshLevelName = meshBody.getMeshLevels().getGroup<MeshLevel>(0).getName();
+        if( targetTokens[1] != singleMeshLevelName )
         {
-          targetGroup = elemRegionSubGroup;
+          ++targetTokenLength;
+          targetTokens.insert( 1, &singleMeshLevelName, (&singleMeshLevelName)+1 );
         }
-        dataRepository::Group const * elemSubRegionSubGroup = targetGroup->getGroupPointer( ElementRegionBase::viewKeyStruct::elementSubRegions() );
-        if( elemSubRegionSubGroup != nullptr )
+        else
         {
-          targetGroup = elemSubRegionSubGroup;
+          bool levelFound = false;
+          meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
+          {
+            if( meshLevel.getName()==targetTokens[1] )
+            {
+              levelFound=true;
+            }
+          } );
+
+          GEOSX_ERROR_IF( !levelFound,
+                          GEOSX_FMT( "MeshLevel ({}) is specified, but not found.",
+                                     targetTokens[1] ) );
         }
-        if( targetTokens[pathLevel] == ElementRegionManager::groupKeyStruct::elementRegionsGroup() ||
-            targetTokens[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions() )
+      }
+      else if( !meshBody.getMeshLevels().hasGroup<MeshLevel>( targetTokens[1] ) )
+      {
+        GEOSX_LOG_RANK_0("In TimeHistoryCollection.hpp, Mesh Level Discretization not specified, "
+                         "using baseDiscretizationString().");
+
+        string const baseMeshLevelName = MeshLevel::groupStructKeys::baseDiscretizationString();
+        ++targetTokenLength;
+        targetTokens.insert( 1, &baseMeshLevelName, (&baseMeshLevelName)+1 );
+      }
+
+      string meshLevelName = targetTokens[1];
+      MeshLevel const & meshLevel = meshBody.getMeshLevel( meshLevelName );
+      targetGroup = &meshLevel;
+
+
+//      std::cout<<targetTokens<<std::endl;
+
+      if( targetTokens[2]== MeshLevel::groupStructKeys::elemManagerString() )
+      {
+        ElementRegionManager const & elemRegionManager = meshLevel.getElemManager();
+
+        string const elemRegionName = targetTokens[3];
+        ElementRegionBase const & elemRegion = elemRegionManager.getRegion( elemRegionName );
+
+        string const elemSubRegionName = targetTokens[4];
+        ElementSubRegionBase const & elemSubRegion = elemRegion.getSubRegion( elemSubRegionName );
+        targetGroup = &elemSubRegion;
+      }
+      else
+      {
+        for( localIndex pathLevel = 2; pathLevel < targetTokenLength; ++pathLevel )
         {
-          continue;
+          targetGroup = targetGroup->getGroupPointer( targetTokens[pathLevel] );
         }
-        targetGroup = &targetGroup->getGroup( targetTokens[pathLevel] );
       }
       return targetGroup;
     }

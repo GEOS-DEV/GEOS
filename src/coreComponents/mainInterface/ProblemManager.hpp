@@ -335,7 +335,7 @@ private:
   map< std::tuple< string, string, string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );
 
 
-  map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d< string const > const >
+  map< std::pair< string, Group const * const >, arrayView1d< string const > const >
   getFiniteElementDiscretizations() const;
 
   void generateDiscretization( MeshLevel & meshLevel,

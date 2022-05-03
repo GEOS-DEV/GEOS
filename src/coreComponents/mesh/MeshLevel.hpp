@@ -109,7 +109,7 @@ public:
     static constexpr auto faceManagerString = "faceManager";
 
     // This key is defined in problem manager:
-    static constexpr auto elemManagerString = "ElementRegions";
+    static constexpr char const * elemManagerString() {return "ElementRegions";};
 
     static constexpr auto embSurfNodeManagerString = "embeddedSurfacesNodeManager";
     static constexpr auto embSurfEdgeManagerString = "embeddedSurfacesEdgeManager";
@@ -117,7 +117,6 @@ public:
     dataRepository::GroupKey nodeManager = {nodeManagerString};
     dataRepository::GroupKey edgeManager = {edgeManagerString};
     dataRepository::GroupKey faceManager = {faceManagerString};
-    dataRepository::GroupKey elemManager = {elemManagerString};
     dataRepository::GroupKey embSurfNodeManager = {embSurfNodeManagerString};
     dataRepository::GroupKey embSurfEdgeManager = {embSurfEdgeManagerString};
   } groupKeys;

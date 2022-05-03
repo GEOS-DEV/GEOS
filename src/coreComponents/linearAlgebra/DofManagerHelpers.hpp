@@ -91,7 +91,7 @@ struct MeshHelper< DofManager::Location::Elem >
 
   static LocalIndexType constexpr invalid_local_index{ -1, -1, -1 };
 
-  static constexpr auto managerGroupName() { return MeshLevel::groupStructKeys::elemManagerString; }
+  static constexpr auto managerGroupName() { return MeshLevel::groupStructKeys::elemManagerString(); }
   static constexpr auto syncObjName = "elems";
 
   template< typename MANAGER >

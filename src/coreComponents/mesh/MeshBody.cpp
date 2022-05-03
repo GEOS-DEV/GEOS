@@ -57,7 +57,9 @@ MeshLevel & MeshBody::createShallowMeshLevel( string const & sourceLevelName,
                                               string const & newLevelName )
 {
   MeshLevel & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
-  return m_meshLevels.registerGroup( newLevelName, &sourceMeshLevel );
+  MeshLevel & rval = m_meshLevels.registerGroup( newLevelName, &sourceMeshLevel );
+  rval.setRestartFlags( RestartFlags::NO_WRITE );
+  return rval;
 }
 
 
