@@ -1021,7 +1021,7 @@ public:
                              integer const recursive,
                              bool onDevice,
                              parallelDeviceEvents & events,
-                             MPI_Op op=MPI_REPLACE);
+                             MPI_Op op=MPI_REPLACE );
 
   ///@}
 
