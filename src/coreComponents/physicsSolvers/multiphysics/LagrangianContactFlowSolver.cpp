@@ -778,13 +778,13 @@ void LagrangianContactFlowSolver::assembleSystem( real64 const time,
                                            dofManager,
                                            localMatrix,
                                            localRhs );
-  m_flowSolver->assembleHydrofracFluxTerms( time,
-                                            dt,
-                                            domain,
-                                            dofManager,
-                                            localMatrix,
-                                            localRhs,
-                                            getDerivativeFluxResidual_dAperture() );
+  m_flowSolver->assemblePoroelasticFluxTerms( time,
+                                              dt,
+                                              domain,
+                                              dofManager,
+                                              localMatrix,
+                                              localRhs,
+                                              getDerivativeFluxResidual_dAperture() );
 
   assembleForceResidualDerivativeWrtPressure( domain, dofManager, localMatrix, localRhs );
   assembleFluidMassResidualDerivativeWrtDisplacement( domain, dofManager, localMatrix, localRhs );

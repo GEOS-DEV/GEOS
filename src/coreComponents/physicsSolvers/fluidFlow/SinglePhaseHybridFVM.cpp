@@ -345,13 +345,13 @@ void SinglePhaseHybridFVM::assemblePoroelasticFluxTerms( real64 const time_n,
                      localRhs );
 }
 
-void SinglePhaseHybridFVM::assembleHydrofracFluxTerms( real64 const time_n,
-                                                       real64 const dt,
-                                                       DomainPartition const & domain,
-                                                       DofManager const & dofManager,
-                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                       arrayView1d< real64 > const & localRhs,
-                                                       CRSMatrixView< real64, localIndex const > const & dR_dAper )
+void SinglePhaseHybridFVM::assemblePoroelasticFluxTerms( real64 const time_n,
+                                                         real64 const dt,
+                                                         DomainPartition const & domain,
+                                                         DofManager const & dofManager,
+                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         arrayView1d< real64 > const & localRhs,
+                                                         CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
   GEOSX_UNUSED_VAR ( time_n );
   GEOSX_UNUSED_VAR ( dt );

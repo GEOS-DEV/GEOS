@@ -1,0 +1,332 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhasePoromechanicsLagrangianContact
+      name="porolagrangiancontact"
+      contactSolverName="lagrangiancontact"
+      contactFlowSolverName="lagrangiancontactflow"
+      solidSolverName="lagsolve"
+      fluidSolverName="SinglePhaseFlow"
+      logLevel="1"
+      initialDt="3600.0"
+      discretization="FE1"
+      targetRegions="{ Domain, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-04"
+        dtIncIterLimit="0.1"
+        dtCutIterLimit="0.7"
+        logLevel="1"
+        newtonMaxIter="10"
+        lineSearchAction="Attempt"
+        lineSearchMaxCuts="3"
+        lineSearchInterpolationType="Parabolic"
+        maxTimeStepCuts="2"
+        allowNonConverged="0"
+        maxNumConfigurationAttempts="10"/>
+      <LinearSolverParameters
+        directParallel="1"/>
+    </SinglePhasePoromechanicsLagrangianContact>
+
+    <LagrangianContactWithFlow 
+      name="lagrangiancontactflow"
+      fluidSolverName="SinglePhaseFlow"
+      contactSolverName="lagrangiancontact"
+      stabilizationName="singlePhaseTPFA_stab"
+      logLevel="1"
+      targetRegions="{Domain, Fracture}"/>
+
+    <LagrangianContact
+      name="lagrangiancontact"
+      solidSolverName="lagsolve"
+      stabilizationName="singlePhaseTPFA_stab"
+      logLevel="1"
+      targetRegions="{ Domain, Fracture }"
+      contactRelationName="fractureMaterial"/>
+
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      targetRegions="{ Domain }">
+      <LinearSolverParameters 
+        preconditionerType="amg" 
+        amgNullSpaceType="rigidBodyModes"/>  
+    </SolidMechanicsLagrangianSSLE>
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Domain }"
+      rockToughness="1.0e6"
+      mpiCommOrder="1"/>
+
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain, Fracture }">
+      <LinearSolverParameters
+        preconditionerType="direct"
+        amgNullSpaceType="constantModes"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 0.5}"
+      zCoords="{ 0, 20 }"
+      nx="{ 20 }"
+      ny="{  1 }"
+      nz="{ 40 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Geometry>
+    <BoundedPlane
+      name="FRACTURE"
+      normal="{1.0, 0.0, 0.0}"
+      origin="{5.0, 0.5, 10.0}"
+      lengthVector="{0.0, 0.0, 1.0}"
+      widthVector="{0.0, 1.0, 0.0}"
+      dimensions="{ 12, 1 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="432000.0">
+
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="3600.0"
+      target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication"
+      beginTime="0.0"
+      endTime="432000.0"
+      target="/Solvers/porolagrangiancontact"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA_stab"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{ porousRock, fluid }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      subRegionType="faceElement"
+      defaultAperture="0.005"
+      materialList="{ fluid, fractureFilling, fractureMaterial }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="skeleton"
+      porosityModelName="skeletonPorosity"
+      permeabilityModelName="skeletonPerm"/>
+
+    <ElasticIsotropic
+      name="skeleton"
+      defaultDensity="0"
+      defaultYoungModulus="1.0e10"
+      defaultPoissonRatio="0.2"/>
+
+    <CompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1.0e03"
+      defaultViscosity="1.0e-03"
+      referencePressure="0.0"
+      referenceDensity="1.0e03"
+      compressibility="5.0e-9"
+      referenceViscosity="1.0e-03"
+      viscosibility="0.0"/>
+
+    <BiotPorosity
+      name="skeletonPorosity"
+      grainBulkModulus="2.222222222e10"
+      defaultReferencePorosity="0.2"/>
+
+    <ConstantPermeability
+      name="skeletonPerm"
+      permeabilityComponents="{ 2.0e-15, 1.0e-20, 1.0e-15 }"/>
+
+    <Coulomb
+      name="fractureMaterial"
+      cohesion="0.0"
+      frictionCoefficient="0.01"
+      apertureTableName="aperTable"/>
+
+    <CompressibleSolidConstantPlusParallelPlatesPermeability 
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <!--CompressibleSolidConstantPermeability 
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/-->
+
+    <NullModel 
+      name="nullSolid"/>
+
+    <PressurePorosity 
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPlusParallelPlatesPermeability
+      name="fracturePerm"
+      defaultConductivity="9.869233e-11"/>
+
+    <!--ConstantPermeability
+      name="fracturePerm"
+      permeabilityComponents="{1e-10, 1e-10, 1e-10}"/-->
+  </Constitutive>
+
+  <FieldSpecifications>
+	
+    <!-- condition on the fracture at time t0 -->
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ FRACTURE }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ FRACTURE }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+  <!-- condition on the pressure at time t0 -->
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="pressure"
+      scale="0.0"/>
+
+  <!-- condition on the displacements at time t0 -->
+    <FieldSpecification
+      name="xInitialDisplacement"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="yInitialDisplacement"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="zInitialDisplacement"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"/>
+
+  <!-- boundary condition on displacements -->
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg }"/>
+
+  <!-- imposed traction on the top -->
+    <Traction
+      name="zposconstraint"
+      objectPath="faceManager"
+      direction="{ 0, 0, -1 }"
+      scale="20.0e6"
+      setNames="{ zpos }"
+      functionName="timeFunction"/>
+
+  <!-- imposed pressure on the top -->
+    <FieldSpecification
+      name="boundaryPressure"
+      setNames="{ zpos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="0.0"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 0.1e-09, 1e7 }"
+      values="{ 0.0, 1.0, 1.0 }"/>
+
+    <TableFunction
+      name="aperTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.e-3, 0.e-3 }"/>
+  </Functions>
+
+  <Outputs>
+    <Silo
+      name="siloOutput"/>
+  </Outputs>
+
+</Problem>
