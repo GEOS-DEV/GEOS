@@ -45,14 +45,14 @@
     <TableFunction
       name="strainFunction"
       inputVarNames="{ time }"
-      coordinateFiles="{ triaixalDriverTables/time.geos }"
-      voxelFile="triaixalDriverTables/axialStrain.geos"/>
+      coordinateFiles="{ tables/time.geos }"
+      voxelFile="tables/axialStrain.geos"/>
 
     <TableFunction
       name="stressFunction"
       inputVarNames="{ time }"
-      coordinateFiles="{ triaixalDriverTables/time.geos }"
-      voxelFile="triaixalDriverTables/radialStress.geos"/>
+      coordinateFiles="{ tables/time.geos }"
+      voxelFile="tables/radialStress.geos"/>
   </Functions>
   <!-- SPHINX_FUNCTION_END -->
 
