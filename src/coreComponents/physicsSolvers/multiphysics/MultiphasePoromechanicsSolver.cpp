@@ -169,7 +169,7 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
 
       integer currentID = 0;
 
-      forAll< serialPolicy >( nodeManager.size(), [&] GEOSX_HOST_DEVICE ( localIndex const a )
+      forAll< serialPolicy >( nodeManager.size(), [&] ( localIndex const a )
       {
 
         if( bdryNodes[a] == 1 )
