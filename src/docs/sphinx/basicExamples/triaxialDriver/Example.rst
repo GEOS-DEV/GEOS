@@ -1,4 +1,4 @@
-.. _triaxialDriver:
+.. _triaxialDriverExample:
 
 
 ###########################################################
@@ -28,14 +28,14 @@ The XML file for this test case is located at:
 
 .. code-block:: console
 
-  inputFiles/solidMechanics/triaxialDriver_ExtendedDruckerPrager.xml
+  inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager.xml
 
 
 This example also uses a set of table files located at:
 
 .. code-block:: console
 
-  inputFiles/solidMechanics/triaixalDriverTables/
+  inputFiles/triaxialDriver/tables/
 
 
 Last, a Python script for post-processing the results is provided:
@@ -92,13 +92,13 @@ This stress has a negative value due to the negative sign convention for compres
 Then, ``steps="200"`` defines the number of load steps and ``output="simulationResults.txt"`` specifies an output file to which the simulation results will be written. 
 
 
-.. literalinclude:: ../../../../../inputFiles/solidMechanics/triaxialDriver_ExtendedDruckerPrager.xml
+.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager.xml
     :language: xml
     :start-after: <!-- SPHINX_TASK -->
     :end-before: <!-- SPHINX_TASK_END -->
 
 
-In addition to triaxial tests, volumetric and oedometer tests can be simulated by changing the ``strainControl`` mode, and by defining loading controls in axial and radial direction accordingly. A volumetric test can be modelled by setting the axial and radial control functions to the same strain function, whereas an oedometer test runs by setting the radial strain to zero.
+In addition to triaxial tests, volumetric and oedometer tests can be simulated by changing the ``strainControl`` mode, and by defining loading controls in axial and radial direction accordingly. A volumetric test can be modelled by setting the axial and radial control functions to the same strain function, whereas an oedometer test runs by setting the radial strain to zero (see :ref:`TriaxialDriver`).
 
 
 ------------------------------
@@ -114,7 +114,7 @@ If the residual friction angle is set to be less than the initial one, strain we
 Setting ``defaultDilationRatio="1.0"`` corresponds to an associated flow rule.
 
 
-.. literalinclude:: ../../../../../inputFiles/solidMechanics/triaxialDriver_ExtendedDruckerPrager.xml
+.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL -->
     :end-before: <!-- SPHINX_MATERIAL_END -->
@@ -129,10 +129,11 @@ Functions
 
 The ``TriaxialDriver`` uses a simple form of time-stepping to advance through the loading steps, allowing for simulating both rate-dependent and rate-independent models.  
 
-In this case, users should define two different time history functions (``strainFunction`` and ``stressFunction``) to describe loading conditions in axial and radial direction respectively. More specifically, the table functions in this example include the temporal variations of radial stress and axial strain, which rely upon the external files in the table directory.
+In this case, users should define two different time history functions (``strainFunction`` and ``stressFunction``) to describe loading conditions in axial and radial direction respectively. More specifically, the table functions in this example include the temporal variations of radial stress and axial strain, which rely upon the external files in the table directory (see :ref:`FunctionManager`).
+Note that for standard tests with simple loading history, functions can be embedded directly in the XML file without using external tables.
 
 
-.. literalinclude:: ../../../../../inputFiles/solidMechanics/triaxialDriver_ExtendedDruckerPrager.xml
+.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager.xml
     :language: xml
     :start-after: <!-- SPHINX_FUNCTION -->
     :end-before: <!-- SPHINX_FUNCTION_END -->
@@ -140,23 +141,23 @@ In this case, users should define two different time history functions (``strain
 
 The ``strainFunction`` TableFunction is an example of a 1D interpolated function, which describes the strain as a function of time ``inputVarNames="{ time }"``. This table is defined using a single coordinate file:
 
-.. literalinclude:: ../../../../../inputFiles/solidMechanics/triaixalDriverTables/time.geos
+.. literalinclude:: ../../../../../inputFiles/triaxialDriver/tables/time.geos
   :language: none
 
 And a single voxel file:
 
-.. literalinclude:: ../../../../../inputFiles/solidMechanics/triaixalDriverTables/axialStrain.geos
+.. literalinclude:: ../../../../../inputFiles/triaxialDriver/tables/axialStrain.geos
   :language: none
 
 
 Similarly, the correlation between the confining stress and time is given through the ``stressFunction`` defined using the same coordinate file:
 
-.. literalinclude:: ../../../../../inputFiles/solidMechanics/triaixalDriverTables/time.geos
+.. literalinclude:: ../../../../../inputFiles/triaxialDriver/tables/time.geos
   :language: none
 
 And a different voxel file:
 
-.. literalinclude:: ../../../../../inputFiles/solidMechanics/triaixalDriverTables/radialStress.geos
+.. literalinclude:: ../../../../../inputFiles/triaxialDriver/tables/radialStress.geos
   :language: none
 
 
@@ -174,7 +175,7 @@ Mesh
 Even if discretization is not required for the ``TriaxialDriver``, a dummy mesh should be defined to pass all the necessary checks when initializing GEOSX and running the module. A dummy mesh should be created in the ``Mesh`` section and assigned to the ``cellBlocks`` in the ``ElementRegions`` section. 
 
 
-.. literalinclude:: ../../../../../inputFiles/solidMechanics/triaxialDriver_ExtendedDruckerPrager.xml
+.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -247,7 +248,7 @@ This output file has a brief header explaining the meaning of each column. Each 
 
 Note that the file contains two columns for radial strains (``radial_strain_1`` and ``radial_strain_2``) and two columns for radial stresses (``radial_stress_1`` and ``radial_stress_2``). For isotropic materials, the stresses and strains along the two radial axes would be the same. However, the stresses and strains in the radial directions can differ for cases with anisotropic materials and true-triaxial loading conditions.
 
-This output file can be processed and visualized using any tools. As an example here, with the provided Python script, the simulated stress-strain curve, p-q diagram and relationship between volumetric strain and axial strain are plotted, and used to validate results against experimental observations:
+This output file can be processed and visualized using any tool. As an example here, with the provided python script, the simulated stress-strain curve, p-q diagram and relationship between volumetric strain and axial strain are plotted, and used to validate results against experimental observations:
 
 
 .. plot:: docs/sphinx/basicExamples/triaxialDriver/triaxialDriverFigure.py
