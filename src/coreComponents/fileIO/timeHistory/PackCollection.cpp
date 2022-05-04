@@ -106,8 +106,17 @@ std::vector< string > getExistingWrapperNames( arrayView1d< string const > setNa
 //  should only collect on size changes, otherwise not collect anything
 void PackCollection::updateSetsIndices( DomainPartition const & domain )
 {
-  ObjectManagerBase const * targetObject = dynamicCast< ObjectManagerBase const * >( this->getTargetObject( domain, m_objectPath ) );
-  WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
+  // In the current function, depending on the context, the target can be considered as a `Group` or as an `ObjectManagerBase`.
+  // This convenience lambda function is a writing shortcut to get lighter syntax while not changing the whole function.
+  auto asOMB = []( Group const * grp ) -> ObjectManagerBase const *
+  {
+    ObjectManagerBase const * omb = dynamicCast< ObjectManagerBase const * >( grp );
+    GEOSX_ERROR_IF( omb == nullptr, "Group " << grp->getName() << " could not be converted to an ObjectManagerBase during the `PackCollection` process.");
+    return omb;
+  };
+
+  Group const * targetGrp = this->getTargetObject( domain, m_objectPath );
+  WrapperBase const & targetField = targetGrp->getWrapperBase( m_fieldName );
   GEOSX_ERROR_IF( !targetField.isPackable( false ), "The object targeted for collection must be packable!" );
 
   // If no set or "all" is specified we retrieve the entire field.
@@ -116,7 +125,8 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
 
   // In the wake of previous trick about `m_setNames`, another small trick not to compute the real set names if they are not needed.
   // This is questionable but lets me define `setNames` as `const` variable.
-  std::vector< string > const setNames = collectAll ? std::vector< string >{} : getExistingWrapperNames( m_setNames.toViewConst(), targetObject );
+  // Note that the third operator will be evaluated iff `collectAll` is `false` (C++ paragraph 6.5.15). So `asOMB` will not kill the simulation.
+  std::vector< string > const setNames = collectAll ? std::vector< string >{} : getExistingWrapperNames( m_setNames.toViewConst(), asOMB( targetGrp ) );
 
   std::size_t const numSets = collectAll ? 1 : setNames.size();
   m_setsIndices.resize( numSets );
@@ -131,20 +141,21 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   {
     // Here we only have one "all" field.
     array1d< localIndex > & setIndices = m_setsIndices.front();
-    setIndices.resize( targetObject->size() );
-    for( localIndex i = 0; i < targetObject->size(); ++i )
+    setIndices.resize( targetGrp->size() );
+    for( localIndex i = 0; i < targetGrp->size(); ++i )
     {
       setIndices[i] = i;
     }
   }
   else
   {
+    ObjectManagerBase const * targetOMB = asOMB( targetGrp );
     for( std::size_t setIdx = 0; setIdx < numSets; ++setIdx )
     {
       string const & setName = setNames[setIdx];
       array1d< localIndex > & setIndices = m_setsIndices[setIdx];
 
-      SortedArrayView< localIndex const > const & set = targetObject->getSet( setName );
+      SortedArrayView< localIndex const > const & set = targetOMB->getSet( setName );
       localIndex setSize = set.size();
       setIndices.resize( setSize );
       if( setSize > 0 )
@@ -160,7 +171,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   // filter out the ghost indices immediately when we update the index sets
   if( m_targetIsMeshObject )
   {
-    arrayView1d< integer const > const ghostRank = targetObject->ghostRank( );
+    arrayView1d< integer const > const ghostRank = asOMB( targetGrp )->ghostRank();
     for( std::size_t setIdx = 0; setIdx < numSets; ++setIdx )
     {
       array1d< localIndex > & setIndices = m_setsIndices[ setIdx ];
