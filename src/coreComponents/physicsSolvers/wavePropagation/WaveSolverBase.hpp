@@ -65,7 +65,7 @@ public:
 protected:
 
   /**
-   * @brief Apply free surface condition to the face define in the geometry box from the xml
+   * @brief Apply free surface condition to the face defined in the geometry box of the xml
    * @param time the time to apply the BC
    * @param domain the partition domain
    */
@@ -82,7 +82,7 @@ protected:
   real64 evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order );
 
   /**
-   * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
+   * @brief Locate sources and receivers positions in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
    */
@@ -96,7 +96,7 @@ protected:
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) = 0;
 
   /**
-   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the pressure values at the
+   * @brief Compute the seismic traces for a given variable at each receiver coordinate at a given time, using the pressure values at the
    * last two timesteps.
    * @param time_n the time corresponding to the pressure values pressure_n
    * @param dt the simulation timestep
