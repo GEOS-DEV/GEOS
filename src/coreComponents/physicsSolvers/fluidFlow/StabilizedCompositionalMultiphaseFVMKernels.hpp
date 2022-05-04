@@ -210,15 +210,15 @@ public:
     //  1) compFlux and its derivatives,
     //
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to compute stabilization terms
-    Base::computeFlux( iconn, stack, [&] GEOSX_HOST_DEVICE ( integer const ip,
-                                                             localIndex const k_up,
-                                                             localIndex const er_up,
-                                                             localIndex const esr_up,
-                                                             localIndex const ei_up,
-                                                             real64 const & potGrad,
-                                                             real64 const & phaseFlux,
-                                                             real64 const (&dPhaseFlux_dP)[maxStencilSize],
-                                                             real64 const (&dPhaseFlux_dC)[maxStencilSize][numComp] )
+    Base::computeFlux( iconn, stack, [&] ( integer const ip,
+                                           localIndex const k_up,
+                                           localIndex const er_up,
+                                           localIndex const esr_up,
+                                           localIndex const ei_up,
+                                           real64 const & potGrad,
+                                           real64 const & phaseFlux,
+                                           real64 const (&dPhaseFlux_dP)[maxStencilSize],
+                                           real64 const (&dPhaseFlux_dC)[maxStencilSize][numComp] )
     {
       GEOSX_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
 
@@ -293,20 +293,6 @@ public:
       }
     }
 
-
-  }
-
-  /**
-   * @brief Performs the complete phase for the kernel.
-   * @param[in] iconn the connection index
-   * @param[inout] stack the stack variables
-   */
-  GEOSX_HOST_DEVICE
-  void complete( localIndex const iconn,
-                 StackVariables & stack ) const
-  {
-    // Step 1: assemble the component mass balance equations (i = 0 to i = numDof-2)
-    Base::complete( iconn, stack );
 
   }
 
