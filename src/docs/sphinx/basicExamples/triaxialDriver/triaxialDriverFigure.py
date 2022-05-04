@@ -160,7 +160,7 @@ def getMechanicalParametersFromXML( xmlFilePath ):
 
 def main():
     # File path
-    xmlFilePath = "../../../../../inputFiles/solidMechanics/triaxialDriver_ExtendedDruckerPrager.xml"
+    xmlFilePath = "../../../../../inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager.xml"
 
     # Extract info from XML
     mechanicalParameters = getMechanicalParametersFromXML(xmlFilePath)
