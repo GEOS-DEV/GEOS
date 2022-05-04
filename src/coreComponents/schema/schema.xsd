@@ -337,6 +337,10 @@
 					<xsd:selector xpath="ProppantTransport" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversReactiveCompositionalMultiphaseOBLUniqueName">
+					<xsd:selector xpath="ReactiveCompositionalMultiphaseOBL" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversSinglePhaseFVMUniqueName">
 					<xsd:selector xpath="SinglePhaseFVM" />
 					<xsd:field xpath="@name" />
