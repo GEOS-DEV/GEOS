@@ -107,7 +107,7 @@
       scale="0.0"/>
 
     <FieldSpecification
-      name="xInitialDisplacement"
+      name="yInitialDisplacement"
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
@@ -116,7 +116,7 @@
       scale="0.0"/>
 
     <FieldSpecification
-      name="xInitialDisplacement"
+      name="zInitialDisplacement"
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
