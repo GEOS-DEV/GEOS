@@ -176,8 +176,8 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems ),
-      stabFlux( numComp ),
-      dStabFlux_dP( size, numComp )
+      stabFlux( numElems * numEqn ),
+      dStabFlux_dP( numElems * numEqn, size * numDof )
     {}
 
     using Base::StackVariables::stencilSize;
@@ -188,8 +188,8 @@ public:
     using Base::StackVariables::localFlux;
     using Base::StackVariables::localFluxJacobian;
 
-    stackArray1d< real64, numComp > stabFlux;
-    stackArray2d< real64, maxStencilSize * numComp > dStabFlux_dP;
+    stackArray1d< real64, maxNumElems * numEqn > stabFlux;
+    stackArray2d< real64, maxNumElems * numEqn * maxStencilSize * numDof > dStabFlux_dP;
 
   };
 
@@ -369,7 +369,7 @@ public:
       internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
       integer constexpr NUM_COMP = NC();
-      integer constexpr NUM_DOF = NC()+2;
+      integer constexpr NUM_DOF = NC()+1;
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
