@@ -294,7 +294,7 @@ void CellElementSubRegion::
         LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
         LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
       }
-      m_elementVolume[k] = computationalGeometry::elementVolume< finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2 >( Xlocal );
+      m_elementVolume[k] = computationalGeometry::hexahedronVolume( Xlocal );
       break;
     }
     case ElementType::Tetrahedron:
@@ -305,7 +305,7 @@ void CellElementSubRegion::
         LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
         LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
       }
-      m_elementVolume[k] = computationalGeometry::elementVolume< finiteElement::H1_Tetrahedron_Lagrange1_Gauss1 >( Xlocal );
+      m_elementVolume[k] = computationalGeometry::tetrahedronVolume( Xlocal );
       break;
     }
     case ElementType::Wedge:
@@ -316,7 +316,7 @@ void CellElementSubRegion::
         LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
         LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
       }
-      m_elementVolume[k] = computationalGeometry::elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( Xlocal );
+      m_elementVolume[k] = computationalGeometry::wedgeVolume( Xlocal );
       break;
     }
     case ElementType::Pyramid:
@@ -327,7 +327,29 @@ void CellElementSubRegion::
         LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
         LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
       }
-      m_elementVolume[k] = computationalGeometry::elementVolume< finiteElement::H1_Pyramid_Lagrange1_Gauss5 >( Xlocal );
+      m_elementVolume[k] = computationalGeometry::pyramidVolume( Xlocal );
+      break;
+    }
+    case ElementType::Prism5:
+    {
+      real64 Xlocal[10][3];
+      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+      {
+        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
+        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
+      }
+      m_elementVolume[k] = computationalGeometry::prismVolume< 5 >( Xlocal );
+      break;
+    }
+    case ElementType::Prism6:
+    {
+      real64 Xlocal[12][3];
+      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+      {
+        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
+        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
+      }
+      m_elementVolume[k] = computationalGeometry::prismVolume< 6 >( Xlocal );
       break;
     }
     default:

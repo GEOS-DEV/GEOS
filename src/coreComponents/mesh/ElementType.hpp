@@ -38,6 +38,8 @@ enum class ElementType : integer
   Pyramid,       ///< Five-node pyramid element
   Wedge,         ///< Six-node wedge element
   Hexahedron,    ///< Eight-node hexahedral element
+  Prism5,        ///< Ten-node pentagonal prism
+  Prism6,        ///< Twelve-node hexagonal prism
   Polyhedron,    ///< General polyhedral element
   // NOTE: If you add anything below Polyhedron,
   // don't forget to update numElementTypes() below.
@@ -70,6 +72,8 @@ inline int getElementDim( ElementType const elementType )
     case ElementType::Pyramid:
     case ElementType::Wedge:
     case ElementType::Hexahedron:
+    case ElementType::Prism5:
+    case ElementType::Prism6:
     case ElementType::Polyhedron:    return 3;
   }
   return 0;
@@ -86,6 +90,8 @@ ENUM_STRINGS( ElementType,
               "C3D5",
               "C3D6",
               "C3D8",
+              "C3D10",
+              "C3D12",
               "Polyhedron" );
 
 } // namespace geosx

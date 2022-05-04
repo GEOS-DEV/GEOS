@@ -240,6 +240,175 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
   }
 }
 
+static localIndex getFaceNodesPrism5( localIndex const faceNum,
+                                      arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const & elemNodes,
+                                      Span< localIndex > const faceNodes )
+{
+  switch( faceNum )
+  {
+    case 0:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[1];
+      faceNodes[2] = elemNodes[6];
+      faceNodes[3] = elemNodes[5];
+      return 4;
+    }
+    case 1:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 5 );
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[4];
+      faceNodes[2] = elemNodes[3];
+      faceNodes[3] = elemNodes[2];
+      faceNodes[4] = elemNodes[1];
+      return 5;
+    }
+    case 2:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[5];
+      faceNodes[2] = elemNodes[9];
+      faceNodes[3] = elemNodes[4];
+      return 4;
+    }
+    case 3:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[1];
+      faceNodes[1] = elemNodes[2];
+      faceNodes[2] = elemNodes[7];
+      faceNodes[3] = elemNodes[6];
+      return 4;
+    }
+    case 4:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[2];
+      faceNodes[1] = elemNodes[3];
+      faceNodes[2] = elemNodes[8];
+      faceNodes[3] = elemNodes[7];
+      return 4;
+    }
+    case 5:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[3];
+      faceNodes[1] = elemNodes[4];
+      faceNodes[2] = elemNodes[9];
+      faceNodes[3] = elemNodes[8];
+      return 4;
+    }
+    case 6:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 5 );
+      faceNodes[0] = elemNodes[5];
+      faceNodes[1] = elemNodes[6];
+      faceNodes[2] = elemNodes[7];
+      faceNodes[3] = elemNodes[8];
+      faceNodes[4] = elemNodes[9];
+      return 5;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Invalid local face index for element of type Wedge: " << faceNum );
+      return 0;
+    }
+  }
+}
+
+static localIndex getFaceNodesPrism6( localIndex const faceNum,
+                                      arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const & elemNodes,
+                                      Span< localIndex > const faceNodes )
+{
+  switch( faceNum )
+  {
+    case 0:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[1];
+      faceNodes[2] = elemNodes[7];
+      faceNodes[3] = elemNodes[6];
+      return 4;
+    }
+    case 1:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 6 );
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[5];
+      faceNodes[2] = elemNodes[4];
+      faceNodes[3] = elemNodes[3];
+      faceNodes[4] = elemNodes[2];
+      faceNodes[5] = elemNodes[1];
+      return 6;
+    }
+    case 2:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[6];
+      faceNodes[2] = elemNodes[11];
+      faceNodes[3] = elemNodes[5];
+      return 4;
+    }
+    case 3:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[1];
+      faceNodes[1] = elemNodes[2];
+      faceNodes[2] = elemNodes[8];
+      faceNodes[3] = elemNodes[7];
+      return 4;
+    }
+    case 4:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[2];
+      faceNodes[1] = elemNodes[3];
+      faceNodes[2] = elemNodes[9];
+      faceNodes[3] = elemNodes[8];
+      return 4;
+    }
+    case 5:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[3];
+      faceNodes[1] = elemNodes[4];
+      faceNodes[2] = elemNodes[10];
+      faceNodes[3] = elemNodes[9];
+      return 4;
+    }
+    case 6:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[4];
+      faceNodes[1] = elemNodes[5];
+      faceNodes[2] = elemNodes[11];
+      faceNodes[3] = elemNodes[10];
+      return 4;
+    }
+    case 7:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 6 );
+      faceNodes[0] = elemNodes[6];
+      faceNodes[1] = elemNodes[7];
+      faceNodes[2] = elemNodes[8];
+      faceNodes[3] = elemNodes[9];
+      faceNodes[4] = elemNodes[10];
+      faceNodes[5] = elemNodes[11];
+      return 6;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Invalid local face index for element of type Wedge: " << faceNum );
+      return 0;
+    }
+  }
+}
+
 localIndex getFaceNodes( ElementType const elementType,
                          localIndex const elemIdx,
                          localIndex const faceNumber,
@@ -263,6 +432,14 @@ localIndex getFaceNodes( ElementType const elementType,
     case ElementType::Pyramid:
     {
       return getFaceNodesPyramid( faceNumber, elementToNodes[elemIdx], faceNodes );
+    }
+    case ElementType::Prism5:
+    {
+      return getFaceNodesPrism5( faceNumber, elementToNodes[elemIdx], faceNodes );
+    }
+    case ElementType::Prism6:
+    {
+      return getFaceNodesPrism6( faceNumber, elementToNodes[elemIdx], faceNodes );
     }
     default:
     {
