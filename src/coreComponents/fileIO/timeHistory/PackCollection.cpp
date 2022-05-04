@@ -36,8 +36,7 @@ void PackCollection::initializePostSubGroups( )
   if( !m_initialized )
   {
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-    localIndex numSets = m_setNames.size( );
-    m_collectionCount = numSets == 0 ? 1 : numSets;
+    m_collectionCount = collectAll() ? 1 : m_setNames.size();
     // determine whether we're collecting from a mesh object manager
     Group const * const targetObject = this->getTargetObject( domain, m_objectPath );
     ObjectManagerBase const * const objectManagerTarget = dynamic_cast< ObjectManagerBase const * >( targetObject );
@@ -61,9 +60,10 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
 {
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
-  if( m_setNames.empty() )
+
+  if( collectAll() )
   {
-    localIndex const packCount = m_setsIndices[0].size() == 0 ? 1 : m_setsIndices[0].size(); // TODO CHECK!
+    localIndex const packCount = m_setsIndices[0].size() == 0 ? targetField.size() : m_setsIndices[0].size(); // TODO CHECK!
     return targetField.getHistoryMetadata( packCount );
   }
   else
@@ -121,7 +121,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
 
   // If no set or "all" is specified we retrieve the entire field.
   // If sets are specified we retrieve the field only from those sets.
-  bool const collectAll = m_setNames.empty() or std::find( m_setNames.begin(), m_setNames.end(), "all" ) != m_setNames.end();
+  bool const collectAll = this->collectAll();
 
   // In the wake of previous trick about `m_setNames`, another small trick not to compute the real set names if they are not needed.
   // This is questionable but lets me define `setNames` as `const` variable.
@@ -213,12 +213,12 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   }
 }
 
-localIndex PackCollection::numMetaDataCollectors( ) const
+localIndex PackCollection::numMetaDataCollectors() const
 {
-  return m_targetIsMeshObject && !m_disableCoordCollection ? 1 : 0;
+  return m_metaDataCollectors.size();
 }
 
-void PackCollection::buildMetaDataCollectors( )
+void PackCollection::buildMetaDataCollectors()
 {
   if( !m_disableCoordCollection )
   {
@@ -264,26 +264,28 @@ void PackCollection::collect( DomainPartition const & domain,
   GEOSX_ERROR_IF( collectionIdx < 0 || collectionIdx >= numCollectors(), "Attempting to collection from an invalid collection index!" );
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
-  // if we have any indices to collect, and we're either collecting every time or we're only collecting when the set changes and the set has
-  // changed
+  // If we have any indices to collect, and we're either collecting every time or we're only collecting
+  // when the set changes and the set has changed.
   parallelDeviceEvents events;
-  if( m_setsIndices[ collectionIdx ].size() > 0 )
+  if( m_setsIndices[collectionIdx].size() > 0 )
   {
-    if( ( (m_onlyOnSetChange != 0) && m_setChanged ) || (m_onlyOnSetChange == 0) )
+    if( ( ( m_onlyOnSetChange != 0 ) && m_setChanged ) || ( m_onlyOnSetChange == 0 ) )
     {
       targetField.packByIndex< true >( buffer, m_setsIndices[collectionIdx], false, true, events );
     }
   }
-  // if we're not collecting from a set of indices, we're collecting the entire object
-  //  this will only happen when we're not targeting a mesh object since in that case while setnames size is 0,
-  //  setsIndices[0] is the entire non-ghost index set, so all mesh object collection goes to packbyindex and any
-  //  non-mesh objects (that don't somehow have index sets) are packed in their entirety
-  else if( !m_targetIsMeshObject && m_setNames.size() == 0 )
+  // If we're not collecting from a set of indices, we're collecting the entire object.
+  else if( !m_targetIsMeshObject && collectAll() )
   {
     targetField.pack< true >( buffer, false, true, events );
   }
   m_setChanged = false;
   GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
+}
+
+bool PackCollection::collectAll() const
+{
+  return m_setNames.empty() or std::find( m_setNames.begin(), m_setNames.end(), "all" ) != m_setNames.end();
 }
 
 REGISTER_CATALOG_ENTRY( TaskBase, PackCollection, string const &, Group * const )

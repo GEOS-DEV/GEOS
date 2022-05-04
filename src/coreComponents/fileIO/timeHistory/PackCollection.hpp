@@ -97,6 +97,14 @@ private:
                 localIndex const collectionIdx,
                 buffer_unit_type * & buffer ) override;
 
+  /**
+   * @brief Should we collect all the fields or only those indicated in @p m_setNames?
+   * @return A boolean
+   *
+   * Note that we cannot directly rely on @p m_setNames because it can contain the "all" keyword...
+   */
+  bool collectAll() const;
+
   // todo : replace this with a vector of references to the actual set sortedarrays (after packing rework to allow sorted arrays to be used
   // for indexing)
   /// The indices for the specified sets to pack
