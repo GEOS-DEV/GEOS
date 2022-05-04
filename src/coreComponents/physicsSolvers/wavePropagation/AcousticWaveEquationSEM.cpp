@@ -298,7 +298,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
                                                   localIndex iSeismo,
                                                   arrayView1d< real64 > const var_at_np1,
                                                   arrayView1d< real64 > const var_at_n,
-                                                  arrayView2d< real64 > const var_rcvs )
+                                                  arrayView2d< real64 > var_at_receivers )
 {
   real64 const timeNp1 = time_n+dt;
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
@@ -314,7 +314,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
     {
       if( receiverIsLocal[ircv] == 1 )
       {
-        var_rcvs[iSeismo][ircv] = 0.0;
+        var_at_receivers[iSeismo][ircv] = 0.0;
         real64 vtmpNp1 = 0.0;
         real64 vtmpN = 0.0;
         for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
@@ -323,7 +323,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
           vtmpN += var_at_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
         }
         // linear interpolation between the pressure value at time_n and time_(n+1)
-        var_rcvs[iSeismo][ircv] = a1*vtmpN + a2*vtmpNp1;
+        var_at_receivers[iSeismo][ircv] = a1*vtmpN + a2*vtmpNp1;
       }
     } );
   }
@@ -343,7 +343,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
           // TODO: remove saveSeismo and replace with TimeHistory
           for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
           {
-            this->saveSeismo( iSample, var_rcvs[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+            this->saveSeismo( iSample, var_at_receivers[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
           }
         }
       }
@@ -354,7 +354,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
 
 /// Use for now until we get the same functionality in TimeHistory
 /// TODO: move implementation into WaveSolverBase
-void AcousticWaveEquationSEM::saveSeismo( localIndex const iSeismo, real64 val, string const & filename )
+void AcousticWaveEquationSEM::saveSeismo( localIndex const iSeismo, real64 const val, string const & filename )
 {
   std::ofstream f( filename, std::ios::app );
   f<< iSeismo << " " << val << std::endl;
@@ -581,12 +581,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
     // compute the seismic traces since last step.
     arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
-    for( real64 timeSeismo;
-         (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= time_n + dt && m_indexSeismoTrace < m_nsamplesSeismoTrace;
-         m_indexSeismoTrace++ )
-    {
-      computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, p_np1, p_n, p_rcvs );
-    }
+    computeAllSeismoTraces( time_n, dt, p_np1, p_n, p_rcvs );
 
     // prepare next step
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
@@ -601,28 +596,34 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   } );
   return dt;
 }
-void AcousticWaveEquationSEM::cleanup( real64 const time_n,
-                                       integer const cycleNumber,
-                                       integer const eventCounter,
-                                       real64 const eventProgress,
-                                       DomainPartition & domain )
+
+void AcousticWaveEquationSEM::cleanup( real64 const time_n, integer const, integer const, real64 const, DomainPartition & domain )
 {
-  // compute the last seismic traces, if needed
+  // compute the remaining seismic traces, if needed
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
     arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
     arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
-    for( real64 timeSeismo;
-         (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= time_n && m_indexSeismoTrace < m_nsamplesSeismoTrace;
-         m_indexSeismoTrace++ )
-    {
-      computeSeismoTrace( time_n, 0, timeSeismo, m_indexSeismoTrace, p_np1, p_n, p_rcvs );
-    }
+    computeAllSeismoTraces( time_n, 0, p_np1, p_n, p_rcvs );
   } );
+}
+
+void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
+                                                      real64 const dt,
+                                                      arrayView1d< real64 > const var_at_np1,
+                                                      arrayView1d< real64 > const var_at_n,
+                                                      arrayView2d< real64 > var_at_receivers )
+{
+  for( real64 timeSeismo;
+       (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= time_n && m_indexSeismoTrace < m_nsamplesSeismoTrace;
+       m_indexSeismoTrace++ )
+  {
+    computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, var_at_np1, var_at_n, var_at_receivers );
+  }
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationSEM, string const &, dataRepository::Group * const )

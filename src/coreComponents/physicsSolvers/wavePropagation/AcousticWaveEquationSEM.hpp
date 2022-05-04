@@ -89,22 +89,38 @@ public:
 
   /**
    * TODO: move implementation into WaveSolverBase
-   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the pressure values at the
+   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
    * last two timesteps.
-   * @param time_n the time corresponding to the pressure values pressure_n
+   * @param time_n the time corresponding to the field values pressure_n
    * @param dt the simulation timestep
    * @param timeSeismo the time at which the seismogram is computed
    * @param iSeismo the index of the seismogram time in the seismogram array
-   * @param pressure_np1 the pressure values at time_n + dt
-   * @param pressure_n the pressure values at time_n
+   * @param var_at_np1 the field values at time_n + dt
+   * @param var_at_n the field values at time_n
+   * @param var_at_receivers the array holding the trace values, where the output is written
    */
   virtual void computeSeismoTrace( real64 const time_n,
                                    real64 const dt,
                                    real64 const timeSeismo,
-                                   localIndex iSeismo,
+                                   localIndex const iSeismo,
                                    arrayView1d< real64 > const var_at_np1,
                                    arrayView1d< real64 > const var_at_n,
-                                   arrayView2d< real64 > const var_rcvs ) override;
+                                   arrayView2d< real64 > var_at_receivers ) override;
+
+  /**
+   * TODO: move implementation into WaveSolverBase
+   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
+   * @param time_n the time corresponding to the field values pressure_n
+   * @param dt the simulation timestep
+   * @param var_at_np1 the field values at time_n + dt
+   * @param var_at_n the field values at time_n
+   * @param var_at_receivers the array holding the trace values, where the output is written
+   */
+  virtual void computeAllSeismoTraces( real64 const time_n,
+                                       real64 const dt,
+                                       arrayView1d< real64 > const var_at_np1,
+                                       arrayView1d< real64 > const var_at_n,
+                                       arrayView2d< real64 > var_at_receivers );
 
 
   /**
@@ -155,7 +171,7 @@ private:
    * @param val value to be written in seismo
    * @param filename name of the output file
    */
-  void saveSeismo( localIndex const iSeismo, real64 val, string const & filename ) override;
+  void saveSeismo( localIndex const iSeismo, real64 const val, string const & filename ) override;
 
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
