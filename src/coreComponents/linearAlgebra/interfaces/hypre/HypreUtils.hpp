@@ -433,7 +433,7 @@ enum class MGRInterpolationType : HYPRE_Int
   jacobi = 2,                         //!< Diagonal scaling
   classicalModifiedInterpolation = 3, //!< Classical modified interpolation
   approximateInverse = 4,             //!< Approximate inverse
-  gaussianElimination = 12            //!< TODO
+  blockJacobi = 12                    //!< Block-Jacobi
 };
 
 /**
