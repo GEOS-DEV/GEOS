@@ -97,7 +97,7 @@ protected:
 
   /**
    * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the pressure values at the
-   *last two timesteps.
+   * last two timesteps.
    * @param time_n the time corresponding to the pressure values pressure_n
    * @param dt the simulation timestep
    * @param timeSeismo the time at which the seismogram is computed

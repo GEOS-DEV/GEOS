@@ -88,6 +88,26 @@ public:
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) override;
 
   /**
+   * TODO: move implementation into WaveSolverBase
+   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the pressure values at the
+   * last two timesteps.
+   * @param time_n the time corresponding to the pressure values pressure_n
+   * @param dt the simulation timestep
+   * @param timeSeismo the time at which the seismogram is computed
+   * @param iSeismo the index of the seismogram time in the seismogram array
+   * @param pressure_np1 the pressure values at time_n + dt
+   * @param pressure_n the pressure values at time_n
+   */
+  virtual void computeSeismoTrace( real64 const time_n,
+                                   real64 const dt,
+                                   real64 const timeSeismo,
+                                   localIndex iSeismo,
+                                   arrayView1d< real64 > const var_at_np1,
+                                   arrayView1d< real64 > const var_at_n,
+                                   arrayView2d< real64 > const var_rcvs ) override;
+
+
+  /**
    * @brief Overridden from ExecutableGroup. Used to write las seismogram if needed.
    */
   virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain );
@@ -128,25 +148,6 @@ private:
    * @param domain the partition domain
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
-
-  /**
-   * TODO: move implementation into WaveSolverBase
-   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the pressure values at the
-   *last two timesteps.
-   * @param time_n the time corresponding to the pressure values pressure_n
-   * @param dt the simulation timestep
-   * @param timeSeismo the time at which the seismogram is computed
-   * @param iSeismo the index of the seismogram time in the seismogram array
-   * @param pressure_np1 the pressure values at time_n + dt
-   * @param pressure_n the pressure values at time_n
-   */
-  virtual void computeSeismoTrace( real64 const time_n,
-                                   real64 const dt,
-                                   real64 const timeSeismo,
-                                   localIndex iSeismo,
-                                   arrayView1d< real64 > const var_at_np1,
-                                   arrayView1d< real64 > const var_at_n,
-                                   arrayView2d< real64 > const var_rcvs ) override;
 
   /**
    * @brief Temporary debug function. Saves the sismo trace to a file.
