@@ -626,8 +626,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
-			<xsd:element name="ParticleMesh" type="ParticleMeshType" />
 			<xsd:element name="PAMELAMesh" type="PAMELAMeshType" />
+			<xsd:element name="ParticleMesh" type="ParticleMeshType" />
 			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -754,6 +754,18 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="ParticleMeshType">
+		<!--headerFile => path to the header file-->
+		<xsd:attribute name="headerFile" type="path" use="required" />
+		<!--particleBlockNames => Names of each particle block-->
+		<xsd:attribute name="particleBlockNames" type="string_array" use="required" />
+		<!--particleFile => path to the particle file-->
+		<xsd:attribute name="particleFile" type="path" use="required" />
+		<!--particleTypes => Particle types of each particle block-->
+		<xsd:attribute name="particleTypes" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="VTKMeshType">
 		<!--fieldNamesInGEOSX => Names of fields in GEOSX to import into-->
 		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="{}" />
@@ -771,16 +783,6 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
 		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
 		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ParticleMeshType">
-		<!--file => path to the particle file-->
-		<xsd:attribute name="file" type="path" use="required" />
-		<!--particleBlockNames => Names of each particle block-->
-		<xsd:attribute name="particleBlockNames" type="string_array" use="required" />
-		<!--particleTypes => Particle types of each particle block-->
-		<xsd:attribute name="particleTypes" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1070,7 +1072,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--format => Output data format.  Valid options: ``binary``, ``ascii``-->
 		<xsd:attribute name="format" type="geosx_vtk_VTKOutputMode" default="binary" />
-		<!--outputRegionType => Output region types.  Valid options: ``cell``, ``well``, ``surface``, ``all``-->
+		<!--outputRegionType => Output region types.  Valid options: ``cell``, ``well``, ``surface``, ``particle``, ``all``-->
 		<xsd:attribute name="outputRegionType" type="geosx_vtk_VTKRegionTypes" default="all" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
@@ -1090,7 +1092,7 @@ the relative residual norm satisfies:
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_vtk_VTKRegionTypes">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|cell|well|surface|all" />
+			<xsd:pattern value=".*[\[\]`$].*|cell|well|surface|particle|all" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="SolversType">
