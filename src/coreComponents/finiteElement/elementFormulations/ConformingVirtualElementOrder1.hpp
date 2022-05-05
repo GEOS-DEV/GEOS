@@ -267,6 +267,26 @@ public:
     }
   }
 
+  template< typename VECTORTYPE, localIndex NUMDOFSPERTRIALSUPPORTPOINT >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void addEvaluatedGradGradStabilization( StackVariables const & stack,
+                                                 real64 const ( &dofs )[maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 ( & targetVector )[maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 const scaleFactor )
+  {
+    for( localIndex d = 0; d < NUMDOFSPERTRIALSUPPORTPOINT; ++d )
+    {
+      for( localIndex i = 0; i < stack.numSupportPoints; ++i )
+      {
+        for( localIndex j = 0; j < stack.numSupportPoints; ++j )
+        {
+          targetVector[i][d] += scaleFactor * stack.stabilizationMatrix[i][j] * dofs[j][d];
+        }
+      }
+    }
+  }
+
   /**
    * @brief Calculate the integration weights for a quadrature point.
    * @param q Index of the quadrature point.

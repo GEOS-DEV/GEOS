@@ -331,9 +331,26 @@ public:
                                                 localIndex const offset = 0 ) const
   {
     LEAF::template addEvaluatedGradGradStabilization< VECTORTYPE >( stack,
+                                                                    dofs,
                                                                     targetVector,
                                                                     scaleFactor,
                                                                     offset );
+  }
+
+  template< typename LEAF, typename VECTORTYPE, localIndex NUMDOFSPERTRIALSUPPORTPOINT >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void
+  addEvaluatedGradGradStabilizationVector( StackVariables const & stack,
+                                           real64 const ( &dofs )[LEAF::maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
+                                           real64 ( &targetVector )[LEAF::maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
+                                           real64 const scaleFactor = 1.0 )
+  {
+    LEAF::template
+    addEvaluatedGradGradStabilization< VECTORTYPE, NUMDOFSPERTRIALSUPPORTPOINT >( stack,
+                                                                                  dofs,
+                                                                                  targetVector,
+                                                                                  scaleFactor );
   }
 
   /**

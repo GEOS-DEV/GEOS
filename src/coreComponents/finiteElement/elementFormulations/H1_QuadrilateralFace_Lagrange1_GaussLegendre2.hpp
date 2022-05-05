@@ -207,6 +207,14 @@ public:
                                                  real64 const scaleFactor,
                                                  localIndex const offset );
 
+  template< typename VECTORTYPE, localIndex NUMDOFSPERTRIALSUPPORTPOINT >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void addEvaluatedGradGradStabilization( StackVariables const & stack,
+                                                 real64 const ( &dofs )[maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 ( &targetVector )[maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 const scaleFactor );
+
 private:
   /// The area of the element in the parent configuration.
   constexpr static real64 parentArea = 4.0;
@@ -315,6 +323,21 @@ void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   GEOSX_UNUSED_VAR( targetVector );
   GEOSX_UNUSED_VAR( scaleFactor );
   GEOSX_UNUSED_VAR( offset );
+}
+
+template< typename VECTORTYPE, localIndex NUMDOFSPERTRIALSUPPORTPOINT >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+  addEvaluatedGradGradStabilization( StackVariables const & stack,
+                                     real64 const ( &dofs )[maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
+                                     real64 ( & targetVector )[maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
+                                     real64 const scaleFactor )
+{
+  GEOSX_UNUSED_VAR( stack );
+  GEOSX_UNUSED_VAR( dofs );
+  GEOSX_UNUSED_VAR( targetVector );
+  GEOSX_UNUSED_VAR( scaleFactor );
 }
 
 GEOSX_HOST_DEVICE
