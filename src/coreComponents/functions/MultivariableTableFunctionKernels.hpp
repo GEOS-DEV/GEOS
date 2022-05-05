@@ -64,9 +64,6 @@ public:
    * @param[in] axisStepInvs inversions of axis interval lengths (axes are discretized uniformly)
    * @param[in] axisHypercubeMults  hypercube index mult factors for each axis
    * @param[in] hypercubeData table data stored per hypercube
-   * @param[in] coordinates array of coordinates of points where interpolation is required
-   * @param[in] values array of interpolated operator values (all operators are interpolated at each point)
-   * @param[in] derivatives  array of derivatives of interpolated operators (all derivatives for all operators are computed at each point)
    */
   MultivariableTableFunctionStaticKernel( arrayView1d< real64 const > const & axisMinimums,
                                           arrayView1d< real64 const > const & axisMaximums,
@@ -74,46 +71,61 @@ public:
                                           arrayView1d< real64 const > const & axisSteps,
                                           arrayView1d< real64 const > const & axisStepInvs,
                                           arrayView1d< globalIndex const > const & axisHypercubeMults,
-                                          arrayView1d< real64 const > const & hypercubeData,
-                                          arrayView1d< real64 const > const & coordinates,
-                                          arrayView1d< real64 > const & values,
-                                          arrayView1d< real64 > const & derivatives ):
+                                          arrayView1d< real64 const > const & hypercubeData ):
     m_axisMinimums ( axisMinimums ),
     m_axisMaximums ( axisMaximums ),
     m_axisPoints ( axisPoints ),
     m_axisSteps ( axisSteps ),
     m_axisStepInvs ( axisStepInvs ),
     m_axisHypercubeMults ( axisHypercubeMults ),
-    m_hypercubeData ( hypercubeData ),
-    m_coordinates ( coordinates ),
-    m_values ( values ),
-    m_derivatives ( derivatives )
+    m_hypercubeData ( hypercubeData )
   {};
 
-  /**
-   * @brief Compute interpolation element-wise using host or device execution space
-   *
-   * @param[in] ei Index of element
-   */
-  GEOSX_HOST_DEVICE
-  void
-  compute( localIndex const ei ) const
-  {
-    interpolatePoint( &m_coordinates[ei * numDims], &m_values[ei * numOps], &m_derivatives[ei * numOps * numDims] );
-  }
-
 /**
- * @brief interpolate operators at a given point
+ * @brief interpolate all operators at a given point
  *
  * @param[in] coordinates point coordinates
  * @param[out] values interpolated operator values
- * @param[out] derivatives derivatives of interpolated operators
  */
+  template< typename IN_ARRAY, typename OUT_ARRAY >
   GEOSX_HOST_DEVICE
   void
-  interpolatePoint( real64 const *coordinates,
-                    real64 *values,
-                    real64 *derivatives ) const
+  compute( IN_ARRAY const & coordinates,
+           OUT_ARRAY && values ) const
+  {
+    globalIndex hypercubeIndex = 0;
+    real64 axisLows[numDims];
+    real64 axisMults[numDims];
+
+    for( int i = 0; i < numDims; ++i )
+    {
+      integer const axisIndex = getAxisIntervalIndexLowMult( coordinates[i],
+                                                             m_axisMinimums[i], m_axisMaximums[i],
+                                                             m_axisSteps[i], m_axisStepInvs[i], m_axisPoints[i],
+                                                             axisLows[i], axisMults[i] );
+      hypercubeIndex += axisIndex * m_axisHypercubeMults[i];
+    }
+
+    interpolatePoint( coordinates,
+                      getHypercubeData( hypercubeIndex ),
+                      &axisLows[0],
+                      &m_axisStepInvs[0],
+                      values );
+  }
+
+  /**
+   * @brief interpolate all operators and compute their derivatives at a given point
+   *
+   * @param[in] coordinates point coordinates
+   * @param[out] values interpolated operator values
+   * @param[out] derivatives derivatives of interpolated operators
+   */
+  template< typename IN_ARRAY, typename OUT_ARRAY, typename OUT_2D_ARRAY >
+  GEOSX_HOST_DEVICE
+  void
+  compute( IN_ARRAY const & coordinates,
+           OUT_ARRAY && values,
+           OUT_2D_ARRAY && derivatives ) const
   {
     globalIndex hypercubeIndex = 0;
     real64 axisLows[numDims];
@@ -205,9 +217,60 @@ protected:
     return axisIntervalIndex;
   }
 
+  /**
+   * @brief interpolate all operators values at a given point
+   * The algoritm is based on http://dx.doi.org/10.1090/S0025-5718-1988-0917826-0
+   *
+   * @param[in] axisCoordinates coordinates of a point
+   * @param[in] hypercubeData data of target hypercube
+   * @param[in] axisLows array of left coordinates of target axis intervals
+   * @param[in] axisStepInvs array of inversions of axis steps
+   * @param[out] values interpolated operator values
+   */
+  template< typename IN_ARRAY, typename OUT_ARRAY >
+  GEOSX_HOST_DEVICE
+  inline
+  void
+  interpolatePoint( IN_ARRAY const & axisCoordinates,
+                    real64 const * const hypercubeData,
+                    real64 const * const axisLows,
+                    real64 const * const axisStepInvs,
+                    OUT_ARRAY && values ) const
+  {
+    integer pwr = numVerts / 2;   // distance between high and low values
+    real64 workspace[numVerts][numOps];
+
+    // copy operator values for all vertices
+    for( integer i = 0; i < numVerts; ++i )
+    {
+      for( integer j = 0; j < numOps; ++j )
+      {
+        workspace[i][j] = hypercubeData[i * numOps + j];
+      }
+    }
+
+    for( integer i = 0; i < numDims; ++i )
+    {
+
+      for( integer j = 0; j < pwr; ++j )
+      {
+        for( integer op = 0; op < numOps; ++op )
+        {
+          // update own derivative
+          workspace[j][op] += (axisCoordinates[i] - axisLows[i]) * (workspace[j + pwr][op] - workspace[j][op]) * axisStepInvs[i];
+        }
+      }
+      pwr /= 2;
+    }
+    for( integer op = 0; op < numOps; ++op )
+    {
+      values[op] = workspace[0][op];
+    }
+  }
+
 
   /**
-   * @brief interpolate all operator values and derivatives at a given point
+   * @brief interpolate all operators values and derivatives at a given point
    * The algoritm is based on http://dx.doi.org/10.1090/S0025-5718-1988-0917826-0
    *
    * @param[in] axisCoordinates coordinates of a point
@@ -218,16 +281,17 @@ protected:
    * @param[out] values interpolated operator values
    * @param[out] derivatives derivatives of interpolated operators
    */
+  template< typename IN_ARRAY, typename OUT_ARRAY, typename OUT_2D_ARRAY >
   GEOSX_HOST_DEVICE
   inline
   void
-  interpolatePointWithDerivatives( real64 const * const axisCoordinates,
+  interpolatePointWithDerivatives( IN_ARRAY const & axisCoordinates,
                                    real64 const * const hypercubeData,
                                    real64 const * const axisLows,
                                    real64 const * const axisMults,
                                    real64 const * const axisStepInvs,
-                                   real64 *values,
-                                   real64 *derivatives ) const
+                                   OUT_ARRAY && values,
+                                   OUT_2D_ARRAY && derivatives ) const
   {
     integer pwr = numVerts / 2;   // distance between high and low values
     real64 workspace[2 * numVerts - 1][numOps];
@@ -276,7 +340,7 @@ protected:
       values[op] = workspace[0][op];
       for( integer i = 0; i < numDims; ++i )
       {
-        derivatives[op * numDims + i] = workspace[2 * numVerts - (numVerts >> i)][op];
+        derivatives[op][i] = workspace[2 * numVerts - (numVerts >> i)][op];
       }
     }
   }
