@@ -21,6 +21,14 @@
 namespace geosx
 {
 
+/**
+ * @brief Get the local indices of the nodes in a face of the prism with N-sided polygon base.
+ * @tparam N the number of sides in the polygon base
+ * @param[in] faceNum the local index of the target face in the element  (this will be 0-numFacesInElement)
+ * @param[in] elemNodes Element to nodes mapping.
+ * @param[out] faceNodes space to write node indices to, must be of sufficient size
+ * @return number of nodes in the face
+ */
 template< localIndex N >
 localIndex getFaceNodesPrism( localIndex const faceNum,
                               arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const & elemNodes,
@@ -74,7 +82,7 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   }
   else
   {
-    GEOSX_ERROR( "Invalid local face index for element of type Wedge: " << faceNum );
+    GEOSX_ERROR( GEOSX_FMT( "Invalid local face index for element of type Prism{}: {}", N, faceNum ) );
     return 0;
   }
 
