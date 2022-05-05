@@ -1,8 +1,7 @@
 
-import sys
 from mpi4py import MPI
 import pygeosx
-from pygeosx_tools import xml
+from geosx_xml_tools.main import preprocess_parallel
 
 
 def run_problem():
@@ -15,15 +14,14 @@ def run_problem():
     rank = comm.Get_rank()
 
     # Preprocess the xml file
-    xml.apply_xml_preprocessor()
-    
+    args = preprocess_parallel()
+
     # Initialize the code and set initial conditions
-    problem = pygeosx.initialize(rank, sys.argv)
+    problem = pygeosx.initialize(rank, args)
     pygeosx.apply_initial_conditions()
     while pygeosx.run() != pygeosx.COMPLETED:
         pass
 
+
 if __name__ == '__main__':
     run_problem()
-
-
