@@ -2,6 +2,8 @@
 
 import sys
 import argparse
+import os
+import time
 from geosx_xml_tools import xml_processor
 
 
@@ -16,18 +18,78 @@ def parse_arguments():
     return parser.parse_known_args()
 
 
+def check_mpi_rank():
+    rank = 0
+    mpi_rank_key_options = ['OMPI_COMM_WORLD_RANK', 'PMI_RANK']
+    for k in mpi_rank_key_options:
+        if k in os.environ:
+            rank = int(os.environ[k])
+    return rank
+
+
+def wait_for_file_write_rank_0(target_file_argument=0, max_wait_time=100):
+    def wait_for_file_write_rank_0_inner(writer):
+        def wait_for_file_write_rank_0_decorator(*args, **kwargs):
+            # Check the target file status
+            rank = check_mpi_rank()
+            fname = ''
+            if isinstance(target_file_argument, int):
+                fname = args[target_file_argument]
+            else:
+                fname = kwargs[target_file_argument]
+
+            target_file_exists = os.path.isfile(fname)
+            target_file_edit_time = 0
+            if target_file_exists:
+                target_file_edit_time = os.path.getmtime(fname)
+
+            # Go into the target process or wait for the expected file update
+            if (rank == 0):
+                return writer(*args, **kwargs)
+            else:
+                ta = time.time()
+                while(time.time() - ta < max_wait_time):
+                    if target_file_exists:
+                        if (os.path.getmtime(fname) > target_file_edit_time):
+                            break
+                    else:
+                        if os.path.isfile(fname):
+                            break
+                    time.sleep(0.1)
+                print('File detected')
+        return wait_for_file_write_rank_0_decorator
+    return wait_for_file_write_rank_0_inner
+
+
 def preprocess_serial():
     """
     Entry point for the geosx_xml_tools console script
     """
     # Process the xml file
     args, unknown_args = parse_arguments()
-    compiled_name = xml_processor.process(args.input,
-                                          outputFile=args.compiled_name,
-                                          schema=args.schema,
-                                          verbose=args.verbose,
-                                          parameter_override=args.parameters)
-    return format_geosx_arguments(compiled_name, unknown_args)
+
+    # Attempt to only process the file on rank 0
+    # Note: The rank here is determined by inspecting the system environment variables
+    #       While this is not the preferred way of doing so, it avoids mpi environment errors
+    #       If the rank detection fails, then it will preprocess the file on all ranks, which
+    #       sometimes cause a (seemingly harmless) file write conflict.
+    # processor = xml_processor.process
+    processor = wait_for_file_write_rank_0(target_file_argument='outputFile', max_wait_time=100)(xml_processor.process)
+
+    compiled_name = processor(args.input,
+                              outputFile=args.compiled_name,
+                              schema=args.schema,
+                              verbose=args.verbose,
+                              parameter_override=args.parameters)
+    if not compiled_name:
+        if args.compiled_name:
+            compiled_name = args.compiled_name
+        else:
+            raise Exception('When applying the preprocessor in parallel (outside of pygeosx), the --compiled_name argument is required')
+
+    # Note: the return value may be passed to sys.exit, and cause bash to report an error
+    # return format_geosx_arguments(compiled_name, unknown_args)
+    print(compiled_name, flush=True)
 
 
 def preprocess_parallel():
