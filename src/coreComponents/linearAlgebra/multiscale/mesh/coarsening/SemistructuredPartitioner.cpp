@@ -73,18 +73,19 @@ buildLayerGraph( multiscale::MeshLevel const & mesh,
 
   CRSMatrix< int64_t, int64_t, int64_t > graph;
   graph.resizeFromRowCapacities< parallelHostPolicy >( numCells, numCells, rowCounts.data() );
+  auto graphView = graph.toView();
 
   // Fill the graph
-  forAll< parallelHostPolicy >( numCells, [=, rowCounts = rowCounts.toView(), graph = graph.toView()] ( localIndex const i )
+  forAll< parallelHostPolicy >( numCells, [=, &structIndexToLayerCell] ( localIndex const i )
   {
     localIndex const cellIdx = layerCells[i];
     meshUtils::forUniqueNeighbors< 512 >( cellIdx, cellToNode, nodeToCell, [&]( localIndex const nbrIdx, localIndex const numCommonNodes )
     {
       if( numCommonNodes >= minCommonNodes && nbrIdx != cellIdx && cellGhostRank[nbrIdx] < 0 && structIndex[nbrIdx][1] == layerIndex )
       {
-        graph.insertNonZero( LvArray::integerConversion< int64_t >( i ),
-                             LvArray::integerConversion< int64_t >( structIndexToLayerCell.at( structIndex[nbrIdx][0] ) ),
-                             weightFunc( cellIdx, nbrIdx ) );
+        graphView.insertNonZero( LvArray::integerConversion< int64_t >( i ),
+                                 LvArray::integerConversion< int64_t >( structIndexToLayerCell.at( structIndex[nbrIdx][0] ) ),
+                                 weightFunc( cellIdx, nbrIdx ) );
       }
     } );
   } );
