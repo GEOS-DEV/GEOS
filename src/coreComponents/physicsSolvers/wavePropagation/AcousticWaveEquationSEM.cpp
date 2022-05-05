@@ -503,36 +503,22 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      DomainPartition & domain,
                                                      bool const computeGradient )
 {
-  return explicitStepInternal( time_n, dt, cycleNumber, domain );
+  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   if (computeGradient) {
     forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                   MeshLevel & mesh,
                                                   arrayView1d< string const > const & regionNames )
     {
       NodeManager & nodeManager = mesh.getNodeManager();
-      ElementRegionManager & elemManager = mesh.getElemManager();
 
       arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
       arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
       arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
-      arrayView1d< real64 > const p_dt2 = elemManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
+      arrayView1d< real64 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
 
-      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                  CellElementSubRegion & elementSubRegion )
+      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
       {
-        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-        constexpr localIndex numNodesPerElem = 8;
-
-        GEOSX_MARK_SCOPE ( computePressureDoubleDerivative );
-        forAll< EXEC_POLICY >( elemManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const eltIdx )
-        {
-          p_dt2[eltIdx] = 0.;
-          for ( localIndex i = 0; i < numNodesPerElem; ++i )
-          {
-            localIndex nodeIdx = elemsToNodes[eltIdx][i];
-            p_dt2[eltIdx] += (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
-          }
-        } );
+        p_dt2[nodeIdx] += (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
       } );
 
       int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
@@ -548,6 +534,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                       InputError );
     } );
   }
+  return dtOut;
 }
       
 
@@ -557,7 +544,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                       DomainPartition & domain,
                                                       bool const computeGradient)
 {
-  return explicitStepInternal(time_n, dt, cycleNumber, domain);
+  real64 dtOut = explicitStepInternal(time_n, dt, cycleNumber, domain);
   if (computeGradient) {
     forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                   MeshLevel & mesh,
@@ -567,7 +554,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       ElementRegionManager & elemManager = mesh.getElemManager();
 
       arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-      arrayView1d< real64 > const p_dt2 = elemManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
+      arrayView1d< real64 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
       arrayView1d< real64 > const grad = elemManager.getExtrinsicData< extrinsicMeshData::PartialGradient >();
 
       int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
@@ -598,7 +585,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
           for ( localIndex i = 0; i < numNodesPerElem; ++i )
           {
             localIndex nodeIdx = elemsToNodes[eltIdx][i];
-            grad[eltIdx] += p_dt2[eltIdx] * p_n[nodeIdx];
+            grad[eltIdx] += p_dt2[nodeIdx] * p_n[nodeIdx];
           }
         } );
       } );
@@ -613,6 +600,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                       InputError );
     } );
   }
+  return dtOut;
 }
 
 real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,

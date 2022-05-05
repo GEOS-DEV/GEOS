@@ -269,7 +269,7 @@ EXTRINSIC_MESH_DATA_TRAIT( PressureDoubleDerivative,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "Double derivative of the pressure of the cell to compute the gradient" );
+                           "Double derivative of the pressure for each node to compute the gradient" );
 
 EXTRINSIC_MESH_DATA_TRAIT( PartialGradient,
                            "partialGradient",
