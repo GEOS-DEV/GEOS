@@ -294,7 +294,7 @@ public:
                                  meshData.cellCenters( cellIndex, 1 ),
                                  meshData.cellCenters( cellIndex, 2 ) };
     real64 const cellVolume = meshData.cellVolumes( cellIndex );
- 
+
     computeProjectors< SUBREGION_TYPE >( cellIndex,
                                          meshData.nodesCoords,
                                          meshData.cellToNodeMap,

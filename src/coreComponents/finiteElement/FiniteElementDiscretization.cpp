@@ -116,13 +116,13 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       case ElementType::Prism5:
       {
         GEOSX_ERROR_IF( m_useVem != 1,
-			"Element type Prism5 available only when using the Virtual Element Method" );
+                        "Element type Prism5 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism5_VEM_Gauss1 >();
       }
       case ElementType::Prism6:
       {
         GEOSX_ERROR_IF( m_useVem != 1,
-			"Element type Prism6 available only when using the Virtual Element Method" );
+                        "Element type Prism6 available only when using the Virtual Element Method" );
         return std::make_unique< H1_Prism6_VEM_Gauss1 >();
       }
       default:
