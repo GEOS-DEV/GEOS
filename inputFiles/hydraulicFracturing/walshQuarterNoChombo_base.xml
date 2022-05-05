@@ -77,9 +77,6 @@
       name="fractureContact"
       penaltyStiffness="1.0e0" 
       apertureTableName="aperTable"/>
-
-    <ParallelPlatesPermeability
-      name="fracturePerm"/>
   </Constitutive>
 
   <Outputs>
