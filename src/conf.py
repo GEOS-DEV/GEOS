@@ -108,6 +108,7 @@ with open('/tmp/puppeteer-config.json', 'w') as f:
     f.write('{ "args": [ "--no-sandbox" ] }')
 mermaid_params = ['--backgroundColor', 'transparent', '-p', '/tmp/puppeteer-config.json']
 
+plot_html_show_source_link = True
 plot_html_show_formats = False
 
 # Add any paths that contain templates here, relative to this directory.

@@ -13,7 +13,7 @@ type relates to each other in an inheritance diagram.
 
 .. _diagMeshDevFig:
 .. mermaid:: /coreComponents/mesh/docs/MeshObjectInstantiationHierarchy.mmd
-   :caption: Instances cardinalities and multiplicities mesh domain.
+   :caption: Object instances describing the mesh domain. Cardinalities and relationships are indicated.
 
 
 To illustrate the mesh hierarchy, we propose to present it along with a model with two
