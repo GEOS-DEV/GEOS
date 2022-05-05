@@ -27,15 +27,23 @@ using namespace dataRepository;
 
 FunctionBase::FunctionBase( const string & name,
                             Group * const parent ):
-  Group( name, parent ),
-  m_inputVarNames()
+  Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( keys::inputVarNames, &m_inputVarNames ).
+  registerWrapper( viewKeyStruct::inputVarNamesString(), &m_inputVarNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Name of fields are input to function." );
+
+  registerWrapper( viewKeyStruct::inputVarScaleString(), &m_inputVarScale ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( 1.0 ).
+    setSizedFromParent( 0 ).
+    setDescription( "Scaling applied to function inputs before function evaluation." );
+
+  // Will be resized later if read from input
+  m_inputVarScale.resizeDefault( MAX_VARS, 1.0 );
 }
 
 integer FunctionBase::isFunctionOfTime() const
@@ -45,6 +53,11 @@ integer FunctionBase::isFunctionOfTime() const
     return 1 + ( m_inputVarNames.size() == 1 );
   }
   return 0;
+}
+
+void FunctionBase::postProcessInput()
+{
+  initializeFunction();
 }
 
 real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,
