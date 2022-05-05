@@ -119,7 +119,7 @@ TEST( FunctionTests, 1DTable )
   localIndex const Ntest = 6;
 
   // Setup table
-  array1d< real64_array > coordinates;
+  array1d< array1d< real64 > > coordinates;
   coordinates.resize( 1 );
   coordinates[0].resize( Naxis );
   coordinates[0][0] = -1.0;
@@ -127,7 +127,7 @@ TEST( FunctionTests, 1DTable )
   coordinates[0][2] = 2.0;
   coordinates[0][3] = 5.0;
 
-  real64_array values( Naxis );
+  array1d< real64 > values( Naxis );
   values[0] = 1.0;
   values[1] = 3.0;
   values[2] = -5.0;
@@ -139,7 +139,7 @@ TEST( FunctionTests, 1DTable )
   table_a.reInitializeFunction();
 
   // Setup testing coordinates, expected values
-  real64_array testCoordinates( Ntest );
+  array1d< real64 > testCoordinates( Ntest );
   testCoordinates[0] = -1.1;
   testCoordinates[1] = -0.5;
   testCoordinates[2] = 0.2;
@@ -148,7 +148,7 @@ TEST( FunctionTests, 1DTable )
   testCoordinates[5] = 10.0;
 
   // Linear Interpolation
-  real64_array testExpected( Ntest );
+  array1d< real64 > testExpected( Ntest );
   testExpected[0] = 1.0;
   testExpected[1] = 2.0;
   testExpected[2] = 2.2;
@@ -209,7 +209,7 @@ TEST( FunctionTests, 2DTable )
   string const inputName = "coordinates";
 
   // Setup table
-  array1d< real64_array > coordinates;
+  array1d< array1d< real64 > > coordinates;
   coordinates.resize( Ndim );
   coordinates[0].resize( Nx );
   coordinates[0][0] = -1.0;
@@ -221,7 +221,7 @@ TEST( FunctionTests, 2DTable )
   coordinates[1][2] = 1.0;
   coordinates[1][3] = 2.0;
 
-  real64_array values( Nx * Ny );
+  array1d< real64 > values( Nx * Ny );
   localIndex tablePosition = 0;
   for( localIndex jj=0; jj<Ny; ++jj )
   {
@@ -250,15 +250,15 @@ TEST( FunctionTests, 2DTable )
   conduit::Node node;
   dataRepository::Group testGroup( "testGroup", node );
 
-  real64_array2d testCoordinates;
+  array2d< real64 > testCoordinates;
   testGroup.registerWrapper( inputName, &testCoordinates ).
     setSizedFromParent( 1 ).
     reference().resizeDimension< 1 >( Ndim );
   testGroup.resize( Ntest );
 
   // Build testing inputs/outputs
-  real64_array expected( Ntest );
-  real64_array output( Ntest );
+  array1d< real64 > expected( Ntest );
+  array1d< real64 > output( Ntest );
   SortedArray< localIndex > set;
 
   // Build the set
@@ -313,7 +313,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   string const timeName = "time";
 
   // Setup table
-  array1d< real64_array > coordinates;
+  array1d< array1d< real64 > > coordinates;
   coordinates.resize( Ndim );
   coordinates[0].resize( Nx );
   coordinates[0][0] = -1.0;
@@ -334,7 +334,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   coordinates[3][0] = -1.0;
   coordinates[3][1] = 1.0;
 
-  real64_array values( Nx * Ny * Nz * Nt );
+  array1d< real64 > values( Nx * Ny * Nz * Nt );
   localIndex tablePosition = 0;
   for( localIndex mm=0; mm<Nt; ++mm )
   {
@@ -372,15 +372,15 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   conduit::Node node;
   dataRepository::Group testGroup( "testGroup", node );
 
-  real64_array2d testCoordinates;
+  array2d< real64 > testCoordinates;
   testGroup.registerWrapper( coordinatesName, &testCoordinates ).
     setSizedFromParent( 1 ).
     reference().resizeDimension< 1 >( Ndim - 1 );
   testGroup.resize( Ntest );
 
   // Build testing inputs/outputs
-  real64_array expected( Ntest );
-  real64_array output( Ntest );
+  array1d< real64 > expected( Ntest );
+  array1d< real64 > output( Ntest );
   SortedArray< localIndex > set;
 
   // Fill out the set
@@ -437,7 +437,7 @@ TEST( FunctionTests, 4DTable_derivatives )
   string const timeName = "time";
 
   // Setup table
-  array1d< real64_array > coordinates;
+  array1d< array1d< real64 > > coordinates;
   coordinates.resize( Ndim );
   coordinates[0].resize( Nx );
   coordinates[0][0] = -1.0;
@@ -460,7 +460,7 @@ TEST( FunctionTests, 4DTable_derivatives )
   coordinates[3][2] = 0.5;
   coordinates[3][3] = 1.0;
 
-  real64_array values( Nx * Ny * Nz * Nt );
+  array1d< real64 > values( Nx * Ny * Nz * Nt );
   for( localIndex mm=0, tablePosition=0; mm<Nt; ++mm )
   {
     for( localIndex kk=0; kk<Nz; ++kk )
@@ -571,10 +571,10 @@ TEST( FunctionTests, 4DTable_symbolic )
   conduit::Node node;
   dataRepository::Group testGroup( "testGroup", node );
 
-  real64_array inputA;
-  real64_array inputB;
-  real64_array inputC;
-  real64_array inputD;
+  array1d< real64 > inputA;
+  array1d< real64 > inputB;
+  array1d< real64 > inputC;
+  array1d< real64 > inputD;
   testGroup.registerWrapper( nameA, &inputA ).setSizedFromParent( 1 );
   testGroup.registerWrapper( nameB, &inputB ).setSizedFromParent( 1 );
   testGroup.registerWrapper( nameC, &inputC ).setSizedFromParent( 1 );
@@ -582,8 +582,8 @@ TEST( FunctionTests, 4DTable_symbolic )
   testGroup.resize( Ntest );
 
   // Build testing inputs/outputs
-  real64_array expected( Ntest );
-  real64_array output( Ntest );
+  array1d< real64 > expected( Ntest );
+  array1d< real64 > output( Ntest );
   SortedArray< localIndex > set;
 
   // Fill out the set
@@ -636,10 +636,10 @@ void testMutivariableFunction( MultivariableTableFunction & function,
   ASSERT_EQ( numElems * NUM_DIMS, inputs.size());
   ASSERT_EQ( numElems * NUM_OPS, expectedValues.size());
 
-  real64_array evaluatedValues( numElems * NUM_OPS );
-  real64_array evaluatedDerivatives( numElems * NUM_OPS * NUM_OPS );
-  arrayView1d< real64 > evaluatedValuesView = evaluatedValues.toView(),
-                        evaluatedDerivativesView = evaluatedDerivatives.toView();
+  array1d< real64 > evaluatedValues( numElems * NUM_OPS );
+  array2d< real64 > evaluatedDerivatives( numElems * NUM_OPS, NUM_DIMS );
+  arrayView1d< real64 > evaluatedValuesView = evaluatedValues.toView();
+  arrayView2d< real64 > evaluatedDerivativesView = evaluatedDerivatives.toView();
 
 
   MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > kernel( function.getAxisMinimums(),
@@ -648,27 +648,46 @@ void testMutivariableFunction( MultivariableTableFunction & function,
                                                                       function.getAxisSteps(),
                                                                       function.getAxisStepInvs(),
                                                                       function.getAxisHypercubeMults(),
-                                                                      function.getHypercubeData(),
-                                                                      inputs,
-                                                                      evaluatedValuesView,
-                                                                      evaluatedDerivativesView );
-  // Loop over cells on the device.
+                                                                      function.getHypercubeData()
+                                                                      );
+  // Test values evaluation first
   forAll< parallelDevicePolicy< > >( numElems, [=] GEOSX_HOST_DEVICE
                                        ( localIndex const elemIndex )
   {
-    kernel.compute( elemIndex );
+    kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS] );
+  } );
+
+  forAll< serialPolicy >( numElems * NUM_OPS, [=] ( localIndex const elemOpIndex )
+  {
+    ASSERT_NEAR( expectedValues[elemOpIndex], evaluatedValuesView[elemOpIndex], valuesTolerance );
+  } );
+
+  // And now - both values and derivatives
+  forAll< parallelDevicePolicy< > >( numElems, [=] GEOSX_HOST_DEVICE
+                                       ( localIndex const elemIndex )
+  {
+    // use local 2D array for the kernel
+    real64 derivatives[NUM_OPS][NUM_DIMS];
+
+    kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS], derivatives );
+
+    // now copy results to the view
+    for( auto i = 0; i < NUM_OPS; i++ )
+      for( auto j = 0; j < NUM_DIMS; j++ )
+        evaluatedDerivativesView[elemIndex * NUM_OPS + i][j] = derivatives[i][j];
   } );
 
   // Perform checks.
-  forAll< serialPolicy >( numElems, [=] ( localIndex const elemIndex )
+  forAll< serialPolicy >( numElems * NUM_OPS, [=] ( localIndex const elemOpIndex )
   {
-    ASSERT_NEAR( expectedValues[elemIndex], evaluatedValuesView[elemIndex], valuesTolerance );
+    ASSERT_NEAR( expectedValues[elemOpIndex], evaluatedValuesView[elemOpIndex], valuesTolerance );
   } );
 
   // Perform checks.
-  forAll< serialPolicy >( numElems * NUM_DIMS, [=] ( localIndex const elemDerivIndex )
+  forAll< serialPolicy >( numElems * NUM_OPS, [=] ( localIndex const elemOpIndex )
   {
-    ASSERT_NEAR( expectedDerivatives[elemDerivIndex], evaluatedDerivativesView[elemDerivIndex], derivativesTolerance );
+    for( auto j = 0; j < NUM_DIMS; j++ )
+      ASSERT_NEAR( expectedDerivatives[elemOpIndex * NUM_DIMS + j], evaluatedDerivativesView[elemOpIndex][j], derivativesTolerance );
   } );
 }
 
@@ -682,8 +701,8 @@ TEST( FunctionTests, 1DMultivariableTable )
   localIndex const nTest = 7;
 
   // Setup table
-  real64_array axisMins;
-  real64_array axisMaxs;
+  array1d< real64 > axisMins;
+  array1d< real64 > axisMaxs;
   integer_array axisPoints;
   axisMins.resize( nDims );
   axisMaxs.resize( nDims );
@@ -692,7 +711,7 @@ TEST( FunctionTests, 1DMultivariableTable )
   axisMaxs[0] = 100;
   axisPoints[0] = 100;
 
-  real64_array values( axisPoints[0] );
+  array1d< real64 > values( axisPoints[0] );
   // set this up so that values are equal to coordinate: f(x) = x
   for( auto i = 0; i < axisPoints[0]; i++ )
     values[i] = i + 1;
@@ -704,7 +723,7 @@ TEST( FunctionTests, 1DMultivariableTable )
 
 
   // Setup testing coordinates, expected values
-  real64_array testCoordinates( nTest );
+  array1d< real64 > testCoordinates( nTest );
   testCoordinates[0] = -1.1;
   testCoordinates[1] = 0.0;
   testCoordinates[2] = 1.0;
@@ -713,8 +732,8 @@ TEST( FunctionTests, 1DMultivariableTable )
   testCoordinates[5] = 100.0;
   testCoordinates[6] = 11234.534;
 
-  real64_array testExpectedValues( testCoordinates );
-  real64_array testExpectedDerivatives( nTest * nDims * nOps );
+  array1d< real64 > testExpectedValues( testCoordinates );
+  array1d< real64 > testExpectedDerivatives( nTest * nDims * nOps );
   for( auto i = 0; i < nTest * nDims * nOps; i++ )
     testExpectedDerivatives[i] = 1;
 
@@ -743,8 +762,8 @@ TEST( FunctionTests, 2DMultivariableTable )
   localIndex const nTest = 3;
 
   // Setup table
-  real64_array axisMins( nDims );
-  real64_array axisMaxs( nDims );
+  array1d< real64 > axisMins( nDims );
+  array1d< real64 > axisMaxs( nDims );
   integer_array axisPoints( nDims );
 
 
@@ -755,11 +774,11 @@ TEST( FunctionTests, 2DMultivariableTable )
   axisPoints[0] = 1000;
   axisPoints[1] = 1100;
 
-  real64_array axisSteps( nDims );
+  array1d< real64 > axisSteps( nDims );
   for( auto i = 0; i < nDims; i++ )
     axisSteps[i] = (axisMaxs[i] - axisMins[i]) /  axisPoints[i];
 
-  real64_array values( axisPoints[0] * axisPoints[1] * nOps );
+  array1d< real64 > values( axisPoints[0] * axisPoints[1] * nOps );
   for( auto i = 0; i < axisPoints[0]; i++ )
     for( auto j = 0; j < axisPoints[1]; j++ )
     {
@@ -778,7 +797,7 @@ TEST( FunctionTests, 2DMultivariableTable )
 
 
   // Setup testing coordinates, expected values
-  real64_array testCoordinates( nTest * nDims );
+  array1d< real64 > testCoordinates( nTest * nDims );
   testCoordinates[0] = 1.2334;
   testCoordinates[1] = 0.1232;
   testCoordinates[2] = 1.7342;
@@ -786,8 +805,8 @@ TEST( FunctionTests, 2DMultivariableTable )
   testCoordinates[4] = 2.0;
   testCoordinates[5] = 0.7745;
 
-  real64_array testExpectedValues( nTest * nOps );
-  real64_array testExpectedDerivatives( nTest * nOps * nDims );
+  array1d< real64 > testExpectedValues( nTest * nOps );
+  array1d< real64 > testExpectedDerivatives( nTest * nOps * nDims );
   for( auto i = 0; i < nTest; i++ )
   {
     testExpectedValues[i * nOps] = operator1( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
@@ -802,7 +821,7 @@ TEST( FunctionTests, 2DMultivariableTable )
   }
 
 
-  testMutivariableFunction< nDims, nOps >( table_g, testCoordinates, testExpectedValues, testExpectedDerivatives, 1e-3, 1e-2 );
+  testMutivariableFunction< nDims, nOps >( table_g, testCoordinates, testExpectedValues, testExpectedDerivatives, 1e-2, 2e-2 );
 }
 
 TEST( FunctionTests, MultivariableTableFromFile )
@@ -823,7 +842,7 @@ TEST( FunctionTests, MultivariableTableFromFile )
 
 
   // Setup testing coordinates, expected values
-  real64_array testCoordinates( nTest * 4 );
+  array1d< real64 > testCoordinates( nTest * 4 );
   testCoordinates[0] = 345;
   testCoordinates[1] = 0.1232;
   testCoordinates[2] = 0.2454;
@@ -835,7 +854,7 @@ TEST( FunctionTests, MultivariableTableFromFile )
     9.962409391432278e-12, 0.12583684837156695, 4.708882886399814e-13, 0.674544852574673, 0.16858415006532698, 0.00020186000309950752, 0.0028632490461658346, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     -1.1408215389715537, 0.0, 0.5704107694857768, 0.0, 0.0, 0.0, 1340.4622053037895, 292.252107461518, 0.0, 0.0, 0.8431 };
 
-  real64_array testExpectedValues ( nTest * nOps );
+  array1d< real64 > testExpectedValues ( nTest * nOps );
   for( auto i = 0; i < nTest * nOps; i++ )
   {
     testExpectedValues[i] = vals[i];
@@ -856,7 +875,7 @@ TEST( FunctionTests, MultivariableTableFromFile )
    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0 };
 
 
-  real64_array testExpectedDerivatives( nTest * nOps * nDims );
+  array1d< real64 > testExpectedDerivatives( nTest * nOps * nDims );
 
   for( auto i = 0; i < nTest * nOps * nDims; i++ )
   {
