@@ -1267,6 +1267,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="functionNames" type="string_array" default="{}" />
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
+		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
+		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
 		<!--variableNames => List of variables in expression-->
 		<xsd:attribute name="variableNames" type="groupNameRef_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1275,6 +1277,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 	<xsd:complexType name="MultivariableTableFunctionType">
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
+		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
+		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -1283,6 +1287,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="expression" type="string" use="required" />
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
+		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
+		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
 		<!--variableNames => List of variables in expression.  The order must match the evaluate argument-->
 		<xsd:attribute name="variableNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1295,6 +1301,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="coordinates" type="real64_array" default="{0}" />
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
+		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
+		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
 		<!--interpolation => Interpolation method. Valid options:
 * linear
 * nearest
