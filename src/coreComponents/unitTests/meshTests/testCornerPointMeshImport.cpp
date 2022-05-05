@@ -17,6 +17,7 @@
 #include "dataRepository/xmlWrapper.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 
@@ -46,10 +47,15 @@ void testMeshImport( string const & inputStringMesh,
   xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );
   meshManager.processInputFileRecursive( xmlMeshNode );
   meshManager.postProcessInputRecursive();
+  // we stop here for nonconfornming open vtk files
+  // file-file comparison
+  // write a function to parse and compare the generated files
 
   // Create the domain and generate the Mesh
   DomainPartition domain( "domain", &root );
   meshManager.generateMeshes( domain );
+
+  // nonconforming stops here
 
   MeshBody & meshBody = domain.getMeshBody( meshBodyName );
   MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
@@ -101,6 +107,88 @@ void testMeshImport( string const & inputStringMesh,
   }
 }
 
+string fileToString( const string filePath )
+{
+  std::ifstream meshFile;
+  string fileContent( "A" );
+
+  //Open file
+  meshFile.open( filePath );
+  GEOSX_THROW_IF( !meshFile.is_open(),
+                  "File could not be open",
+                  InputError );
+
+  //Transfer file content into string for easing broadcast
+  std::stringstream buffer;
+  buffer << meshFile.rdbuf();
+  fileContent = buffer.str();
+
+  //Close file
+  meshFile.close();
+  return fileContent;
+}
+
+void testNonconformingMeshImport( string const & inputStringMesh,
+                                  string const & vtkFileName )
+{
+  // Current version of unit test for nonconforming mesh checks an temporary VTK file generated
+  // from the CPG mesh builder after the class's postProcessInput() is invoked. The content to be
+  // verified is the connectivity calculated from the CPG mesh builder.
+
+  conduit::Node node;
+  Group root( "root", node );
+  MeshManager meshManager( "mesh", &root );
+
+  // Load the mesh
+  xmlWrapper::xmlDocument xmlDocument;
+  xmlDocument.load_buffer( inputStringMesh.c_str(), inputStringMesh.size() );
+
+  xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );
+  meshManager.processInputFileRecursive( xmlMeshNode );
+  meshManager.postProcessInputRecursive();
+
+  // Open VTK files and check the content of connectivity
+  string const debugVTKFilePath = vtkFileName;
+  string const fileContent = fileToString( debugVTKFilePath );
+  std::istringstream meshFile;
+  meshFile.str( fileContent );
+
+  // Here we start from line 47, a hardcoded line corresponding to single fault case
+  std::string line, buffer;
+  localIndex lineNum = 0;
+  localIndex sumIdx = 0;
+  while( getline( meshFile, line ) )
+  {
+    if( (lineNum >= 47) && (lineNum <= 53))
+    {
+      line = stringutilities::removeStringAndFollowingContent( line, "--" );
+      line = stringutilities::removeExtraSpaces( line );
+      line = stringutilities::removeEndOfLine( line );
+      line = stringutilities::removeTab( line );
+      line = stringutilities::trim( line, " " );
+
+      std::istringstream iss( line );
+      localIndex tmpIdx;
+      while( iss >> tmpIdx )
+      {
+        sumIdx += tmpIdx;
+      }
+    }
+
+    if( lineNum > 53 )
+      break;
+    lineNum += 1;
+  }
+  const localIndex expectedSumIdx = 320;
+  real64 const eps = 1e-8;
+  EXPECT_LE( LvArray::math::abs( sumIdx - expectedSumIdx ), eps );
+  // clean the generated VTK for testing purpose
+  int const ret = std::remove( vtkFileName.c_str() );
+  ASSERT_TRUE( ret == 0 );
+
+}
+
+// test conforming cases
 TEST( CornerPointMeshImport, testECLIPSE )
 {
   string const eclipseFilePath = testMeshDir + "/SPE10_small.GRDECL";
@@ -130,6 +218,37 @@ TEST( CornerPointMeshImport, testECLIPSE )
   string inputStringRegion = inputStreamRegion.str();
 
   testMeshImport( inputStringMesh, inputStringRegion, "mesh", "rockPorosity_referencePorosity" );
+}
+
+// test noncoforming cases
+TEST( CornerPointMeshImport, testNonconforming )
+{
+  string const eclipseFilePath = testMeshDir + "/singleFault.GRDECL";
+  conduit::Node node;
+  Group root( "root", node );
+  MeshManager meshManager( "mesh", &root );
+
+  std::stringstream inputStreamMesh;
+  inputStreamMesh <<
+    "<?xml version=\"1.0\" ?>" <<
+    "  <Mesh xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
+    " <CornerPointMesh" <<
+    " name=\"mesh\"" <<
+    " file=\"" << eclipseFilePath.c_str() << "\"" <<
+    " fieldsToImport=\"{ PORO, PERM }\"" <<
+    " fieldNamesInGEOSX=\"{ rockPorosity_referencePorosity, rockPerm_permeability }\"/>"
+    "</Mesh>";
+  const string inputStringMesh = inputStreamMesh.str();
+
+//  std::stringstream inputStreamRegion;
+//  inputStreamRegion <<
+//    "<?xml version=\"1.0\" ?>" <<
+//    "  <ElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
+//    "  <CellElementRegion name=\"0\" cellBlocks=\"{ DEFAULT_HEX_0 }\" materialList=\"{ water, rock }\"/>" <<
+//    "</ElementRegions>";
+//  string inputStringRegion = inputStreamRegion.str();
+  testNonconformingMeshImport( inputStringMesh, "debug_nonconforming_face.vtk" );
+
 }
 
 int main( int argc, char * * argv )

@@ -385,9 +385,7 @@ void updateVerticalFaceMaps( localIndex const iOwnedActiveCellPrev,
   }
 
 }
-
-
-};
+}
 
 
 void CornerPointMeshBuilder::buildCornerPointCells()

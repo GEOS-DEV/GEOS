@@ -30,15 +30,24 @@ namespace cornerPointMesh
 namespace outputUtilities
 {
 
-
-void printFile( std::ostream & fStream, std::ostream & cStream, std::string & str )
+/**
+ * @brief write a line of content into the output file
+ * @param[in] str one line of string to be written into the file
+ * @param[out] fStream stream buffer for writing content into the file
+ */
+void printFile( std::ostream & fStream, std::string & str )
 {
-  GEOSX_UNUSED_VAR( cStream );
   fStream << str;
 }
-// Change the original function to accomodate data with cell type of 42
-// this only works with conforming case
 
+
+/**
+ * @brief find a vector of offset between each cell.
+ * @param[in] nActiveCells number of active cells
+ * @param[in] ownedActiveCellToFaces map between active cell and its owned faces
+ * @param[in] faceToVertices map between face and its vertices
+ * @return a vector of offsets
+ */
 std::vector< localIndex > getPolygonOffsets( localIndex const nActiveCells,
                                              ArrayOfArrays< localIndex > const & ownedActiveCellToFaces,
                                              ArrayOfArrays< localIndex > const & faceToVertices )
@@ -66,6 +75,12 @@ std::vector< localIndex > getPolygonOffsets( localIndex const nActiveCells,
   return offsetVec;
 }
 
+/**
+ * @brief use the information extracted from GrdEcl file to write a VTK file for visualization and unit testing
+ * @param[in] vertices vertex struct storing all vertices information
+ * @param[in] faces face struct storing all face information
+ * @param[in] cells cell struct storing all cell information
+ */
 void outputDebugVTKFileWithFaces( CornerPointMeshVertices const & vertices,
                                   CornerPointMeshFaces const & faces,
                                   CornerPointMeshCells const & cells )
@@ -81,13 +96,13 @@ void outputDebugVTKFileWithFaces( CornerPointMeshVertices const & vertices,
   array2d< real64 > const & vertexPositions = vertices.m_vertexPositions;
   std::string currLine = "";
   currLine = "POINTS " + std::to_string( vertexPositions.size( 0 ) ) + " float\n";
-  printFile( myfile, std::cout, currLine );
+  printFile( myfile, currLine );
 
   for( localIndex iVertex = 0; iVertex < vertexPositions.size( 0 ); ++iVertex )
   {
     currLine = std::to_string( vertexPositions( iVertex, 0 ) ) + " " + std::to_string( vertexPositions( iVertex, 1 ) ) + " " +
                std::to_string( vertexPositions( iVertex, 2 ) ) + "\n";
-    printFile( myfile, std::cout, currLine );
+    printFile( myfile, currLine );
   }
 
   array1d< localIndex > const & activeCellToCell = cells.m_activeCellToCell;
@@ -108,27 +123,27 @@ void outputDebugVTKFileWithFaces( CornerPointMeshVertices const & vertices,
   for( auto iter = offsetVec.begin(); iter != offsetVec.end(); ++iter )
   {
     currLine = std::to_string( *iter ) + " ";
-    printFile( myfile, std::cout, currLine );
+    printFile( myfile, currLine );
   }
   currLine = "\nCONNECTIVITY vtktypeint64\n";
-  printFile( myfile, std::cout, currLine );
+  printFile( myfile, currLine );
 
   for( localIndex iActiveCell = 0; iActiveCell < nActiveCells; ++iActiveCell )
   {
     currLine = std::to_string( ownedActiveCellToFaces[iActiveCell].size()) + "\n";
-    printFile( myfile, std::cout, currLine );
+    printFile( myfile, currLine );
     for( auto iter = ownedActiveCellToFaces[iActiveCell].begin(); iter != ownedActiveCellToFaces[iActiveCell].end(); ++iter )
     {
       localIndex const faceIndex = *iter;
       currLine = std::to_string( faceToVertices[faceIndex].size()) + " ";
-      printFile( myfile, std::cout, currLine );
+      printFile( myfile, currLine );
       for( auto iterVer = faceToVertices[faceIndex].begin(); iterVer != faceToVertices[faceIndex].end(); ++iterVer )
       {
         currLine =  std::to_string( *iterVer ) + " ";
-        printFile( myfile, std::cout, currLine );
+        printFile( myfile, currLine );
       }
       currLine =  "\n";
-      printFile( myfile, std::cout, currLine );
+      printFile( myfile, currLine );
     }
   }
 

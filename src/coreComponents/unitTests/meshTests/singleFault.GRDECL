@@ -1,0 +1,54 @@
+-- This reservoir simulation deck is made available under the Open Database
+-- License: http://opendatacommons.org/licenses/odbl/1.0/. Any rights in
+-- individual contents of the database are licensed under the Database Contents
+-- License: http://opendatacommons.org/licenses/dbcl/1.0/
+
+-- Copyright (C) 2015 Statoil
+
+
+
+SPECGRID
+   2  1   2     1     F     /
+
+
+
+--  =======================================================
+--  I                                                     I
+--  I   THIS GRID FILE HAS BEEN WRITTEN FROM ORATIEW.     I
+--  I   THE FOLLOWING ECLIPSE KEYWORD HAS BEEN WRITTEN:   I
+--  I                                                     I
+--  I             ==>   C O O R D         <==             I
+--  I                                                     I
+--  I                                                     I
+--  I   THE FOLLOWING ECLIPSE KEYWORDS MUST BE INCLUDED   I
+--  I   BEFORE IMPORTING THE GRID FILE TO ORATIEW, GRID,  I
+--  I   ECLIPSE OR OTHER RESERVOIR SIMULATION SYSTEMS:    I
+--  I                                                     I
+--  I             ==>   S P E C G R I D   <==             I
+--  I                                                     I
+--  I             ==>   Z C O R N         <==             I
+--  I                                                     I
+--  I                                                     I
+--  I   IF IT IS NEEDED TO DEFINE INACTIVE GRID BLOCKS,   I
+--  I   THE FOLLOWING ECLIPSE KEYWORD MUST BE INCLUDED:   I
+--  I                                                     I
+--  I             ==>   A C T N U M       <==             I
+--  I                                                     I
+--  =======================================================
+
+COORD
+ 0.000 0.000 0.000 0.000 0.000 60.000 
+ 60.000 0.000 0.000 60.000 0.000 60.000
+ 100.000 0.000 0.000 100.000 0.000 60.000
+ 0.000 60.000 0.000 0.000 60.000 60.000 
+ 60.000 60.000 0.000 60.000 60.000 60.000
+ 100.000 60.000 0.000 100.000 60.000 60.000
+/
+
+ZCORN
+0.0 0.0 10.0 10.0 0.0 0.0 25.0 25.0
+20.0 20.0 30.0 30.0 20.0 20.0 30.0 30.0
+20.0 20.0 30.0 30.0 20.0 20.0 30.0 30.0
+40.0 40.0 50.0 50.0 40.0 40.0 50.0 50.0
+/
+
