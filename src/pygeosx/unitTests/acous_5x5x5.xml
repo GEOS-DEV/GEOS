@@ -1,0 +1,109 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <!-- define the solver -->
+    <!-- define the source coordinates -->
+    <!-- define the time source frequency -->
+    <!-- define the receiver coordinates -->
+    <AcousticSEM
+      name="acousticSolver"
+      cflFactor="0.25"
+      discretization="FE1"
+      targetRegions="{ Region }"
+      sourceCoordinates="{ { 1005.0, 1005.0, 1005.0 } }"
+      timeSourceFrequency="5.0"
+      receiverCoordinates="{ { 1105, 1005, 1005 } }"
+      outputSeismoTrace="0"
+      dtSeismoTrace="0.1"/>
+  </Solvers>
+
+  <!-- hexahedral mesh generated internally by GEOSX -->
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 2000 }"
+      yCoords="{ 0, 2000 }"
+      zCoords="{ 0, 2000 }"
+      nx="{ 5 }"
+      ny="{ 5 }"
+      nz="{ 5 }"
+      cellBlockNames="{ cb }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="zpos"
+      xMin="{ -0.01, -0.01, 1999.99 }"
+      xMax="{ 2000.01, 2000.01, 2000.01 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="1.5">
+    <!-- trigger the application of the solver -->
+    <!-- control the timestepping here with forceDt -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="0.005"
+      target="/Solvers/acousticSolver"/>
+
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region"
+      cellBlocks="{ cb }"
+      materialList="{ nullModel }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <NullModel
+      name="nullModel"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <!-- 1) The initial pressure field -->
+    <FieldSpecification
+      name="initialPressureN"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="pressure_n"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialPressureNm1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="pressure_nm1"
+      scale="0.0"/>
+
+    <!-- 2) The velocity in the domain -->
+    <FieldSpecification
+      name="cellVelocity"
+      initialCondition="1"
+      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      fieldName="mediumVelocity"
+      scale="1500"
+      setNames="{ all }"/>
+
+    <!-- 3) The free surface condition the domain -->
+    <FieldSpecification
+      name="zposFreeSurface"
+      objectPath="faceManager"
+      fieldName="FreeSurface"
+      scale="0.0"
+      setNames="{ zpos }"/>
+  </FieldSpecifications>
+
+</Problem>
