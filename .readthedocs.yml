@@ -15,7 +15,7 @@ build:
     - npm install -g npm
     - npm install -g @mermaid-js/mermaid-cli
 
-# Set requirements required to build the docs
+# Set requirements to build the docs
 python:
   install:
   - requirements: src/docs/sphinx/requirements.txt
