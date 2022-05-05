@@ -65,12 +65,6 @@
       target="/Solvers/lagSolve"/>
 
     <PeriodicEvent
-      name="outputs"
-      timeFrequency="0.5"
-      targetExactTimestep="0"
-      target="/Outputs/siloOutput"/>
-
-    <PeriodicEvent
       name="restarts"
       timeFrequency="0.5"
       targetExactTimestep="0"
