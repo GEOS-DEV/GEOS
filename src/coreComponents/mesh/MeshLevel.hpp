@@ -48,6 +48,12 @@ public:
   MeshLevel( string const & name,
              Group * const parent );
 
+
+  MeshLevel( string const & name,
+             Group * const parent,
+             MeshLevel & source );
+
+
   /**
    * @brief Constructor for the MeshLevel object.
    * @param[in] name the name of the MeshLevel object in the repository
@@ -133,96 +139,104 @@ public:
    * @return a reference to the nodeManager object
    */
   NodeManager const & getNodeManager() const
-  { return m_nodeManager; }
+  { return *m_nodeManager; }
 
   /**
    * @copydoc getNodeManager() const
    */
   NodeManager & getNodeManager()
-  { return m_nodeManager; }
+  { return *m_nodeManager; }
 
   /**
    * @brief Get the edge manager.
    * @return a reference to the edgeManager object
    */
   EdgeManager const & getEdgeManager() const
-  { return m_edgeManager; }
+  { return *m_edgeManager; }
 
   /**
    * @copydoc getEdgeManager() const
    */
   EdgeManager & getEdgeManager()
-  { return m_edgeManager; }
+  { return *m_edgeManager; }
 
   /**
    * @brief Get the face manager.
    * @return a reference to the faceManager object
    */
   FaceManager const & getFaceManager() const
-  { return m_faceManager; }
+  { return *m_faceManager; }
 
   /**
    * @copydoc getFaceManager() const
    */
   FaceManager & getFaceManager()
-  { return m_faceManager; }
+  { return *m_faceManager; }
 
   /**
    * @brief Get the element region manager.
    * @return a reference to the elementRegionManager object
    */
   ElementRegionManager const & getElemManager() const
-  { return m_elementManager; }
+  { return *m_elementManager; }
 
   /**
    * @copydoc getElemManager() const
    */
   ElementRegionManager & getElemManager()
-  { return m_elementManager; }
+  { return *m_elementManager; }
 
   /**
    * @brief Get the node Manager of the embedded surfaces grid.
    * @return a pointer to the EmbeddedSurfaceNodeManager
    */
   EmbeddedSurfaceNodeManager const & getEmbSurfNodeManager() const
-  { return m_embSurfNodeManager; }
+  { return *m_embSurfNodeManager; }
 
   /**
    * @copydoc getEmbSurfNodeManager() const
    */
   EmbeddedSurfaceNodeManager & getEmbSurfNodeManager()
-  { return m_embSurfNodeManager; }
+  { return *m_embSurfNodeManager; }
 
   /**
    * @brief Get the edge Manager related to the embedded surfaces grid.
    * @return a pointer to the edgeManager related to the embedded surfaces grid
    */
   EdgeManager const & getEmbSurfEdgeManager() const
-  { return m_embSurfEdgeManager; }
+  { return *m_embSurfEdgeManager; }
 
   /**
    * @copydoc getEmbSurfEdgeManager() const
    */
   EdgeManager & getEmbSurfEdgeManager()
-  { return m_embSurfEdgeManager; }
+  { return *m_embSurfEdgeManager; }
+
+
+  bool isShallowCopy() const
+  { return m_isShallowCopy; }
+
+  bool isShallowCopyOf( MeshLevel const & comparisonLevel ) const;
 
   ///@}
 
 private:
 
   /// Manager for node data
-  NodeManager m_nodeManager;
+  NodeManager * const m_nodeManager;
   /// Manager for edge data
-  EdgeManager m_edgeManager;
+  EdgeManager * const m_edgeManager;
   /// Manager for face data
-  FaceManager m_faceManager;
+  FaceManager * const m_faceManager;
   /// Manager for element data
-  ElementRegionManager m_elementManager;
+  ElementRegionManager * const m_elementManager;
 
   ///Manager for embedded surfaces nodes
-  EmbeddedSurfaceNodeManager m_embSurfNodeManager;
+  EmbeddedSurfaceNodeManager * const m_embSurfNodeManager;
   /// Manager for embedded surfaces edge data
-  EdgeManager m_embSurfEdgeManager;
+  EdgeManager * const m_embSurfEdgeManager;
+
+  bool const m_isShallowCopy = false;
 
 };
 

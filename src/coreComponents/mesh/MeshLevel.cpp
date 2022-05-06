@@ -30,32 +30,68 @@ using namespace dataRepository;
 MeshLevel::MeshLevel( string const & name,
                       Group * const parent ):
   Group( name, parent ),
-  m_nodeManager( groupStructKeys::nodeManagerString, this ),
-  m_edgeManager( groupStructKeys::edgeManagerString, this ),
-  m_faceManager( groupStructKeys::faceManagerString, this ),
-  m_elementManager( groupStructKeys::elemManagerString(), this ),
-  m_embSurfNodeManager( groupStructKeys::embSurfNodeManagerString, this ),
-  m_embSurfEdgeManager( groupStructKeys::embSurfEdgeManagerString, this )
-
+  m_nodeManager( new NodeManager(groupStructKeys::nodeManagerString, this) ),
+  m_edgeManager( new EdgeManager(groupStructKeys::edgeManagerString, this) ),
+  m_faceManager( new FaceManager(groupStructKeys::faceManagerString, this) ),
+  m_elementManager( new ElementRegionManager(groupStructKeys::elemManagerString(), this) ),
+  m_embSurfNodeManager( new EmbeddedSurfaceNodeManager( groupStructKeys::embSurfNodeManagerString, this) ),
+  m_embSurfEdgeManager( new EdgeManager( groupStructKeys::embSurfEdgeManagerString, this) ),
+  m_isShallowCopy(false)
 {
 
-  registerGroup( groupStructKeys::nodeManagerString, &m_nodeManager );
+  registerGroup( groupStructKeys::nodeManagerString, m_nodeManager );
 
-  registerGroup( groupStructKeys::edgeManagerString, &m_edgeManager );
-
-
-  registerGroup< FaceManager >( groupStructKeys::faceManagerString, &m_faceManager );
-  m_faceManager.nodeList().setRelatedObject( m_nodeManager );
+  registerGroup( groupStructKeys::edgeManagerString, m_edgeManager );
 
 
-  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString(), &m_elementManager );
+  registerGroup< FaceManager >( groupStructKeys::faceManagerString, m_faceManager );
+  m_faceManager->nodeList().setRelatedObject( *m_nodeManager );
 
-  registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, &m_embSurfEdgeManager );
 
-  registerGroup< EmbeddedSurfaceNodeManager >( groupStructKeys::embSurfNodeManagerString, &m_embSurfNodeManager );
+  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString(), m_elementManager );
+
+  registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, m_embSurfEdgeManager );
+
+  registerGroup< EmbeddedSurfaceNodeManager >( groupStructKeys::embSurfNodeManagerString, m_embSurfNodeManager );
 
   registerWrapper< integer >( viewKeys.meshLevel );
 }
+
+
+MeshLevel::MeshLevel( string const & name,
+                      Group * const parent,
+                      MeshLevel & source ):
+  Group( name, parent ),
+  m_nodeManager( source.m_nodeManager ),
+  m_edgeManager( source.m_edgeManager ),
+  m_faceManager( source.m_faceManager ),
+  m_elementManager( source.m_elementManager ),
+  m_embSurfNodeManager( source.m_embSurfNodeManager),
+  m_embSurfEdgeManager( source.m_embSurfEdgeManager ),
+  m_isShallowCopy(true)
+{
+  this->setRestartFlags(RestartFlags::NO_WRITE);
+
+  registerGroup( groupStructKeys::nodeManagerString, m_nodeManager );
+
+  registerGroup( groupStructKeys::edgeManagerString, m_edgeManager );
+
+
+  registerGroup< FaceManager >( groupStructKeys::faceManagerString, m_faceManager );
+  m_faceManager->nodeList().setRelatedObject( *m_nodeManager );
+
+
+  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString(), m_elementManager );
+
+  registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, m_embSurfEdgeManager );
+
+  registerGroup< EmbeddedSurfaceNodeManager >( groupStructKeys::embSurfNodeManagerString, m_embSurfNodeManager );
+
+  registerWrapper< integer >( viewKeys.meshLevel );
+
+
+}
+
 
 MeshLevel::MeshLevel( string const & name,
                       Group * const parent,
@@ -71,25 +107,25 @@ MeshLevel::MeshLevel( string const & name,
   localIndex const numNodesPerEdge = numBasisSupportPoints;
   localIndex const numNonVertexNodesPerEdge = numNodesPerEdge - 2;
 
-  m_edgeManager.resize( source.m_edgeManager.size() );
-  EdgeManager::NodeMapType const & edgesToNodesSource = source.m_edgeManager.nodeList();
-  EdgeManager::NodeMapType const & edgesToNodes = m_edgeManager.nodeList();
+  m_edgeManager->resize( source.m_edgeManager->size() );
+  EdgeManager::NodeMapType const & edgesToNodesSource = source.m_edgeManager->nodeList();
+  EdgeManager::NodeMapType const & edgesToNodes = m_edgeManager->nodeList();
 
-  localIndex const numInternalEdgeNodes = m_edgeManager.size() * numNonVertexNodesPerEdge;
+  localIndex const numInternalEdgeNodes = m_edgeManager->size() * numNonVertexNodesPerEdge;
 
-  m_faceManager.resize( source.m_faceManager.size() );
-  m_faceManager.edgeList() = source.m_faceManager.edgeList();
+  m_faceManager->resize( source.m_faceManager->size() );
+  m_faceManager->edgeList() = source.m_faceManager->edgeList();
 
   // Faces
-  ArrayOfArraysView< localIndex const > const facesToNodesMapSource = m_faceManager.nodeList().toViewConst();
-  ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceManager.nodeList();
-  ArrayOfArraysView< localIndex const > const & facesToEdges = m_faceManager.edgeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const facesToNodesMapSource = m_faceManager->nodeList().toViewConst();
+  ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & facesToEdges = m_faceManager->edgeList().toViewConst();
   localIndex const estimatedNumNodesPerFace = pow( order+1, 2 );
   faceToNodeMapNew.resize( faceToNodeMapNew.size(), estimatedNumNodesPerFace );
 
   // add the number of non-edge face nodes
   localIndex numInternalFaceNodes = 0;
-  for( localIndex kf=0; kf<m_faceManager.size(); ++kf )
+  for( localIndex kf=0; kf<m_faceManager->size(); ++kf )
   {
     localIndex const numEdgesPerFace = facesToEdges.sizeOfArray( kf );
     localIndex const numVertexNodesPerFace = facesToNodesMapSource.sizeOfArray( kf );
@@ -111,7 +147,7 @@ MeshLevel::MeshLevel( string const & name,
 
   // add the number of non-face element nodes
   localIndex numInternalElementNodes = 0;
-  source.m_elementManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
+  source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
   {
     sourceRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
     {
@@ -124,22 +160,22 @@ MeshLevel::MeshLevel( string const & name,
 
 
 
-  localIndex const numNodes = source.m_nodeManager.size()
+  localIndex const numNodes = source.m_nodeManager->size()
                               + numInternalEdgeNodes
                               + numInternalFaceNodes
                               + numInternalElementNodes;
 
-  m_nodeManager.resize( numNodes );
+  m_nodeManager->resize( numNodes );
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.m_nodeManager.referencePosition();
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPosNew = m_nodeManager.referencePosition().toView();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.m_nodeManager->referencePosition();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPosNew = m_nodeManager->referencePosition().toView();
 
   {
-    Group & nodeSets = m_nodeManager.sets();
+    Group & nodeSets = m_nodeManager->sets();
     SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
-    allNodes.reserve( m_nodeManager.size() );
+    allNodes.reserve( m_nodeManager->size() );
 
-    for( localIndex a=0; a<m_nodeManager.size(); ++a )
+    for( localIndex a=0; a<m_nodeManager->size(); ++a )
     {
       allNodes.insert( a );
     }
@@ -148,16 +184,16 @@ MeshLevel::MeshLevel( string const & name,
 
 
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager->nodeList().toViewConst();
 
-  FaceManager::ElemMapType const & faceToElem = source.m_faceManager.toElementRelation();
+  FaceManager::ElemMapType const & faceToElem = source.m_faceManager->toElementRelation();
 
   arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
 
 
-  source.m_elementManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
+  source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
   {
-    CellElementRegion & region = *(dynamic_cast< CellElementRegion * >( m_elementManager.createChild( sourceRegion.getCatalogName(),
+    CellElementRegion & region = *(dynamic_cast< CellElementRegion * >( m_elementManager->createChild( sourceRegion.getCatalogName(),
                                                                                                       sourceRegion.getName() ) ) );
 
     region.addCellBlockNames( sourceRegion.getCellBlockNames() );
@@ -434,13 +470,24 @@ MeshLevel::MeshLevel( string const & name,
 
 
 MeshLevel::~MeshLevel()
-{}
+{
+  if( !m_isShallowCopy )
+  {
+    delete m_nodeManager;
+    delete m_edgeManager;
+    delete m_faceManager;
+    delete m_elementManager;
+    delete m_embSurfNodeManager;
+    delete m_embSurfEdgeManager;
+  }
+
+}
 
 void MeshLevel::initializePostInitialConditionsPostSubGroups()
 {
-  m_elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+  m_elementManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    subRegion.calculateElementGeometricQuantities( m_nodeManager, m_faceManager );
+    subRegion.calculateElementGeometricQuantities( *m_nodeManager, *m_faceManager );
   } );
 }
 
@@ -552,7 +599,7 @@ void MeshLevel::generateSets()
 {
   GEOSX_MARK_FUNCTION;
 
-  NodeManager const & nodeManager = m_nodeManager;
+  NodeManager const & nodeManager = *m_nodeManager;
 
   dataRepository::Group const & nodeSets = nodeManager.sets();
 
@@ -578,7 +625,7 @@ void MeshLevel::generateSets()
   }
 
 
-  ElementRegionManager & elementRegionManager = m_elementManager;
+  ElementRegionManager & elementRegionManager = *m_elementManager;
   elementRegionManager.forElementSubRegions( [&]( auto & subRegion )
   {
     dataRepository::Group & elementSets = subRegion.sets();
@@ -611,6 +658,17 @@ void MeshLevel::generateSets()
       }
     }
   } );
+}
+
+bool MeshLevel::isShallowCopyOf( MeshLevel const & comparisonLevel ) const
+{
+  return ( m_nodeManager == comparisonLevel.m_nodeManager ) &&
+         ( m_edgeManager == comparisonLevel.m_edgeManager ) &&
+         ( m_faceManager == comparisonLevel.m_faceManager ) &&
+         ( m_elementManager == comparisonLevel.m_elementManager ) &&
+         ( m_embSurfNodeManager == comparisonLevel.m_embSurfNodeManager) &&
+         ( m_embSurfEdgeManager == comparisonLevel.m_embSurfEdgeManager ) &&
+         isShallowCopy();
 }
 
 

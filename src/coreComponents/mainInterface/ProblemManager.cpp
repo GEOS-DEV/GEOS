@@ -799,9 +799,13 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
       solver->forDiscretizationOnMeshTargets( meshBodies,
                               [&]( string const & meshBodyName,
-                                   MeshLevel & meshLevel,
+                                   MeshLevel & targetMeshLevel,
                                    auto const & regionNames )
       {
+        MeshLevel & baseMeshLevel = meshBodies.getGroup<MeshBody>(meshBodyName).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
+
+        MeshLevel & meshLevel = targetMeshLevel.isShallowCopyOf( baseMeshLevel) ? baseMeshLevel : targetMeshLevel;
+
         NodeManager & nodeManager = meshLevel.getNodeManager();
         ElementRegionManager & elemManager = meshLevel.getElemManager();
         FaceManager const & faceManager = meshLevel.getFaceManager();
@@ -888,29 +892,32 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     string const regionName = std::get<2>(key);
     string const subRegionName = std::get<3>(key);
 
-    std::cout<<"regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = "<<
-               meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName<<std::endl;
+    GEOSX_LOG_RANK_0( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = "<<
+                       meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName );
 
 
 
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
     MeshLevel & meshLevel = meshBody.getMeshLevel( meshLevelName );
-    ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
-    ElementRegionBase & elemRegion = elemRegionManager.getRegion( regionName );
-    ElementSubRegionBase & elemSubRegion = elemRegion.getSubRegion( subRegionName );
 
-    string_array const & materialList = elemRegion.getMaterialList();
-    for( auto & materialName : materialList )
+//    if( meshLevel.isShallowCopy() )
     {
-      constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, numQuadraturePoints );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
-                                   meshBodyName,
-                                   meshLevelName,
-                                   regionName,
-                                   subRegionName,
-                                   materialName,
-                                   numQuadraturePoints ) );
+      ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
+      ElementRegionBase & elemRegion = elemRegionManager.getRegion( regionName );
+      ElementSubRegionBase & elemSubRegion = elemRegion.getSubRegion( subRegionName );
 
+      string_array const & materialList = elemRegion.getMaterialList();
+      for( auto & materialName : materialList )
+      {
+        constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, numQuadraturePoints );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
+                                     meshBodyName,
+                                     meshLevelName,
+                                     regionName,
+                                     subRegionName,
+                                     materialName,
+                                     numQuadraturePoints ) );
+      }
     }
   }
 
