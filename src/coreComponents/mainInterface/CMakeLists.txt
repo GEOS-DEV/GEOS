@@ -5,6 +5,7 @@ set( mainInterface_headers
      GeosxState.hpp
      ProblemManager.hpp
      initialization.hpp
+     StableToXml.hpp
    )
 
 #
@@ -14,9 +15,14 @@ set( mainInterface_sources
      GeosxState.cpp
      ProblemManager.cpp
      initialization.cpp
+     StableToXml.cpp
    )
 
 set( dependencyList physicsSolvers discretizationMethods fieldSpecification linearAlgebra events fileIO optionparser )
+
+if( ENABLE_STABILIZED_INPUT )
+  set( dependencyList ${dependencyList} yaml-cpp )
+endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
