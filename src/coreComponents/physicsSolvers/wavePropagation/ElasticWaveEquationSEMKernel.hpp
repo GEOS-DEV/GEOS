@@ -258,10 +258,10 @@ struct PrecomputeSourceAndReceiverKernel
 };
 
 template< typename FE_TYPE >
-struct MassMatrixKernel
+struct MassAndDampingMatrixKernel
 {
 
-  MassMatrixKernel( FE_TYPE const & finiteElement )
+  MassAndDampingMatrixKernel( FE_TYPE const & finiteElement )
     : m_finiteElement( finiteElement )
   {}
 
@@ -276,9 +276,21 @@ struct MassMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
+          localIndex const numFacesPerElem,
+          localIndex const numNodesPerFace,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+          arrayView2d< localIndex const > const elemsToFaces,
+          ArrayOfArraysView< localIndex const > const facesToNodes,
+          arrayView1d< integer const > const facesDomainBoundaryIndicator,
+          arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
+          arrayView2d< real64 const > const faceNormal,
           arrayView1d< real64 const > const density,
+          arrayView1d< real64 > const velocityVp,
+          arrayView1d< real64 > const velocityVs,
+          arrayView1d< real64 > const damping_x,
+          arrayView1d< real64 > const damping_y,
+          arrayView1d< real64 > const damping_z,
           arrayView1d< real64 > const mass )
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -286,6 +298,7 @@ struct MassMatrixKernel
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+  
 
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -310,6 +323,63 @@ struct MassMatrixKernel
           RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][a]], localIncrement );
         }
       }
+
+      for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
+      {
+        localIndex const iface = elemsToFaces[k][kfe];
+
+        if( facesDomainBoundaryIndicator[iface] == 1 && freeSurfaceFaceIndicator[iface] != 1 )
+        {
+          for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+          {
+            FE_TYPE::calcN( q, N );
+            real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+
+            real64 invJ[3][3]={{0}};
+            FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
+
+            for( localIndex a=0; a < numNodesPerFace; ++a )
+            {
+              /// compute ds=||detJ*invJ*normalFace_{kfe}||
+              real64 tmp[3]={0};
+              real64 ds = 0.0;
+              for( localIndex b=0; b<3; ++b )
+              {
+                for( localIndex j = 0; j < 3; ++j )
+                {
+                  tmp[b] += invJ[j][b]*faceNormal[iface][j];
+                }
+                ds +=tmp[b]*tmp[b];
+              }
+              ds = std::sqrt( ds );
+
+              localIndex numNodeGl = facesToNodes[iface][a];
+
+              // Damping in x=xpos and x=xneg direction
+              if( faceNormal[iface][0] < 0.0 || faceNormal[iface][0] > 0.0)
+              {
+                real64 const alpha_x = density[k] * velocityVp[k];
+                real64 const alpha_y = density[k] * velocityVs[k];
+                real64 const alpha_z = density[k] * velocityVs[k];
+                damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
+                damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
+                damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+              }
+              // Damping in z=zpos and z=zneg direction
+              if( faceNormal[iface][2] < 0.0 || faceNormal[iface][2] > 0.0)
+              {
+                real64 const alpha_x = density[k] * velocityVs[k];
+                real64 const alpha_y = density[k] * velocityVs[k];
+                real64 const alpha_z = density[k] * velocityVp[k];
+                damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
+                damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
+                damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+              }
+            }
+          }
+        }
+      }
+
     } ); // end loop over element
   }
 
@@ -317,166 +387,6 @@ struct MassMatrixKernel
   FE_TYPE const & m_finiteElement;
 
 };
-
-template< typename FE_TYPE >
-struct DampingMatrixKernel
-{
-  DampingMatrixKernel( FE_TYPE const & finiteElement )
-    : m_finiteElement( finiteElement )
-  {}
-  /**
-   * @brief Launches the precomputation of the damping matrix
-   * @param[in]  X coordinates of the nodes
-   * @param[in]  elemsToNodes map from element to nodes
-   * @param[in]  targetSet Set of faces targetted here
-   * @param[in]  faceToElemIndex map from face to element index
-   * @param[in]  faceToNodes map from faces to nodes
-   * @param[in]  faceNormal Normal to the faces
-   * @param[in]  density cell-wise density
-   * @param[in]  velocityVp cell-wise P-wave velocity
-   * @param[in]  velocityVs cell-wise S-wave velocity
-   * @param[out] damping_x diagonal of the damping matrix in x direction
-   * @param[out] damping_y diagonal of the damping matrix in y direction
-   * @param[out] damping_z diagonal of the damping matrix in z direction
-   */
-
-  template< typename EXEC_POLICY, typename ATOMIC_POLICY >
-  void
-  launch( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-          SortedArrayView< localIndex const > const targetSet,
-          arrayView2d< localIndex const > const faceToElemIndex,
-          ArrayOfArraysView< localIndex const > const facesToNodes,
-          arrayView2d< real64 const > const faceNormal,
-          arrayView1d< real64 const > const density,
-          arrayView1d< real64 > const velocityVp,
-          arrayView1d< real64 > const velocityVs,
-          arrayView1d< real64 > const damping_x,
-          arrayView1d< real64 > const damping_y,
-          arrayView1d< real64 > const damping_z )
-  {
-    localIndex const numNodesPerFace = 4;
-
-    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-    constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-
-    for( localIndex i = 0; i < targetSet.size(); ++i )
-    {
-      localIndex const kf = targetSet[ i ];
-      localIndex const k = faceToElemIndex[kf][0];
-
-      real64 xLocal[numNodesPerElem][3];
-
-      for( localIndex a=0; a< numNodesPerElem; ++a )
-      {
-        for( localIndex b=0; b<3; ++b )
-        {
-          xLocal[a][b] = X( elemsToNodes( k, a ), b );
-        }
-      }
-
-      real64 N[numNodesPerElem];
-      real64 gradN[ numNodesPerElem ][ 3 ];
-
-      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-      {
-        FE_TYPE::calcN( q, N );
-        real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
-
-        real64 invJ[3][3]={{0}};
-        FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
-
-        for( localIndex a=0; a < numNodesPerFace; ++a )
-        {
-          /// compute ds=||detJ*invJ*normalFace_{kfe}||
-          real64 tmp[3]={0};
-          real64 ds = 0.0;
-          for( localIndex b=0; b<3; ++b )
-          {
-            for( localIndex j = 0; j < 3; ++j )
-            {
-              tmp[b] += invJ[j][b]*faceNormal[kf][j];
-            }
-            ds +=tmp[b]*tmp[b];
-          }
-          ds = std::sqrt( ds );
-
-          localIndex numNodeGl = facesToNodes[kf][a];
-
-
-          // Damping in x=xpos direction
-          if( faceNormal[kf][0] > 0.0 )
-          {
-            real64 const alpha_x = density[k] * velocityVp[k];
-            real64 const alpha_y = density[k] * velocityVs[k];
-            real64 const alpha_z = density[k] * velocityVs[k];
-            damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
-            damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
-            damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
-          }
-
-          // Damping in x=xneg direction
-          if( faceNormal[kf][0] < 0.0 )
-          {
-            real64 const alpha_x = density[k] * velocityVp[k];
-            real64 const alpha_y = density[k] * velocityVs[k];
-            real64 const alpha_z = density[k] * velocityVs[k];
-            damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
-            damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
-            damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
-          }
-          //Damping in y=ypos direction
-          if( faceNormal[kf][1] > 0.0 )
-          {
-            real64 const alpha_x = density[k] * velocityVs[k];
-            real64 const alpha_y = density[k] * velocityVp[k];
-            real64 const alpha_z = density[k] * velocityVs[k];
-            damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
-            damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
-            damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
-          }
-
-          //Damping in y=yneg direction
-          if( faceNormal[kf][1] < 0.0 )
-          {
-            real64 const alpha_x = density[k] * velocityVs[k];
-            real64 const alpha_y = density[k] * velocityVp[k];
-            real64 const alpha_z = density[k] * velocityVs[k];
-            damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
-            damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
-            damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
-          }
-
-          //Damping in z=zpos direction
-          if( faceNormal[kf][2] > 0.0 )
-          {
-            real64 const alpha_x = density[k] * velocityVs[k];
-            real64 const alpha_y = density[k] * velocityVs[k];
-            real64 const alpha_z = density[k] * velocityVp[k];
-            damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
-            damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
-            damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
-          }
-          //Damping in z=zneg direction
-          if( faceNormal[kf][2] < 0.0 )
-          {
-            real64 const alpha_x = density[k] * velocityVs[k];
-            real64 const alpha_y = density[k] * velocityVs[k];
-            real64 const alpha_z = density[k] * velocityVp[k];
-            damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
-            damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
-            damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
-          }
-        }
-      }
-    }
-
-  }
-  /// The finite element space/discretization object for the element type in the subRegion
-  FE_TYPE const & m_finiteElement;
-};
-
 
 /**
  * @brief Implements kernels for solving the acoustic wave equations
@@ -580,7 +490,7 @@ public:
       xLocal()
     {}
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ]{};
+    real64 xLocal[ numNodesPerElem ][ 3 ]{};   
     real64 mu=0;
     real64 lambda=0;
   };
@@ -606,8 +516,7 @@ public:
         stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
       }
     }
-    stack.mu = m_density[k] * m_velocityVs[k] * m_velocityVs[k];
-    stack.lambda = m_density[k] * m_velocityVp[k] * m_velocityVp[k] - 2.0*stack.mu;
+
   }
 
   /**
@@ -622,29 +531,64 @@ public:
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
-  {
-
+  { 
+     
     real64 gradN[ numNodesPerElem ][ 3 ];
+
+    real64 sigmaxx[numNodesPerElem] = {{0.0}};
+    real64 sigmaxy[numNodesPerElem] = {{0.0}};
+    real64 sigmaxz[numNodesPerElem] = {{0.0}};
+    real64 sigmayy[numNodesPerElem] = {{0.0}};
+    real64 sigmayx[numNodesPerElem] = {{0.0}};
+    real64 sigmayz[numNodesPerElem] = {{0.0}};
+    real64 sigmazz[numNodesPerElem] = {{0.0}};
+    real64 sigmazx[numNodesPerElem] = {{0.0}};
+    real64 sigmazy[numNodesPerElem] = {{0.0}};
 
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
 
     for( localIndex i=0; i<numNodesPerElem; ++i )
     {
+      sigmaxx[i] = detJ * ((stack.lambda + 2*stack.mu) * gradN[i][0]*m_ux_n[m_elemsToNodes[k][i]] + stack.lambda * ( gradN[i][1]*m_uy_n[m_elemsToNodes[k][i]]+ gradN[i][2]*m_uz_n[m_elemsToNodes[k][i]]));
+      sigmayy[i] = detJ * ((stack.lambda + 2*stack.mu) * gradN[i][0]*m_uy_n[m_elemsToNodes[k][i]] + stack.lambda * ( gradN[i][1]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][2]*m_uz_n[m_elemsToNodes[k][i]]));
+      sigmazz[i] = detJ * ((stack.lambda + 2*stack.mu) * gradN[i][0]*m_uz_n[m_elemsToNodes[k][i]] + stack.lambda * ( gradN[i][1]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][2]*m_uy_n[m_elemsToNodes[k][i]]));
+      sigmaxy[i] = detJ * (stack.mu * ( gradN[i][1]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][0]*m_uy_n[m_elemsToNodes[k][i]]));
+      sigmaxz[i] = detJ * (stack.mu * ( gradN[i][2]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][0]*m_uz_n[m_elemsToNodes[k][i]]));
+      sigmayz[i] = detJ * (stack.mu * ( gradN[i][2]*m_uy_n[m_elemsToNodes[k][i]]+ gradN[i][1]*m_uz_n[m_elemsToNodes[k][i]]));
+
+      sigmayx[i] = sigmaxy[i];
+      sigmazy[i] = sigmayz[i];
+      sigmazx[i] = sigmaxz[i];
+    }
+
+
+    for( localIndex i=0; i<numNodesPerElem; ++i )
+    {
       for( localIndex j=0; j<numNodesPerElem; ++j )
       {
-        real64 const Rxx_ij = detJ* ((stack.lambda+2.0*stack.mu)*gradN[j][0]*gradN[i][0] + stack.mu * gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][2]*gradN[i][2]);
-        real64 const Ryy_ij = detJ* ((stack.lambda+2.0*stack.mu)*gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][0]*gradN[i][0] + stack.mu * gradN[j][2]*gradN[i][2]);
-        real64 const Rzz_ij = detJ*((stack.lambda+2.0*stack.mu)*gradN[j][2]*gradN[i][2] + stack.mu * gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][0]*gradN[i][0]);
-        real64 const Rxy_ij =  detJ*(stack.mu * gradN[j][1]*gradN[i][0] + stack.lambda * gradN[j][0]*gradN[i][1]);
-        real64 const Ryx_ij =  detJ*(stack.mu * gradN[j][0]*gradN[i][1] + stack.lambda * gradN[j][1]*gradN[i][0]);
-        real64 const Rxz_ij =  detJ*(stack.mu * gradN[j][2]*gradN[i][0] + stack.lambda * gradN[j][0]*gradN[i][2]);
-        real64 const Rzx_ij =  detJ*(stack.mu * gradN[j][0]*gradN[i][2] + stack.lambda * gradN[j][2]*gradN[i][0]);
-        real64 const Ryz_ij =  detJ*(stack.mu * gradN[j][2]*gradN[i][1] + stack.lambda * gradN[j][1]*gradN[i][2]);
-        real64 const Rzy_ij =  detJ*(stack.mu * gradN[j][1]*gradN[i][2] + stack.lambda * gradN[j][2]*gradN[i][1]);
+        // real64 const Rxx_ij = detJ* ((stack.lambda+2.0*stack.mu)*gradN[j][0]*gradN[i][0] + stack.mu * gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][2]*gradN[i][2]);
+        // real64 const Ryy_ij = detJ* ((stack.lambda+2.0*stack.mu)*gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][0]*gradN[i][0] + stack.mu * gradN[j][2]*gradN[i][2]);
+        // real64 const Rzz_ij = detJ*((stack.lambda+2.0*stack.mu)*gradN[j][2]*gradN[i][2] + stack.mu * gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][0]*gradN[i][0]);
+        // real64 const Rxy_ij =  detJ*(stack.mu * gradN[j][1]*gradN[i][0] + stack.lambda * gradN[j][0]*gradN[i][1]);
+        // real64 const Ryx_ij =  detJ*(stack.mu * gradN[j][0]*gradN[i][1] + stack.lambda * gradN[j][1]*gradN[i][0]);
+        // real64 const Rxz_ij =  detJ*(stack.mu * gradN[j][2]*gradN[i][0] + stack.lambda * gradN[j][0]*gradN[i][2]);
+        // real64 const Rzx_ij =  detJ*(stack.mu * gradN[j][0]*gradN[i][2] + stack.lambda * gradN[j][2]*gradN[i][0]);
+        // real64 const Ryz_ij =  detJ*(stack.mu * gradN[j][2]*gradN[i][1] + stack.lambda * gradN[j][1]*gradN[i][2]);
+        // real64 const Rzy_ij =  detJ*(stack.mu * gradN[j][1]*gradN[i][2] + stack.lambda * gradN[j][2]*gradN[i][1]);
 
-        real64 const localIncrement_x = Rxx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rxy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rxz_ij*m_uz_n[m_elemsToNodes[k][j]];
-        real64 const localIncrement_y = Ryx_ij * m_ux_n[m_elemsToNodes[k][j]] + Ryy_ij*m_uy_n[m_elemsToNodes[k][j]] + Ryz_ij*m_uz_n[m_elemsToNodes[k][j]];
-        real64 const localIncrement_z = Rzx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rzy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rzz_ij*m_uz_n[m_elemsToNodes[k][j]];
+        real64 const Rxx_ij = gradN[i][0];
+        real64 const Rxz_ij = gradN[i][2];
+        real64 const Rxy_ij = gradN[i][1];
+        real64 const Ryy_ij = gradN[i][1];
+        real64 const Ryx_ij = gradN[i][0];
+        real64 const Ryz_ij = gradN[i][2];
+        real64 const Rzx_ij = gradN[i][0];
+        real64 const Rzy_ij = gradN[i][1];
+        real64 const Rzz_ij = gradN[i][2];
+
+        real64 const localIncrement_x = Rxx_ij * sigmaxx[j] + Rxy_ij*sigmaxy[j] + Rxz_ij*sigmaxz[j];
+        real64 const localIncrement_y = Ryx_ij * sigmayx[j] + Ryy_ij*sigmayy[j] + Ryz_ij*sigmayz[j];
+        real64 const localIncrement_z = Rzx_ij * sigmazx[j] + Rzy_ij*sigmazy[j] + Rzz_ij*sigmazz[j];
 
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_x[m_elemsToNodes[k][i]], localIncrement_x );
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_y[m_elemsToNodes[k][i]], localIncrement_y );

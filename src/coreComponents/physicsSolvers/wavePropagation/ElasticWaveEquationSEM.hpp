@@ -133,13 +133,6 @@ private:
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
 
-  /**
-   * @brief Apply ansorbing boundary condition to the face define in the geometry box from the xml
-   * @param time the time to apply the BC
-   * @param domain the partition domain
-   */
-  virtual void applyABC( real64 const time, DomainPartition & domain, arrayView1d< string const > const & regionNames );
-
   /// save the sismo trace in file
   void saveSeismo( localIndex iseismo, real64 valDisplacement, string const & filename ) override;
 
