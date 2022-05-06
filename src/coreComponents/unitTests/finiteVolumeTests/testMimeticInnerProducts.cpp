@@ -63,28 +63,37 @@ void computeVolumeAndCenter( array2d< real64, nodes::REFERENCE_POSITION_PERM > c
                              real64 & elemVolume )
 {
   localIndex const numNodes = toNodes.size();
-  real64 Xlocal[10][3];
-  LvArray::tensorOps::fill< 3 >( elemCenter, 0.0 );
-  for( localIndex a = 0; a < numNodes; ++a )
-  {
-    Xlocal[a][0] = nodePosition( toNodes( a ), 0 );
-    Xlocal[a][1] = nodePosition( toNodes( a ), 1 );
-    Xlocal[a][2] = nodePosition( toNodes( a ), 2 );
-    LvArray::tensorOps::add< 3 >( elemCenter, Xlocal[a] );
-  }
-  LvArray::tensorOps::scale< 3 >( elemCenter, 1.0 / numNodes );
 
   GEOSX_ERROR_IF( numNodes != 8 && numNodes != 4,
                   "This number of nodes is not supported in the test yet" );
 
+  LvArray::tensorOps::fill< 3 >( elemCenter, 0.0 );
+
   if( numNodes == 8 )
   {
+    real64 Xlocal[8][3];
+    for( integer a = 0; a < numNodes; ++a )
+    {
+      Xlocal[a][0] = nodePosition( toNodes( a ), 0 );
+      Xlocal[a][1] = nodePosition( toNodes( a ), 1 );
+      Xlocal[a][2] = nodePosition( toNodes( a ), 2 );
+      LvArray::tensorOps::add< 3 >( elemCenter, Xlocal[a] );
+    }
     elemVolume = computationalGeometry::hexVolume( Xlocal );
   }
   else if( numNodes == 4 )
   {
+    real64 Xlocal[4][3];
+    for( integer a = 0; a < numNodes; ++a )
+    {
+      Xlocal[a][0] = nodePosition( toNodes( a ), 0 );
+      Xlocal[a][1] = nodePosition( toNodes( a ), 1 );
+      Xlocal[a][2] = nodePosition( toNodes( a ), 2 );
+      LvArray::tensorOps::add< 3 >( elemCenter, Xlocal[a] );
+    }
     elemVolume = computationalGeometry::tetVolume( Xlocal );
   }
+  LvArray::tensorOps::scale< 3 >( elemCenter, 1.0 / numNodes );
 }
 
 void makeHexa( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
