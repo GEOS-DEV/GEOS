@@ -452,7 +452,7 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
   arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
 
   fsManager.apply( time,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "faceManager",
                    string( "FreeSurface" ),
                    [&]( FieldSpecificationBase const & bc,

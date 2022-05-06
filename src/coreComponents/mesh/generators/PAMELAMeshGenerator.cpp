@@ -97,7 +97,7 @@ ElementType toGeosxElementType( PAMELA::ELEMENTS::TYPE const type )
     case PAMELA::ELEMENTS::TYPE::VTK_QUAD: return ElementType::Quadrilateral;
     case PAMELA::ELEMENTS::TYPE::VTK_TETRA: return ElementType::Tetrahedron;
     case PAMELA::ELEMENTS::TYPE::VTK_PYRAMID: return ElementType::Pyramid;
-    case PAMELA::ELEMENTS::TYPE::VTK_WEDGE: return ElementType::Prism;
+    case PAMELA::ELEMENTS::TYPE::VTK_WEDGE: return ElementType::Wedge;
     case PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON: return ElementType::Hexahedron;
     default:
     {
@@ -115,7 +115,7 @@ PAMELA::ELEMENTS::TYPE toPamelaElementType( ElementType const type )
     case ElementType::Quadrilateral: return PAMELA::ELEMENTS::TYPE::VTK_QUAD;
     case ElementType::Tetrahedron: return PAMELA::ELEMENTS::TYPE::VTK_TETRA;
     case ElementType::Pyramid: return PAMELA::ELEMENTS::TYPE::VTK_PYRAMID;
-    case ElementType::Prism: return PAMELA::ELEMENTS::TYPE::VTK_WEDGE;
+    case ElementType::Wedge: return PAMELA::ELEMENTS::TYPE::VTK_WEDGE;
     case ElementType::Hexahedron: return PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON;
     default:
     {
@@ -133,7 +133,7 @@ std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type,
     case PAMELA::ELEMENTS::TYPE::VTK_TRIANGLE: return { 0, 1, 2 };
     case PAMELA::ELEMENTS::TYPE::VTK_QUAD: return { };
     case PAMELA::ELEMENTS::TYPE::VTK_TETRA: return { 0, 1, 2, 3 };
-    case PAMELA::ELEMENTS::TYPE::VTK_PYRAMID: return { 0, 1, 2, 3, 4 };
+    case PAMELA::ELEMENTS::TYPE::VTK_PYRAMID: return { 0, 1, 3, 2, 4 };
     case PAMELA::ELEMENTS::TYPE::VTK_WEDGE: return { 0, 3, 1, 4, 2, 5 };
     case PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON:
     {

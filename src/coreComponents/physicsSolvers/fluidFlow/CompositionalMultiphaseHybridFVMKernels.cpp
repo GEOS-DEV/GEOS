@@ -593,11 +593,9 @@ GEOSX_HOST_DEVICE
 void
 AssemblerKernelHelper::
   applyGradient( arrayView1d< real64 const > const & facePres,
-                 arrayView1d< real64 const > const & dFacePres,
                  arrayView1d< real64 const > const & faceGravCoef,
                  arraySlice1d< localIndex const > const & elemToFaces,
                  real64 const & elemPres,
-                 real64 const & dElemPres,
                  real64 const & elemGravCoef,
                  arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & elemPhaseMassDens,
                  arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dElemPhaseMassDens,
@@ -644,8 +642,8 @@ AssemblerKernelHelper::
       {
 
         // 1) compute the potential diff between the cell center and the face center
-        real64 const ccPres = elemPres + dElemPres;
-        real64 const fPres  = facePres[elemToFaces[jfaceLoc]] + dFacePres[elemToFaces[jfaceLoc]];
+        real64 const ccPres = elemPres;
+        real64 const fPres  = facePres[elemToFaces[jfaceLoc]];
 
         // pressure difference
         real64 const presDif = ccPres - fPres;
@@ -1117,11 +1115,9 @@ AssemblerKernelHelper::
   void \
   AssemblerKernelHelper:: \
     applyGradient< NF, NC, NP >( arrayView1d< real64 const > const & facePres, \
-                                 arrayView1d< real64 const > const & dFacePres, \
                                  arrayView1d< real64 const > const & faceGravCoef, \
                                  arraySlice1d< localIndex const > const & elemToFaces, \
                                  real64 const & elemPres, \
-                                 real64 const & dElemPres, \
                                  real64 const & elemGravCoef, \
                                  arraySlice1d< real64 const, multifluid::USD_PHASE-2 > const & elemPhaseMassDens, \
                                  arraySlice2d< real64 const, multifluid::USD_PHASE_DC-2 > const & dElemPhaseMassDens_dCompFrac, \
@@ -1267,12 +1263,10 @@ AssemblerKernel::
            arrayView1d< globalIndex const > const & faceDofNumber,
            arrayView1d< integer const > const & faceGhostRank,
            arrayView1d< real64 const > const & facePres,
-           arrayView1d< real64 const > const & dFacePres,
            arrayView1d< real64 const > const & faceGravCoef,
            arrayView1d< real64 const > const & mimFaceGravCoef,
            arraySlice1d< localIndex const > const & elemToFaces,
            real64 const & elemPres,
-           real64 const & dElemPres,
            real64 const & elemGravCoef,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
@@ -1310,11 +1304,9 @@ AssemblerKernel::
   // for each one-sided face of the elem,
   // compute the volumetric flux using transMatrix
   AssemblerKernelHelper::applyGradient< NF, NC, NP >( facePres,
-                                                      dFacePres,
                                                       faceGravCoef,
                                                       elemToFaces,
                                                       elemPres,
-                                                      dElemPres,
                                                       elemGravCoef,
                                                       phaseMassDens[er][esr][ei][0],
                                                       dPhaseMassDens[er][esr][ei][0],
@@ -1400,12 +1392,10 @@ AssemblerKernel::
                            arrayView1d< globalIndex const > const & faceDofNumber, \
                            arrayView1d< integer const > const & faceGhostRank, \
                            arrayView1d< real64 const > const & facePres, \
-                           arrayView1d< real64 const > const & dFacePres, \
                            arrayView1d< real64 const > const & faceGravCoef, \
                            arrayView1d< real64 const > const & mimFaceGravCoef, \
                            arraySlice1d< localIndex const > const & elemToFaces, \
                            real64 const & elemPres, \
-                           real64 const & dElemPres, \
                            real64 const & elemGravCoef, \
                            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
                            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens, \
@@ -1483,7 +1473,6 @@ FluxKernel::
           arrayView1d< globalIndex const > const & faceDofNumber,
           arrayView1d< integer const > const & faceGhostRank,
           arrayView1d< real64 const > const & facePres,
-          arrayView1d< real64 const > const & dFacePres,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & mimFaceGravCoef,
           arrayView1d< real64 const > const & transMultiplier,
@@ -1513,8 +1502,6 @@ FluxKernel::
   // get the cell-centered pressures
   arrayView1d< real64 const > const & elemPres  =
     subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-  arrayView1d< real64 const > const & dElemPres =
-    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
 
   // get the element data needed for transmissibility computation
   arrayView2d< real64 const > const & elemCenter =
@@ -1576,12 +1563,10 @@ FluxKernel::
                                                                                      faceDofNumber,
                                                                                      faceGhostRank,
                                                                                      facePres,
-                                                                                     dFacePres,
                                                                                      faceGravCoef,
                                                                                      mimFaceGravCoef,
                                                                                      elemToFaces[ei],
                                                                                      elemPres[ei],
-                                                                                     dElemPres[ei],
                                                                                      elemGravCoef[ei],
                                                                                      phaseDens,
                                                                                      dPhaseDens,
@@ -1620,7 +1605,6 @@ FluxKernel::
                                    arrayView1d< globalIndex const > const & faceDofNumber, \
                                    arrayView1d< integer const > const & faceGhostRank, \
                                    arrayView1d< real64 const > const & facePres, \
-                                   arrayView1d< real64 const > const & dFacePres, \
                                    arrayView1d< real64 const > const & faceGravCoef, \
                                    arrayView1d< real64 const > const & mimFaceGravCoef, \
                                    arrayView1d< real64 const > const & transMultiplier, \

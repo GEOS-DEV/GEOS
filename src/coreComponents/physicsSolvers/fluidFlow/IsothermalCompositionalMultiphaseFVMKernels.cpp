@@ -13,10 +13,10 @@
  */
 
 /**
- * @file CompositionalMultiphaseFVMKernels.cpp
+ * @file IsothermalCompositionalMultiphaseFVMKernels.cpp
  */
 
-#include "CompositionalMultiphaseFVMKernels.hpp"
+#include "IsothermalCompositionalMultiphaseFVMKernels.hpp"
 #include "CompositionalMultiphaseUtilities.hpp"
 
 #include "finiteVolume/CellElementStencilTPFA.hpp"
@@ -28,7 +28,7 @@
 namespace geosx
 {
 
-namespace compositionalMultiphaseFVMKernels
+namespace isothermalCompositionalMultiphaseFVMKernels
 {
 
 /******************************** FaceBasedAssemblyKernel ********************************/
@@ -54,7 +54,6 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
   m_ghostRank( compFlowAccessors.get( extrinsicMeshData::ghostRank {} ) ),
   m_gravCoef( compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient {} ) ),
   m_pres( compFlowAccessors.get( extrinsicMeshData::flow::pressure {} ) ),
-  m_dPres( compFlowAccessors.get( extrinsicMeshData::flow::deltaPressure {} ) ),
   m_dCompFrac_dCompDens( compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity {} ) ),
   m_dPhaseVolFrac_dPres( compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure {} ) ),
   m_dPhaseVolFrac_dCompDens( compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity {} ) ),
@@ -152,7 +151,7 @@ CFLFluxKernel::
     real64 const mobility = phaseRelPerm[er_up][esr_up][ei_up][0][ip] / phaseVisc[er_up][esr_up][ei_up][0][ip];
 
     // increment the phase (volumetric) outflux of the upstream cell
-    real64 const absPhaseFlux = fabs( dt * mobility * potGrad );
+    real64 const absPhaseFlux = LvArray::math::abs( dt * mobility * potGrad );
     RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseOutflux[er_up][esr_up][ei_up][ip], absPhaseFlux );
 
     // increment the component (mass/molar) outflux of the upstream cell
@@ -320,7 +319,7 @@ CFLKernel::
     real64 const coef0 = denom * mob[ip1] / mob[ip0] * dMob_dVolFrac[ip0];
     real64 const coef1 = -denom * mob[ip0] / mob[ip1] * dMob_dVolFrac[ip1];
 
-    phaseCFLNumber = fabs( coef0*phaseOutflux[ip0] + coef1*phaseOutflux[ip1] );
+    phaseCFLNumber = LvArray::math::abs( coef0*phaseOutflux[ip0] + coef1*phaseOutflux[ip1] );
   }
   // three-phase flow regime
   else if( numMobilePhases == 3 )
@@ -350,7 +349,7 @@ CFLKernel::
     }
     phaseCFLNumber = f[0][0] + f[1][1];
     phaseCFLNumber += sqrt( phaseCFLNumber*phaseCFLNumber - 4 * ( f[0][0]*f[1][1] - f[1][0]*f[0][1] ) );
-    phaseCFLNumber = 0.5 * fabs( phaseCFLNumber ) / poreVol;
+    phaseCFLNumber = 0.5 * LvArray::math::abs( phaseCFLNumber ) / poreVol;
   }
 }
 
@@ -564,7 +563,7 @@ AquiferBCKernel::
           arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac,
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
-          ElementViewConst< arrayView1d< real64 const > > const & dPres,
+          ElementViewConst< arrayView1d< real64 const > > const & presOld,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
@@ -607,7 +606,7 @@ AquiferBCKernel::
     real64 const aquiferVolFlux = aquiferBCWrapper.compute( timeAtBeginningOfStep,
                                                             dt,
                                                             pres[er][esr][ei],
-                                                            dPres[er][esr][ei],
+                                                            presOld[er][esr][ei],
                                                             gravCoef[er][esr][ei],
                                                             areaFraction,
                                                             dAquiferVolFlux_dPres );
@@ -702,7 +701,6 @@ INST_AquiferBCKernel( 5 );
 
 #undef INST_AquiferBCKernel
 
-
-} // namespace compositionalMultiphaseFVMKernels
+} // namespace isothermalCompositionalMultiphaseFVMKernels
 
 } // namespace geosx
