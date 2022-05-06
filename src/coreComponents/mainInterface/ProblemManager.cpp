@@ -81,9 +81,13 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   m_functionManager = &registerGroup< FunctionManager >( groupKeys.functionManager );
 
   // Command line entries
-  commandLine.registerWrapper< string >( viewKeys.inputFileName.key() ).
+  commandLine.registerWrapper< string >( viewKeys.rdInputFileName.key() ).
     setRestartFlags( RestartFlags::WRITE ).
-    setDescription( "Name of the input xml file." );
+    setDescription( "Name of the rd-input xml file." );
+
+  commandLine.registerWrapper< string >( viewKeys.stableInputFileName.key() ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Name of the stable input xml file." );
 
   commandLine.registerWrapper< string >( viewKeys.restartFileName.key() ).
     setRestartFlags( RestartFlags::WRITE ).
@@ -183,8 +187,10 @@ void ProblemManager::parseCommandLineInput()
   outputDirectory = opts.outputDirectory;
   OutputBase::setOutputDirectory( outputDirectory );
 
-  string & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
-  inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames, outputDirectory );
+  string & rdInputFileName = commandLine.getReference< string >( viewKeys.rdInputFileName );
+  rdInputFileName = xmlWrapper::buildMultipleInputXML( opts.rdInputFileNames, outputDirectory );
+  string & stableInputFileName = commandLine.getReference< string >( viewKeys.stableInputFileName );
+  stableInputFileName = xmlWrapper::buildMultipleInputXML( opts.stableInputFileNames, outputDirectory );
 
   string & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
   schemaName = opts.schemaName;
@@ -195,8 +201,16 @@ void ProblemManager::parseCommandLineInput()
 
   if( schemaName.empty())
   {
-    inputFileName = getAbsolutePath( inputFileName );
-    Path::pathPrefix() = splitPath( inputFileName ).first;
+    if( not rdInputFileName.empty() )
+    {
+      rdInputFileName = getAbsolutePath( rdInputFileName );
+      Path::pathPrefix() = splitPath( rdInputFileName ).first;
+    }
+    if( not stableInputFileName.empty() )
+    {
+      stableInputFileName = getAbsolutePath( stableInputFileName );
+      Path::pathPrefix() = splitPath( stableInputFileName ).first;
+    }
   }
 
   if( opts.suppressMoveLogging )
@@ -369,7 +383,10 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 void ProblemManager::parseInputFile()
 {
   Group & commandLine = getGroup( groupKeys.commandLine );
-  string const & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
+
+  string const rdInputFileName = commandLine.getReference< string >( viewKeys.rdInputFileName );
+  string const stableInputFileName = commandLine.getReference< string >( viewKeys.stableInputFileName );
+  string const inputFileName = rdInputFileName.empty() ? stableInputFileName : stableInputFileName;
 
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;

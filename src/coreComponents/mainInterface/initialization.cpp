@@ -88,6 +88,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     UNKNOWN,
     HELP,
     INPUT,
+    STABLE_INPUT,
     RESTART,
     XPAR,
     YPAR,
@@ -107,6 +108,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { UNKNOWN, 0, "", "", Arg::unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:" },
     { HELP, 0, "?", "help", Arg::None, "\t-?, --help" },
     { INPUT, 0, "i", "input", Arg::nonEmpty, "\t-i, --input, \t Input xml filename (required)" },
+    { STABLE_INPUT, 0, "Y", "stable-input", Arg::nonEmpty, "\t-y, --stable-input, \t Input yaml filename (required)" },
     { RESTART, 0, "r", "restart", Arg::nonEmpty, "\t-r, --restart, \t Target restart filename" },
     { XPAR, 0, "x", "xpartitions", Arg::numeric, "\t-x, --x-partitions, \t Number of partitions in the x-direction" },
     { YPAR, 0, "y", "ypartitions", Arg::numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction" },
@@ -130,8 +132,8 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
   option::Parser parse( usage, argc, argv, options, buffer );
 
   // Handle special cases
-  bool const noXML = options[INPUT].count() == 0 && options[SCHEMA].count() == 0;
-  if( parse.error() || options[HELP] || (argc == 0) || noXML )
+  bool const noInput = (options[INPUT].count() == 0 and options[STABLE_INPUT].count() == 0) && options[SCHEMA].count() == 0;
+  if( parse.error() || options[HELP] || (argc == 0) || noInput )
   {
     int columns = getenv( "COLUMNS" ) ? atoi( getenv( "COLUMNS" )) : 120;
     option::printUsage( fwrite, stdout, usage, columns );
@@ -158,7 +160,12 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       break;
       case INPUT:
       {
-        commandLineOptions->inputFileNames.emplace_back( opt.arg );
+        commandLineOptions->rdInputFileNames.emplace_back( opt.arg );
+      }
+      break;
+      case STABLE_INPUT:
+      {
+        commandLineOptions->stableInputFileNames.emplace_back( opt.arg );
       }
       break;
       case RESTART:
@@ -233,7 +240,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
 
   if( commandLineOptions->problemName.empty() && options[INPUT].count() > 0 )
   {
-    string & inputFileName = commandLineOptions->inputFileNames[0];
+    string & inputFileName = commandLineOptions->rdInputFileNames[0];
     if( inputFileName.length() > 4 && inputFileName.substr( inputFileName.length() - 4, 4 ) == ".xml" )
     {
       string::size_type start = inputFileName.find_last_of( '/' ) + 1;

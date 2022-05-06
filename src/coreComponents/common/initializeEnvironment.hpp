@@ -39,7 +39,10 @@ namespace geosx
 struct CommandLineOptions
 {
   /// The paths to the input xml files.
-  string_array inputFileNames;
+  string_array rdInputFileNames;
+
+  /// The paths to the stable input yaml files.
+  string_array stableInputFileNames;
 
   /// True iff restarting from the middle of an existing run.
   bool beginFromRestart = false;

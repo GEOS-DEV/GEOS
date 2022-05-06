@@ -187,8 +187,8 @@ public:
    * @brief Returns the input file name
    * @return The input file name
    */
-  string const & getInputFileName() const
-  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.inputFileName ); }
+//  string const & getInputFileName() const
+//  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.rdInputFileName ); }
 
   /**
    * @brief Returns the restart file name
@@ -207,7 +207,8 @@ public:
   /// Command line input viewKeys
   struct viewKeysStruct
   {
-    dataRepository::ViewKey inputFileName            = {"inputFileName"};            ///< Input file name key
+    dataRepository::ViewKey rdInputFileName          = { "rdInputFileName"};         ///< Input file name key for rd format
+    dataRepository::ViewKey stableInputFileName      = {"stableInputFileName"};      ///< Input file name key for stable usage
     dataRepository::ViewKey restartFileName          = {"restartFileName"};          ///< Restart file name key
     dataRepository::ViewKey beginFromRestart         = {"beginFromRestart"};         ///< Flag to begin from restart key
     dataRepository::ViewKey xPartitionsOverride      = {"xPartitionsOverride"};      ///< Override of number of

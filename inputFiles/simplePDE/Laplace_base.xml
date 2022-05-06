@@ -29,7 +29,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
@@ -71,6 +71,8 @@
     <Silo
       name="siloOutput"
       parallelThreads="32"/>
+    <VTK
+      name="vtkOutput"/>
 
     <Restart
       name="restartOutput"/>
