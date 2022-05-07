@@ -80,7 +80,7 @@ public:
     m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
     m_levelInterpType[1]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
+    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::quasiImpes;
 
     // Level 2
     m_levelFRelaxMethod[2]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
@@ -88,8 +88,9 @@ public:
     m_levelRestrictType[2]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[2] = MGRCoarseGridMethod::galerkin;
 
-    m_globalSmoothType = MGRGlobalSmootherType::ilu0; // TODO switch to levelGlobalSmoother when hypre allows
-    m_numGlobalSmoothSweeps = 0; // No global smoother
+    // Global smoother at each level, only do block-GS for the condensed system
+    m_levelSmoothType[2] = 1;
+    m_levelSmoothIters[2] = 1;
   }
 
   /**
@@ -111,8 +112,8 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalSmoothType( precond.ptr, toUnderlying( m_globalSmoothType ) ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalSmoothIters( precond.ptr, m_numGlobalSmoothSweeps ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothType( precond.ptr, m_levelSmoothType ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelSmoothIters ) );
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
