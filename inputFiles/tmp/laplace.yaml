@@ -1,0 +1,65 @@
+version: 0.1
+
+simulation:
+  solvers:
+    - type: Laplace
+#      discretization: FE1
+      time_integration_option: steady_state
+      field_name: temperature
+#      regions:
+#        - Region1
+      linear_solver_parameters:
+        - direct_parallel: false
+  max_time: 2.
+  FEM:
+#    name: FE1
+    order: 1
+
+mesh:
+  - type: generated
+    element_type: [ C3D8 ]
+    x_range: [ 0, 1 ]
+    y_range: [ 0, 1 ]
+    z_range: [ 0, 1 ]
+    nx: [ 10 ]
+    ny: [ 10 ]
+    nz: [ 10 ]
+    cell_blocks: [ cb1 ]
+  - type: box
+    name: source
+    point_min: [ -0.01, -0.01, -0.01 ]
+    point_max: [ 0.01,  1.01,  1.01 ]
+  - type: box
+    name: sink
+    point_min: [ 0.99, -0.01, -0.01 ]
+    point_max: [ 1.01,  1.01,  1.01 ]
+
+regions:
+  - type: cells
+#    name: Region1
+    cell_blocks: [ cb1 ]
+
+sources_and_sinks:
+  - field: temperature
+    function: Dirichlet
+    location: nodes/source
+  - field: temperature
+    value: 0.
+    location: nodes/sink
+
+functions:
+  - name: Dirichlet
+    type: table
+    variables: [ time ]
+    coordinates: [ 0.0, 1.0, 2.0 ]
+    values: [ 0.0, 3.e2, 4.e3 ]
+
+outputs:
+  - type: vtk
+    period: 1.
+  - type: silo
+    period: 1.
+    parallel_threads: 32
+  - type: restart
+    exact_timestep: false
+    period: 1.

@@ -1,0 +1,95 @@
+version: 0.1
+
+simulation:
+  solvers:
+    - type: compositional_multiphase_hybrid_FVM
+      regions: Channel
+      temperature: 300
+      max_comp_fraction_change: 0.5
+      linear_solver_parameters:
+        - direct_parallel: false
+      non_linear_solver_parameters:
+        newton_tol: 1.0e-8
+        newton_max_iter: 30
+  max_time: 2e8
+  FVM:
+    - type: hybrid_mimetic
+      inner_product: Beirao_da_Veiga_Lipnikov_Manzini
+
+regions:
+  - cells:
+      - name: Channel
+        cell_blocks: [ b08, b00, b01, b05, b06, b14, b15, b11 ]
+        materials: [ fluid, rock, relPerm ]
+      - name: Barrier
+        cell_blocks: [ b04, b12, b13, b09, b10, b02, b03, b07]
+
+constitutive_relations:
+  - name: fluid
+    type: dead_oil_fluid
+    phases: oil, gas, water
+    surface_densities: [ 800.0, 0.9907, 1022.0 ]
+    component_molar_weight: [ 114e-3, 16e-3, 18e-3 ]
+    table_files: [ pvdo.txt, pvdg.txt, pvtw.txt ]
+  - name: rock
+    type: compressible_solid_constant_permeability
+    porosity_model: rockPorosity
+    permeability_model: rockPerm
+  - name: rockPorosity
+    type: pressure_porosity
+    default_reference_porosity: 0.2
+    reference_pressure: 0.0
+    compressibility: 1.0e-9
+  - name: relPerm
+    type: Brooks_Corey_relative_permeability
+    phases: [ oil, gas, water ]
+    phase_min_volume_fraction: [ 0.05, 0.05, 0.05 ]
+    phase_rel_perm_exponent: [ 2.0, 2.0, 1.5 ]
+    phase_rel_perm_max_value: [ 0.8, 0.9, 0.9 ]
+  - name: rockPerm
+    type: ConstantPermeability
+    permeability_components: [ 1.0e-16, 1.0e-16, 1.0e-16 ]
+
+initial_conditions:
+  - location: elements/Channel
+    field: pressure
+    value: 5e6
+  - location: faces
+    field: pressure
+    value: 5e6
+  - location: elements/Channel
+    field: global_comp_fraction
+    value: [ 0.6, 0.399, 0.001 ]
+
+sources_and_sinks:
+  - location: elements/Channel/source
+    field: pressure
+    value: 1e7
+  - location: elements/Channel/source
+    field: global_comp_fraction
+    value: [ 0.1, 0.1, 0.8 ]
+  - location: elements/Channel/sink
+    field: pressure
+    value: 5e6
+  - location: elements/Channel/sink
+    field: global_comp_fraction
+    value: [ 0.6, 0.399, 0.001 ]
+
+outputs:
+  - type: vtk
+    period: 1e7
+  - type: silo
+    period: 1e7
+  - type: restart
+    period: 1e8
+
+mesh:
+  - type: generated
+    element_type: [ C3D8 ]
+    x_range: [ 0, 5, 10 ]
+    y_range: [ 0, 5, 10 ]
+    z_range: [ 0, 2.5, 5, 7.5, 10 ]
+    nx: [ 5, 5 ]
+    ny: [ 5, 5 ]
+    nz: [ 3, 3, 3, 3 ]
+    cell_blocks: [ b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11, b12, b13, b14, b15 ]

@@ -15,12 +15,15 @@
 #ifndef GEOSX_TOTOGAZ_STABLETOXML_HPP
 #define GEOSX_TOTOGAZ_STABLETOXML_HPP
 
+#include "dataRepository/xmlWrapper.hpp"
+#include "common/DataTypes.hpp"
+
 namespace geosx
 {
 namespace api
 {
 
-void f();
+void Convert( string const & stableInputFileName, xmlWrapper::xmlDocument & doc );
 
 }
 }

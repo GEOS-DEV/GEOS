@@ -44,6 +44,7 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
+#include "StableToXml.hpp"
 
 // System includes
 #include <vector>
@@ -386,15 +387,21 @@ void ProblemManager::parseInputFile()
 
   string const rdInputFileName = commandLine.getReference< string >( viewKeys.rdInputFileName );
   string const stableInputFileName = commandLine.getReference< string >( viewKeys.stableInputFileName );
-  string const inputFileName = rdInputFileName.empty() ? stableInputFileName : stableInputFileName;
 
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult const xmlResult = xmlDocument.load_file( inputFileName.c_str() );
-  GEOSX_THROW_IF( !xmlResult, GEOSX_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
-                                         inputFileName, xmlResult.description(), xmlResult.offset ), InputError );
-
+  if( not rdInputFileName.empty() )
+  {
+    xmlWrapper::xmlResult const xmlResult = xmlDocument.load_file( rdInputFileName.c_str() );
+    GEOSX_THROW_IF( !xmlResult, GEOSX_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
+                                           rdInputFileName, xmlResult.description(), xmlResult.offset ), InputError );
+  }
+  else
+  {
+    api::Convert( stableInputFileName, xmlDocument );
+  }
   // Add path information to the file
+  string const & inputFileName = rdInputFileName.empty() ? stableInputFileName : stableInputFileName;
   xmlDocument.append_child( xmlWrapper::filePathString ).append_attribute( xmlWrapper::filePathString ).set_value( inputFileName.c_str() );
 
   // Parse the results
