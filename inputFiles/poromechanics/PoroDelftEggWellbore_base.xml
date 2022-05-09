@@ -1,5 +1,4 @@
 <Problem>
-<!-- SPHINX_WELLBORE_TABLE -->
 <Functions>
   <TableFunction 
     name="timeFunction"
@@ -8,9 +7,7 @@
     values="{0.0, 1.0, 1.0}" 
   />
 </Functions>
-<!-- SPHINX_WELLBORE_TABLE_END -->
 
-<!-- SPHINX_WELLBORE_MATERIAL -->
 <Constitutive>
   <PorousDelftEgg
     name="porousRock"
@@ -37,7 +34,7 @@
     defaultViscosity="0.001"
     referencePressure="0e6"
     referenceDensity="1000"
-    compressibility="2.09028227021e-10"
+    compressibility="2.09e-10"
     referenceViscosity="0.001"
     viscosibility="0.0"
   />
@@ -51,9 +48,7 @@
     permeabilityComponents="{1.0e-20, 1.0e-20, 1.0e-20}"
   /> 
 </Constitutive>
-<!-- SPHINX_WELLBORE_MATERIAL_END -->
 
-<!-- SPHINX_WELLBORE_ELEMENTREGIONS -->
 <ElementRegions>
   <CellElementRegion 
     name="Omega" 
@@ -61,9 +56,7 @@
     materialList="{ water, porousRock }"
   />
 </ElementRegions>
-<!-- SPHINX_WELLBORE_ELEMENTREGIONS_END -->
 
-<!-- SPHINX_WELLBORE_BC -->
 <FieldSpecifications>
   <FieldSpecification 
     name="stressXX"
@@ -149,9 +142,7 @@
     functionName="timeFunction"   
   />
 </FieldSpecifications>
-<!-- SPHINX_WELLBORE_BC_END -->
 
-<!-- SPHINX_WELLBORE_POROMECHANICSSOLVER -->
 <Solvers gravityVector="{0.0, 0.0, 0.0}">
 <SinglePhasePoromechanics 
   name="PoromechanicsSolver" 
@@ -169,9 +160,7 @@
     newtonMaxIter = "40"
   />
 </SinglePhasePoromechanics>
-<!-- SPHINX_WELLBORE_POROMECHANICSSOLVER_END -->
 
-<!-- SPHINX_WELLBORE_MECHANICALSOLVER -->
 <SolidMechanics_LagrangianFEM 
   name="mechanicsSolver" 
   timeIntegrationOption="QuasiStatic"
@@ -184,9 +173,7 @@
     newtonMaxIter = "15"
   />  
 </SolidMechanics_LagrangianFEM>
-<!-- SPHINX_WELLBORE_MECHANICALSOLVER_END -->
 
-<!-- SPHINX_WELLBORE_SINGLEPHASEFVM -->
 <SinglePhaseFVM 
   name="SinglePhaseFlowSolver"
   logLevel="1"
@@ -198,9 +185,7 @@
   /> 
 </SinglePhaseFVM>
 </Solvers>
-<!-- SPHINX_WELLBORE_SINGLEPHASEFVM_END -->
 
-<!-- SPHINX_WELLBORE_NUMERICAL -->
 <NumericalMethods>
   <FiniteElements>
     <FiniteElementSpace 
@@ -213,9 +198,7 @@
     />
   </FiniteVolume>
 </NumericalMethods>
-<!-- SPHINX_WELLBORE_NUMERICAL_END -->
 
-<!-- SPHINX_WELLBORE_OUTPUT -->
 <Outputs>
   <Silo 
     name="siloOutput"
@@ -227,6 +210,5 @@
     name="restartOutput"
   />  
 </Outputs>
-<!-- SPHINX_WELLBORE_OUTPUT_END -->
 
 </Problem>
