@@ -3,44 +3,49 @@
 <Problem>
   <Included>
     <File name="./class09_pb3_drainageOnly_base.xml"/>
-    <!-- <File name="./class09_pb3_hystRelperm_base.xml"/> -->
   </Included>
+    <!-- <File name="./class09_pb3_hystRelperm_base.xml"/> -->
+    <!-- <File name="./class09_pb3_drainageOnly_base.xml"/> -->
 
   <Mesh>
    <VTKMesh
-	  name="mesh"
-	  file="../../../../../GEOSX_DATA/DataSets/Class09_p3/meshes/Johansen.vtk"
-	  fieldsToImport="{ perm, poro }"
-	  fieldNamesInGEOSX="{ rockPerm_permeability, rockPorosity_referencePorosity }" /> 
+     name="mesh"
+     logLevel="2"  
+     file="../meshes/Johansen.vtk"
+     fieldsToImport="{ perm, poro }"
+     fieldNamesInGEOSX="{ rockPerm_permeability, rockPorosity_referencePorosity }" /> 
    <InternalWell
       name="wellInjector1"
       wellRegionName="wellRegion"
       wellControlsName="wellControls"
       logLevel="1"
       meshName="mesh"
-      polylineNodeCoords="{ { 5440.0, 3300.0, -2900.0 },
+      polylineNodeCoords="{ { 5440.0, 3300.0, -2950.0 },
                             { 5440.0, 3300.0, -3000.00 } }"
       polylineSegmentConn="{ { 0, 1 } }"
       radius="0.1"
-      numElementsPerSegment="10">
+      numElementsPerSegment="5">
       <Perforation
         name="injector1_perf1"
-        distanceFromHead="95"/>
+        distanceFromHead="45"/>
       <Perforation
         name="injector1_perf2"
-        distanceFromHead="85"/>
+        distanceFromHead="35"/>
       <Perforation
         name="injector1_perf3"
-        distanceFromHead="75"/>
+        distanceFromHead="25"/>
       <Perforation
         name="injector1_perf4"
-	distanceFromHead="65"/> 
+	distanceFromHead="15"/>
+      <Perforation
+        name="injector1_perf5"
+	distanceFromHead="5"/> 
     </InternalWell>
   </Mesh>
  
   <!-- max time 50 y -->
   <Events
-    maxTime="1.544e+09">
+    maxTime="1.5768e+09">
 
     <PeriodicEvent
       name="outputs"
@@ -90,12 +95,33 @@
       timeFrequency="1e8"
       targetExactTimestep="1"
       target="/Outputs/timeXcompHistoryOutput" />
+   
+   <PeriodicEvent
+      name="timePoroHistoryCollection"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Tasks/poroCollection" /> 
+    <PeriodicEvent
+      name="timePoroHistoryOutput"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Outputs/timePoroHistoryOutput" />
+   <PeriodicEvent
+      name="timeVolHistoryCollection"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Tasks/volCollection" /> 
+    <PeriodicEvent
+      name="timeVolHistoryOutput"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Outputs/timeVolHistoryOutput" />
 
    <PeriodicEvent
       name="timeRhoHistoryCollection_bc"
       timeFrequency="1e8"
       targetExactTimestep="1"
-      target="/Tasks/rhoCollection_bc" /> 
+      target="/Tasks/rhoCollection_bc" />
    <PeriodicEvent
       name="timeRhoHistoryOutput_bc"
       timeFrequency="1e8"
@@ -105,7 +131,7 @@
       name="timeSatHistoryCollection_bc"
       timeFrequency="1e8"
       targetExactTimestep="1"
-      target="/Tasks/satCollection_bc" /> 
+      target="/Tasks/satCollection_bc" />
     <PeriodicEvent
       name="timeSatHistoryOutput_bc"
       timeFrequency="1e8"
@@ -115,29 +141,90 @@
       name="timeXcompHistoryCollection_bc"
       timeFrequency="1e8"
       targetExactTimestep="1"
-      target="/Tasks/xcompCollection_bc" /> 
+      target="/Tasks/xcompCollection_bc" />
     <PeriodicEvent
       name="timeXcompHistoryOutput_bc"
       timeFrequency="1e8"
       targetExactTimestep="1"
       target="/Outputs/timeXcompHistoryOutput_bc" />
+   <PeriodicEvent
+      name="timePoroHistoryCollection_bc"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Tasks/poroCollection_bc" /> 
+    <PeriodicEvent
+      name="timePoroHistoryOutput_bc"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Outputs/timePoroHistoryOutput_bc" />
+   <PeriodicEvent
+      name="timeVolHistoryCollection_bc"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Tasks/volCollection_bc" /> 
+    <PeriodicEvent
+      name="timeVolHistoryOutput_bc"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Outputs/timeVolHistoryOutput_bc" />
 
+	<SoloEvent 
+		name="final_timeXcompHistoryOutput"
+		target="/Outputs/timeXcompHistoryOutput"
+		targetTime="1.5768e+09"/>
+
+	<SoloEvent 
+		name="final_timeSatHistoryOutput"
+		target="/Outputs/timeSatHistoryOutput"
+		targetTime="1.5768e+09"/>
+	<SoloEvent 
+		name="final_timeRhoHistoryOutput"
+		target="/Outputs/timeRhoHistoryOutput"
+		targetTime="1.5768e+09"/>
+	<SoloEvent 
+		name="final_timePoroHistoryOutput"
+		target="/Outputs/timePoroHistoryOutput"
+		targetTime="1.5768e+09"/>
+	<SoloEvent 
+		name="final_timeVolHistoryOutput"
+		target="/Outputs/timeVolHistoryOutput"
+		targetTime="1.5768e+09"/>
+	<SoloEvent 
+		name="final_timeXcompHistoryOutput_bc"
+		target="/Outputs/timeXcompHistoryOutput_bc"
+		targetTime="1.5768e+09"/>
+	<SoloEvent 
+		name="final_timeSatHistoryOutput_bc"
+		target="/Outputs/timeSatHistoryOutput_bc"
+		targetTime="1.5768e+09"/>
+	<SoloEvent 
+		name="final_timeRhoHistoryOutput_bc"
+		target="/Outputs/timeRhoHistoryOutput_bc" 
+		targetTime="1.5768e+09"/>
+	<SoloEvent 
+		name="final_timePoroHistoryOutput_bc"
+		target="/Outputs/timePoroHistoryOutput_bc" 
+		targetTime="1.5768e+09"/>
+	<SoloEvent 
+		name="final_timeVolHistoryOutput_bc"
+		target="/Outputs/timeVolHistoryOutput_bc"
+		targetTime="1.5768e+09"/>
 
     <PeriodicEvent
       name="solverApplications1"
       beginTime="0"
-      endTime="7.72e8"
+      endTime="7.884e8"
       maxEventDt="5e6"        
       target="/Solvers/coupledFlowAndWells"/>
     <PeriodicEvent
       name="solverApplications2"
-      beginTime="7.72e8"
-      endTime="7.7205e8"
+      beginTime="7.884e8"
+      endTime="7.88405e8"
       forceDt="1e4"        
       target="/Solvers/coupledFlowAndWells"/>
     <PeriodicEvent
       name="solverApplications3"
-      beginTime="7.7205e8"
+      beginTime="7.88405e8"
       endTime="1.544e9"
       maxEventDt="1e6"        
       target="/Solvers/coupledFlowAndWells"/>
