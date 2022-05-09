@@ -283,35 +283,51 @@ void CellElementSubRegion::
                                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
 {
   LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
-  real64 Xlocal[10][3];
-
-  for( localIndex a = 0; a < m_numNodesPerElement; ++a )
-  {
-    LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
-    LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
-  }
-  LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
 
   switch( m_elementType )
   {
     case ElementType::Hexahedron:
     {
-      m_elementVolume[k] = computationalGeometry::hexVolume( Xlocal );
+      real64 Xlocal[8][3];
+      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+      {
+        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
+        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
+      }
+      m_elementVolume[k] = computationalGeometry::elementVolume< finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2 >( Xlocal );
       break;
     }
     case ElementType::Tetrahedron:
     {
-      m_elementVolume[k] = computationalGeometry::tetVolume( Xlocal );
+      real64 Xlocal[4][3];
+      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+      {
+        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
+        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
+      }
+      m_elementVolume[k] = computationalGeometry::elementVolume< finiteElement::H1_Tetrahedron_Lagrange1_Gauss1 >( Xlocal );
       break;
     }
     case ElementType::Wedge:
     {
-      m_elementVolume[k] = computationalGeometry::wedgeVolume( Xlocal );
+      real64 Xlocal[6][3];
+      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+      {
+        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
+        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
+      }
+      m_elementVolume[k] = computationalGeometry::elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( Xlocal );
       break;
     }
     case ElementType::Pyramid:
     {
-      m_elementVolume[k] = computationalGeometry::pyramidVolume( Xlocal );
+      real64 Xlocal[5][3];
+      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+      {
+        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
+        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
+      }
+      m_elementVolume[k] = computationalGeometry::elementVolume< finiteElement::H1_Pyramid_Lagrange1_Gauss5 >( Xlocal );
       break;
     }
     default:
@@ -320,6 +336,11 @@ void CellElementSubRegion::
                               m_elementType, getName() ) );
     }
   }
+
+  GEOSX_ERROR_IF( m_elementVolume[k] <= 0.0,
+                  GEOSX_FMT( "Negative volume for element {} type {} in subregion {}",
+                             k, m_elementType, getName() ) );
+  LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
 }
 
 void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,
