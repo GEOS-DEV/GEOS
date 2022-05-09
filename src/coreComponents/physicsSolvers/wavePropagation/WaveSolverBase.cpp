@@ -83,6 +83,11 @@ WaveSolverBase::~WaveSolverBase()
   // TODO Auto-generated destructor stub
 }
 
+void WaveSolverBase::reinit()
+{
+  postProcessInput();
+  initializePostInitialConditionsPreSubGroups();
+}
 
 void WaveSolverBase::initializePreSubGroups()
 {

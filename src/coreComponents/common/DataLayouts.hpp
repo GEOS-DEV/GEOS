@@ -218,6 +218,12 @@ using LAYOUT_PHASE_COMP = RAJA::PERM_JKI;
 /// Fluid property compositional derivative array layout
 using LAYOUT_FLUID_DC = RAJA::PERM_JI;
 
+/// OBL operator values array layout
+using LAYOUT_OBL_OPERATOR_VALUES = RAJA::PERM_JI;
+
+/// OBL operator derivatives derivative array layout
+using LAYOUT_OBL_OPERATOR_DERIVATIVES = RAJA::PERM_JKI;
+
 #else
 
 /// Component global density/fraction array layout
@@ -238,6 +244,12 @@ using LAYOUT_PHASE_COMP = RAJA::PERM_IJK;
 /// Fluid property compositional derivative array layout
 using LAYOUT_FLUID_DC = RAJA::PERM_IJ;
 
+/// OBL operator values array layout
+using LAYOUT_OBL_OPERATOR_VALUES = RAJA::PERM_IJ;
+
+/// OBL operator derivatives derivative array layout
+using LAYOUT_OBL_OPERATOR_DERIVATIVES = RAJA::PERM_IJK;
+
 #endif
 
 /// Component global density/fraction unit stride dimension
@@ -257,6 +269,12 @@ static constexpr int USD_PHASE_COMP = LvArray::typeManipulation::getStrideOneDim
 
 /// Fluid property compositional derivative unit stride dimension
 static constexpr int USD_FLUID_DC = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_FLUID_DC{} );
+
+/// OBL operator values unit stride dimension
+static constexpr int USD_OBL_VAL = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_OBL_OPERATOR_VALUES{} );
+
+/// OBL operator derivatives unit stride dimension
+static constexpr int USD_OBL_DER = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_OBL_OPERATOR_DERIVATIVES{} );
 
 } // namespace compflow
 
