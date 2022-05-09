@@ -36,6 +36,8 @@ public:
   using EXEC_POLICY = parallelDevicePolicy< 32 >; 
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
+  static constexpr real64 epsilonLoc = 1e-8;
+ 
   ElasticWaveEquationSEM( const std::string & name,
                            Group * const parent );
 
@@ -74,9 +76,9 @@ public:
                        integer const cycleNumber,
                        DomainPartition & domain ) override;
 
-  void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs_x ) override;
+  void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs_x ) override;
 
-  void computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const  displacementx_np1) override;
+  void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const u_np1, arrayView1d< real64 > const u_n) override;
   
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -106,7 +108,7 @@ private:
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh ) override;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
@@ -144,7 +146,7 @@ private:
   array1d< localIndex > m_receiverIsLocal;
 
   /// Displacement_np1 at the receiver location for each time step for each receiver
-  array1d< real64 > m_displacementNp1AtReceivers;
+  array2d< real64 > m_displacementNp1AtReceivers;
 
 };
 
