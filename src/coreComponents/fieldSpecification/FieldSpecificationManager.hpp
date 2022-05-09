@@ -291,17 +291,14 @@ private:
         && target.getName() != ObjectManagerBase::groupKeyStruct::setsString()
         && target.getName() != ObjectManagerBase::groupKeyStruct::neighborDataString() )
     {
-//      if( target.hasWrapper( targetName ) )
+      dataRepository::Group const & setGroup = target.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
+      string_array setNames = fs.getSetNames();
+      for( auto & setName : setNames )
       {
-        dataRepository::Group const & setGroup = target.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
-        string_array setNames = fs.getSetNames();
-        for( auto & setName : setNames )
+        if( setGroup.hasWrapper( setName ) )
         {
-          if( setGroup.hasWrapper( setName ) )
-          {
-            SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
-            lambda( fs, setName, targetSet, target, targetName );
-          }
+          SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
+          lambda( fs, setName, targetSet, target, targetName );
         }
       }
     }

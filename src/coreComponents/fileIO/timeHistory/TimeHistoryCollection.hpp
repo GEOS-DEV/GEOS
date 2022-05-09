@@ -218,12 +218,7 @@ protected:
       localIndex targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
 
       dataRepository::Group const * targetGroup = nullptr;
-      //dataRepository::Group const * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 1 );
-
       int const numMeshBodies = domain.getMeshBodies().numSubGroups();
-
-//      GEOSX_ERROR_IF( targetTokenLength>3,
-//                      "too many levels in path entry");
 
 
       int startingTokenIndex = 0;
@@ -297,8 +292,6 @@ protected:
       MeshLevel const & meshLevel = meshBody.getMeshLevel( meshLevelName );
       targetGroup = &meshLevel;
 
-
-//      std::cout<<targetTokens<<std::endl;
 
       if( targetTokens[2]== MeshLevel::groupStructKeys::elemManagerString() )
       {
