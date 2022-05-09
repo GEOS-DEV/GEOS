@@ -244,6 +244,10 @@
 					<xsd:selector xpath="PAMELAMesh" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="MeshParticleMeshUniqueName">
+					<xsd:selector xpath="ParticleMesh" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="MeshVTKMeshUniqueName">
 					<xsd:selector xpath="VTKMesh" />
 					<xsd:field xpath="@name" />
@@ -375,6 +379,10 @@
 				</xsd:unique>
 				<xsd:unique name="SolversSolidMechanics_LagrangianFEMUniqueName">
 					<xsd:selector xpath="SolidMechanics_LagrangianFEM" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversSolidMechanics_MPMUniqueName">
+					<xsd:selector xpath="SolidMechanics_MPM" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="SolversSurfaceGeneratorUniqueName">
