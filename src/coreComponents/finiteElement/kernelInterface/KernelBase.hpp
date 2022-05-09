@@ -37,6 +37,481 @@ namespace finiteElement
 {
 
 /**
+ * @brief Compute the values of a finite element field at given quadrature points.
+ * 
+ * @param[in] basis Operator returning the shape functions values at the desired
+ *                  quadrature points.
+ *                  `basis ( dof, quad ) = phi_dof ( x_quad )`
+ * @param[in] dofs The sets of degrees of freedom or support points.
+ * @return Values of the finite element field described by @a dofs
+ *         evaluated at quadrature points.
+ */
+template < typename Basis,
+           typename Dofs,
+           typename QuadValues,
+           std::enable_if_t<
+            !is_tensor_basis<Basis> ||
+            ( is_tensor_basis<Basis> && 
+              get_basis_dim<Basis> == 1 ),
+            bool > = true >
+GEOSX_HOST_DEVICE
+auto interpolateAtQuadraturePoints( Basis const & basis,
+                                    Dofs const & dofs)
+{
+  using T = get_value_type<QuadValues>;
+
+  // Matrix vector product where each thread computes a value
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  using Result = basis_result<Basis, num_quads>;
+
+  Result q_values;
+
+  forall<Result>([&](size_t quad)
+  {
+    T res{};
+    forall<Dofs>([&](size_t dof)
+    {
+      res += basis( dof, quad ) * dofs( dof );
+    });
+    q_values( quad ) = res;
+  });
+
+  return q_values;
+}
+
+/**
+ * @brief Compute the values of a finite element field at given quadrature points.
+ * 
+ * @param[in] basis Operator returning the shape functions values at the desired
+ *                  quadrature points.
+ *                  `basis ( dof, quad ) = phi_dof ( x_quad )`
+ * @param[in] dofs The sets of degrees of freedom or support points.
+ * @return Values of the finite element field described by @a dofs
+ *         evaluated at quadrature points.
+ */
+template < typename Basis,
+           typename Dofs,
+           typename QuadValues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 2,
+            bool > = true >
+GEOSX_HOST_DEVICE
+auto interpolateAtQuadraturePoints( Basis const & basis,
+                                    Dofs const & dofs)
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  // Contraction on the first dimension
+  using Tmp = basis_result<Basis, num_quads, num_dofs>;
+  Tmp Bu;
+  
+  foreach_dim<Dofs, 1>([&](size_t dof_y)
+  {
+    foreach_dim<Tmp, 0>([&](size_t quad_x)
+    {
+      T res{};
+      foreach_dim<Dofs, 0>([&](size_t dof_x)
+      {
+        res += basis( dof_x, quad_x ) * dofs( dof_x, dof_y );
+      });
+      Bu( quad_x, dof_y ) = res;
+    });
+  });
+
+  // Contraction on the second dimension
+  using Result = basis_result<Basis, num_quads, num_quads>;
+  Result q_values;
+
+  foreach_dim<Result, 0>([&](size_t quad_x)
+  {
+    foreach_dim<Result, 1>([&](size_t quad_y)
+    {
+      T res{};
+      foreach_dim<Tmp, 1>([&](size_t dof_y)
+      {
+        res += basis( dof_y, quad_y ) * Bu( quad_x, dof_y );
+      });
+      q_values( quad_x, quad_y ) = res;
+    });
+  });
+
+  return q_values;
+}
+
+/**
+ * @brief Compute the values of a finite element field at given quadrature points.
+ * 
+ * @param[in] basis Operator returning the shape functions values at the desired
+ *                  quadrature points.
+ *                  `basis ( dof, quad ) = phi_dof ( x_quad )`
+ * @param[in] dofs The sets of degrees of freedom or support points.
+ * @return Values of the finite element field described by @a dofs
+ *         evaluated at quadrature points.
+ */
+template < typename Basis,
+           typename Dofs,
+           typename QuadValues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 3,
+            bool > = true >
+GEOSX_HOST_DEVICE
+auto interpolateAtQuadraturePoints( Basis const & basis,
+                                    Dofs const & dofs)
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  // Contraction on the first dimension
+  using TmpX = basis_result<Basis, num_quads, num_dofs, num_dofs>;
+  TmpX Bu;
+
+  foreach_dim<Dofs, 2>([&](size_t dof_z)
+  {
+    foreach_dim<Dofs, 1>([&](size_t dof_y)
+    {
+      foreach_dim<TmpX, 0>([&](size_t quad_x)
+      {
+        T res{};
+        foreach_dim<Dofs, 0>([&](size_t dof_x)
+        {
+          res += basis( dof_x, quad_x ) * dofs( dof_x, dof_y, dof_z );
+        });
+        Bu( quad_x, dof_y, dof_z ) = res;
+      });
+    });
+  });
+
+  // Contraction on the second dimension
+  using TmpY = basis_result<Basis, num_quads, num_quads, num_dofs>;
+  TmpY BBu;
+  
+  foreach_dim<TmpY, 2>([&](size_t dof_z)
+  {
+    foreach_dim<TmpY, 0>([&](size_t quad_x)
+    {
+      foreach_dim<TmpY, 1>([&](size_t quad_y)
+      {
+        T res{};
+        foreach_dim<TmpX, 0>([&](size_t dof_y)
+        {
+          res += basis( dof_y, quad_y ) * Bu( quad_x, dof_y, dof_z );
+        });
+        BBu( quad_x, quad_y, dof_z ) = res;
+      });
+    });
+  });
+
+  // Contraction on the third dimension
+  using Result = basis_result<Basis, num_quads, num_quads, num_quads>;
+  Result q_values;
+
+  foreach_dim<Result, 1>([&](size_t quad_y)
+  {
+    foreach_dim<Result, 0>([&](size_t quad_x)
+    {
+      foreach_dim<Result, 2>([&](size_t quad_z)
+      {
+        T res{};
+        foreach_dim<TmpY, 2>([&](size_t dof_z)
+        {
+          res += basis( dof_z, quad_z ) * BBu( quad_x, quad_y, dof_z );
+        });
+        q_values( quad_x, quad_y, quad_z ) = res;
+      });
+    });
+  });
+
+  return q_values;
+}
+
+/**
+ * @brief "Apply" test functions.
+ * 
+ * @param[in] basis Operator returning the shape functions values at the desired
+ *                  quadrature points.
+ *                  `basis ( dof, quad ) = phi_dof ( x_quad )`
+ * @param[in] q_values Values of the "qFunction" at quadrature points.
+ * @return Contribution of the q_values to the degrees of freedom.
+ */
+template < typename Basis,
+           typename QValues >
+GEOSX_HOST_DEVICE
+auto applyTestFunctions( Basis const & basis,
+                         QValues const & q_values )
+{
+  interpolateAtQuadraturePoints( transpose( basis ), q_values );
+}
+
+/**
+ * @brief Compute the gradient values of a finite element field at given quadrature points.
+ * 
+ * @param[in] basis Operator returning the shape functions values at the desired
+ *                  quadrature points.
+ *                  `basis ( dof, quad ) = phi_dof ( x_quad )`
+ * @param[in] dofs The sets of degrees of freedom or support points.
+ * @return Gradient values of the finite element field described by @a dofs
+ *         evaluated at quadrature points.
+ */
+template < typename Basis,
+           typename Dofs,
+           typename QuadValues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 3,
+            bool > = true >
+GEOSX_HOST_DEVICE
+auto interpolateGradientAtQuadraturePoints( Basis const & basis,
+                                            Dofs const & u)
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  // Contraction on the first dimension
+  using TmpX = basis_result<Basis, num_quads, num_dofs, num_dofs>;
+  TmpX Bu, Gu;
+
+  foreach_dim<Dofs, 2>([&](size_t dof_z)
+  {
+    foreach_dim<Dofs, 1>([&](size_t dof_y)
+    {
+      foreach_dim<TmpX, 0>([&](size_t quad_x)
+      {
+        T bu{};
+        T gu{};
+        foreach_dim<Dofs, 0>([&](size_t dof_x)
+        {
+          const T val = dofs( dof_x, dof_y, dof_z );
+          bu += basis( dof_x, quad_x ) * val;
+          gu += gradient( basis )( dof_x, quad_x ) * val;
+        });
+        Bu( quad_x, dof_y, dof_z ) = bu;
+        Gu( quad_x, dof_y, dof_z ) = gu;
+      });
+    });
+  });
+
+  // Contraction on the second dimension
+  using TmpY = basis_result<Basis, num_quads, num_quads, num_dofs>;
+  TmpY BBu, BGu, GBu;
+  
+  foreach_dim<TmpY, 2>([&](size_t dof_z)
+  {
+    foreach_dim<TmpY, 0>([&](size_t quad_x)
+    {
+      foreach_dim<TmpY, 1>([&](size_t quad_y)
+      {
+        T bbu{};
+        T bgu{};
+        T gbu{};
+        foreach_dim<TmpX, 0>([&](size_t dof_y)
+        {
+          const T bu = Bu( quad_x, dof_y, dof_z );
+          const T gu = Gu( quad_x, dof_y, dof_z );
+          bbu += basis( dof_y, quad_y ) * bu;
+          gbu += gradient( basis )( dof_y, quad_y ) * bu;
+          bgu += basis( dof_y, quad_y ) * gu;
+        });
+        BBu( quad_x, quad_y, dof_z ) = bbu;
+        GBu( quad_x, quad_y, dof_z ) = gbu;
+        BGu( quad_x, quad_y, dof_z ) = bgu;
+      });
+    });
+  });
+
+  // Contraction on the third dimension
+  using Result = basis_result<Basis, num_quads, num_quads, num_quads, 3>; // remove magic number?
+  Result q_values;
+
+  foreach_dim<Result, 1>([&](size_t quad_y)
+  {
+    foreach_dim<Result, 0>([&](size_t quad_x)
+    {
+      foreach_dim<Result, 2>([&](size_t quad_z)
+      {
+        T gbbu{};
+        T bgbu{};
+        T bbgu{};
+        foreach_dim<TmpY, 2>([&](size_t dof_z)
+        {
+          const T bbu = BBu( quad_x, quad_y, dof_z );
+          const T gbu = GBu( quad_x, quad_y, dof_z );
+          const T bgu = BGu( quad_x, quad_y, dof_z );
+          gbbu += gradient( basis )( dof_z, quad_z ) * bbu;
+          bgbu += basis( dof_z, quad_z ) * gbu;
+          bbgu += basis( dof_z, quad_z ) * bgu;
+        });
+        q_values( quad_x, quad_y, quad_z, 0 ) = bbgu;
+        q_values( quad_x, quad_y, quad_z, 1 ) = bgbu;
+        q_values( quad_x, quad_y, quad_z, 2 ) = gbbu;
+      });
+    });
+  });
+
+  return q_values;
+}
+
+/**
+ * @brief "Apply" gradient of the test functions.
+ * 
+ * @param[in] basis Operator returning the shape functions values at the desired
+ *                  quadrature points.
+ *                  `basis ( dof, quad ) = phi_dof ( x_quad )`
+ * @param[out] q_values Values of the "qFunction" at quadrature points.
+ * @return Contribution of the q_values to the degrees of freedom.
+ */
+template < typename Basis,
+           typename Qvalues >
+auto applyGradientTestFunctions( Basis const & basis,
+                                 Qvalues const & q_values )
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  // Contraction on the first dimension
+  using TmpX = basis_result<Basis, num_dofs, num_quads, num_quads>;
+  TmpX Gqx, Bqy, Bqz;
+
+  foreach_dim<QValues, 2>([&](size_t quad_z)
+  {
+    foreach_dim<QValues, 1>([&](size_t quad_y)
+    {
+      foreach_dim<TmpX, 0>([&](size_t dof_x)
+      {
+        T gqx{};
+        T bqy{};
+        T bqz{};
+        foreach_dim<QValues, 0>([&](size_t quad_x)
+        {
+          // Using gradient at quadrature points prevents us from storing so many tmp while also reducing FLOPs
+          const T qx = q_values( quad_x, quad_y, quad_z, 0 );
+          const T qy = q_values( quad_x, quad_y, quad_z, 1 );
+          const T qz = q_values( quad_x, quad_y, quad_z, 2 );
+          const T b = basis( dof_x, quad_x );
+          const T g = gradient( basis )( dof_x, quad_x );
+          gqx += g * qx;
+          bqy += b * qy;
+          bqz += b * qz;
+        });
+        Gqx( dof_x, quad_y, quad_z ) = gqx;
+        Bqy( dof_x, quad_y, quad_z ) = bqy;
+        Bqz( dof_x, quad_y, quad_z ) = bqz;
+      });
+    });
+  });
+
+  // Contraction on the second dimension
+  using TmpY = basis_result<Basis, num_dofs, num_dofs, num_quads>;
+  TmpY BGqx, GBqy, BBqz;
+  
+  foreach_dim<TmpY, 2>([&](size_t quad_z)
+  {
+    foreach_dim<TmpY, 0>([&](size_t dof_x)
+    {
+      foreach_dim<TmpY, 1>([&](size_t dof_y)
+      {
+        T bgqx{};
+        T gbqy{};
+        T bbqz{};
+        foreach_dim<TmpX, 0>([&](size_t quad_y)
+        {
+          const T gqx = Gqx( dof_x, quad_y, quad_z );
+          const T bqy = Bqy( dof_x, quad_y, quad_z );
+          const T bqz = Bqz( dof_x, quad_y, quad_z );
+          const T b = basis( dof_y, quad_y );
+          const T g = gradient( basis )( dof_y, quad_y );
+          bgqx += b * gqx;
+          gbqy += g * bqy;
+          bbqz += b * bqz;
+        });
+        BGqx( dof_x, dof_y, quad_z ) = bgqx;
+        GBqy( dof_x, dof_y, quad_z ) = gbqy;
+        BBqz( dof_x, dof_y, quad_z ) = bbqz;
+      });
+    });
+  });
+
+  // Contraction on the third dimension
+  using Result = basis_result<Basis, num_dofs, num_dofs, num_dofs>; // remove magic number?
+  Result dofs;
+
+  foreach_dim<Result, 1>([&](size_t dof_y)
+  {
+    foreach_dim<Result, 0>([&](size_t dof_x)
+    {
+      foreach_dim<Result, 2>([&](size_t dof_z)
+      {
+        T res{};
+        foreach_dim<TmpY, 2>([&](size_t quad_z)
+        {
+          const T bgqx = BGqx( dof_x, dof_y, quad_z );
+          const T gbqy = GBqy( dof_x, dof_y, quad_z );;
+          const T bbqz = BBqz( dof_x, dof_y, quad_z );;
+          const T b = basis( dof_z, quad_z );
+          const T g = gradient( basis )( dof_z, quad_z )
+          res += b * bgqx;
+          res += b * gbqy;
+          res += g * bbqz;
+        });
+        dofs( dof_x, dof_y, dof_z ) = res;
+      });
+    });
+  });
+
+  return dofs;  
+}
+
+template < typename FiniteElement >
+class StoredNonTensorBasis
+{
+private:
+  constexpr size_t num_dofs = get_num_dofs<FiniteElement>;
+  constexpr size_t num_quads = get_num_quads<FiniteElement>;
+  real64 const data[ num_quads ][ num_dofs ];
+
+public:
+  StoredBasis()
+  {
+    real64 basis_functions_at_xq[ num_dofs ];
+    for (size_t q = 0; q < num_quads; q++)
+    {
+      FiniteElement::calcN( q, basis_functions_at_xq );
+      for (size_t d = 0; d < num_dofs; d++)
+      {
+        data[ q ][ d ] = basis_functions_at_xq[ d ];
+      }
+    }
+  }
+
+  real64 operator()( size_t dof, size_t quad ) const
+  {
+    return data[ quad ][ dof ];
+  }
+};
+
+template < typename T, size_t... Dims >
+StaticTensor
+{
+private:
+  T data[ 1 * ... * Dims ];
+
+public:
+  template < typename... Args >
+  T const & operator()( Args... indices )
+  {
+    static_assert( sizeof...(Args) == sizeof...(Dims),
+                   "Wrong number of arguments" );
+    return data[ 0 ]; // TODO
+  }
+};
+
+/**
  * @class KernelBase
  * @brief Define the base interface for finite element kernels.
  * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
