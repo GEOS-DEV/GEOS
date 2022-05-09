@@ -92,11 +92,25 @@ Element: CO2BrineEzrokhiFluid
 .. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid.rst
 
 
+.. _XML_CO2BrineEzrokhiThermalFluid:
+
+Element: CO2BrineEzrokhiThermalFluid
+====================================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiThermalFluid.rst
+
+
 .. _XML_CO2BrinePhillipsFluid:
 
 Element: CO2BrinePhillipsFluid
 ==============================
 .. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid.rst
+
+
+.. _XML_CO2BrinePhillipsThermalFluid:
+
+Element: CO2BrinePhillipsThermalFluid
+=====================================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsThermalFluid.rst
 
 
 .. _XML_CarmanKozenyPermeability:
@@ -190,11 +204,25 @@ Element: CompressibleSolidParallelPlatesPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability.rst
 
 
+.. _XML_CompressibleSolidSlipDependentPermeability:
+
+Element: CompressibleSolidSlipDependentPermeability
+===================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability.rst
+
+
 .. _XML_ConstantPermeability:
 
 Element: ConstantPermeability
 =============================
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability.rst
+
+
+.. _XML_ConstantThermalConductivity:
+
+Element: ConstantThermalConductivity
+====================================
+.. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity.rst
 
 
 .. _XML_Constitutive:
@@ -449,6 +477,13 @@ Element: InternalWellbore
 .. include:: ../../coreComponents/schema/docs/InternalWellbore.rst
 
 
+.. _XML_JFunctionCapillaryPressure:
+
+Element: JFunctionCapillaryPressure
+===================================
+.. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure.rst
+
+
 .. _XML_LagrangianContact:
 
 Element: LagrangianContact
@@ -461,13 +496,6 @@ Element: LagrangianContact
 Element: LaplaceFEM
 ===================
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM.rst
-
-
-.. _XML_LaplaceVEM:
-
-Element: LaplaceVEM
-===================
-.. include:: ../../coreComponents/schema/docs/LaplaceVEM.rst
 
 
 .. _XML_LinearSolverParameters:
@@ -498,6 +526,13 @@ Element: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
 
 
+.. _XML_MultivariableTableFunction:
+
+Element: MultivariableTableFunction
+===================================
+.. include:: ../../coreComponents/schema/docs/MultivariableTableFunction.rst
+
+
 .. _XML_NonlinearSolverParameters:
 
 Element: NonlinearSolverParameters
@@ -526,11 +561,18 @@ Element: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs.rst
 
 
-.. _XML_PAMELAMeshGenerator:
+.. _XML_PAMELAMesh:
 
-Element: PAMELAMeshGenerator
-============================
-.. include:: ../../coreComponents/schema/docs/PAMELAMeshGenerator.rst
+Element: PAMELAMesh
+===================
+.. include:: ../../coreComponents/schema/docs/PAMELAMesh.rst
+
+
+.. _XML_PVTDriver:
+
+Element: PVTDriver
+==================
+.. include:: ../../coreComponents/schema/docs/PVTDriver.rst
 
 
 .. _XML_PackCollection:
@@ -764,6 +806,20 @@ Element: SinglePhaseWell
 .. include:: ../../coreComponents/schema/docs/SinglePhaseWell.rst
 
 
+.. _XML_SlipDependentPermeability:
+
+Element: SlipDependentPermeability
+==================================
+.. include:: ../../coreComponents/schema/docs/SlipDependentPermeability.rst
+
+
+.. _XML_SolidInternalEnergy:
+
+Element: SolidInternalEnergy
+============================
+.. include:: ../../coreComponents/schema/docs/SolidInternalEnergy.rst
+
+
 .. _XML_SolidMechanicsEmbeddedFractures:
 
 Element: SolidMechanicsEmbeddedFractures
@@ -806,13 +862,6 @@ Element: SourceFlux
 .. include:: ../../coreComponents/schema/docs/SourceFlux.rst
 
 
-.. _XML_StrainDependentPermeability:
-
-Element: StrainDependentPermeability
-====================================
-.. include:: ../../coreComponents/schema/docs/StrainDependentPermeability.rst
-
-
 .. _XML_SurfaceElementRegion:
 
 Element: SurfaceElementRegion
@@ -853,6 +902,13 @@ Element: TableFunction
 Element: TableRelativePermeability
 ==================================
 .. include:: ../../coreComponents/schema/docs/TableRelativePermeability.rst
+
+
+.. _XML_TableRelativePermeabilityHysteresis:
+
+Element: TableRelativePermeabilityHysteresis
+============================================
+.. include:: ../../coreComponents/schema/docs/TableRelativePermeabilityHysteresis.rst
 
 
 .. _XML_Tasks:
@@ -904,6 +960,13 @@ Element: VTK
 .. include:: ../../coreComponents/schema/docs/VTK.rst
 
 
+.. _XML_VTKMesh:
+
+Element: VTKMesh
+================
+.. include:: ../../coreComponents/schema/docs/VTKMesh.rst
+
+
 .. _XML_VanGenuchtenBakerRelativePermeability:
 
 Element: VanGenuchtenBakerRelativePermeability
@@ -916,6 +979,13 @@ Element: VanGenuchtenBakerRelativePermeability
 Element: VanGenuchtenCapillaryPressure
 ======================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
+
+
+.. _XML_VolumeWeightedThermalConductivity:
+
+Element: VolumeWeightedThermalConductivity
+==========================================
+.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity.rst
 
 
 .. _XML_WellControls:
@@ -1034,11 +1104,25 @@ Datastructure: CO2BrineEzrokhiFluid
 .. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid_other.rst
 
 
+.. _DATASTRUCTURE_CO2BrineEzrokhiThermalFluid:
+
+Datastructure: CO2BrineEzrokhiThermalFluid
+==========================================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiThermalFluid_other.rst
+
+
 .. _DATASTRUCTURE_CO2BrinePhillipsFluid:
 
 Datastructure: CO2BrinePhillipsFluid
 ====================================
 .. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid_other.rst
+
+
+.. _DATASTRUCTURE_CO2BrinePhillipsThermalFluid:
+
+Datastructure: CO2BrinePhillipsThermalFluid
+===========================================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsThermalFluid_other.rst
 
 
 .. _DATASTRUCTURE_CarmanKozenyPermeability:
@@ -1132,11 +1216,25 @@ Datastructure: CompressibleSolidParallelPlatesPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability_other.rst
 
 
+.. _DATASTRUCTURE_CompressibleSolidSlipDependentPermeability:
+
+Datastructure: CompressibleSolidSlipDependentPermeability
+=========================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability_other.rst
+
+
 .. _DATASTRUCTURE_ConstantPermeability:
 
 Datastructure: ConstantPermeability
 ===================================
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ConstantThermalConductivity:
+
+Datastructure: ConstantThermalConductivity
+==========================================
+.. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity_other.rst
 
 
 .. _DATASTRUCTURE_Constitutive:
@@ -1405,6 +1503,13 @@ Datastructure: InternalWellbore
 .. include:: ../../coreComponents/schema/docs/InternalWellbore_other.rst
 
 
+.. _DATASTRUCTURE_JFunctionCapillaryPressure:
+
+Datastructure: JFunctionCapillaryPressure
+=========================================
+.. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure_other.rst
+
+
 .. _DATASTRUCTURE_LagrangianContact:
 
 Datastructure: LagrangianContact
@@ -1417,13 +1522,6 @@ Datastructure: LagrangianContact
 Datastructure: LaplaceFEM
 =========================
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM_other.rst
-
-
-.. _DATASTRUCTURE_LaplaceVEM:
-
-Datastructure: LaplaceVEM
-=========================
-.. include:: ../../coreComponents/schema/docs/LaplaceVEM_other.rst
 
 
 .. _DATASTRUCTURE_Level0:
@@ -1468,6 +1566,13 @@ Datastructure: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
 
 
+.. _DATASTRUCTURE_MultivariableTableFunction:
+
+Datastructure: MultivariableTableFunction
+=========================================
+.. include:: ../../coreComponents/schema/docs/MultivariableTableFunction_other.rst
+
+
 .. _DATASTRUCTURE_NonlinearSolverParameters:
 
 Datastructure: NonlinearSolverParameters
@@ -1496,11 +1601,18 @@ Datastructure: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs_other.rst
 
 
-.. _DATASTRUCTURE_PAMELAMeshGenerator:
+.. _DATASTRUCTURE_PAMELAMesh:
 
-Datastructure: PAMELAMeshGenerator
-==================================
-.. include:: ../../coreComponents/schema/docs/PAMELAMeshGenerator_other.rst
+Datastructure: PAMELAMesh
+=========================
+.. include:: ../../coreComponents/schema/docs/PAMELAMesh_other.rst
+
+
+.. _DATASTRUCTURE_PVTDriver:
+
+Datastructure: PVTDriver
+========================
+.. include:: ../../coreComponents/schema/docs/PVTDriver_other.rst
 
 
 .. _DATASTRUCTURE_PackCollection:
@@ -1734,6 +1846,20 @@ Datastructure: SinglePhaseWell
 .. include:: ../../coreComponents/schema/docs/SinglePhaseWell_other.rst
 
 
+.. _DATASTRUCTURE_SlipDependentPermeability:
+
+Datastructure: SlipDependentPermeability
+========================================
+.. include:: ../../coreComponents/schema/docs/SlipDependentPermeability_other.rst
+
+
+.. _DATASTRUCTURE_SolidInternalEnergy:
+
+Datastructure: SolidInternalEnergy
+==================================
+.. include:: ../../coreComponents/schema/docs/SolidInternalEnergy_other.rst
+
+
 .. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:
 
 Datastructure: SolidMechanicsEmbeddedFractures
@@ -1776,13 +1902,6 @@ Datastructure: SourceFlux
 .. include:: ../../coreComponents/schema/docs/SourceFlux_other.rst
 
 
-.. _DATASTRUCTURE_StrainDependentPermeability:
-
-Datastructure: StrainDependentPermeability
-==========================================
-.. include:: ../../coreComponents/schema/docs/StrainDependentPermeability_other.rst
-
-
 .. _DATASTRUCTURE_SurfaceElementRegion:
 
 Datastructure: SurfaceElementRegion
@@ -1823,6 +1942,13 @@ Datastructure: TableFunction
 Datastructure: TableRelativePermeability
 ========================================
 .. include:: ../../coreComponents/schema/docs/TableRelativePermeability_other.rst
+
+
+.. _DATASTRUCTURE_TableRelativePermeabilityHysteresis:
+
+Datastructure: TableRelativePermeabilityHysteresis
+==================================================
+.. include:: ../../coreComponents/schema/docs/TableRelativePermeabilityHysteresis_other.rst
 
 
 .. _DATASTRUCTURE_Tasks:
@@ -1874,6 +2000,13 @@ Datastructure: VTK
 .. include:: ../../coreComponents/schema/docs/VTK_other.rst
 
 
+.. _DATASTRUCTURE_VTKMesh:
+
+Datastructure: VTKMesh
+======================
+.. include:: ../../coreComponents/schema/docs/VTKMesh_other.rst
+
+
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:
 
 Datastructure: VanGenuchtenBakerRelativePermeability
@@ -1886,6 +2019,13 @@ Datastructure: VanGenuchtenBakerRelativePermeability
 Datastructure: VanGenuchtenCapillaryPressure
 ============================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
+
+
+.. _DATASTRUCTURE_VolumeWeightedThermalConductivity:
+
+Datastructure: VolumeWeightedThermalConductivity
+================================================
+.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity_other.rst
 
 
 .. _DATASTRUCTURE_WellControls:
@@ -1907,20 +2047,6 @@ Datastructure: WellElementRegion
 Datastructure: WellElementRegionuniqueSubRegion
 ===============================================
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
-
-
-.. _DATASTRUCTURE_cellBlocks:
-
-Datastructure: cellBlocks
-=========================
-.. include:: ../../coreComponents/schema/docs/cellBlocks_other.rst
-
-
-.. _DATASTRUCTURE_cellManager:
-
-Datastructure: cellManager
-==========================
-.. include:: ../../coreComponents/schema/docs/cellManager_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:
@@ -1972,18 +2098,18 @@ Datastructure: embeddedSurfacesNodeManager
 .. include:: ../../coreComponents/schema/docs/embeddedSurfacesNodeManager_other.rst
 
 
-.. _DATASTRUCTURE_finiteVolumeStencils:
-
-Datastructure: finiteVolumeStencils
-===================================
-.. include:: ../../coreComponents/schema/docs/finiteVolumeStencils_other.rst
-
-
 .. _DATASTRUCTURE_lassen:
 
 Datastructure: lassen
 =====================
 .. include:: ../../coreComponents/schema/docs/lassen_other.rst
+
+
+.. _DATASTRUCTURE_meshLevels:
+
+Datastructure: meshLevels
+=========================
+.. include:: ../../coreComponents/schema/docs/meshLevels_other.rst
 
 
 .. _DATASTRUCTURE_neighborData:

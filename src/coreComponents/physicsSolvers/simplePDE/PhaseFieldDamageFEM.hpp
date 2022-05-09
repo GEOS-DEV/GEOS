@@ -71,13 +71,6 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain ) override;
 
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution,
-                            bool const setSparsity ) override;
-
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
@@ -97,10 +90,10 @@ public:
                                         DofManager const & dofManager,
                                         arrayView1d< real64 const > const & localRhs ) override;
 
-  virtual void solveSystem( DofManager const & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution ) override;
+  virtual void solveLinearSystem( DofManager const & dofManager,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution ) override;
 
   virtual void applySystemSolution( DofManager const & dofManager,
                                     arrayView1d< real64 const > const & localSolution,
@@ -138,7 +131,6 @@ public:
 
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
-//    static constexpr auto coeffFieldName = "coeffFieldName";
     static constexpr char const * coeffNameString() { return "coeffField"; }
     static constexpr char const * localDissipationOptionString() { return "localDissipation"; }
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
@@ -157,11 +149,6 @@ public:
     return m_matrix.numGlobalRows();
   }
 
-//  void setSolidModelName( string const & name )
-//  {
-//    m_solidModelName = name;
-//  }
-
   string const & getFieldName() const
   {
     return m_fieldName;
@@ -175,10 +162,8 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
-  array1d< string > m_solidModelNames;
 
   array1d< real64 > m_coeff;
-  //  string m_coeffFieldName;
 
   PhaseFieldDamageFEM();
 };

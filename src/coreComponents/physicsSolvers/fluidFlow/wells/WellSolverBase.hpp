@@ -20,8 +20,6 @@
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-
 
 namespace geosx
 {
@@ -39,20 +37,6 @@ class WellElementSubRegion;
 class WellSolverBase : public SolverBase
 {
 public:
-
-  // tag to access well and reservoir elements in perforation rates computation
-  struct SubRegionTag
-  {
-    static constexpr integer RES  = 0;
-    static constexpr integer WELL = 1;
-  };
-
-  // tag to access the next and current well elements of a connection
-  struct ElemTag
-  {
-    static constexpr integer CURRENT = 0;
-    static constexpr integer NEXT    = 1;
-  };
 
   /**
    * @brief main constructor for Group Objects
@@ -137,14 +121,14 @@ public:
   /**
    * @brief getter for the well controls associated to this well subRegion
    * @param subRegion the well subRegion whose controls are requested
-   * @return a pointer to the controls
+   * @return a reference to the controls
    */
   WellControls & getWellControls( WellElementSubRegion const & subRegion );
 
   /**
    * @brief const getter for the well controls associated to this well subRegion
    * @param subRegion the well subRegion whose controls are requested
-   * @return a pointer to the const controls
+   * @return a reference to the const controls
    */
   WellControls const & getWellControls( WellElementSubRegion const & subRegion ) const;
 
@@ -163,6 +147,10 @@ public:
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
                                   DomainPartition & domain ) override;
+
+  virtual void implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
 
   /**@}*/
 
@@ -242,26 +230,24 @@ public:
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param well the well containing all the primary and dependent fields
+   * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual void updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
+  virtual void updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
+
+  /**
+   * @brief Recompute the perforation rates for all the wells
+   * @param domain the domain containing the mesh and fields
+   */
+  virtual void computePerforationRates( DomainPartition & domain ) = 0;
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param mesh reference to the mesh
    */
-  virtual void backupFields( MeshLevel & mesh ) const = 0;
-
-  arrayView1d< string const > const fluidModelNames() const { return m_fluidModelNames; }
-
-  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
+  virtual void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const = 0;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    // gravity term precomputed values
-    static constexpr char const * gravityCoefString() { return FlowSolverBase::viewKeyStruct::gravityCoefString(); }
-
-    // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
   };
 
@@ -273,17 +259,15 @@ private:
    */
   void precomputeData( DomainPartition & domain );
 
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
+
+
 protected:
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
-
-  /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  virtual void resetViews( DomainPartition & domain );
 
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
@@ -300,9 +284,6 @@ protected:
   /// name of the flow solver
   string m_flowSolverName;
 
-  /// names of the fluid constitutive models
-  array1d< string > m_fluidModelNames;
-
   /// the number of Degrees of Freedom per well element
   integer m_numDofPerWellElement;
 
@@ -315,8 +296,6 @@ protected:
   /// copy of the time step size saved in this class for residual normalization
   real64 m_currentDt;
 
-  /// views into reservoir constant data fields
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_resGravCoef;
 };
 
 }

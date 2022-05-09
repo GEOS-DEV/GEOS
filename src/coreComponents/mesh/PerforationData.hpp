@@ -30,7 +30,6 @@ namespace geosx
 class DomainPartition;
 class MeshLevel;
 class WellElementSubRegion;
-class CellBlock;
 
 /**
  * @class PerforationData
@@ -100,7 +99,7 @@ public:
   /**
    * @copydoc catalogName()
    */
-  virtual const string getCatalogName() const override { return catalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   ///@}
 

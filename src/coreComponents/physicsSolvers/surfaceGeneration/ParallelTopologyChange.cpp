@@ -47,7 +47,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
     localIndex a=0;
     for( auto const index : modifiedObjects.newNodes )
     {
-      localIndex const parentNodeIndex = ObjectManagerBase::getParentRecusive( parentNodeIndices, index );
+      localIndex const parentNodeIndex = ObjectManagerBase::getParentRecursive( parentNodeIndices, index );
       if( nodeGhostRank[parentNodeIndex] == neighborRank )
       {
         newNodePackListArray[a] = index;
@@ -61,7 +61,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
     localIndex a=0;
     for( auto const index : modifiedObjects.modifiedNodes )
     {
-      localIndex const parentNodeIndex = ObjectManagerBase::getParentRecusive( parentNodeIndices, index );
+      localIndex const parentNodeIndex = ObjectManagerBase::getParentRecursive( parentNodeIndices, index );
       if( nodeGhostRank[parentNodeIndex] == neighborRank )
       {
         modNodePackListArray[a] = index;
@@ -77,7 +77,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
     localIndex a=0;
     for( auto const index : modifiedObjects.newEdges )
     {
-      localIndex const parentIndex = ObjectManagerBase::getParentRecusive( parentEdgeIndices, index );
+      localIndex const parentIndex = ObjectManagerBase::getParentRecursive( parentEdgeIndices, index );
       if( edgeGhostRank[parentIndex] == neighborRank )
       {
         newEdgePackListArray[a] = index;
@@ -91,7 +91,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
     localIndex a=0;
     for( auto const index : modifiedObjects.modifiedEdges )
     {
-      localIndex const parentIndex = ObjectManagerBase::getParentRecusive( parentEdgeIndices, index );
+      localIndex const parentIndex = ObjectManagerBase::getParentRecursive( parentEdgeIndices, index );
       if( edgeGhostRank[parentIndex] == neighborRank )
       {
         modEdgePackListArray[a] = index;
@@ -107,7 +107,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
     localIndex a=0;
     for( auto const index : modifiedObjects.newFaces )
     {
-      localIndex const parentIndex = ObjectManagerBase::getParentRecusive( parentFaceIndices, index );
+      localIndex const parentIndex = ObjectManagerBase::getParentRecursive( parentFaceIndices, index );
       if( faceGhostRank[parentIndex] == neighborRank )
       {
         newFacePackListArray[a] = index;
@@ -121,7 +121,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
     localIndex a=0;
     for( auto const index : modifiedObjects.modifiedFaces )
     {
-      localIndex const parentIndex = ObjectManagerBase::getParentRecusive( parentFaceIndices, index );
+      localIndex const parentIndex = ObjectManagerBase::getParentRecursive( parentFaceIndices, index );
       if( faceGhostRank[parentIndex] == neighborRank )
       {
         modFacePackListArray[a] = index;
@@ -197,34 +197,34 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   bufferSize += nodeManager.packGlobalMapsSize( newNodePackListArray, 0 );
   bufferSize += edgeManager.packGlobalMapsSize( newEdgePackListArray, 0 );
   bufferSize += faceManager.packGlobalMapsSize( newFacePackListArray, 0 );
-  bufferSize += elemManager.PackGlobalMapsSize( newElemPackList );
+  bufferSize += elemManager.packGlobalMapsSize( newElemPackList );
 
   bufferSize += nodeManager.packUpDownMapsSize( newNodePackListArray );
   bufferSize += edgeManager.packUpDownMapsSize( newEdgePackListArray );
   bufferSize += faceManager.packUpDownMapsSize( newFacePackListArray );
-  bufferSize += elemManager.PackUpDownMapsSize( newElemPackList );
+  bufferSize += elemManager.packUpDownMapsSize( newElemPackList );
 
   bufferSize += nodeManager.packParentChildMapsSize( newNodePackListArray );
   bufferSize += edgeManager.packParentChildMapsSize( newEdgePackListArray );
   bufferSize += faceManager.packParentChildMapsSize( newFacePackListArray );
 
-  bufferSize += nodeManager.packSize( {}, newNodePackListArray, 0, false, sizeEvents );
-  bufferSize += edgeManager.packSize( {}, newEdgePackListArray, 0, false, sizeEvents );
-  bufferSize += faceManager.packSize( {}, newFacePackListArray, 0, false, sizeEvents );
-  bufferSize += elemManager.PackSize( {}, newElemPackList );
+  bufferSize += nodeManager.packSize( newNodePackListArray, 0, false, sizeEvents );
+  bufferSize += edgeManager.packSize( newEdgePackListArray, 0, false, sizeEvents );
+  bufferSize += faceManager.packSize( newFacePackListArray, 0, false, sizeEvents );
+  bufferSize += elemManager.packSize( newElemPackList );
 
   bufferSize += nodeManager.packUpDownMapsSize( modNodePackListArray );
   bufferSize += edgeManager.packUpDownMapsSize( modEdgePackListArray );
   bufferSize += faceManager.packUpDownMapsSize( modFacePackListArray );
-  bufferSize += elemManager.PackUpDownMapsSize( modElemPackList );
+  bufferSize += elemManager.packUpDownMapsSize( modElemPackList );
 
   bufferSize += nodeManager.packParentChildMapsSize( modNodePackListArray );
   bufferSize += edgeManager.packParentChildMapsSize( modEdgePackListArray );
   bufferSize += faceManager.packParentChildMapsSize( modFacePackListArray );
 
-  bufferSize += nodeManager.packSize( {}, modNodePackListArray, 0, false, sizeEvents );
-  bufferSize += edgeManager.packSize( {}, modEdgePackListArray, 0, false, sizeEvents );
-  bufferSize += faceManager.packSize( {}, modFacePackListArray, 0, false, sizeEvents );
+  bufferSize += nodeManager.packSize( modNodePackListArray, 0, false, sizeEvents );
+  bufferSize += edgeManager.packSize( modEdgePackListArray, 0, false, sizeEvents );
+  bufferSize += faceManager.packSize( modFacePackListArray, 0, false, sizeEvents );
 
   waitAllDeviceEvents( sizeEvents );
   neighbor->resizeSendBuffer( commID, bufferSize );
@@ -239,34 +239,34 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   packedSize += nodeManager.packGlobalMaps( sendBufferPtr, newNodePackListArray, 0 );
   packedSize += edgeManager.packGlobalMaps( sendBufferPtr, newEdgePackListArray, 0 );
   packedSize += faceManager.packGlobalMaps( sendBufferPtr, newFacePackListArray, 0 );
-  packedSize += elemManager.PackGlobalMaps( sendBufferPtr, newElemPackList );
+  packedSize += elemManager.packGlobalMaps( sendBufferPtr, newElemPackList );
 
   packedSize += nodeManager.packUpDownMaps( sendBufferPtr, newNodePackListArray );
   packedSize += edgeManager.packUpDownMaps( sendBufferPtr, newEdgePackListArray );
   packedSize += faceManager.packUpDownMaps( sendBufferPtr, newFacePackListArray );
-  packedSize += elemManager.PackUpDownMaps( sendBufferPtr, newElemPackList );
+  packedSize += elemManager.packUpDownMaps( sendBufferPtr, newElemPackList );
 
   packedSize += nodeManager.packParentChildMaps( sendBufferPtr, newNodePackListArray );
   packedSize += edgeManager.packParentChildMaps( sendBufferPtr, newEdgePackListArray );
   packedSize += faceManager.packParentChildMaps( sendBufferPtr, newFacePackListArray );
 
-  packedSize += nodeManager.pack( sendBufferPtr, {}, newNodePackListArray, 0, false, packEvents );
-  packedSize += edgeManager.pack( sendBufferPtr, {}, newEdgePackListArray, 0, false, packEvents );
-  packedSize += faceManager.pack( sendBufferPtr, {}, newFacePackListArray, 0, false, packEvents );
-  packedSize += elemManager.Pack( sendBufferPtr, {}, newElemPackList );
+  packedSize += nodeManager.pack( sendBufferPtr, newNodePackListArray, 0, false, packEvents );
+  packedSize += edgeManager.pack( sendBufferPtr, newEdgePackListArray, 0, false, packEvents );
+  packedSize += faceManager.pack( sendBufferPtr, newFacePackListArray, 0, false, packEvents );
+  packedSize += elemManager.pack( sendBufferPtr, newElemPackList );
 
   packedSize += nodeManager.packUpDownMaps( sendBufferPtr, modNodePackListArray );
   packedSize += edgeManager.packUpDownMaps( sendBufferPtr, modEdgePackListArray );
   packedSize += faceManager.packUpDownMaps( sendBufferPtr, modFacePackListArray );
-  packedSize += elemManager.PackUpDownMaps( sendBufferPtr, modElemPackList );
+  packedSize += elemManager.packUpDownMaps( sendBufferPtr, modElemPackList );
 
   packedSize += nodeManager.packParentChildMaps( sendBufferPtr, modNodePackListArray );
   packedSize += edgeManager.packParentChildMaps( sendBufferPtr, modEdgePackListArray );
   packedSize += faceManager.packParentChildMaps( sendBufferPtr, modFacePackListArray );
 
-  packedSize += nodeManager.pack( sendBufferPtr, {}, modNodePackListArray, 0, false, packEvents );
-  packedSize += edgeManager.pack( sendBufferPtr, {}, modEdgePackListArray, 0, false, packEvents );
-  packedSize += faceManager.pack( sendBufferPtr, {}, modFacePackListArray, 0, false, packEvents );
+  packedSize += nodeManager.pack( sendBufferPtr, modNodePackListArray, 0, false, packEvents );
+  packedSize += edgeManager.pack( sendBufferPtr, modEdgePackListArray, 0, false, packEvents );
+  packedSize += faceManager.pack( sendBufferPtr, modFacePackListArray, 0, false, packEvents );
 
   // poll for pack completion here
   waitAllDeviceEvents( packEvents );
@@ -328,12 +328,12 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
   unpackedSize += nodeManager.unpackGlobalMaps( receiveBufferPtr, newLocalNodes, 0 );
   unpackedSize += edgeManager.unpackGlobalMaps( receiveBufferPtr, newLocalEdges, 0 );
   unpackedSize += faceManager.unpackGlobalMaps( receiveBufferPtr, newLocalFaces, 0 );
-  unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr, newLocalElements );
+  unpackedSize += elemManager.unpackGlobalMaps( receiveBufferPtr, newLocalElements );
 
   unpackedSize += nodeManager.unpackUpDownMaps( receiveBufferPtr, newLocalNodes, true, true );
   unpackedSize += edgeManager.unpackUpDownMaps( receiveBufferPtr, newLocalEdges, true, true );
   unpackedSize += faceManager.unpackUpDownMaps( receiveBufferPtr, newLocalFaces, true, true );
-  unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, newLocalElements, true );
+  unpackedSize += elemManager.unpackUpDownMaps( receiveBufferPtr, newLocalElements, true );
 
   unpackedSize += nodeManager.unpackParentChildMaps( receiveBufferPtr, newLocalNodes );
   unpackedSize += edgeManager.unpackParentChildMaps( receiveBufferPtr, newLocalEdges );
@@ -342,12 +342,12 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
   unpackedSize += nodeManager.unpack( receiveBufferPtr, newLocalNodes, 0, false, events );
   unpackedSize += edgeManager.unpack( receiveBufferPtr, newLocalEdges, 0, false, events );
   unpackedSize += faceManager.unpack( receiveBufferPtr, newLocalFaces, 0, false, events );
-  unpackedSize += elemManager.Unpack( receiveBufferPtr, newLocalElements );
+  unpackedSize += elemManager.unpack( receiveBufferPtr, newLocalElements );
 
   unpackedSize += nodeManager.unpackUpDownMaps( receiveBufferPtr, modifiedLocalNodes, false, true );
   unpackedSize += edgeManager.unpackUpDownMaps( receiveBufferPtr, modifiedLocalEdges, false, true );
   unpackedSize += faceManager.unpackUpDownMaps( receiveBufferPtr, modifiedLocalFaces, false, true );
-  unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, modifiedLocalElements, true );
+  unpackedSize += elemManager.unpackUpDownMaps( receiveBufferPtr, modifiedLocalElements, true );
 
   unpackedSize += nodeManager.unpackParentChildMaps( receiveBufferPtr, modifiedLocalNodes );
   unpackedSize += edgeManager.unpackParentChildMaps( receiveBufferPtr, modifiedLocalEdges );
@@ -527,26 +527,26 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
   bufferSize += nodeManager.packGlobalMapsSize( newNodesToSend, 0 );
   bufferSize += edgeManager.packGlobalMapsSize( newEdgesToSend, 0 );
   bufferSize += faceManager.packGlobalMapsSize( newFacesToSend, 0 );
-  bufferSize += elemManager.PackGlobalMapsSize( newElemsToSend );
+  bufferSize += elemManager.packGlobalMapsSize( newElemsToSend );
 
   bufferSize += nodeManager.packUpDownMapsSize( newNodesToSend );
   bufferSize += edgeManager.packUpDownMapsSize( newEdgesToSend );
   bufferSize += faceManager.packUpDownMapsSize( newFacesToSend );
-  bufferSize += elemManager.PackUpDownMapsSize( newElemsToSend );
+  bufferSize += elemManager.packUpDownMapsSize( newElemsToSend );
 
   bufferSize += nodeManager.packParentChildMapsSize( newNodesToSend );
   bufferSize += edgeManager.packParentChildMapsSize( newEdgesToSend );
   bufferSize += faceManager.packParentChildMapsSize( newFacesToSend );
 
-  bufferSize += nodeManager.packSize( {}, newNodesToSend, 0, false, sizeEvents );
-  bufferSize += edgeManager.packSize( {}, newEdgesToSend, 0, false, sizeEvents );
-  bufferSize += faceManager.packSize( {}, newFacesToSend, 0, false, sizeEvents );
-  bufferSize += elemManager.PackSize( {}, newElemsToSend );
+  bufferSize += nodeManager.packSize( newNodesToSend, 0, false, sizeEvents );
+  bufferSize += edgeManager.packSize( newEdgesToSend, 0, false, sizeEvents );
+  bufferSize += faceManager.packSize( newFacesToSend, 0, false, sizeEvents );
+  bufferSize += elemManager.packSize( newElemsToSend );
 
   bufferSize += nodeManager.packUpDownMapsSize( modNodesToSend );
   bufferSize += edgeManager.packUpDownMapsSize( modEdgesToSend );
   bufferSize += faceManager.packUpDownMapsSize( modFacesToSend );
-  bufferSize += elemManager.PackUpDownMapsSize( modElemsToSend );
+  bufferSize += elemManager.packUpDownMapsSize( modElemsToSend );
 
   bufferSize += nodeManager.packParentChildMapsSize( modNodesToSend );
   bufferSize += edgeManager.packParentChildMapsSize( modEdgesToSend );
@@ -564,26 +564,26 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
   packedSize += nodeManager.packGlobalMaps( sendBufferPtr, newNodesToSend, 0 );
   packedSize += edgeManager.packGlobalMaps( sendBufferPtr, newEdgesToSend, 0 );
   packedSize += faceManager.packGlobalMaps( sendBufferPtr, newFacesToSend, 0 );
-  packedSize += elemManager.PackGlobalMaps( sendBufferPtr, newElemsToSend );
+  packedSize += elemManager.packGlobalMaps( sendBufferPtr, newElemsToSend );
 
   packedSize += nodeManager.packUpDownMaps( sendBufferPtr, newNodesToSend );
   packedSize += edgeManager.packUpDownMaps( sendBufferPtr, newEdgesToSend );
   packedSize += faceManager.packUpDownMaps( sendBufferPtr, newFacesToSend );
-  packedSize += elemManager.PackUpDownMaps( sendBufferPtr, newElemsToSend );
+  packedSize += elemManager.packUpDownMaps( sendBufferPtr, newElemsToSend );
 
   packedSize += nodeManager.packParentChildMaps( sendBufferPtr, newNodesToSend );
   packedSize += edgeManager.packParentChildMaps( sendBufferPtr, newEdgesToSend );
   packedSize += faceManager.packParentChildMaps( sendBufferPtr, newFacesToSend );
 
-  packedSize += nodeManager.pack( sendBufferPtr, {}, newNodesToSend, 0, false, packEvents );
-  packedSize += edgeManager.pack( sendBufferPtr, {}, newEdgesToSend, 0, false, packEvents );
-  packedSize += faceManager.pack( sendBufferPtr, {}, newFacesToSend, 0, false, packEvents );
-  packedSize += elemManager.Pack( sendBufferPtr, {}, newElemsToSend );
+  packedSize += nodeManager.pack( sendBufferPtr, newNodesToSend, 0, false, packEvents );
+  packedSize += edgeManager.pack( sendBufferPtr, newEdgesToSend, 0, false, packEvents );
+  packedSize += faceManager.pack( sendBufferPtr, newFacesToSend, 0, false, packEvents );
+  packedSize += elemManager.pack( sendBufferPtr, newElemsToSend );
 
   packedSize += nodeManager.packUpDownMaps( sendBufferPtr, modNodesToSend );
   packedSize += edgeManager.packUpDownMaps( sendBufferPtr, modEdgesToSend );
   packedSize += faceManager.packUpDownMaps( sendBufferPtr, modFacesToSend );
-  packedSize += elemManager.PackUpDownMaps( sendBufferPtr, modElemsToSend );
+  packedSize += elemManager.packUpDownMaps( sendBufferPtr, modElemsToSend );
 
   packedSize += nodeManager.packParentChildMaps( sendBufferPtr, modNodesToSend );
   packedSize += edgeManager.packParentChildMaps( sendBufferPtr, modEdgesToSend );
@@ -651,12 +651,12 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
   unpackedSize += nodeManager.unpackGlobalMaps( receiveBufferPtr, newGhostNodes, 0 );
   unpackedSize += edgeManager.unpackGlobalMaps( receiveBufferPtr, newGhostEdges, 0 );
   unpackedSize += faceManager.unpackGlobalMaps( receiveBufferPtr, newGhostFaces, 0 );
-  unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr, newGhostElems );
+  unpackedSize += elemManager.unpackGlobalMaps( receiveBufferPtr, newGhostElems );
 
   unpackedSize += nodeManager.unpackUpDownMaps( receiveBufferPtr, newGhostNodes, true, true );
   unpackedSize += edgeManager.unpackUpDownMaps( receiveBufferPtr, newGhostEdges, true, true );
   unpackedSize += faceManager.unpackUpDownMaps( receiveBufferPtr, newGhostFaces, true, true );
-  unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, newGhostElems, true );
+  unpackedSize += elemManager.unpackUpDownMaps( receiveBufferPtr, newGhostElems, true );
 
   unpackedSize += nodeManager.unpackParentChildMaps( receiveBufferPtr, newGhostNodes );
   unpackedSize += edgeManager.unpackParentChildMaps( receiveBufferPtr, newGhostEdges );
@@ -665,12 +665,12 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
   unpackedSize += nodeManager.unpack( receiveBufferPtr, newGhostNodes, 0, false, events );
   unpackedSize += edgeManager.unpack( receiveBufferPtr, newGhostEdges, 0, false, events );
   unpackedSize += faceManager.unpack( receiveBufferPtr, newGhostFaces, 0, false, events );
-  unpackedSize += elemManager.Unpack( receiveBufferPtr, newGhostElems );
+  unpackedSize += elemManager.unpack( receiveBufferPtr, newGhostElems );
 
   unpackedSize += nodeManager.unpackUpDownMaps( receiveBufferPtr, modGhostNodes, false, true );
   unpackedSize += edgeManager.unpackUpDownMaps( receiveBufferPtr, modGhostEdges, false, true );
   unpackedSize += faceManager.unpackUpDownMaps( receiveBufferPtr, modGhostFaces, false, true );
-  unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, modGhostElems, true );
+  unpackedSize += elemManager.unpackUpDownMaps( receiveBufferPtr, modGhostElems, true );
 
   unpackedSize += nodeManager.unpackParentChildMaps( receiveBufferPtr, modGhostNodes );
   unpackedSize += edgeManager.unpackParentChildMaps( receiveBufferPtr, modGhostEdges );
@@ -781,7 +781,7 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
 
 }
 
-void ParallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
+void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
                                                         std::vector< NeighborCommunicator > & neighbors,
                                                         ModifiedObjectLists & modifiedObjects,
                                                         ModifiedObjectLists & receivedObjects,

@@ -2,7 +2,7 @@
 Publications
 ###############################################################################
 
-Last updated 17-September-2021
+Last updated 21-January-2022
 
 Preprints and Early-Views
 =========================
@@ -11,30 +11,48 @@ Preprints and Early-Views
    :widths: 100
    :header-rows: 0
 
+   * - | **A scalable preconditioning framework for stabilized contact mechanics with hydraulically active fractures**
+       | A Franceschini, L Gazzola, M Ferronato
+       | arXiv preprint
+       | `arXiv:2112.12397 <https://arxiv.org/abs/2112.12397>`_
+       
+   * - | **Deep learning-accelerated 3D carbon storage reservoir pressure forecasting based on data assimilation using surface displacement from InSAR**
+       | H Tang, P Fu, H Jo, S Jiang, CS Sherman, F Hamon, NA Azzolina, JP Morris
+       | arXiv preprint
+       | `arXiv:2201.08543 <https://arxiv.org/abs/2201.08543>`_
+
+
+2022
+====
+
+.. list-table::
+   :widths: 100
+   :header-rows: 0
+
    * - | **Smooth implicit hybrid upwinding for compositional multiphase flow in porous media**
        | SBM Bosma, FP Hamon, BT Mallison, HA Tchelepi
-       | arXiv preprint
-       | `arXiv:2106.03317 <https://arxiv.org/abs/2106.03317>`_
-
-   * - | **Phase-field modeling of rock fractures with roughness**
-       | F Fei, J Choo, C Liu, JA White
-       | arXiv preprint
-       | `arXiv:2105.14663 <https://arxiv.org/abs/2105.14663>`_
-
-   * - | **Enhanced Relaxed Physical Factorization preconditioner for coupled poromechanics**
-       | M Frigo, N Castelletto, M Ferronato
-       | arXiv preprint
-       | `arXiv:2007.14591 <https://arxiv.org/abs/2007.14591>`_
+       | Computer Methods in Applied Mechanics and Engineering
+       | `doi:10.1016/j.cma.2021.114288 <https://doi.org/10.1016/j.cma.2021.114288>`_
 
    * - | **An aggregation-based nonlinear multigrid solver for two-phase flow and transport in porous media**
        | CS Lee, F Hamon, N Castelletto, PS Vassilevski, JA White
-       | arXiv preprint
-       | `arXiv:2109.07546 <https://arxiv.org/abs/2109.07546>`_
+       | Computers & Mathematics with Applications
+       | `doi:10.1016/j.camwa.2022.03.026 <https://doi.org/10.1016/j.camwa.2022.03.026>`_  
+       
+   * - | **Phase-field modeling of rock fractures with roughness**
+       | F Fei, J Choo, C Liu, JA White
+       | International Journal for Numerical and Analytical Methods in Geomechanics 
+       | `doi:10.1002/nag.3317 <https://doi.org/10.1002/nag.3317>`_
 
-   * - | **A deep learning-accelerated data assimilation and forecasting workflow for commercial-scale geologic carbon storage**
-       | H Tang, P Fu, CS Sherman, J Zhang, X Ju, F Hamon, NA Azzolina, M Burton-Kelly, JP Morris
-       | arXiv preprint
-       | `arXiv:2105.09468 <https://arxiv.org/abs/2105.09468>`_
+   * - | **Scalable preconditioning for the stabilized contact mechanics problem**
+       | A Franceschini, N Castelletto, JA White, HA Tchelepi
+       | Journal of Computational Physics 
+       | `doi:10.1016/j.jcp.2022.111150 <https://doi.org/10.1016/j.jcp.2022.111150>`_
+
+   * - | **Enhanced Relaxed Physical Factorization preconditioner for coupled poromechanics**
+       | M Frigo, N Castelletto, M Ferronato
+       | Computers & Mathematics with Applications
+       | `doi:10.1016/j.camwa.2021.11.015 <https://doi.org/10.1016/j.camwa.2021.11.015>`_  
 
 
 2021
@@ -46,7 +64,7 @@ Preprints and Early-Views
 
    * - | **Hybrid mimetic finite-difference and virtual element formulation for coupled poromechanics**
        | A Borio, FP Hamon, N Castelletto, JA White, RR Settgast
-       | Computer Methods in Applied Mechanics and Engineering 
+       | Computer Methods in Applied Mechanics and Engineering
        | `doi:10.1016/j.cma.2021.113917 <https://doi.org/10.1016/j.cma.2021.113917>`_
        
    * - | **Enhanced multiscale restriction-smoothed basis (MsRSB) preconditioning with applications to porous media flow and geomechanics**
@@ -88,6 +106,11 @@ Preprints and Early-Views
        | M Frigo, N Castelletto, M Ferronato, JA White
        | Computers and Mathematics with Applications 
        | `doi:10.1016/j.camwa.2020.07.010 <https://doi.org/10.1016/j.camwa.2020.07.010>`_
+       
+   * - | **A deep learning-accelerated data assimilation and forecasting workflow for commercial-scale geologic carbon storage**
+       | H Tang, P Fu, CS Sherman, J Zhang, X Ju, F Hamon, NA Azzolina, M Burton-Kelly, JP Morris
+       | International Journal of Greenhouse Gas Control
+       | `doi:10.1016/j.ijggc.2021.103488 <https://doi.org/10.1016/j.ijggc.2021.103488>`_    
 
 
 2020
@@ -102,12 +125,12 @@ Preprints and Early-Views
        | SIAM Journal on Scientific Computing 
        | `doi:10.1137/19M1256117 <https://doi.org/10.1137/19M1256117>`_
 
-   * - | **Multi-stage preconditioners for thermal–compositional–reactive flow in porous media**.
+   * - | **Multi-stage preconditioners for thermal–compositional–reactive flow in porous media**
        | MA Cremon, N Castelletto, JA White
        | Journal of Computational Physics
        | `doi:10.1016/j.jcp.2020.109607 <https://doi.org/10.1016/j.jcp.2020.109607>`_
 
-   * - | **Algebraically stabilized Lagrange multiplier method for frictional contact mechanics with hydraulically active fractures**.
+   * - | **Algebraically stabilized Lagrange multiplier method for frictional contact mechanics with hydraulically active fractures**
        | A Franceschini, N Castelletto, JA White, HA Tchelepi
        | Computer Methods in Applied Mechanics and Engineering 
        | `doi:10.1016/j.cma.2020.113161 <https://doi.org/10.1016/j.cma.2020.113161>`_

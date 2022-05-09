@@ -585,6 +585,7 @@ void HypreMatrix::apply( HypreVector const & src,
                                                    src.unwrapped(),
                                                    0.0,
                                                    dst.unwrapped() ) );
+  dst.touch();
 }
 
 void HypreMatrix::applyTranspose( HypreVector const & src,
@@ -601,6 +602,7 @@ void HypreMatrix::applyTranspose( HypreVector const & src,
                                                     src.unwrapped(),
                                                     0.0,
                                                     dst.unwrapped() ) );
+  dst.touch();
 }
 
 void HypreMatrix::multiply( HypreMatrix const & src,
@@ -763,6 +765,7 @@ void HypreMatrix::gemv( real64 const alpha,
                                                       beta,
                                                       y.unwrapped() ) );
   }
+  y.touch();
 }
 
 void HypreMatrix::scale( real64 const scalingFactor )
@@ -857,7 +860,7 @@ void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
     }
   } );
 
-  dst.create( tempMatView.toViewConst(), numLocalCols(), getComm() );
+  dst.create( tempMatView.toViewConst(), numLocalCols(), comm() );
   dst.setDofManager( dofManager() );
 }
 
@@ -912,7 +915,7 @@ void HypreMatrix::addDiagonal( HypreVector const & src,
   GEOSX_LAI_ASSERT( numLocalRows() == src.localSize() );
 
   hypre::CSRData< false > const csr{ hypre_ParCSRMatrixDiag( m_parcsr_mat ) };
-  real64 const * const values = src.extractLocalVector();
+  arrayView1d< real64 const > const values = src.values();
 
   if( isEqual( scale, 1.0 ) )
   {
@@ -956,7 +959,7 @@ localIndex HypreMatrix::maxRowLength() const
     localMaxRowLength.max( (ia_diag[localRow + 1] - ia_diag[localRow]) + (ia_offd[localRow + 1] - ia_offd[localRow] ) );
   } );
 
-  return MpiWrapper::max( localMaxRowLength.get(), getComm() );
+  return MpiWrapper::max( localMaxRowLength.get(), comm() );
 }
 
 localIndex HypreMatrix::rowLength( globalIndex const globalRowIndex ) const
@@ -1023,7 +1026,9 @@ void HypreMatrix::extractDiagonal( HypreVector & dst ) const
   GEOSX_LAI_ASSERT( dst.ready() );
   GEOSX_LAI_ASSERT_EQ( dst.localSize(), numLocalRows() );
 
-  hypre_CSRMatrixExtractDiagonal( hypre_ParCSRMatrixDiag( m_parcsr_mat ), dst.extractLocalVector(), 0 );
+  HYPRE_Real * const data = hypre_VectorData( hypre_ParVectorLocalVector( dst.unwrapped() ) );
+  hypre_CSRMatrixExtractDiagonal( hypre_ParCSRMatrixDiag( m_parcsr_mat ), data, 0 );
+  dst.touch();
 }
 
 namespace
@@ -1070,6 +1075,7 @@ void HypreMatrix::getRowSums( HypreVector & dst,
       break;
     }
   }
+  dst.touch();
 }
 
 real64 HypreMatrix::clearRow( globalIndex const globalRow,
@@ -1197,15 +1203,15 @@ localIndex HypreMatrix::numLocalNonzeros() const
 
 globalIndex HypreMatrix::numGlobalNonzeros() const
 {
-  return MpiWrapper::sum( LvArray::integerConversion< globalIndex >( numLocalNonzeros() ), getComm() );
+  return MpiWrapper::sum( LvArray::integerConversion< globalIndex >( numLocalNonzeros() ), comm() );
 }
 
 void HypreMatrix::print( std::ostream & os ) const
 {
   GEOSX_LAI_ASSERT( ready() );
 
-  int const myRank = MpiWrapper::commRank( getComm() );
-  int const numProcs = MpiWrapper::commSize( getComm() );
+  int const myRank = MpiWrapper::commRank( comm() );
+  int const numProcs = MpiWrapper::commSize( comm() );
   char str[77];
 
   constexpr char const lineFormat[] = "{:>11}{:>18}{:>18}{:>28.16e}\n";
@@ -1219,7 +1225,7 @@ void HypreMatrix::print( std::ostream & os ) const
 
   for( int rank = 0; rank < numProcs; ++rank )
   {
-    MpiWrapper::barrier( getComm() );
+    MpiWrapper::barrier( comm() );
     if( rank == myRank )
     {
       globalIndex const firstRowID = ilower();
@@ -1271,8 +1277,7 @@ void HypreMatrix::write( string const & filename,
     }
     case LAIOutputFormat::MATRIX_MARKET:
     {
-      MPI_Comm const comm = getComm();
-      int const rank = MpiWrapper::commRank( comm );
+      int const rank = MpiWrapper::commRank( comm() );
 
       // Write MatrixMarket header
       if( rank == 0 )
@@ -1291,7 +1296,7 @@ void HypreMatrix::write( string const & filename,
         hypre_CSRMatrix * const fullMatrix = hypre_ParCSRMatrixToCSRMatrixAll( m_parcsr_mat );
 
         // Identify the smallest process where CSRmatrix exists
-        int const printRank = MpiWrapper::min( fullMatrix ? rank : MpiWrapper::commSize( comm ), comm );
+        int const printRank = MpiWrapper::min( fullMatrix ? rank : MpiWrapper::commSize( comm() ), comm() );
 
         // Write to file CSRmatrix on one rank
         if( rank == printRank )
@@ -1306,7 +1311,7 @@ void HypreMatrix::write( string const & filename,
             for( HYPRE_Int k = csr.rowptr[i]; k < csr.rowptr[i + 1]; k++ )
             {
               // MatrixMarket row/col indices are 1-based
-              GEOSX_FMT_TO( str, sizeof( str ), "{} {} {.16e}\n", i + 1, csr.colind[k] + 1, csr.values[k] );
+              GEOSX_FMT_TO( str, sizeof( str ), "{} {} {:>28.16e}\n", i + 1, csr.colind[k] + 1, csr.values[k] );
               os << str;
             }
           }
@@ -1355,7 +1360,7 @@ real64 HypreMatrix::normInf() const
     maxRowAbsSum.max( rowAbsSum );
   } );
 
-  return MpiWrapper::max( maxRowAbsSum.get(), getComm() );
+  return MpiWrapper::max( maxRowAbsSum.get(), comm() );
 
 }
 
@@ -1370,7 +1375,7 @@ real64 HypreMatrix::normMax() const
   GEOSX_LAI_ASSERT( ready() );
   real64 const maxNorm = std::max( hypre::computeMaxNorm( hypre_ParCSRMatrixDiag( m_parcsr_mat ) ),
                                    hypre::computeMaxNorm( hypre_ParCSRMatrixOffd( m_parcsr_mat ) ) );
-  return MpiWrapper::max( maxNorm, getComm() );
+  return MpiWrapper::max( maxNorm, comm() );
 }
 
 real64 HypreMatrix::normMax( arrayView1d< globalIndex const > const & rowIndices ) const
@@ -1378,7 +1383,7 @@ real64 HypreMatrix::normMax( arrayView1d< globalIndex const > const & rowIndices
   GEOSX_LAI_ASSERT( ready() );
   real64 const maxNorm = std::max( hypre::computeMaxNorm( hypre_ParCSRMatrixDiag( m_parcsr_mat ), rowIndices, ilower() ),
                                    hypre::computeMaxNorm( hypre_ParCSRMatrixOffd( m_parcsr_mat ), rowIndices, ilower() ) );
-  return MpiWrapper::max( maxNorm, getComm() );
+  return MpiWrapper::max( maxNorm, comm() );
 }
 
 void HypreMatrix::rightScale( HypreVector const & vec )
@@ -1409,7 +1414,7 @@ void HypreMatrix::transpose( HypreMatrix & dst ) const
   dst.parCSRtoIJ( dst_parcsr );
 }
 
-MPI_Comm HypreMatrix::getComm() const
+MPI_Comm HypreMatrix::comm() const
 {
   GEOSX_LAI_ASSERT( created() );
   return hypre_IJMatrixComm( m_ij_mat );

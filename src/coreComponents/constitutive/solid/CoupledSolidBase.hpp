@@ -71,9 +71,9 @@ public:
    * @brief get the old porosity.
    * return a constant arrayView2d to the old porosity
    */
-  arrayView2d< real64 const > const getOldPorosity() const
+  arrayView2d< real64 const > const getPorosity_n() const
   {
-    return getBasePorosityModel().getOldPorosity();
+    return getBasePorosityModel().getPorosity_n();
   }
 
   /*
@@ -106,9 +106,9 @@ public:
    * @brief get the old internal energy.
    * return a constant arrayView2d to the old internal energy
    */
-  arrayView2d< real64 const > const getOldInternalEnergy() const
+  arrayView2d< real64 const > const getInternalEnergy_n() const
   {
-    return getSolidInternalEnergyModel().getOldInternalEnergy();
+    return getSolidInternalEnergyModel().getInternalEnergy_n();
   }
 
   /*
@@ -133,6 +133,7 @@ public:
   void initializeState() const
   {
     getBasePorosityModel().initializeState();
+    getBasePermModel().initializeState();
   }
 
   virtual void saveConvergedState() const override final

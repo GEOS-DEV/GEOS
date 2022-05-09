@@ -9,14 +9,18 @@ BrooksCoreyBakerRelativePermeability        node         :ref:`XML_BrooksCoreyBa
 BrooksCoreyCapillaryPressure                node         :ref:`XML_BrooksCoreyCapillaryPressure`                
 BrooksCoreyRelativePermeability             node         :ref:`XML_BrooksCoreyRelativePermeability`             
 CO2BrineEzrokhiFluid                        node         :ref:`XML_CO2BrineEzrokhiFluid`                        
+CO2BrineEzrokhiThermalFluid                 node         :ref:`XML_CO2BrineEzrokhiThermalFluid`                 
 CO2BrinePhillipsFluid                       node         :ref:`XML_CO2BrinePhillipsFluid`                       
+CO2BrinePhillipsThermalFluid                node         :ref:`XML_CO2BrinePhillipsThermalFluid`                
 CarmanKozenyPermeability                    node         :ref:`XML_CarmanKozenyPermeability`                    
 CompositionalMultiphaseFluid                node         :ref:`XML_CompositionalMultiphaseFluid`                
 CompressibleSinglePhaseFluid                node         :ref:`XML_CompressibleSinglePhaseFluid`                
 CompressibleSolidCarmanKozenyPermeability   node         :ref:`XML_CompressibleSolidCarmanKozenyPermeability`   
 CompressibleSolidConstantPermeability       node         :ref:`XML_CompressibleSolidConstantPermeability`       
 CompressibleSolidParallelPlatesPermeability node         :ref:`XML_CompressibleSolidParallelPlatesPermeability` 
+CompressibleSolidSlipDependentPermeability  node         :ref:`XML_CompressibleSolidSlipDependentPermeability`  
 ConstantPermeability                        node         :ref:`XML_ConstantPermeability`                        
+ConstantThermalConductivity                 node         :ref:`XML_ConstantThermalConductivity`                 
 Coulomb                                     node         :ref:`XML_Coulomb`                                     
 DamageElasticIsotropic                      node         :ref:`XML_DamageElasticIsotropic`                      
 DamageSpectralElasticIsotropic              node         :ref:`XML_DamageSpectralElasticIsotropic`              
@@ -30,6 +34,7 @@ ElasticOrthotropic                          node         :ref:`XML_ElasticOrthot
 ElasticTransverseIsotropic                  node         :ref:`XML_ElasticTransverseIsotropic`                  
 ExtendedDruckerPrager                       node         :ref:`XML_ExtendedDruckerPrager`                       
 FrictionlessContact                         node         :ref:`XML_FrictionlessContact`                         
+JFunctionCapillaryPressure                  node         :ref:`XML_JFunctionCapillaryPressure`                  
 ModifiedCamClay                             node         :ref:`XML_ModifiedCamClay`                             
 NullModel                                   node         :ref:`XML_NullModel`                                   
 ParallelPlatesPermeability                  node         :ref:`XML_ParallelPlatesPermeability`                  
@@ -45,11 +50,14 @@ ProppantPermeability                        node         :ref:`XML_ProppantPerme
 ProppantPorosity                            node         :ref:`XML_ProppantPorosity`                            
 ProppantSlurryFluid                         node         :ref:`XML_ProppantSlurryFluid`                         
 ProppantSolidProppantPermeability           node         :ref:`XML_ProppantSolidProppantPermeability`           
-StrainDependentPermeability                 node         :ref:`XML_StrainDependentPermeability`                 
+SlipDependentPermeability                   node         :ref:`XML_SlipDependentPermeability`                   
+SolidInternalEnergy                         node         :ref:`XML_SolidInternalEnergy`                         
 TableCapillaryPressure                      node         :ref:`XML_TableCapillaryPressure`                      
 TableRelativePermeability                   node         :ref:`XML_TableRelativePermeability`                   
+TableRelativePermeabilityHysteresis         node         :ref:`XML_TableRelativePermeabilityHysteresis`         
 VanGenuchtenBakerRelativePermeability       node         :ref:`XML_VanGenuchtenBakerRelativePermeability`       
 VanGenuchtenCapillaryPressure               node         :ref:`XML_VanGenuchtenCapillaryPressure`               
+VolumeWeightedThermalConductivity           node         :ref:`XML_VolumeWeightedThermalConductivity`           
 =========================================== ==== ======= ====================================================== 
 
 

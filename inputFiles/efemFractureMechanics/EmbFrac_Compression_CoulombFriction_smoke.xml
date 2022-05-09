@@ -1,0 +1,87 @@
+<?xml version="1.0" ?>
+
+<Problem>
+ <Included>
+    <File
+      name="./EmbFrac_Compression_CoulombFriction_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -40, -3.5, 3.5, 40 }"
+      yCoords="{ -40, -3.5, 3.5, 40 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 10, 21, 10 }"
+      ny="{ 10, 21, 10 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Geometry>
+    <BoundedPlane
+      name="FracturePlane"
+      normal="{-0.342020143325669, 0.939692620785908, 0.0}"
+      origin="{0.0, 0.0, 0.5}"
+      lengthVector="{0.939692620785908, 0.342020143325669, 0.0}"
+      widthVector="{0, 0, 1}"
+      dimensions="{ 2,  10 }"/>
+
+    <Box
+      name="rightPoint"
+      xMin="{ 39.9, -0.5, -0.001}"
+      xMax="{ 40.1,  0.5,  1.001}"/>
+
+    <Box
+      name="leftPoint"
+      xMin="{-40.1, -0.5, -0.001}"
+      xMax="{-39.9,  0.5,  1.001}"/>
+
+    <Box
+      name="topPoint"
+      xMin="{-0.5, 39.9, -0.001}"
+      xMax="{ 0.5, 40.1,  1.001}"/>
+
+    <Box
+      name="bottomPoint"
+      xMin="{-0.5, -40.1, -0.001}"
+      xMax="{ 0.5, -39.9,  1.001}"/>
+  </Geometry>
+  
+  <Events
+    maxTime="1.0">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGenerator"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      beginTime="0.0"
+      endTime="1.0"
+      forceDt="1.0"
+      target="/Solvers/mechSolve"/>
+
+     <PeriodicEvent
+      name="outputs"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Tasks/displacementJumpCollection" />
+
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/> 
+      
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.0"
+      target="/Outputs/restartOutput"/>    
+  </Events> 
+</Problem>

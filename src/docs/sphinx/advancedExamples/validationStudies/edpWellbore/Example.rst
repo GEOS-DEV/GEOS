@@ -41,7 +41,7 @@ Description of the case
 We simulate a drained wellbore problem subjected to isotropic horizontal stress (:math:`\sigma_h`) and vertical stress (:math:`\sigma_v`). By lowering the wellbore supporting pressure (:math:`P_w`), the wellbore contracts, and the reservoir rock experiences elastoplastic deformation. A plastic zone develops in the near wellbore region, as shown below.
 
 
-.. _problemSketchFig:
+.. _problemSketchEDPWellboreFig:
 .. figure:: Wellbore.png
    :align: center
    :width: 500
@@ -64,7 +64,7 @@ Mesh
 
 Following figure shows the generated mesh that is used for solving this 3D wellbore problem
 
-.. _problemSketchFig2:
+.. _problemSketchEDPWellboreFig2:
 .. figure:: WellMesh.png
    :align: center
    :width: 500
@@ -204,7 +204,7 @@ Inspecting results
 In the above example, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. Below figure shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of normal stress components, stress path, the supporting wellbore pressure and wellbore size. It is clear that the GEOSX predictions are in excellent agreement with the analytical results. 
 
 
-.. _problemVerificationFig:
+.. _problemVerificationEDPWellboreFig:
 .. figure:: Verification.png
    :align: center
    :width: 1000
