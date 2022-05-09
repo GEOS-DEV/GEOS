@@ -279,10 +279,12 @@
 
   <Outputs>
     <Silo
-      name="siloOutput"/>
+      name="siloOutput"
+      fieldNames="{ TotalDisplacement, pressure, skeleton_stress }"/>
 
     <VTK
-      name="vtkOutput"/>
+      name="vtkOutput"
+      fieldNames="{ TotalDisplacement, pressure, skeleton_stress }"/>
 
     <Restart
       name="restartOutput"/>

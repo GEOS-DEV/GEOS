@@ -662,7 +662,25 @@ public:
     m_siloDirectory = joinPath( path, "siloFiles" );
   }
 
+  /**
+   * @brief Set the names of the fields to output
+   * @param[in] fieldNames the fields to output
+   */
+  void setFieldNames( array1d< string > const & fieldNames )
+  {
+    m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
+  }
+
 private:
+
+  /**
+   * @brief Check if plotting is enabled for this field
+   * @param[in] wrapperPlotLevel the plot level of the wrapper
+   * @param[in] wrapperName the name of the wrapper
+   */
+  bool isFieldPlotEnabled( dataRepository::PlotLevel const wrapperPlotLevel,
+                           string const & wrapperName ) const;
+
 
   /// pointer to the DBfile that this class is working on
   DBfile * m_dbFilePtr;
@@ -702,6 +720,10 @@ private:
   integer m_writeFaceElementMesh;
 
   dataRepository::PlotLevel m_plotLevel;
+
+  /// Names of the fields to output
+  std::set< string > m_fieldNames;
+
 
   bool m_ghostFlags;
 };

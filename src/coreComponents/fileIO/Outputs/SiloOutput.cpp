@@ -35,7 +35,8 @@ SiloOutput::SiloOutput( string const & name,
   m_writeFaceMesh( 0 ),
   m_writeCellElementMesh( 1 ),
   m_writeFaceElementMesh( 1 ),
-  m_plotLevel()
+  m_plotLevel(),
+  m_fieldNames()
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -67,11 +68,22 @@ SiloOutput::SiloOutput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "" );
 
+  registerWrapper( viewKeysStruct::fieldNames, &m_fieldNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of the fields to output. If this attribute is specified, GEOSX outputs all (and only) the fields specified by the user, regardless of their plotLevel" );
+
 }
 
 SiloOutput::~SiloOutput()
 {}
 
+void SiloOutput::postProcessInput()
+{
+  GEOSX_LOG_RANK_0_IF( !m_fieldNames.empty(),
+                       GEOSX_FMT(
+                         "{} `{}`: found {} fields to plot. These fields will be output regardless of the plotLevel specified by the user. No other field will be output. Remove keyword `{}` from the XML file to output fields based on their plotLevel.",
+                         catalogName(), getName(), std::to_string( m_fieldNames.size() ), viewKeysStruct::fieldNames ) );
+}
 
 
 bool SiloOutput::execute( real64 const time_n,
@@ -99,6 +111,7 @@ bool SiloOutput::execute( real64 const time_n,
   silo.setWriteFaceMesh( m_writeFaceMesh );
   silo.setWriteCellElementMesh( m_writeCellElementMesh );
   silo.setWriteFaceElementMesh( m_writeFaceElementMesh );
+  silo.setFieldNames( m_fieldNames );
   silo.setPlotFileRoot( m_plotFileRoot );
   silo.initialize( numFiles );
   silo.waitForBatonWrite( rank, cycleNumber, eventCounter, false );

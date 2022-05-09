@@ -118,6 +118,16 @@ public:
   }
 
   /**
+   * @brief Set the names of the fields to output
+   * @param[in] fieldNames the fields to output
+   */
+  void setFieldNames( array1d< string > const & fieldNames )
+  {
+    m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
+  }
+
+
+  /**
    * @brief Main method of this class. Write all the files for one time step.
    * @details This method writes a .pvd file (if a previous one was created from a precedent time step,
    * it is overwritten). The .pvd file contains relative path to every .vtm files (one vtm file per time step).
@@ -153,6 +163,15 @@ public:
   void write( real64 time, integer cycle, DomainPartition const & domain );
 
 private:
+
+  /**
+   * @brief Check if plotting is enabled for this field
+   * @param[in] wrapperPlotLevel the plot level of the wrapper
+   * @param[in] wrapperName the name of the wrapper
+   */
+  bool isFieldPlotEnabled( dataRepository::PlotLevel const wrapperPlotLevel,
+                           string const & wrapperName ) const;
+
 
   /**
    * @brief Writes the files for all the CellElementRegions.
@@ -250,6 +269,9 @@ private:
 
   /// Maximum plot level to be written.
   dataRepository::PlotLevel m_plotLevel;
+
+  /// Names of the fields to output
+  std::set< string > m_fieldNames;
 
   /// The previousCycle
   integer m_previousCycle;
