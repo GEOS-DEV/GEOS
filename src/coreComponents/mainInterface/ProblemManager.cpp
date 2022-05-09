@@ -481,7 +481,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
                                                                   regionNode.attribute( "meshBody" ).value() );
 
       MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
-      meshBody.m_hasParticles = true;
+      meshBody.setHasParticles( true );
       meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
       {
         ParticleManager & particleManager = meshLevel.getParticleManager();
@@ -587,7 +587,7 @@ void ProblemManager::generateMesh()
     Group & meshLevels = meshBody.getMeshLevels();
 
     // Enter particle-specific loop
-    if(meshBody.m_hasParticles)
+    if( meshBody.hasParticles() )
     {
       ParticleBlockManager & particleBlockManager = meshBody.getGroup< ParticleBlockManager >( keys::particleManager ); // This was created by the relevant mesh generator, it will be de-registered at the end of this function!
       for( localIndex b = 0; b < meshLevels.numSubGroups(); ++b )
@@ -745,7 +745,28 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
                                    auto const & regionNames )
       {
         MeshBody const & meshBody = dynamicCast< MeshBody const & >( meshLevel.getParent().getParent() );
-        if(!meshBody.m_hasParticles)
+        if( meshBody.hasParticles() )
+        {
+          ParticleManager & particleManager = meshLevel.getParticleManager();
+
+          for( auto const & regionName : regionNames )
+          {
+            if( particleManager.hasRegion( regionName ) )
+            {
+              ParticleRegionBase & particleRegion = particleManager.getRegion( regionName );
+
+              particleRegion.forParticleSubRegions( [&]( auto & subRegion )
+              {
+                localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                            regionName,
+                                                                                            subRegion.getName() ) ];
+                localIndex const numQuadraturePoints = 1; // Particles always have 1 quadrature point
+                numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
+              } );
+            }
+          }
+        }
+        else
         {
           NodeManager & nodeManager = meshLevel.getNodeManager();
           ElementRegionManager & elemManager = meshLevel.getElemManager();
@@ -808,27 +829,6 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
               }
             }
           }
-        } // if( !meshBody.m_hasParticles )
-        else
-        {
-          ParticleManager & particleManager = meshLevel.getParticleManager();
-
-          for( auto const & regionName : regionNames )
-          {
-            if( particleManager.hasRegion( regionName ) )
-            {
-              ParticleRegionBase & particleRegion = particleManager.getRegion( regionName );
-
-              particleRegion.forParticleSubRegions( [&]( auto & subRegion )
-              {
-                localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
-                                                                                            regionName,
-                                                                                            subRegion.getName() ) ];
-                localIndex const numQuadraturePoints = 1; // Particles always have 1 quadrature point
-                numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
-              } );
-            }
-          }
         }
       } );
     } // if( solver!=nullptr )
@@ -845,40 +845,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
   for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
   {
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
-    if(!meshBody.m_hasParticles)
-    {
-      meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
-      {
-        ElementRegionManager & elemManager = meshLevel.getElemManager();
-
-        elemManager.forElementSubRegionsComplete( [&]( localIndex const,
-                                                       localIndex const,
-                                                       ElementRegionBase & elemRegion,
-                                                       ElementSubRegionBase & elemSubRegion )
-        {
-          string const & regionName = elemRegion.getName();
-          string const & subRegionName = elemSubRegion.getName();
-          string_array const & materialList = elemRegion.getMaterialList();
-          TYPEOFREF( regionQuadrature ) ::const_iterator rqIter = regionQuadrature.find( std::make_tuple( meshBody.getName(),
-                                                                                                          regionName,
-                                                                                                          subRegionName ) );
-          if( rqIter != regionQuadrature.end() )
-          {
-            localIndex const quadratureSize = rqIter->second;
-            for( auto & materialName : materialList )
-            {
-              constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, quadratureSize );
-              GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<"/"<<materialName<<" is allocated with "<<quadratureSize<<" quadrature points per element." );
-            }
-          }
-          else
-          {
-            GEOSX_LOG_RANK_0( "\t" << regionName << "/" << subRegionName << " does not have a discretization associated with it." );
-          }
-        } );
-      } );
-    }
-    else
+    if( meshBody.hasParticles() )
     {
       meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
       {
@@ -902,6 +869,39 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
             {
               constitutiveManager.hangConstitutiveRelation( materialName, &particleSubRegion, quadratureSize );
               GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<"/"<<materialName<<" is allocated with "<<quadratureSize<<" quadrature points per particle." );
+            }
+          }
+          else
+          {
+            GEOSX_LOG_RANK_0( "\t" << regionName << "/" << subRegionName << " does not have a discretization associated with it." );
+          }
+        } );
+      } );
+    }
+    else
+    {
+      meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
+      {
+        ElementRegionManager & elemManager = meshLevel.getElemManager();
+
+        elemManager.forElementSubRegionsComplete( [&]( localIndex const,
+                                                       localIndex const,
+                                                       ElementRegionBase & elemRegion,
+                                                       ElementSubRegionBase & elemSubRegion )
+        {
+          string const & regionName = elemRegion.getName();
+          string const & subRegionName = elemSubRegion.getName();
+          string_array const & materialList = elemRegion.getMaterialList();
+          TYPEOFREF( regionQuadrature ) ::const_iterator rqIter = regionQuadrature.find( std::make_tuple( meshBody.getName(),
+                                                                                                          regionName,
+                                                                                                          subRegionName ) );
+          if( rqIter != regionQuadrature.end() )
+          {
+            localIndex const quadratureSize = rqIter->second;
+            for( auto & materialName : materialList )
+            {
+              constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, quadratureSize );
+              GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<"/"<<materialName<<" is allocated with "<<quadratureSize<<" quadrature points per element." );
             }
           }
           else

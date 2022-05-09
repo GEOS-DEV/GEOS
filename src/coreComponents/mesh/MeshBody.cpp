@@ -28,10 +28,9 @@ MeshBody::MeshBody( string const & name,
                     Group * const parent ):
   Group( name, parent ),
   m_meshLevels( registerGroup( groupStructKeys::meshLevelsString() ) ),
-  m_globalLengthScale( 0 )
-{
-  m_hasParticles = false; // By default we assume no particles in a mesh body... SJP
-}
+  m_globalLengthScale( 0 ),
+  m_hasParticles( false )
+{}
 
 MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel )
 {
@@ -46,6 +45,11 @@ void MeshBody::setGlobalLengthScale( real64 scale )
 string MeshBody::intToMeshLevelString( localIndex const meshLevel )
 {
   return GEOSX_FMT( "Level{}", meshLevel );
+}
+
+void MeshBody::setHasParticles( bool hasParticles )
+{
+  m_hasParticles = hasParticles;
 }
 
 

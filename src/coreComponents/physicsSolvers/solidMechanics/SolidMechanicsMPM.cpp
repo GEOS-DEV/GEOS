@@ -156,20 +156,20 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 {
   ExecutableGroup::registerDataOnMesh( meshBodies );
 
-  forMeshTargets( meshBodies, [&] ( string const &,
+  forMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                     MeshLevel & meshLevel,
                                     arrayView1d< string const > const & regionNames )
   {
     ParticleManager & particleManager = meshLevel.getParticleManager();
 
-    MeshBody const & meshBody = dynamicCast< MeshBody const & >( meshLevel.getParent().getParent() );
+    MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
     // Set constitutive names on particles
-    if(meshBody.m_hasParticles)
+    if( meshBody.hasParticles() )
     {
       particleManager.forParticleSubRegions< ParticleSubRegionBase >( regionNames,
                                                                       [&]( localIndex const,
-                                                                          ParticleSubRegionBase & subRegion )
+                                                                           ParticleSubRegionBase & subRegion )
       {
         setConstitutiveNamesCallSuper( subRegion );
         setConstitutiveNames( subRegion );
@@ -178,13 +178,16 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
   } );
 
-  forMeshTargets( meshBodies, [&] ( string const &,
+  forMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                     MeshLevel & meshLevel,
                                     arrayView1d<string const> const & regionNames )
   {
-    MeshBody const & meshBody = dynamicCast< MeshBody const & >( meshLevel.getParent().getParent() );
-
-    if(!meshBody.m_hasParticles) // Background grid field registration
+    MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
+    if( meshBody.hasParticles() ) // Particle field registration? TODO: What goes here?
+    {
+      GEOSX_LOG_RANK_0("Registering particle fields.");
+    }
+    else // Background grid field registration
     {
       NodeManager & nodes = meshLevel.getNodeManager();
 
@@ -271,11 +274,6 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
       } );
     }
-    else // Particle field registration? TODO: What goes here?
-    {
-      GEOSX_LOG_RANK_0("Registering particle fields, I guess");
-    }
-
   } );
 }
 
@@ -291,7 +289,7 @@ void SolidMechanicsMPM::initializePreSubGroups()
   {
     MeshBody const & meshBody = dynamicCast< MeshBody const & >( meshLevel.getParent().getParent() );
 
-    if(meshBody.m_hasParticles) // Only particle regions will hold actual materials. Background grid currently holds a null material so that the input file parser doesn't complain, but we don't need to actually do anything with it.
+    if( meshBody.hasParticles() ) // Only particle regions will hold actual materials. Background grid currently holds a null material so that the input file parser doesn't complain, but we don't need to actually do anything with it.
     {
       ParticleManager & particleManager = meshLevel.getParticleManager();
       particleManager.forParticleSubRegions< ParticleSubRegion >( regionNames, [&]( localIndex const,
@@ -515,8 +513,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
   MeshBody & meshBody1 = meshBodies.getGroup< MeshBody >(0);
   MeshBody & meshBody2 = meshBodies.getGroup< MeshBody >(1);
-  MeshBody & particles = meshBody1.m_hasParticles ? meshBody1 : meshBody2;
-  MeshBody & grid = !meshBody1.m_hasParticles ? meshBody1 : meshBody2;
+  MeshBody & particles = meshBody1.hasParticles() ? meshBody1 : meshBody2;
+  MeshBody & grid = !meshBody1.hasParticles() ? meshBody1 : meshBody2;
 
   ParticleManager & particleManager = particles.getMeshLevel(0).getParticleManager();
   MeshLevel & mesh = grid.getMeshLevel(0);
