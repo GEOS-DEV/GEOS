@@ -14,12 +14,12 @@ set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "" )
 set( CMAKE_ENABLE_EXPORTS ON )
 
 if( ENABLE_STABILIZED_INPUT )
-	include( FetchContent )
-	FetchContent_Declare( yaml-cpp
-												GIT_REPOSITORY https://github.com/jbeder/yaml-cpp
-												GIT_TAG yaml-cpp-0.7.0
-												)
-	FetchContent_MakeAvailable( yaml-cpp )
+  include( FetchContent )
+  FetchContent_Declare( yaml-cpp
+                        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp
+                        GIT_TAG yaml-cpp-0.7.0
+                        )
+  FetchContent_MakeAvailable( yaml-cpp )
 endif()
 
 ################################

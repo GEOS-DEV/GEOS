@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_TOTOGAZ_STABLETOXML_HPP
-#define GEOSX_TOTOGAZ_STABLETOXML_HPP
+#ifndef GEOSX_API_STABLETOXML_HPP
+#define GEOSX_API_STABLETOXML_HPP
 
 #include "dataRepository/xmlWrapper.hpp"
 #include "common/DataTypes.hpp"
@@ -23,9 +23,14 @@ namespace geosx
 namespace api
 {
 
+/**
+ * @brief Converts the stable input file to its xml internal representation
+ * @param stableInputFileName The yaml input file name.
+ * @param doc The output xml document being fed.
+ */
 void Convert( string const & stableInputFileName, xmlWrapper::xmlDocument & doc );
 
 }
 }
 
-#endif //GEOSX_TOTOGAZ_STABLETOXML_HPP
+#endif //GEOSX_API_STABLETOXML_HPP
