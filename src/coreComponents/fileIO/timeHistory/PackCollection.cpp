@@ -111,7 +111,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   auto asOMB = []( Group const * grp ) -> ObjectManagerBase const *
   {
     ObjectManagerBase const * omb = dynamicCast< ObjectManagerBase const * >( grp );
-    GEOSX_ERROR_IF( omb == nullptr, "Group " << grp->getName() << " could not be converted to an ObjectManagerBase during the `PackCollection` process.");
+    GEOSX_ERROR_IF( omb == nullptr, "Group " << grp->getName() << " could not be converted to an ObjectManagerBase during the `PackCollection` process." );
     return omb;
   };
 
@@ -125,7 +125,8 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
 
   // In the wake of previous trick about `m_setNames`, another small trick not to compute the real set names if they are not needed.
   // This is questionable but lets me define `setNames` as `const` variable.
-  // Note that the third operator will be evaluated iff `collectAll` is `false` (C++ paragraph 6.5.15). So `asOMB` will not kill the simulation.
+  // Note that the third operator will be evaluated iff `collectAll` is `false` (C++ paragraph 6.5.15).
+  // So the `asOMB` function will not be called inappropriately and kill the simulation.
   std::vector< string > const setNames = collectAll ? std::vector< string >{} : getExistingWrapperNames( m_setNames.toViewConst(), asOMB( targetGrp ) );
 
   std::size_t const numSets = collectAll ? 1 : setNames.size();
