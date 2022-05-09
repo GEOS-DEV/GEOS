@@ -366,7 +366,11 @@ auto interpolateGradientAtQuadraturePoints( Basis const & basis,
  * @return Contribution of the q_values to the degrees of freedom.
  */
 template < typename Basis,
-           typename Qvalues >
+           typename Qvalues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 3,
+            bool > = true >
 auto applyGradientTestFunctions( Basis const & basis,
                                  Qvalues const & q_values )
 {
@@ -467,6 +471,7 @@ auto applyGradientTestFunctions( Basis const & basis,
   return dofs;  
 }
 
+/** @brief Basic non-tensor basis that stores its values. */
 template < typename FiniteElement >
 class StoredNonTensorBasis
 {
@@ -495,6 +500,7 @@ public:
   }
 };
 
+/** @brief A basic tensor class statically sized. */
 template < typename T, size_t... Dims >
 StaticTensor
 {
@@ -510,6 +516,21 @@ public:
     return data[ 0 ]; // TODO
   }
 };
+
+template < typename Tensor,
+           size_t Dim,
+           typename LambdaFn,
+           std::enable_if_t<
+             is_serial_tensor<Tensor>,
+             bool > = true >
+GEOSX_HOST_DEVICE
+void foreach_dim( LambdaFn && fn )
+{
+  for (int i = 0; i < get_tensor_size<Tensor, Dim>; i++)
+  {
+    fn(i);
+  }
+}
 
 /**
  * @class KernelBase
