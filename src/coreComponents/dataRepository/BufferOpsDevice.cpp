@@ -237,6 +237,10 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
         ++threadBuffer;
       } );
     }
+    else
+    {
+      GEOSX_ERROR("Unsupported MPI operator, MPI_SUM or MPI_REPLACE are supported.");
+    }
   } ) );
 
   buffer += unpackSize;

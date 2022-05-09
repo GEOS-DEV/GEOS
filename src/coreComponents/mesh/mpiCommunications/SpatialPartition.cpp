@@ -301,7 +301,7 @@ namespace geosx
     dataRepository::Group & meshBodies = domain.getMeshBodies();
     MeshBody & meshBody1 = meshBodies.getGroup< MeshBody >(0);
     MeshBody & meshBody2 = meshBodies.getGroup< MeshBody >(1);
-    MeshBody & particles = meshBody1.m_hasParticles ? meshBody1 : meshBody2;
+    MeshBody & particles = meshBody1.hasParticles() ? meshBody1 : meshBody2;
     ParticleManager & particleManager = particles.getMeshLevel(0).getParticleManager();
 
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )

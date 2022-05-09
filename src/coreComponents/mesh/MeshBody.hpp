@@ -128,6 +128,20 @@ public:
   }
 
   /**
+   * @brief Get whether meshbody has particles
+   * @return whether meshbody has particles
+   */
+  bool hasParticles() const
+  {
+    return m_hasParticles;
+  }
+
+  /**
+   * @brief Set whether meshbody has particles
+   */
+  void setHasParticles( bool hasParticles );
+
+  /**
    * @brief Data repository keys
    */
   struct viewKeysStruct
@@ -142,18 +156,17 @@ public:
     static constexpr char const * meshLevelsString() { return "meshLevels"; }
   } groupKeys; ///< groupKeys
 
-  /**
-   * @brief flag for whether MeshBody has particles
-   */
-  bool m_hasParticles;
 
 private:
+
   Group & m_meshLevels;
 
   /// Mesh length scale used to define an absolute length tolerance
   /// The default value can be set to another value
   real64 m_globalLengthScale { 0. };
 
+  /// flag for whether MeshBody has particles
+  bool m_hasParticles;
 
   static string intToMeshLevelString( localIndex const meshLevel );
 
