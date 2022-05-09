@@ -365,6 +365,16 @@ struct MassAndDampingMatrixKernel
                 damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
                 damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
               }
+              // Damping in y=ypos and y=yneg direction
+              if( faceNormal[iface][1] < 0.0 || faceNormal[iface][1] > 0.0)
+              {
+                real64 const alpha_x = density[k] * velocityVs[k];
+                real64 const alpha_y = density[k] * velocityVp[k];
+                real64 const alpha_z = density[k] * velocityVs[k];
+                damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
+                damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
+                damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+              }
               // Damping in z=zpos and z=zneg direction
               if( faceNormal[iface][2] < 0.0 || faceNormal[iface][2] > 0.0)
               {
