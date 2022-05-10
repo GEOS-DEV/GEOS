@@ -9,7 +9,6 @@ import numpy as np
 descr = 'Post processing for Class09 Cases \n' + \
         '\t use -f to specify a dest folder\n' + \
         '\t use -t to specify a drain or hyst\n'
-
 parser = argparse.ArgumentParser(description=descr)
 parser.add_argument('-f', nargs=1, help='specify dest folder')
 parser.add_argument('-t', nargs=1, help='specify drain or hyst for ref loading')
@@ -61,16 +60,29 @@ def form_block_value(suffix):
 
 
 if (args.t[0] == 'hyst'):
-    ecl = pd.read_csv(os.getcwd() + '/postt/ECLSLB_hyst.csv')
+    # ecl = pd.read_csv(os.getcwd() + '/postt/ECLSLB_hyst.csv')
+    ref = pd.read_csv(os.getcwd() + '/postt/data_hyst.csv')
+    ofs = [str(i) for i in [1,3,5,7,9,11]]
 elif (args.t[0] == 'drain'):
-    ecl = pd.read_csv(os.getcwd() + '/postt/ECLSLB_drain.csv')
+    ref = pd.read_csv(os.getcwd() + '/postt/data_drain.csv')
+    ofs = [str(i) for i in [9,11,5,7,13,15]]
 else:
     raise NotImplemented
 
-ref_co2g_ti = ecl['ECLSLB_co2g'].to_numpy()
-ref_co2g = ecl['Unnamed: 1'].to_numpy()
-ref_co2l_ti = ecl['ECLSLB_co2l'].to_numpy()
-ref_co2l = ecl['Unnamed: 3'].to_numpy()
+#time and values from refs
+tags = ['GEM', 'GPRS', 'SLB']
+ref_co2g_ti = {}
+ref_co2g = {}
+ref_co2l_ti = {}
+ref_co2l = {}
+
+ix = 0
+for i, tg in enumerate(tags):
+    ref_co2g_ti[tg] = ref['gas_'+tg].to_numpy()
+    ref_co2g[tg] = ref['Unnamed: '+ofs[ix]].to_numpy()
+    ix = ix + 1
+    ref_co2l_ti[tg] = ref['diss_'+tg].to_numpy()
+    ref_co2l[tg] = ref['Unnamed: '+ofs[ix]].to_numpy()
 ##
 
 # get interior values
@@ -106,15 +118,22 @@ for ti in range(mc.shape[1]):
     stot[ti] += sco2_g[ti]
 
 plt.figure()
-plt.plot(np.arange(0, nt) * dt , sco2_l, '-+')
-plt.plot(np.arange(0, nt) * dt , sco2_g, '--+')
-plt.plot(np.arange(0, nt) * dt , stot, '-r+')
+plt.plot(np.arange(0, nt) * dt , sco2_l, '-r+')
+plt.plot(np.arange(0, nt) * dt , sco2_g, '--r+')
+plt.plot(np.arange(0, nt) * dt , stot, ':r+')
 #
-plt.plot(ref_co2g_ti, ref_co2g * 1e9, 'k')
-plt.plot(ref_co2l_ti, ref_co2l * 1e9, '--k')
-plt.plot(ref_co2l_ti, (ref_co2g + ref_co2l) * 1e9, ':k')
 
-plt.legend(['m_co2_l', 'm_co2_g', 'm_co2_tot', 'ref(ECLSLB) m_co2_l', 'ref(ECLSLB) m_co2_g', 'ref(ECLSLB) m_co2_tot'])
+lgd = ['m_co2_l', 'm_co2_g', 'm_co2_tot']
+colors = [ 'b', 'g', 'm']
+for i, tg in enumerate(tags):
+    plt.plot(ref_co2g_ti[tg], ref_co2g[tg], colors[i])
+    plt.plot(ref_co2l_ti[tg], ref_co2l[tg], '--'+colors[i])
+    plt.plot(ref_co2l_ti[tg], (ref_co2g[tg] + ref_co2l[tg]), ':'+colors[i])
+    lgd.append('ref( '+tg+' ) m_co2_l')
+    lgd.append('ref( '+tg+' ) m_co2_g')
+    lgd.append('ref( '+tg+' ) m_co2_tot')
+
+plt.legend(lgd, loc='upper left')
 plt.xlabel('time[years]')
 plt.ylabel('Co_2 mass [kg]')
 plt.xlim([0, 50])
