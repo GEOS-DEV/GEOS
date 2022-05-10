@@ -442,7 +442,7 @@ auto applyGradientTestFunctions( Basis const & basis,
   });
 
   // Contraction on the third dimension
-  using Result = basis_result<Basis, num_dofs, num_dofs, num_dofs>; // remove magic number?
+  using Result = basis_result<Basis, num_dofs, num_dofs, num_dofs>;
   Result dofs;
 
   foreach_dim<Result, 1>([&](size_t dof_y)
@@ -459,9 +459,7 @@ auto applyGradientTestFunctions( Basis const & basis,
           const T bbqz = BBqz( dof_x, dof_y, quad_z );;
           const T b = basis( dof_z, quad_z );
           const T g = gradient( basis )( dof_z, quad_z )
-          res += b * bgqx;
-          res += b * gbqy;
-          res += g * bbqz;
+          res += b * bgqx + b * gbqy + g * bbqz;
         });
         dofs( dof_x, dof_y, dof_z ) = res;
       });
@@ -481,7 +479,8 @@ private:
   real64 const data[ num_quads ][ num_dofs ];
 
 public:
-  StoredBasis()
+  GEOSX_HOST_DEVICE
+  StoredNonTensorBasis()
   {
     real64 basis_functions_at_xq[ num_dofs ];
     for (size_t q = 0; q < num_quads; q++)
@@ -497,6 +496,28 @@ public:
   real64 operator()( size_t dof, size_t quad ) const
   {
     return data[ quad ][ dof ];
+  }
+};
+
+template < typename FiniteElement >
+class StoredTensorBasis
+{
+private:
+  constexpr localIndex num_dofs = get_num_1d_dofs<FiniteElement>;
+  constexpr localIndex num_quads = get_num_1d_quads<FiniteElement>;
+  real64 const data[ num_quads ][ num_dofs ];
+
+public:
+  GEOSX_HOST_DEVICE
+  StoredTensorBasis()
+  {
+    for (localIndex q = 0; q < num_quads; q++)
+    {
+      for (localIndex d = 0; d < num_dofs; d++)
+      {
+        data[ q ][ d ] = LagrangeBasis1::value(d, LagrangeBasis1::parentSupportCoord(q));
+      }
+    }
   }
 };
 
