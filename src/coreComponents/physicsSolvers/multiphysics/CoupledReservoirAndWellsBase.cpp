@@ -142,32 +142,6 @@ addCouplingNumNonzeros( SolverBase const * const solver,
 }
 
 void
-assembleSinglePhysicsSystems( SolverBase * const reservoirSolver,
-                              SolverBase * const wellSolver,
-                              real64 const time_n,
-                              real64 const dt,
-                              DomainPartition & domain,
-                              DofManager const & dofManager,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                              arrayView1d< real64 > const & localRhs )
-{
-  // assemble J_RR (excluding perforation rates)
-  reservoirSolver->assembleSystem( time_n, dt,
-                                   domain,
-                                   dofManager,
-                                   localMatrix,
-                                   localRhs );
-
-  // assemble J_WW (excluding perforation rates)
-  wellSolver->assembleSystem( time_n, dt,
-                              domain,
-                              dofManager,
-                              localMatrix,
-                              localRhs );
-}
-
-
-void
 solveLinearSystem( SolverBase * const solver,
                    DofManager const & dofManager,
                    ParallelMatrix & matrix,

@@ -7,7 +7,7 @@
 <Problem>
   <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS -->
   <Solvers>
-    <CompositionalMultiphaseReservoirFVM
+    <CompositionalMultiphaseReservoir
       name="coupledFlowAndWells"
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
@@ -28,7 +28,7 @@
         krylovTol="1e-4"
         krylovAdaptiveTol="1"
         krylovWeakestTol="1e-2"/>
-    </CompositionalMultiphaseReservoirFVM>
+    </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"

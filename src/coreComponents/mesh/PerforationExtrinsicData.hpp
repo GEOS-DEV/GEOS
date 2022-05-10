@@ -42,7 +42,7 @@ EXTRINSIC_MESH_DATA_TRAIT( reservoirElementRegion,
                            "For each perforation, elementRegion index of the perforated element" );
 
 EXTRINSIC_MESH_DATA_TRAIT( reservoirElementSubRegion,
-                           "reservoirElementSubRegion",
+                           "reservoirElementSubregion",
                            array1d< localIndex >,
                            0,
                            NOPLOT,

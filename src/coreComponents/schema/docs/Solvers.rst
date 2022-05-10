@@ -7,8 +7,7 @@ gravityVector                             R1Tensor {0,0,-9.81} Gravity vector us
 AcousticSEM                               node                 :ref:`XML_AcousticSEM`                               
 CompositionalMultiphaseFVM                node                 :ref:`XML_CompositionalMultiphaseFVM`                
 CompositionalMultiphaseHybridFVM          node                 :ref:`XML_CompositionalMultiphaseHybridFVM`          
-CompositionalMultiphaseReservoirFVM       node                 :ref:`XML_CompositionalMultiphaseReservoirFVM`       
-CompositionalMultiphaseReservoirHybridFVM node                 :ref:`XML_CompositionalMultiphaseReservoirHybridFVM` 
+CompositionalMultiphaseReservoir          node                 :ref:`XML_CompositionalMultiphaseReservoir`          
 CompositionalMultiphaseWell               node                 :ref:`XML_CompositionalMultiphaseWell`               
 EmbeddedSurfaceGenerator                  node                 :ref:`XML_EmbeddedSurfaceGenerator`                  
 FlowProppantTransport                     node                 :ref:`XML_FlowProppantTransport`                     
@@ -25,8 +24,7 @@ SinglePhaseHybridFVM                      node                 :ref:`XML_SingleP
 SinglePhasePoromechanics                  node                 :ref:`XML_SinglePhasePoromechanics`                  
 SinglePhasePoromechanicsEmbeddedFractures node                 :ref:`XML_SinglePhasePoromechanicsEmbeddedFractures` 
 SinglePhaseProppantFVM                    node                 :ref:`XML_SinglePhaseProppantFVM`                    
-SinglePhaseReservoirFVM                   node                 :ref:`XML_SinglePhaseReservoirFVM`                   
-SinglePhaseReservoirHybridFVM             node                 :ref:`XML_SinglePhaseReservoirHybridFVM`             
+SinglePhaseReservoir                      node                 :ref:`XML_SinglePhaseReservoir`                      
 SinglePhaseWell                           node                 :ref:`XML_SinglePhaseWell`                           
 SolidMechanicsEmbeddedFractures           node                 :ref:`XML_SolidMechanicsEmbeddedFractures`           
 SolidMechanicsLagrangianSSLE              node                 :ref:`XML_SolidMechanicsLagrangianSSLE`              

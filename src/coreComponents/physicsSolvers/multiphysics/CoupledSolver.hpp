@@ -93,6 +93,24 @@ public:
   { GEOSX_UNUSED_VAR( domain, dofManager ); }
 
   /**
+   * @brief Utility function to compute coupling terms
+   * @param[in] time_n the time at the beginning of the time step
+   * @param[in] dt the time step size
+   * @param[in] domain the domain partition
+   * @paran[in] dofManager the degree of freedom manager
+   * @param[in] localMatrix the local matrix
+   * @param[in] localRhs the local rhs
+   */
+  virtual void
+  assembleCouplingTerms( real64 const time_n,
+                         real64 const dt,
+                         DomainPartition const & domain,
+                         DofManager const & dofManager,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs )
+  { GEOSX_UNUSED_VAR( time_n, dt, domain, dofManager, localMatrix, localRhs ); }
+
+  /**
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
@@ -131,6 +149,22 @@ public:
     {
       solver->implicitStepComplete( time_n, dt, domain );
     } );
+  }
+
+  virtual void
+  assembleSystem( real64 const time_n,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    } );
+
+    assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
   }
 
   virtual void

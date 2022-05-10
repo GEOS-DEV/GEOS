@@ -446,8 +446,7 @@
 			<xsd:element name="AcousticSEM" type="AcousticSEMType" />
 			<xsd:element name="CompositionalMultiphaseFVM" type="CompositionalMultiphaseFVMType" />
 			<xsd:element name="CompositionalMultiphaseHybridFVM" type="CompositionalMultiphaseHybridFVMType" />
-			<xsd:element name="CompositionalMultiphaseReservoirFVM" type="CompositionalMultiphaseReservoirFVMType" />
-			<xsd:element name="CompositionalMultiphaseReservoirHybridFVM" type="CompositionalMultiphaseReservoirHybridFVMType" />
+			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
@@ -464,8 +463,7 @@
 			<xsd:element name="SinglePhasePoromechanics" type="SinglePhasePoromechanicsType" />
 			<xsd:element name="SinglePhasePoromechanicsEmbeddedFractures" type="SinglePhasePoromechanicsEmbeddedFracturesType" />
 			<xsd:element name="SinglePhaseProppantFVM" type="SinglePhaseProppantFVMType" />
-			<xsd:element name="SinglePhaseReservoirFVM" type="SinglePhaseReservoirFVMType" />
-			<xsd:element name="SinglePhaseReservoirHybridFVM" type="SinglePhaseReservoirHybridFVMType" />
+			<xsd:element name="SinglePhaseReservoir" type="SinglePhaseReservoirType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType" />
 			<xsd:element name="SolidMechanicsEmbeddedFractures" type="SolidMechanicsEmbeddedFracturesType" />
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
@@ -519,19 +517,7 @@
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
-	<xsd:complexType name="CompositionalMultiphaseReservoirFVMType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-		</xsd:choice>
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" />
-		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
-	</xsd:complexType>
-	<xsd:complexType name="CompositionalMultiphaseReservoirHybridFVMType">
+	<xsd:complexType name="CompositionalMultiphaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -715,19 +701,7 @@
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
-	<xsd:complexType name="SinglePhaseReservoirFVMType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-		</xsd:choice>
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" />
-		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
-	</xsd:complexType>
-	<xsd:complexType name="SinglePhaseReservoirHybridFVMType">
+	<xsd:complexType name="SinglePhaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -2139,8 +2113,8 @@
 		<xsd:attribute name="reservoirElementIndex" type="integer_array" />
 		<!--reservoirElementRegion => For each perforation, elementRegion index of the perforated element-->
 		<xsd:attribute name="reservoirElementRegion" type="integer_array" />
-		<!--reservoirElementSubRegion => For each perforation, elementSubRegion index of the perforated element-->
-		<xsd:attribute name="reservoirElementSubRegion" type="integer_array" />
+		<!--reservoirElementSubregion => For each perforation, elementSubRegion index of the perforated element-->
+		<xsd:attribute name="reservoirElementSubregion" type="integer_array" />
 		<!--wellElementIndex => For each perforation, index of the well element-->
 		<xsd:attribute name="wellElementIndex" type="integer_array" />
 		<!--wellTransmissibility => For each perforation, well transmissibility-->

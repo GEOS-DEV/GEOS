@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers>
-    <SinglePhaseReservoirHybridFVM
+    <SinglePhaseReservoir
       name="reservoirSystem"
       flowSolverName="SinglePhaseFlow"
       wellSolverName="SinglePhaseWell"
@@ -13,7 +13,7 @@
         newtonMaxIter="40"/>
       <LinearSolverParameters
         directParallel="0"/>
-    </SinglePhaseReservoirHybridFVM>
+    </SinglePhaseReservoir>
 
     <SinglePhaseHybridFVM
       name="SinglePhaseFlow"

@@ -59,27 +59,6 @@ addCouplingNumNonzeros( SolverBase const * const solver,
 
 
 /**
- * @brief Utility function for the implementation details of assembleSystem
- * @param reservoirSolver the reservoir solver
- * @param wellSolver the well solver
- * @param time_n the time at the beginning of the time step
- * @param dt the time step size
- * @param domain the domain partition
- * @param dofManager the dof manager
- * @param localMatrix the local Jacobian matrix
- * @param localRhs the local residual
- */
-void
-assembleSinglePhysicsSystems( SolverBase * const reservoirSolver,
-                              SolverBase * const wellSolver,
-                              real64 const time_n,
-                              real64 const dt,
-                              DomainPartition & domain,
-                              DofManager const & dofManager,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                              arrayView1d< real64 > const & localRhs );
-
-/**
  * @brief Utility function for the implementation details of solveLinearSystem
  * @param solver the coupled solver
  * @param dofManager the degree of freedom manager
@@ -198,31 +177,6 @@ public:
 
 
   virtual void
-  assembleSystem( real64 const time_n,
-                  real64 const dt,
-                  DomainPartition & domain,
-                  DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                  arrayView1d< real64 > const & localRhs ) override
-  {
-    coupledReservoirAndWellsInternal::
-      assembleSinglePhysicsSystems( getReservoirSolver(),
-                                    getWellSolver(),
-                                    time_n, dt,
-                                    domain,
-                                    dofManager,
-                                    localMatrix,
-                                    localRhs );
-
-    // assemble perforation rates in J_WR, J_RW, J_RR and J_WW
-    assembleCouplingTerms( time_n, dt,
-                           domain,
-                           dofManager,
-                           localMatrix,
-                           localRhs );
-  }
-
-  virtual void
   solveLinearSystem( DofManager const & dofManager,
                      ParallelMatrix & matrix,
                      ParallelVector & rhs,
@@ -241,33 +195,18 @@ public:
   /**@}*/
 
   /**
-   * @brief assembles the perforation rate terms
-   * @param time_n previous time value
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void
-  assembleCouplingTerms( real64 const time_n,
-                         real64 const dt,
-                         DomainPartition const & domain,
-                         DofManager const & dofManager,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                         arrayView1d< real64 > const & localRhs ) = 0;
-
-  /**
    * @brief accessor for the pointer to the reservoir solver
    * @return a pointer to the reservoir solver
    */
-  RESERVOIR_SOLVER * getReservoirSolver() const { return std::get< toUnderlying( SolverType::Reservoir ) >( m_solvers ); }
+  RESERVOIR_SOLVER *
+  getReservoirSolver() const { return std::get< toUnderlying( SolverType::Reservoir ) >( m_solvers ); }
 
   /**
    * @brief accessor for the pointer to the well solver
    * @return a pointer to the well solver
    */
-  WELL_SOLVER * getWellSolver() const { return std::get< toUnderlying( SolverType::Well ) >( m_solvers ); }
+  WELL_SOLVER *
+  getWellSolver() const { return std::get< toUnderlying( SolverType::Well ) >( m_solvers ); }
 
 protected:
 

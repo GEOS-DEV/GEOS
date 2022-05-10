@@ -12,7 +12,7 @@ location                  real64_array2d                                        
 numPerforationsGlobal     globalIndex                                                           (no description available)                                             
 reservoirElementIndex     integer_array                                                         For each perforation, element index of the perforated element          
 reservoirElementRegion    integer_array                                                         For each perforation, elementRegion index of the perforated element    
-reservoirElementSubRegion integer_array                                                         For each perforation, elementSubRegion index of the perforated element 
+reservoirElementSubregion integer_array                                                         For each perforation, elementSubRegion index of the perforated element 
 wellElementIndex          integer_array                                                         For each perforation, index of the well element                        
 wellTransmissibility      real64_array                                                          For each perforation, well transmissibility                            
 neighborData              node                                                                  :ref:`DATASTRUCTURE_neighborData`                                      

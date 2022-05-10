@@ -6,8 +6,7 @@ Name                                      Type Description
 AcousticSEM                               node :ref:`DATASTRUCTURE_AcousticSEM`                               
 CompositionalMultiphaseFVM                node :ref:`DATASTRUCTURE_CompositionalMultiphaseFVM`                
 CompositionalMultiphaseHybridFVM          node :ref:`DATASTRUCTURE_CompositionalMultiphaseHybridFVM`          
-CompositionalMultiphaseReservoirFVM       node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoirFVM`       
-CompositionalMultiphaseReservoirHybridFVM node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoirHybridFVM` 
+CompositionalMultiphaseReservoir          node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoir`          
 CompositionalMultiphaseWell               node :ref:`DATASTRUCTURE_CompositionalMultiphaseWell`               
 EmbeddedSurfaceGenerator                  node :ref:`DATASTRUCTURE_EmbeddedSurfaceGenerator`                  
 FlowProppantTransport                     node :ref:`DATASTRUCTURE_FlowProppantTransport`                     
@@ -24,8 +23,7 @@ SinglePhaseHybridFVM                      node :ref:`DATASTRUCTURE_SinglePhaseHy
 SinglePhasePoromechanics                  node :ref:`DATASTRUCTURE_SinglePhasePoromechanics`                  
 SinglePhasePoromechanicsEmbeddedFractures node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures` 
 SinglePhaseProppantFVM                    node :ref:`DATASTRUCTURE_SinglePhaseProppantFVM`                    
-SinglePhaseReservoirFVM                   node :ref:`DATASTRUCTURE_SinglePhaseReservoirFVM`                   
-SinglePhaseReservoirHybridFVM             node :ref:`DATASTRUCTURE_SinglePhaseReservoirHybridFVM`             
+SinglePhaseReservoir                      node :ref:`DATASTRUCTURE_SinglePhaseReservoir`                      
 SinglePhaseWell                           node :ref:`DATASTRUCTURE_SinglePhaseWell`                           
 SolidMechanicsEmbeddedFractures           node :ref:`DATASTRUCTURE_SolidMechanicsEmbeddedFractures`           
 SolidMechanicsLagrangianSSLE              node :ref:`DATASTRUCTURE_SolidMechanicsLagrangianSSLE`              

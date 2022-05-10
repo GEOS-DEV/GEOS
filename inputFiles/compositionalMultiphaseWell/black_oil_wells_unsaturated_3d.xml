@@ -3,7 +3,7 @@
 <Problem>
   <Solvers>
 
-    <CompositionalMultiphaseReservoirHybridFVM
+    <CompositionalMultiphaseReservoir
       name="reservoirSystem"
       wellSolverName="compositionalMultiphaseWell"
       flowSolverName="compositionalMultiphaseFlow"
@@ -16,7 +16,7 @@
         newtonMaxIter="20"/>
       <LinearSolverParameters 
         directParallel="0"/> 
-    </CompositionalMultiphaseReservoirHybridFVM>
+    </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseHybridFVM
       name="compositionalMultiphaseFlow"

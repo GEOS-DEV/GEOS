@@ -43,18 +43,20 @@ namespace
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER > class
   CompositionalCatalogNames {};
 
-// Class specialization for a RESERVOIR_SOLVER set to CompositionalMultiphaseFVM
-template<> class CompositionalCatalogNames< CompositionalMultiphaseFVM >
+// Class specialization for a RESERVOIR_SOLVER set to CompositionalMultiphaseFlow
+template<> class CompositionalCatalogNames< CompositionalMultiphaseBase >
 {
 public:
-  static string name() { return "CompositionalMultiphaseReservoirFVM"; }
+  static string name() { return "CompositionalMultiphaseReservoir"; }
 };
-// Class specialization for a RESERVOIR_SOLVER set to CompositionalMultiphaseHybridFVM
-template<> class CompositionalCatalogNames< CompositionalMultiphaseHybridFVM >
-{
-public:
-  static string name() { return "CompositionalMultiphaseReservoirHybridFVM"; }
-};
+/*
+   // Class specialization for a RESERVOIR_SOLVER set to MultiphasePoromechanics
+   template<> class CompositionalCatalogNames< MultiphasePoromechanics >
+   {
+   public:
+   static string name() { return "CompositionalMultiphasePoromechanicsReservoir"; }
+   };
+ */
 
 }
 
@@ -101,13 +103,20 @@ void
 CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
-  if( catalogName() == CompositionalCatalogNames< CompositionalMultiphaseFVM >::name() )
+  if( catalogName() == CompositionalCatalogNames< CompositionalMultiphaseBase >::name() )
   {
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
+    if( dynamicCast< CompositionalMultiphaseFVM * >( this->getReservoirSolver() ) )
+    {
+      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
+    }
+    else if( dynamicCast< CompositionalMultiphaseHybridFVM * >( this->getReservoirSolver() ) )
+    {
+      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
+    }
   }
-  else if( catalogName() == CompositionalCatalogNames< CompositionalMultiphaseHybridFVM >::name() )
+  else
   {
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
+    GEOSX_ERROR( "This option is not available yet" );
   }
 }
 
@@ -388,10 +397,10 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
 namespace
 {
-typedef CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseFVM > CompositionalMultiphaseFVMAndWells;
-typedef CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseHybridFVM > CompositionalMultiphaseHybridFVMAndWells;
-REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFVMAndWells, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseHybridFVMAndWells, string const &, Group * const )
+typedef CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > CompositionalMultiphaseFlowAndWells;
+//typedef CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics > CompositionalMultiphasePoromechanicsAndWells;
+REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFlowAndWells, string const &, Group * const )
+//REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphasePoromechanicsAndWells, string const &, Group * const )
 }
 
 } /* namespace geosx */
