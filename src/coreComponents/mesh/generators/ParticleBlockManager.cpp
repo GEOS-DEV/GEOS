@@ -12,30 +12,21 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file ParticleBlockManager.cpp
- */
-
 #include "ParticleBlockManager.hpp"
 
-#include <algorithm>
+#include "mesh/generators/CellBlockUtilities.hpp"
+#include "mesh/utilities/MeshMapUtilities.hpp"
 
-#include <map>
-#include <vector>
+#include <algorithm>
 
 namespace geosx
 {
 using namespace dataRepository;
 
 ParticleBlockManager::ParticleBlockManager( string const & name, Group * const parent ):
-  Group( name, parent )
+  ParticleBlockManagerABC( name, parent )
 {
-  this->registerGroup< Group >( keys::particleBlocks );
-}
-
-ParticleBlockManager::~ParticleBlockManager()
-{
-  // TODO Auto-generated destructor stub
+  this->registerGroup< Group >( viewKeyStruct::particleBlocks );
 }
 
 void ParticleBlockManager::resize( integer_array const & numParticles,
@@ -68,9 +59,9 @@ Group & ParticleBlockManager::getParticleBlocks()
   return this->getGroup( viewKeyStruct::particleBlocks() );
 }
 
-const ParticleBlockABC & ParticleBlockManager::getParticleBlock( localIndex iParticleBlock ) const
+const ParticleBlock & ParticleBlockManager::getParticleBlock( localIndex const blockIndex ) const
 {
-  return this->getParticleBlocks().getGroup< const ParticleBlockABC >( iParticleBlock );
+  return this->getParticleBlocks().getGroup< ParticleBlock >( blockIndex );
 }
 
 }

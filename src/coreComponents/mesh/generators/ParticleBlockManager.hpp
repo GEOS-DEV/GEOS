@@ -19,43 +19,19 @@
 #ifndef GEOSX_MESH_PARTICLEBLOCKMANAGER_H_
 #define GEOSX_MESH_PARTICLEBLOCKMANAGER_H_
 
-#include "ParticleBlock.hpp"
-#include "mesh/ParticleType.hpp"
-#include "common/DataTypes.hpp"
-#include "dataRepository/Group.hpp"
+#include "mesh/generators/ParticleBlockManagerABC.hpp"
+#include "mesh/generators/ParticleBlock.hpp"
 
 namespace geosx
 {
-
-namespace dataRepository
-{
-namespace keys
-{
-/// String for particleBlocks
-string const particleBlocks = "particleBlocks";
-}
-}
 
 /**
  * @class ParticleBlockManager
  * @brief The ParticleBlockManager class provides an interface to ObjectManagerBase in order to manage ParticleBlock data.
  */
-class ParticleBlockManager : public dataRepository::Group
+class ParticleBlockManager : public ParticleBlockManagerABC
 {
 public:
-
-  /**
-   * @brief The function is to return the name of the ParticleBlockManager in the object catalog
-   * @return string that contains the catalog name used to register/lookup this class in the object catalog
-   */
-  static string catalogName()
-  {
-    return "ParticleBlockManager";
-  }
-
-  virtual const string getCatalogName() const
-  { return ParticleBlockManager::catalogName(); }
-
 
   /**
    * @brief Constructor for ParticleBlockManager object.
@@ -63,11 +39,6 @@ public:
    * @param parent pointer to the parent Group of this instantiation of ParticleBlockManager
    */
   ParticleBlockManager( string const & name, Group * const parent );
-
-  /**
-   * @brief Destructor
-   */
-  virtual ~ParticleBlockManager() override;
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
@@ -82,26 +53,6 @@ public:
                string_array const & regionNames );
 
   /**
-   * @brief Launch kernel function over all the sub-regions
-   * @tparam LAMBDA type of the user-provided function
-   * @param lambda kernel function
-   */
-  template< typename LAMBDA >
-  void forParticleSubRegions( LAMBDA lambda )
-  {
-    this->getGroup( dataRepository::keys::particleBlocks ).forSubGroups< ParticleBlock >( lambda );
-  }
-
-  /**
-   * @brief Registers and returns a particle block of name @p name.
-   * @param name The name of the created particle block.
-   * @return A reference to the new particle block. The ParticleBlockManager owns this new instance.
-   */
-  ParticleBlock & registerParticleBlock( string name );
-
-  Group & getParticleBlocks();
-
-  /**
    * @brief Get particle block by name.
    * @param[in] name Name of the particle block.
    * @return Reference to the particle block instance.
@@ -111,18 +62,29 @@ public:
     return this->getGroup( viewKeyStruct::particleBlocks() ).getGroup< ParticleBlock >( name );
   }
 
+  const Group & getParticleBlocks() const override;
+
+  Group & getParticleBlocks() override;
+
+  /**
+   * @brief Registers and returns a particle block of name @p name.
+   * @param name The name of the created particle block.
+   * @return A reference to the new particle block. The ParticleBlockManager owns this new instance.
+   */
+  ParticleBlock & registerParticleBlock( string name );
+
+  /**
+   * @brief Launch kernel function over all the sub-regions
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
+  template< typename LAMBDA >
+  void forParticleSubRegions( LAMBDA lambda )
+  {
+    this->getGroup( viewKeyStruct::particleBlocks ).forSubGroups< ParticleBlock >( lambda );
+  }
+
 private:
-
-  /**
-   * @brief Copy constructor.
-   */
-  ParticleBlockManager( const ParticleBlockManager & );
-
-  /**
-   * @brief Copy assignment operator.
-   * @return reference to this object
-   */
-  ParticleBlockManager & operator=( const ParticleBlockManager & );
 
   struct viewKeyStruct
   {
@@ -131,28 +93,13 @@ private:
   };
 
   /**
-   * @brief Returns a group containing the particle blocks as ParticleBlockABC instances
-   * @return Reference to the Group instance.
-   */
-  const Group & getParticleBlocks() const;
-
-  /**
    * @brief Get particle block at index @p iParticleBlock.
    * @param[in] iParticleBlock The particle block index.
    * @return Const reference to the instance.
    *
    * @note Mainly useful for iteration purposes.
    */
-  const ParticleBlockABC & getParticleBlock( localIndex iParticleBlock ) const;
-
-  /**
-   * @brief Get particle block at index @p iParticleBlock.
-   * @param[in] iParticleBlock The particle block index.
-   * @return Const reference to the instance.
-   *
-   * @note Mainly useful for iteration purposes.
-   */
-  //const ParticleBlockABC & getParticleBlock( localIndex iParticleBlock ) const;
+  ParticleBlock const & getParticleBlock( localIndex const blockIndex ) const;
 
   /**
    * @brief Returns the number of particles blocks
@@ -160,7 +107,7 @@ private:
    */
   localIndex numParticleBlocks() const;
 
-
 };
+
 }
 #endif /* GEOSX_MESH_PARTICLEBLOCKMANAGER_H_ */
