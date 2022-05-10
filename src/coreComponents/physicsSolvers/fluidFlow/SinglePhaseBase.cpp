@@ -435,15 +435,11 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     arrayView1d< real64 > const pres =
       subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
 
-    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< parallelHostPolicy >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
-  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
       pres[k] = presTableWrapper.compute( &elevation );
-#endif
     } );
   } );
 }

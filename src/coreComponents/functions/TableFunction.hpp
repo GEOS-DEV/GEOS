@@ -425,7 +425,11 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
       integer const corner = (point >> dim) & 1;
       cornerValue *= weights[dim][corner];
     }
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
     value += cornerValue;
+#endif
   }
   return value;
 }
@@ -501,7 +505,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && deri
   // Linear interpolation
   if( m_interpolationMethod == TableFunction::InterpolationType::Linear )
   {
-    return interpolateLinear( input, derivatives );
+    return this->interpolateLinear( input, derivatives );
   }
   // Nearest, Upper, Lower interpolation methods
   else
@@ -516,7 +520,7 @@ GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
-  integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
+  integer const numDimensions = LvArray::integerConversion< integer >( this->m_coordinates.size() );
 
   localIndex bounds[maxDimensions][2]{};
   real64 weights[maxDimensions][2]{};
@@ -525,7 +529,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
   // Determine position, weights
   for( integer dim = 0; dim < numDimensions; ++dim )
   {
-    arraySlice1d< real64 const > const coords = m_coordinates[dim];
+    arraySlice1d< real64 const > const coords = this->m_coordinates[dim];
     if( input[dim] <= coords[0] )
     {
       // Coordinate is to the left of this axis
@@ -581,11 +585,11 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
     {
       integer const corner = (point >> dim) & 1;
       tableIndex += bounds[dim][corner] * stride;
-      stride *= m_coordinates.sizeOfArray( dim );
+      stride *= this->m_coordinates.sizeOfArray( dim );
     }
 
     // Determine weighted value
-    real64 cornerValue = m_values[tableIndex];
+    real64 cornerValue = this->m_values[tableIndex];
     real64 dCornerValue_dInput[maxDimensions];
     for( integer dim = 0; dim < numDimensions; ++dim )
     {
@@ -609,23 +613,22 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
       real64 & d = derivatives[dim];
 
       // ====================================
+      //#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
+      //      GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+      //#else
       d += val;
+      //#endif
       // ====================================
-      // uncommenting this makes the hip-clang compiler fail to compile on Crusher via:
-      // FluidUpdateKernel<DeadOilFluid::KernelWrapper>::launch
-      // + DeadOilFluid::KernelWrapper::update
-      //   + DeadOilFluid::KernelWrapper::compute
-      //     + DeadOilFluid::KernelWrapper::computeViscosities
-      //       + TableFunction::compute
-      //         + TableFunction::interpolateLinear
-      // all of which are force-inlined to get to this point in the first place
-      // val is on the stack
-      // d is a value from an arrayview3d, which is sliced down to an array..
-      // is the issue &(phaseVisc.derivs)[ip][Deriv::dP] in DeadOilFluid::computeViscosities?
-      // phaseVisc.derivs is an Array(View)Slice, so we're taking the address of that object and grabbing an offset from there? but there isn't an array of those, only a struct containing two Slices/Views, and this is the latter, so what is that doing?
+      // uncommenting this makes the hip-clang compiler fail to compile on Crusher
     }
-
+    // ====================================
+    //#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
+    //    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+    //#else
     value += cornerValue;
+    //#endif
+    // ====================================
+    // same here
   }
   return value;
 }

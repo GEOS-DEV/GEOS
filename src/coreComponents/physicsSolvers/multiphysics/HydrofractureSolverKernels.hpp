@@ -53,7 +53,22 @@ struct DeformationUpdateKernel
 #endif
           )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
+    forAll< POLICY >( size, [elemsToFaces,
+			     faceToNodeMap,
+			     u,
+			     faceNormal,
+			     aperture,
+			     contactWrapper,
+			     hydraulicAperture,
+#ifdef GEOSX_USE_SEPERATION_COEFFICIENT			     
+			     apertureAtFailure,
+			     seperationCoeff0,
+			     seperationCoeff,
+			     dSeperationCoeff_dAper,
+#endif			     
+			     area,
+			     volume,
+			     deltaVolume] GEOSX_HOST_DEVICE ( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const kf1 = elemsToFaces[kfe][1];
@@ -69,8 +84,7 @@ struct DeformationUpdateKernel
       aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
 
       real64 dHydraulicAperture_dAperture = 0;
-      hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe],
-                                                                        dHydraulicAperture_dAperture );
+      hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dAperture );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
       real64 const s = aperture[kfe] / apertureAtFailure[kfe];

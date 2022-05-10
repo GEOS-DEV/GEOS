@@ -626,7 +626,19 @@ struct StateUpdateKernel
           arrayView2d< real64 > const & fractureTraction,
           arrayView1d< real64 > const & dFractureTraction_dPressure )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( size, [aperture,
+			     dispJump,
+			     hydraulicAperture,
+			     contactWrapper,
+			     deltaVolume,
+			     area,
+			     volume,
+			     porousMaterialWrapper,
+			     pressure,
+			     deltaPressure,
+			     oldHydraulicAperture,
+			     fractureTraction,
+			     dFractureTraction_dPressure] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       // update aperture to be equal to the normal displacement jump
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.

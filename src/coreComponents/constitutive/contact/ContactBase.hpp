@@ -68,7 +68,7 @@ public:
    * @return The hydraulic aperture that is always > 0
    */
   GEOSX_HOST_DEVICE
-  inline
+  GEOSX_FORCE_INLINE
   virtual real64 computeHydraulicAperture( real64 const aperture,
                                            real64 & dHydraulicAperture_dAperture ) const;
 
@@ -80,7 +80,7 @@ public:
    * @param[out] dTractionVector_dJump the derivative of the traction vector wrt displacement jump
    */
   GEOSX_HOST_DEVICE
-  inline
+  GEOSX_FORCE_INLINE
   virtual void computeTraction( localIndex const k,
                                 arraySlice1d< real64 const > const & oldDispJump,
                                 arraySlice1d< real64 const > const & dispJump,
@@ -97,7 +97,7 @@ public:
    * @return the updated traction
    */
   GEOSX_HOST_DEVICE
-  inline
+  GEOSX_FORCE_INLINE
   virtual void addPressureToTraction( real64 const & pressure,
                                       arraySlice1d< real64 >const & tractionVector,
                                       real64 & dTraction_dPressure ) const;
@@ -109,7 +109,7 @@ public:
    * @return the limit tangential traction norm
    */
   GEOSX_HOST_DEVICE
-  inline
+  GEOSX_FORCE_INLINE
   virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
                                                      real64 & dLimitTangentialTractionNorm_dTraction ) const
   { GEOSX_UNUSED_VAR( normalTraction, dLimitTangentialTractionNorm_dTraction ); return 0; };
@@ -216,18 +216,15 @@ protected:
 };
 
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
                                                      real64 & dHydraulicAperture_dAperture ) const
 {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
-  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-  return 0.0;
-#else
   return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
-#endif
 }
 
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void ContactBaseUpdates::addPressureToTraction( real64 const & pressure,
                                                 arraySlice1d< real64 > const & tractionVector,
                                                 real64 & dTraction_dPressure ) const
