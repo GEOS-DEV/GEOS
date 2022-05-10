@@ -134,11 +134,11 @@ void ParticleManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   }
 }
 
-void ParticleManager::generateMesh( Group & particleBlockManager )
+void ParticleManager::generateMesh( ParticleBlockManagerABC & particleBlockManager )
 {
   this->forParticleRegions< ParticleRegion >( [&]( auto & particleRegion )
   {
-    particleRegion.generateMesh( particleBlockManager.getGroup( keys::particleBlocks ) );
+    particleRegion.generateMesh( particleBlockManager.getParticleBlocks() );
   } );
 }
 

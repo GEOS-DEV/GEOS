@@ -143,7 +143,7 @@ public:
    * @brief Generate the mesh.
    * @param [in] particleBlockManager pointer to the ParticleBlockManager
    */
-  void generateMesh( Group & particleBlockManager );
+  void generateMesh( ParticleBlockManagerABC & particleBlockManager );
 
   /**
    * @brief Create a new ParticleRegion object as a child of this group.

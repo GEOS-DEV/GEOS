@@ -26,7 +26,7 @@ using namespace dataRepository;
 ParticleBlockManager::ParticleBlockManager( string const & name, Group * const parent ):
   ParticleBlockManagerABC( name, parent )
 {
-  this->registerGroup< Group >( viewKeyStruct::particleBlocks );
+  this->registerGroup< Group >( viewKeyStruct::particleBlocks() );
 }
 
 void ParticleBlockManager::resize( integer_array const & numParticles,
