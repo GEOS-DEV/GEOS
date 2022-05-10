@@ -259,10 +259,10 @@ struct PrecomputeSourceAndReceiverKernel
 };
 
 template< typename FE_TYPE >
-struct MassMatrixKernel
+struct MassAndDampingMatrixKernel
 {
 
-  MassMatrixKernel( FE_TYPE const & finiteElement )
+  MassAndDampingMatrixKernel( FE_TYPE const & finiteElement )
     : m_finiteElement( finiteElement )
   {}
 
@@ -277,9 +277,21 @@ struct MassMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
+          localIndex const numFacesPerElem,
+          localIndex const numNodesPerFace,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+          arrayView2d< localIndex const > const elemsToFaces,
+          ArrayOfArraysView< localIndex const > const facesToNodes,
+          arrayView1d< integer const > const facesDomainBoundaryIndicator,
+          arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
+          arrayView2d< real64 const > const faceNormal,
           arrayView1d< real64 const > const density,
+          arrayView1d< real64 > const velocityVp,
+          arrayView1d< real64 > const velocityVs,
+          arrayView1d< real64 > const damping_x,
+          arrayView1d< real64 > const damping_y,
+          arrayView1d< real64 > const damping_z,
           arrayView1d< real64 > const mass )
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -287,6 +299,7 @@ struct MassMatrixKernel
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+  
 
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -311,6 +324,73 @@ struct MassMatrixKernel
           RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][a]], localIncrement );
         }
       }
+
+      for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
+      {
+        localIndex const iface = elemsToFaces[k][kfe];
+
+        if( facesDomainBoundaryIndicator[iface] == 1 && freeSurfaceFaceIndicator[iface] != 1 )
+        {
+          for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+          {
+            FE_TYPE::calcN( q, N );
+            real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+
+            real64 invJ[3][3]={{0}};
+            FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
+
+            for( localIndex a=0; a < numNodesPerFace; ++a )
+            {
+              /// compute ds=||detJ*invJ*normalFace_{kfe}||
+              real64 tmp[3]={0};
+              real64 ds = 0.0;
+              for( localIndex b=0; b<3; ++b )
+              {
+                for( localIndex j = 0; j < 3; ++j )
+                {
+                  tmp[b] += invJ[j][b]*faceNormal[iface][j];
+                }
+                ds +=tmp[b]*tmp[b];
+              }
+              ds = std::sqrt( ds );
+
+              localIndex numNodeGl = facesToNodes[iface][a];
+
+              // Damping in x=xpos and x=xneg direction
+              if( faceNormal[iface][0] < 0.0 || faceNormal[iface][0] > 0.0)
+              {
+                real64 const alpha_x = density[k] * velocityVp[k];
+                real64 const alpha_y = density[k] * velocityVs[k];
+                real64 const alpha_z = density[k] * velocityVs[k];
+                damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
+                damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
+                damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+              }
+              // Damping in y=ypos and y=yneg direction
+              if( faceNormal[iface][1] < 0.0 || faceNormal[iface][1] > 0.0)
+              {
+                real64 const alpha_x = density[k] * velocityVs[k];
+                real64 const alpha_y = density[k] * velocityVp[k];
+                real64 const alpha_z = density[k] * velocityVs[k];
+                damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
+                damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
+                damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+              }
+              // Damping in z=zpos and z=zneg direction
+              if( faceNormal[iface][2] < 0.0 || faceNormal[iface][2] > 0.0)
+              {
+                real64 const alpha_x = density[k] * velocityVs[k];
+                real64 const alpha_y = density[k] * velocityVs[k];
+                real64 const alpha_z = density[k] * velocityVp[k];
+                damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
+                damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
+                damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+              }
+            }
+          }
+        }
+      }
+
     } ); // end loop over element
   }
 
