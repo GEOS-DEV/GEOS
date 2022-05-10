@@ -300,7 +300,9 @@ DeadOilFluid::KernelWrapper::
     // get the phase index
     integer const ip = m_hydrocarbonPhaseOrder[iph];
     // interpolate in the table to get the phase viscosity and derivatives
-    phaseVisc.value[ip] = m_viscosityTables[iph].compute( &pressure, &(phaseVisc.derivs)[ip][Deriv::dP] );
+    real64 dPhaseVisc_dPres = 0.0;
+    phaseVisc.value[ip] = m_viscosityTables[iph].compute( &pressure, &dPhaseVisc_dPres );
+    phaseVisc.derivs[ip][Deriv::dP] = dPhaseVisc_dPres;
   }
 
   // 2. Water phase: use the constant viscosity provided by the user

@@ -181,7 +181,7 @@ public:
   arrayView2d< real64 const > dDensity_dPressure() const { return m_dDensity_dPressure; }
 
   arrayView2d< real64 const > initialDensity() const { return m_initialDensity; }
-  arrayView2d< real64 const > densityOld() const { return m_densityOld; }
+  arrayView2d< real64 const > density_n() const { return m_density_n; }
 
   arrayView2d< real64 > viscosity() { return m_viscosity; }
   arrayView2d< real64 const > viscosity() const { return m_viscosity; }
@@ -201,7 +201,7 @@ protected:
   array2d< real64 > m_dDensity_dPressure;
 
   array2d< real64 > m_initialDensity;
-  array2d< real64 > m_densityOld;
+  array2d< real64 > m_density_n;
 
   array2d< real64 > m_viscosity;
   array2d< real64 > m_dViscosity_dPressure;

@@ -180,10 +180,10 @@ public:
     m_elemGhostRank( subRegion.ghostRank() ),
     m_volume( subRegion.getElementVolume() ),
     m_deltaVolume( subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaVolume >() ),
-    m_porosityOld( solid.getOldPorosity() ),
+    m_porosity_n( solid.getPorosity_n() ),
     m_porosityNew( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
-    m_densityOld( fluid.densityOld() ),
+    m_density_n( fluid.density_n() ),
     m_density( fluid.density() ),
     m_dDensity_dPres( fluid.dDensity_dPressure() ),
     m_localMatrix( localMatrix ),
@@ -204,7 +204,7 @@ public:
     real64 poreVolumeNew = 0.0;
 
     /// Pore volume at the previous converged time step
-    real64 poreVolumeOld = 0.0;
+    real64 poreVolume_n = 0.0;
 
     /// Derivative of pore volume with respect to pressure
     real64 dPoreVolume_dPres = 0.0;
@@ -243,7 +243,7 @@ public:
   {
     // initialize the pore volume
     stack.poreVolumeNew = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosityNew[ei][0];
-    stack.poreVolumeOld = m_volume[ei] * m_porosityOld[ei][0];
+    stack.poreVolume_n = m_volume[ei] * m_porosity_n[ei][0];
     stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
 
     // set degree of freedom index for this element
@@ -264,7 +264,7 @@ public:
                             FUNC && kernelOp = NoOpFunc{} ) const
   {
     // Residual contribution is mass conservation in the cell
-    stack.localResidual = stack.poreVolumeNew * m_density[ei][0] - stack.poreVolumeOld * m_densityOld[ei][0];
+    stack.localResidual = stack.poreVolumeNew * m_density[ei][0] - stack.poreVolume_n * m_density_n[ei][0];
 
     // Derivative of residual wrt to pressure in the cell
     stack.localJacobian = stack.dPoreVolume_dPres * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolumeNew;
@@ -334,12 +334,12 @@ protected:
   arrayView1d< real64 const > const m_deltaVolume;
 
   /// Views on the porosity
-  arrayView2d< real64 const > const m_porosityOld;
+  arrayView2d< real64 const > const m_porosity_n;
   arrayView2d< real64 const > const m_porosityNew;
   arrayView2d< real64 const > const m_dPoro_dPres;
 
   /// Views on density
-  arrayView2d< real64 const > const m_densityOld;
+  arrayView2d< real64 const > const m_density_n;
   arrayView2d< real64 const > const m_density;
   arrayView2d< real64 const > const m_dDensity_dPres;
 
@@ -401,7 +401,7 @@ public:
     Base::computeAccumulation( ei, stack, [&] ()
     {
 #if ALLOW_CREATION_MASS
-      if( Base::m_volume[ei] * Base::m_densityOld[ei][0] > 1.1 * m_creationMass[ei] )
+      if( Base::m_volume[ei] * Base::m_density_n[ei][0] > 1.1 * m_creationMass[ei] )
       {
         stack.localResidual += m_creationMass[ei] * 0.25;
       }
@@ -485,14 +485,13 @@ struct FluidUpdateKernel
 {
   template< typename FLUID_WRAPPER >
   static void launch( FLUID_WRAPPER const & fluidWrapper,
-                      arrayView1d< real64 const > const & pres,
-                      arrayView1d< real64 const > const & dPres )
+                      arrayView1d< real64 const > const & pres )
   {
     forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.update( k, q, pres[k] + dPres[k] );
+        fluidWrapper.update( k, q, pres[k] );
       }
     } );
   }
@@ -508,8 +507,8 @@ struct ResidualNormKernel
                       arrayView1d< globalIndex const > const & presDofNumber,
                       arrayView1d< integer const > const & ghostRank,
                       arrayView1d< real64 const > const & volume,
-                      arrayView2d< real64 const > const & densOld,
-                      arrayView2d< real64 const > const & poroOld,
+                      arrayView2d< real64 const > const & dens_n,
+                      arrayView2d< real64 const > const & poro_n,
                       real64 * localResidualNorm )
   {
     RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localSum( 0.0 );
@@ -523,7 +522,7 @@ struct ResidualNormKernel
         localIndex const lid = presDofNumber[a] - rankOffset;
         real64 const val = localResidual[lid];
         localSum += val * val;
-        normSum += poroOld[a][0] * densOld[a][0] * volume[a];
+        normSum += poro_n[a][0] * dens_n[a][0] * volume[a];
         count += 1;
       }
     } );
@@ -544,7 +543,6 @@ struct SolutionCheckKernel
                             arrayView1d< globalIndex const > const & presDofNumber,
                             arrayView1d< integer const > const & ghostRank,
                             arrayView1d< real64 const > const & pres,
-                            arrayView1d< real64 const > const & dPres,
                             real64 const scalingFactor )
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
@@ -554,7 +552,7 @@ struct SolutionCheckKernel
       if( ghostRank[ei] < 0 && presDofNumber[ei] >= 0 )
       {
         localIndex const lid = presDofNumber[ei] - rankOffset;
-        real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[lid];
+        real64 const newPres = pres[ei] + scalingFactor * localSolution[lid];
 
         if( newPres < 0.0 )
         {

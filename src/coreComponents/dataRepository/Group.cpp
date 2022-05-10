@@ -147,6 +147,7 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
   }
 
   // Loop over the child nodes of the targetNode
+  array1d< string > childNames;
   for( xmlWrapper::xmlNode childNode : targetNode.children() )
   {
     // Get the child tag and name
@@ -154,6 +155,14 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     if( childName.empty() )
     {
       childName = childNode.name();
+    }
+    else
+    {
+      // Make sure child names are not duplicated
+      GEOSX_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
+                      GEOSX_FMT( "Error: An XML block cannot contain children with duplicated names ({}/{}). ",
+                                 getPath(), childName ) );
+      childNames.emplace_back( childName );
     }
 
     // Create children
@@ -541,7 +550,7 @@ void Group::loadFromConduit()
     return;
   }
 
-  m_size = m_conduitNode.fetch_child( "__size__" ).value();
+  m_size = m_conduitNode.child( "__size__" ).value();
   localIndex const groupSize = m_size;
 
   forWrappers( [&]( WrapperBase & wrapper )

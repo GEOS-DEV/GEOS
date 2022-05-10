@@ -105,7 +105,7 @@
       scale="0.0"/>
 
     <FieldSpecification
-      name="initialPressure"
+      name="initialPressure_nm1"
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"

@@ -54,8 +54,8 @@ EXTRINSIC_MESH_DATA_TRAIT( initialDensity,
                            WRITE_AND_READ,
                            "Initial density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( densityOld,
-                           "densityOld",
+EXTRINSIC_MESH_DATA_TRAIT( density_n,
+                           "density_n",
                            array2d< real64 >,
                            0,
                            NOPLOT,
