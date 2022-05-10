@@ -67,12 +67,13 @@ VTKOutput::~VTKOutput()
 void VTKOutput::postProcessInput()
 {
   m_writer.setOutputLocation( getOutputDirectory(), m_plotFileRoot );
-  m_writer.setFieldNames( m_fieldNames );
+  m_writer.setFieldNames( m_fieldNames.toViewConst() );
 
+  string const fieldNamesString = viewKeysStruct::fieldNames;
   GEOSX_LOG_RANK_0_IF( !m_fieldNames.empty(),
                        GEOSX_FMT(
                          "{} `{}`: found {} fields to plot. These fields will be output regardless of the plotLevel specified by the user. No other field will be output. Remove keyword `{}` from the XML file to output fields based on their plotLevel.",
-                         catalogName(), getName(), std::to_string( m_fieldNames.size() ), viewKeysStruct::fieldNames ) );
+                         catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString ) );
 
 }
 

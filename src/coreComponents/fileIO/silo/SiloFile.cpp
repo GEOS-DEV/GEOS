@@ -24,6 +24,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+#include "common/Logger.hpp"
 #include "common/TypeDispatch.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
@@ -878,7 +879,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
       {
         auto const & wrapper = wrapperIter.second;
 
-        if( isFieldPlotEnabled( wrapper->getPlotLevel(), wrapper->getName() ) )
+        if( isFieldPlotEnabled( *wrapper ) )
         {
           std::type_info const & typeID = wrapper->getTypeId();
 
@@ -1233,7 +1234,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
     {
       WrapperBase const & wrapper = *wrapperIter.second;
 
-      if( isFieldPlotEnabled( wrapper.getPlotLevel(), wrapper.getName() ) )
+      if( isFieldPlotEnabled( wrapper ) )
       {
         // the field name is the key to the map
         string const & fieldName = wrapper.getName();

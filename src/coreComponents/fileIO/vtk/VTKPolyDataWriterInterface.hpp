@@ -121,7 +121,7 @@ public:
    * @brief Set the names of the fields to output
    * @param[in] fieldNames the fields to output
    */
-  void setFieldNames( array1d< string > const & fieldNames )
+  void setFieldNames( arrayView1d< string const > const & fieldNames )
   {
     m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   }
@@ -166,8 +166,20 @@ private:
 
   /**
    * @brief Check if plotting is enabled for this field
+   * @param[in] wrapper the wrapper
+   * @return true if this wrapper should be plot, false otherwise
+   */
+  bool isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const
+  {
+    return this->isFieldPlotEnabled( wrapper.getPlotLevel(), wrapper.getName() );
+  }
+
+
+  /**
+   * @brief Check if plotting is enabled for this field
    * @param[in] wrapperPlotLevel the plot level of the wrapper
    * @param[in] wrapperName the name of the wrapper
+   * @return true if this wrapper should be plot, false otherwise
    */
   bool isFieldPlotEnabled( dataRepository::PlotLevel const wrapperPlotLevel,
                            string const & wrapperName ) const;

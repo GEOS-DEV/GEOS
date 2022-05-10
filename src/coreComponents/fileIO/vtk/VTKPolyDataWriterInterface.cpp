@@ -15,6 +15,7 @@
 // Source includes
 #include "VTKPolyDataWriterInterface.hpp"
 
+#include "common/Logger.hpp"
 #include "common/TypeDispatch.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -633,7 +634,7 @@ void VTKPolyDataWriterInterface::writeNodeFields( NodeManager const & nodeManage
   for( auto const & wrapperIter : nodeManager.wrappers() )
   {
     auto const & wrapper = *wrapperIter.second;
-    if( isFieldPlotEnabled( wrapper.getPlotLevel(), wrapper.getName() ) )
+    if( isFieldPlotEnabled( wrapper ) )
     {
       vtkSmartPointer< vtkDataArray > data;
       types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
@@ -695,8 +696,7 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
   {
     for( auto const & wrapperIter : subRegion.wrappers() )
     {
-      if( isFieldPlotEnabled( wrapperIter.second->getPlotLevel(), wrapperIter.second->getName() ) &&
-          materialFields.count( wrapperIter.first ) == 0 )
+      if( isFieldPlotEnabled( *wrapperIter.second ) && materialFields.count( wrapperIter.first ) == 0 )
       {
         regularFields.insert( wrapperIter.first );
       }
