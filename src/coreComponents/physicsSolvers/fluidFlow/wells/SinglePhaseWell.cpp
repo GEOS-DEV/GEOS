@@ -774,19 +774,20 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
                                scalingFactor,
                                { m_numDofPerWellElement, 1, m_numDofPerWellElement } );
 
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( extrinsicMeshData::well::pressure::key() );
-  fieldNames["elems"].emplace_back( extrinsicMeshData::well::connectionRate::key() );
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                arrayView1d< string const > const & regionNames )
   {
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    FieldIdentifiers fieldsToBeSync;
+
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::well::pressure::key(),
+                                       extrinsicMeshData::well::connectionRate::key() },
+                                     regionNames );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );
-
   } );
 
 }

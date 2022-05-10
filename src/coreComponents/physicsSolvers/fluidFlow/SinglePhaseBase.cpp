@@ -203,14 +203,16 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( extrinsicMeshData::flow::pressure::key() ) );
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key() },
+                                     regionNames );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
     // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
     // They will be updated in applySystemSolution and ImplicitStepComplete, respectively
