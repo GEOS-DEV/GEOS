@@ -294,7 +294,12 @@ void HDFHistoryIO::write()
         // forward the data buffer pointer to the start of the next row
         if( dataBuffer )
         {
-          dataBuffer += m_localIdxCounts_buffered[ row ] * m_typeSize;
+          hsize_t rowsize = m_localIdxCounts_buffered[ row ] * m_typeSize;
+          for( hsize_t ii = 1; ii < m_rank; ++ii )
+          {
+            rowsize *= m_dims[ii];
+          }
+          dataBuffer += rowsize;
         }
 
         // unfortunately have to close/open the file for each row since the accessing mpi ranks and extents can change over time
