@@ -743,6 +743,13 @@ Element: Python
 .. include:: ../../coreComponents/schema/docs/Python.rst
 
 
+.. _XML_ReactiveCompositionalMultiphaseOBL:
+
+Element: ReactiveCompositionalMultiphaseOBL
+===========================================
+.. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
+
+
 .. _XML_Restart:
 
 Element: Restart
@@ -1795,6 +1802,13 @@ Datastructure: ProppantTransport
 Datastructure: Python
 =====================
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
+
+
+.. _DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL:
+
+Datastructure: ReactiveCompositionalMultiphaseOBL
+=================================================
+.. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
 
 
 .. _DATASTRUCTURE_Restart:
