@@ -9,6 +9,7 @@
       stabilizationName="TPFAstabilization"
       targetRegions="{ Region, Fracture }"
       contactRelationName="fractureMaterial"
+      fractureRegionName="Fracture"
       logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
@@ -35,7 +36,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Region }"
-      
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>
