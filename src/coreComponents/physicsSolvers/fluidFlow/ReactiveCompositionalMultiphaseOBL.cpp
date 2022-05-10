@@ -83,6 +83,7 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
 
   this->registerWrapper( viewKeyStruct::OBLOperatorsTableFileString(), &m_OBLOperatorsTableFile ).
     setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "File containing OBL operator values" );
 
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
@@ -134,7 +135,7 @@ void ReactiveCompositionalMultiphaseOBL::setupDofs( DomainPartition const & doma
                                                     DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::elemDofFieldString(),
-                       DofManager::Location::Elem,
+                       FieldLocation::Elem,
                        m_numDofPerCell,
                        m_meshTargets );
 
@@ -504,19 +505,19 @@ void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const &
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+                                               arrayView1d< string const > const & regionNames )
   {
-    std::map< string, string_array > fieldNames;
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addElementFields( {  extrinsicMeshData::flow::pressure::key() }, regionNames );
     if( m_numComponents > 1 )
     {
-      fieldNames["elems"].emplace_back( extrinsicMeshData::flow::globalCompFraction::key() );
+      fieldsToBeSync.addElementFields( {  extrinsicMeshData::flow::globalCompFraction::key() }, regionNames );
     }
     if( m_enableEnergyBalance )
     {
-      fieldNames["elems"].emplace_back( extrinsicMeshData::flow::temperature::key() );
+      fieldsToBeSync.addElementFields( {  extrinsicMeshData::flow::temperature::key() }, regionNames );
     }
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );
 }
 
@@ -528,16 +529,17 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
-  fieldNames["elems"].emplace_back( extrinsicMeshData::flow::globalCompFraction::key() );
-
   // set mass fraction flag on fluid models
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
+
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key() }, regionNames );
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::globalCompFraction::key() }, regionNames );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
