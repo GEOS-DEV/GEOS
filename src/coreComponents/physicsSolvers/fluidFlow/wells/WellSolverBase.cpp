@@ -131,7 +131,7 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
   } );
 
   dofManager.addField( wellElementDofName(),
-                       DofManager::Location::Elem,
+                       FieldLocation::Elem,
                        numDofPerWellElement(),
                        meshTargets );
 

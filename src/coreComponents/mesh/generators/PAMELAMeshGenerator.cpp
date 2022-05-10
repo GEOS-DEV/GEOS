@@ -486,6 +486,8 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
   PAMELA::PartMap< PAMELA::Polyhedron * > const polyhedronPartMap =
     std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ) );
 
+  std::vector< string > regionNames;
+
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex,
                                                                          localIndex,
                                                                          ElementRegionBase const & region,
@@ -503,9 +505,14 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
     GEOSX_ERROR_IF( cellBlockPtr == nullptr, "Internal logic error (PAMELA subregion not found)" );
 
     importFieldsOnSubRegion( *regionPtr, *cellBlockPtr, region, subRegion );
+    regionNames.emplace_back( region.getName() );
   } );
 
-  CommunicationTools::getInstance().synchronizeFields( { { "elems", m_fieldNamesInGEOSX } },
+  std::vector< string > tmp( m_fieldNamesInGEOSX.begin(), m_fieldNamesInGEOSX.end() );
+  FieldIdentifiers fieldsToBeSync;
+  fieldsToBeSync.addElementFields( tmp, regionNames );
+
+  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                        domain.getMeshBody( this->getName() ).getMeshLevel( 0 ),
                                                        domain.getNeighbors(),
                                                        false );
