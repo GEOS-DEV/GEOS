@@ -451,6 +451,9 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
   arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
 
+  freeSurfaceFaceIndicator.zero();
+  freeSurfaceNodeIndicator.zero();
+
   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "faceManager",
@@ -466,9 +469,6 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
       real64 const value = bc.getScale();
-
-      freeSurfaceFaceIndicator.zero();
-      freeSurfaceNodeIndicator.zero();
 
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {
@@ -564,11 +564,11 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     } );
 
     /// synchronize pressure fields
-    std::map< string, string_array > fieldNames;
-    fieldNames["node"].emplace_back( extrinsicMeshData::Pressure_np1::key() );
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::Pressure_np1::key() } );
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
-    syncFields.synchronizeFields( fieldNames,
+    syncFields.synchronizeFields( fieldsToBeSync,
                                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                   domain.getNeighbors(),
                                   true );
