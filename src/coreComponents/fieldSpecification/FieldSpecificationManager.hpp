@@ -29,17 +29,6 @@
 
 namespace geosx
 {
-namespace dataRepository
-{
-namespace keys
-{
-/**
- * @brief The key for BoundaryConditionManager
- * @return the key
- */
-string const boundaryConditionManager( "BoundaryConditionManager" );
-}
-}
 
 /**
  * @class FieldSpecificationManager
@@ -233,43 +222,16 @@ public:
     // loop over all FieldSpecificationBase objects
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
-      int const isInitialCondition = fs.initialCondition();
+      bool const apply = fs.initialCondition()
+                       ? fieldPath.empty() && fieldName.empty()
+                       : fs.getObjectPath().find( fieldPath ) != string::npos
+                         && time >= fs.getStartTime() && time < fs.getEndTime()
+                         && fs.getFieldName() == fieldName;
 
-      if( ( isInitialCondition && fieldPath.empty() ) ||
-          ( !isInitialCondition && fs.getObjectPath().find( fieldPath ) != string::npos ) )
+      if( apply )
       {
-        string_array const targetPath = stringutilities::tokenize( fs.getObjectPath(), "/" );
-        localIndex const targetPathLength = LvArray::integerConversion< localIndex >( targetPath.size());
-        string const targetName = fs.getFieldName();
-
-        if( ( isInitialCondition && fieldName=="" ) ||
-            ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && targetName==fieldName ) )
-        {
-          dataRepository::Group * targetGroup = &mesh;
-          for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
-          {
-            dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
-            if( elemRegionSubGroup != nullptr )
-            {
-              targetGroup = elemRegionSubGroup;
-            }
-
-            dataRepository::Group * const elemSubRegionSubGroup = targetGroup->getGroupPointer( ElementRegionBase::viewKeyStruct::elementSubRegions() );
-            if( elemSubRegionSubGroup != nullptr )
-            {
-              targetGroup = elemSubRegionSubGroup;
-            }
-
-            if( targetPath[pathLevel] == ElementRegionManager::groupKeyStruct::elementRegionsGroup() ||
-                targetPath[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions() )
-            {
-              continue;
-            }
-
-            targetGroup = &targetGroup->getGroup( targetPath[pathLevel] );
-          }
-          applyOnTargetRecursive( *targetGroup, fs, targetName, lambda );
-        }
+        array1d< string > const targetPath = stringutilities::tokenize( fs.getObjectPath(), "/" );
+        applyToPathRecursive( &mesh, targetPath, fs, std::forward< LAMBDA >( lambda ) );
       }
     } );
   }
@@ -277,28 +239,72 @@ public:
 private:
 
   template< typename BCTYPE, typename LAMBDA >
-  void applyOnTargetRecursive( Group & target,
-                               BCTYPE const & fs,
-                               string const & targetName,
-                               LAMBDA && lambda
-                               ) const
+  void applyToPathRecursive( dataRepository::Group * targetGroup,
+                             Span< string const > const targetPath,
+                             BCTYPE const & fs,
+                             LAMBDA && lambda ) const
   {
-    if( ( target.getParent().getName() == ElementRegionBase::viewKeyStruct::elementSubRegions()
-          || target.getName() == "nodeManager"
-          || target.getName() == "FaceManager"
-          || target.getName() == "edgeManager" ) // TODO these 3 strings are harcoded because for the moment, there are
-                                                 // inconsistencies with the name of the Managers...
-        && target.getName() != ObjectManagerBase::groupKeyStruct::setsString()
-        && target.getName() != ObjectManagerBase::groupKeyStruct::neighborDataString() )
+    constexpr std::array< char const *, 2 > groupsToSkip =
     {
-      dataRepository::Group const & setGroup = target.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
-      string_array setNames = fs.getSetNames();
-      for( auto & setName : setNames )
+      ElementRegionManager::groupKeyStruct::elementRegionsGroup(),
+      ElementRegionBase::viewKeyStruct::elementSubRegions()
+    };
+
+    for( std::size_t pathLevel = 0; pathLevel < targetPath.size(); ++pathLevel )
+    {
+      // Skip certain groups in the tree by jumping directly to them
+      for( char const * const groupName : groupsToSkip )
+      {
+        if( dataRepository::Group * const subGroup = targetGroup->getGroupPointer( groupName ) )
+        {
+          targetGroup = subGroup;
+        }
+      }
+
+      // Also skip them in the object path being processed
+      if( std::find( groupsToSkip.begin(), groupsToSkip.end(), targetPath[pathLevel] ) != groupsToSkip.end() )
+      {
+        continue;
+      }
+
+      // If the next token is a list, process it recursively and stop
+      if( targetPath[pathLevel][0] == '{' )
+      {
+        array1d< string > subGroupNames;
+        LvArray::input::stringToArray( subGroupNames, targetPath[pathLevel] );
+        for( string const & subGroupName : subGroupNames )
+        {
+          applyToPathRecursive( &targetGroup->getGroup( subGroupName ),
+                                targetPath.subspan( pathLevel + 1 ),
+                                fs, std::forward< LAMBDA >( lambda ) );
+        }
+        return;
+      }
+
+      targetGroup = &targetGroup->getGroup( targetPath[pathLevel] );
+    }
+    applyOnTargetRecursive( *targetGroup, fs, std::forward< LAMBDA >( lambda ) );
+  }
+
+  template< typename BCTYPE, typename LAMBDA >
+  void applyOnTargetRecursive( dataRepository::Group & target,
+                               BCTYPE const & fs,
+                               LAMBDA && lambda ) const
+  {
+    // Set-based application makes sense only for classes derived from ObjectManagerBase...
+    // except for ElementRegionManager and ElementRegionBase, which are intermediate layers.
+    ObjectManagerBase const * const manager = dynamicCast< ObjectManagerBase * >( &target );
+    if( manager != nullptr
+        && target.getName() != MeshLevel::groupStructKeys::elemManagerString
+        && target.getParent().getName() != ElementRegionManager::groupKeyStruct::elementRegionsGroup() )
+    {
+      dataRepository::Group const & setGroup = manager->sets();
+      for( string const & setName : fs.getSetNames() )
       {
         if( setGroup.hasWrapper( setName ) )
         {
-          SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
-          lambda( fs, setName, targetSet, target, targetName );
+          SortedArrayView< localIndex const > const targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
+          lambda( fs, setName, targetSet, target, fs.getFieldName() );
         }
       }
     }
@@ -306,7 +312,7 @@ private:
     {
       target.forSubGroups( [&]( Group & subTarget )
       {
-        applyOnTargetRecursive( subTarget, fs, targetName, lambda );
+        applyOnTargetRecursive( subTarget, fs, std::forward< LAMBDA >( lambda ) );
       } );
     }
   }
@@ -331,7 +337,7 @@ FieldSpecificationManager::
          [&]( FieldSpecificationBase const & fs,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,
-              Group & targetGroup,
+              dataRepository::Group & targetGroup,
               string const & targetField )
   {
     fs.applyFieldValue< FieldSpecificationEqual, POLICY >( targetSet, time, targetGroup, targetField );
@@ -355,7 +361,7 @@ FieldSpecificationManager::
          [&]( FieldSpecificationBase const & fs,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,
-              Group & targetGroup,
+              dataRepository::Group & targetGroup,
               string const & targetField )
   {
     preLambda( fs, targetSet );

@@ -122,6 +122,11 @@ stringToInputVariable( T & target, string const & value )
   ss >> target;
 }
 
+inline void stringToInputVariable( string & target, string const & value )
+{
+  target = value;
+}
+
 /**
  * @brief Parse a string and fill a R1Tensor with the value(s) in the string.
  * @param[out] target the object to read values into

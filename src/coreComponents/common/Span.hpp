@@ -219,9 +219,14 @@ public:
    * @brief @return a new span of @p count elements starting at @p offset
    * @param offset starting index
    * @param count number of elements
+   * @note if @p count == -1, the result contains all remaining elements
    */
-  Span< element_type > subspan( size_type const offset, size_type const count ) const
+  Span< element_type > subspan( size_type const offset, size_type const count = -1 ) const
   {
+    if( count == size_type( -1 ) )
+    {
+      return { m_data + offset, m_size - offset };
+    }
     GEOSX_ASSERT_GE( m_size, offset + count );
     return { m_data + offset, count };
   }
