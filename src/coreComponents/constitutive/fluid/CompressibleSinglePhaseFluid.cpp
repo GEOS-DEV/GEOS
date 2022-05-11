@@ -141,8 +141,13 @@ CompressibleSinglePhaseFluid::createKernelWrapper()
                         KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ),
                         m_density,
                         m_dDensity_dPressure,
+                        m_dDensity_dTemperature, 
                         m_viscosity,
-                        m_dViscosity_dPressure );
+                        m_dViscosity_dPressure,
+                        m_dViscosity_dTemperature, 
+                        m_internalEnergy, 
+                        m_dInternalEnergy_dPressure,
+                        m_dInternalEnergy_dTemperature );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, string const &, Group * const )

@@ -46,12 +46,22 @@ public:
                                  ViscRelationType const & viscRelation,
                                  arrayView2d< real64 > const & density,
                                  arrayView2d< real64 > const & dDens_dPres,
+                                 arrayView2d< real64 > const & dDens_dTemp, 
                                  arrayView2d< real64 > const & viscosity,
-                                 arrayView2d< real64 > const & dVisc_dPres )
+                                 arrayView2d< real64 > const & dVisc_dPres, 
+                                 arrayView2d< real64 > const & dVisc_dTemp, 
+                                 arrayView2d< real64 > const & internalEnergy, 
+                                 arrayView2d< real64 > const & dIntEnergy_dPres, 
+                                 arrayView2d< real64 > const & dIntEnergy_dTemp )
     : SingleFluidBaseUpdate( density,
                              dDens_dPres,
+                             dDens_dTemp, 
                              viscosity,
-                             dVisc_dPres ),
+                             dVisc_dPres,
+                             dVisc_dTemp, 
+                             internalEnergy, 
+                             dIntEnergy_dPres,
+                             dIntEnergy_dTemp ),
     m_densRelation( densRelation ),
     m_viscRelation( viscRelation )
   {}
@@ -72,7 +82,7 @@ public:
   GEOSX_FORCE_INLINE
   virtual void compute( real64 const pressure,
                         real64 & density,
-                        real64 & viscosity ) const override
+                        real64 & viscosity) const override
   {
     m_densRelation.compute( pressure, density );
     m_viscRelation.compute( pressure, viscosity );
@@ -92,10 +102,47 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
+  virtual void compute( real64 const pressure,
+                        real64 const temperature, 
+                        real64 & density,
+                        real64 & dDensity_dPressure,
+                        real64 & dDensity_dTemperature, 
+                        real64 & viscosity,
+                        real64 & dViscosity_dPressure, 
+                        real64 & dViscosity_dTemperature, 
+                        real64 & internalEnergy, 
+                        real64 & dInternalEnergy_dPressure, 
+                        real64 & dInternalEnergy_dTemperature ) const override
+  {
+    GEOSX_UNUSED_VAR( temperature, dDensity_dTemperature, dViscosity_dTemperature,
+                      internalEnergy, dInternalEnergy_dPressure, dInternalEnergy_dTemperature ); 
+
+    m_densRelation.compute( pressure, density, dDensity_dPressure );
+    m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure ) const override
   {
+    compute( pressure,
+             m_density[k][q],
+             m_dDens_dPres[k][q],
+             m_viscosity[k][q],
+             m_dVisc_dPres[k][q] );
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void update( localIndex const k,
+                       localIndex const q,
+                       real64 const pressure,
+                       real64 const temperature ) const override
+  {
+    GEOSX_UNUSED_VAR( temperature ); 
+
     compute( pressure,
              m_density[k][q],
              m_dDens_dPres[k][q],
