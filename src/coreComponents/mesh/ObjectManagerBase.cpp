@@ -270,7 +270,7 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
     std::set_difference( input.cbegin(), input.cend(), available.cbegin(), available.cend(), std::inserter( tmp1, tmp1.end() ) );
     if( !tmp1.empty() )
     {
-      GEOSX_LOG( "Wrappers \"" << stringutilities::join( tmp1, ", " ) << "\" were requested from \"" << getName() << "\" but are not available." );
+      GEOSX_ERROR( "Wrappers \"" << stringutilities::join( tmp1, ", " ) << "\" were requested from \"" << getName() << "\" but are not available." );
     }
 
     // Not taking the wrappers that are excluded.
