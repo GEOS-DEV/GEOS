@@ -14,6 +14,7 @@ set( mesh_headers
      ExtrinsicMeshData.hpp
      FaceElementSubRegion.hpp
      FaceManager.hpp
+     FieldIdentifiers.hpp
      InterObjectRelation.hpp
      MeshBody.hpp
      MeshForLoopInterface.hpp
@@ -107,7 +108,7 @@ set( mesh_sources
      utilities/ComputationalGeometry.cpp
      )
 
-set( dependencyList schema dataRepository constitutive parmetis metis )
+set( dependencyList schema dataRepository constitutive finiteElement parmetis metis )
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )

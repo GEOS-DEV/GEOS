@@ -134,7 +134,7 @@ std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type,
     case PAMELA::ELEMENTS::TYPE::VTK_QUAD: return { };
     case PAMELA::ELEMENTS::TYPE::VTK_TETRA: return { 0, 1, 2, 3 };
     case PAMELA::ELEMENTS::TYPE::VTK_PYRAMID: return { 0, 1, 3, 2, 4 };
-    case PAMELA::ELEMENTS::TYPE::VTK_WEDGE: return { 0, 3, 2, 5, 1, 4 };
+    case PAMELA::ELEMENTS::TYPE::VTK_WEDGE: return { 0, 3, 1, 4, 2, 5 };
     case PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON:
     {
       // if the reverseZ option is on, we have to switch the node ordering
@@ -486,6 +486,8 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
   PAMELA::PartMap< PAMELA::Polyhedron * > const polyhedronPartMap =
     std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ) );
 
+  std::vector< string > regionNames;
+
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex,
                                                                          localIndex,
                                                                          ElementRegionBase const & region,
@@ -503,9 +505,14 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
     GEOSX_ERROR_IF( cellBlockPtr == nullptr, "Internal logic error (PAMELA subregion not found)" );
 
     importFieldsOnSubRegion( *regionPtr, *cellBlockPtr, region, subRegion );
+    regionNames.emplace_back( region.getName() );
   } );
 
-  CommunicationTools::getInstance().synchronizeFields( { { "elems", m_fieldNamesInGEOSX } },
+  std::vector< string > tmp( m_fieldNamesInGEOSX.begin(), m_fieldNamesInGEOSX.end() );
+  FieldIdentifiers fieldsToBeSync;
+  fieldsToBeSync.addElementFields( tmp, regionNames );
+
+  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                        domain.getMeshBody( this->getName() ).getMeshLevel( 0 ),
                                                        domain.getNeighbors(),
                                                        false );
