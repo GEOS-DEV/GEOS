@@ -140,7 +140,7 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="string">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+			<xsd:pattern value=".*[\[\]`$].*|.*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="string_array">

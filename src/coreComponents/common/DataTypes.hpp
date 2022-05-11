@@ -665,7 +665,7 @@ private:
       {"real32_array3d", constructArrayRegex( rr, 3 )},
       {"real64_array3d", constructArrayRegex( rr, 3 )},
       {"real64_array4d", constructArrayRegex( rr, 4 )},
-      {"string", rs},
+      {"string", ".*"},
       {"path", rs},
       {"string_array", constructArrayRegex( rs, 1 )},
       {"path_array", constructArrayRegex( rs, 1 )},

@@ -112,7 +112,7 @@ string buildMultipleInputXML( string_array const & inputFileList,
  * @tparam T the type of variable fill with string value
  * @param[out] target the object to read values into
  * @param[in]  value  the string that contains the data to be parsed into target
- * @return void.
+ * @return void
  */
 template< typename T >
 std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
@@ -122,6 +122,11 @@ stringToInputVariable( T & target, string const & value )
   ss >> target;
 }
 
+/**
+ * @brief Overload for string, simply copies the whole string.
+ * @param[out] target the object to read values into
+ * @param[in]  value  the string that contains the data to be parsed into target
+ */
 inline void stringToInputVariable( string & target, string const & value )
 {
   target = value;
