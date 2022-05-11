@@ -84,37 +84,37 @@ public:
   array1d< int > getParticleID() const override
   { return m_particleID; }
 
-  void setParticleID(array1d< int > const particleID) override
+  void setParticleID(array1d< int > const particleID)
   { m_particleID = particleID; }
 
   array2d< real64 > getParticleCenter() const override
   { return m_particleCenter; }
 
-  void setParticleCenter(array2d< real64 > const particleCenter) override
+  void setParticleCenter(array2d< real64 > const particleCenter)
   { m_particleCenter = particleCenter; }
 
   array2d< real64 > getParticleVelocity() const override
   { return m_particleVelocity; }
 
-  void setParticleVelocity(array2d< real64 > const particleVelocity) override
+  void setParticleVelocity(array2d< real64 > const particleVelocity)
   { m_particleVelocity = particleVelocity; }
 
   array1d< real64 > getParticleVolume() const override
   { return m_particleVolume; }
 
-  void setParticleVolume(array1d< real64 > const particleVolume) override
+  void setParticleVolume(array1d< real64 > const particleVolume)
   { m_particleVolume = particleVolume; }
 
   array3d< real64 > getParticleRVectors() const override
   { return m_particleRVectors; }
 
-  void setParticleRVectors(array3d< real64 > const particleRVectors) override
+  void setParticleRVectors(array3d< real64 > const particleRVectors)
   { m_particleRVectors = particleRVectors; }
 
   array3d< real64 > getParticleRVectors0() const override
   { return m_particleRVectors0; }
 
-  void setParticleRVectors0(array3d< real64 > const particleRVectors0) override
+  void setParticleRVectors0(array3d< real64 > const particleRVectors0)
   { m_particleRVectors0 = particleRVectors0; }
 
   bool hasRVectors() const override
