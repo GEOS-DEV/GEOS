@@ -603,10 +603,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   // Grid MPI operations
 
   // (1) Initialize
-  std::map< string, string_array > fieldNames;
-  fieldNames["node"].emplace_back( keys::Mass );
-  fieldNames["node"].emplace_back( keys::Velocity );
-  fieldNames["node"].emplace_back( keys::Acceleration );
+  FieldIdentifiers fieldsToBeSync;
+  fieldsToBeSync.addFields( FieldLocation::Node, { keys::Mass, keys::Velocity, keys::Acceleration } );
+//  std::map< string, string_array > fieldNames;
+//  fieldNames["node"].emplace_back( keys::Mass );
+//  fieldNames["node"].emplace_back( keys::Velocity );
+//  fieldNames["node"].emplace_back( keys::Acceleration );
   std::vector< NeighborCommunicator > & neighbors = domain.getNeighbors();
   m_iComm.resize( neighbors.size() );
 
@@ -622,9 +624,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   }
 
   // (3) Additive sync
-  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSync, mesh, neighbors, m_iComm, true );
   parallelDeviceEvents packEvents;
-  CommunicationTools::getInstance().asyncPack( fieldNames, mesh, neighbors, m_iComm, true, packEvents );
+  CommunicationTools::getInstance().asyncPack( fieldsToBeSync, mesh, neighbors, m_iComm, true, packEvents );
   waitAllDeviceEvents( packEvents );
   CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, true, packEvents );
   parallelDeviceEvents unpackEvents;
@@ -642,9 +644,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   }
 
   // (5) Perform sync
-  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSync, mesh, neighbors, m_iComm, true );
   parallelDeviceEvents packEvents2;
-  CommunicationTools::getInstance().asyncPack( fieldNames, mesh, neighbors, m_iComm, true, packEvents2 );
+  CommunicationTools::getInstance().asyncPack( fieldsToBeSync, mesh, neighbors, m_iComm, true, packEvents2 );
   waitAllDeviceEvents( packEvents2 );
   CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, true, packEvents2 );
   parallelDeviceEvents unpackEvents2;

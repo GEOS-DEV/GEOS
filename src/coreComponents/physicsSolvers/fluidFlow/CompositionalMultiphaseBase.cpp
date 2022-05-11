@@ -1028,16 +1028,17 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
-  fieldNames["elems"].emplace_back( extrinsicMeshData::flow::globalCompDensity::key() );
-
   // set mass fraction flag on fluid models
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key(),
+                                       extrinsicMeshData::flow::globalCompDensity::key() },
+                                     regionNames );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )

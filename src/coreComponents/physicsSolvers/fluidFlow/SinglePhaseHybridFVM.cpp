@@ -184,7 +184,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
   // we need Connectivity::Face because of the two-point upwinding
   // in AssembleOneSidedMassFluxes
   dofManager.addField( extrinsicMeshData::flow::pressure::key(),
-                       DofManager::Location::Elem,
+                       FieldLocation::Elem,
                        1,
                        m_meshTargets );
 
@@ -194,7 +194,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
 
   // setup the connectivity of face fields
   dofManager.addField( extrinsicMeshData::flow::facePressure::key(),
-                       DofManager::Location::Face,
+                       FieldLocation::Face,
                        1,
                        m_meshTargets );
 
@@ -605,14 +605,14 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
   // 3. synchronize
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                arrayView1d< string const > const & regionNames )
   {
-    // the tags in fieldNames have to match the tags used in NeighborCommunicator.cpp
-    std::map< string, string_array > fieldNames;
-    fieldNames["face"].emplace_back( extrinsicMeshData::flow::facePressure::key() );
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
+    FieldIdentifiers fieldsToBeSync;
 
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key() }, regionNames );
+    fieldsToBeSync.addFields( FieldLocation::Face, { extrinsicMeshData::flow::facePressure::key() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );
 }
 
