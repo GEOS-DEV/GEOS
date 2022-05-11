@@ -64,26 +64,26 @@ public:
     m_labels[1].resize( 2 );
     m_labels[1][0] = 0;
     m_labels[1][1] = m_numBlocks - 1;
-    // Level 2: eliminate reservoir pressure
+    // Level 2: eliminate reservoir cell-centered pressure
     m_labels[2].resize( 1 );
     m_labels[2][0] = m_numBlocks - 1;
 
     setupLabels();
 
     // Level 0
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelInterpType[0]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
 
     // Level 1
-    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelInterpType[1]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::quasiImpes;
+    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::cprLikeBlockDiag;
 
     // Level 2
-    m_levelFRelaxMethod[2]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelFRelaxMethod[2]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelInterpType[2]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[2]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[2] = MGRCoarseGridMethod::galerkin;

@@ -39,13 +39,11 @@ namespace mgr
  *             ... = densities
  *   numLabels - 1 = density
  *
- * 2-level MGR reduction strategy which seems to work well for 2 components:
+ * 2-level MGR reduction strategy:
  *   - 1st level: eliminate the reservoir density associated with the volume constraint
- *   - 2nd level: eliminate the other reservoir density
+ *   - 2nd level: eliminate the other reservoir densities
  *   - The coarse grid (pressure system) is solved with BoomerAMG.
  *
- * @todo:
- *   - Experiment with block Jacobi for F-relaxation/interpolation of the reservoir densities
  */
 class CompositionalMultiphaseFVM : public MGRStrategyBase< 2 >
 {
@@ -60,20 +58,20 @@ public:
     // Level 0: eliminate last density which corresponds to the volume constraint equation
     m_labels[0].resize( m_numBlocks - 1 );
     std::iota( m_labels[0].begin(), m_labels[0].end(), 0 );
-    // Level 1: eliminate the rest of the densities
+    // Level 1: eliminate the remaining the densities
     m_labels[1].push_back( 0 );
 
     setupLabels();
 
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelInterpType[0]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
 
-    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelInterpType[1]       = MGRInterpolationType::injection;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::quasiImpes;
+    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::cprLikeBlockDiag;
 
     // Global smoother at each level, only do block-GS for the condensed system
     m_levelSmoothType[1] = 1;

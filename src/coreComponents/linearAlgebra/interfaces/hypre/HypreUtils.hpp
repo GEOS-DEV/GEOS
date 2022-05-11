@@ -430,6 +430,7 @@ enum class AMGCoarseningType : HYPRE_Int
 enum class MGRInterpolationType : HYPRE_Int
 {
   injection = 0,                      //!< Injection \f$[0  I]^{T}\f$
+  l1jacobi = 1,                       //!< l1 Jacobi
   jacobi = 2,                         //!< Diagonal scaling
   classicalModifiedInterpolation = 3, //!< Classical modified interpolation
   approximateInverse = 4,             //!< Approximate inverse
@@ -443,9 +444,11 @@ enum class MGRInterpolationType : HYPRE_Int
  */
 enum class MGRRestrictionType : HYPRE_Int
 {
-  injection = 0,         //!< Injection \f$[0  I]\f$
-  jacobi = 2,            //!< Diagonal scaling
-  approximateInverse = 3 //!< Approximate inverse
+  injection = 0,           //!< Injection \f$[0  I]\f$
+  jacobi = 2,              //!< Diagonal scaling
+  approximateInverse = 3,  //!< Approximate inverse
+  blockJacobi = 12,        //!< Block-Jacobi
+  cprLike = 13             //!< CPR-like restriction
 };
 
 /**
@@ -454,9 +457,15 @@ enum class MGRRestrictionType : HYPRE_Int
  */
 enum class MGRCoarseGridMethod : HYPRE_Int
 {
-  galerkin = 0,    //!< Galerkin coarse grid computation using RAP
-  nonGalerkin = 1, //!< Non-Galerkin coarse grid computation with dropping strategy
-  quasiImpes = 3   //!< TODO
+  galerkin = 0,          //!< Galerkin coarse grid computation using RAP
+  nonGalerkin = 1,       //!< Non-Galerkin coarse grid computation with dropping strategy: inv(A_FF) approximated by its (block) diagonal
+                         //!< inverse
+  cprLikeDiag = 2,       //!< Non-Galerkin coarse grid computation with dropping strategy: CPR-like approximation with inv(A_FF)
+                         //!< approximated by its diagonal inverse
+  cprLikeBlockDiag = 3,  //!< Non-Galerkin coarse grid computation with dropping strategy: CPR-like approximation with inv(A_FF)
+                         //!< approximated by its block diagonal inverse
+  approximateInverse = 4 //!< Non-Galerkin coarse grid computation with dropping strategy: inv(A_FF) approximated by sparse approximate
+                         //!< inverse
 };
 
 /**

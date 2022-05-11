@@ -44,14 +44,11 @@ namespace mgr
  * numResLabels + numWellLabels - 2 = well density
  * numResLabels + numWellLabels - 1 = well rate
  *
- * 3-level MGR reduction strategy which seems to work well for 2 components:
- *   - 1st level: eliminate the reservoir density associated with the volume constraint
- *   - 2nd level: eliminate the rest of the reservoir densities
- *   - 3rd level: eliminate the pressure
- *   - The coarse grid is the well block and solved with ILU(0)
- *
- * @todo:
- *   - Use block Jacobi for F-relaxation/interpolation of the reservoir densities (2nd level)
+ * 3-level MGR reduction strategy
+ *   - 1st level: eliminate the well block
+ *   - 2nd level: eliminate the reservoir density associated with the volume constraint
+ *   - 3rd level: eliminate the remaining the reservoir densities
+ *   - The coarse grid is the pressure system and is solved with BoomerAMG
  */
 class CompositionalMultiphaseReservoirFVM : public MGRStrategyBase< 3 >
 {
@@ -77,20 +74,20 @@ public:
 
     setupLabels();
 
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
 
-    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelInterpType[1]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
 
-    m_levelFRelaxMethod[2]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelFRelaxMethod[2]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelInterpType[2]       = MGRInterpolationType::injection;
     m_levelRestrictType[2]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[2] = MGRCoarseGridMethod::quasiImpes;
+    m_levelCoarseGridMethod[2] = MGRCoarseGridMethod::cprLikeBlockDiag;
 
     // Set global smoothing type/iterations at each level
     // Use block-GS for the condensed system
@@ -120,7 +117,8 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelSmoothIters ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // Low tolerance to remove only zeros
 
-    // Note for me: uncomment HYPRE_MGRSetLevelFRelaxMethod and comment HYPRE_MGRSetRelaxType breaks the recipe
+    // Note: uncomment HYPRE_MGRSetLevelFRelaxMethod and comment HYPRE_MGRSetRelaxType breaks the recipe, this requires further
+    // investigation
     //GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, 0 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
