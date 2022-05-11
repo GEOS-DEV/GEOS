@@ -1435,15 +1435,23 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
     chopNegativeDensities( domain );
   }
 
-  // synchronize
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( extrinsicMeshData::well::pressure::key() );
-  fieldNames["elems"].emplace_back( extrinsicMeshData::well::globalCompDensity::key() );
-  fieldNames["elems"].emplace_back( extrinsicMeshData::well::mixtureConnectionRate::key() );
-  CommunicationTools::getInstance().synchronizeFields( fieldNames,
-                                                       domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
-                                                       domain.getNeighbors(),
-                                                       true );
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
+  {
+    // synchronize
+    FieldIdentifiers fieldsToBeSync;
+
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::well::pressure::key(),
+                                       extrinsicMeshData::well::globalCompDensity::key(),
+                                       extrinsicMeshData::well::mixtureConnectionRate::key() },
+                                     regionNames );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
+  } );
 }
 
 void CompositionalMultiphaseWell::chopNegativeDensities( DomainPartition & domain )

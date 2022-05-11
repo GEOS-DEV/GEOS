@@ -854,7 +854,8 @@ void VTKMeshGenerator::
                                      std::vector< vtkIdType > const & cellIds,
                                      ElementRegionManager & elemManager,
                                      arrayView1d< string const > const & fieldNames,
-                                     std::vector< vtkDataArray * > const & srcArrays ) const
+                                     std::vector< vtkDataArray * > const & srcArrays,
+                                     FieldIdentifiers & fieldsToBeSync ) const
 {
   string const cellBlockName = vtk::buildCellBlockName( elemType, regionId );
 
@@ -883,6 +884,8 @@ void VTKMeshGenerator::
         // Skip - the user may have not enabled a particular physics model/solver on this dstRegion.
         GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
                                               vtkArray->GetName(), wrapperName, region.getName(), subRegion.getName() ) );
+
+        fieldsToBeSync.addElementFields( {wrapperName}, {region.getName()} );
         continue;
       }
       WrapperBase & wrapper = subRegion.getWrapperBase( wrapperName );
@@ -912,6 +915,8 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
 
   std::vector< vtkDataArray * > const srcArrays = vtk::findArraysForImport( *m_vtkMesh, m_fieldsToImport );
 
+  FieldIdentifiers fieldsToBeSync;
+
   for( auto const & typeRegions : m_cellMap )
   {
     // Restrict data import to 3D cells
@@ -924,12 +929,13 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
                                            regionCells.second,
                                            elemManager,
                                            m_fieldNamesInGEOSX,
-                                           srcArrays );
+                                           srcArrays,
+                                           fieldsToBeSync );
       }
     }
   }
 
-  CommunicationTools::getInstance().synchronizeFields( { { "elems", m_fieldNamesInGEOSX } },
+  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                        domain.getMeshBody( this->getName() ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
                                                        domain.getNeighbors(),
                                                        false );

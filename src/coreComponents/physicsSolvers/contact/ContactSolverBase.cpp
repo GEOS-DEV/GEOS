@@ -51,6 +51,10 @@ ContactSolverBase::ContactSolverBase( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
+  registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the fracture region." );
+
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
 }
@@ -233,14 +237,15 @@ real64 ContactSolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
 void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) const
 {
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( viewKeyStruct::fractureStateString() ) );
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    FieldIdentifiers fieldsToBeSync;
+
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::fractureState::key() }, { getFractureRegionName() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );

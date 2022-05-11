@@ -208,14 +208,18 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
       }
       else
       {
-        std::map< string, string_array > fieldNames;
-        fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
-        fieldNames["node"].emplace_back( keys::TotalDisplacement );
-        fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
-        fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure_n::key() ); // in case there is a time step cut
-        fieldNames["elems"].emplace_back( "elementAperture" );
+        FieldIdentifiers fieldsToBeSync;
 
-        CommunicationTools::getInstance().synchronizeFields( fieldNames,
+        fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key(),
+                                           extrinsicMeshData::flow::pressure_n::key(),
+                                           SurfaceElementSubRegion::viewKeyStruct::elementApertureString() },
+                                         { m_surfaceGenerator->getFractureRegionName() } );
+
+        fieldsToBeSync.addFields( FieldLocation::Node,
+                                  { keys::IncrementalDisplacement,
+                                    keys::TotalDisplacement } );
+
+        CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                              domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
                                                              domain.getNeighbors(),
                                                              false );
