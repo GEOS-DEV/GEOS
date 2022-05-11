@@ -98,11 +98,11 @@ std::vector< DofManager::Regions > getRegions( DomainPartition const & domain, s
 namespace internal
 {
 
-template< DofManager::Location LOC >
+template< FieldLocation LOC >
 struct testMeshHelper {};
 
 template<>
-struct testMeshHelper< DofManager::Location::Node >
+struct testMeshHelper< FieldLocation::Node >
 {
   static constexpr auto managerKey()
   { return MeshLevel::groupStructKeys::nodeManagerString; }
@@ -114,7 +114,7 @@ struct testMeshHelper< DofManager::Location::Node >
 };
 
 template<>
-struct testMeshHelper< DofManager::Location::Face >
+struct testMeshHelper< FieldLocation::Face >
 {
   static constexpr auto managerKey()
   { return MeshLevel::groupStructKeys::faceManagerString; }
@@ -142,7 +142,7 @@ localIndex size1( ArrayOfArraysView< localIndex const > const & map, localIndex 
   return map.sizeOfArray( i0 );
 }
 
-template< DofManager::Location LOC >
+template< FieldLocation LOC >
 struct forLocalObjectsImpl
 {
   template< typename LAMBDA >
@@ -180,7 +180,7 @@ struct forLocalObjectsImpl
 };
 
 template<>
-struct forLocalObjectsImpl< DofManager::Location::Elem >
+struct forLocalObjectsImpl< FieldLocation::Elem >
 {
   template< typename LAMBDA >
   static void f( MeshLevel const & mesh,
@@ -220,7 +220,7 @@ struct forLocalObjectsImpl< DofManager::Location::Elem >
  * @param regions list of input region names to loop over
  * @param lambda  the lambda to apply
  */
-template< DofManager::Location LOC, typename LAMBDA >
+template< FieldLocation LOC, typename LAMBDA >
 void forLocalObjects( MeshLevel const & mesh,
                       std::vector< string > const & regions,
                       LAMBDA && lambda )
@@ -235,7 +235,7 @@ void forLocalObjects( MeshLevel const & mesh,
  * @param regions list of input region names to loop over
  * @return the number of locally owned objects (e.g. nodes)
  */
-template< DofManager::Location LOC >
+template< FieldLocation LOC >
 localIndex countLocalObjects( DomainPartition const & domain, std::vector< DofManager::Regions > const & support )
 {
   localIndex numLocal = 0;
@@ -515,7 +515,7 @@ void makeSparsityMass( DomainPartition const & domain,
     array2d< real64 > localValues( numComp, numComp );
     localValues.setValues< serialPolicy >( 1.0 );
 
-    forLocalObjects< DofManager::Location::Elem >( mesh, regions.regionNames, [&]( auto const & idx )
+    forLocalObjects< FieldLocation::Elem >( mesh, regions.regionNames, [&]( auto const & idx )
     {
       for( localIndex c = 0; c < numComp; ++c )
       {

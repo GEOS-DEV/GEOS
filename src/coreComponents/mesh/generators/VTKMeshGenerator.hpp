@@ -23,6 +23,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
+#include "mesh/FieldIdentifiers.hpp"
 
 // TODO can we remove this and use unique_ptr to hold mesh?
 #include <vtkSmartPointer.h>
@@ -124,7 +125,8 @@ private:
                                           std::vector< vtkIdType > const & cellIds,
                                           ElementRegionManager & elemManager,
                                           arrayView1d< string const > const & fieldNames,
-                                          std::vector< vtkDataArray * > const & srcArrays ) const;
+                                          std::vector< vtkDataArray * > const & srcArrays,
+                                          FieldIdentifiers & fieldsToBeSync ) const;
 
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct

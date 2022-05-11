@@ -17,7 +17,7 @@
 
 #include "CommID.hpp"
 
-#include "common/DataTypes.hpp"
+#include "mesh/FieldIdentifiers.hpp"
 
 namespace geosx
 {
@@ -60,14 +60,14 @@ public:
   int commID() const { return m_commID; }
 
   /**
-   * @return Reference to the field names registered with the communication data.
+   * @return Const Reference to the field names registered with the communication data.
    */
-  std::map< string, string_array > const & getFieldNames() const { return m_fieldNames;}
+  FieldIdentifiers const & getFieldsToBeSync() const { return m_fieldsToBeSync;}
 
   /**
-   * @return Reference to the field names registered with the communication data.
+   * @return Setter of the names registered with the communication data.
    */
-  std::map< string, string_array > & fieldNames() { return m_fieldNames;}
+  void setFieldsToBeSync( FieldIdentifiers const & fieldsToBeSync ) { m_fieldsToBeSync = fieldsToBeSync; }
 
 
   MPI_Request * mpiSendBufferRequest() { return m_mpiSendBufferRequest.data(); }
@@ -99,7 +99,8 @@ private:
 
   /// A collection of field names keyed on object keys to pack/unpack from
   /// communication pipeline.
-  std::map< string, string_array > m_fieldNames;
+
+  FieldIdentifiers m_fieldsToBeSync;
 
   array1d< MPI_Request > m_mpiSendBufferRequest;
   array1d< MPI_Request > m_mpiRecvBufferRequest;

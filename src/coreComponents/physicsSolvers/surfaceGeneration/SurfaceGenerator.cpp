@@ -522,11 +522,15 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   ArrayOfArrays< localIndex > const & nodeToElementMap = nodeManager.elementList();
 
-  map< string, string_array > fieldNames;
-  fieldNames["face"].emplace_back( string( extrinsicMeshData::RuptureState::key() ) );
-  fieldNames["node"].emplace_back( string( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() ) );
+  FieldIdentifiers fieldsToBeSync;
 
-  CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
+  fieldsToBeSync.addFields( FieldLocation::Face, { extrinsicMeshData::RuptureState::key() } );
+  if( nodeManager.hasWrapper( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() ) )
+  {
+    fieldsToBeSync.addFields( FieldLocation::Node, { SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() } );
+  }
+
+  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
   {
