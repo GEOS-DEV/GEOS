@@ -43,6 +43,7 @@
       stabilizationName="singlePhaseTPFA_stab"
       logLevel="1"
       targetRegions="{ Domain, Fracture }"
+      fractureRegionName="Fracture"
       contactRelationName="fractureMaterial"/>
 
     <SolidMechanicsLagrangianSSLE
