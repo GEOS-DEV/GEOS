@@ -168,7 +168,7 @@ void CompositionalMultiphaseReservoir::addCouplingSparsityPattern( DomainPartiti
   } );
 }
 
-void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_n,
+void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                               real64 const dt,
                                                               DomainPartition const & domain,
                                                               DofManager const & dofManager,
@@ -200,17 +200,10 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & subRegion )
   {
 
-    // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
-    // therefore, we do not want to compute perforation rates and we simply assume they are zero
     WellControls const & wellControls = m_wellSolver->getWellControls( subRegion );
     bool const detectCrossflow =
       ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
       getLogLevel() >= 1; // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
-
-    if( !wellControls.isWellOpen( time_n + dt ) )
-    {
-      return;
-    }
 
     PerforationData const * const perforationData = subRegion.getPerforationData();
 
@@ -305,8 +298,8 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
 
       // Apply equation/variable change transformation(s)
       stackArray1d< real64, 2 * MAX_NUM_DOF > work( 2 * resNumDofs );
-      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComps, resNumDofs*2, 2, localPerfJacobian, work );
-      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComps, 2, localPerf );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComps, numComps, resNumDofs*2, 2, localPerfJacobian, work );
+      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComps, numComps, 2, localPerf );
 
       for( localIndex i = 0; i < localPerf.size(); ++i )
       {

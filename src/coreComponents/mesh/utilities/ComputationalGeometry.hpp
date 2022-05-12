@@ -21,6 +21,10 @@
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
+#include "finiteElement/elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
+#include "finiteElement/elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
+#include "finiteElement/elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
+#include "finiteElement/elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -345,48 +349,6 @@ int sign( T const val )
   return (T( 0 ) < val) - (val < T( 0 ));
 }
 
-/**
- * @brief Check if a point is inside a convex polyhedron (3D polygon)
- * @tparam POINT_TYPE type of @p point
- * @param[in] nodeCoordinates a global array of nodal coordinates
- * @param[in] faceNodeIndices ordered lists of node indices for each face of the polyhedron
- * @param[in] point coordinates of the query point
- * @param[in] areaTolerance same as in centroid_3DPolygon
- * @return whether the point is inside
- *
- * @note Face nodes must all be ordered the same way (i.e. CW or CCW),
- * resulting in all face normals pointing either outside or inside the polyhendron
- *
- * @note For faces with n>3 nodes that are non-planar, average normal is used
- */
-template< typename POINT_TYPE >
-GEOSX_HOST_DEVICE
-bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
-                              arrayView1d< arrayView1d< localIndex const > const > const & faceNodeIndices,
-                              POINT_TYPE const & point,
-                              real64 const areaTolerance = 0.0 )
-{
-  localIndex const numFaces = faceNodeIndices.size( 0 );
-  R1Tensor faceCenter, faceNormal;
-  int prevSign = 0;
-
-  for( localIndex kf = 0; kf < numFaces; ++kf )
-  {
-    centroid_3DPolygon( faceNodeIndices[kf], nodeCoordinates, faceCenter, faceNormal, areaTolerance );
-
-    LvArray::tensorOps::subtract< 3 >( faceCenter, point );
-    int const s = sign( LvArray::tensorOps::AiBi< 3 >( faceNormal, faceCenter ) );
-
-    // all dot products should be non-negative (for outward normals) or non-positive (for inward normals)
-    if( prevSign * s < 0 )
-    {
-      return false;
-    }
-    prevSign = s;
-  }
-
-  return true;
-}
 
 /**
  * @brief Check if a point is inside a convex polyhedron (3D polygon)
@@ -482,53 +444,33 @@ void getBoundingBox( localIndex const elemIndex,
 }
 
 /**
+ * @brief Compute the volume of an element (tetrahedron, pyramid, wedge, hexahedron)
+ * @tparam FE_TYPE the type of finite element space
+ * @param[in] X vertices of the element
+ * @return the volume of the element
+ */
+template< typename FE_TYPE >
+GEOSX_HOST_DEVICE inline
+real64 elementVolume( real64 const (&X)[FE_TYPE::numNodes][3] )
+{
+  real64 result{};
+  for( localIndex q=0; q<FE_TYPE::numQuadraturePoints; ++q )
+  {
+    result = result + FE_TYPE::transformedQuadratureWeight( q, X );
+  }
+  return result;
+}
+
+/**
  * @brief Compute the volume of an hexahedron
  * @param[in] X vertices of the hexahedron
  * @return the volume of the hexahedron
  */
 GEOSX_HOST_DEVICE
 inline
-real64 hexVolume( real64 const X[][3] )
+real64 hexVolume( real64 const (&X)[8][3] )
 {
-  real64 X7_X1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
-  LvArray::tensorOps::subtract< 3 >( X7_X1, X[1] );
-
-  real64 X6_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[6] );
-  LvArray::tensorOps::subtract< 3 >( X6_X0, X[0] );
-
-  real64 X7_X2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
-  LvArray::tensorOps::subtract< 3 >( X7_X2, X[2] );
-
-  real64 X3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] );
-  LvArray::tensorOps::subtract< 3 >( X3_X0, X[0] );
-
-  real64 X5_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] );
-  LvArray::tensorOps::subtract< 3 >( X5_X0, X[0] );
-
-  real64 X7_X4[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
-  LvArray::tensorOps::subtract< 3 >( X7_X4, X[4] );
-
-  real64 X7_X1plusX6_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X1 );
-  LvArray::tensorOps::add< 3 >( X7_X1plusX6_X0, X6_X0 );
-
-  real64 X7_X2plusX5_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X2 );
-  LvArray::tensorOps::add< 3 >( X7_X2plusX5_X0, X5_X0 );
-
-  real64 X7_X4plusX3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X4 );
-  LvArray::tensorOps::add< 3 >( X7_X4plusX3_X0, X3_X0 );
-
-  real64 X7_X2crossX3_X0[3];
-  LvArray::tensorOps::crossProduct( X7_X2crossX3_X0, X7_X2, X3_X0 );
-
-  real64 X7_X2plusX5_X0crossX7_X4[3];
-  LvArray::tensorOps::crossProduct( X7_X2plusX5_X0crossX7_X4, X7_X2plusX5_X0, X7_X4 );
-
-  real64 X5_X0crossX7_X4plusX3_X0[3];
-  LvArray::tensorOps::crossProduct( X5_X0crossX7_X4plusX3_X0, X5_X0, X7_X4plusX3_X0 );
-
-  return 1.0/12.0 * ( LvArray::tensorOps::AiBi< 3 >( X7_X1plusX6_X0, X7_X2crossX3_X0 ) +
-                      LvArray::tensorOps::AiBi< 3 >( X6_X0, X7_X2plusX5_X0crossX7_X4 ) +
-                      LvArray::tensorOps::AiBi< 3 >( X7_X1, X5_X0crossX7_X4plusX3_X0 ) );
+  return elementVolume< finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2 >( X );
 }
 
 /**
@@ -538,21 +480,9 @@ real64 hexVolume( real64 const X[][3] )
  */
 GEOSX_HOST_DEVICE
 inline
-real64 tetVolume( real64 const X[][3] )
+real64 tetVolume( real64 const (&X)[4][3] )
 {
-  real64 X1_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] );
-  LvArray::tensorOps::subtract< 3 >( X1_X0, X[0] );
-
-  real64 X2_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] );
-  LvArray::tensorOps::subtract< 3 >( X2_X0, X[0] );
-
-  real64 X3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] );
-  LvArray::tensorOps::subtract< 3 >( X3_X0, X[0] );
-
-  real64 X2_X0crossX3_X0[ 3 ];
-  LvArray::tensorOps::crossProduct( X2_X0crossX3_X0, X2_X0, X3_X0 );
-
-  return LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( X1_X0, X2_X0crossX3_X0 ) / 6.0 );
+  return elementVolume< finiteElement::H1_Tetrahedron_Lagrange1_Gauss1 >( X );
 }
 
 /**
@@ -562,24 +492,9 @@ real64 tetVolume( real64 const X[][3] )
  */
 GEOSX_HOST_DEVICE
 inline
-real64 wedgeVolume( real64 const X[][3] )
+real64 wedgeVolume( real64 const (&X)[6][3] )
 {
-  real64 const tet1[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
-
-  real64 const tet2[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] ) };
-
-  real64 const tet3[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] ) };
-
-  return tetVolume( tet1 ) + tetVolume( tet2 ) + tetVolume( tet3 );
+  return elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( X );
 }
 
 /**
@@ -589,19 +504,9 @@ real64 wedgeVolume( real64 const X[][3] )
  */
 GEOSX_HOST_DEVICE
 inline
-real64 pyramidVolume( real64 const X[][3] )
+real64 pyramidVolume( real64 const (&X)[5][3] )
 {
-  real64 const tet1[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
-
-  real64 const tet2[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
-
-  return tetVolume( tet1 ) + tetVolume( tet2 );
+  return elementVolume< finiteElement::H1_Pyramid_Lagrange1_Gauss5 >( X );
 }
 
 } /* namespace computationalGeometry */

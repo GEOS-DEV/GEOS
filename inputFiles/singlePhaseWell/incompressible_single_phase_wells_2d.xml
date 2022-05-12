@@ -41,6 +41,7 @@
       <WellControls
         name="wellControls3"
         type="injector"
+	initialPressureCoefficient="0.01"
         control="totalVolRate"
         referenceElevation="0.5"
         targetBHP="1e7"

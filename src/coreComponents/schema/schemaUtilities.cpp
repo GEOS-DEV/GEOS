@@ -169,6 +169,21 @@ void SchemaConstruction( Group & group,
         for( string subName : subGroupNames )
         {
           Group & subGroup = group.getGroup( subName );
+          InputFlags subSchemaType = subGroup.getInputFlags();
+
+          if( ( documentationType == 0 ) & (( subSchemaType == InputFlags::REQUIRED_NONUNIQUE ) || ( subSchemaType == InputFlags::OPTIONAL_NONUNIQUE )))
+          {
+            // Enforce uniqueness of element names
+            // Note: this must be done at the parent element level
+            xmlWrapper::xmlNode uniqueNameNode = targetIncludeNode.append_child( "xsd:unique" );
+            string uniqueNameNodeStr = targetName + subName + "UniqueName";
+            uniqueNameNode.append_attribute( "name" ) = uniqueNameNodeStr.c_str();
+            xmlWrapper::xmlNode uniqueNameSelector = uniqueNameNode.append_child( "xsd:selector" );
+            uniqueNameSelector.append_attribute( "xpath" ) = subName.c_str();
+            xmlWrapper::xmlNode uniqueNameField = uniqueNameNode.append_child( "xsd:field" );
+            uniqueNameField.append_attribute( "xpath" ) = "@name";
+          }
+
           SchemaConstruction( subGroup, schemaRoot, targetChoiceNode, documentationType );
         }
       }

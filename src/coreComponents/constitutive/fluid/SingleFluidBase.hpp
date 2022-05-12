@@ -26,7 +26,7 @@ namespace geosx
 
 namespace constitutive
 {
-
+//START_SPHINX_INCLUDE_01
 /**
  * @brief Base class for single-phase fluid model kernel wrappers.
  */
@@ -89,6 +89,7 @@ protected:
    */
   SingleFluidBaseUpdate & operator=( SingleFluidBaseUpdate && ) = delete;
 
+
   /// Fluid density
   arrayView2d< real64 > m_density;
 
@@ -100,7 +101,8 @@ protected:
 
   /// Derivative of viscosity w.r.t. pressure
   arrayView2d< real64 > m_dVisc_dPres;
-
+//END_SPHINX_INCLUDE_01
+//START_SPHINX_INCLUDE_02
 private:
 
   /**
@@ -144,6 +146,7 @@ private:
                        real64 const pressure ) const = 0;
 
 };
+//END_SPHINX_INCLUDE_02
 
 /**
  * @brief Base class for single-phase fluid models.
@@ -192,6 +195,7 @@ protected:
 
   virtual void postProcessInput() override;
 
+  //START_SPHINX_INCLUDE_00
   array2d< real64 > m_density;
   array2d< real64 > m_dDensity_dPressure;
 
@@ -199,7 +203,7 @@ protected:
 
   array2d< real64 > m_viscosity;
   array2d< real64 > m_dViscosity_dPressure;
-
+  //END_SPHINX_INCLUDE_00
 };
 
 } //namespace constitutive

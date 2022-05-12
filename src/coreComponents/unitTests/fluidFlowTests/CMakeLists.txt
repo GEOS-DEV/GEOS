@@ -4,8 +4,9 @@
 
 set( gtest_geosx_tests
      testSinglePhaseBaseKernels.cpp
-     testSinglePhaseFVMKernels.cpp     
+     testSinglePhaseFVMKernels.cpp
      testSinglePhaseHybridFVMKernels.cpp
+     testThermalCompMultiphaseFlow.cpp
    )
 
 set( dependencyList ${commonDeps} gtest )
@@ -16,10 +17,15 @@ else()
   set (dependencyList ${dependencyList} ${geosx_core_libs} )
 endif()
 
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testCompMultiphaseFlow.cpp
-          testCompMultiphaseFlowHybrid.cpp )
+          testCompMultiphaseFlowHybrid.cpp
+          testReactiveCompositionalMultiphaseOBL.cpp )
 
     set( dependencyList ${dependencyList} PVTPackage )
 endif()

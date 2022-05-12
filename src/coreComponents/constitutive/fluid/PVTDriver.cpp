@@ -182,8 +182,7 @@ bool PVTDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
 
 template< typename FLUID_TYPE >
-GEOSX_FORCE_INLINE
-void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > & table )
+void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table )
 {
   // get number of phases and components
 
@@ -222,20 +221,18 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > & table )
     compositionValues[0][i] /= sum;
   }
 
-  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition = compositionValues[0];
+  arrayView2d< real64 const, compflow::USD_COMP > const composition = compositionValues;
 
   // perform fluid update using table (P,T) and save resulting total density, etc.
   // note: column indexing should be kept consistent with output file header below.
 
+  integer numSteps = m_numSteps;
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
-  auto numSteps = m_numSteps;
-  forAll< ExecPolicy >( 1, [=] GEOSX_HOST_DEVICE ( integer const ei )
+  forAll< ExecPolicy >( 1, [=]  GEOSX_HOST_DEVICE ( localIndex const ei )
   {
-    for( integer n=0; n<=numSteps; ++n )
+    for( integer n = 0; n <= numSteps; ++n )
     {
-      auto & pres = table( n, PRES );
-      auto & temp = table( n, TEMP );
-      kernelWrapper.update( ei, 0, pres, temp, composition );
+      kernelWrapper.update( ei, 0, table( n, PRES ), table( n, TEMP ), composition[0] );
       table( n, TEMP+1 ) = totalDensity( ei, 0 );
 
       for( integer p=0; p<NP; ++p )

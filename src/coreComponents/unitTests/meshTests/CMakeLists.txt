@@ -4,8 +4,9 @@
 
 
 set( gtest_geosx_tests
-     testNeighborCommunicator.cpp
+     testMeshEnums.cpp
      testMeshGeneration.cpp
+     testNeighborCommunicator.cpp
      )
 
 set( gtest_geosx_mpi_tests

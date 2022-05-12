@@ -25,6 +25,15 @@ foreach(test ${gtest_geosx_tests})
             DEPENDS_ON ${dependencyList}
             )
 
+    # Guard to prevent GCC (version 8) from giving warnings due
+    # to some sort of possible conversion from int to long unsigned.
+    # See also discussion here: https://github.com/GEOSX/LvArray/pull/250
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+      if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.3.1)
+        target_compile_options(${test_name} PRIVATE "-Wno-stringop-overflow")
+      endif()
+    endif()
+
     blt_add_test( NAME ${test_name}
             COMMAND ${test_name}
             )

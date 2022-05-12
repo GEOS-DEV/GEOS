@@ -26,22 +26,32 @@ namespace geosx
 
 std::string getAbsolutePath( std::string const & path )
 {
-  char absFilePath[ PATH_MAX + 1 ];
-  if( realpath( path.data(), absFilePath ) )
+  char buf[ PATH_MAX ];
+  if( realpath( path.data(), buf ) )
   {
-    return absFilePath;
+    return buf;
   }
-  else
+
+  char const * const reason = []
   {
-    char const * ret = getcwd( absFilePath, PATH_MAX + 1 );
-    if( ret != nullptr )
+    switch( errno )
     {
-      GEOSX_THROW( "Could not get the absolute path for " << path << " from working directory " << absFilePath
-                                                          << ". Common causes include the path/file doesn't exist, spelling errors, or incorrect permissions.", InputError );
+      case ENOENT:       return "File does not exist";
+      case EACCES:       return "Permission denied for part of the path prefix";
+      case EIO:          return "Filesystem I/O error occurred";
+      case ENAMETOOLONG: return "Path length exceeds maximum limit";
+      case ELOOP:        return "Symbolic link loop detected";
+      case ENOTDIR:      return "Part of the path prefix is not a directory";
+      default:           return "Unknown error";
     }
-    GEOSX_THROW( "Could not get the absolute path for " << path
-                                                        << ". Common causes include the path/file doesn't exist, spelling errors, or incorrect permissions.", InputError );
-  }
+  }();
+
+  char const * const cwd = getcwd( buf, PATH_MAX ) ? buf : "";
+  GEOSX_THROW( GEOSX_FMT( "Could not resolve absolute path for: {}.\n"
+                          "The following error occurred: {}.\n"
+                          "Current working directory is: {}.\n",
+                          path, reason, cwd ),
+               InputError );
 }
 
 std::istream & operator>>( std::istream & is, Path & p )

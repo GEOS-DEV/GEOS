@@ -92,11 +92,25 @@ Element: CO2BrineEzrokhiFluid
 .. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid.rst
 
 
+.. _XML_CO2BrineEzrokhiThermalFluid:
+
+Element: CO2BrineEzrokhiThermalFluid
+====================================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiThermalFluid.rst
+
+
 .. _XML_CO2BrinePhillipsFluid:
 
 Element: CO2BrinePhillipsFluid
 ==============================
 .. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid.rst
+
+
+.. _XML_CO2BrinePhillipsThermalFluid:
+
+Element: CO2BrinePhillipsThermalFluid
+=====================================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsThermalFluid.rst
 
 
 .. _XML_CarmanKozenyPermeability:
@@ -547,11 +561,11 @@ Element: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs.rst
 
 
-.. _XML_PAMELAMeshGenerator:
+.. _XML_PAMELAMesh:
 
-Element: PAMELAMeshGenerator
-============================
-.. include:: ../../coreComponents/schema/docs/PAMELAMeshGenerator.rst
+Element: PAMELAMesh
+===================
+.. include:: ../../coreComponents/schema/docs/PAMELAMesh.rst
 
 
 .. _XML_PVTDriver:
@@ -631,6 +645,13 @@ Element: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
 
 
+.. _XML_PorousDelftEgg:
+
+Element: PorousDelftEgg
+============================
+.. include:: ../../coreComponents/schema/docs/PorousDelftEgg.rst
+
+
 .. _XML_PorousDruckerPrager:
 
 Element: PorousDruckerPrager
@@ -664,6 +685,13 @@ Element: PorousElasticTransverseIsotropic
 Element: PorousExtendedDruckerPrager
 ====================================
 .. include:: ../../coreComponents/schema/docs/PorousExtendedDruckerPrager.rst
+
+
+.. _XML_PorousModifiedCamClay:
+
+Element: PorousModifiedCamClay
+====================================
+.. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay.rst
 
 
 .. _XML_PressurePorosity:
@@ -720,6 +748,13 @@ Element: ProppantTransport
 Element: Python
 ===============
 .. include:: ../../coreComponents/schema/docs/Python.rst
+
+
+.. _XML_ReactiveCompositionalMultiphaseOBL:
+
+Element: ReactiveCompositionalMultiphaseOBL
+===========================================
+.. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
 
 
 .. _XML_Restart:
@@ -797,6 +832,13 @@ Element: SinglePhaseWell
 Element: SlipDependentPermeability
 ==================================
 .. include:: ../../coreComponents/schema/docs/SlipDependentPermeability.rst
+
+
+.. _XML_SolidInternalEnergy:
+
+Element: SolidInternalEnergy
+============================
+.. include:: ../../coreComponents/schema/docs/SolidInternalEnergy.rst
 
 
 .. _XML_SolidMechanicsEmbeddedFractures:
@@ -939,11 +981,11 @@ Element: VTK
 .. include:: ../../coreComponents/schema/docs/VTK.rst
 
 
-.. _XML_VTKMeshGenerator:
+.. _XML_VTKMesh:
 
-Element: VTKMeshGenerator
-=========================
-.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator.rst
+Element: VTKMesh
+================
+.. include:: ../../coreComponents/schema/docs/VTKMesh.rst
 
 
 .. _XML_VanGenuchtenBakerRelativePermeability:
@@ -1083,11 +1125,25 @@ Datastructure: CO2BrineEzrokhiFluid
 .. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid_other.rst
 
 
+.. _DATASTRUCTURE_CO2BrineEzrokhiThermalFluid:
+
+Datastructure: CO2BrineEzrokhiThermalFluid
+==========================================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiThermalFluid_other.rst
+
+
 .. _DATASTRUCTURE_CO2BrinePhillipsFluid:
 
 Datastructure: CO2BrinePhillipsFluid
 ====================================
 .. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid_other.rst
+
+
+.. _DATASTRUCTURE_CO2BrinePhillipsThermalFluid:
+
+Datastructure: CO2BrinePhillipsThermalFluid
+===========================================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsThermalFluid_other.rst
 
 
 .. _DATASTRUCTURE_CarmanKozenyPermeability:
@@ -1566,11 +1622,11 @@ Datastructure: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs_other.rst
 
 
-.. _DATASTRUCTURE_PAMELAMeshGenerator:
+.. _DATASTRUCTURE_PAMELAMesh:
 
-Datastructure: PAMELAMeshGenerator
-==================================
-.. include:: ../../coreComponents/schema/docs/PAMELAMeshGenerator_other.rst
+Datastructure: PAMELAMesh
+=========================
+.. include:: ../../coreComponents/schema/docs/PAMELAMesh_other.rst
 
 
 .. _DATASTRUCTURE_PVTDriver:
@@ -1650,6 +1706,13 @@ Datastructure: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
 
 
+.. _DATASTRUCTURE_PorousDelftEgg:
+
+Datastructure: PorousDelftEgg
+==================================
+.. include:: ../../coreComponents/schema/docs/PorousDelftEgg_other.rst
+
+
 .. _DATASTRUCTURE_PorousDruckerPrager:
 
 Datastructure: PorousDruckerPrager
@@ -1683,6 +1746,13 @@ Datastructure: PorousElasticTransverseIsotropic
 Datastructure: PorousExtendedDruckerPrager
 ==========================================
 .. include:: ../../coreComponents/schema/docs/PorousExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_PorousModifiedCamClay:
+
+Datastructure: PorousModifiedCamClay
+==========================================
+.. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay_other.rst
 
 
 .. _DATASTRUCTURE_PressurePorosity:
@@ -1739,6 +1809,13 @@ Datastructure: ProppantTransport
 Datastructure: Python
 =====================
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
+
+
+.. _DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL:
+
+Datastructure: ReactiveCompositionalMultiphaseOBL
+=================================================
+.. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
 
 
 .. _DATASTRUCTURE_Restart:
@@ -1816,6 +1893,13 @@ Datastructure: SinglePhaseWell
 Datastructure: SlipDependentPermeability
 ========================================
 .. include:: ../../coreComponents/schema/docs/SlipDependentPermeability_other.rst
+
+
+.. _DATASTRUCTURE_SolidInternalEnergy:
+
+Datastructure: SolidInternalEnergy
+==================================
+.. include:: ../../coreComponents/schema/docs/SolidInternalEnergy_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:
@@ -1958,11 +2042,11 @@ Datastructure: VTK
 .. include:: ../../coreComponents/schema/docs/VTK_other.rst
 
 
-.. _DATASTRUCTURE_VTKMeshGenerator:
+.. _DATASTRUCTURE_VTKMesh:
 
-Datastructure: VTKMeshGenerator
-===============================
-.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator_other.rst
+Datastructure: VTKMesh
+======================
+.. include:: ../../coreComponents/schema/docs/VTKMesh_other.rst
 
 
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:

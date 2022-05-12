@@ -163,10 +163,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm, fracturePerm, fractureContact }"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -351,7 +348,7 @@
     <VTK
       name="vtkOutput"
       plotLevel="3"
-      writeBinaryData="1"/>
+      format="binary"/>
 
    <TimeHistory
       name="timeHistoryOutput"

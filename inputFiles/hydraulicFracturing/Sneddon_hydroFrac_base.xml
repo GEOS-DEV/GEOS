@@ -127,12 +127,6 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
 
-    <ElasticIsotropic
-      name="rock"
-      defaultDensity="2700"
-      defaultBulkModulus="16.66666666666666e9"
-      defaultShearModulus="1.0e10"/>
-
     <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="1.0e0"
@@ -219,7 +213,7 @@
      <VTK
       name="vtkOutput"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
      <TimeHistory
       name="timeHistoryOutput"

@@ -35,9 +35,9 @@ GEOSX_FORCE_INLINE
 void
 AccumulationKernel::
   compute( localIndex const numComps,
-           real64 const proppantConcOld,
+           real64 const proppantConc_n,
            real64 const proppantConcNew,
-           arraySlice1d< real64 const > const & componentDensOld,
+           arraySlice1d< real64 const > const & componentDens_n,
            arraySlice1d< real64 const > const & componentDensNew,
            arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dCompDens_dPres ),
            arraySlice2d< real64 const > const & dCompDens_dCompConc,
@@ -49,7 +49,7 @@ AccumulationKernel::
 {
 
   // proppant mass conservation
-  localAccum[0] = (proppantConcNew - proppantConcOld) * volume - proppantLiftVolume;
+  localAccum[0] = (proppantConcNew - proppantConc_n) * volume - proppantLiftVolume;
 
   for( localIndex c1 = 0; c1 < numComps; ++c1 )
   {
@@ -65,8 +65,8 @@ AccumulationKernel::
   for( localIndex c1 = 0; c1 < numComps; ++c1 )
   {
 
-    localAccum[c1+1] = ( componentDensNew[c1] * (1.0 - proppantConcNew) - componentDensOld[c1] * (1.0 - proppantConcOld) ) * volume
-                       + (componentDensNew[c1] - componentDensOld[c1]) * packPoreVolume;
+    localAccum[c1+1] = ( componentDensNew[c1] * (1.0 - proppantConcNew) - componentDens_n[c1] * (1.0 - proppantConc_n) ) * volume
+                       + (componentDensNew[c1] - componentDens_n[c1]) * packPoreVolume;
 
     for( localIndex c2 = 0; c2 < numComps; ++c2 )
     {
@@ -86,9 +86,9 @@ AccumulationKernel::
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
+          arrayView1d< real64 const > const & proppantConc_n,
           arrayView1d< real64 const > const & proppantConc,
-          arrayView1d< real64 const > const & dProppantConc,
-          arrayView2d< real64 const > const & componentDensOld,
+          arrayView2d< real64 const > const & componentDens_n,
           arrayView3d< real64 const > const & componentDens,
           arrayView3d< real64 const > const & dCompDens_dPres,
           arrayView4d< real64 const > const & dCompDens_dCompConc,
@@ -124,9 +124,9 @@ AccumulationKernel::
       real64 const proppantLiftVolume = proppantLiftFlux[ei] * dt;
 
       compute( numComps,
+               proppantConc_n[ei],
                proppantConc[ei],
-               proppantConc[ei] + dProppantConc[ei],
-               componentDensOld[ei],
+               componentDens_n[ei],
                componentDens[ei][0],
                dCompDens_dPres[ei][0],
                dCompDens_dCompConc[ei][0],
@@ -167,9 +167,7 @@ FluxKernel::
                    localIndex const numDofPerCell,
                    arraySlice1d< localIndex const > const & stencilElementIndices,
                    arrayView1d< real64 const > const & pres,
-                   arrayView1d< real64 const > const & dPres,
                    arrayView1d< real64 const > const & proppantConc,
-                   arrayView1d< real64 const > const & dProppantConc,
                    arrayView3d< real64 const > const & componentDens,
                    arrayView3d< real64 const > const & dComponentDens_dPres,
                    arrayView4d< real64 const > const & dComponentDens_dComponentConc,
@@ -259,7 +257,7 @@ FluxKernel::
     dEdgeVisc_dP[i] = geometricWeight[i] * dVisc_dPres[ei][0];
     dEdgeVisc_dProppantC[i] = geometricWeight[i] * dVisc_dProppantConc[ei][0];
 
-    proppantC[i] = proppantConc[ei] + dProppantConc[ei];
+    proppantC[i] = proppantConc[ei];
 
     mixDens[i] = dens[ei][0];
     fluidDens[i] = fluidDensity[ei][0];
@@ -288,7 +286,7 @@ FluxKernel::
     real64 const gravD    = gravDepth[ei];
     real64 const gravTerm = edgeDensity * gravD;
 
-    Pe += transmissibility[i] * (pres[ei] + dPres[ei] - gravTerm);
+    Pe += transmissibility[i] * (pres[ei] - gravTerm);
     transmissibilitySum += transmissibility[i];
     dPe_dP[i] += transmissibility[i];
 
@@ -324,7 +322,7 @@ FluxKernel::
     real64 const gravD    = gravDepth[ei];
     real64 const gravTerm = edgeDensity * gravD;
 
-    real64 const fluxTerm = Pe - (pres[ei] + dPres[ei] - gravTerm);
+    real64 const fluxTerm = Pe - (pres[ei] - gravTerm);
 
     edgeToFaceFlux[i] = transmissibility[i] * fluxTerm / edgeViscosity;
     dEdgeToFaceFlux_dP[i][i] += -transmissibility[i] / edgeViscosity;
@@ -747,9 +745,7 @@ void FluxKernel::
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
-          ElementViewConst< arrayView1d< real64 const > > const & dPres,
           ElementViewConst< arrayView1d< real64 const > > const & proppantConc,
-          ElementViewConst< arrayView1d< real64 const > > const & dProppantConc,
           ElementViewConst< arrayView3d< real64 const > > const & componentDens,
           ElementViewConst< arrayView3d< real64 const > > const & dComponentDens_dPres,
           ElementViewConst< arrayView4d< real64 const > > const & dComponentDens_dComponentConc,
@@ -826,9 +822,7 @@ void FluxKernel::
                        numDofPerCell,
                        sei[iconn],
                        pres[er][esr],
-                       dPres[er][esr],
                        proppantConc[er][esr],
-                       dProppantConc[er][esr],
                        componentDens[er][esr],
                        dComponentDens_dPres[er][esr],
                        dComponentDens_dComponentConc[er][esr],

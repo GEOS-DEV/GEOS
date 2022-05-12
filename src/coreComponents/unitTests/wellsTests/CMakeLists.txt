@@ -4,6 +4,7 @@
 
 set( gtest_geosx_tests
      testReservoirSinglePhaseMSWells.cpp
+     testWellEnums.cpp
    )
 
 set( dependencyList gtest )

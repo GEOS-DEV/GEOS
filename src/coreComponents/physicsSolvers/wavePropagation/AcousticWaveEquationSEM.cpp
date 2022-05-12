@@ -133,7 +133,6 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 void AcousticWaveEquationSEM::postProcessInput()
 {
   WaveSolverBase::postProcessInput();
-
   GEOSX_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the sources",
                   InputError );
@@ -141,6 +140,30 @@ void AcousticWaveEquationSEM::postProcessInput()
   GEOSX_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the receivers",
                   InputError );
+
+  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
+  real64 dt = 0;
+  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
+  {
+    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
+    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    {
+      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
+    }
+  }
+
+  GEOSX_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+
+  if( m_dtSeismoTrace > 0 )
+  {
+    m_nsamplesSeismoTrace = int( maxTime / m_dtSeismoTrace) + 1;
+  }
+  else
+  {
+    m_nsamplesSeismoTrace = 0;
+  }
+  localIndex const nsamples = int(maxTime/dt) + 1;
 
   localIndex const numNodesPerElem = 8;
 
@@ -154,7 +177,8 @@ void AcousticWaveEquationSEM::postProcessInput()
   m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverIsLocal.resize( numReceiversGlobal );
 
-  m_pressureNp1AtReceivers.resize( numReceiversGlobal );
+  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_sourceValue.resize( nsamples, numSourcesGlobal );
 
 }
 
@@ -183,6 +207,21 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   receiverNodeIds.setValues< EXEC_POLICY >( -1 );
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
+
+  real64 const timeSourceFrequency = this->m_timeSourceFrequency;
+  localIndex const rickerOrder = this->m_rickerOrder;
+  arrayView2d< real64 > const sourceValue = m_sourceValue.toView();
+  real64 dt = 0;
+  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
+  {
+    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
+    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    {
+      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
+    }
+  }
+
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
@@ -222,75 +261,97 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         receiverCoordinates,
         receiverIsLocal,
         receiverNodeIds,
-        receiverConstants );
-
+        receiverConstants,
+        sourceValue,
+        dt,
+        timeSourceFrequency,
+        rickerOrder );
     } );
   } );
+
 }
 
 
-void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs )
+void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
+  arrayView2d< real64 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  real64 const fi = evaluateRicker( time_n, this->m_timeSourceFrequency, this->m_rickerOrder );
-
+  GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsLocal[isrc] == 1 )
     {
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
-        rhs[sourceNodeIds[isrc][inode]] = sourceConstants[isrc][inode] * fi;
+        rhs[sourceNodeIds[isrc][inode]] = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
       }
     }
   } );
 }
 
 
-void AcousticWaveEquationSEM::computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 )
+void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n )
 {
+  real64 const timeSeismo = m_dtSeismoTrace*iSeismo;
+  real64 const timeNp1 = time_n+dt;
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  arrayView1d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
+  arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
 
-  forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
-  {
-    if( receiverIsLocal[ircv] == 1 )
-    {
-      p_rcvs[ircv] = 0.0;
-      for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
-      {
-        real64 const localIncrement = pressure_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
-        RAJA::atomicAdd< ATOMIC_POLICY >( &p_rcvs[ircv], localIncrement );
-      }
-    }
-  } );
+  real64 const a1 = (dt < epsilonLoc) ? 1.0 : (timeNp1 - timeSeismo)/dt;
+  real64 const a2 = 1.0 - a1;
 
-  forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+  if( m_nsamplesSeismoTrace > 0 )
   {
-    if( this->m_outputSeismoTrace == 1 )
+    forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
     {
       if( receiverIsLocal[ircv] == 1 )
       {
-        // Note: this "manual" output to file is temporary
-        //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-        // TODO: remove saveSeismo and replace with TimeHistory
-        this->saveSeismo( iseismo, p_rcvs[ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+        p_rcvs[iSeismo][ircv] = 0.0;
+        real64 ptmpNp1 = 0.0;
+        real64 ptmpN = 0.0;
+        for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
+        {
+          ptmpNp1 += pressure_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+          ptmpN += pressure_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+        }
+        //Temporary linear interpolation.
+        p_rcvs[iSeismo][ircv] = a1*ptmpN + a2*ptmpNp1;
       }
-    }
-  } );
+    } );
+  }
+
+  if( iSeismo == m_nsamplesSeismoTrace - 1 )
+  {
+    forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+    {
+      if( this->m_outputSeismoTrace == 1 )
+      {
+        if( receiverIsLocal[ircv] == 1 )
+        {
+          // Note: this "manual" output to file is temporary
+          //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+          // TODO: remove saveSeismo and replace with TimeHistory
+          for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
+          {
+            this->saveSeismo( iSample, p_rcvs[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+          }
+        }
+      }
+    } );
+  }
 }
 
 /// Use for now until we get the same functionality in TimeHistory
-void AcousticWaveEquationSEM::saveSeismo( localIndex iseismo, real64 valPressure, string const & filename )
+void AcousticWaveEquationSEM::saveSeismo( localIndex iSeismo, real64 valPressure, string const & filename )
 {
   std::ofstream f( filename, std::ios::app );
-  f<< iseismo << " " << valPressure << std::endl;
+  f<< iSeismo << " " << valPressure << std::endl;
   f.close();
 }
 
@@ -390,8 +451,11 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
   arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
 
+  freeSurfaceFaceIndicator.zero();
+  freeSurfaceNodeIndicator.zero();
+
   fsManager.apply( time,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "faceManager",
                    string( "FreeSurface" ),
                    [&]( FieldSpecificationBase const & bc,
@@ -405,9 +469,6 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
       real64 const value = bc.getScale();
-
-      freeSurfaceFaceIndicator.zero();
-      freeSurfaceNodeIndicator.zero();
 
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {
@@ -454,6 +515,8 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
+  GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
+
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
@@ -482,7 +545,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                                             "",
                                                             kernelFactory );
 
-    addSourceToRightHandSide( time_n, rhs );
+    addSourceToRightHandSide( cycleNumber, rhs );
 
     /// calculate your time integrators
     real64 const dt2 = dt*dt;
@@ -501,11 +564,11 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     } );
 
     /// synchronize pressure fields
-    std::map< string, string_array > fieldNames;
-    fieldNames["node"].emplace_back( "pressure_np1" );
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::Pressure_np1::key() } );
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
-    syncFields.synchronizeFields( fieldNames,
+    syncFields.synchronizeFields( fieldsToBeSync,
                                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                   domain.getNeighbors(),
                                   true );
@@ -519,9 +582,11 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       rhs[a] = 0.0;
     } );
 
-    if( this->m_outputSeismoTrace == 1 )
+    real64 const checkSeismo = m_dtSeismoTrace*m_indexSeismoTrace;
+    if( (time_n-epsilonLoc) <= checkSeismo && checkSeismo < (time_n + dt) )
     {
-      computeSeismoTrace( cycleNumber, p_np1 );
+      computeSeismoTrace( time_n, dt, m_indexSeismoTrace, p_np1, p_n );
+      m_indexSeismoTrace++;
     }
 
   } );

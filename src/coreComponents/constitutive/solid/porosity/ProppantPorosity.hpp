@@ -31,13 +31,13 @@ class ProppantPorosityUpdates : public PorosityBaseUpdates
 public:
 
   ProppantPorosityUpdates( arrayView2d< real64 > const & newPorosity,
-                           arrayView2d< real64 > const & oldPorosity,
+                           arrayView2d< real64 > const & porosity_n,
                            arrayView2d< real64 > const & dPorosity_dPressure,
                            arrayView2d< real64 > const & initialPorosity,
                            arrayView1d< real64 > const & referencePorosity,
                            real64 const & maxProppantConcentration ):
     PorosityBaseUpdates( newPorosity,
-                         oldPorosity,
+                         porosity_n,
                          dPorosity_dPressure,
                          initialPorosity,
                          referencePorosity ),
@@ -98,7 +98,7 @@ public:
   KernelWrapper createKernelUpdates() const
   {
     return KernelWrapper( m_newPorosity,
-                          m_oldPorosity,
+                          m_porosity_n,
                           m_dPorosity_dPressure,
                           m_initialPorosity,
                           m_referencePorosity,
