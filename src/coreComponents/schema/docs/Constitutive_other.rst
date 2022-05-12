@@ -39,12 +39,14 @@ ModifiedCamClay                             node :ref:`DATASTRUCTURE_ModifiedCam
 NullModel                                   node :ref:`DATASTRUCTURE_NullModel`                                   
 ParallelPlatesPermeability                  node :ref:`DATASTRUCTURE_ParallelPlatesPermeability`                  
 ParticleFluid                               node :ref:`DATASTRUCTURE_ParticleFluid`                               
-PermeabilityBase                            node :ref:`DATASTRUCTURE_PermeabilityBase`                            
+PermeabilityBase                            node :ref:`DATASTRUCTURE_PermeabilityBase` 
+PorousDelftEgg                              node :ref:`DATASTRUCTURE_PorousDelftEgg`                             
 PorousDruckerPrager                         node :ref:`DATASTRUCTURE_PorousDruckerPrager`                         
 PorousElasticIsotropic                      node :ref:`DATASTRUCTURE_PorousElasticIsotropic`                      
 PorousElasticOrthotropic                    node :ref:`DATASTRUCTURE_PorousElasticOrthotropic`                    
 PorousElasticTransverseIsotropic            node :ref:`DATASTRUCTURE_PorousElasticTransverseIsotropic`            
-PorousExtendedDruckerPrager                 node :ref:`DATASTRUCTURE_PorousExtendedDruckerPrager`                 
+PorousExtendedDruckerPrager                 node :ref:`DATASTRUCTURE_PorousExtendedDruckerPrager` 
+PorousModifiedCamClay                       node :ref:`DATASTRUCTURE_PorousModifiedCamClay`                
 PressurePorosity                            node :ref:`DATASTRUCTURE_PressurePorosity`                            
 ProppantPermeability                        node :ref:`DATASTRUCTURE_ProppantPermeability`                        
 ProppantPorosity                            node :ref:`DATASTRUCTURE_ProppantPorosity`                            
