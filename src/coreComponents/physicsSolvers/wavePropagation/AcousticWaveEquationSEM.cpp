@@ -518,7 +518,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
       {
-        p_dt2[nodeIdx] += (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
+        p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
       } );
 
       int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
@@ -585,7 +585,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
           for ( localIndex i = 0; i < numNodesPerElem; ++i )
           {
             localIndex nodeIdx = elemsToNodes[eltIdx][i];
-            grad[eltIdx] += p_dt2[nodeIdx] * p_n[nodeIdx];
+            grad[eltIdx] -= p_dt2[nodeIdx] * p_n[nodeIdx];
           }
         } );
       } );
