@@ -510,6 +510,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                   arrayView1d< string const > const & regionNames )
     {
       NodeManager & nodeManager = mesh.getNodeManager();
+      ElementRegionManager & elemManager = mesh.getElemManager();
 
       arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
       arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
@@ -532,6 +533,16 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       GEOSX_THROW_IF( !wf.good() ,
                       "An error occured while writting "<< fileName,
                       InputError );
+
+      if (cycleNumber == 0) {
+        elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                    CellElementSubRegion & elementSubRegion )
+        {
+          arrayView1d< real64 > grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
+          grad.zero();
+        });
+      }
+
     } );
   }
   return dtOut;
@@ -571,16 +582,6 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
         constexpr localIndex numNodesPerElem = 8;
 
-        std::string fileNameGradient = GEOSX_FMT( "gradient_{:06}_{:04}.dat", m_shotIndex, rank );
-        std::ifstream wf2( fileNameGradient, std::ios::in | std::ios::binary );
-        if (wf2) {
-          wf2.read( (char*)&grad[0], grad.size()*sizeof( real64 ) );
-          wf2.close();
-        }
-        else {
-          grad.zero();
-        }
-
         GEOSX_MARK_SCOPE ( updatePartialGradient );
         forAll< EXEC_POLICY >( elemManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const eltIdx )
         {
@@ -590,15 +591,6 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
             grad[eltIdx] -= (p_dt2[nodeIdx] * p_n[nodeIdx])/numNodesPerElem;
           }
         } );
-        std::ofstream wf3( fileNameGradient, std::ios::out | std::ios::binary );
-        GEOSX_THROW_IF( !wf3 ,
-                        "Could not open file "<< fileNameGradient << " for writting",
-                        InputError );
-        wf3.write( (char*)&grad[0], grad.size()*sizeof( real64 ) );
-        wf3.close();
-        GEOSX_THROW_IF( !wf3.good() ,
-                        "An error occured while writting "<< fileNameGradient,
-                        InputError );
       } );
     } );
   }
