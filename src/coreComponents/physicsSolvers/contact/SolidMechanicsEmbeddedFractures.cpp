@@ -31,7 +31,6 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernels.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMStaticCondensationKernels.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMJumpUpdateKernels.hpp"
@@ -46,10 +45,6 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
                                                                   Group * const parent ):
   ContactSolverBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the fracture region." );
-
   registerWrapper( viewKeyStruct::useStaticCondensationString(), &m_useStaticCondensation ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
@@ -109,6 +104,37 @@ void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroup
 void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   m_solidSolver->resetStateToBeginningOfStep( domain );
+
+  // reset displacementJump
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
+                                                                                    EmbeddedSurfaceSubRegion & subRegion )
+    {
+      arrayView2d< real64 > const & jump  =
+        subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
+
+      arrayView2d< real64 const > const & oldJump  =
+        subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
+
+      arrayView2d< real64 > const & deltaJump  =
+        subRegion.getExtrinsicData< extrinsicMeshData::contact::deltaDispJump >();
+
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
+      {
+        for( localIndex i = 0; i < 3; ++i )
+        {
+          jump( kfe, i ) = oldJump( kfe, i );
+          deltaJump( kfe, i ) = 0.0;
+        }
+      } );
+    } );
+  } );
 
   updateState( domain );
 }
@@ -171,7 +197,7 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
     } );
 
     dofManager.addField( extrinsicMeshData::contact::dispJump::key(),
-                         DofManager::Location::Elem,
+                         FieldLocation::Elem,
                          3,
                          meshTargets );
 
@@ -495,22 +521,27 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  fsManager.apply( time_n+ dt,
-                   domain,
-                   "ElementRegions",
-                   extrinsicMeshData::contact::traction::key(),
-                   [&] ( FieldSpecificationBase const & fs,
-                         string const &,
-                         SortedArrayView< localIndex const > const & targetSet,
-                         Group & subRegion,
-                         string const & )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & )
   {
-    fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
-                                                                       time_n+dt,
-                                                                       subRegion,
-                                                                       extrinsicMeshData::contact::traction::key() );
-  } );
 
+    fsManager.apply( time_n+ dt,
+                     mesh,
+                     "ElementRegions",
+                     extrinsicMeshData::contact::traction::key(),
+                     [&] ( FieldSpecificationBase const & fs,
+                           string const &,
+                           SortedArrayView< localIndex const > const & targetSet,
+                           Group & subRegion,
+                           string const & )
+    {
+      fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
+                                                                         time_n+dt,
+                                                                         subRegion,
+                                                                         extrinsicMeshData::contact::traction::key() );
+    } );
+  } );
 }
 
 real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition const & domain,
@@ -629,15 +660,17 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
     updateJump( dofManager, domain );
   }
 
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    std::map< string, string_array > fieldNames;
-    fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::dispJump::key() ) );
-    fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::deltaDispJump::key()) );
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    FieldIdentifiers fieldsToBeSync;
+
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::dispJump::key(),
+                                       extrinsicMeshData::contact::deltaDispJump::key() },
+                                     { getFractureRegionName() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );
@@ -702,17 +735,15 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
     {
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
-      arrayView2d< real64 const > const & jump  =
-        subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
+      arrayView2d< real64 const > const & jump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
 
-      arrayView2d< real64 const > const & oldJump  =
-        subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
+      arrayView2d< real64 const > const & oldJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
 
-      arrayView2d< real64 > const & fractureTraction =
-        subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
+      arrayView2d< real64 > const & fractureTraction = subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
 
-      arrayView3d< real64 > const & dFractureTraction_dJump =
-        subRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dJump >();
+      arrayView3d< real64 > const & dFractureTraction_dJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dJump >();
+
+      arrayView1d< integer const > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
 
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
@@ -725,7 +756,8 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
                                             oldJump,
                                             jump,
                                             fractureTraction,
-                                            dFractureTraction_dJump );
+                                            dFractureTraction_dJump,
+                                            fractureState );
       } );
     } );
   } );
@@ -733,10 +765,66 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 
 bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR( domain );
-  return true;
-}
+  bool hasConfigurationConverged = true;
 
+  using namespace extrinsicMeshData::contact;
+
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+
+    // We want to update the configuration (fracture state in this case) and check if it has changed. If it hasn't changed
+    // then we know the configuartion loop has converged and we can return true.
+    elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
+                                                                                    EmbeddedSurfaceSubRegion & subRegion )
+    {
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView2d< real64 const > const & dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
+      arrayView2d< real64 const > const & traction = subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
+      arrayView1d< integer > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
+
+      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+
+      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+      {
+        using ContactType = TYPEOFREF( castedContact );
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+
+        RAJA::ReduceMin< parallelHostReduce, integer > checkActiveSetSub( 1 );
+
+        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        {
+          if( ghostRank[kfe] < 0 )
+          {
+            integer const originalFractureState = fractureState[kfe];
+            contactWrapper.updateFractureState( kfe, dispJump[kfe], traction[kfe], fractureState[kfe] );
+            checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
+          }
+        } );
+        hasConfigurationConverged &= checkActiveSetSub.get();
+      } );
+    } );
+  } );
+  // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
+  synchronizeFractureState( domain );
+
+  // Compute if globally the fracture state has changed
+  bool hasConfigurationConvergedGlobally;
+  MpiWrapper::allReduce( &hasConfigurationConverged,
+                         &hasConfigurationConvergedGlobally,
+                         1,
+                         MPI_LAND,
+                         MPI_COMM_GEOSX );
+
+  // for this solver it makes sense to reset the state.
+  // if( !hasConfigurationConvergedGlobally )
+  //   resetStateToBeginningOfStep( domain );
+
+  return hasConfigurationConvergedGlobally;
+}
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, string const &, Group * const )
 } /* namespace geosx */

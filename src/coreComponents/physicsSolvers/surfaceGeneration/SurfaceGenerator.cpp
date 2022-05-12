@@ -522,11 +522,15 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   ArrayOfArrays< localIndex > const & nodeToElementMap = nodeManager.elementList();
 
-  map< string, string_array > fieldNames;
-  fieldNames["face"].emplace_back( string( extrinsicMeshData::RuptureState::key() ) );
-  fieldNames["node"].emplace_back( string( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() ) );
+  FieldIdentifiers fieldsToBeSync;
 
-  CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
+  fieldsToBeSync.addFields( FieldLocation::Face, { extrinsicMeshData::RuptureState::key() } );
+  if( nodeManager.hasWrapper( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() ) )
+  {
+    fieldsToBeSync.addFields( FieldLocation::Node, { SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() } );
+  }
+
+  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
   {
@@ -2099,7 +2103,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
                                                         getSubRegion< CellElementSubRegion >( faceToSubRegionMap[iFace][0] );
             arrayView2d< real64 const > const subRegionElemCenter = elementSubRegion.getElementCenter();
 
-            faceManager.sortFaceNodes( X, subRegionElemCenter[ elementIndex ], faceToNodeMap[ iFace ], faceToNodeMap.sizeOfArray( iFace ) );
+            FaceManager::sortFaceNodes( X, subRegionElemCenter[ elementIndex ], faceToNodeMap[ iFace ] );
 
             //Face normal need to be updated here
             real64 fCenter[ 3 ];

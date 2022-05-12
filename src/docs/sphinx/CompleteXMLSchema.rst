@@ -736,6 +736,13 @@ Element: Python
 .. include:: ../../coreComponents/schema/docs/Python.rst
 
 
+.. _XML_ReactiveCompositionalMultiphaseOBL:
+
+Element: ReactiveCompositionalMultiphaseOBL
+===========================================
+.. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
+
+
 .. _XML_Restart:
 
 Element: Restart
@@ -811,6 +818,13 @@ Element: SinglePhaseWell
 Element: SlipDependentPermeability
 ==================================
 .. include:: ../../coreComponents/schema/docs/SlipDependentPermeability.rst
+
+
+.. _XML_SolidInternalEnergy:
+
+Element: SolidInternalEnergy
+============================
+.. include:: ../../coreComponents/schema/docs/SolidInternalEnergy.rst
 
 
 .. _XML_SolidMechanicsEmbeddedFractures:
@@ -1769,6 +1783,13 @@ Datastructure: Python
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
 
 
+.. _DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL:
+
+Datastructure: ReactiveCompositionalMultiphaseOBL
+=================================================
+.. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
+
+
 .. _DATASTRUCTURE_Restart:
 
 Datastructure: Restart
@@ -1844,6 +1865,13 @@ Datastructure: SinglePhaseWell
 Datastructure: SlipDependentPermeability
 ========================================
 .. include:: ../../coreComponents/schema/docs/SlipDependentPermeability_other.rst
+
+
+.. _DATASTRUCTURE_SolidInternalEnergy:
+
+Datastructure: SolidInternalEnergy
+==================================
+.. include:: ../../coreComponents/schema/docs/SolidInternalEnergy_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:

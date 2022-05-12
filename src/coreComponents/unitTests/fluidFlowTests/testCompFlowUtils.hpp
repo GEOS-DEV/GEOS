@@ -244,9 +244,8 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
 
       arrayView2d< real64, compflow::USD_COMP > const compDens =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-
-      arrayView2d< real64, compflow::USD_COMP > const dCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
+      arrayView2d< real64 const, compflow::USD_COMP > const compDens_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity_n >();
 
       arrayView2d< real64, compflow::USD_COMP > const compFrac =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
@@ -271,7 +270,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dRho = perturbParameter * ( compDens[ei][jc] + perturbParameter );
-          dCompDens[ei][jc] = dRho;
+          compDens[ei][jc] += dRho;
         } );
 
         // recompute component fractions
@@ -285,10 +284,11 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
           auto dZ_dRho = invertLayout( dCompFrac_dCompDens[ei].toSliceConst(), numComp, numComp );
           string var = "compDens[" + components[jc] + "]";
 
+          real64 const delta = compDens[ei][jc] - compDens_n[ei][jc];
           checkDerivative( compFrac[ei].toSliceConst(),
                            compFracOrig[ei].toSliceConst(),
                            dZ_dRho[jc].toSliceConst(),
-                           dCompDens[ei][jc],
+                           delta,
                            relTol,
                            "compFrac",
                            var,
@@ -327,15 +327,13 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
 
       arrayView1d< real64 > const pres =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-
-      arrayView1d< real64 > const dPres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
+      arrayView1d< real64 const > const pres_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
 
       arrayView2d< real64, compflow::USD_COMP > const compDens =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-
-      arrayView2d< real64, compflow::USD_COMP > const dCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
+      arrayView2d< real64, compflow::USD_COMP > const compDens_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity_n >();
 
       arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
@@ -360,7 +358,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
-          dPres[ei] = dP;
+          pres[ei] += dP;
         } );
 
         // recompute component fractions
@@ -371,10 +369,11 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
         {
           SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
+          real64 const delta = pres[ei] - pres_n[ei];
           checkDerivative( phaseVolFrac[ei].toSliceConst(),
                            phaseVolFracOrig[ei].toSliceConst(),
                            dPhaseVolFrac_dPres[ei].toSliceConst(),
-                           dPres[ei],
+                           delta,
                            relTol,
                            "phaseVolFrac",
                            "Pres",
@@ -393,7 +392,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dRho = perturbParameter * ( compDens[ei][jc] + perturbParameter );
-          dCompDens[ei][jc] = dRho;
+          compDens[ei][jc] += dRho;
         } );
 
         // recompute component fractions
@@ -407,10 +406,11 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
           auto dS_dRho = invertLayout( dPhaseVolFrac_dCompDens[ei].toSliceConst(), numPhase, numComp );
           string var = "compDens[" + components[jc] + "]";
 
+          real64 const delta = compDens[ei][jc] - compDens_n[ei][jc];
           checkDerivative( phaseVolFrac[ei].toSliceConst(),
                            phaseVolFracOrig[ei].toSliceConst(),
                            dS_dRho[jc].toSliceConst(),
-                           dCompDens[ei][jc],
+                           delta,
                            relTol,
                            "phaseVolFrac",
                            var,
@@ -424,9 +424,8 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       {
         arrayView1d< real64 > const temp =
           subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
-
-        arrayView1d< real64 > const dTemp =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >();
+        arrayView1d< real64 > const temp_n =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
 
         arrayView2d< real64, compflow::USD_PHASE > const dPhaseVolFrac_dTemp =
           subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >();
@@ -438,7 +437,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
-          dTemp[ei] = dT;
+          temp[ei] += dT;
         } );
 
         // recompute all fluid properties
@@ -449,10 +448,11 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
         {
           SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
+          real64 const delta = temp[ei] - temp_n[ei];
           checkDerivative( phaseVolFrac[ei].toSliceConst(),
                            phaseVolFracOrig[ei].toSliceConst(),
                            dPhaseVolFrac_dTemp[ei].toSliceConst(),
-                           dTemp[ei],
+                           delta,
                            relTol,
                            "phaseVolFrac",
                            "Temp",
@@ -492,15 +492,13 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
 
       arrayView1d< real64 > const pres =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-
-      arrayView1d< real64 > const dPres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
+      arrayView1d< real64 const > const pres_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
 
       arrayView2d< real64, compflow::USD_COMP > const compDens =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-
-      arrayView2d< real64, compflow::USD_COMP > const dCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
+      arrayView2d< real64 const, compflow::USD_COMP > const compDens_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity_n >();
 
       arrayView2d< real64, compflow::USD_PHASE > const phaseMob =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >();
@@ -525,7 +523,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
-          dPres[ei] = dP;
+          pres[ei] += dP;
         } );
 
         // recompute component fractions
@@ -536,10 +534,11 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
         {
           SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
+          real64 const delta = pres[ei] - pres_n[ei];
           checkDerivative( phaseMob[ei].toSliceConst(),
                            phaseMobOrig[ei].toSliceConst(),
                            dPhaseMob_dPres[ei].toSliceConst(),
-                           dPres[ei],
+                           delta,
                            relTol,
                            "phaseMob",
                            "Pres",
@@ -558,7 +557,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dRho = perturbParameter * ( compDens[ei][jc] + perturbParameter );
-          dCompDens[ei][jc] = dRho;
+          compDens[ei][jc] += dRho;
         } );
 
         // recompute component fractions
@@ -572,10 +571,11 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
           auto dS_dRho = invertLayout( dPhaseMob_dCompDens[ei].toSliceConst(), numPhase, numComp );
           string var = "compDens[" + components[jc] + "]";
 
+          real64 const delta = compDens[ei][jc] - compDens_n[ei][jc];
           checkDerivative( phaseMob[ei].toSliceConst(),
                            phaseMobOrig[ei].toSliceConst(),
                            dS_dRho[jc].toSliceConst(),
-                           dCompDens[ei][jc],
+                           delta,
                            relTol,
                            "phaseMob",
                            var,
@@ -589,9 +589,8 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       {
         arrayView1d< real64 > const temp =
           subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
-
-        arrayView1d< real64 > const dTemp =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >();
+        arrayView1d< real64 const > const temp_n =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
 
         arrayView2d< real64, compflow::USD_PHASE > const dPhaseMob_dTemp =
           subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dTemperature >();
@@ -603,7 +602,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
-          dTemp[ei] = dT;
+          temp[ei] += dT;
         } );
 
         // recompute component fractions
@@ -614,10 +613,11 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
         {
           SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
+          real64 const delta = temp[ei] - temp_n[ei];
           checkDerivative( phaseMob[ei].toSliceConst(),
                            phaseMobOrig[ei].toSliceConst(),
                            dPhaseMob_dTemp[ei].toSliceConst(),
-                           dTemp[ei],
+                           delta,
                            relTol,
                            "phaseMob",
                            "Temp",
@@ -657,19 +657,10 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
       arrayView1d< globalIndex const > const & elemDofNumber =
         subRegion.getReference< array1d< globalIndex > >( elemDofKey );
 
-      arrayView1d< real64 const > const pres =
+      arrayView1d< real64 > const pres =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-      pres.move( LvArray::MemorySpace::host, false );
-
-      arrayView1d< real64 > const dPres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
-
-      arrayView2d< real64 const, compflow::USD_COMP > const compDens =
+      arrayView2d< real64, compflow::USD_COMP > const compDens =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-      compDens.move( LvArray::MemorySpace::host, false );
-
-      arrayView2d< real64, compflow::USD_COMP > const dCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
@@ -678,7 +669,11 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
           continue;
         }
 
+        // Warning! To compute a correct totalDensity, we have to reset compDens
+        solver.resetStateToBeginningOfStep( domain );
+
         real64 totalDensity = 0.0;
+        compDens.move( LvArray::MemorySpace::host, true ); // to get the correct compDens after reset
         for( integer ic = 0; ic < numComp; ++ic )
         {
           totalDensity += compDens[ei][ic];
@@ -687,13 +682,11 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
         // Step 1: compute numerical derivatives wrt pressure
 
         {
-          solver.resetStateToBeginningOfStep( domain );
-
+          pres.move( LvArray::MemorySpace::host, true ); // to get the correct pres after reset
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
-          dPres.move( LvArray::MemorySpace::host, true );
-          dPres[ei] = dP;
+          pres[ei] += dP;
 #if defined(GEOSX_USE_CUDA)
-          dPres.move( LvArray::MemorySpace::cuda, false );
+          pres.move( LvArray::MemorySpace::cuda, false );
 #endif
 
 
@@ -721,11 +714,11 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
         {
           solver.resetStateToBeginningOfStep( domain );
 
+          compDens.move( LvArray::MemorySpace::host, true ); // to get the correct compDens after reset
           real64 const dRho = perturbParameter * totalDensity;
-          dCompDens.move( LvArray::MemorySpace::host, true );
-          dCompDens[ei][jc] = dRho;
+          compDens[ei][jc] += dRho;
 #if defined(GEOSX_USE_CUDA)
-          dCompDens.move( LvArray::MemorySpace::cuda, false );
+          compDens.move( LvArray::MemorySpace::cuda, false );
 #endif
 
 
@@ -751,20 +744,17 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
 
         if( isThermal )
         {
-          arrayView1d< real64 const > const temp =
+          arrayView1d< real64 > const temp =
             subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
           temp.move( LvArray::MemorySpace::host, false );
 
-          arrayView1d< real64 > const dTemp =
-            subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >();
-
           solver.resetStateToBeginningOfStep( domain );
 
+          temp.move( LvArray::MemorySpace::host, true );
           real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
-          dTemp.move( LvArray::MemorySpace::host, true );
-          dTemp[ei] = dT;
+          temp[ei] += dT;
 #if defined(GEOSX_USE_CUDA)
-          dTemp.move( LvArray::MemorySpace::cuda, false );
+          temp.move( LvArray::MemorySpace::cuda, false );
 #endif
 
           // here, we make sure that rock internal energy is updated
@@ -780,7 +770,6 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
                                  elemDofNumber[ei] + numComp + 1,
                                  dT,
                                  jacobianFD.toViewConstSizes() );
-
         }
 
       }

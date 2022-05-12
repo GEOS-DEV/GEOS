@@ -569,25 +569,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
            m_totalDensity( k, q ) );
 }
 
-/// Declare strings associated with enumeration values
-/// Needed for now, because we don't use the catalogNames for input (yet)
-ENUM_STRINGS( CO2BrinePhillipsFluid::SubModelInputNames,
-              "DensityFun",
-              "ViscosityFun",
-              "EnthalpyFun" );
-ENUM_STRINGS( CO2BrinePhillipsThermalFluid::SubModelInputNames,
-              "DensityFun",
-              "ViscosityFun",
-              "EnthalpyFun" );
-ENUM_STRINGS( CO2BrineEzrokhiFluid::SubModelInputNames,
-              "DensityFun",
-              "ViscosityFun",
-              "EnthalpyFun" );
-ENUM_STRINGS( CO2BrineEzrokhiThermalFluid::SubModelInputNames,
-              "DensityFun",
-              "ViscosityFun",
-              "EnthalpyFun" );
-
 
 } // namespace constitutive
 
