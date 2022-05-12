@@ -567,17 +567,19 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                   CellElementSubRegion & elementSubRegion )
       {
-        arrayView1d< real64 > const grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
+        arrayView1d< real64 > grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
         constexpr localIndex numNodesPerElem = 8;
 
         std::string fileNameGradient = GEOSX_FMT( "gradient_{:06}_{:04}.dat", m_shotIndex, rank );
         std::ifstream wf2( fileNameGradient, std::ios::in | std::ios::binary );
-        GEOSX_THROW_IF( !wf2 ,
-                        "Could not open file "<< fileNameGradient << " for reading",
-                        InputError );
-        wf.read( (char*)&grad[0], grad.size()*sizeof( real64 ) );
-        wf.close();
+        if (wf2) {
+          wf2.read( (char*)&grad[0], grad.size()*sizeof( real64 ) );
+          wf2.close();
+        }
+        else {
+          grad.zero();
+        }
 
         GEOSX_MARK_SCOPE ( updatePartialGradient );
         forAll< EXEC_POLICY >( elemManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const eltIdx )
