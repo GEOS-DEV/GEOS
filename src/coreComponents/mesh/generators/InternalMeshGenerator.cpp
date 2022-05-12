@@ -548,8 +548,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   GEOSX_MARK_FUNCTION;
 
   MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( this->getName() );
-  MeshLevel & meshLevel0 = meshBody.createMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
-  NodeManager & nodeManager = meshLevel0.getNodeManager();
 
   // Make sure that the node manager fields are initialized
 

@@ -63,10 +63,10 @@ protected:
     m_edgeManager = &mesh.getEdgeManager();
 
     ElementRegionManager & elemManager = mesh.getElemManager();
-    ASSERT_EQ( elemManager.getRegions().size(), 1 );
+    ASSERT_EQ( elemManager.numRegions(), 1 );
 
     ElementRegionBase & elemRegion = elemManager.getRegion( 0 );
-    ASSERT_EQ( elemRegion.getSubRegions().size(), 1 );
+    ASSERT_EQ( elemRegion.numSubRegions(), 1 );
 
     m_subRegion = &elemRegion.getSubRegion< CellElementSubRegion >( 0 );
   }

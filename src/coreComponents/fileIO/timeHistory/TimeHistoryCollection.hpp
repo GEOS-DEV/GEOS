@@ -221,10 +221,9 @@ protected:
       int const numMeshBodies = domain.getMeshBodies().numSubGroups();
 
 
-      int startingTokenIndex = 0;
       if( numMeshBodies==1 )
       {
-        string const singleMeshBodyName = domain.getMeshBody(0).getName();
+        string const singleMeshBodyName = domain.getMeshBody( 0 ).getName();
         if( targetTokens[0] != singleMeshBodyName )
         {
           ++targetTokenLength;
@@ -256,7 +255,7 @@ protected:
       localIndex const numMeshLevels = meshBody.getMeshLevels().numSubGroups();
       if( numMeshLevels==1 )
       {
-        string const singleMeshLevelName = meshBody.getMeshLevels().getGroup<MeshLevel>(0).getName();
+        string const singleMeshLevelName = meshBody.getMeshLevels().getGroup< MeshLevel >( 0 ).getName();
         if( targetTokens[1] != singleMeshLevelName )
         {
           ++targetTokenLength;
@@ -278,10 +277,10 @@ protected:
                                      targetTokens[1] ) );
         }
       }
-      else if( !meshBody.getMeshLevels().hasGroup<MeshLevel>( targetTokens[1] ) )
+      else if( !meshBody.getMeshLevels().hasGroup< MeshLevel >( targetTokens[1] ) )
       {
-        GEOSX_LOG_RANK_0("In TimeHistoryCollection.hpp, Mesh Level Discretization not specified, "
-                         "using baseDiscretizationString().");
+        GEOSX_LOG_RANK_0( "In TimeHistoryCollection.hpp, Mesh Level Discretization not specified, "
+                          "using baseDiscretizationString()." );
 
         string const baseMeshLevelName = MeshLevel::groupStructKeys::baseDiscretizationString();
         ++targetTokenLength;

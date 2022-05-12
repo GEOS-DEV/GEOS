@@ -689,10 +689,10 @@ public:
       //MeshLevel const & meshLevel = meshBody.getMeshLevel( this->m_discretizationName );
       //lambda( meshBodyName, meshLevel, regionNames );
 
-      MeshLevel const * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer<MeshLevel>( this->m_discretizationName );
+      MeshLevel const * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( this->m_discretizationName );
       if( meshLevelPtr==nullptr )
       {
-        meshLevelPtr = meshBody.getMeshLevels().getGroupPointer<MeshLevel>( MeshLevel::groupStructKeys::baseDiscretizationString() );
+        meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshLevel::groupStructKeys::baseDiscretizationString() );
       }
       lambda( meshBodyName, *meshLevelPtr, regionNames );
     }
@@ -709,10 +709,10 @@ public:
 //      MeshLevel & meshLevel = meshBody.getMeshLevel( this->m_discretizationName );
 //      lambda( meshBodyName, meshLevel, regionNames );
 
-      MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer<MeshLevel>( this->m_discretizationName );
+      MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( this->m_discretizationName );
       if( meshLevelPtr==nullptr )
       {
-        meshLevelPtr = meshBody.getMeshLevels().getGroupPointer<MeshLevel>( MeshLevel::groupStructKeys::baseDiscretizationString() );
+        meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshLevel::groupStructKeys::baseDiscretizationString() );
       }
       lambda( meshBodyName, *meshLevelPtr, regionNames );
     }

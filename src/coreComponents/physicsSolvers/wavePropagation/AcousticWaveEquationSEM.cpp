@@ -106,15 +106,20 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
                                        arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions( [&]( ElementSubRegionBase const & elementSubRegion )
+    elemManager.forElementRegions( regionNames,
+                                   [&] ( localIndex const,
+                                         ElementRegionBase const & elemRegion )
     {
-      finiteElement::FiniteElementBase const &
-      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-      localIndex const numSupportPoints = fe.getNumSupportPoints();
-      if( numSupportPoints > numNodesPerElem )
+      elemRegion.forElementSubRegions( [&]( ElementSubRegionBase const & elementSubRegion )
       {
-        numNodesPerElem = numSupportPoints;
-      }
+        finiteElement::FiniteElementBase const &
+        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+        localIndex const numSupportPoints = fe.getNumSupportPoints();
+        if( numSupportPoints > numNodesPerElem )
+        {
+          numNodesPerElem = numSupportPoints;
+        }
+      } );
     } );
 
   } );
@@ -140,8 +145,8 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & )
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 

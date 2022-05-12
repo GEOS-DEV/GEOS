@@ -30,13 +30,13 @@ using namespace dataRepository;
 MeshLevel::MeshLevel( string const & name,
                       Group * const parent ):
   Group( name, parent ),
-  m_nodeManager( new NodeManager(groupStructKeys::nodeManagerString, this) ),
-  m_edgeManager( new EdgeManager(groupStructKeys::edgeManagerString, this) ),
-  m_faceManager( new FaceManager(groupStructKeys::faceManagerString, this) ),
-  m_elementManager( new ElementRegionManager(groupStructKeys::elemManagerString(), this) ),
-  m_embSurfNodeManager( new EmbeddedSurfaceNodeManager( groupStructKeys::embSurfNodeManagerString, this) ),
-  m_embSurfEdgeManager( new EdgeManager( groupStructKeys::embSurfEdgeManagerString, this) ),
-  m_isShallowCopy(false)
+  m_nodeManager( new NodeManager( groupStructKeys::nodeManagerString, this ) ),
+  m_edgeManager( new EdgeManager( groupStructKeys::edgeManagerString, this ) ),
+  m_faceManager( new FaceManager( groupStructKeys::faceManagerString, this ) ),
+  m_elementManager( new ElementRegionManager( groupStructKeys::elemManagerString(), this ) ),
+  m_embSurfNodeManager( new EmbeddedSurfaceNodeManager( groupStructKeys::embSurfNodeManagerString, this ) ),
+  m_embSurfEdgeManager( new EdgeManager( groupStructKeys::embSurfEdgeManagerString, this ) ),
+  m_isShallowCopy( false )
 {
 
   registerGroup( groupStructKeys::nodeManagerString, m_nodeManager );
@@ -66,11 +66,11 @@ MeshLevel::MeshLevel( string const & name,
   m_edgeManager( source.m_edgeManager ),
   m_faceManager( source.m_faceManager ),
   m_elementManager( source.m_elementManager ),
-  m_embSurfNodeManager( source.m_embSurfNodeManager),
+  m_embSurfNodeManager( source.m_embSurfNodeManager ),
   m_embSurfEdgeManager( source.m_embSurfEdgeManager ),
-  m_isShallowCopy(true)
+  m_isShallowCopy( true )
 {
-  this->setRestartFlags(RestartFlags::NO_WRITE);
+  this->setRestartFlags( RestartFlags::NO_WRITE );
 
   registerGroup( groupStructKeys::nodeManagerString, m_nodeManager );
 
@@ -108,8 +108,8 @@ MeshLevel::MeshLevel( string const & name,
   localIndex const numNonVertexNodesPerEdge = numNodesPerEdge - 2;
 
   m_edgeManager->resize( source.m_edgeManager->size() );
-  EdgeManager::NodeMapType const & edgesToNodesSource = source.m_edgeManager->nodeList();
-  EdgeManager::NodeMapType const & edgesToNodes = m_edgeManager->nodeList();
+//  EdgeManager::NodeMapType const & edgesToNodesSource = source.m_edgeManager->nodeList();
+//  EdgeManager::NodeMapType const & edgesToNodes = m_edgeManager->nodeList();
 
   localIndex const numInternalEdgeNodes = m_edgeManager->size() * numNonVertexNodesPerEdge;
 
@@ -117,7 +117,7 @@ MeshLevel::MeshLevel( string const & name,
   m_faceManager->edgeList() = source.m_faceManager->edgeList();
 
   // Faces
-  ArrayOfArraysView< localIndex const > const facesToNodesMapSource = m_faceManager->nodeList().toViewConst();
+//  ArrayOfArraysView< localIndex const > const facesToNodesMapSource = m_faceManager->nodeList().toViewConst();
   ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceManager->nodeList();
   ArrayOfArraysView< localIndex const > const & facesToEdges = m_faceManager->edgeList().toViewConst();
   localIndex const estimatedNumNodesPerFace = pow( order+1, 2 );
@@ -128,8 +128,8 @@ MeshLevel::MeshLevel( string const & name,
   for( localIndex kf=0; kf<m_faceManager->size(); ++kf )
   {
     localIndex const numEdgesPerFace = facesToEdges.sizeOfArray( kf );
-    localIndex const numVertexNodesPerFace = facesToNodesMapSource.sizeOfArray( kf );
-    localIndex const numEdgeNodesPerFace = numVertexNodesPerFace + numEdgesPerFace * numNonVertexNodesPerEdge;
+//    localIndex const numVertexNodesPerFace = facesToNodesMapSource.sizeOfArray( kf );
+//    localIndex const numEdgeNodesPerFace = numVertexNodesPerFace + numEdgesPerFace * numNonVertexNodesPerEdge;
 
     if( numEdgesPerFace==4 )
     {
@@ -194,7 +194,7 @@ MeshLevel::MeshLevel( string const & name,
   source.m_elementManager->forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
   {
     CellElementRegion & region = *(dynamic_cast< CellElementRegion * >( m_elementManager->createChild( sourceRegion.getCatalogName(),
-                                                                                                      sourceRegion.getName() ) ) );
+                                                                                                       sourceRegion.getName() ) ) );
 
     region.addCellBlockNames( sourceRegion.getCellBlockNames() );
 

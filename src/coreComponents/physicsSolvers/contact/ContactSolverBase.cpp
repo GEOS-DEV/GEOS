@@ -73,10 +73,12 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
   forDiscretizationOnMeshTargets( meshBodies,
                                   [&]( string const,
                                        MeshLevel & meshLevel,
-                                       arrayView1d<string const> const regionNames )
+                                       arrayView1d< string const > const regionNames )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
-    elemManager.forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
+    elemManager.forElementRegions< SurfaceElementRegion >( regionNames,
+                                                           [&] ( localIndex const,
+                                                                 SurfaceElementRegion & region )
     {
       region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
       {
@@ -92,12 +94,12 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
         subRegion.registerExtrinsicData< traction >( getName() ).
           reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< fractureState >( getName() );
+        subRegion.registerExtrinsicData< fractureState >( getName() );
 
-          subRegion.registerExtrinsicData< oldFractureState >( getName() );
-        } );
+        subRegion.registerExtrinsicData< oldFractureState >( getName() );
       } );
     } );
+  } );
 }
 
 real64 ContactSolverBase::solverStep( real64 const & time_n,

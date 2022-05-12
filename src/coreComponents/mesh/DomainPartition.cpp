@@ -188,8 +188,8 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
     faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
     faceManager.computeGeometry( nodeManager );
 
-    meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
-    {} );
+//    meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+//    {} );
   } );
 }
 

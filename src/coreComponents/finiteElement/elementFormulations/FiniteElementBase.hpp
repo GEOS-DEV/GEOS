@@ -128,7 +128,13 @@ public:
                             FaceManager const & faceManager,
                             SUBREGION_TYPE const & cellSubRegion,
                             MeshData< SUBREGION_TYPE > & meshData )
-  {}
+  {
+    GEOSX_UNUSED_VAR( nodeManager,
+                      edgeManager,
+                      faceManager,
+                      cellSubRegion,
+                      meshData );
+  }
 
   /**
    * @brief Abstract initialization method.
@@ -165,7 +171,12 @@ public:
   static void setupStack( localIndex const & cellIndex,
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack )
-  {}
+  {
+    GEOSX_UNUSED_VAR( cellIndex,
+                      meshData,
+                      stack );
+
+  }
 
   /**
    * @brief Abstract setup method, possibly computing cell-dependent properties.
@@ -327,7 +338,10 @@ public:
   GEOSX_FORCE_INLINE
   static void addGradGradStabilization( StackVariables const & stack,
                                         MATRIXTYPE & matrix )
-  {}
+  {
+    GEOSX_UNUSED_VAR( stack,
+                      matrix );
+  }
 
 
   /**

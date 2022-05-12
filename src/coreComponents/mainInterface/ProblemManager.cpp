@@ -548,7 +548,7 @@ void ProblemManager::generateMesh()
     if( discretizationPair.first.second!=nullptr )
     {
       FiniteElementDiscretization const * const
-      feDiscretization = dynamic_cast<FiniteElementDiscretization const * const>( discretizationPair.first.second );
+      feDiscretization = dynamic_cast< FiniteElementDiscretization const * const >( discretizationPair.first.second );
 
       if( feDiscretization != nullptr )
       {
@@ -681,7 +681,7 @@ ProblemManager::getFiniteElementDiscretizations() const
     {
       solver.forMeshTargets( meshBodies,
                              [&]( string const & meshBodyName,
-                                  MeshLevel const & meshLevel,
+                                  MeshLevel const &,
                                   auto const & regionNames )
       {
         std::pair< string, Group const * const > key = std::make_pair( meshBodyName, discretization );
@@ -696,7 +696,7 @@ ProblemManager::getFiniteElementDiscretizations() const
 void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
                                              CellBlockManagerABC & cellBlockManager,
                                              Group const * const discretization,
-                                             arrayView1d< string const > const & targetRegions )
+                                             arrayView1d< string const > const & )
 {
   int order = 1;
   if( discretization != nullptr )
@@ -725,7 +725,7 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
   FaceManager & faceManager = meshLevel.getFaceManager();
   ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-  GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
+//  GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
 
 //  MeshUtilities::generateNodesets( geometricObjects, nodeManager );
 
@@ -798,13 +798,13 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
       feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( discretizationName );
 
       solver->forDiscretizationOnMeshTargets( meshBodies,
-                              [&]( string const & meshBodyName,
-                                   MeshLevel & targetMeshLevel,
-                                   auto const & regionNames )
+                                              [&]( string const & meshBodyName,
+                                                   MeshLevel & targetMeshLevel,
+                                                   auto const & regionNames )
       {
-        MeshLevel & baseMeshLevel = meshBodies.getGroup<MeshBody>(meshBodyName).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
+        MeshLevel & baseMeshLevel = meshBodies.getGroup< MeshBody >( meshBodyName ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
 
-        MeshLevel & meshLevel = targetMeshLevel.isShallowCopyOf( baseMeshLevel) ? baseMeshLevel : targetMeshLevel;
+        MeshLevel & meshLevel = targetMeshLevel.isShallowCopyOf( baseMeshLevel ) ? baseMeshLevel : targetMeshLevel;
 
         NodeManager & nodeManager = meshLevel.getNodeManager();
         ElementRegionManager & elemManager = meshLevel.getElemManager();
@@ -887,13 +887,13 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
   {
     std::tuple< string, string, string, string > const key = regionQuadrature->first;
     localIndex const numQuadraturePoints = regionQuadrature->second;
-    string const meshBodyName = std::get<0>(key);
-    string const meshLevelName = std::get<1>(key);
-    string const regionName = std::get<2>(key);
-    string const subRegionName = std::get<3>(key);
+    string const meshBodyName = std::get< 0 >( key );
+    string const meshLevelName = std::get< 1 >( key );
+    string const regionName = std::get< 2 >( key );
+    string const subRegionName = std::get< 3 >( key );
 
     GEOSX_LOG_RANK_0( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = "<<
-                       meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName );
+                      meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName );
 
 
 
