@@ -1,0 +1,53 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./beamBending_base.xml"/>
+  </Included>
+
+  <!-- SPHINX_Gravity -->
+  <Solvers
+      gravityVector="{ 0.0, 0.0, 0.0 }">
+    <!-- SPHINX_GravityEnd -->
+    <!-- SPHINX_SolidMechanicsSolver -->
+    <SolidMechanicsLagrangianSSLE
+        name="lagsolve"
+        logLevel="1"
+        timeIntegrationOption="QuasiStatic"
+        discretization="FE1"
+        targetRegions="{ mesh1/Region2 }"
+        >
+      <!-- SPHINX_SolidMechanicsSolverEnd -->
+      <NonlinearSolverParameters
+          newtonTol="1.0e-6"
+          newtonMaxIter="8"/>
+      <LinearSolverParameters
+          directParallel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+  </Solvers>
+
+  <!-- SPHINX_BeamBendingMesh -->
+  <Mesh>
+    <InternalMesh
+        name="mesh1"
+        elementTypes="{ C3D8 }"
+        xCoords="{ 0, 80 }"
+        yCoords="{ 0, 8 }"
+        zCoords="{ 0, 4 }"
+        nx="{ 80 }"
+        ny="{ 8 }"
+        nz="{ 4 }"
+        cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+          name="FE1"
+          order="1"
+          useVirtualElements="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+</Problem>
