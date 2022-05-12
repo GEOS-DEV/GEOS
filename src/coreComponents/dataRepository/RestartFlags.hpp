@@ -31,7 +31,7 @@ namespace dataRepository
  */
 enum class RestartFlags : integer
 {
-  NO_WRITE,      ///< Doe no write into restart
+  NO_WRITE,      ///< Do not write into restart
   WRITE,         ///< Write into restart
   WRITE_AND_READ ///< Write and read from restart
 };
