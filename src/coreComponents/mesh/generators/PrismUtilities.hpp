@@ -28,12 +28,18 @@ namespace geosx
  * @param[in] elemNodes Element to nodes mapping.
  * @param[out] faceNodes space to write node indices to, must be of sufficient size
  * @return number of nodes in the face
+ *
+ * @note The function can be called only for N > 5. For N = 3 and N = 4 function getFaceNodesWedge
+ *       and getFaceNodesHex, respectively, should be used.
  */
 template< localIndex N >
 localIndex getFaceNodesPrism( localIndex const faceNum,
                               arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const & elemNodes,
                               Span< localIndex > const faceNodes )
 {
+  static_assert( N > 4,
+                 "Function getFaceNodePrism can be called for a prism with N-sided polygon base where N > 5." );
+
   if( faceNum == 0 )
   {
     GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );

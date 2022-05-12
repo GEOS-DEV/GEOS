@@ -1005,14 +1005,7 @@ real64 VTKMeshGenerator::writeNodes( CellBlockManager & cellBlockManager ) const
 
 /**
  * @brief Build all the cell blocks.
- * @param[in] mesh the vtkUnstructuredGrid that is loaded
- * @param[in] regionsHex map from region index to the hexahedron indexes in this region
- * @param[in] regionsTetra map from region index to the tetra indexes in this region
- * @param[in] regionsWedges map from region index to the wedges indexes in this region
- * @param[in] regionsPyramids map from region index to the pyramids indexes in this region
- * @param[in] regionsPentagonalPrisms map from region index to the pentagonal prisms indexes in this region
- * @param[in] regionsHexagonalPrisms map from region index to the hexagonal prisms indexes in this region
- * @param[out] cellBlockManager The instance that stores the cell blocks.
+ * @param[in] cellBlockManager The instance that stores the cell blocks.
  */
 void VTKMeshGenerator::writeCells( CellBlockManager & cellBlockManager ) const
 {

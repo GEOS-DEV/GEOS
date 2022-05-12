@@ -515,13 +515,18 @@ real64 pyramidVolume( real64 const (&X)[5][3] )
  * @param[in] X vertices of the prism
  * @return the volume of the prism
  *
- * @note The volume is computed splitting the prism into wedges
+ * @note The volume is computed splitting the prism into wedges. The function can be called only
+ *       for N > 5. For N = 3 and N = 4 function wedgeVolume and hexahedronVolume, respectively,
+ *       should be used.
  */
 template< integer N >
 GEOSX_HOST_DEVICE
 inline
 real64 prismVolume( real64 const (&X)[2*N][3] )
 {
+  static_assert( N > 4,
+                 "Function prismVolume can be called for a prism with N-sided polygon base where N > 5." );
+
   real64 result{};
 
   // Compute the barycenters of the prism bases
@@ -529,8 +534,11 @@ real64 prismVolume( real64 const (&X)[2*N][3] )
   real64 XGTop[3]{};
   for( integer a = 0; a < N; ++a )
   {
-    LvArray::tensorOps::add< 3 >( XGBot, X[ a ] );
-    LvArray::tensorOps::add< 3 >( XGTop, X[ a + N ] );
+    LvArray::tensorOps::add< 3 >( XGBot, X[a] );
+  }
+  for( integer a = N; a < 2 * N; ++a )
+  {
+    LvArray::tensorOps::add< 3 >( XGTop, X[a] );
   }
   LvArray::tensorOps::scale< 3 >( XGBot, 1.0 / N );
   LvArray::tensorOps::scale< 3 >( XGTop, 1.0 / N );
@@ -539,20 +547,20 @@ real64 prismVolume( real64 const (&X)[2*N][3] )
   for( int a = 0; a < N - 1; ++a )
   {
 
-    LvArray::tensorOps::copy< 3 >( XWedge[ 0 ], X[ a ] );
-    LvArray::tensorOps::copy< 3 >( XWedge[ 1 ], X[ a + N ] );
-    LvArray::tensorOps::copy< 3 >( XWedge[ 2 ], X[ a + 1 ] );
-    LvArray::tensorOps::copy< 3 >( XWedge[ 3 ], X[ a + 1 + N ] );
-    LvArray::tensorOps::copy< 3 >( XWedge[ 4 ], XGBot );
-    LvArray::tensorOps::copy< 3 >( XWedge[ 5 ], XGTop );
+    LvArray::tensorOps::copy< 3 >( XWedge[0], X[a] );
+    LvArray::tensorOps::copy< 3 >( XWedge[1], X[a+N] );
+    LvArray::tensorOps::copy< 3 >( XWedge[2], X[a+1] );
+    LvArray::tensorOps::copy< 3 >( XWedge[3], X[a+1+N] );
+    LvArray::tensorOps::copy< 3 >( XWedge[4], XGBot );
+    LvArray::tensorOps::copy< 3 >( XWedge[5], XGTop );
     result = result + computationalGeometry::elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( XWedge );
   }
-  LvArray::tensorOps::copy< 3 >( XWedge[ 0 ], X[ N - 1 ] );
-  LvArray::tensorOps::copy< 3 >( XWedge[ 1 ], X[ 2 * N - 1 ] );
-  LvArray::tensorOps::copy< 3 >( XWedge[ 2 ], X[ 0 ] );
-  LvArray::tensorOps::copy< 3 >( XWedge[ 3 ], X[ N ] );
-  LvArray::tensorOps::copy< 3 >( XWedge[ 4 ], XGBot );
-  LvArray::tensorOps::copy< 3 >( XWedge[ 5 ], XGTop );
+  LvArray::tensorOps::copy< 3 >( XWedge[0], X[N-1] );
+  LvArray::tensorOps::copy< 3 >( XWedge[1], X[2*N-1] );
+  LvArray::tensorOps::copy< 3 >( XWedge[2], X[0] );
+  LvArray::tensorOps::copy< 3 >( XWedge[3], X[N] );
+  LvArray::tensorOps::copy< 3 >( XWedge[4], XGBot );
+  LvArray::tensorOps::copy< 3 >( XWedge[5], XGTop );
   result = result + computationalGeometry::elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( XWedge );
   return result;
 }
