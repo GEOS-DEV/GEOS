@@ -290,7 +290,7 @@ public:
     }
   }
 
-  template< typename VECTORTYPE, localIndex NUMDOFSPERTRIALSUPPORTPOINT >
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void addEvaluatedGradGradStabilization( StackVariables const & stack,
