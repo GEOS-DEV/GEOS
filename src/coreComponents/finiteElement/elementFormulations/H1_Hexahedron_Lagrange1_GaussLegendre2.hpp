@@ -289,7 +289,7 @@ public:
                                                  real64 const scaleFactor,
                                                  localIndex const offset );
 
-  template< typename VECTORTYPE, localIndex NUMDOFSPERTRIALSUPPORTPOINT >
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void addEvaluatedGradGradStabilization( StackVariables const & stack,
@@ -544,7 +544,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::
   GEOSX_UNUSED_VAR( offset );
 }
 
-template< typename VECTORTYPE, localIndex NUMDOFSPERTRIALSUPPORTPOINT >
+template< localIndex NUMDOFSPERTRIALSUPPORTPOINT >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2::

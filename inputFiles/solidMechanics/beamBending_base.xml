@@ -29,13 +29,13 @@
   </Events>
 
   <!-- SPHINX_FEDiscretization -->
-  <NumericalMethods>
-    <FiniteElements>
-      <FiniteElementSpace
-        name="FE1"
-        order="1"/>
-    </FiniteElements>
-  </NumericalMethods>
+  <!-- <NumericalMethods> -->
+  <!--   <FiniteElements> -->
+  <!--     <FiniteElementSpace -->
+  <!--       name="FE1" -->
+  <!--       order="1"/> -->
+  <!--   </FiniteElements> -->
+  <!-- </NumericalMethods> -->
 
   <!-- SPHINX_FEDiscretizationEnd -->
   <ElementRegions>

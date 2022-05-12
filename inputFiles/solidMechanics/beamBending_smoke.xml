@@ -12,11 +12,12 @@
     <!-- SPHINX_GravityEnd -->
     <!-- SPHINX_SolidMechanicsSolver -->
     <SolidMechanicsLagrangianSSLE
-      name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
-      discretization="FE1"
-      targetRegions="{ mesh1/Region2 }"
-      >
+        name="lagsolve"
+        logLevel="1"
+        timeIntegrationOption="QuasiStatic"
+        discretization="FE1"
+        targetRegions="{ mesh1/Region2 }"
+        >
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -25,6 +26,17 @@
         directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
+
+  <!-- SPHINX_FEDiscretization -->
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <!-- SPHINX_FEDiscretizationEnd -->
 
   <!-- SPHINX_BeamBendingMesh -->
   <Mesh>
