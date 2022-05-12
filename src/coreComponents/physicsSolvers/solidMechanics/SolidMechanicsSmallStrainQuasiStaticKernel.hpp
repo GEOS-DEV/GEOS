@@ -197,11 +197,11 @@ public:
     }
     // Add stabilization to block diagonal parts of the local jacobian
     // (this is a no-operation with FEM classes)
-    real64 const minusTwiceShear = - 2.0 * m_constitutiveUpdate.getShearModulus( k );
+    real64 const minusTwiceShear = -2.0 * m_constitutiveUpdate.getShearModulus( k );
     m_finiteElementSpace.template addGradGradStabilizationMatrix
-      < FE_TYPE, numDofPerTrialSupportPoint, true >( stack.feStack,
-                                                     stack.localJacobian,
-                                                     minusTwiceShear );
+    < FE_TYPE, numDofPerTrialSupportPoint, true >( stack.feStack,
+                                                   stack.localJacobian,
+                                                   minusTwiceShear );
     // m_finiteElementSpace.template addGradGradStabilizationMatrix
     // < FE_TYPE,
     //   real64 ( & ) [numNodesPerElem *numDofPerTestSupportPoint]
@@ -310,10 +310,10 @@ public:
                                      gravityForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
     real64 const minusTwiceShear = -2.0 * m_constitutiveUpdate.getShearModulus( k );
-    m_finiteElementSpace. template addEvaluatedGradGradStabilizationVector< FE_TYPE, numDofPerTrialSupportPoint >( stack.feStack,
-                                                                                                                   stack.uhat_local,
-                                                                                                                   reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
-                                                                                                                   minusTwiceShear );
+    m_finiteElementSpace.template addEvaluatedGradGradStabilizationVector< FE_TYPE, numDofPerTrialSupportPoint >( stack.feStack,
+                                                                                                                  stack.uhat_local,
+                                                                                                                  reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
+                                                                                                                  minusTwiceShear );
     stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
   }
 
