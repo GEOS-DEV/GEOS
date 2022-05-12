@@ -79,12 +79,12 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
   registerWrapper( viewKeyStruct::forwardString(), &m_forward ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
-    setDescription( "Set to false to compute backward propagation" );
+    setDescription( "Set to 1 to compute forward propagation" );
 
   registerWrapper( viewKeyStruct::saveFieldsString(), &m_saveFields ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Set to true to save fields during forward and restore them during backward" );
+    setDescription( "Set to 1 to save fields during forward and restore them during backward" );
 
 
   registerWrapper( viewKeyStruct::shotIndexString(), &m_shotIndex ).

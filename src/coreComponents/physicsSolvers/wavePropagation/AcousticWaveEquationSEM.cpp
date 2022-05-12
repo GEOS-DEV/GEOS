@@ -111,6 +111,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     nodeManager.registerExtrinsicData< extrinsicMeshData::Pressure_nm1,
                                        extrinsicMeshData::Pressure_n,
                                        extrinsicMeshData::Pressure_np1,
+                                       extrinsicMeshData::PressureDoubleDerivative,
                                        extrinsicMeshData::ForcingRHS,
                                        extrinsicMeshData::MassVector,
                                        extrinsicMeshData::DampingVector,
@@ -125,7 +126,6 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocity >( this->getName() );
-      subRegion.registerExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >( this->getName() );
       subRegion.registerExtrinsicData< extrinsicMeshData::PartialGradient >( this->getName() );
     } );
   } );
@@ -555,7 +555,6 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 
       arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
       arrayView1d< real64 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
-      arrayView1d< real64 > const grad = elemManager.getExtrinsicData< extrinsicMeshData::PartialGradient >();
 
       int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
       std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
@@ -565,19 +564,20 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                       InputError );
       wf.read( (char*)&p_dt2[0], p_dt2.size()*sizeof( real64 ) );
       wf.close();
-      std::string fileNameGradient = GEOSX_FMT( "gradient_{:06}_{:04}.dat", m_shotIndex, rank );
-      std::ifstream wf2( fileNameGradient, std::ios::in | std::ios::binary );
-      GEOSX_THROW_IF( !wf2 ,
-                      "Could not open file "<< fileNameGradient << " for reading",
-                      InputError );
-      wf.read( (char*)&grad[0], grad.size()*sizeof( real64 ) );
-      wf.close();
-
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                   CellElementSubRegion & elementSubRegion )
       {
+        arrayView1d< real64 > const grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
         constexpr localIndex numNodesPerElem = 8;
+
+        std::string fileNameGradient = GEOSX_FMT( "gradient_{:06}_{:04}.dat", m_shotIndex, rank );
+        std::ifstream wf2( fileNameGradient, std::ios::in | std::ios::binary );
+        GEOSX_THROW_IF( !wf2 ,
+                        "Could not open file "<< fileNameGradient << " for reading",
+                        InputError );
+        wf.read( (char*)&grad[0], grad.size()*sizeof( real64 ) );
+        wf.close();
 
         GEOSX_MARK_SCOPE ( updatePartialGradient );
         forAll< EXEC_POLICY >( elemManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const eltIdx )
@@ -585,19 +585,19 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
           for ( localIndex i = 0; i < numNodesPerElem; ++i )
           {
             localIndex nodeIdx = elemsToNodes[eltIdx][i];
-            grad[eltIdx] -= p_dt2[nodeIdx] * p_n[nodeIdx];
+            grad[eltIdx] -= (p_dt2[nodeIdx] * p_n[nodeIdx])/numNodesPerElem;
           }
         } );
+        std::ofstream wf3( fileNameGradient, std::ios::out | std::ios::binary );
+        GEOSX_THROW_IF( !wf3 ,
+                        "Could not open file "<< fileNameGradient << " for writting",
+                        InputError );
+        wf3.write( (char*)&grad[0], grad.size()*sizeof( real64 ) );
+        wf3.close();
+        GEOSX_THROW_IF( !wf3.good() ,
+                        "An error occured while writting "<< fileNameGradient,
+                        InputError );
       } );
-      std::ofstream wf3( fileNameGradient, std::ios::out | std::ios::binary );
-      GEOSX_THROW_IF( !wf3 ,
-                      "Could not open file "<< fileNameGradient << " for writting",
-                      InputError );
-      wf3.write( (char*)&grad[0], grad.size()*sizeof( real64 ) );
-      wf3.close();
-      GEOSX_THROW_IF( !wf3.good() ,
-                      "An error occured while writting "<< fileNameGradient,
-                      InputError );
     } );
   }
   return dtOut;
