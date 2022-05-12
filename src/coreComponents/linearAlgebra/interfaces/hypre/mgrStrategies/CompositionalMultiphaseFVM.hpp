@@ -39,13 +39,11 @@ namespace mgr
  *             ... = densities
  *   numLabels - 1 = density
  *
- * 2-level MGR reduction strategy which seems to work well for 2 components:
+ * 2-level MGR reduction strategy:
  *   - 1st level: eliminate the reservoir density associated with the volume constraint
- *   - 2nd level: eliminate the other reservoir density
+ *   - 2nd level: eliminate the other reservoir densities
  *   - The coarse grid (pressure system) is solved with BoomerAMG.
  *
- * @todo:
- *   - Experiment with block Jacobi for F-relaxation/interpolation of the reservoir densities
  */
 class CompositionalMultiphaseFVM : public MGRStrategyBase< 2 >
 {
@@ -60,25 +58,24 @@ public:
     // Level 0: eliminate last density which corresponds to the volume constraint equation
     m_labels[0].resize( m_numBlocks - 1 );
     std::iota( m_labels[0].begin(), m_labels[0].end(), 0 );
-    // Level 1: eliminate the other density
+    // Level 1: eliminate the remaining the densities
     m_labels[1].push_back( 0 );
 
     setupLabels();
 
-    // Level 0
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelInterpType[0]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
 
-    // Level 1
-    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
-    m_levelInterpType[1]       = MGRInterpolationType::jacobi;
+    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
+    m_levelInterpType[1]       = MGRInterpolationType::injection;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
+    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::cprLikeBlockDiag;
 
-    m_globalSmoothType = MGRGlobalSmootherType::ilu0; // TODO switch to levelGlobalSmoother when hypre allows
-    m_numGlobalSmoothSweeps = 0; // No global smoother
+    // Global smoother at each level, only do block-GS for the condensed system
+    m_levelSmoothType[1] = 1;
+    m_levelSmoothIters[1] = 1;
   }
 
   /**
@@ -95,21 +92,27 @@ public:
                                                                   m_numLabels, m_ptrLabels,
                                                                   mgrData.pointMarkers.data() ) );
 
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
+
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, toUnderlyingPtr( m_levelInterpType ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalsmoothType( precond.ptr, toUnderlying( m_globalSmoothType ) ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( precond.ptr, m_numGlobalSmoothSweeps ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothType( precond.ptr, m_levelSmoothType ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelSmoothIters ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // truncate intermediate/coarse grids
+
+    // Note for me: uncomment HYPRE_MGRSetLevelFRelaxMethod and comment HYPRE_MGRSetRelaxType breaks the recipe
+    //GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, 0 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
 #ifdef GEOSX_USE_HYPRE_CUDA
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // truncate intermediate/coarse grids
 #endif
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( mgrData.coarseSolver.ptr, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
 #ifdef GEOSX_USE_HYPRE_CUDA
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 1 ) );
