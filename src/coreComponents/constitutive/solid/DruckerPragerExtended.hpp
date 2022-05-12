@@ -56,8 +56,9 @@ public:
                                 arrayView1d< real64 const > const & bulkModulus,
                                 arrayView1d< real64 const > const & shearModulus,
                                 arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                                arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
-    ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress ),
+                                arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                                bool const & disableInelasticity ):
+    ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress, disableInelasticity ),
     m_initialFriction( initialFriction ),
     m_residualFriction( residualFriction ),
     m_dilationRatio( dilationRatio ),
@@ -168,6 +169,11 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
   // elastic predictor (assume strainIncrement is all elastic)
 
   ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+
+  if( m_disableInelasticity )
+  {
+    return;
+  }
 
   // decompose into mean (P) and von mises (Q) stress invariants
 
@@ -354,8 +360,6 @@ public:
 
   virtual void saveConvergedState() const override;
 
-  virtual void applyPostEquilibrationStep() const override;
-
   /**
    * @name Static Factory Catalog members and functions
    */
@@ -431,7 +435,8 @@ public:
                                          m_bulkModulus,
                                          m_shearModulus,
                                          m_newStress,
-                                         m_oldStress );
+                                         m_oldStress,
+                                         m_disableInelasticity );
   }
 
   /**
@@ -455,7 +460,8 @@ public:
                           m_bulkModulus,
                           m_shearModulus,
                           m_newStress,
-                          m_oldStress );
+                          m_oldStress,
+                          m_disableInelasticity );
   }
 
 

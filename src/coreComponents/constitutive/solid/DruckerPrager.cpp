@@ -155,8 +155,6 @@ void DruckerPrager::saveConvergedState() const
   } );
 }
 
-void DruckerPrager::applyPostEquilibrationStep() const
-{}
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPrager, std::string const &, Group * const )
 }

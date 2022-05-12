@@ -173,9 +173,6 @@ void DruckerPragerExtended::saveConvergedState() const
   } );
 }
 
-void DruckerPragerExtended::applyPostEquilibrationStep() const
-{}
-
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPragerExtended, string const &, Group * const )
 }

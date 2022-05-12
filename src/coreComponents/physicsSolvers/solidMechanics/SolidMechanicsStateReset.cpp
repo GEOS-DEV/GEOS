@@ -13,10 +13,10 @@
  */
 
 /**
- * @file SolidMechanicsPostEquilibrationStep.cpp
+ * @file SolidMechanicsStateReset.cpp
  */
 
-#include "SolidMechanicsPostEquilibrationStep.hpp"
+#include "SolidMechanicsStateReset.hpp"
 
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -28,8 +28,8 @@ namespace geosx
 using namespace constitutive;
 using namespace dataRepository;
 
-SolidMechanicsPostEquilibrationStep::SolidMechanicsPostEquilibrationStep( const string & name,
-                                                                          Group * const parent ):
+SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
+                                                    Group * const parent ):
   TaskBase( name, parent ),
   m_solidSolverName()
 {
@@ -38,12 +38,22 @@ SolidMechanicsPostEquilibrationStep::SolidMechanicsPostEquilibrationStep( const 
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the solid mechanics solver" );
+
+  registerWrapper( viewKeyStruct::resetDisplacementsString(), &m_resetDisplacements ).
+    setApplyDefaultValue( true ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to reset displacements (and velocities)" );
+
+  registerWrapper( viewKeyStruct::disableInelasticityString(), &m_disableInelasticity ).
+    setApplyDefaultValue( false ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to enable/disable inelastic behavior" );
 }
 
-SolidMechanicsPostEquilibrationStep::~SolidMechanicsPostEquilibrationStep()
+SolidMechanicsStateReset::~SolidMechanicsStateReset()
 {}
 
-void SolidMechanicsPostEquilibrationStep::postProcessInput()
+void SolidMechanicsStateReset::postProcessInput()
 {
   ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
   PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
@@ -56,32 +66,36 @@ void SolidMechanicsPostEquilibrationStep::postProcessInput()
   m_solidSolver = &physicsSolverManager.getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 }
 
-bool SolidMechanicsPostEquilibrationStep::execute( real64 const time_n,
-                                                   real64 const GEOSX_UNUSED_PARAM( dt ),
-                                                   integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                                   integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                                                   real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                                                   DomainPartition & domain )
+bool SolidMechanicsStateReset::execute( real64 const time_n,
+                                        real64 const GEOSX_UNUSED_PARAM( dt ),
+                                        integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                                        DomainPartition & domain )
 {
   m_solidSolver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
   {
-    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Task `{}`: at time {}s, physics solver `{}` sets total displacement and velocity for all the nodes of the mesh",
-                                          getName(), time_n, m_solidSolverName ) );
+    // Option 1: zero out velocity, incremental displacement, and displacement
+    if( m_resetDisplacements )
+    {
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Task `{}`: at time {}s, physics solver `{}` is resetting total displacement and velocity to zero",
+                                            getName(), time_n, m_solidSolverName ) );
 
-    NodeManager & nodeManager = mesh.getNodeManager();
+      NodeManager & nodeManager = mesh.getNodeManager();
+
+      arrayView2d< real64, nodes::VELOCITY_USD > const velocity = nodeManager.velocity();
+      arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const incrementalDisp = nodeManager.incrementalDisplacement();
+      arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
+
+      velocity.zero();
+      incrementalDisp.zero();
+      disp.zero();
+    }
+
+    // Option 2: enable / disable inelastic behavior
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
-
-    // Step 1: zero out velocity, incremental displacement, and displacement after the equilibration step
-    arrayView2d< real64, nodes::VELOCITY_USD > const velocity = nodeManager.velocity();
-    arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const incrementalDisp = nodeManager.incrementalDisplacement();
-    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
-    velocity.zero();
-    incrementalDisp.zero();
-    disp.zero();
-
-    // Step 2: for plasticity, re-activate the yield surface for a plastic calculation with some known consolidation condition
     elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                        [&]( localIndex const,
                                                                             CellElementSubRegion & subRegion )
@@ -89,12 +103,13 @@ bool SolidMechanicsPostEquilibrationStep::execute( real64 const time_n,
       string const & solidMaterialName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString() );
       Group & constitutiveModels = subRegion.getGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
 
-      GEOSX_LOG_LEVEL_RANK_0( 2, GEOSX_FMT( "Task `{}`: at time {}s, solid model `{}` performs a post-equilibration step on subRegion `{}`. "
-                                            "This step is only performed by plasticity solid models.",
-                                            getName(), time_n, solidMaterialName, subRegion.getName() ) );
+      GEOSX_LOG_LEVEL_RANK_0( 2, GEOSX_FMT( "Task `{}`: at time {}s, solid model `{}` is setting inelastic behavior to `{}` on subRegion `{}`. ",
+                                            getName(), time_n, solidMaterialName,
+                                            m_disableInelasticity ? "OFF" : "ON",
+                                            subRegion.getName() ) );
 
       SolidBase & constitutiveRelation = constitutiveModels.getGroup< SolidBase >( solidMaterialName );
-      constitutiveRelation.applyPostEquilibrationStep();
+      constitutiveRelation.disableInelasticity( m_disableInelasticity );
     } );
   } );
 
@@ -102,7 +117,7 @@ bool SolidMechanicsPostEquilibrationStep::execute( real64 const time_n,
 }
 
 REGISTER_CATALOG_ENTRY( TaskBase,
-                        SolidMechanicsPostEquilibrationStep,
+                        SolidMechanicsStateReset,
                         string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

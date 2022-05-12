@@ -158,10 +158,6 @@ void DelftEgg::saveConvergedState() const
   } );
 }
 
-void DelftEgg::applyPostEquilibrationStep() const
-{}
-
-
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DelftEgg, string const &, Group * const )
 }
 } /* namespace geosx */

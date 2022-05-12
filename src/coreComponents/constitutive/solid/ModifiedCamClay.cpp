@@ -130,8 +130,6 @@ void ModifiedCamClay::saveConvergedState() const
   } );
 }
 
-void ModifiedCamClay::applyPostEquilibrationStep() const
-{}
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ModifiedCamClay, std::string const &, Group * const )
 }

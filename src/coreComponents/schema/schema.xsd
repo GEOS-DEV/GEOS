@@ -1832,7 +1832,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
-			<xsd:element name="SolidMechanicsPostEquilibrationStep" type="SolidMechanicsPostEquilibrationStepType" />
+			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -1868,9 +1868,13 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="SolidMechanicsPostEquilibrationStepType">
+	<xsd:complexType name="SolidMechanicsStateResetType">
+		<!--disableInelasticity => Flag to enable/disable inelastic behavior-->
+		<xsd:attribute name="disableInelasticity" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--resetDisplacements => Flag to reset displacements (and velocities)-->
+		<xsd:attribute name="resetDisplacements" type="integer" default="1" />
 		<!--solidSolverName => Name of the solid mechanics solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->

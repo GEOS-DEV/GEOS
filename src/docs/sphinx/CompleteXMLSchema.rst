@@ -834,11 +834,11 @@ Element: SolidMechanicsLagrangianSSLE
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangianSSLE.rst
 
 
-.. _XML_SolidMechanicsPostEquilibrationStep:
+.. _XML_SolidMechanicsStateReset:
 
-Element: SolidMechanicsPostEquilibrationStep
-============================================
-.. include:: ../../coreComponents/schema/docs/SolidMechanicsPostEquilibrationStep.rst
+Element: SolidMechanicsStateReset
+=================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsStateReset.rst
 
 
 .. _XML_SolidMechanics_LagrangianFEM:
@@ -1881,11 +1881,11 @@ Datastructure: SolidMechanicsLagrangianSSLE
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangianSSLE_other.rst
 
 
-.. _DATASTRUCTURE_SolidMechanicsPostEquilibrationStep:
+.. _DATASTRUCTURE_SolidMechanicsStateReset:
 
-Datastructure: SolidMechanicsPostEquilibrationStep
-==================================================
-.. include:: ../../coreComponents/schema/docs/SolidMechanicsPostEquilibrationStep_other.rst
+Datastructure: SolidMechanicsStateReset
+=======================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsStateReset_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanics_LagrangianFEM:

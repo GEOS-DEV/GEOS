@@ -52,11 +52,14 @@ protected:
    * @brief constructor
    * @param[in] newStress The new stress data from the constitutive model class.
    * @param[in] oldStress The old stress data from the constitutive model class.
+   * @param[in] disableInelasticity Flag to disable inelastic response
    */
   SolidBaseUpdates( arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                    arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
+                    arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                    const bool & disableInelasticity ):
     m_newStress( newStress ),
-    m_oldStress( oldStress )
+    m_oldStress( oldStress ),
+    m_disableInelasticity ( disableInelasticity )
   {}
 
   /// Deleted default constructor
@@ -105,6 +108,9 @@ public:
 
   /// A reference the previous material stress at quadrature points.
   arrayView3d< real64, solid::STRESS_USD > const m_oldStress;
+
+  /// Flag to disable inelasticity
+  const bool & m_disableInelasticity;
 
   /**
    * @name Update Interfaces: Stress and Stiffness
@@ -595,6 +601,15 @@ public:
    */
   virtual ~SolidBase() override;
 
+  /// Keys for data in this class
+  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  {
+    static constexpr char const * stressString() { return "stress"; }                  ///< New stress key
+    static constexpr char const * oldStressString() { return "oldStress"; }            ///< Old stress key
+    static constexpr char const * densityString() { return "density"; }                ///< Density key
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
+  };
+
   /**
    * @brief Allocate constitutive arrays
    * @param parent Object's parent group (element subregion)
@@ -606,18 +621,14 @@ public:
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
 
-  /// Resets some quantities in the solid model after the equilibration step (relevant for plasticity models only)
-  virtual void applyPostEquilibrationStep() const {};
-
-  /// Keys for data in this class
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  /**
+   * @brief Enable/disable inelasticity
+   * @param flag Flag to disable (if true) or enable (if false) inelastic response
+   */
+  void disableInelasticity( bool const flag )
   {
-    static constexpr char const * stressString() { return "stress"; }                  ///< New stress key
-    static constexpr char const * oldStressString() { return "oldStress"; }            ///< Old stress key
-    static constexpr char const * densityString() { return "density"; }                ///< Density key
-    static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
-  };
-
+    m_disableInelasticity = flag;
+  }
 
   /**
    * @brief Number of elements storing solid data
@@ -696,6 +707,9 @@ protected:
 
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;
+
+  /// Flag to disable inelasticity (plasticity, damage, etc.)
+  bool m_disableInelasticity = false;
 
   /// band-aid fix...going to have to remove this after we clean up
   /// initialization for constitutive models.
