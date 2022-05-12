@@ -21,6 +21,8 @@
 
 #include "constitutive/fluid/SingleFluidBase.hpp"
 
+#include "constitutive/ExponentialRelation.hpp"
+
 namespace geosx
 {
 
@@ -29,20 +31,25 @@ namespace constitutive
 
 /**
  * @brief Update class for the model suitable for lambda capture.
+ * @tparam DENS_PRES_EAT type of density exponent approximation for the pressure part
+ * @tparam DENS_TEMP_EAT type of density exponent approximation for the temperature part
+ * @tparam VISC_EAT type of viscosity exponent approximation
  */
+template< ExponentApproximationType DENS_PRES_EAT, ExponentApproximationType DENS_TEMP_EAT, 
+          ExponentApproximationType VISC_EAT, ExponentApproximationType INTENERGY_EAT >
 class ThermalSinglePhaseUpdate final : public SingleFluidBaseUpdate
 {
 public:
 
-  ThermalSinglePhaseUpdate( real64 const & compressibility, 
-                            real64 const & thermalExpansionCoeff, 
-                            real64 const & viscosibility, 
-                            real64 const & volumetricHeatCapacity, 
-                            real64 const & referencePressure, 
-                            real64 const & referenceTemperature, 
-                            real64 const & referenceDensity, 
-                            real64 const & referenceViscosity, 
-                            real64 const & referenceInternalEnergy, 
+  using DensPresRelationType  = ExponentialRelation< real64, DENS_PRES_EAT >;
+  using DensTempRelationType  = ExponentialRelation< real64, DENS_TEMP_EAT >; 
+  using ViscRelationType      = ExponentialRelation< real64, VISC_EAT >;
+  using IntEnergyRelationType = ExponentialRelation< real64, INTENERGY_EAT >; 
+
+  ThermalSinglePhaseUpdate( DensPresRelationType const & densPresRelation, 
+                            DensTempRelationType const & densTempRelation,
+                            ViscRelationType const & viscRelation, 
+                            IntEnergyRelationType const & intEnergyRelation, 
                             arrayView2d< real64 > const & density,
                             arrayView2d< real64 > const & dDens_dPres,
                             arrayView2d< real64 > const & dDens_dTemp, 
@@ -61,15 +68,11 @@ public:
                              internalEnergy, 
                              dIntEnergy_dPres,
                              dIntEnergy_dTemp ),
-    m_compressibility( compressibility ),
-    m_thermalExpansionCoeff( thermalExpansionCoeff ),
-    m_viscosibility( viscosibility ),  
-    m_volumetricHeatCapacity( volumetricHeatCapacity ), 
-    m_referencePressure( referencePressure ), 
-    m_referenceTemperature( referenceTemperature ),
-    m_referenceDensity( referenceDensity ), 
-    m_referenceViscosity( referenceViscosity ),  
-    m_referenceInternalEnergy( referenceInternalEnergy )
+    m_densPresRelation( densPresRelation ), 
+    m_densTempRelation( densTempRelation ), 
+    m_viscRelation( viscRelation ), 
+    m_intEnergyRelation( intEnergyRelation )
+    
   {}
 
   /// Default copy constructor
@@ -90,8 +93,8 @@ public:
                         real64 & density,
                         real64 & viscosity ) const override
   {
-    density = m_referenceDensity * exp( m_compressibility * (pressure - m_referencePressure) ); 
-    viscosity = m_referenceViscosity * exp( m_viscosibility * (pressure - m_referencePressure) ); 
+    m_densPresRelation.compute( pressure, density ); 
+    m_viscRelation.compute( pressure, viscosity ); 
   }
 
   GEOSX_HOST_DEVICE
@@ -102,10 +105,8 @@ public:
                         real64 & viscosity,
                         real64 & dViscosity_dPressure ) const override
   {
-    compute( pressure, density, viscosity );
-
-    dDensity_dPressure = density * m_compressibility; 
-    dViscosity_dPressure = viscosity * m_viscosibility;  
+    m_densPresRelation.compute( pressure, density, dDensity_dPressure ); 
+    m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure ); 
   }
 
   GEOSX_HOST_DEVICE
@@ -123,21 +124,23 @@ public:
                         real64 & dInternalEnergy_dTemperature ) const override
   {
     /// Compute the density and viscosity 
-    density = m_referenceDensity * exp( m_compressibility * (pressure - m_referencePressure)
-                                        + m_thermalExpansionCoeff * (temperature - m_referenceTemperature) ); 
+    real64 density_pressurePart, density_temperaturePart; 
+    real64 density_pressurePart_deriv, density_temperaturePart_deriv; 
 
-    dDensity_dPressure = density * m_compressibility; 
-    dDensity_dTemperature = density * m_thermalExpansionCoeff; 
+    m_densPresRelation.compute( pressure, density_pressurePart, density_pressurePart_deriv ); 
+    m_densTempRelation.compute( temperature, density_temperaturePart, density_temperaturePart_deriv ); 
 
-    viscosity = m_referenceViscosity * exp( m_viscosibility * (pressure - m_referencePressure) ); 
+    density = density_pressurePart * density_temperaturePart; 
 
-    dViscosity_dPressure = viscosity * m_viscosibility; 
+    dDensity_dPressure = density_pressurePart_deriv * density_temperaturePart; 
+    dDensity_dTemperature = density_temperaturePart_deriv * density_pressurePart; 
+
+    m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure ); 
     dViscosity_dTemperature = 0.0; 
 
     /// Compute the internal energy (only sensitive to temperature)
-    internalEnergy = m_referenceInternalEnergy + m_volumetricHeatCapacity * ( temperature - m_referenceTemperature ); 
+    m_intEnergyRelation.compute( temperature, internalEnergy, dInternalEnergy_dTemperature ); 
     dInternalEnergy_dPressure = 0.0; 
-    dInternalEnergy_dTemperature = m_volumetricHeatCapacity; 
   }
 
   GEOSX_HOST_DEVICE
@@ -175,33 +178,18 @@ public:
   }
 
 private:
-  /// Fluid compressibility 
-  real64 m_compressibility; 
+  /// Relationship between the fluid density and pressure 
+  DensPresRelationType m_densPresRelation; 
 
-  /// Fluid thermal expansion coefficient 
-  real64 m_thermalExpansionCoeff; 
+  /// Relationship between the fluid density and temperature  
+  DensTempRelationType m_densTempRelation; 
 
-  /// Fluid viscosibility 
-  real64 m_viscosibility; 
+  /// Relationship between the fluid viscosity and pressure 
+  ViscRelationType m_viscRelation;
 
-  /// Fluid volumetric heat capacity
-  real64 m_volumetricHeatCapacity;
-
-  /// reference pressure parameter
-  real64 m_referencePressure;
-
-  /// reference temperature parameter
-  real64 m_referenceTemperature;
-
-  /// reference density parameter
-  real64 m_referenceDensity;
-
-  /// reference viscosity parameter
-  real64 m_referenceViscosity;
-
-  /// Fluid reference internal energy
-  real64 m_referenceInternalEnergy;
-
+  /// Relationship between the fluid internal energy and temperature 
+  IntEnergyRelationType m_intEnergyRelation; 
+ 
 };
 
 class ThermalSinglePhaseFluid : public SingleFluidBase
@@ -220,7 +208,8 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
-  using KernelWrapper = ThermalSinglePhaseUpdate;
+  using KernelWrapper = ThermalSinglePhaseUpdate< ExponentApproximationType::Full, ExponentApproximationType::Full,
+                                                  ExponentApproximationType::Full, ExponentApproximationType::Linear >;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -241,6 +230,10 @@ public:
     static constexpr char const * referenceDensityString() { return "referenceDensity"; }
     static constexpr char const * referenceViscosityString() { return "referenceViscosity"; }
     static constexpr char const * referenceInternalEnergyString() { return "referenceInternalEnergy"; }
+    static constexpr char const * densityPressureModelTypeString() { return "densityPressureModelType"; }
+    static constexpr char const * densityTemperatureModelTypeString() { return "densityTemperatureModelType"; }
+    static constexpr char const * viscosityModelTypeString() { return "viscosityModelType"; }
+    static constexpr char const * internalEnergyModelTypeString() { return "internalEnergyModelType"; }
   };
 
   real64 defaultDensity() const override final { return m_defaultDensity; }
@@ -284,6 +277,18 @@ private:
 
   /// reference internal energy parameter
   real64 m_referenceInternalEnergy; 
+
+  /// type of density model in terms of pressure 
+  ExponentApproximationType m_densityPressureModelType;
+
+  /// type of density model in terms of temperature 
+  ExponentApproximationType m_densityTemperatureModelType;
+
+  /// type of viscosity model 
+  ExponentApproximationType m_viscosityModelType;
+
+  /// type of internal energy model 
+  ExponentApproximationType m_internalEnergyModelType;
 };
 
 } /* namespace constitutive */

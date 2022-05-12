@@ -29,7 +29,11 @@ namespace constitutive
 {
 
 ThermalSinglePhaseFluid::ThermalSinglePhaseFluid( string const & name, Group * const parent ):
-  SingleFluidBase( name, parent )
+  SingleFluidBase( name, parent ), 
+  m_densityPressureModelType( ExponentApproximationType::Full ), 
+  m_densityTemperatureModelType( ExponentApproximationType::Full ), 
+  m_viscosityModelType( ExponentApproximationType::Full ), 
+  m_internalEnergyModelType( ExponentApproximationType::Linear )
 {
 
   registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
@@ -84,6 +88,26 @@ ThermalSinglePhaseFluid::ThermalSinglePhaseFluid( string const & name, Group * c
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Reference fluid internal energy" );
+
+  registerWrapper( viewKeyStruct::densityPressureModelTypeString(), &m_densityPressureModelType ).
+    setApplyDefaultValue( m_densityPressureModelType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Type of density model in terms of pressure . Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::densityTemperatureModelTypeString(), &m_densityTemperatureModelType ).
+    setApplyDefaultValue( m_densityTemperatureModelType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Type of density model in terms of temperature . Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::viscosityModelTypeString(), &m_viscosityModelType ).
+    setApplyDefaultValue( m_viscosityModelType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Type of viscosity model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::internalEnergyModelTypeString(), &m_internalEnergyModelType ).
+    setApplyDefaultValue( m_internalEnergyModelType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Type of internal energy model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 }
 
 ThermalSinglePhaseFluid::~ThermalSinglePhaseFluid() = default;
@@ -115,7 +139,6 @@ void ThermalSinglePhaseFluid::postProcessInput()
   checkNonnegative( m_viscosibility, viewKeyStruct::viscosibilityString() );
   checkNonnegative( m_thermalExpansionCoeff, viewKeyStruct::thermalExpansionCoeffString() ); 
   checkNonnegative( m_volumetricHeatCapacity, viewKeyStruct::volumetricHeatCapacityString() ); 
-  checkNonnegative( m_referenceInternalEnergy, viewKeyStruct::referenceInternalEnergyString() ); 
 
   auto const checkPositive = [&]( real64 const value, auto const & attribute )
   {
@@ -125,6 +148,7 @@ void ThermalSinglePhaseFluid::postProcessInput()
   };
   checkPositive( m_referenceDensity, viewKeyStruct::referenceDensityString() );
   checkPositive( m_referenceViscosity, viewKeyStruct::referenceViscosityString() );
+  checkNonnegative( m_referenceInternalEnergy, viewKeyStruct::referenceInternalEnergyString() ); 
 
   // // Set default values for derivatives (cannot be done in base class)
   // // TODO: reconsider the necessity of this
@@ -145,15 +169,10 @@ void ThermalSinglePhaseFluid::postProcessInput()
 ThermalSinglePhaseFluid::KernelWrapper
 ThermalSinglePhaseFluid::createKernelWrapper()
 {
-  return KernelWrapper( m_compressibility,
-                        m_thermalExpansionCoeff, 
-                        m_viscosibility, 
-                        m_volumetricHeatCapacity, 
-                        m_referencePressure, 
-                        m_referenceTemperature, 
-                        m_referenceDensity, 
-                        m_referenceViscosity, 
-                        m_referenceInternalEnergy,
+  return KernelWrapper( KernelWrapper::DensPresRelationType( m_referencePressure, m_referenceDensity, m_compressibility ),
+                        KernelWrapper::DensTempRelationType( m_referenceTemperature, 1.0, m_thermalExpansionCoeff ),
+                        KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ), 
+                        KernelWrapper::IntEnergyRelationType( m_referenceTemperature, m_referenceInternalEnergy, m_volumetricHeatCapacity/m_referenceInternalEnergy ), 
                         m_density,
                         m_dDensity_dPressure,
                         m_dDensity_dTemperature, 
