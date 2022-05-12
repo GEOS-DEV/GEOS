@@ -309,6 +309,19 @@ public:
                                                                   colOffset );
   }
 
+  template< typename LEAF, localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER = false >
+  GEOSX_HOST_DEVICE
+  void addGradGradStabilizationMatrix( typename LEAF::StackVariables const & stack,
+                                       real64 ( & matrix )
+                                       [LEAF::maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
+                                       [LEAF::maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT],
+                                       real64 const scaleFactor = 1.0 ) const
+  {
+    LEAF::template addGradGradStabilization< NUMDOFSPERTRIALSUPPORTPOINT, UPPER >( stack,
+                                                                                   matrix,
+                                                                                   scaleFactor );
+  }
+
   /**
    * @brief Add a grad-grad stabilization operator evaluated at a provided vector of dofs to input
    * vector.
@@ -343,7 +356,7 @@ public:
   void
   addEvaluatedGradGradStabilizationVector( StackVariables const & stack,
                                            real64 const ( &dofs )[LEAF::maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
-                                           real64 ( &targetVector )[LEAF::maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
+                                           real64 ( & targetVector )[LEAF::maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
                                            real64 const scaleFactor = 1.0 )
   {
     LEAF::template

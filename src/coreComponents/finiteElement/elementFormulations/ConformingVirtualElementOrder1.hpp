@@ -237,6 +237,29 @@ public:
     }
   }
 
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void addGradGradStabilization( StackVariables const & stack,
+                                        real64 ( & matrix )
+                                        [MAXCELLNODES * NUMDOFSPERTRIALSUPPORTPOINT]
+                                        [MAXCELLNODES * NUMDOFSPERTRIALSUPPORTPOINT],
+                                        real64 const & scaleFactor )
+  {
+    for( localIndex i = 0; i < stack.numSupportPoints; ++i )
+    {
+      localIndex startCol = (UPPER) ? i : 0;
+      for( localIndex j = startCol; j < stack.numSupportPoints; ++j )
+      {
+        real64 const contribution = scaleFactor * stack.stabilizationMatrix[i][j];
+        for( localIndex d = 0; d < NUMDOFSPERTRIALSUPPORTPOINT; ++d )
+        {
+          matrix[i*NUMDOFSPERTRIALSUPPORTPOINT + d][j*NUMDOFSPERTRIALSUPPORTPOINT + d] += contribution;
+        }
+      }
+    }
+  }
+
   /**
    * @brief Adds a grad-grad stabilization evaluated at @p dofs to @p targetVector.
    * @detail This method is intended to be used with @p targetVector being the residual and @p dofs

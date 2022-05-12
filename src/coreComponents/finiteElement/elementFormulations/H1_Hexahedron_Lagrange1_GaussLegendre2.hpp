@@ -259,6 +259,15 @@ public:
                                         localIndex const rowOffset,
                                         localIndex const colOffset );
 
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void addGradGradStabilization( StackVariables const & stack,
+                                        real64 ( &matrix )
+                                        [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
+                                        [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT],
+                                        real64 const & scaleFactor );
+
   /**
    * @brief Adds a grad-grad stabilization evaluated at @p dofs to @p targetVector.
    * @detail This method is intended to be used with @p targetVector being the residual and @p dofs
@@ -501,6 +510,21 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::
   GEOSX_UNUSED_VAR( scaleFactor );
   GEOSX_UNUSED_VAR( rowOffset );
   GEOSX_UNUSED_VAR( colOffset );
+}
+
+template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Hexahedron_Lagrange1_GaussLegendre2::
+  addGradGradStabilization( StackVariables const & stack,
+                            real64 ( & matrix )
+                            [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
+                            [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT],
+                            real64 const & scaleFactor )
+{
+  GEOSX_UNUSED_VAR( stack );
+  GEOSX_UNUSED_VAR( matrix );
+  GEOSX_UNUSED_VAR( scaleFactor );
 }
 
 template< typename VECTORTYPE >
