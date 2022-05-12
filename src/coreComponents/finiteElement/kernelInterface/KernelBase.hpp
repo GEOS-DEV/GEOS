@@ -474,8 +474,8 @@ template < typename FiniteElement >
 class StoredNonTensorBasis
 {
 private:
-  constexpr size_t num_dofs = get_num_dofs<FiniteElement>;
-  constexpr size_t num_quads = get_num_quads<FiniteElement>;
+  constexpr localIndex num_dofs = get_num_dofs<FiniteElement>;
+  constexpr localIndex num_quads = get_num_quads<FiniteElement>;
   real64 const data[ num_quads ][ num_dofs ];
 
 public:
@@ -483,24 +483,31 @@ public:
   StoredNonTensorBasis()
   {
     real64 basis_functions_at_xq[ num_dofs ];
-    for (size_t q = 0; q < num_quads; q++)
+    for (localIndex q = 0; q < num_quads; q++)
     {
       FiniteElement::calcN( q, basis_functions_at_xq );
-      for (size_t d = 0; d < num_dofs; d++)
+      for (localIndex d = 0; d < num_dofs; d++)
       {
         data[ q ][ d ] = basis_functions_at_xq[ d ];
       }
     }
   }
 
-  real64 operator()( size_t dof, size_t quad ) const
+  GEOSX_HOST_DEVICE
+  real64 operator()( localIndex dof, localIndex quad ) const
   {
     return data[ quad ][ dof ];
   }
 };
 
+template < size_t Order >
+class LagrangeBasis;
+
+template <>
+class LagrangeBasis<1> : public LagrangeBasis1 { };
+
 template < typename FiniteElement >
-class StoredTensorBasis
+class StoredLagrangeTensorBasis
 {
 private:
   constexpr localIndex num_dofs = get_num_1d_dofs<FiniteElement>;
@@ -509,15 +516,39 @@ private:
 
 public:
   GEOSX_HOST_DEVICE
-  StoredTensorBasis()
+  constexpr StoredLagrangeTensorBasis()
   {
     for (localIndex q = 0; q < num_quads; q++)
     {
       for (localIndex d = 0; d < num_dofs; d++)
       {
-        data[ q ][ d ] = LagrangeBasis1::value(d, LagrangeBasis1::parentSupportCoord(q));
+        data[ q ][ d ] = LagrangeBasis<num_dofs-1>::value( d, LagrangeBasis<num_quads-1>::parentSupportCoord( q ) );
       }
     }
+  }
+
+  GEOSX_HOST_DEVICE
+  constexpr real64 operator()( localIndex dof, localIndex quad ) const
+  {
+    return data[ quad ][ dof ];
+  }
+};
+
+template < typename FiniteElement >
+class OnTheFlyLagrangeTensorBasis
+{
+private:
+  constexpr localIndex num_dofs = get_num_1d_dofs<FiniteElement>;
+  constexpr localIndex num_quads = get_num_1d_quads<FiniteElement>;
+
+public:
+  GEOSX_HOST_DEVICE
+  constexpr OnTheFlyLagrangeTensorBasis() { }
+
+  GEOSX_HOST_DEVICE
+  constexpr real64 operator()( localIndex dof, localIndex quad ) const
+  {
+    return LagrangeBasis<num_dofs-1>::value( dof, LagrangeBasis<num_quads-1>::parentSupportCoord( quad ) );
   }
 };
 
