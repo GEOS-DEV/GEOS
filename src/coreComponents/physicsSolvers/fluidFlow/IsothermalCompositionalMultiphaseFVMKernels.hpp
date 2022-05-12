@@ -898,7 +898,7 @@ public:
 
     forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
       GEOSX_ERROR("Can't compile this kernel with HIP yet.");
 #else
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
@@ -907,7 +907,7 @@ public:
       kernelComponent.setup( iconn, stack );
       kernelComponent.computeFlux( iconn, stack );
       kernelComponent.complete( iconn, stack );
-#endif      
+#endif
     } );
   }
 

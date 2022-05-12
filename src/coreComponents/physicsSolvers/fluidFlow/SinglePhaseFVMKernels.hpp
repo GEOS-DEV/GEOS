@@ -473,7 +473,7 @@ struct AquiferBCKernel
 
     forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
       GEOSX_ERROR("Can't compile this kernel with HIP yet.");
 #else
       // working variables

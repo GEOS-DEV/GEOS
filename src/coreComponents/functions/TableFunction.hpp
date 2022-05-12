@@ -425,7 +425,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
       integer const corner = (point >> dim) & 1;
       cornerValue *= weights[dim][corner];
     }
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
     GEOSX_ERROR("Can't compile this kernel with HIP yet.");
 #else
     value += cornerValue;
@@ -613,7 +613,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
       real64 & d = derivatives[dim];
 
       // ====================================
-      //#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
+      //#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG) && defined(DNDEBUG)
       //      GEOSX_ERROR("Can't compile this kernel with HIP yet.");
       //#else
       d += val;
@@ -622,7 +622,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
       // uncommenting this makes the hip-clang compiler fail to compile on Crusher
     }
     // ====================================
-    //#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
+    //#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG) && defined(DNDEBUG)
     //    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
     //#else
     value += cornerValue;

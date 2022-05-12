@@ -536,7 +536,7 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
     GEOSX_ERROR("Can't compile this kernel with HIP yet.");
 #else
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;

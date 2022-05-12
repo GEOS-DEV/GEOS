@@ -116,7 +116,7 @@ struct ProppantUpdateKernel
 
     forAll< parallelDevicePolicy<> >( proppantWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
       GEOSX_ERROR("Can't compile this kernel with HIP yet.");
 #else
       proppantWrapper.update( a,

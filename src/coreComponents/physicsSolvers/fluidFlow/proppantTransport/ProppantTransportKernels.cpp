@@ -102,7 +102,7 @@ AccumulationKernel::
 {
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
   {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
     GEOSX_ERROR("Can't compile this kernel with HIP yet.");
 #else
     if( elemGhostRank[ei] < 0 )
@@ -786,7 +786,7 @@ void FluxKernel::
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
   GEOSX_ERROR("Can't compile this kernel with HIP yet.");
 #else
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
