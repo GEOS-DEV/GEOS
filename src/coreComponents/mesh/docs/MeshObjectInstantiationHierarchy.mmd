@@ -1,0 +1,58 @@
+classDiagram
+
+class DomainPartition {
+    +getMeshBodies() List~MeshBody~
+}
+
+class MeshBody {
+    +getMeshLevels() List~MeshLevels~
+}
+
+class MeshLevel {
+    +getNodeManager() NodeManager
+    +getEdgeManager() EdgeManager
+    +getFaceManager() FaceManager
+    +getElemManager() ElementRegionManager
+}
+
+class NodeManager {
+    +edgeList()
+    +faceList()
+    +elementList()
+    +elementSubRegionList()
+    +elementRegionList()
+}
+
+class EdgeManager {
+    +nodeList()
+    +faceList()
+}
+
+class FaceManager {
+    +nodeList()
+    +edgeList()
+    +elementList()
+    +elementSubRegionList()
+    +elementRegionList()
+}
+
+class ElementRegionManager {
+    +forElementRegion(f)
+    +forElementSubRegion(f)
+}
+
+DomainPartition "1" *-- "1..*" MeshBody
+MeshBody "1" *-- "1..*" MeshLevel
+
+MeshLevel "1" *-- "1" NodeManager
+MeshLevel "1" *-- "1" EdgeManager
+MeshLevel "1" *-- "1" FaceManager
+MeshLevel "1" *-- "1" ElementRegionManager
+
+ElementRegionManager "1" *-- "0..n" WellElementRegion
+ElementRegionManager "1" *-- "0..n" FaceElementRegion
+ElementRegionManager "1" *-- "0..n" CellElementRegion
+
+WellElementRegion "1" *-- "1..n" WellElementSubRegion
+FaceElementRegion "1" *-- "1..n" FaceElementSubRegion
+CellElementRegion "1" *-- "1..n" CellElementSubRegion

@@ -88,7 +88,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
   // TODO: stampare m_meshTargets
   // question: from here...
   dofManager.addField( keys::TotalDisplacement,
-                       DofManager::Location::Node,
+                       FieldLocation::Node,
                        3,
                        m_meshTargets );
 
@@ -116,7 +116,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
   } );
 
   dofManager.addField( extrinsicMeshData::contact::traction::key(),
-                       DofManager::Location::Elem,
+                       FieldLocation::Elem,
                        3,
                        meshTargets );
 //                       fractureRegions );
