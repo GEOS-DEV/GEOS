@@ -666,6 +666,13 @@ Element: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
 
 
+.. _XML_PorousDelftEgg:
+
+Element: PorousDelftEgg
+=======================
+.. include:: ../../coreComponents/schema/docs/PorousDelftEgg.rst
+
+
 .. _XML_PorousDruckerPrager:
 
 Element: PorousDruckerPrager
@@ -699,6 +706,13 @@ Element: PorousElasticTransverseIsotropic
 Element: PorousExtendedDruckerPrager
 ====================================
 .. include:: ../../coreComponents/schema/docs/PorousExtendedDruckerPrager.rst
+
+
+.. _XML_PorousModifiedCamClay:
+
+Element: PorousModifiedCamClay
+==============================
+.. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay.rst
 
 
 .. _XML_PressurePorosity:
@@ -1741,6 +1755,13 @@ Datastructure: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
 
 
+.. _DATASTRUCTURE_PorousDelftEgg:
+
+Datastructure: PorousDelftEgg
+=============================
+.. include:: ../../coreComponents/schema/docs/PorousDelftEgg_other.rst
+
+
 .. _DATASTRUCTURE_PorousDruckerPrager:
 
 Datastructure: PorousDruckerPrager
@@ -1774,6 +1795,13 @@ Datastructure: PorousElasticTransverseIsotropic
 Datastructure: PorousExtendedDruckerPrager
 ==========================================
 .. include:: ../../coreComponents/schema/docs/PorousExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_PorousModifiedCamClay:
+
+Datastructure: PorousModifiedCamClay
+====================================
+.. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay_other.rst
 
 
 .. _DATASTRUCTURE_PressurePorosity:
