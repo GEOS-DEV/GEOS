@@ -144,7 +144,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
 
   if( collectAll )
   {
-    // Here we only have one "all" field.
+    // Here we only have one "all" set.
     array1d< localIndex > & setIndices = m_setsIndices.front();
     setIndices.resize( targetGrp->size() );
     for( localIndex i = 0; i < targetGrp->size(); ++i )
