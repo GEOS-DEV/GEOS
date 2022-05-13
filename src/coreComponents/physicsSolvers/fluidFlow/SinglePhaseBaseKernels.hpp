@@ -201,7 +201,7 @@ public:
     // Pore volume information
 
     /// Pore volume at time n+1
-    real64 poreVolumeNew = 0.0;
+    real64 poreVolume = 0.0;
 
     /// Pore volume at the previous converged time step
     real64 poreVolume_n = 0.0;
@@ -242,7 +242,7 @@ public:
               StackVariables & stack ) const
   {
     // initialize the pore volume
-    stack.poreVolumeNew = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosityNew[ei][0];
+    stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosityNew[ei][0];
     stack.poreVolume_n = m_volume[ei] * m_porosity_n[ei][0];
     stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
 
@@ -264,10 +264,10 @@ public:
                             FUNC && kernelOp = NoOpFunc{} ) const
   {
     // Residual contribution is mass conservation in the cell
-    stack.localResidual = stack.poreVolumeNew * m_density[ei][0] - stack.poreVolume_n * m_density_n[ei][0];
+    stack.localResidual = stack.poreVolume * m_density[ei][0] - stack.poreVolume_n * m_density_n[ei][0];
 
     // Derivative of residual wrt to pressure in the cell
-    stack.localJacobian = stack.dPoreVolume_dPres * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolumeNew;
+    stack.localJacobian = stack.dPoreVolume_dPres * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolume;
 
     // Customize the kernel with this lambda
     kernelOp();

@@ -52,18 +52,16 @@ void SingleFluidBase::postProcessInput()
 
 void SingleFluidBase::initializeState() const
 {
-  arrayView2d< real64 const > density        = m_density;
-  arrayView2d< real64 >       initialDensity = m_initialDensity;
-  arrayView2d< real64 >       density_n     = m_density_n;
-  initialDensity.setValues< parallelDevicePolicy<> >( density );
-  density_n.setValues< parallelDevicePolicy<> >( density );
+  arrayView2d< real64 > initialDensity = m_initialDensity;
+  arrayView2d< real64 > density_n      = m_density_n;
+  initialDensity.setValues< parallelDevicePolicy<> >( m_density.toViewConst() );
+  density_n.setValues< parallelDevicePolicy<> >( m_density.toViewConst() );
 }
 
 void SingleFluidBase::saveConvergedState() const
 {
-  arrayView2d< real64 const > density   = m_density;
-  arrayView2d< real64 >       density_n = m_density_n;
-  density_n.setValues< parallelDevicePolicy<> >( density );
+  arrayView2d< real64 > density_n = m_density_n;
+  density_n.setValues< parallelDevicePolicy<> >( m_density.toViewConst() );
 }
 
 //START_SPHINX_INCLUDE_00
