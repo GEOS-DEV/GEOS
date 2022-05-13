@@ -233,6 +233,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
+    arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -250,6 +251,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         ( elementSubRegion.size(),
         numNodesPerElem,
         X,
+        elemGhostRank,
         elemsToNodes,
         elemsToFaces,
         facesToNodes,

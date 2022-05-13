@@ -23,8 +23,8 @@
       wellRegionName="wellRegion"
       wellControlsName="wellControls"
       meshName="cartesianMesh"
-      polylineNodeCoords="{ { 500.0, 500.0, 6600.00 },
-                            { 500.0, 500.0, 6650.00 } }"
+      polylineNodeCoords="{ { 500.0, 500.0, 6650.00 },
+                            { 500.0, 500.0, 6600.00 } }"
       polylineSegmentConn="{ { 0, 1 } }"
       radius="0.1"
       numElementsPerSegment="2">
@@ -37,7 +37,7 @@
  
   <!-- SPHINX_FIELD_CASE_Co2_EVENTS -->
   <Events
-    maxTime="2e8">
+    maxTime="5e8">
 
     <PeriodicEvent
       name="outputs"

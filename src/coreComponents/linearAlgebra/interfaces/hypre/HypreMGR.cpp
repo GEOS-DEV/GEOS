@@ -158,9 +158,13 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.mechSolver.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.mechSolver.ptr, 2 ) );
 #else
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.mechSolver.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1sgs ) ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.mechSolver.ptr, 1 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxWt( mgrData.mechSolver.ptr, 0.8 ) );
+    // Note: commenting out the line below, and uncommenting what follows seems to consistently deteriorate
+    // the behavior of the linear solver (number of iterations and wall-clock time). This requires further investigation.
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.mechSolver.ptr, 1 ) );
+    // GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.mechSolver.ptr, hypre::getAMGRelaxationType(
+    // LinearSolverParameters::AMG::SmootherType::l1sgs ) ) );
+    // GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.mechSolver.ptr, 1 ) );
+    // GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxWt( mgrData.mechSolver.ptr, 0.8 ) );
 #endif
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.mechSolver.ptr, 3 ) );
 
