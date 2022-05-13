@@ -146,13 +146,13 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
 
   // Add the edges that compose the faceElement to the edge map. This is essentially a copy of
   // the facesToEdges entry.
-  localIndex const faceID = faceIndices[0];
-  localIndex const numEdges = originalFaceToEdgeMap.sizeOfArray( faceID );
+  localIndex const faceIndex = faceIndices[0];
+  localIndex const numEdges = originalFaceToEdgeMap.sizeOfArray( faceIndex );
   edgeMap.resizeArray( kfe, numEdges );
   for( localIndex a=0; a<numEdges; ++a )
   {
-    edgeMap[kfe][a] = originalFaceToEdgeMap( faceID, a );
-    connectedEdges.insert( originalFaceToEdgeMap( faceID, a ) );
+    edgeMap[kfe][a] = originalFaceToEdgeMap( faceIndex, a );
+    connectedEdges.insert( originalFaceToEdgeMap( faceIndex, a ) );
   }
 
   // Add the cell region/subregion/index to the faceElementToCells map
@@ -188,7 +188,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   }
 
 
-  subRegion.CalculateElementGeometricQuantities( kfe, faceManager->faceArea() );
+  subRegion.calculateSingleElementGeometricQuantities( kfe, faceManager->faceArea() );
 
   creationMass[kfe] *= elemArea[kfe];
 
@@ -199,8 +199,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
     SortedArray< localIndex > & faceElementSet = subRegion.sets().registerWrapper< SortedArray< localIndex > >( setIter.first ).reference();
     for( localIndex a=0; a<faceMap.size( 0 ); ++a )
     {
-      localIndex const faceIndex = faceMap[a][0];
-      if( faceSet.count( faceIndex ) )
+      if( faceSet.count( faceMap[a][0] ) )
       {
         faceElementSet.insert( a );
       }

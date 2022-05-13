@@ -53,14 +53,14 @@ public:
    *
    * @note Value forwarding is due to refactoring.
    */
-  inline localIndex getEdgeMapOverallocation()
-  { return CellBlockManagerABC::getEdgeMapOverallocation(); }
+  static constexpr localIndex edgeMapOverallocation()
+  { return CellBlockManagerABC::edgeMapExtraSpacePerNode(); }
 
   /**
    * @brief return default size of the value array in the node-to-element mapping
    * @return default size of value array in the node-to-element mapping
    */
-  inline localIndex getElemMapOverAllocation()
+  static constexpr localIndex elemMapOverallocation()
   { return 8; }
 
 
@@ -76,36 +76,6 @@ public:
    */
   EmbeddedSurfaceNodeManager( string const & name,
                               dataRepository::Group * const parent );
-
-  /**
-   * @brief The default EmbeddedSurfaceNodeManager destructor.
-   */
-  ~EmbeddedSurfaceNodeManager() override;
-
-  /// @cond DO_NOT_DOCUMENT
-  /**
-   * @brief deleted constructor
-   */
-  EmbeddedSurfaceNodeManager() = delete;
-
-  /**
-   * @brief deleted copy constructor
-   */
-  EmbeddedSurfaceNodeManager( EmbeddedSurfaceNodeManager const & init ) = delete;
-
-  /**
-   * @brief Default move constructor.
-   */
-  EmbeddedSurfaceNodeManager( EmbeddedSurfaceNodeManager && ) = delete;
-
-  /**
-   * @brief deleted assignement operator
-   */
-  EmbeddedSurfaceNodeManager & operator=( EmbeddedSurfaceNodeManager const & ) = delete;
-
-
-  EmbeddedSurfaceNodeManager & operator=( EmbeddedSurfaceNodeManager && ) = delete;
-  /// @endcond
 
   ///@}
 
@@ -132,8 +102,8 @@ public:
    * @brief Provide a virtual access to catalogName().
    * @return string that contains the EmbeddedSurfaceNodeManager catalog name
    */
-  const string getCatalogName() const override final
-  { return EmbeddedSurfaceNodeManager::catalogName(); }
+  string getCatalogName() const override final
+  { return catalogName(); }
 
   ///@}
 
@@ -170,8 +140,6 @@ public:
    * @name Packing methods
    */
   ///@{
-
-  std::set< string > getPackingExclusionList() const override;
 
   /**
    * @brief Computes the pack size of the global maps elements in the @ packList.
@@ -370,26 +338,26 @@ private:
 
   /**
    * @brief Pack the upward and downward pointing maps into a buffer.
-   * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
-   *                packed and the function returns the size of the packing that would have occured if set to TRUE.
+   * @tparam DO_PACKING template argument to determine whether or not to pack the buffer. If false, the buffer is not
+   *                    packed and the function returns the size of the packing that would have occured if set to TRUE.
    * @param buffer the buffer to pack data into
    * @param packList the indices of nodes that should be packed.
    * @return size of data packed in terms of number of chars
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
   /**
    * @brief Packing global maps.
-   * @tparam DOPACK A template parameter to discriminate between actually packing or only computing the packing size.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
    * @param buffer The buffer that will receive the packed data.
    * @param packList The element we want packed.
    * @return The packed size.
    */
-  template< bool DOPACK >
-  localIndex packNewNodesGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                            arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packNewNodesGlobalMapsImpl( buffer_unit_type * & buffer,
+                                         arrayView1d< localIndex const > const & packList ) const;
 
   /**
    * @brief Checks if a node already exists on this rank and returns its local index.

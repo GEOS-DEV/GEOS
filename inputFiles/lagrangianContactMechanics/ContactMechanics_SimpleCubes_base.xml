@@ -8,13 +8,16 @@
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
       targetRegions="{ Region, Fracture }"
-      contactRelationName="fractureMaterial">
+      contactRelationName="fractureMaterial"
+      fractureRegionName="Fracture"
+      logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         logLevel="2"
         newtonMaxIter="10"
         lineSearchAction="Require"
-        lineSearchMaxCuts="2"/>
+        lineSearchMaxCuts="2"
+        lineSearchInterpolationType="Parabolic"/>
       <LinearSolverParameters
         directParallel="0"/>
     </LagrangianContact>
@@ -33,7 +36,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Region }"
-      
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>

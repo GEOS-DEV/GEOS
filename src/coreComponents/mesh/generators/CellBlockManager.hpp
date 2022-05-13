@@ -40,29 +40,16 @@ public:
    */
   CellBlockManager( string const & name, Group * const parent );
 
-  CellBlockManager( const CellBlockManager & ) = delete;
-
-  CellBlockManager & operator=( const CellBlockManager & ) = delete;
-
-  ~CellBlockManager() override = default;
-
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /**
-   * @brief Maximum number of faces allowed (in memory) per each node.
+   * @brief Maximum number of nodes allowed (in memory) per each face.
    * @return The number as an integer.
    */
-  static constexpr int maxFacesPerNode()
-  { return 200; }
+  static constexpr int maxNodesPerFace()
+  { return 64; }
 
-  /**
-   * @brief Extra space for node to faces mapping.
-   * @return Number of extra values as an integer.
-   */
-  static constexpr localIndex getFaceMapOverallocation()
-  { return 8; }
-
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodesPositions() const override;
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodePositions() const override;
 
   /**
    * @brief Returns a view to the vector holding the nodes coordinates
@@ -70,23 +57,23 @@ public:
    *
    * @note This is meant to be used as a values setter.
    */
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > getNodesPositions();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > getNodePositions();
 
-  ArrayOfSets< localIndex > getNodeToEdges() const override;
+  ArrayOfArrays< localIndex > getNodeToEdges() const override;
 
-  ArrayOfSets< localIndex > getNodeToFaces() const override;
+  ArrayOfArrays< localIndex > getNodeToFaces() const override;
 
-  ArrayOfArrays< localIndex > getNodeToElements() const override;
+  ToCellRelation< ArrayOfArrays< localIndex > > getNodeToElements() const override;
 
-  array2d< geosx::localIndex > getEdgeToNodes() const override;
+  array2d< localIndex > getEdgeToNodes() const override;
 
-  ArrayOfSets< geosx::localIndex > getEdgeToFaces() const override;
+  ArrayOfArrays< localIndex > getEdgeToFaces() const override;
 
   ArrayOfArrays< localIndex > getFaceToNodes() const override;
 
-  ArrayOfArrays< geosx::localIndex > getFaceToEdges() const override;
+  ArrayOfArrays< localIndex > getFaceToEdges() const override;
 
-  array2d< localIndex > getFaceToElements() const override;
+  ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
 
   array1d< globalIndex > getNodeLocalToGlobal() const override;
 
@@ -162,7 +149,7 @@ public:
    * @param name The name of the created cell block.
    * @return A reference to the new cell block. The CellBlockManager owns this new instance.
    */
-  CellBlock & registerCellBlock( string name );
+  CellBlock & registerCellBlock( string const & name );
 
   /**
    * @brief Launch kernel function over all the sub-regions
@@ -184,13 +171,13 @@ private:
   };
 
   /**
-   * @brief Get cell block at index @p iCellBlock.
-   * @param[in] iCellBlock The cell block index.
+   * @brief Get cell block at index @p blockIndex.
+   * @param[in] blockIndex The cell block index.
    * @return Const reference to the instance.
    *
    * @note Mainly useful for iteration purposes.
    */
-  const CellBlockABC & getCellBlock( localIndex iCellBlock ) const;
+  CellBlock const & getCellBlock( localIndex const blockIndex ) const;
 
   /**
    * @brief Returns the number of cells blocks
@@ -208,14 +195,20 @@ private:
    */
   void buildFaceMaps();
 
+  template< typename BASEMAP, typename FUNC >
+  void buildToCellMap( localIndex const cellIndex,
+                       ToCellRelation< BASEMAP > & toCells,
+                       FUNC cellToObjectGetter,
+                       localIndex const overAlloc = 0 ) const;
+
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_nodesPositions;
 
-  ArrayOfSets< localIndex > m_nodeToEdges;
-  ArrayOfSets< localIndex > m_edgeToFaces;
+  ArrayOfArrays< localIndex > m_nodeToEdges;
+  ArrayOfArrays< localIndex > m_edgeToFaces;
   array2d< localIndex > m_edgeToNodes;
   ArrayOfArrays< localIndex >  m_faceToNodes;
   ArrayOfArrays< localIndex > m_faceToEdges;
-  array2d< localIndex >  m_faceToElements;
+  ToCellRelation< array2d< localIndex > > m_faceToCells;
 
   array1d< globalIndex >  m_nodeLocalToGlobal;
 

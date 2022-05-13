@@ -63,8 +63,8 @@ public:
    *
    * @note Value forwarding is due to refactoring.
    */
-  static constexpr inline localIndex getEdgeMapOverallocation()
-  { return CellBlockManagerABC::getEdgeMapOverallocation(); }
+  static constexpr localIndex getEdgeMapOverallocation()
+  { return CellBlockManagerABC::edgeMapExtraSpacePerNode(); }
 
   /**
    * @brief return default size of the value in the node-to-face mapping
@@ -72,19 +72,19 @@ public:
    *
    * @note Value forwarding is due to refactoring.
    */
-  static constexpr inline localIndex getFaceMapOverallocation()
-  { return CellBlockManagerABC::getEdgeMapOverallocation(); }
+  static constexpr localIndex getFaceMapOverallocation()
+  { return CellBlockManagerABC::faceMapExtraSpacePerNode(); }
 
   /**
    * @brief return default size of the value array in the node-to-element mapping
    * @return default size of value array in the node-to-element mapping
    */
-  static constexpr inline localIndex getElemMapOverAllocation()
-  { return CellBlockManagerABC::getElemMapOverAllocation(); }
+  static constexpr localIndex getElemMapOverAllocation()
+  { return CellBlockManagerABC::elemMapExtraSpacePerNode(); }
 
-/**
- * @name Constructors/destructor
- */
+  /**
+   * @name Constructors/destructor
+   */
   ///@{
 
   /**
@@ -94,28 +94,6 @@ public:
    */
   NodeManager( string const & name,
                dataRepository::Group * const parent );
-
-  /**
-   * @brief The default NodeManager destructor.
-   */
-  ~NodeManager() override;
-
-  /// @cond DO_NOT_DOCUMENT
-  /**
-   * @brief deleted constructor
-   */
-  NodeManager() = delete;
-
-  /**
-   * @brief deleted copy constructor
-   */
-  NodeManager( const NodeManager & init ) = delete;
-
-  /**
-   * @brief deleted assignement operator
-   */
-  NodeManager & operator=( const NodeManager & ) = delete;
-  /// @endcond
 
   ///@}
 
@@ -142,19 +120,10 @@ public:
    * @brief Provide a virtual access to catalogName().
    * @return string that contains the NodeManager catalog name
    */
-  const string getCatalogName() const override final
-  { return NodeManager::catalogName(); }
+  string getCatalogName() const override final
+  { return catalogName(); }
 
   ///@}
-
-  /**
-   * @brief Builds the nodes to regions and nodes to sub-regions mappings.
-   * @param [in] elementRegionManager the ElementRegionManager.
-   *
-   * @note Requires the sub-regions of the @p elementRegionManager to be fully defined.
-   * As well as the node to elements mappings of the @p NodeManager.
-   */
-  void buildRegionMaps( ElementRegionManager const & elementRegionManager );
 
   /**
    * @brief Copies the local to global mapping from @p cellBlockManager and invert to create the global to local mapping.
@@ -172,16 +141,18 @@ public:
 
   /**
    * @brief Builds the node-on-domain-boundary indicator.
-   * @param[in] faceManager The computation is based on the face-on-domain-boundary indicator.
+   * @param[in] faceIndex The computation is based on the face-on-domain-boundary indicator.
    * @see ObjectManagerBase::getDomainBoundaryIndicator()
    */
-  void setDomainBoundaryObjects( FaceManager const & faceManager );
+  void setDomainBoundaryObjects( FaceManager const & faceIndex );
 
   /**
    * @brief Copies the nodes positions and the nodes to (edges|faces|elements) mappings from @p cellBlockManager.
    * @param[in] cellBlockManager Will provide the mappings.
+   * @param[in] elemRegionManager element region manager, needed to map blocks to subregion
    */
-  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager );
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
+                                ElementRegionManager const & elemRegionManager );
 
   /**
    * @brief Link the current manager to other managers.
@@ -203,8 +174,6 @@ public:
    * @name Packing methods
    */
   ///@{
-
-  std::set< string > getPackingExclusionList() const override;
 
   /**
    * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
@@ -519,15 +488,15 @@ private:
 
   /**
    * @brief Pack the upward and downward pointing maps into a buffer.
-   * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
-   *                packed and the function returns the size of the packing that would have occured if set to TRUE.
+   * @tparam DO_PACKING template argument to determine whether or not to pack the buffer. If false, the buffer is not
+   *                    packed and the function returns the size of the packing that would have occured if set to TRUE.
    * @param buffer the buffer to pack data into
    * @param packList the indices of nodes that should be packed.
    * @return size of data packed in terms of number of chars
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
 
 

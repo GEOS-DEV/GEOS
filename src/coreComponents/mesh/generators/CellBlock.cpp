@@ -44,7 +44,7 @@ void CellBlock::setElementType( ElementType elementType )
       m_numFacesPerElement = 4;
       break;
     }
-    case ElementType::Prism:
+    case ElementType::Wedge:
     {
       m_numNodesPerElement = 6;
       m_numEdgesPerElement = 9;
@@ -83,11 +83,15 @@ void CellBlock::resize( dataRepository::indexType const numElements )
   m_elementsToFaces.resize( numElements );
 }
 
-void CellBlock::getFaceNodes( localIndex iElement,
-                              localIndex iFace,
-                              array1d< localIndex > & nodesInFaces ) const
+localIndex CellBlock::getFaceNodes( localIndex const cellIndex,
+                                    localIndex const faceNum,
+                                    Span< localIndex > const nodesInFaces ) const
 {
-  geosx::getFaceNodes( m_elementType, iElement, iFace, m_elementsToNodes, nodesInFaces );
+  return geosx::getFaceNodes( m_elementType,
+                              cellIndex,
+                              faceNum,
+                              m_elementsToNodes,
+                              nodesInFaces );
 }
 
 }
