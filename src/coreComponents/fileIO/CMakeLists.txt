@@ -14,7 +14,6 @@ set( fileIO_headers
      timeHistory/HistoryCollectionBase.hpp
      timeHistory/BufferedHistoryIO.hpp
      timeHistory/PackCollection.hpp
-     timeHistory/TestingBuffer.hpp
      timeHistory/HDFHistoryIO.hpp
      timeHistory/HistoryCollection.hpp
    )
@@ -34,7 +33,6 @@ set( fileIO_sources
      timeHistory/HDFFile.cpp
      timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
-     timeHistory/TestingBuffer.cpp
      timeHistory/HDFHistoryIO.cpp
    )
 
