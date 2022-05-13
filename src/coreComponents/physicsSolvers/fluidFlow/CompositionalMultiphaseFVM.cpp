@@ -56,14 +56,9 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
   CompositionalMultiphaseBase::initializePreSubGroups();
 
-  if( m_isThermal )
-  {
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM;
-  }
-  else
-  {
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
-  }
+  m_linearSolverParameters.get().mgr.strategy = m_isThermal
+    ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM
+    : LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
