@@ -248,9 +248,9 @@ redistributeByCellGraph( vtkUnstructuredGrid & mesh,
   GEOSX_MARK_FUNCTION;
 
   // Use int64_t here to match ParMETIS' idx_t
-  ArrayOfArrays< int64_t, int64_t > const elemToNodes = buildElemToNodes< int64_t >( mesh );
-  int64_t const numProcs = MpiWrapper::commSize( comm );
-  array1d< int64_t > const newParts = parmetis::partMeshKway( elemToNodes.toViewConst(), comm, 3, numRefinements );
+  ArrayOfArrays< pmet_idx_t, pmet_idx_t > const elemToNodes = buildElemToNodes< pmet_idx_t >( mesh );
+  pmet_idx_t const numProcs = MpiWrapper::commSize( comm );
+  array1d< pmet_idx_t > const newParts = parmetis::partMeshKway( elemToNodes.toViewConst(), comm, 3, numRefinements );
   vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numProcs, newParts.toViewConst() );
   return vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
 }

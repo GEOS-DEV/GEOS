@@ -27,6 +27,13 @@ namespace geosx
 namespace parmetis
 {
 
+#if defined(GEOSX_USE_DEVICE)
+using pmet_idx_t = int32_t;
+#else
+using pmet_idx_t = int64_t;
+#endif
+
+
 /**
  * @brief Partition a mesh according to its dual graph.
  * @param elemToNodes the input mesh represented by its elem-node graph
@@ -36,8 +43,8 @@ namespace parmetis
  * @return an array of target partitions for each element in local mesh
  * @note the number of partitions will be equal to the size of @p comm.
  */
-array1d< int64_t >
-partMeshKway( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
+array1d< pmet_idx_t >
+partMeshKway( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & elemToNodes,
               MPI_Comm comm,
               int minCommonNodes,
               int numRefinements );

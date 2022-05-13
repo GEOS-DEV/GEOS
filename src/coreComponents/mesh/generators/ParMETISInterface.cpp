@@ -29,10 +29,10 @@ namespace geosx
 namespace parmetis
 {
 
-static_assert( std::is_same< idx_t, int64_t >::value, "PetMETIS must be built with IDXTYPEWIDTH=64" );
+static_assert( std::is_same< idx_t, pmet_idx_t >::value, "ParMETIS must be built with IDXTYPEWIDTH=64" );
 
-array1d< int64_t >
-partMeshKway( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
+array1d< pmet_idx_t >
+partMeshKway( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & elemToNodes,
               MPI_Comm comm,
               int const minCommonNodes,
               int const numRefinements )
@@ -40,7 +40,7 @@ partMeshKway( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
   int const numProcs = MpiWrapper::commSize( comm );
   idx_t const numElems = elemToNodes.size();
 
-  array1d< int64_t > part( numElems ); // all 0 by default
+  array1d< pmet_idx_t > part( numElems ); // all 0 by default
   if( numProcs == 1 )
   {
     return part;
