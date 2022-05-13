@@ -1621,13 +1621,13 @@
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
-        <xsd:complexType name="PorousDelftEggType" />
+	<xsd:complexType name="PorousDelftEggType" />
 	<xsd:complexType name="PorousDruckerPragerType" />
 	<xsd:complexType name="PorousElasticIsotropicType" />
 	<xsd:complexType name="PorousElasticOrthotropicType" />
 	<xsd:complexType name="PorousElasticTransverseIsotropicType" />
 	<xsd:complexType name="PorousExtendedDruckerPragerType" />
-        <xsd:complexType name="PorousModifiedCamClayType" />
+	<xsd:complexType name="PorousModifiedCamClayType" />
 	<xsd:complexType name="PressurePorosityType">
 		<!--dPorosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
