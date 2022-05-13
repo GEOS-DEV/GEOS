@@ -107,7 +107,11 @@ private:
 
   // todo : replace this with a vector of references to the actual set sortedarrays (after packing rework to allow sorted arrays to be used
   // for indexing)
-  /// The indices for the specified sets to pack
+  /**
+   * @brief The indices for the specified sets to pack
+   * If we are collecting all the fields, `m_setsIndices` will be of size 1
+   * and and `m_setsIndices[0]` being empty means that we take all the indices.
+   */
   std::vector< array1d< localIndex > > m_setsIndices;
   /// The dataRepository name/path to get history data from, relative paths are assumed to be relative to mesh body 0, mesh level 0
   string m_objectPath;

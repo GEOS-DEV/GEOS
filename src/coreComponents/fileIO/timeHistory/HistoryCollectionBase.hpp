@@ -25,7 +25,9 @@ namespace geosx
 {
 
 /**
- * @brief Technical code factorisation after refactoring. Feel free to challenge this class.
+ * @brief Intermediate class for code factorisation.
+ *        It mainly deals with collector and buffer management.
+ *        It delegates the actual collection to derived classes.
  */
 class HistoryCollectionBase : public HistoryCollection
 {

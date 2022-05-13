@@ -98,10 +98,9 @@ public:
   virtual localIndex numMetaDataCollectors() const = 0;
 
   /**
-   * @brief Get a pointer to a collector of meta-information for this collector.
+   * @brief Get a collector of meta-information for this collector.
    * @param[in] metaIdx Which of the meta-info collectors to return. (see HistoryCollection::numMetaDataCollectors()).
-   * @return A unique pointer to the HistoryCollection object used for meta-info collection.
-   *         Intended to fall out of scope and destruct immediately after being used to perform output during simulation initialization.
+   * @return A mutable reference.
    */
   virtual HistoryCollection & getMetaDataCollector( localIndex metaIdx ) = 0;
 };

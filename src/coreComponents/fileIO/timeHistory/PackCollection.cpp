@@ -63,19 +63,21 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
 
   if( collectAll() )
   {
-    localIndex const packCount = m_setsIndices[0].size() == 0 ? targetField.size() : m_setsIndices[0].size(); // TODO CHECK!
+    // If we collect all the data, then we have a unique field: "all".
+    // So it's safe to grab index 0.
+    localIndex const packCount = m_setsIndices[0].size() == 0 ? targetField.size() : m_setsIndices[0].size();
     return targetField.getHistoryMetadata( packCount );
   }
   else
   {
     GEOSX_ERROR_IF( collectionIdx < 0 || collectionIdx >= m_setNames.size(), "Invalid collection index specified." );
-    localIndex collectionSize = m_setsIndices[ collectionIdx ].size( );
-    if( (m_onlyOnSetChange != 0) && ( !m_setChanged ) ) // if we're only collecting when the set changes but the set hasn't changed
+    localIndex collectionSize = m_setsIndices[collectionIdx].size();
+    if( ( m_onlyOnSetChange != 0 ) && ( !m_setChanged ) ) // if we're only collecting when the set changes but the set hasn't changed
     {
       collectionSize = 0;
     }
     HistoryMetadata metadata = targetField.getHistoryMetadata( collectionSize );
-    metadata.setName( metadata.getName() + " " + m_setNames[ collectionIdx ] );
+    metadata.setName( metadata.getName() + " " + m_setNames[collectionIdx] );
     return metadata;
   }
 }
@@ -83,22 +85,24 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
 /**
  * @brief Extracts the wrapper names that exist in the @p sets group of @p group.
  * @param setNames The candidate wrapper names.
- * @param omb The @p group (@p ObjectManagerBase) that which @p sets sub group may contain the @p setNames.
+ * @param omb The  @p ObjectManagerBase instance holding the @p sets from which we'll extract the @p setNames.
  * @return The set names, guarantied to be unique.
+ * @note This function simply discards requested sets which are not available. No warning or error is provided...
  */
 std::vector< string > getExistingWrapperNames( arrayView1d< string const > setNames, ObjectManagerBase const * omb )
 {
-  std::vector< string > result;
+  // Extract available wrapper names from `omb`.
+  std::set< string > available;
+  omb->sets().forWrappers( [&]( WrapperBase const & w ) { available.insert( w.getName() ); } );
 
-  Group const & sets = omb->sets(); // FIXME ObjectManagerBase
-  auto predicate = [&sets]( string const & setName )
-  {
-    return sets.hasWrapper( setName );
-  };
-  std::set< string > const tmp( setNames.begin(), setNames.end() );
-  std::copy_if( tmp.cbegin(), tmp.cend(), std::back_inserter( result ), predicate );
+  // Convert input `setNames` to a `std::set` to allow set intersection computation.
+  std::set< string > const requested( setNames.begin(), setNames.end() );
 
-  return result;
+  // Compute the intersection of requested and available.
+  std::vector< string > intersection;
+  std::set_intersection( requested.cbegin(), requested.cend(), available.cbegin(), available.cend(), std::back_inserter( intersection ) );
+
+  return intersection;
 }
 
 
@@ -107,7 +111,7 @@ std::vector< string > getExistingWrapperNames( arrayView1d< string const > setNa
 void PackCollection::updateSetsIndices( DomainPartition const & domain )
 {
   // In the current function, depending on the context, the target can be considered as a `Group` or as an `ObjectManagerBase`.
-  // This convenience lambda function is a writing shortcut to get lighter syntax while not changing the whole function.
+  // This convenience lambda function is a shortcut to get lighter syntax while not changing the whole function.
   auto asOMB = []( Group const * grp ) -> ObjectManagerBase const *
   {
     ObjectManagerBase const * omb = dynamicCast< ObjectManagerBase const * >( grp );
@@ -157,7 +161,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
       array1d< localIndex > & setIndices = m_setsIndices[setIdx];
 
       SortedArrayView< localIndex const > const & set = targetOMB->getSet( setName );
-      localIndex setSize = set.size();
+      localIndex const setSize = set.size();
       setIndices.resize( setSize );
       if( setSize > 0 )
       {
@@ -240,12 +244,8 @@ void PackCollection::buildMetaDataCollectors()
     {
       coordField = ElementSubRegionBase::viewKeyStruct::elementCenterString();
     }
-//    else
-//    {
-//      GEOSX_ERROR( "Data collection for \"" << m_objectPath << "\" is unimplemented." );
-//    }
 
-    string metaName( "coordinates" ); // FIXME Name?
+    string metaName( "metaCollector" );
     std::unique_ptr< PackCollection > collector = std::make_unique< PackCollection >( metaName, this );
     collector->m_objectPath = m_objectPath;
     collector->m_fieldName = coordField ? string( coordField ) : m_fieldName;
@@ -286,6 +286,9 @@ void PackCollection::collect( DomainPartition const & domain,
 
 bool PackCollection::collectAll() const
 {
+  // The current pattern is that an empty `m_setNames` means that we have to collect all the sets.
+  // But is `m_setNames` contains the "all" keyword, then we must collect all the sets too.
+  // Otherwise, we rely on the content of `m_setNames`.
   return m_setNames.empty() or std::find( m_setNames.begin(), m_setNames.end(), "all" ) != m_setNames.end();
 }
 

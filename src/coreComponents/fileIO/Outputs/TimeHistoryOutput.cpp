@@ -75,7 +75,6 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
       }
 
       m_io.emplace_back( std::make_unique< HDFHistoryIO >( outputFile, metadata, m_recordCount ) );
-//      m_io.emplace_back( std::make_unique< TestingBuffer >( metadata.getName(), metadata.getDims() ) );
       hc.registerBufferProvider( collectorIdx, [this, idx = m_io.size() - 1]( localIndex count )
       {
         m_io[idx]->updateCollectingCount( count );
@@ -93,15 +92,14 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
     registerBufferCalls( collector.getMetaDataCollector( metaIdx ), collector.getTargetName() + " " );
   }
 
-  // do the time output last so its at the end of the m_io list, since writes are parallel we need
-  //  the rest of the collectors to share position in the list across the world comm
+  // Do the time output last so its at the end of the m_io list, since writes are parallel
+  // we need the rest of the collectors to share position in the list across the world comm
 
   // rank == 0 does time output for the collector
   if( MpiWrapper::commRank() == 0 )
   {
     HistoryMetadata timeMetadata = collector.getTimeMetaData();
     m_io.emplace_back( std::make_unique< HDFHistoryIO >( outputFile, timeMetadata, m_recordCount, 1, 2, MPI_COMM_SELF ) );
-//    m_io.emplace_back( std::make_unique< TestingBuffer >( timeMetadata.getName(), timeMetadata.getDims() ) );
     // We copy the back `idx` not to rely on possible future appends to `m_io`.
     collector.registerTimeBufferProvider( [this, idx = m_io.size() - 1]() { return m_io[idx]->getBufferHead(); } );
     m_io.back()->init( !freshInit );

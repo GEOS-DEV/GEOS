@@ -64,8 +64,6 @@ bool HistoryCollectionBase::execute( real64 const time_n,
     GEOSX_ERROR_IF( m_bufferProviders[collectionIdx] == nullptr,
                     "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
     // using GEOSX_ERROR_IF_EQ caused type issues since the values are used in streams
-    // we don't explicitly update the index sets here as they are updated in the buffer callback (see
-    // TimeHistoryOutput.cpp::initCollectorParallel( ) )
     this->updateSetsIndices( domain );
     HistoryMetadata hmd = this->getMetaData( domain, collectionIdx );
     buffer_unit_type * buffer = m_bufferProviders[collectionIdx]( hmd.size( 0 ) );
