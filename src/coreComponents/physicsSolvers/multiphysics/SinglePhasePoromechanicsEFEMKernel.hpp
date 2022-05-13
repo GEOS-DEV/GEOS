@@ -631,7 +631,6 @@ struct StateUpdateKernel
 			     volume,
 			     porousMaterialWrapper,
 			     pressure,
-			     deltaPressure,
 			     oldHydraulicAperture,
 			     fractureTraction,
 			     dFractureTraction_dPressure] GEOSX_HOST_DEVICE ( localIndex const k )

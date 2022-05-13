@@ -556,6 +556,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   computeTotalDensity( phaseFraction,
                        phaseDensity,
                        totalDensity );
+#endif
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >

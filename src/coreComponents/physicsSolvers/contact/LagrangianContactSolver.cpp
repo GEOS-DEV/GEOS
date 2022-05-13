@@ -1863,16 +1863,6 @@ void LagrangianContactSolver::setNextDt( real64 const & currentDt,
   nextDt = currentDt;
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-bool LagrangianContactSolver::compareFractureStates( integer const state0, integer const state1 )
-{
-  return state0 == state1
-           || ( state0 == NEW_SLIP && state1 == SLIP )
-           || ( state0 == SLIP && state1 == NEW_SLIP );
-
-}
-
 REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactSolver, string const &, Group * const )
 
 } /* namespace geosx */

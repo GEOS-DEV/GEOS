@@ -83,7 +83,7 @@ computeUniqueValueOffsets( ArrayOfArraysView< T const > const & sortedLists )
   } );
 
   // Perform an inplace prefix-sum to get the unique edge offset.
-  RAJA::inclusive_scan_inplace< POLICY >( uniqueValueOffsets.begin(), uniqueValueOffsets.end() );
+  RAJA::inclusive_scan_inplace< POLICY >( uniqueValueOffsets );
   return uniqueValueOffsets;
 }
 
