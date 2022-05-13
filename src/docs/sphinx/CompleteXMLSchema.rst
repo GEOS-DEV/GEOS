@@ -669,7 +669,7 @@ Element: PhaseFieldFracture
 .. _XML_PorousDelftEgg:
 
 Element: PorousDelftEgg
-============================
+=======================
 .. include:: ../../coreComponents/schema/docs/PorousDelftEgg.rst
 
 
@@ -711,7 +711,7 @@ Element: PorousExtendedDruckerPrager
 .. _XML_PorousModifiedCamClay:
 
 Element: PorousModifiedCamClay
-====================================
+==============================
 .. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay.rst
 
 
@@ -1758,7 +1758,7 @@ Datastructure: PhaseFieldFracture
 .. _DATASTRUCTURE_PorousDelftEgg:
 
 Datastructure: PorousDelftEgg
-==================================
+=============================
 .. include:: ../../coreComponents/schema/docs/PorousDelftEgg_other.rst
 
 
@@ -1800,7 +1800,7 @@ Datastructure: PorousExtendedDruckerPrager
 .. _DATASTRUCTURE_PorousModifiedCamClay:
 
 Datastructure: PorousModifiedCamClay
-==========================================
+====================================
 .. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay_other.rst
 
 
