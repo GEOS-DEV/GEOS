@@ -268,24 +268,21 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
     {
       GEOSX_ERROR( "Wrapper(s) \"" << stringutilities::join( reqNotAvail, ", " ) << "\" was (were) requested from \"" << getName() << "\" but is (are) not available." );
     }
+    // From now on all the requested wrappers are guarantied to be available.
 
-    // Only taking the wrappers that are requested and available.
-    std::set< string > redAndAvail;
-    std::set_intersection( input.cbegin(), input.cend(), available.cbegin(), available.cend(), std::inserter( redAndAvail, redAndAvail.end() ) );
-
-    // Not taking the wrappers that are excluded.
-    std::set< string > reqAndAvailNotExcl;
-    std::set_difference( redAndAvail.cbegin(), redAndAvail.cend(), exclusion.cbegin(), exclusion.cend(), std::inserter( reqAndAvailNotExcl, reqAndAvailNotExcl.end() ) );
+    // Discarding the wrappers that are excluded.
+    std::set< string > reqNotExcl;
+    std::set_difference( input.cbegin(), input.cend(), exclusion.cbegin(), exclusion.cend(), std::inserter( reqNotExcl, reqNotExcl.end() ) );
 
     // Now we build the final list.
     // No packing by index is allowed if the registered wrapper does not share the size of the owning group.
     // Hence, the sufficient (but not necessary...) condition on `wrapper.sizedFromParent()`.
-    std::vector< string > reqAndAvailNotExclAndSized;
+    std::vector< string > reqNotExclAndSized;
     auto predicate = [this]( string const & wrapperName ) -> bool
     {
       return bool( this->getWrapperBase( wrapperName ).sizedFromParent() );
     };
-    std::copy_if( reqAndAvailNotExcl.cbegin(), reqAndAvailNotExcl.cend(), std::back_inserter( reqAndAvailNotExclAndSized ), predicate );
+    std::copy_if( reqNotExcl.cbegin(), reqNotExcl.cend(), std::back_inserter( reqNotExclAndSized ), predicate );
 
     // Extracting the wrappers
     std::vector< WrapperBase const * > wrappers;
@@ -293,7 +290,7 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
     {
       return &this->getWrapperBase( wrapperName );
     };
-    std::transform( reqAndAvailNotExclAndSized.cbegin(), reqAndAvailNotExclAndSized.cend(), std::back_inserter( wrappers ), transformer );
+    std::transform( reqNotExclAndSized.cbegin(), reqNotExclAndSized.cend(), std::back_inserter( wrappers ), transformer );
 
     // Additional refactoring should be done by using `Group::packImpl` that duplicates the following pack code.
     packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( "Wrappers" ) );
