@@ -2,7 +2,7 @@
 #include <Python.h>
 
 // Source includes
-#include "fileIO/timeHistory/TimeHistoryCollection.hpp"
+#include "fileIO/timeHistory/HistoryCollection.hpp"
 
 #include "PyHistoryCollectionType.hpp"
 #include "dataRepository/python/PyGroupType.hpp"
@@ -26,7 +26,7 @@ struct PyHistoryCollection
   PyObject_HEAD
 
   static constexpr char const * docString =
-    "A Python interface to TimeHistoryCollection.";
+    "A Python interface to HistoryCollection.";
 
   geosx::HistoryCollection * group;
 };
@@ -96,7 +96,7 @@ static PyObject * collect( PyHistoryCollection * self, PyObject * args )
 }
 
 static PyMethodDef PyHistoryCollection_methods[] = {
-  { "collect", (PyCFunction) collect, METH_VARARGS, "wrapper to routine TimeHistoryCollection::execute" },
+  { "collect", (PyCFunction) collect, METH_VARARGS, "wrapper to routine HistoryCollection::execute" },
   { nullptr, nullptr, 0, nullptr }      /* Sentinel */
 };
 
