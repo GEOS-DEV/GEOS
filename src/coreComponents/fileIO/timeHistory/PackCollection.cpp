@@ -245,9 +245,8 @@ void PackCollection::buildMetaDataCollectors()
       coordField = ElementSubRegionBase::viewKeyStruct::elementCenterString();
     }
 
-    // "coordinates" is a dummy name that should not appear in the results.
-    // Consider changing it, but it requires rebaseline.
-    string metaName( "coordinates" );
+    // "metaCollector" is a dummy name that should not appear in the results.
+    string metaName( "metaCollector" );
     std::unique_ptr< PackCollection > collector = std::make_unique< PackCollection >( metaName, this );
     collector->m_objectPath = m_objectPath;
     collector->m_fieldName = coordField ? string( coordField ) : m_fieldName;
