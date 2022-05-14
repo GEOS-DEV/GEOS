@@ -59,7 +59,7 @@ EXTRINSIC_MESH_DATA_TRAIT( density_n,
                            array2d< real64 >,
                            0,
                            NOPLOT,
-                           NO_WRITE,
+                           WRITE_AND_READ,
                            "Density at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( viscosity,

@@ -174,19 +174,15 @@ public:
 
   // *** SingleFluid-specific interface
 
-  //arrayView2d< real64 > density() { return m_density; }
   arrayView2d< real64 const > density() const { return m_density; }
 
-  //arrayView2d< real64 > dDensity_dPressure() { return m_dDensity_dPressure; }
   arrayView2d< real64 const > dDensity_dPressure() const { return m_dDensity_dPressure; }
 
   arrayView2d< real64 const > initialDensity() const { return m_initialDensity; }
   arrayView2d< real64 const > density_n() const { return m_density_n; }
 
-  //arrayView2d< real64 > viscosity() { return m_viscosity; }
   arrayView2d< real64 const > viscosity() const { return m_viscosity; }
 
-  //arrayView2d< real64 > dViscosity_dPressure() { return m_dViscosity_dPressure; }
   arrayView2d< real64 const > dViscosity_dPressure() const { return m_dViscosity_dPressure; }
 
   virtual real64 defaultDensity() const = 0;
