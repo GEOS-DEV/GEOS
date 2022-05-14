@@ -1,4 +1,5 @@
-#include "fileIO/timeHistory/TimeHistHDF.hpp"
+#include "fileIO/timeHistory/HDFHistoryIO.hpp"
+#include "common/TimingMacros.hpp"
 #include "mainInterface/initialization.hpp"
 
 #include <gtest/gtest.h>
@@ -13,7 +14,7 @@ TEST( testHDFIO_parallel, SingleValueHistory )
 
   int rank = MpiWrapper::commRank( );
 
-  HDFHistIO io( filename, spec );
+  HDFHistoryIO io( filename, spec );
   io.init( true );
   real64 val = 0.0;
   for( localIndex tidx = 0; tidx < 100; ++tidx )
@@ -36,7 +37,7 @@ TEST( testHDFIO_parallel, DynamicHistory )
 
   int rnk = MpiWrapper::commRank( );
 
-  HDFHistIO io( filename, singleItemSpec );
+  HDFHistoryIO io( filename, singleItemSpec );
   io.init( true );
   real64 val = 0.0;
   for( localIndex tidx = 0; tidx < 4; ++tidx )
