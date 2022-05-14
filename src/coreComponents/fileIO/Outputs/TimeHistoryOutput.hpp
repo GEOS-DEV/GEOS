@@ -20,9 +20,9 @@
 #define GEOSX_FILEIO_OUTPUTS_HISTORYOUTPUT_HPP_
 
 #include "OutputBase.hpp"
-#include "fileIO/timeHistory/TimeHistoryCollection.hpp"
-#include "fileIO/timeHistory/HistoryIO.hpp"
-#include "fileIO/timeHistory/TimeHistHDF.hpp"
+#include "fileIO/timeHistory/HistoryCollection.hpp"
+#include "fileIO/timeHistory/BufferedHistoryIO.hpp"
+#include "fileIO/timeHistory/HDFHistoryIO.hpp"
 
 #include "LvArray/src/Array.hpp" // just for collector
 
@@ -120,7 +120,7 @@ private:
    * @param group The ProblemManager cast to a Group
    * @param collector The HistoryCollector to intialize
    */
-  void initCollectorParallel( DomainPartition & domain, HistoryCollection & collector );
+  void initCollectorParallel( DomainPartition const & domain, HistoryCollection & collector );
 
   /// The paths of the collectors to collect history from.
   string_array m_collectorPaths;
