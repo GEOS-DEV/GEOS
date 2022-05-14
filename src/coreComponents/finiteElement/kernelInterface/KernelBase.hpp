@@ -500,6 +500,32 @@ public:
   }
 };
 
+template < typename Basis, typename MeshBasis, typename Dofs, typename MeshDofs>
+void laplaceKernel(Basis const & basis, MeshBasis const & mesh_basis, Dofs const &u, MeshDofs const x, Dofs & v)
+{
+  for ( size_t k = BlockIdx.x ; k < num_elems; k+=BlockDim.x )
+  {
+    auto local_dofs = get_local_elem_dofs(k, u);
+    auto mesh_local_dofs = get_local_elem_dofs(k, x);
+    auto grad_u_q = interpolateGradientAtQuadraturePoints( basis, u );
+    auto J = interpolateGradientAtQuadraturePoints( mesh_basis, x );
+    auto q_function = [](auto weight, auto J, auto grad_u_q )
+    {
+      auto inv_J = inverse( J );
+      return weight * det( inv_J ) * inv_J * transpose( inv_J ) * u_q * square ( grad_u_q );
+    };
+    auto d = apply_q_function(q_function, basis.weight, J, grad_u_q);
+    // serial apply_q_function code:
+    // for (size_t q = 0; q < num_q_pts; q++)
+    // {
+    //   auto inv_J = inverse( J(q) );
+    //   d(q) = basis.weight(q) * det( inv_J ) * inv_J * transpose( inv_J ) * grad_u_q( q );
+    // }
+    auto local_v = applyGradientTestFunctions(basis, d);
+    gather(v, k, local_v);
+  }
+}
+
 template < size_t Order >
 class LagrangeBasis;
 
