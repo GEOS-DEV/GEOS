@@ -246,7 +246,6 @@ void PackCollection::buildMetaDataCollectors()
     }
 
     // "metaCollector" is a dummy name that should not appear in the results.
-    // Consider changing it, but it requires rebaseline.
     string metaName( "metaCollector" );
     std::unique_ptr< PackCollection > collector = std::make_unique< PackCollection >( metaName, this );
     collector->m_objectPath = m_objectPath;
