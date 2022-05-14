@@ -115,12 +115,6 @@ public:
   localIndex unpackSets( buffer_unit_type const * & buffer );
 
   /**
-   * @brief Gets the wrapper names that should not be packed.
-   * @return The set of names.
-   */
-  std::set< string > getPackingExclusionList() const;
-
-  /**
    * @brief Registers wrappers that will be excluded from packing.
    * @param wrapperNames The wrapper names.
    */
