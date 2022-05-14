@@ -437,29 +437,26 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
       arrayView1d< globalIndex const > const & elemDofNumber = subRegion.template getReference< array1d< globalIndex > >( elemDofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-      arrayView1d< real64 const > const & dens_n = subRegion.template getExtrinsicData< extrinsicMeshData::flow::density_n >();
 
-      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
-      CoupledSolidBase const & solidModel = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
+      SingleFluidBase const & fluidModel =
+        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+      arrayView2d< real64 const > const & density_n = fluidModel.density_n();
 
-      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [=, &localResidualNorm] ( auto & castedSolidModel )
-      {
-        arrayView2d< real64 const > const & porosity_n = castedSolidModel.getPorosity_n();
+      CoupledSolidBase const & solidModel =
+        SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+      arrayView2d< real64 const > const & porosity_n = solidModel.getPorosity_n();
 
-        singlePhaseBaseKernels::
-          ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
-                                                                rankOffset,
-                                                                elemDofNumber,
-                                                                elemGhostRank,
-                                                                volume,
-                                                                dens_n,
-                                                                porosity_n,
-                                                                localResidualNorm );
-      } );
+      singlePhaseBaseKernels::
+        ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
+                                                              rankOffset,
+                                                              elemDofNumber,
+                                                              elemGhostRank,
+                                                              volume,
+                                                              density_n,
+                                                              porosity_n,
+                                                              localResidualNorm );
 
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      SingleFluidBase const & fluid = subRegion.template getConstitutiveModel< SingleFluidBase >( fluidName );
-      defaultViscosity += fluid.defaultViscosity();
+      defaultViscosity += fluidModel.defaultViscosity();
       subRegionCounter++;
     } );
 

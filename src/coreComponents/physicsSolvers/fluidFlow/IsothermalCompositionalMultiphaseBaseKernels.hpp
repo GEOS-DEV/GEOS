@@ -552,7 +552,7 @@ public:
     m_elemGhostRank( subRegion.ghostRank() ),
     m_volume( subRegion.getElementVolume() ),
     m_porosity_n( solid.getPorosity_n() ),
-    m_porosityNew( solid.getPorosity() ),
+    m_porosity( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
     m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseVolFrac_n( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction_n >() ),
@@ -580,7 +580,7 @@ public:
     // Pore volume information (used by both accumulation and volume balance)
 
     /// Pore volume at time n+1
-    real64 poreVolumeNew = 0.0;
+    real64 poreVolume = 0.0;
 
     /// Pore volume at the previous converged time step
     real64 poreVolume_n = 0.0;
@@ -624,7 +624,7 @@ public:
               StackVariables & stack ) const
   {
     // initialize the pore volume
-    stack.poreVolumeNew = m_volume[ei] * m_porosityNew[ei][0];
+    stack.poreVolume = m_volume[ei] * m_porosity[ei][0];
     stack.poreVolume_n = m_volume[ei] * m_porosity_n[ei][0];
     stack.dPoreVolume_dPres = m_volume[ei] * m_dPoro_dPres[ei][0];
 
@@ -674,12 +674,12 @@ public:
     // sum contributions to component accumulation from each phase
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
-      real64 const phaseAmountNew = stack.poreVolumeNew * phaseVolFrac[ip] * phaseDens[ip];
+      real64 const phaseAmount = stack.poreVolume * phaseVolFrac[ip] * phaseDens[ip];
       real64 const phaseAmount_n = stack.poreVolume_n * phaseVolFrac_n[ip] * phaseDens_n[ip];
 
       real64 const dPhaseAmount_dP = stack.dPoreVolume_dPres * phaseVolFrac[ip] * phaseDens[ip]
-                                     + stack.poreVolumeNew * ( dPhaseVolFrac_dPres[ip] * phaseDens[ip]
-                                                               + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] );
+                                     + stack.poreVolume * ( dPhaseVolFrac_dPres[ip] * phaseDens[ip]
+                                                            + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] );
 
       // assemble density dependence
       applyChainRule( numComp, dCompFrac_dCompDens, dPhaseDens[ip], dPhaseAmount_dC, Deriv::dC );
@@ -687,20 +687,20 @@ public:
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
                               + phaseDens[ip] * dPhaseVolFrac_dCompDens[ip][jc];
-        dPhaseAmount_dC[jc] *= stack.poreVolumeNew;
+        dPhaseAmount_dC[jc] *= stack.poreVolume;
       }
 
       // ic - index of component whose conservation equation is assembled
       // (i.e. row number in local matrix)
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        real64 const phaseCompAmountNew = phaseAmountNew * phaseCompFrac[ip][ic];
+        real64 const phaseCompAmount = phaseAmount * phaseCompFrac[ip][ic];
         real64 const phaseCompAmount_n = phaseAmount_n * phaseCompFrac_n[ip][ic];
 
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
-                                           + phaseAmountNew * dPhaseCompFrac[ip][ic][Deriv::dP];
+                                           + phaseAmount * dPhaseCompFrac[ip][ic][Deriv::dP];
 
-        stack.localResidual[ic] += phaseCompAmountNew - phaseCompAmount_n;
+        stack.localResidual[ic] += phaseCompAmount - phaseCompAmount_n;
         stack.localJacobian[ic][0] += dPhaseCompAmount_dP;
 
         // jc - index of component w.r.t. whose compositional var the derivative is being taken
@@ -710,7 +710,7 @@ public:
         applyChainRule( numComp, dCompFrac_dCompDens, dPhaseCompFrac[ip][ic], dPhaseCompFrac_dC, Deriv::dC );
         for( integer jc = 0; jc < numComp; ++jc )
         {
-          real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmountNew
+          real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmount
                                              + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
           stack.localJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
         }
@@ -719,7 +719,7 @@ public:
 
       // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
       // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
-      phaseAmountKernelOp( ip, phaseAmountNew, phaseAmount_n, dPhaseAmount_dP, dPhaseAmount_dC );
+      phaseAmountKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dP, dPhaseAmount_dC );
 
     }
   }
@@ -756,14 +756,14 @@ public:
     }
 
     // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
-    // possible use: assemble the derivatives wrt temperature, and use oneMinusPhaseVolFracSum if poreVolumeNew depends on temperature
+    // possible use: assemble the derivatives wrt temperature, and use oneMinusPhaseVolFracSum if poreVolume depends on temperature
     phaseVolFractionSumKernelOp( oneMinusPhaseVolFracSum );
 
     // scale saturation-based volume balance by pore volume (for better scaling w.r.t. other equations)
-    stack.localResidual[numComp] = stack.poreVolumeNew * oneMinusPhaseVolFracSum;
+    stack.localResidual[numComp] = stack.poreVolume * oneMinusPhaseVolFracSum;
     for( integer idof = 0; idof < numDof; ++idof )
     {
-      stack.localJacobian[numComp][idof] *= stack.poreVolumeNew;
+      stack.localJacobian[numComp][idof] *= stack.poreVolume;
     }
     stack.localJacobian[numComp][0] += stack.dPoreVolume_dPres * oneMinusPhaseVolFracSum;
   }
@@ -847,7 +847,7 @@ protected:
 
   /// Views on the porosity
   arrayView2d< real64 const > const m_porosity_n;
-  arrayView2d< real64 const > const m_porosityNew;
+  arrayView2d< real64 const > const m_porosity;
   arrayView2d< real64 const > const m_dPoro_dPres;
 
   /// Views on the derivatives of comp fractions wrt component density

@@ -118,7 +118,7 @@ public:
     m_wDofNumber( jumpDofNumber ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_fluidDensity( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
-    m_fluidDensity_n( embeddedSurfSubRegion.template getExtrinsicData< extrinsicMeshData::flow::density_n >() ),
+    m_fluidDensity_n( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density_n() ),
     m_dFluidDensity_dPressure( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
                                                                                                                        fluidModelKey ) ).dDensity_dPressure() ),
     m_matrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
@@ -435,7 +435,7 @@ public:
     // Mass balance accumulation
     real64 const newVolume = m_elementVolume( embSurfIndex ) + m_deltaVolume( embSurfIndex );
     real64 const newMass =  m_fluidDensity( embSurfIndex, 0 ) * newVolume;
-    real64 const oldMass =  m_fluidDensity_n( embSurfIndex ) * m_elementVolume( embSurfIndex );
+    real64 const oldMass =  m_fluidDensity_n( embSurfIndex, 0 ) * m_elementVolume( embSurfIndex );
     real64 const localFlowResidual = ( newMass - oldMass );
     real64 const localFlowJumpJacobian = m_fluidDensity( embSurfIndex, 0 ) * m_surfaceArea[ embSurfIndex ];
     real64 const localFlowFlowJacobian = m_dFluidDensity_dPressure( embSurfIndex, 0 ) * newVolume;
@@ -533,7 +533,7 @@ protected:
   /// The rank global densities
   arrayView2d< real64 const > const m_solidDensity;
   arrayView2d< real64 const > const m_fluidDensity;
-  arrayView1d< real64 const > const m_fluidDensity_n;
+  arrayView2d< real64 const > const m_fluidDensity_n;
   arrayView2d< real64 const > const m_dFluidDensity_dPressure;
 
   /// The rank-global fluid pressure array.

@@ -164,7 +164,7 @@ public:
   using Base::m_elemGhostRank;
   using Base::m_volume;
   using Base::m_porosity_n;
-  using Base::m_porosityNew;
+  using Base::m_porosity;
   using Base::m_dPoro_dPres;
   using Base::m_dCompFrac_dCompDens;
   using Base::m_phaseVolFrac_n;
@@ -218,7 +218,7 @@ public:
       : Base::StackVariables()
     {}
 
-    using Base::StackVariables::poreVolumeNew;
+    using Base::StackVariables::poreVolume;
     using Base::StackVariables::poreVolume_n;
     using Base::StackVariables::dPoreVolume_dPres;
     using Base::StackVariables::localRow;
@@ -229,7 +229,7 @@ public:
     // Solid energy
 
     /// Solid energy at time n+1
-    real64 solidEnergyNew = 0.0;
+    real64 solidEnergy = 0.0;
 
     /// Solid energy at the previous converged time step
     real64 solidEnergy_n = 0.0;
@@ -254,15 +254,15 @@ public:
     Base::setup( ei, stack );
 
     // initialize the solid volume
-    real64 const solidVolumeNew = m_volume[ei] * ( 1.0 - m_porosityNew[ei][0] );
+    real64 const solidVolume = m_volume[ei] * ( 1.0 - m_porosity[ei][0] );
     real64 const solidVolume_n = m_volume[ei] * ( 1.0 - m_porosity_n[ei][0] );
     real64 const dSolidVolume_dPres = -m_volume[ei] * m_dPoro_dPres[ei][0];
 
     // initialize the solid internal energy
-    stack.solidEnergyNew = solidVolumeNew * m_rockInternalEnergy[ei][0];
+    stack.solidEnergy = solidVolume * m_rockInternalEnergy[ei][0];
     stack.solidEnergy_n = solidVolume_n * m_rockInternalEnergy_n[ei][0];
     stack.dSolidEnergy_dPres = dSolidVolume_dPres * m_rockInternalEnergy[ei][0];
-    stack.dSolidEnergy_dTemp = solidVolumeNew * m_dRockInternalEnergy_dTemp[ei][0];
+    stack.dSolidEnergy_dTemp = solidVolume * m_dRockInternalEnergy_dTemp[ei][0];
   }
 
   /**
@@ -278,7 +278,7 @@ public:
     using Deriv = multifluid::DerivativeOffset;
 
     Base::computeAccumulation( ei, stack, [&] ( integer const ip,
-                                                real64 const & phaseAmountNew,
+                                                real64 const & phaseAmount,
                                                 real64 const & phaseAmount_n,
                                                 real64 const & dPhaseAmount_dP,
                                                 real64 const (&dPhaseAmount_dC)[numComp] )
@@ -304,25 +304,25 @@ public:
 
       // Step 1: assemble the derivatives of the component mass balance equations with respect to temperature
 
-      real64 const dPhaseAmount_dT = stack.poreVolumeNew
+      real64 const dPhaseAmount_dT = stack.poreVolume
                                      * (dPhaseVolFrac_dTemp[ip] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
       for( integer ic = 0; ic < numComp; ++ic )
       {
         stack.localJacobian[ic][numDof-1] += dPhaseAmount_dT * phaseCompFrac[ip][ic]
-                                             + phaseAmountNew * dPhaseCompFrac[ip][ic][Deriv::dT];
+                                             + phaseAmount * dPhaseCompFrac[ip][ic][Deriv::dT];
       }
 
       // Step 2: assemble the phase-dependent part of the accumulation term of the energy equation
 
-      real64 const phaseEnergyNew = phaseAmountNew * phaseInternalEnergy[ip];
+      real64 const phaseEnergy = phaseAmount * phaseInternalEnergy[ip];
       real64 const phaseEnergy_n = phaseAmount_n * phaseInternalEnergy_n[ip];
       real64 const dPhaseEnergy_dP = dPhaseAmount_dP * phaseInternalEnergy[ip]
-                                     + phaseAmountNew * dPhaseInternalEnergy[ip][Deriv::dP];
+                                     + phaseAmount * dPhaseInternalEnergy[ip][Deriv::dP];
       real64 const dPhaseEnergy_dT = dPhaseAmount_dT * phaseInternalEnergy[ip]
-                                     + phaseAmountNew * dPhaseInternalEnergy[ip][Deriv::dT];
+                                     + phaseAmount * dPhaseInternalEnergy[ip][Deriv::dT];
 
       // local accumulation
-      stack.localResidual[numEqn-1] += phaseEnergyNew - phaseEnergy_n;
+      stack.localResidual[numEqn-1] += phaseEnergy - phaseEnergy_n;
 
       // derivatives w.r.t. pressure and temperature
       stack.localJacobian[numEqn-1][0]        += dPhaseEnergy_dP;
@@ -333,14 +333,14 @@ public:
       for( integer jc = 0; jc < numComp; ++jc )
       {
         stack.localJacobian[numEqn-1][jc + 1] += phaseInternalEnergy[ip] * dPhaseAmount_dC[jc]
-                                                 + dPhaseInternalEnergy_dC[jc] * phaseAmountNew;
+                                                 + dPhaseInternalEnergy_dC[jc] * phaseAmount;
       }
     } );
 
     // Step 3: assemble the solid part of the accumulation term
 
     // local accumulation and derivatives w.r.t. pressure and temperature
-    stack.localResidual[numEqn-1] += stack.solidEnergyNew - stack.solidEnergy_n;
+    stack.localResidual[numEqn-1] += stack.solidEnergy - stack.solidEnergy_n;
     stack.localJacobian[numEqn-1][0] += stack.dSolidEnergy_dPres;
     stack.localJacobian[numEqn-1][numDof-1] += stack.dSolidEnergy_dTemp;
 
