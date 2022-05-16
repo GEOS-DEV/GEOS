@@ -30,9 +30,16 @@ namespace constitutive
 
 CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name, Group * const parent ):
   SingleFluidBase( name, parent ),
-  m_densityModelType( ExponentApproximationType::Linear ),
-  m_viscosityModelType( ExponentApproximationType::Linear )
+  m_isThermal( 0 ), 
+  m_densityPressureModelType( ExponentApproximationType::Full ), 
+  m_densityTemperatureModelType( ExponentApproximationType::Full ), 
+  m_viscosityModelType( ExponentApproximationType::Full ), 
+  m_internalEnergyModelType( ExponentApproximationType::Linear )
 {
+  registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to determine if the fluid is nonisothermal" );
 
   registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -47,15 +54,30 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Fluid compressibility" );
 
+  registerWrapper( viewKeyStruct::thermalExpansionCoeffString(), &m_thermalExpansionCoeff ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Fluid thermal expansion coefficient" );
+
   registerWrapper( viewKeyStruct::viscosibilityString(), &m_viscosibility ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Fluid viscosity exponential coefficient" );
 
+  registerWrapper( viewKeyStruct::volumetricHeatCapacityString(), &m_volumetricHeatCapacity ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Fluid volumetric heat capacity" );
+
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Reference pressure" );
+
+  registerWrapper( viewKeyStruct::referenceTemperatureString(), &m_referenceTemperature ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Reference temperature" );
 
   registerWrapper( viewKeyStruct::referenceDensityString(), &m_referenceDensity ).
     setApplyDefaultValue( 1000.0 ).
@@ -67,18 +89,39 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Reference fluid viscosity" );
 
-  registerWrapper( viewKeyStruct::densityModelTypeString(), &m_densityModelType ).
-    setApplyDefaultValue( m_densityModelType ).
+  registerWrapper( viewKeyStruct::referenceInternalEnergyString(), &m_referenceInternalEnergy ).
+    setApplyDefaultValue( 0.001 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Type of density model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
+    setDescription( "Reference fluid internal energy" );
+
+  registerWrapper( viewKeyStruct::densityPressureModelTypeString(), &m_densityPressureModelType ).
+    setApplyDefaultValue( m_densityPressureModelType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Type of density model in terms of pressure . Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::densityTemperatureModelTypeString(), &m_densityTemperatureModelType ).
+    setApplyDefaultValue( m_densityTemperatureModelType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Type of density model in terms of temperature . Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::viscosityModelTypeString(), &m_viscosityModelType ).
     setApplyDefaultValue( m_viscosityModelType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Type of viscosity model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::internalEnergyModelTypeString(), &m_internalEnergyModelType ).
+    setApplyDefaultValue( m_internalEnergyModelType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Type of internal energy model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
+
 }
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
+
+bool CompressibleSinglePhaseFluid::isThermal() const
+{
+  return m_isThermal; 
+}
 
 void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Group & parent,
                                                              localIndex const numConstitutivePointsPerParentIndex )
@@ -90,6 +133,11 @@ void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Gro
 
   m_density.setValues< serialPolicy >( m_referenceDensity );
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
+
+  if ( m_isThermal )
+  {
+    m_internalEnergy.setValues< serialPolicy >( m_referenceInternalEnergy ); 
+  }
 }
 
 void CompressibleSinglePhaseFluid::postProcessInput()
@@ -105,6 +153,12 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   checkNonnegative( m_compressibility, viewKeyStruct::compressibilityString() );
   checkNonnegative( m_viscosibility, viewKeyStruct::viscosibilityString() );
 
+  if ( m_isThermal )
+  {
+    checkNonnegative( m_thermalExpansionCoeff, viewKeyStruct::thermalExpansionCoeffString() ); 
+    checkNonnegative( m_volumetricHeatCapacity, viewKeyStruct::volumetricHeatCapacityString() ); 
+  }
+
   auto const checkPositive = [&]( real64 const value, auto const & attribute )
   {
     GEOSX_THROW_IF_LE_MSG( value, 0.0,
@@ -114,31 +168,38 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   checkPositive( m_referenceDensity, viewKeyStruct::referenceDensityString() );
   checkPositive( m_referenceViscosity, viewKeyStruct::referenceViscosityString() );
 
-  // Due to the way update wrapper is currently implemented, we can only support one model type
-  auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
+  if ( m_isThermal )
   {
-    GEOSX_THROW_IF_NE_MSG( value, ExponentApproximationType::Linear,
-                           GEOSX_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
-                           InputError );
-  };
-  checkModelType( m_densityModelType, viewKeyStruct::densityModelTypeString() );
-  checkModelType( m_viscosityModelType, viewKeyStruct::viscosityModelTypeString() );
+    checkNonnegative( m_referenceInternalEnergy, viewKeyStruct::referenceInternalEnergyString() ); 
+  }
 
-  // Set default values for derivatives (cannot be done in base class)
-  // TODO: reconsider the necessity of this
+  // // Due to the way update wrapper is currently implemented, we can only support one model type
+  // auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
+  // {
+  //   GEOSX_THROW_IF_NE_MSG( value, ExponentApproximationType::Linear,
+  //                          GEOSX_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
+  //                          InputError );
+  // };
+  // checkModelType( m_densityModelType, viewKeyStruct::densityModelTypeString() );
+  // checkModelType( m_viscosityModelType, viewKeyStruct::viscosityModelTypeString() );
 
-  real64 dRho_dP;
-  real64 dVisc_dP;
-  createKernelWrapper().compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
-  getExtrinsicData< extrinsicMeshData::singlefluid::dDensity_dPressure >().setDefaultValue( dRho_dP );
-  getExtrinsicData< extrinsicMeshData::singlefluid::dViscosity_dPressure >().setDefaultValue( dVisc_dP );
+  // // Set default values for derivatives (cannot be done in base class)
+  // // TODO: reconsider the necessity of this
+
+  // real64 dRho_dP;
+  // real64 dVisc_dP;
+  // createKernelWrapper().compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
+  // getExtrinsicData< extrinsicMeshData::singlefluid::dDensity_dPressure >().setDefaultValue( dRho_dP );
+  // getExtrinsicData< extrinsicMeshData::singlefluid::dViscosity_dPressure >().setDefaultValue( dVisc_dP );
 }
 
 CompressibleSinglePhaseFluid::KernelWrapper
 CompressibleSinglePhaseFluid::createKernelWrapper()
 {
-  return KernelWrapper( KernelWrapper::DensRelationType( m_referencePressure, m_referenceDensity, m_compressibility ),
-                        KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ),
+  return KernelWrapper( KernelWrapper::DensPresRelationType( m_referencePressure, m_referenceDensity, m_compressibility ),
+                        KernelWrapper::DensTempRelationType( m_referenceTemperature, 1.0, m_thermalExpansionCoeff ),
+                        KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ), 
+                        KernelWrapper::IntEnergyRelationType( m_referenceTemperature, m_referenceInternalEnergy, m_volumetricHeatCapacity/m_referenceInternalEnergy ), 
                         m_density,
                         m_dDensity_dPressure,
                         m_dDensity_dTemperature, 
@@ -147,7 +208,8 @@ CompressibleSinglePhaseFluid::createKernelWrapper()
                         m_dViscosity_dTemperature, 
                         m_internalEnergy, 
                         m_dInternalEnergy_dPressure,
-                        m_dInternalEnergy_dTemperature );
+                        m_dInternalEnergy_dTemperature, 
+                        m_isThermal );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, string const &, Group * const )

@@ -227,6 +227,14 @@ public:
   SingleFluidBase( string const & name, Group * const parent );
 
   /**
+   * @brief Get the thermal flag.
+   * @return boolean value indicating whether the model can be used to assemble the energy balance equation or not
+   * @detail if isThermal is true, the constitutive model compute the enthalpy and internal energy of the phase.
+   *         This can be used to check the compatibility of the constitutive model with the solver
+   */
+  virtual bool isThermal() const { return false; }
+
+  /**
    * @brief Save the current density into the initial density (needed for single-phase poromechanics)
    */
   void initializeState() const;
