@@ -1,37 +1,23 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ElementTree
+import HydrofractureSolutions
 
-class kgd:
-    def __init__(self, E, nu, KIc, mu, Q0, t):
-        Ep = E / ( 1.0 - nu**2.0 )
-
-        self.t  = t
-        self.Q0 = Q0
-        self.mu = mu
-        self.Ep = Ep
-        self.X  = 256.0 / ( 3.0 * np.pi**2.0 ) * ( KIc**4.0 ) / ( mu * Q0 * Ep**3.0 )
-
-
-    def analyticalSolution(self):
-        t  = self.t
-        mu = self.mu
-        Q0 = self.Q0
-        Ep = self.Ep
-        X  = self.X
-
-        halfLength = 0.9324 * X**( -1.0/6.0 ) * ( ( Ep * Q0**3.0 ) / ( 12.0 * mu ) )**( 1.0/6.0 ) * t**( 2.0/3.0 )
-
-        inletAperture = np.sqrt( 0.5 * X**( 0.5 ) * ( 12.0 * mu * Q0 / Ep )**( 0.5 ) * halfLength )
-
-        inletPressure = 0.125 * X**( 0.5 ) * (12.0 * mu * Q0 * Ep)**( 0.5 ) / inletAperture
-
-        return [ halfLength, inletAperture , inletPressure ]
 
 def getParametersFromXML( xmlFilePath ):
     tree = ElementTree.parse(xmlFilePath + "_benchmark.xml")
 
     maxTime = float(tree.find('Events').get('maxTime'))
+
+    param = tree.findall('Geometry/Box')
+    found_source = False
+    for elem in param:
+        if elem.get("name") == "source":
+            source = elem.get("xMax")
+            source = [float(i) for i in source[1:-1].split(",")]
+            x_source = round(source[0])
+            found_source = True
+        if found_source: break
 
     tree = ElementTree.parse(xmlFilePath + "_base.xml")
 
@@ -48,19 +34,22 @@ def getParametersFromXML( xmlFilePath ):
 
     injectionRate = -2.0 * float( tree.find('FieldSpecifications/SourceFlux').get('scale') ) / fluidDensity
 
-    return [ maxTime, youngModulus, poissonRatio, toughness, viscosity, injectionRate ]
+    return [ maxTime, youngModulus, poissonRatio, toughness, viscosity, injectionRate, x_source ]
 
 
 def main():
     xmlFilePathPrefix = "../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated"
 
-    tMax, E, nu, KIc, mu, Q0 = getParametersFromXML( xmlFilePathPrefix )
+    tMax, E, nu, KIC, mu, Q0, xSource = getParametersFromXML( xmlFilePathPrefix )
+    Ep = E / ( 1.0 - nu**2.0 )
 
-    t    = np.arange(0.01*tMax,tMax,0.01*tMax)
-
-    model = kgd( E, nu, KIc, mu, Q0, t )
-    halfLength, inletAperture , inletPressure = model.analyticalSolution()
-
+    t = np.arange(0.01*tMax,tMax,0.01*tMax)
+    radTimes = np.array([tMax])
+    hfsolns = HydrofractureSolutions.KGDSolutions()
+    kgdFrac = hfsolns.Solutions( mu, Ep, Q0, KIC, t, radTimes, xSource )
+    inletPressure = kgdFrac[5]
+    halfLength = kgdFrac[6]
+    inletAperture = kgdFrac[7]
 
     # GEOSX results
     t_geosx, halfLength_geosx = [], []
@@ -87,19 +76,19 @@ def main():
 
     plt.subplot(221)
     plt.plot(t_geosx, halfLength_geosx, 'ko', label='GEOSX result')
-    plt.plot(t, halfLength,  'k', linewidth=2, label='Analytic')
+    plt.plot(t, halfLength,  'k', linewidth=2, label='Analytical solution')
     plt.ylabel('Fracture half-length (m)')
     plt.xlabel('Injection time (s)')
 
     plt.subplot(222)
     plt.plot(t_geosx, inletAperture_geosx, 'ko', label='GEOSX result')
-    plt.plot(t, inletAperture * 1e3,  'k', linewidth=2, label='Analytic')
+    plt.plot(t, inletAperture * 1e3,  'k', linewidth=2, label='Analytical solution')
     plt.ylabel('Inlet aperture (mm)')
     plt.xlabel('Injection time (s)')
 
     plt.subplot(223)
     plt.plot(t_geosx, inletPressure_geosx, 'ko', label='GEOSX result')
-    plt.plot(t, inletPressure / 1e6,  'k', linewidth=2, label='Analytic')
+    plt.plot(t, inletPressure / 1e6,  'k', linewidth=2, label='Analytical solution')
     plt.ylabel('Inlet fluid pressure (MPa)')
     plt.xlabel('Injection time (s)')
 

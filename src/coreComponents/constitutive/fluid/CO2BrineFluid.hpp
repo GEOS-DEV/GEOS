@@ -24,9 +24,7 @@
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/PhaseModel.hpp"
 #include "constitutive/fluid/PVTFunctions/BrineEnthalpy.hpp"
-#include "constitutive/fluid/PVTFunctions/BrineInternalEnergy.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Enthalpy.hpp"
-#include "constitutive/fluid/PVTFunctions/CO2InternalEnergy.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
 #include "constitutive/fluid/PVTFunctions/EzrokhiBrineDensity.hpp"
 #include "constitutive/fluid/PVTFunctions/EzrokhiBrineViscosity.hpp"
@@ -116,6 +114,7 @@ private:
                    FLASH const & flash,
                    arrayView1d< real64 const > componentMolarWeight,
                    bool const useMass,
+                   bool const isThermal,
                    PhaseProp::ViewType phaseFraction,
                    PhaseProp::ViewType phaseDensity,
                    PhaseProp::ViewType phaseMassDensity,
@@ -131,6 +130,8 @@ private:
     /// Index of the gas phase
     integer m_p2Index;
 
+    /// Flag to specify whether the model is thermal or not
+    bool m_isThermal;
 
     /// Brine constitutive kernel wrappers
     typename PHASE1::KernelWrapper m_phase1;
@@ -151,8 +152,7 @@ private:
   {
     DENSITY,         ///< the keyword for the density model
     VISCOSITY,       ///< the keyword for the viscosity model
-    ENTHALPY,        ///< the keyword for the enthalpy model
-    INTERNALENERGY,  ///< the keyword for the internal energy model
+    ENTHALPY         ///< the keyword for the enthalpy model
   };
 
   /**
@@ -201,21 +201,21 @@ private:
 
 // these aliases are useful in constitutive dispatch
 using CO2BrinePhillipsFluid =
-  CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
-                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
+  CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction >,
+                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction >,
                  PVTProps::CO2Solubility >;
 using CO2BrinePhillipsThermalFluid =
-  CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy, PVTProps::BrineInternalEnergy >,
-                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy, PVTProps::CO2InternalEnergy >,
+  CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy >,
+                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy >,
                  PVTProps::CO2Solubility >;
 
 using CO2BrineEzrokhiFluid =
-  CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
-                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
+  CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::NoOpPVTFunction >,
+                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction >,
                  PVTProps::CO2Solubility >;
 using CO2BrineEzrokhiThermalFluid =
-  CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::BrineEnthalpy, PVTProps::BrineInternalEnergy >,
-                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy, PVTProps::CO2InternalEnergy >,
+  CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::BrineEnthalpy >,
+                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy >,
                  PVTProps::CO2Solubility >;
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
@@ -289,31 +289,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                               phaseViscosity[ip2],
                               m_useMass );
 
-  // 4. Compute enthalpy and internal energy
-
-  m_phase1.enthalpy.compute( pressure,
-                             temperatureInCelsius,
-                             phaseCompFraction[ip1].toSliceConst(),
-                             phaseEnthalpy[ip1],
-                             m_useMass );
-  m_phase1.internalEnergy.compute( pressure,
-                                   temperatureInCelsius,
-                                   phaseCompFraction[ip1].toSliceConst(),
-                                   phaseInternalEnergy[ip1],
-                                   m_useMass );
-
-  m_phase2.enthalpy.compute( pressure,
-                             temperatureInCelsius,
-                             phaseCompFraction[ip2].toSliceConst(),
-                             phaseEnthalpy[ip2],
-                             m_useMass );
-  m_phase2.internalEnergy.compute( pressure,
-                                   temperatureInCelsius,
-                                   phaseCompFraction[ip2].toSliceConst(),
-                                   phaseInternalEnergy[ip2],
-                                   m_useMass );
-
-  // 5. Depending on the m_useMass flag, convert to mass variables or simply compute mass density
+  // 4. Depending on the m_useMass flag, convert to mass variables or simply compute mass density
 
   // TODO: for now the treatment of molar/mass density requires too many interpolations in the tables, it needs to be fixed
   //       we should modify the PVT functions so that they can return phaseMassDens, phaseDens, and phaseMW in one call
@@ -361,6 +337,30 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                               phaseCompFraction[ip2].toSliceConst(),
                               phaseMassDensity[ip2],
                               true );
+  }
+
+  // 5. Compute enthalpy and internal energy
+
+  if( m_isThermal )
+  {
+
+    m_phase1.enthalpy.compute( pressure,
+                               temperatureInCelsius,
+                               phaseCompFraction[ip1].toSliceConst(),
+                               phaseEnthalpy[ip1],
+                               m_useMass );
+    m_phase2.enthalpy.compute( pressure,
+                               temperatureInCelsius,
+                               phaseCompFraction[ip2].toSliceConst(),
+                               phaseEnthalpy[ip2],
+                               m_useMass );
+
+    computeInternalEnergy< numComp, numPhase >( pressure,
+                                                phaseFraction,
+                                                phaseMassDensity,
+                                                phaseEnthalpy,
+                                                phaseInternalEnergy );
+
   }
 
   // 6. Compute total fluid mass/molar density
@@ -442,32 +442,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                               phaseViscosity.value[ip2], phaseViscosity.derivs[ip2],
                               m_useMass );
 
-
-  // 4. Compute enthalpy and internal energy
-
-  m_phase1.enthalpy.compute( pressure,
-                             temperatureInCelsius,
-                             phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
-                             phaseEnthalpy.value[ip1], phaseEnthalpy.derivs[ip1],
-                             m_useMass );
-  m_phase1.internalEnergy.compute( pressure,
-                                   temperatureInCelsius,
-                                   phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
-                                   phaseInternalEnergy.value[ip1], phaseInternalEnergy.derivs[ip1],
-                                   m_useMass );
-
-  m_phase2.enthalpy.compute( pressure,
-                             temperatureInCelsius,
-                             phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
-                             phaseEnthalpy.value[ip2], phaseEnthalpy.derivs[ip2],
-                             m_useMass );
-  m_phase2.internalEnergy.compute( pressure,
-                                   temperatureInCelsius,
-                                   phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
-                                   phaseInternalEnergy.value[ip2], phaseInternalEnergy.derivs[ip2],
-                                   m_useMass );
-
-  // 5. Depending on the m_useMass flag, convert to mass variables or simply compute mass density
+  // 4. Depending on the m_useMass flag, convert to mass variables or simply compute mass density
 
   // TODO: for now the treatment of molar/mass density requires too many interpolations in the tables, it needs to be fixed
   //       we should modify the PVT functions so that they can return phaseMassDens, phaseDens, and phaseMW in one call
@@ -542,7 +517,30 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                               true );
   }
 
-  // 5. Compute total fluid mass/molar density and derivatives
+  // 5. Compute enthalpy and internal energy
+
+  if( m_isThermal )
+  {
+
+    m_phase1.enthalpy.compute( pressure,
+                               temperatureInCelsius,
+                               phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
+                               phaseEnthalpy.value[ip1], phaseEnthalpy.derivs[ip1],
+                               m_useMass );
+    m_phase2.enthalpy.compute( pressure,
+                               temperatureInCelsius,
+                               phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
+                               phaseEnthalpy.value[ip2], phaseEnthalpy.derivs[ip2],
+                               m_useMass );
+
+    computeInternalEnergy( pressure,
+                           phaseFraction,
+                           phaseMassDensity,
+                           phaseEnthalpy,
+                           phaseInternalEnergy );
+  }
+
+  // 6. Compute total fluid mass/molar density and derivatives
 
   computeTotalDensity( phaseFraction,
                        phaseDensity,
@@ -570,29 +568,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
            m_phaseCompFraction( k, q ),
            m_totalDensity( k, q ) );
 }
-
-/// Declare strings associated with enumeration values
-/// Needed for now, because we don't use the catalogNames for input (yet)
-ENUM_STRINGS( CO2BrinePhillipsFluid::SubModelInputNames,
-              "DensityFun",
-              "ViscosityFun",
-              "EnthalpyFun",
-              "InternalEnergyFun" );
-ENUM_STRINGS( CO2BrinePhillipsThermalFluid::SubModelInputNames,
-              "DensityFun",
-              "ViscosityFun",
-              "EnthalpyFun",
-              "InternalEnergyFun" );
-ENUM_STRINGS( CO2BrineEzrokhiFluid::SubModelInputNames,
-              "DensityFun",
-              "ViscosityFun",
-              "EnthalpyFun",
-              "InternalEnergyFun" );
-ENUM_STRINGS( CO2BrineEzrokhiThermalFluid::SubModelInputNames,
-              "DensityFun",
-              "ViscosityFun",
-              "EnthalpyFun",
-              "InternalEnergyFun" );
 
 
 } // namespace constitutive

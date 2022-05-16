@@ -16,8 +16,8 @@
 #define GEOSX_MESH_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
 
 #include "common/MpiWrapper.hpp"
+#include "mesh/FieldIdentifiers.hpp"
 
-#include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "LvArray/src/limits.hpp"
@@ -217,19 +217,19 @@ public:
   void unpackAndRebuildSyncLists( MeshLevel & meshLevel,
                                   int const CommID );
 
-  void packCommBufferForSync( std::map< string, string_array > const & fieldNames,
+  void packCommBufferForSync( FieldIdentifiers const & fieldsToBeSync,
                               MeshLevel const & meshLevel,
                               int const commID,
                               bool onDevice,
                               parallelDeviceEvents & events );
 
-  int packCommSizeForSync( std::map< string, string_array > const & fieldNames,
+  int packCommSizeForSync( FieldIdentifiers const & fieldsToBeSync,
                            MeshLevel const & meshLevel,
                            int const commID,
                            bool onDevice,
                            parallelDeviceEvents & events );
 
-  void unpackBufferForSync( std::map< string, string_array > const & fieldNames,
+  void unpackBufferForSync( FieldIdentifiers const & fieldsToBeSync,
                             MeshLevel & meshLevel,
                             int const commID,
                             bool onDevice,
@@ -293,8 +293,6 @@ private:
   std::vector< buffer_type > m_receiveBuffer;
 
 };
-
-
 
 template< typename T >
 void NeighborCommunicator::mpiISendReceiveSizes( array1d< T > const & sendBuffer,

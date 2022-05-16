@@ -47,13 +47,13 @@ EXTRINSIC_MESH_DATA_TRAIT( temperature,
                            WRITE_AND_READ,
                            "Temperature" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaTemperature,
-                           "deltaTemperature",
+EXTRINSIC_MESH_DATA_TRAIT( temperature_n,
+                           "temperature_n",
                            array1d< real64 >,
                            0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Accumulated temperature updates" );
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Temperature at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
                            "globalCompDensity",
@@ -63,13 +63,13 @@ EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
                            WRITE_AND_READ,
                            "Global component density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaGlobalCompDensity,
-                           "deltaGlobalCompDensity",
+EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity_n,
+                           "globalCompDensity_n",
                            array2dLayoutComp,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Accumulated global component density updates" );
+                           "Global component density updates at the previous converged time step " );
 
 EXTRINSIC_MESH_DATA_TRAIT( globalCompFraction,
                            "globalCompFraction",
@@ -151,45 +151,21 @@ EXTRINSIC_MESH_DATA_TRAIT( dPhaseMobility_dGlobalCompDensity,
                            NO_WRITE,
                            "Derivative of phase volume fraction with respect to global component density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseVolumeFractionOld,
-                           "phaseVolumeFractionOld",
+EXTRINSIC_MESH_DATA_TRAIT( phaseVolumeFraction_n,
+                           "phaseVolumeFraction_n",
                            array2dLayoutPhase,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Phase volume fraction at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseDensityOld,
-                           "phaseDensityOld",
-                           array2dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase density at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( totalDensityOld,
-                           "totalDensityOld",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Total density at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( phaseMobilityOld,
-                           "phaseMobilityOld",
+EXTRINSIC_MESH_DATA_TRAIT( phaseMobility_n,
+                           "phaseMobility_n",
                            array2dLayoutPhase,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Phase mobility at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( phaseComponentFractionOld,
-                           "phaseComponentFractionOld",
-                           array3dLayoutPhaseComp,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase component fraction at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseOutflux,
                            "phaseOutflux",
@@ -230,6 +206,15 @@ EXTRINSIC_MESH_DATA_TRAIT( bcPressure,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Boundary condition pressure" );
+
+EXTRINSIC_MESH_DATA_TRAIT( bcTemperature,
+                           "bcTemperature",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Boundary temperature" );
+
 
 }
 

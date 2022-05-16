@@ -62,6 +62,14 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseDensity,
                            WRITE_AND_READ,
                            "Phase density" );
 
+EXTRINSIC_MESH_DATA_TRAIT( phaseDensity_n,
+                           "phaseDensity_n",
+                           array3dLayoutPhase,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Phase density at the previous converged time step" );
+
 EXTRINSIC_MESH_DATA_TRAIT( dPhaseDensity,
                            "dPhaseDensity",
                            array4dLayoutPhase_dC,
@@ -110,6 +118,14 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseEnthalpy,
                            NO_WRITE,
                            "Phase enthalpy" );
 
+EXTRINSIC_MESH_DATA_TRAIT( phaseEnthalpy_n,
+                           "phaseEnthalpy_n",
+                           array3dLayoutPhase,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Phase enthalpy at the previous converged time step" );
+
 EXTRINSIC_MESH_DATA_TRAIT( dPhaseEnthalpy,
                            "dPhaseEnthalpy",
                            array4dLayoutPhase_dC,
@@ -126,13 +142,21 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseInternalEnergy,
                            NO_WRITE,
                            "Phase internal energy" );
 
+EXTRINSIC_MESH_DATA_TRAIT( phaseInternalEnergy_n,
+                           "phaseInternalEnergy_n",
+                           array3dLayoutPhase,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Phase internal energy at the previous converged time step" );
+
 EXTRINSIC_MESH_DATA_TRAIT( dPhaseInternalEnergy,
                            "dPhaseInternalEnergy",
                            array4dLayoutPhase_dC,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Derivative of phase internal energy with respect to pressure, temperature, and global component fraction" );
+                           "Derivative of phase internal energy with respect to pressure, temperature, and global component fractions" );
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseCompFraction,
                            "phaseCompFraction",
@@ -141,6 +165,14 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseCompFraction,
                            LEVEL_0,
                            WRITE_AND_READ,
                            "Phase component fraction" );
+
+EXTRINSIC_MESH_DATA_TRAIT( phaseCompFraction_n,
+                           "phaseCompFraction_n",
+                           array4dLayoutPhaseComp,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Phase component fraction at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( dPhaseCompFraction,
                            "dPhaseCompFraction",
@@ -158,6 +190,14 @@ EXTRINSIC_MESH_DATA_TRAIT( totalDensity,
                            WRITE_AND_READ,
                            "Total density" );
 
+EXTRINSIC_MESH_DATA_TRAIT( totalDensity_n,
+                           "totalDensity_n",
+                           array2dLayoutFluid,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Total density at the previous converged time step" );
+
 EXTRINSIC_MESH_DATA_TRAIT( initialTotalMassDensity,
                            "initialTotalMassDensity",
                            array2dLayoutFluid,
@@ -173,7 +213,6 @@ EXTRINSIC_MESH_DATA_TRAIT( dTotalDensity,
                            NOPLOT,
                            NO_WRITE,
                            "Derivative of total density with respect to pressure, temperature, and global component fractions" );
-
 
 }
 

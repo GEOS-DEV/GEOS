@@ -34,7 +34,7 @@ We simulate a hydraulic fracturing experiment within a finite domain made of thr
 .. _problemSketchKGDFig:
 .. figure:: sketch.png
    :align: center
-   :width: 500
+   :width: 1000
    :figclass: align-center
 
    Sketch of the problem
@@ -199,7 +199,7 @@ The following figure shows the distribution of :math:`\sigma_{yy}` at :math:`t=1
 .. _problemVerificationKGDFig1:
 .. figure:: syy.png
    :align: center
-   :width: 1000
+   :width: 500
    :figclass: align-center
 
    Simulation result of :math:`\sigma_{xx}` at :math:`t=100 s`
