@@ -61,7 +61,7 @@ protected:
     state( std::make_unique< CommandLineOptions >() )
   {
     geosx::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
-    mesh = &state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
+    mesh = &state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
   }
 
   GeosxState state;
@@ -95,7 +95,7 @@ TYPED_TEST_P( LAIHelperFunctionsTest, nodalVectorPermutation )
   using Vector = typename TypeParam::ParallelVector;
 
   DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
   NodeManager const & nodeManager = meshLevel.getNodeManager();
 
   string const fieldName = "nodalVariable";
@@ -146,7 +146,7 @@ TYPED_TEST_P( LAIHelperFunctionsTest, cellCenteredVectorPermutation )
   using Vector = typename TypeParam::ParallelVector;
 
   DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
   string const fieldName = "cellCenteredVariable";

@@ -71,7 +71,7 @@ void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
   // 2) Register the face data
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
-    MeshLevel & meshLevel = meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
+    MeshLevel & meshLevel = meshBody.getBaseDiscretization();
 
     FaceManager & faceManager = meshLevel.getFaceManager();
 

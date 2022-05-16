@@ -330,7 +330,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
   // then start the actual table construction
   fsManager.apply< EquilibriumInitialCondition >( 0.0,
-                                                  domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
+                                                  domain.getMeshBody( 0 ).getBaseDiscretization(),
                                                   "ElementRegions",
                                                   EquilibriumInitialCondition::catalogName(),
                                                   [&] ( EquilibriumInitialCondition const & fs,

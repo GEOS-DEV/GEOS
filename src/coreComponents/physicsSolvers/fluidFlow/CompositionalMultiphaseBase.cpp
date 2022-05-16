@@ -1388,7 +1388,7 @@ bool validateDirichletBC( DomainPartition & domain,
 
   // 1. Check pressure Dirichlet BCs
   fsManager.apply( time,
-                   domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
+                   domain.getMeshBody( 0 ).getBaseDiscretization(),
                    "ElementRegions",
                    extrinsicMeshData::flow::pressure::key(),
                    [&]( FieldSpecificationBase const &,
@@ -1414,7 +1414,7 @@ bool validateDirichletBC( DomainPartition & domain,
   if( isThermal )
   {
     fsManager.apply( time,
-                     domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
+                     domain.getMeshBody( 0 ).getBaseDiscretization(),
                      "ElementRegions",
                      extrinsicMeshData::flow::temperature::key(),
                      [&]( FieldSpecificationBase const &,
@@ -1449,7 +1449,7 @@ bool validateDirichletBC( DomainPartition & domain,
 
   // 3. Check composition BC (global component fraction)
   fsManager.apply( time,
-                   domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
+                   domain.getMeshBody( 0 ).getBaseDiscretization(),
                    "ElementRegions",
                    extrinsicMeshData::flow::globalCompFraction::key(),
                    [&] ( FieldSpecificationBase const & fs,

@@ -1010,7 +1010,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
   arrayView1d< real64 > const localSumFaceAreasView = localSumFaceAreas.toView();
 
   fsManager.apply< AquiferBoundaryCondition >( 0.0,
-                                               domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
+                                               domain.getMeshBody( 0 ).getBaseDiscretization(),
                                                "faceManager",
                                                AquiferBoundaryCondition::catalogName(),
                                                [&] ( AquiferBoundaryCondition const & bc,
@@ -1070,7 +1070,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
   // Step 3: compute the face area fraction for each connection, and insert into boundary stencil
 
   fsManager.apply< AquiferBoundaryCondition >( 0.0,
-                                               domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
+                                               domain.getMeshBody( 0 ).getBaseDiscretization(),
                                                "faceManager",
                                                AquiferBoundaryCondition::catalogName(),
                                                [&] ( AquiferBoundaryCondition const & bc,

@@ -301,7 +301,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
-  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ).getElemManager();
+  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
   elementManager.generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( elementManager, schemaRoot, targetChoiceNode, documentationType );
 
@@ -529,7 +529,7 @@ void ProblemManager::generateMesh()
   {
     CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
 
-    MeshLevel & baseMesh = meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
+    MeshLevel & baseMesh = meshBody.getBaseDiscretization();
     array1d< string > junk;
     this->generateDiscretization( baseMesh, cellBlockManager, nullptr, junk.toViewConst() );
 
@@ -559,7 +559,7 @@ void ProblemManager::generateMesh()
 
         if( order > 1 )
         {
-          MeshLevel & mesh = meshBody.createMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString(),
+          MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                                        discretizationName,
                                                        feDiscretization->getOrder() );
 
@@ -570,7 +570,7 @@ void ProblemManager::generateMesh()
         }
         else if( order==1 )
         {
-          meshBody.createShallowMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString(),
+          meshBody.createShallowMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                            discretizationName );
         }
       }
@@ -581,7 +581,7 @@ void ProblemManager::generateMesh()
         if( discretization != nullptr )
         {
           string const & discretizationName = discretization->getName();
-          meshBody.createShallowMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString(),
+          meshBody.createShallowMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                            discretizationName );
         }
       }
@@ -602,7 +602,7 @@ void ProblemManager::generateMesh()
 //    GEOSX_THROW_IF_NE( meshBody.getMeshLevels().numSubGroups(), 1, InputError );
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
-//    MeshLevel & meshLevel = meshBody.getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
+//    MeshLevel & meshLevel = meshBody.getMeshLevel(MeshBody::groupStructKeys::baseDiscretizationString() );
 
       FaceManager & faceManager = meshLevel.getFaceManager();
       EdgeManager & edgeManager = meshLevel.getEdgeManager();
@@ -733,7 +733,7 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
 //  nodeManager.constructGlobalToLocalMap();
 
 
-  if( meshLevel.getName() == MeshLevel::groupStructKeys::baseDiscretizationString() )
+  if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
   {
     elemManager.generateMesh( cellBlockManager );
     nodeManager.setGeometricalRelations( cellBlockManager, elemManager );
@@ -762,7 +762,7 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
   meshLevel.generateSets();
 
 
-  if( meshLevel.getName() == MeshLevel::groupStructKeys::baseDiscretizationString() )
+  if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
   {
     elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
     {
@@ -802,7 +802,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
                                                    MeshLevel & targetMeshLevel,
                                                    auto const & regionNames )
       {
-        MeshLevel & baseMeshLevel = meshBodies.getGroup< MeshBody >( meshBodyName ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
+        MeshLevel & baseMeshLevel = meshBodies.getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
 
         MeshLevel & meshLevel = targetMeshLevel.isShallowCopyOf( baseMeshLevel ) ? baseMeshLevel : targetMeshLevel;
 

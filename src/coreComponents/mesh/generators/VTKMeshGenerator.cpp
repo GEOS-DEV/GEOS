@@ -911,7 +911,7 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
 
   // TODO Having CellElementSubRegion and ConstitutiveBase... here in a pure geometric module is problematic.
-  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ).getElemManager();
+  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getBaseDiscretization().getElemManager();
 
   std::vector< vtkDataArray * > const srcArrays = vtk::findArraysForImport( *m_vtkMesh, m_fieldsToImport );
 
@@ -936,7 +936,7 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   }
 
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                       domain.getMeshBody( this->getName() ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
+                                                       domain.getMeshBody( this->getName() ).getBaseDiscretization(),
                                                        domain.getNeighbors(),
                                                        false );
 }

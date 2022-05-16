@@ -102,6 +102,17 @@ public:
   MeshLevel & getMeshLevel( T const & level )
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
 
+
+  MeshLevel & getBaseDiscretization()
+  {
+    return getMeshLevel( groupStructKeys::baseDiscretizationString() );
+  }
+
+  MeshLevel const & getBaseDiscretization() const
+  {
+    return getMeshLevel( groupStructKeys::baseDiscretizationString() );
+  }
+
 //  template< typename T >
 //  MeshLevel const & getMeshLevel( T const & level ) const = delete;
 //
@@ -173,6 +184,7 @@ public:
   {
     /// @return The key/string used to register/access the Group that contains the MeshLevel objects.
     static constexpr char const * meshLevelsString() { return "meshLevels"; }
+    static constexpr char const * baseDiscretizationString() { return "Level0"; }
   } groupKeys; ///< groupKeys
 
 private:

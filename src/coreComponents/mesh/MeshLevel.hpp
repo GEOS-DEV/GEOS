@@ -108,7 +108,7 @@ public:
     dataRepository::GroupKey vertexManager  = { "vertexManager" };
     dataRepository::GroupKey cellManager    = { "cellManager" };
 
-    static constexpr char const * baseDiscretizationString() { return "Level0"; }
+//    static constexpr char const * baseDiscretizationString() { return "Level0"; }
 
     static constexpr auto nodeManagerString = "nodeManager";
     static constexpr auto edgeManagerString = "edgeManager";

@@ -27,7 +27,7 @@ namespace finiteElement
 {
 
 /**
- * This class contains the implementation for a first order (linear) Lagrange
+ * This class contains the implementation for a 5th order Lagrange
  * polynomial basis. The parent space is defined by:
  *
  *                 o-------------o------------------------o------------------------o------------------------o-------------------o  ---> xi

@@ -1032,7 +1032,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   }
   MpiWrapper::barrier( MPI_COMM_GEOSX );
 
-  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
   NodeManager const & nodeManager = meshLevel.getNodeManager();
   EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();

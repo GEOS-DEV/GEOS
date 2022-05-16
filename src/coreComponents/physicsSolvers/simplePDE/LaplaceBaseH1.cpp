@@ -71,7 +71,7 @@ void LaplaceBaseH1::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    NodeManager & nodes = meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ).getNodeManager();
+    NodeManager & nodes = meshBody.getBaseDiscretization().getNodeManager();
 
     nodes.registerWrapper< real64_array >( m_fieldName ).
       setApplyDefaultValue( 0.0 ).

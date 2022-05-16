@@ -46,7 +46,7 @@ void RegisterAndApplyField( DomainPartition & domain,
   fieldSpec.addSetName( "all" );
 
   fieldSpecificationManager.apply( 0.,
-                                   domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
+                                   domain.getMeshBody( 0 ).getBaseDiscretization(),
                                    "",
                                    "",
                                    [&] ( FieldSpecificationBase const & bc,

@@ -651,7 +651,7 @@ public:
 //        lambda( meshBodyName, meshLevel, regionNames );
 //      } );
       lambda( meshBodyName,
-              meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
+              meshBody.getBaseDiscretization(),
               regionNames );
 
     }
@@ -672,7 +672,7 @@ public:
 //      } );
 
       lambda( meshBodyName,
-              meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
+              meshBody.getBaseDiscretization(),
               regionNames );
 
     }
@@ -692,7 +692,7 @@ public:
       MeshLevel const * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( this->m_discretizationName );
       if( meshLevelPtr==nullptr )
       {
-        meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshLevel::groupStructKeys::baseDiscretizationString() );
+        meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
       }
       lambda( meshBodyName, *meshLevelPtr, regionNames );
     }
@@ -712,7 +712,7 @@ public:
       MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( this->m_discretizationName );
       if( meshLevelPtr==nullptr )
       {
-        meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshLevel::groupStructKeys::baseDiscretizationString() );
+        meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
       }
       lambda( meshBodyName, *meshLevelPtr, regionNames );
     }

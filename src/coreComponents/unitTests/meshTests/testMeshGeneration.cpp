@@ -56,7 +56,7 @@ protected:
   void SetUp() override
   {
     DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
-    MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
+    MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
 
     m_nodeManager = &mesh.getNodeManager();
     m_faceManager = &mesh.getFaceManager();
@@ -111,7 +111,7 @@ protected:
     MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
 
-    ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ).getElemManager();
+    ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
     elementManager.processInputFileRecursive( topLevelNode );
     elementManager.postProcessInputRecursive();

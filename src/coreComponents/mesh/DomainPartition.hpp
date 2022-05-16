@@ -181,6 +181,8 @@ public:
    * @return Reference to a const MeshBody instance matching @p key.
    */
   template< typename KEY_TYPE >
+//            std::enable_if_t< std::is_same< T, string >::value ||
+//                              std::is_same< T, const char * >::value, bool > = false >
   MeshBody const & getMeshBody( KEY_TYPE const & key ) const
   { return getMeshBodies().getGroup< MeshBody >( key ); }
 
@@ -191,6 +193,8 @@ public:
    * @return Reference to a const MeshBody instance matching @p key.
    */
   template< typename KEY_TYPE >
+//  std::enable_if_t< std::is_same< T, string >::value ||
+//                    std::is_same< T, const char * >::value, bool > = false >
   MeshBody & getMeshBody( KEY_TYPE const & key )
   { return getMeshBodies().getGroup< MeshBody >( key ); }
 

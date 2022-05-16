@@ -342,7 +342,7 @@ void DofManager::addField( string const & fieldName,
   for( auto const & p : regions )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first );
-    MeshLevel const & mesh = meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ); // TODO by name?
+    MeshLevel const & mesh = meshBody.getBaseDiscretization(); // TODO by name?
     std::vector< string > regionNames( p.second.begin(), p.second.end() );
     support.push_back( { meshBody.getName(), mesh.getName(), std::move( regionNames ) } );
   }
@@ -509,7 +509,7 @@ void DofManager::addCoupling( string const & rowFieldName,
   for( auto const & p : regions )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first );
-    MeshLevel const & mesh = meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ); // TODO by name?
+    MeshLevel const & mesh = meshBody.getBaseDiscretization(); // TODO by name?
     std::vector< string > regionNames( p.second.begin(), p.second.end() );
     support.push_back( { meshBody.getName(), mesh.getName(), std::move( regionNames ) } );
   }

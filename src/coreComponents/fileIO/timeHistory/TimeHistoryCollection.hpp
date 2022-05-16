@@ -282,7 +282,7 @@ protected:
         GEOSX_LOG_RANK_0( "In TimeHistoryCollection.hpp, Mesh Level Discretization not specified, "
                           "using baseDiscretizationString()." );
 
-        string const baseMeshLevelName = MeshLevel::groupStructKeys::baseDiscretizationString();
+        string const baseMeshLevelName = MeshBody::groupStructKeys::baseDiscretizationString();
         ++targetTokenLength;
         targetTokens.insert( 1, &baseMeshLevelName, (&baseMeshLevelName)+1 );
       }
