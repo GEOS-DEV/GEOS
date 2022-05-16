@@ -26,6 +26,8 @@
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
+#include "constitutive/solid/SolidInternalEnergy.hpp"
+#include "constitutive/thermalConductivity/thermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -48,9 +50,19 @@ using namespace singlePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
-  FlowSolverBase( name, parent )
+  FlowSolverBase( name, parent ), 
+  m_isThermal( 0 )
 {
-  m_numDofPerCell = 1;
+  this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Temperature" );
+
+  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether the problem is thermal or not." );
+
+  m_numDofPerCell = m_isThermal ? 2 : 1;
 }
 
 
@@ -75,13 +87,24 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< initialPressure >( getName() );
       subRegion.registerExtrinsicData< pressure >( getName() );
 
+      subRegion.registerExtrinsicData< bcPressure >( getName() ); // TOCHECK if necessary 
+
       subRegion.registerExtrinsicData< deltaVolume >( getName() );
+
+      subRegion.registerExtrinsicData< temperature >( getName() ); 
+      subRegion.registerExtrinsicData< temperature_n >( getName() ); 
+
+      subRegion.registerExtrinsicData< bcTemperature >( getName() ); // TOCHECK if necessary
 
       subRegion.registerExtrinsicData< mobility >( getName() );
       subRegion.registerExtrinsicData< dMobility_dPressure >( getName() );
 
-      subRegion.registerExtrinsicData< density_n >( getName() );
+      if( m_isThermal )
+      {
+        subRegion.registerExtrinsicData< dMobility_dTemperature >( getName() ); 
+      }
 
+      subRegion.registerExtrinsicData< density_n >( getName() );
 
     } );
 
@@ -99,9 +122,36 @@ void SinglePhaseBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subR
 
 void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  string & fluidMaterialName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  fluidMaterialName = SolverBase::getConstitutiveName< SingleFluidBase >( subRegion );
-  GEOSX_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
+  string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  fluidName = SolverBase::getConstitutiveName< SingleFluidBase >( subRegion );
+  GEOSX_ERROR_IF( fluidName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
+
+  if ( m_isThermal )
+  {
+    string & solidInternalEnergyName = subRegion.registerWrapper< string >( viewKeyStruct::solidInternalEnergyNamesString() ).
+                                         setPlotLevel( PlotLevel::NOPLOT ).
+                                         setRestartFlags( RestartFlags::NO_WRITE ).
+                                         setSizedFromParent( 0 ).
+                                         setDescription( "Name of the solid internal energy constitutive model to use" ).
+                                         reference();
+
+    solidInternalEnergyName = getConstitutiveName< SolidInternalEnergy >( subRegion );
+    GEOSX_THROW_IF( solidInternalEnergyName.empty(),
+                    GEOSX_FMT( "Solid internal energy model not found on subregion {}", subRegion.getName() ),
+                    InputError );
+
+    string & thermalConductivityName = subRegion.registerWrapper< string >( viewKeyStruct::thermalConductivityNamesString() ).
+                                         setPlotLevel( PlotLevel::NOPLOT ).
+                                         setRestartFlags( RestartFlags::NO_WRITE ).
+                                         setSizedFromParent( 0 ).
+                                         setDescription( "Name of the thermal conductivity constitutive model to use" ).
+                                         reference();
+
+    thermalConductivityName = getConstitutiveName< ThermalConductivityBase >( subRegion );
+    GEOSX_THROW_IF( thermalConductivityName.empty(),
+                    GEOSX_FMT( "Thermal conductivity model not found on subregion {}", subRegion.getName() ),
+                    InputError );
+  }
 }
 
 
@@ -116,9 +166,10 @@ void SinglePhaseBase::initializeAquiferBC() const
   } );
 }
 
-
-void SinglePhaseBase::validateFluidModels( DomainPartition & domain ) const
+void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) const
 {
+  GEOSX_MARK_FUNCTION; 
+
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
@@ -131,6 +182,21 @@ void SinglePhaseBase::validateFluidModels( DomainPartition & domain ) const
       GEOSX_THROW_IF( fluidName.empty(),
                       GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                       InputError );
+
+      SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName ); 
+
+      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+      {
+        bool const isFluidModelThermal = castedFluid.isThermal();
+        GEOSX_THROW_IF( m_isThermal && !isFluidModelThermal,
+                        GEOSX_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is incompatible with the thermal option",
+                                   getName(), fluid.getName() ),
+                        InputError );
+        GEOSX_THROW_IF( !m_isThermal && isFluidModelThermal,
+                        GEOSX_FMT( "SingleFluidBase {}: the thermal option is enabled in fluid model `{}`, but the solver options are incompatible with the thermal option",
+                                   getName(), fluid.getName() ),
+                        InputError );
+      } );
     } );
   } );
 }
@@ -146,13 +212,41 @@ SinglePhaseBase::FluidPropViews SinglePhaseBase::getFluidProperties( Constitutiv
            singleFluid.defaultViscosity() };
 }
 
+SinglePhaseBase::ThermalFluidPropViews SinglePhaseBase::getThermalFluidProperties( ConstitutiveBase const & fluid ) const
+{
+  SingleFluidBase const & singleFluid = dynamicCast< SingleFluidBase const & >( fluid );
+  return { singleFluid.dDensity_dTemperature(),
+           singleFluid.dViscosity_dTemperature(),
+           singleFluid.internalEnergy(),
+           singleFluid.dInternalEnergy_dPressure(), 
+           singleFluid.dInternalEnergy_dTemperature() };
+}
+
 void SinglePhaseBase::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
 
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  validateFluidModels( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
+  // 1. Validate various models against each other (must have same phases and components)
+  validateConstitutiveModels( domain );
 
+  // 2. Set the value of temperature
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
+
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< real64 > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+      temp.setValues< parallelHostPolicy >( m_inputTemperature );
+    } );
+  } );
+
+  // 3. Initialize the aquifer boundary condition
   initializeAquiferBC();
 }
 
@@ -161,6 +255,7 @@ void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres = dataGroup.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+  arrayView1d< real64 const > const temp = dataGroup.getExtrinsicData< extrinsicMeshData::flow::temperature >();
 
   SingleFluidBase & fluid =
     getConstitutiveModel< SingleFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
@@ -168,7 +263,7 @@ void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    FluidUpdateKernel::launch( fluidWrapper, pres );
+    FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
 }
 

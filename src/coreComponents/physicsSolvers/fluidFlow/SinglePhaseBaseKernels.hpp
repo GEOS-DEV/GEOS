@@ -257,13 +257,14 @@ struct FluidUpdateKernel
 {
   template< typename FLUID_WRAPPER >
   static void launch( FLUID_WRAPPER const & fluidWrapper,
-                      arrayView1d< real64 const > const & pres )
+                      arrayView1d< real64 const > const & pres,
+                      arrayView1d< real64 const > const & temp )
   {
     forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.update( k, q, pres[k] );
+        fluidWrapper.update( k, q, pres[k], temp[k] );
       }
     } );
   }

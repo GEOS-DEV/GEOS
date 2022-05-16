@@ -208,6 +208,15 @@ public:
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper ) = 0;
 
+  struct viewKeyStruct : FlowSolverBase::viewKeyStruct
+  {
+    // inputs 
+    static constexpr char const * inputTemperatureString() { return "temperature"; }
+    static constexpr char const * isThermalString() { return "isThermal"; }
+    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
+    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
+  };
+
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
    * @param time current time
@@ -311,7 +320,7 @@ protected:
    * @param[in] domain the domain partition
    */
   virtual void
-  validateFluidModels( DomainPartition & domain ) const;
+  validateConstitutiveModels( DomainPartition & domain ) const;
 
   /**
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
@@ -327,12 +336,24 @@ protected:
    */
   struct FluidPropViews
   {
-    arrayView2d< real64 const > const dens;        ///< density
-    arrayView2d< real64 const > const dDens_dPres; ///< derivative of density w.r.t. pressure
-    arrayView2d< real64 const > const visc;        ///< viscosity
-    arrayView2d< real64 const > const dVisc_dPres; ///< derivative of viscosity w.r.t. pressure
+    arrayView2d< real64 const > const dens;             ///< density
+    arrayView2d< real64 const > const dDens_dPres;      ///< derivative of density w.r.t. pressure
+    arrayView2d< real64 const > const visc;             ///< viscosity
+    arrayView2d< real64 const > const dVisc_dPres;      ///< derivative of viscosity w.r.t. pressure
     real64 const defaultDensity;                     ///< default density to use for new elements
     real64 const defaultViscosity;                    ///< default vi to use for new elements
+  };
+
+  /**
+   * @brief Structure holding views into thermal fluid properties used by the base solver.
+   */
+  struct ThermalFluidPropViews
+  {
+    arrayView2d< real64 const > const dDens_dTemp;      ///< derivative of density w.r.t. temperature
+    arrayView2d< real64 const > const dVisc_dTemp;      ///< derivative of viscosity w.r.t. temperature
+    arrayView2d< real64 const > const intEnergy;        ///< internal energy 
+    arrayView2d< real64 const > const dintEnergy_dPres; ///< derivative of internal energy w.r.t. pressure
+    arrayView2d< real64 const > const dintEnergy_dTemp; ///< derivative of internal energy w.r.t. temperature
   };
 
   /**
@@ -347,6 +368,13 @@ protected:
    */
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
 
+  virtual ThermalFluidPropViews getThermalFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
+
+  /// the input temperature
+  real64 m_inputTemperature;
+
+  /// flag to determine whether or not this is a thermal simulation
+  integer m_isThermal;   
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

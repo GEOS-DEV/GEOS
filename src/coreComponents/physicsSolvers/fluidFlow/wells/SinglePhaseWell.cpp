@@ -280,6 +280,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+  arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::well::temperature >();
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   SingleFluidBase & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
@@ -287,7 +288,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres );
+    singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
 }
 
