@@ -13,6 +13,3 @@ set(MPI_Fortran_COMPILER /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-rel
 
 include(${CMAKE_CURRENT_LIST_DIR}/lassen-base.cmake)
 
-
-
-#set(HYPRE_DIR /usr/workspace/GEOS/GEOSX/geosx_hypre/hypre-mgr-gpu/src/hypre_debug CACHE PATH "" FORCE)

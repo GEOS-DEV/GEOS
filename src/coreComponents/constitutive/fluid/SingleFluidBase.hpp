@@ -127,7 +127,6 @@ protected:
   /// Derivative of internal energy w.r.t. temperature
   arrayView2d< real64 > m_dIntEnergy_dTemp;
 
-  /// 
 //END_SPHINX_INCLUDE_01
 //START_SPHINX_INCLUDE_02
 private:
@@ -239,6 +238,8 @@ public:
    */
   void initializeState() const;
 
+  virtual void saveConvergedState() const override;
+
   // *** ConstitutiveBase interface
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
@@ -246,21 +247,18 @@ public:
 
   // *** SingleFluid-specific interface
 
-  arrayView2d< real64 > density() { return m_density; }
   arrayView2d< real64 const > density() const { return m_density; }
 
-  arrayView2d< real64 > dDensity_dPressure() { return m_dDensity_dPressure; }
   arrayView2d< real64 const > dDensity_dPressure() const { return m_dDensity_dPressure; }
 
   arrayView2d< real64 > dDensity_dTemperature() { return m_dDensity_dTemperature; }
   arrayView2d< real64 const > dDensity_dTemperature() const { return m_dDensity_dTemperature; }
 
   arrayView2d< real64 const > initialDensity() const { return m_initialDensity; }
+  arrayView2d< real64 const > density_n() const { return m_density_n; }
 
-  arrayView2d< real64 > viscosity() { return m_viscosity; }
   arrayView2d< real64 const > viscosity() const { return m_viscosity; }
 
-  arrayView2d< real64 > dViscosity_dPressure() { return m_dViscosity_dPressure; }
   arrayView2d< real64 const > dViscosity_dPressure() const { return m_dViscosity_dPressure; }
 
   arrayView2d< real64 > dViscosity_dTemperature() { return m_dViscosity_dTemperature; }
@@ -278,8 +276,8 @@ public:
   arrayView2d< real64 > dInternalEnergy_dTemperature() { return m_dInternalEnergy_dTemperature; }
   arrayView2d< real64 const > dInternalEnergy_dTemperature() const { return m_dInternalEnergy_dTemperature; }
 
-  virtual real64 defaultDensity() const = 0; // { return 1.0; }
-  virtual real64 defaultViscosity() const = 0; // { return 1.0; }
+  virtual real64 defaultDensity() const = 0;
+  virtual real64 defaultViscosity() const = 0;
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
@@ -294,6 +292,7 @@ protected:
   array2d< real64 > m_dDensity_dTemperature; 
 
   array2d< real64 > m_initialDensity;
+  array2d< real64 > m_density_n;
 
   array2d< real64 > m_viscosity;
   array2d< real64 > m_dViscosity_dPressure;
