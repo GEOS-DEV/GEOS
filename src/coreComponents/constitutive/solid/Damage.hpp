@@ -106,7 +106,7 @@ public:
   virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const
   {
-    real64 pf = fmax(fmin(0.999, m_damage( k, q )), 0.0); 
+    real64 pf = fmax(fmin(1.0, m_damage( k, q )), 0.0); 
 
     return (1 - pf)*(1 - pf);
   }
