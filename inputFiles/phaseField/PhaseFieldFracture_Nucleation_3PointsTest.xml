@@ -27,7 +27,7 @@
       >
       <NonlinearSolverParameters
         newtonMaxIter="200"
-        newtonTol="1.0e-10"/>
+        newtonTol="1.0e-9"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
@@ -43,7 +43,7 @@
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="200"
-        newtonTol="1.0e-10"/>
+        newtonTol="1.0e-9"/>
       <LinearSolverParameters
         directParallel="0"/>
     </PhaseFieldDamageFEM>
@@ -52,11 +52,11 @@
   <Mesh>
     <PAMELAMesh
       name="3PointsTests"
-      file="3PointsTestsMesh/L-shape.msh"/>
+      file="3PointsTestsMesh/L-shape-fine-half.msh"/>
   </Mesh>
 
   <Events
-    maxTime="100.0">
+    maxTime="130.0">
     <!-- <SoloEvent name="siloOutput0"
                target="/Outputs/SiloOutput"/> -->
 
@@ -142,7 +142,7 @@
       component="0"
       objectPath="nodeManager"
       scale="0.0"
-      setNames="{ leftpin }"/>
+      setNames="{ forcepoint }"/>
 
     <FieldSpecification
       name="fixedZ"
@@ -158,8 +158,8 @@
     <TableFunction
       name="disp"
       inputVarNames="{ time }"
-      coordinates="{ 0, 100 }"
-      values="{ 0, 100 }"/>
+      coordinates="{ 0, 130 }"
+      values="{ 0, 130 }"/>
   </Functions>
 
   <Outputs>
@@ -168,7 +168,7 @@
 
     <VTK
       name="DamageNucleation3PointsTest_VTKOutput"
-      plotFileRoot="plot_damage_3points"/>
+      plotFileRoot="plot_damage_3points_half"/>
 
     <Restart
       name="restartOutput"/>
@@ -178,21 +178,21 @@
     <Box
       name="leftpin"
       xMin="{ 44.999, -0.001, -0.001 }"
-      xMax="{ 45.001, 0.001, 1.001 }"/>
+      xMax="{ 45.001, 0.001, 7.001 }"/>
 
     <Box
       name="rightpin"
       xMin="{ 118.999, 13.999, -0.001 }"
-      xMax="{ 119.001, 14.001, 1.001 }"/>
+      xMax="{ 119.001, 14.001, 7.001 }"/>
 
     <Box
       name="forcepoint"
       xMin="{ 71.999, 27.999, -0.001 }"
-      xMax="{ 72.001, 28.001, 1.001 }"/>
+      xMax="{ 72.001, 28.001, 7.001 }"/>
 
     <Box
       name="frontface"
-      xMin="{ -0.001, -0.001, 0.999 }"
-      xMax="{ 126.001, 28.001, 1.001 }"/>
+      xMin="{ -0.001, -0.001, 6.999 }"
+      xMax="{ 126.001, 28.001, 7.001 }"/>
   </Geometry>
 </Problem>

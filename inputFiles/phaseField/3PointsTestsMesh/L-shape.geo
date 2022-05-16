@@ -39,6 +39,12 @@ Line(19) = {12, 14};
 Line(20) = {14, 15}; 
 Line(21) = {15, 13}; 
 
+Transfinite Line {-8, 10, 12} = 101 Using Progression 1.02;
+Transfinite Line {13, -15} = 101 Using Progression 1;
+Transfinite Line {16, -18} = 101 Using Progression 1.02;
+Transfinite Line {1, 3, 6, 19, 21} = 21 Using Progression 1;
+Transfinite Line {-2, 4, 5, -7, -9, 11, 14, 17, 20} = 81 Using Progression 1.02;
+
 // Add line loops and surfaces 
 Line Loop(1) = {1, 2, 3, 4};
 Ruled Surface(1) = {1};
@@ -76,4 +82,7 @@ Transfinite Surface {7} = {12, 14, 15, 13};
 Recombine Surface {7};
 
 // Extrude to volumes 
-Extrude {0, 0, 14} {Surface{1, 2, 3, 4, 5, 6, 7}; Layers{1}; Recombine;}
+Extrude {0, 0, 14} {Surface{1, 2, 3, 4, 5, 6, 7}; Layers{2}; Recombine;}
+
+// Add physical sets 
+Physical Volume("all") = {1, 2, 3, 4, 5, 6, 7};
