@@ -7,7 +7,7 @@ import logging
 import sys
 
 
-def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
+def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None, force_tri_nodeset=True):
     """
     @brief Convert an abaqus mesh to gmsh 2 format, preserving nodeset information.
     @details If the code encounters any issues with region/element indices,
@@ -35,7 +35,7 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
     n_regions = len(region_list)
     cell_ids = []
     for block_id, block in enumerate(mesh.cells):
-        cell_ids.append(np.zeros(len(block[1]), dtype=int) - 1)
+        cell_ids.append(np.zeros(len(block.data), dtype=int) - 1)
         for region_id, region in enumerate(region_list):
             mesh.field_data[region] = [region_id + 1, 3]
             cell_ids[block_id][mesh.cell_sets[region][block_id]] = region_id + 1
@@ -64,7 +64,7 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
 
         # Search by block, then element
         for block_id, block in enumerate(mesh.cells):
-            for element_id, element in enumerate(block[1]):
+            for element_id, element in enumerate(block.data):
                 # Find any matching nodes
                 matching_nodes = [x for x in element if x in nodeset]
 
@@ -81,6 +81,15 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
                     tag_id = mesh.field_data[nodeset_name][0]
                     if (n_matching == 3):
                         new_tris.append(matching_nodes)
+                        tri_nodeset.append(tag_id)
+                        tri_region.append(region_id)
+
+                    elif ((n_matching == 4) & force_tri_nodeset):
+                        new_tris.append(matching_nodes[:-1])
+                        tri_nodeset.append(tag_id)
+                        tri_region.append(region_id)
+
+                        new_tris.append(matching_nodes[1:])
                         tri_nodeset.append(tag_id)
                         tri_region.append(region_id)
 
