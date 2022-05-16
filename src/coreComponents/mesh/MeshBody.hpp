@@ -68,6 +68,13 @@ public:
                                string const & newLevelName,
                                int const order );
 
+  /**
+   * @brief Creates a mesh level in which the member pointers are set to the
+   *        allocations from another MeshLevel.
+   * @param sourceLevelName The MeshLevel to be "copied"
+   * @param newLevelName The name of the new shallow copy.
+   * @return A reference to the new shallow MeshLevel.
+   */
   MeshLevel & createShallowMeshLevel( string const & sourceLevelName,
                                       string const & newLevelName );
 
@@ -83,8 +90,10 @@ public:
   Group const & getMeshLevels() const { return m_meshLevels; }
 
   /**
-   * @brief Get mesh level
-   * @param [in] level index of the mesh level
+   * @brief Get a reference to a MeshLevel.
+   * @tparam T The type of the lookup key. Function is only implemented for
+   *  string and const char * key types.
+   * @param[in] level The lookup key of the MeshLevel
    * @return const reference to the MeshLevel
    */
   template< typename T, std::enable_if_t< std::is_same< T, string >::value ||
@@ -93,8 +102,10 @@ public:
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
 
   /**
-   * @brief Get the specified MeshLevel
-   * @param level The name of the MeshLevel
+   * @brief Get a reference to a MeshLevel.
+   * @tparam T The type of the lookup key. Function is only implemented for
+   *  string and const char * key types.
+   * @param[in] level The lookup key of the MeshLevel
    * @return Reference to the MeshLevel
    */
   template< typename T, std::enable_if_t< std::is_same< T, string >::value ||
@@ -103,38 +114,23 @@ public:
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
 
 
+  /**
+   * @brief Convenience function to access the baseDiscretization.
+   * @return Reference to the base discretization.
+   */
   MeshLevel & getBaseDiscretization()
   {
     return getMeshLevel( groupStructKeys::baseDiscretizationString() );
   }
 
+  /**
+   * @brief Convenience function to access the baseDiscretization.
+   * @return Reference to the base discretization.
+   */
   MeshLevel const & getBaseDiscretization() const
   {
     return getMeshLevel( groupStructKeys::baseDiscretizationString() );
   }
-
-//  template< typename T >
-//  MeshLevel const & getMeshLevel( T const & level ) const = delete;
-//
-//  template< typename T >
-//  MeshLevel const & getMeshLevel( T const & level ) = delete;
-
-
-  /**
-   * @brief Get mesh level
-   * @param [in] level index of the mesh level
-   * @return pointer to MeshLevel
-   */
-//  MeshLevel & getMeshLevel( localIndex const level )
-//  { return m_meshLevels.getGroup< MeshLevel >( level );}//getMeshLevel( intToMeshLevelString( level ) ); }
-
-  /**
-   * @brief Get mesh level
-   * @param [in] level index of the mesh level
-   * @return pointer to const MeshLevel
-   */
-//  MeshLevel const & getMeshLevel( localIndex const level ) const
-//  { return m_meshLevels.getGroup< MeshLevel >( level );}// getMeshLevel( intToMeshLevelString( level ) ); }
 
   /**
    * @brief Apply the given functor to all meshLevels on this meshBody.
@@ -184,6 +180,8 @@ public:
   {
     /// @return The key/string used to register/access the Group that contains the MeshLevel objects.
     static constexpr char const * meshLevelsString() { return "meshLevels"; }
+
+    /// @return The key/string used to register/access the Group that contains the base discretization.
     static constexpr char const * baseDiscretizationString() { return "Level0"; }
   } groupKeys; ///< groupKeys
 

@@ -49,6 +49,12 @@ public:
              Group * const parent );
 
 
+  /**
+   * @brief Constructor to create a shallow MeshLevel.
+   * @param[in] name the name of the MeshLevel object in the repository
+   * @param[in] parent the parent group of the MeshLevel object being constructed
+   * @param[in] source The MeshLevel to make a shallow copy of.
+   */
   MeshLevel( string const & name,
              Group * const parent,
              MeshLevel & source );
@@ -212,10 +218,17 @@ public:
   EdgeManager & getEmbSurfEdgeManager()
   { return *m_embSurfEdgeManager; }
 
-
+  /**
+   * @return value of m_isShallowCopy.
+   */
   bool isShallowCopy() const
   { return m_isShallowCopy; }
 
+  /**
+   * @brief Determines if this->MeshLevel is a shallow copy of the input.
+   * @param comparisonLevel The MeshLevel to compare with.
+   * @return Whether or not the comparison is true.
+   */
   bool isShallowCopyOf( MeshLevel const & comparisonLevel ) const;
 
   ///@}
