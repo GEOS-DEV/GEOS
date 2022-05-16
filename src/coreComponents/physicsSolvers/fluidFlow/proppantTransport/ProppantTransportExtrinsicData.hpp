@@ -40,13 +40,13 @@ EXTRINSIC_MESH_DATA_TRAIT( proppantConcentration,
                            WRITE_AND_READ,
                            "Proppant concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaProppantConcentration,
-                           "deltaProppantConcentration",
+EXTRINSIC_MESH_DATA_TRAIT( proppantConcentration_n,
+                           "proppantConcentration_n",
                            array1d< real64 >,
                            0,
-                           NOPLOT,
+                           LEVEL_0,
                            WRITE_AND_READ,
-                           "Accumulated proppant concentration updates" );
+                           "Proppant concentration at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( componentConcentration,
                            "componentConcentration",
@@ -56,13 +56,13 @@ EXTRINSIC_MESH_DATA_TRAIT( componentConcentration,
                            WRITE_AND_READ,
                            "Component concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaComponentConcentration,
-                           "deltaComponentConcentration",
+EXTRINSIC_MESH_DATA_TRAIT( componentConcentration_n,
+                           "componentConcentration_n",
                            array2d< real64 >,
                            0,
-                           NOPLOT,
+                           LEVEL_0,
                            WRITE_AND_READ,
-                           "Accumulated component concentration updates" );
+                           "Component concentration at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( bcComponentConcentration,
                            "bcComponentConcentration",
@@ -96,8 +96,8 @@ EXTRINSIC_MESH_DATA_TRAIT( isProppantMobile,
                            WRITE_AND_READ,
                            "Flag indicating whether proppant is mobile" );
 
-EXTRINSIC_MESH_DATA_TRAIT( oldComponentDensity,
-                           "oldComponentDensity",
+EXTRINSIC_MESH_DATA_TRAIT( componentDensity_n,
+                           "componentDensity_n",
                            array2d< real64 >,
                            0,
                            NOPLOT,

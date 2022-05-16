@@ -14,418 +14,375 @@
 
 #include "CellBlockUtilities.hpp"
 
-#include "CellBlockManagerABC.hpp"
-
+#include "codingUtilities/Utilities.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/TimingMacros.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
 
 namespace geosx
 {
 
-void getFaceNodes( ElementType const & elementType,
-                   localIndex const iElement,
-                   localIndex const iFace,
-                   array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & elementToNodes,
-                   array1d< localIndex > & nodeIndices )
+static localIndex getFaceNodesHex( localIndex const faceNum,
+                                   arraySlice1d< localIndex const, cells::NODE_MAP_USD-1 > const & elemNodes,
+                                   Span< localIndex > const faceNodes )
+{
+  GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+  switch( faceNum )
+  {
+    case 0:
+    {
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[1];
+      faceNodes[2] = elemNodes[5];
+      faceNodes[3] = elemNodes[4];
+      break;
+    }
+    case 1:
+    {
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[2];
+      faceNodes[2] = elemNodes[3];
+      faceNodes[3] = elemNodes[1];
+      break;
+    }
+    case 2:
+    {
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[4];
+      faceNodes[2] = elemNodes[6];
+      faceNodes[3] = elemNodes[2];
+      break;
+    }
+    case 3:
+    {
+      faceNodes[0] = elemNodes[1];
+      faceNodes[1] = elemNodes[3];
+      faceNodes[2] = elemNodes[7];
+      faceNodes[3] = elemNodes[5];
+      break;
+    }
+    case 4:
+    {
+      faceNodes[0] = elemNodes[2];
+      faceNodes[1] = elemNodes[6];
+      faceNodes[2] = elemNodes[7];
+      faceNodes[3] = elemNodes[3];
+      break;
+    }
+    case 5:
+    {
+      faceNodes[0] = elemNodes[4];
+      faceNodes[1] = elemNodes[5];
+      faceNodes[2] = elemNodes[7];
+      faceNodes[3] = elemNodes[6];
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Invalid local face index for element of type Hexahedron: " << faceNum );
+    }
+  }
+  return 4;
+}
+
+static localIndex getFaceNodesWedge( localIndex const faceNum,
+                                     arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const & elemNodes,
+                                     Span< localIndex > const faceNodes )
+{
+  switch( faceNum )
+  {
+    case 0:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[1];
+      faceNodes[2] = elemNodes[5];
+      faceNodes[3] = elemNodes[4];
+      return 4;
+    }
+    case 1:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[2];
+      faceNodes[2] = elemNodes[3];
+      faceNodes[3] = elemNodes[1];
+      return 4;
+    }
+    case 2:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[4];
+      faceNodes[2] = elemNodes[2];
+      return 3;
+    }
+    case 3:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+      faceNodes[0] = elemNodes[1];
+      faceNodes[1] = elemNodes[3];
+      faceNodes[2] = elemNodes[5];
+      return 3;
+    }
+    case 4:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[2];
+      faceNodes[1] = elemNodes[4];
+      faceNodes[2] = elemNodes[5];
+      faceNodes[3] = elemNodes[3];
+      return 4;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Invalid local face index for element of type Wedge: " << faceNum );
+      return 0;
+    }
+  }
+}
+
+static localIndex getFaceNodesTet( localIndex const faceNum,
+                                   arraySlice1d< localIndex const, cells::NODE_MAP_USD-1 > const & elemNodes,
+                                   Span< localIndex > const faceNodes )
+{
+  GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+  switch( faceNum )
+  {
+    case 0:
+    {
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[1];
+      faceNodes[2] = elemNodes[3];
+      break;
+    }
+    case 1:
+    {
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[2];
+      faceNodes[2] = elemNodes[1];
+      break;
+    }
+    case 2:
+    {
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[3];
+      faceNodes[2] = elemNodes[2];
+      break;
+    }
+    case 3:
+    {
+      faceNodes[0] = elemNodes[1];
+      faceNodes[1] = elemNodes[2];
+      faceNodes[2] = elemNodes[3];
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Invalid local face index for element of type Tetrahedron: " << faceNum );
+    }
+  }
+  return 3;
+}
+
+static localIndex getFaceNodesPyramid( localIndex const faceNum,
+                                       arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const & elemNodes,
+                                       Span< localIndex > const faceNodes )
+{
+  switch( faceNum )
+  {
+    case 0:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[1];
+      faceNodes[2] = elemNodes[4];
+      return 3;
+    }
+    case 1:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[2];
+      faceNodes[2] = elemNodes[3];
+      faceNodes[3] = elemNodes[1];
+      return 4;
+    }
+    case 2:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[4];
+      faceNodes[2] = elemNodes[2];
+      return 3;
+    }
+    case 3:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+      faceNodes[0] = elemNodes[1];
+      faceNodes[1] = elemNodes[3];
+      faceNodes[2] = elemNodes[4];
+      return 3;
+    }
+    case 4:
+    {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+      faceNodes[0] = elemNodes[2];
+      faceNodes[1] = elemNodes[4];
+      faceNodes[2] = elemNodes[3];
+      return 3;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Invalid local face index for element of type Pyramid: " << faceNum );
+      return 0;
+    }
+  }
+}
+
+localIndex getFaceNodes( ElementType const elementType,
+                         localIndex const elemIdx,
+                         localIndex const faceNumber,
+                         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elementToNodes,
+                         Span< localIndex > const faceNodes )
 {
   switch( elementType )
   {
     case ElementType::Hexahedron:
     {
-      nodeIndices.resize( 4 );
-      switch( iFace )
-      {
-        case 0:
-        {
-          nodeIndices[0] = elementToNodes[iElement][0];
-          nodeIndices[1] = elementToNodes[iElement][1];
-          nodeIndices[2] = elementToNodes[iElement][5];
-          nodeIndices[3] = elementToNodes[iElement][4];
-          break;
-        }
-        case 1:
-        {
-          nodeIndices[0] = elementToNodes[iElement][0];
-          nodeIndices[1] = elementToNodes[iElement][2];
-          nodeIndices[2] = elementToNodes[iElement][3];
-          nodeIndices[3] = elementToNodes[iElement][1];
-          break;
-        }
-        case 2:
-        {
-          nodeIndices[0] = elementToNodes[iElement][0];
-          nodeIndices[1] = elementToNodes[iElement][4];
-          nodeIndices[2] = elementToNodes[iElement][6];
-          nodeIndices[3] = elementToNodes[iElement][2];
-          break;
-        }
-        case 3:
-        {
-          nodeIndices[0] = elementToNodes[iElement][1];
-          nodeIndices[1] = elementToNodes[iElement][3];
-          nodeIndices[2] = elementToNodes[iElement][7];
-          nodeIndices[3] = elementToNodes[iElement][5];
-          break;
-        }
-        case 4:
-        {
-          nodeIndices[0] = elementToNodes[iElement][3];
-          nodeIndices[1] = elementToNodes[iElement][2];
-          nodeIndices[2] = elementToNodes[iElement][6];
-          nodeIndices[3] = elementToNodes[iElement][7];
-          break;
-        }
-        case 5:
-        {
-          nodeIndices[0] = elementToNodes[iElement][4];
-          nodeIndices[1] = elementToNodes[iElement][5];
-          nodeIndices[2] = elementToNodes[iElement][7];
-          nodeIndices[3] = elementToNodes[iElement][6];
-          break;
-        }
-        default:
-        {
-          GEOSX_ERROR( "Invalid local face index: " << iFace );
-        }
-      }
-      break;
+      return getFaceNodesHex( faceNumber, elementToNodes[elemIdx], faceNodes );
     }
-    case ElementType::Prism:
+    case ElementType::Wedge:
     {
-      switch( iFace )
-      {
-        case 0:
-        {
-          nodeIndices.resize( 4 );
-          nodeIndices[0] = elementToNodes[iElement][0];
-          nodeIndices[1] = elementToNodes[iElement][1];
-          nodeIndices[2] = elementToNodes[iElement][5];
-          nodeIndices[3] = elementToNodes[iElement][4];
-          break;
-        }
-        case 1:
-        {
-          nodeIndices.resize( 4 );
-          nodeIndices[0] = elementToNodes[iElement][0];
-          nodeIndices[1] = elementToNodes[iElement][2];
-          nodeIndices[2] = elementToNodes[iElement][3];
-          nodeIndices[3] = elementToNodes[iElement][1];
-          break;
-        }
-        case 2:
-        {
-          nodeIndices.resize( 3 );
-          nodeIndices[0] = elementToNodes[iElement][0];
-          nodeIndices[1] = elementToNodes[iElement][2];
-          nodeIndices[2] = elementToNodes[iElement][4];
-          break;
-        }
-        case 3:
-        {
-          nodeIndices.resize( 3 );
-          nodeIndices[0] = elementToNodes[iElement][1];
-          nodeIndices[1] = elementToNodes[iElement][3];
-          nodeIndices[2] = elementToNodes[iElement][5];
-          break;
-        }
-        case 4:
-        {
-          nodeIndices.resize( 4 );
-          nodeIndices[0] = elementToNodes[iElement][2];
-          nodeIndices[1] = elementToNodes[iElement][3];
-          nodeIndices[2] = elementToNodes[iElement][5];
-          nodeIndices[3] = elementToNodes[iElement][4];
-          break;
-        }
-        default:
-        {
-          GEOSX_ERROR( "Invalid local face index: " << iFace );
-        }
-      }
-      break;
+      return getFaceNodesWedge( faceNumber, elementToNodes[elemIdx], faceNodes );
     }
     case ElementType::Tetrahedron:
     {
-      nodeIndices.resize( 3 );
-      switch( iFace )
-      {
-        case 0:
-        {
-          nodeIndices[0] = elementToNodes[iElement][0];
-          nodeIndices[1] = elementToNodes[iElement][2];
-          nodeIndices[2] = elementToNodes[iElement][1];
-          break;
-        }
-        case 1:
-        {
-          nodeIndices[0] = elementToNodes[iElement][0];
-          nodeIndices[1] = elementToNodes[iElement][1];
-          nodeIndices[2] = elementToNodes[iElement][3];
-          break;
-        }
-        case 2:
-        {
-          nodeIndices[0] = elementToNodes[iElement][0];
-          nodeIndices[1] = elementToNodes[iElement][3];
-          nodeIndices[2] = elementToNodes[iElement][2];
-          break;
-        }
-        case 3:
-        {
-          nodeIndices[0] = elementToNodes[iElement][1];
-          nodeIndices[1] = elementToNodes[iElement][2];
-          nodeIndices[2] = elementToNodes[iElement][3];
-          break;
-        }
-        default:
-        {
-          GEOSX_ERROR( "Invalid local face index: " << iFace );
-        }
-      }
-      break;
+      return getFaceNodesTet( faceNumber, elementToNodes[elemIdx], faceNodes );
     }
     case ElementType::Pyramid:
     {
-      switch( iFace )
-      {
-        case 0:
-        {
-          nodeIndices.resize( 4 );
-          nodeIndices[0] = elementToNodes[iElement][0];
-          nodeIndices[1] = elementToNodes[iElement][1];
-          nodeIndices[2] = elementToNodes[iElement][2];
-          nodeIndices[3] = elementToNodes[iElement][3];
-          break;
-        }
-        case 1:
-        {
-          nodeIndices.resize( 3 );
-          nodeIndices[0] = elementToNodes[iElement][0];
-          nodeIndices[1] = elementToNodes[iElement][1];
-          nodeIndices[2] = elementToNodes[iElement][4];
-          break;
-        }
-        case 2:
-        {
-          nodeIndices.resize( 3 );
-          nodeIndices[0] = elementToNodes[iElement][1];
-          nodeIndices[1] = elementToNodes[iElement][2];
-          nodeIndices[2] = elementToNodes[iElement][4];
-          break;
-        }
-        case 3:
-        {
-          nodeIndices.resize( 3 );
-          nodeIndices[0] = elementToNodes[iElement][2];
-          nodeIndices[1] = elementToNodes[iElement][3];
-          nodeIndices[2] = elementToNodes[iElement][4];
-          break;
-        }
-        case 4:
-        {
-          nodeIndices.resize( 3 );
-          nodeIndices[0] = elementToNodes[iElement][3];
-          nodeIndices[1] = elementToNodes[iElement][0];
-          nodeIndices[2] = elementToNodes[iElement][4];
-          break;
-        }
-        default:
-        {
-          GEOSX_ERROR( "Invalid local face index: " << iFace );
-        }
-      }
-      break;
+      return getFaceNodesPyramid( faceNumber, elementToNodes[elemIdx], faceNodes );
     }
     default:
     {
       GEOSX_ERROR( "Invalid element type: " << elementType );
     }
   }
+  return 0;
 }
 
 /**
- * @class EdgeBuilder
- * @brief This class stores the data necessary to construct the various edge maps.
+ * @brief Stores the data necessary to construct the various edge maps.
+ *
+ * These records are created and stored when visiting edges through faces.
+ * Organizing and sorting them by both nodes enables identification of
+ * matching edges of different faces. Face indices are preserved
+ * so that face-edge maps may be constructed.
  */
 struct EdgeBuilder
 {
   /**
    * @brief Constructor.
-   * @param [in] n1_ the greater of the two node indices that comprise the edge.
-   * @param [in] faceID_ the ID of the face this edge came from.
-   * @param [in] faceLocalEdgeIndex_ the face local index of this edge.
+   * @param [in] node1 the greater of the two node indices that comprise the edge.
+   * @param [in] face the ID of the face this edge came from.
+   * @param [in] edgeNum the face local index of this edge.
    */
-  EdgeBuilder( localIndex const n1_,
-               localIndex const faceID_,
-               localIndex const faceLocalEdgeIndex_ ):
-    n1( int32_t( n1_ ) ),
-    faceID( int32_t( faceID_ ) ),
-    faceLocalEdgeIndex( int32_t( faceLocalEdgeIndex_ ) )
+  EdgeBuilder( localIndex const node1,
+               localIndex const face,
+               localIndex const edgeNum ):
+    n1( node1 ),
+    faceIndex( face ),
+    edgeNumber( edgeNum )
   {}
 
-  /**
-   * @brief Return true if the two EdgeBuilders share the same greatest node index.
-   * @param [in] rhs the EdgeBuilder to compare against.
-   */
-  bool operator==( EdgeBuilder const & rhs ) const
-  { return n1 == rhs.n1; }
-
-  /**
-   * @brief Return true if the two EdgeBuilders don't share the same greatest node index.
-   * @param [in] rhs the EdgeBuilder to compare against.
-   */
-  bool operator!=( EdgeBuilder const & rhs ) const
-  { return !this->operator==( rhs ); }
-
   /// The larger of the two node indices that comprise the edge.
-  int32_t n1;
+  localIndex n1;
+
   /// The face the edge came from.
-  int32_t faceID;
+  localIndex faceIndex;
+
   /// The face local index of the edge.
-  int32_t faceLocalEdgeIndex;
+  localIndex edgeNumber;
+
+private:
+
+  /**
+   * @brief Equality comparison operator.
+   * @param [in] lhs left-hand side of the comparison
+   * @param [in] rhs right-hand side of the comparison
+   *
+   * Two edges are considered equal if they share 2 nodes.
+   * Because the other data structure already groups entries by lowest node,
+   * here we only store and compare the second node.
+   */
+  friend bool operator==( EdgeBuilder const & lhs, EdgeBuilder const & rhs )
+  { return lhs.n1 == rhs.n1; }
 };
-
-/**
- * @brief Add an edge to the face to edge map, edge to face map, and edge to node map.
- * @param [in] edgesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
- * @param [in,out] faceToEdgeMap the map from face IDs to edge IDs.
- * @param [in,out] edgeToFacemap the map from edgeIDs to faceIDs.
- * @param [in,out] edgeToNodeMap the map from edgeIDs to nodeIDs.
- * @param [in] edgeID the ID of the edge to add.
- * @param [in] firstNodeID the ID of the first node of the edge.
- * @param [in] firstMatch the index of the first EdgeBuilder that describes this edge in edgesByLowestNode[ firstNodeID ].
- * @param [in] numMatches the number of EdgeBuilders that describe this edge in edgesByLowestNode[ firstNodeID ].
- */
-void addEdge( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
-              ArrayOfArraysView< localIndex > const & faceToEdgeMap,
-              ArrayOfSetsView< localIndex > const & edgeToFaceMap,
-              arrayView2d< localIndex > const & edgeToNodeMap,
-              localIndex const edgeID,
-              localIndex const firstNodeID,
-              localIndex const firstMatch,
-              localIndex const numMatches )
-{
-  GEOSX_ASSERT_GE( edgeToFaceMap.capacityOfSet( edgeID ), numMatches );
-
-  // Populate the edge to node map.
-  edgeToNodeMap( edgeID, 0 ) = firstNodeID;
-  edgeToNodeMap( edgeID, 1 ) = edgesByLowestNode( firstNodeID, firstMatch ).n1;
-
-  // Loop through all the matches and fill in the face to edge and edge to face maps.
-  for( localIndex i = 0; i < numMatches; ++i )
-  {
-    localIndex const faceID = edgesByLowestNode( firstNodeID, firstMatch + i ).faceID;
-    localIndex const faceLocalEdgeIndex = edgesByLowestNode( firstNodeID, firstMatch + i ).faceLocalEdgeIndex;
-
-    faceToEdgeMap( faceID, faceLocalEdgeIndex ) = edgeID;
-    edgeToFaceMap.insertIntoSet( edgeID, faceID );
-  }
-}
 
 /**
  * @brief Populate the edgesByLowestNode map.
  * @param [in] numNodes The number of nodes.
  * @param [in] faceToNodeMap a map that associates an ordered list of nodes with each face.
- * @param [in,out] edgesByLowestNode of size numNodes, where each sub array has been preallocated to hold
- *        *enough* space.
- * For each edge of each face, this function gets the lowest node in the edge n0, creates an EdgeBuilder
- * associated with the edge and then appends the EdgeBuilder to edgesByLowestNode[ n0 ]. Finally it sorts
- * the contents of each sub-array of edgesByLowestNode from least to greatest.
+ * @return a map of each node to edges that have it as their lowest index node, sorted by second node index.
  */
-ArrayOfArrays< EdgeBuilder > createEdgesByLowestNode( localIndex numNodes,
-                                                      ArrayOfArraysView< localIndex const > const & faceToNodeMap )
+ArrayOfArrays< EdgeBuilder >
+createEdgesByLowestNode( localIndex const numNodes,
+                         ArrayOfArraysView< localIndex const > const & faceToNodeMap )
 {
-  GEOSX_MARK_FUNCTION;
-
-  ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * CellBlockManagerABC::maxEdgesPerNode() );
-
-  localIndex const numFaces = faceToNodeMap.size();
-
-  // loop over all the faces.
-  forAll< parallelHostPolicy >( numFaces, [&]( localIndex const faceID )
+  array1d< localIndex > edgeCounts( numNodes );
+  forAll< parallelHostPolicy >( faceToNodeMap.size(), [counts = edgeCounts.toView(),
+                                                       faceToNodeMap]( localIndex const faceIndex )
   {
-    localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceID );
+    // loop over all the nodes in the face. there will be an edge for each node.
+    localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceIndex );
+    for( localIndex a = 0; a < numNodesInFace; ++a )
+    {
+      // count the edge for its lowest index node
+      localIndex const node0 = faceToNodeMap( faceIndex, a );
+      localIndex const node1 = faceToNodeMap( faceIndex, ( a + 1 ) % numNodesInFace );
+      RAJA::atomicInc< parallelHostAtomic >( &counts[ std::min( node0, node1 ) ] );
+    }
+  } );
+
+  ArrayOfArrays< EdgeBuilder > edgesByLowestNode;
+  edgesByLowestNode.resizeFromCapacities< parallelHostPolicy >( numNodes, edgeCounts.data() );
+
+  forAll< parallelHostPolicy >( faceToNodeMap.size(), [&]( localIndex const faceIndex )
+  {
+    localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceIndex );
 
     // loop over all the nodes in the face. there will be an edge for each node.
-    for( localIndex a=0; a< numNodesInFace; ++a )
+    for( localIndex a = 0; a < numNodesInFace; ++a )
     {
       // sort the nodes in order of index value.
-      localIndex node0 = faceToNodeMap( faceID, a );
-      localIndex node1 = faceToNodeMap( faceID, ( a + 1 ) % numNodesInFace );
+      localIndex node0 = faceToNodeMap( faceIndex, a );
+      localIndex node1 = faceToNodeMap( faceIndex, ( a + 1 ) % numNodesInFace );
       if( node0 > node1 )
+      {
         std::swap( node0, node1 );
+      }
 
       // And append the edge to edgesByLowestNode.
-      edgesByLowestNode.emplaceBackAtomic< parallelHostAtomic >( node0, node1, faceID, a );
+      edgesByLowestNode.emplaceBackAtomic< parallelHostAtomic >( node0, node1, faceIndex, a );
     }
   } );
 
   // This comparator is not attached to EdgeBuilder because of potential inconsistencies with operator==
   auto const comp = []( EdgeBuilder const & e0, EdgeBuilder const & e1 ) -> bool
   {
-    if( e0.n1 < e1.n1 )
-    {
-      return true;
-    }
-    if( e0.n1 > e1.n1 )
-    {
-      return false;
-    }
-    return e0.faceID < e1.faceID;
+    return ( e0.n1 < e1.n1 ) || ( ( e0.n1 == e1.n1 ) && ( e0.faceIndex < e1.faceIndex ) );
   };
 
   // Loop over all the nodes and sort the associated edges.
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [edgesByLowestNode = edgesByLowestNode.toView(),
+                                           comp]( localIndex const nodeIndex )
   {
-    EdgeBuilder * const edges = edgesByLowestNode[nodeID];
-    std::sort( edges, edges + edgesByLowestNode.sizeOfArray( nodeID ), comp );
+    arraySlice1d< EdgeBuilder > const edges = edgesByLowestNode[ nodeIndex ];
+    std::sort( edges.begin(), edges.end(), comp );
   } );
 
   return edgesByLowestNode;
-}
-
-/**
- * @brief Return the total number of unique edges and fill in the uniqueEdgeOffsets array.
- * @param [in] edgesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
- * @param [out] uniqueEdgeOffsets an array of size numNodes + 1. After this function returns node i contains
- * edges with IDs ranging from uniqueEdgeOffsets[ i ] to uniqueEdgeOffsets[ i + 1 ] - 1.
- */
-localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
-                                        arrayView1d< localIndex > const & uniqueEdgeOffsets )
-{
-  localIndex const numNodes = edgesByLowestNode.size();
-  GEOSX_ERROR_IF_NE( numNodes, uniqueEdgeOffsets.size() - 1 );
-
-  uniqueEdgeOffsets[0] = 0;
-
-  // Loop over all the nodes.
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
-  {
-    localIndex const numEdges = edgesByLowestNode.sizeOfArray( nodeID );
-
-    // If there are no edges associated with this node we can skip it.
-    if( numEdges == 0 )
-      return;
-
-    localIndex & numUniqueEdges = uniqueEdgeOffsets[ nodeID + 1 ];
-    numUniqueEdges = 0;
-
-    // Otherwise since edgesByLowestNode[ nodeID ] is sorted we can compare subsequent entries
-    // count up the unique entries.
-    localIndex j = 0;
-    for(; j < numEdges - 1; ++j )
-    {
-      numUniqueEdges += edgesByLowestNode( nodeID, j ) != edgesByLowestNode( nodeID, j + 1 );
-    }
-
-    numUniqueEdges += j == numEdges - 1;
-  } );
-
-  // At this point uniqueEdgeOffsets[ i ] holds the number of unique edges associated with node i - 1.
-  // Perform an inplace prefix-sum to get the unique edge offset.
-  RAJA::inclusive_scan_inplace< parallelHostPolicy >( uniqueEdgeOffsets.begin(), uniqueEdgeOffsets.end() );
-
-  return uniqueEdgeOffsets.back();
 }
 
 
@@ -433,199 +390,133 @@ localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > c
  * @brief Populate the face to edge map, edge to face map, and edge to node map.
  * @param [in] edgesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
  * @param [in] uniqueEdgeOffsets an array containing the unique ID of the first edge associated with each node.
- * @param [in] faceToNodeMap the map from faces to nodes.
- * @param [in,out] faceToEdgeMap the map from face IDs to edge IDs.
- * @param [in,out] edgeToFacemap the map from edgeIDs to faceIDs.
- * @param [in,out] edgeToNodeMap the map from edgeIDs to nodeIDs.
+ * @param [in] faceToEdgeMap the map from faces to nodes.
+ * @param [in,out] edgeToFaceMap the map from edges to faces.
+ * @param [in,out] edgeToNodeMap the map from edges to nodes.
  */
 void populateEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
                        arrayView1d< localIndex const > const & uniqueEdgeOffsets,
-                       ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-                       ArrayOfArrays< localIndex > & faceToEdgeMap,
-                       ArrayOfSets< localIndex > & edgeToFaceMap,
+                       ArrayOfArraysView< localIndex > const & faceToEdgeMap,
+                       ArrayOfArraysView< localIndex > const & edgeToFaceMap,
                        arrayView2d< localIndex > const & edgeToNodeMap )
 {
-  GEOSX_MARK_FUNCTION;
-
   localIndex const numNodes = edgesByLowestNode.size();
-  localIndex const numFaces = faceToNodeMap.size();
   localIndex const numUniqueEdges = uniqueEdgeOffsets.back();
   GEOSX_ERROR_IF_NE( numNodes, uniqueEdgeOffsets.size() - 1 );
-  GEOSX_ERROR_IF_NE( numFaces, faceToEdgeMap.size() );
   GEOSX_ERROR_IF_NE( numUniqueEdges, edgeToFaceMap.size() );
   GEOSX_ERROR_IF_NE( numUniqueEdges, edgeToNodeMap.size( 0 ) );
 
-  // The face to edge map has the same shape as the face to node map, so we can resize appropriately.
-  localIndex totalSize = 0;
-  for( localIndex faceID = 0; faceID < numFaces; ++faceID )
-  {
-    totalSize += faceToNodeMap.sizeOfArray( faceID );
-  }
-
-  // Resize the face to edge map
-  faceToEdgeMap.resize( 0 );
-
-  // Reserve space for the number of current faces plus some extra.
-  double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numFaces;
-  faceToEdgeMap.reserve( entriesToReserve );
-
-  // Reserve space for the total number of face edges + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = totalSize + numFaces * CellBlockManagerABC::edgeMapExtraSpacePerFace() * ( 1 + 2 * overAllocationFactor );
-  faceToEdgeMap.reserveValues( valuesToReserve );
-  for( localIndex faceID = 0; faceID < numFaces; ++faceID )
-  {
-    faceToEdgeMap.appendArray( faceToNodeMap.sizeOfArray( faceID ) );
-    faceToEdgeMap.setCapacityOfArray( faceToEdgeMap.size() - 1,
-                                      faceToNodeMap.sizeOfArray( faceID ) + CellBlockManagerABC::edgeMapExtraSpacePerFace() );
-  }
-
   // loop over all the nodes.
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeIndex )
   {
-    localIndex curEdgeID = uniqueEdgeOffsets[ nodeID ];
-    localIndex const numEdges = edgesByLowestNode.sizeOfArray( nodeID );
-
-    // loop over all the EdgeBuilders associated with the node
-    localIndex j = 0;
-    while( j < numEdges - 1 )
+    localIndex curEdgeID = uniqueEdgeOffsets[ nodeIndex ];
+    arraySlice1d< EdgeBuilder const > const edges = edgesByLowestNode[ nodeIndex ];
+    forEqualRanges( edges.begin(), edges.end(), [&]( auto first, auto last )
     {
-      // Find the number of EdgeBuilders that describe the same edge
-      localIndex numMatches = 1;
-      while( edgesByLowestNode( nodeID, j ) == edgesByLowestNode( nodeID, j + numMatches ) )
+      // Populate the edge to node map.
+      edgeToNodeMap( curEdgeID, 0 ) = nodeIndex;
+      edgeToNodeMap( curEdgeID, 1 ) = first->n1;
+
+      // Loop through all the matches and fill in the face to edge and edge to face maps.
+      while( first != last )
       {
-        ++numMatches;
-        if( j + numMatches == numEdges )
-          break;
+        EdgeBuilder const & edge = *first;
+        faceToEdgeMap( edge.faceIndex, edge.edgeNumber ) = curEdgeID;
+        edgeToFaceMap.emplaceBack( curEdgeID, edge.faceIndex );
+        ++first;
       }
-      // Then add the edge.
-      addEdge( edgesByLowestNode, faceToEdgeMap.toView(), edgeToFaceMap.toView(), edgeToNodeMap, curEdgeID, nodeID, j, numMatches );
-      ++curEdgeID;
-      j += numMatches;
-    }
 
-    if( j == numEdges - 1 )
-    {
-      addEdge( edgesByLowestNode, faceToEdgeMap.toView(), edgeToFaceMap.toView(), edgeToNodeMap, curEdgeID, nodeID, j, 1 );
-    }
+      ++curEdgeID;
+    } );
   } );
 }
 
 /**
- * @brief Resize the edge to face map.
+ * @brief Resize the edge to face and edge to node maps.
  * @param [in] edgesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
  * @param [in] uniqueEdgeOffsets an containing the unique edge IDs for each node in edgesByLowestNode.
- * param [out] edgeToFaceMap the map from edges to faces. This function resizes the array appropriately.
- */
-void resizeEdgeToFaceMap( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
-                          arrayView1d< localIndex const > const & uniqueEdgeOffsets,
-                          ArrayOfSets< localIndex > & edgeToFaceMap )
-{
-  GEOSX_MARK_FUNCTION;
-
-  localIndex const numNodes = edgesByLowestNode.size();
-  localIndex const numUniqueEdges = uniqueEdgeOffsets.back();
-  array1d< localIndex > numFacesPerEdge( numUniqueEdges );
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalEdgeFaces( 0.0 );
-
-  // loop over all the nodes.
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
-  {
-    localIndex curEdgeID = uniqueEdgeOffsets[ nodeID ];
-    localIndex const numEdges = edgesByLowestNode.sizeOfArray( nodeID );
-
-    // loop over all the EdgeBuilders associated with the node
-    localIndex j = 0;
-    while( j < numEdges - 1 )
-    {
-      // Find the number of EdgeBuilders that describe the same edge
-      localIndex numMatches = 1;
-      while( edgesByLowestNode( nodeID, j ) == edgesByLowestNode( nodeID, j + numMatches ) )
-      {
-        ++numMatches;
-        if( j + numMatches == numEdges )
-          break;
-      }
-
-      // The number of matches is the number of faces associated with this edge.
-      numFacesPerEdge( curEdgeID ) = numMatches;
-      totalEdgeFaces += numFacesPerEdge( curEdgeID );
-      ++curEdgeID;
-      j += numMatches;
-    }
-
-    if( j == numEdges - 1 )
-    {
-      numFacesPerEdge( curEdgeID ) = 1;
-      totalEdgeFaces += numFacesPerEdge( curEdgeID );
-    }
-  } );
-
-  // Resize the edge to face map
-  edgeToFaceMap.resize( 0 );
-
-  // Reserve space for the number of current faces plus some extra.
-  double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numUniqueEdges;
-  edgeToFaceMap.reserve( entriesToReserve );
-
-  // Reserve space for the total number of edge faces + extra space for existing edges + even more space for new edges.
-  localIndex const valuesToReserve = totalEdgeFaces.get() + numUniqueEdges * CellBlockManagerABC::faceMapExtraSpacePerEdge() * ( 1 + 2 * overAllocationFactor );
-  edgeToFaceMap.reserveValues( valuesToReserve );
-
-  // Append the individual sets.
-  for( localIndex faceID = 0; faceID < numUniqueEdges; ++faceID )
-  {
-    edgeToFaceMap.appendSet( numFacesPerEdge[ faceID ] + CellBlockManagerABC::faceMapExtraSpacePerEdge() );
-  }
-}
-
-/**
- * @brief Resize the edge to face map.
- * @param [in] edgesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
- * @param [in] uniqueEdgeOffsets an containing the unique edge IDs for each node in edgesByLowestNode.
- * param [out] edgeToNodesMap the map from edges to nodes. This function resizes the array appropriately.
- * param [out] edgeToFaceMap the map from edges to faces. This function resizes the array appropriately.
+ * @param [out] faceToEdgeMap the map from faces to edges, resized appropriately and filled with dummy values.
+ * @param [out] edgeToFaceMap the map from edges to faces, resized appropriately.
+ * @param [out] edgeToNodeMap the map from edges to nodes, resized appropriately.
  */
 void resizeEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
                      arrayView1d< localIndex const > const & uniqueEdgeOffsets,
-                     array2d< localIndex > & edgeToNodesMap,
-                     ArrayOfSets< localIndex > & edgeToFaceMap )
+                     ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                     ArrayOfArrays< localIndex > & faceToEdgeMap,
+                     ArrayOfArrays< localIndex > & edgeToFaceMap,
+                     array2d< localIndex > & edgeToNodeMap )
+{
+  localIndex const numFaces = faceToNodeMap.size();
+  localIndex const numNodes = edgesByLowestNode.size();
+  localIndex const numUniqueEdges = uniqueEdgeOffsets.back();
+
+  // Count the number of faces adjacent to each edge by traversing previously built data structures
+  array1d< localIndex > numFacesPerEdge( numUniqueEdges );
+  forAll< parallelHostPolicy >( numNodes, [uniqueEdgeOffsets,
+                                           edgesByLowestNode,
+                                           numFacesPerEdge = numFacesPerEdge.toView()]( localIndex const nodeIndex )
+  {
+    localIndex curEdgeID = uniqueEdgeOffsets[ nodeIndex ];
+    arraySlice1d< EdgeBuilder const > const edges = edgesByLowestNode[ nodeIndex ];
+    forUniqueValues( edges.begin(), edges.end(), [&]( EdgeBuilder const &, localIndex const numMatches )
+    {
+      numFacesPerEdge( curEdgeID++ ) = numMatches + CellBlockManagerABC::faceMapExtraSpacePerEdge();
+    } );
+  } );
+  edgeToFaceMap.resizeFromCapacities< parallelHostPolicy >( numUniqueEdges, numFacesPerEdge.data() );
+
+  // This relies on the fact that #nodes = #edges for each face.
+  // Thus, by utilizing faceToNodeMap, we can avoid atomic counting of capacity.
+  array1d< localIndex > numEdgesPerFace( numFaces );
+  forAll< parallelHostPolicy >( numFaces, [faceToNodeMap,
+                                           numEdgesPerFace = numEdgesPerFace.toView()] ( localIndex const faceIndex )
+  {
+    localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceIndex );
+    numEdgesPerFace[ faceIndex ] = numNodesInFace + CellBlockManagerABC::edgeMapExtraSpacePerFace();
+  } );
+  faceToEdgeMap.resizeFromCapacities< parallelHostPolicy >( numFaces, numEdgesPerFace.data() );
+  forAll< parallelHostPolicy >( numFaces, [numEdgesPerFace = numEdgesPerFace.toViewConst(),
+                                           faceToEdgeMap = faceToEdgeMap.toView()] ( localIndex const faceIndex )
+  {
+    // There is no API to set size of each sub-array within its capacity in parallel
+    for( localIndex i = 0; i < numEdgesPerFace[ faceIndex ] - CellBlockManagerABC::edgeMapExtraSpacePerFace(); ++i )
+    {
+      faceToEdgeMap.emplaceBack( faceIndex, -1 );
+    }
+  } );
+
+  // Each edge is adjacent to strictly 2 nodes.
+  edgeToNodeMap.resize( numUniqueEdges, 2 );
+}
+
+localIndex buildEdgeMaps( localIndex const numNodes,
+                          ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                          ArrayOfArrays< localIndex > & faceToEdgeMap,
+                          ArrayOfArrays< localIndex > & edgeToFaceMap,
+                          array2d< localIndex > & edgeToNodeMap )
 {
   GEOSX_MARK_FUNCTION;
 
-  resizeEdgeToFaceMap( edgesByLowestNode, uniqueEdgeOffsets, edgeToFaceMap );
+  ArrayOfArrays< EdgeBuilder > const edgesByLowestNode =
+    createEdgesByLowestNode( numNodes, faceToNodeMap );
 
-  // Each face may belong to _maximum_ 2 elements.
-  // If it belongs to only one, we put `-1` for the undefined value.
-  localIndex const numUniqueEdges = uniqueEdgeOffsets.back();
-  edgeToNodesMap.resize( numUniqueEdges, 2 );
-}
-
-localIndex buildEdgeMaps( localIndex numNodes,
-                          ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-                          ArrayOfArrays< localIndex > & faceToEdgeMap,
-                          ArrayOfSets< localIndex > & edgeToFaceMap,
-                          array2d< localIndex > & edgeToNodeMap )
-{
-  ArrayOfArrays< EdgeBuilder > edgesByLowestNode = createEdgesByLowestNode( numNodes, faceToNodeMap );
-
-  array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
-  localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode.toViewConst(), uniqueEdgeOffsets );
+  array1d< localIndex > const uniqueEdgeOffsets =
+    computeUniqueValueOffsets< parallelHostPolicy >( edgesByLowestNode.toViewConst() );
 
   resizeEdgeMaps( edgesByLowestNode.toViewConst(),
                   uniqueEdgeOffsets,
-                  edgeToNodeMap,
-                  edgeToFaceMap );
+                  faceToNodeMap,
+                  faceToEdgeMap,
+                  edgeToFaceMap,
+                  edgeToNodeMap );
 
   populateEdgeMaps( edgesByLowestNode.toViewConst(),
                     uniqueEdgeOffsets,
-                    faceToNodeMap,
-                    faceToEdgeMap,
-                    edgeToFaceMap,
-                    edgeToNodeMap );
+                    faceToEdgeMap.toView(),
+                    edgeToFaceMap.toView(),
+                    edgeToNodeMap.toView() );
 
-  return numEdges;
+  return uniqueEdgeOffsets.back();
 }
 
 }

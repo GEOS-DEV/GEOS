@@ -1,3 +1,6 @@
+.. _TriaxialDriver:
+
+
 Triaxial Driver
 ===============
 
