@@ -214,7 +214,7 @@
 
     <VTK
       name="DamageNucleation_VTKOutput"
-      plotFileRoot="plot_damage_edf_off"/>
+      plotFileRoot="plot_damage_edf_on"/>
 
     <Restart
       name="restartOutput"/>
