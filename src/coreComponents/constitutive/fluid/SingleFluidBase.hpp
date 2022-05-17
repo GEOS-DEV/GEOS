@@ -279,9 +279,6 @@ public:
   virtual real64 defaultDensity() const = 0;
   virtual real64 defaultViscosity() const = 0;
 
-  /// Save state data in preparation for next timestep
-  virtual void saveConvergedState() const override;
-
 protected:
 
   virtual void postProcessInput() override;

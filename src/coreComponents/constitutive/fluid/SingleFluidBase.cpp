@@ -63,12 +63,18 @@ void SingleFluidBase::initializeState() const
   arrayView2d< real64 > density_n      = m_density_n;
   initialDensity.setValues< parallelDevicePolicy<> >( m_density.toViewConst() );
   density_n.setValues< parallelDevicePolicy<> >( m_density.toViewConst() );
+
+  arrayView2d< real64 > internalEnergy_n = m_internalEnergy_n; 
+  internalEnergy_n.setValues< parallelDevicePolicy<> >( m_internalEnergy.toViewConst() ); 
 }
 
 void SingleFluidBase::saveConvergedState() const
 {
   arrayView2d< real64 > density_n = m_density_n;
   density_n.setValues< parallelDevicePolicy<> >( m_density.toViewConst() );
+
+  arrayView2d< real64 > internalEnergy_n = m_internalEnergy_n; 
+  internalEnergy_n.setValues< parallelDevicePolicy<> >( m_internalEnergy.toViewConst() ); 
 }
 
 //START_SPHINX_INCLUDE_00
@@ -95,23 +101,6 @@ void SingleFluidBase::allocateConstitutiveData( Group & parent,
   m_dInternalEnergy_dTemperature.resize( parent.size(), numConstitutivePointsPerParentIndex ); 
 }
 //END_SPHINX_INCLUDE_00
-
-void SingleFluidBase::saveConvergedState() const
-{
-  localIndex const numElem = m_internalEnergy.size( 0 );
-  localIndex const numGauss = m_internalEnergy.size( 1 );
-
-  arrayView2d< real64 const > intEnergy   = m_internalEnergy; 
-  arrayView2d< real64 >       intEnergy_n = m_internalEnergy_n; 
-
-  forAll< parallelDevicePolicy<> >( numElem, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-  {
-    for( localIndex q = 0; q < numGauss; ++q)
-    {
-      intEnergy_n[k][q] = intEnergy[k][q]; 
-    }
-  } );
-}
 
 } //namespace constitutive
 
