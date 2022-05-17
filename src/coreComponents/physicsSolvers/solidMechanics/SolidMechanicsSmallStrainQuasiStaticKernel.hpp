@@ -197,11 +197,10 @@ public:
     }
     // Add stabilization to block diagonal parts of the local jacobian
     // (this is a no-operation with FEM classes)
-    real64 const minusTwiceShear = -2.0 * m_constitutiveUpdate.getShearModulus( k );
     m_finiteElementSpace.template addGradGradStabilizationMatrix
     < FE_TYPE, numDofPerTrialSupportPoint, true >( stack.feStack,
                                                    stack.localJacobian,
-                                                   minusTwiceShear );
+                                                   -stabilizationPhysicalWeight( k ) );
     // m_finiteElementSpace.template addGradGradStabilizationMatrix
     // < FE_TYPE,
     //   real64 ( & ) [numNodesPerElem *numDofPerTestSupportPoint]
@@ -309,11 +308,10 @@ public:
                                      N,
                                      gravityForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
-    real64 const minusTwiceShear = -2.0 * m_constitutiveUpdate.getShearModulus( k );
     m_finiteElementSpace.template addEvaluatedGradGradStabilizationVector< FE_TYPE, numDofPerTrialSupportPoint >( stack.feStack,
                                                                                                                   stack.uhat_local,
                                                                                                                   reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
-                                                                                                                  minusTwiceShear );
+                                                                                                                  -stabilizationPhysicalWeight( k ) );
     stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
   }
 
@@ -371,6 +369,11 @@ protected:
   /// The rank global density
   arrayView2d< real64 const > const m_density;
 
+  GEOSX_HOST_DEVICE
+  real64 stabilizationPhysicalWeight( localIndex const k ) const
+  {
+    return 2.0 * m_constitutiveUpdate.getShearModulus( k );
+  }
 };
 
 /// The factory used to construct a QuasiStatic kernel.
