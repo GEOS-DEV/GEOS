@@ -158,29 +158,33 @@ TEST( VTKImport, medley )
     // - Element 1 is an hexahedron, in region 1.
     // - Element 2 is a wedge, in region 2.
     // - Element 3 is a tetrahedron, in region 3.
+    // - Element 4 is a pentagonal prism, in region 4.
+    // - Element 5 is an hexagonal prism, in region 5.
     // All the elements belong to a region. Therefore, there is no "-1" region.
-    // It contains 12 nodes, 24 edges, 17 faces.
+    // It contains 26 nodes, 49 edges, 30 faces.
 
-    ASSERT_EQ( cellBlockManager.numNodes(), 12 );
-    ASSERT_EQ( cellBlockManager.numEdges(), 24 );
-    ASSERT_EQ( cellBlockManager.numFaces(), 17 );
+    ASSERT_EQ( cellBlockManager.numNodes(), 26 );
+    ASSERT_EQ( cellBlockManager.numEdges(), 49 );
+    ASSERT_EQ( cellBlockManager.numFaces(), 30 );
 
     SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" );
-    ASSERT_EQ( allNodes.size(), 12 );
+    ASSERT_EQ( allNodes.size(), 26 );
 
-    // 4 elements types x 4 regions = 16 sub-groups
-    ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), 16 );
+    // 6 elements types x 6 regions = 36 sub-groups
+    ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), 36 );
 
     // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
     CellBlockABC const & zone0 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "0_pyramids" );
     CellBlockABC const & zone1 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "1_hexahedra" );
     CellBlockABC const & zone2 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "2_wedges" );
     CellBlockABC const & zone3 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "3_tetrahedra" );
+    CellBlockABC const & zone4 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "4_pentagonalPrisms" );
+    CellBlockABC const & zone5 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "5_hexagonalPrisms" );
 
-    std::vector< string > const elementNames{ "pyramids", "hexahedra", "wedges", "tetrahedra" };
-    for( std::size_t prefix: { 0, 1, 2, 3 } )
+    std::vector< string > const elementNames{ "pyramids", "hexahedra", "wedges", "tetrahedra", "pentagonalPrisms", "hexagonalPrisms" };
+    for( std::size_t prefix: { 0, 1, 2, 3, 4, 5 } )
     {
-      for( std::size_t i = 0; i < 4; ++i )
+      for( std::size_t i = 0; i < 6; ++i )
       {
         string const name = std::to_string( prefix ) + "_" + elementNames[i];
         CellBlockABC const & zone = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( name );
@@ -235,7 +239,41 @@ TEST( VTKImport, medley )
     EXPECT_EQ( elementToNodes( 0, 2 ), 10 );
     EXPECT_EQ( elementToNodes( 0, 3 ), 11 );
 
-    for( auto const & z: { &zone0, &zone1, &zone2, &zone3 } )
+    // Pentagonal prism
+    elementToNodes = zone4.getElemToNodes();
+    ASSERT_EQ( elementToNodes.size( 1 ), 10 );
+    ASSERT_EQ( zone4.getElemToEdges().size( 1 ), 15 );
+    ASSERT_EQ( zone4.getElemToFaces().size( 1 ), 7 );
+    EXPECT_EQ( elementToNodes( 0, 0 ), 2 );
+    EXPECT_EQ( elementToNodes( 0, 1 ), 12 );
+    EXPECT_EQ( elementToNodes( 0, 2 ), 13 );
+    EXPECT_EQ( elementToNodes( 0, 3 ), 14 );
+    EXPECT_EQ( elementToNodes( 0, 4 ), 3 );
+    EXPECT_EQ( elementToNodes( 0, 5 ), 6 );
+    EXPECT_EQ( elementToNodes( 0, 6 ), 15 );
+    EXPECT_EQ( elementToNodes( 0, 7 ), 16 );
+    EXPECT_EQ( elementToNodes( 0, 8 ), 17 );
+    EXPECT_EQ( elementToNodes( 0, 9 ), 7 );
+
+    // Hexagonal prism
+    elementToNodes = zone5.getElemToNodes();
+    ASSERT_EQ( elementToNodes.size( 1 ), 12 );
+    ASSERT_EQ( zone5.getElemToEdges().size( 1 ), 18 );
+    ASSERT_EQ( zone5.getElemToFaces().size( 1 ), 8 );
+    EXPECT_EQ( elementToNodes( 0, 0 ), 1 );
+    EXPECT_EQ( elementToNodes( 0, 1 ), 4 );
+    EXPECT_EQ( elementToNodes( 0, 2 ), 18 );
+    EXPECT_EQ( elementToNodes( 0, 3 ), 19 );
+    EXPECT_EQ( elementToNodes( 0, 4 ), 20 );
+    EXPECT_EQ( elementToNodes( 0, 5 ), 21 );
+    EXPECT_EQ( elementToNodes( 0, 6 ), 5 );
+    EXPECT_EQ( elementToNodes( 0, 7 ), 8 );
+    EXPECT_EQ( elementToNodes( 0, 8 ), 22 );
+    EXPECT_EQ( elementToNodes( 0, 9 ), 23 );
+    EXPECT_EQ( elementToNodes( 0, 10 ), 24 );
+    EXPECT_EQ( elementToNodes( 0, 11 ), 25 );
+
+    for( auto const & z: { &zone0, &zone1, &zone2, &zone3, &zone4, &zone5 } )
     {
       ASSERT_EQ( z->size(), 1 );
       ASSERT_EQ( z->getElemToNodes().size( 0 ), 1 );
