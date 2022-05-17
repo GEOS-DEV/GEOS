@@ -201,30 +201,6 @@ public:
     < FE_TYPE, numDofPerTrialSupportPoint, true >( stack.feStack,
                                                    stack.localJacobian,
                                                    -stabilizationPhysicalWeight( k ) );
-    // m_finiteElementSpace.template addGradGradStabilizationMatrix
-    // < FE_TYPE,
-    //   real64 ( & ) [numNodesPerElem *numDofPerTestSupportPoint]
-    //   [numNodesPerElem *numDofPerTestSupportPoint],
-    //   true >( stack.feStack,
-    //           stack.localJacobian,
-    //           twiceShear,
-    //           0, 0 ); // first diagonal block
-    // m_finiteElementSpace.template addGradGradStabilizationMatrix
-    // < FE_TYPE,
-    //   real64 ( & ) [numNodesPerElem *numDofPerTestSupportPoint]
-    //   [numNodesPerElem *numDofPerTestSupportPoint],
-    //   true >( stack.feStack,
-    //           stack.localJacobian,
-    //           twiceShear,
-    //           numSupportPoints, numSupportPoints ); // second diagonal block
-    // m_finiteElementSpace.template addGradGradStabilizationMatrix
-    // < FE_TYPE,
-    //   real64 ( & ) [numNodesPerElem *numDofPerTestSupportPoint]
-    //   [numNodesPerElem *numDofPerTestSupportPoint],
-    //   true >( stack.feStack,
-    //           stack.localJacobian,
-    //           twiceShear,
-    //           2*numSupportPoints, 2*numSupportPoints ); // third diagonal block
   }
 
 
@@ -308,10 +284,12 @@ public:
                                      N,
                                      gravityForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
-    m_finiteElementSpace.template addEvaluatedGradGradStabilizationVector< FE_TYPE, numDofPerTrialSupportPoint >( stack.feStack,
-                                                                                                                  stack.uhat_local,
-                                                                                                                  reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
-                                                                                                                  -stabilizationPhysicalWeight( k ) );
+    m_finiteElementSpace.template
+    addEvaluatedGradGradStabilizationVector< FE_TYPE,
+                                             numDofPerTrialSupportPoint >( stack.feStack,
+                                                                           stack.uhat_local,
+                                                                           reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
+                                                                           -stabilizationPhysicalWeight( k ) );
     stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
   }
 
@@ -369,6 +347,11 @@ protected:
   /// The rank global density
   arrayView2d< real64 const > const m_density;
 
+  /**
+   * @brief Get the physical scaling of the stabilization matrix.
+   * @param k The index of the cell.
+   * @return The scaling.
+   */
   GEOSX_HOST_DEVICE
   real64 stabilizationPhysicalWeight( localIndex const k ) const
   {
