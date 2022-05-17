@@ -191,3 +191,5 @@ inline dataRepository::Group const * HistoryCollectionBase::getTargetObject( Dom
     return targetGroup;
   }
 }
+
+}
