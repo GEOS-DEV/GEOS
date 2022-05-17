@@ -296,16 +296,16 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
                                                   real64 const dt,
                                                   real64 const timeSeismo,
                                                   localIndex iSeismo,
-                                                  arrayView1d< real64 > const var_at_np1,
-                                                  arrayView1d< real64 > const var_at_n,
-                                                  arrayView2d< real64 > var_at_receivers )
+                                                  arrayView1d< real64 const > const var_np1,
+                                                  arrayView1d< real64 const > const var_n,
+                                                  arrayView2d< real64 > varAtReceivers )
 {
-  real64 const timeNp1 = time_n+dt;
+  real64 const time_np1 = time_n+dt;
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  real64 const a1 = (dt < epsilonLoc) ? 1.0 : (timeNp1 - timeSeismo)/dt;
+  real64 const a1 = (dt < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
   real64 const a2 = 1.0 - a1;
 
   if( m_nsamplesSeismoTrace > 0 )
@@ -314,16 +314,16 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
     {
       if( receiverIsLocal[ircv] == 1 )
       {
-        var_at_receivers[iSeismo][ircv] = 0.0;
-        real64 vtmpNp1 = 0.0;
-        real64 vtmpN = 0.0;
+        varAtReceivers[iSeismo][ircv] = 0.0;
+        real64 vtmp_np1 = 0.0;
+        real64 vtmp_n = 0.0;
         for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
         {
-          vtmpNp1 += var_at_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
-          vtmpN += var_at_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+          vtmp_np1 += var_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+          vtmp_n += var_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
         }
         // linear interpolation between the pressure value at time_n and time_(n+1)
-        var_at_receivers[iSeismo][ircv] = a1*vtmpN + a2*vtmpNp1;
+        varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
       }
     } );
   }
@@ -343,7 +343,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
           // TODO: remove saveSeismo and replace with TimeHistory
           for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
           {
-            this->saveSeismo( iSample, var_at_receivers[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+            this->saveSeismo( iSample, varAtReceivers[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
           }
         }
       }
@@ -605,8 +605,8 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n, integer const, integ
                                                 arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-    arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+    arrayView1d< real64 const > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+    arrayView1d< real64 const > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
     arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, 0, p_np1, p_n, p_rcvs );
   } );
@@ -614,15 +614,15 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n, integer const, integ
 
 void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
                                                       real64 const dt,
-                                                      arrayView1d< real64 > const var_at_np1,
-                                                      arrayView1d< real64 > const var_at_n,
-                                                      arrayView2d< real64 > var_at_receivers )
+                                                      arrayView1d< real64 const > const var_np1,
+                                                      arrayView1d< real64 const > const var_n,
+                                                      arrayView2d< real64 > varAtReceivers )
 {
   for( real64 timeSeismo;
-       (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= time_n && m_indexSeismoTrace < m_nsamplesSeismoTrace;
+       (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace;
        m_indexSeismoTrace++ )
   {
-    computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, var_at_np1, var_at_n, var_at_receivers );
+    computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, var_np1, var_n, varAtReceivers );
   }
 }
 
