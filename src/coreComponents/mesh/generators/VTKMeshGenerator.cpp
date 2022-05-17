@@ -377,16 +377,18 @@ ElementType convertVtkToGeosxElementType( VTKCellType const cellType )
 {
   switch( cellType )
   {
-    case VTK_VERTEX:     return ElementType::Vertex;
-    case VTK_LINE:       return ElementType::Line;
-    case VTK_TRIANGLE:   return ElementType::Triangle;
-    case VTK_QUAD:       return ElementType::Quadrilateral;
-    case VTK_POLYGON:    return ElementType::Polygon;
-    case VTK_TETRA:      return ElementType::Tetrahedron;
-    case VTK_PYRAMID:    return ElementType::Pyramid;
-    case VTK_WEDGE:      return ElementType::Wedge;
-    case VTK_HEXAHEDRON: return ElementType::Hexahedron;
-    case VTK_POLYHEDRON: return ElementType::Polyhedron;
+    case VTK_VERTEX:           return ElementType::Vertex;
+    case VTK_LINE:             return ElementType::Line;
+    case VTK_TRIANGLE:         return ElementType::Triangle;
+    case VTK_QUAD:             return ElementType::Quadrilateral;
+    case VTK_POLYGON:          return ElementType::Polygon;
+    case VTK_TETRA:            return ElementType::Tetrahedron;
+    case VTK_PYRAMID:          return ElementType::Pyramid;
+    case VTK_WEDGE:            return ElementType::Wedge;
+    case VTK_HEXAHEDRON:       return ElementType::Hexahedron;
+    case VTK_PENTAGONAL_PRISM: return ElementType::Prism5;
+    case VTK_HEXAGONAL_PRISM:  return ElementType::Prism6;
+    case VTK_POLYHEDRON:       return ElementType::Polyhedron;
     default:
     {
       GEOSX_ERROR( cellType << " is not a recognized cell type to be used with the VTKMeshGenerator" );
@@ -587,6 +589,8 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
     case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
     case ElementType::Wedge:         return { 0, 3, 2, 5, 1, 4 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
   }
   return {};
@@ -639,6 +643,8 @@ string getElementTypeName( ElementType const type )
     case ElementType::Tetrahedron: return "tetrahedra";
     case ElementType::Wedge:       return "wedges";
     case ElementType::Pyramid:     return "pyramids";
+    case ElementType::Prism5:      return "pentagonalPrisms";
+    case ElementType::Prism6:      return "hexagonalPrisms";
     case ElementType::Polyhedron:  return "polyhedra";
     default:
     {
@@ -1002,12 +1008,7 @@ real64 VTKMeshGenerator::writeNodes( CellBlockManager & cellBlockManager ) const
 
 /**
  * @brief Build all the cell blocks.
- * @param[in] mesh the vtkUnstructuredGrid that is loaded
- * @param[in] regionsHex map from region index to the hexahedron indexes in this region
- * @param[in] regionsTetra map from region index to the tetra indexes in this region
- * @param[in] regionsWedges map from region index to the wedges indexes in this region
- * @param[in] regionsPyramids map from region index to the pyramids indexes in this region
- * @param[out] cellBlockManager The instance that stores the cell blocks.
+ * @param[in] cellBlockManager The instance that stores the cell blocks.
  */
 void VTKMeshGenerator::writeCells( CellBlockManager & cellBlockManager ) const
 {
