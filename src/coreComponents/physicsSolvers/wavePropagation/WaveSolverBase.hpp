@@ -110,9 +110,9 @@ protected:
                                    real64 const dt,
                                    real64 const timeSeismo,
                                    localIndex iSeismo,
-                                   arrayView1d< real64 > const var_at_np1,
-                                   arrayView1d< real64 > const var_at_n,
-                                   arrayView2d< real64 > var_at_receivers ) = 0;
+                                   arrayView1d< real64 const > const var_np1,
+                                   arrayView1d< real64 const > const var_n,
+                                   arrayView2d< real64 > varAtReceivers ) = 0;
 
   /**
    * @brief Temporary debug function. Saves the sismo trace to a file.
