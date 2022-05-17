@@ -90,8 +90,8 @@ ENUM_STRINGS( ElementType,
               "C3D5",
               "C3D6",
               "C3D8",
-              "C3D10",
-              "C3D12",
+              "PentagonalPrism",
+              "HexagonalPrism",
               "Polyhedron" );
 
 } // namespace geosx
