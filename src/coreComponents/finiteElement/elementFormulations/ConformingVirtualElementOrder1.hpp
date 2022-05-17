@@ -608,13 +608,13 @@ private:
 };
 
 /// Convenience typedef for VEM on tetrahedra.
-using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 4 >;
+using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 3 >;
 /// Convenience typedef for VEM on hexahedra.
-using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 6 >;
+using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 4 >;
 /// Convenience typedef for VEM on pyramids.
-using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 5 >;
+using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 4 >;
 /// Convenience typedef for VEM on wedges.
-using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 5 >;
+using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 4 >;
 }
 }
 
