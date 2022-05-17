@@ -76,8 +76,11 @@ public:
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::cprLikeBlockDiag; // Non-Galerkin Quasi-IMPES CPR
 
-    // Global smoother at each level, only do block-GS for the condensed system
-    m_levelSmoothType[1] = 1;
+    // Global smoothing performed only on the first level,
+    // after the reservoir density associated with the volume constraint has been eliminated
+    m_levelSmoothType[0]  = 0;
+    m_levelSmoothIters[0] = 0;
+    m_levelSmoothType[1]  = 1;
     m_levelSmoothIters[1] = 1;
   }
 
@@ -95,6 +98,7 @@ public:
                                                                   m_numLabels, m_ptrLabels,
                                                                   mgrData.pointMarkers.data() ) );
 
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, toUnderlyingPtr( m_levelInterpType ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );
@@ -103,10 +107,7 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelSmoothIters ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // Low tolerance to remove only zeros
 
-    // Note: uncommenting HYPRE_MGRSetLevelFRelaxMethod and commenting HYPRE_MGRSetRelaxType breaks the recipe. This requires further
-    // investigation
-    //GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, 0 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::jacobi ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
 
 #ifdef GEOSX_USE_HYPRE_CUDA
