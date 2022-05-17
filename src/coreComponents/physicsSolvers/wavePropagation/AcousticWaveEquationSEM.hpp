@@ -103,9 +103,9 @@ public:
                                    real64 const dt,
                                    real64 const timeSeismo,
                                    localIndex const iSeismo,
-                                   arrayView1d< real64 > const var_at_np1,
-                                   arrayView1d< real64 > const var_at_n,
-                                   arrayView2d< real64 > var_at_receivers ) override;
+                                   arrayView1d< real64 const > const var_np1,
+                                   arrayView1d< real64 const > const var_n,
+                                   arrayView2d< real64 > varAtReceivers ) override;
 
   /**
    * TODO: move implementation into WaveSolverBase
@@ -118,9 +118,9 @@ public:
    */
   virtual void computeAllSeismoTraces( real64 const time_n,
                                        real64 const dt,
-                                       arrayView1d< real64 > const var_at_np1,
-                                       arrayView1d< real64 > const var_at_n,
-                                       arrayView2d< real64 > var_at_receivers );
+                                       arrayView1d< real64 const > const var_np1,
+                                       arrayView1d< real64 const > const var_n,
+                                       arrayView2d< real64 > varAtReceivers );
 
 
   /**
