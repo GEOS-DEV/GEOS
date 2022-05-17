@@ -116,14 +116,14 @@
       name="sourceTerm"
       objectPath="ElementRegions/Domain"
       fieldName="pressure"
-      scale="1.0"
+      scale="5e6"
       setNames="{ source }"/>
 
    <FieldSpecification
       name="sinkTerm"
       objectPath="ElementRegions/Domain"
       fieldName="pressure"
-      scale="-1.0"
+      scale="-5e6"
       setNames="{ sink }"/>
   </FieldSpecifications>
 
