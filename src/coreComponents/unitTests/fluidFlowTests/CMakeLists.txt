@@ -6,6 +6,7 @@ set( gtest_geosx_tests
      testSinglePhaseBaseKernels.cpp
      testSinglePhaseFVMKernels.cpp
      testSinglePhaseHybridFVMKernels.cpp
+     testThermalCompMultiphaseFlow.cpp
    )
 
 set( dependencyList gtest )
@@ -23,7 +24,8 @@ endif()
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testCompMultiphaseFlow.cpp
-          testCompMultiphaseFlowHybrid.cpp )
+          testCompMultiphaseFlowHybrid.cpp
+          testReactiveCompositionalMultiphaseOBL.cpp )
 
     set( dependencyList ${dependencyList} PVTPackage )
 endif()

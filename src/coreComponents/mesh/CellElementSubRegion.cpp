@@ -43,6 +43,12 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::toEmbSurfString(), &m_toEmbeddedSurfaces ).setSizedFromParent( 1 );
 
   registerWrapper( viewKeyStruct::fracturedCellsString(), &m_fracturedCells ).setSizedFromParent( 1 );
+
+  excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
+                                viewKeyStruct::edgeListString(),
+                                viewKeyStruct::faceListString(),
+                                viewKeyStruct::fracturedCellsString(),
+                                viewKeyStruct::toEmbSurfString() } );
 }
 
 void CellElementSubRegion::copyFromCellBlock( CellBlockABC & cellBlock )
@@ -87,17 +93,6 @@ void CellElementSubRegion::addFracturedElement( localIndex const cellElemIndex,
   m_toEmbeddedSurfaces.emplaceBack( cellElemIndex, embSurfIndex );
   // add the element to the fractured elements list
   m_fracturedCells.insert( cellElemIndex );
-}
-
-
-std::set< string > CellElementSubRegion::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( { viewKeyStruct::nodeListString(),
-                   viewKeyStruct::edgeListString(),
-                   viewKeyStruct::faceListString(),
-                   viewKeyStruct::toEmbSurfString() } );
-  return result;
 }
 
 
@@ -276,47 +271,70 @@ void CellElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
                                     clearIfUnmapped );
 }
 
-void CellElementSubRegion::getFaceNodes( localIndex const elementIndex,
-                                         localIndex const localFaceIndex,
-                                         array1d< localIndex > & nodeIndices ) const
+localIndex CellElementSubRegion::getFaceNodes( localIndex const elementIndex,
+                                               localIndex const localFaceIndex,
+                                               Span< localIndex > const nodeIndices ) const
 {
-  geosx::getFaceNodes( m_elementType, elementIndex, localFaceIndex, m_toNodesRelation, nodeIndices );
+  return geosx::getFaceNodes( m_elementType, elementIndex, localFaceIndex, m_toNodesRelation, nodeIndices );
 }
 
 void CellElementSubRegion::
   calculateElementCenterAndVolume( localIndex const k,
                                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
 {
-  LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
-  real64 Xlocal[10][3];
-
-  for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+  auto getElementCoordinatesaAndComputeElementCenter = [k, X, this]( auto & XLocal )
   {
-    LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
-    LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
-  }
-  LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
+    LvArray::tensorOps::fill< 3 >( m_elementCenter[k], 0 );
+    for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+    {
+      LvArray::tensorOps::copy< 3 >( XLocal[a], X[m_toNodesRelation( k, a )] );
+      LvArray::tensorOps::add< 3 >( m_elementCenter[k], XLocal[a] );
+    }
+    LvArray::tensorOps::scale< 3 >( m_elementCenter[k], 1.0 / m_numNodesPerElement );
+  };
 
   switch( m_elementType )
   {
     case ElementType::Hexahedron:
     {
-      m_elementVolume[k] = computationalGeometry::hexVolume( Xlocal );
+      real64 Xlocal[8][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::hexahedronVolume( Xlocal );
       break;
     }
     case ElementType::Tetrahedron:
     {
-      m_elementVolume[k] = computationalGeometry::tetVolume( Xlocal );
+      real64 Xlocal[4][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::tetrahedronVolume( Xlocal );
       break;
     }
-    case ElementType::Prism:
+    case ElementType::Wedge:
     {
+      real64 Xlocal[6][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
       m_elementVolume[k] = computationalGeometry::wedgeVolume( Xlocal );
       break;
     }
     case ElementType::Pyramid:
     {
+      real64 Xlocal[5][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
       m_elementVolume[k] = computationalGeometry::pyramidVolume( Xlocal );
+      break;
+    }
+    case ElementType::Prism5:
+    {
+      real64 Xlocal[10][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 5 >( Xlocal );
+      break;
+    }
+    case ElementType::Prism6:
+    {
+      real64 Xlocal[12][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 6 >( Xlocal );
       break;
     }
     default:
@@ -325,12 +343,18 @@ void CellElementSubRegion::
                               m_elementType, getName() ) );
     }
   }
+
+  GEOSX_ERROR_IF( m_elementVolume[k] <= 0.0,
+                  GEOSX_FMT( "Negative volume for element {} type {} in subregion {}",
+                             k, m_elementType, getName() ) );
 }
 
 void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                                 FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) )
 {
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  GEOSX_MARK_FUNCTION;
+
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
 
   forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
   {

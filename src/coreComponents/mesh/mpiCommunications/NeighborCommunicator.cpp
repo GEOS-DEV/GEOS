@@ -198,10 +198,10 @@ inline int GhostSize( NodeManager & nodeManager, arrayView1d< localIndex const >
   bufferSize += faceManager.packUpDownMapsSize( faceAdjacencyList );
   bufferSize += elemManager.packUpDownMapsSize( elementAdjacencyList );
   parallelDeviceEvents events;
-  bufferSize += nodeManager.packSize( {}, nodeAdjacencyList, 0, false, events );
-  bufferSize += edgeManager.packSize( {}, edgeAdjacencyList, 0, false, events );
-  bufferSize += faceManager.packSize( {}, faceAdjacencyList, 0, false, events );
-  bufferSize += elemManager.packSize( {}, elementAdjacencyList );
+  bufferSize += nodeManager.packSize( nodeAdjacencyList, 0, false, events );
+  bufferSize += edgeManager.packSize( edgeAdjacencyList, 0, false, events );
+  bufferSize += faceManager.packSize( faceAdjacencyList, 0, false, events );
+  bufferSize += elemManager.packSize( elementAdjacencyList );
   waitAllDeviceEvents( events );
   return bufferSize;
 }
@@ -222,10 +222,10 @@ inline int PackGhosts( buffer_unit_type * sendBufferPtr,
   packedSize += faceManager.packUpDownMaps( sendBufferPtr, faceAdjacencyList );
   packedSize += elemManager.packUpDownMaps( sendBufferPtr, elementAdjacencyList );
   parallelDeviceEvents events;
-  packedSize += nodeManager.pack( sendBufferPtr, {}, nodeAdjacencyList, 0, false, events );
-  packedSize += edgeManager.pack( sendBufferPtr, {}, edgeAdjacencyList, 0, false, events );
-  packedSize += faceManager.pack( sendBufferPtr, {}, faceAdjacencyList, 0, false, events );
-  packedSize += elemManager.pack( sendBufferPtr, {}, elementAdjacencyList );
+  packedSize += nodeManager.pack( sendBufferPtr, nodeAdjacencyList, 0, false, events );
+  packedSize += edgeManager.pack( sendBufferPtr, edgeAdjacencyList, 0, false, events );
+  packedSize += faceManager.pack( sendBufferPtr, faceAdjacencyList, 0, false, events );
+  packedSize += elemManager.pack( sendBufferPtr, elementAdjacencyList );
   waitAllDeviceEvents( events );
   return packedSize;
 }
@@ -478,7 +478,8 @@ void NeighborCommunicator::unpackAndRebuildSyncLists( MeshLevel & mesh,
   } );
 }
 
-int NeighborCommunicator::packCommSizeForSync( std::map< string, string_array > const & fieldNames,
+
+int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsToBeSync,
                                                MeshLevel const & mesh,
                                                int const commID,
                                                bool onDevice,
@@ -497,35 +498,42 @@ int NeighborCommunicator::packCommSizeForSync( std::map< string, string_array > 
 
   int bufferSize = 0;
 
-  if( fieldNames.count( "node" ) > 0 )
+  for( auto const & iter : fieldsToBeSync.getFields() )
   {
-    bufferSize += nodeManager.packSize( fieldNames.at( "node" ), nodeGhostsToSend, 0, onDevice, events );
-  }
-
-  if( fieldNames.count( "edge" ) > 0 )
-  {
-    bufferSize += edgeManager.packSize( fieldNames.at( "edge" ), edgeGhostsToSend, 0, onDevice, events );
-  }
-
-  if( fieldNames.count( "face" ) > 0 )
-  {
-    bufferSize += faceManager.packSize( fieldNames.at( "face" ), faceGhostsToSend, 0, onDevice, events );
-  }
-
-  if( fieldNames.count( "elems" ) > 0 )
-  {
-    elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+    FieldLocation location;
+    fieldsToBeSync.getLocation( iter.first, location );
+    switch( location )
     {
-      bufferSize += subRegion.packSize( fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
-    } );
+      case FieldLocation::Node:
+      {
+        bufferSize += nodeManager.packSize( iter.second, nodeGhostsToSend, 0, onDevice, events );
+        break;
+      }
+      case FieldLocation::Edge:
+      {
+        bufferSize += edgeManager.packSize( iter.second, edgeGhostsToSend, 0, onDevice, events );
+        break;
+      }
+      case FieldLocation::Face:
+      {
+        bufferSize += faceManager.packSize( iter.second, faceGhostsToSend, 0, onDevice, events );
+        break;
+      }
+      case FieldLocation::Elem:
+      {
+        elemManager.getRegion( fieldsToBeSync.getRegionName( iter.first ) ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+        {
+          bufferSize += subRegion.packSize( iter.second, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
+        } );
+        break;
+      }
+    }
   }
-
   this->m_sendBufferSize[commID] = bufferSize;
   return bufferSize;
 }
 
-
-void NeighborCommunicator::packCommBufferForSync( std::map< string, string_array > const & fieldNames,
+void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & fieldsToBeSync,
                                                   MeshLevel const & mesh,
                                                   int const commID,
                                                   bool onDevice,
@@ -547,34 +555,44 @@ void NeighborCommunicator::packCommBufferForSync( std::map< string, string_array
   buffer_unit_type * sendBufferPtr = sendBuff.data();
 
   int packedSize = 0;
-  if( fieldNames.count( "node" ) > 0 )
-  {
-    packedSize += nodeManager.pack( sendBufferPtr, fieldNames.at( "node" ), nodeGhostsToSend, 0, onDevice, events );
-  }
 
-  if( fieldNames.count( "edge" ) > 0 )
+  for( auto const & iter : fieldsToBeSync.getFields() )
   {
-    packedSize += edgeManager.pack( sendBufferPtr, fieldNames.at( "edge" ), edgeGhostsToSend, 0, onDevice, events );
-  }
-
-  if( fieldNames.count( "face" ) > 0 )
-  {
-    packedSize += faceManager.pack( sendBufferPtr, fieldNames.at( "face" ), faceGhostsToSend, 0, onDevice, events );
-  }
-
-  if( fieldNames.count( "elems" ) > 0 )
-  {
-    elemManager.forElementSubRegions( [&]( ElementSubRegionBase const & subRegion )
+    FieldLocation location;
+    fieldsToBeSync.getLocation( iter.first, location );
+    switch( location )
     {
-      packedSize += subRegion.pack( sendBufferPtr, fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
-    } );
+      case FieldLocation::Node:
+      {
+        packedSize += nodeManager.pack( sendBufferPtr, iter.second, nodeGhostsToSend, 0, onDevice, events );
+        break;
+      }
+      case FieldLocation::Edge:
+      {
+        packedSize += edgeManager.pack( sendBufferPtr, iter.second, edgeGhostsToSend, 0, onDevice, events );
+        break;
+      }
+      case FieldLocation::Face:
+      {
+        packedSize += faceManager.pack( sendBufferPtr, iter.second, faceGhostsToSend, 0, onDevice, events );
+        break;
+      }
+      case FieldLocation::Elem:
+      {
+        elemManager.getRegion( fieldsToBeSync.getRegionName( iter.first ) ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+        {
+          packedSize += subRegion.pack( sendBufferPtr, iter.second, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
+        } );
+        break;
+      }
+    }
   }
 
   GEOSX_ERROR_IF_NE( bufferSize, packedSize );
 }
 
 
-void NeighborCommunicator::unpackBufferForSync( std::map< string, string_array > const & fieldNames,
+void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsToBeSync,
                                                 MeshLevel & mesh,
                                                 int const commID,
                                                 bool onDevice,
@@ -596,29 +614,39 @@ void NeighborCommunicator::unpackBufferForSync( std::map< string, string_array >
 
   int unpackedSize = 0;
 
-  if( fieldNames.count( "node" ) > 0 )
+  for( auto const & iter : fieldsToBeSync.getFields() )
   {
-    unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeGhostsToReceive, 0, onDevice, events );
-  }
-
-  if( fieldNames.count( "edge" ) > 0 )
-  {
-    unpackedSize += edgeManager.unpack( receiveBufferPtr, edgeGhostsToReceive, 0, onDevice, events );
-  }
-
-  if( fieldNames.count( "face" ) > 0 )
-  {
-    unpackedSize += faceManager.unpack( receiveBufferPtr, faceGhostsToReceive, 0, onDevice, events );
-  }
-
-  if( fieldNames.count( "elems" ) > 0 )
-  {
-    elemManager.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase & subRegion )
+    FieldLocation location;
+    fieldsToBeSync.getLocation( iter.first, location );
+    switch( location )
     {
-      unpackedSize += subRegion.unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, onDevice, events );
-    } );
+      case FieldLocation::Node:
+      {
+        unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeGhostsToReceive, 0, onDevice, events );
+        break;
+      }
+      case FieldLocation::Edge:
+      {
+        unpackedSize += edgeManager.unpack( receiveBufferPtr, edgeGhostsToReceive, 0, onDevice, events );
+        break;
+      }
+      case FieldLocation::Face:
+      {
+        unpackedSize += faceManager.unpack( receiveBufferPtr, faceGhostsToReceive, 0, onDevice, events );
+        break;
+      }
+      case FieldLocation::Elem:
+      {
+        elemManager.getRegion( fieldsToBeSync.getRegionName( iter.first ) ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+        {
+          unpackedSize += subRegion.unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, onDevice, events );
+        } );
+        break;
+      }
+    }
   }
 }
+
 
 
 } /* namespace geosx */
