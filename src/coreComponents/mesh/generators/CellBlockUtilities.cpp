@@ -18,6 +18,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
+#include "mesh/generators/PrismUtilities.hpp"
 
 namespace geosx
 {
@@ -263,6 +264,14 @@ localIndex getFaceNodes( ElementType const elementType,
     case ElementType::Pyramid:
     {
       return getFaceNodesPyramid( faceNumber, elementToNodes[elemIdx], faceNodes );
+    }
+    case ElementType::Prism5:
+    {
+      return getFaceNodesPrism< 5 >( faceNumber, elementToNodes[elemIdx], faceNodes );
+    }
+    case ElementType::Prism6:
+    {
+      return getFaceNodesPrism< 6 >( faceNumber, elementToNodes[elemIdx], faceNodes );
     }
     default:
     {

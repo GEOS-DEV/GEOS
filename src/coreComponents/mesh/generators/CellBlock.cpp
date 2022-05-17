@@ -58,6 +58,20 @@ void CellBlock::setElementType( ElementType elementType )
       m_numFacesPerElement = 5;
       break;
     }
+    case ElementType::Prism5:
+    {
+      m_numNodesPerElement = 10;
+      m_numEdgesPerElement = 15;
+      m_numFacesPerElement = 7;
+      break;
+    }
+    case ElementType::Prism6:
+    {
+      m_numNodesPerElement = 12;
+      m_numEdgesPerElement = 18;
+      m_numFacesPerElement = 8;
+      break;
+    }
     default:
     {
       GEOSX_ERROR( "Invalid element type " << m_elementType << " for CellBlock " << getName() );

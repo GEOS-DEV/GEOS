@@ -36,9 +36,11 @@ TEST( MeshEnums, ElementType )
   ASSERT_EQ( "C3D5", toString( EnumType::Pyramid ) );
   ASSERT_EQ( "C3D6", toString( EnumType::Wedge ) );
   ASSERT_EQ( "C3D8", toString( EnumType::Hexahedron ) );
+  ASSERT_EQ( "PentagonalPrism", toString( EnumType::Prism5 ) );
+  ASSERT_EQ( "HexagonalPrism", toString( EnumType::Prism6 ) );
   ASSERT_EQ( "Polyhedron", toString( EnumType::Polyhedron ) );
 
-  ASSERT_EQ( numElementTypes(), 10 );
+  ASSERT_EQ( numElementTypes(), 12 );
 }
 
 

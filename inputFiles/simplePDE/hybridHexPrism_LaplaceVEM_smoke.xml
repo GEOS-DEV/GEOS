@@ -7,25 +7,18 @@
   </Included>
 
   <Mesh>
-    <InternalMesh
+    <VTKMesh
       name="mesh"
-      elementTypes="{ C3D6 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 10 }"
-      ny="{ 5 }"
-      nz="{ 15 }"
-      cellBlockNames="{ cb1 }"/>
+      file="hybridHexPrismMesh.vtk"/>
   </Mesh>
 
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ cb1 }"
+      cellBlocks="{ 0_hexahedra, 1_pentagonalPrisms, 2_hexagonalPrisms }"
       materialList="{ nullModel }"/>
   </ElementRegions>
-
+  
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
@@ -36,3 +29,4 @@
   </NumericalMethods>
 
 </Problem>
+
