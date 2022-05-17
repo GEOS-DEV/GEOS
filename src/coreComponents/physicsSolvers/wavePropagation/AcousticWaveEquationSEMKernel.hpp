@@ -153,6 +153,7 @@ struct PrecomputeSourceAndReceiverKernel
   launch( localIndex const size,
           localIndex const numNodesPerElem,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const & facesToNodes,
@@ -197,7 +198,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                              facesToNodes,
                                                              X,
                                                              coordsOnRefElem );
-          if( sourceFound )
+          if( sourceFound && elemGhostRank[k] < 0 )
           {
             sourceIsLocal[isrc] = 1;
             real64 Ntest[FE_TYPE::numNodes];
@@ -239,7 +240,8 @@ struct PrecomputeSourceAndReceiverKernel
                                                              facesToNodes,
                                                              X,
                                                              coordsOnRefElem );
-          if( receiverFound )
+
+          if( receiverFound && elemGhostRank[k] < 0 )
           {
             receiverIsLocal[ircv] = 1;
 

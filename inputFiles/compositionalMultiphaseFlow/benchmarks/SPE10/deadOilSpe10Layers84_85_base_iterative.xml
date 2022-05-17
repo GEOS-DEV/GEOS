@@ -29,13 +29,9 @@
   </Solvers>
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS_END -->  
 
-  <!-- Some recent changes in hypre have significantly undermined the ability of MGR to solve the systems with "large" time steps -->
-  <!-- For this reason, I drastically reduced the time step size in this case (otherswise, the finer benchmark crashes) -->        
-  <!-- TODO: increase max time and time step size once linear solver is fixed -->
-  
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->
   <Events
-    maxTime="1e6">
+    maxTime="2e6">
 
    <PeriodicEvent
       name="outputs"
@@ -45,12 +41,12 @@
     
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="8000"
+      maxEventDt="5e5"
       target="/Solvers/compflow"/>
     
     <PeriodicEvent
       name="restarts"
-      timeFrequency="2.5e5"
+      timeFrequency="1e6"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
     
