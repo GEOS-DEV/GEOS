@@ -194,6 +194,9 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   // retrieve seismo
   arrayView2d< real64 > const p_rcvs = propagator->getReference< array2d< real64 > >( AcousticWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
 
+  // move it to CPU, if needed
+  p_rcvs.move( LvArray::MemorySpace::host, false );
+
   // check number of seismos and trace length
   ASSERT_EQ( p_rcvs.size( 1 ), 9 );
   ASSERT_EQ( p_rcvs.size( 0 ), 11 );
