@@ -76,7 +76,7 @@ void SinglePhaseFVM< BASE >::setupDofs( DomainPartition const & domain,
                                         DofManager & dofManager ) const
 {
   dofManager.addField( extrinsicMeshData::flow::pressure::key(),
-                       DofManager::Location::Elem,
+                       FieldLocation::Elem,
                        1,
                        BASE::m_meshTargets );
 
@@ -130,11 +130,13 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
       arrayView1d< globalIndex const > const & dofNumber = subRegion.template getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & volume         = subRegion.getElementVolume();
-      arrayView1d< real64 const > const & dens_n        = subRegion.template getExtrinsicData< extrinsicMeshData::flow::density_n >();
+
+      SingleFluidBase const & fluidModel =
+        SolverBase::getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( BASE::viewKeyStruct::fluidNamesString() ) );
+      arrayView2d< real64 const > const & density_n = fluidModel.density_n();
 
       CoupledSolidBase const & solidModel =
-        SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( BASE::viewKeyStruct::solidNamesString() ) );
-
+        SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( BASE::viewKeyStruct::solidNamesString() ) );
       arrayView2d< real64 const > const & porosity_n = solidModel.getPorosity_n();
 
       ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
@@ -142,7 +144,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
                                                             dofNumber,
                                                             elemGhostRank,
                                                             volume,
-                                                            dens_n,
+                                                            density_n,
                                                             porosity_n,
                                                             localResidualNorm );
 
@@ -177,12 +179,13 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                arrayView1d< string const > const & regionNames )
   {
-    std::map< string, string_array > fieldNames;
-    fieldNames["elems"].emplace_back( string( extrinsicMeshData::flow::pressure::key() ) );
+    FieldIdentifiers fieldsToBeSync;
 
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key() }, regionNames );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );
 }
 

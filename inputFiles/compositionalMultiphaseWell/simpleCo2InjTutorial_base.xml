@@ -1,9 +1,5 @@
 <?xml version="1.0" ?>
 
-<!-- Some recent changes in hypre have broken the MGR recipe for this tutorial -->
-<!-- It no longer works and fails with an error about block-ordering when the preconditioner is called -->
-<!-- The error has been fixed in hypre, the fix needs to be merged in hypre develop, and then added to our TPLs --> 
-
 <Problem>
 
   <!-- SPHINX_FIELD_CASE_Co2_SOLVER -->
@@ -17,15 +13,13 @@
       targetRegions="{ reservoir, wellRegion }">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
-        lineSearchAction="Attempt"
+        lineSearchAction="None"
         maxTimeStepCuts="10"
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="fgmres"
         preconditionerType="mgr"
-        krylovTol="1e-4"
-        krylovAdaptiveTol="1"
-        krylovWeakestTol="1e-2"/>
+        krylovTol="1e-5"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM
@@ -40,17 +34,22 @@
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion }"
+      maxCompFractionChange="0.2"
       logLevel="1"
       useMass="1">
       <WellControls
         name="wellControls"
         type="injector"
         control="totalVolRate"
-        referenceElevation="7500"
-        targetBHP="1e8"
-        targetTotalRate="5e-2"
+        enableCrossflow="0"
+        referenceElevation="6650"
+        useSurfaceConditions="1"            
+        surfacePressure="101325"  
+        surfaceTemperature="288.71" 
+        targetBHP="5e7"
+        targetTotalRate="1.5"
         injectionTemperature="368.15"
-        injectionStream="{ 0.995, 0.005 }"/>
+        injectionStream="{ 1, 0 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
   <!-- SPHINX_FIELD_CASE_Co2_SOLVER_END -->  
@@ -72,8 +71,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        />
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
   <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL_END -->
@@ -85,7 +83,6 @@
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-
       phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
       flashModelParaFile="co2flash.txt"/>
 

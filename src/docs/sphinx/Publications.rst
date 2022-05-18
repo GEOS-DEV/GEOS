@@ -11,11 +11,6 @@ Preprints and Early-Views
    :widths: 100
    :header-rows: 0
 
-   * - | **A scalable preconditioning framework for stabilized contact mechanics with hydraulically active fractures**
-       | A Franceschini, L Gazzola, M Ferronato
-       | arXiv preprint
-       | `arXiv:2112.12397 <https://arxiv.org/abs/2112.12397>`_
-       
    * - | **Deep learning-accelerated 3D carbon storage reservoir pressure forecasting based on data assimilation using surface displacement from InSAR**
        | H Tang, P Fu, H Jo, S Jiang, CS Sherman, F Hamon, NA Azzolina, JP Morris
        | arXiv preprint
@@ -49,6 +44,11 @@ Preprints and Early-Views
        | Journal of Computational Physics 
        | `doi:10.1016/j.jcp.2022.111150 <https://doi.org/10.1016/j.jcp.2022.111150>`_
 
+   * - | **A scalable preconditioning framework for stabilized contact mechanics with hydraulically active fractures**
+       | A Franceschini, L Gazzola, M Ferronato
+       | Journal of Computational Physics 
+       | `doi:10.1016/j.jcp.2022.111276 <https://doi.org/10.1016/j.jcp.2022.111276>`_
+       
    * - | **Enhanced Relaxed Physical Factorization preconditioner for coupled poromechanics**
        | M Frigo, N Castelletto, M Ferronato
        | Computers & Mathematics with Applications
