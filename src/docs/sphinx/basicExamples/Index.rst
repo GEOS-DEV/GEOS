@@ -17,5 +17,7 @@ Basic Examples
 
    hydraulicFracturing/Example
 
+   triaxialDriver/Example
+
 
 
