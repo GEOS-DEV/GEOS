@@ -267,9 +267,9 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
+  for( MeshBody * meshBody : domain.getMeshBodies() )
   {
-    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = meshBody->getMeshLevel( 0 );
 
     for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {

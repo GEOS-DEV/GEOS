@@ -164,15 +164,31 @@ public:
    * @brief Get the mesh bodies, const version.
    * @return Reference to a const instance of a Group that contains MeshBody instances.
    */
-  Group const & getMeshBodies() const
+  Group const & getMeshBodiesGrp() const
   { return this->getGroup( groupKeys.meshBodies ); }
 
   /**
    * @brief Get the mesh bodies.
    * @return Reference to a instance of a Group that contains MeshBody instances.
    */
-  Group & getMeshBodies()
+  Group & getMeshBodiesGrp()
   { return this->getGroup( groupKeys.meshBodies ); }
+
+  std::vector< const MeshBody * > getMeshBodies() const
+  {
+    std::vector< const MeshBody * > result;
+    auto filler = [&]( MeshBody const & mb){ result.emplace_back( &mb ); };
+    this->getGroup( groupKeys.meshBodies ).forSubGroups< MeshBody >( filler );
+    return result;
+  }
+
+  std::vector< MeshBody * > getMeshBodies()
+  {
+    std::vector< MeshBody * > result;
+    auto filler = [&]( MeshBody & mb ) { result.emplace_back( &mb ); };
+    this->getGroup( groupKeys.meshBodies ).forSubGroups< MeshBody >( filler );
+    return result;
+  }
 
   /**
    * @brief Get a MeshBody by name, const version.
@@ -182,7 +198,7 @@ public:
    */
   template< typename KEY_TYPE >
   MeshBody const & getMeshBody( KEY_TYPE const & key ) const
-  { return getMeshBodies().getGroup< MeshBody >( key ); }
+  { return getMeshBodiesGrp().getGroup< MeshBody >( key ); }
 
   /**
    * @brief Get a MeshBody by name.
@@ -192,47 +208,7 @@ public:
    */
   template< typename KEY_TYPE >
   MeshBody & getMeshBody( KEY_TYPE const & key )
-  { return getMeshBodies().getGroup< MeshBody >( key ); }
-
-
-  /**
-   * @brief Apply the given functor to all meshBodies.
-   * @tparam FUNCTION the type of functor to call
-   * @param[in] function  the functor to call
-   */
-  template< typename FUNCTION >
-  void forMeshBodies( FUNCTION && function ) const
-  {
-    getMeshBodies().forSubGroups< MeshBody >( std::forward< FUNCTION >( function ) );
-  }
-
-  /**
-   * @copydoc forMeshBodies(FUNCTION &&) const
-   */
-  template< typename FUNCTION >
-  void forMeshBodies( FUNCTION && function )
-  {
-    getMeshBodies().forSubGroups< MeshBody >( std::forward< FUNCTION >( function ) );
-  }
-
-  /**
-   * @copydoc forMeshBodies(FUNCTION &&) const
-   */
-  template< typename FUNCTION >
-  void forMeshBodiesIndex( FUNCTION && function ) const
-  {
-    getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
-  }
-
-  /**
-   * @copydoc forMeshBodies(FUNCTION &&) const
-   */
-  template< typename FUNCTION >
-  void forMeshBodiesIndex( FUNCTION && function )
-  {
-    getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
-  }
-
+  { return getMeshBodiesGrp().getGroup< MeshBody >( key ); }
 
   /**
    * @brief Get the metis neighbors indices.  @see DomainPartition#m_metisNeighborList

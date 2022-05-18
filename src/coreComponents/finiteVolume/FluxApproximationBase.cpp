@@ -63,22 +63,17 @@ void FluxApproximationBase::initializePreSubGroups()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  Group & meshBodies = domain.getMeshBodies();
-
-  meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  for( MeshLevel * mesh: domain.getMeshBodies() | flattenMeshLevels() )
   {
-    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
-    {
-      // Group structure: mesh1/finiteVolumeStencils/myTPFA
+    // Group structure: mesh1/finiteVolumeStencils/myTPFA
 
-      Group & stencilParentGroup = mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
-      Group & stencilGroup = stencilParentGroup.registerGroup( getName() );
+    Group & stencilParentGroup = mesh->registerGroup( groupKeyStruct::stencilMeshGroupString() );
+    Group & stencilGroup = stencilParentGroup.registerGroup( getName() );
 
-      registerCellStencil( stencilGroup );
+    registerCellStencil( stencilGroup );
 
-      registerFractureStencil( stencilGroup );
-    } );
-  } );
+    registerFractureStencil( stencilGroup );
+  }
 }
 
 void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
@@ -88,11 +83,12 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  domain.getMeshBodies().forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  for( MeshBody * meshBody: domain.getMeshBodies() )
   {
-    m_lengthScale = meshBody.getGlobalLengthScale();
-    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
+    m_lengthScale = meshBody->getGlobalLengthScale();
+    for( MeshLevel * ml: meshBody->getMeshLevels() )
     {
+      MeshLevel & mesh = *ml;
       // Group structure: mesh1/finiteVolumeStencils/myTPFA
 
       Group & stencilParentGroup = mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
@@ -145,9 +141,8 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 
       // Compute the aquifer stencil weights
       computeAquiferStencil( domain, mesh );
-
-    } );
-  } );
+    }
+  }
 }
 
 void FluxApproximationBase::setFieldName( string const & name )

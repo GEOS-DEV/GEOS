@@ -1100,7 +1100,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
 
-  MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( this->getName() );
+  MeshBody & meshBody = domain.getMeshBodiesGrp().registerGroup< MeshBody >( this->getName() );
   meshBody.createMeshLevel( 0 );
 
   CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
