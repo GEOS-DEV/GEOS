@@ -31,6 +31,7 @@ using namespace dataRepository;
 EventManager::EventManager( string const & name,
                             Group * const parent ):
   Group( name, parent ),
+  m_beginTime(),
   m_maxTime(),
   m_maxCycle(),
   m_time(),
@@ -42,6 +43,11 @@ EventManager::EventManager( string const & name,
 
   // This enables logLevel filtering
   enableLogLevelInput();
+
+  registerWrapper( viewKeyStruct::beginTimeString(), &m_beginTime ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Start simulation time for the global event loop." );
 
   registerWrapper( viewKeyStruct::maxTimeString(), &m_maxTime ).
     setApplyDefaultValue( std::numeric_limits< real64 >::max()).
@@ -119,6 +125,11 @@ bool EventManager::run( DomainPartition & domain )
   if((m_currentSubEvent > 0))
   {
     GEOSX_LOG_RANK_0( "Resuming from step " << m_currentSubEvent << " of the event loop." );
+  }
+  else
+  {
+    // we are not starting from a restart file, so we can set the current time to the start time
+    m_time = m_beginTime;
   }
 
   // Run problem

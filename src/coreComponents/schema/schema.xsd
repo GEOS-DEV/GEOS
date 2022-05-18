@@ -173,6 +173,8 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
+		<!--beginTime => Start simulation time for the global event loop.-->
+		<xsd:attribute name="beginTime" type="real64" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCycle => Maximum simulation cycle for the global event loop.-->
