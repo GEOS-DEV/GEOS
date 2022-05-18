@@ -73,6 +73,8 @@ public:
 
   /**@}*/
 
+private:
+
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
@@ -86,7 +88,6 @@ public:
     constexpr static char const * disableInelasticityString() { return "disableInelasticity"; }
   };
 
-private:
 
   void postProcessInput() override;
 

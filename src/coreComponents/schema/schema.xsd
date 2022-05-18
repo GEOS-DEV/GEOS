@@ -395,6 +395,10 @@
 					<xsd:selector xpath="PackCollection" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="TasksSolidMechanicsStateResetUniqueName">
+					<xsd:selector xpath="SolidMechanicsStateReset" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksTriaxialDriverUniqueName">
 					<xsd:selector xpath="TriaxialDriver" />
 					<xsd:field xpath="@name" />
