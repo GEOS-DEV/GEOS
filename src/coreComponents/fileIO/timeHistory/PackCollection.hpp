@@ -12,26 +12,21 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file PackCollection.hpp
- */
-
 #ifndef GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
 #define GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
 
-#include "TimeHistoryCollection.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "HistoryCollectionBase.hpp"
 
 namespace geosx
 {
-
-class DomainPartition;
 
 /**
  * @class PackCollection
  *
  * A task class for serializing history information using the MPI communication packing routines.
  */
-class PackCollection : public HistoryCollection
+class PackCollection : public HistoryCollectionBase
 {
 public:
   /**
@@ -48,28 +43,29 @@ public:
 
   virtual void initializePostSubGroups() override;
 
-  /// @copydoc geosx::HistoryCollection::getMetadata
-  virtual HistoryMetadata getMetadata( DomainPartition const & domain, localIndex collectionIdx ) override;
+  /// @copydoc geosx::HistoryCollection::getMetaData
+  virtual HistoryMetadata getMetaData( DomainPartition const & domain, localIndex collectionIdx ) const override;
 
   /// @copydoc geosx::HistoryCollection::getTargetName
-  virtual const string & getTargetName( ) const override
+  virtual const string & getTargetName() const override
   {
     return m_fieldName;
   }
 
   /**
    * @brief Update the indices related to the sets being collected.
-   * @param domain The domain partition.
+   * @param[in] domain The domain partition.
    * @note This is only required because we don't want to copy/move the
    *       indices each collection execution, because that causes data movement
    *       when collecting data from the device.
-   * @note Refactoring the packing functions to allow direct usage of set indices
-   *       from SortedArrayView instead of only ArrayViews will remove this
-   *       duplication.
+   * @deprecated Refactoring the packing functions to allow direct usage of set indices
+   *             from SortedArrayView instead of only ArrayViews will remove this duplication.
    */
-  virtual void updateSetsIndices( DomainPartition & domain ) override final;
+  virtual void updateSetsIndices( DomainPartition const & domain ) override final;
 
-  virtual localIndex getNumMetaCollectors( ) const override final;
+  virtual localIndex numMetaDataCollectors() const override final;
+
+private:
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct
@@ -86,28 +82,36 @@ public:
   } viewKeys;
   /// @endcond
 
-protected:
   /// Construct the metadata collectors for this collector.
-  void buildMetaCollectors( );
+  void buildMetaDataCollectors();
 
   /// Do not construct metadata collectors to collect coordinate information.
   ///   ( Prevents reccuring initialization of coordinate collection for coordinate collectors ).
-  void disableCoordCollection( )
+  void disableCoordCollection()
   {
     m_disableCoordCollection = true;
   }
 
   /// @copydoc geosx::HistoryCollection::collect
-  virtual void collect( DomainPartition & domain,
-                        real64 const time_n,
-                        real64 const dt,
-                        localIndex const collectionIdx,
-                        buffer_unit_type * & buffer ) override;
+  void collect( DomainPartition const & domain,
+                localIndex const collectionIdx,
+                buffer_unit_type * & buffer ) override;
 
-private:
+  /**
+   * @brief Should we collect all the fields or only those indicated in @p m_setNames?
+   * @return A boolean
+   *
+   * Note that we cannot directly rely on @p m_setNames because it can contain the "all" keyword...
+   */
+  bool collectAll() const;
+
   // todo : replace this with a vector of references to the actual set sortedarrays (after packing rework to allow sorted arrays to be used
   // for indexing)
-  /// The indices for the specified sets to pack
+  /**
+   * @brief The indices for the specified sets to pack
+   * If we are collecting all the fields, `m_setsIndices` will be of size 1
+   * and and `m_setsIndices[0]` being empty means that we take all the indices.
+   */
   std::vector< array1d< localIndex > > m_setsIndices;
   /// The dataRepository name/path to get history data from, relative paths are assumed to be relative to mesh body 0, mesh level 0
   string m_objectPath;
