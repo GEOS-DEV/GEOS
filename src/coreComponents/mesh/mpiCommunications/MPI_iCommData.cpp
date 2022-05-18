@@ -20,7 +20,6 @@ namespace geosx
 MPI_iCommData::MPI_iCommData( int const inputCommID ):
   m_size( 0 ),
   m_commID( inputCommID ),      // CommunicationTools::getInstance().getCommID() ),
-  m_fieldNames(),
   m_mpiSendBufferRequest(),
   m_mpiRecvBufferRequest(),
   m_mpiSendBufferStatus(),

@@ -282,52 +282,59 @@ void CellElementSubRegion::
   calculateElementCenterAndVolume( localIndex const k,
                                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
 {
-  LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
+  auto getElementCoordinatesaAndComputeElementCenter = [k, X, this]( auto & XLocal )
+  {
+    LvArray::tensorOps::fill< 3 >( m_elementCenter[k], 0 );
+    for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+    {
+      LvArray::tensorOps::copy< 3 >( XLocal[a], X[m_toNodesRelation( k, a )] );
+      LvArray::tensorOps::add< 3 >( m_elementCenter[k], XLocal[a] );
+    }
+    LvArray::tensorOps::scale< 3 >( m_elementCenter[k], 1.0 / m_numNodesPerElement );
+  };
 
   switch( m_elementType )
   {
     case ElementType::Hexahedron:
     {
       real64 Xlocal[8][3];
-      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
-      {
-        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
-        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
-      }
-      m_elementVolume[k] = computationalGeometry::elementVolume< finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2 >( Xlocal );
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::hexahedronVolume( Xlocal );
       break;
     }
     case ElementType::Tetrahedron:
     {
       real64 Xlocal[4][3];
-      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
-      {
-        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
-        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
-      }
-      m_elementVolume[k] = computationalGeometry::elementVolume< finiteElement::H1_Tetrahedron_Lagrange1_Gauss1 >( Xlocal );
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::tetrahedronVolume( Xlocal );
       break;
     }
     case ElementType::Wedge:
     {
       real64 Xlocal[6][3];
-      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
-      {
-        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
-        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
-      }
-      m_elementVolume[k] = computationalGeometry::elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( Xlocal );
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::wedgeVolume( Xlocal );
       break;
     }
     case ElementType::Pyramid:
     {
       real64 Xlocal[5][3];
-      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
-      {
-        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
-        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
-      }
-      m_elementVolume[k] = computationalGeometry::elementVolume< finiteElement::H1_Pyramid_Lagrange1_Gauss5 >( Xlocal );
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::pyramidVolume( Xlocal );
+      break;
+    }
+    case ElementType::Prism5:
+    {
+      real64 Xlocal[10][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 5 >( Xlocal );
+      break;
+    }
+    case ElementType::Prism6:
+    {
+      real64 Xlocal[12][3];
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      m_elementVolume[k] = computationalGeometry::prismVolume< 6 >( Xlocal );
       break;
     }
     default:
@@ -337,7 +344,9 @@ void CellElementSubRegion::
     }
   }
 
-  LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
+  GEOSX_ERROR_IF( m_elementVolume[k] <= 0.0,
+                  GEOSX_FMT( "Negative volume for element {} type {} in subregion {}",
+                             k, m_elementType, getName() ) );
 }
 
 void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,

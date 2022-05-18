@@ -86,6 +86,8 @@ protected:
   MGRInterpolationType m_levelInterpType[numLevels];      ///< Interpolation type for each level
   MGRRestrictionType m_levelRestrictType[numLevels];      ///< Restriction type for each level
   MGRCoarseGridMethod m_levelCoarseGridMethod[numLevels]; ///< Coarse grid method for each level
+  HYPRE_Int m_levelSmoothType[numLevels]{ -1 };           ///< Smoother type for each level
+  HYPRE_Int m_levelSmoothIters[numLevels]{ -1 };          ///< Number of smoother iterations for each level
 
   HYPRE_Int m_numRestrictSweeps{ -1 }; ///< Number of restrict sweeps
   HYPRE_Int m_numInterpSweeps{ -1 };   ///< Number of interpolation sweeps
