@@ -645,6 +645,13 @@ Element: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
 
 
+.. _XML_PorousDelftEgg:
+
+Element: PorousDelftEgg
+=======================
+.. include:: ../../coreComponents/schema/docs/PorousDelftEgg.rst
+
+
 .. _XML_PorousDruckerPrager:
 
 Element: PorousDruckerPrager
@@ -678,6 +685,13 @@ Element: PorousElasticTransverseIsotropic
 Element: PorousExtendedDruckerPrager
 ====================================
 .. include:: ../../coreComponents/schema/docs/PorousExtendedDruckerPrager.rst
+
+
+.. _XML_PorousModifiedCamClay:
+
+Element: PorousModifiedCamClay
+==============================
+.. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay.rst
 
 
 .. _XML_PressurePorosity:
@@ -734,6 +748,13 @@ Element: ProppantTransport
 Element: Python
 ===============
 .. include:: ../../coreComponents/schema/docs/Python.rst
+
+
+.. _XML_ReactiveCompositionalMultiphaseOBL:
+
+Element: ReactiveCompositionalMultiphaseOBL
+===========================================
+.. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
 
 
 .. _XML_Restart:
@@ -1692,6 +1713,13 @@ Datastructure: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
 
 
+.. _DATASTRUCTURE_PorousDelftEgg:
+
+Datastructure: PorousDelftEgg
+=============================
+.. include:: ../../coreComponents/schema/docs/PorousDelftEgg_other.rst
+
+
 .. _DATASTRUCTURE_PorousDruckerPrager:
 
 Datastructure: PorousDruckerPrager
@@ -1725,6 +1753,13 @@ Datastructure: PorousElasticTransverseIsotropic
 Datastructure: PorousExtendedDruckerPrager
 ==========================================
 .. include:: ../../coreComponents/schema/docs/PorousExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_PorousModifiedCamClay:
+
+Datastructure: PorousModifiedCamClay
+====================================
+.. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay_other.rst
 
 
 .. _DATASTRUCTURE_PressurePorosity:
@@ -1781,6 +1816,13 @@ Datastructure: ProppantTransport
 Datastructure: Python
 =====================
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
+
+
+.. _DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL:
+
+Datastructure: ReactiveCompositionalMultiphaseOBL
+=================================================
+.. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
 
 
 .. _DATASTRUCTURE_Restart:
