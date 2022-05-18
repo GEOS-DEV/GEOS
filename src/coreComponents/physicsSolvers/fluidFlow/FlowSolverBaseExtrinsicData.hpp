@@ -128,22 +128,6 @@ EXTRINSIC_MESH_DATA_TRAIT( mimGravityCoefficient,
                            WRITE_AND_READ,
                            "Mimetic gravity coefficient" );
 
-EXTRINSIC_MESH_DATA_TRAIT( bcPressure,
-                           "bcPressure",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Boundary condition pressure" );
-
-EXTRINSIC_MESH_DATA_TRAIT( bcTemperature,
-                           "bcTemperature",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Boundary temperature" );
-
 }
 
 }

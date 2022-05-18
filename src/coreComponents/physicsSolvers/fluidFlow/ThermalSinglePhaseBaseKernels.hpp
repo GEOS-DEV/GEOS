@@ -13,24 +13,18 @@
  */
 
 /**
- * @file SinglePhaseBaseKernels.hpp
+ * @file ThermalSinglePhaseBaseKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASEKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASEKERNELS_HPP
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
 
-#include "common/DataTypes.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/singlePhaseBaseKernels.hpp"
 
 namespace geosx
 {
 
-namespace singlePhaseBaseKernels
+namespace thermalSinglePhaseBaseKernels
 {
 
 /******************************** MobilityKernel ********************************/
@@ -42,13 +36,17 @@ struct MobilityKernel
   static void
   compute( real64 const & dens,
            real64 const & dDens_dPres,
+           real64 const & dDens_dTemp, 
            real64 const & visc,
            real64 const & dVisc_dPres,
+           real64 const & dVisc_dTemp, 
            real64 & mob,
-           real64 & dMob_dPres )
+           real64 & dMob_dPres, 
+           real64 & dMob_dTemp )
   {
     mob = dens / visc;
     dMob_dPres = dDens_dPres / visc - mob / visc * dVisc_dPres;
+    dMob_dTemp = dDens_dTemp / visc - mob / visc * dVisc_dTemp; 
   }
 
   GEOSX_HOST_DEVICE
@@ -65,19 +63,25 @@ struct MobilityKernel
   static void launch( localIndex const size,
                       arrayView2d< real64 const > const & dens,
                       arrayView2d< real64 const > const & dDens_dPres,
+                      arrayView2d< real64 const > const & dDens_dTemp, 
                       arrayView2d< real64 const > const & visc,
                       arrayView2d< real64 const > const & dVisc_dPres,
+                      arrayView2d< real64 const > const & dVisc_dTemp, 
                       arrayView1d< real64 > const & mob,
-                      arrayView1d< real64 > const & dMob_dPres )
+                      arrayView1d< real64 > const & dMob_dPres, 
+                      arrayView1d< real64 > const & dMob_dTemp )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       compute( dens[a][0],
                dDens_dPres[a][0],
+               dDens_dTemp[a][0], 
                visc[a][0],
                dVisc_dPres[a][0],
+               dVisc_dTemp[a][0], 
                mob[a],
-               dMob_dPres[a] );
+               dMob_dPres[a], 
+               dMob_dTemp[a] );
     } );
   }
 
@@ -85,20 +89,26 @@ struct MobilityKernel
   static void launch( SortedArrayView< localIndex const > targetSet,
                       arrayView2d< real64 const > const & dens,
                       arrayView2d< real64 const > const & dDens_dPres,
+                      arrayView2d< real64 const > const & dDens_dTemp, 
                       arrayView2d< real64 const > const & visc,
                       arrayView2d< real64 const > const & dVisc_dPres,
+                      arrayView2d< real64 const > const & dVisc_dTemp, 
                       arrayView1d< real64 > const & mob,
-                      arrayView1d< real64 > const & dMob_dPres )
+                      arrayView1d< real64 > const & dMob_dPres, 
+                      arrayView1d< real64 > const & dMob_dTemp)
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
       compute( dens[a][0],
                dDens_dPres[a][0],
+               dDens_dTemp[a][0], 
                visc[a][0],
                dVisc_dPres[a][0],
+               dVisc_dTemp[a][0],
                mob[a],
-               dMob_dPres[a] );
+               dMob_dPres[a], 
+               dMob_dTemp[a] );
     } );
   }
 
@@ -476,6 +486,44 @@ public:
     SurfaceElementBasedAssemblyKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 
+};
+
+
+/******************************** FluidUpdateKernel ********************************/
+
+struct FluidUpdateKernel
+{
+  template< typename FLUID_WRAPPER >
+  static void launch( FLUID_WRAPPER const & fluidWrapper,
+                      arrayView1d< real64 const > const & pres,
+                      arrayView1d< real64 const > const & temp )
+  {
+    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
+      {
+        fluidWrapper.update( k, q, pres[k], temp[k] );
+      }
+    } );
+  }
+};
+
+/******************************** SolidInternalEnergyUpdateKernel ********************************/
+
+struct SolidInternalEnergyUpdateKernel
+{
+
+  template< typename SOLID_INTERNAL_ENERGY_WRAPPER >
+  static void
+  launch( localIndex const size,
+          SOLID_INTERNAL_ENERGY_WRAPPER const & solidInternalEnergyWrapper,
+          arrayView1d< real64 const > const & temp )
+  {
+    forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      solidInternalEnergyWrapper.update( k, temp[k] );
+    } );
+  }
 };
 
 /******************************** ResidualNormKernel ********************************/

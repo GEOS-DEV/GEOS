@@ -40,6 +40,8 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
+
 
 namespace geosx
 {
@@ -87,14 +89,10 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< initialPressure >( getName() );
       subRegion.registerExtrinsicData< pressure >( getName() );
 
-      subRegion.registerExtrinsicData< bcPressure >( getName() ); // TOCHECK if necessary 
-
       subRegion.registerExtrinsicData< deltaVolume >( getName() );
 
       subRegion.registerExtrinsicData< temperature >( getName() ); 
       subRegion.registerExtrinsicData< temperature_n >( getName() ); 
-
-      subRegion.registerExtrinsicData< bcTemperature >( getName() ); // TOCHECK if necessary
 
       subRegion.registerExtrinsicData< mobility >( getName() );
       subRegion.registerExtrinsicData< dMobility_dPressure >( getName() );
@@ -103,8 +101,6 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       {
         subRegion.registerExtrinsicData< dMobility_dTemperature >( getName() ); 
       }
-
-      subRegion.registerExtrinsicData< density_n >( getName() );
 
     } );
 
@@ -216,10 +212,7 @@ SinglePhaseBase::ThermalFluidPropViews SinglePhaseBase::getThermalFluidPropertie
 {
   SingleFluidBase const & singleFluid = dynamicCast< SingleFluidBase const & >( fluid );
   return { singleFluid.dDensity_dTemperature(),
-           singleFluid.dViscosity_dTemperature(),
-           singleFluid.internalEnergy(),
-           singleFluid.dInternalEnergy_dPressure(), 
-           singleFluid.dInternalEnergy_dTemperature() };
+           singleFluid.dViscosity_dTemperature() };
 }
 
 void SinglePhaseBase::initializePreSubGroups()
@@ -263,8 +256,26 @@ void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    FluidUpdateKernel::launch( fluidWrapper, pres, temp );
+    thermalSinglePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
+}
+
+void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
+{
+  arrayView1d< real64 const > const temp = dataGroup.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+
+  string const & solidInternalEnergyName = dataGroup.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
+  SolidInternalEnergy & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( dataGroup, solidInternalEnergyName );
+
+  SolidInternalEnergy::KernelWrapper solidInternalEnergyWrapper = solidInternalEnergy.createKernelUpdates();
+
+  thermalSinglePhaseBaseKernels::SolidInternalEnergyUpdateKernel::launch< parallelDevicePolicy<> >( dataGroup.size(), solidInternalEnergyWrapper, temp );
+}
+
+void SinglePhaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
+{
+  updateFluidModel( subRegion );
+  updateMobility( subRegion );
 }
 
 void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
@@ -279,19 +290,39 @@ void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
   arrayView1d< real64 > const dMob_dPres =
     dataGroup.getExtrinsicData< extrinsicMeshData::flow::dMobility_dPressure >();
 
+  arrayView1d< real64 > const dMob_dTemp = 
+    dataGroup.getExtrinsicData< extrinsicMeshData::flow::dMobility_dTemperature >(); 
+
   // input
 
   SingleFluidBase & fluid =
     getConstitutiveModel< SingleFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
   FluidPropViews fluidProps = getFluidProperties( fluid );
+  ThermalFluidPropViews thermalFluidProps = getThermalFluidProperties( fluid ); 
 
-  singlePhaseBaseKernels::MobilityKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
-                                                                            fluidProps.dens,
-                                                                            fluidProps.dDens_dPres,
-                                                                            fluidProps.visc,
-                                                                            fluidProps.dVisc_dPres,
-                                                                            mob,
-                                                                            dMob_dPres );
+  if ( m_isThermal )
+  {
+    thermalSinglePhaseBaseKernels::MobilityKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
+                                                                                     fluidProps.dens,
+                                                                                     fluidProps.dDens_dPres,
+                                                                                     thermalFluidProps.dDens_dTemp, 
+                                                                                     fluidProps.visc,
+                                                                                     fluidProps.dVisc_dPres,
+                                                                                     thermalFluidProps.dVisc_dTemp,
+                                                                                     mob,
+                                                                                     dMob_dPres, 
+                                                                                     dMob_dTemp );
+  }
+  else
+  {
+    singlePhaseBaseKernels::MobilityKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
+                                                                              fluidProps.dens,
+                                                                              fluidProps.dDens_dPres,
+                                                                              fluidProps.visc,
+                                                                              fluidProps.dVisc_dPres,
+                                                                              mob,
+                                                                              dMob_dPres );
+  }
 }
 
 void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
@@ -334,6 +365,26 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
 
       porousSolid.initializeState();
+
+      // 4. initialize the rock thermal quantities: conductivity and solid internal energy 
+      if( m_isThermal )
+      {
+        // initialized porosity
+        arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
+
+        string const & thermalConductivityName = subRegion.template getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
+        ThermalConductivityBase const & conductivityMaterial =
+          getConstitutiveModel< ThermalConductivityBase >( subRegion, thermalConductivityName );
+        conductivityMaterial.initializeRockFluidState( porosity, phaseVolFrac );
+        // note that there is nothing to update here because thermal conductivity is explicit for now
+
+        updateSolidInternalEnergyModel( subRegion );
+        string const & solidInternalEnergyName = subRegion.template getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
+        SolidInternalEnergy const & solidInternalEnergyMaterial =
+          getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
+        solidInternalEnergyMaterial.saveConvergedState();
+
+      }
     } );
 
     mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
@@ -881,12 +932,6 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
     } );
 
   } );
-}
-
-void SinglePhaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
-{
-  updateFluidModel( subRegion );
-  updateMobility( subRegion );
 }
 
 void SinglePhaseBase::updateState( DomainPartition & domain )

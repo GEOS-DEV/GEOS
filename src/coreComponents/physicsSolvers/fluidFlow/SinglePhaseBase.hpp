@@ -276,6 +276,12 @@ public:
   updateFluidModel( ObjectManagerBase & dataGroup ) const;
 
   /**
+   * @brief Update all relevant solid internal energy models using current values of temperature
+   * @param dataGroup the group storing the required fields
+   */
+  void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const;
+
+  /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
@@ -333,9 +339,9 @@ protected:
   {
     arrayView2d< real64 const > const dDens_dTemp;      ///< derivative of density w.r.t. temperature
     arrayView2d< real64 const > const dVisc_dTemp;      ///< derivative of viscosity w.r.t. temperature
-    arrayView2d< real64 const > const intEnergy;        ///< internal energy 
-    arrayView2d< real64 const > const dintEnergy_dPres; ///< derivative of internal energy w.r.t. pressure
-    arrayView2d< real64 const > const dintEnergy_dTemp; ///< derivative of internal energy w.r.t. temperature
+    // arrayView2d< real64 const > const intEnergy;        ///< internal energy 
+    // arrayView2d< real64 const > const dintEnergy_dPres; ///< derivative of internal energy w.r.t. pressure
+    // arrayView2d< real64 const > const dintEnergy_dTemp; ///< derivative of internal energy w.r.t. temperature
   };
 
   /**
