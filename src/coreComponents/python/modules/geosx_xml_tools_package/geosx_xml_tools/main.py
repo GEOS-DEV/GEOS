@@ -27,7 +27,7 @@ def check_mpi_rank():
     return rank
 
 
-def wait_for_file_write_rank_0(target_file_argument=0, max_wait_time=100):
+def wait_for_file_write_rank_0(target_file_argument=0, max_wait_time=100, max_startup_delay=1):
     def wait_for_file_write_rank_0_inner(writer):
         def wait_for_file_write_rank_0_decorator(*args, **kwargs):
             # Check the target file status
@@ -42,6 +42,11 @@ def wait_for_file_write_rank_0(target_file_argument=0, max_wait_time=100):
             target_file_edit_time = 0
             if target_file_exists:
                 target_file_edit_time = os.path.getmtime(fname)
+
+                # Variations in thread startup times may mean the file has already been processed
+                # If the last edit was done within the specified time, then allow the thread to proceed
+                if (abs(target_file_edit_time - time.time()) < max_startup_delay):
+                    target_file_edit_time = 0                    
 
             # Go into the target process or wait for the expected file update
             if (rank == 0):
