@@ -582,8 +582,8 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                   true );
 
     // compute the seismic traces since last step.
-    arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
-    computeAllSeismoTraces( time_n, dt, p_np1, p_n, p_rcvs );
+    arrayView2d< real64 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+    computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
 
     // prepare next step
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
@@ -609,8 +609,8 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n, integer const, integ
     NodeManager & nodeManager = mesh.getNodeManager();
     arrayView1d< real64 const > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
     arrayView1d< real64 const > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
-    arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
-    computeAllSeismoTraces( time_n, 0, p_np1, p_n, p_rcvs );
+    arrayView2d< real64 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+    computeAllSeismoTraces( time_n, 0, p_np1, p_n, pReceivers );
   } );
 }
 

@@ -192,14 +192,14 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   propagator->cleanup( 1.0, 10, 0, 0, domain );
 
   // retrieve seismo
-  arrayView2d< real64 > const p_rcvs = propagator->getReference< array2d< real64 > >( AcousticWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
+  arrayView2d< real64 > const pReceivers = propagator->getReference< array2d< real64 > >( AcousticWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
 
   // move it to CPU, if needed
-  p_rcvs.move( LvArray::MemorySpace::host, false );
+  pReceivers.move( LvArray::MemorySpace::host, false );
 
   // check number of seismos and trace length
-  ASSERT_EQ( p_rcvs.size( 1 ), 9 );
-  ASSERT_EQ( p_rcvs.size( 0 ), 11 );
+  ASSERT_EQ( pReceivers.size( 1 ), 9 );
+  ASSERT_EQ( pReceivers.size( 0 ), 11 );
 
   // check seismo content. The pressure values cannot be directly checked as the problem is too small.
   // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
@@ -208,15 +208,15 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   {
     if( i > 0 )
     {
-      ASSERT_TRUE( std::abs( p_rcvs[i][8] ) > 0 );
+      ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
     }
     double avg = 0;
     for( int r=0; r<8; r++ )
     {
-      avg += p_rcvs[i][r];
+      avg += pReceivers[i][r];
     }
     avg /=8.0;
-    ASSERT_TRUE( std::abs( p_rcvs[i][8] - avg ) < 0.00001 );
+    ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );
   }
 }
 
