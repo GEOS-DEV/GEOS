@@ -162,6 +162,7 @@ void createAMG( LinearSolverParameters const & params,
 
   // Interpolation options: Use options 3, 6, 14 or 15.
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( precond.ptr, params.amg.interpolationType ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPMaxElmts( precond.ptr, params.amg.interpolationMaxNonZeros ) );
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( precond.ptr, params.amg.numFunctions ) );
 

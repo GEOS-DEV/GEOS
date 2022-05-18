@@ -114,6 +114,7 @@ public:
 
     static constexpr char const * amgCoarseningString()         { return "amgCoarseningType";           } ///< AMG coarsening key
     static constexpr char const * amgInterpolationString()      { return "amgInterpolationType";        }   ///< AMG interpolation key
+    static constexpr char const * amgInterpMaxNonZerosString()  { return "amgInterpolationMaxNonZeros"; }   ///< AMG interpolation key
     static constexpr char const * amgNumFunctionsString()       { return "amgNumFunctions";             }   ///< AMG threshold key
     static constexpr char const * amgAggresiveNumLevelsString() { return "amgAggresiveCoarseningLevels";}             ///< AMG threshold key
     /// ILU fill key

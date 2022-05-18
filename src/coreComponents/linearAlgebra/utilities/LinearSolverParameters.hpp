@@ -191,7 +191,8 @@ struct LinearSolverParameters
     SmootherType smootherType = SmootherType::fgs;  ///< Smoother type
     CoarseType coarseType = CoarseType::direct;     ///< Coarse-level solver/smoother
     string coarseningType = "HMIS";                 ///< Coarsening algorithm
-    integer interpolationType = 6;                  ///< Coarsening algorithm
+    integer interpolationType = 6;                  ///< Interpolation algorithm
+    integer interpolationMaxNonZeros = 4;           ///< Interpolation - Maximum number of nonzeros per row
     integer numSweeps = 2;                          ///< Number of smoother sweeps
     integer numFunctions = 1;                       ///< Number of amg functions
     integer aggresiveNumLevels = 0;                 ///< Number of levels for aggressive coarsening.
