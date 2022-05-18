@@ -101,11 +101,11 @@ protected:
     {
       string_array targetTokens = stringutilities::tokenize( objectPath, "/" );
       localIndex targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
-  
+
       dataRepository::Group const * targetGroup = nullptr;
       int const numMeshBodies = domain.getMeshBodies().numSubGroups();
-  
-  
+
+
       if( numMeshBodies==1 )
       {
         string const singleMeshBodyName = domain.getMeshBody( 0 ).getName();
@@ -125,17 +125,17 @@ protected:
             bodyFound=true;
           }
         } );
-  
+
         GEOSX_ERROR_IF( !bodyFound,
                         GEOSX_FMT( "MeshBody ({}) is specified, but not found.",
                                    targetTokens[0] ) );
       }
-  
-  
-  
+
+
+
       string const meshBodyName = targetTokens[0];
       MeshBody const & meshBody = domain.getMeshBody( meshBodyName );
-  
+
       // set mesh level in path
       localIndex const numMeshLevels = meshBody.getMeshLevels().numSubGroups();
       if( numMeshLevels==1 )
@@ -156,7 +156,7 @@ protected:
               levelFound=true;
             }
           } );
-  
+
           GEOSX_ERROR_IF( !levelFound,
                           GEOSX_FMT( "MeshLevel ({}) is specified, but not found.",
                                      targetTokens[1] ) );
@@ -166,24 +166,24 @@ protected:
       {
         GEOSX_LOG_RANK_0( "In TimeHistoryCollection.hpp, Mesh Level Discretization not specified, "
                           "using baseDiscretizationString()." );
-  
+
         string const baseMeshLevelName = MeshBody::groupStructKeys::baseDiscretizationString();
         ++targetTokenLength;
         targetTokens.insert( 1, &baseMeshLevelName, (&baseMeshLevelName)+1 );
       }
-  
+
       string meshLevelName = targetTokens[1];
       MeshLevel const & meshLevel = meshBody.getMeshLevel( meshLevelName );
       targetGroup = &meshLevel;
-  
-  
+
+
       if( targetTokens[2]== MeshLevel::groupStructKeys::elemManagerString() )
       {
         ElementRegionManager const & elemRegionManager = meshLevel.getElemManager();
-  
+
         string const elemRegionName = targetTokens[3];
         ElementRegionBase const & elemRegion = elemRegionManager.getRegion( elemRegionName );
-  
+
         string const elemSubRegionName = targetTokens[4];
         ElementSubRegionBase const & elemSubRegion = elemRegion.getSubRegion( elemSubRegionName );
         targetGroup = &elemSubRegion;
