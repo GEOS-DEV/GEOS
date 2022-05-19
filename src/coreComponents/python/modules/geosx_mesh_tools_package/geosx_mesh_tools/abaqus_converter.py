@@ -75,7 +75,7 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None, force_tri_nodes
                     region_id = -1
                     for region in region_list:
                         if (element_id in mesh.cell_sets[region][block_id]):
-                            region_id = mesh.field_data[region][block_id]
+                            region_id = mesh.field_data[region][0]
 
                     # Test to see if the element is a quad or triangle
                     tag_id = mesh.field_data[nodeset_name][0]
