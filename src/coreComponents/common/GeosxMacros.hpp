@@ -38,7 +38,7 @@
  */
 ///@{
 
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(GEOSX_USE_DEVICE)
 #define GEOSX_HOST __host__
 #define GEOSX_DEVICE __device__
 #define GEOSX_HOST_DEVICE __host__ __device__
