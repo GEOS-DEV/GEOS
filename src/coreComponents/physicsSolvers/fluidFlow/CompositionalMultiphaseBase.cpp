@@ -81,11 +81,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
 
-  this->registerWrapper( viewKeyStruct::computeStatisticsString(), &m_computeStatistics ).
-    setApplyDefaultValue( 0 ). // do nothing by default
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether statistics are computed or not" );;
-
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1081,23 +1076,6 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 
 }
 
-void CompositionalMultiphaseBase::computeStatistics( real64 const dt,
-                                                     DomainPartition & domain ) const
-{
-  if( !m_computeStatistics )
-  {
-    return;
-  }
-
-  GEOSX_UNUSED_VAR( dt );
-
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
-  {
-    computeRegionStatistics( mesh, regionNames );
-  } );
-}
 
 void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
                                                            arrayView1d< string const > const & regionNames ) const
@@ -1237,9 +1215,6 @@ real64 CompositionalMultiphaseBase::solverStep( real64 const & time_n,
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   implicitStepComplete( time_n, dt_return, domain );
-
-  // compute some statistics on the reservoir (CFL, average field pressure, averege field temperature)
-  computeStatistics( dt_return, domain );
 
   return dt_return;
 }
@@ -2036,6 +2011,9 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       }
     } );
   } );
+
+  // compute some statistics on the reservoir (CFL, average field pressure, averege field temperature)
+  computeStatistics( dt, domain );
 
 }
 

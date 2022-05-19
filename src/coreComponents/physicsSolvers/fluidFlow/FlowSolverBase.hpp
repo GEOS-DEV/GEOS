@@ -59,10 +59,6 @@ public:
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
-  void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
-
-  void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
-
   localIndex numDofPerCell() const { return m_numDofPerCell; }
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
@@ -77,6 +73,15 @@ public:
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
     static constexpr char const * transMultiplierString() { return "permeabilityTransMultiplier"; }
+
+    // reservoir region statistics
+
+    static constexpr char const * computeStatisticsString() { return "computeStatistics"; }
+    static constexpr char const * averagePressureString() { return "averagePressure"; }
+    static constexpr char const * maximumPressureString() { return "maximumPressure"; }
+    static constexpr char const * minimumPressureString() { return "minimumPressure"; }
+    static constexpr char const * totalPoreVolumeString() { return "totalPoreVolume"; }
+    static constexpr char const * totalUncompactedPoreVolumeString() { return "totalUncompactedPoreVolume"; }
 
   };
 
@@ -113,8 +118,30 @@ protected:
                                           real64 const & dt,
                                           DomainPartition & domain );
 
+  /**
+   * @brief Precompute the data needed by the flow solvers, like the gravity coefficient
+   * @param[in] mesh the mesh level
+   * @param[in] regionNames the array of target region names
+   */
   virtual void precomputeData( MeshLevel & mesh,
                                arrayView1d< string const > const & regionNames );
+
+  /**
+   * @brief Compute CFL numbers and reservoir statistics
+   * @param dt the time step size
+   * @param domain the domain partition
+   */
+  virtual void computeStatistics( real64 const & dt,
+                                  DomainPartition & domain ) const;
+
+  /**
+   * @brief Compute some statistics on the reservoir (average field pressure)
+   * @param[in] mesh the mesh level object
+   * @param[in] regionNames the array of target region names
+   */
+  virtual void computeRegionStatistics( MeshLevel & mesh,
+                                        arrayView1d< string const > const & regionNames ) const
+  { GEOSX_UNUSED_VAR( mesh, regionNames ); }
 
   virtual void initializePreSubGroups() override;
 
@@ -122,17 +149,14 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
-  /// flag to determine whether or not coupled with solid solver
-  integer m_poroElasticFlag;
-
-  /// flag to determine whether or not coupled with wells
-  integer m_coupledWellsFlag;
-
   /// the number of Degrees of Freedom per cell
   integer m_numDofPerCell;
 
+  /// flux estimate used for normalization in single-phase flow
   real64 m_fluxEstimate;
 
+  /// flag to decide whether statistics (avg pressure, CFL) are computed or not
+  integer m_computeStatistics;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

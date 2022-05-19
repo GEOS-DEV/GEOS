@@ -146,7 +146,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
   } );
 }
 
-void CompositionalMultiphaseFVM::computeStatistics( real64 const dt,
+void CompositionalMultiphaseFVM::computeStatistics( real64 const & dt,
                                                     DomainPartition & domain ) const
 {
   if( !m_computeStatistics )

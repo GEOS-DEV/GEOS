@@ -217,7 +217,6 @@ real64 MultiphasePoromechanicsSolver::solverStep( real64 const & time_n,
   return dt_return;
 }
 
-
 void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                     real64 const dt,
                                                     DomainPartition & domain,

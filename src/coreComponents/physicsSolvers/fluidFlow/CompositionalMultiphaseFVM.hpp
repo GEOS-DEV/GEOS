@@ -129,7 +129,7 @@ public:
 protected:
 
   virtual void
-  computeStatistics( real64 const dt,
+  computeStatistics( real64 const & dt,
                      DomainPartition & domain ) const override;
 
   virtual void

@@ -222,36 +222,16 @@ public:
     // inputs
 
     static constexpr char const * inputTemperatureString() { return "temperature"; }
-
     static constexpr char const * useMassFlagString() { return "useMass"; }
-
     static constexpr char const * isThermalString()  { return "isThermal"; }
-
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
-
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
-
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
-
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
-
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
 
     // reservoir region statistics
-
-    static constexpr char const * computeStatisticsString() { return "computeStatistics"; }
-
-    static constexpr char const * averagePressureString() { return "averagePressure"; }
-
-    static constexpr char const * maximumPressureString() { return "maximumPressure"; }
-
-    static constexpr char const * minimumPressureString() { return "minimumPressure"; }
-
-    static constexpr char const * totalPoreVolumeString() { return "totalPoreVolume"; }
-
-    static constexpr char const * totalUncompactedPoreVolumeString() { return "totalUncompactedPoreVolume"; }
 
     static constexpr char const * phasePoreVolumeString() { return "phasePoreVolume"; }
 
@@ -341,6 +321,9 @@ protected:
 
   virtual void initializePreSubGroups() override;
 
+  virtual void computeRegionStatistics( MeshLevel & mesh,
+                                        arrayView1d< string const > const & regionNames ) const override;
+
   /**
    * @brief Utility function that checks the consistency of the constitutive models
    * @param[in] domain the domain partition
@@ -355,21 +338,6 @@ protected:
    */
   void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
-  /**
-   * @brief Compute CFL numbers and reservoir statistics
-   * @param dt the time step size
-   * @param domain the domain partition
-   */
-  virtual void computeStatistics( real64 const dt,
-                                  DomainPartition & domain ) const;
-
-  /**
-   * @brief Compute some statistics on the reservoir (average field pressure, average field temperature)
-   * @param[in] mesh the mesh level object
-   * @param[in] regionNames the array of target region Names
-   */
-  void computeRegionStatistics( MeshLevel & mesh,
-                                arrayView1d< string const > const & regionNames ) const;
 
   /// flag to specify whether the sparsity pattern needs to be rebuilt
   bool m_systemSetupDone;
@@ -382,9 +350,6 @@ protected:
 
   /// the input temperature
   real64 m_inputTemperature;
-
-  /// flag to decide whether statistics (avg pressure, CFL) are computed or not
-  integer m_computeStatistics;
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;

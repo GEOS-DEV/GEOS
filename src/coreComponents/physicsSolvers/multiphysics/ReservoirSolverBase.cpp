@@ -63,7 +63,6 @@ void ReservoirSolverBase::postProcessInput()
   m_wellSolver = &this->getParent().getGroup< WellSolverBase >( m_wellSolverName );
 
   m_wellSolver->setFlowSolverName( m_flowSolverName );
-  m_flowSolver->setReservoirWellsCoupling();
 }
 
 void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()

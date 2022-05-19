@@ -566,6 +566,58 @@ struct SolutionCheckKernel
 
 };
 
+/******************************** StatisticsKernel ********************************/
+
+struct StatisticsKernel
+{
+  template< typename POLICY >
+  static void
+  launch( localIndex const size,
+          arrayView1d< integer const > const & elemGhostRank,
+          arrayView1d< real64 const > const & volume,
+          arrayView1d< real64 const > const & pres,
+          arrayView1d< real64 const > const & refPorosity,
+          arrayView2d< real64 const > const & porosity,
+          real64 & minPres,
+          real64 & avgPresNumerator,
+          real64 & maxPres,
+          real64 & totalUncompactedPoreVol,
+          real64 & totalPoreVol )
+  {
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPresNumerator( 0.0 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPres( 0.0 );
+
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalUncompactedPoreVol( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalPoreVol( 0.0 );
+
+    forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( elemGhostRank[ei] >= 0 )
+      {
+        return;
+      }
+
+      // To match our "reference", we have to use reference porosity here, not the actual porosity when we compute averages
+      real64 const uncompactedPoreVol = volume[ei] * refPorosity[ei];
+      real64 const dynamicPoreVol = volume[ei] * porosity[ei][0];
+
+      subRegionMinPres.min( pres[ei] );
+      subRegionAvgPresNumerator += uncompactedPoreVol * pres[ei];
+      subRegionMaxPres.max( pres[ei] );
+      subRegionTotalUncompactedPoreVol += uncompactedPoreVol;
+      subRegionTotalPoreVol += dynamicPoreVol;
+    } );
+
+    minPres = subRegionMinPres.get();
+    avgPresNumerator = subRegionAvgPresNumerator.get();
+    maxPres = subRegionMaxPres.get();
+    totalUncompactedPoreVol = subRegionTotalUncompactedPoreVol.get();
+    totalPoreVol = subRegionTotalPoreVol.get();
+  }
+};
+
+
 /******************************** HydrostaticPressureKernel ********************************/
 
 struct HydrostaticPressureKernel
