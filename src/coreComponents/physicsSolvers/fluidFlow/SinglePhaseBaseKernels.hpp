@@ -23,6 +23,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
+#include "functions/TableFunction.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
@@ -558,6 +559,7 @@ struct HydrostaticPressureKernel
                               real64 const & equilTolerance,
                               real64 const (&gravVector)[ 3 ],
                               FLUID_WRAPPER fluidWrapper,
+                              TableFunction::KernelWrapper tempTableWrapper, 
                               real64 const & refElevation,
                               real64 const & refPres,
                               real64 const & refDens,
@@ -568,6 +570,7 @@ struct HydrostaticPressureKernel
     // Step 1: guess the pressure with the refDensity
 
     real64 const gravCoef = gravVector[2] * ( refElevation - newElevation );
+    real64 const temp = tempTableWrapper.compute( &newElevation ); 
     real64 pres0 = refPres - refDens * gravCoef;
     real64 pres1 = 0.0;
 
@@ -575,7 +578,7 @@ struct HydrostaticPressureKernel
 
     real64 dens = 0.0;
     real64 visc = 0.0;
-    fluidWrapper.compute( pres0, dens, visc );
+    fluidWrapper.compute( pres0, temp, dens, visc );
     pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
 
     // Step 3: fixed-point iteration until convergence
@@ -595,7 +598,7 @@ struct HydrostaticPressureKernel
       }
 
       // compute the density at this elevation using the previous pressure, and compute the new pressure
-      fluidWrapper.compute( pres0, dens, visc );
+      fluidWrapper.compute( pres0, temp, dens, visc );
       pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
     }
 
@@ -619,16 +622,21 @@ struct HydrostaticPressureKernel
           real64 const & datumElevation,
           real64 const & datumPres,
           FLUID_WRAPPER fluidWrapper,
-          arrayView1d< arrayView1d< real64 > const > elevationValues,
+          TableFunction::KernelWrapper tempTableWrapper,
+          arrayView1d< arrayView1d< real64 > const > elevationValues, 
           arrayView1d< real64 > pressureValues )
   {
     bool hasConverged = true;
 
     // Step 1: compute the mass density at the datum elevation
 
+    real64 const datumTemp = tempTableWrapper.compute( &datumElevation ); 
+
     real64 datumDens = 0.0;
     real64 datumVisc = 0.0;
+    
     fluidWrapper.compute( datumPres,
+                          datumTemp, 
                           datumDens,
                           datumVisc );
 
@@ -653,6 +661,7 @@ struct HydrostaticPressureKernel
                                   equilTolerance,
                                   gravVector,
                                   fluidWrapper,
+                                  tempTableWrapper, 
                                   datumElevation,
                                   datumPres,
                                   datumDens,
@@ -675,6 +684,7 @@ struct HydrostaticPressureKernel
                                     equilTolerance,
                                     gravVector,
                                     fluidWrapper,
+                                    tempTableWrapper, 
                                     elevationValues[0][iRef+i],
                                     pressureValues[iRef+i],
                                     dens[iRef+i],
@@ -699,6 +709,7 @@ struct HydrostaticPressureKernel
                                     equilTolerance,
                                     gravVector,
                                     fluidWrapper,
+                                    tempTableWrapper, 
                                     elevationValues[0][iRef-i],
                                     pressureValues[iRef-i],
                                     dens[iRef-i],

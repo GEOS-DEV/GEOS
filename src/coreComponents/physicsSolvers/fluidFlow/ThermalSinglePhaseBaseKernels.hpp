@@ -19,7 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
 
-#include "physicsSolvers/fluidFlow/singlePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
 namespace geosx
 {
@@ -513,13 +513,13 @@ struct FluidUpdateKernel
 struct SolidInternalEnergyUpdateKernel
 {
 
-  template< typename SOLID_INTERNAL_ENERGY_WRAPPER >
+  template< typename POLICY, typename SOLID_INTERNAL_ENERGY_WRAPPER >
   static void
   launch( localIndex const size,
           SOLID_INTERNAL_ENERGY_WRAPPER const & solidInternalEnergyWrapper,
           arrayView1d< real64 const > const & temp )
   {
-    forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       solidInternalEnergyWrapper.update( k, temp[k] );
     } );
@@ -768,4 +768,4 @@ struct HydrostaticPressureKernel
 
 } // namespace geosx
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASEKERNELS_HPP
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
