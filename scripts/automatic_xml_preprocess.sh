@@ -9,6 +9,7 @@ COMPILED_XML_NAME_OVERRIDE=""
 PARAMETER_ARGS=""
 NEW_ARGS=""
 USE_PYGEOSX=1
+PYGEOSX_WARNINGS=0
 SCRIPT_DIR=$(dirname "$0")
 PYGEOSX=$SCRIPT_DIR/../lib/PYGEOSX/bin/python
 
@@ -33,6 +34,10 @@ do
         ;;
         -u|--use-pygeosx)
         USE_PYGEOSX=$2
+        shift
+        ;;
+        -w|--pygeosx-warnings)
+        PYGEOSX_WARNINGS=$2
         shift
         ;;
         -h|--help)
@@ -70,9 +75,15 @@ if [ "$USE_PYGEOSX" -eq "1" ]
 then
    if [ -f $PYGEOSX ]
    then
-      echo "Using pygeosx to preprocess the xml file"
+      if [ "$PYGEOSX_WARNINGS" -eq "1" ]
+      then
+         echo "Using pygeosx to preprocess the xml file"
+      fi
    else
-      echo "Pygeosx installation not found... reverting to non-pygeosx version"
+      if [ "$PYGEOSX_WARNINGS" -eq "1" ]
+      then
+         echo "Pygeosx installation not found... reverting to non-pygeosx version"
+      fi
       USE_PYGEOSX=0
    fi
 fi

@@ -61,7 +61,6 @@ def wait_for_file_write_rank_0(target_file_argument=0, max_wait_time=100, max_st
                         if os.path.isfile(fname):
                             break
                     time.sleep(0.1)
-                print('File detected')
         return wait_for_file_write_rank_0_decorator
     return wait_for_file_write_rank_0_inner
 
@@ -94,7 +93,7 @@ def preprocess_serial():
 
     # Note: the return value may be passed to sys.exit, and cause bash to report an error
     # return format_geosx_arguments(compiled_name, unknown_args)
-    print(compiled_name, flush=True)
+    print(compiled_name)
 
 
 def preprocess_parallel():
@@ -125,7 +124,7 @@ def format_geosx_arguments(compiled_name, unknown_args):
         geosx_args.extend(unknown_args)
 
     # Print the output name for use in bash scripts
-    print(compiled_name, flush=True)
+    print(compiled_name)
     return geosx_args
 
 
