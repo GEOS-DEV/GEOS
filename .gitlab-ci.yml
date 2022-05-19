@@ -49,7 +49,9 @@ stages:
     # UNIT TEST
     - echo "~~~~~~~~~~ START - unit tests ~~~~~~~~~~~"
     - unit_code=0
-    - ${ALLOC_COMMAND} make -C build test ARGS="-V" 2>&1 | tee ${SYSTEM}/${SYSTEM}_unit_test.log || unit_code=$?
+    - cd build
+    - ${ALLOC_COMMAND} ctest --output-on-failure  2>&1 | tee ../${SYSTEM}/${SYSTEM}_unit_test.log || unit_code=$?
+    - cd ..
     - if [[ $unit_code -ne 0 ]]; then mv ${SYSTEM}/${SYSTEM}_unit_test.log ${SYSTEM}/${SYSTEM}_unit_test_FAILURE.log; else mv ${SYSTEM}/${SYSTEM}_unit_test.log ${SYSTEM}/${SYSTEM}_unit_test_SUCCESS.log; fi
     - echo "~~~~~~~~~~ END - unit tests ~~~~~~~~~~~~~"
 
