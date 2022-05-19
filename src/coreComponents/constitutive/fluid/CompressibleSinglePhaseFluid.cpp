@@ -173,15 +173,17 @@ void CompressibleSinglePhaseFluid::postProcessInput()
     checkNonnegative( m_referenceInternalEnergy, viewKeyStruct::referenceInternalEnergyString() ); 
   }
 
-  // // Due to the way update wrapper is currently implemented, we can only support one model type
-  // auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
-  // {
-  //   GEOSX_THROW_IF_NE_MSG( value, ExponentApproximationType::Linear,
-  //                          GEOSX_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
-  //                          InputError );
-  // };
-  // checkModelType( m_densityModelType, viewKeyStruct::densityModelTypeString() );
-  // checkModelType( m_viscosityModelType, viewKeyStruct::viscosityModelTypeString() );
+  // Due to the way update wrapper is currently implemented, we can only support one model type
+  auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
+  {
+    GEOSX_THROW_IF( value != ExponentApproximationType::Linear && value != ExponentApproximationType::Full,
+                    GEOSX_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
+                    InputError );
+  };
+  checkModelType( m_densityPressureModelType, viewKeyStruct::densityPressureModelTypeString() );
+  checkModelType( m_densityTemperatureModelType, viewKeyStruct::densityTemperatureModelTypeString() ); 
+  checkModelType( m_viscosityModelType, viewKeyStruct::viscosityModelTypeString() );
+  checkModelType( m_internalEnergyModelType, viewKeyStruct::internalEnergyModelTypeString() ); 
 
   // // Set default values for derivatives (cannot be done in base class)
   // // TODO: reconsider the necessity of this
