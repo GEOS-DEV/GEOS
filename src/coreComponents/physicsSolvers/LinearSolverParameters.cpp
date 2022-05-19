@@ -171,6 +171,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "AMG strength-of-connection threshold" );
 
+  registerWrapper( viewKeyStruct::amgSeparateComponentsString(), &m_parameters.amg.separateComponents ).
+    setApplyDefaultValue( m_parameters.amg.separateComponents ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG apply separate component filter for multi-variable problems" );
+
   registerWrapper( viewKeyStruct::amgNullSpaceTypeString(), &m_parameters.amg.nullSpaceType ).
     setApplyDefaultValue( m_parameters.amg.nullSpaceType ).
     setInputFlag( InputFlags::OPTIONAL ).

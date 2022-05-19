@@ -118,6 +118,8 @@ public:
     static constexpr char const * amgNumFunctionsString()         { return "amgNumFunctions";               }   ///< AMG threshold key
     static constexpr char const * amgAggressiveNumLevelsString()  { return "amgAggressiveCoarseningLevels"; }   ///< AMG threshold key
     static constexpr char const * amgAggressiveInterpTypeString() { return "amgAggressiveInterpType";       }
+    static constexpr char const * amgSeparateComponentsString()   { return "amgSeparateComponents";         }
+
     /// ILU fill key
     static constexpr char const * iluFillString() { return "iluFill"; }
     /// ILU threshold key
