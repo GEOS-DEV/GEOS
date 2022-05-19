@@ -13,11 +13,11 @@
  */
 
 /**
- * @file ThermalConductivityExtrinsicData.hpp
+ * @file SinglePhaseThermalConductivityExtrinsicData.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYEXTRINSICDATA_HPP_
-#define GEOSX_CONSTITUTIVE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYEXTRINSICDATA_HPP_
+#ifndef GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYEXTRINSICDATA_HPP_
+#define GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYEXTRINSICDATA_HPP_
 
 #include "constitutive/relativePermeability/layouts.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
@@ -31,21 +31,13 @@ namespace extrinsicMeshData
 namespace thermalconductivity
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( effectiveConductivity,
-                           "effectiveConductivity",
+EXTRINSIC_MESH_DATA_TRAIT( dEffectiveConductivity_dPorosity,
+                           "dEffectiveConductivity_dPorosity",
                            array3d< real64 >,
                            0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Effective conductivity" );
-
-EXTRINSIC_MESH_DATA_TRAIT( rockThermalConductivity,
-                           "rockThermalConductivity",
-                           array3d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Rock thermal conductivity" );
+                           NOPLOT,
+                           NO_WRITE,
+                           "Derivative of effective conductivity with respect to porosity" );
 
 }
 
@@ -53,4 +45,4 @@ EXTRINSIC_MESH_DATA_TRAIT( rockThermalConductivity,
 
 }
 
-#endif // GEOSX_CONSTITUTIVE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYEXTRINSICDATA_HPP_
+#endif // GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYEXTRINSICDATA_HPP_
