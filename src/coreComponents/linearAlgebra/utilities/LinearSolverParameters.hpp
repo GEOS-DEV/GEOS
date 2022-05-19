@@ -189,6 +189,7 @@ struct LinearSolverParameters
     integer maxLevels = 20;                         ///< Maximum number of coarsening levels
     CycleType cycleType = CycleType::V;             ///< AMG cycle type
     SmootherType smootherType = SmootherType::fgs;  ///< Smoother type
+    real64 relaxWeight = 1.0;                       ///< Relaxation weight for the smoother
     CoarseType coarseType = CoarseType::direct;     ///< Coarse-level solver/smoother
     string coarseningType = "HMIS";                 ///< Coarsening algorithm
     integer interpolationType = 6;                  ///< Interpolation algorithm

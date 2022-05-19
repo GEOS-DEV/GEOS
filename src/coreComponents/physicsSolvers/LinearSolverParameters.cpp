@@ -124,6 +124,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setDescription( "AMG smoother type. Available options are: "
                     "``" + EnumStrings< LinearSolverParameters::AMG::SmootherType >::concat( "|" ) + "``" );
 
+  registerWrapper( viewKeyStruct::amgRelaxWeight(), &m_parameters.amg.relaxWeight ).
+    setApplyDefaultValue( m_parameters.amg.relaxWeight ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG relaxation factor for the smoother" );
+
   registerWrapper( viewKeyStruct::amgCoarseString(), &m_parameters.amg.coarseType ).
     setApplyDefaultValue( m_parameters.amg.coarseType ).
     setInputFlag( InputFlags::OPTIONAL ).

@@ -105,6 +105,8 @@ public:
     static constexpr char const * amgNumSweepsString() { return "amgNumSweeps"; }
     /// AMG smoother type key
     static constexpr char const * amgSmootherString() { return "amgSmootherType"; }
+    /// AMG smoother relax factor key
+    static constexpr char const * amgRelaxWeight() { return "amgRelaxWeight"; }
     /// AMG coarse solver key
     static constexpr char const * amgCoarseString() { return "amgCoarseSolver"; }
     /// AMG threshold key

@@ -157,6 +157,9 @@ void createAMG( LinearSolverParameters const & params,
     }
   }
 
+  // Set relaxation weight
+  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxWt( precond.ptr, params.amg.relaxWeight ) );
+
   // Coarsening options: Only PMIS is supported on GPU
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( precond.ptr, hypre::getAMGCoarseningType( params.amg.coarseningType ) ) );
 
