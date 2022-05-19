@@ -951,7 +951,7 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
                                                                      time_n + dt, 
                                                                      subRegion, 
                                                                      dofNumber, 
-                                                                     dofManager,rankOffset(),
+                                                                     dofManager.rankOffset(),
                                                                      localMatrix,
                                                                      localRhs, 
                                                                      temp ); 
