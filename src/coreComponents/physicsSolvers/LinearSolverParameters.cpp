@@ -154,7 +154,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setDescription( "AMG number of functions\n"
                     "Available options are: TODO" );
 
-  registerWrapper( viewKeyStruct::amgAggresiveNumLevelsString(), &m_parameters.amg.aggresiveNumLevels ).
+  registerWrapper( viewKeyStruct::amgAggressiveNumLevelsString(), &m_parameters.amg.aggressiveNumLevels ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "AMG number levels for aggressive coarsening \n"

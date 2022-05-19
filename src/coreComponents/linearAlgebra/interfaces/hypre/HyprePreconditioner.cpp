@@ -166,9 +166,9 @@ void createAMG( LinearSolverParameters const & params,
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( precond.ptr, params.amg.numFunctions ) );
 
-  if( params.amg.aggresiveNumLevels )
+  if( params.amg.aggressiveNumLevels )
   {
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( precond.ptr, params.amg.aggresiveNumLevels ) ); // agg_num_levels = 1
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( precond.ptr, params.amg.aggressiveNumLevels ) ); // agg_num_levels = 1
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggInterpType( precond.ptr, params.amg.aggressiveInterpType) );
   }
 

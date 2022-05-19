@@ -195,7 +195,7 @@ struct LinearSolverParameters
     integer interpolationMaxNonZeros = 4;           ///< Interpolation - Maximum number of nonzeros per row
     integer numSweeps = 2;                          ///< Number of smoother sweeps
     integer numFunctions = 1;                       ///< Number of amg functions
-    integer aggresiveNumLevels = 0;                 ///< Number of levels for aggressive coarsening.
+    integer aggressiveNumLevels = 0;                ///< Number of levels for aggressive coarsening.
     integer aggressiveInterpType = 4;               ///< Interpolation type for aggressive coarsening.
     PreOrPost preOrPostSmoothing = PreOrPost::both; ///< Pre and/or post smoothing
     real64 threshold = 0.0;                         ///< Threshold for "strong connections" (for classical and smoothed-aggregation AMG)
