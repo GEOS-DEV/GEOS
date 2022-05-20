@@ -79,6 +79,38 @@ auto interpolateAtQuadraturePoints( Basis const & basis,
   return q_values;
 }
 
+template < typename Basis,
+           typename Dofs,
+           typename QuadValues,
+           std::enable_if_t<
+            !is_tensor_basis<Basis> ||
+            ( is_tensor_basis<Basis> && 
+              get_basis_dim<Basis> == 1 ),
+            bool > = true >
+GEOSX_HOST_DEVICE
+auto interpolateAtQuadraturePoints( Basis const & basis,
+                                    Dofs const & dofs)
+{
+  using T = get_value_type<QuadValues>;
+
+  // Matrix vector product where each thread computes a value
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  using Result = basis_result<Basis, num_quads>;
+
+  Result q_values;
+
+  RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (int quad) {
+    T res = 0.0;
+    for (size_t dof = 0; dof < num_dofs; dof++)
+    {
+      res += basis( dof, quad ) * dofs( dof );
+    }
+    q_values( quad ) = res;
+  });
+
+  return q_values;
+}
+
 /**
  * @brief Compute the values of a finite element field at given quadrature points.
  * 
@@ -137,6 +169,62 @@ auto interpolateAtQuadraturePoints( Basis const & basis,
       q_values( quad_x, quad_y ) = res;
     });
   });
+
+  return q_values;
+}
+
+template < typename Basis,
+           typename Dofs,
+           typename QuadValues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 2,
+            bool > = true >
+GEOSX_HOST_DEVICE
+auto interpolateAtQuadraturePoints( Basis const & basis,
+                                    Dofs const & dofs)
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+  
+  // Contraction on the first dimension
+  using Tmp = basis_result<Basis, num_quads, num_dofs>;
+  RAJA_TEAM_SHARED Tmp Bu
+
+  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_y)
+  {
+    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+    {
+      T res{};
+      for (size_t dof_x = 0; dof_x < num_dofs; dof_x++)
+      {
+        res += basis( dof_x, quad_x ) * dofs( dof_x, dof_y ); // assumes dofs in shared
+      }
+      Bu( quad_x, dof_y ) = res;
+    });
+  });
+
+  ctx.teamSync();
+
+  // Contraction on the second dimension
+  using Result = basis_result<Basis, num_quads, num_quads>;
+  Result q_values;
+
+  RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+  {
+    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_y)
+    {
+      T res{};
+      for (size_t dof_y = 0; dof_y < num_dofs; dof_y++)
+      {
+        res += basis( dof_y, quad_y ) * Bu( quad_x, dof_y );
+      }
+      q_values( quad_x, quad_y ) = res;
+    });
+  });
+
+  ctx.teamSync();
 
   return q_values;
 }
@@ -225,6 +313,90 @@ auto interpolateAtQuadraturePoints( Basis const & basis,
       });
     });
   });
+
+  return q_values;
+}
+
+template < typename Basis,
+           typename Dofs,
+           typename QuadValues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 3,
+            bool > = true >
+GEOSX_HOST_DEVICE
+auto interpolateAtQuadraturePoints( Basis const & basis,
+                                    Dofs const & dofs)
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  // Contraction on the first dimension
+  using TmpX = basis_result<Basis, num_quads, num_dofs, num_dofs>;
+  RAJA_TEAM_SHARED TmpX Bu;
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_z)
+  {
+    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_y)
+    {
+      RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+      {
+        T res{};
+        for (size_t dof_x = 0; dof_x < num_dofs; dof_x++)
+        {
+          res += basis( dof_x, quad_x ) * dofs( dof_x, dof_y, dof_z ); // assumes dofs in shared
+        }
+        Bu( quad_x, dof_y, dof_z ) = res;
+      });
+    });
+  });
+
+  ctx.teamSync();
+
+  // Contraction on the second dimension
+  using TmpY = basis_result<Basis, num_quads, num_quads, num_dofs>;
+  RAJA_TEAM_SHARED TmpY BBu;
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_z)
+  {
+    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+    {
+      RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_y)
+      {
+        T res{};
+        for (size_t dof_y = 0; dof_y < num_dofs; dof_y++)
+        {
+          res += basis( dof_y, quad_y ) * Bu( quad_x, dof_y, dof_z );
+        }
+        BBu( quad_x, quad_y, dof_z ) = res;
+      });
+    });
+  });
+
+  ctx.teamSync();
+
+  // Contraction on the third dimension
+  using Result = basis_result<Basis, num_quads, num_quads, num_quads>;
+  Result q_values;
+
+  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_y)
+  {
+    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+    {
+      RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_z)
+      {
+        T res{};
+        for (size_t dof_z = 0; dof_z < num_dofs; dof_z++)
+        {
+          res += basis( dof_z, quad_z ) * BBu( quad_x, quad_y, dof_z );
+        }
+        q_values( quad_x, quad_y, quad_z ) = res;
+      });
+    });
+  });
+
+  ctx.teamSync();
 
   return q_values;
 }
@@ -356,6 +528,111 @@ auto interpolateGradientAtQuadraturePoints( Basis const & basis,
   return q_values;
 }
 
+template < typename Basis,
+           typename Dofs,
+           typename QuadValues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 3,
+            bool > = true >
+GEOSX_HOST_DEVICE
+auto interpolateGradientAtQuadraturePoints( Basis const & basis,
+                                            Dofs const & u)
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  // Contraction on the first dimension
+  using TmpX = basis_result<Basis, num_quads, num_dofs, num_dofs>;
+  RAJA_TEAM_SHARED TmpX Bu, Gu;
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_z)
+  {
+    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_y)
+    {
+      RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+      {
+        T bu{};
+        T gu{};
+        for (size_t dof_x = 0; dof_x < num_dofs; dof_x++)
+        {
+          const T val = dofs( dof_x, dof_y, dof_z );
+          bu += basis( dof_x, quad_x ) * val;
+          gu += gradient( basis )( dof_x, quad_x ) * val;
+        }
+        Bu( quad_x, dof_y, dof_z ) = bu;
+        Gu( quad_x, dof_y, dof_z ) = gu;
+      });
+    });
+  });
+
+  ctx.teamSync();
+
+  // Contraction on the second dimension
+  using TmpY = basis_result<Basis, num_quads, num_quads, num_dofs>;
+  RAJA_TEAM_SHARED TmpY BBu, BGu, GBu;
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_z)
+  {
+    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+    {
+      RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_y)
+      {
+        T bbu{};
+        T bgu{};
+        T gbu{};
+        for (size_t dof_y = 0; dof_y < num_dofs; dof_y++)
+        {
+          const T bu = Bu( quad_x, dof_y, dof_z );
+          const T gu = Gu( quad_x, dof_y, dof_z );
+          bbu += basis( dof_y, quad_y ) * bu;
+          gbu += gradient( basis )( dof_y, quad_y ) * bu;
+          bgu += basis( dof_y, quad_y ) * gu;
+        }
+        BBu( quad_x, quad_y, dof_z ) = bbu;
+        GBu( quad_x, quad_y, dof_z ) = gbu;
+        BGu( quad_x, quad_y, dof_z ) = bgu;
+      });
+    });
+  });
+
+  ctx.teamSync();
+
+  // Contraction on the third dimension
+  using Result = basis_result<Basis, num_quads, num_quads, num_quads, 3>; // remove magic number?
+  Result q_values;
+
+  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_y)
+  {
+    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+    {
+      RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_z)
+      {
+        T gbbu{};
+        T bgbu{};
+        T bbgu{};
+        for (size_t dof_z = 0; dof_z < num_dofs; dof_z++)
+        {
+          const T bbu = BBu( quad_x, quad_y, dof_z );
+          const T gbu = GBu( quad_x, quad_y, dof_z );
+          const T bgu = BGu( quad_x, quad_y, dof_z );
+          gbbu += gradient( basis )( dof_z, quad_z ) * bbu;
+          bgbu += basis( dof_z, quad_z ) * gbu;
+          bbgu += basis( dof_z, quad_z ) * bgu;
+        }
+        q_values( quad_x, quad_y, quad_z, 0 ) = bbgu;
+        q_values( quad_x, quad_y, quad_z, 1 ) = bgbu;
+        q_values( quad_x, quad_y, quad_z, 2 ) = gbbu;
+      });
+    });
+  });
+
+  ctx.teamSync();
+
+  return q_values;
+}
+
 /**
  * @brief "Apply" gradient of the test functions.
  * 
@@ -469,6 +746,110 @@ auto applyGradientTestFunctions( Basis const & basis,
   return dofs;  
 }
 
+template < typename Basis,
+           typename Qvalues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 3,
+            bool > = true >
+auto applyGradientTestFunctions( Basis const & basis,
+                                 Qvalues const & q_values )
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  // Contraction on the first dimension
+  using TmpX = basis_result<Basis, num_dofs, num_quads, num_quads>;
+  RAJA_TEAM_SHARED TmpX Gqx, Bqy, Bqz;
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_z)
+  {
+    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_y)
+    {
+      RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_x)
+      {
+        T gqx{};
+        T bqy{};
+        T bqz{};
+        for (size_t quad_x = 0; quad_x < num_quads; quad_x++)
+        {
+          // Using gradient at quadrature points prevents us from storing so many tmp while also reducing FLOPs
+          const T qx = q_values( quad_x, quad_y, quad_z, 0 );
+          const T qy = q_values( quad_x, quad_y, quad_z, 1 );
+          const T qz = q_values( quad_x, quad_y, quad_z, 2 );
+          const T b = basis( dof_x, quad_x );
+          const T g = gradient( basis )( dof_x, quad_x );
+          gqx += g * qx;
+          bqy += b * qy;
+          bqz += b * qz;
+        }
+        Gqx( dof_x, quad_y, quad_z ) = gqx;
+        Bqy( dof_x, quad_y, quad_z ) = bqy;
+        Bqz( dof_x, quad_y, quad_z ) = bqz;
+      });
+    });
+  });
+
+  // Contraction on the second dimension
+  using TmpY = basis_result<Basis, num_dofs, num_dofs, num_quads>;
+  RAJA_TEAM_SHARED TmpY BGqx, GBqy, BBqz;
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_z)
+  {
+    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_x)
+    {
+      RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_y)
+      {
+        T bgqx{};
+        T gbqy{};
+        T bbqz{};
+        for (size_t quad_y = 0; quad_y < num_quads; quad_y++)
+        {
+          const T gqx = Gqx( dof_x, quad_y, quad_z );
+          const T bqy = Bqy( dof_x, quad_y, quad_z );
+          const T bqz = Bqz( dof_x, quad_y, quad_z );
+          const T b = basis( dof_y, quad_y );
+          const T g = gradient( basis )( dof_y, quad_y );
+          bgqx += b * gqx;
+          gbqy += g * bqy;
+          bbqz += b * bqz;
+        }
+        BGqx( dof_x, dof_y, quad_z ) = bgqx;
+        GBqy( dof_x, dof_y, quad_z ) = gbqy;
+        BBqz( dof_x, dof_y, quad_z ) = bbqz;
+      });
+    });
+  });
+
+  // Contraction on the third dimension
+  using Result = basis_result<Basis, num_dofs, num_dofs, num_dofs>;
+  Result dofs;
+
+  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_y)
+  {
+    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_x)
+    {
+      RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_z)
+      {
+        T res{};
+        for (size_t quad_z = 0; quad_z < num_quads; quad_z++)
+        {
+          const T bgqx = BGqx( dof_x, dof_y, quad_z );
+          const T gbqy = GBqy( dof_x, dof_y, quad_z );;
+          const T bbqz = BBqz( dof_x, dof_y, quad_z );;
+          const T b = basis( dof_z, quad_z );
+          const T g = gradient( basis )( dof_z, quad_z )
+          res += b * bgqx + b * gbqy + g * bbqz;
+        }
+        dofs( dof_x, dof_y, dof_z ) = res;
+      });
+    });
+  });
+
+  return dofs;  
+}
+
 /** @brief Basic non-tensor basis that stores its values. */
 template < typename FiniteElement >
 class StoredNonTensorBasis
@@ -509,12 +890,12 @@ void laplaceKernel(Basis const & basis, MeshBasis const & mesh_basis, Dofs const
     auto mesh_local_dofs = get_local_elem_dofs(k, x);
     auto grad_u_q = interpolateGradientAtQuadraturePoints( basis, u );
     auto J = interpolateGradientAtQuadraturePoints( mesh_basis, x );
-    auto q_function = [](auto weight, auto J, auto grad_u_q )
+    auto q_function = []( auto weight, auto J, auto grad_u_q )
     {
       auto inv_J = inverse( J );
       return weight * det( inv_J ) * inv_J * transpose( inv_J ) * u_q * square ( grad_u_q );
     };
-    auto d = apply_q_function(q_function, basis.weight, J, grad_u_q);
+    auto d = apply_q_function( q_function, basis.weight, J, grad_u_q );
     // serial apply_q_function code:
     // for (size_t q = 0; q < num_q_pts; q++)
     // {
@@ -609,6 +990,24 @@ void foreach_dim( LambdaFn && fn )
     fn(i);
   }
 }
+
+RAJA::expt::launch<launch_policy>(select_CPU_or_GPU)
+RAJA::expt::Grid(RAJA::expt::Teams(NE), RAJA::expt::Threads(Q1D)),
+[=] RAJA_HOST_DEVICE (RAJA::expt::Launch ctx) {
+
+  RAJA::expt::loop<team_x> (ctx, RAJA::RangeSegment(0, teamRange), [&] (int bx) {
+
+    RAJA_TEAM_SHARED double s_A[SHARE_MEM_SIZE];
+
+    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, threadRange), [&] (int tx) {
+      s_A[tx] = tx;
+    });
+
+      ctx.teamSync();
+
+ )};
+
+});
 
 /**
  * @class KernelBase
