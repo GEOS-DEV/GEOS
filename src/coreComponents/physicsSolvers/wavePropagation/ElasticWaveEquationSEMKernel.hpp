@@ -30,6 +30,7 @@ namespace elasticWaveEquationSEMKernels
 {
 
 struct PrecomputeSourceAndReceiverKernel
+
 {
 
   /**
@@ -139,7 +140,9 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] sourceCoordinates coordinates of the source terms
    * @param[out] sourceIsLocal flag indicating whether the source is local or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
-   * @param[out] sourceNodeConstants constant part of the source terms
+   * @param[out] sourceConstants_x constant part of the source terms in x-direction
+   * @param[out] sourceConstants_y constant part of the source terms in y-direction
+   * @param[out] sourceConstants_z constant part of the source terms in z-direction
    * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
@@ -148,7 +151,6 @@ struct PrecomputeSourceAndReceiverKernel
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
-          localIndex const numNodesPerElem,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
@@ -157,7 +159,9 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 const > const sourceCoordinates,
           arrayView1d< localIndex > const sourceIsLocal,
           arrayView2d< localIndex > const sourceNodeIds,
-          arrayView2d< real64 > const sourceConstants,
+          arrayView2d< real64 > const sourceConstants_x,
+          arrayView2d< real64 > const sourceConstants_y,
+          arrayView2d< real64 > const sourceConstants_z,
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView2d< localIndex > const receiverNodeIds,
@@ -170,6 +174,8 @@ struct PrecomputeSourceAndReceiverKernel
 
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+
       real64 const center[3] = { elemCenter[k][0],
                                  elemCenter[k][1],
                                  elemCenter[k][2] };
@@ -185,6 +191,16 @@ struct PrecomputeSourceAndReceiverKernel
                                      sourceCoordinates[isrc][1],
                                      sourceCoordinates[isrc][2] };
 
+          real64 xLocal[numNodesPerElem][3];
+
+          for( localIndex a=0; a< numNodesPerElem; ++a )
+          {
+            for( localIndex i=0; i<3; ++i )
+            {
+              xLocal[a][i] = X( elemsToNodes( k, a ), i );
+            }
+          }
+
           real64 coordsOnRefElem[3]{};
           bool const sourceFound =
             computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
@@ -197,13 +213,33 @@ struct PrecomputeSourceAndReceiverKernel
           if( sourceFound )
           {
             sourceIsLocal[isrc] = 1;
-            real64 Ntest[8];
-            finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
-
-            for( localIndex a = 0; a < numNodesPerElem; ++a )
+            
+            for( localIndex c=0; c<2; ++c )
             {
-              sourceNodeIds[isrc][a] = elemsToNodes[k][a];
-              sourceConstants[isrc][a] = Ntest[a];
+              for( localIndex b=0; b<2; ++b )
+              {
+                for( localIndex a=0; a<2; ++a )
+                {
+                  real64 const Grad[3] = { finiteElement::LagrangeBasis1::gradient( a, coordsOnRefElem[0])*
+                                           finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1])*
+                                           finiteElement::LagrangeBasis1::value( c, coordsOnRefElem[2]),
+                                           finiteElement::LagrangeBasis1::value( a, coordsOnRefElem[0])*
+                                           finiteElement::LagrangeBasis1::gradient( b, coordsOnRefElem[1])*
+                                           finiteElement::LagrangeBasis1::value( c, coordsOnRefElem[2]),
+                                           finiteElement::LagrangeBasis1::value( a, coordsOnRefElem[0])*
+                                           finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1])*
+                                           finiteElement::LagrangeBasis1::gradient( c, coordsOnRefElem[2])};
+
+                  localIndex const nodeIndex = finiteElement::LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
+
+                  real64 invJ[3][3]={{0}};
+                  FE_TYPE::invJacobianTransformation( nodeIndex, xLocal, invJ );
+                  sourceNodeIds[isrc][nodeIndex] = elemsToNodes[k][nodeIndex];
+                  sourceConstants_x[isrc][nodeIndex] = Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2];
+                  sourceConstants_y[isrc][nodeIndex] = Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2];
+                  sourceConstants_z[isrc][nodeIndex] = Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2];
+                }
+              }
             }
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )

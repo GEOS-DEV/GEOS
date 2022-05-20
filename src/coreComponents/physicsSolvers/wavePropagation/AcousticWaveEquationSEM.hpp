@@ -87,6 +87,8 @@ public:
    */
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) override;
 
+  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs_x, arrayView1d< real64 > const rhs_y, arrayView1d< real64 > const rhs_z) override;
+
   /**
    * @brief Compute the pressure at each receiver coordinate in one time step
    * @param time_n the time of evaluation of the seismoTrace

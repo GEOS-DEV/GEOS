@@ -99,6 +99,8 @@ protected:
    */
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) = 0;
 
+  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs_x, arrayView1d< real64 > const rhs_y, arrayView1d< real64 > const rhs_z) = 0;
+
   /**
    * @brief Compute the pressure at each receiver coordinate in one time step
    * @param iseismo index number of the seismo trace
