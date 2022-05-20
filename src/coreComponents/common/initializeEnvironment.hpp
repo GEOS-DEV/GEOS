@@ -80,7 +80,7 @@ struct CommandLineOptions
   /// The string used to initialize caliper.
   string timerOutput = "";
 
-  /// Suppress logging of host-device data migration.
+  /// Display logging of host-device data migration.
   integer displayMoveLogging = false;
 };
 
