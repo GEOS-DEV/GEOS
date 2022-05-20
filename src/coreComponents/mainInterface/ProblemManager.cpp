@@ -698,25 +698,20 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
                                              Group const * const discretization,
                                              arrayView1d< string const > const & )
 {
-  int order = 1;
   if( discretization != nullptr )
   {
-    if( auto const * const feDisc = dynamic_cast< FiniteElementDiscretization const * >(discretization) )
-    {
-      order = feDisc->getOrder();
-    }
-    else
-    {
-      auto const * const
-      fvsDisc = dynamic_cast< FluxApproximationBase const * >(discretization);
+    auto const * const 
+    feDisc = dynamic_cast< FiniteElementDiscretization const * >(discretization); 
 
-      auto const * const
-      fvhDisc = dynamic_cast< HybridMimeticDiscretization const * >(discretization);
+    auto const * const
+    fvsDisc = dynamic_cast< FluxApproximationBase const * >(discretization);
 
-      if( fvsDisc!=nullptr && fvhDisc!=nullptr )
-      {
-        GEOSX_ERROR( "Group expected to cast to a discretization object." );
-      }
+    auto const * const
+    fvhDisc = dynamic_cast< HybridMimeticDiscretization const * >(discretization);
+
+    if( feDisc==nullptr && fvsDisc==nullptr && fvhDisc==nullptr )
+    {
+      GEOSX_ERROR( "Group expected to cast to a discretization object." );
     }
   }
 
