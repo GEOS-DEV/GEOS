@@ -53,7 +53,7 @@ void testKernelDriver()
       Q5_Hexahedron_Lagrange_GaussLobatto::calcN( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
-        if( abs( N[a] )<1e-9 )
+        if( fabs( N[a] )<1e-9 )
         {
           viewN( q, a ) = 0;
         }
