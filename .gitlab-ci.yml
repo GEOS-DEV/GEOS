@@ -36,14 +36,14 @@ stages:
     - echo "~~~~~~~~~~ START - configure ~~~~~~~~~~~"
     - config_code=0
     - python scripts/config-build.py -hc host-configs/LLNL/${HOST_CONFIG} -bt Release -bp build -DENABLE_DOXYGEN=OFF 2>&1 | tee ${SYSTEM}/${SYSTEM}_configure.log || config_code=$?
-    - if [[ $config_code -ne 0 ]]; then mv ${SYSTEM}/${SYSTEM}_configure.log ${SYSTEM}/${SYSTEM}_configure_FAILURE.log; else mv ${SYSTEM}/${SYSTEM}_configure.log ${SYSTEM}/${SYSTEM}_configure_SUCCESS.log; fi
+    - mv ${SYSTEM}/${SYSTEM}_configure.log ${SYSTEM}/${SYSTEM}_configure_$([ $config_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
     - echo "~~~~~~~~~~ END - configure ~~~~~~~~~~~~~"
 
     # BUILD
     - echo "~~~~~~~~~~ START - build ~~~~~~~~~~~"
     - build_code=0
     - ${ALLOC_COMMAND} make VERBOSE=1 -C build -j ${NPROC} 2>&1 | tee ${SYSTEM}/${SYSTEM}_build.log || build_code=$?
-    - if [[ $build_code -ne 0 ]]; then mv ${SYSTEM}/${SYSTEM}_build.log ${SYSTEM}/${SYSTEM}_build_FAILURE.log; else mv ${SYSTEM}/${SYSTEM}_build.log ${SYSTEM}/${SYSTEM}_build_SUCCESS.log; fi
+    - mv ${SYSTEM}/${SYSTEM}_build.log ${SYSTEM}/${SYSTEM}_build_$([ $build_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
     - echo "~~~~~~~~~~ END - build ~~~~~~~~~~~~~"
 
     # UNIT TEST
@@ -52,7 +52,7 @@ stages:
     - cd build
     - ${ALLOC_COMMAND} ctest --output-on-failure  2>&1 | tee ../${SYSTEM}/${SYSTEM}_unit_test.log || unit_code=$?
     - cd ..
-    - if [[ $unit_code -ne 0 ]]; then mv ${SYSTEM}/${SYSTEM}_unit_test.log ${SYSTEM}/${SYSTEM}_unit_test_FAILURE.log; else mv ${SYSTEM}/${SYSTEM}_unit_test.log ${SYSTEM}/${SYSTEM}_unit_test_SUCCESS.log; fi
+    - mv ${SYSTEM}/${SYSTEM}_unit_test.log ${SYSTEM}/${SYSTEM}_unit_test_$([ $unit_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
     - echo "~~~~~~~~~~ END - unit tests ~~~~~~~~~~~~~"
 
     # INTEGRATED TEST
@@ -60,7 +60,7 @@ stages:
     - ./build/geosxats.sh -a veryclean
     - integrated_code=0
     - ${INTEGRATED_ALLOC_COMMAND} ./build/geosxats.sh --failIfTestsFail 2>&1 | tee ${SYSTEM}/${SYSTEM}_integrated_test.log || integrated_code=$?
-    - if [[ $integrated_code -ne 0 ]]; then mv ${SYSTEM}/${SYSTEM}_integrated_test.log ${SYSTEM}/${SYSTEM}_integrated_test_FAILURE.log; else mv ${SYSTEM}/${SYSTEM}_integrated_test.log ${SYSTEM}/${SYSTEM}_integrated_test_SUCCESS.log; fi
+    - mv ${SYSTEM}/${SYSTEM}_integrated_test.log ${SYSTEM}/${SYSTEM}_integrated_test_$([ $integrated_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
     - mkdir ${SYSTEM}/integratedTestsDebugFiles
     - cp -rL build/integratedTests/TestLogs ${SYSTEM}/
     - grep -r -l --include=*.data "Error" build/integratedTests/ | xargs cp -t ${SYSTEM}/integratedTestsDebugFiles || true
