@@ -81,7 +81,7 @@ struct CommandLineOptions
   string timerOutput = "";
 
   /// Suppress logging of host-device data migration.
-  integer suppressMoveLogging = false;
+  integer displayMoveLogging = false;
 };
 
 /**

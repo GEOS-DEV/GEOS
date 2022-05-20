@@ -199,7 +199,11 @@ void ProblemManager::parseCommandLineInput()
     Path::pathPrefix() = splitPath( inputFileName ).first;
   }
 
-  if( opts.suppressMoveLogging )
+  if( opts.displayMoveLogging )
+  {
+    chai::ArrayManager::getInstance()->enableCallbacks();
+  }
+  else
   {
     chai::ArrayManager::getInstance()->disableCallbacks();
   }
