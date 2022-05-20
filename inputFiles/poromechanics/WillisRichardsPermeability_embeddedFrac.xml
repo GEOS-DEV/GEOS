@@ -21,7 +21,7 @@
 
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
-      targetRegions="{ Domain }"
+      targetRegions="{ Domain, Fracture }"
       solidSolverName="matrixMechSolver"
       fractureRegionName="Fracture"
       contactRelationName="fractureContact"/>
@@ -91,7 +91,7 @@
   </Geometry>
 
   <Events
-    maxTime="1.0e-2">
+    maxTime="1.e0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>  
@@ -153,7 +153,16 @@
     <PeriodicEvent
       name="timeHistoryOutput2"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput2"/>     
+      target="/Outputs/timeHistoryOutput2"/> 
+
+    <PeriodicEvent
+      name="timeHistoryCollection3"
+      target="/Tasks/pressureCollection" />
+
+    <PeriodicEvent
+      name="timeHistoryOutput3"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput3"/>        
   </Events>
 
   <NumericalMethods>
@@ -344,7 +353,12 @@
     <PackCollection
       name="fracPermeabilityCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="fracturePerm_permeability"/>             
+      fieldName="fracturePerm_permeability"/>  
+
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      fieldName="pressure"/>           
   </Tasks>
 
   <Outputs>
@@ -367,5 +381,10 @@
       name="timeHistoryOutput2"
       sources="{/Tasks/fracPermeabilityCollection}"
       filename="fracPermeability_history" />
+
+    <TimeHistory
+      name="timeHistoryOutput3"
+      sources="{/Tasks/pressureCollection}"
+      filename="fracPressure_history" />
   </Outputs>
 </Problem>
