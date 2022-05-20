@@ -31,7 +31,7 @@ using namespace dataRepository;
 EventManager::EventManager( string const & name,
                             Group * const parent ):
   Group( name, parent ),
-  m_beginTime(),
+  m_minTime(),
   m_maxTime(),
   m_maxCycle(),
   m_time(),
@@ -44,7 +44,7 @@ EventManager::EventManager( string const & name,
   // This enables logLevel filtering
   enableLogLevelInput();
 
-  registerWrapper( viewKeyStruct::beginTimeString(), &m_beginTime ).
+  registerWrapper( viewKeyStruct::minTimeString(), &m_minTime ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Start simulation time for the global event loop." );
@@ -129,7 +129,7 @@ bool EventManager::run( DomainPartition & domain )
   else
   {
     // we are not starting from a restart file, so we can set the current time to the start time
-    m_time = m_beginTime;
+    m_time = m_minTime;
   }
 
   // Run problem

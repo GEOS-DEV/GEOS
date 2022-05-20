@@ -24,7 +24,7 @@
   </ElementRegions>
 
   <Events
-    beginTime="-10"  
+    minTime="-10"  
     maxTime="5.1">
     <SoloEvent
       name="preEquilibrationStep"
