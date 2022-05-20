@@ -1,4 +1,4 @@
-include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/ORNL/crusher-cce@13.0.1.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/ORNL/crusher-cpu-cce@13.0.1.cmake)
 
 set( CONDUIT_DIR "${GEOSX_TPL_DIR}/conduit-0.7.2-yjtizbev4kv2xwnezjpp77zrb5r4ujje/" CACHE PATH "" )
 set( HDF5_DIR "${GEOSX_TPL_DIR}/hdf5-1.10.8-yddpmglvv6c4mam3swocgkeeomcfpoyw/" CACHE PATH "" )
@@ -40,7 +40,7 @@ else()
   set( SUPERLU_DIST_DIR "${GEOSX_TPL_DIR}/superlu-dist-7.1.1-ryxxa3bxgu4fyk5xhqxcenskd6v3ziaw/" CACHE PATH "" )
 endif()
 
-set( GEOSX_BUILD_OBJ_LIBS OFF CACHE BOOL "" FORCE )
+set( GEOSX_BUILD_OBJ_LIBS ON CACHE BOOL "" FORCE )
 
 set( ENABLE_GTEST_DEATH_TESTS OFF CACHE BOOL "" )
 set( gtest_disable_pthreads ON CACHE BOOL "" )
