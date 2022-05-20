@@ -173,6 +173,7 @@ auto interpolateAtQuadraturePoints( Basis const & basis,
   return q_values;
 }
 
+// 2D Threaded version using RAJA teams
 template < typename Basis,
            typename Dofs,
            typename QuadValues,
@@ -317,6 +318,7 @@ auto interpolateAtQuadraturePoints( Basis const & basis,
   return q_values;
 }
 
+// 3D Threaded version using RAJA teams
 template < typename Basis,
            typename Dofs,
            typename QuadValues,
@@ -390,6 +392,63 @@ auto interpolateAtQuadraturePoints( Basis const & basis,
         for (size_t dof_z = 0; dof_z < num_dofs; dof_z++)
         {
           res += basis( dof_z, quad_z ) * BBu( quad_x, quad_y, dof_z );
+        }
+        q_values( quad_x, quad_y, quad_z ) = res;
+      });
+    });
+  });
+
+  ctx.teamSync();
+
+  return q_values;
+}
+
+// 3D Threaded version using RAJA teams (computes B on the fly instead of tensor contractions)
+template < typename Basis,
+           typename Dofs,
+           typename QuadValues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 3,
+            bool > = true >
+GEOSX_HOST_DEVICE
+auto interpolateAtQuadraturePoints( Basis const & basis,
+                                    Dofs const & dofs)
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  // Assemble B3D instead of contracting each dimension
+  using Result = basis_result<Basis, num_quads, num_quads, num_quads>;
+  Result q_values;
+
+  T bx[num_dofs], by[num_dofs], bz[num_dofs];
+  for (size_t dof = 0; dof < num_dofs; dof++)
+  {
+    bx[dof] = basis( dof, quad_x );
+    by[dof] = basis( dof, quad_y );
+    bz[dof] = basis( dof, quad_z );
+  }
+
+  // Should we load the dofs in shared memory?
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_z)
+  {
+    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_y)
+    {
+      RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+      {
+        T res{};
+        for (size_t dof_z = 0; dof_z < num_dofs; dof_z++)
+        {
+          for (size_t dof_y = 0; dof_y < num_dofs; dof_y++)
+          {
+            for (size_t dof_x = 0; dof_x < num_dofs; dof_x++)
+            {
+              res += bx[dof_x] * by[dof_y] * bz[dof_z] * dofs( dof_x, dof_y, dof_z );
+            }
+          }
         }
         q_values( quad_x, quad_y, quad_z ) = res;
       });
@@ -528,6 +587,7 @@ auto interpolateGradientAtQuadraturePoints( Basis const & basis,
   return q_values;
 }
 
+// 3D Threaded version using RAJA teams
 template < typename Basis,
            typename Dofs,
            typename QuadValues,
@@ -620,6 +680,74 @@ auto interpolateGradientAtQuadraturePoints( Basis const & basis,
           gbbu += gradient( basis )( dof_z, quad_z ) * bbu;
           bgbu += basis( dof_z, quad_z ) * gbu;
           bbgu += basis( dof_z, quad_z ) * bgu;
+        }
+        q_values( quad_x, quad_y, quad_z, 0 ) = bbgu;
+        q_values( quad_x, quad_y, quad_z, 1 ) = bgbu;
+        q_values( quad_x, quad_y, quad_z, 2 ) = gbbu;
+      });
+    });
+  });
+
+  ctx.teamSync();
+
+  return q_values;
+}
+
+// 3D Threaded version using RAJA teams (computes B on the fly instead of tensor contractions)
+template < typename Basis,
+           typename Dofs,
+           typename QuadValues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 3,
+            bool > = true >
+GEOSX_HOST_DEVICE
+auto interpolateGradientAtQuadraturePoints( Basis const & basis,
+                                            Dofs const & u)
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  // Assemble B3D instead of contracting each dimension
+  using Result = basis_result<Basis, num_quads, num_quads, num_quads, 3>;
+  Result q_values;
+
+  T bx[num_dofs], by[num_dofs], bz[num_dofs];
+  T gx[num_dofs], gy[num_dofs], gz[num_dofs];
+  for (size_t dof = 0; dof < num_dofs; dof++)
+  {
+    bx[dof] = basis( dof, quad_x );
+    by[dof] = basis( dof, quad_y );
+    bz[dof] = basis( dof, quad_z );
+    gx[dof] = gradient( basis )( dof, quad_x );
+    gy[dof] = gradient( basis )( dof, quad_y );
+    gz[dof] = gradient( basis )( dof, quad_z );
+  }
+
+  // Should we load the dofs in shared memory?
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_z)
+  {
+    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_y)
+    {
+      RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+      {
+        T bbgu{};
+        T bgbu{};
+        T gbbu{};
+        for (size_t dof_z = 0; dof_z < num_dofs; dof_z++)
+        {
+          for (size_t dof_y = 0; dof_y < num_dofs; dof_y++)
+          {
+            for (size_t dof_x = 0; dof_x < num_dofs; dof_x++)
+            {
+              T const val = dofs( dof_x, dof_y, dof_z );
+              bbgu += gx[dof_x] * by[dof_y] * bz[dof_z] * val;
+              bgbu += bx[dof_x] * gy[dof_y] * bz[dof_z] * val;
+              gbbu += bx[dof_x] * by[dof_y] * gz[dof_z] * val;
+            }
+          }
         }
         q_values( quad_x, quad_y, quad_z, 0 ) = bbgu;
         q_values( quad_x, quad_y, quad_z, 1 ) = bgbu;
@@ -746,6 +874,7 @@ auto applyGradientTestFunctions( Basis const & basis,
   return dofs;  
 }
 
+// 3D Threaded version using RAJA teams
 template < typename Basis,
            typename Qvalues,
            std::enable_if_t<
@@ -841,6 +970,66 @@ auto applyGradientTestFunctions( Basis const & basis,
           const T b = basis( dof_z, quad_z );
           const T g = gradient( basis )( dof_z, quad_z )
           res += b * bgqx + b * gbqy + g * bbqz;
+        }
+        dofs( dof_x, dof_y, dof_z ) = res;
+      });
+    });
+  });
+
+  return dofs;  
+}
+
+// 3D Threaded version using RAJA teams (computes B on the fly instead of tensor contractions)
+template < typename Basis,
+           typename Qvalues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 3,
+            bool > = true >
+auto applyGradientTestFunctions( Basis const & basis,
+                                 Qvalues const & q_values )
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  T bx[num_quads], by[num_quads], bz[num_quads];
+  T gx[num_quads], gy[num_quads], gz[num_quads];
+  for (size_t quad = 0; quad < num_quads; quad++)
+  {
+    bx[quad] = basis( dof_x, quad );
+    by[quad] = basis( dof_y, quad );
+    bz[quad] = basis( dof_z, quad );
+    gx[quad] = gradient( basis )( dof_x, quad );
+    gy[quad] = gradient( basis )( dof_y, quad );
+    gz[quad] = gradient( basis )( dof_z, quad );
+  }
+
+  // Assemble B3D instead of contracting each dimension
+  using Result = basis_result<Basis, num_dofs, num_dofs, num_dofs>;
+  Result dofs;
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_z)
+  {
+    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_y)
+    {
+      RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_x)
+      {
+        T res{};
+        for (size_t quad_z = 0; quad_z < num_quads; quad_z++)
+        {
+          for (size_t quad_y = 0; quad_y < num_quads; quad_y++)
+          {
+            for (size_t quad_x = 0; quad_x < num_quads; quad_x++)
+            {
+              const T qx = q_values( quad_x, quad_y, quad_z, 0 );
+              const T qy = q_values( quad_x, quad_y, quad_z, 1 );
+              const T qz = q_values( quad_x, quad_y, quad_z, 2 );
+              res += gx[quad_x] * by[quad_y] * bz[quad_z] * qx
+                   + bx[quad_x] * gy[quad_y] * bz[quad_z] * qy
+                   + bx[quad_x] * by[quad_y] * gz[quad_z] * qz;
+            }
+          }
         }
         dofs( dof_x, dof_y, dof_z ) = res;
       });
