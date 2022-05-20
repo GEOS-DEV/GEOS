@@ -61,7 +61,7 @@ void testKernelDriver()
         {
           viewN( q, a ) = N[a];
         }
-	Ntest[q][a] = 0.0;
+        Ntest[q][a] = 0.0;
       }
       Ntest[q][q]=1.0;
     }
