@@ -284,7 +284,6 @@ FluxKernel::
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & connRate,
-          arrayView1d< real64 const > const & dConnRate,
           arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompFrac,
           arrayView3d< real64 const, compflow::USD_COMP_DC > const & dWellElemCompFrac_dCompDens,
           real64 const & dt,
@@ -319,7 +318,7 @@ FluxKernel::
      */
 
     localIndex const iwelemNext = nextWellElemIndex[iwelem];
-    real64 const currentConnRate = connRate[iwelem] + dConnRate[iwelem];
+    real64 const currentConnRate = connRate[iwelem];
     localIndex iwelemUp = -1;
 
     if( iwelemNext < 0 && !isProducer ) // exit connection, injector
@@ -482,9 +481,9 @@ FluxKernel::
 
       // Apply equation/variable change transformation(s)
       real64 work[NC+1]{};
-      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, 1, 2, localFluxJacobian_dRate, work );
-      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, 2, localFluxJacobian_dPresCompUp, work );
-      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, 2, localFlux );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC, 1, 2, localFluxJacobian_dRate, work );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC, NC + 1, 2, localFluxJacobian_dPresCompUp, work );
+      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, NC, 2, localFlux );
 
       for( integer i = 0; i < 2*NC; ++i )
       {
@@ -514,7 +513,6 @@ FluxKernel::
                   arrayView1d< globalIndex const > const & wellElemDofNumber, \
                   arrayView1d< localIndex const > const & nextWellElemIndex, \
                   arrayView1d< real64 const > const & connRate, \
-                  arrayView1d< real64 const > const & dConnRate, \
                   arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompFrac, \
                   arrayView3d< real64 const, compflow::USD_COMP_DC > const & dWellElemCompFrac_dCompDens, \
                   real64 const & dt, \
@@ -537,8 +535,6 @@ PressureRelationKernel::
            real64 const & gravCoefNext,
            real64 const & pres,
            real64 const & presNext,
-           real64 const & dPres,
-           real64 const & dPresNext,
            real64 const & totalMassDens,
            real64 const & totalMassDensNext,
            real64 const & dTotalMassDens_dPres,
@@ -567,7 +563,7 @@ PressureRelationKernel::
 
   // TODO: add friction and acceleration terms
 
-  localPresRel = ( presNext + dPresNext  - pres - dPres - avgMassDens * gravD );
+  localPresRel = ( presNext - pres - avgMassDens * gravD );
   localPresRelJacobian[TAG::NEXT *(NC+1)]    = ( 1 - dAvgMassDens_dPresNext * gravD );
   localPresRelJacobian[TAG::CURRENT *(NC+1)] = ( -1 - dAvgMassDens_dPresCurrent * gravD );
 
@@ -592,7 +588,6 @@ PressureRelationKernel::
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & wellElemPressure,
-          arrayView1d< real64 const > const & dWellElemPressure,
           arrayView1d< real64 const > const & wellElemTotalMassDens,
           arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres,
           arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens,
@@ -693,8 +688,6 @@ PressureRelationKernel::
                      wellElemGravCoef[iwelemNext],
                      wellElemPressure[iwelem],
                      wellElemPressure[iwelemNext],
-                     dWellElemPressure[iwelem],
-                     dWellElemPressure[iwelemNext],
                      wellElemTotalMassDens[iwelem],
                      wellElemTotalMassDens[iwelemNext],
                      dWellElemTotalMassDens_dPres[iwelem],
@@ -745,7 +738,6 @@ PressureRelationKernel::
                   arrayView1d< real64 const > const & wellElemGravCoef, \
                   arrayView1d< localIndex const > const & nextWellElemIndex, \
                   arrayView1d< real64 const > const & wellElemPressure, \
-                  arrayView1d< real64 const > const & dWellElemPressure, \
                   arrayView1d< real64 const > const & wellElemTotalMassDens, \
                   arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres, \
                   arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens, \
@@ -768,7 +760,6 @@ void
 PerforationKernel::
   compute( bool const & disableReservoirToWellFlow,
            real64 const & resPres,
-           real64 const & dResPres,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & resPhaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dResPhaseVolFrac_dPres,
            arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dResPhaseVolFrac_dComp,
@@ -783,9 +774,7 @@ PerforationKernel::
            arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const & dResPhaseRelPerm_dPhaseVolFrac,
            real64 const & wellElemGravCoef,
            real64 const & wellElemPres,
-           real64 const & dWellElemPres,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & wellElemCompDens,
-           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & dWellElemCompDens,
            real64 const & wellElemTotalMassDens,
            real64 const & dWellElemTotalMassDens_dPres,
            arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dWellElemTotalMassDens_dCompDens,
@@ -839,7 +828,7 @@ PerforationKernel::
 
   // a) get reservoir variables
 
-  pres[TAG::RES] = resPres + dResPres;
+  pres[TAG::RES] = resPres;
   dPres_dP[TAG::RES] = 1.0;
   multiplier[TAG::RES] = 1.0;
 
@@ -849,7 +838,7 @@ PerforationKernel::
 
   // b) get well variables
 
-  pres[TAG::WELL] = wellElemPres + dWellElemPres;
+  pres[TAG::WELL] = wellElemPres;
   dPres_dP[TAG::WELL] = 1.0;
   multiplier[TAG::WELL] = -1.0;
 
@@ -989,7 +978,7 @@ PerforationKernel::
     real64 wellElemTotalDens = 0;
     for( integer ic = 0; ic < NC; ++ic )
     {
-      wellElemTotalDens += wellElemCompDens[ic] + dWellElemCompDens[ic];
+      wellElemTotalDens += wellElemCompDens[ic];
     }
 
     // first, compute the reservoir total mobility (excluding phase density)
@@ -1087,7 +1076,6 @@ PerforationKernel::
   launch( localIndex const size,
           bool const disableReservoirToWellFlow,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
-          ElementViewConst< arrayView1d< real64 const > > const & dResPres,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dResPhaseVolFrac_dPres,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dResPhaseVolFrac_dComp,
@@ -1102,9 +1090,7 @@ PerforationKernel::
           ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM_DS > > const & dResPhaseRelPerm_dPhaseVolFrac,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 const > const & wellElemPres,
-          arrayView1d< real64 const > const & dWellElemPres,
           arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dWellElemCompDens,
           arrayView1d< real64 const > const & wellElemTotalMassDens,
           arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres,
           arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens,
@@ -1135,7 +1121,6 @@ PerforationKernel::
 
     compute< NC, NP >( disableReservoirToWellFlow,
                        resPres[er][esr][ei],
-                       dResPres[er][esr][ei],
                        resPhaseVolFrac[er][esr][ei],
                        dResPhaseVolFrac_dPres[er][esr][ei],
                        dResPhaseVolFrac_dComp[er][esr][ei],
@@ -1150,9 +1135,7 @@ PerforationKernel::
                        dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0],
                        wellElemGravCoef[iwelem],
                        wellElemPres[iwelem],
-                       dWellElemPres[iwelem],
                        wellElemCompDens[iwelem],
-                       dWellElemCompDens[iwelem],
                        wellElemTotalMassDens[iwelem],
                        dWellElemTotalMassDens_dPres[iwelem],
                        dWellElemTotalMassDens_dCompDens[iwelem],
@@ -1173,7 +1156,6 @@ PerforationKernel::
     launch< NC, NP >( localIndex const size, \
                       bool const disableReservoirToWellFlow, \
                       ElementViewConst< arrayView1d< real64 const > > const & resPres, \
-                      ElementViewConst< arrayView1d< real64 const > > const & dResPres, \
                       ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac, \
                       ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dResPhaseVolFrac_dPres, \
                       ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dResPhaseVolFrac_dComp, \
@@ -1188,9 +1170,7 @@ PerforationKernel::
                       ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM_DS > > const & dResPhaseRelPerm_dPhaseVolFrac, \
                       arrayView1d< real64 const > const & wellElemGravCoef, \
                       arrayView1d< real64 const > const & wellElemPres, \
-                      arrayView1d< real64 const > const & dWellElemPres, \
                       arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens, \
-                      arrayView2d< real64 const, compflow::USD_COMP > const & dWellElemCompDens, \
                       arrayView1d< real64 const > const & wellElemTotalMassDens, \
                       arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres, \
                       arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens, \
@@ -1233,9 +1213,9 @@ AccumulationKernel::
            arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseDens,
            arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFrac,
            arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > const & dPhaseCompFrac,
-           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFracOld,
-           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseDensOld,
-           arraySlice2d< real64 const, compflow::USD_PHASE_COMP - 1 > const & phaseCompFracOld,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac_n,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseDens_n,
+           arraySlice2d< real64 const, compflow::USD_PHASE_COMP - 1 > const & phaseCompFrac_n,
            real64 ( & localAccum )[NC],
            real64 ( & localAccumJacobian )[NC][NC + 1] )
 {
@@ -1259,7 +1239,7 @@ AccumulationKernel::
   for( integer ip = 0; ip < numPhases; ++ip )
   {
     real64 const phaseAmountNew = volume * phaseVolFrac[ip] * phaseDens[ip];
-    real64 const phaseAmountOld = volume * phaseVolFracOld[ip] * phaseDensOld[ip];
+    real64 const phaseAmount_n = volume * phaseVolFrac_n[ip] * phaseDens_n[ip];
 
     real64 const dPhaseAmount_dP = volume * ( dPhaseVolFrac_dPres[ip] * phaseDens[ip]
                                               + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] );
@@ -1278,12 +1258,12 @@ AccumulationKernel::
     for( integer ic = 0; ic < NC; ++ic )
     {
       real64 const phaseCompAmountNew = phaseAmountNew * phaseCompFrac[ip][ic];
-      real64 const phaseCompAmountOld = phaseAmountOld * phaseCompFracOld[ip][ic];
+      real64 const phaseCompAmount_n = phaseAmount_n * phaseCompFrac_n[ip][ic];
 
       real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
                                          + phaseAmountNew * dPhaseCompFrac[ip][ic][Deriv::dP];
 
-      localAccum[ic] += phaseCompAmountNew - phaseCompAmountOld;
+      localAccum[ic] += phaseCompAmountNew - phaseCompAmount_n;
       localAccumJacobian[ic][0] += dPhaseCompAmount_dP;
 
       // jc - index of component w.r.t. whose compositional var the derivative is being taken
@@ -1318,9 +1298,9 @@ AccumulationKernel::
           arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dWellElemPhaseDens,
           arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & wellElemPhaseCompFrac,
           arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dWellElemPhaseCompFrac,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFracOld,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDensOld,
-          arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & wellElemPhaseCompFracOld,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFrac_n,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDens_n,
+          arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & wellElemPhaseCompFrac_n,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
@@ -1348,9 +1328,9 @@ AccumulationKernel::
                    dWellElemPhaseDens[iwelem][0],
                    wellElemPhaseCompFrac[iwelem][0],
                    dWellElemPhaseCompFrac[iwelem][0],
-                   wellElemPhaseVolFracOld[iwelem],
-                   wellElemPhaseDensOld[iwelem],
-                   wellElemPhaseCompFracOld[iwelem],
+                   wellElemPhaseVolFrac_n[iwelem],
+                   wellElemPhaseDens_n[iwelem],
+                   wellElemPhaseCompFrac_n[iwelem],
                    localAccum,
                    localAccumJacobian );
 
@@ -1402,9 +1382,9 @@ AccumulationKernel::
                   arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dWellElemPhaseDens, \
                   arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & wellElemPhaseCompFrac, \
                   arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dWellElemPhaseCompFrac, \
-                  arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFracOld, \
-                  arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDensOld, \
-                  arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & wellElemPhaseCompFracOld, \
+                  arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFrac_n, \
+                  arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDens_n, \
+                  arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & wellElemPhaseCompFrac_n, \
                   CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                   arrayView1d< real64 > const & localRhs )
 
@@ -1544,6 +1524,7 @@ PresTempCompFracInitializationKernel::
           arrayView1d< localIndex const > const & resElementRegion,
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
+          arrayView1d< real64 const > const & perfGravCoef,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 > const & wellElemPres,
           arrayView1d< real64 > const & wellElemTemp,
@@ -1553,14 +1534,24 @@ PresTempCompFracInitializationKernel::
 
   real64 const targetBHP = wellControls.getTargetBHP( currentTime );
   real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
+  real64 const initialPresCoef = wellControls.getInitialPressureCoefficient();
   WellControls::Control const currentControl = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
 
-  // loop over all perforations to compute an average total mass density and component fraction
+
+
+  // Step 1: we loop over all the perforations on this rank to compute the following quantities:
+  //   - Sum of total mass densities over the perforated reservoir elements
+  //   - Sum of the temperatures over the perforated reservoir elements
+  //   - Sum of the component fractions over the perforated reservoir elements
+  // In passing, we save the min gravCoef difference between the reference depth and the perforation depth
+  // Note that we use gravCoef instead of depth for the (unlikely) case in which the gravityVector is not aligned with z
+
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumTotalMassDens( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumTemp( 0 );
-  RAJA::ReduceMin< parallelDeviceReduce, real64 > minResPres( 1e10 );
-  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxResPres( 0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > sumCompFrac[MAX_NUM_COMP]{};
+  RAJA::ReduceMin< parallelDeviceReduce, real64 > localMinGravCoefDiff( 1e9 );
+
   forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
   {
     // get the reservoir (sub)region and element indices
@@ -1568,26 +1559,85 @@ PresTempCompFracInitializationKernel::
     localIndex const esr = resElementSubRegion[iperf];
     localIndex const ei = resElementIndex[iperf];
 
-    minResPres.min( resPres[er][esr][ei] );
-    maxResPres.max( resPres[er][esr][ei] );
+    // save the min gravCoef difference between the reference depth and the perforation depth (times g)
+    localMinGravCoefDiff.min( LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] ) );
 
     // increment the temperature
     sumTemp += resTemp[er][esr][ei];
 
-    // increment the average total mass density
+    // increment the total mass density
     for( integer ip = 0; ip < numPhases; ++ip )
     {
       sumTotalMassDens += resPhaseVolFrac[er][esr][ei][ip] * resPhaseMassDens[er][esr][ei][0][ip];
     }
-  } );
 
-  // TODO: there must a better way to do what is below
-  // I would like to define an array of RAJA::ReduceSum to be able to do sum[ic] += ...
-  // and put back what is below in the previous kernel.
-  stackArray1d< real64, MAX_NUM_COMP > sumCompFrac( numComps );
-  for( integer ic = 0; ic < numComps; ++ic )
+    // increment the component fractions
+    real64 perfTotalDens = 0.0;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      perfTotalDens += resCompDens[er][esr][ei][ic];
+    }
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      sumCompFrac[ic] += resCompDens[er][esr][ei][ic] / perfTotalDens;
+    }
+  } );
+  real64 const minGravCoefDiff = MpiWrapper::min( localMinGravCoefDiff.get() );
+
+
+
+  // Step 2: we assign average quantities over the well (i.e., over all the ranks)
+  // For composition and temperature, we make a distinction between injection and production
+
+  // for total mass density, we always use the values of the perforated reservoir elements, even for injectors
+  real64 const avgTotalMassDens = MpiWrapper::sum( sumTotalMassDens.get() ) / numPerforations;
+
+  stackArray1d< real64, MAX_NUM_COMP > avgCompFrac( numComps );
+  real64 avgTemp = 0;
+
+  // for a producer, we use the temperature and component fractions from the reservoir
+  if( isProducer )
   {
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > sum( 0.0 );
+    // use average temperature from reservoir
+    avgTemp = MpiWrapper::sum( sumTemp.get() ) / numPerforations;
+
+    // use average comp frac from reservoir
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      avgCompFrac[ic] = MpiWrapper::sum( sumCompFrac[ic].get() ) / numPerforations;
+    }
+  }
+  // for an injector, we use the injection stream values
+  else
+  {
+    // use temperature from injection stream
+    avgTemp = wellControls.getInjectionTemperature();
+
+    // use comp frac from injection stream
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      avgCompFrac[ic] = wellControls.getInjectionStream()[ic];
+    }
+  }
+
+
+
+  // Step 3: we compute the approximate pressure at the reference depth
+  // We make a distinction between pressure-controlled wells and rate-controlled wells
+
+  real64 refPres = 0.0;
+
+  // if the well is controlled by pressure, initialize the reference pressure at the target pressure
+  if( currentControl == WellControls::Control::BHP )
+  {
+    refPres = targetBHP;
+  }
+  // if the well is controlled by rate, initialize the reference pressure using the pressure at the closest perforation
+  else
+  {
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > localRefPres( 1e9 );
+    real64 const alpha = ( isProducer ) ? 1 - initialPresCoef : 1 + initialPresCoef;
+
     forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
     {
       // get the reservoir (sub)region and element indices
@@ -1595,91 +1645,67 @@ PresTempCompFracInitializationKernel::
       localIndex const esr = resElementSubRegion[iperf];
       localIndex const ei = resElementIndex[iperf];
 
-      real64 perfTotalDens = 0.0;
-      for( integer jc = 0; jc < numComps; ++jc )
+      // get the perforation pressure and save the estimated reference pressure
+      real64 const gravCoefDiff = LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] );
+      if( isZero( gravCoefDiff - minGravCoefDiff ) )
       {
-        perfTotalDens += resCompDens[er][esr][ei][jc];
+        localRefPres.min( alpha * resPres[er][esr][ei] + avgTotalMassDens * ( refWellElemGravCoef - perfGravCoef[iperf] ) );
       }
-      sum += resCompDens[er][esr][ei][ic] / perfTotalDens;
     } );
-    sumCompFrac[ic] = sum.get();
+    refPres = MpiWrapper::min( localRefPres.get() );
   }
 
-  real64 const pres = ( isProducer )
-                      ? MpiWrapper::min( minResPres.get() )
-                      : MpiWrapper::max( maxResPres.get() );
-  real64 const avgTotalMassDens = MpiWrapper::sum( sumTotalMassDens.get() ) / numPerforations;
 
-  stackArray1d< real64, MAX_NUM_COMP > avgCompFrac( numComps );
-  real64 avgTemp = 0;
-  // compute average component fraction
-  if( isProducer )
-  {
-    // use average temperature from reservoir
-    avgTemp = MpiWrapper::sum( sumTemp.get() ) / numPerforations;
 
-    // use average comp frac from reservoir
-    real64 compFracSum = 0;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      avgCompFrac[ic] = MpiWrapper::sum( sumCompFrac[ic] ) / numPerforations;
-      compFracSum += avgCompFrac[ic];
-    }
+  // Step 4: we are ready to assign the primary variables on the well elements:
+  //  - pressure: hydrostatic pressure using our crude approximation of the total mass density
+  //  - temperature: uniform, using the average temperature computed above
+  //  - component fraction: uniform, using the average component fraction computed above
 
-    real64 const tol = 1e-13;
-    GEOSX_THROW_IF( compFracSum < 1 - tol || compFracSum > 1 + tol,
-                    "Invalid well initialization: sum of component fractions should be between 0 and 1",
-                    InputError );
-  }
-  else // injector
-  {
-    // use temperature from XML file
-    avgTemp = wellControls.getInjectionTemperature();
+  RAJA::ReduceMax< parallelDeviceReduce, integer > foundNegativeTemp( 0 );
+  RAJA::ReduceMax< parallelDeviceReduce, integer > foundNegativePres( 0 );
+  RAJA::ReduceMax< parallelDeviceReduce, integer > foundInconsistentCompFrac( 0 );
 
-    // use comp frac from XML file
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      avgCompFrac[ic] = wellControls.getInjectionStream()[ic];
-    }
-  }
 
-  // set the global component fractions to avgCompFrac / temperature to avgTemp
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
+    wellElemPres[iwelem] = refPres + avgTotalMassDens * ( wellElemGravCoef[iwelem] - refWellElemGravCoef );
     wellElemTemp[iwelem] = avgTemp;
+
+    real64 sumCompFracForCheck = 0.0;
     for( integer ic = 0; ic < numComps; ++ic )
     {
       wellElemCompFrac[iwelem][ic] = avgCompFrac[ic];
+      sumCompFracForCheck += wellElemCompFrac[iwelem][ic];
     }
+
+    if( wellElemPres[iwelem] <= 0 )
+    {
+      foundNegativePres.max( 1 );
+    }
+    if( wellElemTemp[iwelem] <= 0 )
+    {
+      foundNegativeTemp.max( 1 );
+    }
+    if( !isZero( sumCompFracForCheck - 1.0 ) )
+    {
+      foundInconsistentCompFrac.max( 1 );
+    }
+
   } );
 
-  real64 pressureControl = 0.0;
-  real64 const gravCoefControl = refWellElemGravCoef;
-  // initialize the pressure in the element where the BHP is controlled)
-  if( currentControl == WellControls::Control::BHP )
-  {
-    // if pressure constraint, initialize the pressure at the constraint
-    pressureControl = targetBHP;
-  }
-  else // rate control
-  {
-    // initialize the pressure in the element where the BHP is controlled slightly
-    // above/below the target pressure depending on well type.
-    // note: the targetBHP is not used here because we sometimes set targetBHP to a very large (unrealistic) value
-    //       to keep the well in rate control during the full simulation, and we don't want this large targetBHP to
-    //       be used for initialization
-    pressureControl = ( isProducer ) ? 0.5 * pres : 2.0 * pres;
-  }
 
-  GEOSX_THROW_IF( pressureControl <= 0,
-                  "Invalid well initialization: negative pressure was found",
+  GEOSX_THROW_IF( foundNegativePres.get() == 1,
+                  "Invalid well initialization: negative pressure was found, please check " << wellControls.getName(),
+                  InputError );
+  GEOSX_THROW_IF( foundNegativeTemp.get() == 1,
+                  "Invalid well initialization: negative temperature was found, please check " << wellControls.getName(),
+                  InputError );
+  GEOSX_THROW_IF( foundInconsistentCompFrac.get() == 1,
+                  "Invalid well initialization: inconsistent component fractions were found, please check " << wellControls.getName(),
                   InputError );
 
-  // estimate the pressures in the well elements using this avgDens
-  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-  {
-    wellElemPres[iwelem] = pressureControl + avgTotalMassDens * ( wellElemGravCoef[iwelem] - gravCoefControl );
-  } );
+
 }
 
 /******************************** CompDensInitializationKernel ********************************/

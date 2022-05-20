@@ -88,7 +88,7 @@ protected:
  * @param [in] support list of target region names
  * @param [out] dofNumbers the list of dof indices
  */
-template< DofManager::Location LOC >
+template< FieldLocation LOC >
 void collectLocalDofNumbers( DomainPartition const & domain,
                              string const & dofIndexKey,
                              std::vector< DofManager::Regions > const & support,
@@ -120,10 +120,10 @@ void collectLocalDofNumbers( DomainPartition const & domain,
  * @param [out] dofNumbers the list of dof indices
  */
 template<>
-void collectLocalDofNumbers< DofManager::Location::Elem >( DomainPartition const & domain,
-                                                           string const & dofIndexKey,
-                                                           std::vector< DofManager::Regions > const & support,
-                                                           array1d< globalIndex > & dofNumbers )
+void collectLocalDofNumbers< FieldLocation::Elem >( DomainPartition const & domain,
+                                                    string const & dofIndexKey,
+                                                    std::vector< DofManager::Regions > const & support,
+                                                    array1d< globalIndex > & dofNumbers )
 {
   for( DofManager::Regions const & regions : support )
   {
@@ -134,7 +134,7 @@ void collectLocalDofNumbers< DofManager::Location::Elem >( DomainPartition const
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
     auto const dofNumber = elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
 
-    forLocalObjects< DofManager::Location::Elem >( meshLevel, regions.regionNames, [&]( auto const idx )
+    forLocalObjects< FieldLocation::Elem >( meshLevel, regions.regionNames, [&]( auto const idx )
     {
       globalIndex const dofIndex = dofNumber[idx[0]][idx[1]][idx[2]];
       EXPECT_GE( dofIndex, 0 );
@@ -202,7 +202,7 @@ protected:
   struct FieldDesc
   {
     string name;
-    DofManager::Location location;
+    FieldLocation location;
     integer components;
     std::vector< DofManager::Regions > regions{};
   };
@@ -235,19 +235,19 @@ void DofManagerIndicesTest::test( std::vector< FieldDesc > const & fields )
     string const key = dofManager.getKey( f.name );
     switch( f.location )
     {
-      case DofManager::Location::Elem:
+      case FieldLocation::Elem:
       {
-        collectLocalDofNumbers< DofManager::Location::Elem >( domain, key, getRegions( domain, f.regions ), dofNumbers );
+        collectLocalDofNumbers< FieldLocation::Elem >( domain, key, getRegions( domain, f.regions ), dofNumbers );
         break;
       }
-      case DofManager::Location::Face:
+      case FieldLocation::Face:
       {
-        collectLocalDofNumbers< DofManager::Location::Face >( domain, key, getRegions( domain, f.regions ), dofNumbers );
+        collectLocalDofNumbers< FieldLocation::Face >( domain, key, getRegions( domain, f.regions ), dofNumbers );
         break;
       }
-      case DofManager::Location::Node:
+      case FieldLocation::Node:
       {
-        collectLocalDofNumbers< DofManager::Location::Node >( domain, key, getRegions( domain, f.regions ), dofNumbers );
+        collectLocalDofNumbers< FieldLocation::Node >( domain, key, getRegions( domain, f.regions ), dofNumbers );
         break;
       }
       default:
@@ -281,7 +281,7 @@ TEST_F( DofManagerIndicesTest, Node_Full )
   {
     {
       "displacement",
-      DofManager::Location::Node,
+      FieldLocation::Node,
       3,
       { { "mesh", "Level0", {} } }
     }
@@ -297,7 +297,7 @@ TEST_F( DofManagerIndicesTest, Node_Partial )
   {
     {
       "displacement",
-      DofManager::Location::Node,
+      FieldLocation::Node,
       3,
       { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     }
@@ -313,7 +313,7 @@ TEST_F( DofManagerIndicesTest, Elem_Full )
   {
     {
       "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       2,
       { { "mesh", "Level0", {} } }
     }
@@ -329,7 +329,7 @@ TEST_F( DofManagerIndicesTest, Elem_Partial )
   {
     {
       "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       2,
       { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     }
@@ -345,7 +345,7 @@ TEST_F( DofManagerIndicesTest, Face_Full )
   {
     {
       "flux",
-      DofManager::Location::Face,
+      FieldLocation::Face,
       2,
       { { "mesh", "Level0", {} } }
     }
@@ -361,7 +361,7 @@ TEST_F( DofManagerIndicesTest, Face_Partial )
   {
     {
       "flux",
-      DofManager::Location::Face,
+      FieldLocation::Face,
       2,
       { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     }
@@ -377,13 +377,13 @@ TEST_F( DofManagerIndicesTest, Node_Elem_Full )
   {
     {
       "displacement",
-      DofManager::Location::Node,
+      FieldLocation::Node,
       3,
       { { "mesh", "Level0", {} } }
     },
     {
       "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       2,
       { { "mesh", "Level0", {} } }
     }
@@ -399,13 +399,13 @@ TEST_F( DofManagerIndicesTest, Node_Elem_Partial )
   {
     {
       "displacement",
-      DofManager::Location::Node,
+      FieldLocation::Node,
       3,
       { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     },
     {
       "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       2,
       { { "mesh", "Level0", { "region1", "region2", "region4" } } }
     }
@@ -421,13 +421,13 @@ TEST_F( DofManagerIndicesTest, Face_Elem_Full )
   {
     {
       "flux",
-      DofManager::Location::Face,
+      FieldLocation::Face,
       2,
       { { "mesh", "Level0", {} } }
     },
     {
       "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       2,
       { { "mesh", "Level0", {} } }
     }
@@ -443,13 +443,13 @@ TEST_F( DofManagerIndicesTest, Face_Elem_Partial )
   {
     {
       "flux",
-      DofManager::Location::Face,
+      FieldLocation::Face,
       2,
       { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     },
     {
       "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       2,
       { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     }
@@ -486,7 +486,7 @@ protected:
   struct FieldDesc
   {
     string name;
-    DofManager::Location location;
+    FieldLocation location;
     DofManager::Connector connectivity;
     localIndex components;
     PatternFunc makePattern;
@@ -556,19 +556,19 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
     localIndex numLocalObj = 0;
     switch( f.location )
     {
-      case DofManager::Location::Elem:
+      case FieldLocation::Elem:
       {
-        numLocalObj = countLocalObjects< DofManager::Location::Elem >( domain, regions );
+        numLocalObj = countLocalObjects< FieldLocation::Elem >( domain, regions );
       }
       break;
-      case DofManager::Location::Face:
+      case FieldLocation::Face:
       {
-        numLocalObj = countLocalObjects< DofManager::Location::Face >( domain, regions );
+        numLocalObj = countLocalObjects< FieldLocation::Face >( domain, regions );
       }
       break;
-      case DofManager::Location::Node:
+      case FieldLocation::Node:
       {
-        numLocalObj = countLocalObjects< DofManager::Location::Node >( domain, regions );
+        numLocalObj = countLocalObjects< FieldLocation::Node >( domain, regions );
       }
       break;
       default:
@@ -639,7 +639,7 @@ TYPED_TEST_P( DofManagerSparsityTest, TPFA_Full )
 {
   TestFixture::test( {
     { "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       DofManager::Connector::Face,
       2, makeSparsityTPFA }
   } );
@@ -653,7 +653,7 @@ TYPED_TEST_P( DofManagerSparsityTest, TPFA_Partial )
 {
   TestFixture::test( {
     { "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       DofManager::Connector::Face,
       2, makeSparsityTPFA,
       { {"mesh", "Level0", { "region1", "region3", "region4" } } }
@@ -669,7 +669,7 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_Full )
 {
   TestFixture::test( {
     { "displacement",
-      DofManager::Location::Node,
+      FieldLocation::Node,
       DofManager::Connector::Elem,
       3, makeSparsityFEM }
   } );
@@ -683,7 +683,7 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_Partial )
 {
   TestFixture::test( {
     { "displacement",
-      DofManager::Location::Node,
+      FieldLocation::Node,
       DofManager::Connector::Elem,
       3, makeSparsityFEM,
       { {"mesh", "Level0", { "region1", "region3", "region4" } } }
@@ -699,7 +699,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Mass_Full )
 {
   TestFixture::test( {
     { "mass",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       DofManager::Connector::None,
       2, makeSparsityMass }
   } );
@@ -713,7 +713,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Mass_Partial )
 {
   TestFixture::test( {
     { "mass",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       DofManager::Connector::None,
       2, makeSparsityMass,
       { {"mesh", "Level0", { "region1", "region3", "region4" } } }
@@ -729,7 +729,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Flux_Full )
 {
   TestFixture::test( {
     { "flux",
-      DofManager::Location::Face,
+      FieldLocation::Face,
       DofManager::Connector::Elem,
       2, makeSparsityFlux }
   } );
@@ -743,7 +743,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Flux_Partial )
 {
   TestFixture::test( {
     { "flux",
-      DofManager::Location::Face,
+      FieldLocation::Face,
       DofManager::Connector::Elem,
       2, makeSparsityFlux,
       { {"mesh", "Level0", { "region1", "region3", "region4" } } }
@@ -759,11 +759,11 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Full )
 {
   TestFixture::test( {
     { "displacement",
-      DofManager::Location::Node,
+      FieldLocation::Node,
       DofManager::Connector::Elem,
       3, makeSparsityFEM },
     { "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       DofManager::Connector::Face,
       2, makeSparsityTPFA }
   },
@@ -785,13 +785,13 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Partial )
 {
   TestFixture::test( {
     { "displacement",
-      DofManager::Location::Node,
+      FieldLocation::Node,
       DofManager::Connector::Elem,
       3, makeSparsityFEM,
       { {"mesh", "Level0", { "region1", "region3", "region4" } } }
     },
     { "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       DofManager::Connector::Face,
       2, makeSparsityTPFA,
       { {"mesh", "Level0", { "region1", "region2", "region4" } } }
@@ -944,7 +944,7 @@ TYPED_TEST_P( DofManagerRestrictorTest, SingleBlock )
   TestFixture::test(
   {
     { "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       DofManager::Connector::Face,
       3, nullptr,
       { {"mesh", "Level0", {"region1", "region3", "region4"} } }
@@ -960,13 +960,13 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_First )
   TestFixture::test(
   {
     { "displacement",
-      DofManager::Location::Node,
+      FieldLocation::Node,
       DofManager::Connector::Elem,
       3, nullptr,
       { {"mesh", "Level0", { "region1", "region3", "region4" } } }
     },
     { "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       DofManager::Connector::Face,
       2, nullptr,
       { {"mesh", "Level0", { "region1", "region2", "region4" } } }
@@ -992,13 +992,13 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_Second )
   TestFixture::test(
   {
     { "displacement",
-      DofManager::Location::Node,
+      FieldLocation::Node,
       DofManager::Connector::Elem,
       3, nullptr,
       { {"mesh", "Level0", { "region1", "region3", "region4" } } }
     },
     { "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       DofManager::Connector::Face,
       2, nullptr,
       { {"mesh", "Level0", {"region1", "region2", "region4"} } }
@@ -1025,13 +1025,13 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_Both )
   TestFixture::test(
   {
     { "displacement",
-      DofManager::Location::Node,
+      FieldLocation::Node,
       DofManager::Connector::Elem,
       3, nullptr,
       { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     },
     { "pressure",
-      DofManager::Location::Elem,
+      FieldLocation::Elem,
       DofManager::Connector::Face,
       2, nullptr,
       { { "mesh", "Level0", { "region1", "region2", "region4" } } }

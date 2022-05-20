@@ -72,6 +72,12 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
     setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
     setDescription( "The amount of remaining mass that was introduced when the SurfaceElement was created." );
 
+  excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
+                                viewKeyStruct::edgeListString(),
+                                viewKeyStruct::surfaceElementsToCellRegionsString(),
+                                viewKeyStruct::surfaceElementsToCellSubRegionsString(),
+                                viewKeyStruct::surfaceElementsToCellIndexString() } );
+
   // TODO there has to be a cleaner way than this.
   m_surfaceElementsToCells.setElementRegionManager( dynamicCast< ElementRegionManager & >( getParent().getParent().getParent().getParent() ) );
 

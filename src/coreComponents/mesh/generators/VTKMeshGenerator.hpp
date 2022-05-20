@@ -23,6 +23,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
+#include "mesh/FieldIdentifiers.hpp"
 
 // TODO can we remove this and use unique_ptr to hold mesh?
 #include <vtkSmartPointer.h>
@@ -113,21 +114,25 @@ public:
 
 private:
 
-  void buildCellBlocks( CellBlockManager & cellBlockManager ) const;
+  real64 writeNodes( CellBlockManager & cellBlockManager ) const;
 
-  void buildSurfaces( CellBlockManager & cellBlockManager ) const;
+  void writeCells( CellBlockManager & cellBlockManager ) const;
+
+  void writeSurfaces( CellBlockManager & cellBlockManager ) const;
 
   void importFieldOnCellElementSubRegion( int const regionId,
                                           ElementType const elemType,
                                           std::vector< vtkIdType > const & cellIds,
                                           ElementRegionManager & elemManager,
                                           arrayView1d< string const > const & fieldNames,
-                                          std::vector< vtkDataArray * > const & srcArrays ) const;
+                                          std::vector< vtkDataArray * > const & srcArrays,
+                                          FieldIdentifiers & fieldsToBeSync ) const;
 
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
   };
   /// @endcond
 
@@ -139,6 +144,9 @@ private:
 
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;
+
+  /// Number of graph partitioning refinement iterations
+  integer m_partitionRefinement = 0;
 
   /// Lists of VTK cell ids, organized by element type, then by region
   CellMapType m_cellMap;

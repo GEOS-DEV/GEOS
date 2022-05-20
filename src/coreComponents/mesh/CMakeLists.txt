@@ -14,6 +14,7 @@ set( mesh_headers
      ExtrinsicMeshData.hpp
      FaceElementSubRegion.hpp
      FaceManager.hpp
+     FieldIdentifiers.hpp
      InterObjectRelation.hpp
      MeshBody.hpp
      MeshForLoopInterface.hpp
@@ -38,6 +39,8 @@ set( mesh_headers
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
      generators/MeshGeneratorBase.hpp
+     generators/ParMETISInterface.hpp
+     generators/PrismUtilities.hpp
      mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp
      mpiCommunications/MPI_iCommData.hpp
@@ -90,6 +93,7 @@ set( mesh_sources
      generators/InternalWellGenerator.cpp
      generators/InternalWellboreGenerator.cpp
      generators/MeshGeneratorBase.cpp
+     generators/ParMETISInterface.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp
      mpiCommunications/MPI_iCommData.cpp
@@ -105,7 +109,7 @@ set( mesh_sources
      utilities/ComputationalGeometry.cpp
      )
 
-set( dependencyList schema dataRepository constitutive metis )
+set( dependencyList schema dataRepository constitutive finiteElement parmetis metis )
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
@@ -121,8 +125,8 @@ endif()
 
 if( ENABLE_VTK )
     message(STATUS "Adding VTKMeshGenerator sources and headers")
-    set( mesh_headers ${mesh_headers} generators/VTKMeshGenerator.hpp )                                                                                                                                         
-    set( mesh_sources ${mesh_sources} generators/VTKMeshGenerator.cpp)
+    set( mesh_headers ${mesh_headers} generators/VTKMeshGenerator.hpp generators/VTKMeshGeneratorTools.hpp )
+    set( mesh_sources ${mesh_sources} generators/VTKMeshGenerator.cpp generators/VTKMeshGeneratorTools.cpp )
     set( dependencyList ${dependencyList} VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
       set( dependencyList ${dependencyList} VTK::IOParallelXML VTK::ParallelMPI )

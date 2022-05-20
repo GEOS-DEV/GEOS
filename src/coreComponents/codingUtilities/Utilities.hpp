@@ -119,6 +119,69 @@ T_VALUE softMapLookup( mapBase< T_KEY, T_VALUE, SORTED > const & theMap,
 }
 
 /**
+ * @brief Call a user function on sub-ranges of repeating values.
+ * @tparam ITER type of range iterator
+ * @tparam FUNC type of user function
+ * @tparam COMP type of comparison function
+ * @param first iterator to start of the input range
+ * @param last iterator past the end of the input range
+ * @param func the function to call, must be callable with a pair of iterators
+ *
+ * User function will be called once per consecutive group of equal values, as defined
+ * by @p comp, with a pair of iterators to the beginning and past the end of each group.
+ * For example, given an input [1,1,2,2,2,3,3,1], @p func will be called with iterators
+ * to sub-ranges [1,1], [2,2,2], [3,3], [1].
+ *
+ * @note @p comp is an equality comparison, not a less-than type predicate used in sorting.
+ *       For a range sorted with some predicate P, one can use comp(x,y) = !(P(x,y) || P(y,x)),
+ *       but in most cases default value (std::equal_to<>) should be fine.
+ */
+template< typename ITER, typename FUNC, typename COMP = std::equal_to<> >
+void forEqualRanges( ITER first, ITER const last, FUNC && func, COMP && comp = {} )
+{
+  using R = typename std::iterator_traits< ITER >::reference;
+  while( first != last )
+  {
+    R curr = *first;
+    auto const pred = [&]( R v ) { return comp( curr, v ); };
+    ITER const next = std::find_if_not( std::next( first ), last, pred );
+    func( first, next );
+    first = next;
+  }
+}
+
+/**
+ * @brief Execute a user function on unique values in a range.
+ * @tparam ITER type of range iterator
+ * @tparam FUNC type of user function
+ * @tparam COMP type of comparison function
+ * @param first iterator to start of the range
+ * @param last iterator past the end of the range
+ * @param func the function to call, must be callable with value and size (as int)
+ *
+ * User function will be called once per consecutive group of equal values, as defined
+ * by @p comp, with a reference to one of the values from each group and the group size.
+ * If the range is (partially) ordered w.r.t. to a predicate compatible with @p comp,
+ * the function will be called once per unique value in the entire range.
+ * For example, given an input [a,a,b,b,b,c,c,a], @p func will be called with
+ * (a,2), (b,3), (c,2), (a,1), where a,b,c will be references to one of the
+ * corresponding elements in the input (which one exactly is unspecified).
+ *
+ * @note @p comp is an equality comparison, not a less-than type predicate used in sorting.
+ *       For a range sorted with some predicate P, one can use comp(x,y) = !(P(x,y) || P(y,x)),
+ *       but in most cases default value (std::equal_to<>) should be fine.
+ */
+template< typename ITER, typename FUNC, typename COMP = std::equal_to<> >
+void forUniqueValues( ITER first, ITER const last, FUNC && func, COMP && comp = {} )
+{
+  auto const f = [&func]( ITER r_first, ITER r_last )
+  {
+    func( *r_first, std::distance( r_first, r_last ) );
+  };
+  forEqualRanges( first, last, f, std::forward< COMP >( comp ) );
+}
+
+/**
  * @brief Perform lookup in a map of options and throw a user-friendly exception if not found.
  * @tparam KEY map key type
  * @tparam VAL map value type
@@ -183,6 +246,30 @@ template< class F, class ... Ts >
 void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func )
 {
   internal::forEachArgInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
+}
+
+/**
+ * @brief Utility function to convert the value of an enumerator to its underlying type (integer).
+ * @tparam ENUMERATION the type of the enumeration
+ * @param[in] value the value of the enumerator
+ * @return the integer conversion of @p value
+ */
+template< typename ENUMERATION >
+std::underlying_type_t< ENUMERATION > toUnderlying( ENUMERATION const value )
+{
+  return static_cast< std::underlying_type_t< ENUMERATION > >( value );
+}
+
+/**
+ * @brief Utility function to convert a pointer to an enumeration to a pointer to its underlying type (integer).
+ * @tparam ENUMERATION the type of the enumeration
+ * @param[in] enumPtr the pointer to the enumeration
+ * @return the pointer to the enumeration underlying type
+ */
+template< typename ENUMERATION >
+std::underlying_type_t< ENUMERATION > * toUnderlyingPtr( ENUMERATION * const enumPtr )
+{
+  return reinterpret_cast< std::underlying_type_t< ENUMERATION > * >( enumPtr );
 }
 
 // The code below should work with any subscriptable vector/matrix types
