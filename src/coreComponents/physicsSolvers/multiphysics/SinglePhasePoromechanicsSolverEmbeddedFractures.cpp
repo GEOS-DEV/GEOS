@@ -628,6 +628,9 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
       arrayView1d< real64 const > const & pressure =
         subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();
 
+      arrayView1d< real64 const > const & pressure_n =
+        subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
+
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_fracturesSolver->getContactRelationName() );
 
       ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
@@ -645,6 +648,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
                                             porousMaterialWrapper,
                                             dispJump,
                                             pressure,
+                                            pressure_n,
                                             area,
                                             volume,
                                             deltaVolume,
