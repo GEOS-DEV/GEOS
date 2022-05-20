@@ -152,11 +152,17 @@ struct NoOpFunc
  * @class ElementBasedAssemblyKernel
  * @brief Define the interface for the assembly kernel in charge of accumulation
  */
-template< typename SUBREGION_TYPE >
+template< typename SUBREGION_TYPE, integer NUM_DOF >
 class ElementBasedAssemblyKernel
 {
 
 public:
+
+  /// Compute time value for the number of degrees of freedom
+  static constexpr integer numDof = NUM_DOF;
+
+  /// Compute time value for the number of equations
+  static constexpr integer numEqn = NUM_DOF;
 
   /**
    * @brief Constructor
@@ -212,14 +218,17 @@ public:
 
     // Residual information
 
+    /// Index of the local row corresponding to this element
+    localIndex localRow = -1;
+
     /// Index of the matrix row/column corresponding to the dof in this element
-    globalIndex dofNumber;
+    globalIndex dofIndices[numDof]{};
 
     /// Storage for the element local residual vector
-    real64 localResidual;
+    real64 localResidual[numEqn]{};
 
     /// Storage for the element local Jacobian matrix
-    real64 localJacobian;
+    real64 localJacobian[numEqn][numDof]{};
 
   };
 
@@ -247,8 +256,12 @@ public:
     stack.poreVolume_n = m_volume[ei] * m_porosity_n[ei][0];
     stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
 
-    // set degree of freedom index for this element
-    stack.dofNumber = m_dofNumber[ei];
+    // set row index and degrees of freedom indices for this element
+    stack.localRow = m_dofNumber[ei] - m_rankOffset;
+    for( integer idof = 0; idof < numDof; ++idof )
+    {
+      stack.dofIndices[idof] = m_dofNumber[ei] + idof;
+    }
   }
 
   /**
@@ -265,10 +278,10 @@ public:
                             FUNC && kernelOp = NoOpFunc{} ) const
   {
     // Residual contribution is mass conservation in the cell
-    stack.localResidual = stack.poreVolume * m_density[ei][0] - stack.poreVolume_n * m_density_n[ei][0];
+    stack.localResidual[0] = stack.poreVolume * m_density[ei][0] - stack.poreVolume_n * m_density_n[ei][0];
 
     // Derivative of residual wrt to pressure in the cell
-    stack.localJacobian = stack.dPoreVolume_dPres * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolume;
+    stack.localJacobian[0][0] = stack.dPoreVolume_dPres * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolume;
 
     // Customize the kernel with this lambda
     kernelOp();
@@ -283,11 +296,13 @@ public:
   void complete( localIndex const GEOSX_UNUSED_PARAM( ei ),
                  StackVariables & stack ) const
   {
-    localIndex const localElemDof = stack.dofNumber - m_rankOffset;
-
     // add contribution to global residual and jacobian (no need for atomics here)
-    m_localMatrix.addToRow< serialAtomic >( localElemDof, &stack.dofNumber, &stack.localJacobian, 1 );
-    m_localRhs[localElemDof] += stack.localResidual;
+    m_localMatrix.template addToRow< serialAtomic >( stack.localRow, 
+                                                     stack.dofIndices, 
+                                                     stack.localJacobian[0], 
+                                                     numDof );
+    m_localRhs[stack.localRow] += stack.localResidual[0];
+
   }
 
   /**
@@ -355,12 +370,12 @@ protected:
  * @class SurfaceElementBasedAssemblyKernel
  * @brief Define the interface for the assembly kernel in charge of accumulation in SurfaceElementSubRegion
  */
-class SurfaceElementBasedAssemblyKernel : public ElementBasedAssemblyKernel< SurfaceElementSubRegion >
+class SurfaceElementBasedAssemblyKernel : public ElementBasedAssemblyKernel< SurfaceElementSubRegion, 1 >
 {
 
 public:
 
-  using Base = ElementBasedAssemblyKernel< SurfaceElementSubRegion >;
+  using Base = ElementBasedAssemblyKernel< SurfaceElementSubRegion, 1 >;
 
   /**
    * @brief Constructor
@@ -404,7 +419,7 @@ public:
 #if ALLOW_CREATION_MASS
       if( Base::m_volume[ei] * Base::m_density_n[ei][0] > 1.1 * m_creationMass[ei] )
       {
-        stack.localResidual += m_creationMass[ei] * 0.25;
+        stack.localResidual[0] += m_creationMass[ei] * 0.25;
       }
 #endif
     } );
@@ -446,9 +461,11 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    ElementBasedAssemblyKernel< CellElementSubRegion >
+    integer constexpr NUM_DOF = 1;
+
+    ElementBasedAssemblyKernel< CellElementSubRegion, NUM_DOF >
     kernel( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
-    ElementBasedAssemblyKernel< CellElementSubRegion >::template launch< POLICY >( subRegion.size(), kernel );
+    ElementBasedAssemblyKernel< CellElementSubRegion, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
   }
 
   /**
@@ -486,7 +503,7 @@ struct ResidualNormKernel
   template< typename POLICY >
   static void launch( arrayView1d< real64 const > const & localResidual,
                       globalIndex const rankOffset,
-                      arrayView1d< globalIndex const > const & presDofNumber,
+                      arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< integer const > const & ghostRank,
                       arrayView1d< real64 const > const & volume,
                       arrayView2d< real64 const > const & dens_n,
@@ -497,14 +514,14 @@ struct ResidualNormKernel
     RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > normSum( 0.0 );
     RAJA::ReduceSum< ReducePolicy< POLICY >, localIndex > count( 0 );
 
-    forAll< POLICY >( presDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      if( ghostRank[a] < 0 )
+      if( ghostRank[ei] < 0 )
       {
-        localIndex const lid = presDofNumber[a] - rankOffset;
+        localIndex const lid = dofNumber[ei] - rankOffset;
         real64 const val = localResidual[lid];
         localSum += val * val;
-        normSum += poro_n[a][0] * dens_n[a][0] * volume[a];
+        normSum += poro_n[ei][0] * dens_n[ei][0] * volume[ei];
         count += 1;
       }
     } );
@@ -522,18 +539,18 @@ struct SolutionCheckKernel
   template< typename POLICY >
   static localIndex launch( arrayView1d< real64 const > const & localSolution,
                             globalIndex const rankOffset,
-                            arrayView1d< globalIndex const > const & presDofNumber,
+                            arrayView1d< globalIndex const > const & dofNumber,
                             arrayView1d< integer const > const & ghostRank,
                             arrayView1d< real64 const > const & pres,
                             real64 const scalingFactor )
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
 
-    forAll< POLICY >( presDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      if( ghostRank[ei] < 0 && presDofNumber[ei] >= 0 )
+      if( ghostRank[ei] < 0 && dofNumber[ei] >= 0 )
       {
-        localIndex const lid = presDofNumber[ei] - rankOffset;
+        localIndex const lid = dofNumber[ei] - rankOffset;
         real64 const newPres = pres[ei] + scalingFactor * localSolution[lid];
 
         if( newPres < 0.0 )
@@ -543,6 +560,7 @@ struct SolutionCheckKernel
       }
 
     } );
+
     return minVal.get();
   }
 
@@ -634,7 +652,7 @@ struct HydrostaticPressureKernel
 
     real64 datumDens = 0.0;
     real64 datumVisc = 0.0;
-    
+
     fluidWrapper.compute( datumPres,
                           datumTemp, 
                           datumDens,

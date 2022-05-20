@@ -145,27 +145,31 @@ struct MobilityKernel
 /******************************** ElementBasedAssemblyKernel ********************************/
 
 /**
- * @brief Internal struct to provide no-op defaults used in the inclusion
- *   of lambda functions into kernel component functions.
- * @struct NoOpFunc
- */
-struct NoOpFunc
-{
-  template< typename ... Ts >
-  GEOSX_HOST_DEVICE
-  constexpr void
-  operator()( Ts && ... ) const {}
-};
-
-/**
  * @class ElementBasedAssemblyKernel
  * @brief Define the interface for the assembly kernel in charge of accumulation
  */
-template< typename SUBREGION_TYPE >
-class ElementBasedAssemblyKernel
+template< typename SUBREGION_TYPE, integer NUM_DOF >
+class ElementBasedAssemblyKernel : public singlePhaseBaseKernels::ElementBasedAssemblyKernel< SUBREGION_TYPE, NUM_DOF > 
 {
 
 public:
+
+  using Base = singlePhaseBaseKernels::ElementBasedAssemblyKernel< SUBREGION_TYPE, NUM_DOF >;
+  using Base::numDof;
+  using Base::numEqn;
+  using Base::m_rankOffset;
+  using Base::m_dofNumber;
+  using Base::m_elemGhostRank;
+  using Base::m_volume;
+  using Base::m_deltaVolume; 
+  using Base::m_porosity_n;
+  using Base::m_porosityNew;
+  using Base::m_dPoro_dPres;
+  using Base::m_density_n; 
+  using Base::m_density;
+  using Base::m_dDensity_dPres;  
+  using Base::m_localMatrix;
+  using Base::m_localRhs;
 
   /**
    * @brief Constructor
@@ -184,62 +188,52 @@ public:
                               constitutive::CoupledSolidBase const & solid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
-    :
-    m_rankOffset( rankOffset ),
-    m_dofNumber( subRegion.template getReference< array1d< globalIndex > >( dofKey ) ),
-    m_elemGhostRank( subRegion.ghostRank() ),
-    m_volume( subRegion.getElementVolume() ),
-    m_deltaVolume( subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaVolume >() ),
-    m_porosity_n( solid.getPorosity_n() ),
-    m_porosityNew( solid.getPorosity() ),
-    m_dPoro_dPres( solid.getDporosity_dPressure() ),
-    m_density_n( fluid.density_n() ),
-    m_density( fluid.density() ),
-    m_dDensity_dPres( fluid.dDensity_dPressure() ),
-    m_localMatrix( localMatrix ),
-    m_localRhs( localRhs )
+    : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
+    m_dDensity_dTemp( fluid.dDensity_dTemperature() ),
+    m_internalEnergy_n( fluid.internalEnergy_n() ), 
+    m_internalEnergy( fluid.internalEnergy() ), 
+    m_dInternalEnergy_dPres( fluid.dInternalEnergy_dPressure() ), 
+    m_dInternalEnergy_dTemp( fluid.dInternalEnergy_dTemperature() ), 
+    m_rockInternalEnergy_n( solid.getInternalEnergy_n() ),
+    m_rockInternalEnergy( solid.getInternalEnergy() ),
+    m_dRockInternalEnergy_dTemp( solid.getDinternalEnergy_dTemperature() )
   {}
 
   /**
    * @struct StackVariables
    * @brief Kernel variables (dof numbers, jacobian and residual) located on the stack
    */
-  struct StackVariables
+  struct StackVariables : public Base::StackVariables
   {
 public:
 
-    // Pore volume information
+    GEOSX_HOST_DEVICE
+    StackVariables()
+      : Base::StackVariables()
+    {}
 
-    /// Pore volume at time n+1
-    real64 poreVolume = 0.0;
+    using Base::StackVariables::poreVolume;
+    using Base::StackVariables::poreVolume_n;
+    using Base::StackVariables::dPoreVolume_dPres;
+    using Base::StackVariables::localRow;
+    using Base::StackVariables::dofIndices;
+    using Base::StackVariables::localResidual;
+    using Base::StackVariables::localJacobian;
 
-    /// Pore volume at the previous converged time step
-    real64 poreVolume_n = 0.0;
+    // Solid energy
 
-    /// Derivative of pore volume with respect to pressure
-    real64 dPoreVolume_dPres = 0.0;
+    /// Solid energy at time n+1
+    real64 solidEnergy = 0.0;
 
-    // Residual information
+    /// Solid energy at the previous converged time step
+    real64 solidEnergy_n = 0.0;
 
-    /// Index of the matrix row/column corresponding to the dof in this element
-    globalIndex dofNumber;
+    /// Derivative of solid internal energy with respect to pressure
+    real64 dSolidEnergy_dPres = 0.0;
 
-    /// Storage for the element local residual vector
-    real64 localResidual;
-
-    /// Storage for the element local Jacobian matrix
-    real64 localJacobian;
-
+    /// Derivative of solid internal energy with respect to temperature
+    real64 dSolidEnergy_dTemp = 0.0;
   };
-
-  /**
-   * @brief Getter for the ghost rank of an element
-   * @param[in] ei the element index
-   * @return the ghost rank of the element
-   */
-  GEOSX_HOST_DEVICE
-  integer elemGhostRank( localIndex const ei ) const
-  { return m_elemGhostRank( ei ); }
 
 
   /**
@@ -251,13 +245,18 @@ public:
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
-    // initialize the pore volume
-    stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosityNew[ei][0];
-    stack.poreVolume_n = m_volume[ei] * m_porosity_n[ei][0];
-    stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
+    Base::setup( ei, stack ); 
 
-    // set degree of freedom index for this element
-    stack.dofNumber = m_dofNumber[ei];
+    // initialize the solid volume
+    real64 const solidVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * ( 1.0 - m_porosityNew[ei][0] );
+    real64 const solidVolume_n = m_volume[ei] * ( 1.0 - m_porosity_n[ei][0] );
+    real64 const dSolidVolume_dPres = - ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
+
+    // initialize the solid internal energy
+    stack.solidEnergy = solidVolume * m_rockInternalEnergy[ei][0];
+    stack.solidEnergy_n = solidVolume_n * m_rockInternalEnergy_n[ei][0];
+    stack.dSolidEnergy_dPres = dSolidVolume_dPres * m_rockInternalEnergy[ei][0];
+    stack.dSolidEnergy_dTemp = solidVolume * m_dRockInternalEnergy_dTemp[ei][0];
   }
 
   /**
@@ -267,20 +266,39 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] kernelOp the function used to customize the kernel
    */
-  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
-                            StackVariables & stack,
-                            FUNC && kernelOp = NoOpFunc{} ) const
+                            StackVariables & stack ) const
   {
-    // Residual contribution is mass conservation in the cell
-    stack.localResidual = stack.poreVolume * m_density[ei][0] - stack.poreVolume_n * m_density_n[ei][0];
+    Base::computeAccumulation( ei, stack, [&] ()
+    {
+      // Step 1: assemble the derivatives of the mass balance equation w.r.t temperature
+      stack.localJacobian[0][numDof-1] = stack.poreVolume * m_dDensity_dTemp[ei][0];
 
-    // Derivative of residual wrt to pressure in the cell
-    stack.localJacobian = stack.dPoreVolume_dPres * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolume;
+      // Step 2: assemble the fluid part of the accumulation term of the energy equation
+      real64 const fluidEnergy = stack.poreVolume * m_density[ei][0] * m_internalEnergy[ei][0]; 
+      real64 const fluidEnergy_n = stack.poreVolume_n * m_density_n[ei][0] * m_internalEnergy_n[ei][0]; 
 
-    // Customize the kernel with this lambda
-    kernelOp();
+      real64 const dFluidEnergy_dP = stack.dPoreVolume_dPres * m_density[ei][0] * m_internalEnergy[ei][0]
+                                     + stack.poreVolume * m_dDensity_dPres[ei][0] * m_internalEnergy[ei][0]
+                                     + stack.poreVolume * m_density[ei][0] * m_dInternalEnergy_dPres[ei][0]; 
+
+      real64 const dFluidEnergy_dT = stack.poreVolume * m_dDensity_dTemp[ei][0] * m_internalEnergy[ei][0]
+                                     + stack.poreVolume * m_density[ei][0] * m_dInternalEnergy_dTemp[ei][0]; 
+
+      // local accumulation
+      stack.localResidual[numEqn-1] += fluidEnergy - fluidEnergy_n; 
+
+      // derivatives w.r.t. pressure and temperature
+      stack.localJacobian[numEqn-1][0]        += dFluidEnergy_dP;
+      stack.localJacobian[numEqn-1][numDof-1] += dFluidEnergy_dT;
+    } );
+
+    // Step 3: assemble the solid part of the accumulation term of the energy equation 
+    stack.localResidual[numEqn-1] += stack.solidEnergy - stack.solidEnergy_n; 
+    stack.localJacobian[numEqn-1][0] += stack.dSolidEnergy_dPres; 
+    stack.localJacobian[numEqn-1][numDof-1] += stack.dSolidEnergy_dTemp; 
+
   }
 
   /**
@@ -289,74 +307,37 @@ public:
    * @param[inout] stack the stack variables
    */
   GEOSX_HOST_DEVICE
-  void complete( localIndex const GEOSX_UNUSED_PARAM( ei ),
+  void complete( localIndex const ei ,
                  StackVariables & stack ) const
   {
-    localIndex const localElemDof = stack.dofNumber - m_rankOffset;
+    // Step 1: assemble the mass balance equation
+    Base::complete( ei, stack ); 
 
-    // add contribution to global residual and jacobian (no need for atomics here)
-    m_localMatrix.addToRow< serialAtomic >( localElemDof, &stack.dofNumber, &stack.localJacobian, 1 );
-    m_localRhs[localElemDof] += stack.localResidual;
-  }
+    // Step 2: assemble the energy equation 
+    m_localRhs[stack.localRow + numEqn-1] += stack.localResidual[numEqn-1]; 
+    m_localMatrix.template addToRow< serialAtomic >( stack.localRow + numEqn-1, 
+                                                     stack.dofIndices, 
+                                                     stack.localJacobian[numEqn-1],
+                                                     numDof ); 
 
-  /**
-   * @brief Performs the kernel launch
-   * @tparam POLICY the policy used in the RAJA kernels
-   * @tparam KERNEL_TYPE the kernel type
-   * @param[in] numElems the number of elements
-   * @param[inout] kernelComponent the kernel component providing access to setup/compute/complete functions and stack variables
-   */
-  template< typename POLICY, typename KERNEL_TYPE >
-  static void
-  launch( localIndex const numElems,
-          KERNEL_TYPE const & kernelComponent )
-  {
-    GEOSX_MARK_FUNCTION;
-
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      if( kernelComponent.elemGhostRank( ei ) >= 0 )
-      {
-        return;
-      }
-
-      typename KERNEL_TYPE::StackVariables stack;
-
-      kernelComponent.setup( ei, stack );
-      kernelComponent.computeAccumulation( ei, stack );
-      kernelComponent.complete( ei, stack );
-    } );
+    
   }
 
 protected:
 
-  /// Offset for my MPI rank
-  globalIndex const m_rankOffset;
+  /// View on derivative of fluid density w.r.t temperature
+  arrayView2d< real64 const > const m_dDensity_dTemp; 
 
-  /// View on the dof numbers
-  arrayView1d< globalIndex const > const m_dofNumber;
+  /// Views on fluid internal energy
+  arrayView2d< real64 const > const m_internalEnergy_n;
+  arrayView2d< real64 const > const m_internalEnergy;
+  arrayView2d< real64 const > const m_dInternalEnergy_dPres;
+  arrayView2d< real64 const > const m_dInternalEnergy_dTemp; 
 
-  /// View on the ghost ranks
-  arrayView1d< integer const > const m_elemGhostRank;
-
-  /// View on the element volumes
-  arrayView1d< real64 const > const m_volume;
-  arrayView1d< real64 const > const m_deltaVolume;
-
-  /// Views on the porosity
-  arrayView2d< real64 const > const m_porosity_n;
-  arrayView2d< real64 const > const m_porosityNew;
-  arrayView2d< real64 const > const m_dPoro_dPres;
-
-  /// Views on density
-  arrayView2d< real64 const > const m_density_n;
-  arrayView2d< real64 const > const m_density;
-  arrayView2d< real64 const > const m_dDensity_dPres;
-
-  /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
-  /// View on the local RHS
-  arrayView1d< real64 > const m_localRhs;
+  /// Views on rock internal energy
+  arrayView2d< real64 const > m_rockInternalEnergy_n;
+  arrayView2d< real64 const > m_rockInternalEnergy;
+  arrayView2d< real64 const > m_dRockInternalEnergy_dTemp;
 
 };
 
@@ -364,12 +345,12 @@ protected:
  * @class SurfaceElementBasedAssemblyKernel
  * @brief Define the interface for the assembly kernel in charge of accumulation in SurfaceElementSubRegion
  */
-class SurfaceElementBasedAssemblyKernel : public ElementBasedAssemblyKernel< SurfaceElementSubRegion >
+class SurfaceElementBasedAssemblyKernel : public ElementBasedAssemblyKernel< SurfaceElementSubRegion, 2 >
 {
 
 public:
 
-  using Base = ElementBasedAssemblyKernel< SurfaceElementSubRegion >;
+  using Base = ElementBasedAssemblyKernel< SurfaceElementSubRegion, 2 >;
 
   /**
    * @brief Constructor
@@ -408,15 +389,14 @@ public:
   void computeAccumulation( localIndex const ei,
                             Base::StackVariables & stack ) const
   {
-    Base::computeAccumulation( ei, stack, [&] ()
-    {
+    Base::computeAccumulation( ei, stack ); 
+    
 #if ALLOW_CREATION_MASS
       if( Base::m_volume[ei] * Base::m_density_n[ei][0] > 1.1 * m_creationMass[ei] )
       {
-        stack.localResidual += m_creationMass[ei] * 0.25;
+        stack.localResidual[0] += m_creationMass[ei] * 0.25;
       }
 #endif
-    } );
   }
 
 protected:
@@ -455,9 +435,12 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    ElementBasedAssemblyKernel< CellElementSubRegion >
+    integer constexpr NUM_DOF = 2;
+
+    ElementBasedAssemblyKernel< CellElementSubRegion, NUM_DOF >
     kernel( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
-    ElementBasedAssemblyKernel< CellElementSubRegion >::template launch< POLICY >( subRegion.size(), kernel );
+    ElementBasedAssemblyKernel< CellElementSubRegion, NUM_DOF >::template 
+    launch< POLICY, ElementBasedAssemblyKernel< CellElementSubRegion, NUM_DOF> >( subRegion.size(), kernel );
   }
 
   /**
@@ -485,6 +468,7 @@ public:
       kernel( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
     SurfaceElementBasedAssemblyKernel::launch< POLICY >( subRegion.size(), kernel );
   }
+
 
 };
 
@@ -533,238 +517,54 @@ struct ResidualNormKernel
   template< typename POLICY >
   static void launch( arrayView1d< real64 const > const & localResidual,
                       globalIndex const rankOffset,
-                      arrayView1d< globalIndex const > const & presDofNumber,
+                      arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< integer const > const & ghostRank,
                       arrayView1d< real64 const > const & volume,
                       arrayView2d< real64 const > const & dens_n,
                       arrayView2d< real64 const > const & poro_n,
-                      real64 * localResidualNorm )
+                      arrayView2d< real64 const > const & fluidInternalEnergy_n,
+                      arrayView2d< real64 const > const & solidInternalEnergy_n,
+                      real64 * localFlowResidualNorm,
+                      real64 * localEnergyResidualNorm )
   {
-    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localSum( 0.0 );
-    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > normSum( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localFlowSum( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > normFlowSum( 0.0 );
     RAJA::ReduceSum< ReducePolicy< POLICY >, localIndex > count( 0 );
 
-    forAll< POLICY >( presDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localEnergySum( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > normEnergySum( 0.0 );
+
+    forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      if( ghostRank[a] < 0 )
+      if( ghostRank[ei] < 0 )
       {
-        localIndex const lid = presDofNumber[a] - rankOffset;
-        real64 const val = localResidual[lid];
-        localSum += val * val;
-        normSum += poro_n[a][0] * dens_n[a][0] * volume[a];
+        localIndex const lid = dofNumber[ei] - rankOffset;
+
+        real64 const valFlow = localResidual[lid];
+        localFlowSum += valFlow * valFlow;
+        normFlowSum += poro_n[ei][0] * dens_n[ei][0] * volume[ei];
+
+        real64 const valEnergy = localResidual[lid + 1];
+        localEnergySum += valEnergy * valEnergy; 
+        normEnergySum += solidInternalEnergy_n[ei][0] * ( 1.0 - poro_n[ei][0] ) * volume[ei]
+                         + fluidInternalEnergy_n[ei][0] * dens_n[ei][0] * poro_n[ei][0] * volume[ei]; 
+
         count += 1;
       }
     } );
 
-    localResidualNorm[0] += localSum.get();
-    localResidualNorm[1] += normSum.get();
-    localResidualNorm[2] += count.get();
-  }
-};
+    localFlowResidualNorm[0] += localFlowSum.get();
+    localFlowResidualNorm[1] += normFlowSum.get();
+    localFlowResidualNorm[2] += count.get();
 
-/******************************** SolutionCheckKernel ********************************/
-
-struct SolutionCheckKernel
-{
-  template< typename POLICY >
-  static localIndex launch( arrayView1d< real64 const > const & localSolution,
-                            globalIndex const rankOffset,
-                            arrayView1d< globalIndex const > const & presDofNumber,
-                            arrayView1d< integer const > const & ghostRank,
-                            arrayView1d< real64 const > const & pres,
-                            real64 const scalingFactor )
-  {
-    RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
-
-    forAll< POLICY >( presDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      if( ghostRank[ei] < 0 && presDofNumber[ei] >= 0 )
-      {
-        localIndex const lid = presDofNumber[ei] - rankOffset;
-        real64 const newPres = pres[ei] + scalingFactor * localSolution[lid];
-
-        if( newPres < 0.0 )
-        {
-          minVal.min( 0 );
-        }
-      }
-
-    } );
-    return minVal.get();
-  }
-
-};
-
-/******************************** HydrostaticPressureKernel ********************************/
-
-struct HydrostaticPressureKernel
-{
-
-  template< typename FLUID_WRAPPER >
-  static bool
-  computeHydrostaticPressure( integer const maxNumEquilIterations,
-                              real64 const & equilTolerance,
-                              real64 const (&gravVector)[ 3 ],
-                              FLUID_WRAPPER fluidWrapper,
-                              real64 const & refElevation,
-                              real64 const & refPres,
-                              real64 const & refDens,
-                              real64 const & newElevation,
-                              real64 & newPres,
-                              real64 & newDens )
-  {
-    // Step 1: guess the pressure with the refDensity
-
-    real64 const gravCoef = gravVector[2] * ( refElevation - newElevation );
-    real64 pres0 = refPres - refDens * gravCoef;
-    real64 pres1 = 0.0;
-
-    // Step 2: compute the mass density at this elevation using the guess, and update pressure
-
-    real64 dens = 0.0;
-    real64 visc = 0.0;
-    fluidWrapper.compute( pres0, dens, visc );
-    pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
-
-    // Step 3: fixed-point iteration until convergence
-
-    bool equilHasConverged = false;
-    for( localIndex eqIter = 0; eqIter < maxNumEquilIterations; ++eqIter )
-    {
-
-      // check convergence
-      equilHasConverged = ( LvArray::math::abs( pres0 - pres1 ) < equilTolerance );
-      pres0 = pres1;
-
-      // if converged, move on
-      if( equilHasConverged )
-      {
-        break;
-      }
-
-      // compute the density at this elevation using the previous pressure, and compute the new pressure
-      fluidWrapper.compute( pres0, dens, visc );
-      pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
-    }
-
-    // Step 4: save the hydrostatic pressure and the corresponding density
-
-    newPres = pres1;
-    newDens = dens;
-
-    return equilHasConverged;
-  }
-
-
-  template< typename FLUID_WRAPPER >
-  static bool
-  launch( localIndex const size,
-          integer const maxNumEquilIterations,
-          real64 const equilTolerance,
-          real64 const (&gravVector)[ 3 ],
-          real64 const & minElevation,
-          real64 const & elevationIncrement,
-          real64 const & datumElevation,
-          real64 const & datumPres,
-          FLUID_WRAPPER fluidWrapper,
-          arrayView1d< arrayView1d< real64 > const > elevationValues,
-          arrayView1d< real64 > pressureValues )
-  {
-    bool hasConverged = true;
-
-    // Step 1: compute the mass density at the datum elevation
-
-    real64 datumDens = 0.0;
-    real64 datumVisc = 0.0;
-    fluidWrapper.compute( datumPres,
-                          datumDens,
-                          datumVisc );
-
-    // Step 2: find the closest elevation to datumElevation
-
-    forAll< parallelHostPolicy >( size, [=] ( localIndex const i )
-    {
-      real64 const elevation = minElevation + i * elevationIncrement;
-      elevationValues[0][i] = elevation;
-    } );
-    integer const iRef = LvArray::sortedArrayManipulation::find( elevationValues[0].begin(),
-                                                                 elevationValues[0].size(),
-                                                                 datumElevation );
-
-
-    // Step 3: compute the mass density and pressure at the reference elevation
-
-    array1d< real64 > dens( pressureValues.size() );
-
-    bool const hasConvergedRef =
-      computeHydrostaticPressure( maxNumEquilIterations,
-                                  equilTolerance,
-                                  gravVector,
-                                  fluidWrapper,
-                                  datumElevation,
-                                  datumPres,
-                                  datumDens,
-                                  elevationValues[0][iRef],
-                                  pressureValues[iRef],
-                                  dens[iRef] );
-    if( !hasConvergedRef )
-    {
-      return false;
-    }
-
-
-    // Step 4: for each elevation above the reference elevation, compute the pressure
-
-    localIndex const numEntriesAboveRef = size - iRef - 1;
-    forAll< serialPolicy >( numEntriesAboveRef, [=, &hasConverged] ( localIndex const i )
-    {
-      bool const hasConvergedAboveRef =
-        computeHydrostaticPressure( maxNumEquilIterations,
-                                    equilTolerance,
-                                    gravVector,
-                                    fluidWrapper,
-                                    elevationValues[0][iRef+i],
-                                    pressureValues[iRef+i],
-                                    dens[iRef+i],
-                                    elevationValues[0][iRef+i+1],
-                                    pressureValues[iRef+i+1],
-                                    dens[iRef+i+1] );
-      if( !hasConvergedAboveRef )
-      {
-        hasConverged = false;
-      }
-
-
-    } );
-
-    // Step 5: for each elevation below the reference elevation, compute the pressure
-
-    localIndex const numEntriesBelowRef = iRef;
-    forAll< serialPolicy >( numEntriesBelowRef, [=, &hasConverged] ( localIndex const i )
-    {
-      bool const hasConvergedBelowRef =
-        computeHydrostaticPressure( maxNumEquilIterations,
-                                    equilTolerance,
-                                    gravVector,
-                                    fluidWrapper,
-                                    elevationValues[0][iRef-i],
-                                    pressureValues[iRef-i],
-                                    dens[iRef-i],
-                                    elevationValues[0][iRef-i-1],
-                                    pressureValues[iRef-i-1],
-                                    dens[iRef-i-1] );
-      if( !hasConvergedBelowRef )
-      {
-        hasConverged = false;
-      }
-    } );
-
-    return hasConverged;
+    localEnergyResidualNorm[0] += localEnergySum.get(); 
+    localEnergyResidualNorm[1] += normEnergySum.get(); 
+    localEnergyResidualNorm[2] += count.get(); 
   }
 };
 
 
-} // namespace singlePhaseBaseKernels
+} // namespace thermalSinglePhaseBaseKernels
 
 } // namespace geosx
 

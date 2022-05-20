@@ -821,12 +821,14 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
         getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
       //END_SPHINX_INCLUDE_COUPLEDSOLID
 
+      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
       if ( m_isThermal )
       {
         thermalSinglePhaseBaseKernels::
           ElementBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                     dofManager.getKey( extrinsicMeshData::flow::pressure::key() ),
+                                                     dofKey,
                                                      subRegion,
                                                      fluid,
                                                      solid,
@@ -838,7 +840,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
         singlePhaseBaseKernels:: 
           ElementBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                     dofManager.getKey( extrinsicMeshData::flow::pressure::key() ),
+                                                     dofKey,
                                                      subRegion,
                                                      fluid,
                                                      solid,
