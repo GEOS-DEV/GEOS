@@ -74,6 +74,7 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
 
 template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 CFLFluxKernel::
   compute( integer const numPhases,
@@ -193,7 +194,7 @@ CFLFluxKernel::
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
   GEOSX_ERROR("Can't compile this kernel with HIP yet.");
 #else
     // compute transmissibility
@@ -593,7 +594,7 @@ AquiferBCKernel::
 
   forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
     GEOSX_ERROR("Can't compile this kernel with HIP yet.");
 #else
     // ==================================

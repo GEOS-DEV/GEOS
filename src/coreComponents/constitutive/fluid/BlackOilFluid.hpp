@@ -1130,7 +1130,7 @@ BlackOilFluid::KernelWrapper::
           real64 const temperature,
           arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
   GEOSX_ERROR("Can't compile this kernel with HIP yet.");
 #else
   compute( pressure,

@@ -68,6 +68,7 @@ struct AssemblerKernelHelper
    */
   template< localIndex NF >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
   applyGradient( arrayView1d< real64 const > const & facePres,
                  arrayView1d< real64 const > const & faceGravCoef,
@@ -146,6 +147,7 @@ struct AssemblerKernelHelper
    */
   template< localIndex NF >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
   assembleFluxDivergence( localIndex const (&localIds)[ 3 ],
                           globalIndex const rankOffset,
@@ -165,6 +167,9 @@ struct AssemblerKernelHelper
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs )
   {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
+    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
     // fluxes
     real64 divMassFluxes = 0;
     real64 dDivMassFluxes_dElemVars[ NF+1 ]{};
@@ -245,6 +250,7 @@ struct AssemblerKernelHelper
                                                               &faceDofColIndices[0],
                                                               &dDivMassFluxes_dFaceVars[0],
                                                               NF );
+#endif    
   }
 
   /**
@@ -261,6 +267,7 @@ struct AssemblerKernelHelper
    */
   template< localIndex NF >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
   assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                            arrayView1d< integer const > const & faceGhostRank,
@@ -363,6 +370,7 @@ struct AssemblerKernel
    */
   template< localIndex NF >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
   compute( localIndex const er,
            localIndex const esr,

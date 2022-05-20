@@ -249,6 +249,9 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
+  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
@@ -270,7 +273,7 @@ public:
     {
       stack.localComponentDofIndices[flowDofIndex] = stack.localPressureDofIndex[0] + flowDofIndex + 1;
     }
-
+#endif
   }
 
   GEOSX_HOST_DEVICE
@@ -279,6 +282,9 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
+  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
     using namespace PDEUtilities;
 
     constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
@@ -521,7 +527,7 @@ public:
       dPoreVolumeConstraint_dComponents,
       1.0,
       detJxW );
-
+#endif
   }
 
   /**
@@ -536,7 +542,7 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
     GEOSX_ERROR("Can't compile this kernel with HIP yet.");
 #else
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;

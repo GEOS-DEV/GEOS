@@ -54,6 +54,7 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void smallStrainUpdateSinglePhase( localIndex const k,
                                      localIndex const q,
                                      real64 const & initialFluidPressure,
@@ -135,6 +136,7 @@ public:
 
   template< int NUM_MAX_COMPONENTS >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void smallStrainUpdateMultiphase( localIndex const k,
                                     localIndex const q,
                                     localIndex const NP,
@@ -356,6 +358,7 @@ public:
    * @param stiffness the stiffness array
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void getElasticStiffness( localIndex const k, localIndex const q, real64 ( & stiffness )[6][6] ) const
   {
     m_solidUpdate.getElasticStiffness( k, q, stiffness );
@@ -369,6 +372,7 @@ private:
 
 
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void updateBiotCoefficient( localIndex const k ) const
   {
     // This call is not general like this.
@@ -378,6 +382,7 @@ private:
   }
 
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void computeBodyForce( real64 const & solidDensity,
                          real64 const & initialFluidDensity,
                          real64 const & fluidDensity,
@@ -409,6 +414,7 @@ private:
 
   template< int NUM_MAX_COMPONENTS >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void computeBodyForce( real64 const & solidDensity,
                          real64 const & initialFluidTotalMassDensity,
                          real64 const & fluidTotalMassDensity,
@@ -441,6 +447,7 @@ private:
   }
 
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void computePorosity( localIndex const k,
                         localIndex const q,
                         real64 const & deltaFluidPressure,
@@ -464,6 +471,7 @@ private:
   }
 
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void computeTotalStress( localIndex const k,
                            localIndex const q,
                            real64 const & initialFluidPressure,

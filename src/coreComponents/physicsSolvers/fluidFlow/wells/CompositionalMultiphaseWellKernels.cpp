@@ -292,7 +292,6 @@ FluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-
   using namespace compositionalMultiphaseUtilities;
 
   bool const isProducer = wellControls.isProducer();
@@ -301,7 +300,9 @@ FluxKernel::
   // loop over the well elements to compute the fluxes between elements
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
-
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
+    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
     // create local work arrays
     real64 compFracUp[NC]{};
     real64 dCompFrac_dCompDensUp[NC][NC]{};
@@ -503,6 +504,7 @@ FluxKernel::
         }
       }
     }
+    #endif
   } );
 }
 

@@ -99,6 +99,7 @@ public:
    */
   template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void compute( localIndex const ei,
                 FUNC && phaseMobilityKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
@@ -536,6 +537,7 @@ public:
    * @return the size of the stencil at this connection
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   localIndex stencilSize( localIndex const iconn ) const
   { return m_sei[iconn].size(); }
 
@@ -545,6 +547,7 @@ public:
    * @return the number of elements at this connection
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   localIndex numPointsInFlux( localIndex const iconn ) const
   { return m_stencilWrapper.numPointsInFlux( iconn ); }
 
@@ -555,6 +558,7 @@ public:
    * @param[in] stack the stack variables
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
@@ -579,6 +583,7 @@ public:
    */
   template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
@@ -841,6 +846,7 @@ public:
    */
   template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void complete( localIndex const iconn,
                  StackVariables & stack,
                  FUNC && assemblyKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
@@ -890,25 +896,25 @@ public:
    * @param[inout] kernelComponent the kernel component providing access to setup/compute/complete functions and stack variables
    */
   template< typename POLICY, typename KERNEL_TYPE >
-  static void
+  static
+  void
   launch( localIndex const numConnections,
           KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
-
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
+    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
     forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
-      GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
 
       kernelComponent.setup( iconn, stack );
       kernelComponent.computeFlux( iconn, stack );
       kernelComponent.complete( iconn, stack );
-#endif
     } );
+#endif
   }
 
 protected:
@@ -1029,6 +1035,7 @@ struct CFLFluxKernel
 
   template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
   compute( integer const numPhases,
            localIndex const stencilSize,
@@ -1080,6 +1087,7 @@ struct CFLKernel
 
   template< integer NP >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
   computePhaseCFL( real64 const & poreVol,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
@@ -1091,6 +1099,7 @@ struct CFLKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
   computeCompCFL( real64 const & poreVol,
                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > compDens,
@@ -1154,6 +1163,7 @@ struct AquiferBCKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
     compute( integer const numPhases,
              integer const ipWater,

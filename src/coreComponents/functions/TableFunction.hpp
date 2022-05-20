@@ -425,7 +425,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
       integer const corner = (point >> dim) & 1;
       cornerValue *= weights[dim][corner];
     }
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
     GEOSX_ERROR("Can't compile this kernel with HIP yet.");
 #else
     value += cornerValue;
@@ -613,16 +613,17 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
       real64 & d = derivatives[dim];
 
       // ====================================
-      //#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG) && defined(DNDEBUG)
+      //#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
       //      GEOSX_ERROR("Can't compile this kernel with HIP yet.");
       //#else
       d += val;
       //#endif
       // ====================================
-      // uncommenting this makes the hip-clang compiler fail to compile on Crusher
+      // uncommenting this makes the hip-clang compiler fail to compile on Crusher when the higher-level
+      //  gaurded kernels are compiled in -O2 -g or -O3
     }
     // ====================================
-    //#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG) && defined(DNDEBUG)
+    //#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
     //    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
     //#else
     value += cornerValue;

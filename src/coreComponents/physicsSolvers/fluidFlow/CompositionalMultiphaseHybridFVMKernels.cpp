@@ -36,6 +36,7 @@ namespace compositionalMultiphaseHybridFVMKernels
 
 template< integer NC, integer NP >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 UpwindingHelper::
   upwindViscousCoefficient( localIndex const (&localIds)[ 3 ],
@@ -134,6 +135,7 @@ UpwindingHelper::
 
 template< integer NC, integer NP >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 UpwindingHelper::
   upwindBuoyancyCoefficient( localIndex const (&localIds)[ 3 ],
@@ -156,6 +158,9 @@ UpwindingHelper::
                              real64 ( & dUpwPhaseGravCoef_dPres )[ NP ][ NP-1 ][ NC ][ 2 ],
                              real64 ( & dUpwPhaseGravCoef_dCompDens )[ NP ][ NP-1 ][ NC ][ 2 ][ NC ] )
 {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
+    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
   using Deriv = multifluid::DerivativeOffset;
 
   // 1) Compute the driving force: T ( \rho^{avg}_{\ell} - \rho^{avg}_m ) g \Delta z
@@ -268,10 +273,12 @@ UpwindingHelper::
       ++k;
     }
   }
+#endif
 }
 
 template< integer NC, integer NP >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 UpwindingHelper::
   computePhaseGravTerm( localIndex const (&localIds)[ 3 ],
@@ -358,6 +365,7 @@ UpwindingHelper::
 
 template< integer NC, integer NP >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 UpwindingHelper::
   computeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
@@ -432,6 +440,7 @@ UpwindingHelper::
 
 template< integer NP >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 UpwindingHelper::
   setIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[ 3 ],
@@ -580,7 +589,7 @@ INST_UpwindingHelperNCNP( 5, 3 );
 #define INST_UpwindingHelperNP( NP ) \
   template \
   GEOSX_HOST_DEVICE \
-  void		    \
+  void \
   UpwindingHelper:: \
     setIndicesForTotalMobilityUpwinding< NP >( localIndex const (&localIds)[ 3 ], \
                                                localIndex const (&neighborIds)[ 3 ], \
@@ -597,6 +606,7 @@ INST_UpwindingHelperNP( 3 );
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 AssemblerKernelHelper::
   applyGradient( arrayView1d< real64 const > const & facePres,
@@ -701,6 +711,7 @@ AssemblerKernelHelper::
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 AssemblerKernelHelper::
   assembleFluxDivergence( localIndex const (&localIds)[ 3 ],
@@ -733,6 +744,9 @@ AssemblerKernelHelper::
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs )
 {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
+    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
   using namespace compositionalMultiphaseUtilities;
   integer constexpr NDOF = NC+1;
 
@@ -897,10 +911,12 @@ AssemblerKernelHelper::
                                                               &dDivMassFluxes_dFaceVars[0][0] + ic * NF,
                                                               NF );
   }
+#endif
 }
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 AssemblerKernelHelper::
   assembleViscousFlux( localIndex const ifaceLoc,
@@ -982,6 +998,7 @@ AssemblerKernelHelper::
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 AssemblerKernelHelper::
   assembleBuoyancyFlux( localIndex const ifaceLoc,
@@ -1043,6 +1060,7 @@ AssemblerKernelHelper::
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 AssemblerKernelHelper::
   assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
@@ -1265,6 +1283,7 @@ INST_AssemblerKernelHelper( 6, 5, 3 );
 
 template< integer NF, integer NC, integer NP >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 AssemblerKernel::
   compute( localIndex const er, localIndex const esr, localIndex const ei,
@@ -1299,6 +1318,9 @@ AssemblerKernel::
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
+    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
   // one sided flux
   real64 oneSidedVolFlux[ NF ]{};
   real64 dOneSidedVolFlux_dPres[ NF ]{};
@@ -1389,7 +1411,7 @@ AssemblerKernel::
                                                                 dOneSidedVolFlux_dCompDens,
                                                                 localMatrix,
                                                                 localRhs );
-
+#endif
 }
 
 #define INST_AssemblerKernel( NF, NC, NP ) \
@@ -1535,7 +1557,9 @@ FluxKernel::
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const ei )
   {
-
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
+    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
     // transmissibility matrix
     stackArray2d< real64, NF *NF > transMatrix( NF, NF );
     stackArray2d< real64, NF *NF > transMatrixGrav( NF, NF );
@@ -1599,6 +1623,7 @@ FluxKernel::
                                                                                      transMatrixGrav,
                                                                                      localMatrix,
                                                                                      localRhs );
+  #endif
   } );
 }
 

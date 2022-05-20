@@ -236,7 +236,7 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const GEOSX
     // loop over the perforations and add the rates to the residual and jacobian
     forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
     {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(DNDEBUG)
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
   GEOSX_ERROR("Can't compile this kernel with HIP yet.");
 #else
       // local working variables and arrays

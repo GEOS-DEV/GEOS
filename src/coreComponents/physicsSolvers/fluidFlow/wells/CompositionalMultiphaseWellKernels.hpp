@@ -133,6 +133,7 @@ struct FluxKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
     computeExit( real64 const & dt,
                  real64 const ( &compFlux )[NC],
@@ -145,6 +146,7 @@ struct FluxKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
     compute( real64 const & dt,
              real64 const ( &compFlux )[NC],
@@ -182,6 +184,7 @@ struct PressureRelationKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
     compute( real64 const & gravCoef,
              real64 const & gravCoefNext,
@@ -260,6 +263,7 @@ struct PerforationKernel
 
   template< integer NC, integer NP >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
   compute( bool const & disableReservoirToWellFlow,
            real64 const & resPres,
@@ -336,6 +340,7 @@ struct AccumulationKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
     compute( integer const numPhases,
              real64 const & volume,
@@ -387,6 +392,7 @@ struct VolumeBalanceKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
     compute( integer const numPhases,
              real64 const & volume,
@@ -539,6 +545,7 @@ public:
    */
   template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void compute( localIndex const ei,
                 FUNC && totalMassDensityKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
