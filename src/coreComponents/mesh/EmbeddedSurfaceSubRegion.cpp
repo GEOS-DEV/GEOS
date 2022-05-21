@@ -106,33 +106,6 @@ void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( arrayView2d<
   m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
 }
 
-void EmbeddedSurfaceSubRegion::computeConnectivityIndex( localIndex const k,
-                                                         arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes,
-                                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodesCoord )
-{
-  // 1. Compute average distance
-  // TODO: This is a pretty bad approximation of the average distance and proper numerical integration should
-  // be implemented.
-  real64 averageDistance = 0.0;
-
-  localIndex const cellIndex = m_surfaceElementsToCells.m_toElementIndex[k][0];
-  localIndex const numOfNodes = cellToNodes.size( 1 );
-
-  real64 nodeToFracCenter[3];
-  for( localIndex a=0; a < numOfNodes; a++ )
-  {
-    localIndex const nodeIndex = cellToNodes[cellIndex][a];
-    LvArray::tensorOps::copy< 3 >( nodeToFracCenter, nodesCoord[nodeIndex] );
-    LvArray::tensorOps::subtract< 3 >( nodeToFracCenter, m_elementCenter[k] );
-    real64 distance = LvArray::tensorOps::AiBi< 3 >( nodeToFracCenter, m_normalVector[k] );
-    averageDistance += std::sqrt( distance * distance );
-  }
-  averageDistance /= numOfNodes;
-
-  //2. Compute connectivity index
-  m_connectivityIndex[k] = m_elementArea[ k ] / averageDistance;
-}
-
 bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex,
                                                       localIndex const regionIndex,
                                                       localIndex const subRegionIndex,

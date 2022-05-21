@@ -124,16 +124,6 @@ public:
   void calculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                             localIndex k );
   /**
-   * @brief computes the connectivityIndex of the embedded surface element.
-   * @param k element index
-   * @param cellToNodes cell to nodes map
-   * @param nodesCoord cordinates of the nodes
-   */
-  void computeConnectivityIndex( localIndex const k,
-                                 arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes,
-                                 arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodesCoord );
-
-  /**
    * @brief Function to add a new embedded surface element.
    * @param cellIndex cell element index
    * @param regionIndex cell element region index
@@ -229,22 +219,12 @@ public:
    * @brief Get normal vectors.
    * @return an array of normal vectors.
    */
-  array2d< real64 > & getNormalVector() { return m_normalVector; }
-
-  /**
-   * @copydoc getNormalVector()
-   */
   arrayView2d< real64 const > getNormalVector() const { return m_normalVector; }
 
   /**
    * @brief Get normal vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the normal vector of a specific embedded surface element
-   */
-  arraySlice1d< real64 > getNormalVector( localIndex k ) { return m_normalVector[k]; }
-
-  /**
-   * @copydoc getNormalVector( localIndex k )
    */
   arraySlice1d< real64 const > getNormalVector( localIndex k ) const { return m_normalVector[k]; }
 
@@ -259,7 +239,7 @@ public:
    * @brief Get an array of the first tangent vector of the embedded surface elements.
    * @return an array of the first tangent vector of the embedded surface elements
    */
-  array2d< real64 > & getTangentVector1() { return m_tangentVector1; }
+  // array2d< real64 > & getTangentVector1() { return m_tangentVector1; }
 
   /**
    * @copydoc getTangentVector1()
@@ -271,33 +251,18 @@ public:
    * @param k index of the embedded surface element
    * @return the first tangent vector of a specific embedded surface element
    */
-  arraySlice1d< real64 > getTangentVector1( localIndex k ) { return m_tangentVector1[k];}
-
-  /**
-   * @copydoc getTangentVector1( localIndex k )
-   */
   arraySlice1d< real64 const > getTangentVector1( localIndex k ) const { return m_tangentVector1[k]; }
 
   /**
    * @brief Get an array of the second tangent vector of the embedded surface elements.
    * @return an array of the second tangent vector of the embedded surface elements
    */
-  array2d< real64 > & getTangentVector2() { return m_tangentVector2; }
-
-  /**
-   * @copydoc getTangentVector2()
-   */
-  arrayView2d< real64 const > getTangentVector2() const { return m_tangentVector2; }
+  arrayView2d< real64 const > getTangentVector2() const { return m_tangentVector2.toViewConst(); }
 
   /**
    * @brief Get the second tangent vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the second tangent vector of a specific embedded surface element
-   */
-  arraySlice1d< real64 > getTangentVector2( localIndex k ) { return m_tangentVector2[k];}
-
-  /**
-   * @copydoc getTangentVector2( localIndex k )
    */
   arraySlice1d< real64 const > getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
 
@@ -305,12 +270,12 @@ public:
    * @brief Get the connectivity index of the  embedded surface element.
    * @return the connectivity index
    */
-  array1d< real64 > & getConnectivityIndex()   { return m_connectivityIndex;}
+  arrayView1d< real64 > getConnectivityIndex()   { return m_connectivityIndex.toView();}
 
   /**
    * @copydoc getConnectivityIndex()
    */
-  array1d< real64 > const & getConnectivityIndex() const { return m_connectivityIndex;}
+  arrayView1d< real64 const > getConnectivityIndex() const { return m_connectivityIndex;}
 
   /**
    * @brief accessor to the m_surfaceWithGhostNodes list

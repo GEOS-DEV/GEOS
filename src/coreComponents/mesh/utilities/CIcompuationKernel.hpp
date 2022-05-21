@@ -24,6 +24,9 @@
 #include "common/TimingMacros.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "mesh/EmbeddedSurfaceSubRegion.hpp"
+#include "mesh/CellElementSubRegion.hpp"
+
 
 namespace geosx
 {
@@ -35,14 +38,16 @@ class CIcomputationKernel
   CIcomputationKernel( FE_TYPE const & finiteElementSpace,
                        NodeManager const & nodeManager, 
                        CellElementSubRegion const & elementSubRegion,
-                       EmbeddedSurfaceSubregion const & embeddedSurfSubRegion ):
+                       EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion ):
     m_finiteElementSpace( finiteElementSpace ),
     m_X( nodeManger.referencePosition() ),
     m_elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
     m_fracturedElems( elementSubRegion.fracturedElementsList().toViewConst()),
     m_cellsToEmbeddedSurfaces( elementSubRegion.embeddedSurfacesList().toViewConst() ),
     m_normalVector( embeddedSurfSubRegion.getNormalVector().toViewConst()),
-    m_elemCenter( embeddedSurfSubRegion.getElementCenter().toViewConst())
+    m_elemCenter( embeddedSurfSubRegion.getElementCenter().toViewConst()),
+    m_fractureSurfaceArea( embeddedSurfSubRegion.getElementArea().toViewConst() ),
+    m_connectivityIndex( embeddedSurfSubRegion.getConnectivityIndex() )
   {}
    
   static constexpr int numNodesPerElem = FE_TYPE::maxSupportPoints;
@@ -148,6 +153,10 @@ class CIcomputationKernel
     arrayView2d< real64 const > const m_normalVector;
 
     arrayView2d< real64 const > const m_fracCenter;
+
+    arrayView1d< real64 const > const m_fractureSurfaceArea;
+
+    arrayView1d< real64 > const m_connectivityIndex;
 }
 
 }
