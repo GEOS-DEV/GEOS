@@ -24,6 +24,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+#include "common/Logger.hpp"
 #include "common/TypeDispatch.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
@@ -878,7 +879,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
       {
         auto const & wrapper = wrapperIter.second;
 
-        if( wrapper->getPlotLevel() < m_plotLevel )
+        if( isFieldPlotEnabled( *wrapper ) )
         {
           std::type_info const & typeID = wrapper->getTypeId();
 
@@ -1233,7 +1234,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
     {
       WrapperBase const & wrapper = *wrapperIter.second;
 
-      if( wrapper.getPlotLevel() < m_plotLevel )
+      if( isFieldPlotEnabled( wrapper ) )
       {
         // the field name is the key to the map
         string const & fieldName = wrapper.getName();
@@ -3170,6 +3171,22 @@ int SiloFile::getMeshType( string const & meshName ) const
   }
   return meshType;
 }
+
+bool SiloFile::isFieldPlotEnabled( PlotLevel const wrapperPlotLevel,
+                                   string const & wrapperName ) const
+{
+  // check if the logLevel is sufficient high for plotting
+  bool plotEnabled = ( wrapperPlotLevel <= m_plotLevel );
+
+  // override the logLevel if the fieldNames list was provided
+  if( !m_fieldNames.empty() )
+  {
+    auto search = m_fieldNames.find( wrapperName );
+    plotEnabled = ( search != m_fieldNames.end() );
+  }
+  return plotEnabled;
+}
+
 
 }
 #pragma GCC diagnostic pop

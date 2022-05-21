@@ -29,6 +29,7 @@ VTKOutput::VTKOutput( string const & name,
   m_plotFileRoot( name ),
   m_writeFaceMesh(),
   m_plotLevel(),
+  m_fieldNames(),
   m_writer( getOutputDirectory() + '/' + m_plotFileRoot )
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
@@ -44,6 +45,10 @@ VTKOutput::VTKOutput( string const & name,
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Level detail plot. Only fields with lower of equal plot level will be output." );
+
+  registerWrapper( viewKeysStruct::fieldNames, &m_fieldNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of the fields to output. If this attribute is specified, GEOSX outputs all (and only) the fields specified by the user, regardless of their plotLevel" );
 
   registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData ).
     setApplyDefaultValue( m_writeBinaryData ).
@@ -62,6 +67,14 @@ VTKOutput::~VTKOutput()
 void VTKOutput::postProcessInput()
 {
   m_writer.setOutputLocation( getOutputDirectory(), m_plotFileRoot );
+  m_writer.setFieldNames( m_fieldNames.toViewConst() );
+
+  string const fieldNamesString = viewKeysStruct::fieldNames;
+  GEOSX_LOG_RANK_0_IF( !m_fieldNames.empty(),
+                       GEOSX_FMT(
+                         "{} `{}`: found {} fields to plot. These fields will be output regardless of the plotLevel specified by the user. No other field will be output. Remove keyword `{}` from the XML file to output fields based on their plotLevel.",
+                         catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString ) );
+
 }
 
 bool VTKOutput::execute( real64 const time_n,
