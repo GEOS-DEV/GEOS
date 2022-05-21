@@ -374,18 +374,19 @@ This should print out a brief summary of the available command line arguments:
 
     Options:
     -?, --help
-    -i, --input,            Input xml filename (required)
-    -r, --restart,          Target restart filename
-    -x, --x-partitions,     Number of partitions in the x-direction
-    -y, --y-partitions,     Number of partitions in the y-direction
-    -z, --z-partitions,     Number of partitions in the z-direction
-    -s, --schema,           Name of the output schema
-    -b, --use-nonblocking,  Use non-blocking MPI communication
-    -n, --name,             Name of the problem, used for output
-    -s, --suppress-pinned   Suppress usage of pinned memory for MPI communication buffers
-    -o, --output,           Directory to put the output files
-    -t, --timers,           String specifying the type of timer output.
-    An input xml must be specified!
+    -i, --input,             Input xml filename (required)
+    -r, --restart,           Target restart filename
+    -x, --x-partitions,      Number of partitions in the x-direction
+    -y, --y-partitions,      Number of partitions in the y-direction
+    -z, --z-partitions,      Number of partitions in the z-direction
+    -s, --schema,            Name of the output schema
+    -b, --use-nonblocking,   Use non-blocking MPI communication
+    -n, --name,              Name of the problem, used for output
+    -s, --suppress-pinned,   Suppress usage of pinned memory for MPI communication buffers
+    -o, --output,            Directory to put the output files
+    -t, --timers,            String specifying the type of timer output
+    --trace-data-migration,  Trace host-device data migration
+    --pause-for,             Pause geosx for a given number of seconds before starting execution
 
 Obviously this doesn't do much interesting, but it will at least confirm that the executable runs.
 In typical usage, an input XML must be provided describing the problem to be run, e.g.
