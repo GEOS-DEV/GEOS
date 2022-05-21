@@ -24,7 +24,6 @@
       widthVector="{ 0, 0, 1 }"
       dimensions="{ 0.5, 1 }"/>
   </Geometry>
-
  
   <Outputs>
     <VTK

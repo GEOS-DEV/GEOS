@@ -202,6 +202,22 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
     } );// end loop over subregions
   } );// end loop over thick planes
 
+  elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
+      [&]( localIndex const er, localIndex const esr, ElementRegionBase &, CellElementSubRegion & subRegion )
+  {
+    FiniteElementBase & subRegionFE = subRegion.template getReference< FiniteElementBase >( finiteElementName );
+    finiteElement::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
+    {
+      CIcomputationKernel kernel = CIcomputationKernel( nodeManager,
+                                                        edgeManager,
+                                                        faceManager,
+                                                        targetRegionIndex,
+                                                        elementSubRegion,
+                                                        finiteElement );
+
+    } );
+  } );  
+
   // add all new nodes to newObject list
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
   {
