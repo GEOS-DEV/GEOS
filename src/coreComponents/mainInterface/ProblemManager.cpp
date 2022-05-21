@@ -700,8 +700,8 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
 {
   if( discretization != nullptr )
   {
-    auto const * const 
-    feDisc = dynamic_cast< FiniteElementDiscretization const * >(discretization); 
+    auto const * const
+    feDisc = dynamic_cast< FiniteElementDiscretization const * >(discretization);
 
     auto const * const
     fvsDisc = dynamic_cast< FluxApproximationBase const * >(discretization);
