@@ -693,6 +693,115 @@ auto interpolateGradientAtQuadraturePoints( Basis const & basis,
   return q_values;
 }
 
+// 3D Threaded version using RAJA teams (with warp shuffle)
+template < typename Basis,
+           typename Dofs,
+           typename QuadValues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 3,
+            bool > = true >
+GEOSX_HOST_DEVICE
+auto interpolateGradientAtQuadraturePoints( Basis const & basis,
+                                            Dofs const & u)
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  // Contraction on the first dimension
+  using TmpX = basis_result<Basis, num_quads, num_dofs, num_dofs>;
+  TmpX Bu, Gu;
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_z)
+  {
+    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_y)
+    {
+      RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+      {
+        T bu{};
+        T gu{};
+        for (size_t dof_x = 0; dof_x < num_dofs; dof_x++)
+        {
+          size_t const warp_thread = dof_x + num_quads * ( dof_y + num_quads * dof_z ); // the stride is num_quads (not num_dofs) TODO: batch elements
+          T const val = __shfl_sync( FULL_MASK, dofs( dof_x, dof_y, dof_z ), warp_thread ); // one value per thread, warp_thread is the real index
+          bu += basis( dof_x, quad_x ) * val;
+          gu += gradient( basis )( dof_x, quad_x ) * val;
+        }
+        Bu( quad_x, dof_y, dof_z ) = bu;
+        Gu( quad_x, dof_y, dof_z ) = gu;
+      });
+    });
+  });
+
+  __syncwarp();
+
+  // Contraction on the second dimension
+  using TmpY = basis_result<Basis, num_quads, num_quads, num_dofs>;
+  TmpY BBu, BGu, GBu;
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_z)
+  {
+    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+    {
+      RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_y)
+      {
+        T bbu{};
+        T bgu{};
+        T gbu{};
+        for (size_t dof_y = 0; dof_y < num_dofs; dof_y++)
+        {
+          size_t const warp_thread = quad_x + num_quads * ( dof_y + num_quads * dof_z ); // the stride is num_quads (not num_dofs) TODO: batch elements
+          T const bu = __shfl_sync( FULL_MASK, Bu( quad_x, dof_y, dof_z ), warp_thread ); // one value per thread, warp_thread is the real index
+          T const gu = __shfl_sync( FULL_MASK, Gu( quad_x, dof_y, dof_z ), warp_thread ); // one value per thread, warp_thread is the real index
+          bbu += basis( dof_y, quad_y ) * bu;
+          gbu += gradient( basis )( dof_y, quad_y ) * bu;
+          bgu += basis( dof_y, quad_y ) * gu;
+        }
+        BBu( quad_x, quad_y, dof_z ) = bbu;
+        GBu( quad_x, quad_y, dof_z ) = gbu;
+        BGu( quad_x, quad_y, dof_z ) = bgu;
+      });
+    });
+  });
+
+  __syncwarp();
+
+  // Contraction on the third dimension
+  using Result = basis_result<Basis, num_quads, num_quads, num_quads, 3>; // remove magic number?
+  Result q_values;
+
+  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_y)
+  {
+    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+    {
+      RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_z)
+      {
+        T gbbu{};
+        T bgbu{};
+        T bbgu{};
+        for (size_t dof_z = 0; dof_z < num_dofs; dof_z++)
+        {
+          size_t const warp_thread = quad_x + num_quads * ( quad_y + num_quads * dof_z ); // the stride is num_quads (not num_dofs) TODO: batch elements
+          const T bbu =  __shfl_sync( FULL_MASK, BBu( quad_x, quad_y, dof_z ), warp_thread ); // one value per thread, warp_thread is the real index
+          const T gbu =  __shfl_sync( FULL_MASK, GBu( quad_x, quad_y, dof_z ), warp_thread ); // one value per thread, warp_thread is the real index
+          const T bgu =  __shfl_sync( FULL_MASK, BGu( quad_x, quad_y, dof_z ), warp_thread ); // one value per thread, warp_thread is the real index
+          gbbu += gradient( basis )( dof_z, quad_z ) * bbu;
+          bgbu += basis( dof_z, quad_z ) * gbu;
+          bbgu += basis( dof_z, quad_z ) * bgu;
+        }
+        q_values( quad_x, quad_y, quad_z, 0 ) = bbgu;
+        q_values( quad_x, quad_y, quad_z, 1 ) = bgbu;
+        q_values( quad_x, quad_y, quad_z, 2 ) = gbbu;
+      });
+    });
+  });
+
+  __syncwarp();
+
+  return q_values;
+}
+
 // 3D Threaded version using RAJA teams (computes B on the fly instead of tensor contractions)
 template < typename Basis,
            typename Dofs,
@@ -713,6 +822,7 @@ auto interpolateGradientAtQuadraturePoints( Basis const & basis,
   using Result = basis_result<Basis, num_quads, num_quads, num_quads, 3>;
   Result q_values;
 
+  // Ideally we would want this to be done in the basis.
   T bx[num_dofs], by[num_dofs], bz[num_dofs];
   T gx[num_dofs], gy[num_dofs], gz[num_dofs];
   for (size_t dof = 0; dof < num_dofs; dof++)
@@ -743,6 +853,74 @@ auto interpolateGradientAtQuadraturePoints( Basis const & basis,
             for (size_t dof_x = 0; dof_x < num_dofs; dof_x++)
             {
               T const val = dofs( dof_x, dof_y, dof_z );
+              bbgu += gx[dof_x] * by[dof_y] * bz[dof_z] * val;
+              bgbu += bx[dof_x] * gy[dof_y] * bz[dof_z] * val;
+              gbbu += bx[dof_x] * by[dof_y] * gz[dof_z] * val;
+            }
+          }
+        }
+        q_values( quad_x, quad_y, quad_z, 0 ) = bbgu;
+        q_values( quad_x, quad_y, quad_z, 1 ) = bgbu;
+        q_values( quad_x, quad_y, quad_z, 2 ) = gbbu;
+      });
+    });
+  });
+
+  ctx.teamSync();
+
+  return q_values;
+}
+
+// 3D Threaded version using RAJA teams with warp shuffles (computes B on the fly instead of tensor contractions)
+template < typename Basis,
+           typename Dofs,
+           typename QuadValues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 3,
+            bool > = true >
+GEOSX_HOST_DEVICE
+auto interpolateGradientAtQuadraturePoints( Basis const & basis,
+                                            Dofs const & u)
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  // Assemble B3D instead of contracting each dimension
+  using Result = basis_result<Basis, num_quads, num_quads, num_quads, 3>;
+  Result q_values;
+
+  // Ideally we would want this to be done in the basis.
+  T bx[num_dofs], by[num_dofs], bz[num_dofs];
+  T gx[num_dofs], gy[num_dofs], gz[num_dofs];
+  for (size_t dof = 0; dof < num_dofs; dof++)
+  {
+    bx[dof] = basis( dof, quad_x );
+    by[dof] = basis( dof, quad_y );
+    bz[dof] = basis( dof, quad_z );
+    gx[dof] = gradient( basis )( dof, quad_x );
+    gy[dof] = gradient( basis )( dof, quad_y );
+    gz[dof] = gradient( basis )( dof, quad_z );
+  }
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_z)
+  {
+    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_y)
+    {
+      RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_x)
+      {
+        T bbgu{};
+        T bgbu{};
+        T gbbu{};
+        for (size_t dof_z = 0; dof_z < num_dofs; dof_z++)
+        {
+          for (size_t dof_y = 0; dof_y < num_dofs; dof_y++)
+          {
+            for (size_t dof_x = 0; dof_x < num_dofs; dof_x++)
+            {
+              const size_t warp_thread = dof_x + num_quads * ( dof_y + num_quads * dof_z ); // the stride is num_quads (not num_dofs) TODO: batch elements
+              T const val = __shfl_sync( FULL_MASK, dofs( dof_x, dof_y, dof_z ), warp_thread ); // one value per thread, warp_thread is the real index
               bbgu += gx[dof_x] * by[dof_y] * bz[dof_z] * val;
               bgbu += bx[dof_x] * gy[dof_y] * bz[dof_z] * val;
               gbbu += bx[dof_x] * by[dof_y] * gz[dof_z] * val;
@@ -965,10 +1143,118 @@ auto applyGradientTestFunctions( Basis const & basis,
         for (size_t quad_z = 0; quad_z < num_quads; quad_z++)
         {
           const T bgqx = BGqx( dof_x, dof_y, quad_z );
-          const T gbqy = GBqy( dof_x, dof_y, quad_z );;
-          const T bbqz = BBqz( dof_x, dof_y, quad_z );;
+          const T gbqy = GBqy( dof_x, dof_y, quad_z );
+          const T bbqz = BBqz( dof_x, dof_y, quad_z );
           const T b = basis( dof_z, quad_z );
-          const T g = gradient( basis )( dof_z, quad_z )
+          const T g = gradient( basis )( dof_z, quad_z );
+          res += b * bgqx + b * gbqy + g * bbqz;
+        }
+        dofs( dof_x, dof_y, dof_z ) = res;
+      });
+    });
+  });
+
+  return dofs;  
+}
+
+// 3D Threaded version using RAJA teams with warp shuffles
+template < typename Basis,
+           typename Qvalues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 3,
+            bool > = true >
+auto applyGradientTestFunctions( Basis const & basis,
+                                 Qvalues const & q_values )
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  // Contraction on the first dimension
+  using TmpX = basis_result<Basis, num_dofs, num_quads, num_quads>;
+  TmpX Gqx, Bqy, Bqz;
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_z)
+  {
+    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_y)
+    {
+      RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_x)
+      {
+        T gqx{};
+        T bqy{};
+        T bqz{};
+        for (size_t quad_x = 0; quad_x < num_quads; quad_x++)
+        {
+          // Using gradient at quadrature points prevents us from storing so many tmp while also reducing FLOPs
+          const size_t warp_thread = quad_x + num_quads * ( quad_y + num_quads * quad_z ); // the stride is num_quads (not num_dofs) TODO: batch elements
+          const T qx = __shfl_sync( FULL_MASK, q_values( quad_x, quad_y, quad_z, 0 ), warp_thread ); // one value per thread, warp_thread is the real index
+          const T qy = __shfl_sync( FULL_MASK, q_values( quad_x, quad_y, quad_z, 1 ), warp_thread ); // one value per thread, warp_thread is the real index
+          const T qz = __shfl_sync( FULL_MASK, q_values( quad_x, quad_y, quad_z, 2 ), warp_thread ); // one value per thread, warp_thread is the real index
+          const T b = basis( dof_x, quad_x );
+          const T g = gradient( basis )( dof_x, quad_x );
+          gqx += g * qx;
+          bqy += b * qy;
+          bqz += b * qz;
+        }
+        Gqx( dof_x, quad_y, quad_z ) = gqx;
+        Bqy( dof_x, quad_y, quad_z ) = bqy;
+        Bqz( dof_x, quad_y, quad_z ) = bqz;
+      });
+    });
+  });
+
+  // Contraction on the second dimension
+  using TmpY = basis_result<Basis, num_dofs, num_dofs, num_quads>;
+  TmpY BGqx, GBqy, BBqz;
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_quads), [&] (size_t quad_z)
+  {
+    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_x)
+    {
+      RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_y)
+      {
+        T bgqx{};
+        T gbqy{};
+        T bbqz{};
+        for (size_t quad_y = 0; quad_y < num_quads; quad_y++)
+        {
+          const size_t warp_thread = dof_x + num_quads * ( quad_y + num_quads * quad_z ); // the stride is num_quads (not num_dofs) TODO: batch elements
+          const T gqx = __shfl_sync( FULL_MASK, Gqx( dof_x, quad_y, quad_z ), warp_thread ); // one value per thread, warp_thread is the real index
+          const T bqy = __shfl_sync( FULL_MASK, Bqy( dof_x, quad_y, quad_z ), warp_thread ); // one value per thread, warp_thread is the real index
+          const T bqz = __shfl_sync( FULL_MASK, Bqz( dof_x, quad_y, quad_z ), warp_thread ); // one value per thread, warp_thread is the real index
+          const T b = basis( dof_y, quad_y );
+          const T g = gradient( basis )( dof_y, quad_y );
+          bgqx += b * gqx;
+          gbqy += g * bqy;
+          bbqz += b * bqz;
+        }
+        BGqx( dof_x, dof_y, quad_z ) = bgqx;
+        GBqy( dof_x, dof_y, quad_z ) = gbqy;
+        BBqz( dof_x, dof_y, quad_z ) = bbqz;
+      });
+    });
+  });
+
+  // Contraction on the third dimension
+  using Result = basis_result<Basis, num_dofs, num_dofs, num_dofs>;
+  Result dofs;
+
+  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_y)
+  {
+    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_x)
+    {
+      RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_z)
+      {
+        T res{};
+        for (size_t quad_z = 0; quad_z < num_quads; quad_z++)
+        {
+          const size_t warp_thread = dof_x + num_quads * ( dof_y + num_quads * quad_z ); // the stride is num_quads (not num_dofs) TODO: batch elements
+          const T bgqx = __shfl_sync( FULL_MASK, BGqx( dof_x, dof_y, quad_z ), warp_thread ); // one value per thread, warp_thread is the real index
+          const T gbqy = __shfl_sync( FULL_MASK, GBqy( dof_x, dof_y, quad_z ), warp_thread ); // one value per thread, warp_thread is the real index
+          const T bbqz = __shfl_sync( FULL_MASK, BBqz( dof_x, dof_y, quad_z ), warp_thread ); // one value per thread, warp_thread is the real index
+          const T b = basis( dof_z, quad_z );
+          const T g = gradient( basis )( dof_z, quad_z );
           res += b * bgqx + b * gbqy + g * bbqz;
         }
         dofs( dof_x, dof_y, dof_z ) = res;
@@ -993,6 +1279,7 @@ auto applyGradientTestFunctions( Basis const & basis,
   constexpr size_t num_quads = get_num_quads<Basis>;
   constexpr size_t num_dofs = get_num_dofs<Dofs>;
 
+  // Ideally we would want this to be done in the basis.
   T bx[num_quads], by[num_quads], bz[num_quads];
   T gx[num_quads], gy[num_quads], gz[num_quads];
   for (size_t quad = 0; quad < num_quads; quad++)
@@ -1025,6 +1312,68 @@ auto applyGradientTestFunctions( Basis const & basis,
               const T qx = q_values( quad_x, quad_y, quad_z, 0 );
               const T qy = q_values( quad_x, quad_y, quad_z, 1 );
               const T qz = q_values( quad_x, quad_y, quad_z, 2 );
+              res += gx[quad_x] * by[quad_y] * bz[quad_z] * qx
+                   + bx[quad_x] * gy[quad_y] * bz[quad_z] * qy
+                   + bx[quad_x] * by[quad_y] * gz[quad_z] * qz;
+            }
+          }
+        }
+        dofs( dof_x, dof_y, dof_z ) = res;
+      });
+    });
+  });
+
+  return dofs;  
+}
+
+// 3D Threaded version using RAJA teams (computes B on the fly instead of tensor contractions)
+template < typename Basis,
+           typename Qvalues,
+           std::enable_if_t<
+            is_tensor_basis<Basis> && 
+            get_basis_dim<Basis> == 3,
+            bool > = true >
+auto applyGradientTestFunctions( Basis const & basis,
+                                 Qvalues const & q_values )
+{
+  using T = get_quads_value_type<Basis>
+  constexpr size_t num_quads = get_num_quads<Basis>;
+  constexpr size_t num_dofs = get_num_dofs<Dofs>;
+
+  // Ideally we would want this to be done in the basis.
+  T bx[num_quads], by[num_quads], bz[num_quads];
+  T gx[num_quads], gy[num_quads], gz[num_quads];
+  for (size_t quad = 0; quad < num_quads; quad++)
+  {
+    bx[quad] = basis( dof_x, quad );
+    by[quad] = basis( dof_y, quad );
+    bz[quad] = basis( dof_z, quad );
+    gx[quad] = gradient( basis )( dof_x, quad );
+    gy[quad] = gradient( basis )( dof_y, quad );
+    gz[quad] = gradient( basis )( dof_z, quad );
+  }
+
+  // Assemble B3D instead of contracting each dimension
+  using Result = basis_result<Basis, num_dofs, num_dofs, num_dofs>;
+  Result dofs;
+
+  RAJA::expt::loop<thread_z> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_z)
+  {
+    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_y)
+    {
+      RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_dofs), [&] (size_t dof_x)
+      {
+        T res{};
+        for (size_t quad_z = 0; quad_z < num_quads; quad_z++)
+        {
+          for (size_t quad_y = 0; quad_y < num_quads; quad_y++)
+          {
+            for (size_t quad_x = 0; quad_x < num_quads; quad_x++)
+            {
+              const size_t warp_thread = quad_x + num_quads * ( quad_y + num_quads * quad_z ); // the stride is num_quads (not num_dofs) TODO: batch elements
+              const T qx = __shfl_sync( FULL_MASK, q_values( quad_x, quad_y, quad_z, 0 ), warp_thread );
+              const T qy = __shfl_sync( FULL_MASK, q_values( quad_x, quad_y, quad_z, 1 ), warp_thread );
+              const T qz = __shfl_sync( FULL_MASK, q_values( quad_x, quad_y, quad_z, 2 ), warp_thread );
               res += gx[quad_x] * by[quad_y] * bz[quad_z] * qx
                    + bx[quad_x] * gy[quad_y] * bz[quad_z] * qy
                    + bx[quad_x] * by[quad_y] * gz[quad_z] * qz;
