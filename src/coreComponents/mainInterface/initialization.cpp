@@ -98,7 +98,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     PROBLEMNAME,
     OUTPUTDIR,
     TIMERS,
-    DISPLAY_MOVE_LOGGING,
+    TRACE_DATA_MIGRATION,
     PAUSE_FOR,
   };
 
@@ -117,7 +117,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { SUPPRESS_PINNED, 0, "s", "suppress-pinned", Arg::None, "\t-s, --suppress-pinned, \t Suppress usage of pinned memory for MPI communication buffers" },
     { OUTPUTDIR, 0, "o", "output", Arg::nonEmpty, "\t-o, --output, \t Directory to put the output files" },
     { TIMERS, 0, "t", "timers", Arg::nonEmpty, "\t-t, --timers, \t String specifying the type of timer output" },
-    { DISPLAY_MOVE_LOGGING, 0, "", "display-move-logging", Arg::None, "\t--display-move-logging, \t Display logging of host-device data migration" },
+    { TRACE_DATA_MIGRATION, 0, "", "trace-data-migration", Arg::None, "\t--trace-data-migration, \t Trace host-device data migration" },
     { PAUSE_FOR, 0, "", "pause-for", Arg::numeric, "\t--pause-for, \t Pause geosx for a given number of seconds before starting execution" },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
   };
@@ -215,9 +215,9 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
         commandLineOptions->timerOutput = opt.arg;
       }
       break;
-      case DISPLAY_MOVE_LOGGING:
+      case TRACE_DATA_MIGRATION:
       {
-        commandLineOptions->displayMoveLogging = true;
+        commandLineOptions->traceDataMigration = true;
       }
       break;
       case PAUSE_FOR:

@@ -385,9 +385,8 @@ This should print out a brief summary of the available command line arguments:
     -s, --suppress-pinned,   Suppress usage of pinned memory for MPI communication buffers
     -o, --output,            Directory to put the output files
     -t, --timers,            String specifying the type of timer output
-    --display-move-logging,  Display logging of host-device data migration
+    --trace-data-migration,  Trace host-device data migration
     --pause-for,             Pause geosx for a given number of seconds before starting execution
-    An input xml must be specified!
 
 Obviously this doesn't do much interesting, but it will at least confirm that the executable runs.
 In typical usage, an input XML must be provided describing the problem to be run, e.g.
