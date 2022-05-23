@@ -612,7 +612,7 @@ struct StateUpdateKernel
           ContactBase::KernelWrapper const & contactWrapper,
           POROUS_WRAPPER const & porousMaterialWrapper,
           arrayView2d< real64 const > const & dispJump,
-          arrayView1d< real64 const > const & pressure,          
+          arrayView1d< real64 const > const & pressure,
           arrayView1d< real64 const > const & area,
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
@@ -633,17 +633,18 @@ struct StateUpdateKernel
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 
+      // traction on the fracture to include the pressure contribution
+      contactWrapper.addPressureToTraction( pressure[k],
+                                            fractureTraction[k],
+                                            dFractureTraction_dPressure[k] );
+
       real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
-      real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureTraction[k] );      
+      real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureTraction[k] );
 
       porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( k, 0, pressure[k],
                                                                             oldHydraulicAperture[k], hydraulicAperture[k],
                                                                             jump, traction );
 
-      // traction on the fracture to include the pressure contribution
-      contactWrapper.addPressureToTraction( pressure[k],
-                                            fractureTraction[k],
-                                            dFractureTraction_dPressure[k] );
     } );
   }
 };
