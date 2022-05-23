@@ -786,12 +786,16 @@
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CompositionalMultiphaseStateReset" type="CompositionalMultiphaseStateResetType" />
+			<xsd:element name="MultiphasePoromechanicsStateReset" type="MultiphasePoromechanicsStateResetType" />
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
 	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseStateResetType" />
+	<xsd:complexType name="MultiphasePoromechanicsStateResetType" />
 	<xsd:complexType name="PVTDriverType" />
 	<xsd:complexType name="PackCollectionType" />
 	<xsd:complexType name="SolidMechanicsStateResetType" />

@@ -122,6 +122,14 @@ void MultiphasePoromechanicsSolver::initializePreSubGroups()
   } );
 }
 
+void MultiphasePoromechanicsSolver::useInitializationSolverConfiguration( bool useInitializationSolverConfiguration )
+{
+  m_linearSolverParameters.get().mgr.strategy =
+    useInitializationSolverConfiguration
+    ? LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics
+    : LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsInitialization;
+}
+
 void MultiphasePoromechanicsSolver::setupSystem( DomainPartition & domain,
                                                  DofManager & dofManager,
                                                  CRSMatrix< real64, globalIndex > & localMatrix,

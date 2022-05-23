@@ -387,6 +387,14 @@
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="Tasks" type="TasksType" maxOccurs="1">
+				<xsd:unique name="TasksCompositionalMultiphaseStateResetUniqueName">
+					<xsd:selector xpath="CompositionalMultiphaseStateReset" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksMultiphasePoromechanicsStateResetUniqueName">
+					<xsd:selector xpath="MultiphasePoromechanicsStateReset" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksPVTDriverUniqueName">
 					<xsd:selector xpath="PVTDriver" />
 					<xsd:field xpath="@name" />
@@ -2430,11 +2438,33 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CompositionalMultiphaseStateReset" type="CompositionalMultiphaseStateResetType" />
+			<xsd:element name="MultiphasePoromechanicsStateReset" type="MultiphasePoromechanicsStateResetType" />
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseStateResetType">
+		<!--flowSolverName => Name of the flow solver-->
+		<xsd:attribute name="flowSolverName" type="string" use="required" />
+		<!--freezeFlowVariablesDuringStep => Flag to freeze the flow variables during a time step-->
+		<xsd:attribute name="freezeFlowVariablesDuringStep" type="integer" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MultiphasePoromechanicsStateResetType">
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--multiphasePoromechanicsSolverName => Name of the multiphase poromechanics solver-->
+		<xsd:attribute name="multiphasePoromechanicsSolverName" type="string" use="required" />
+		<!--useInitializationSolverConfiguration => Flag to reset the multiphase poromechanics solver configuration-->
+		<xsd:attribute name="useInitializationSolverConfiguration" type="integer" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PVTDriverType">
 		<!--baseline => Baseline file-->

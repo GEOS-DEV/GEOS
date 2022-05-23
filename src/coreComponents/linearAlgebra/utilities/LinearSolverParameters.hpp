@@ -223,6 +223,8 @@ struct LinearSolverParameters
       compositionalMultiphaseReservoirHybridFVM, ///< hybrid finite volume compositional multiphase flow with wells
       thermalCompositionalMultiphaseFVM,         ///< finite volume thermal compositional multiphase flow
       multiphasePoromechanics,                   ///< multiphase poromechanics with finite volume compositional multiphase flow
+      multiphasePoromechanicsInitialization,     ///< multiphase poromechanics with finite volume compositional multiphase flow
+                                                 ///< (initialization)
       hydrofracture,                             ///< hydrofracture
       lagrangianContactMechanics,                ///< Lagrangian contact mechanics
       solidMechanicsEmbeddedFractures            ///< Embedded fractures mechanics
@@ -307,6 +309,7 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "compositionalMultiphaseReservoirHybridFVM",
               "thermalCompositionalMultiphaseFVM",
               "multiphasePoromechanics",
+              "multiphasePoromechanicsInitialization",
               "hydrofracture",
               "lagrangianContactMechanics",
               "solidMechanicsEmbeddedFractures" );

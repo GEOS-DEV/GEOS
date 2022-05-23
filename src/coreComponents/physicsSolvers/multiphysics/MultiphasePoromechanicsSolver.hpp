@@ -110,6 +110,12 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
+  /**
+   * @brief Utility function to set the solver to use a initialization solver configuration
+   * @detail This function is meant to be called by a specific task before the initialization step
+   */
+  void useInitializationSolverConfiguration( bool useInitializationSolverConfiguration );
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }

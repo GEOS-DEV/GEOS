@@ -169,6 +169,13 @@ Element: CompositionalMultiphaseReservoir
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir.rst
 
 
+.. _XML_CompositionalMultiphaseStateReset:
+
+Element: CompositionalMultiphaseStateReset
+==========================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseStateReset.rst
+
+
 .. _XML_CompositionalMultiphaseWell:
 
 Element: CompositionalMultiphaseWell
@@ -524,6 +531,13 @@ Element: ModifiedCamClay
 Element: MultiphasePoromechanics
 ================================
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
+
+
+.. _XML_MultiphasePoromechanicsStateReset:
+
+Element: MultiphasePoromechanicsStateReset
+==========================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsStateReset.rst
 
 
 .. _XML_MultivariableTableFunction:
@@ -1209,6 +1223,13 @@ Datastructure: CompositionalMultiphaseReservoir
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir_other.rst
 
 
+.. _DATASTRUCTURE_CompositionalMultiphaseStateReset:
+
+Datastructure: CompositionalMultiphaseStateReset
+================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseStateReset_other.rst
+
+
 .. _DATASTRUCTURE_CompositionalMultiphaseWell:
 
 Datastructure: CompositionalMultiphaseWell
@@ -1592,6 +1613,13 @@ Datastructure: ModifiedCamClay
 Datastructure: MultiphasePoromechanics
 ======================================
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_MultiphasePoromechanicsStateReset:
+
+Datastructure: MultiphasePoromechanicsStateReset
+================================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsStateReset_other.rst
 
 
 .. _DATASTRUCTURE_MultivariableTableFunction:
