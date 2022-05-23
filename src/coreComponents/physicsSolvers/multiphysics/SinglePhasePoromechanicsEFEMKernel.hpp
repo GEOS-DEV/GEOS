@@ -598,7 +598,6 @@ struct StateUpdateKernel
    * @param[in] contactWrapper the wrapper implementing the contact relationship
    * @param[in] dispJump the displacement jump
    * @param[in] pressure the pressure
-   * @param[in] pressure_n the pressure at the previous time-step
    * @param[in] area the area
    * @param[in] volume the volume
    * @param[out] deltaVolume the change in volume
@@ -613,8 +612,7 @@ struct StateUpdateKernel
           ContactBase::KernelWrapper const & contactWrapper,
           POROUS_WRAPPER const & porousMaterialWrapper,
           arrayView2d< real64 const > const & dispJump,
-          arrayView1d< real64 const > const & pressure,
-          arrayView1d< real64 const > const & pressure_n,
+          arrayView1d< real64 const > const & pressure,          
           arrayView1d< real64 const > const & area,
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
@@ -636,10 +634,9 @@ struct StateUpdateKernel
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 
       real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
-      real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureTraction[k] );
-      real64 const deltaPressure = pressure[k] - pressure_n[k];
+      real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureTraction[k] );      
 
-      porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( k, 0, pressure[k], deltaPressure,
+      porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( k, 0, pressure[k],
                                                                             oldHydraulicAperture[k], hydraulicAperture[k],
                                                                             jump, traction );
 

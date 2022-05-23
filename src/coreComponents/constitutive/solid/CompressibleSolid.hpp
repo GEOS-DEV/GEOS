@@ -75,14 +75,13 @@ public:
   void updateStateFromPressureApertureJumpAndTraction( localIndex const k,
                                                        localIndex const q,
                                                        real64 const & pressure,
-                                                       real64 const & deltaPressure,
                                                        real64 const & oldHydraulicAperture,
                                                        real64 const & newHydraulicAperture,
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const
   {
-    m_porosityUpdate.updateFromPressure( k, q, pressure + deltaPressure );
-    m_permUpdate.updateFromApertureAndShearDisplacement( k, q, oldHydraulicAperture, newHydraulicAperture, pressure + deltaPressure, dispJump, traction );
+    m_porosityUpdate.updateFromPressure( k, q, pressure );
+    m_permUpdate.updateFromApertureAndShearDisplacement( k, q, oldHydraulicAperture, newHydraulicAperture, pressure, dispJump, traction );
   }
 
 private:
