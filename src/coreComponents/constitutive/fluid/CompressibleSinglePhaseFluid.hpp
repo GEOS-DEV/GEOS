@@ -60,6 +60,10 @@ public:
                                  arrayView2d< real64 > const & internalEnergy, 
                                  arrayView2d< real64 > const & dIntEnergy_dPres, 
                                  arrayView2d< real64 > const & dIntEnergy_dTemp,
+                                 arrayView2d< real64 > const & enthalpy, 
+                                 arrayView2d< real64 > const & dEnthalpy_dPres, 
+                                 arrayView2d< real64 > const & dEnthalpy_dTemp,
+                                 real64 const & refIntEnergy, 
                                  integer const isThermal )
     : SingleFluidBaseUpdate( density,
                              dDens_dPres,
@@ -69,11 +73,15 @@ public:
                              dVisc_dTemp, 
                              internalEnergy, 
                              dIntEnergy_dPres,
-                             dIntEnergy_dTemp ),
+                             dIntEnergy_dTemp,
+                             enthalpy, 
+                             dEnthalpy_dPres, 
+                             dEnthalpy_dTemp ),
     m_densPresRelation( densPresRelation ), 
     m_densTempRelation( densTempRelation ), 
     m_viscRelation( viscRelation ), 
     m_intEnergyRelation( intEnergyRelation ), 
+    m_refIntEnergy( refIntEnergy ), 
     m_isThermal( isThermal )
   {}
 
@@ -147,7 +155,10 @@ public:
                         real64 & dViscosity_dTemperature, 
                         real64 & internalEnergy, 
                         real64 & dInternalEnergy_dPressure, 
-                        real64 & dInternalEnergy_dTemperature ) const override
+                        real64 & dInternalEnergy_dTemperature,
+                        real64 & enthalpy, 
+                        real64 & dEnthalpy_dPressure,
+                        real64 & dEnthalpy_dTemperature ) const override
   {
     m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
     dViscosity_dTemperature = 0.0; 
@@ -168,6 +179,10 @@ public:
       /// Compute the internal energy (only sensitive to temperature)
       m_intEnergyRelation.compute( temperature, internalEnergy, dInternalEnergy_dTemperature ); 
       dInternalEnergy_dPressure = 0.0; 
+
+      enthalpy = internalEnergy - m_refIntEnergy; 
+      dEnthalpy_dPressure = 0.0; 
+      dEnthalpy_dTemperature = dInternalEnergy_dTemperature; 
     }
     else
     {
@@ -207,7 +222,10 @@ public:
              m_dVisc_dTemp[k][q], 
              m_internalEnergy[k][q],
              m_dIntEnergy_dPres[k][q],
-             m_dIntEnergy_dTemp[k][q] );
+             m_dIntEnergy_dTemp[k][q],
+             m_enthalpy[k][q], 
+             m_dEnthalpy_dPres[k][q],
+             m_dEnthalpy_dTemp[k][q] );
   }
 
 private:
@@ -223,6 +241,9 @@ private:
 
   /// Relationship between the fluid internal energy and temperature 
   IntEnergyRelationType m_intEnergyRelation; 
+
+  /// Reference internal energy of the fluid
+  real64 const m_refIntEnergy; 
 
   /// Flag to determine whether it is a nonisothermal fluid
   integer m_isThermal; 

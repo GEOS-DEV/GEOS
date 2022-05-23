@@ -46,6 +46,10 @@ SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
   registerExtrinsicData( extrinsicMeshData::singlefluid::dInternalEnergy_dPressure{}, &m_dInternalEnergy_dPressure ); 
   registerExtrinsicData( extrinsicMeshData::singlefluid::dInternalEnergy_dTemperature{}, &m_dInternalEnergy_dTemperature ); 
 
+  registerExtrinsicData( extrinsicMeshData::singlefluid::enthalpy{}, &m_enthalpy ); 
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dEnthalpy_dPressure{}, &m_dEnthalpy_dPressure ); 
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dEnthalpy_dTemperature{}, &m_dEnthalpy_dTemperature ); 
+
 }
 
 void SingleFluidBase::postProcessInput()
@@ -98,7 +102,11 @@ void SingleFluidBase::allocateConstitutiveData( Group & parent,
   m_internalEnergy.resize( parent.size(), numConstitutivePointsPerParentIndex ); 
   m_internalEnergy_n.resize( parent.size(), numConstitutivePointsPerParentIndex ); 
   m_dInternalEnergy_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex ); 
-  m_dInternalEnergy_dTemperature.resize( parent.size(), numConstitutivePointsPerParentIndex ); 
+  m_dInternalEnergy_dTemperature.resize( parent.size(), numConstitutivePointsPerParentIndex );
+
+  m_enthalpy.resize( parent.size(), numConstitutivePointsPerParentIndex ); 
+  m_dEnthalpy_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex ); 
+  m_dEnthalpy_dTemperature.resize( parent.size(), numConstitutivePointsPerParentIndex ); 
 }
 //END_SPHINX_INCLUDE_00
 

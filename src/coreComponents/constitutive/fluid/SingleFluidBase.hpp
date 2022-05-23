@@ -65,7 +65,10 @@ protected:
                          arrayView2d< real64 > const & dVisc_dTemp,
                          arrayView2d< real64 > const & internalEnergy, 
                          arrayView2d< real64 > const & dIntEnergy_dPres, 
-                         arrayView2d< real64 > const & dIntEnergy_dTemp )
+                         arrayView2d< real64 > const & dIntEnergy_dTemp,
+                         arrayView2d< real64 > const & enthalpy, 
+                         arrayView2d< real64 > const & dEnthalpy_dPres, 
+                         arrayView2d< real64 > const & dEnthalpy_dTemp )
     : m_density( density ),
     m_dDens_dPres( dDens_dPres ),
     m_dDens_dTemp( dDens_dTemp ), 
@@ -74,7 +77,10 @@ protected:
     m_dVisc_dTemp( dVisc_dTemp ), 
     m_internalEnergy( internalEnergy ), 
     m_dIntEnergy_dPres( dIntEnergy_dPres ),
-    m_dIntEnergy_dTemp( dIntEnergy_dTemp ) 
+    m_dIntEnergy_dTemp( dIntEnergy_dTemp ), 
+    m_enthalpy( enthalpy ), 
+    m_dEnthalpy_dPres( dEnthalpy_dPres ), 
+    m_dEnthalpy_dTemp( dEnthalpy_dTemp )
   {}
 
   /**
@@ -126,6 +132,15 @@ protected:
 
   /// Derivative of internal energy w.r.t. temperature
   arrayView2d< real64 > m_dIntEnergy_dTemp;
+
+  /// Fluid enthalpy
+  arrayView2d< real64 > m_enthalpy; 
+
+  /// Derivative of enthalpy w.r.t. pressure
+  arrayView2d< real64 > m_dEnthalpy_dPres;
+
+  /// Derivative of enthalpy w.r.t. temperature
+  arrayView2d< real64 > m_dEnthalpy_dTemp;
 
 //END_SPHINX_INCLUDE_01
 //START_SPHINX_INCLUDE_02
@@ -183,6 +198,9 @@ private:
    * @param[out] internalEnergy fluid internal energy
    * @param[out] dInternalEnergy_dPressure fluid internal energy derivative w.r.t. pressure
    * @param[out] dInternalEnergy_dTemperature fluid internal energy derivative w.r.t. temperature
+   * @param[out] enthalpy fluid enthalpy
+   * @param[out] dEnthalpy_dPressure fluid enthalpy derivative w.r.t. pressure
+   * @param[out] dEnthalpy_dTemperature fluid enthalpy derivative w.r.t. temperature
    */
   GEOSX_HOST_DEVICE
   virtual void compute( real64 const pressure,
@@ -195,7 +213,10 @@ private:
                         real64 & dViscosity_dTemperature, 
                         real64 & internalEnergy, 
                         real64 & dInternalEnergy_dPressure, 
-                        real64 & dInternalEnergy_dTemperature ) const = 0;
+                        real64 & dInternalEnergy_dTemperature, 
+                        real64 & enthalpy, 
+                        real64 & dEnthalpy_dPressure,
+                        real64 & dEnthalpy_dTemperature ) const = 0;
 
   /**
    * @brief Update fluid state at a single point.
@@ -289,6 +310,15 @@ public:
   arrayView2d< real64 > dInternalEnergy_dTemperature() { return m_dInternalEnergy_dTemperature; }
   arrayView2d< real64 const > dInternalEnergy_dTemperature() const { return m_dInternalEnergy_dTemperature; }
 
+  arrayView2d< real64 > enthalpy() { return m_enthalpy; }
+  arrayView2d< real64 const > enthalpy() const { return m_enthalpy; }
+
+  arrayView2d< real64 > dEnthalpy_dPressure() { return m_dEnthalpy_dPressure; }
+  arrayView2d< real64 const > dEnthalpy_dPressure() const { return m_dEnthalpy_dPressure; }
+
+  arrayView2d< real64 > dEnthalpy_dTemperature() { return m_dEnthalpy_dTemperature; }
+  arrayView2d< real64 const > dEnthalpy_dTemperature() const { return m_dEnthalpy_dTemperature; }
+
   virtual real64 defaultDensity() const = 0;
   virtual real64 defaultViscosity() const = 0;
 
@@ -312,6 +342,10 @@ protected:
   array2d< real64 > m_internalEnergy_n; 
   array2d< real64 > m_dInternalEnergy_dPressure; 
   array2d< real64 > m_dInternalEnergy_dTemperature; 
+
+  array2d< real64 > m_enthalpy; 
+  array2d< real64 > m_dEnthalpy_dPressure; 
+  array2d< real64 > m_dEnthalpy_dTemperature; 
   //END_SPHINX_INCLUDE_00
 };
 

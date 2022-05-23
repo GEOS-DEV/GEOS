@@ -211,6 +211,10 @@ CompressibleSinglePhaseFluid::createKernelWrapper()
                         m_internalEnergy, 
                         m_dInternalEnergy_dPressure,
                         m_dInternalEnergy_dTemperature, 
+                        m_enthalpy, 
+                        m_dEnthalpy_dPressure, 
+                        m_dEnthalpy_dTemperature, 
+                        m_referenceInternalEnergy, 
                         m_isThermal );
 }
 
