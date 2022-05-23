@@ -63,6 +63,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_computeCFLNumbers( 0 ),
   m_hasCapPressure( 0 ),
   m_isThermal( 0 ),
+  m_freezeFlowVariablesDuringStep( 0 ),
   m_maxCompFracChange( 1.0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
@@ -1256,14 +1257,22 @@ void CompositionalMultiphaseBase::applyBoundaryConditions( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  // apply pressure boundary conditions.
-  applyDirichletBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+  if( m_freezeFlowVariablesDuringStep )
+  {
+    // this function is going to force the current flow state to be constant during the time step
+    freezeFlowVariablesDuringStep( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+  }
+  else
+  {
+    // apply pressure boundary conditions.
+    applyDirichletBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 
-  // apply flux boundary conditions
-  applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+    // apply flux boundary conditions
+    applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 
-  // apply aquifer boundary conditions
-  applyAquiferBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+    // apply aquifer boundary conditions
+    applyAquiferBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+  }
 }
 
 namespace internal
@@ -1705,6 +1714,91 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
   } );
 
 }
+
+void CompositionalMultiphaseBase::freezeFlowVariablesDuringStep( real64 const time,
+                                                                 real64 const dt,
+                                                                 DofManager const & dofManager,
+                                                                 DomainPartition & domain,
+                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                 arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time, dt );
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel const & mesh,
+                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
+    {
+      globalIndex const rankOffset = dofManager.rankOffset();
+      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+      arrayView1d< integer const > const ghostRank =
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< globalIndex const > const dofNumber =
+        subRegion.getReference< array1d< globalIndex > >( dofKey );
+
+      arrayView1d< real64 const > const pres =
+        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+      arrayView1d< real64 const > const temp =
+        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
+      arrayView2d< real64 const, compflow::USD_COMP > const compDens =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::globalCompDensity::key() );
+
+      integer const numComp = m_numComponents;
+      integer const isThermal = m_isThermal;
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] >= 0 )
+        {
+          return;
+        }
+
+        globalIndex const dofIndex = dofNumber[ei];
+        localIndex const localRow = dofIndex - rankOffset;
+        real64 rhsValue;
+
+        // 4.1. Apply pressure value to the matrix/rhs
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
+                                                    rankOffset,
+                                                    localMatrix,
+                                                    rhsValue,
+                                                    pres[ei], // freeze the current pressure value
+                                                    pres[ei] );
+        localRhs[localRow] = rhsValue;
+
+        // 4.2. Apply temperature value to the matrix/rhs
+        if( isThermal )
+        {
+          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + numComp + 1,
+                                                      rankOffset,
+                                                      localMatrix,
+                                                      rhsValue,
+                                                      temp[ei], // freeze the current temperature value
+                                                      temp[ei] );
+          localRhs[localRow + numComp + 1] = rhsValue;
+        }
+
+        // 4.3. For each component, apply target global density value
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
+                                                      rankOffset,
+                                                      localMatrix,
+                                                      rhsValue,
+                                                      compDens[ei][ic], // freeze the current component density values
+                                                      compDens[ei][ic] );
+          localRhs[localRow + ic + 1] = rhsValue;
+        }
+      } );
+    } );
+  } );
+}
+
 
 void CompositionalMultiphaseBase::solveLinearSystem( DofManager const & dofManager,
                                                      ParallelMatrix & matrix,

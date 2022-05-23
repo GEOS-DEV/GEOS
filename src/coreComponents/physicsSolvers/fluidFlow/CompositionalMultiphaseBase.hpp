@@ -317,9 +317,36 @@ public:
    */
   void chopNegativeDensities( DomainPartition & domain );
 
+  /**
+   * @brief Utility function to freeze the flow variables during a time step
+   * @param[in] freezeFlowVariablesDuringStep flag to tell the solver to freeze its primary variables during a time step
+   * @detail This function is meant to be called by a specific task before/after the initialization step
+   */
+  void freezeFlowVariablesDuringStep( bool freezeFlowVariablesDuringStep )
+  { m_freezeFlowVariablesDuringStep = freezeFlowVariablesDuringStep; }
+
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
 protected:
+
+  /**
+   * @brief Function to fix the initial state during the initialization step in coupled problems
+   * @param time current time
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   *
+   * @detail This function is meant to be called when the flag m_freezeFlowVariablesDuringStep is on
+   *         The main use case is the initialization step in coupled problems during which we solve an elastic problem for a fixed pressure
+   */
+  void freezeFlowVariablesDuringStep( real64 const time,
+                                      real64 const dt,
+                                      DofManager const & dofManager,
+                                      DomainPartition & domain,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs ) const;
 
   /**
    * @brief Utility function that checks the consistency of the constitutive models
@@ -364,6 +391,9 @@ protected:
 
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
+
+  /// flag to fix the initial state during initialization in coupled problems
+  integer m_freezeFlowVariablesDuringStep;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
