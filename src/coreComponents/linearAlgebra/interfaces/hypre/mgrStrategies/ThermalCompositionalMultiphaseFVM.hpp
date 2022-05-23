@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SinglePhaseReservoirFVM.hpp
+ * @file ThermalCompositionalMultiphaseFVM.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASERESERVOIRFVM_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASERESERVOIRFVM_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRTHERMALCOMPOSITIONALMULTIPHASEFVM_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRTHERMALCOMPOSITIONALMULTIPHASEFVM_HPP_
 
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
@@ -31,40 +31,57 @@ namespace mgr
 {
 
 /**
- * @brief SinglePhaseReservoirFVM strategy.
+ * @brief ThermalCompositionalMultiphaseFVM strategy.
  *
  * Labels description stored in point_marker_array
- *   dofLabel: 0 = reservoir pressure (numResLabels = 1)
- *   dofLabel: 1 = well pressure
- *   dofLabel: 2 = well rate (numWellLabels = 2)
+ *               0 = pressure
+ *               1 = density
+ *             ... = densities
+ *   numLabels - 2 = last density
+ *   numLabels - 1 = temperature
  *
- * Ingredients
+ * 2-level MGR reduction strategy
+ *   - 1st level: eliminate the reservoir density associated with the volume constraint
+ *   - 2nd level: eliminate the other reservoir densities
+ *   - The coarse grid (pressure and temperature system) is solved with BoomerAMG with numFunctions==2.
  *
- * 1. F-points well vars, C-points cell-centered pressure
- * 2. F-points smoother: jacobi (soon, direct solver)
- * 3. C-points coarse-grid/Schur complement solver: BoomerAMG
  */
-class SinglePhaseReservoirFVM : public MGRStrategyBase< 1 >
+class ThermalCompositionalMultiphaseFVM : public MGRStrategyBase< 2 >
 {
 public:
   /**
    * @brief Constructor.
+   * @param numComponentsPerField array with number of components for each field
    */
-  explicit SinglePhaseReservoirFVM( arrayView1d< int const > const & )
-    : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( 3 ) )
+  explicit ThermalCompositionalMultiphaseFVM( arrayView1d< int const > const & numComponentsPerField )
+    : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] ) )
   {
-    // Level 0: eliminate the well variables, and just keep the cell-centered pressures
-    m_labels[0].push_back( 0 );
+    // Level 0: eliminate last density which corresponds to the volume constraint equation
+    m_labels[0].resize( m_numBlocks - 2 );
+    std::iota( m_labels[0].begin(), m_labels[0].end(), 0 );
+    m_labels[0].push_back( m_numBlocks-1 ); // keep temperature
+    // Level 1: eliminate the other densities
+    m_labels[1].push_back( 0 ); // keep pressure
+    m_labels[1].push_back( m_numBlocks-1 ); // keep temperature
 
     setupLabels();
 
-    // Level 0
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel;
-    m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
+    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
+    m_levelInterpType[0]       = MGRInterpolationType::jacobi; // Diagonal scaling (Jacobi)
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
+    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin; // Standard Galerkin
 
+    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
+    m_levelInterpType[1]       = MGRInterpolationType::injection; // Injection
+    m_levelRestrictType[1]     = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::cprLikeBlockDiag; // Non-Galerkin Quasi-IMPES CPR
+
+    // Global smoothing performed only on the first level,
+    // after the reservoir density associated with the volume constraint has been eliminated
+    m_levelSmoothType[0]  = 0;
     m_levelSmoothIters[0] = 0;
+    m_levelSmoothType[1]  = 1;
+    m_levelSmoothIters[1] = 1;
   }
 
   /**
@@ -88,19 +105,22 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothType( precond.ptr, m_levelSmoothType ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelSmoothIters ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // Low tolerance to remove only zeros
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::jacobi ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
 
 #ifdef GEOSX_USE_HYPRE_CUDA
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) ); // l1-Jacobi
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
 #endif
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.coarseSolver.ptr, 2 ) ); // pressure and temperature (CPTR)
 #ifdef GEOSX_USE_HYPRE_CUDA
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.coarseSolver.ptr, toUnderlying( AMGCoarseningType::PMIS ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.coarseSolver.ptr, 2 ) );
@@ -121,4 +141,4 @@ public:
 
 } // namespace geosx
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASERESERVOIRFVM_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASEFVM_HPP_*/
