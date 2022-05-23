@@ -425,11 +425,11 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
       integer const corner = (point >> dim) & 1;
       cornerValue *= weights[dim][corner];
     }
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
+    //#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
+    //GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+    //#else
     value += cornerValue;
-#endif
+    //#endif
   }
   return value;
 }
