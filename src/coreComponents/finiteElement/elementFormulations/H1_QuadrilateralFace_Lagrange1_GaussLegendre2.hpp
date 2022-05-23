@@ -130,6 +130,19 @@ public:
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
 
+
+  /**
+   * @brief Calculate shape functions values for each support point at a
+   *   given point in the parent space.
+   * @param coords coordinates of the given point.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const (&pointCoord)[3],
+                     real64 (& N)[numNodes] );
+
   /**
    * @brief Calculate shape functions values for each support point at a
    *   quadrature point.
@@ -262,6 +275,17 @@ void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
                             MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
 {}
+
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+  calcN( real64 const (&pointCoord)[3],
+         real64 (& N)[numNodes] )
+{
+  GEOSX_UNUSED_VAR( pointCoord, N );
+}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE

@@ -157,6 +157,22 @@ public:
   static void setupStack( localIndex const & cellIndex,
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
+    
+
+   /**
+   * @brief Calculate shape functions values for each support point at a
+   *   given point in the parent space.
+   * @param coords coordinates of the given point.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const (&pointCoord)[3],
+                     real64 (& N)[numNodes] )
+  {
+    LagrangeBasis1::TensorProduct3D::value( pointCoord, N );
+  }
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -176,7 +192,7 @@ public:
                                 quadratureFactor * LagrangeBasis1::parentSupportCoord( qb ),
                                 quadratureFactor * LagrangeBasis1::parentSupportCoord( qc ) };
 
-    LagrangeBasis1::TensorProduct3D::value( qCoords, N );
+    calcN( qCoords, N );
   }
 
   /**

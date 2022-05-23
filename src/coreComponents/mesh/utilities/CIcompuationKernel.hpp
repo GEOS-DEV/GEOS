@@ -38,7 +38,7 @@ class CIcomputationKernel
   CIcomputationKernel( FE_TYPE const & finiteElementSpace,
                        NodeManager const & nodeManager, 
                        CellElementSubRegion const & elementSubRegion,
-                       EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion ):
+                       EmbeddedSurfaceSubRegion & embeddedSurfSubRegion ):
     m_finiteElementSpace( finiteElementSpace ),
     m_X( nodeManger.referencePosition() ),
     m_elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
@@ -89,8 +89,8 @@ class CIcomputationKernel
         samplingPointCoord( k, np, stack );
         averageDistance += computeDistance( point )
       }
-      
-    } );
+      setConnectivityIndex(k, averageDistance )
+    } );   
   }   
 
    /**
@@ -117,10 +117,12 @@ class CIcomputationKernel
   real64 computeDistance( localIndex const k, 
                           real64 const (&point)[3] ) const
   {
+
+    localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
     real64 pointToFracCenter[3];
     LvArray::tensorOps::copy< 3 >( pointToFracCenter, point );
-    LvArray::tensorOps::subtract< 3 >( pointToFracCenter, m_fracCenter[k] );
-    return LvArray::tensorOps::AiBi< 3 >( pointToFracCenter, m_normalVector[k] );   
+    LvArray::tensorOps::subtract< 3 >( pointToFracCenter, m_fracCenter[embSurfIndex] );
+    return LvArray::tensorOps::AiBi< 3 >( pointToFracCenter, m_normalVector[embSurfIndex] );   
   }
 
   GEOSX_HOST_DEVICE
@@ -131,10 +133,19 @@ class CIcomputationKernel
     // Get sampling point coord in parent space.
 
     // Compute shape function values at sampling point
+    
     for (localIndex a=0; a<numNodesPerElem; a++)
     {
       LvArray::tensorOps::scaledAdd(stack.samplingPointCoord, stack.xLocal[a], N[a] );
     }
+  }
+
+  GEOSX_HOST_DEVICE
+  void setConnectivityIndex( localIndex const k,
+                              real64 const averageDistance )
+  {
+    localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
+    m_connectivityIndex[embSurfIndex] = m_fractureSurfaceArea[embSurfIndex] / averageDistance;
   }
 
   private:

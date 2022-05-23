@@ -136,6 +136,18 @@ public:
 
   /**
    * @brief Calculate shape functions values for each support point at a
+   *   given point in the parent space.
+   * @param coords coordinates of the given point.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const (&pointCoord)[3],
+                     real64 (& N)[numNodes] );
+
+  /**
+   * @brief Calculate shape functions values for each support point at a
    *   quadrature point.
    * @param q Index of the quadrature point.
    * @param N An array to pass back the shape function values for each support
@@ -475,6 +487,29 @@ H1_Wedge_Lagrange1_Gauss6::
 
 //*************************************************************************************************
 
+/**
+   * @brief Calculate shape functions values for each support point at a
+   *   given point in the parent space.
+   * @param coords coordinates of the given point.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void
+  H1_Wedge_Lagrange1_Gauss6::
+    calcN( real64 const (&pointCoord)[3],
+           real64 (& N)[numNodes] )
+  {
+    N[0] = 0.5*( 1.0 - pointCoord[0] - pointCoord[1] ) * ( 1.0 - pointCoord[2] );
+    N[1] = 0.5*( 1.0 - pointCoord[0] - pointCoord[1] ) * ( 1.0 + pointCoord[2] );
+    N[2] = 0.5* pointCoord[0] * ( 1.0 - pointCoord[2] );
+    N[3] = 0.5* pointCoord[0] * ( 1.0 + pointCoord[2] );
+    N[4] = 0.5* pointCoord[1] * ( 1.0 - pointCoord[2] );
+    N[5] = 0.5* pointCoord[1] * ( 1.0 + pointCoord[2] );
+  }
+
+
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
@@ -482,16 +517,11 @@ H1_Wedge_Lagrange1_Gauss6::
   calcN( localIndex const q,
          real64 (& N)[numNodes] )
 {
-  real64 const r  = quadratureParentCoords0( q );
-  real64 const s  = quadratureParentCoords1( q );
-  real64 const xi = quadratureParentCoords2( q );
+  real64 const pointCoord[3] = {quadratureParentCoords0( q ),
+                                quadratureParentCoords1( q ),
+                                quadratureParentCoords2( q )};
 
-  N[0] = 0.5*( 1.0 - r - s ) * ( 1.0 - xi );
-  N[1] = 0.5*( 1.0 - r - s ) * ( 1.0 + xi );
-  N[2] = 0.5* r * ( 1.0 - xi );
-  N[3] = 0.5* r * ( 1.0 + xi );
-  N[4] = 0.5* s * ( 1.0 - xi );
-  N[5] = 0.5* s * ( 1.0 + xi );
+  calcN(pointCoord, N);
 }
 
 GEOSX_HOST_DEVICE

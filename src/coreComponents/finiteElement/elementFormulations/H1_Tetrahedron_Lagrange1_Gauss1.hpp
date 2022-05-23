@@ -131,6 +131,18 @@ public:
 
   /**
    * @brief Calculate shape functions values for each support point at a
+   *   given point in the parent space.
+   * @param coords coordinates of the given point.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const (&pointCoord)[3],
+                     real64 (& N)[numNodes] );                        
+
+  /**
+   * @brief Calculate shape functions values for each support point at a
    *   quadrature point.
    * @param q Index of the quadrature point.
    * @param N An array to pass back the shape function values for each support
@@ -286,6 +298,23 @@ H1_Tetrahedron_Lagrange1_Gauss1::
 
 //*************************************************************************************************
 
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+H1_Tetrahedron_Lagrange1_Gauss1::
+  calcN( real64 const (& pointCoord)[3],
+         real64 (& N)[numNodes] )
+{
+  GEOSX_UNUSED_VAR( q );
+
+  // single quadrature point (centroid), i.e.  r = s = t = 1/4
+  N[0] = 1 - pointCoord[0] - pointCoord[1] - pointCoord[1]
+  N[1] = pointCoord[0];
+  N[2] = pointCoord[1];
+  N[3] = pointCoord[2];
+}
+
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
@@ -296,10 +325,8 @@ H1_Tetrahedron_Lagrange1_Gauss1::
   GEOSX_UNUSED_VAR( q );
 
   // single quadrature point (centroid), i.e.  r = s = t = 1/4
-  N[0] = 0.25; // N0 = 1 - r - s - t
-  N[1] = 0.25; // N1 = r
-  N[2] = 0.25; // N2 = s
-  N[3] = 0.25; // N3 = t
+  real64 const pointCoord[3] = {0.25, 0.25, 0.25}; 
+  calcN(pointCoord, N);
 }
 
 GEOSX_HOST_DEVICE
