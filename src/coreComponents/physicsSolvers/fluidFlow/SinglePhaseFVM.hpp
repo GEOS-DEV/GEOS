@@ -65,6 +65,8 @@ public:
   using BASE::m_numDofPerCell;
   using BASE::m_fluxEstimate;
 
+  using BASE::m_isThermal; 
+
 
   // Aliasing public/protected members/methods of SinglePhaseBase so we don't
   // have to use this->member etc.
