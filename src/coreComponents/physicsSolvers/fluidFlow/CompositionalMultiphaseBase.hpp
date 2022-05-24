@@ -222,24 +222,19 @@ public:
     // inputs
 
     static constexpr char const * inputTemperatureString() { return "temperature"; }
-
     static constexpr char const * useMassFlagString() { return "useMass"; }
-
     static constexpr char const * isThermalString()  { return "isThermal"; }
-
-    static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
-
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
-
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
-
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
-
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
-
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
+
+    // reservoir region statistics
+
+    static constexpr char const * phasePoreVolumeString() { return "phasePoreVolume"; }
+
   };
 
   /**
@@ -311,6 +306,7 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
 
+
   /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
@@ -328,6 +324,13 @@ public:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
 protected:
+
+  virtual void postProcessInput() override;
+
+  virtual void initializePreSubGroups() override;
+
+  virtual void computeRegionStatistics( MeshLevel & mesh,
+                                        arrayView1d< string const > const & regionNames ) const override;
 
   /**
    * @brief Function to fix the initial state during the initialization step in coupled problems
@@ -356,11 +359,6 @@ protected:
    */
   void validateConstitutiveModels( DomainPartition const & domain ) const;
 
-  virtual void postProcessInput() override;
-
-  virtual void initializePreSubGroups() override;
-
-
   /**
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
    * @param[in] cm reference to the global constitutive model manager
@@ -382,9 +380,6 @@ protected:
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
-
-  /// flag indicating whether CFL numbers will be computed or not
-  integer m_computeCFLNumbers;
 
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
@@ -408,6 +403,7 @@ protected:
   string m_referenceFluidModelName;
 
 private:
+
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };

@@ -9,7 +9,7 @@
       targetRegions="{ Channel }"
       initialDt="1"
       temperature="300"
-      computeCFLNumbers="1">
+      computeStatistics="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-9"
         newtonMaxIter="15"

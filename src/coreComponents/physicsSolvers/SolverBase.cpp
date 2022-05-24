@@ -642,11 +642,15 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
     if( isConfigurationLoopConverged )
     {
+      m_nonlinearSolverParameters.m_totalSuccessfulNewtonNumIterations +=
+        m_nonlinearSolverParameters.m_numNewtonIterations;
       break; // get out of outer loop
     }
     else
     {
       // cut timestep, go back to beginning of step and restart the Newton loop
+      m_nonlinearSolverParameters.m_totalWastedNewtonNumIterations +=
+        m_nonlinearSolverParameters.m_numNewtonIterations;
       stepDt *= dtCutFactor;
       GEOSX_LOG_LEVEL_RANK_0 ( 1, GEOSX_FMT( "New dt = {}", stepDt ) );
     }

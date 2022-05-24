@@ -86,6 +86,9 @@ public:
 
     static constexpr auto numConfigurationAttemptsString    = "numConfigurationAttempts";
     static constexpr auto maxNumConfigurationAttemptsString = "maxNumConfigurationAttempts";
+
+    static constexpr auto totalSuccessfulNewtonNumIterationsString = "totalSuccessfulNewtonNumIterations";
+    static constexpr auto totalWastedNewtonNumIterationsString     = "numberWastedNewtonNumIterations";
   } viewKeys;
 
 
@@ -172,7 +175,7 @@ public:
   /// Factor by which the time step will be cut if a timestep cut is required.
   real64 m_timeStepCutFactor;
 
-  /// number of times that the time-step had to be cut
+  /// Number of times that the time-step had to be cut
   integer m_numdtAttempts;
 
   /// number of times that the configuration had to be changed
@@ -180,6 +183,15 @@ public:
 
   /// Max number of times that the configuration can be changed
   integer m_maxNumConfigurationAttempts;
+
+  // Simulation statistics
+
+  /// Total number of successful Newton iterations
+  integer m_totalSuccessfulNewtonNumIterations;
+
+  /// Total number of wasted Newton iterations
+  integer m_totalWastedNewtonNumIterations;
+
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,

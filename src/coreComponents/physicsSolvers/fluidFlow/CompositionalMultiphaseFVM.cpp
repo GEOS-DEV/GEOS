@@ -146,20 +146,22 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
   } );
 }
 
-void CompositionalMultiphaseFVM::implicitStepComplete( real64 const & time,
-                                                       real64 const & dt,
-                                                       DomainPartition & domain )
+void CompositionalMultiphaseFVM::computeStatistics( real64 const & dt,
+                                                    DomainPartition & domain ) const
 {
-  CompositionalMultiphaseBase::implicitStepComplete( time, dt, domain );
-
-  if( m_computeCFLNumbers )
+  if( !m_computeStatistics )
   {
-    computeCFLNumbers( dt, domain );
+    return;
   }
+
+  CompositionalMultiphaseBase::computeStatistics( dt, domain );
+
+  computeCFLNumbers( dt, domain );
 }
 
+
 void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
-                                                    DomainPartition & domain )
+                                                    DomainPartition & domain ) const
 {
   GEOSX_MARK_FUNCTION;
 
