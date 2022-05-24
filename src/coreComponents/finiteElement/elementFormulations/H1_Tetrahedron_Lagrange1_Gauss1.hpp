@@ -321,7 +321,6 @@ H1_Tetrahedron_Lagrange1_Gauss1::
   calcN( real64 const (&pointCoord)[3],
          real64 (& N)[numNodes] )
 {
-  // single quadrature point (centroid), i.e.  r = s = t = 1/4
   N[0] = 1 - pointCoord[0] - pointCoord[1] - pointCoord[1];
   N[1] = pointCoord[0];
   N[2] = pointCoord[1];

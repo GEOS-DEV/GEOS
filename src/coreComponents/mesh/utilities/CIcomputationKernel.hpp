@@ -135,7 +135,7 @@ public:
                            StackVariables & stack ) const
   {
     // Get sampling point coord in parent space.
-    real64 parentSamplingPointCoord[3];
+    real64 parentSamplingPointCoord[3] = {0.0, 0.0, 0.0};
     FE_TYPE::getSamplingPointCoordInParentSpace( np, parentSamplingPointCoord );
 
     // Compute shape function values at sampling point
