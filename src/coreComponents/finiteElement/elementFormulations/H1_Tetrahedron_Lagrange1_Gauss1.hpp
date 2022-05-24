@@ -138,11 +138,11 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void getSamplingPointCoordInParentSpace( int const & linearIndex,
-                                                  real64 (&samplingPointCoord)[3] )
+                                                  real64 (& samplingPointCoord)[3] )
   {
-    GEOSX_UNUSED_VAR(linearIndex, samplingPointCoord);
-    GEOSX_ERROR(" Element type not supported.");
-  }                                       
+    GEOSX_UNUSED_VAR( linearIndex, samplingPointCoord );
+    GEOSX_ERROR( " Element type not supported." );
+  }
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -154,7 +154,7 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void calcN( real64 const (&pointCoord)[3],
-                     real64 (& N)[numNodes] );                        
+                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -318,7 +318,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Tetrahedron_Lagrange1_Gauss1::
-  calcN( real64 const (& pointCoord)[3],
+  calcN( real64 const (&pointCoord)[3],
          real64 (& N)[numNodes] )
 {
   // single quadrature point (centroid), i.e.  r = s = t = 1/4
@@ -338,8 +338,8 @@ H1_Tetrahedron_Lagrange1_Gauss1::
   GEOSX_UNUSED_VAR( q );
 
   // single quadrature point (centroid), i.e.  r = s = t = 1/4
-  real64 const pointCoord[3] = {0.25, 0.25, 0.25}; 
-  calcN(pointCoord, N);
+  real64 const pointCoord[3] = {0.25, 0.25, 0.25};
+  calcN( pointCoord, N );
 }
 
 GEOSX_HOST_DEVICE

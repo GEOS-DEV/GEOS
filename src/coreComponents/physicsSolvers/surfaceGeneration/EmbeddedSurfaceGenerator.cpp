@@ -71,7 +71,7 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
     setApplyDefaultValue( "FractureRegion" );
 
   // this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-    // setInputFlag( InputFlags::FALSE );
+  // setInputFlag( InputFlags::FALSE );
 
   registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -203,25 +203,25 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   // Launch kernel to compute connectivity index of each fractured element.
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
-      [&]( localIndex const, localIndex const, ElementRegionBase &, CellElementSubRegion & subRegion )
+    [&]( localIndex const, localIndex const, ElementRegionBase &, CellElementSubRegion & subRegion )
   {
     finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
     finiteElement::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
     {
-      using FE_TYPE = decltype( finiteElement ); 
+      using FE_TYPE = decltype( finiteElement );
 
-      auto kernel = CIcomputationKernel<FE_TYPE>( finiteElement,
-                                                  nodeManager,
-                                                  subRegion,
-                                                  embeddedSurfaceSubRegion );
+      auto kernel = CIcomputationKernel< FE_TYPE >( finiteElement,
+                                                    nodeManager,
+                                                    subRegion,
+                                                    embeddedSurfaceSubRegion );
 
-      using KERNEL_TYPE = decltype( kernel );                                                  
+      using KERNEL_TYPE = decltype( kernel );
 
-      KERNEL_TYPE::template launchCICompuationKernel< parallelDevice<32>, KERNEL_TYPE >( kernel );
+      KERNEL_TYPE::template launchCICompuationKernel< parallelDevice< 32 >, KERNEL_TYPE >( kernel );
     } );
-  } );  
-   
+  } );
+
   // add all new nodes to newObject list
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
   {

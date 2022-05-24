@@ -162,13 +162,13 @@ public:
   static void setupStack( localIndex const & cellIndex,
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
-    
+
 
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void getSamplingPointCoordInParentSpace( int const & linearIndex,
-                                                  real64 (&samplingPointCoord)[3] )
+                                                  real64 (& samplingPointCoord)[3] )
   {
     int const i0 = linearIndex % numSamplingPointsPerDirection;
     int const i1 = ( (linearIndex - i0)/numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
@@ -179,9 +179,9 @@ public:
     samplingPointCoord[0] = -1 + i0 * step;
     samplingPointCoord[1] = -1 + i1 * step;
     samplingPointCoord[2] = -1 + i2 * step;
-  }                                                
+  }
 
-   /**
+  /**
    * @brief Calculate shape functions values for each support point at a
    *   given point in the parent space.
    * @param coords coordinates of the given point.

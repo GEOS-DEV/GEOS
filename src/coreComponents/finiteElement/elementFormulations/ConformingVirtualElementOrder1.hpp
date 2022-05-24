@@ -61,7 +61,7 @@ public:
   /// The number of quadrature points per element.
   static constexpr localIndex numQuadraturePoints = 1;
 
-  static constexpr int numSamplingPoints = 1000;  
+  static constexpr int numSamplingPoints = 1000;
 
   ConformingVirtualElementOrder1() = default;
 
@@ -341,11 +341,11 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void getSamplingPointCoordInParentSpace( int const & linearIndex,
-                                                  real64 (&samplingPointCoord)[3] )
+                                                  real64 (& samplingPointCoord)[3] )
   {
-    GEOSX_UNUSED_VAR(linearIndex, samplingPointCoord);
-    GEOSX_ERROR("Element type not supported.");
-  }               
+    GEOSX_UNUSED_VAR( linearIndex, samplingPointCoord );
+    GEOSX_ERROR( "Element type not supported." );
+  }
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -356,7 +356,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void calcN( real64 const ( & pointCoord )[3],
+  static void calcN( real64 const ( &pointCoord )[3],
                      real64 ( & N )[maxSupportPoints] )
   {
     GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
