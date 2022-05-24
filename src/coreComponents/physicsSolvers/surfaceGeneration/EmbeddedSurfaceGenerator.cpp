@@ -201,6 +201,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
     } );// end loop over subregions
   } );// end loop over thick planes
 
+  // Launch kernel to compute connectivity index of each fractured element.
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
       [&]( localIndex const, localIndex const, ElementRegionBase &, CellElementSubRegion & subRegion )
   {
@@ -217,12 +218,9 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
       using KERNEL_TYPE = decltype( kernel );                                                  
 
-      KERNEL_TYPE::template launchCICompuationKernel< serialPolicy, KERNEL_TYPE >( kernel );
+      KERNEL_TYPE::template launchCICompuationKernel< parallelDevice<32>, KERNEL_TYPE >( kernel );
     } );
   } );  
-
-  arrayView1d<real64 const > CI = embeddedSurfaceSubRegion.getConnectivityIndex();
-  std::cout << "connectivity index: " << CI << std::endl;
    
   // add all new nodes to newObject list
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
