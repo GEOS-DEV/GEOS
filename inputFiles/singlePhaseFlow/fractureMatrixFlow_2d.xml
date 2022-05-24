@@ -194,14 +194,6 @@
       scale="0.0"/>
 
     <FieldSpecification
-      name="frac"
-      initialCondition="1"
-      setNames="{ fracture }"
-      objectPath="faceManager"
-      fieldName="ruptureState"
-      scale="1"/>
-
-    <FieldSpecification
       name="source"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"

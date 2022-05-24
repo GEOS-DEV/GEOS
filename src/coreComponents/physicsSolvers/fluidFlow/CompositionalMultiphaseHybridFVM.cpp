@@ -275,7 +275,7 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOSX_
   // we need Connectivity::Face because of the two-point upwinding
   // in AssembleOneSidedMassFluxes
   dofManager.addField( viewKeyStruct::elemDofFieldString(),
-                       DofManager::Location::Elem,
+                       FieldLocation::Elem,
                        m_numDofPerCell,
                        m_meshTargets );
 
@@ -285,7 +285,7 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOSX_
 
   // setup the connectivity of face fields
   dofManager.addField( viewKeyStruct::faceDofFieldString(),
-                       DofManager::Location::Face,
+                       FieldLocation::Face,
                        1,
                        m_meshTargets );
 
@@ -804,13 +804,19 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
   // 3. synchronize
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                arrayView1d< string const > const & regionNames )
   {
-    std::map< string, string_array > fieldNames;
-    fieldNames["face"].emplace_back( extrinsicMeshData::flow::facePressure::key() );
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::globalCompDensity::key() );
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    FieldIdentifiers fieldsToBeSync;
+
+    {
+      fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key(),
+                                         extrinsicMeshData::flow::globalCompDensity::key() },
+                                       regionNames );
+
+      fieldsToBeSync.addFields( FieldLocation::Face, { extrinsicMeshData::flow::facePressure::key() } );
+    };
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );
