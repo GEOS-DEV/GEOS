@@ -18,11 +18,11 @@
 
     <BoundedPlane
       name="FracturePlane"
-      normal="{ 1, 0, 0 }"
+      normal="{ 0.5547, 0.8321, 0 }"
       origin="{ 0.5, 0.5, 0.5 }"
-      lengthVector="{ 0, 1, 0 }"
+      lengthVector="{ 0.8321, -0.5547, 0 }"
       widthVector="{ 0, 0, 1 }"
-      dimensions="{ 0.5, 1 }"/>
+      dimensions="{ 1.1, 4 }"/>
   </Geometry>
  
   <Outputs>

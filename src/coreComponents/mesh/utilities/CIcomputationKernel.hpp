@@ -79,8 +79,7 @@ class CIcomputationKernel
   void launchCICompuationKernel( KERNEL_TYPE & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
-
-    forAll< POLICY >(  kernelComponent.m_fracturedElems.size(),
+    forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
                        [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
 
@@ -95,6 +94,7 @@ class CIcomputationKernel
         kernelComponent.samplingPointCoord( np, stack );
         averageDistance += kernelComponent.computeDistance( k, stack.samplingPointCoord );
       }
+      averageDistance /= numSamplingPoints;
       kernelComponent.setConnectivityIndex(k, averageDistance );
     } );   
   }   
@@ -127,7 +127,7 @@ class CIcomputationKernel
     real64 pointToFracCenter[3];
     LvArray::tensorOps::copy< 3 >( pointToFracCenter, point );
     LvArray::tensorOps::subtract< 3 >( pointToFracCenter, m_fracCenter[embSurfIndex] );
-    return LvArray::tensorOps::AiBi< 3 >( pointToFracCenter, m_normalVector[embSurfIndex] );   
+    return LvArray::math::abs(LvArray::tensorOps::AiBi< 3 >( pointToFracCenter, m_normalVector[embSurfIndex] ));   
   }
 
   GEOSX_HOST_DEVICE
@@ -141,11 +141,7 @@ class CIcomputationKernel
     // Compute shape function values at sampling point
     real64 N[numNodesPerElem];
     FE_TYPE::calcN(parentSamplingPointCoord, N);
-    std::cout << "point: " << np;
-    std::cout << " i " << parentSamplingPointCoord[0];
-    std::cout << " j " << parentSamplingPointCoord[1]; 
-    std::cout << " k " << parentSamplingPointCoord[2] << std::endl;
-
+    
     LvArray::tensorOps::fill<3>( stack.samplingPointCoord, 0.0);
 
     // Compute sampling point coord in the physical space 
