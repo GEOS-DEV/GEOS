@@ -141,6 +141,10 @@ class CIcomputationKernel
     // Compute shape function values at sampling point
     real64 N[numNodesPerElem];
     FE_TYPE::calcN(parentSamplingPointCoord, N);
+    std::cout << "point: " << np;
+    std::cout << " i " << parentSamplingPointCoord[0];
+    std::cout << " j " << parentSamplingPointCoord[1]; 
+    std::cout << " k " << parentSamplingPointCoord[2] << std::endl;
 
     LvArray::tensorOps::fill<3>( stack.samplingPointCoord, 0.0);
 

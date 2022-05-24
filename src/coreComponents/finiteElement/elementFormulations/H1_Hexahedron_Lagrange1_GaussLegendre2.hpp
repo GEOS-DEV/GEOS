@@ -82,9 +82,9 @@ public:
   constexpr static localIndex numQuadraturePoints = 8;
 
   ///
-  constexpr static int numSamplingPoints = 1000;  // 10 in each direction.
+  constexpr static int numSamplingPoints = 27;  // 10 in each direction.
 
-  constexpr static int numSamplingPointsPerDirection = 10;
+  constexpr static int numSamplingPointsPerDirection = 3;
 
   /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
@@ -170,11 +170,13 @@ public:
   static void getSamplingPointCoordInParentSpace( int const & linearIndex,
                                                   real64 (&samplingPointCoord)[3] )
   {
-    int const i0 = ( linearIndex % numSamplingPointsPerDirection );
-    int const i1 = ( linearIndex / numSamplingPointsPerDirection );
-    int const i2 = ( linearIndex / ( numSamplingPointsPerDirection * numSamplingPointsPerDirection ) );
+    int const i0 = linearIndex % numSamplingPointsPerDirection;
+    int const i1 = ( (linearIndex - i0)/numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
+    int const i2 = ( (linearIndex - i0)/numSamplingPointsPerDirection - i1 ) / numSamplingPointsPerDirection;
 
     real64 const step = 2 / ( numSamplingPointsPerDirection - 1 );
+
+    std::cout << "linear index: " << linearIndex << " multiIndex: " << " i: " << i0 << " j: " <<  i1 << " k: " << i2 << std::endl;
 
     samplingPointCoord[0] = -1 + i0 * step;
     samplingPointCoord[1] = -1 + i1 * step;
@@ -194,6 +196,7 @@ public:
                      real64 (& N)[numNodes] )
   {
     LagrangeBasis1::TensorProduct3D::value( pointCoord, N );
+    std::cout <<  " N[0] " << N[0] << " N[1] " << N[1] <<  " N[2] " << N[2] << std::endl;
   }
 
   /**

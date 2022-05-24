@@ -70,8 +70,8 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "FractureRegion" );
 
-  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-    setInputFlag( InputFlags::FALSE );
+  // this->getWrapper< string >( viewKeyStruct::discretizationString() ).
+    // setInputFlag( InputFlags::FALSE );
 
   registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -217,10 +217,13 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
       using KERNEL_TYPE = decltype( kernel );                                                  
 
-      KERNEL_TYPE::template launchCICompuationKernel< parallelDevicePolicy<32>, KERNEL_TYPE >( kernel );
+      KERNEL_TYPE::template launchCICompuationKernel< serialPolicy, KERNEL_TYPE >( kernel );
     } );
   } );  
 
+  arrayView1d<real64 const > CI = embeddedSurfaceSubRegion.getConnectivityIndex();
+  std::cout << "connectivity index: " << CI << std::endl;
+   
   // add all new nodes to newObject list
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
   {
