@@ -738,28 +738,19 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
                       
       } );
 
-    } );
+      FieldIdentifiers fieldsToBeSync;
+      fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::Displacementx_np1::key(), extrinsicMeshData::Displacementy_np1::key(),  extrinsicMeshData::Displacementz_np1::key()} );
+      fieldsToBeSync.addElementFields( {extrinsicMeshData::Stresstensor_xx::key(), extrinsicMeshData::Stresstensor_yy::key(), extrinsicMeshData::Stresstensor_zz::key(), extrinsicMeshData::Stresstensor_xy::key(), 
+                                        extrinsicMeshData::Stresstensor_xz::key(), extrinsicMeshData::Stresstensor_yz::key()}, regionNames );
 
 
-
-  /// Synchronize pressure fields
-  std::map< string, string_array > fieldNames;
-  fieldNames["node"].emplace_back( "displacementx_np1" );
-  fieldNames["node"].emplace_back( "displacementy_np1" );
-  fieldNames["node"].emplace_back( "displacementz_np1" );
-  fieldNames["elems"].emplace_back( "stresstensor_xx" );
-  fieldNames["elems"].emplace_back( "stresstensor_yy" );
-  fieldNames["elems"].emplace_back( "stresstensor_zz" );
-  fieldNames["elems"].emplace_back( "stresstensor_xy" );
-  fieldNames["elems"].emplace_back( "stresstensor_xz" );
-  fieldNames["elems"].emplace_back( "stresstensor_yz" );
-
-  CommunicationTools & syncFields = CommunicationTools::getInstance();
-  syncFields.synchronizeFields( fieldNames,
+      CommunicationTools & syncFields = CommunicationTools::getInstance();
+      syncFields.synchronizeFields( fieldsToBeSync,
                                 domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                 domain.getNeighbors(),
                                 true );
 
+    } );
   
   // real64 const checkSeismo = m_dtSeismoTrace*m_indexSeismoTrace;
   // if( (time_n-epsilonLoc) <= checkSeismo && checkSeismo < (time_n + dt) )
