@@ -14,9 +14,8 @@
 
 
 /**
- * @file KernelBase.hpp
+ * @file CIcomputationKernel.hpp
  */
-
 #ifndef GEOSX_MESH_UTILITIES_CICOMPUTATIONKERNEL_HPP_
 #define GEOSX_MESH_UTILITIES_CICOMPUTATIONKERNEL_HPP_
 
@@ -26,6 +25,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/EmbeddedSurfaceSubRegion.hpp"
 #include "mesh/CellElementSubRegion.hpp"
+#include "mesh/ElementType.hpp"
 
 
 namespace geosx
@@ -40,19 +40,20 @@ class CIcomputationKernel
                        CellElementSubRegion const & elementSubRegion,
                        EmbeddedSurfaceSubRegion & embeddedSurfSubRegion ):
     m_finiteElementSpace( finiteElementSpace ),
-    m_X( nodeManger.referencePosition() ),
+    m_elementType( elementSubRegion.getElementType() ),
+    m_X( nodeManager.referencePosition() ),
     m_elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
     m_fracturedElems( elementSubRegion.fracturedElementsList().toViewConst()),
     m_cellsToEmbeddedSurfaces( elementSubRegion.embeddedSurfacesList().toViewConst() ),
     m_normalVector( embeddedSurfSubRegion.getNormalVector().toViewConst()),
-    m_elemCenter( embeddedSurfSubRegion.getElementCenter().toViewConst()),
+    m_fracCenter( embeddedSurfSubRegion.getElementCenter().toViewConst()),
     m_fractureSurfaceArea( embeddedSurfSubRegion.getElementArea().toViewConst() ),
     m_connectivityIndex( embeddedSurfSubRegion.getConnectivityIndex() )
   {}
    
   static constexpr int numNodesPerElem = FE_TYPE::maxSupportPoints;
 
-  static constexpr int numSamplingPoints = FE_TYPE::numSampligPoints;
+  static constexpr int numSamplingPoints = FE_TYPE::numSamplingPoints;
 
   struct StackVariables
   {
@@ -62,7 +63,7 @@ class CIcomputationKernel
     GEOSX_HOST_DEVICE
     StackVariables():
     xLocal(),
-    samplingPointCoord(0.0)
+    samplingPointCoord()
     {}
 
     /// C-array stack storage for element local the nodal positions.
@@ -72,24 +73,29 @@ class CIcomputationKernel
   };
 
 
-  template< typename POLICY >
-  void computeCIs()
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static
+  void launchCICompuationKernel( KERNEL_TYPE & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
 
-    forAll< POLICY >(  m_fracturedElems.size(),
+    forAll< POLICY >(  kernelComponent.m_fracturedElems.size(),
                        [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
-      real64 averageDistance = 0.0;
-      
+
+      localIndex k = kernelComponent.m_fracturedElems[i];
+
       StackVariables stack;
-      setup( k, stack );
-      for( integer np=0; q<numOfSamplingPoints; ++np )
+      kernelComponent.setup( k, stack );
+
+      real64 averageDistance = 0.0;
+      for( integer np=0; np<numSamplingPoints; ++np )
       {
-        samplingPointCoord( k, np, stack );
-        averageDistance += computeDistance( point )
+        kernelComponent.samplingPointCoord( np, stack );
+        averageDistance += kernelComponent.computeDistance( k, stack.samplingPointCoord );
       }
-      setConnectivityIndex(k, averageDistance )
+      kernelComponent.setConnectivityIndex(k, averageDistance );
     } );   
   }   
 
@@ -117,7 +123,6 @@ class CIcomputationKernel
   real64 computeDistance( localIndex const k, 
                           real64 const (&point)[3] ) const
   {
-
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
     real64 pointToFracCenter[3];
     LvArray::tensorOps::copy< 3 >( pointToFracCenter, point );
@@ -126,23 +131,32 @@ class CIcomputationKernel
   }
 
   GEOSX_HOST_DEVICE
-  samplingPointCoord( localIndex const k, 
-                      integer const np, 
-                      StackVariable & stack ) const
+  void samplingPointCoord( integer const np, 
+                           StackVariables & stack ) const
   {
     // Get sampling point coord in parent space.
+    real64 parentSamplingPointCoord[3];
+    FE_TYPE::getSamplingPointCoordInParentSpace(np, parentSamplingPointCoord);
 
     // Compute shape function values at sampling point
-    
+    real64 N[numNodesPerElem];
+    FE_TYPE::calcN(parentSamplingPointCoord, N);
+
+    LvArray::tensorOps::fill<3>( stack.samplingPointCoord, 0.0);
+
+    // Compute sampling point coord in the physical space 
     for (localIndex a=0; a<numNodesPerElem; a++)
     {
-      LvArray::tensorOps::scaledAdd(stack.samplingPointCoord, stack.xLocal[a], N[a] );
+      for (int i =0; i < 3; i++)
+      {
+        stack.samplingPointCoord[i] += stack.xLocal[a][i] * N[a];
+      }
     }
   }
 
   GEOSX_HOST_DEVICE
   void setConnectivityIndex( localIndex const k,
-                              real64 const averageDistance )
+                             real64 const averageDistance ) const
   {
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
     m_connectivityIndex[embSurfIndex] = m_fractureSurfaceArea[embSurfIndex] / averageDistance;
@@ -151,6 +165,8 @@ class CIcomputationKernel
   private:
 
     FE_TYPE const & m_finiteElementSpace;
+
+    ElementType const m_elementType;
 
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
@@ -168,6 +184,8 @@ class CIcomputationKernel
     arrayView1d< real64 const > const m_fractureSurfaceArea;
 
     arrayView1d< real64 > const m_connectivityIndex;
-}
+};
 
 }
+
+#endif /* GEOSX_MESH_UTILITIES_CICOMPUTATIONKERNEL_HPP_ */

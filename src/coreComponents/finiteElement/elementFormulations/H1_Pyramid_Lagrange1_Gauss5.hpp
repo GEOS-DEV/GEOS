@@ -64,6 +64,9 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 5;
 
+  ///
+  constexpr static int numSamplingPoints = 1000;  // 10 in each direction.
+
   virtual ~H1_Pyramid_Lagrange1_Gauss5() override
   {}
 
@@ -137,6 +140,15 @@ public:
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
 
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void getSamplingPointCoordInParentSpace( int const & linearIndex,
+                                                  real64 (&samplingPointCoord)[3] )
+  {
+    GEOSX_UNUSED_VAR(linearIndex, samplingPointCoord);
+    GEOSX_ERROR(" Element type not supported.");
+  }                                                 
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -528,13 +540,13 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Pyramid_Lagrange1_Gauss5::
-  calcN( real64 const (&pointCoord)[3],
+  calcN( real64 const ( &pointCoord )[3],
          real64 ( & N )[numNodes] )
 {
   N[0] = 0.125*( 1.0 - pointCoord[0] ) * ( 1.0 - pointCoord[1] ) * ( 1.0 - pointCoord[2] );
   N[1] = 0.125*( 1.0 + pointCoord[0] ) * ( 1.0 - pointCoord[1] ) * ( 1.0 - pointCoord[2] );
   N[2] = 0.125*( 1.0 - pointCoord[0] ) * ( 1.0 + pointCoord[1] ) * ( 1.0 - pointCoord[2] );
-  N[3] = 0.125*( 1.0 + [0] ) * ( 1.0 + pointCoord[1] ) * ( 1.0 - pointCoord[2] );
+  N[3] = 0.125*( 1.0 + pointCoord[0] ) * ( 1.0 + pointCoord[1] ) * ( 1.0 - pointCoord[2] );
   N[4] = 0.5*( 1.0 + pointCoord[2] );
 }
 

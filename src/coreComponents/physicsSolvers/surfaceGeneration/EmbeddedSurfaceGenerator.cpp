@@ -30,6 +30,7 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/CIcomputationKernel.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/simpleGeometricObjects/BoundedPlane.hpp"
@@ -201,16 +202,22 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   } );// end loop over thick planes
 
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
-      [&]( localIndex const er, localIndex const esr, ElementRegionBase &, CellElementSubRegion & subRegion )
+      [&]( localIndex const, localIndex const, ElementRegionBase &, CellElementSubRegion & subRegion )
   {
-    FiniteElementBase & subRegionFE = subRegion.template getReference< FiniteElementBase >( finiteElementName );
+    finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
     finiteElement::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
     {
-      CIcomputationKernel kernel = CIcomputationKernel( nodeManager,
-                                                        targetRegionIndex,
-                                                        elementSubRegion,
-                                                        finiteElement );
+      using FE_TYPE = decltype( finiteElement ); 
 
+      auto kernel = CIcomputationKernel<FE_TYPE>( finiteElement,
+                                                  nodeManager,
+                                                  subRegion,
+                                                  embeddedSurfaceSubRegion );
+
+      using KERNEL_TYPE = decltype( kernel );                                                  
+
+      KERNEL_TYPE::template launchCICompuationKernel< parallelDevicePolicy<32>, KERNEL_TYPE >( kernel );
     } );
   } );  
 

@@ -61,6 +61,11 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 6;
 
+  ///
+  constexpr static int numSamplingPoints = 1000;  // 10 in each direction.
+
+  constexpr static int numSamplingPointsPerDirection = 10;
+
   virtual ~H1_Wedge_Lagrange1_Gauss6() override
   {}
 
@@ -133,6 +138,16 @@ public:
   static void setupStack( localIndex const & cellIndex,
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
+
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void getSamplingPointCoordInParentSpace( int const & linearIndex,
+                                                  real64 (&samplingPointCoord)[3] )
+  {
+    GEOSX_UNUSED_VAR(linearIndex, samplingPointCoord);
+    GEOSX_ERROR(" Element type not supported.");
+  }                                       
 
   /**
    * @brief Calculate shape functions values for each support point at a

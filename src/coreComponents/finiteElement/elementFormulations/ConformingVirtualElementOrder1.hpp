@@ -61,6 +61,8 @@ public:
   /// The number of quadrature points per element.
   static constexpr localIndex numQuadraturePoints = 1;
 
+  static constexpr int numSamplingPoints = 1000;  
+
   ConformingVirtualElementOrder1() = default;
 
   virtual ~ConformingVirtualElementOrder1() = default;
@@ -334,6 +336,37 @@ public:
     GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
     return 0;
   }
+
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void getSamplingPointCoordInParentSpace( int const & linearIndex,
+                                                  real64 (&samplingPointCoord)[3] )
+  {
+    GEOSX_UNUSED_VAR(linearIndex, samplingPointCoord);
+    GEOSX_ERROR("Element type not supported.");
+  }               
+
+  /**
+   * @brief Calculate shape functions values for each support point at a
+   *   given point in the parent space.
+   * @param coords coordinates of the given point.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const ( & pointCoord )[3],
+                     real64 ( & N )[maxSupportPoints] )
+  {
+    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    GEOSX_UNUSED_VAR( pointCoord );
+    for( localIndex i = 0; i < maxSupportPoints; ++i )
+    {
+      N[i] = 0.0;
+    }
+  }
+
 
   /**
    * @brief This function returns an error, since to get projection of basis functions with VEM you

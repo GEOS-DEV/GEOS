@@ -81,6 +81,11 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 8;
 
+  ///
+  constexpr static int numSamplingPoints = 1000;  // 10 in each direction.
+
+  constexpr static int numSamplingPointsPerDirection = 10;
+
   /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
   /** @endcond Doxygen_Suppress */
@@ -158,6 +163,23 @@ public:
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
     
+
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void getSamplingPointCoordInParentSpace( int const & linearIndex,
+                                                  real64 (&samplingPointCoord)[3] )
+  {
+    int const i0 = ( linearIndex % numSamplingPointsPerDirection );
+    int const i1 = ( linearIndex / numSamplingPointsPerDirection );
+    int const i2 = ( linearIndex / ( numSamplingPointsPerDirection * numSamplingPointsPerDirection ) );
+
+    real64 const step = 2 / ( numSamplingPointsPerDirection - 1 );
+
+    samplingPointCoord[0] = -1 + i0 * step;
+    samplingPointCoord[1] = -1 + i1 * step;
+    samplingPointCoord[2] = -1 + i2 * step;
+  }                                                
 
    /**
    * @brief Calculate shape functions values for each support point at a
