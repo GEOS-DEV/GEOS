@@ -120,6 +120,9 @@ stringToInputVariable( T & target, string const & value )
 {
   std::istringstream ss( value );
   ss >> target;
+  GEOSX_THROW_IF( ss.fail() | !ss.eof(),
+                  "Error detected while parsing string: \"" << value << "\"",
+                  InputError );
 }
 
 /**
