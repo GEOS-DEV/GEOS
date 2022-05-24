@@ -127,6 +127,12 @@ public:
                                   DiscretizationOps & stiffness ) const final;
 
   GEOSX_HOST_DEVICE
+  virtual real64 getBulkModulus( localIndex const k ) const override final
+  {
+    return -m_refPressure/m_recompressionIndex[k]; // bulk modulus at cell index K
+  }
+
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final

@@ -44,7 +44,7 @@ Specifying a benchmark
 
 A group of benchmarks is specified with a standard GEOSX input XML file with an extra ``Benchmarks`` block added at the top level. This block is ignored by GEOSX itself and only used by the ``runBenchmarks.py`` script.
 
-.. literalinclude:: ../../../../../inputFiles/solidMechanics/benchmarks/SSLE-small.xml
+.. literalinclude:: ../../../../../inputFiles/solidMechanics/benchmarks/SSLE-io.xml
    :language: xml
    :start-after: <Problem>
    :end-before: <Solvers>

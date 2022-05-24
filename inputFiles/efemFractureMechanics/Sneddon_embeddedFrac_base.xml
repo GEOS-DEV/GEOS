@@ -128,7 +128,7 @@
       name="Traction"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="fractureTraction"
+      fieldName="traction"
       component="0"
       scale="-2.0e6"/>      
   </FieldSpecifications>

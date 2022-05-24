@@ -245,6 +245,12 @@ public:
    */
   bool isCrossflowEnabled() const { return m_isCrossflowEnabled; }
 
+  /**
+   * @brief Getter for the initial pressure coefficient
+   * @return the initial pressure coefficient
+   */
+  real64 getInitialPressureCoefficient() const { return m_initialPressureCoefficient; }
+
   ///@}
 
   /**
@@ -285,6 +291,9 @@ public:
     static constexpr char const * targetBHPTableNameString() { return "targetBHPTableName"; }
     /// string key for the crossflow flag
     static constexpr char const * enableCrossflowString() { return "enableCrossflow"; }
+    /// string key for the initial pressure coefficient
+    static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
+
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -292,6 +301,8 @@ public:
 protected:
 
   virtual void postProcessInput() override;
+
+  virtual void initializePreSubGroups() override;
 
 private:
 
@@ -345,6 +356,9 @@ private:
 
   /// Flag to enable crossflow
   integer m_isCrossflowEnabled;
+
+  /// Tuning coefficient for the initial well pressure
+  real64 m_initialPressureCoefficient;
 
   /// Total rate table
   TableFunction * m_targetTotalRateTable;

@@ -17,12 +17,14 @@
  */
 
 #include "NodeManager.hpp"
-#include "FaceManager.hpp"
-#include "EdgeManager.hpp"
-#include "ToElementRelation.hpp"
-#include "BufferOps.hpp"
+
 #include "common/TimingMacros.hpp"
-#include "ElementRegionManager.hpp"
+#include "mesh/BufferOps.hpp"
+#include "mesh/EdgeManager.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "mesh/FaceManager.hpp"
+#include "mesh/ToElementRelation.hpp"
+#include "mesh/utilities/MeshMapUtilities.hpp"
 
 namespace geosx
 {
@@ -47,11 +49,12 @@ NodeManager::NodeManager( string const & name,
   this->registerWrapper( viewKeyStruct::elementSubRegionListString(), &elementSubRegionList() );
   this->registerWrapper( viewKeyStruct::elementListString(), &elementList() );
 
+  excludeWrappersFromPacking( { viewKeyStruct::edgeListString(),
+                                viewKeyStruct::faceListString(),
+                                viewKeyStruct::elementRegionListString(),
+                                viewKeyStruct::elementSubRegionListString(),
+                                viewKeyStruct::elementListString() } );
 }
-
-
-NodeManager::~NodeManager()
-{}
 
 
 void NodeManager::resize( localIndex const newSize )
@@ -71,161 +74,11 @@ void NodeManager::constructGlobalToLocalMap( CellBlockManagerABC const & cellBlo
   ObjectManagerBase::constructGlobalToLocalMap();
 }
 
-/**
- * @brief Populates the node to element region and node to element subregion mappings.
- * @param [in] elementRegionMgr The ElementRegionManager associated with this mesh level. Regions and subregions come from it.
- * @param [in] n2e The node to element maps.
- * @param [in,out] n2er The face to element region map.
- * @param [in,out] n2esr The face to element subregion map.
- *
- * @warning The @p n2e, @p n2er and @p n2esr need to be allocated at the correct dimensions, but need to be empty.
- */
-void populateRegions( ElementRegionManager const & elementRegionMgr,
-                      ArrayOfArraysView< localIndex const > const & n2e,
-                      ArrayOfArraysView< localIndex > const & n2er,
-                      ArrayOfArraysView< localIndex > const & n2esr )
-{
-  GEOSX_ERROR_IF_NE( n2e.size(), n2er.size() );
-  GEOSX_ERROR_IF_NE( n2e.size(), n2esr.size() );
-
-  // There is an implicit convention in the (n2e, n2er, n2esr) triplet.
-  // The node to element mapping (n2e) binds node indices to multiple element indices (like `n -> (e0, e1,...)`).
-  // The node to regions (n2r) and sub-regions (n2sr) respectively bind
-  // node indices to the regions/sub-regions: `n -> (er0, er1)` and `n -> (esr0, esr1)`.
-  //
-  // It is assumed in the code that triplets obtained at indices 0, 1,... of all these relations,
-  // (respectively `(e0, er0, esr0)`, `(e1, er1, esr1)`,...) are consistent:
-  // `e0` should belong to both `er0` and `esr0`.
-  //
-  // But in some configuration (multi-regions, multi-subregions, parallel computing, ghost cells),
-  // it may happen that a same element index appear multiple times in a same entry of the node to elements mapping.
-  // For example `n0 -> (e0, e1, e2, e0)` where `e0` appears twice.
-  // These duplicated elements will in fact belong to multiple regions/sub-regions.
-  // This implies a specific care when filling the nodes to regions and sub-regions mappings.
-  //
-  // Thus, the algorithm is the following.
-  //
-  // For each sub-region of each region, we consider each node of each element.
-  // We list all the elements connected to this node.
-  // Then we take the first element that has not already been inserted in the mappings
-  // (we check if the value is still -1), and we insert it using the `er` and `esr` values,
-  // before moving to another node.
-  //
-  // The same node index with the same elements will eventually come back during the iterative process.
-  // But this time with another region/sub-region combination.
-  //
-  // It must be noted that we can take the duplicated elements in any order,
-  // as long as the insertions are consistent!
-
-  // The algorithm is equivalent to the algorithm described
-  // in the `populateRegions` in the `FaceManager.cpp` file.
-  // Instead of nodes, we'll have faces.
-  //
-  // Since the algorithm is quite short, and because of slight variations
-  // (e.g. the different allocation between faces and nodes implementation),
-  // I considered acceptable to duplicate it a bit.
-  // This is surely disputable.
-
-  // This function `f` will be applied on every sub-region.
-  auto f = [&n2e, &n2er, &n2esr]( localIndex er,
-                                  localIndex esr,
-                                  ElementRegionBase const &,
-                                  CellElementSubRegion const & subRegion ) -> void
-  {
-    for( localIndex iElement = 0; iElement < subRegion.size(); ++iElement )
-    {
-      for( localIndex iNodeLoc = 0; iNodeLoc < subRegion.numNodesPerElement(); ++iNodeLoc )
-      {
-        // iNodeLoc is the node index in the referential of each cell (0 to 7 for a cube, e.g.).
-        // While iNode is the global index of the node.
-        localIndex const & iNode = subRegion.nodeList( iElement, iNodeLoc );
-
-        // A node may be attached to `numElementsLoc` elements.
-        localIndex const numElementsLoc = n2e[iNode].size();
-        for( localIndex iElementLoc = 0; iElementLoc < numElementsLoc; ++iElementLoc )
-        {
-          // We only consider the elements that match the mapping.
-          if( n2e( iNode, iElementLoc ) != iElement )
-          {
-            continue;
-          }
-
-          // This loop is a small hack to back insert/allocate dummy elements
-          // that will eventually be replaced by the correct values.
-          for( localIndex i = n2er[iNode].size(); i < iElementLoc + 1; ++i )
-          {
-            // By construction n2er and n2esr have the same size, so we use the same loop.
-            n2er.emplaceBack( iNode, -1 );
-            n2esr.emplaceBack( iNode, -1 );
-          }
-
-          // Here we fill the mapping iff it has not already been inserted.
-          if( n2er( iNode, iElementLoc ) < 0 or n2esr( iNode, iElementLoc ) < 0 )
-          {
-            n2er( iNode, iElementLoc ) = er;
-            n2esr( iNode, iElementLoc ) = esr;
-
-            // We only want to insert one unique index that has not been inserted,
-            // so we quit the loop on indices here.
-            break;
-          }
-        }
-      }
-    }
-  };
-
-  elementRegionMgr.forElementSubRegionsComplete< CellElementSubRegion >( f );
-}
-
-void NodeManager::buildRegionMaps( ElementRegionManager const & elementRegionManager )
-{
-  GEOSX_MARK_FUNCTION;
-
-  ArrayOfArrays< localIndex > & toElementRegionList = m_toElements.m_toElementRegion;
-  ArrayOfArrays< localIndex > & toElementSubRegionList = m_toElements.m_toElementSubRegion;
-  ArrayOfArraysView< localIndex const > const & toElementList = m_toElements.m_toElementIndex.toViewConst();
-  localIndex const numNodes = size();
-
-  // Resize the node to elem map.
-  toElementRegionList.resize( 0 );
-  toElementSubRegionList.resize( 0 );
-
-  // TODO Since there is a strong requirement that `toElementRegionList` and `toElementSubRegionList`
-  //      share the same capacities as `toElementList`, then it's should be interesting
-  //      to retrieve this information from `toElementList` instead.
-
-  // Reserve space for the number of current faces plus some extra.
-  double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
-  toElementRegionList.reserve( entriesToReserve );
-  toElementSubRegionList.reserve( entriesToReserve );
-
-  // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = numNodes + numNodes * getElemMapOverAllocation() * ( 1 + 2 * overAllocationFactor );
-  toElementRegionList.reserveValues( valuesToReserve );
-  toElementSubRegionList.reserveValues( valuesToReserve );
-
-  // Append an array for each node with capacity to hold the appropriate number of elements plus some wiggle room.
-  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
-  {
-    toElementRegionList.appendArray( 0 );
-    toElementSubRegionList.appendArray( 0 );
-
-    const localIndex numElementsPerNode = toElementList[nodeID].size() + getElemMapOverAllocation();
-    toElementRegionList.setCapacityOfArray( nodeID, numElementsPerNode );
-    toElementSubRegionList.setCapacityOfArray( nodeID, numElementsPerNode );
-  }
-
-  // Delegate the computation to a free function.
-  populateRegions( elementRegionManager,
-                   toElementList,
-                   toElementRegionList.toView(),
-                   toElementSubRegionList.toView() );
-}
-
 void NodeManager::buildSets( CellBlockManagerABC const & cellBlockManager,
                              GeometricObjectManager const & geometries )
 {
+  GEOSX_MARK_FUNCTION;
+
   // Let's first copy the sets from the cell block manager.
   for( const auto & nameArray: cellBlockManager.getNodeSets() )
   {
@@ -237,8 +90,7 @@ void NodeManager::buildSets( CellBlockManagerABC const & cellBlockManager,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = this->referencePosition();
   localIndex const numNodes = this->size();
 
-  geometries.forSubGroups< SimpleGeometricObjectBase >(
-    [&]( SimpleGeometricObjectBase const & object ) -> void
+  geometries.forSubGroups< SimpleGeometricObjectBase >( [&]( SimpleGeometricObjectBase const & object )
   {
     string const & name = object.getName();
     SortedArray< localIndex > & targetSet = m_sets.registerWrapper< SortedArray< localIndex > >( name ).reference();
@@ -255,35 +107,43 @@ void NodeManager::buildSets( CellBlockManagerABC const & cellBlockManager,
 
 void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 {
-  arrayView1d< integer const > const & isFaceOnDomainBoundary = faceManager.getDomainBoundaryIndicator();
-  arrayView1d< integer > const & isNodeOnDomainBoundary = getDomainBoundaryIndicator();
+  arrayView1d< integer const > const isFaceOnDomainBoundary = faceManager.getDomainBoundaryIndicator();
+  arrayView1d< integer > const isNodeOnDomainBoundary = getDomainBoundaryIndicator();
   isNodeOnDomainBoundary.zero();
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
-  forAll< parallelHostPolicy >( faceManager.size(), [&]( localIndex const k )
+  forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const faceIndex )
   {
-    if( isFaceOnDomainBoundary[k] == 1 )
+    if( isFaceOnDomainBoundary[faceIndex] == 1 )
     {
-      localIndex const numNodes = faceToNodes.sizeOfArray( k );
-      for( localIndex a = 0; a < numNodes; ++a )
+      for( localIndex const nodeIndex : faceToNodes[faceIndex] )
       {
-        isNodeOnDomainBoundary[faceToNodes( k, a )] = 1;
+        isNodeOnDomainBoundary[nodeIndex] = 1;
       }
     }
   } );
 }
 
-void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager )
+void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
+                                           ElementRegionManager const & elemRegionManager )
 {
+  GEOSX_MARK_FUNCTION;
+
   resize( cellBlockManager.numNodes() );
 
-  m_referencePosition = cellBlockManager.getNodesPositions();
+  m_referencePosition = cellBlockManager.getNodePositions();
 
-  m_toEdgesRelation.base() = cellBlockManager.getNodeToEdges();
-  m_toFacesRelation.base() = cellBlockManager.getNodeToFaces();
+  m_toEdgesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToEdges(),
+                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+  m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToFaces(),
+                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
 
-  m_toElements.m_toElementIndex = cellBlockManager.getNodeToElements();
+  ToCellRelation< ArrayOfArrays< localIndex > > const toCellBlock = cellBlockManager.getNodeToElements();
+  array2d< localIndex > const blockToSubRegion = elemRegionManager.getCellBlockToSubRegionMap( cellBlockManager );
+  meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
+                                                                         toCellBlock,
+                                                                         m_toElements );
 }
 
 void NodeManager::setupRelatedObjectsInRelations( EdgeManager const & edgeManager,
@@ -307,64 +167,47 @@ void NodeManager::compressRelationMaps()
 }
 
 
-std::set< string > NodeManager::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( { viewKeyStruct::edgeListString(),
-                   viewKeyStruct::faceListString(),
-                   viewKeyStruct::elementRegionListString(),
-                   viewKeyStruct::elementSubRegionListString(),
-                   viewKeyStruct::elementListString() } );
-
-  if( this->hasWrapper( "usedFaces" ) )
-  {
-    result.insert( "usedFaces" );
-  }
-  return result;
-}
-
-
 localIndex NodeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 
 localIndex NodeManager::packUpDownMaps( buffer_unit_type * & buffer,
                                         arrayView1d< localIndex const > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
 
-template< bool DOPACK >
-localIndex NodeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               arrayView1d< localIndex const > const & packList ) const
+template< bool DO_PACKING >
+localIndex NodeManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                            arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toEdgesRelation.toArrayOfArraysView(),
-                                           m_unmappedGlobalIndicesInToEdges,
-                                           packList,
-                                           this->localToGlobalMap(),
-                                           m_toEdgesRelation.relatedObjectLocalToGlobal() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::edgeListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_toEdgesRelation.toArrayOfArraysView(),
+                                               m_unmappedGlobalIndicesInToEdges,
+                                               packList,
+                                               this->localToGlobalMap(),
+                                               m_toEdgesRelation.relatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toFacesRelation.toArrayOfArraysView(),
-                                           m_unmappedGlobalIndicesInToFaces,
-                                           packList,
-                                           this->localToGlobalMap(),
-                                           m_toFacesRelation.relatedObjectLocalToGlobal() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::faceListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_toFacesRelation.toArrayOfArraysView(),
+                                               m_unmappedGlobalIndicesInToFaces,
+                                               packList,
+                                               this->localToGlobalMap(),
+                                               m_toFacesRelation.relatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           this->m_toElements,
-                                           packList,
-                                           m_toElements.getElementRegionManager() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::elementListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               this->m_toElements,
+                                               packList,
+                                               m_toElements.getElementRegionManager() );
   return packedSize;
 }
 

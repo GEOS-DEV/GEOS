@@ -45,7 +45,7 @@ HYPRE_Vector parVectorToVectorAll( HYPRE_ParVector const vec )
   }
 }
 
-HYPRE_Int DummySetup( HYPRE_Solver,
+HYPRE_Int dummySetup( HYPRE_Solver,
                       HYPRE_ParCSRMatrix,
                       HYPRE_ParVector,
                       HYPRE_ParVector )
@@ -88,7 +88,7 @@ struct RelaxationData
   HYPRE_Real * norms{};
 };
 
-HYPRE_Int RelaxationCreate( HYPRE_Solver & solver,
+HYPRE_Int relaxationCreate( HYPRE_Solver & solver,
                             HYPRE_Int const type )
 {
   RelaxationData * const data = new RelaxationData;
@@ -111,7 +111,7 @@ HYPRE_Int getL1NormType( HYPRE_Int const relaxType )
   }
 }
 
-HYPRE_Int RelaxationSetup( HYPRE_Solver solver,
+HYPRE_Int relaxationSetup( HYPRE_Solver solver,
                            HYPRE_ParCSRMatrix A,
                            HYPRE_ParVector b,
                            HYPRE_ParVector x )
@@ -136,7 +136,7 @@ HYPRE_Int RelaxationSetup( HYPRE_Solver solver,
   return 0;
 }
 
-HYPRE_Int RelaxationSolve( HYPRE_Solver solver,
+HYPRE_Int relaxationSolve( HYPRE_Solver solver,
                            HYPRE_ParCSRMatrix A,
                            HYPRE_ParVector b,
                            HYPRE_ParVector x )
@@ -146,7 +146,7 @@ HYPRE_Int RelaxationSolve( HYPRE_Solver solver,
   return hypre_BoomerAMGRelax( A, b, nullptr, data->type, 0, 1.0, 1.0, data->norms, x, data->vtemp.unwrapped(), data->ztemp.unwrapped() );
 }
 
-HYPRE_Int RelaxationDestroy( HYPRE_Solver solver )
+HYPRE_Int relaxationDestroy( HYPRE_Solver solver )
 {
   // Refer to RelaxationData doxygen above for explanation of reinterpret_cast
   RelaxationData * const data = reinterpret_cast< RelaxationData * >( solver );

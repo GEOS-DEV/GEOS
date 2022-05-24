@@ -2,9 +2,7 @@
 #include <Python.h>
 
 // Source includes
-#include "fileIO/timeHistory/TimeHistoryCollection.hpp"
-#include "mainInterface/GeosxState.hpp"
-#include "mainInterface/ProblemManager.hpp"
+#include "fileIO/timeHistory/HistoryCollection.hpp"
 
 #include "PyHistoryCollectionType.hpp"
 #include "dataRepository/python/PyGroupType.hpp"
@@ -19,7 +17,6 @@
 
 namespace geosx
 {
-
 namespace python
 {
 
@@ -29,7 +26,7 @@ struct PyHistoryCollection
   PyObject_HEAD
 
   static constexpr char const * docString =
-    "A Python interface to TimeHistoryCollection.";
+    "A Python interface to HistoryCollection.";
 
   geosx::HistoryCollection * group;
 };
@@ -84,8 +81,7 @@ static PyObject * collect( PyHistoryCollection * self, PyObject * args )
     return nullptr;
   }
 
-  geosx::GeosxState * g_state = &getGlobalState();
-  geosx::DomainPartition & domain = g_state->getProblemManager().getDomainPartition();
+  geosx::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   int cycleNumber = int(time/dt);
   try
@@ -100,7 +96,7 @@ static PyObject * collect( PyHistoryCollection * self, PyObject * args )
 }
 
 static PyMethodDef PyHistoryCollection_methods[] = {
-  { "collect", (PyCFunction) collect, METH_VARARGS, "wrapper to routine TimeHistoryCollection::execute" },
+  { "collect", (PyCFunction) collect, METH_VARARGS, "wrapper to routine HistoryCollection::execute" },
   { nullptr, nullptr, 0, nullptr }      /* Sentinel */
 };
 

@@ -21,6 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/utilities/ComponentMask.hpp"
+#include "mesh/FieldIdentifiers.hpp"
 
 #include <numeric>
 
@@ -73,21 +74,8 @@ public:
   };
 
   /**
-   * @brief Enumeration of geometric objects for support location. Note that this
-   * enum is nearly identical to Connectivity, but we keep both for code readability
-   * in function calls.
-   */
-  enum class Location
-  {
-    Elem, //!< location is element (like pressure in finite volumes)
-    Face, //!< location is face (like flux in mixed finite elements)
-    Edge, //!< location is edge (like flux between fracture elements)
-    Node  //!< location is node (like displacements in finite elements)
-  };
-
-  /**
    * @brief Enumeration of geometric objects for connectivity type. Note that this
-   * enum is nearly identical to Location, but we keep both for code readability
+   * enum is nearly identical to FieldLocation, but we keep both for code readability
    * in function calls.
    */
   enum class Connector
@@ -153,17 +141,17 @@ public:
    * @param [in] regions list of region names the field is defined on (if empty, selects all regions)
    */
   void addField( string const & fieldName,
-                 Location location,
+                 FieldLocation location,
                  integer components,
                  std::vector< Regions > const & regions = {} );
 
   /**
-   * @copydoc addField(string const &, Location, integer, std::vector< Regions > const &)
+   * @copydoc addField(string const &, FieldLocation, integer, std::vector< Regions > const &)
    *
    * Overload for  map< string, array1d< string > > bodyRegions used by physics solvers.
    */
   void addField( string const & fieldName,
-                 Location location,
+                 FieldLocation location,
                  integer components,
                  map< string, array1d< string > > const & regions );
 
@@ -295,7 +283,7 @@ public:
    * @param [in] fieldName name of the field
    * @return support location type
    */
-  Location location( string const & fieldName ) const;
+  FieldLocation location( string const & fieldName ) const;
 
   /**
    * @brief @return global offset of field's block on current processor in the system matrix.
@@ -458,7 +446,7 @@ private:
     string key;                    ///< string key for index array
     string docstring;              ///< documentation string
     std::vector< Regions > support;///< list of mesh body/level/region supports
-    Location location;             ///< support location
+    FieldLocation location;             ///< support location
     integer numComponents = 1;     ///< number of vector components
     localIndex numLocalDof = 0;    ///< number of local rows
     globalIndex numGlobalDof = 0;  ///< number of global rows

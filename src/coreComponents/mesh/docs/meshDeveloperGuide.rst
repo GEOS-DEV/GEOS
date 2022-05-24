@@ -11,18 +11,15 @@ The object instantiation hierarchy differs from a "class hierarchy" in that it s
 how instantiations of each class relate to each other in the data hierarchy rather than how each class
 type relates to each other in an inheritance diagram.
 
-.. _diagFig:
-.. figure:: /coreComponents/mesh/docs/MeshObjectInstantiationHierarchy.png
-    :align: center
-    :figclass: align-center
-    :name: MeshObjectInstantiationHierarchy
+.. _diagMeshDevFig:
+.. mermaid:: /coreComponents/mesh/docs/MeshObjectInstantiationHierarchy.mmd
+   :caption: Object instances describing the mesh domain. Cardinalities and relationships are indicated.
 
-    Object Instantiation Hierarchy for the Mesh Objects.
 
 To illustrate the mesh hierarchy, we propose to present it along with a model with two
-regions (Top and Bottom) (:numref:`modelFig`).
+regions (Top and Bottom) (:numref:`modelMeshDevFig`).
 
-.. _modelFig:
+.. _modelMeshDevFig:
 .. figure:: /coreComponents/mesh/docs/model.png
    :align: center
    :width: 500
@@ -44,9 +41,9 @@ At this time there is a unique ``DomainPartition`` for every MPI rank.
    this may be a future option if its use is properly motivated.
 
 For instance, the model presented as example can be split into two different domains
-(:numref:`domainPartFig`).
+(:numref:`domainPartMeshDevFig`).
 
-.. _domainPartFig:
+.. _domainPartMeshDevFig:
 .. figure:: /coreComponents/mesh/docs/mesh_domain.png
    :align: center
    :width: 500
@@ -126,9 +123,9 @@ Each ``ElementRegion`` holds some number of ``ElementSubRegion``.
 The ``ElementSubRegion`` is meant to hold all the element topologies present in an ``ElementSubRegion``
 in their own groups.
 For instance, for a ``CellElementRegion``, there may be one ``CellElementSubRegion`` for all
-tetrahedra, one for all hexahedra, one for all wedges and one for all the pyramids (:numref:`meshPolyFig`).
+tetrahedra, one for all hexahedra, one for all wedges and one for all the pyramids (:numref:`meshPolyMeshDevFig`).
 
-.. _meshPolyFig:
+.. _meshPolyMeshDevFig:
 .. figure:: /coreComponents/mesh/docs/mesh_multi.png
    :align: center
    :width: 500
@@ -137,4 +134,4 @@ tetrahedra, one for all hexahedra, one for all wedges and one for all the pyrami
    Model meshed with different cell types
 
 Now that all the classes of the mesh hierarchy has been described, we propose to adapt the diagram
-presented in :numref:`diagFig` to match with the example presented in :numref:`modelFig`.
+presented in :numref:`diagMeshDevFig` to match with the example presented in :numref:`modelMeshDevFig`.

@@ -113,10 +113,10 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  solveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
+  solveLinearSystem( DofManager const & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override;
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
@@ -125,17 +125,6 @@ public:
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain ) override;
-
-  void accumulationLaunch( CellElementSubRegion const & subRegion,
-                           DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs );
-
-  void accumulationLaunch( SurfaceElementSubRegion const & subRegion,
-                           DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs );
-
 
   ///@}
 
@@ -296,13 +285,6 @@ public:
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
    */
   void computeHydrostaticEquilibrium();
-
-  /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param mesh the mesh to operate on
-   */
-  void
-  backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const;
 
 protected:
 
