@@ -218,7 +218,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
       using KERNEL_TYPE = decltype( kernel );
 
-      KERNEL_TYPE::template launchCICompuationKernel< parallelDevice< 32 >, KERNEL_TYPE >( kernel );
+      KERNEL_TYPE::template launchCICompuationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
     } );
   } );
 
