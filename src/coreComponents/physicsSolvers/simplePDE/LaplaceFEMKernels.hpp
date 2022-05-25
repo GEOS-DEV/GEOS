@@ -178,6 +178,9 @@ public:
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
     }
+    m_finiteElementSpace.template
+      addGradGradStabilizationMatrix< FE_TYPE, numDofPerTrialSupportPoint >( stack.feStack,
+                                                                             stack.localJacobian );
   }
 
   /**
@@ -199,7 +202,6 @@ public:
         stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJ;
       }
     }
-    m_finiteElementSpace.template addGradGradStabilizationMatrix< FE_TYPE >( stack.feStack, stack.localJacobian );
   }
 
   /**
