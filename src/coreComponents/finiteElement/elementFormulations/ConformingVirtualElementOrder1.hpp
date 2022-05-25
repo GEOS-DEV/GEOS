@@ -243,32 +243,14 @@ public:
    * @brief Adds a grad-grad stabilization evaluated at @p dofs to @p targetVector.
    * @detail This method is intended to be used with @p targetVector being the residual and @p dofs
    * being the degrees of freedom of the previous solution.
-   * @tparam VECTORTYPE The type of @p targetVector.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
    * @param stack Stack variables as filled by @ref setupStack.
    * @param dofs The degrees of freedom of the function where the stabilization operator has to be
    * evaluated.
-   * @param targetVector The vector where values have to be added.
+   * @param targetVector The input vector to which values have to be added, seen in chunks of length
+   * @p NUMDOFSPERTRIALSUPPORTPOINT.
    * @param scaleFactor Scaling of the stabilization matrix.
-   * @param offset Starting position of @p targetVector from which additions have to start.
    */
-  template< typename VECTORTYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void addEvaluatedGradGradStabilization( StackVariables const & stack,
-                                                 real64 const ( &dofs )[maxSupportPoints],
-                                                 VECTORTYPE & targetVector,
-                                                 real64 const scaleFactor,
-                                                 localIndex const offset )
-  {
-    for( localIndex i = 0; i < stack.numSupportPoints; ++i )
-    {
-      for( localIndex j = 0; j < stack.numSupportPoints; ++j )
-      {
-        targetVector[offset + i] += scaleFactor * stack.stabilizationMatrix[i][j] * dofs[j];
-      }
-    }
-  }
-
   template< localIndex NUMDOFSPERTRIALSUPPORTPOINT >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE

@@ -307,31 +307,16 @@ public:
   /**
    * @brief Add a grad-grad stabilization operator evaluated at a provided vector of dofs to input
    * vector.
-   * @detail This method is used to modify a residual when the jacobian includes a stabilization
-   * term.
+   * @detail This method is used to modify a residual consistently when the jacobian includes a
+   * stabilization term.
    * @tparam LEAF Type of the derived finite element implementation.
-   * @tparam VECTORTYPE Type of the vector to be filled.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
    * @param stack Stack variables created by a call to @ref setup.
    * @param dofs The vector of dofs to evaluate the stabilization.
-   * @param targetVector The input vector to which values have to be added.
-   * @param scaleFactor Optional scaling of the stabilization matrix.
-   * @param offset Optional index from which to start adding.
+   * @param targetVector The input vector to which values have to be added, seen in chunks of length
+   * @p NUMDOFSPERTRIALSUPPORTPOINT.
+   * @param scaleFactor Optional scaling of the stabilization matrix. Defaults to 1.0.
    */
-  template< typename LEAF, typename VECTORTYPE >
-  GEOSX_HOST_DEVICE
-  void addEvaluatedGradGradStabilizationVector( typename LEAF::StackVariables const & stack,
-                                                real64 const ( &dofs )[LEAF::maxSupportPoints],
-                                                VECTORTYPE & targetVector,
-                                                real64 const scaleFactor = 1.0,
-                                                localIndex const offset = 0 ) const
-  {
-    LEAF::template addEvaluatedGradGradStabilization< VECTORTYPE >( stack,
-                                                                    dofs,
-                                                                    targetVector,
-                                                                    scaleFactor,
-                                                                    offset );
-  }
-
   template< typename LEAF, localIndex NUMDOFSPERTRIALSUPPORTPOINT >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
