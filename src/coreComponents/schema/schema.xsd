@@ -2095,6 +2095,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="bridgingFactor" type="real64" default="0" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--criticalShieldsNumber => Critical Shields number-->
 		<xsd:attribute name="criticalShieldsNumber" type="real64" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
@@ -2133,6 +2135,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--enableEnergyBalance => Enable energy balance calculation and temperature degree of freedom-->
@@ -2167,6 +2171,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -2187,6 +2193,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -2251,6 +2259,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->

@@ -1023,18 +1023,25 @@ struct StatisticsKernel
   template< typename POLICY >
   static void
   launch( localIndex const size,
+          integer const numComps,
           integer const numPhases,
           arrayView1d< integer const > const & elemGhostRank,
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & refPorosity,
           arrayView2d< real64 const > const & porosity,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDensity,
+          arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFraction,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMobility,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
           real64 & totalUncompactedPoreVol,
-          arraySlice1d< real64 > const & phaseDynamicPoreVol )
+          arraySlice1d< real64 > const & phaseDynamicPoreVol,
+          arraySlice1d< real64 > const & mobilePhaseMass,
+          arraySlice1d< real64 > const & immobilePhaseMass,
+          arraySlice1d< real64 > const & dissolvedComponentMass )
   {
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPresNumerator( 0.0 );
@@ -1042,6 +1049,10 @@ struct StatisticsKernel
 
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalUncompactedPoreVol( 0.0 );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionPhaseDynamicPoreVol[MultiFluidBase::MAX_NUM_PHASES]{};
+
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionMobilePhaseMass[MultiFluidBase::MAX_NUM_PHASES]{};
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionImmobilePhaseMass[MultiFluidBase::MAX_NUM_PHASES]{};
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionDissolvedComponentMass[MultiFluidBase::MAX_NUM_COMPONENTS]{};
 
     forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
@@ -1060,8 +1071,17 @@ struct StatisticsKernel
       subRegionTotalUncompactedPoreVol += uncompactedPoreVol;
       for( integer ip = 0; ip < numPhases; ++ip )
       {
-        subRegionPhaseDynamicPoreVol[ip] += dynamicPoreVol * phaseVolFrac[ei][ip];
+        real64 const phaseVolume = dynamicPoreVol * phaseVolFrac[ei][ip];
+        real64 const phaseMass = phaseDensity[ei][0][ip] * phaseVolume;
+        subRegionPhaseDynamicPoreVol[ip] += phaseVolume;
+        subRegionMobilePhaseMass[ip] += phaseMass * ( phaseMobility[ei][ip] > 1e-6 );
+        subRegionImmobilePhaseMass[ip] += phaseMass * ( phaseMobility[ei][ip] <= 1e-6 );
+        for( integer ic = 0; ic < numComps; ++ic )
+        {
+          subRegionDissolvedComponentMass[ic] += ( ip != ic ) * phaseCompFraction[ei][0][ip][ic] * phaseMass;
+        }
       }
+
     } );
 
     minPres = subRegionMinPres.get();
@@ -1071,6 +1091,12 @@ struct StatisticsKernel
     for( integer ip = 0; ip < numPhases; ++ip )
     {
       phaseDynamicPoreVol[ip] = subRegionPhaseDynamicPoreVol[ip].get();
+      mobilePhaseMass[ip] = subRegionMobilePhaseMass[ip].get();
+      immobilePhaseMass[ip] = subRegionImmobilePhaseMass[ip].get();
+    }
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      dissolvedComponentMass[ic] = subRegionDissolvedComponentMass[ic].get();
     }
   }
 };

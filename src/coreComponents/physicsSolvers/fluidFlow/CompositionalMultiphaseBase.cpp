@@ -272,6 +272,16 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         region.registerWrapper< array1d< real64 > >( viewKeyStruct::phasePoreVolumeString() ).
           setSizedFromParent( 0 ).reference().
           resizeDimension< 0 >( m_numPhases );
+        region.registerWrapper< array1d< real64 > >( viewKeyStruct::mobilePhaseMassString() ).
+          setSizedFromParent( 0 ).reference().
+          resizeDimension< 0 >( m_numPhases );
+        region.registerWrapper< array1d< real64 > >( viewKeyStruct::immobilePhaseMassString() ).
+          setSizedFromParent( 0 ).reference().
+          resizeDimension< 0 >( m_numPhases );
+        region.registerWrapper< array1d< real64 > >( viewKeyStruct::dissolvedComponentMassString() ).
+          setSizedFromParent( 0 ).reference().
+          resizeDimension< 0 >( m_numComponents );
+
       }
     }
   } );
@@ -1101,6 +1111,16 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     arrayView1d< real64 > const & phasePoreVol =
       region.getReference< array1d< real64 > >( viewKeyStruct::phasePoreVolumeString() );
     phasePoreVol.setValues< serialPolicy >( 0.0 );
+
+    arrayView1d< real64 > const & mobilePhaseMass =
+      region.getReference< array1d< real64 > >( viewKeyStruct::mobilePhaseMassString() );
+    mobilePhaseMass.setValues< serialPolicy >( 0.0 );
+    arrayView1d< real64 > const & immobilePhaseMass =
+      region.getReference< array1d< real64 > >( viewKeyStruct::immobilePhaseMassString() );
+    immobilePhaseMass.setValues< serialPolicy >( 0.0 );
+    arrayView1d< real64 > const & dissolvedComponentMass =
+      region.getReference< array1d< real64 > >( viewKeyStruct::dissolvedComponentMassString() );
+    dissolvedComponentMass.setValues< serialPolicy >( 0.0 );
   }
 
   // Step 2: increment the average/min/max quantities for all the subRegions
@@ -1113,33 +1133,50 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
       subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+    arrayView2d< real64 const, compflow::USD_PHASE > const phaseMobility =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >();
 
     string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
     CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
     arrayView1d< real64 const > const refPorosity = solid.getReferencePorosity();
     arrayView2d< real64 const > const porosity = solid.getPorosity();
 
+    string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+    arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDensity = fluid.phaseDensity();
+    arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const phaseCompFraction = fluid.phaseCompFraction();
+
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;
     real64 subRegionMaxPres = 0.0;
     real64 subRegionTotalUncompactedPoreVol = 0.0;
     stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionPhaseDynamicPoreVol( m_numPhases );
+    stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionMobilePhaseMass( m_numPhases );
+    stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionImmobilePhaseMass( m_numPhases );
+    stackArray1d< real64, MultiFluidBase::MAX_NUM_COMPONENTS > subRegionDissolvedComponentMass( m_numComponents );
 
     isothermalCompositionalMultiphaseBaseKernels::
       StatisticsKernel::
       launch< parallelDevicePolicy<> >( subRegion.size(),
+                                        m_numComponents,
                                         m_numPhases,
                                         elemGhostRank,
                                         volume,
                                         pres,
                                         refPorosity,
                                         porosity,
+                                        phaseDensity,
+                                        phaseCompFraction,
                                         phaseVolFrac,
+                                        phaseMobility,
                                         subRegionMinPres,
                                         subRegionAvgPresNumerator,
                                         subRegionMaxPres,
                                         subRegionTotalUncompactedPoreVol,
-                                        subRegionPhaseDynamicPoreVol.toSlice() );
+                                        subRegionPhaseDynamicPoreVol.toSlice(),
+                                        subRegionMobilePhaseMass.toSlice(),
+                                        subRegionImmobilePhaseMass.toSlice(),
+                                        subRegionDissolvedComponentMass.toSlice() );
 
     ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
     real64 & minPres = region.getReference< real64 >( viewKeyStruct::minimumPressureString() );
@@ -1149,6 +1186,12 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     real64 & totalUncompactedPoreVol = region.getReference< real64 >( viewKeyStruct::totalUncompactedPoreVolumeString() );
     arrayView1d< real64 > const & phasePoreVol =
       region.getReference< array1d< real64 > >( viewKeyStruct::phasePoreVolumeString() );
+    arrayView1d< real64 > const & mobilePhaseMass =
+      region.getReference< array1d< real64 > >( viewKeyStruct::mobilePhaseMassString() );
+    arrayView1d< real64 > const & immobilePhaseMass =
+      region.getReference< array1d< real64 > >( viewKeyStruct::immobilePhaseMassString() );
+    arrayView1d< real64 > const & dissolvedComponentMass =
+      region.getReference< array1d< real64 > >( viewKeyStruct::dissolvedComponentMassString() );
 
     avgPres += subRegionAvgPresNumerator;
     if( subRegionMinPres < minPres )
@@ -1164,7 +1207,14 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
       phasePoreVol[ip] += subRegionPhaseDynamicPoreVol[ip];
+      mobilePhaseMass[ip] += subRegionMobilePhaseMass[ip];
+      immobilePhaseMass[ip] += subRegionImmobilePhaseMass[ip];
     }
+    for( integer ic = 0; ic < m_numComponents; ++ic )
+    {
+      dissolvedComponentMass[ic] += subRegionDissolvedComponentMass[ic];
+    }
+
   } );
 
   // Step 3: synchronize the results over the MPI ranks
@@ -1179,6 +1229,12 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     real64 & totalUncompactedPoreVol = region.getReference< real64 >( viewKeyStruct::totalUncompactedPoreVolumeString() );
     arrayView1d< real64 > const & phasePoreVol =
       region.getReference< array1d< real64 > >( viewKeyStruct::phasePoreVolumeString() );
+    arrayView1d< real64 > const & mobilePhaseMass =
+      region.getReference< array1d< real64 > >( viewKeyStruct::mobilePhaseMassString() );
+    arrayView1d< real64 > const & immobilePhaseMass =
+      region.getReference< array1d< real64 > >( viewKeyStruct::immobilePhaseMassString() );
+    arrayView1d< real64 > const & dissolvedComponentMass =
+      region.getReference< array1d< real64 > >( viewKeyStruct::dissolvedComponentMassString() );
 
     minPres = MpiWrapper::min( minPres );
     maxPres = MpiWrapper::max( maxPres );
@@ -1187,10 +1243,24 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
       phasePoreVol[ip] = MpiWrapper::sum( phasePoreVol[ip] );
+      mobilePhaseMass[ip] = MpiWrapper::sum( mobilePhaseMass[ip] );
+      immobilePhaseMass[ip] = MpiWrapper::sum( immobilePhaseMass[ip] );
       totalPoreVol += phasePoreVol[ip];
+    }
+    for( integer ic = 0; ic < m_numComponents; ++ic )
+    {
+      dissolvedComponentMass[ic] = MpiWrapper::sum( dissolvedComponentMass[ic] );
     }
     avgPres = MpiWrapper::sum( avgPres );
     avgPres /= totalUncompactedPoreVol;
+
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i] << ": Pressure (min, average, max): " << minPres << ", " << avgPres << ", " << maxPres << " Pa" );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i] << ": Total dynamic pore volume: " << totalPoreVol << " rm^3" );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i] << ": Phase dynamic pore volumes: " << phasePoreVol << " rm^3" );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i] << ": Mobile phase mass: " << mobilePhaseMass << " kg" );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i] << ": Immobile phase mass: " << immobilePhaseMass << " kg" );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i] << ": Dissolved component mass: " << dissolvedComponentMass << " kg" );
+
   }
 }
 
@@ -1437,85 +1507,129 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-  fsManager.apply( time + dt,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                   "ElementRegions",
-                   FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                   [&]( FieldSpecificationBase const & fs,
-                        string const & setName,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group & subRegion,
-                        string const & )
+  // Step 1: count individual source flux boundary conditions
+
+  std::map< string, localIndex > bcNameToBcId;
+  localIndex bcCounter = 0;
+
+  fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
-    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    // collect all the bc names to idx
+    bcNameToBcId[bc.getName()] = bcCounter;
+    bcCounter++;
+  } );
+
+  if( bcCounter == 0 )
+  {
+    return;
+  }
+
+  // Step 2: count the set size for each source flux (each source flux may have multiple target sets)
+
+  array1d< globalIndex > bcAllSetsSize( bcNameToBcId.size() );
+
+  computeSourceFluxSizeScalingFactor( time,
+                                      dt,
+                                      domain,
+                                      bcNameToBcId,
+                                      bcAllSetsSize.toView() );
+
+  // Step 3: we are ready to impose the boundary condition, normalized by the set size
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel const & mesh,
+                                               arrayView1d< string const > const & )
+  {
+    fsManager.apply( time + dt,
+                     mesh,
+                     "ElementRegions",
+                     FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
+                     [&]( FieldSpecificationBase const & fs,
+                          string const & setName,
+                          SortedArrayView< localIndex const > const & targetSet,
+                          Group & subRegion,
+                          string const & )
     {
-      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
-                                   getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
-                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
-    }
+      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+                                     getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
+                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+      }
 
-    arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< integer const > const ghostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-
-    // Step 1: get the values of the source boundary condition that need to be added to the rhs
-    // We don't use FieldSpecificationBase::applyConditionToSystem here because we want to account for the row permutation used in the
-    // compositional solvers
-
-    array1d< globalIndex > dofArray( targetSet.size() );
-    array1d< real64 > rhsContributionArray( targetSet.size() );
-    arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
-    localIndex const rankOffset = dofManager.rankOffset();
-
-    // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-    fs.computeRhsContribution< FieldSpecificationAdd,
-                               parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                         time + dt,
-                                                         dt,
-                                                         subRegion,
-                                                         dofNumber,
-                                                         rankOffset,
-                                                         localMatrix,
-                                                         dofArray.toView(),
-                                                         rhsContributionArrayView,
-                                                         [] GEOSX_HOST_DEVICE ( localIndex const )
-    {
-      return 0.0;
-    } );
-
-    // Step 2: we are ready to add the right-hand side contributions, taking into account our equation layout
-
-    integer const fluidComponentId = fs.getComponent();
-    integer const numFluidComponents = m_numComponents;
-    forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
-                                                         rankOffset,
-                                                         ghostRank,
-                                                         fluidComponentId,
-                                                         numFluidComponents,
-                                                         dofNumber,
-                                                         rhsContributionArrayView,
-                                                         localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
-    {
-      // we need to filter out ghosts here, because targetSet may contain them
-      localIndex const ei = targetSet[a];
-      if( ghostRank[ei] >= 0 )
+      if( targetSet.size() == 0 )
       {
         return;
       }
 
-      // for all "fluid components", we add the value to the total mass balance equation
-      globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
-      localRhs[totalMassBalanceRow] += rhsContributionArrayView[a];
+      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const ghostRank =
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-      // for all "fluid components" except the last one, we add the value to the component mass balance equation (shifted appropriately)
-      if( fluidComponentId < numFluidComponents - 1 )
+      // Step 3.1: get the values of the source boundary condition that need to be added to the rhs
+      // We don't use FieldSpecificationBase::applyConditionToSystem here because we want to account for the row permutation used in the
+      // compositional solvers
+
+      array1d< globalIndex > dofArray( targetSet.size() );
+      array1d< real64 > rhsContributionArray( targetSet.size() );
+      arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
+      localIndex const rankOffset = dofManager.rankOffset();
+
+      // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
+      fs.computeRhsContribution< FieldSpecificationAdd,
+                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
+                                                           time + dt,
+                                                           dt,
+                                                           subRegion,
+                                                           dofNumber,
+                                                           rankOffset,
+                                                           localMatrix,
+                                                           dofArray.toView(),
+                                                           rhsContributionArrayView,
+                                                           [] GEOSX_HOST_DEVICE ( localIndex const )
       {
-        globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
-        localRhs[compMassBalanceRow] += rhsContributionArrayView[a];
-      }
-    } );
+        return 0.0;
+      } );
 
+      // Step 3.2: we are ready to add the right-hand side contributions, taking into account our equation layout
+
+      // get the normalizer
+      real64 const sizeScalingFactor = bcAllSetsSize[bcNameToBcId[fs.getName()]];
+
+      integer const fluidComponentId = fs.getComponent();
+      integer const numFluidComponents = m_numComponents;
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
+                                                           targetSet,
+                                                           rankOffset,
+                                                           ghostRank,
+                                                           fluidComponentId,
+                                                           numFluidComponents,
+                                                           dofNumber,
+                                                           rhsContributionArrayView,
+                                                           localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
+      {
+        // we need to filter out ghosts here, because targetSet may contain them
+        localIndex const ei = targetSet[a];
+        if( ghostRank[ei] >= 0 )
+        {
+          return;
+        }
+
+        // for all "fluid components", we add the value to the total mass balance equation
+        globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
+        localRhs[totalMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor
+                                                                                          // here!!!
+
+        // for all "fluid components" except the last one, we add the value to the component mass balance equation (shifted appropriately)
+        if( fluidComponentId < numFluidComponents - 1 )
+        {
+          globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
+          localRhs[compMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
+                                                                                           // sizeScalingFactor here!!!
+        }
+      } );
+    } );
   } );
 }
 

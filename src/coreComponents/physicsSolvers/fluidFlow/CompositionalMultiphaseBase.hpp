@@ -234,6 +234,9 @@ public:
     // reservoir region statistics
 
     static constexpr char const * phasePoreVolumeString() { return "phasePoreVolume"; }
+    static constexpr char const * mobilePhaseMassString() { return "mobilePhaseMass"; }
+    static constexpr char const * immobilePhaseMassString() { return "immobilePhaseMass"; }
+    static constexpr char const * dissolvedComponentMassString() { return "dissolvedComponentMass"; }
 
   };
 
@@ -314,25 +317,6 @@ public:
   void chopNegativeDensities( DomainPartition & domain );
 
   /**
-   * @brief Utility function to freeze the flow variables during a time step
-   * @param[in] freezeFlowVariablesDuringStep flag to tell the solver to freeze its primary variables during a time step
-   * @detail This function is meant to be called by a specific task before/after the initialization step
-   */
-  void freezeFlowVariablesDuringStep( bool freezeFlowVariablesDuringStep )
-  { m_freezeFlowVariablesDuringStep = freezeFlowVariablesDuringStep; }
-
-  virtual void initializePostInitialConditionsPreSubGroups() override;
-
-protected:
-
-  virtual void postProcessInput() override;
-
-  virtual void initializePreSubGroups() override;
-
-  virtual void computeRegionStatistics( MeshLevel & mesh,
-                                        arrayView1d< string const > const & regionNames ) const override;
-
-  /**
    * @brief Function to fix the initial state during the initialization step in coupled problems
    * @param time current time
    * @param dt time step
@@ -350,6 +334,25 @@ protected:
                                       DomainPartition & domain,
                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) const;
+
+  /**
+   * @brief Utility function to freeze the flow variables during a time step
+   * @param[in] freezeFlowVariablesDuringStep flag to tell the solver to freeze its primary variables during a time step
+   * @detail This function is meant to be called by a specific task before/after the initialization step
+   */
+  void freezeFlowVariablesDuringStep( bool freezeFlowVariablesDuringStep )
+  { m_freezeFlowVariablesDuringStep = freezeFlowVariablesDuringStep; }
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
+protected:
+
+  virtual void postProcessInput() override;
+
+  virtual void initializePreSubGroups() override;
+
+  virtual void computeRegionStatistics( MeshLevel & mesh,
+                                        arrayView1d< string const > const & regionNames ) const override;
 
   /**
    * @brief Utility function that checks the consistency of the constitutive models
