@@ -1,8 +1,8 @@
 
 
-============================================= ==== ================================================================ 
+============================================= ==== ================================================================== 
 Name                                          Type Description                                                      
-============================================= ==== ================================================================ 
+============================================= ==== ================================================================== 
 BiotPorosity                                  node :ref:`DATASTRUCTURE_BiotPorosity`                                
 BlackOilFluid                                 node :ref:`DATASTRUCTURE_BlackOilFluid`                               
 BrooksCoreyBakerRelativePermeability          node :ref:`DATASTRUCTURE_BrooksCoreyBakerRelativePermeability`        
@@ -17,7 +17,7 @@ CompositionalMultiphaseFluid                  node :ref:`DATASTRUCTURE_Compositi
 CompressibleSinglePhaseFluid                  node :ref:`DATASTRUCTURE_CompressibleSinglePhaseFluid`                
 CompressibleSolidCarmanKozenyPermeability     node :ref:`DATASTRUCTURE_CompressibleSolidCarmanKozenyPermeability`   
 CompressibleSolidConstantPermeability         node :ref:`DATASTRUCTURE_CompressibleSolidConstantPermeability`
-CompressibleSolidExponentialDecayPermeability node :ref:`DATASTRUCTURE_CompressibleSolidExponentialDecayPermeability`
+CompressibleSolidExponentialDecayPermeability node :ref:`DATASTRUCTURE_CompressibleSolidExponentialDecayPermeability`       
 CompressibleSolidParallelPlatesPermeability   node :ref:`DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability` 
 CompressibleSolidSlipDependentPermeability    node :ref:`DATASTRUCTURE_CompressibleSolidSlipDependentPermeability`  
 ConstantPermeability                          node :ref:`DATASTRUCTURE_ConstantPermeability`                        
@@ -32,8 +32,8 @@ DruckerPrager                                 node :ref:`DATASTRUCTURE_DruckerPr
 ElasticIsotropic                              node :ref:`DATASTRUCTURE_ElasticIsotropic`                            
 ElasticIsotropicPressureDependent             node :ref:`DATASTRUCTURE_ElasticIsotropicPressureDependent`           
 ElasticOrthotropic                            node :ref:`DATASTRUCTURE_ElasticOrthotropic`                          
-ElasticTransverseIsotropic                    node :ref:`DATASTRUCTURE_ElasticTransverseIsotropic` 
-ExponentialDecayPermeability                  node :ref:`DATASTRUCTURE_ExponentialDecayPermeability`                  
+ElasticTransverseIsotropic                    node :ref:`DATASTRUCTURE_ElasticTransverseIsotropic`
+ExponentialDecayPermeability                  node :ref:`DATASTRUCTURE_ExponentialDecayPermeability`                   
 ExtendedDruckerPrager                         node :ref:`DATASTRUCTURE_ExtendedDruckerPrager`                       
 FrictionlessContact                           node :ref:`DATASTRUCTURE_FrictionlessContact`                         
 JFunctionCapillaryPressure                    node :ref:`DATASTRUCTURE_JFunctionCapillaryPressure`                  
@@ -42,23 +42,27 @@ NullModel                                     node :ref:`DATASTRUCTURE_NullModel
 ParallelPlatesPermeability                    node :ref:`DATASTRUCTURE_ParallelPlatesPermeability`                  
 ParticleFluid                                 node :ref:`DATASTRUCTURE_ParticleFluid`                               
 PermeabilityBase                              node :ref:`DATASTRUCTURE_PermeabilityBase`                            
+PorousDelftEgg                                node :ref:`DATASTRUCTURE_PorousDelftEgg`                              
 PorousDruckerPrager                           node :ref:`DATASTRUCTURE_PorousDruckerPrager`                         
 PorousElasticIsotropic                        node :ref:`DATASTRUCTURE_PorousElasticIsotropic`                      
 PorousElasticOrthotropic                      node :ref:`DATASTRUCTURE_PorousElasticOrthotropic`                    
 PorousElasticTransverseIsotropic              node :ref:`DATASTRUCTURE_PorousElasticTransverseIsotropic`            
 PorousExtendedDruckerPrager                   node :ref:`DATASTRUCTURE_PorousExtendedDruckerPrager`                 
+PorousModifiedCamClay                         node :ref:`DATASTRUCTURE_PorousModifiedCamClay`                       
 PressurePorosity                              node :ref:`DATASTRUCTURE_PressurePorosity`                            
 ProppantPermeability                          node :ref:`DATASTRUCTURE_ProppantPermeability`                        
 ProppantPorosity                              node :ref:`DATASTRUCTURE_ProppantPorosity`                            
 ProppantSlurryFluid                           node :ref:`DATASTRUCTURE_ProppantSlurryFluid`                         
 ProppantSolidProppantPermeability             node :ref:`DATASTRUCTURE_ProppantSolidProppantPermeability`           
 SlipDependentPermeability                     node :ref:`DATASTRUCTURE_SlipDependentPermeability`                   
+SolidInternalEnergy                           node :ref:`DATASTRUCTURE_SolidInternalEnergy`                         
 TableCapillaryPressure                        node :ref:`DATASTRUCTURE_TableCapillaryPressure`                      
 TableRelativePermeability                     node :ref:`DATASTRUCTURE_TableRelativePermeability`                   
 TableRelativePermeabilityHysteresis           node :ref:`DATASTRUCTURE_TableRelativePermeabilityHysteresis`         
 VanGenuchtenBakerRelativePermeability         node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability`       
 VanGenuchtenCapillaryPressure                 node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure`               
 VolumeWeightedThermalConductivity             node :ref:`DATASTRUCTURE_VolumeWeightedThermalConductivity`           
-============================================= ==== ================================================================ 
+============================================= ==== ================================================================== 
+
 
 

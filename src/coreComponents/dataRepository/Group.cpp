@@ -147,6 +147,7 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
   }
 
   // Loop over the child nodes of the targetNode
+  array1d< string > childNames;
   for( xmlWrapper::xmlNode childNode : targetNode.children() )
   {
     // Get the child tag and name
@@ -154,6 +155,14 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     if( childName.empty() )
     {
       childName = childNode.name();
+    }
+    else
+    {
+      // Make sure child names are not duplicated
+      GEOSX_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
+                      GEOSX_FMT( "Error: An XML block cannot contain children with duplicated names ({}/{}). ",
+                                 getPath(), childName ) );
+      childNames.emplace_back( childName );
     }
 
     // Create children
@@ -330,16 +339,10 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
 
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( "Wrappers" ) );
 
-  // If `wrapperNames` is empty, then one takes all the available wrappers of this Group instance.
-  // Here `tmp` is a convenience conversion from `array1d< string >` to `std::vector< string >`
-  // for I need the same type everywhere.
-  std::vector< string > const tmp( wrapperNames.begin(), wrapperNames.end() );
-  std::vector< string > const rawWrapperNames = wrapperNames.empty() ? mapKeys( m_wrappers ) : tmp;
-
   // `wrappers` are considered for packing if they match the size of this Group instance.
   // A way to check this is to check the sufficient (but not necessary...) condition `wrapper.sizedFromParent()`.
   std::vector< WrapperBase const * > wrappers;
-  for( string const & wrapperName: rawWrapperNames )
+  for( string const & wrapperName: wrapperNames )
   {
     if( hasWrapper( wrapperName ) )
     {
@@ -396,6 +399,18 @@ localIndex Group::packSize( array1d< string > const & wrapperNames,
 }
 
 
+localIndex Group::packSize( arrayView1d< localIndex const > const & packList,
+                            integer const recursive,
+                            bool onDevice,
+                            parallelDeviceEvents & events ) const
+{
+  std::vector< string > const tmp = mapKeys( m_wrappers );
+  array1d< string > wrapperNames;
+  wrapperNames.insert( 0, tmp.begin(), tmp.end() );
+  return this->packSize( wrapperNames, packList, recursive, onDevice, events );
+}
+
+
 localIndex Group::packSize( array1d< string > const & wrapperNames,
                             integer const recursive,
                             bool onDevice,
@@ -415,6 +430,20 @@ localIndex Group::pack( buffer_unit_type * & buffer,
 {
   return this->packImpl< true >( buffer, wrapperNames, packList, recursive, onDevice, events );
 }
+
+
+localIndex Group::pack( buffer_unit_type * & buffer,
+                        arrayView1d< localIndex const > const & packList,
+                        integer const recursive,
+                        bool onDevice,
+                        parallelDeviceEvents & events ) const
+{
+  std::vector< string > const tmp = mapKeys( m_wrappers );
+  array1d< string > wrapperNames;
+  wrapperNames.insert( 0, tmp.begin(), tmp.end() );
+  return this->pack( buffer, wrapperNames, packList, recursive, onDevice, events );
+}
+
 
 localIndex Group::pack( buffer_unit_type * & buffer,
                         array1d< string > const & wrapperNames,
@@ -521,7 +550,7 @@ void Group::loadFromConduit()
     return;
   }
 
-  m_size = m_conduitNode.fetch_child( "__size__" ).value();
+  m_size = m_conduitNode.child( "__size__" ).value();
   localIndex const groupSize = m_size;
 
   forWrappers( [&]( WrapperBase & wrapper )

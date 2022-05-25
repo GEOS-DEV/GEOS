@@ -376,15 +376,4 @@ localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * 
   return unPackedSize;
 }
 
-std::set< string > EmbeddedSurfaceSubRegion::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( { viewKeyStruct::nodeListString(),
-                   viewKeyStruct::edgeListString(),
-                   viewKeyStruct::surfaceElementsToCellRegionsString(),
-                   viewKeyStruct::surfaceElementsToCellSubRegionsString(),
-                   viewKeyStruct::surfaceElementsToCellIndexString() } );
-  return result;
-}
-
 } /* namespace geosx */

@@ -31,9 +31,6 @@ namespace constitutive
 ContactBase::ContactBase( string const & name,
                           Group * const parent ):
   ConstitutiveBase( name, parent ),
-  m_penaltyStiffness( 0.0 ),
-  m_shearStiffness( 0.0 ),
-  m_apertureTolerance( 1.0e-99 ),
   m_apertureTable( nullptr )
 {
   registerWrapper( viewKeyStruct::penaltyStiffnessString(), &m_penaltyStiffness ).
@@ -53,6 +50,12 @@ ContactBase::ContactBase( string const & name,
                     "Note that this value may have some physical significance in its usage, as it may be used "
                     "to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the "
                     "1/0 error." );
+
+  registerWrapper( viewKeyStruct::displacementJumpThresholdString(), &m_displacementJumpThreshold ).
+    setApplyDefaultValue( std::numeric_limits< real64 >::epsilon() ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "A threshold valued to determine whether a fracture is open or not." );
+
 
   registerWrapper( viewKeyStruct::apertureTableNameString(), &m_apertureTableName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -141,6 +144,7 @@ ContactBaseUpdates ContactBase::createKernelWrapper() const
 {
   return ContactBaseUpdates( m_penaltyStiffness,
                              m_shearStiffness,
+                             m_displacementJumpThreshold,
                              *m_apertureTable );
 }
 

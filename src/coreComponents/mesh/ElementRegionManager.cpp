@@ -59,11 +59,7 @@ void ElementRegionManager::setMaxGlobalIndex()
     m_localMaxGlobalIndex = std::max( m_localMaxGlobalIndex, subRegion.maxGlobalIndex() );
   } );
 
-  MpiWrapper::allReduce( &m_localMaxGlobalIndex,
-                         &m_maxGlobalIndex,
-                         1,
-                         MPI_MAX,
-                         MPI_COMM_GEOSX );
+  m_maxGlobalIndex = MpiWrapper::max( m_localMaxGlobalIndex, MPI_COMM_GEOSX );
 }
 
 
@@ -238,23 +234,20 @@ void ElementRegionManager::buildSets( NodeManager const & nodeManager )
   } );
 }
 
-int ElementRegionManager::packSize( string_array const & wrapperNames,
-                                    ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+int ElementRegionManager::packSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packImpl< false >( junk, wrapperNames, packList );
+  return packImpl< false >( junk, packList );
 }
 
 int ElementRegionManager::pack( buffer_unit_type * & buffer,
-                                string_array const & wrapperNames,
                                 ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
-  return packImpl< true >( buffer, wrapperNames, packList );
+  return packImpl< true >( buffer, packList );
 }
 
 template< bool DO_PACKING >
 int ElementRegionManager::packImpl( buffer_unit_type * & buffer,
-                                    string_array const & wrapperNames,
                                     ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   int packedSize = 0;
@@ -280,11 +273,11 @@ int ElementRegionManager::packImpl( buffer_unit_type * & buffer,
       arrayView1d< localIndex const > const elemList = packList[kReg][esr];
       if( DO_PACKING )
       {
-        packedSize += subRegion.pack( buffer, wrapperNames, elemList, 0, false, events );
+        packedSize += subRegion.pack( buffer, elemList, 0, false, events );
       }
       else
       {
-        packedSize += subRegion.packSize( wrapperNames, elemList, 0, false, events );
+        packedSize += subRegion.packSize( elemList, 0, false, events );
       }
     } );
   }
@@ -628,6 +621,33 @@ ElementRegionManager::unpackFracturedElements( buffer_unit_type const * & buffer
   }
 
   return unpackedSize;
+}
+
+array2d< localIndex >
+ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & cellBlockManager ) const
+{
+  array2d< localIndex > blockMap( cellBlockManager.getCellBlocks().numSubGroups(), 2 );
+  blockMap.setValues< serialPolicy >( -1 );
+
+  Group::subGroupMap const & cellBlocks = cellBlockManager.getCellBlocks().getSubGroups();
+
+  forElementSubRegionsComplete< CellElementSubRegion >( [blockMap = blockMap.toView(),
+                                                         &cellBlocks]( localIndex const er,
+                                                                       localIndex const esr,
+                                                                       ElementRegionBase const & region,
+                                                                       CellElementSubRegion const & subRegion )
+  {
+    localIndex const blockIndex = cellBlocks.getIndex( subRegion.getName() );
+    GEOSX_ERROR_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,
+                    GEOSX_FMT( "Cell block not found for subregion {}/{}", region.getName(), subRegion.getName() ) );
+    GEOSX_ERROR_IF( blockMap( blockIndex, 1 ) != -1,
+                    GEOSX_FMT( "Cell block {} mapped to more than one subregion", subRegion.getName() ) );
+
+    blockMap( blockIndex, 0 ) = er;
+    blockMap( blockIndex, 1 ) = esr;
+  } );
+
+  return blockMap;
 }
 
 

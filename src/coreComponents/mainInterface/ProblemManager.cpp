@@ -199,7 +199,11 @@ void ProblemManager::parseCommandLineInput()
     Path::pathPrefix() = splitPath( inputFileName ).first;
   }
 
-  if( opts.suppressMoveLogging )
+  if( opts.traceDataMigration )
+  {
+    chai::ArrayManager::getInstance()->enableCallbacks();
+  }
+  else
   {
     chai::ArrayManager::getInstance()->disableCallbacks();
   }
@@ -576,9 +580,9 @@ void ProblemManager::generateMesh()
 
       elemManager.generateMesh( cellBlockManager );
 
-      nodeManager.setGeometricalRelations( cellBlockManager );
+      nodeManager.setGeometricalRelations( cellBlockManager, elemManager );
       edgeManager.setGeometricalRelations( cellBlockManager );
-      faceManager.setGeometricalRelations( cellBlockManager, nodeManager );
+      faceManager.setGeometricalRelations( cellBlockManager, elemManager, nodeManager );
 
       nodeManager.constructGlobalToLocalMap( cellBlockManager );
 
@@ -594,9 +598,6 @@ void ProblemManager::generateMesh()
       nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
       edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
       faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
-
-      nodeManager.buildRegionMaps( elemManager );
-      faceManager.buildRegionMaps( elemManager );
 
       // Node and edge managers rely on the boundary information provided by the face manager.
       // This is why `faceManager.setDomainBoundaryObjects` is called first.
@@ -715,6 +716,7 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
                 finiteElement::FiniteElementBase &
                 fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
                        setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).reference();
+                subRegion.excludeWrappersFromPacking( { discretizationName } );
 
                 finiteElement::dispatch3D( fe,
                                            [&] ( auto & finiteElement )
@@ -819,7 +821,13 @@ DomainPartition const & ProblemManager::getDomainPartition() const
 
 void ProblemManager::applyInitialConditions()
 {
-  m_fieldSpecificationManager->applyInitialConditions( getDomainPartition() );
+  getDomainPartition().forMeshBodies( [&] ( MeshBody & meshBody )
+  {
+    meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
+    {
+      m_fieldSpecificationManager->applyInitialConditions( meshLevel );
+    } );
+  } );
   initializePostInitialConditions();
 }
 
