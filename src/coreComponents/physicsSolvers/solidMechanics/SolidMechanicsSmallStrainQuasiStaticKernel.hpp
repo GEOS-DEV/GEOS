@@ -197,10 +197,11 @@ public:
     }
     // Add stabilization to block diagonal parts of the local jacobian
     // (this is a no-operation with FEM classes)
+    real64 const stabilizationPhysicalWeight = m_constitutiveUpdate.getStiffnessParameter( k );
     m_finiteElementSpace.template addGradGradStabilizationMatrix
     < FE_TYPE, numDofPerTrialSupportPoint, true >( stack.feStack,
                                                    stack.localJacobian,
-                                                   -stabilizationPhysicalWeight( k ) );
+                                                   -stabilizationPhysicalWeight );
   }
 
 
@@ -284,12 +285,13 @@ public:
                                      N,
                                      gravityForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+    real64 const stabilizationPhysicalWeight = m_constitutiveUpdate.getStiffnessParameter( k );
     m_finiteElementSpace.template
     addEvaluatedGradGradStabilizationVector< FE_TYPE,
                                              numDofPerTrialSupportPoint >( stack.feStack,
                                                                            stack.uhat_local,
                                                                            reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
-                                                                           -stabilizationPhysicalWeight( k ) );
+                                                                           -stabilizationPhysicalWeight );
     stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
   }
 
@@ -346,17 +348,6 @@ protected:
 
   /// The rank global density
   arrayView2d< real64 const > const m_density;
-
-  /**
-   * @brief Get the physical scaling of the stabilization matrix.
-   * @param k The index of the cell.
-   * @return The scaling.
-   */
-  GEOSX_HOST_DEVICE
-  real64 stabilizationPhysicalWeight( localIndex const k ) const
-  {
-    return 2.0 * m_constitutiveUpdate.getShearModulus( k );
-  }
 };
 
 /// The factory used to construct a QuasiStatic kernel.
