@@ -199,23 +199,12 @@ public:
   /**
    * @brief Empty method, here for compatibility with methods that require a stabilization of the
    * grad-grad bilinear form.
-   * @tparam MATRIXTYPE The type of @p matrix.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
    * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables as filled by @ref setupStack.
    * @param matrix The matrix that needs to be stabilized.
    * @param scaleFactor Optional scaling of the stabilization matrix.
-   * @param rowOffset Optional row index from which to start adding.
-   * @param colOffset Optional column index from which to start addin.g
    */
-  template< typename MATRIXTYPE, bool UPPER >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void addGradGradStabilization( StackVariables const & stack,
-                                        MATRIXTYPE & matrix,
-                                        real64 const scaleFactor,
-                                        localIndex const rowOffset,
-                                        localIndex const colOffset );
-
   template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -309,23 +298,6 @@ void H1_Tetrahedron_Lagrange1_Gauss1::
               MeshData< SUBREGION_TYPE > const & GEOSX_UNUSED_PARAM( meshData ),
               StackVariables & GEOSX_UNUSED_PARAM( stack ) )
 {}
-
-template< typename MATRIXTYPE, bool UPPER >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void H1_Tetrahedron_Lagrange1_Gauss1::
-  addGradGradStabilization( StackVariables const & stack,
-                            MATRIXTYPE & matrix,
-                            real64 const scaleFactor,
-                            localIndex const rowOffset,
-                            localIndex const colOffset )
-{
-  GEOSX_UNUSED_VAR( stack );
-  GEOSX_UNUSED_VAR( matrix );
-  GEOSX_UNUSED_VAR( scaleFactor );
-  GEOSX_UNUSED_VAR( rowOffset );
-  GEOSX_UNUSED_VAR( colOffset );
-}
 
 template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
 GEOSX_HOST_DEVICE

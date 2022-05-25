@@ -210,33 +210,12 @@ public:
 
   /**
    * @brief Adds a grad-grad stabilization to @p matrix.
-   * @tparam MATRIXTYPE The type of @p matrix.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
    * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables as filled by @ref setupStack.
    * @param matrix The matrix that needs to be stabilized.
-   * @param scaleFactor Scaling of the stabilization matrix.
-   * @param rowOffset Row index from which to start adding.
-   * @param colOffset Column index from which to start adding.
+   * @param scaleFactor Optional scaling of the stabilization matrix.
    */
-  template< typename MATRIXTYPE, bool UPPER >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void addGradGradStabilization( StackVariables const & stack,
-                                        MATRIXTYPE & matrix,
-                                        real64 const scaleFactor,
-                                        localIndex const rowOffset,
-                                        localIndex const colOffset )
-  {
-    for( localIndex i = 0; i < stack.numSupportPoints; ++i )
-    {
-      localIndex startCol = (UPPER) ? i : 0;
-      for( localIndex j = startCol; j < stack.numSupportPoints; ++j )
-      {
-        matrix[rowOffset + i][colOffset + j] += scaleFactor * stack.stabilizationMatrix[i][j];
-      }
-    }
-  }
-
   template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
