@@ -1,10 +1,8 @@
-#include "TimeHistHDF.hpp"
+#include "HDFHistoryIO.hpp"
 
-#include "fileIO/Outputs/TimeHistoryOutput.hpp"
+#include "HDFFile.hpp"
 
 #include "common/MpiWrapper.hpp"
-
-#include <hdf5.h>
 
 namespace geosx
 {
@@ -83,74 +81,18 @@ inline hid_t GetHDFArrayDataType( std::type_index const & type, hsize_t const ra
   return H5Tarray_create( GetHDFDataType( type ), rank, dims );
 }
 
-HDFFile::HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, MPI_Comm comm ):
-  m_filename( ),
-  m_fileId( 0 ),
-  m_faplId( 0 ),
-  m_mpioFapl( parallelAccess ),
-  m_comm( comm )
-{
-  int rnk = MpiWrapper::commRank( comm );
-#ifdef GEOSX_USE_MPI
-  if( m_mpioFapl )
-  {
-    m_faplId = H5Pcreate( H5P_FILE_ACCESS );
-    H5Pset_fapl_mpio( m_faplId, m_comm, MPI_INFO_NULL );
-    m_filename = fnm + ".hdf5";
-  }
-  else
-  {
-    m_faplId = H5P_DEFAULT;
-    m_filename = fnm + "." + std::to_string( rnk ) + ".hdf5";
-  }
-#else
-  m_faplId = H5P_DEFAULT;
-  m_filename = fnm + ".hdf5";
-#endif
-  // check if file already exists
-  htri_t exists = 0;
-  H5E_BEGIN_TRY {
-    exists = H5Fis_hdf5( m_filename.c_str() );
-  } H5E_END_TRY
-  // if there is an non-hdf file with the same name,
-  // and we're either not using parallel access or we're rank 0
-  if( exists == 0 && ( !m_mpioFapl || rnk == 0 ) )
-  {
-    remove( m_filename.c_str() );
-  }
-  if( exists > 0 && !deleteExisting )
-  {
-    m_fileId = H5Fopen( m_filename.c_str(), H5F_ACC_RDWR, m_faplId );
-  }
-  else if( exists >= 0 && deleteExisting )
-  {
-    m_fileId = H5Fcreate( m_filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, m_faplId );
-  }
-  else if( exists < 0 )
-  {
-    m_fileId = H5Fcreate( m_filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, m_faplId );
-  }
-}
-
-HDFFile::~HDFFile()
-{
-  if( m_mpioFapl )
-  {
-    H5Pclose( m_faplId );
-  }
-  H5Fclose( m_fileId );
-}
-
-HDFHistIO::HDFHistIO( string const & filename,
-                      localIndex rank,
-                      std::vector< localIndex > const & dims,
-                      string const & name,
-                      std::type_index typeId,
-                      localIndex writeHead,
-                      localIndex initAlloc,
-                      localIndex overallocMultiple,
-                      MPI_Comm comm ):
-  BufferedHistoryIO(),
+HDFHistoryIO::HDFHistoryIO( string const & filename,
+                            localIndex rank,
+                            std::vector< localIndex > const & dims,
+                            string const & name,
+                            std::type_index typeId,
+                            localIndex writeHead,
+                            localIndex initAlloc,
+                            localIndex overallocMultiple,
+                            MPI_Comm comm ):
+  m_bufferedCount( 0 ),
+  m_bufferHead( nullptr ),
+  m_dataBuffer( 0 ),
   m_filename( filename ),
   m_overallocMultiple( overallocMultiple ),
   m_globalIdxOffset( 0 ),
@@ -179,7 +121,7 @@ HDFHistIO::HDFHistIO( string const & filename,
   m_bufferHead = &m_dataBuffer[0];
 }
 
-void HDFHistIO::setupPartition( globalIndex localIdxCount )
+void HDFHistoryIO::setupPartition( globalIndex localIdxCount )
 {
   int size = MpiWrapper::commSize( m_comm );
   int rank = MpiWrapper::commRank( m_comm );
@@ -234,7 +176,16 @@ void HDFHistIO::setupPartition( globalIndex localIdxCount )
   m_subcomm = MpiWrapper::commSplit( m_comm, color, key );
 }
 
-void HDFHistIO::init( bool existsOkay )
+buffer_unit_type * HDFHistoryIO::getBufferHead()
+{
+  resizeBuffer();
+  m_bufferedCount++;
+  buffer_unit_type * const currentBufferHead = m_bufferHead;
+  m_bufferHead += getRowBytes();
+  return currentBufferHead;
+}
+
+void HDFHistoryIO::init( bool existsOkay )
 {
   setupPartition( m_dims[0] );
   int rank = MpiWrapper::commRank( m_comm );
@@ -263,7 +214,7 @@ void HDFHistIO::init( bool existsOkay )
     historyFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxCount );
 
     HDFFile target( m_filename, false, true, subcomm );
-    bool inTarget = target.checkInTarget( m_name );
+    bool inTarget = target.hasDataset( m_name );
     if( !inTarget )
     {
       hid_t dcplId = 0;
@@ -286,7 +237,7 @@ void HDFHistIO::init( bool existsOkay )
   }
 }
 
-void HDFHistIO::write( )
+void HDFHistoryIO::write()
 {
   // check if the size has changed on any process in the primary comm
   bool anyChanged = false;
@@ -343,7 +294,12 @@ void HDFHistIO::write( )
         // forward the data buffer pointer to the start of the next row
         if( dataBuffer )
         {
-          dataBuffer += m_localIdxCounts_buffered[ row ] * m_typeSize;
+          hsize_t rowsize = m_localIdxCounts_buffered[ row ] * m_typeSize;
+          for( hsize_t ii = 1; ii < m_rank; ++ii )
+          {
+            rowsize *= m_dims[ii];
+          }
+          dataBuffer += rowsize;
         }
 
         // unfortunately have to close/open the file for each row since the accessing mpi ranks and extents can change over time
@@ -360,14 +316,14 @@ void HDFHistIO::write( )
   emptyBuffer( );
 }
 
-void HDFHistIO::compressInFile( )
+void HDFHistoryIO::compressInFile()
 {
   // set the write limit in the file to the current write head
   updateDatasetExtent( m_writeHead );
   m_writeLimit = m_writeHead;
 }
 
-inline void HDFHistIO::resizeFileIfNeeded( localIndex buffered_count )
+inline void HDFHistoryIO::resizeFileIfNeeded( localIndex buffered_count )
 {
   if( m_writeHead + buffered_count > m_writeLimit )
   {
@@ -379,7 +335,7 @@ inline void HDFHistIO::resizeFileIfNeeded( localIndex buffered_count )
   }
 }
 
-void HDFHistIO::updateDatasetExtent( hsize_t rowLimit )
+void HDFHistoryIO::updateDatasetExtent( hsize_t rowLimit )
 {
   if( m_subcomm != MPI_COMM_NULL )
   {
@@ -397,20 +353,26 @@ void HDFHistIO::updateDatasetExtent( hsize_t rowLimit )
   }
 }
 
-size_t HDFHistIO::getRowBytes( )
+size_t HDFHistoryIO::getRowBytes()
 {
   return m_typeCount * m_typeSize;
 }
 
-void HDFHistIO::resizeBuffer( )
+void HDFHistoryIO::emptyBuffer()
+{
+  m_bufferedCount = 0;
+  m_bufferHead = &m_dataBuffer[0];
+}
+
+void HDFHistoryIO::resizeBuffer()
 {
   // need to store the count every time we collect (which calls this)
   //  regardless of whether the size changes
   m_localIdxCounts_buffered.emplace_back( m_dims[0] );
 
-  size_t capacity = m_dataBuffer.size();
-  size_t inUse = m_bufferHead - &m_dataBuffer[0];
-  size_t nextRow = getRowBytes( );
+  size_t const capacity = m_dataBuffer.size();
+  size_t const inUse = m_bufferHead - &m_dataBuffer[0];
+  size_t const nextRow = getRowBytes( );
   // if needed, resize the buffer
   if( inUse + nextRow > capacity )
   {
@@ -421,7 +383,7 @@ void HDFHistIO::resizeBuffer( )
   m_bufferHead = &m_dataBuffer[0] + inUse;
 }
 
-void HDFHistIO::updateCollectingCount( localIndex count )
+void HDFHistoryIO::updateCollectingCount( localIndex count )
 {
   if( LvArray::integerConversion< hsize_t >( count ) != m_dims[0] )
   {
