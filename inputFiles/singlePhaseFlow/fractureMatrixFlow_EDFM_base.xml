@@ -33,7 +33,7 @@
       zCoords="{ 0, 1 }"
       nx="{ 11 }"
       ny="{ 11 }"
-      nz="{ 1 }"
+      nz="{ 11 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -116,7 +116,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+      permeabilityComponents="{ 2.0e-10, 2.0e-10, 2.0e-10 }"/>
 
     <PressurePorosity
       name="fracturePorosity"
