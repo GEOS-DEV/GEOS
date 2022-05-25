@@ -390,6 +390,10 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
     damping.zero();
 
+    /// Partial gradient if gradient as to be computed
+    arrayView1d< real64 > grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
+    grad.zero();
+
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
 
@@ -507,7 +511,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
   if (computeGradient) {
     forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                   MeshLevel & mesh,
-                                                  arrayView1d< string const > const & regionNames )
+                                                  arrayView1d< string const > const & GEOSX_UNUSED_PARAM(regionNames) )
     {
       NodeManager & nodeManager = mesh.getNodeManager();
       ElementRegionManager & elemManager = mesh.getElemManager();
@@ -522,6 +526,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
         p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
       } );
 
+      p_dt2.move( MemorySpace::host, false );
       int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
       std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
       std::ofstream wf( fileName, std::ios::out | std::ios::binary );
@@ -533,15 +538,6 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       GEOSX_THROW_IF( !wf.good() ,
                       "An error occured while writting "<< fileName,
                       InputError );
-
-      if (cycleNumber == 0) {
-        elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                    CellElementSubRegion & elementSubRegion )
-        {
-          arrayView1d< real64 > grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
-          grad.zero();
-        });
-      }
 
     } );
   }
@@ -573,8 +569,11 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       GEOSX_THROW_IF( !wf ,
                       "Could not open file "<< fileName << " for reading",
                       InputError );
+      // maybe better with registerTouch()
+      p_dt2.move( MemorySpace::host, true );
       wf.read( (char*)&p_dt2[0], p_dt2.size()*sizeof( real64 ) );
       wf.close();
+
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                   CellElementSubRegion & elementSubRegion )
       {
