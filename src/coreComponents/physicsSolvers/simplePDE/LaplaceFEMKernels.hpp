@@ -179,8 +179,8 @@ public:
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
     }
     m_finiteElementSpace.template
-      addGradGradStabilizationMatrix< FE_TYPE, numDofPerTrialSupportPoint >( stack.feStack,
-                                                                             stack.localJacobian );
+    addGradGradStabilizationMatrix< FE_TYPE, numDofPerTrialSupportPoint >( stack.feStack,
+                                                                           stack.localJacobian );
   }
 
   /**

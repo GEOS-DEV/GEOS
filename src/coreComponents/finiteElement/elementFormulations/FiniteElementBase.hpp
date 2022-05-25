@@ -308,6 +308,15 @@ public:
                                                                   colOffset );
   }
 
+  /**
+   * @brief Add stabilization of grad-grad bilinear form to input matrix.
+   * @tparam LEAF Type of the derived finite element implementation.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
+   * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
+   * @param stack Stack variables created by a call to @ref setup.
+   * @param matrix The input matrix to which values have to be added.
+   * @param scaleFactor Optional scaling of the stabilization matrix.
+   */
   template< typename LEAF, localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER = false >
   GEOSX_HOST_DEVICE
   void addGradGradStabilizationMatrix( typename LEAF::StackVariables const & stack,
