@@ -158,11 +158,14 @@ real64 WaveSolverBase::solverStep( real64 const & time_n,
 real64 WaveSolverBase::explicitStep( real64 const & time_n,
                                      real64 const & dt,
                                      integer const cycleNumber,
-                                     DomainPartition & domain)
+                                     DomainPartition & domain )
 {
-  if (m_forward) {
+  if( m_forward )
+  {
     return explicitStepForward( time_n, dt, cycleNumber, domain, m_saveFields );
-  } else {
+  }
+  else
+  {
     return explicitStepBackward( time_n, dt, cycleNumber, domain, m_saveFields );
   }
 }
