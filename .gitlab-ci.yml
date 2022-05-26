@@ -42,7 +42,7 @@ stages:
     # BUILD
     - echo "~~~~~~~~~~ START - build ~~~~~~~~~~~"
     - build_code=0
-    - ${ALLOC_COMMAND} make VERBOSE=1 -C build -j ${NPROC} 2>&1 | tee ${SYSTEM}/${SYSTEM}_build.log || build_code=$?
+    - ${ALLOC_COMMAND} make VERBOSE=1 -C build -j ${NPROC:-16} 2>&1 | tee ${SYSTEM}/${SYSTEM}_build.log || build_code=$?
     - mv ${SYSTEM}/${SYSTEM}_build.log ${SYSTEM}/${SYSTEM}_build_$([ $build_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
     - echo "~~~~~~~~~~ END - build ~~~~~~~~~~~~~"
 
