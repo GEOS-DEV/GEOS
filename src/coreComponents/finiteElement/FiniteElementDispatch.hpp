@@ -74,6 +74,14 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr8 );
   }
+  else if( auto const * const ptr9 = dynamic_cast< H1_Prism5_VEM_Gauss1 const * >(&input) ) // VEM on Prism5
+  {
+    lambda( *ptr9 );
+  }
+  else if( auto const * const ptr10 = dynamic_cast< H1_Prism6_VEM_Gauss1 const * >(&input) ) // VEM on Prism6
+  {
+    lambda( *ptr10 );
+  }
 #endif
   else
   {
@@ -119,6 +127,14 @@ dispatch3D( FiniteElementBase & input,
   else if( auto * const ptr8 = dynamic_cast< H1_Hexahedron_VEM_Gauss1 * >(&input) ) // VEM on Hexahedron
   {
     lambda( *ptr8 );
+  }
+  else if( auto * const ptr9 = dynamic_cast< H1_Prism5_VEM_Gauss1 * >(&input) ) // VEM on Prism5
+  {
+    lambda( *ptr9 );
+  }
+  else if( auto * const ptr10 = dynamic_cast< H1_Prism6_VEM_Gauss1 * >(&input) ) // VEM on Prism6
+  {
+    lambda( *ptr10 );
   }
 #endif
   else
