@@ -175,6 +175,175 @@ TEST( testXmlWrapper, TensorIllFormed )
   testTensorIllFormed< real64, 3 >( "{ 1.0, 2.O, 3.0 }" ); // invalid floating point value
 }
 
+
+// Attribute format tests
+class real64AttributeTestFixture :public ::testing::TestWithParam<std::tuple<string, real64, bool>>
+{
+protected:
+    string attributeString;
+    real64 expectedValue;
+    real64 parsedValue;
+    bool failureFlag;
+
+    void parseString()
+    {
+      GEOSX_LOG_RANK_0( "Parsing string: " << attributeString );
+      xmlWrapper::stringToInputVariable< real64 >(parsedValue, attributeString);
+      ASSERT_NEAR( expectedValue, parsedValue, 1e-10 );
+    }
+};
+
+TEST_P(real64AttributeTestFixture, testParsing)
+{
+    auto testParams = GetParam();
+    attributeString = std::get<0>(testParams);
+    expectedValue = std::get<1>(testParams);
+    failureFlag = std::get<2>(testParams);
+
+    if (failureFlag)
+    {
+      EXPECT_THROW( parseString(), InputError );
+    }
+    else
+    {
+      parseString();
+    }
+}
+
+INSTANTIATE_TEST_CASE_P(
+        real64AttributeTests,
+        real64AttributeTestFixture,
+        ::testing::Values(std::make_tuple("1", 1,  false),
+                          std::make_tuple("-23", -23,  false),
+                          std::make_tuple("4.5", 4.5, false),
+                          std::make_tuple("4.", 4.0, false),
+                          std::make_tuple("6e1", 6e1, false),
+                          std::make_tuple("7e-2", 7e-2, false),
+                          std::make_tuple("8.765e0", 8.765, false),
+                          std::make_tuple("-1.2e-3", -1.2e-3, false),
+                          std::make_tuple("3.5E+4", 3.5e+4, false),
+                          std::make_tuple("6.1E05", 6.1e05, false),
+                          std::make_tuple("-7.1e06", -7.1e06, false),
+                          std::make_tuple("8.1e+02", 8.1e+02, false),
+                          std::make_tuple("9.1e-01", 9.1e-01, false),
+                          std::make_tuple("alpha", 0, true),
+                          std::make_tuple("1beta234", 0, true),
+                          std::make_tuple("1.234gamma", 0, true),
+                          std::make_tuple("1.2.3", 0, true),
+                          std::make_tuple("1e2.3 ", 0, true),
+                          std::make_tuple("1 ", 0, true),
+                          std::make_tuple("1e", 0, true),
+                          std::make_tuple("1e-", 0, true),
+                          std::make_tuple("1e+", 0, true)));
+
+
+class real32AttributeTestFixture :public ::testing::TestWithParam<std::tuple<string, real32, bool>>
+{
+protected:
+    string attributeString;
+    real32 expectedValue;
+    real32 parsedValue;
+    bool failureFlag;
+
+    void parseString()
+    {
+      GEOSX_LOG_RANK_0( "Parsing string: " << attributeString );
+      xmlWrapper::stringToInputVariable< real32 >(parsedValue, attributeString);
+      ASSERT_NEAR( expectedValue, parsedValue, 1e-10 );
+    }
+};
+
+TEST_P(real32AttributeTestFixture, testParsing)
+{
+    auto testParams = GetParam();
+    attributeString = std::get<0>(testParams);
+    expectedValue = std::get<1>(testParams);
+    failureFlag = std::get<2>(testParams);
+
+    if (failureFlag)
+    {
+      EXPECT_THROW( parseString(), InputError );
+    }
+    else
+    {
+      parseString();
+    }
+}
+
+INSTANTIATE_TEST_CASE_P(
+        real32AttributeTests,
+        real32AttributeTestFixture,
+        ::testing::Values(std::make_tuple("1", 1,  false),
+                          std::make_tuple("-23", -23,  false),
+                          std::make_tuple("4.5", 4.5, false),
+                          std::make_tuple("4.", 4.0, false),
+                          std::make_tuple("6e1", 6e1, false),
+                          std::make_tuple("7e-2", 7e-2, false),
+                          std::make_tuple("8.765e0", 8.765, false),
+                          std::make_tuple("-1.2e-3", -1.2e-3, false),
+                          std::make_tuple("3.5E+4", 3.5e+4, false),
+                          std::make_tuple("6.1E05", 6.1e05, false),
+                          std::make_tuple("-7.1e06", -7.1e06, false),
+                          std::make_tuple("8.1e+02", 8.1e+02, false),
+                          std::make_tuple("9.1e-01", 9.1e-01, false),
+                          std::make_tuple("alpha", 0, true),
+                          std::make_tuple("1beta234", 0, true),
+                          std::make_tuple("1.234gamma", 0, true),
+                          std::make_tuple("1.2.3", 0, true),
+                          std::make_tuple("1e2.3 ", 0, true),
+                          std::make_tuple("1 ", 0, true),
+                          std::make_tuple("1e", 0, true),
+                          std::make_tuple("1e-", 0, true),
+                          std::make_tuple("1e+", 0, true)));
+
+class integerAttributeTestFixture :public ::testing::TestWithParam<std::tuple<string, integer, bool>>
+{
+protected:
+    string attributeString;
+    integer expectedValue;
+    integer parsedValue;
+    bool failureFlag;
+
+    void parseString()
+    {
+      GEOSX_LOG_RANK_0( "Parsing string: " << attributeString );
+      xmlWrapper::stringToInputVariable< integer >(parsedValue, attributeString);
+      ASSERT_TRUE( expectedValue == parsedValue );
+    }
+};
+
+TEST_P(integerAttributeTestFixture, testParsing)
+{
+    auto testParams = GetParam();
+    attributeString = std::get<0>(testParams);
+    expectedValue = std::get<1>(testParams);
+    failureFlag = std::get<2>(testParams);
+
+    if (failureFlag)
+    {
+      EXPECT_THROW( parseString(), InputError );
+    }
+    else
+    {
+      parseString();
+    }
+}
+
+INSTANTIATE_TEST_CASE_P(
+        integerAttributeTests,
+        integerAttributeTestFixture,
+        ::testing::Values(std::make_tuple("1", 1,  false),
+                          std::make_tuple("-23", -23,  false),
+                          std::make_tuple("4.5", 0, true),
+                          std::make_tuple("4.", 0, true),
+                          std::make_tuple("alpha", 0, true),
+                          std::make_tuple("1beta234", 0, true),
+                          std::make_tuple("1234gamma", 0, true),
+                          std::make_tuple("1 ", 0, true),
+                          std::make_tuple("1 2", 0, true)));
+
+
+
 int main( int argc, char * argv[] )
 {
   logger::InitializeLogger();
