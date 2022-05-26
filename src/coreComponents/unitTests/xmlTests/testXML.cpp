@@ -21,8 +21,6 @@
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-using namespace geosx;
-
 TEST( testXML, testXMLString )
 {
   char const *  xmlInput =
