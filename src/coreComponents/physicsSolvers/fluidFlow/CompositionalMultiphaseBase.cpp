@@ -1133,8 +1133,11 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
       subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
-    arrayView2d< real64 const, compflow::USD_PHASE > const phaseMobility =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >();
+
+    string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+    RelativePermeabilityBase const & relPermMaterial =
+      getConstitutiveModel< RelativePermeabilityBase >( subRegion, relPermName );
+    arrayView3d< real64 const, relperm::USD_RELPERM > const phaseRelPerm = relPermMaterial.phaseRelPerm();
 
     string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
     CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
@@ -1168,7 +1171,7 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
                                         phaseDensity,
                                         phaseCompFraction,
                                         phaseVolFrac,
-                                        phaseMobility,
+                                        phaseRelPerm,
                                         subRegionMinPres,
                                         subRegionAvgPresNumerator,
                                         subRegionMaxPres,
@@ -1537,7 +1540,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
   // Step 3: we are ready to impose the boundary condition, normalized by the set size
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel const & mesh,
+                                               MeshLevel & mesh,
                                                arrayView1d< string const > const & )
   {
     fsManager.apply( time + dt,

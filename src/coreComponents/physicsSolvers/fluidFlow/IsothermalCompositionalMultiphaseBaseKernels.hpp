@@ -1033,7 +1033,7 @@ struct StatisticsKernel
           arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDensity,
           arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFraction,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMobility,
+          arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
@@ -1074,8 +1074,8 @@ struct StatisticsKernel
         real64 const phaseVolume = dynamicPoreVol * phaseVolFrac[ei][ip];
         real64 const phaseMass = phaseDensity[ei][0][ip] * phaseVolume;
         subRegionPhaseDynamicPoreVol[ip] += phaseVolume;
-        subRegionMobilePhaseMass[ip] += phaseMass * ( phaseMobility[ei][ip] > 1e-6 );
-        subRegionImmobilePhaseMass[ip] += phaseMass * ( phaseMobility[ei][ip] <= 1e-6 );
+        subRegionMobilePhaseMass[ip] += phaseMass * ( phaseRelPerm[ei][0][ip] > 1e-3 );
+        subRegionImmobilePhaseMass[ip] += phaseMass * ( phaseRelPerm[ei][0][ip] <= 1e-3 );
         for( integer ic = 0; ic < numComps; ++ic )
         {
           subRegionDissolvedComponentMass[ic] += ( ip != ic ) * phaseCompFraction[ei][0][ip][ic] * phaseMass;

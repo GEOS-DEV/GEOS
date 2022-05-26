@@ -384,7 +384,7 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel const & mesh,
+                                               MeshLevel & mesh,
                                                arrayView1d< string const > const & )
   {
     fsManager.apply( time + dt,
@@ -430,6 +430,11 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
                                                 DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
+
+  if( time < 0 )
+  {
+    return;
+  }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );

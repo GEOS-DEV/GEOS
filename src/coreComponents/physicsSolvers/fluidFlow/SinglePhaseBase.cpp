@@ -896,7 +896,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
   // Step 3: we are ready to impose the boundary condition, normalized by the set size
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel const & mesh,
+                                               MeshLevel & mesh,
                                                arrayView1d< string const > const & )
   {
     fsManager.apply( time_n + dt,
