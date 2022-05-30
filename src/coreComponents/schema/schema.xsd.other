@@ -1282,6 +1282,8 @@
 		<xsd:attribute name="dViscosity_dPressure" type="real64_array2d" />
 		<!--density => Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--density_n => Density at the previous converged time step-->
+		<xsd:attribute name="density_n" type="real64_array2d" />
 		<!--initialDensity => Initial density-->
 		<xsd:attribute name="initialDensity" type="real64_array2d" />
 		<!--viscosity => Viscosity-->
@@ -1712,6 +1714,8 @@
 		<xsd:attribute name="dViscosity_dPressure" type="real64_array2d" />
 		<!--density => Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--density_n => Density at the previous converged time step-->
+		<xsd:attribute name="density_n" type="real64_array2d" />
 		<!--initialDensity => Initial density-->
 		<xsd:attribute name="initialDensity" type="real64_array2d" />
 		<!--viscosity => Viscosity-->
