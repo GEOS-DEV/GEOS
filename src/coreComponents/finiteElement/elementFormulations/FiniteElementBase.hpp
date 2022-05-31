@@ -131,7 +131,10 @@ public:
                           typename LEAF::template MeshData< SUBREGION_TYPE > & meshData
                           )
   {
-    LEAF::template fillMeshData< SUBREGION_TYPE >( nodeManager, edgeManager, faceManager, cellSubRegion,
+    LEAF::template fillMeshData< SUBREGION_TYPE >( nodeManager,
+                                                   edgeManager,
+                                                   faceManager,
+                                                   cellSubRegion,
                                                    meshData );
   }
 
@@ -337,8 +340,10 @@ public:
   GEOSX_FORCE_INLINE
   void
   addEvaluatedGradGradStabilizationVector( typename LEAF::StackVariables const & stack,
-                                           real64 const ( &dofs )[LEAF::maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
-                                           real64 ( & targetVector )[LEAF::maxSupportPoints][NUMDOFSPERTRIALSUPPORTPOINT],
+                                           real64 const ( &dofs )[LEAF::maxSupportPoints]
+                                           [NUMDOFSPERTRIALSUPPORTPOINT],
+                                           real64 ( & targetVector )[LEAF::maxSupportPoints]
+                                           [NUMDOFSPERTRIALSUPPORTPOINT],
                                            real64 const scaleFactor = 1.0 ) const
   {
     LEAF::template

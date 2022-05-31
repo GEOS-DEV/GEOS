@@ -124,7 +124,9 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
 
   stackArray1d< real64, VEM::numNodes > stabTimeMonomialDofs( numCellPoints );
   real64 stabilizationMatrix[maxSupportPoints][maxSupportPoints]{};
-  feBase.template addGradGradStabilizationMatrix< VEM >( stack, stabilizationMatrix );
+  feBase.template addGradGradStabilizationMatrix< VEM, 1, false >( stack,
+
+                                                                   stabilizationMatrix );
   stabTimeMonomialDofsNorm( 0 ) = 0.0;
   for( localIndex i = 0; i < numCellPoints; ++i )
   {
