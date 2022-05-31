@@ -310,7 +310,7 @@ public:
   /**
    * @brief Add a grad-grad stabilization operator evaluated at a provided vector of dofs to input
    * vector.
-   * @detail This method is used to modify a residual consistently when the jacobian includes a
+   * @details This method is used to modify a residual consistently when the jacobian includes a
    * stabilization term.
    * @tparam LEAF Type of the derived finite element implementation.
    * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
