@@ -241,7 +241,7 @@ public:
 
   /**
    * @brief Adds a grad-grad stabilization evaluated at @p dofs to @p targetVector.
-   * @detail This method is intended to be used with @p targetVector being the residual and @p dofs
+   * @details This method is intended to be used with @p targetVector being the residual and @p dofs
    * being the degrees of freedom of the previous solution.
    * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
    * @param stack Stack variables as filled by @ref setupStack.
