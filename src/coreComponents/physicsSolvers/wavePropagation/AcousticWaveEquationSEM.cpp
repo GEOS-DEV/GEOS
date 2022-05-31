@@ -81,11 +81,8 @@ AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
   // TODO Auto-generated destructor stub
 }
 
-
-void AcousticWaveEquationSEM::initializePreSubGroups()
+localIndex AcousticWaveEquationSEM::getNumNodesPerElem()
 {
-  WaveSolverBase::initializePreSubGroups();
-
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -98,7 +95,7 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
   GEOSX_THROW_IF( feDiscretization == nullptr,
                   getName() << ": FE discretization not found: " << m_discretizationName,
                   InputError );
-
+  
   localIndex numNodesPerElem = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&]( string const &,
@@ -122,7 +119,16 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
       } );
     } );
 
+    
   } );
+  return numNodesPerElem;
+}    
+
+void AcousticWaveEquationSEM::initializePreSubGroups()
+{
+  WaveSolverBase::initializePreSubGroups();
+
+  localIndex numNodesPerElem = getNumNodesPerElem();
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
@@ -208,7 +214,8 @@ void AcousticWaveEquationSEM::postProcessInput()
   }
   localIndex const nsamples = int(maxTime/dt) + 1;
 
-  localIndex const numNodesPerElem = 8;
+
+  localIndex numNodesPerElem = getNumNodesPerElem();
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
@@ -228,13 +235,15 @@ void AcousticWaveEquationSEM::postProcessInput()
 void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
 {
+
+  FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
   NodeManager const & nodeManager = mesh.getNodeManager();
-  FaceManager const & faceManager = mesh.getFaceManager();
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X =
     nodeManager.referencePosition().toViewConst();
-  ArrayOfArraysView< localIndex const > const & facesToNodes =
-    faceManager.nodeList().toViewConst();
+  arrayView2d< real64 const > const faceNormal  = faceManager0.faceNormal();
+  arrayView2d< real64 const > const faceCenter  = faceManager0.faceCenter();
+
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -266,7 +275,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     }
   }
 
-
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
@@ -279,6 +287,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
 
+
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
     finiteElement::dispatch3D( fe,
@@ -288,18 +297,21 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
       using FE_TYPE = TYPEOFREF( finiteElement );
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+      localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
       acousticWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         numNodesPerElem,
+        numFacesPerElem,
         X,
         elemGhostRank,
         elemsToNodes,
         elemsToFaces,
-        facesToNodes,
         elemCenter,
+        faceNormal,
+        faceCenter,
         sourceCoordinates,
         sourceIsLocal,
         sourceNodeIds,
@@ -418,13 +430,14 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
+    FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     /// get table containing all the face normals
-    arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
+    arrayView2d< real64 const > const faceNormal  = faceManager0.faceNormal();
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
@@ -454,7 +467,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         using FE_TYPE = TYPEOFREF( finiteElement );
 
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-        localIndex const numNodesPerFace = 4;
+        localIndex const numNodesPerFace = facesToNodes.sizeOfArray(0);
+        std::cout << "numnodesperface " << numNodesPerFace << std::endl;
 
         acousticWaveEquationSEMKernels::MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
 

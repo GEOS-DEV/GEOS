@@ -142,6 +142,8 @@ private:
    */
   void saveSeismo( localIndex iseismo, real64 valPressure, string const & filename ) override;
 
+  localIndex getNumNodesPerElem();
+
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
 
