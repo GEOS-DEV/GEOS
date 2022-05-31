@@ -458,6 +458,7 @@
 			<xsd:element name="PhaseFieldDamageFEM" type="PhaseFieldDamageFEMType" />
 			<xsd:element name="PhaseFieldFracture" type="PhaseFieldFractureType" />
 			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
+			<xsd:element name="ReactiveCompositionalMultiphaseOBL" type="ReactiveCompositionalMultiphaseOBLType" />
 			<xsd:element name="SinglePhaseFVM" type="SinglePhaseFVMType" />
 			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
 			<xsd:element name="SinglePhasePoromechanics" type="SinglePhasePoromechanicsType" />
@@ -650,6 +651,16 @@
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantTransportType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="ReactiveCompositionalMultiphaseOBLType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -879,11 +890,13 @@
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PermeabilityBase" type="PermeabilityBaseType" />
+			<xsd:element name="PorousDelftEgg" type="PorousDelftEggType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
 			<xsd:element name="PorousElasticIsotropic" type="PorousElasticIsotropicType" />
 			<xsd:element name="PorousElasticOrthotropic" type="PorousElasticOrthotropicType" />
 			<xsd:element name="PorousElasticTransverseIsotropic" type="PorousElasticTransverseIsotropicType" />
 			<xsd:element name="PorousExtendedDruckerPrager" type="PorousExtendedDruckerPragerType" />
+			<xsd:element name="PorousModifiedCamClay" type="PorousModifiedCamClayType" />
 			<xsd:element name="PressurePorosity" type="PressurePorosityType" />
 			<xsd:element name="ProppantPermeability" type="ProppantPermeabilityType" />
 			<xsd:element name="ProppantPorosity" type="ProppantPorosityType" />
@@ -1264,6 +1277,8 @@
 		<xsd:attribute name="dViscosity_dPressure" type="real64_array2d" />
 		<!--density => Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--density_n => Density at the previous converged time step-->
+		<xsd:attribute name="density_n" type="real64_array2d" />
 		<!--initialDensity => Initial density-->
 		<xsd:attribute name="initialDensity" type="real64_array2d" />
 		<!--viscosity => Viscosity-->
@@ -1609,11 +1624,13 @@
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousDelftEggType" />
 	<xsd:complexType name="PorousDruckerPragerType" />
 	<xsd:complexType name="PorousElasticIsotropicType" />
 	<xsd:complexType name="PorousElasticOrthotropicType" />
 	<xsd:complexType name="PorousElasticTransverseIsotropicType" />
 	<xsd:complexType name="PorousExtendedDruckerPragerType" />
+	<xsd:complexType name="PorousModifiedCamClayType" />
 	<xsd:complexType name="PressurePorosityType">
 		<!--dPorosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
@@ -1683,6 +1700,8 @@
 		<xsd:attribute name="dViscosity_dPressure" type="real64_array2d" />
 		<!--density => Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--density_n => Density at the previous converged time step-->
+		<xsd:attribute name="density_n" type="real64_array2d" />
 		<!--initialDensity => Initial density-->
 		<xsd:attribute name="initialDensity" type="real64_array2d" />
 		<!--viscosity => Viscosity-->

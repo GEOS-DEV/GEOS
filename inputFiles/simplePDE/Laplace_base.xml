@@ -8,7 +8,7 @@
       discretization="FE1"
       timeIntegrationOption="SteadyState"
       fieldName="Temperature"
-      targetRegions="{ Region1 }">
+      targetRegions="{ Domain }">
       <LinearSolverParameters
         directParallel="0"/>
     </LaplaceFEM>
@@ -29,7 +29,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
@@ -37,13 +37,6 @@
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="Region1"
-      cellBlocks="{ cb1 }"
-      materialList="{ nullModel }"/>
-  </ElementRegions>
 
   <Constitutive>
     <NullModel
@@ -68,9 +61,8 @@
   </FieldSpecifications>
 
   <Outputs>
-    <Silo
-      name="siloOutput"
-      parallelThreads="32"/>
+    <VTK
+      name="vtkOutput"/>
 
     <Restart
       name="restartOutput"/>

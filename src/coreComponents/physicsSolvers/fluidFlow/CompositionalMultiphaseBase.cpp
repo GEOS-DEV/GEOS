@@ -57,6 +57,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
                                                           Group * const parent )
   :
   FlowSolverBase( name, parent ),
+  m_systemSetupDone( false ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_computeCFLNumbers( 0 ),
@@ -1027,16 +1028,17 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
-  fieldNames["elems"].emplace_back( extrinsicMeshData::flow::globalCompDensity::key() );
-
   // set mass fraction flag on fluid models
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key(),
+                                       extrinsicMeshData::flow::globalCompDensity::key() },
+                                     regionNames );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
@@ -1060,11 +1062,10 @@ real64 CompositionalMultiphaseBase::solverStep( real64 const & time_n,
 
   // Only build the sparsity pattern once
   // TODO: this should be triggered by a topology change indicator
-  static bool systemSetupDone = false;
-  if( !systemSetupDone )
+  if( !m_systemSetupDone )
   {
     setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-    systemSetupDone = true;
+    m_systemSetupDone = true;
   }
 
   implicitStepSetup( time_n, dt, domain );
