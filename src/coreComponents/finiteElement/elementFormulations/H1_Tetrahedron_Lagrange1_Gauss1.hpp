@@ -55,10 +55,8 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 1;
 
-  ///
-  constexpr static int numSamplingPoints = 1000;  // 10 in each direction.
-
-  constexpr static int numSamplingPointsPerDirection = 10;
+  /// The number of sampling points per element.
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
   virtual ~H1_Tetrahedron_Lagrange1_Gauss1() override
   {}

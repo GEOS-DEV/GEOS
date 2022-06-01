@@ -61,10 +61,8 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 6;
 
-  ///
-  constexpr static int numSamplingPoints = 1000;  // 10 in each direction.
-
-  constexpr static int numSamplingPointsPerDirection = 10;
+  /// The number of sampling points per element.
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
   virtual ~H1_Wedge_Lagrange1_Gauss6() override
   {}
@@ -153,7 +151,7 @@ public:
 
     real64 const r = i0 * step;
     real64 const s = i1 * step;
-    real64 const t = i2 * step;
+    real64 const t = i2 * 2 * step;
     if ( (r+s) <= 1 )
     {
       samplingPointCoord[0] = r;

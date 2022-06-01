@@ -65,7 +65,7 @@ public:
   constexpr static localIndex numQuadraturePoints = 5;
 
   ///
-  constexpr static int numSamplingPoints = 1000;  // 10 in each direction.
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
   virtual ~H1_Pyramid_Lagrange1_Gauss5() override
   {}

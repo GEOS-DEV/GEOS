@@ -56,11 +56,8 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 4;
 
-  ///
-  constexpr static int numSamplingPoints = 100;  // 10 in each direction.
-
-  constexpr static int numSamplingPointsPerDirection = 10;
-
+  /// The number of sampling points per element.
+  constexpr static int numSamplingPoints =  numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
   virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override
   {}

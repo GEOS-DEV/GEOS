@@ -48,6 +48,10 @@ public:
   /// Default Constructor
   FiniteElementBase() = default;
 
+
+  // Number of sampling points.
+  constexpr static int numSamplingPointsPerDirection = 10;
+
   /**
    * @brief Copy Constructor
    * @param source The object to copy.

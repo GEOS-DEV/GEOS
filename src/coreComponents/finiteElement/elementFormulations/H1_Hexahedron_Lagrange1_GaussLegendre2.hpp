@@ -80,11 +80,8 @@ public:
 
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 8;
-
   ///
-  constexpr static int numSamplingPoints = 1000;  // 10 in each direction.
-
-  constexpr static int numSamplingPointsPerDirection = 10;
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
   /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
