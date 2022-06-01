@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./deadOil_fractureMatrixFlow_EDFM_inclinedbase.xml" />
+  </Included>
+
+  <Geometry>
+    <BoundedPlane
+      name="FracturePlane"
+      normal="{ -0.707, 0.707, 0 }"
+      origin="{ 5.0, 8.0, 0.5 }"
+      lengthVector="{ 0.707, 0.707, 0 }"
+      widthVector="{ 0, 0, 1 }"
+      dimensions="{ 8, 4 }"/>
+  </Geometry>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="PoroElastic_efem-edfm_horizFrac"
+      plotLevel="2"
+      format="binary"/>
+
+    <Restart
+      name="sidreRestart"/>
+  </Outputs>
+</Problem>
