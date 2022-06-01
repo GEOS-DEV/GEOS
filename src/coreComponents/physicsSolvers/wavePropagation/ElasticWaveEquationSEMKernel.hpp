@@ -32,6 +32,55 @@ namespace elasticWaveEquationSEMKernels
 struct PrecomputeSourceAndReceiverKernel
 
 {
+  /**
+   * @brief Check if the sourtc epoint is inside an element or not
+  */
+
+  GEOSX_HOST_DEVICE
+  static bool
+  locateSourceElement(real64 const numFacesPerElem,
+                      real64 const (&elemCenter)[3],
+                      arrayView2d< real64 const > const faceNormal,
+                      arrayView2d< real64 const > const faceCenter,
+                      arraySlice1d< localIndex const > const elemsToFaces,
+                      real64 const (&coords)[3])
+  {
+    //Loop over the element faces
+    localIndex prevSign = 0;
+    real64 tmpVector[3]{};
+    for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
+    {
+      
+      localIndex const iface = elemsToFaces[kfe];
+      real64  faceCenterOnFace[3] = {faceCenter[iface][0],
+                                     faceCenter[iface][1], 
+                                     faceCenter[iface][2]};
+      real64  faceNormalOnFace[3] = {faceNormal[iface][0],
+                                     faceNormal[iface][1],
+                                     faceNormal[iface][2]};
+
+      //Test to make sure if the normal is outwardly directed
+      LvArray::tensorOps::copy< 3 >( tmpVector, faceCenterOnFace );
+      LvArray::tensorOps::subtract< 3 >( tmpVector, elemCenter );
+      if( LvArray::tensorOps::AiBi< 3 >( tmpVector, faceNormalOnFace ) < 0.0 )
+      {
+        LvArray::tensorOps::scale< 3 >( faceNormalOnFace, -1 );
+      }
+ 
+      // compute the vector face center to query point
+      LvArray::tensorOps::subtract<3>(faceCenterOnFace, coords);
+      localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >(faceNormalOnFace, faceCenterOnFace));
+      
+      // all dot products should be non-negative (we enforce outward normals)
+      if( prevSign * s < 0 )
+      {
+        return false;
+      }
+      prevSign = s;
+
+    }
+    return true;
+  }
 
   /**
    * @brief Convert a mesh element point coordinate into a coordinate on the reference element
@@ -46,21 +95,24 @@ struct PrecomputeSourceAndReceiverKernel
   template< typename FE_TYPE >
   GEOSX_HOST_DEVICE
   static bool
-  computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
+  computeCoordinatesOnReferenceElement( real64 numFacesPerElem,
+                                        real64 const (&coords)[3],
                                         real64 const (&elemCenter)[3],
+                                        arrayView2d< real64 const > const faceNormal,
+                                        arrayView2d< real64 const > const faceCenter,
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
                                         arraySlice1d< localIndex const > const elemsToFaces,
-                                        ArrayOfArraysView< localIndex const > const & facesToNodes,
                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
                                         real64 (& coordsOnRefElem)[3] )
   {
-    bool const isInsidePolyhedron =
-      computationalGeometry::isPointInsidePolyhedron( X,
-                                                      elemsToFaces,
-                                                      facesToNodes,
-                                                      elemCenter,
-                                                      coords );
-    if( isInsidePolyhedron )
+    bool const SourceInELem =
+      locateSourceElement( numFacesPerElem,
+                           elemCenter,
+                           faceNormal,
+                           faceCenter,
+                           elemsToFaces,
+                           coords );
+    if( SourceInELem )
     {
       real64 xLocal[FE_TYPE::numNodes][3]{};
       for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
@@ -151,11 +203,14 @@ struct PrecomputeSourceAndReceiverKernel
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
+          localIndex const numFacesPerElem,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
-          ArrayOfArraysView< localIndex const > const & facesToNodes,
           arrayView2d< real64 const > const & elemCenter,
+          arrayView2d< real64 const > const faceNormal,
+          arrayView2d< real64 const > const faceCenter,
           arrayView2d< real64 const > const sourceCoordinates,
           arrayView1d< localIndex > const sourceIsLocal,
           arrayView2d< localIndex > const sourceNodeIds,
@@ -174,6 +229,7 @@ struct PrecomputeSourceAndReceiverKernel
 
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
+
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
       real64 const center[3] = { elemCenter[k][0],
@@ -203,14 +259,16 @@ struct PrecomputeSourceAndReceiverKernel
 
           real64 coordsOnRefElem[3]{};
           bool const sourceFound =
-            computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+            computeCoordinatesOnReferenceElement< FE_TYPE >( numFacesPerElem,
+                                                             coords,
                                                              center,
+                                                             faceNormal,
+                                                             faceCenter,
                                                              elemsToNodes[k],
                                                              elemsToFaces[k],
-                                                             facesToNodes,
                                                              X,
                                                              coordsOnRefElem );
-          if( sourceFound )
+          if( sourceFound && elemGhostRank[k] < 0 )
           {
             sourceIsLocal[isrc] = 1;
             
@@ -266,14 +324,17 @@ struct PrecomputeSourceAndReceiverKernel
 
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
-            computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+            computeCoordinatesOnReferenceElement< FE_TYPE >( numFacesPerElem,
+                                                             coords,
                                                              center,
+                                                             faceNormal,
+                                                             faceCenter,
                                                              elemsToNodes[k],
                                                              elemsToFaces[k],
-                                                             facesToNodes,
                                                              X,
                                                              coordsOnRefElem );
-          if( receiverFound )
+
+          if( receiverFound && elemGhostRank[k] < 0 )
           {
             receiverIsLocal[ircv] = 1;
 
@@ -562,7 +623,8 @@ public:
         stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
       }
     }
-
+    stack.mu = m_density[k] * m_velocityVs[k] * m_velocityVs[k];
+    stack.lambda = m_density[k] *m_velocityVp[k] * m_velocityVp[k] - 2.0*stack.mu;
   }
 
   /**
@@ -581,60 +643,64 @@ public:
      
     real64 gradN[ numNodesPerElem ][ 3 ];
 
-    real64 sigmaxx[numNodesPerElem] = {{0.0}};
-    real64 sigmaxy[numNodesPerElem] = {{0.0}};
-    real64 sigmaxz[numNodesPerElem] = {{0.0}};
-    real64 sigmayy[numNodesPerElem] = {{0.0}};
-    real64 sigmayx[numNodesPerElem] = {{0.0}};
-    real64 sigmayz[numNodesPerElem] = {{0.0}};
-    real64 sigmazz[numNodesPerElem] = {{0.0}};
-    real64 sigmazx[numNodesPerElem] = {{0.0}};
-    real64 sigmazy[numNodesPerElem] = {{0.0}};
+    // real64 sigmaxx[numNodesPerElem] = {{0.0}};
+    // real64 sigmaxy[numNodesPerElem] = {{0.0}};
+    // real64 sigmaxz[numNodesPerElem] = {{0.0}};
+    // real64 sigmayy[numNodesPerElem] = {{0.0}};
+    // real64 sigmayx[numNodesPerElem] = {{0.0}};
+    // real64 sigmayz[numNodesPerElem] = {{0.0}};
+    // real64 sigmazz[numNodesPerElem] = {{0.0}};
+    // real64 sigmazx[numNodesPerElem] = {{0.0}};
+    // real64 sigmazy[numNodesPerElem] = {{0.0}};
 
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
 
-    for( localIndex i=0; i<numNodesPerElem; ++i )
-    {
-      sigmaxx[i] = detJ * ((stack.lambda + 2*stack.mu) * gradN[i][0]*m_ux_n[m_elemsToNodes[k][i]] + stack.lambda * ( gradN[i][1]*m_uy_n[m_elemsToNodes[k][i]]+ gradN[i][2]*m_uz_n[m_elemsToNodes[k][i]]));
-      sigmayy[i] = detJ * ((stack.lambda + 2*stack.mu) * gradN[i][0]*m_uy_n[m_elemsToNodes[k][i]] + stack.lambda * ( gradN[i][1]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][2]*m_uz_n[m_elemsToNodes[k][i]]));
-      sigmazz[i] = detJ * ((stack.lambda + 2*stack.mu) * gradN[i][0]*m_uz_n[m_elemsToNodes[k][i]] + stack.lambda * ( gradN[i][1]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][2]*m_uy_n[m_elemsToNodes[k][i]]));
-      sigmaxy[i] = detJ * (stack.mu * ( gradN[i][1]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][0]*m_uy_n[m_elemsToNodes[k][i]]));
-      sigmaxz[i] = detJ * (stack.mu * ( gradN[i][2]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][0]*m_uz_n[m_elemsToNodes[k][i]]));
-      sigmayz[i] = detJ * (stack.mu * ( gradN[i][2]*m_uy_n[m_elemsToNodes[k][i]]+ gradN[i][1]*m_uz_n[m_elemsToNodes[k][i]]));
+    // for( localIndex i=0; i<numNodesPerElem; ++i )
+    // {
+    //   sigmaxx[i] = detJ * ((stack.lambda + 2*stack.mu) * gradN[i][0]*m_ux_n[m_elemsToNodes[k][i]] + stack.lambda * ( gradN[i][1]*m_uy_n[m_elemsToNodes[k][i]]+ gradN[i][2]*m_uz_n[m_elemsToNodes[k][i]]));
+    //   sigmayy[i] = detJ * ((stack.lambda + 2*stack.mu) * gradN[i][0]*m_uy_n[m_elemsToNodes[k][i]] + stack.lambda * ( gradN[i][1]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][2]*m_uz_n[m_elemsToNodes[k][i]]));
+    //   sigmazz[i] = detJ * ((stack.lambda + 2*stack.mu) * gradN[i][0]*m_uz_n[m_elemsToNodes[k][i]] + stack.lambda * ( gradN[i][1]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][2]*m_uy_n[m_elemsToNodes[k][i]]));
+    //   sigmaxy[i] = detJ * (stack.mu * ( gradN[i][1]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][0]*m_uy_n[m_elemsToNodes[k][i]]));
+    //   sigmaxz[i] = detJ * (stack.mu * ( gradN[i][2]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][0]*m_uz_n[m_elemsToNodes[k][i]]));
+    //   sigmayz[i] = detJ * (stack.mu * ( gradN[i][2]*m_uy_n[m_elemsToNodes[k][i]]+ gradN[i][1]*m_uz_n[m_elemsToNodes[k][i]]));
 
-      sigmayx[i] = sigmaxy[i];
-      sigmazy[i] = sigmayz[i];
-      sigmazx[i] = sigmaxz[i];
-    }
+    //   sigmayx[i] = sigmaxy[i];
+    //   sigmazy[i] = sigmayz[i];
+    //   sigmazx[i] = sigmaxz[i];
+    // }
 
 
     for( localIndex i=0; i<numNodesPerElem; ++i )
     {
       for( localIndex j=0; j<numNodesPerElem; ++j )
-      {
-        // real64 const Rxx_ij = detJ* ((stack.lambda+2.0*stack.mu)*gradN[j][0]*gradN[i][0] + stack.mu * gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][2]*gradN[i][2]);
-        // real64 const Ryy_ij = detJ* ((stack.lambda+2.0*stack.mu)*gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][0]*gradN[i][0] + stack.mu * gradN[j][2]*gradN[i][2]);
-        // real64 const Rzz_ij = detJ*((stack.lambda+2.0*stack.mu)*gradN[j][2]*gradN[i][2] + stack.mu * gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][0]*gradN[i][0]);
-        // real64 const Rxy_ij =  detJ*(stack.mu * gradN[j][1]*gradN[i][0] + stack.lambda * gradN[j][0]*gradN[i][1]);
-        // real64 const Ryx_ij =  detJ*(stack.mu * gradN[j][0]*gradN[i][1] + stack.lambda * gradN[j][1]*gradN[i][0]);
-        // real64 const Rxz_ij =  detJ*(stack.mu * gradN[j][2]*gradN[i][0] + stack.lambda * gradN[j][0]*gradN[i][2]);
-        // real64 const Rzx_ij =  detJ*(stack.mu * gradN[j][0]*gradN[i][2] + stack.lambda * gradN[j][2]*gradN[i][0]);
-        // real64 const Ryz_ij =  detJ*(stack.mu * gradN[j][2]*gradN[i][1] + stack.lambda * gradN[j][1]*gradN[i][2]);
-        // real64 const Rzy_ij =  detJ*(stack.mu * gradN[j][1]*gradN[i][2] + stack.lambda * gradN[j][2]*gradN[i][1]);
+      { 
+        real64 const Rxx_ij = detJ* ((stack.lambda+2.0*stack.mu)*gradN[j][0]*gradN[i][0] + stack.mu * gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][2]*gradN[i][2]);
+        real64 const Ryy_ij = detJ* ((stack.lambda+2.0*stack.mu)*gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][0]*gradN[i][0] + stack.mu * gradN[j][2]*gradN[i][2]);
+        real64 const Rzz_ij = detJ*((stack.lambda+2.0*stack.mu)*gradN[j][2]*gradN[i][2] + stack.mu * gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][0]*gradN[i][0]);
+        real64 const Rxy_ij =  detJ*(stack.mu * gradN[j][1]*gradN[i][0] + stack.lambda * gradN[j][0]*gradN[i][1]);
+        real64 const Ryx_ij =  detJ*(stack.mu * gradN[j][0]*gradN[i][1] + stack.lambda * gradN[j][1]*gradN[i][0]);
+        real64 const Rxz_ij =  detJ*(stack.mu * gradN[j][2]*gradN[i][0] + stack.lambda * gradN[j][0]*gradN[i][2]);
+        real64 const Rzx_ij =  detJ*(stack.mu * gradN[j][0]*gradN[i][2] + stack.lambda * gradN[j][2]*gradN[i][0]);
+        real64 const Ryz_ij =  detJ*(stack.mu * gradN[j][2]*gradN[i][1] + stack.lambda * gradN[j][1]*gradN[i][2]);
+        real64 const Rzy_ij =  detJ*(stack.mu * gradN[j][1]*gradN[i][2] + stack.lambda * gradN[j][2]*gradN[i][1]);
 
-        real64 const Rxx_ij = gradN[i][0];
-        real64 const Rxz_ij = gradN[i][2];
-        real64 const Rxy_ij = gradN[i][1];
-        real64 const Ryy_ij = gradN[i][1];
-        real64 const Ryx_ij = gradN[i][0];
-        real64 const Ryz_ij = gradN[i][2];
-        real64 const Rzx_ij = gradN[i][0];
-        real64 const Rzy_ij = gradN[i][1];
-        real64 const Rzz_ij = gradN[i][2];
+        // real64 const Rxx_ij = gradN[i][0];
+        // real64 const Rxz_ij = gradN[i][2];
+        // real64 const Rxy_ij = gradN[i][1];
+        // real64 const Ryy_ij = gradN[i][1];
+        // real64 const Ryx_ij = gradN[i][0];
+        // real64 const Ryz_ij = gradN[i][2];
+        // real64 const Rzx_ij = gradN[i][0];
+        // real64 const Rzy_ij = gradN[i][1];
+        // real64 const Rzz_ij = gradN[i][2];
 
-        real64 const localIncrement_x = Rxx_ij * sigmaxx[j] + Rxy_ij*sigmaxy[j] + Rxz_ij*sigmaxz[j];
-        real64 const localIncrement_y = Ryx_ij * sigmayx[j] + Ryy_ij*sigmayy[j] + Ryz_ij*sigmayz[j];
-        real64 const localIncrement_z = Rzx_ij * sigmazx[j] + Rzy_ij*sigmazy[j] + Rzz_ij*sigmazz[j];
+        // real64 const localIncrement_x = Rxx_ij * sigmaxx[j] + Rxy_ij*sigmaxy[j] + Rxz_ij*sigmaxz[j];
+        // real64 const localIncrement_y = Ryx_ij * sigmayx[j] + Ryy_ij*sigmayy[j] + Ryz_ij*sigmayz[j];
+        // real64 const localIncrement_z = Rzx_ij * sigmazx[j] + Rzy_ij*sigmazy[j] + Rzz_ij*sigmazz[j];
+
+        real64 const localIncrement_x = (Rxx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rxy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rxz_ij*m_uz_n[m_elemsToNodes[k][j]]);
+        real64 const localIncrement_y = (Ryx_ij * m_ux_n[m_elemsToNodes[k][j]] + Ryy_ij*m_uy_n[m_elemsToNodes[k][j]] + Ryz_ij*m_uz_n[m_elemsToNodes[k][j]]);
+        real64 const localIncrement_z = (Rzx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rzy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rzz_ij*m_uz_n[m_elemsToNodes[k][j]]);
 
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_x[m_elemsToNodes[k][i]], localIncrement_x );
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_y[m_elemsToNodes[k][i]], localIncrement_y );

@@ -20,6 +20,7 @@
 #include "ElasticWaveEquationSEM.hpp"
 #include "ElasticWaveEquationSEMKernel.hpp"
 
+#include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -107,6 +108,8 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
   GEOSX_THROW_IF( feDiscretization == nullptr,
                   getName() << ": FE discretization not found: " << m_discretizationName,
                   InputError );
+
+
 }
 
 
@@ -191,7 +194,7 @@ void ElasticWaveEquationSEM::postProcessInput()
   }
   localIndex const nsamples = int(maxTime/dt) + 1;
 
-  localIndex const numNodesPerElem = 8;
+  localIndex numNodesPerElem = 8;
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
@@ -220,8 +223,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X =
     nodeManager.referencePosition().toViewConst();
-  ArrayOfArraysView< localIndex const > const & facesToNodes =
-    faceManager.nodeList().toViewConst();
+  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
+  arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
+
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -268,6 +272,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
+    arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -277,15 +282,20 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
+      localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
+
       elasticWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
+        numFacesPerElem,
         X,
+        elemGhostRank,
         elemsToNodes,
         elemsToFaces,
-        facesToNodes,
         elemCenter,
+        faceNormal,
+        faceCenter,
         sourceCoordinates,
         sourceIsLocal,
         sourceNodeIds,
@@ -420,11 +430,10 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     /// Get table containing all the face normals
     arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
+    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
-
-    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
 
@@ -456,7 +465,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         using FE_TYPE = TYPEOFREF( finiteElement );
 
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-        localIndex const numNodesPerFace = 4;
+        localIndex const numNodesPerFace = facesToNodes.sizeOfArray(0);
 
         elasticWaveEquationSEMKernels::MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
