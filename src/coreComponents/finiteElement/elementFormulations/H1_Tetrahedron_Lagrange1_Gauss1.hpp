@@ -139,19 +139,17 @@ public:
   GEOSX_FORCE_INLINE
   static void getSamplingPointCoordInParentSpace( int const & linearIndex,
                                                   real64 (& samplingPointCoord)[3] )
-  {
-    GEOSX_UNUSED_VAR( linearIndex, samplingPointCoord );
-    
+  { 
     int const i0 = linearIndex % numSamplingPointsPerDirection;
     int const i1 = ( (linearIndex - i0)/numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
     int const i2 = ( (linearIndex - i0)/numSamplingPointsPerDirection - i1 ) / numSamplingPointsPerDirection;
 
-    real64 const step = 2 / ( numSamplingPointsPerDirection - 1 );
+    real64 const step = 1 / ( numSamplingPointsPerDirection - 1 );
 
     real64 const r = i0 * step;
     real64 const s = i1 * step;
     real64 const t = i2 * step;
-    if ( (r+s) <= 1 )
+    if ( (r+s) <= t )
     {
       samplingPointCoord[0] = r;
       samplingPointCoord[1] = s;
@@ -159,8 +157,8 @@ public:
     }else
     {
       // if outside of the triangle need to reproject it. Points will be doubled though.
-      samplingPointCoord[0] = 1 - r;
-      samplingPointCoord[1] = 1 - s;
+      samplingPointCoord[0] = 1 - t - r;
+      samplingPointCoord[1] = 1 - t - s;
       samplingPointCoord[2] = t;
     }
   }
