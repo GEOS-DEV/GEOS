@@ -33,7 +33,7 @@ class MultiResolutionHFSolver : public SolverBase
 {
 public:
   MultiResolutionHFSolver( const string & name,
-                       Group * const parent );
+                           Group * const parent );
 
   ~MultiResolutionHFSolver() override;
 
@@ -66,7 +66,7 @@ public:
 
   virtual void prepareSubProblemBCs( MeshLevel const & base,
                                      MeshLevel const & patch );
-    
+
   real64 splitOperatorStep( real64 const & time_n,
                             real64 const & dt,
                             integer const cycleNumber,
@@ -75,13 +75,13 @@ public:
   virtual void setNextDt( real64 const & currentDt,
                           real64 & nextDt ) override;
 
-  
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * baseSolverNameString() { return "baseSolverName"; }
 
     constexpr static char const * patchSolverNameString() { return "patchSolverName"; }
-        
+
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
 
     constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
@@ -105,17 +105,17 @@ private:
   string m_patchSolverName;
 
   // list of damage dofs to be fixed in the subdomain boundary
-  array1d<localIndex> m_nodeFixDamage;
+  array1d< localIndex > m_nodeFixDamage;
 
   // list of disp dofs to be fixed in the subdomain boundary
-  array1d<localIndex> m_nodeFixDisp;
-  
+  array1d< localIndex > m_nodeFixDisp;
+
   // list of displacement values to be prescribed in the subdomain boundary
-  array2d<real64> m_fixedDispList;
-  
+  array2d< real64 > m_fixedDispList;
+
   // pointer to base efem solver
   SolidMechanicsEmbeddedFractures * m_baseSolver;
-    
+
   // pointer to patch phase-field fracture solver
   PhaseFieldFractureSolver * m_patchSolver;
 

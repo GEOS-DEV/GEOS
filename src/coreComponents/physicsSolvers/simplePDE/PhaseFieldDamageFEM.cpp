@@ -55,7 +55,7 @@ using namespace constitutive;
 PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
-  m_damageName("Damage")
+  m_damageName( "Damage" )
 {
 
   registerWrapper< string >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key() ).
@@ -65,7 +65,7 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
   // registerWrapper< string >( PhaseFieldDamageFEMViewKeys.damageVarName.key(),"Damage" ).
   //   setInputFlag( InputFlags::OPTIONAL ).
   //   setDescription( "name of damage variable" );
-  
+
   registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Type of local dissipation function. Can be Linear or Quadratic" );
@@ -194,15 +194,10 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM(
                                      DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
-<<<<<<< HEAD
-  dofManager.addField( m_damageName,
-                       DofManager::Location::Node,
-=======
-  dofManager.addField( m_fieldName,
-                       FieldLocation::Node,
->>>>>>> origin/develop
-                       1,
-                       m_meshTargets );
+  dofManager.addField ( m_damageName,
+                        FieldLocation::Node,
+                        1,
+                        m_meshTargets );
 
   dofManager.addCoupling( m_damageName,
                           m_damageName,
@@ -296,7 +291,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
           //real64 Gc = m_criticalFractureEnergy;             //energy release rate
           real64 Gc = constitutiveUpdate.getCriticalFractureEnergy();
 
-          real64 threshold = constitutiveUpdate.getEnergyThreshold();//elastic energy threshold - use when Local Dissipation is linear
+          real64 threshold = constitutiveUpdate.getEnergyThreshold();  //elastic energy threshold - use when Local Dissipation is linear
 
           arrayView1d< real64 > const & nodalDamage = nodeManager.getReference< array1d< real64 > >( m_damageName );
           //real64 diffusion = 1.0;
@@ -341,7 +336,8 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                   if( m_localDissipationOption == "Linear" )
                   {
                     // element_rhs( a ) += detJ[k][q] * (Na * (ell * D - 3 * Gc / 16 )/ Gc -
-                    //                                   0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] )
+                    //                                   0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a]
+                    // )
                     // -
                     //                                   (ell * D/Gc) * Na * qp_damage);
 
@@ -559,7 +555,7 @@ void PhaseFieldDamageFEM::solveLinearSystem( DofManager const & dofManager,
                                              ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
-  rhs.scale( -1.0 ); // TODO decide if we want this here
+  rhs.scale( -1.0 );   // TODO decide if we want this here
   solution.zero();
 
 //  GEOSX_LOG_RANK_0( "Before PhaseFieldDamageFEM::SolveSystem" );
@@ -581,7 +577,6 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                     DomainPartition & domain,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs )
-
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
