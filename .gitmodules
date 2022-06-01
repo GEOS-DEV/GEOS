@@ -14,3 +14,6 @@
 [submodule "src/coreComponents/fileIO/coupling/hdf5_interface"]
 	path = src/coreComponents/fileIO/coupling/hdf5_interface
 	url = ../hdf5_interface.git
+[submodule "integratedTests"]
+	path = integratedTests
+	url = git@github.com:GEOSX/integratedTests.git
