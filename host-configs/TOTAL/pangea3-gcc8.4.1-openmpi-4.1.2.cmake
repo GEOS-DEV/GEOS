@@ -43,7 +43,7 @@ if (DEFINED ENV{MPI_ROOT})
   set(MPIEXEC                $ENV{MPI_ROOT}/bin/mpirun  CACHE STRING "")
   set(ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC ON CACHE BOOL "")
 else()
-  message(FATAL_ERROR "You must have MPI_ROOT variable set, we advise loading module openmpi/p3/4.1.2")
+  message(FATAL_ERROR "You must have MPI_ROOT variable set, we advise loading module ompi/4.1.2")
 endif()
 
 # Cuda options
