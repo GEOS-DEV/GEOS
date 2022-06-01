@@ -321,10 +321,14 @@ H1_Tetrahedron_Lagrange1_Gauss1::
   calcN( real64 const (&pointCoord)[3],
          real64 (& N)[numNodes] )
 {
-  N[0] = 1 - pointCoord[0] - pointCoord[1] - pointCoord[1];
-  N[1] = pointCoord[0];
-  N[2] = pointCoord[1];
-  N[3] = pointCoord[2];
+  real64 const r = pointCoord[0];
+  real64 const s = pointCoord[1];
+  real64 const t = pointCoord[2];
+
+  N[0] = 1 - r - s - t;
+  N[1] = r;
+  N[2] = s;
+  N[3] = t;
 }
 
 GEOSX_HOST_DEVICE

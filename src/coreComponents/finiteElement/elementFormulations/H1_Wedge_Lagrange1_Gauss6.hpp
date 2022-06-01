@@ -516,12 +516,16 @@ H1_Wedge_Lagrange1_Gauss6::
   calcN( real64 const (&pointCoord)[3],
          real64 (& N)[numNodes] )
 {
-  N[0] = 0.5*( 1.0 - pointCoord[0] - pointCoord[1] ) * ( 1.0 - pointCoord[2] );
-  N[1] = 0.5*( 1.0 - pointCoord[0] - pointCoord[1] ) * ( 1.0 + pointCoord[2] );
-  N[2] = 0.5* pointCoord[0] * ( 1.0 - pointCoord[2] );
-  N[3] = 0.5* pointCoord[0] * ( 1.0 + pointCoord[2] );
-  N[4] = 0.5* pointCoord[1] * ( 1.0 - pointCoord[2] );
-  N[5] = 0.5* pointCoord[1] * ( 1.0 + pointCoord[2] );
+  real64 const r  = pointCoord[0];
+  real64 const s  = pointCoord[1];
+  real64 const xi = pointCoord[2];
+
+  N[0] = 0.5 * ( 1.0 - r - s ) * ( 1.0 - xi );
+  N[1] = 0.5 * ( 1.0 - r - s ) * ( 1.0 + xi );
+  N[2] = 0.5 * r * ( 1.0 - xi );
+  N[3] = 0.5 * r * ( 1.0 + xi );
+  N[4] = 0.5 * s * ( 1.0 - xi );
+  N[5] = 0.5 * s * ( 1.0 + xi );
 }
 
 
