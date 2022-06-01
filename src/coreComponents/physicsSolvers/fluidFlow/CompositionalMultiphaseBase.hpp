@@ -233,6 +233,9 @@ public:
 
     // reservoir region statistics
 
+    static constexpr char const * averageTemperatureString() { return "averageTemperature"; }
+    static constexpr char const * maximumTemperatureString() { return "maximumTemperature"; }
+    static constexpr char const * minimumTemperatureString() { return "minimumTemperature"; }
     static constexpr char const * phasePoreVolumeString() { return "phasePoreVolume"; }
     static constexpr char const * mobilePhaseMassString() { return "mobilePhaseMass"; }
     static constexpr char const * immobilePhaseMassString() { return "immobilePhaseMass"; }

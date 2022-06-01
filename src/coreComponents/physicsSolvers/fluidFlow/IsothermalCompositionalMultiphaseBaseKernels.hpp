@@ -1028,6 +1028,7 @@ struct StatisticsKernel
           arrayView1d< integer const > const & elemGhostRank,
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 const > const & pres,
+          arrayView1d< real64 const > const & temp,
           arrayView1d< real64 const > const & refPorosity,
           arrayView2d< real64 const > const & porosity,
           arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDensity,
@@ -1037,6 +1038,9 @@ struct StatisticsKernel
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
+          real64 & minTemp,
+          real64 & avgTempNumerator,
+          real64 & maxTemp,
           real64 & totalUncompactedPoreVol,
           arraySlice1d< real64 > const & phaseDynamicPoreVol,
           arraySlice1d< real64 > const & mobilePhaseMass,
@@ -1046,6 +1050,10 @@ struct StatisticsKernel
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPresNumerator( 0.0 );
     RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPres( 0.0 );
+
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinTemp( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgTempNumerator( 0.0 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTemp( 0.0 );
 
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalUncompactedPoreVol( 0.0 );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionPhaseDynamicPoreVol[MultiFluidBase::MAX_NUM_PHASES]{};
@@ -1068,6 +1076,9 @@ struct StatisticsKernel
       subRegionMinPres.min( pres[ei] );
       subRegionAvgPresNumerator += uncompactedPoreVol * pres[ei];
       subRegionMaxPres.max( pres[ei] );
+      subRegionMinTemp.min( temp[ei] );
+      subRegionAvgTempNumerator += uncompactedPoreVol * temp[ei];
+      subRegionMaxTemp.max( temp[ei] );
       subRegionTotalUncompactedPoreVol += uncompactedPoreVol;
       for( integer ip = 0; ip < numPhases; ++ip )
       {
@@ -1087,6 +1098,10 @@ struct StatisticsKernel
     minPres = subRegionMinPres.get();
     avgPresNumerator = subRegionAvgPresNumerator.get();
     maxPres = subRegionMaxPres.get();
+    minTemp = subRegionMinTemp.get();
+    avgTempNumerator = subRegionAvgTempNumerator.get();
+    maxTemp = subRegionMaxTemp.get();
+
     totalUncompactedPoreVol = subRegionTotalUncompactedPoreVol.get();
     for( integer ip = 0; ip < numPhases; ++ip )
     {

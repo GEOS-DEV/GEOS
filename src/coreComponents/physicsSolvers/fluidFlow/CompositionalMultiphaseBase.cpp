@@ -267,6 +267,9 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         region.registerWrapper< real64 >( viewKeyStruct::averagePressureString() );
         region.registerWrapper< real64 >( viewKeyStruct::minimumPressureString() );
         region.registerWrapper< real64 >( viewKeyStruct::maximumPressureString() );
+        region.registerWrapper< real64 >( viewKeyStruct::averageTemperatureString() );
+        region.registerWrapper< real64 >( viewKeyStruct::minimumTemperatureString() );
+        region.registerWrapper< real64 >( viewKeyStruct::maximumTemperatureString() );
         region.registerWrapper< real64 >( viewKeyStruct::totalPoreVolumeString() );
         region.registerWrapper< real64 >( viewKeyStruct::totalUncompactedPoreVolumeString() );
         region.registerWrapper< array1d< real64 > >( viewKeyStruct::phasePoreVolumeString() ).
@@ -1102,7 +1105,11 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     real64 & avgPres = region.getReference< real64 >( viewKeyStruct::averagePressureString() );
     real64 & minPres = region.getReference< real64 >( viewKeyStruct::minimumPressureString() );
     real64 & maxPres = region.getReference< real64 >( viewKeyStruct::maximumPressureString() );
+    real64 & avgTemp = region.getReference< real64 >( viewKeyStruct::averageTemperatureString() );
+    real64 & minTemp = region.getReference< real64 >( viewKeyStruct::minimumTemperatureString() );
+    real64 & maxTemp = region.getReference< real64 >( viewKeyStruct::maximumTemperatureString() );
     avgPres = 0.0; maxPres = 0.0; minPres = LvArray::NumericLimits< real64 >::max;
+    avgTemp = 0.0; maxTemp = 0.0; minTemp = LvArray::NumericLimits< real64 >::max;
 
     real64 & totalPoreVol = region.getReference< real64 >( viewKeyStruct::totalPoreVolumeString() );
     real64 & totalUncompactedPoreVol = region.getReference< real64 >( viewKeyStruct::totalUncompactedPoreVolumeString() );
@@ -1131,6 +1138,7 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
     arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+    arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
       subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
 
@@ -1152,6 +1160,9 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;
     real64 subRegionMaxPres = 0.0;
+    real64 subRegionAvgTempNumerator = 0.0;
+    real64 subRegionMinTemp = 0.0;
+    real64 subRegionMaxTemp = 0.0;
     real64 subRegionTotalUncompactedPoreVol = 0.0;
     stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionPhaseDynamicPoreVol( m_numPhases );
     stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionMobilePhaseMass( m_numPhases );
@@ -1166,6 +1177,7 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
                                         elemGhostRank,
                                         volume,
                                         pres,
+                                        temp,
                                         refPorosity,
                                         porosity,
                                         phaseDensity,
@@ -1175,6 +1187,9 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
                                         subRegionMinPres,
                                         subRegionAvgPresNumerator,
                                         subRegionMaxPres,
+                                        subRegionMinTemp,
+                                        subRegionAvgTempNumerator,
+                                        subRegionMaxTemp,
                                         subRegionTotalUncompactedPoreVol,
                                         subRegionPhaseDynamicPoreVol.toSlice(),
                                         subRegionMobilePhaseMass.toSlice(),
@@ -1185,6 +1200,9 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     real64 & minPres = region.getReference< real64 >( viewKeyStruct::minimumPressureString() );
     real64 & avgPres = region.getReference< real64 >( viewKeyStruct::averagePressureString() );
     real64 & maxPres = region.getReference< real64 >( viewKeyStruct::maximumPressureString() );
+    real64 & minTemp = region.getReference< real64 >( viewKeyStruct::minimumTemperatureString() );
+    real64 & avgTemp = region.getReference< real64 >( viewKeyStruct::averageTemperatureString() );
+    real64 & maxTemp = region.getReference< real64 >( viewKeyStruct::maximumTemperatureString() );
 
     real64 & totalUncompactedPoreVol = region.getReference< real64 >( viewKeyStruct::totalUncompactedPoreVolumeString() );
     arrayView1d< real64 > const & phasePoreVol =
@@ -1204,6 +1222,16 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     if( subRegionMaxPres > maxPres )
     {
       maxPres = subRegionMaxPres;
+    }
+
+    avgTemp += subRegionAvgTempNumerator;
+    if( subRegionMinTemp < minTemp )
+    {
+      minTemp = subRegionMinTemp;
+    }
+    if( subRegionMaxTemp > maxTemp )
+    {
+      maxTemp = subRegionMaxTemp;
     }
 
     totalUncompactedPoreVol += subRegionTotalUncompactedPoreVol;
@@ -1228,6 +1256,9 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     real64 & avgPres = region.getReference< real64 >( viewKeyStruct::averagePressureString() );
     real64 & minPres = region.getReference< real64 >( viewKeyStruct::minimumPressureString() );
     real64 & maxPres = region.getReference< real64 >( viewKeyStruct::maximumPressureString() );
+    real64 & avgTemp = region.getReference< real64 >( viewKeyStruct::averageTemperatureString() );
+    real64 & minTemp = region.getReference< real64 >( viewKeyStruct::minimumTemperatureString() );
+    real64 & maxTemp = region.getReference< real64 >( viewKeyStruct::maximumTemperatureString() );
     real64 & totalPoreVol = region.getReference< real64 >( viewKeyStruct::totalPoreVolumeString() );
     real64 & totalUncompactedPoreVol = region.getReference< real64 >( viewKeyStruct::totalUncompactedPoreVolumeString() );
     arrayView1d< real64 > const & phasePoreVol =
@@ -1241,6 +1272,8 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
 
     minPres = MpiWrapper::min( minPres );
     maxPres = MpiWrapper::max( maxPres );
+    minTemp = MpiWrapper::min( minTemp );
+    maxTemp = MpiWrapper::max( maxTemp );
     totalUncompactedPoreVol = MpiWrapper::sum( totalUncompactedPoreVol );
     totalPoreVol = 0.0;
     for( integer ip = 0; ip < m_numPhases; ++ip )
@@ -1256,8 +1289,11 @@ void CompositionalMultiphaseBase::computeRegionStatistics( MeshLevel & mesh,
     }
     avgPres = MpiWrapper::sum( avgPres );
     avgPres /= totalUncompactedPoreVol;
+    avgTemp = MpiWrapper::sum( avgTemp );
+    avgTemp /= totalUncompactedPoreVol;
 
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i] << ": Pressure (min, average, max): " << minPres << ", " << avgPres << ", " << maxPres << " Pa" );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i] << ": Temperature (min, average, max): " << minTemp << ", " << avgTemp << ", " << maxTemp << " K" );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i] << ": Total dynamic pore volume: " << totalPoreVol << " rm^3" );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i] << ": Phase dynamic pore volumes: " << phasePoreVol << " rm^3" );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i] << ": Mobile phase mass: " << mobilePhaseMass << " kg" );
@@ -1636,24 +1672,25 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
   } );
 }
 
-namespace
-{
+/*
+   namespace
+   {
 
-bool validateDirichletBC( DomainPartition & domain,
+   bool validateDirichletBC( DomainPartition & domain,
                           integer const isThermal,
                           integer const numComp,
                           real64 const time )
-{
-  constexpr integer MAX_NC = MultiFluidBase::MAX_NUM_COMPONENTS;
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+   {
+   constexpr integer MAX_NC = MultiFluidBase::MAX_NUM_COMPONENTS;
+   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  // maps to check consistent application of BC
-  map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcStatusMap;
-  map< string, map< string, set< string > > > bcTempStatusMap;
-  bool bcConsistent = true;
+   // maps to check consistent application of BC
+   map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcStatusMap;
+   map< string, map< string, set< string > > > bcTempStatusMap;
+   bool bcConsistent = true;
 
-  // 1. Check pressure Dirichlet BCs
-  fsManager.apply( time,
+   // 1. Check pressure Dirichlet BCs
+   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    extrinsicMeshData::flow::pressure::key(),
@@ -1662,7 +1699,7 @@ bool validateDirichletBC( DomainPartition & domain,
                         SortedArrayView< localIndex const > const &,
                         Group & subRegion,
                         string const & )
-  {
+   {
     // Check whether pressure has already been applied to this set
     string const & subRegionName = subRegion.getName();
     string const & regionName = subRegion.getParent().getParent().getName();
@@ -1674,11 +1711,11 @@ bool validateDirichletBC( DomainPartition & domain,
       GEOSX_WARNING( GEOSX_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
     }
     subRegionSetMap[setName].setNumComp( numComp );
-  } );
+   } );
 
-  // 2. Check temperature Dirichlet BCs
-  if( isThermal )
-  {
+   // 2. Check temperature Dirichlet BCs
+   if( isThermal )
+   {
     fsManager.apply( time,
                      domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                      "ElementRegions",
@@ -1711,10 +1748,10 @@ bool validateDirichletBC( DomainPartition & domain,
 
       // no need to set the number of components here, it was done while checking pressure
     } );
-  }
+   }
 
-  // 3. Check composition BC (global component fraction)
-  fsManager.apply( time,
+   // 3. Check composition BC (global component fraction)
+   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    extrinsicMeshData::flow::globalCompFraction::key(),
@@ -1723,7 +1760,7 @@ bool validateDirichletBC( DomainPartition & domain,
                          SortedArrayView< localIndex const > const &,
                          Group & subRegion,
                          string const & )
-  {
+   {
     // 3.1 Check pressure, temperature, and record composition bc application
     string const & subRegionName = subRegion.getName();
     string const & regionName = subRegion.getParent().getParent().getName();
@@ -1755,14 +1792,15 @@ bool validateDirichletBC( DomainPartition & domain,
     if( compMask[comp] )
     {
       bcConsistent = false;
-      GEOSX_WARNING( GEOSX_FMT( "Conflicting composition[{}] boundary conditions on set {}/{}/{}", comp, regionName, subRegionName, setName ) );
+      GEOSX_WARNING( GEOSX_FMT( "Conflicting composition[{}] boundary conditions on set {}/{}/{}", comp, regionName, subRegionName, setName
+         ) );
     }
     compMask.set( comp );
-  } );
+   } );
 
-  // 3.2 Check consistency between composition BC applied to sets
-  for( auto const & regionEntry : bcStatusMap )
-  {
+   // 3.2 Check consistency between composition BC applied to sets
+   for( auto const & regionEntry : bcStatusMap )
+   {
     for( auto const & subRegionEntry : regionEntry.second )
     {
       for( auto const & setEntry : subRegionEntry.second )
@@ -1779,13 +1817,13 @@ bool validateDirichletBC( DomainPartition & domain,
         }
       }
     }
-  }
+   }
 
-  return bcConsistent;
-}
+   return bcConsistent;
+   }
 
-}
-
+   }
+ */
 
 void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
                                                     real64 const dt,
@@ -1799,8 +1837,8 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
   // Only validate BC at the beginning of Newton loop
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
-    bool const bcConsistent = validateDirichletBC( domain, m_isThermal, m_numComponents, time + dt );
-    GEOSX_ERROR_IF( !bcConsistent, GEOSX_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
+    //bool const bcConsistent = validateDirichletBC( domain, m_isThermal, m_numComponents, time + dt );
+    //GEOSX_ERROR_IF( !bcConsistent, GEOSX_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -1874,7 +1912,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
   fsManager.apply( time + dt,
                    domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
-                   extrinsicMeshData::flow::pressure::key(),
+                   extrinsicMeshData::flow::temperature::key(),
                    [&] ( FieldSpecificationBase const &,
                          string const &,
                          SortedArrayView< localIndex const > const & targetSet,
@@ -1936,13 +1974,13 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
       real64 rhsValue;
 
       // 4.1. Apply pressure value to the matrix/rhs
-      FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
-                                                  rankOffset,
-                                                  localMatrix,
-                                                  rhsValue,
-                                                  bcPres[ei],
-                                                  pres[ei] );
-      localRhs[localRow] = rhsValue;
+      // FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
+      //                                             rankOffset,
+      //                                             localMatrix,
+      //                                             rhsValue,
+      //                                             bcPres[ei],
+      //                                             pres[ei] );
+      // localRhs[localRow] = rhsValue;
 
       // 4.2. Apply temperature value to the matrix/rhs
       if( isThermal )
@@ -1957,16 +1995,16 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
       }
 
       // 4.3. For each component, apply target global density value
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
-                                                    rankOffset,
-                                                    localMatrix,
-                                                    rhsValue,
-                                                    totalDens[ei][0] * compFrac[ei][ic],
-                                                    compDens[ei][ic] );
-        localRhs[localRow + ic + 1] = rhsValue;
-      }
+      // for( integer ic = 0; ic < numComp; ++ic )
+      // {
+      //   FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
+      //                                               rankOffset,
+      //                                               localMatrix,
+      //                                               rhsValue,
+      //                                               totalDens[ei][0] * compFrac[ei][ic],
+      //                                               compDens[ei][ic] );
+      //   localRhs[localRow + ic + 1] = rhsValue;
+      // }
     } );
   } );
 
