@@ -139,6 +139,15 @@ public:
   void buildSets( CellBlockManagerABC const & cellBlockManager,
                   GeometricObjectManager const & geometries );
 
+
+  /**
+   * @brief Set external nodes.
+   * @details external nodes are the nodes on the faces which are external
+   * @param[in] faceManager the face manager to obtain external face
+   */
+  void setIsExternal( FaceManager const & faceManager );
+
+
   /**
    * @brief Builds the node-on-domain-boundary indicator.
    * @param[in] faceIndex The computation is based on the face-on-domain-boundary indicator.
