@@ -194,8 +194,13 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM(
                                      DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
+<<<<<<< HEAD
   dofManager.addField( m_damageName,
                        DofManager::Location::Node,
+=======
+  dofManager.addField( m_fieldName,
+                       FieldLocation::Node,
+>>>>>>> origin/develop
                        1,
                        m_meshTargets );
 
@@ -423,14 +428,14 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( localSolution, m_damageName, m_damageName, scalingFactor );
 
   // Syncronize ghost nodes
-  std::map< string, string_array > fieldNames;
-  fieldNames["node"].emplace_back( m_damageName );
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addFields( FieldLocation::Node, { m_damageName } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          false );

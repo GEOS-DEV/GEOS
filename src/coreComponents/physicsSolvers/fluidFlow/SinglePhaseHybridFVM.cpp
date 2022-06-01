@@ -184,7 +184,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
   // we need Connectivity::Face because of the two-point upwinding
   // in AssembleOneSidedMassFluxes
   dofManager.addField( extrinsicMeshData::flow::pressure::key(),
-                       DofManager::Location::Elem,
+                       FieldLocation::Elem,
                        1,
                        m_meshTargets );
 
@@ -194,7 +194,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
 
   // setup the connectivity of face fields
   dofManager.addField( extrinsicMeshData::flow::facePressure::key(),
-                       DofManager::Location::Face,
+                       FieldLocation::Face,
                        1,
                        m_meshTargets );
 
@@ -437,29 +437,26 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
       arrayView1d< globalIndex const > const & elemDofNumber = subRegion.template getReference< array1d< globalIndex > >( elemDofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-      arrayView1d< real64 const > const & dens_n = subRegion.template getExtrinsicData< extrinsicMeshData::flow::density_n >();
 
-      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
-      CoupledSolidBase const & solidModel = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
+      SingleFluidBase const & fluidModel =
+        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+      arrayView2d< real64 const > const & density_n = fluidModel.density_n();
 
-      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [=, &localResidualNorm] ( auto & castedSolidModel )
-      {
-        arrayView2d< real64 const > const & porosity_n = castedSolidModel.getPorosity_n();
+      CoupledSolidBase const & solidModel =
+        SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+      arrayView2d< real64 const > const & porosity_n = solidModel.getPorosity_n();
 
-        singlePhaseBaseKernels::
-          ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
-                                                                rankOffset,
-                                                                elemDofNumber,
-                                                                elemGhostRank,
-                                                                volume,
-                                                                dens_n,
-                                                                porosity_n,
-                                                                localResidualNorm );
-      } );
+      singlePhaseBaseKernels::
+        ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
+                                                              rankOffset,
+                                                              elemDofNumber,
+                                                              elemGhostRank,
+                                                              volume,
+                                                              density_n,
+                                                              porosity_n,
+                                                              localResidualNorm );
 
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      SingleFluidBase const & fluid = subRegion.template getConstitutiveModel< SingleFluidBase >( fluidName );
-      defaultViscosity += fluid.defaultViscosity();
+      defaultViscosity += fluidModel.defaultViscosity();
       subRegionCounter++;
     } );
 
@@ -605,14 +602,14 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
   // 3. synchronize
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                arrayView1d< string const > const & regionNames )
   {
-    // the tags in fieldNames have to match the tags used in NeighborCommunicator.cpp
-    std::map< string, string_array > fieldNames;
-    fieldNames["face"].emplace_back( extrinsicMeshData::flow::facePressure::key() );
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
+    FieldIdentifiers fieldsToBeSync;
 
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key() }, regionNames );
+    fieldsToBeSync.addFields( FieldLocation::Face, { extrinsicMeshData::flow::facePressure::key() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );
 }
 

@@ -7,9 +7,6 @@
 [submodule "src/coreComponents/constitutive/PVTPackage"]
 	path = src/coreComponents/constitutive/PVTPackage
 	url = ../PVTPackage.git
-[submodule "integratedTests"]
-	path = integratedTests
-	url = ../integratedTests.git
 [submodule "src/coreComponents/mesh/PAMELA"]
 	path = src/coreComponents/mesh/PAMELA
 	url = ../PAMELA.git
