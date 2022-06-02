@@ -24,8 +24,7 @@ namespace geosx
 using namespace dataRepository;
 
 FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * parent ):
-  Group( name, parent ),
-  m_normalizeBySetSize( false )
+  Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 

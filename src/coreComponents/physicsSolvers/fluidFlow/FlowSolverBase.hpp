@@ -97,6 +97,20 @@ public:
                                                arrayView1d< real64 > const & maxElevation,
                                                arrayView1d< real64 > const & minElevation ) const;
 
+  /**
+   * @brief For each source flux boundary condition, loop over all the target cells and sum the owned cells
+   * @param[in] time the time at the beginning of the time step
+   * @param[in] dt the time step size
+   * @param[in] domain the domain partition
+   * @param[in] bcNameToBcId the map from the name of the boundary condition to the boundary condition index
+   * @param[out] bcAllSetsSize the total number of owned cells for each source flux boundary condition
+   */
+  void computeSourceFluxSizeScalingFactor( real64 const & time,
+                                           real64 const & dt,
+                                           DomainPartition & domain, // cannot be const...
+                                           std::map< string, localIndex > const & bcNameToBcId,
+                                           arrayView1d< globalIndex > const & bcAllSetsSize ) const;
+
 
 protected:
 
