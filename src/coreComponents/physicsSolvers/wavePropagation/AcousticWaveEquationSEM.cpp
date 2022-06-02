@@ -237,6 +237,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 {
 
   FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
+  MeshLevel & mesh0 = this->getGroupByPath< MeshLevel >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/" );
   NodeManager const & nodeManager = mesh.getNodeManager();
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X =
@@ -275,6 +276,17 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     }
   }
 
+  arrayView2d< real64 >  center;
+
+  arrayView2d< localIndex >  tmp;
+  
+  mesh0.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                        CellElementSubRegion & elementSubRegion0 )
+  {
+      center = elementSubRegion0.getElementCenter();
+      tmp = elementSubRegion0.faceList();
+  } ) ;
+
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
@@ -282,9 +294,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                     "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
                     InputError );
 
-    arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
+    arrayView2d< localIndex const > const elemsToFaces = tmp;//elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-    arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
+    arrayView2d< real64 const > const elemCenter = center;//elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
 
 
@@ -431,7 +443,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
     FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
-
+    
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
@@ -468,7 +480,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         localIndex const numNodesPerFace = facesToNodes.sizeOfArray(0);
-        std::cout << "numnodesperface " << numNodesPerFace << std::endl;
 
         acousticWaveEquationSEMKernels::MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
 

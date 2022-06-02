@@ -217,29 +217,29 @@ MeshLevel::MeshLevel( string const & name,
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
       array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
 
-      array2d< localIndex > & elemToFacesNew = newSubRegion.faceList();
+      // array2d< localIndex > & elemToFacesNew = newSubRegion.faceList();
 
 
 
       //Copy a new elemToFaces map from the old one
-      for( localIndex elem = 0; elem < elemsToNodesNew.size( 0 ); ++elem )
-      {
-        for( localIndex face = 0; face < 6; ++face )
-        {
-          elemToFacesNew[elem][face] = elemToFaces[elem][face];
-        }
-      }
+      // for( localIndex elem = 0; elem < elemsToNodesNew.size( 0 ); ++elem )
+      // {
+      //   for( localIndex face = 0; face < 6; ++face )
+      //   {
+      //     elemToFacesNew[elem][face] = elemToFaces[elem][face];
+      //   }
+      // }
 
       //Copy a new elemCenter map from the old one
-      arrayView2d < real64  > const & elemCenterNew = newSubRegion.getElementCenter();
-      arrayView2d < real64 const > const & elemCenterOld = sourceSubRegion.getElementCenter();
-      for( localIndex elem = 0; elem < elemsToNodesNew.size( 0 ); ++elem )
-      {
-        for( localIndex a = 0; a < 3; ++a )
-        {
-          elemCenterNew[elem][a] = elemCenterOld[elem][a];
-        }
-      }
+      // arrayView2d < real64  > const & elemCenterNew = newSubRegion.getElementCenter();
+      // arrayView2d < real64 const > const & elemCenterOld = sourceSubRegion.getElementCenter();
+      // for( localIndex elem = 0; elem < elemsToNodesNew.size( 0 ); ++elem )
+      // {
+      //   for( localIndex a = 0; a < 3; ++a )
+      //   {
+      //     elemCenterNew[elem][a] = elemCenterOld[elem][a];
+      //   }
+      // }
     
 //      elemsToNodesNew.resize( elemsToNodesSource.size(0), numNodesPerElem );
 
@@ -402,6 +402,8 @@ MeshLevel::MeshLevel( string const & name,
           }
         }
       }
+
+    
 
       //Fill a temporary array which contains the Gauss-Lobatto points depending on the order
       array1d< real64 > GaussLobattoPts( 4 );
