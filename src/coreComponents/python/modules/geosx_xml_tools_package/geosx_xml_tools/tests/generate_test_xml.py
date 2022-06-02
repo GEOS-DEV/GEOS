@@ -347,28 +347,14 @@ def generate_test_xml_files(root_dir):
 
     # Parameters case
     with open("%s/parameters_input.xml" % (root_dir), "w") as f:
-        f.write(
-            xml_header
-            + xml_parameters
-            + xml_base_a
-            + xml_base_b
-            + field_string_with_parameters
-            + xml_footer
-        )
+        f.write(xml_header + xml_parameters + xml_base_a + xml_base_b + field_string_with_parameters + xml_footer)
     with open("%s/parameters_target.xml" % (root_dir), "w") as f:
         f.write(xml_header + xml_base_a + xml_base_b + field_string_base + xml_footer)
     xml_formatter.format_file("%s/parameters_target.xml" % (root_dir))
 
     # Symbolic + parameters case
     with open("%s/symbolic_parameters_input.xml" % (root_dir), "w") as f:
-        f.write(
-            xml_header
-            + xml_parameters
-            + xml_base_a
-            + xml_base_b
-            + field_string_with_symbolic
-            + xml_footer
-        )
+        f.write(xml_header + xml_parameters + xml_base_a + xml_base_b + field_string_with_symbolic + xml_footer)
     with open("%s/symbolic_parameters_target.xml" % (root_dir), "w") as f:
         f.write(xml_header + xml_base_a + xml_base_b + field_string_alt + xml_footer)
     xml_formatter.format_file("%s/symbolic_parameters_target.xml" % (root_dir))

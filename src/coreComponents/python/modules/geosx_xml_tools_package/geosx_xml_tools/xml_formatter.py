@@ -17,9 +17,7 @@ def format_attribute(attribute_indent, ka, attribute_value):
 
     # Identify and split multi-line attributes
     if re.match(r"\s*{\s*({[-+.,0-9a-zA-Z\s]*},?\s*)*\s*}", attribute_value):
-        split_positions = [
-            match.end() for match in re.finditer(r"}\s*,", attribute_value)
-        ]
+        split_positions = [match.end() for match in re.finditer(r"}\s*,", attribute_value)]
         newline_indent = "\n%s" % (" " * (len(attribute_indent) + len(ka) + 4))
         new_values = []
         for a, b in zip([None] + split_positions, split_positions + [None]):
@@ -75,12 +73,8 @@ def format_xml_level(
             if (level == 0) & include_namespace:
                 # Handle the optional namespace information at the root level
                 # Note: preferably, this would point to a schema we host online
-                attribute_dict[
-                    "xmlns:xsi"
-                ] = "http://www.w3.org/2001/XMLSchema-instance"
-                attribute_dict[
-                    "xsi:noNamespaceSchemaLocation"
-                ] = "/usr/gapps/GEOS/schema/schema.xsd"
+                attribute_dict["xmlns:xsi"] = "http://www.w3.org/2001/XMLSchema-instance"
+                attribute_dict["xsi:noNamespaceSchemaLocation"] = "/usr/gapps/GEOS/schema/schema.xsd"
             elif level > 0:
                 attribute_dict = node.attrib
 
@@ -92,22 +86,15 @@ def format_xml_level(
             # Format attributes
             for ka in akeys:
                 # Avoid formatting mathpresso expressions
-                if not (
-                    node.tag in ["SymbolicFunction", "CompositeFunction"]
-                    and ka == "expression"
-                ):
-                    attribute_dict[ka] = format_attribute(
-                        attribute_indent, ka, attribute_dict[ka]
-                    )
+                if not (node.tag in ["SymbolicFunction", "CompositeFunction"] and ka == "expression"):
+                    attribute_dict[ka] = format_attribute(attribute_indent, ka, attribute_dict[ka])
 
             for ii in range(0, len(akeys)):
                 k = akeys[ii]
                 if (ii == 0) & modify_attribute_indent:
                     output.write(' %s="%s"' % (k, attribute_dict[k]))
                 else:
-                    output.write(
-                        '\n%s%s="%s"' % (attribute_indent, k, attribute_dict[k])
-                    )
+                    output.write('\n%s%s="%s"' % (attribute_indent, k, attribute_dict[k]))
 
         # Write children
         if len(node):
@@ -127,11 +114,7 @@ def format_xml_level(
                 )
 
                 # Add space between blocks
-                if (
-                    (level < block_separation_max_depth)
-                    & (ii < Nc - 1)
-                    & (child.tag is not ElementTree.Comment)
-                ):
+                if (level < block_separation_max_depth) & (ii < Nc - 1) & (child.tag is not ElementTree.Comment):
                     output.write("\n")
 
             # Write the end tag
@@ -208,16 +191,10 @@ def main():
     parser.add_argument("input", type=str, help="Input file name")
     parser.add_argument("-i", "--indent", type=int, help="Indent size", default=2)
     parser.add_argument("-s", "--style", type=int, help="Indent style", default=0)
-    parser.add_argument(
-        "-d", "--depth", type=int, help="Block separation depth", default=2
-    )
-    parser.add_argument(
-        "-a", "--alphebitize", type=int, help="Alphebetize attributes", default=0
-    )
+    parser.add_argument("-d", "--depth", type=int, help="Block separation depth", default=2)
+    parser.add_argument("-a", "--alphebitize", type=int, help="Alphebetize attributes", default=0)
     parser.add_argument("-c", "--close", type=int, help="Close tag style", default=0)
-    parser.add_argument(
-        "-n", "--namespace", type=int, help="Include namespace", default=0
-    )
+    parser.add_argument("-n", "--namespace", type=int, help="Include namespace", default=0)
     args = parser.parse_args()
 
     format_file(

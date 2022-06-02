@@ -76,9 +76,7 @@ def get_spaced_centers(nx, ny, nz, start_point=(1, 1, 1)):
     # add check for nx, ny, nz > 0
     x0, y0, z0 = start_point
     total_points = nx * ny * nz
-    grid = np.mgrid[
-        x0 : (x0 + 2 * nx) : 2, y0 : (y0 + 2 * ny) : 2, z0 : (z0 + 2 * nz) : 2
-    ]
+    grid = np.mgrid[x0 : (x0 + 2 * nx) : 2, y0 : (y0 + 2 * ny) : 2, z0 : (z0 + 2 * nz) : 2]
     centers = np.vstack(list(map(np.ravel, grid))).T
 
     return tuple(map(tuple, centers))
@@ -210,80 +208,23 @@ def print_to_vtu(fname, nodes, faces, index_map):
         write_header(outfile)
         space_count = 2
         space_count = open_node(
-            outfile,
-            space_count,
-            "VTKFile",
-            type="UnstructuredGrid",
-            version="0.1",
-            byte_order="LittleEndian",
+            outfile, space_count, "VTKFile", type="UnstructuredGrid", version="0.1", byte_order="LittleEndian"
         )
         space_count = open_node(outfile, space_count, "UnstructuredGrid")
-        space_count = open_node(
-            outfile, space_count, "Piece", NumberOfPoints=npoints, NumberOfCells=ncells
-        )
+        space_count = open_node(outfile, space_count, "Piece", NumberOfPoints=npoints, NumberOfCells=ncells)
         # Optional: add PointData later
-        space_count = open_node(
-            outfile, space_count, "CellData", Scalars="cell_scalars"
-        )
-        write_data(
-            outfile,
-            space_count,
-            cell_data,
-            type="Int32",
-            Name="cell_scalars",
-            format="ascii",
-        )
+        space_count = open_node(outfile, space_count, "CellData", Scalars="cell_scalars")
+        write_data(outfile, space_count, cell_data, type="Int32", Name="cell_scalars", format="ascii")
         space_count = close_node(outfile, space_count, "CellData")
         space_count = open_node(outfile, space_count, "Points")
-        write_data(
-            outfile,
-            space_count,
-            points,
-            type="Float32",
-            NumberOfComponents=3,
-            format="ascii",
-        )
+        write_data(outfile, space_count, points, type="Float32", NumberOfComponents=3, format="ascii")
         space_count = close_node(outfile, space_count, "Points")
         space_count = open_node(outfile, space_count, "Cells")
-        write_data(
-            outfile,
-            space_count,
-            cell_connectivity,
-            type="Int64",
-            IdType=1,
-            Name="connectivity",
-            format="ascii",
-        )
-        write_data(
-            outfile,
-            space_count,
-            cell_offsets,
-            type="Int64",
-            IdType=1,
-            Name="offsets",
-            format="ascii",
-        )
-        write_data(
-            outfile, space_count, cell_types, type="UInt8", Name="types", format="ascii"
-        )
-        write_data(
-            outfile,
-            space_count,
-            face_connectivity,
-            type="Int64",
-            IdType=1,
-            Name="faces",
-            format="ascii",
-        )
-        write_data(
-            outfile,
-            space_count,
-            face_offsets,
-            type="Int64",
-            IdType=1,
-            Name="faceoffsets",
-            format="ascii",
-        )
+        write_data(outfile, space_count, cell_connectivity, type="Int64", IdType=1, Name="connectivity", format="ascii")
+        write_data(outfile, space_count, cell_offsets, type="Int64", IdType=1, Name="offsets", format="ascii")
+        write_data(outfile, space_count, cell_types, type="UInt8", Name="types", format="ascii")
+        write_data(outfile, space_count, face_connectivity, type="Int64", IdType=1, Name="faces", format="ascii")
+        write_data(outfile, space_count, face_offsets, type="Int64", IdType=1, Name="faceoffsets", format="ascii")
         space_count = close_node(outfile, space_count, "Cells")
         space_count = close_node(outfile, space_count, "Piece")
         space_count = close_node(outfile, space_count, "UnstructuredGrid")
@@ -313,15 +254,9 @@ def make_cuboctahedral_mesh(nx, ny, nz, fname):
 if __name__ == "__main__":
     # Read input arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "nx", help="Number of cuboctahedra in the x direction", type=int
-    )
-    parser.add_argument(
-        "ny", help="Number of cuboctahedra in the y direction", type=int
-    )
-    parser.add_argument(
-        "nz", help="Number of cuboctahedra in the z direction", type=int
-    )
+    parser.add_argument("nx", help="Number of cuboctahedra in the x direction", type=int)
+    parser.add_argument("ny", help="Number of cuboctahedra in the y direction", type=int)
+    parser.add_argument("nz", help="Number of cuboctahedra in the z direction", type=int)
     parser.add_argument("outfile", help="Output file name")
     args = parser.parse_args()
     nx, ny, nz = (args.nx, args.ny, args.nz)

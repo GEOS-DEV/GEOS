@@ -41,10 +41,7 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
 
         # Check for bad element region conversions
         if -1 in cell_ids[-1]:
-            logger.warning(
-                "Some element regions in block %i did not convert correctly to tags!"
-                % (block_id)
-            )
+            logger.warning("Some element regions in block %i did not convert correctly to tags!" % (block_id))
             logger.warning("Note: These will be indicated by a -1 in the output file.")
             n_warnings += 1
 
@@ -92,13 +89,8 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
                         quad_region.append(region_id)
 
                     else:
-                        logger.warning(
-                            "  Discarding an element with an unexpected number of nodes"
-                        )
-                        logger.warning(
-                            "    n_nodes=%i, element=%i, set=%s"
-                            % (n_matching, element_id, nodeset_name)
-                        )
+                        logger.warning("  Discarding an element with an unexpected number of nodes")
+                        logger.warning("    n_nodes=%i, element=%i, set=%s" % (n_matching, element_id, nodeset_name))
                         n_warnings += 1
 
     # Add new tris
@@ -142,9 +134,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("input", type=str, help="Input abaqus mesh file name")
     parser.add_argument("output", type=str, help="Output gmsh mesh file name")
-    parser.add_argument(
-        "-v", "--verbose", help="Increase verbosity level", action="store_true"
-    )
+    parser.add_argument("-v", "--verbose", help="Increase verbosity level", action="store_true")
     args = parser.parse_args()
 
     # Set up a logger

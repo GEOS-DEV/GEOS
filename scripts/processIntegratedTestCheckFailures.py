@@ -27,20 +27,10 @@ parser.add_argument(
 )
 
 
-parser.add_argument(
-    "-ext",
-    "--extension",
-    type=str,
-    default=".data",
-    help="extension of files to filter",
-)
+parser.add_argument("-ext", "--extension", type=str, default=".data", help="extension of files to filter")
 
 parser.add_argument(
-    "-tl",
-    "--numTrailingLines",
-    type=int,
-    default=5,
-    help="number of lines to include in block after match is found.",
+    "-tl", "--numTrailingLines", type=int, default=5, help="number of lines to include in block after match is found."
 )
 
 
@@ -77,20 +67,17 @@ for fileName in findFiles(directory, extension):
 
                 for j in range(1, numTrailingLines + 1):
                     if i + j >= len(lines):
-                        matchBlock += "  ***** No closing line. file truncated? Filters may not be properly applied! *****"
+                        matchBlock += (
+                            "  ***** No closing line. file truncated? Filters may not be properly applied! *****"
+                        )
                         break
                     matchBlock += "  " + lines[i + j]
 
-                    if (
-                        "******************************************************************************"
-                        in lines[i + j]
-                    ):
+                    if "******************************************************************************" in lines[i + j]:
                         break
                 i += j
 
-                if not any(
-                    excludeString in matchBlock for excludeString in exclusionStrings
-                ):
+                if not any(excludeString in matchBlock for excludeString in exclusionStrings):
                     filteredErrors += matchBlock
 
     if len(filteredErrors):

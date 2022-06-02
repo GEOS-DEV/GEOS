@@ -65,9 +65,7 @@ def sexe(cmd, ret_output=False, echo=True):
     if echo:
         print("[exe: {}]".format(cmd))
     if ret_output:
-        p = subprocess.Popen(
-            cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         res = p.communicate()[0]
         res = res.decode("utf8")
         return p.returncode, res
@@ -100,11 +98,7 @@ def find_pkg(pkg_name):
     for l in rout.split("\n"):
         print(l)
         lstrip = l.strip()
-        if (
-            not lstrip == ""
-            and not lstrip.startswith("==>")
-            and not lstrip.startswith("--")
-        ):
+        if not lstrip == "" and not lstrip.startswith("==>") and not lstrip.startswith("--"):
             return {"name": pkg_name, "path": l.split()[-1]}
     print("[ERROR: failed to find package named '{}']".format(pkg_name))
     sys.exit(-1)

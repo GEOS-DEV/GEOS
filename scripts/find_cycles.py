@@ -45,10 +45,7 @@ def get_compile_commands(ninja_compile_command: str) -> Tuple[Compile]:
 
 
 def recursive_populate(
-    edges: Tuple[str, str],
-    root_indent: int,
-    root_path: str,
-    sub_graph_info: Tuple[int, str],
+    edges: Tuple[str, str], root_indent: int, root_path: str, sub_graph_info: Tuple[int, str]
 ) -> None:
     """
     Constructs the edges and populate the list.
@@ -117,9 +114,7 @@ def get_gcc_output(cc: Compile) -> str:
     """
     try:
         logging.info("Extracting include information for " + cc.file)
-        process = subprocess.run(
-            cc.include_command, capture_output=True, cwd=cc.directory, check=True
-        )
+        process = subprocess.run(cc.include_command, capture_output=True, cwd=cc.directory, check=True)
         return process.stderr.decode("utf-8")  # output is on stderr.
     except subprocess.CalledProcessError as e:
         logging.error("Could not run " + " ".join(cc.include_command), exc_info=e)
@@ -149,11 +144,7 @@ def parse(cli_args: List[str]):
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-c",
-        "--compile-command",
-        help="Ninja's compile_command.json file.",
-        type=str,
-        dest="ninja_compile_command",
+        "-c", "--compile-command", help="Ninja's compile_command.json file.", type=str, dest="ninja_compile_command"
     )
     parser.add_argument(
         "-e",
@@ -173,9 +164,7 @@ def main():
     No cycle found will therefore exit on 0.
     :return: None
     """
-    logging.basicConfig(
-        format="[%(asctime)s][%(levelname)s] %(message)s", level=logging.INFO
-    )
+    logging.basicConfig(format="[%(asctime)s][%(levelname)s] %(message)s", level=logging.INFO)
     args = parse(sys.argv[1:])
     logging.info("Starting cycle detection process.")
     outputs = get_gcc_outputs(args.ninja_compile_command)

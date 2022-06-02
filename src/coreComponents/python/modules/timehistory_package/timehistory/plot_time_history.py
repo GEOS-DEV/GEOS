@@ -30,32 +30,22 @@ def getHistorySeries(database, variable, setname, indices=None, components=None)
     set_regex = re.compile(variable + "(.*?)", re.IGNORECASE)
     if setname is not None:
         set_regex = re.compile(variable + "\s*" + str(setname), re.IGNORECASE)
-    time_regex = re.compile(
-        "Time", re.IGNORECASE
-    )  # need to make this per-set, thought that was in already?
+    time_regex = re.compile("Time", re.IGNORECASE)  # need to make this per-set, thought that was in already?
 
     set_match = list(filter(set_regex.match, database.keys()))
     time_match = list(filter(time_regex.match, database.keys()))
 
     if len(set_match) == 0:
-        print(
-            f"Error: can't locate time history data for variable/set described by regex {set_regex.pattern}"
-        )
+        print(f"Error: can't locate time history data for variable/set described by regex {set_regex.pattern}")
         return None
     if len(time_match) == 0:
-        print(
-            f"Error: can't locate time history data for set time variable described by regex {time_regex.pattern}"
-        )
+        print(f"Error: can't locate time history data for set time variable described by regex {time_regex.pattern}")
         return None
 
     if len(set_match) > 1:
-        print(
-            f"Warning: variable/set specification matches multiple datasets: {', '.join(set_match)}"
-        )
+        print(f"Warning: variable/set specification matches multiple datasets: {', '.join(set_match)}")
     if len(time_match) > 1:
-        print(
-            f"Warning: set specification matches multiple time datasets: {', '.join(time_match)}"
-        )
+        print(f"Warning: set specification matches multiple time datasets: {', '.join(time_match)}")
 
     set_match = set_match[0]
     time_match = time_match[0]
@@ -72,9 +62,7 @@ def getHistorySeries(database, variable, setname, indices=None, components=None)
         if type(indices) is int:
             indices = list(indices)
         if isiterable(indices):
-            oob_idxs = list(
-                filter(lambda idx: not 0 <= idx < data_series.shape[1], indices)
-            )
+            oob_idxs = list(filter(lambda idx: not 0 <= idx < data_series.shape[1], indices))
             if len(oob_idxs) > 0:
                 print(
                     f"Error: The specified indices: ({', '.join(oob_idxs)}) "
@@ -91,9 +79,7 @@ def getHistorySeries(database, variable, setname, indices=None, components=None)
         if type(components) is int:
             components = list(components)
         if isiterable(components):
-            oob_comps = list(
-                filter(lambda comp: not 0 <= comp < data_series.shape[2], components)
-            )
+            oob_comps = list(filter(lambda comp: not 0 <= comp < data_series.shape[2], components))
             if len(oob_comps) > 0:
                 print(
                     f"Error: The specified components: ({', '.join(oob_comps)}) "
@@ -106,23 +92,14 @@ def getHistorySeries(database, variable, setname, indices=None, components=None)
     else:
         components = range(data_series.shape[2])
 
-    return [
-        (time_series[:, 0], data_series[:, idx, comp], idx, comp)
-        for idx in indices
-        for comp in components
-    ]
+    return [(time_series[:, 0], data_series[:, idx, comp], idx, comp) for idx in indices for comp in components]
 
 
 def commandLinePlotGen():
     parser = argparse.ArgumentParser(
         description="A script that parses geosx HDF5 time-history files and produces time-history plots using matplotlib"
     )
-    parser.add_argument(
-        "filename",
-        metavar="history_file",
-        type=str,
-        help="The time history file to parse",
-    )
+    parser.add_argument("filename", metavar="history_file", type=str, help="The time history file to parse")
 
     parser.add_argument(
         "variable",
@@ -168,9 +145,7 @@ def commandLinePlotGen():
     else:
         with h5w(args.filename, mode="r") as database:
             for setname in args.sets:
-                ds = getHistorySeries(
-                    database, args.variable, setname, args.indices, args.components
-                )
+                ds = getHistorySeries(database, args.variable, setname, args.indices, args.components)
                 if ds is None:
                     result = -1
                     break

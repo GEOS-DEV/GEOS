@@ -68,9 +68,7 @@ class DictRegexHandler:
         k = match.group(1)
         if k:
             if k not in self.target.keys():
-                raise Exception(
-                    "Error: Target (%s) is not defined in the regex handler" % k
-                )
+                raise Exception("Error: Target (%s) is not defined in the regex handler" % k)
             value = self.target[k]
             return str(value)
         else:

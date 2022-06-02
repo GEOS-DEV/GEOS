@@ -204,12 +204,7 @@ class KGDSolutions(HydrofractureSolutions):
             + B1
             * (
                 4.0 * math.sqrt(1 - rho * rho)
-                + 2.0
-                * rho
-                * rho
-                * math.log(
-                    (1.0 - math.sqrt(1 - rho * rho)) / (1.0 + math.sqrt(1 - rho * rho))
-                )
+                + 2.0 * rho * rho * math.log((1.0 - math.sqrt(1 - rho * rho)) / (1.0 + math.sqrt(1 - rho * rho)))
             )
         )
 
@@ -228,11 +223,7 @@ class KGDSolutions(HydrofractureSolutions):
             / (20.0 * math.pi)
             * scipy.special.beta(-1.5, 8.0 / 3.0)
             * (
-                2.0
-                / 3.0
-                * rho
-                * rho
-                * scipy.special.hyp2f1(-1.0 / 6.0, 2, 1.5, rho * rho)
+                2.0 / 3.0 * rho * rho * scipy.special.hyp2f1(-1.0 / 6.0, 2, 1.5, rho * rho)
                 - 0.5 * scipy.special.hyp2f1(-7.0 / 6.0, 1, 0.5, rho * rho)
             )
         )
@@ -248,9 +239,7 @@ class KGDSolutions(HydrofractureSolutions):
     #              + B1*(2-math.pi*abs(rho))
 
     def Omega_k0(self, rho):
-        return (
-            self.gamma_k0() * pow(math.pi, 1.0 / 3.0) / 2.0 * math.sqrt(1 - pow(rho, 2))
-        )
+        return self.gamma_k0() * pow(math.pi, 1.0 / 3.0) / 2.0 * math.sqrt(1 - pow(rho, 2))
 
     def PI_k0(self):
         return pow(math.pi, 1.0 / 3.0) / 8.0
@@ -280,10 +269,9 @@ class PennySolutions(HydrofractureSolutions):
         A1 = 3.581e-1
         C1 = 6.846e-1
         C2 = 7.098e-2
-        ot1 = (
-            math.sqrt(70.0) / 3.0 * C1
-            + 4.0 * math.sqrt(5.0) / 9.0 * C2 * (13 * rho - 6)
-        ) * pow(1.0 - rho, 2.0 / 3.0)
+        ot1 = (math.sqrt(70.0) / 3.0 * C1 + 4.0 * math.sqrt(5.0) / 9.0 * C2 * (13 * rho - 6)) * pow(
+            1.0 - rho, 2.0 / 3.0
+        )
         ot2 = B1 * 8.0 / math.pi * (math.sqrt(1.0 - rho) - rho * math.acos(rho))
         return ot1 + ot2
 
@@ -292,9 +280,7 @@ class PennySolutions(HydrofractureSolutions):
         A1 = 3.581e-1
         C1 = 6.846e-1
         C2 = 7.098e-2
-        return A1 * (2.479 - 2.0 / 3.0 / pow(1.0 - rho, 1.0 / 3.0)) - B1 * (
-            math.log(rho / 2.0) + 1
-        )
+        return A1 * (2.479 - 2.0 / 3.0 / pow(1.0 - rho, 1.0 / 3.0)) - B1 * (math.log(rho / 2.0) + 1)
 
     def Omega_k0(self, rho):
         return pow(3.0 / 8.0 / math.pi, 0.2) * math.sqrt(1 - pow(rho, 2))

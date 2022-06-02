@@ -76,9 +76,7 @@ def merge_included_xml_files(root, fname, includeCount, maxInclude=100):
     # Check to see if the code has fallen into a loop
     includeCount += 1
     if includeCount > maxInclude:
-        raise Exception(
-            "Reached maximum recursive includes...  Is there an include loop?"
-        )
+        raise Exception("Reached maximum recursive includes...  Is there an include loop?")
 
     # Check to make sure the file exists
     if not os.path.isfile(fname):
@@ -121,31 +119,19 @@ def apply_regex_to_node(node):
             value = re.sub(regex_tools.patterns["parameters"], parameterHandler, value)
             ii += 1
             if ii > 100:
-                raise Exception(
-                    "Reached maximum parameter expands (Node=%s, value=%s)"
-                    % (node.tag, value)
-                )
+                raise Exception("Reached maximum parameter expands (Node=%s, value=%s)" % (node.tag, value))
 
         # Unit format:       9.81[m**2/s] or 1.0 [bbl/day]
         if "[" in value:
-            value = re.sub(
-                regex_tools.patterns["units"], unitManager.regexHandler, value
-            )
+            value = re.sub(regex_tools.patterns["units"], unitManager.regexHandler, value)
 
         # Symbolic format:   `1 + 2.34e5*2 * ...`
         ii = 0
         while "`" in value:
-            value = re.sub(
-                regex_tools.patterns["symbolic"],
-                regex_tools.SymbolicMathRegexHandler,
-                value,
-            )
+            value = re.sub(regex_tools.patterns["symbolic"], regex_tools.SymbolicMathRegexHandler, value)
             ii += 1
             if ii > 100:
-                raise Exception(
-                    "Reached maximum symbolic expands (Node=%s, value=%s)"
-                    % (node.tag, value)
-                )
+                raise Exception("Reached maximum symbolic expands (Node=%s, value=%s)" % (node.tag, value))
 
         node.set(k, value)
 
@@ -168,13 +154,7 @@ def generate_random_name(prefix="", suffix=".xml"):
 
 
 def process(
-    inputFiles,
-    outputFile="",
-    schema="",
-    verbose=0,
-    parameter_override=[],
-    keep_parameters=True,
-    keep_includes=True,
+    inputFiles, outputFile="", schema="", verbose=0, parameter_override=[], keep_parameters=True, keep_includes=True
 ):
     """Process an xml file
 

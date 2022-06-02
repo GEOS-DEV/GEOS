@@ -41,9 +41,7 @@ def parse_schema_element(
             if not pascal_case_regex.match(child_name):
                 print("Element is not PascalCase: %s/%s" % (path, child_name))
 
-            if not (
-                (child_name in recursive_types) and (element_name in recursive_types)
-            ):
+            if not ((child_name in recursive_types) and (element_name in recursive_types)):
                 sub_path = "%s/%s" % (path, child_name)
                 parse_schema_element(root, child, sub_path)
 

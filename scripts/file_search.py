@@ -69,9 +69,7 @@ def parse_and_search(allfiles, todo_token, n_lines_before=5, n_lines_after=5):
                 cnt += 1
                 f.write(tokenize(file_name, "h4"))
                 f.write(tokenize(output_log, "div id=script", todo_token))
-        summary = "</br>Found {} files containing {} (case insensitive) ".format(
-            cnt, todo_token.upper()
-        )
+        summary = "</br>Found {} files containing {} (case insensitive) ".format(cnt, todo_token.upper())
         f.write(tokenize(summary, "strong"))
         f.write(html_tail())
 

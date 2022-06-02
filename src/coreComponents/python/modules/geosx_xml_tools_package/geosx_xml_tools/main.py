@@ -10,13 +10,7 @@ from geosx_xml_tools import xml_processor
 def parse_arguments():
     # Parse the user arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-i",
-        "--input",
-        type=str,
-        action="append",
-        help="Input file name (multiple allowed)",
-    )
+    parser.add_argument("-i", "--input", type=str, action="append", help="Input file name (multiple allowed)")
     parser.add_argument(
         "-c",
         "--compiled-name",
@@ -24,16 +18,8 @@ def parse_arguments():
         help="Compiled xml file name (otherwise, it is randomly genrated)",
         default="",
     )
-    parser.add_argument(
-        "-s",
-        "--schema",
-        type=str,
-        help="GEOSX schema to use for validation",
-        default="",
-    )
-    parser.add_argument(
-        "-v", "--verbose", type=int, help="Verbosity of outputs", default=0
-    )
+    parser.add_argument("-s", "--schema", type=str, help="GEOSX schema to use for validation", default="")
+    parser.add_argument("-v", "--verbose", type=int, help="Verbosity of outputs", default=0)
     parser.add_argument(
         "-p",
         "--parameters",
@@ -54,9 +40,7 @@ def check_mpi_rank():
     return rank
 
 
-def wait_for_file_write_rank_0(
-    target_file_argument=0, max_wait_time=100, max_startup_delay=1
-):
+def wait_for_file_write_rank_0(target_file_argument=0, max_wait_time=100, max_startup_delay=1):
     def wait_for_file_write_rank_0_inner(writer):
         def wait_for_file_write_rank_0_decorator(*args, **kwargs):
             # Check the target file status
@@ -109,9 +93,7 @@ def preprocess_serial():
     #       If the rank detection fails, then it will preprocess the file on all ranks, which
     #       sometimes cause a (seemingly harmless) file write conflict.
     # processor = xml_processor.process
-    processor = wait_for_file_write_rank_0(
-        target_file_argument="outputFile", max_wait_time=100
-    )(xml_processor.process)
+    processor = wait_for_file_write_rank_0(target_file_argument="outputFile", max_wait_time=100)(xml_processor.process)
 
     compiled_name = processor(
         args.input,

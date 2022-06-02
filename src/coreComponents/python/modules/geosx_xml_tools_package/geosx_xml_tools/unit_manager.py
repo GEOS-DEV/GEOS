@@ -20,26 +20,16 @@ class UnitManager:
         """
 
         # Replace all instances of units in the string with their scale defined in self.units
-        symbolicUnits = re.sub(
-            regex_tools.patterns["units_b"], self.unitMatcher, unitStruct[1]
-        )
+        symbolicUnits = re.sub(regex_tools.patterns["units_b"], self.unitMatcher, unitStruct[1])
 
         # Strip out any undesired characters and evaluate
         # Note: the only allowed alpha characters are e and E.  This could be relaxed to allow
         #       functions such as sin, cos, etc.
-        symbolicUnits_sanitized = re.sub(
-            regex_tools.patterns["sanitize"], "", symbolicUnits
-        ).strip()
-        value = float(unitStruct[0]) * eval(
-            symbolicUnits_sanitized, {"__builtins__": None}
-        )
+        symbolicUnits_sanitized = re.sub(regex_tools.patterns["sanitize"], "", symbolicUnits).strip()
+        value = float(unitStruct[0]) * eval(symbolicUnits_sanitized, {"__builtins__": None})
 
         # Format the string, removing any trailing zeros, decimals, extraneous exponential formats
-        str_value = re.sub(
-            regex_tools.patterns["strip_trailing"],
-            "",
-            regex_tools.symbolic_format % (value),
-        )
+        str_value = re.sub(regex_tools.patterns["strip_trailing"], "", regex_tools.symbolic_format % (value))
         str_value = re.sub(regex_tools.patterns["strip_trailing_b"], "", str_value)
         return str_value
 
@@ -79,11 +69,7 @@ class UnitManager:
             "minute": {"value": 60.0, "alt": ["min", "minutes"], "usePrefix": True},
             "hour": {"value": 3600.0, "alt": ["hr", "hours", "hrs"], "usePrefix": True},
             "day": {"value": 3600.0 * 24.0, "alt": ["d", "dy"], "usePrefix": True},
-            "year": {
-                "value": 3600.0 * 24.0 * 365.25,
-                "alt": ["yr", "years"],
-                "usePrefix": True,
-            },
+            "year": {"value": 3600.0 * 24.0 * 365.25, "alt": ["yr", "years"], "usePrefix": True},
             "pascal": {"value": 1.0, "alt": ["Pa"], "usePrefix": True},
             "newton": {"value": 1.0, "alt": ["N"], "usePrefix": True},
             "joule": {"value": 1.0, "alt": ["J"], "usePrefix": True},
@@ -92,33 +78,17 @@ class UnitManager:
 
         # Imperial units, and their abbreviations
         imp_defs = {
-            "pound": {
-                "value": 0.453592,
-                "alt": ["lb", "pounds", "lbs"],
-                "usePrefix": True,
-            },
+            "pound": {"value": 0.453592, "alt": ["lb", "pounds", "lbs"], "usePrefix": True},
             "poundforce": {"value": 0.453592 * 9.81, "alt": ["lbf"], "usePrefix": True},
             "stone": {"value": 6.35029, "alt": ["st"], "usePrefix": True},
             "ton": {"value": 907.185, "alt": ["tons"], "usePrefix": True},
-            "inch": {
-                "value": 1.0 / (3.281 * 12),
-                "alt": ["in", "inches"],
-                "usePrefix": False,
-            },
+            "inch": {"value": 1.0 / (3.281 * 12), "alt": ["in", "inches"], "usePrefix": False},
             "foot": {"value": 1.0 / 3.281, "alt": ["ft", "feet"], "usePrefix": True},
             "yard": {"value": 3.0 / 3.281, "alt": ["yd", "yards"], "usePrefix": True},
             "rod": {"value": 16.5 / 3.281, "alt": ["rd", "rods"], "usePrefix": True},
-            "mile": {
-                "value": 5280.0 / 3.281,
-                "alt": ["mi", "miles"],
-                "usePrefix": True,
-            },
+            "mile": {"value": 5280.0 / 3.281, "alt": ["mi", "miles"], "usePrefix": True},
             "acre": {"value": 4046.86, "alt": ["acres"], "usePrefix": True},
-            "gallon": {
-                "value": 0.00378541,
-                "alt": ["gal", "gallons"],
-                "usePrefix": True,
-            },
+            "gallon": {"value": 0.00378541, "alt": ["gal", "gallons"], "usePrefix": True},
             "psi": {"value": 6894.76, "alt": [], "usePrefix": True},
             "psf": {"value": 1853.184, "alt": [], "usePrefix": True},
         }
@@ -127,22 +97,10 @@ class UnitManager:
         other_defs = {
             "dyne": {"value": 1.0e-5, "alt": ["dynes"], "usePrefix": True},
             "bar": {"value": 1.0e5, "alt": ["bars"], "usePrefix": True},
-            "atmosphere": {
-                "value": 101325.0,
-                "alt": ["atm", "atmospheres"],
-                "usePrefix": True,
-            },
+            "atmosphere": {"value": 101325.0, "alt": ["atm", "atmospheres"], "usePrefix": True},
             "poise": {"value": 0.1, "alt": ["P"], "usePrefix": True},
-            "barrel": {
-                "value": 0.1589873,
-                "alt": ["bbl", "barrels"],
-                "usePrefix": True,
-            },
-            "horsepower": {
-                "value": 745.7,
-                "alt": ["hp", "horsepowers"],
-                "usePrefix": True,
-            },
+            "barrel": {"value": 0.1589873, "alt": ["bbl", "barrels"], "usePrefix": True},
+            "horsepower": {"value": 745.7, "alt": ["hp", "horsepowers"], "usePrefix": True},
         }
 
         # Combine the unit dicts
@@ -159,10 +117,7 @@ class UnitManager:
                 prefixes[prefixes[p]["alt"]] = {"value": prefixes[p]["value"]}
         for u in list(unit_defs.keys()):
             for alt in unit_defs[u]["alt"]:
-                unit_defs[alt] = {
-                    "value": unit_defs[u]["value"],
-                    "usePrefix": unit_defs[u]["usePrefix"],
-                }
+                unit_defs[alt] = {"value": unit_defs[u]["value"], "usePrefix": unit_defs[u]["usePrefix"]}
 
         # Combine the results into the final dictionary
         for u in unit_defs.keys():
@@ -179,8 +134,6 @@ class UnitManager:
         duplicates = [k for k, v in Counter(tmp).items() if v > 1]
         if duplicates:
             print(duplicates)
-            raise Exception(
-                "Error: There are overlapping unit definitions in the UnitManager"
-            )
+            raise Exception("Error: There are overlapping unit definitions in the UnitManager")
 
         self.unitMatcher.target = self.units

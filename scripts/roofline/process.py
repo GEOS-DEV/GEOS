@@ -79,15 +79,11 @@ def process(fin, caliperKernelName, LABELS, FLOPS, AIL1, AIL2, AIHBM):
 
         ### L2 transactions
         # read and write
-        if ("lts__t_sectors_op_read.sum" in line) or (
-            "lts__t_sectors_op_write.sum" in line
-        ):
+        if ("lts__t_sectors_op_read.sum" in line) or ("lts__t_sectors_op_write.sum" in line):
             linesp = line.split(",")
             lL2.append(float(linesp[len(linesp) - 1].strip("\n").strip('"')))
         # atomic
-        if ("lts__t_sectors_op_red.sum" in line) or (
-            "lts__t_sectors_op_atom.sum" in line
-        ):
+        if ("lts__t_sectors_op_red.sum" in line) or ("lts__t_sectors_op_atom.sum" in line):
             linesp = line.split(",")
             lL2.append(float(linesp[len(linesp) - 1].strip("\n").strip('"')) * 2.0)
 

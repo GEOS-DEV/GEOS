@@ -81,9 +81,7 @@ class TestParameterRegex(unittest.TestCase):
     )
     def test_parameter_regex(self, parameterInput, expectedValue, expect_fail=False):
         try:
-            result = re.sub(
-                regex_tools.patterns["parameters"], self.regexHandler, parameterInput
-            )
+            result = re.sub(regex_tools.patterns["parameters"], self.regexHandler, parameterInput)
             self.assertTrue((result == expectedValue) != expect_fail)
         except Exception:
             self.assertTrue(expect_fail)
@@ -107,9 +105,7 @@ class TestUnitsRegex(unittest.TestCase):
     )
     def test_units_regex(self, unitInput, expectedValue, expect_fail=False):
         try:
-            result = re.sub(
-                regex_tools.patterns["units"], unitManager.regexHandler, unitInput
-            )
+            result = re.sub(regex_tools.patterns["units"], unitManager.regexHandler, unitInput)
             self.assertTrue((result == expectedValue) != expect_fail)
         except Exception:
             self.assertTrue(expect_fail)
@@ -140,11 +136,7 @@ class TestSymbolicRegex(unittest.TestCase):
     )
     def test_symbolic_regex(self, symbolicInput, expectedValue, expect_fail=False):
         try:
-            result = re.sub(
-                regex_tools.patterns["symbolic"],
-                regex_tools.SymbolicMathRegexHandler,
-                symbolicInput,
-            )
+            result = re.sub(regex_tools.patterns["symbolic"], regex_tools.SymbolicMathRegexHandler, symbolicInput)
             self.assertTrue((result == expectedValue) != expect_fail)
         except Exception:
             self.assertTrue(expect_fail)
@@ -167,11 +159,7 @@ class TestXMLProcessor(unittest.TestCase):
     def test_xml_processor(self, input_file, target_file, expect_fail=False):
         try:
             tmp = xml_processor.process(
-                input_file,
-                outputFile=input_file + ".processed",
-                verbose=0,
-                keep_parameters=False,
-                keep_includes=False,
+                input_file, outputFile=input_file + ".processed", verbose=0, keep_parameters=False, keep_includes=False
             )
             self.assertTrue(filecmp.cmp(tmp, target_file) != expect_fail)
         except Exception:
@@ -216,13 +204,7 @@ def main():
 
     # Parse the user arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-t",
-        "--test_dir",
-        type=str,
-        help="Test output directory",
-        default="./test_results",
-    )
+    parser.add_argument("-t", "--test_dir", type=str, help="Test output directory", default="./test_results")
     parser.add_argument("-v", "--verbose", type=int, help="Verbosity level", default=2)
     args = parser.parse_args()
 

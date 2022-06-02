@@ -30,18 +30,14 @@ def parse_schema_element(
         attribute_name = attribute.get("name")
         local_types["attributes"][attribute_name] = {ka: [] for ka in folders}
         if "default" in attribute.attrib:
-            local_types["attributes"][attribute_name]["default"] = attribute.get(
-                "default"
-            )
+            local_types["attributes"][attribute_name]["default"] = attribute.get("default")
 
     # Parse children
     choice_node = element_def.findall("%schoice" % (xsd))
     if choice_node:
         for child in choice_node[0].findall("%selement" % (xsd)):
             child_name = child.get("name")
-            if not (
-                (child_name in recursive_types) and (element_name in recursive_types)
-            ):
+            if not ((child_name in recursive_types) and (element_name in recursive_types)):
                 local_types["children"][child_name] = parse_schema_element(root, child)
 
     return local_types
@@ -70,9 +66,7 @@ def collect_xml_attributes_level(local_types, node, folder):
 
     for child in node:
         if child.tag in local_types["children"]:
-            collect_xml_attributes_level(
-                local_types["children"][child.tag], child, folder
-            )
+            collect_xml_attributes_level(local_types["children"][child.tag], child, folder)
 
 
 def collect_xml_attributes(xml_types, fname, folder):
@@ -167,13 +161,7 @@ def main():
     # Parse the user arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--root", type=str, help="GEOSX root", default="")
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        help="Output file name",
-        default="attribute_test.xml",
-    )
+    parser.add_argument("-o", "--output", type=str, help="Output file name", default="attribute_test.xml")
     args = parser.parse_args()
 
     # Parse the xml files

@@ -47,9 +47,7 @@ def get_index_map(ideal, actual):
 
 def get_cube_indices(ncubes, indmap):
     index_list = []
-    starting_corners = np.vstack(
-        list(map(np.ravel, np.mgrid[0:ncubes, 0:ncubes, 0:ncubes]))
-    ).T
+    starting_corners = np.vstack(list(map(np.ravel, np.mgrid[0:ncubes, 0:ncubes, 0:ncubes]))).T
 
     for x, y, z in starting_corners:
         points = [
@@ -94,16 +92,7 @@ def make_nxnxn_framework(n):
     center = np.vstack(list(map(np.ravel, center_combos))).T
 
     # Organize points into list, set corresponding axes for nudging
-    points_list = [
-        corners,
-        x_edges,
-        y_edges,
-        z_edges,
-        xy_faces,
-        yz_faces,
-        xz_faces,
-        center,
-    ]
+    points_list = [corners, x_edges, y_edges, z_edges, xy_faces, yz_faces, xz_faces, center]
     points = np.concatenate(points_list, axis=0)
     nudge_axes = [
         set(),
@@ -117,9 +106,7 @@ def make_nxnxn_framework(n):
     ]
 
     # Get an orderly array of all points and calculate cube corner indices
-    ideal_points = np.vstack(
-        list(map(np.ravel, np.mgrid[0 : n + 1, 0 : n + 1, 0 : n + 1]))
-    ).T
+    ideal_points = np.vstack(list(map(np.ravel, np.mgrid[0 : n + 1, 0 : n + 1, 0 : n + 1]))).T
     # Increments z, then y, then x
     indmap = get_index_map(ideal_points, points)
     cube_indices = get_cube_indices(n, indmap)
@@ -183,9 +170,7 @@ def make_tets_from_cubes(cube_list):
     tet_list = []
 
     for a, b, c, d, e, f, g, h in cube_list:
-        tet_list.extend(
-            [[a, b, c, f], [a, c, d, h], [a, e, f, h], [c, f, g, h], [a, f, c, h]]
-        )
+        tet_list.extend([[a, b, c, f], [a, c, d, h], [a, e, f, h], [c, f, g, h], [a, f, c, h]])
 
     return tet_list
 
@@ -283,19 +268,10 @@ if __name__ == "__main__":
         description="A script that generates NxNxN meshes with a cubic bounding box. Non-corner nodes are perturbed from their structured locations and outputs are written as hexahedra, tetrahedra, wedges, and pyramids in both .vtu and .msh formats."
     )
     parser.add_argument(
-        "sideLengths",
-        metavar="N",
-        type=int,
-        nargs="+",
-        help="an integer side length for mesh construction",
+        "sideLengths", metavar="N", type=int, nargs="+", help="an integer side length for mesh construction"
     )
     parser.add_argument(
-        "--seed",
-        type=int,
-        nargs="?",
-        const=5,
-        default=5,
-        help="Integer random number generator seed, default=5",
+        "--seed", type=int, nargs="?", const=5, default=5, help="Integer random number generator seed, default=5"
     )
     args = parser.parse_args()
 

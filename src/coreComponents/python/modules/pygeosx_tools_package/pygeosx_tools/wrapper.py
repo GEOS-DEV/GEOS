@@ -254,10 +254,7 @@ def set_wrapper_with_function(problem, target_key, input_keys, fn, target_index=
             local_target[...] = np.tile(np.expand_dims(fn_output, axis=1), (1, N[1]))
 
         else:
-            raise Exception(
-                "Shape of function output %s is not compatible with target %s"
-                % (str(M), str(N))
-            )
+            raise Exception("Shape of function output %s is not compatible with target %s" % (str(M), str(N)))
     elif len(M) == 1:
         if len(N) == 2:
             # 2D target, with 1D output applied to a given index
@@ -267,9 +264,7 @@ def set_wrapper_with_function(problem, target_key, input_keys, fn, target_index=
             # ND target, with 1D output tiled across intermediate indices
             expand_axes = tuple([ii for ii in range(1, len(N) - 1)])
             tile_axes = tuple([1] + [ii for ii in N[1:-1]])
-            local_target[..., target_index] = np.tile(
-                np.expand_dims(fn_output, axis=expand_axes), tile_axes
-            )
+            local_target[..., target_index] = np.tile(np.expand_dims(fn_output, axis=expand_axes), tile_axes)
 
     else:
         raise Exception(
@@ -278,9 +273,7 @@ def set_wrapper_with_function(problem, target_key, input_keys, fn, target_index=
         )
 
 
-def search_datastructure_wrappers_recursive(
-    group, filters, matching_paths, level=0, group_path=[]
-):
+def search_datastructure_wrappers_recursive(group, filters, matching_paths, level=0, group_path=[]):
     """
     Recursively search the group and its children for wrappers that match the filters
 
@@ -298,11 +291,7 @@ def search_datastructure_wrappers_recursive(
     for sub_group in group.groups():
         sub_group_name = str(sub_group).split()[0].split("/")[-1]
         search_datastructure_wrappers_recursive(
-            sub_group,
-            filters,
-            matching_paths,
-            level=level + 1,
-            group_path=group_path + [sub_group_name],
+            sub_group, filters, matching_paths, level=level + 1, group_path=group_path + [sub_group_name]
         )
 
 
@@ -359,9 +348,7 @@ def run_queries(problem, records):
             current_time = get_wrapper(problem, "Events/time")
             records[k]["history"].append(current_time * records[k]["scale"])
         else:
-            tmp = print_global_value_range(
-                problem, k, records[k]["label"], scale=records[k]["scale"]
-            )
+            tmp = print_global_value_range(problem, k, records[k]["label"], scale=records[k]["scale"])
             records[k]["history"].append(tmp)
     sys.stdout.flush()
 
@@ -404,9 +391,7 @@ def plot_history(records, output_root=".", save_figures=True, show_figures=True)
 
                     # Setup axes
                     if ("axes" not in records[k]) or (len(fa.axes) == 0):
-                        records[k]["axes"] = [
-                            plt.subplot(rows, columns, ii + 1) for ii in range(0, N[2])
-                        ]
+                        records[k]["axes"] = [plt.subplot(rows, columns, ii + 1) for ii in range(0, N[2])]
 
                     for ii in range(0, N[2]):
                         ax = records[k]["axes"][ii]

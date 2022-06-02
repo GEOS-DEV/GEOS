@@ -115,9 +115,7 @@ def main(filesPaths):
     for xCell in x_analytical:
         aperture_analytical[i] = sneddonAnalyticalSolution.computeAperture(xCell)
         i += 1
-    plt.plot(
-        x_analytical, aperture_analytical, color=cmap(-1), label="analytical solution"
-    )
+    plt.plot(x_analytical, aperture_analytical, color=cmap(-1), label="analytical solution")
     plt.plot(x, aperture, "o", color=cmap(2), label="numerical solution")
 
     plt.grid()
@@ -128,21 +126,11 @@ def main(filesPaths):
 
 
 def parseArguments():
-    parser = argparse.ArgumentParser(
-        description="Sneddon comparison with analytical solution"
-    )
+    parser = argparse.ArgumentParser(description="Sneddon comparison with analytical solution")
 
-    parser.add_argument(
-        "-dp",
-        "--datapath",
-        type=str,
-        default="",
-        help="path to the hdf5 files with the data.",
-    )
+    parser.add_argument("-dp", "--datapath", type=str, default="", help="path to the hdf5 files with the data.")
 
-    parser.add_argument(
-        "-xp", "--xmlpath", type=str, default="", help="path to xml file."
-    )
+    parser.add_argument("-xp", "--xmlpath", type=str, default="", help="path to xml file.")
 
     args, unknown_args = parser.parse_known_args()
 
