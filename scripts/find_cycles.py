@@ -16,6 +16,7 @@ class Compile(object):
     """
     Data class that wraps the json Ninja output.
     """
+
     directory: str
     command: str
     file: str
@@ -40,13 +41,15 @@ def get_compile_commands(ninja_compile_command: str) -> Tuple[Compile]:
     """
     with open(ninja_compile_command, "r") as f:
         raw = json.load(f)
-    return tuple(map(
-        lambda j: Compile(j["directory"], j["command"], j["file"]),
-        raw
-    ))
+    return tuple(map(lambda j: Compile(j["directory"], j["command"], j["file"]), raw))
 
 
-def recursive_populate(edges: Tuple[str, str], root_indent: int, root_path: str, sub_graph_info: Tuple[int, str]) -> None:
+def recursive_populate(
+    edges: Tuple[str, str],
+    root_indent: int,
+    root_path: str,
+    sub_graph_info: Tuple[int, str],
+) -> None:
     """
     Constructs the edges and populate the list.
     :param edges: List the will contain the pairs of string.
@@ -58,7 +61,7 @@ def recursive_populate(edges: Tuple[str, str], root_indent: int, root_path: str,
     for index, (indent, path) in enumerate(sub_graph_info):
         if indent == (root_indent + 1):
             edges.append((root_path, path))
-            recursive_populate(edges, indent, path, sub_graph_info[index + 1:])
+            recursive_populate(edges, indent, path, sub_graph_info[index + 1 :])
         if indent <= root_indent:  # This is not our graph branch anymore
             return
 
@@ -76,8 +79,8 @@ def find_cycles(outputs: Dict[Compile, str], exclude_dirs: List[str]) -> int:
         # For each compilation log, contains the depth and name for each included file.
         sub_graph_info = []
         logging.info("Populating include graph for %s." % cc.file)
-        for line in filter(None, stderr.split('\n')):
-            if line.startswith('.'):
+        for line in filter(None, stderr.split("\n")):
+            if line.startswith("."):
                 indent, path = line.split()
                 # Making all the paths absolute
                 if not os.path.isabs(path):
@@ -114,8 +117,10 @@ def get_gcc_output(cc: Compile) -> str:
     """
     try:
         logging.info("Extracting include information for " + cc.file)
-        process = subprocess.run(cc.include_command, capture_output=True, cwd=cc.directory, check=True)
-        return process.stderr.decode('utf-8')  # output is on stderr.
+        process = subprocess.run(
+            cc.include_command, capture_output=True, cwd=cc.directory, check=True
+        )
+        return process.stderr.decode("utf-8")  # output is on stderr.
     except subprocess.CalledProcessError as e:
         logging.error("Could not run " + " ".join(cc.include_command), exc_info=e)
         sys.exit(-1)
@@ -143,10 +148,21 @@ def parse(cli_args: List[str]):
     :return: The struct
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--compile-command', help="Ninja's compile_command.json file.",
-                        type=str, dest="ninja_compile_command")
-    parser.add_argument('-e', '--exclude-dir', default=[], action='append', dest="exclude_dirs",
-                        help="Exclude a directory for cycle analysis. Can be used multiple times.")
+    parser.add_argument(
+        "-c",
+        "--compile-command",
+        help="Ninja's compile_command.json file.",
+        type=str,
+        dest="ninja_compile_command",
+    )
+    parser.add_argument(
+        "-e",
+        "--exclude-dir",
+        default=[],
+        action="append",
+        dest="exclude_dirs",
+        help="Exclude a directory for cycle analysis. Can be used multiple times.",
+    )
     args = parser.parse_args(cli_args)
     return args
 
@@ -157,7 +173,9 @@ def main():
     No cycle found will therefore exit on 0.
     :return: None
     """
-    logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.INFO)
+    logging.basicConfig(
+        format="[%(asctime)s][%(levelname)s] %(message)s", level=logging.INFO
+    )
     args = parse(sys.argv[1:])
     logging.info("Starting cycle detection process.")
     outputs = get_gcc_outputs(args.ninja_compile_command)

@@ -1,4 +1,3 @@
-
 from mpi4py import MPI
 import pygeosx
 from geosx_xml_tools.main import preprocess_parallel
@@ -23,5 +22,5 @@ def run_problem():
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run_problem()

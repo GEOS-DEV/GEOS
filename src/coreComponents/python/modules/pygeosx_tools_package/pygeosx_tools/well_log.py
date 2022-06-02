@@ -1,9 +1,8 @@
-
 import numpy as np
 import re
 
 
-def parse_las(fname, variable_start='~C', body_start='~A'):
+def parse_las(fname, variable_start="~C", body_start="~A"):
     """
     Parse an las format log file
 
@@ -20,20 +19,20 @@ def parse_las(fname, variable_start='~C', body_start='~A'):
 
     # The expected format of the varible definition block is:
     # name.units code:description
-    variable_regex = re.compile('\s*([^\.^\s]*)\s*(\.[^ ]*) ([^:]*):(.*)')
+    variable_regex = re.compile("\s*([^\.^\s]*)\s*(\.[^ ]*) ([^:]*):(.*)")
 
     with open(fname) as f:
         file_location = 0
         for line in f:
-            line = line.split('#')[0]
+            line = line.split("#")[0]
             if line:
                 # Preamble
-                if (file_location == 0):
+                if file_location == 0:
                     if variable_start in line:
                         file_location += 1
 
                 # Variable definitions
-                elif (file_location == 1):
+                elif file_location == 1:
                     # This is not a comment line
                     if body_start in line:
                         file_location += 1
@@ -41,26 +40,30 @@ def parse_las(fname, variable_start='~C', body_start='~A'):
                         match = variable_regex.match(line)
                         if match:
                             variable_order.append(match[1])
-                            results[match[1]] = {'units': match[2][0:],
-                                                 'code': match[3],
-                                                 'description': match[4],
-                                                 'values': []}
+                            results[match[1]] = {
+                                "units": match[2][0:],
+                                "code": match[3],
+                                "description": match[4],
+                                "values": [],
+                            }
                         else:
                             # As a fall-back use the full line
                             variable_order.append(line[:-1])
-                            results[line[:-1]] = {'units': '',
-                                                  'code': '',
-                                                  'description': '',
-                                                  'values': []}
+                            results[line[:-1]] = {
+                                "units": "",
+                                "code": "",
+                                "description": "",
+                                "values": [],
+                            }
 
                 # Body
                 else:
                     for k, v in zip(variable_order, line.split()):
-                        results[k]['values'].append(float(v))
+                        results[k]["values"].append(float(v))
 
     # Convert values to numpy arrays
     for k in results:
-        results[k]['values'] = np.array(results[k]['values'])
+        results[k]["values"] = np.array(results[k]["values"])
 
     return results
 
@@ -96,4 +99,3 @@ def estimate_shmin(z, rho, nu):
     k = nu / (1.0 - nu)
     sigma_h = k * rho * 9.81 * z
     return sigma_h
-

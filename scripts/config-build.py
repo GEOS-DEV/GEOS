@@ -33,15 +33,19 @@ def setup_ats(scripts_dir, build_path):
 
     # Create a symbolic link to test directory
     os.symlink(ats_update_dir, os.path.join(build_path, "integratedTests"))
-    
+
     # Write the bash script to run ats.
     ats_script_path = os.path.join(build_path, "geosxats.sh")
     with open(ats_script_path, "w") as f:
-        f.write("#!/bin/bash\n{} {} --workingDir {} \"$@\"\n".format(geosxats_path, bin_dir, ats_update_dir))
+        f.write(
+            '#!/bin/bash\n{} {} --workingDir {} "$@"\n'.format(
+                geosxats_path, bin_dir, ats_update_dir
+            )
+        )
 
     # Make the script executable
     st = os.stat(ats_script_path)
-    os.chmod(ats_script_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH )
+    os.chmod(ats_script_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
 def parse_args(cli_arguments):
@@ -53,81 +57,100 @@ def parse_args(cli_arguments):
     parser = argparse.ArgumentParser(description="Configure cmake build.")
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("-bp",
-                       "--buildpath",
-                       dest="build_path",
-                       type=str,
-                       default="",
-                       help="Specify path for build directory. If both `--buildpath` and `--buildrootdir` are not specified, the build directory will be created in current directory, in a subdirectory named `build-<config-file-name>-<buildtype>`. The `--buildpath` option is not compatible with `--buildrootdir`.")
+    group.add_argument(
+        "-bp",
+        "--buildpath",
+        dest="build_path",
+        type=str,
+        default="",
+        help="Specify path for build directory. If both `--buildpath` and `--buildrootdir` are not specified, the build directory will be created in current directory, in a subdirectory named `build-<config-file-name>-<buildtype>`. The `--buildpath` option is not compatible with `--buildrootdir`.",
+    )
 
-    group.add_argument("-br",
-                       "--buildrootdir",
-                       dest="build_root_dir",
-                       type=str,
-                       default="",
-                       metavar="BUILD_ROOT_DIR",
-                       help="Specify path for root of build directory. The build directory will be created as `BUILD_ROOT_DIR/build-<config-file-name>-<buildtype>`. The `--buildrootdir` option is not compatible with `--buildpath`.")
+    group.add_argument(
+        "-br",
+        "--buildrootdir",
+        dest="build_root_dir",
+        type=str,
+        default="",
+        metavar="BUILD_ROOT_DIR",
+        help="Specify path for root of build directory. The build directory will be created as `BUILD_ROOT_DIR/build-<config-file-name>-<buildtype>`. The `--buildrootdir` option is not compatible with `--buildpath`.",
+    )
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("-ip",
-                       "--installpath",
-                       dest="install_path",
-                       type=str,
-                       default="",
-                       help="Specify path for installation directory. If both `--installpath` and `--buildpathdir` are not specified, the install directory will be created in current directory, in a subdirectory named `install-<config-file-name>-<buildtype>`. The `--installpath` option is not compatible with `--installrootdir`.")
+    group.add_argument(
+        "-ip",
+        "--installpath",
+        dest="install_path",
+        type=str,
+        default="",
+        help="Specify path for installation directory. If both `--installpath` and `--buildpathdir` are not specified, the install directory will be created in current directory, in a subdirectory named `install-<config-file-name>-<buildtype>`. The `--installpath` option is not compatible with `--installrootdir`.",
+    )
 
-    group.add_argument("-ir",
-                       "--installrootdir",
-                       dest="install_root_dir",
-                       type=str,
-                       default="",
-                       metavar="INSTALL_ROOT_DIR",
-                       help="Specify path for root of install directory. The install directory will be created as `INSTALL_ROOT_DIR/build-<config-file-name>-<buildtype>`. The `--installrootdir` option is not compatible with `--installpath`.")
+    group.add_argument(
+        "-ir",
+        "--installrootdir",
+        dest="install_root_dir",
+        type=str,
+        default="",
+        metavar="INSTALL_ROOT_DIR",
+        help="Specify path for root of install directory. The install directory will be created as `INSTALL_ROOT_DIR/build-<config-file-name>-<buildtype>`. The `--installrootdir` option is not compatible with `--installpath`.",
+    )
 
-    parser.add_argument("--noinstall",
-                        dest="no_install",
-                        action="store_true",
-                        help="Do not create an install directory.")
+    parser.add_argument(
+        "--noinstall",
+        dest="no_install",
+        action="store_true",
+        help="Do not create an install directory.",
+    )
 
-    parser.add_argument("-bt",
-                        "--buildtype",
-                        dest="build_type",
-                        type=str,
-                        choices=["Release", "Debug", "RelWithDebInfo", "MinSizeRel"],
-                        default="Debug",
-                        help="build type.")
+    parser.add_argument(
+        "-bt",
+        "--buildtype",
+        dest="build_type",
+        type=str,
+        choices=["Release", "Debug", "RelWithDebInfo", "MinSizeRel"],
+        default="Debug",
+        help="build type.",
+    )
 
-    parser.add_argument("-e",
-                        "--eclipse",
-                        action='store_true',
-                        help="create an eclipse project file.")
+    parser.add_argument(
+        "-e", "--eclipse", action="store_true", help="create an eclipse project file."
+    )
 
-    parser.add_argument("-x",
-                        "--xcode",
-                        action='store_true',
-                        help="create an xcode project.")
+    parser.add_argument(
+        "-x", "--xcode", action="store_true", help="create an xcode project."
+    )
 
-    parser.add_argument("-ecc",
-                        "--exportcompilercommands",
-                        dest="export_compiler_commands",
-                        action='store_true',
-                        help="generate a compilation database.  Can be used by the clang tools such as clang-modernize.  Will create a file called 'compile_commands.json' in build directory.")
+    parser.add_argument(
+        "-ecc",
+        "--exportcompilercommands",
+        dest="export_compiler_commands",
+        action="store_true",
+        help="generate a compilation database.  Can be used by the clang tools such as clang-modernize.  Will create a file called 'compile_commands.json' in build directory.",
+    )
 
-    parser.add_argument("-hc",
-                        "--hostconfig",
-                        dest="host_config",
-                        required=True,
-                        type=str,
-                        help="select a specific host-config file to initalize CMake's cache")
+    parser.add_argument(
+        "-hc",
+        "--hostconfig",
+        dest="host_config",
+        required=True,
+        type=str,
+        help="select a specific host-config file to initalize CMake's cache",
+    )
 
-    parser.add_argument("-gvz",
-                        "--graphviz",
-                        action="store_true",
-                        help="Generate graphviz dependency graph")
+    parser.add_argument(
+        "-gvz",
+        "--graphviz",
+        action="store_true",
+        help="Generate graphviz dependency graph",
+    )
 
     args, unknown_args = parser.parse_known_args(cli_arguments)
     if unknown_args:
-        logging.info("Passing the following unknown arguments directly to cmake: %s" % unknown_args)
+        logging.info(
+            "Passing the following unknown arguments directly to cmake: %s"
+            % unknown_args
+        )
     return args, unknown_args
 
 
@@ -142,7 +165,9 @@ def main(calling_script, args, unknown_args):
     if platform_info.endswith(".cmake"):
         platform_info = platform_info[:-6]
 
-    assert os.path.exists(cache_file), "Could not find cmake cache file '%s'." % cache_file
+    assert os.path.exists(cache_file), (
+        "Could not find cmake cache file '%s'." % cache_file
+    )
     logging.info("Using host config file: '%s'." % cache_file)
 
     #####################
@@ -186,7 +211,9 @@ def main(calling_script, args, unknown_args):
         install_path = os.path.abspath(install_path)
 
         if os.path.exists(install_path):
-            logging.info("Install directory '%s' already exists. Deleting..." % install_path)
+            logging.info(
+                "Install directory '%s' already exists. Deleting..." % install_path
+            )
             shutil.rmtree(install_path)
 
         logging.info("Creating install path '%s'..." % install_path)
@@ -212,15 +239,18 @@ def main(calling_script, args, unknown_args):
         cmake_line.append('-G"Eclipse CDT4 - Unix Makefiles"')
 
     if args.xcode:
-        cmake_line.append('-GXcode')
+        cmake_line.append("-GXcode")
 
     if args.graphviz:
         cmake_line.append("--graphviz=dependency.dot")
         dot_line = "dot -Tpng dependency.dot -o dependency.png"
 
     for unknown_arg in unknown_args:
-        if not unknown_arg.startswith('-D'):
-            logging.warning("Additional argument '%s' does not start with '-D'. Keeping it nevertheless." % unknown_arg)
+        if not unknown_arg.startswith("-D"):
+            logging.warning(
+                "Additional argument '%s' does not start with '-D'. Keeping it nevertheless."
+                % unknown_arg
+            )
         cmake_line.append(unknown_arg)
 
     # Append cache file at the end of the command line to make previous argument visible to the cache.
@@ -248,6 +278,8 @@ def main(calling_script, args, unknown_args):
         subprocess.call(dot_line, shell=True)
 
 
-if __name__ == '__main__':
-    logging.basicConfig(format='[%(filename)s]:[%(levelname)s]: %(message)s', level=logging.INFO)
+if __name__ == "__main__":
+    logging.basicConfig(
+        format="[%(filename)s]:[%(levelname)s]: %(message)s", level=logging.INFO
+    )
     main(sys.argv[0], *parse_args(sys.argv[1:]))

@@ -26,7 +26,7 @@ def merge_xml_nodes(existingNode, targetNode, level):
         existingNode.set(tk, targetNode.get(tk))
 
     # Copy target children into the xml structure
-    currentTag = ''
+    currentTag = ""
     matchingSubNodes = []
 
     for target in targetNode.getchildren():
@@ -34,28 +34,28 @@ def merge_xml_nodes(existingNode, targetNode, level):
 
         # Check to see if a node with the appropriate type
         # exists at this level
-        if (currentTag != target.tag):
+        if currentTag != target.tag:
             currentTag = target.tag
             matchingSubNodes = existingNode.findall(target.tag)
 
-        if (matchingSubNodes):
-            targetName = target.get('name')
+        if matchingSubNodes:
+            targetName = target.get("name")
 
             # Special case for the root Problem node (which may be unnamed)
-            if (level == 0):
+            if level == 0:
                 insertCurrentLevel = False
                 merge_xml_nodes(matchingSubNodes[0], target, level + 1)
 
             # Handle named xml nodes
-            elif (targetName and (currentTag not in ['Nodeset'])):
+            elif targetName and (currentTag not in ["Nodeset"]):
                 for match in matchingSubNodes:
-                    if (match.get('name') == targetName):
+                    if match.get("name") == targetName:
                         insertCurrentLevel = False
                         merge_xml_nodes(match, target, level + 1)
 
         # Insert any unnamed nodes or named nodes that aren't present
         # in the current xml structure
-        if (insertCurrentLevel):
+        if insertCurrentLevel:
             existingNode.insert(-1, target)
 
 
@@ -75,13 +75,15 @@ def merge_included_xml_files(root, fname, includeCount, maxInclude=100):
 
     # Check to see if the code has fallen into a loop
     includeCount += 1
-    if (includeCount > maxInclude):
-        raise Exception('Reached maximum recursive includes...  Is there an include loop?')
+    if includeCount > maxInclude:
+        raise Exception(
+            "Reached maximum recursive includes...  Is there an include loop?"
+        )
 
     # Check to make sure the file exists
-    if (not os.path.isfile(fname)):
-        print('Included file does not exist: %s' % (fname))
-        raise Exception('Check included file path!')
+    if not os.path.isfile(fname):
+        print("Included file does not exist: %s" % (fname))
+        raise Exception("Check included file path!")
 
     # Load target xml
     try:
@@ -89,14 +91,14 @@ def merge_included_xml_files(root, fname, includeCount, maxInclude=100):
         includeTree = ElementTree.parse(fname, parser)
         includeRoot = includeTree.getroot()
     except XMLSyntaxError as err:
-        print('\nCould not load included file: %s' % (fname))
+        print("\nCould not load included file: %s" % (fname))
         print(err.msg)
-        raise Exception('\nCheck included file!')
+        raise Exception("\nCheck included file!")
 
     # Recursively add the includes:
-    for includeNode in includeRoot.findall('Included'):
-        for f in includeNode.findall('File'):
-            merge_included_xml_files(root, f.get('name'), includeCount)
+    for includeNode in includeRoot.findall("Included"):
+        for f in includeNode.findall("File"):
+            merge_included_xml_files(root, f.get("name"), includeCount)
 
     # Merge the results into the xml tree
     merge_xml_nodes(root, includeRoot, 0)
@@ -115,29 +117,35 @@ def apply_regex_to_node(node):
 
         # Parameter format:  $Parameter or $:Parameter
         ii = 0
-        while ('$' in value):
-            value = re.sub(regex_tools.patterns['parameters'],
-                           parameterHandler,
-                           value)
+        while "$" in value:
+            value = re.sub(regex_tools.patterns["parameters"], parameterHandler, value)
             ii += 1
-            if (ii > 100):
-                raise Exception('Reached maximum parameter expands (Node=%s, value=%s)' % (node.tag, value))
+            if ii > 100:
+                raise Exception(
+                    "Reached maximum parameter expands (Node=%s, value=%s)"
+                    % (node.tag, value)
+                )
 
         # Unit format:       9.81[m**2/s] or 1.0 [bbl/day]
-        if ('[' in value):
-            value = re.sub(regex_tools.patterns['units'],
-                           unitManager.regexHandler,
-                           value)
+        if "[" in value:
+            value = re.sub(
+                regex_tools.patterns["units"], unitManager.regexHandler, value
+            )
 
         # Symbolic format:   `1 + 2.34e5*2 * ...`
         ii = 0
-        while ('`' in value):
-            value = re.sub(regex_tools.patterns['symbolic'],
-                           regex_tools.SymbolicMathRegexHandler,
-                           value)
+        while "`" in value:
+            value = re.sub(
+                regex_tools.patterns["symbolic"],
+                regex_tools.SymbolicMathRegexHandler,
+                value,
+            )
             ii += 1
-            if (ii > 100):
-                raise Exception('Reached maximum symbolic expands (Node=%s, value=%s)' % (node.tag, value))
+            if ii > 100:
+                raise Exception(
+                    "Reached maximum symbolic expands (Node=%s, value=%s)"
+                    % (node.tag, value)
+                )
 
         node.set(k, value)
 
@@ -145,7 +153,7 @@ def apply_regex_to_node(node):
         apply_regex_to_node(subNode)
 
 
-def generate_random_name(prefix='', suffix='.xml'):
+def generate_random_name(prefix="", suffix=".xml"):
     """If the target name is not specified, generate a random name for the compiled xml
 
     @param prefix The file prefix (default = '').
@@ -156,10 +164,18 @@ def generate_random_name(prefix='', suffix='.xml'):
     from os import getpid
 
     tmp = str(time()) + str(getpid())
-    return '%s%s%s' % (prefix, md5(tmp.encode('utf-8')).hexdigest(), suffix)
+    return "%s%s%s" % (prefix, md5(tmp.encode("utf-8")).hexdigest(), suffix)
 
 
-def process(inputFiles, outputFile='', schema='', verbose=0, parameter_override=[], keep_parameters=True, keep_includes=True):
+def process(
+    inputFiles,
+    outputFile="",
+    schema="",
+    verbose=0,
+    parameter_override=[],
+    keep_parameters=True,
+    keep_includes=True,
+):
     """Process an xml file
 
     @param inputFiles Input file names.
@@ -171,7 +187,7 @@ def process(inputFiles, outputFile='', schema='', verbose=0, parameter_override=
     @param keep_includes If True, then keep includes in the compiled file (default = True)
     """
     if verbose:
-        print('\nReading input xml parameters and parsing symbolic math...')
+        print("\nReading input xml parameters and parsing symbolic math...")
 
     # Check the type of inputFiles
     if isinstance(inputFiles, str):
@@ -184,44 +200,44 @@ def process(inputFiles, outputFile='', schema='', verbose=0, parameter_override=
     os.chdir(single_path)
 
     # Handle single vs. multiple command line inputs
-    root = ''
-    tree = ''
-    if (len(expanded_files) == 1):
+    root = ""
+    tree = ""
+    if len(expanded_files) == 1:
         # Load single files directly
         try:
             parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
             tree = ElementTree.parse(single_input, parser=parser)
             root = tree.getroot()
         except XMLSyntaxError as err:
-            print('\nCould not load input file: %s' % (single_input))
+            print("\nCould not load input file: %s" % (single_input))
             print(err.msg)
-            raise Exception('\nCheck input file!')
+            raise Exception("\nCheck input file!")
 
     else:
         # For multiple inputs, create a simple xml structure to hold
         # the included files.  These will be saved as comments in the compiled file
-        root = ElementTree.Element('Problem')
+        root = ElementTree.Element("Problem")
         tree = ElementTree.ElementTree(root)
         included_node = ElementTree.Element("Included")
         root.append(included_node)
         for f in expanded_files:
             included_file = ElementTree.Element("File")
-            included_file.set('name', f)
+            included_file.set("name", f)
             included_node.append(included_file)
 
     # Add the included files to the xml structure
     # Note: doing this first assumes that parameters aren't used in Included block
     includeCount = 0
-    for includeNode in root.findall('Included'):
-        for f in includeNode.findall('File'):
-            merge_included_xml_files(root, f.get('name'), includeCount)
+    for includeNode in root.findall("Included"):
+        for f in includeNode.findall("File"):
+            merge_included_xml_files(root, f.get("name"), includeCount)
     os.chdir(pwd)
 
     # Build the parameter map
     Pmap = {}
-    for parameters in root.findall('Parameters'):
-        for p in parameters.findall('Parameter'):
-            Pmap[p.get('name')] = p.get('value')
+    for parameters in root.findall("Parameters"):
+        for p in parameters.findall("Parameter"):
+            Pmap[p.get("name")] = p.get("value")
 
     # Apply any parameter overrides
     if len(parameter_override):
@@ -230,11 +246,11 @@ def process(inputFiles, outputFile='', schema='', verbose=0, parameter_override=
         root.append(command_override_node)
         for ii in range(len(parameter_override)):
             pname = parameter_override[ii][0]
-            pval = ' '.join(parameter_override[ii][1:])
+            pval = " ".join(parameter_override[ii][1:])
             Pmap[pname] = pval
             override_parameter = ElementTree.Element("Parameter")
-            override_parameter.set('name', pname)
-            override_parameter.set('value', pval)
+            override_parameter.set("name", pname)
+            override_parameter.set("value", pval)
             command_override_node.append(override_parameter)
 
     # Add the parameter map to the handler
@@ -244,37 +260,40 @@ def process(inputFiles, outputFile='', schema='', verbose=0, parameter_override=
     apply_regex_to_node(root)
 
     # Comment out or remove the Parameter, Included nodes
-    for includeNode in root.findall('Included'):
+    for includeNode in root.findall("Included"):
         if keep_includes:
             root.insert(-1, ElementTree.Comment(ElementTree.tostring(includeNode)))
         root.remove(includeNode)
-    for parameterNode in root.findall('Parameters'):
+    for parameterNode in root.findall("Parameters"):
         if keep_parameters:
             root.insert(-1, ElementTree.Comment(ElementTree.tostring(parameterNode)))
         root.remove(parameterNode)
-    for overrideNode in root.findall('CommandLineOverride'):
+    for overrideNode in root.findall("CommandLineOverride"):
         if keep_parameters:
             root.insert(-1, ElementTree.Comment(ElementTree.tostring(overrideNode)))
         root.remove(overrideNode)
 
     # Generate a random output name if not specified
     if not outputFile:
-        outputFile = generate_random_name(prefix='prep_')
+        outputFile = generate_random_name(prefix="prep_")
 
     # Write the output file
     tree.write(outputFile, pretty_print=True)
 
     # Check for un-matched special characters
-    with open(outputFile, 'r') as ofile:
+    with open(outputFile, "r") as ofile:
         for line in ofile:
-            if any([sc in line for sc in ['$', '[', ']', '`']]):
-                raise Exception('Found un-matched special characters in the pre-processed input file on line:\n%s\n Check your input xml for errors!' % (line))
+            if any([sc in line for sc in ["$", "[", "]", "`"]]):
+                raise Exception(
+                    "Found un-matched special characters in the pre-processed input file on line:\n%s\n Check your input xml for errors!"
+                    % (line)
+                )
 
     # Apply formatting to the file
     xml_formatter.format_file(outputFile)
 
     if verbose:
-        print('Preprocessed xml file stored in %s' % (outputFile))
+        print("Preprocessed xml file stored in %s" % (outputFile))
 
     if schema:
         validate_xml(outputFile, schema, verbose)
@@ -290,18 +309,18 @@ def validate_xml(fname, schema, verbose):
     @param verbose Verbosity level.
     """
     if verbose:
-        print('Validating the xml against the schema...')
+        print("Validating the xml against the schema...")
     try:
         ofile = ElementTree.parse(fname)
         sfile = ElementTree.XMLSchema(ElementTree.parse(os.path.expanduser(schema)))
         sfile.assertValid(ofile)
     except ElementTree.DocumentInvalid as err:
         print(err)
-        print('\nWarning: input XML contains potentially invalid input parameters:')
-        print('-'*20+'\n')
+        print("\nWarning: input XML contains potentially invalid input parameters:")
+        print("-" * 20 + "\n")
         print(sfile.error_log)
-        print('\n'+'-'*20)
-        print('(Total schema warnings: %i)\n' % (len(sfile.error_log)))
+        print("\n" + "-" * 20)
+        print("(Total schema warnings: %i)\n" % (len(sfile.error_log)))
 
     if verbose:
-        print('Done!')
+        print("Done!")
