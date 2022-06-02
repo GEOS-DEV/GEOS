@@ -183,6 +183,19 @@ RAJA_INLINE void forRange( INDEX const begin, INDEX const end, LAMBDA && body )
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< INDEX >( begin, end ), std::forward< LAMBDA >( body ) );
 }
 
+// #define GEOSX_FOREACH_THREAD(i,k,n) RAJA::expt::loop<team_##k> (ctx, RAJA::RangeSegment(0, n), [&] (int i)
+// Hack to avoid having to use the LaunchContext
+#ifdef __CUDA_ARCH__
+#define GEOSX_FOREACH_THREAD(i,k,N) for(int i=threadIdx.k; i<N; i+=blockDim.k)
+#elif defined(__HIP_DEVICE_COMPILE__)
+#define GEOSX_FOREACH_THREAD(i,k,N) for(int i=hipThreadIdx_ ##k; i<N; i+=hipBlockDim_ ##k)
+#else
+#define GEOSX_FOREACH_THREAD(i,k,N) for(int i=0; i<N; i++)
+#endif
+
+//TODO
+#define GEOSX_SYNC_THREAD
+
 } // namespace geosx
 
 #endif // GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP
