@@ -33,8 +33,15 @@ struct PrecomputeSourceAndReceiverKernel
 
 {
   /**
-   * @brief Check if the sourtc epoint is inside an element or not
-  */
+   * @brief Check if the source point is inside an element or not
+   * @param numFacesPerElem number of face on an element
+   * @param elemCenter array containing the center of the elements
+   * @param faceNormal array containing the normal of all faces
+   * @param faceCenter array containing the center of all faces
+   * @param elemsToFaces map to get the global faces from element index and local face index
+   * @param coords coordinate of the point
+   * @return true if coords is inside the element
+   */
 
   GEOSX_HOST_DEVICE
   static bool
@@ -84,59 +91,43 @@ struct PrecomputeSourceAndReceiverKernel
 
   /**
    * @brief Convert a mesh element point coordinate into a coordinate on the reference element
-   * @param coords coordinate of the point
-   * @param coordsOnRefElem to contain the coordinate computed in the reference element
-   * @param elementIndex index of the element containing the coords
-   * @param faceNodeIndices array of face of the element
-   * @param elemsToNodes map to obtaint global nodes from element index
-   * @param X array of mesh nodes coordinates
+   * @tparam FE_TYPE finite element type
+   * @param[in] numFacesPerElem number of face on an element
+   * @param[in] coords coordinate of the point
+   * @param[in] elemCenter array containing the center of the elements
+   * @param[in] faceNormal array containing the normal of all faces
+   * @param[in] faceCenter array containing the center of all faces
+   * @param[in] elemsToNodes map to obtaint global nodes from element index
+   * @param[in] elemsToFaces map to get the global faces from element index and local face index
+   * @param[in] X array of mesh nodes coordinates
+   * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
    * @return true if coords is inside the element num index
    */
   template< typename FE_TYPE >
   GEOSX_HOST_DEVICE
-  static bool
-  computeCoordinatesOnReferenceElement( real64 numFacesPerElem,
-                                        real64 const (&coords)[3],
-                                        real64 const (&elemCenter)[3],
-                                        arrayView2d< real64 const > const faceNormal,
-                                        arrayView2d< real64 const > const faceCenter,
+  static void
+  computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
-                                        arraySlice1d< localIndex const > const elemsToFaces,
                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
                                         real64 (& coordsOnRefElem)[3] )
   {
-    bool const SourceInELem =
-      locateSourceElement( numFacesPerElem,
-                           elemCenter,
-                           faceNormal,
-                           faceCenter,
-                           elemsToFaces,
-                           coords );
-    if( SourceInELem )
+    real64 xLocal[FE_TYPE::numNodes][3]{};
+    for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
     {
-      real64 xLocal[FE_TYPE::numNodes][3]{};
-      for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
-      {
-        LvArray::tensorOps::copy< 3 >( xLocal[a], X[ elemsToNodes[a] ] );
-      }
-
-      // coordsOnRefElem = invJ*(coords-coordsNode_0)
-      real64 invJ[3][3]{};
-      FE_TYPE::invJacobianTransformation( 0, xLocal, invJ );
-
-      for( localIndex i = 0; i < 3; ++i )
-      {
-        // init at (-1,-1,-1) as the origin of the referential elem
-        coordsOnRefElem[i] = -1.0;
-        for( localIndex j = 0; j < 3; ++j )
-        {
-          coordsOnRefElem[i] += invJ[i][j] * (coords[j] - xLocal[0][j]);
-        }
-      }
-      return true;
+      LvArray::tensorOps::copy< 3 >( xLocal[a], X[ elemsToNodes[a] ] );
     }
-    return false;
-
+    // coordsOnRefElem = invJ*(coords-coordsNode_0)
+    real64 invJ[3][3]{};
+    FE_TYPE::invJacobianTransformation( 0, xLocal, invJ );
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      // init at (-1,-1,-1) as the origin of the referential elem
+      coordsOnRefElem[i] = -1.0;
+      for( localIndex j = 0; j < 3; ++j )
+      {
+        coordsOnRefElem[i] += invJ[i][j] * (coords[j] - xLocal[0][j]);
+      }
+    }
   }
 
   GEOSX_HOST_DEVICE
@@ -183,12 +174,14 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numNodesPerElem number of nodes per element
+   * @param[in] numFacesPerElem number of face on an element
    * @param[in] X coordinates of the nodes
+   * @param[in] elemGhostRank array containing the ghost rank 
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
-   * @param[in] facesToNodes map from faces to nodes
    * @param[in] elemCenter coordinates of the element centers
+   * @param[in] faceNormal array containing the normal of all faces
+   * @param[in] faceCenter array containing the center of all faces
    * @param[in] sourceCoordinates coordinates of the source terms
    * @param[out] sourceIsLocal flag indicating whether the source is local or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
@@ -199,6 +192,10 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
    * @param[out] receiverNodeConstants constant part of the receiver term
+   * @param[out] sourceValue array containing the value of the time dependent source (Ricker for e.g)
+   * @param[in] dt time-step
+   * @param[in] timeSourceFrequency Peak frequency of the source
+   * @param[in] rickerOrder Order of the Ricker wavelet
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
@@ -258,20 +255,25 @@ struct PrecomputeSourceAndReceiverKernel
           }
 
           real64 coordsOnRefElem[3]{};
+           
           bool const sourceFound =
-            computeCoordinatesOnReferenceElement< FE_TYPE >( numFacesPerElem,
-                                                             coords,
-                                                             center,
-                                                             faceNormal,
-                                                             faceCenter,
-                                                             elemsToNodes[k],
-                                                             elemsToFaces[k],
-                                                             X,
-                                                             coordsOnRefElem );
+           locateSourceElement( numFacesPerElem,
+                                center,
+                                faceNormal,
+                                faceCenter,
+                                elemsToFaces[k],
+                                coords );
+          
           if( sourceFound && elemGhostRank[k] < 0 )
           {
+            computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                             elemsToNodes[k],
+                                                             X,
+                                                             coordsOnRefElem );
             sourceIsLocal[isrc] = 1;
             
+            //Compute source coefficients: this generate a P-wave and an "unwanted" S-wave. It is classical in the case of the elastic wave equation at order 2, the S-wave can be attenuated by refining the mesh or get to high order
+            //However, we will propably use elastic wave at 1st order for the FWI case.
             for( localIndex c=0; c<2; ++c )
             {
               for( localIndex b=0; b<2; ++b )
@@ -323,19 +325,21 @@ struct PrecomputeSourceAndReceiverKernel
                                      receiverCoordinates[ircv][2] };
 
           real64 coordsOnRefElem[3]{};
-          bool const receiverFound =
-            computeCoordinatesOnReferenceElement< FE_TYPE >( numFacesPerElem,
-                                                             coords,
-                                                             center,
-                                                             faceNormal,
-                                                             faceCenter,
-                                                             elemsToNodes[k],
-                                                             elemsToFaces[k],
-                                                             X,
-                                                             coordsOnRefElem );
+          bool const receiverFound =      
+            locateSourceElement( numFacesPerElem,
+                                 center,
+                                 faceNormal,
+                                 faceCenter,
+                                 elemsToFaces[k],
+                                 coords );
 
           if( receiverFound && elemGhostRank[k] < 0 )
           {
+            computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                             elemsToNodes[k],
+                                                             X,
+                                                             coordsOnRefElem );
+
             receiverIsLocal[ircv] = 1;
 
             real64 Ntest[8];
@@ -364,10 +368,24 @@ struct MassAndDampingMatrixKernel
 
   /**
    * @brief Launches the precomputation of the mass and damping matrices
+   * @tparam EXEC_POLICY the execution policy
+   * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
+   * @param[in] numFacesPerElem number of faces per element
+   * @param[in] numNodesPerFace number of nodes per face
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
+   * @param[in] elemsToFaces map from element to faces
+   * @param[in] facesToNodes map from face to nodes
+   * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
+   * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
+   * @param[in] faceNormal normal vectors at the faces
    * @param[in] density cell-wise density
+   * @param[in] velocityVp cell-wise P-wavespeed
+   * @param[in] velocityVp cell-wise S-wavespeed
+   * @param[out] damping_x diagonal of the damping matrix (x-part)
+   * @param[out] damping_y diagonal of the damping matrix (y-part)
+   * @param[out] damping_z diagonal of the damping matrix (z-part)
    * @param[out] mass diagonal of the mass matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
