@@ -27,7 +27,7 @@
 namespace geosx
 {
 
-namespace tensor
+namespace finiteElement
 {
 
 /// A simple basis structure meant to load basis operators in shared memory.
@@ -241,7 +241,7 @@ struct get_basis_dim_v
 template <int Dofs, typename Config>
 struct get_basis_dim_v<SharedBasis<Dofs, Config>>
 {
-   static constexpr int value = get_config_dim<Config>;
+   static constexpr int value = tensor::get_config_dim<Config>;
 };
 
 template <int Dim, bool IsTensor, typename TensorType>
@@ -269,7 +269,7 @@ struct is_tensor_basis_v
 template <int Dofs, typename Config>
 struct is_tensor_basis_v<SharedBasis<Dofs,Config>>
 {
-   static constexpr bool value = is_tensor_config<Config>;
+   static constexpr bool value = tensor::is_tensor_config<Config>;
 };
 
 template <int Dim, bool IsTensor, typename TensorType>
@@ -297,7 +297,7 @@ struct is_non_tensor_basis_v
 template <int Dofs, typename Config>
 struct is_non_tensor_basis_v<SharedBasis<Dofs,Config>>
 {
-   static constexpr bool value = !is_tensor_config<Config>;
+   static constexpr bool value = !tensor::is_tensor_config<Config>;
 };
 
 template <int Dim, bool IsTensor, typename TensorType>
@@ -322,7 +322,7 @@ struct get_basis_quads_v;
 template <int Dofs, typename Config>
 struct get_basis_quads_v<SharedBasis<Dofs,Config>>
 {
-   static constexpr int value = get_config_quads<Config>;
+   static constexpr int value = tensor::get_config_quads<Config>;
 };
 
 // get_basis_dofs
@@ -338,7 +338,7 @@ struct get_basis_dofs_v<SharedBasis<Dofs,Config>>
 template <int Dim, bool IsTensor, typename TensorType>
 struct get_basis_quads_v<BasisTensor<Dim, IsTensor, TensorType>>
 {
-   static constexpr int value = get_tensor_size<0,TensorType>;
+   static constexpr int value = tensor::get_tensor_size<0,TensorType>;
 };
 
 template <typename Basis>
@@ -359,7 +359,7 @@ constexpr int get_basis_quads = get_basis_quads_v<Basis>::value;
 template <int Dim, bool IsTensor, typename TensorType>
 struct get_basis_dofs_v<BasisTensor<Dim, IsTensor, TensorType>>
 {
-   static constexpr int value = get_tensor_size<1,TensorType>;
+   static constexpr int value = tensor::get_tensor_size<1,TensorType>;
 };
 
 template <typename Basis>
@@ -384,7 +384,7 @@ struct get_basis_size_v;
 template <int N, int Dim, bool IsTensor, typename TensorType>
 struct get_basis_size_v<N, BasisTensor<Dim, IsTensor, TensorType>>
 {
-   static constexpr int value = get_tensor_size<N,TensorType>;
+   static constexpr int value = tensor::get_tensor_size<N,TensorType>;
 };
 
 template <int N, typename Basis>
@@ -394,37 +394,37 @@ constexpr int get_basis_size = get_basis_size_v<N,Basis>::value;
 template <typename Basis, typename Enable = void> //std::enable_if_t<is_basis<Basis>> >
 struct get_basis_capacity_v
 {
-   static constexpr int value = DynamicMaxSize*DynamicMaxSize; // TODO
+   static constexpr int value = tensor::DynamicMaxSize*tensor::DynamicMaxSize; // TODO
 };
 
 template <int Dofs, typename Config>
 struct get_basis_capacity_v<SharedBasis<Dofs,Config>,
 std::enable_if_t<
-   Dofs != Dynamic &&
-   get_config_quads<Config> != Dynamic
+   Dofs != tensor::Dynamic &&
+   tensor::get_config_quads<Config> != tensor::Dynamic
 > >
 {
-   static constexpr int Q = get_config_quads<Config>;
+   static constexpr int Q = tensor::get_config_quads<Config>;
    static constexpr int value = Dofs*Q;
 };
 
 template <int Dofs, typename Config>
 struct get_basis_capacity_v<SharedBasis<Dofs,Config>,
 std::enable_if_t<
-   Dofs == Dynamic &&
-   get_config_quads<Config> == Dynamic &&
-   is_tensor_config<Config>
+   Dofs == tensor::Dynamic &&
+   tensor::get_config_quads<Config> == tensor::Dynamic &&
+   tensor::is_tensor_config<Config>
 > >
 {
-   static constexpr int value = DynamicMaxSize*DynamicMaxSize;
+   static constexpr int value = tensor::DynamicMaxSize*tensor::DynamicMaxSize;
 };
 
 template <int Dofs, typename Config>
 struct get_basis_capacity_v<SharedBasis<Dofs,Config>,
 std::enable_if_t<
-   Dofs == Dynamic &&
-   get_config_quads<Config> == Dynamic &&
-   !is_tensor_config<Config>
+   Dofs == tensor::Dynamic &&
+   tensor::get_config_quads<Config> == tensor::Dynamic &&
+   !tensor::is_tensor_config<Config>
 > >
 {
    static constexpr int value = 64*64; // FIXME magic number
@@ -468,7 +468,7 @@ template <int Dofs, typename Config>
 struct basis_result_tensor<SharedBasis<Dofs,Config>>
 {
    template <int... Sizes>
-   using type = typename config_result_tensor<Config>
+   using type = typename tensor::config_result_tensor<Config>
                    ::template type<Sizes...>;
 };
 
@@ -500,7 +500,7 @@ template <typename Basis, int... Sizes>
 using BasisResultTensor = typename basis_result_tensor<Basis>
                              ::template type<Sizes...>;
 
-} // tensor namespace
+} // finiteElement namespace
 
 } // geosx namespace
 

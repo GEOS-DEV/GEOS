@@ -26,7 +26,7 @@
 namespace geosx
 {
 
-namespace tensor
+namespace finiteElement
 {
 
 // ALL THIS SHOULD BE REWRITTEN...
@@ -46,26 +46,26 @@ public:
 
 /// Represent the rank 2 tensor containing B1d or G1d with dynamic sizes
 template <int Dim>
-using DynamicBasisTensor = BasisTensor<Dim,true,DynamicDTensor<2>>;
+using DynamicBasisTensor = BasisTensor<Dim,true,tensor::DynamicDTensor<2>>;
 template <int Dim>
-using DynamicSharedBasisTensor = BasisTensor<Dim,true,DeviceDTensor<2>>;
+using DynamicSharedBasisTensor = BasisTensor<Dim,true,tensor::DeviceDTensor<2>>;
 
 /// Represent the rank 2 tensor containing B1d or G1d with static sizes
 template <int Dim, int Q, int D>
-using StaticBasisTensor = BasisTensor<Dim,true,StaticDTensor<Q,D>>;
+using StaticBasisTensor = BasisTensor<Dim,true,tensor::StaticDTensor<Q,D>>;
 template <int Dim, int Q, int D>
-using StaticSharedBasisTensor = BasisTensor<Dim,true,StaticPointerDTensor<Q,D>>;
+using StaticSharedBasisTensor = BasisTensor<Dim,true,tensor::StaticPointerDTensor<Q,D>>;
 
 /// Represent the rank 2 tensor containing B or G with dynamic sizes
 template <int Dim>
 using DynamicBasisNonTensor = BasisTensor<
-   Dim, false, DynamicDTensor<2,pow(DynamicMaxSize,2*Dim)>>;
+   Dim, false, tensor::DynamicDTensor<2,tensor::pow(tensor::DynamicMaxSize,2*Dim)>>;
 
 /// Represent the rank 2 tensor containing B or G with static sizes
 template <int Dim, int Q, int D>
-using StaticBasisNonTensor = BasisTensor<Dim,false,StaticDTensor<Q,D>>;
+using StaticBasisNonTensor = BasisTensor<Dim,false,tensor::StaticDTensor<Q,D>>;
 
-} // tensor namespace
+} // finiteElement namespace
 
 } // geosx namespace
 
