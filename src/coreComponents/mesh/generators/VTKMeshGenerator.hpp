@@ -116,6 +116,8 @@ private:
 
   real64 writeNodes( CellBlockManager & cellBlockManager ) const;
 
+  void importNodesets( vtkUnstructuredGrid & mesh, CellBlockManager & cellBlockManager ) const;
+
   void writeCells( CellBlockManager & cellBlockManager ) const;
 
   void writeSurfaces( CellBlockManager & cellBlockManager ) const;
@@ -132,6 +134,7 @@ private:
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
   };
   /// @endcond
@@ -144,6 +147,9 @@ private:
 
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;
+
+  /// Names of VTK nodesets to import
+  string_array m_nodesetNames;
 
   /// Number of graph partitioning refinement iterations
   integer m_partitionRefinement = 0;
