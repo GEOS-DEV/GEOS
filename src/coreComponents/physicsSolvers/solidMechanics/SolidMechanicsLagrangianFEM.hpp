@@ -244,6 +244,15 @@ public:
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
 
+    static constexpr char const * computeStatisticsString() { return "computeStatistics"; }
+    static constexpr char const * maxXDisplacementString() { return "maxXDisplacement"; }
+    static constexpr char const * minXDisplacementString() { return "minXDisplacement"; }
+    static constexpr char const * maxYDisplacementString() { return "maxYDisplacement"; }
+    static constexpr char const * minYDisplacementString() { return "minYDisplacement"; }
+    static constexpr char const * maxZDisplacementString() { return "maxZDisplacement"; }
+    static constexpr char const * minZDisplacementString() { return "minZDisplacement"; }
+    static constexpr char const * maxZZStressString() { return "maxZZStress"; }
+    static constexpr char const * minZZStressString() { return "minZZStress"; }
 
     dataRepository::ViewKey vTilde = { vTildeString() };
     dataRepository::ViewKey uhatTilde = { uhatTildeString() };
@@ -278,6 +287,9 @@ public:
     return m_rigidBodyModes;
   }
 
+  void computeStatistics( MeshLevel & mesh,
+                          arrayView1d< string const > const & regionNames ) const;
+
 protected:
   virtual void postProcessInput() override final;
 
@@ -296,6 +308,7 @@ protected:
   integer m_strainTheory;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
+  integer m_computeStatistics;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;

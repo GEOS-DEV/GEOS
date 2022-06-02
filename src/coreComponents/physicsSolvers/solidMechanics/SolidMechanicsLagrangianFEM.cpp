@@ -59,7 +59,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxForce( 0.0 ),
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
-  m_iComm( CommunicationTools::getInstance().getCommID() )
+  m_iComm( CommunicationTools::getInstance().getCommID() ),
+  m_computeStatistics( 0 )
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -119,6 +120,11 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   registerWrapper( viewKeyStruct::maxForceString(), &m_maxForce ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "The maximum force contribution in the problem domain." );
+
+  this->registerWrapper( viewKeyStruct::computeStatisticsString(), &m_computeStatistics ).
+    setApplyDefaultValue( 0 ). // do nothing by default
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether statistics are computed or not" );;
 
 }
 
@@ -215,6 +221,25 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
     nodeSets.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::targetNodesString() ).
       setPlotLevel( PlotLevel::NOPLOT ).
       setRestartFlags( RestartFlags::NO_WRITE );
+
+    if( m_computeStatistics )
+    {
+      nodes.registerWrapper< real64 >( viewKeyStruct::maxXDisplacementString() );
+      nodes.registerWrapper< real64 >( viewKeyStruct::minXDisplacementString() );
+      nodes.registerWrapper< real64 >( viewKeyStruct::maxYDisplacementString() );
+      nodes.registerWrapper< real64 >( viewKeyStruct::minYDisplacementString() );
+      nodes.registerWrapper< real64 >( viewKeyStruct::maxZDisplacementString() );
+      nodes.registerWrapper< real64 >( viewKeyStruct::minZDisplacementString() );
+
+      ElementRegionManager & elemManager = meshLevel.getElemManager();
+      for( integer i = 0; i < regionNames.size(); ++i )
+      {
+        ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
+
+        region.registerWrapper< real64 >( viewKeyStruct::maxZZStressString() );
+        region.registerWrapper< real64 >( viewKeyStruct::minZZStressString() );
+      }
+    }
 
     ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
     elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
@@ -907,8 +932,111 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
       SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
       constitutiveRelation.saveConvergedState();
     } );
+
+    if( m_computeStatistics )
+    {
+      computeStatistics( mesh, regionNames );
+    }
   } );
 
+}
+
+void SolidMechanicsLagrangianFEM::computeStatistics( MeshLevel & mesh,
+                                                     arrayView1d< string const > const & regionNames ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  NodeManager & nodeManager = mesh.getNodeManager();
+
+  real64 & maxXDisp = nodeManager.getReference< real64 >( viewKeyStruct::maxXDisplacementString() );
+  real64 & minXDisp = nodeManager.getReference< real64 >( viewKeyStruct::minXDisplacementString() );
+  real64 & maxYDisp = nodeManager.getReference< real64 >( viewKeyStruct::maxYDisplacementString() );
+  real64 & minYDisp = nodeManager.getReference< real64 >( viewKeyStruct::minYDisplacementString() );
+  real64 & maxZDisp = nodeManager.getReference< real64 >( viewKeyStruct::maxZDisplacementString() );
+  real64 & minZDisp = nodeManager.getReference< real64 >( viewKeyStruct::minZDisplacementString() );
+  maxXDisp = -LvArray::NumericLimits< real64 >::max; minXDisp = LvArray::NumericLimits< real64 >::max;
+  maxYDisp = -LvArray::NumericLimits< real64 >::max; minYDisp = LvArray::NumericLimits< real64 >::max;
+  maxZDisp = -LvArray::NumericLimits< real64 >::max; minZDisp = LvArray::NumericLimits< real64 >::max;
+
+  ElementRegionManager & elemManager = mesh.getElemManager();
+  for( integer i = 0; i < regionNames.size(); ++i )
+  {
+    ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
+
+    real64 & maxZZStress = region.getReference< real64 >( viewKeyStruct::maxZZStressString() );
+    real64 & minZZStress = region.getReference< real64 >( viewKeyStruct::minZZStressString() );
+    maxZZStress = -LvArray::NumericLimits< real64 >::max;
+    minZZStress =  LvArray::NumericLimits< real64 >::max;
+  }
+
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager.totalDisplacement();
+
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > localMaxXDisp( -LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMin< parallelDeviceReduce, real64 > localMinXDisp( LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > localMaxYDisp( -LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMin< parallelDeviceReduce, real64 > localMinYDisp( LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > localMaxZDisp( -LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMin< parallelDeviceReduce, real64 > localMinZDisp( LvArray::NumericLimits< real64 >::max );
+  forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+  {
+    localMaxXDisp.max( u[a][0] );
+    localMinXDisp.min( u[a][0] );
+    localMaxYDisp.max( u[a][1] );
+    localMinYDisp.min( u[a][1] );
+    localMaxZDisp.max( u[a][2] );
+    localMinZDisp.min( u[a][2] );
+  } );
+
+  maxXDisp = MpiWrapper::max( localMaxXDisp.get() );
+  minXDisp = MpiWrapper::min( localMinXDisp.get() );
+  maxYDisp = MpiWrapper::max( localMaxYDisp.get() );
+  minYDisp = MpiWrapper::min( localMinYDisp.get() );
+  maxZDisp = MpiWrapper::max( localMaxZDisp.get() );
+  minZDisp = MpiWrapper::min( localMinZDisp.get() );
+
+  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Displacement in x (min, max): " << minXDisp << ", " << maxXDisp << " m" );
+  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Displacement in y (min, max): " << minYDisp << ", " << maxYDisp << " m" );
+  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Displacement in z (min, max): " << minZDisp << ", " << maxZDisp << " m" );
+
+  elemManager.forElementSubRegions( regionNames, [&]( localIndex const,
+                                                      ElementSubRegionBase & subRegion )
+  {
+
+    string const & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    SolidBase const & solidMaterial = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+    arrayView3d< real64 const, solid::STRESS_USD > const stress = solidMaterial.getStress();
+    localIndex const numQuad = solidMaterial.numQuad();
+
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > localMaxZZStress( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > localMinZZStress( LvArray::NumericLimits< real64 >::max );
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] ( localIndex const ei )
+    {
+      for( localIndex q = 0; q < numQuad; ++q )
+      {
+        localMaxZZStress.max( stress[ei][q][2] );
+        localMinZZStress.min( stress[ei][q][2] );
+      }
+    } );
+
+    ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
+    real64 & maxZZStress = region.getReference< real64 >( viewKeyStruct::maxZZStressString() );
+    real64 & minZZStress = region.getReference< real64 >( viewKeyStruct::minZZStressString() );
+    maxZZStress = localMaxZZStress.get();
+    minZZStress = localMinZZStress.get();
+  } );
+
+  for( integer i = 0; i < regionNames.size(); ++i )
+  {
+    ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
+
+    real64 & maxZZStress = region.getReference< real64 >( viewKeyStruct::maxZZStressString() );
+    real64 & minZZStress = region.getReference< real64 >( viewKeyStruct::minZZStressString() );
+    maxZZStress = MpiWrapper::max( maxZZStress );
+    minZZStress = MpiWrapper::min( minZZStress );
+
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i] << ": Stress (min, max): " << minZZStress << ", " << maxZZStress << " Pa" );
+
+  }
 }
 
 void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),

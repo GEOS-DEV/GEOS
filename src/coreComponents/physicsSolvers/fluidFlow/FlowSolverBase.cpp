@@ -89,7 +89,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
   this->registerWrapper( viewKeyStruct::computeStatisticsString(), &m_computeStatistics ).
     setApplyDefaultValue( 0 ). // do nothing by default
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether statistics are computed or not" );;
+    setDescription( "Flag indicating whether statistics are computed or not" );
 }
 
 void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
