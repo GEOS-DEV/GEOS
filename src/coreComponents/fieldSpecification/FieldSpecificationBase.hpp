@@ -502,9 +502,6 @@ public:
 protected:
   virtual void postProcessInput() override;
 
-  /// The flag used to decide if the BC value is normalized by the size of the set on which it is applied
-  bool m_normalizeBySetSize;
-
 private:
 
 
@@ -737,37 +734,12 @@ FieldSpecificationBase::
   string const & functionName = getReference< string >( viewKeyStruct::functionNameString() );
   FunctionManager & functionManager = FunctionManager::getInstance();
 
-  // Step 1: we have to compute the global set size (the global number of elements on which the boundary condition is applied)
-  // Note that this global set size is only needed by the SourceFlux boundary condition
-  // We cannot precompute this number in the boundary condition classes the face elements are created after initialisation
-
-  real64 sizeScalingFactor = 1.0;
-  if( m_normalizeBySetSize )
-  {
-    arrayView1d< integer const > const ghostRank =
-      dataGroup.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-
-    RAJA::ReduceSum< ReducePolicy< POLICY >, localIndex > localSetSize( 0 );
-    forAll< POLICY >( targetSet.size(),
-                      [targetSet, ghostRank, localSetSize] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      localIndex const ei = targetSet[k];
-      if( ghostRank[ei] < 0 )
-      {
-        localSetSize += 1;
-      }
-    } );
-
-    globalIndex const globalSetSize = MpiWrapper::sum( LvArray::integerConversion< globalIndex >( localSetSize.get() ), MPI_COMM_GEOSX );
-    sizeScalingFactor = ( globalSetSize > 0 ) ? ( 1.0 / globalSetSize ) : 1.0;
-  }
-
-  // Step 2: compute the value of the rhs terms, and collect the dof numbers
+  // Compute the value of the rhs terms, and collect the dof numbers
   // The rhs terms will be assembled in applyBoundaryConditionToSystem (or in the solver for CompositionalMultiphaseBase)
 
   if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
   {
-    real64 value = m_scale * dt * sizeScalingFactor;
+    real64 value = m_scale * dt;
     if( !functionName.empty() )
     {
       FunctionBase const & function = functionManager.getGroup< FunctionBase >( functionName );
@@ -794,7 +766,7 @@ FieldSpecificationBase::
     real64_array resultsArray( targetSet.size() );
     function.evaluate( dataGroup, time, targetSet, resultsArray );
     arrayView1d< real64 const > const & results = resultsArray.toViewConst();
-    real64 const value = m_scale * dt * sizeScalingFactor;
+    real64 const value = m_scale * dt;
 
     forAll< POLICY >( targetSet.size(),
                       [targetSet, dof, dofMap, dofRankOffset, component, matrix, rhsContribution, results, value, lambda] GEOSX_HOST_DEVICE (

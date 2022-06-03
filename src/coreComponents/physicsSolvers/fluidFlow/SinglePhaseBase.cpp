@@ -973,13 +973,42 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
   string const dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
-  {
+  // Step 1: count individual source flux boundary conditions
 
+  std::map< string, localIndex > bcNameToBcId;
+  localIndex bcCounter = 0;
+
+  fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
+  {
+    // collect all the bc names to idx
+    bcNameToBcId[bc.getName()] = bcCounter;
+    bcCounter++;
+  } );
+
+  if( bcCounter == 0 )
+  {
+    return;
+  }
+
+  // Step 2: count the set size for each source flux (each source flux may have multiple target sets)
+
+  array1d< globalIndex > bcAllSetsSize( bcNameToBcId.size() );
+
+  computeSourceFluxSizeScalingFactor( time_n,
+                                      dt,
+                                      domain,
+                                      bcNameToBcId,
+                                      bcAllSetsSize.toView() );
+
+  // Step 3: we are ready to impose the boundary condition, normalized by the set size
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & )
+  {
     fsManager.apply( time_n + dt,
                      mesh,
                      "ElementRegions",
@@ -998,25 +1027,63 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
-      arrayView1d< globalIndex const > const
-      dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      if( targetSet.size() == 0 )
+      {
+        return;
+      }
 
-      fs.applyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                         parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                                   time_n + dt,
-                                                                   dt,
-                                                                   subRegion,
-                                                                   dofNumber,
-                                                                   dofManager.rankOffset(),
-                                                                   localMatrix,
-                                                                   localRhs,
-                                                                   [] GEOSX_HOST_DEVICE ( localIndex const )
+      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const ghostRank =
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+
+      // Step 3.1: get the values of the source boundary condition that need to be added to the rhs
+
+      array1d< globalIndex > dofArray( targetSet.size() );
+      array1d< real64 > rhsContributionArray( targetSet.size() );
+      arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
+      localIndex const rankOffset = dofManager.rankOffset();
+
+      // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
+      fs.computeRhsContribution< FieldSpecificationAdd,
+                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
+                                                           time_n + dt,
+                                                           dt,
+                                                           subRegion,
+                                                           dofNumber,
+                                                           rankOffset,
+                                                           localMatrix,
+                                                           dofArray.toView(),
+                                                           rhsContributionArrayView,
+                                                           [] GEOSX_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
 
-    } );
+      // Step 3.2: we are ready to add the right-hand side contributions, taking into account our equation layout
 
+      // get the normalizer
+      real64 const sizeScalingFactor = bcAllSetsSize[bcNameToBcId.at( fs.getName())];
+
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
+                                                           targetSet,
+                                                           rankOffset,
+                                                           ghostRank,
+                                                           dofNumber,
+                                                           rhsContributionArrayView,
+                                                           localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
+      {
+        // we need to filter out ghosts here, because targetSet may contain them
+        localIndex const ei = targetSet[a];
+        if( ghostRank[ei] >= 0 )
+        {
+          return;
+        }
+
+        // add the value to the mass balance equation
+        globalIndex const rowIndex = dofNumber[ei] - rankOffset;
+        localRhs[rowIndex] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
+      } );
+    } );
   } );
 }
 
