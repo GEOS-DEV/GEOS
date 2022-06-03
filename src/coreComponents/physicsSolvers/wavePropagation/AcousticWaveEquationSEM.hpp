@@ -90,14 +90,45 @@ public:
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs_x, arrayView1d< real64 > const rhs_y, arrayView1d< real64 > const rhs_z) override;
 
   /**
-   * @brief Compute the pressure at each receiver coordinate in one time step
-   * @param time_n the time of evaluation of the seismoTrace
-   * @param dt time step of simulation
-   * @param iseismo the index number of of the seismo trace
-   * @param pressure_np1 the array to save the pressure value at the receiver position
-   * @param pressure_n the array to save the pressure value at the receiver position
+   * TODO: move implementation into WaveSolverBase
+   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
+   * last two timesteps.
+   * @param time_n the time corresponding to the field values pressure_n
+   * @param dt the simulation timestep
+   * @param timeSeismo the time at which the seismogram is computed
+   * @param iSeismo the index of the seismogram time in the seismogram array
+   * @param var_at_np1 the field values at time_n + dt
+   * @param var_at_n the field values at time_n
+   * @param var_at_receivers the array holding the trace values, where the output is written
    */
-  virtual void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n ) override;
+  virtual void computeSeismoTrace( real64 const time_n,
+                                   real64 const dt,
+                                   real64 const timeSeismo,
+                                   localIndex const iSeismo,
+                                   arrayView1d< real64 const > const var_np1,
+                                   arrayView1d< real64 const > const var_n,
+                                   arrayView2d< real64 > varAtReceivers ) override;
+
+  /**
+   * TODO: move implementation into WaveSolverBase
+   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
+   * @param time_n the time corresponding to the field values pressure_n
+   * @param dt the simulation timestep
+   * @param var_at_np1 the field values at time_n + dt
+   * @param var_at_n the field values at time_n
+   * @param var_at_receivers the array holding the trace values, where the output is written
+   */
+  virtual void computeAllSeismoTraces( real64 const time_n,
+                                       real64 const dt,
+                                       arrayView1d< real64 const > const var_np1,
+                                       arrayView1d< real64 const > const var_n,
+                                       arrayView2d< real64 > varAtReceivers );
+
+
+  /**
+   * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
+   */
+  virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain ) override;
 
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
@@ -137,12 +168,12 @@ private:
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
 
   /**
-   * @brief Save the seismo trace in file
-   * @param iseismo index number of the seismo trace
-   * @param valPressure value of the pressure for iseismo
+   * @brief Temporary debug function. Saves the sismo trace to a file.
+   * @param iSeismo index number of the seismo trace
+   * @param val value to be written in seismo
    * @param filename name of the output file
    */
-  void saveSeismo( localIndex iseismo, real64 valPressure, string const & filename ) override;
+  void saveSeismo( localIndex const iSeismo, real64 const val, string const & filename ) override;
 
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
