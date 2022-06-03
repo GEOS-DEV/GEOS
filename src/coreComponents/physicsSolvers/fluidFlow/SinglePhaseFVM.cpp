@@ -54,9 +54,7 @@ template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
                                         Group * const parent ):
   BASE( name, parent )
-{
-  m_numDofPerCell = m_isThermal ? 2 : 1;
-}
+{}
 
 template< typename BASE >
 void SinglePhaseFVM< BASE >::initializePreSubGroups()
@@ -314,25 +312,25 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UN
       {
         thermalSinglePhaseFVMKernels::
           FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                        dofKey, 
-                                                                        getName(),
-                                                                        mesh.getElemManager(), 
-                                                                        stencilWrapper, 
-                                                                        dt, 
-                                                                        localMatrix.toViewConstSizes(), 
-                                                                        localRhs.toView() ); 
+                                                                                     dofKey, 
+                                                                                     getName(),
+                                                                                     mesh.getElemManager(), 
+                                                                                     stencilWrapper, 
+                                                                                     dt, 
+                                                                                     localMatrix.toViewConstSizes(), 
+                                                                                     localRhs.toView() ); 
       }
       else
       {
         singlePhaseFVMKernels::
           FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                        dofKey, 
-                                                                        getName(),
-                                                                        mesh.getElemManager(), 
-                                                                        stencilWrapper, 
-                                                                        dt, 
-                                                                        localMatrix.toViewConstSizes(), 
-                                                                        localRhs.toView() ); 
+                                                                                     dofKey, 
+                                                                                     getName(),
+                                                                                     mesh.getElemManager(), 
+                                                                                     stencilWrapper, 
+                                                                                     dt, 
+                                                                                     localMatrix.toViewConstSizes(), 
+                                                                                     localRhs.toView() ); 
       }
 
 

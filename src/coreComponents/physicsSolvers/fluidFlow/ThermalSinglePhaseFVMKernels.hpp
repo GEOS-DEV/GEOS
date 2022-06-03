@@ -331,7 +331,7 @@ public:
       // The no. of fluxes is equal to the no. of equations in m_localRhs and m_localMatrix 
       // Different from the one in compositional multi-phase flow, which has a volume balance eqn.  
       RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn-1], stack.localFlux[i * numEqn + numEqn-1] ); 
-      
+
       AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + numEqn-1,
                                                                                         stack.dofColIndices.data(),
                                                                                         stack.localFluxJacobian[i * numEqn + numEqn-1].dataIfContiguous(),

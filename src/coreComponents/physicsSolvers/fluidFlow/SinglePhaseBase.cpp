@@ -63,8 +63,6 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
-
-  m_numDofPerCell = m_isThermal ? 2 : 1;
 }
 
 
@@ -73,6 +71,8 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
   using namespace extrinsicMeshData::flow;
 
   FlowSolverBase::registerDataOnMesh( meshBodies );
+
+  m_numDofPerCell = m_isThermal ? 2 : 1;
 
   forMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
@@ -290,18 +290,19 @@ void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
   arrayView1d< real64 > const dMob_dPres =
     dataGroup.getExtrinsicData< extrinsicMeshData::flow::dMobility_dPressure >();
 
-  arrayView1d< real64 > const dMob_dTemp = 
-    dataGroup.getExtrinsicData< extrinsicMeshData::flow::dMobility_dTemperature >(); 
-
   // input
 
   SingleFluidBase & fluid =
     getConstitutiveModel< SingleFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
   FluidPropViews fluidProps = getFluidProperties( fluid );
-  ThermalFluidPropViews thermalFluidProps = getThermalFluidProperties( fluid ); 
 
   if ( m_isThermal )
   {
+    arrayView1d< real64 > const dMob_dTemp = 
+      dataGroup.getExtrinsicData< extrinsicMeshData::flow::dMobility_dTemperature >(); 
+
+    ThermalFluidPropViews thermalFluidProps = getThermalFluidProperties( fluid ); 
+
     thermalSinglePhaseBaseKernels::MobilityKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
                                                                                      fluidProps.dens,
                                                                                      fluidProps.dDens_dPres,

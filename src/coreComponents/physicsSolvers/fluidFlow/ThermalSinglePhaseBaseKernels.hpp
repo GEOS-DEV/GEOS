@@ -277,6 +277,7 @@ public:
 
       // Step 2: assemble the fluid part of the accumulation term of the energy equation
       real64 const fluidEnergy = stack.poreVolume * m_density[ei][0] * m_internalEnergy[ei][0]; 
+      // real64 const fluidEnergy_tmp = stack.poreVolume_n * m_density[ei][0] * m_internalEnergy[ei][0]; 
       real64 const fluidEnergy_n = stack.poreVolume_n * m_density_n[ei][0] * m_internalEnergy_n[ei][0]; 
 
       real64 const dFluidEnergy_dP = stack.dPoreVolume_dPres * m_density[ei][0] * m_internalEnergy[ei][0]
@@ -287,18 +288,17 @@ public:
                                      + stack.poreVolume * m_density[ei][0] * m_dInternalEnergy_dTemp[ei][0]; 
 
       // local accumulation
-      stack.localResidual[numEqn-1] += fluidEnergy - fluidEnergy_n; 
+      stack.localResidual[numEqn-1] = fluidEnergy - fluidEnergy_n; 
 
       // derivatives w.r.t. pressure and temperature
-      stack.localJacobian[numEqn-1][0]        += dFluidEnergy_dP;
-      stack.localJacobian[numEqn-1][numDof-1] += dFluidEnergy_dT;
+      stack.localJacobian[numEqn-1][0]        = dFluidEnergy_dP;
+      stack.localJacobian[numEqn-1][numDof-1] = dFluidEnergy_dT;
     } );
 
     // Step 3: assemble the solid part of the accumulation term of the energy equation 
     stack.localResidual[numEqn-1] += stack.solidEnergy - stack.solidEnergy_n; 
     stack.localJacobian[numEqn-1][0] += stack.dSolidEnergy_dPres; 
     stack.localJacobian[numEqn-1][numDof-1] += stack.dSolidEnergy_dTemp; 
-
   }
 
   /**
