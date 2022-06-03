@@ -333,22 +333,6 @@ EXTRINSIC_MESH_DATA_TRAIT( MediumDensity,
                            WRITE_AND_READ,
                            "Medium density of the cell" );
 
-EXTRINSIC_MESH_DATA_TRAIT( LameCoefficientLambda,
-                           "lambda",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "First coefficient of Lame." );
-
-EXTRINSIC_MESH_DATA_TRAIT( LameCoefficientMu,
-                           "mu",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Second coefficient of Lame." );                        
-
 EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceFaceIndicator,
                            "freeSurfaceFaceIndicator",
                            array1d< localIndex >,

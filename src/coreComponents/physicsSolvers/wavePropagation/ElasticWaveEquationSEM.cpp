@@ -142,9 +142,6 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocityVs >( this->getName() );
       subRegion.registerExtrinsicData< extrinsicMeshData::MediumDensity >( this->getName() );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::LameCoefficientLambda >(this->getName());
-      subRegion.registerExtrinsicData< extrinsicMeshData::LameCoefficientMu >(this->getName());
-
       subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensor_xx >(this->getName());
       subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensor_yy >(this->getName());
       subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensor_zz >(this->getName());
@@ -615,9 +612,6 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
       arrayView1d< real64 const > const velocityVs = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVs >();
       arrayView1d< real64 const > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity >();
 
-      arrayView1d< real64 > const lambda = elementSubRegion.getExtrinsicData< extrinsicMeshData::LameCoefficientLambda >();
-      arrayView1d< real64 > const mu = elementSubRegion.getExtrinsicData< extrinsicMeshData::LameCoefficientMu >();
-
       arrayView2d< real64 > const stressxx = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_xx >();
       arrayView2d< real64 > const stressyy = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_yy >();
       arrayView2d< real64 > const stresszz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_zz >();
@@ -638,9 +632,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
                                                             "",
                                                             kernelFactory );
 
-      auto kernelFactory2 = ElasticWaveEquationSEMKernels::ExplicitElasticStressSEMFactory( mu,
-                                                                                           lambda,
-                                                                                           stressxx,
+      auto kernelFactory2 = ElasticWaveEquationSEMKernels::ExplicitElasticStressSEMFactory(stressxx,
                                                                                            stressyy,
                                                                                            stresszz,
                                                                                            stressxy,

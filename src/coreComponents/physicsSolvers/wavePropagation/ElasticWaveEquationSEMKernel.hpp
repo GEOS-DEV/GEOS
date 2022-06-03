@@ -699,8 +699,6 @@ public:
                              SUBREGION_TYPE const & elementSubRegion,
                              FE_TYPE const & finiteElementSpace,
                              CONSTITUTIVE_TYPE & inputConstitutiveType,
-                             arrayView1d < real64 > const & inputMu,
-                             arrayView1d < real64 > const & inputLambda,
                              arrayView2d < real64 > const & inputStressxx,
                              arrayView2d < real64 > const & inputStressyy,
                              arrayView2d < real64 > const & inputStresszz,
@@ -724,8 +722,6 @@ public:
     m_density( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumDensity >() ),
     m_velocityVp( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumVelocityVp >() ),
     m_velocityVs( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumVelocityVs >() ),
-    m_lambda(inputLambda),
-    m_mu(inputMu),
     m_rhs( nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS > ()),
     m_dt( dt )
   {
@@ -753,6 +749,8 @@ public:
 
     /// C-array stack storage for element local the nodal positions.
     real64 xLocal[ numNodesPerElem ][ 3 ];
+    real64 mu=0;
+    real64 lambda=0;
   };
   //***************************************************************************
 
@@ -776,6 +774,8 @@ public:
         stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
       }
     }
+    stack.mu = m_density[k] * m_velocityVs[k] * m_velocityVs[k];
+    stack.lambda = m_density[k] * m_velocityVp[k] * m_velocityVp[k] - 2.0*stack.mu;
   }
 
   /**
@@ -791,10 +791,6 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    
-    m_mu[k] = m_density[k] * m_velocityVs[k] * m_velocityVs[k];
-    m_lambda[k] = m_density[k] * m_velocityVp[k] * m_velocityVp[k] - 2.0*m_mu[k];
-
     real64 N[numNodesPerElem];
     real64 gradN[ numNodesPerElem ][ 3 ];
 
@@ -849,13 +845,13 @@ public:
     //Time integration
     for (localIndex i = 0; i < numNodesPerElem; i++)
     {
-      real64 diag = m_lambda[k]*(auxx[i]+auyy[i]+auzz[i]);
-      uelemxx[i]+= m_dt*(diag+2*m_mu[k]*auxx[i]);
-      uelemyy[i]+= m_dt*(diag+2*m_mu[k]*auyy[i]);
-      uelemzz[i]+= m_dt*(diag+2*m_mu[k]*auzz[i]);
-      uelemxy[i]+= m_dt*m_mu[k]*auxy[i];
-      uelemxz[i]+= m_dt*m_mu[k]*auxz[i];
-      uelemyz[i]+= m_dt*m_mu[k]*auyz[i];
+      real64 diag = stack.lambda*(auxx[i]+auyy[i]+auzz[i]);
+      uelemxx[i]+= m_dt*(diag+2*stack.mu*auxx[i]);
+      uelemyy[i]+= m_dt*(diag+2*stack.mu*auyy[i]);
+      uelemzz[i]+= m_dt*(diag+2*stack.mu*auzz[i]);
+      uelemxy[i]+= m_dt*stack.mu*auxy[i];
+      uelemxz[i]+= m_dt*stack.mu*auxz[i];
+      uelemyz[i]+= m_dt*stack.mu*auyz[i];
     }
 
     // Multiplication by inverse mass matrix
@@ -924,12 +920,6 @@ protected:
   /// The array containing the S-wavespeed
   arrayView1d < real64 const > const m_velocityVs;
 
-  /// The array containing one of the Lamé coefficient: Lambda
-  arrayView1d < real64  > const m_lambda;
-
-  /// The array containing one of the Lamé coefficient: Mu
-  arrayView1d< real64 > const m_mu;
-
   /// The array containing the RHS
   arrayView1d< real64  > const m_rhs;
 
@@ -945,8 +935,6 @@ using ExplicitElasticDisplacementSEMFactory = finiteElement::KernelFactory< Expl
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
 using ExplicitElasticStressSEMFactory = finiteElement::KernelFactory< ExplicitElasticStressSEM,
-                                                                      arrayView1d< real64 > const,
-                                                                      arrayView1d< real64 > const,
                                                                       arrayView2d < real64 > const,
                                                                       arrayView2d < real64 > const,
                                                                       arrayView2d < real64 > const,
