@@ -76,9 +76,7 @@ public:
                        integer const cycleNumber,
                        DomainPartition & domain ) override;
 
-  void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs_x ) override;
-
-  void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const u_np1, arrayView1d< real64 > const u_n) override;
+  void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) override;
   
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -90,7 +88,9 @@ public:
     static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
     static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
     
-    static constexpr char const * displacementNp1AtReceiversString() { return "displacementNp1AtReceivers"; }
+    static constexpr char const * displacementxNp1AtReceiversString() { return "displacementxNp1AtReceivers"; }
+    static constexpr char const * displacementyNp1AtReceiversString() { return "displacementyNp1AtReceivers"; }
+    static constexpr char const * displacementzNp1AtReceiversString() { return "displacementzNp1AtReceivers"; }
 
   } waveEquationViewKeys;
 
@@ -117,12 +117,47 @@ private:
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
 
-      /**
-   * @brief Apply ansorbing boundary condition to the face define in the geometry box from the xml
-   * @param time the time to apply the BC
-   * @param domain the partition domain
+    /**
+   * TODO: move implementation into WaveSolverBase
+   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
+   * last two timesteps.
+   * @param time_n the time corresponding to the field values pressure_n
+   * @param dt the simulation timestep
+   * @param timeSeismo the time at which the seismogram is computed
+   * @param iSeismo the index of the seismogram time in the seismogram array
+   * @param var_at_np1 the field values at time_n + dt
+   * @param var_at_n the field values at time_n
+   * @param var_at_receivers the array holding the trace values, where the output is written
    */
-  virtual void applyABC( real64 const time, DomainPartition & domain );
+  virtual void computeSeismoTrace( real64 const time_n,
+                                   real64 const dt,
+                                   real64 const timeSeismo,
+                                   localIndex const iSeismo,
+                                   arrayView1d< real64 const > const var_np1,
+                                   arrayView1d< real64 const > const var_n,
+                                   arrayView2d< real64 > varAtReceivers ) override;
+
+  /**
+   * TODO: move implementation into WaveSolverBase
+   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
+   * @param time_n the time corresponding to the field values pressure_n
+   * @param dt the simulation timestep
+   * @param var_at_np1 the field values at time_n + dt
+   * @param var_at_n the field values at time_n
+   * @param var_at_receivers the array holding the trace values, where the output is written
+   */
+  virtual void computeAllSeismoTraces( real64 const time_n,
+                                       real64 const dt,
+                                       arrayView1d< real64 const > const var_np1,
+                                       arrayView1d< real64 const > const var_n,
+                                       arrayView2d< real64 > varAtReceivers );
+
+
+  /**
+   * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
+   */
+  virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain ) override;
+
 
   /// save the sismo trace in file
   void saveSeismo( localIndex iseismo, real64 valDisplacement, string const & filename ) override;
@@ -146,7 +181,14 @@ private:
   array1d< localIndex > m_receiverIsLocal;
 
   /// Displacement_np1 at the receiver location for each time step for each receiver
-  array2d< real64 > m_displacementNp1AtReceivers;
+  array2d< real64 > m_displacementxNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real64 > m_displacementyNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real64 > m_displacementzNp1AtReceivers;
+
 
 };
 
