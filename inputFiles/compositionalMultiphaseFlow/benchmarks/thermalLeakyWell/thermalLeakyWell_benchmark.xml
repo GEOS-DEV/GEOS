@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Problem>
+  
+  <!-- SPHINX_SOLVER -->      
+  <Solvers>
+    <CompositionalMultiphaseFVM
+      name="compflow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      fluidNames="{ fluid }"
+      solidNames="{ rock, rock, rockWell, rockWell }"
+      permeabilityNames="{ rockPerm, rockPerm, rockPermWell, rockPermWell }"
+      relPermNames="{ relperm }"
+      capPressureNames="{ cappres }"
+      temperature="307.15"
+      initialDt="1"
+      useMass="1"
+      computeCFLNumbers="1"
+      targetRegions="{ aquiferTop, aquiferBottom, injectionWell, leakyWell }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-3"
+        newtonMaxIter="100"
+        maxTimeStepCuts="5"
+        lineSearchAction="Attempt"/>
+      <LinearSolverParameters
+        solverType="fgmres"
+	preconditionerType="mgr"
+	krylovTol="1e-4"/>
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+  <!-- SPHINX_SOLVER_END -->        
+
+  <!-- SPHINX_MESH -->  
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -500, -0.1329, 0.1329, 99.8671, 100.1329, 500 }"
+      yCoords="{ -500, -0.1329, 0.1329, 500 }"
+      zCoords="{ -800, -770, -670, -640 }"
+      nx="{ 50, 1, 20, 1, 40 }"
+      ny="{ 50, 1, 50 }"
+      nz="{ 20, 30, 10 }"
+      cellBlockNames="{ aquiferBottom00, aquitard00, aquiferTop00,
+  		        aquiferBottom01, aquitard01, aquiferTop01,
+		        aquiferBottom02, aquitard02, aquiferTop02,
+ 		        aquiferBottom10, aquitard10, aquiferTop10,
+  		        aquiferBottom11, aquitard11, aquiferTop11,
+		        aquiferBottom12, aquitard12, aquiferTop12,
+		        aquiferBottom20, aquitard20, aquiferTop20,
+  		        aquiferBottom21, aquitard21, aquiferTop21,
+		        aquiferBottom22, aquitard22, aquiferTop22,
+		        aquiferBottom30, aquitard30, aquiferTop30,
+		        aquiferBottom31, aquitard31, aquiferTop31,
+			aquiferBottom32, aquitard32, aquiferTop32,
+			aquiferBottom40, aquitard40, aquiferTop40,
+		        aquiferBottom41, aquitard41, aquiferTop41,
+			aquiferBottom42, aquitard42, aquiferTop42 }"/>
+  </Mesh>
+  <!-- SPHINX_MESH_END -->  
+  
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{  99.85, -0.15, -801 }"
+      xMax="{ 100.15,  0.15, -769 }"/>
+
+    <Box
+      name="west"
+      xMin="{ -500.01, -500.01, -801 }"
+      xMax="{ -489.99,  500.01, -639 }"/>
+    <Box
+      name="east"
+      xMin="{ 489.99, -500.01, -801 }"
+      xMax="{ 500.01,  500.01, -639 }"/>
+    <Box
+      name="north"
+      xMin="{ -500.01, -500.01, -801 }"
+      xMax="{  500.01, -489.99, -639 }"/>
+    <Box
+      name="south"
+      xMin="{ -500.01, 489.99, -801 }"
+      xMax="{  500.01, 500.01, -639 }"/>
+    
+  </Geometry>
+
+  <Events
+    maxTime="17.28e7">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="8.64e6"
+      target="/Outputs/vtkOutput"/>
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="1e4"
+      target="/Outputs/timeHistoryOutput"/>
+    <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="1e4"
+      target="/Tasks/compOutfluxCollection"/>
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="0"
+      endTime="1e4"
+      target="/Solvers/compflow"/>
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="1e4"	
+      forceDt="1e4"
+      target="/Solvers/compflow"/>
+    
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"
+        fieldName="pressure"
+        coefficientName="permeability"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <!-- SPHINX_ELEMENT_REGIONS -->    
+  <ElementRegions>
+    <CellElementRegion
+      name="aquiferBottom"
+      cellBlocks="{ aquiferBottom00, aquiferBottom01, aquiferBottom02,
+		    aquiferBottom10,                  aquiferBottom12,
+		    aquiferBottom20, aquiferBottom21, aquiferBottom22,
+		    aquiferBottom30,                  aquiferBottom32,
+		    aquiferBottom40, aquiferBottom41, aquiferBottom42 }"
+      materialList="{ fluid, rock, relperm, cappres }"/>
+    <CellElementRegion
+      name="aquiferTop"
+      cellBlocks="{ aquiferTop00, aquiferTop01, aquiferTop02,
+		    aquiferTop10,               aquiferTop12,
+		    aquiferTop20, aquiferTop21, aquiferTop22,
+		    aquiferTop30,               aquiferTop32,
+		    aquiferTop40, aquiferTop41, aquiferTop42 }"
+      materialList="{ fluid, rock, relperm, cappres }"/>
+    <CellElementRegion
+      name="injectionWell"
+      cellBlocks="{ aquiferBottom31 }"
+      materialList="{ fluid, rockWell, relperm, cappres }"/>
+    <CellElementRegion
+      name="leakyWell"
+      cellBlocks="{ aquiferTop11, aquitard11, aquiferBottom11 }"
+      materialList="{ fluid, rockWell, relperm, cappres }"/>
+  </ElementRegions>
+  <!-- SPHINX_ELEMENT_REGIONS_END -->    
+  
+  <Constitutive>
+
+    <!-- SPHINX_FLUID -->
+    <CO2BrinePhillipsFluid
+      name="fluid"
+      phaseNames="{ gas, water }"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
+      flashModelParaFile="co2flash.txt"/>
+    <!-- SPHINX_FLUID_END -->          
+    
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+    <NullModel
+      name="nullSolid"/>
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.15"
+      referencePressure="1.e7"
+      compressibility="0.0"/>
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-14, 2.0e-14, 2.0e-14 }"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rockWell"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPermWell"/>
+    <ConstantPermeability
+      name="rockPermWell"
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+
+    <!-- SPHINX_SCAL -->              
+    <TableRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable,
+					    gasRelativePermeabilityTable }"/>
+    <TableCapillaryPressure
+      name="cappres"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="waterCapillaryPressureTable"/>
+    <!-- SPHINX_SCAL_END -->              
+    
+  </Constitutive>
+
+  <FieldSpecifications>
+
+    <!-- SPHINX_HYDROSTATIC -->              
+    <HydrostaticEquilibrium
+      name="equil"
+      objectPath="ElementRegions"      
+      datumElevation="-800"
+      datumPressure="8.499e6"
+      initialPhaseName="water"
+      componentNames="{ co2, water }"
+      componentFractionVsElevationTableNames="{ initCO2CompFracTable,
+                                                initWaterCompFracTable }"
+      temperatureVsElevationTableName="initTempTable"/>
+    <!-- SPHINX_HYDROSTATIC_END -->              
+
+    <!-- SPHINX_SOURCE_BC -->                      
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/injectionWell"
+      component="0"
+      scale="-8.87"
+      setNames="{ source }"/>
+    <!-- SPHINX_SOURCE_BC_END -->                      
+    
+    <!-- SPHINX_DIRICHLET_BC -->                  
+    <FieldSpecification   
+      name="bcPressure"
+      objectPath="ElementRegions"
+      setNames="{ east, west, south, north }"
+      fieldName="pressure"
+      functionName="pressureFunction"
+      scale="1"/>
+    <FieldSpecification
+      name="bcTemperature"
+      objectPath="ElementRegions"
+      setNames="{ east, west, south, north }"
+      fieldName="temperature"
+      functionName="initTempTable"
+      scale="1"/>
+    <FieldSpecification
+      name="bcCompositionCO2"
+      setNames="{ east, west, south, north }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.000001"/>
+    <FieldSpecification
+      name="bcCompositionWater"
+      setNames="{ east, west, south, north }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.999999"/>
+    <!-- SPHINX_DIRICHLET_BC_END -->                  
+    
+  </FieldSpecifications>
+
+  <Functions>
+
+    <TableFunction
+      name="initCO2CompFracTable"
+      coordinates="{ -800, -640 }"
+      values="{ 0.000001, 0.000001 }"/>
+    <TableFunction
+      name="initWaterCompFracTable"
+      coordinates="{ -800, -640 }"
+      values="{ 0.999999, 0.999999 }"/>
+    <TableFunction
+      name="initTempTable"
+      coordinates="{ -800, -640 }"
+      values="{ 307.15, 302.35 }"/>
+
+    <TableFunction
+      name="waterRelativePermeabilityTable"
+      coordinateFiles="{ phaseVolumeFraction_water.txt }"
+      voxelFile="relPerm_water.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable"
+      coordinateFiles="{ phaseVolumeFraction_gas.txt }"
+      voxelFile="relPerm_gas.txt"/>       
+    <TableFunction
+      name="waterCapillaryPressureTable"
+      coordinateFiles="{ phaseVolumeFraction_water.txt }"
+      voxelFile="capPres_water.txt"/>       
+    
+    <TableFunction 
+      name="pressureFunction"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ xlin.geos, ylin.geos, zlin.geos}"
+      voxelFile="pressure.geos"
+      interpolation="linear" />
+    <TableFunction 
+      name="temperatureFunction"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ xlin.geos, ylin.geos, zlin.geos}"
+      voxelFile="temperature.geos"
+      interpolation="linear" />
+    
+  </Functions>      
+  
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{ /Tasks/compOutfluxCollection }"
+      filename="compOutfluxHistory"/>
+  </Outputs>
+
+  <Tasks>
+    <PackCollection
+      name="compOutfluxCollection"
+      objectPath="ElementRegions/leakyWell/aquitard11"
+      fieldName="componentOutflux"/>
+  </Tasks>
+  
+</Problem>
