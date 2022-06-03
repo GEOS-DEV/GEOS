@@ -79,10 +79,20 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
 
-  registerWrapper( viewKeyStruct::displacementNp1AtReceiversString(), &m_displacementNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::displacementxNp1AtReceiversString(), &m_displacementxNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
-    setDescription( "Displacement value at each receiver for each timestep" );
+    setDescription( "Displacement value at each receiver for each timestep (x-component)" );
+
+  registerWrapper( viewKeyStruct::displacementyNp1AtReceiversString(), &m_displacementyNp1AtReceivers ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Displacement value at each receiver for each timestep (y-component)" );
+
+  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_displacementzNp1AtReceivers ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Displacement value at each receiver for each timestep (z-component)" );
 
 }
 
@@ -209,7 +219,9 @@ void ElasticWaveEquationSEM::postProcessInput()
   m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverIsLocal.resize( numReceiversGlobal );
 
-  m_displacementNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_displacementxNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_displacementyNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_displacementzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
   m_sourceValue.resize( nsamples, numSourcesGlobal );
 
 
@@ -340,21 +352,20 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumb
   } );
 }
 
-void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs )
-{}
-
-void ElasticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 >
-                                                 const displacement_np1, arrayView1d< real64 > const displacement_n )
+void ElasticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
+                                                  real64 const dt,
+                                                  real64 const timeSeismo,
+                                                  localIndex iSeismo,
+                                                  arrayView1d< real64 const > const var_np1,
+                                                  arrayView1d< real64 const > const var_n,
+                                                  arrayView2d< real64 > varAtReceivers )
 {
-  real64 const timeSeismo = m_dtSeismoTrace*iSeismo;
-  real64 const timeNp1 = time_n+dt;
+  real64 const time_np1 = time_n+dt;
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  arrayView2d< real64 > const u_rcvs   = m_displacementNp1AtReceivers.toView();
-
-  real64 const a1 = (dt < epsilonLoc) ? 1.0 : (timeNp1 - timeSeismo)/dt;
+  real64 const a1 = (dt < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
   real64 const a2 = 1.0 - a1;
 
   if( m_nsamplesSeismoTrace > 0 )
@@ -363,20 +374,22 @@ void ElasticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 con
     {
       if( receiverIsLocal[ircv] == 1 )
       {
-        u_rcvs[iSeismo][ircv] = 0.0;
-        real64 utmpNp1 = 0.0;
-        real64 utmpN = 0.0;
+        varAtReceivers[iSeismo][ircv] = 0.0;
+        real64 vtmp_np1 = 0.0;
+        real64 vtmp_n = 0.0;
         for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
         {
-          utmpNp1 += displacement_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
-          utmpN += displacement_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+          vtmp_np1 += var_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+          vtmp_n += var_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
         }
-        //Temporary linear interpolation.
-        u_rcvs[iSeismo][ircv] = a1*utmpN + a2*utmpNp1;
+        // linear interpolation between the pressure value at time_n and time_(n+1)
+        varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
       }
     } );
   }
 
+  // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
+  // Output will then only be done via the previous code.
   if( iSeismo == m_nsamplesSeismoTrace - 1 )
   {
     forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
@@ -390,18 +403,21 @@ void ElasticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 con
           // TODO: remove saveSeismo and replace with TimeHistory
           for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
           {
-            this->saveSeismo( iSample, u_rcvs[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+            this->saveSeismo( iSample, varAtReceivers[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
           }
         }
       }
     } );
   }
+
 }
 
-void ElasticWaveEquationSEM::saveSeismo( localIndex iseismo, real64 valDisplacement, string const & filename )
+/// Use for now until we get the same functionality in TimeHistory
+/// TODO: move implementation into WaveSolverBase
+void ElasticWaveEquationSEM::saveSeismo( localIndex const iSeismo, real64 const val, string const & filename )
 {
   std::ofstream f( filename, std::ios::app );
-  f<< iseismo << " " << valDisplacement << std::endl;
+  f<< iSeismo << " " << val << std::endl;
   f.close();
 }
 
@@ -623,12 +639,14 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
     addSourceToRightHandSide( cycleNumber, rhs_x, rhs_y, rhs_z );
 
+    
+
     real64 dt2 = dt*dt;
     forAll< serialPolicy >( nodeManager.size(), [=] ( localIndex const a )
     {
       if( freeSurfaceNodeIndicator[a]!=1 )
       {
-
+        std::cout << rhs_x[a] << std::endl;
         ux_np1[a] = ux_n[a];
         ux_np1[a] *= 2.0*mass[a];
         ux_np1[a] -= (mass[a]-0.5*dt*damping_x[a])*ux_nm1[a];
@@ -657,6 +675,15 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
                                   domain.getNeighbors(),
                                   true );
 
+    // compute the seismic traces since last step.
+    arrayView2d< real64 > const uxReceivers   = m_displacementxNp1AtReceivers.toView();
+    arrayView2d< real64 > const uyReceivers   = m_displacementyNp1AtReceivers.toView();
+    arrayView2d< real64 > const uzReceivers   = m_displacementzNp1AtReceivers.toView();
+
+    computeAllSeismoTraces( time_n, dt, ux_np1, ux_n, uxReceivers );
+    computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, uyReceivers );
+    computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, uzReceivers );
+
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       ux_nm1[a] = ux_n[a];
@@ -674,16 +701,47 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
       rhs_z[a] = 0.0;
     } );
 
-    real64 const checkSeismo = m_dtSeismoTrace*m_indexSeismoTrace;
-    if( (time_n-epsilonLoc) <= checkSeismo && checkSeismo < (time_n + dt) )
-    {
-      computeSeismoTrace( time_n, dt, m_indexSeismoTrace, ux_np1, ux_n );
-      m_indexSeismoTrace++;
-    }
-
   } );
   return dt;
 
+}
+
+void ElasticWaveEquationSEM::cleanup( real64 const time_n, integer const, integer const, real64 const, DomainPartition & domain )
+{
+  // compute the remaining seismic traces, if needed
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+    arrayView1d< real64 const > const ux_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_n >();
+    arrayView1d< real64 const > const ux_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_np1>();
+    arrayView1d< real64 const > const uy_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_n >();
+    arrayView1d< real64 const > const uy_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_np1>();
+    arrayView1d< real64 const > const uz_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_n >();
+    arrayView1d< real64 const > const uz_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_np1>();
+    arrayView2d< real64 > const uxReceivers   = m_displacementxNp1AtReceivers.toView();
+    arrayView2d< real64 > const uyReceivers   = m_displacementyNp1AtReceivers.toView();
+    arrayView2d< real64 > const uzReceivers   = m_displacementzNp1AtReceivers.toView();
+
+    computeAllSeismoTraces( time_n, 0, ux_np1, ux_n, uxReceivers );
+    computeAllSeismoTraces( time_n, 0, uy_np1, uy_n, uyReceivers );
+    computeAllSeismoTraces( time_n, 0, uz_np1, uz_n, uzReceivers );
+  } );
+}
+
+void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
+                                                      real64 const dt,
+                                                      arrayView1d< real64 const > const var_np1,
+                                                      arrayView1d< real64 const > const var_n,
+                                                      arrayView2d< real64 > varAtReceivers )
+{
+  for( real64 timeSeismo;
+       (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace;
+       m_indexSeismoTrace++ )
+  {
+    computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, var_np1, var_n, varAtReceivers );
+  }
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, ElasticWaveEquationSEM, string const &, dataRepository::Group * const )

@@ -85,9 +85,7 @@ public:
    * @param cycleNumber the cycle number/step number of evaluation of the source
    * @param rhs the right hand side vector to be computed
    */
-  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) override;
-
-  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs_x, arrayView1d< real64 > const rhs_y, arrayView1d< real64 > const rhs_z) override;
+  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs );
 
   /**
    * TODO: move implementation into WaveSolverBase

@@ -661,32 +661,7 @@ public:
      
     real64 gradN[ numNodesPerElem ][ 3 ];
 
-    // real64 sigmaxx[numNodesPerElem] = {{0.0}};
-    // real64 sigmaxy[numNodesPerElem] = {{0.0}};
-    // real64 sigmaxz[numNodesPerElem] = {{0.0}};
-    // real64 sigmayy[numNodesPerElem] = {{0.0}};
-    // real64 sigmayx[numNodesPerElem] = {{0.0}};
-    // real64 sigmayz[numNodesPerElem] = {{0.0}};
-    // real64 sigmazz[numNodesPerElem] = {{0.0}};
-    // real64 sigmazx[numNodesPerElem] = {{0.0}};
-    // real64 sigmazy[numNodesPerElem] = {{0.0}};
-
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
-
-    // for( localIndex i=0; i<numNodesPerElem; ++i )
-    // {
-    //   sigmaxx[i] = detJ * ((stack.lambda + 2*stack.mu) * gradN[i][0]*m_ux_n[m_elemsToNodes[k][i]] + stack.lambda * ( gradN[i][1]*m_uy_n[m_elemsToNodes[k][i]]+ gradN[i][2]*m_uz_n[m_elemsToNodes[k][i]]));
-    //   sigmayy[i] = detJ * ((stack.lambda + 2*stack.mu) * gradN[i][0]*m_uy_n[m_elemsToNodes[k][i]] + stack.lambda * ( gradN[i][1]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][2]*m_uz_n[m_elemsToNodes[k][i]]));
-    //   sigmazz[i] = detJ * ((stack.lambda + 2*stack.mu) * gradN[i][0]*m_uz_n[m_elemsToNodes[k][i]] + stack.lambda * ( gradN[i][1]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][2]*m_uy_n[m_elemsToNodes[k][i]]));
-    //   sigmaxy[i] = detJ * (stack.mu * ( gradN[i][1]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][0]*m_uy_n[m_elemsToNodes[k][i]]));
-    //   sigmaxz[i] = detJ * (stack.mu * ( gradN[i][2]*m_ux_n[m_elemsToNodes[k][i]]+ gradN[i][0]*m_uz_n[m_elemsToNodes[k][i]]));
-    //   sigmayz[i] = detJ * (stack.mu * ( gradN[i][2]*m_uy_n[m_elemsToNodes[k][i]]+ gradN[i][1]*m_uz_n[m_elemsToNodes[k][i]]));
-
-    //   sigmayx[i] = sigmaxy[i];
-    //   sigmazy[i] = sigmayz[i];
-    //   sigmazx[i] = sigmaxz[i];
-    // }
-
 
     for( localIndex i=0; i<numNodesPerElem; ++i )
     {
@@ -701,20 +676,6 @@ public:
         real64 const Rzx_ij =  detJ*(stack.mu * gradN[j][0]*gradN[i][2] + stack.lambda * gradN[j][2]*gradN[i][0]);
         real64 const Ryz_ij =  detJ*(stack.mu * gradN[j][2]*gradN[i][1] + stack.lambda * gradN[j][1]*gradN[i][2]);
         real64 const Rzy_ij =  detJ*(stack.mu * gradN[j][1]*gradN[i][2] + stack.lambda * gradN[j][2]*gradN[i][1]);
-
-        // real64 const Rxx_ij = gradN[i][0];
-        // real64 const Rxz_ij = gradN[i][2];
-        // real64 const Rxy_ij = gradN[i][1];
-        // real64 const Ryy_ij = gradN[i][1];
-        // real64 const Ryx_ij = gradN[i][0];
-        // real64 const Ryz_ij = gradN[i][2];
-        // real64 const Rzx_ij = gradN[i][0];
-        // real64 const Rzy_ij = gradN[i][1];
-        // real64 const Rzz_ij = gradN[i][2];
-
-        // real64 const localIncrement_x = Rxx_ij * sigmaxx[j] + Rxy_ij*sigmaxy[j] + Rxz_ij*sigmaxz[j];
-        // real64 const localIncrement_y = Ryx_ij * sigmayx[j] + Ryy_ij*sigmayy[j] + Ryz_ij*sigmayz[j];
-        // real64 const localIncrement_z = Rzx_ij * sigmazx[j] + Rzy_ij*sigmazy[j] + Rzz_ij*sigmazz[j];
 
         real64 const localIncrement_x = (Rxx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rxy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rxz_ij*m_uz_n[m_elemsToNodes[k][j]]);
         real64 const localIncrement_y = (Ryx_ij * m_ux_n[m_elemsToNodes[k][j]] + Ryy_ij*m_uy_n[m_elemsToNodes[k][j]] + Ryz_ij*m_uz_n[m_elemsToNodes[k][j]]);
