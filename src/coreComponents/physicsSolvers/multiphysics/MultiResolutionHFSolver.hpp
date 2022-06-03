@@ -21,7 +21,7 @@
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIRESOLUTIONHFSOLVER_HPP_
 
 #include "physicsSolvers/multiphysics/PhaseFieldFractureSolver.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
 
 namespace geosx
 {
