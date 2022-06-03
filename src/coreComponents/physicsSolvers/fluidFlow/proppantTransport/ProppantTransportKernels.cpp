@@ -102,9 +102,6 @@ AccumulationKernel::
 {
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
   {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
     if( elemGhostRank[ei] < 0 )
     {
       localIndex constexpr MAX_NC = constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
@@ -154,7 +151,6 @@ AccumulationKernel::
                                               nDofs );
       }
     }
-#endif
   } );
 }
 
@@ -786,9 +782,6 @@ void FluxKernel::
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
 
     if( ( numFluxElems > 1 || updateProppantPacking != 0 ) )
@@ -880,7 +873,6 @@ void FluxKernel::
         }
       }
     }
-#endif
   } );
 }
 

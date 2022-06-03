@@ -158,8 +158,8 @@ UpwindingHelper::
                              real64 ( & dUpwPhaseGravCoef_dPres )[ NP ][ NP-1 ][ NC ][ 2 ],
                              real64 ( & dUpwPhaseGravCoef_dCompDens )[ NP ][ NP-1 ][ NC ][ 2 ][ NC ] )
 {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+  GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
 #else
   using Deriv = multifluid::DerivativeOffset;
 
@@ -744,8 +744,8 @@ AssemblerKernelHelper::
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs )
 {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+  GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
 #else
   using namespace compositionalMultiphaseUtilities;
   integer constexpr NDOF = NC+1;
@@ -1318,8 +1318,8 @@ AssemblerKernel::
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+  GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
 #else
   // one sided flux
   real64 oneSidedVolFlux[ NF ]{};
@@ -1557,8 +1557,8 @@ FluxKernel::
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const ei )
   {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+  GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
 #else
     // transmissibility matrix
     stackArray2d< real64, NF *NF > transMatrix( NF, NF );
@@ -1623,7 +1623,7 @@ FluxKernel::
                                                                                      transMatrixGrav,
                                                                                      localMatrix,
                                                                                      localRhs );
-  #endif
+#endif
   } );
 }
 

@@ -163,10 +163,6 @@ struct AquiferBCKernel
 
     forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
-      // ============================================================
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-      GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
       localIndex const er  = seri( iconn, Order::ELEM );
       localIndex const esr = sesri( iconn, Order::ELEM );
       localIndex const ei  = sefi( iconn, Order::ELEM );
@@ -182,8 +178,6 @@ struct AquiferBCKernel
                                                               areaFraction,
                                                               dAquiferVolFlux_dPres );
       targetSetSumFluxes += aquiferVolFlux;
-#endif
-      // =============================================================
     } );
     return targetSetSumFluxes.get();
   }

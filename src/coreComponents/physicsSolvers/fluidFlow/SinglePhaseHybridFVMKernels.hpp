@@ -167,9 +167,6 @@ struct AssemblerKernelHelper
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs )
   {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
     // fluxes
     real64 divMassFluxes = 0;
     real64 dDivMassFluxes_dElemVars[ NF+1 ]{};
@@ -250,7 +247,6 @@ struct AssemblerKernelHelper
                                                               &faceDofColIndices[0],
                                                               &dDivMassFluxes_dFaceVars[0],
                                                               NF );
-#endif    
   }
 
   /**

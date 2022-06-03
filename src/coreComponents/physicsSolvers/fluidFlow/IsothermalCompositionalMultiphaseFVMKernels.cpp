@@ -194,9 +194,6 @@ CFLFluxKernel::
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
     // compute transmissibility
     real64 transmissibility[STENCILWRAPPER_TYPE::maxNumConnections][2];
     real64 dTrans_dPres[STENCILWRAPPER_TYPE::maxNumConnections][2];
@@ -224,7 +221,6 @@ CFLFluxKernel::
                                                             phaseCompFrac,
                                                             phaseOutflux,
                                                             compOutflux );
-#endif
   } );
 }
 
@@ -594,10 +590,6 @@ AquiferBCKernel::
 
   forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
-    // ==================================
     constexpr integer NDOF = NC + 1;
 
     // working arrays
@@ -670,8 +662,6 @@ AquiferBCKernel::
                                                       NDOF );
       }
     }
-#endif
-    // ====================================
   } );
 }
 

@@ -249,8 +249,8 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
 #else
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
@@ -282,9 +282,6 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
     using namespace PDEUtilities;
 
     constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
@@ -527,7 +524,6 @@ public:
       dPoreVolumeConstraint_dComponents,
       1.0,
       detJxW );
-#endif
   }
 
   /**
@@ -542,9 +538,6 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
 
     // Apply equation/variable change transformation(s)
@@ -612,7 +605,6 @@ public:
 
       RAJA::atomicAdd< serialAtomic >( &m_rhs[dof+m_numComponents], stack.localPoreVolumeConstraint[0] );
     }
-#endif
     return maxForce;
   }
 

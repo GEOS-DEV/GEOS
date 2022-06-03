@@ -250,14 +250,10 @@ JFunctionCapillaryPressure::KernelWrapper::
           localIndex const q,
           arraySlice1d< geosx::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
 {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
   compute( phaseVolFraction,
            m_jFuncMultiplier[k],
            m_phaseCapPressure[k][q],
            m_dPhaseCapPressure_dPhaseVolFrac[k][q] );
-#endif
 }
 
 /// Declare strings associated with enumeration values.

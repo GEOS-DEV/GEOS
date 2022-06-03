@@ -902,8 +902,8 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
 #else
     forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {

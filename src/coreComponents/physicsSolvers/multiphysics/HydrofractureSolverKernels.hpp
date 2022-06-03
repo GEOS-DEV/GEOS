@@ -217,8 +217,6 @@ struct FluidMassResidualDerivativeAssemblyKernel
       globalIndex nodeDOF[8 * 3];
       stackArray1d< real64, 24 > dRdU( 2 * numNodesPerFace * 3 );
 
-      constexpr integer kfSign[2] = { -1, 1 };
-
       computeAccumulationDerivative( contactWrapper,
                                      numNodesPerFace,
                                      elemsToFaces[ei],

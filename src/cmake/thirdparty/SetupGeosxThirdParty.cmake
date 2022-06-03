@@ -463,13 +463,13 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
 
     if( ENABLE_HYPRE_CUDA )
         set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY} )
-    elseif( ENABLE_HYPRE_ROCM )
-        find_and_register( NAME rocrand
-			   INCLUDE_DIRECTORIES ${ROCM_ROOT}/rocrand/include
-			   LIBRARY_DIRECTORIES ${ROCM_ROOT}/rocrand/lib
-			   HEADER rocrand.h
-			   LIBRARIES rocrand )
-	set( EXTRA_DEPS rocrand )
+#    elseif( ENABLE_HYPRE_ROCM )
+#        find_and_register( NAME rocrand
+#			   INCLUDE_DIRECTORIES ${ROCM_ROOT}/rocrand/include
+#			   LIBRARY_DIRECTORIES ${ROCM_ROOT}/rocrand/lib
+#			   HEADER rocrand.h
+#			   LIBRARIES rocrand )
+#	set( EXTRA_DEPS rocrand )
     endif()
 
     find_and_register(NAME hypre

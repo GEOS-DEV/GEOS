@@ -460,9 +460,6 @@ DeadOilFluid::KernelWrapper::
           real64 const temperature,
           arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
-#if defined(GEOSX_USE_HIP) and defined(GEOSX_DEVICE_COMPILE)
-  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
   auto phaseFraction = m_phaseFraction(k, q);
   auto phaseDensity = m_phaseDensity(k, q);
   auto phaseMassDensity = m_phaseMassDensity(k, q);
@@ -482,7 +479,6 @@ DeadOilFluid::KernelWrapper::
            phaseInternalEnergy,
            phaseCompFraction,
            totalDensity );
-#endif
 }
 
 } //namespace constitutive

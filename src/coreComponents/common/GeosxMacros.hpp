@@ -28,6 +28,10 @@
   #define GEOSX_DEVICE_COMPILE
 #endif
 
+#if defined( GEOSX_DEVICE_COMPILE ) && defined( GEOSX_USE_HIP )
+  #define GEOSX_CRUSHER_SUPPRESSION "Cannot compile this on Crusher with cce@14.0.0 and rocm@5.1.0"
+#endif
+
 
 /**
  * @name Host-device markers

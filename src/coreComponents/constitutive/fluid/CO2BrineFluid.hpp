@@ -238,9 +238,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
            arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
            real64 & totalDensity ) const
 {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-  GEOSX_ERROR("Can't compile the GEOSx MultiPhaseMultiComponentFluid kernels with HIP yet.");
-#else
   integer constexpr numComp = 2;
   integer constexpr numPhase = 2;
   integer const ip1 = m_p1Index;
@@ -374,7 +371,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   computeTotalDensity< numComp, numPhase >( phaseFraction,
                                             phaseDensity,
                                             totalDensity );
-#endif
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
@@ -394,9 +390,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
            PhaseComp::SliceType const phaseCompFraction,
            FluidProp::SliceType const totalDensity ) const
 {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-  GEOSX_ERROR("Can't compile the GEOSx MultiPhaseMultiComponentFluid kernels with HIP yet.");
-#else
   integer constexpr numComp = 2;
   integer constexpr numPhase = 2;
   integer const ip1 = m_p1Index;
@@ -556,7 +549,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   computeTotalDensity( phaseFraction,
                        phaseDensity,
                        totalDensity );
-#endif
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
@@ -570,9 +562,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
           real64 const temperature,
           arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-  GEOSX_ERROR("Can't compile the GEOSx MultiPhaseMultiComponentFluid kernels with HIP yet.");
-#else
   compute( pressure,
            temperature,
            composition,
@@ -584,7 +573,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
            m_phaseInternalEnergy( k, q ),
            m_phaseCompFraction( k, q ),
            m_totalDensity( k, q ) );
-#endif
 }
 
 

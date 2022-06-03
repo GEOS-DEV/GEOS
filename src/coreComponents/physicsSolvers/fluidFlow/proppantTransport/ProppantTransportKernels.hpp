@@ -116,9 +116,6 @@ struct ProppantUpdateKernel
 
     forAll< parallelDevicePolicy<> >( proppantWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE) && defined(NDEBUG)
-      GEOSX_ERROR("Can't compile this kernel with HIP yet.");
-#else
       proppantWrapper.update( a,
                               proppantConc[a],
                               fluidDens[a][0],
@@ -127,7 +124,6 @@ struct ProppantUpdateKernel
                               fluidVisc[a][0],
                               dFluidVisc_dPres[a][0],
                               dFluidVisc_dCompConc[a][0] );
-#endif
     } );
   }
 };
