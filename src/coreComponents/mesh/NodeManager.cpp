@@ -105,6 +105,33 @@ void NodeManager::buildSets( CellBlockManagerABC const & cellBlockManager,
   } );
 }
 
+void NodeManager::setIsExternal( FaceManager const & faceManager )
+{
+  // get the "isExternal" field from the faceManager...This should have been
+  // set already!
+  arrayView1d< integer const > const & isExternalFace = faceManager.isExternal();
+
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
+
+  // get the "isExternal" field from for *this, and set it to zero
+  m_isExternal.zero();
+
+  // loop through all faces
+  for( localIndex kf=0; kf<faceManager.size(); ++kf )
+  {
+    // check to see if the face is on a domain boundary
+    if( isExternalFace[kf] == 1 )
+    {
+      // loop over all nodes connected to face, and set isNodeDomainBoundary
+      localIndex const numNodes = faceToNodes.sizeOfArray( kf );
+      for( localIndex a = 0; a < numNodes; ++a )
+      {
+        m_isExternal[ faceToNodes( kf, a ) ] = 1;
+      }
+    }
+  }
+}
+
 void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 {
   arrayView1d< integer const > const isFaceOnDomainBoundary = faceManager.getDomainBoundaryIndicator();

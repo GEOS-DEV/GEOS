@@ -108,9 +108,9 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
 
   // Get meshLevel
-  domain.forMeshBodies( [&] ( MeshBody & meshBody )
-  {
-    meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
+ forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                               MeshLevel & meshLevel,
+                                               arrayView1d< string const > const &  )
     {
 
       // Get managers
@@ -243,8 +243,6 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
       // Node to edge map
       embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
       embSurfNodeManager.compressRelationMaps();
-
-    } );
   } );
 }
 
