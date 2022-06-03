@@ -34,6 +34,7 @@ SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
   registerExtrinsicData( extrinsicMeshData::singlefluid::density{}, &m_density );
   registerExtrinsicData( extrinsicMeshData::singlefluid::dDensity_dPressure{}, &m_dDensity_dPressure );
   registerExtrinsicData( extrinsicMeshData::singlefluid::initialDensity{}, &m_initialDensity );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::density_n{}, &m_density_n );
 
   registerExtrinsicData( extrinsicMeshData::singlefluid::viscosity{}, &m_viscosity );
   registerExtrinsicData( extrinsicMeshData::singlefluid::dViscosity_dPressure{}, &m_dViscosity_dPressure );
@@ -43,23 +44,24 @@ SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
 void SingleFluidBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
+
+  // for fracture elements, set the default value
+  getExtrinsicData< extrinsicMeshData::singlefluid::density_n >().
+    setDefaultValue( defaultDensity() );
 }
 
 void SingleFluidBase::initializeState() const
 {
-  localIndex const numE = m_density.size( 0 );
-  localIndex const numG = m_density.size( 1 );
+  arrayView2d< real64 > initialDensity = m_initialDensity;
+  arrayView2d< real64 > density_n      = m_density_n;
+  initialDensity.setValues< parallelDevicePolicy<> >( m_density.toViewConst() );
+  density_n.setValues< parallelDevicePolicy<> >( m_density.toViewConst() );
+}
 
-  arrayView2d< real64 const > newDensity     = m_density;
-  arrayView2d< real64 >       initialDensity = m_initialDensity;
-
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-  {
-    for( localIndex q = 0; q < numG; ++q )
-    {
-      initialDensity[k][q] = newDensity[k][q];
-    }
-  } );
+void SingleFluidBase::saveConvergedState() const
+{
+  arrayView2d< real64 > density_n = m_density_n;
+  density_n.setValues< parallelDevicePolicy<> >( m_density.toViewConst() );
 }
 
 //START_SPHINX_INCLUDE_00
@@ -73,6 +75,7 @@ void SingleFluidBase::allocateConstitutiveData( Group & parent,
   m_density.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_dDensity_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_initialDensity.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_density_n.resize( parent.size(), numConstitutivePointsPerParentIndex );
 
   m_viscosity.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_dViscosity_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
