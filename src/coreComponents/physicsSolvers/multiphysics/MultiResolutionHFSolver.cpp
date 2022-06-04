@@ -242,12 +242,15 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( MeshLevel const & GEOSX_
 //The function will read all this data and prepare a list of dofs and u values that will be used by the patch solver to set
 //the boundary conditions
 void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
-                                                    MeshLevel const & patch )
+                                                    MeshLevel & patch )
 {
 
   // get list of nodes on the boundary of the patch
-  NodeManager const & patchNodeManager = patch.getNodeManager();
-  SortedArrayView< localIndex const > const patchExternalSet = patchNodeManager.externalSet();
+  FaceManager const & patchFaceManager = patch.getFaceManager();
+  NodeManager & patchNodeManager = patch.getNodeManager();
+  patchNodeManager.setIsExternal(patchFaceManager);
+  SortedArray< localIndex > patchExternalSet = patchNodeManager.externalSet(); 
+  //arrayView1d< integer const > const patchExternalSet = patchNodeManager.isExternal(); //option 2 remove if not needed
   //arrayView1d< globalIndex const > const patchLocalToGlobalMap = patchNodeManager.localToGlobalMap();
   arrayView1d< real64 const > const patchDamage = patchNodeManager.getReference< array1d< real64 > >( "Damage" );
   NodeManager const & baseNodeManager = base.getNodeManager();
@@ -274,12 +277,10 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
       localIndex const numBaseNodes = 1;  //this wont be 1 in other cases //m_nodeMapIndices.sizeOfArray( a );
       for( localIndex b=0; b<numBaseNodes; ++b )
       {
-        //localIndex const B = m_nodeMapIndices[b]; // base node number associated to patch node i
-        //WARNING: IN THIS CASE, WE HAVE THE SAME MESH FOR BASE AND PATCH, SO B = b, IN GENERAL, WE WILL NEED A MAP
-        //USE THE REGISTERED ARRAY HERE TOO
-        m_fixedDispList( count, 0 ) = baseDisp( b, 0 );
-        m_fixedDispList( count, 1 ) = baseDisp( b, 1 );
-        m_fixedDispList( count, 2 ) = baseDisp( b, 2 );
+        //write displacements from the base domain to become a boundary condition in the patch domain
+        m_fixedDispList( count, 0 ) = baseDisp( a, 0 );
+        m_fixedDispList( count, 1 ) = baseDisp( a, 1 );
+        m_fixedDispList( count, 2 ) = baseDisp( a, 2 );
       }
 
       ++count;
@@ -350,7 +351,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
     auto const baseTarget = baseTargets.begin();
     map< string, array1d< string > > const & patchTargets = patchSolver.getReference< map< string, array1d< string > > >( SolverBase::viewKeyStruct::meshTargetsString());
     auto const patchTarget = patchTargets.begin();
-    this->setInitialCrackDamageBCs( domain.getMeshBody( baseTarget->first ).getMeshLevel( 0 ), domain.getMeshBody( patchTarget->first ).getMeshLevel( 0 ));
+    this->setInitialCrackDamageBCs( domain.getMeshBody( patchTarget->first ).getMeshLevel( 0 ), domain.getMeshBody( baseTarget->first ).getMeshLevel( 0 ) );
 
     //patchSolver.addCustomBCDamage(m_nodeFixDamage); //this function still doesnt exist
     //must prescribe the damage boundary conditions based on the location of the base crack relative to the subdomain mesh

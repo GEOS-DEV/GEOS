@@ -116,6 +116,15 @@ void NodeManager::setIsExternal( FaceManager const & faceManager )
   // get the "isExternal" field from for *this, and set it to zero
   m_isExternal.zero();
 
+  // get externalSet reference to insert external faces
+  SortedArray< localIndex > & externalSet = this->externalSet();
+
+  // get total number of nodes
+  localIndex const numNodesMesh = this->size();
+
+  //get normals to all faces
+  const arrayView2d< real64 const > normalOfAllFaces = faceManager.faceNormal();
+
   // loop through all faces
   for( localIndex kf=0; kf<faceManager.size(); ++kf )
   {
@@ -127,9 +136,14 @@ void NodeManager::setIsExternal( FaceManager const & faceManager )
       for( localIndex a = 0; a < numNodes; ++a )
       {
         m_isExternal[ faceToNodes( kf, a ) ] = 1;
+        if ( normalOfAllFaces( kf, 2 ) == 0.0 )
+        {
+          externalSet.insert( faceToNodes( kf, a ) );
+        }
       }
     }
   }
+
 }
 
 void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
