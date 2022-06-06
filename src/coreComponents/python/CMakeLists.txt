@@ -5,6 +5,9 @@ set( PYTHON_INTERP_INCLUDE_DIRS
      ${PYTHON_DIR}/lib/python2.7/site-packages/numpy/core/include/
    )
 
+# Set python style targets
+# set( python_sources modules/geosx_mesh_tools_package/geosx_mesh_tools/abaqus_converter.py )
+
 
 # If an explicit python post-processing target is not set, then try
 # using the python being used with cmake.  Note: if the user does not have
@@ -53,4 +56,23 @@ add_custom_target( geosx_format_all_xml_files
                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                    DEPENDS geosx_xml_tools 
                  )
+
+
+# Python formatting
+if ( ENABLE_YAPF )
+     set( python_module_sources )
+     file( GLOB_RECURSE python_module_sources "*py" )
+
+     blt_add_code_checks( PREFIX  python_modules_${arg_PREFIX}
+                          SOURCES ${python_module_sources}
+                          YAPF_CFG_FILE ${PROJECT_SOURCE_DIR}/yapf.cfg )
+
+     set( python_script_sources )
+     file( GLOB_RECURSE python_script_sources "${CMAKE_SOURCE_DIR}/../scripts/*py" )
+
+     blt_add_code_checks( PREFIX  python_scripts_${arg_PREFIX}
+                          SOURCES ${python_script_sources}
+                          YAPF_CFG_FILE ${PROJECT_SOURCE_DIR}/yapf.cfg )
+endif()
+
 
