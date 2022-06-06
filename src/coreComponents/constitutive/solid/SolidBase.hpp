@@ -147,23 +147,6 @@ public:
   }
 
   /**
-   * @brief Get a parameter representative of the stiffness.
-   * @details This can be used when stabilizations need to be scaled locally by taking into account
-   * the order of magnitude of the stiffness matrix.
-   * @param[in] k Element index.
-   * @return A parameter representative of the stiffness matrix dstress/dstrain
-   */
-  GEOSX_HOST_DEVICE
-  virtual real64 getStiffnessParameter( localIndex const k ) const
-  {
-    GEOSX_UNUSED_VAR( k );
-    // We don't throw an error here because we want this method to be called by any constitutive
-    // update.
-
-    return 0;
-  }
-
-  /**
    * @brief Small strain update.
    *
    * @param[in] k Element index.

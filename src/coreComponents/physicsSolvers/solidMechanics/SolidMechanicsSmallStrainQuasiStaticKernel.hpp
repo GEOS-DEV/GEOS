@@ -197,11 +197,11 @@ public:
     }
     // Add stabilization to block diagonal parts of the local jacobian
     // (this is a no-operation with FEM classes)
-    real64 const stabilizationPhysicalWeight = m_constitutiveUpdate.getStiffnessParameter( k );
+    real64 const stabilizationScaling = computeStabilizationScaling( k );
     m_finiteElementSpace.template addGradGradStabilizationMatrix
     < FE_TYPE, numDofPerTrialSupportPoint, true >( stack.feStack,
                                                    stack.localJacobian,
-                                                   -stabilizationPhysicalWeight );
+                                                   -stabilizationScaling );
   }
 
 
@@ -285,13 +285,13 @@ public:
                                      N,
                                      gravityForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
-    real64 const stabilizationPhysicalWeight = m_constitutiveUpdate.getStiffnessParameter( k );
+    real64 const stabilizationScaling = computeStabilizationScaling( k );
     m_finiteElementSpace.template
     addEvaluatedGradGradStabilizationVector< FE_TYPE,
                                              numDofPerTrialSupportPoint >( stack.feStack,
                                                                            stack.uhat_local,
                                                                            reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
-                                                                           -stabilizationPhysicalWeight );
+                                                                           -stabilizationScaling );
     stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
   }
 
@@ -348,6 +348,20 @@ protected:
 
   /// The rank global density
   arrayView2d< real64 const > const m_density;
+
+  /**
+   * @brief Get a parameter representative of the stiffness, used as physical scaling for the
+   * stabilization matrix.
+   * @param[in] k Element index.
+   * @return A parameter representative of the stiffness matrix dstress/dstrain
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  real64 computeStabilizationScaling( localIndex const k ) const
+  {
+    // TODO: generalize this to other constitutive models (currently we assume linear elasticity).
+    return 2.0 * m_constitutiveUpdate.getShearModulus( k );
+  }
 };
 
 /// The factory used to construct a QuasiStatic kernel.

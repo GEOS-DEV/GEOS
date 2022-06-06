@@ -139,12 +139,6 @@ public:
     return m_shearModulus[k];
   }
 
-  GEOSX_HOST_DEVICE
-  virtual real64 getStiffnessParameter( localIndex const k ) const override final
-  {
-    return 2.0 * m_shearModulus[k];
-  }
-
   // TODO: confirm hyper stress/strain measures before activatiing
 
   /*
