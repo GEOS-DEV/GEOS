@@ -1,24 +1,21 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, -9.81 }">
+  <Solvers>
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Region2, Fracture }">
+      targetRegions="{ Fracture }"
+      logLevel="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-2"
-        newtonMaxIter="8"
-        allowNonConverged="1"/>
+        newtonTol="1.0e-8"
+        newtonMaxIter="8"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      
       targetRegions="{ Fracture }"
       rockToughness="1e6"
       mpiCommOrder="1"/>
@@ -28,11 +25,11 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -5, 5 }"
-      yCoords="{ 0, 10 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ 0, 2 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
+      nx="{ 2 }"
+      ny="{ 2 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -59,9 +56,14 @@
       xMax="{ 10.01, 10.01, 1.01 }"/>
 
     <Box
-      name="fracture"
+      name="fracture1"
       xMin="{ -0.01, -0.01, -0.01 }"
       xMax="{ 0.01, 10.01, 1.01 }"/>
+
+    <Box
+      name="fracture2"
+      xMin="{ -2.01, 0.99, -0.01 }"
+      xMax="{ 2.01, 1.01, 1.01 }"/>
 
     <Box
       name="source"
@@ -70,29 +72,23 @@
   </Geometry>
 
   <Events
-    maxTime="50000">
-    <!--SoloEvent
-            name="output0"
-            target="/Outputs/siloOutput" / -->
+    maxTime="50.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
-
-    <!--SoloEvent
-            name="output1"
-            target="/Outputs/siloOutput" / -->
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="1e3"
-      target="/Solvers/SinglePhaseFlow"/>
 
     <PeriodicEvent
       name="outputs"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/SinglePhaseFlow"/>
+
+    <PeriodicEvent
       name="restarts"
-      timeFrequency="25000"
+      timeFrequency="25.0"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
@@ -113,7 +109,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-5"
-      materialList="{ water, fractureFilling }"/>
+      materialList="{ water, fractureFilling}"/>
   </ElementRegions>
 
   <Constitutive>
@@ -148,7 +144,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 5.0e-19, 5.0e-19, 5.0e-19 }"/>
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
 
     <PressurePorosity
       name="fracturePorosity"
@@ -164,18 +160,10 @@
     <FieldSpecification
       name="frac"
       initialCondition="1"
-      setNames="{ fracture }"
+      setNames="{ fracture1, fracture2 }"
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
-
-    <FieldSpecification
-      name="Porosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
-      fieldName="rockPorosity_referencePorosity"
-      scale="0.01"/>
 
     <FieldSpecification
       name="fracPorosity"
@@ -186,25 +174,16 @@
       scale="1.00"/>
 
     <FieldSpecification
-      name="initialPressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
-      fieldName="pressure"
-      scale="0.0"/>
-
-    <FieldSpecification
       name="source"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="2.0e6"
+      scale="1.0e7"
       setNames="{ source }"/>
   </FieldSpecifications>
 
   <Outputs>
-    <VTK
-      name="siloOutput"
-      plotFileRoot="fractureMatrixFlow"/>
+    <Silo
+      name="siloOutput"/>
 
     <Restart
       name="restartOutput"/>
