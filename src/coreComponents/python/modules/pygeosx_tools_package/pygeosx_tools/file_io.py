@@ -1,4 +1,3 @@
-
 import os
 import numpy as np
 
@@ -59,7 +58,10 @@ def save_tables(axes, properties, table_root='./tables', axes_names=[]):
                    delimiter=',')
 
 
-def load_tables(axes_names, property_names, table_root='./tables', extension='csv'):
+def load_tables(axes_names,
+                property_names,
+                table_root='./tables',
+                extension='csv'):
     """
     Load a set of tables in GEOSX format
 
@@ -73,11 +75,18 @@ def load_tables(axes_names, property_names, table_root='./tables', extension='cs
         tuple: List of axes values, and dictionary of table values
     """
     # Load axes
-    axes = [np.loadtxt('%s/%s.%s' % (table_root, axis, extension), unpack=True) for axis in axes_names]
+    axes = [
+        np.loadtxt('%s/%s.%s' % (table_root, axis, extension), unpack=True)
+        for axis in axes_names
+    ]
     N = tuple([len(x) for x in axes])
 
     # Load properties
-    properties = {p: np.reshape(np.loadtxt('%s/%s.%s' % (table_root, p, extension)), N, order='F') for p in property_names}
+    properties = {
+        p: np.reshape(np.loadtxt('%s/%s.%s' % (table_root, p, extension)),
+                      N,
+                      order='F')
+        for p in property_names
+    }
 
     return axes, properties
-

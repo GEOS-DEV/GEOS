@@ -57,7 +57,7 @@ def get_cube_indices(ncubes, indmap):
         cube_inds = []
 
         for xi, yi, zi in points:
-            ind = (ncubes+1)*(ncubes+1)*xi + (ncubes+1)*yi + zi
+            ind = (ncubes + 1) * (ncubes + 1) * xi + (ncubes + 1) * yi + zi
             cube_inds.append(indmap[ind])
         index_list.append(cube_inds)
 
@@ -104,7 +104,7 @@ def make_nxnxn_framework(n):
 
     # Get an orderly array of all points and calculate cube corner indices
     ideal_points = np.vstack(
-        list(map(np.ravel, np.mgrid[0:n+1, 0:n+1, 0:n+1]))).T
+        list(map(np.ravel, np.mgrid[0:n + 1, 0:n + 1, 0:n + 1]))).T
     # Increments z, then y, then x
     indmap = get_index_map(ideal_points, points)
     cube_indices = get_cube_indices(n, indmap)
@@ -168,8 +168,8 @@ def make_tets_from_cubes(cube_list):
     tet_list = []
 
     for a, b, c, d, e, f, g, h in cube_list:
-        tet_list.extend([[a, b, c, f], [a, c, d, h], [
-                        a, e, f, h], [c, f, g, h], [a, f, c, h]])
+        tet_list.extend([[a, b, c, f], [a, c, d, h], [a, e, f, h],
+                         [c, f, g, h], [a, f, c, h]])
 
     return tet_list
 
@@ -187,8 +187,8 @@ def make_pyramids_from_cubes(cube_list):
     pyramid_list = []
 
     for a, b, c, d, e, f, g, h in cube_list:
-        pyramid_list.extend(
-            [[a, e, f, b, h], [b, f, g, c, h], [a, b, c, d, h]])
+        pyramid_list.extend([[a, e, f, b, h], [b, f, g, c, h], [a, b, c, d,
+                                                                h]])
 
     return pyramid_list
 
@@ -235,7 +235,7 @@ def write_msh(points, inds, fname):
             fout.write(' 2 0 1')
 
             for index in elem:
-                fout.write(' ' + str(index+1))
+                fout.write(' ' + str(index + 1))
             fout.write('\n')
         fout.write('$EndElements')
 
@@ -244,31 +244,40 @@ def generate_all_types(n):
     points, inds = make_nxnxn_framework(n)
     # Write hexes
     hex_name = 'hex_' + str(n)
-    write_msh(points, inds, hex_name+'.msh')
-    write_vtu(points, inds, hex_name+'.vtu')
+    write_msh(points, inds, hex_name + '.msh')
+    write_vtu(points, inds, hex_name + '.vtu')
     # Write tets
     tet_name = 'tet_' + str(n)
     tet_inds = make_tets_from_cubes(inds)
-    write_msh(points, tet_inds, tet_name+'.msh')
-    write_vtu(points, tet_inds, tet_name+'.vtu')
+    write_msh(points, tet_inds, tet_name + '.msh')
+    write_vtu(points, tet_inds, tet_name + '.vtu')
     # Write wedges
     wedge_name = 'wedge_' + str(n)
     wedge_inds = make_wedges_from_cubes(inds)
-    write_msh(points, wedge_inds, wedge_name+'.msh')
-    write_vtu(points, wedge_inds, wedge_name+'.vtu')
+    write_msh(points, wedge_inds, wedge_name + '.msh')
+    write_vtu(points, wedge_inds, wedge_name + '.vtu')
     # Write pyramids
     pyramid_name = 'pyramid_' + str(n)
     pyramid_inds = make_pyramids_from_cubes(inds)
-    write_msh(points, pyramid_inds, pyramid_name+'.msh')
-    write_vtu(points, pyramid_inds, pyramid_name+'.vtu')
+    write_msh(points, pyramid_inds, pyramid_name + '.msh')
+    write_vtu(points, pyramid_inds, pyramid_name + '.vtu')
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='A script that generates NxNxN meshes with a cubic bounding box. Non-corner nodes are perturbed from their structured locations and outputs are written as hexahedra, tetrahedra, wedges, and pyramids in both .vtu and .msh formats.')
-    parser.add_argument('sideLengths', metavar='N', type=int, nargs='+',
+        description=
+        'A script that generates NxNxN meshes with a cubic bounding box. Non-corner nodes are perturbed from their structured locations and outputs are written as hexahedra, tetrahedra, wedges, and pyramids in both .vtu and .msh formats.'
+    )
+    parser.add_argument('sideLengths',
+                        metavar='N',
+                        type=int,
+                        nargs='+',
                         help='an integer side length for mesh construction')
-    parser.add_argument('--seed', type=int, nargs='?', const=5, default=5,
+    parser.add_argument('--seed',
+                        type=int,
+                        nargs='?',
+                        const=5,
+                        default=5,
                         help='Integer random number generator seed, default=5')
     args = parser.parse_args()
 

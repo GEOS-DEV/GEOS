@@ -1,4 +1,3 @@
-
 from geosx_xml_tools.attribute_coverage import parse_schema
 from geosx_xml_tools.xml_formatter import format_file
 from lxml import etree as ElementTree
@@ -29,8 +28,8 @@ def check_redundancy_level(local_schema, node, whitelist=['component']):
     for child in node:
         # Comments will not appear in the schema
         if child.tag in local_schema['children']:
-            child_is_required = check_redundancy_level(local_schema['children'][child.tag],
-                                                       child)
+            child_is_required = check_redundancy_level(
+                local_schema['children'][child.tag], child)
             node_is_required += child_is_required
             if not child_is_required:
                 node.remove(child)
@@ -79,7 +78,11 @@ def main():
 
     # Parse the user arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--root', type=str, help='GEOSX root', default='')
+    parser.add_argument('-r',
+                        '--root',
+                        type=str,
+                        help='GEOSX root',
+                        default='')
     args = parser.parse_args()
 
     # Parse the xml files

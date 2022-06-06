@@ -1,4 +1,3 @@
-
 import numpy as np
 from scipy import stats
 
@@ -26,7 +25,7 @@ def apply_to_bins(fn, position, value, bins, collapse_edges=True):
         Nr -= 2
         Ibin -= 1
         Ibin[Ibin == -1] = 0
-        Ibin[Ibin == Nr] = Nr-1
+        Ibin[Ibin == Nr] = Nr - 1
 
     # Apply functions to bins
     binned_values = np.zeros(Nr)
@@ -59,7 +58,12 @@ def extrapolate_nan_values(x, y, slope_scale=0.0):
     return y
 
 
-def get_random_realization(x, bins, value, rand_fill=0, rand_scale=0, slope_scale=0):
+def get_random_realization(x,
+                           bins,
+                           value,
+                           rand_fill=0,
+                           rand_scale=0,
+                           slope_scale=0):
     """
     Get a random realization for a noisy signal with a set of bins
 
@@ -104,5 +108,3 @@ def get_realizations(x, bins, targets):
     for k, t in targets.items():
         results[k] = get_random_realization(x, bins, **t)
     return results
-
-

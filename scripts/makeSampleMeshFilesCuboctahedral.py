@@ -145,7 +145,7 @@ def open_node(outfile, space_count, name, **kwargs):
     for arg, value in kwargs.items():
         arg_string += f' {arg}="{value}"'
 
-    outfile.write(space_count*' ' + f'<{name}' + arg_string + '>\n')
+    outfile.write(space_count * ' ' + f'<{name}' + arg_string + '>\n')
     space_count += 2
 
     return space_count
@@ -153,21 +153,21 @@ def open_node(outfile, space_count, name, **kwargs):
 
 def close_node(outfile, space_count, name):
     space_count -= 2
-    outfile.write(space_count*' ' + f'</{name}>\n')
+    outfile.write(space_count * ' ' + f'</{name}>\n')
 
     return space_count
 
 
 def write_data(outfile, space_count, data, **kwargs):
     space_count = open_node(outfile, space_count, 'DataArray', **kwargs)
-    outfile.write(space_count*' ')
+    outfile.write(space_count * ' ')
 
     for index, value in enumerate(data, 1):
         outfile.write(f' {value}')
         # Write a newline every 15 values
 
         if (index % 15) == 0:
-            outfile.write('\n' + space_count*' ')
+            outfile.write('\n' + space_count * ' ')
 
     outfile.write('\n')
     space_count = close_node(outfile, space_count, 'DataArray')
@@ -187,33 +187,73 @@ def print_to_vtu(fname, nodes, faces, index_map):
     with open(fname, 'w') as outfile:
         write_header(outfile)
         space_count = 2
-        space_count = open_node(outfile, space_count, 'VTKFile',
-                                type='UnstructuredGrid', version='0.1',
+        space_count = open_node(outfile,
+                                space_count,
+                                'VTKFile',
+                                type='UnstructuredGrid',
+                                version='0.1',
                                 byte_order='LittleEndian')
         space_count = open_node(outfile, space_count, 'UnstructuredGrid')
-        space_count = open_node(outfile, space_count, 'Piece',
-                                NumberOfPoints=npoints, NumberOfCells=ncells)
+        space_count = open_node(outfile,
+                                space_count,
+                                'Piece',
+                                NumberOfPoints=npoints,
+                                NumberOfCells=ncells)
         # Optional: add PointData later
-        space_count = open_node(outfile, space_count,
-                                'CellData', Scalars='cell_scalars')
-        write_data(outfile, space_count, cell_data, type='Int32',
-                   Name='cell_scalars', format='ascii')
+        space_count = open_node(outfile,
+                                space_count,
+                                'CellData',
+                                Scalars='cell_scalars')
+        write_data(outfile,
+                   space_count,
+                   cell_data,
+                   type='Int32',
+                   Name='cell_scalars',
+                   format='ascii')
         space_count = close_node(outfile, space_count, 'CellData')
         space_count = open_node(outfile, space_count, 'Points')
-        write_data(outfile, space_count, points, type='Float32',
-                   NumberOfComponents=3, format='ascii')
+        write_data(outfile,
+                   space_count,
+                   points,
+                   type='Float32',
+                   NumberOfComponents=3,
+                   format='ascii')
         space_count = close_node(outfile, space_count, 'Points')
         space_count = open_node(outfile, space_count, 'Cells')
-        write_data(outfile, space_count, cell_connectivity,
-                   type='Int64', IdType=1, Name='connectivity', format='ascii')
-        write_data(outfile, space_count, cell_offsets, type='Int64',
-                   IdType=1, Name='offsets', format='ascii')
-        write_data(outfile, space_count, cell_types,
-                   type='UInt8', Name='types', format='ascii')
-        write_data(outfile, space_count, face_connectivity,
-                   type='Int64', IdType=1, Name='faces', format='ascii')
-        write_data(outfile, space_count, face_offsets, type='Int64',
-                   IdType=1, Name='faceoffsets', format='ascii')
+        write_data(outfile,
+                   space_count,
+                   cell_connectivity,
+                   type='Int64',
+                   IdType=1,
+                   Name='connectivity',
+                   format='ascii')
+        write_data(outfile,
+                   space_count,
+                   cell_offsets,
+                   type='Int64',
+                   IdType=1,
+                   Name='offsets',
+                   format='ascii')
+        write_data(outfile,
+                   space_count,
+                   cell_types,
+                   type='UInt8',
+                   Name='types',
+                   format='ascii')
+        write_data(outfile,
+                   space_count,
+                   face_connectivity,
+                   type='Int64',
+                   IdType=1,
+                   Name='faces',
+                   format='ascii')
+        write_data(outfile,
+                   space_count,
+                   face_offsets,
+                   type='Int64',
+                   IdType=1,
+                   Name='faceoffsets',
+                   format='ascii')
         space_count = close_node(outfile, space_count, 'Cells')
         space_count = close_node(outfile, space_count, 'Piece')
         space_count = close_node(outfile, space_count, 'UnstructuredGrid')
