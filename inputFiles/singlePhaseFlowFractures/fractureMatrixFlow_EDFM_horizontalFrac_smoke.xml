@@ -5,6 +5,19 @@
     <File name="./fractureMatrixFlow_EDFM_base.xml" />
   </Included>
 
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 11 }"
+      ny="{ 11 }"
+      nz="{ 11 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
   <Geometry>
     <Box
       name="source"

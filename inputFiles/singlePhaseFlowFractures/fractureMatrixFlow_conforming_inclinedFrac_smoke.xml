@@ -8,12 +8,12 @@
   <Mesh>
     <VTKMesh
       name="mesh"
-      file="inclinedFracture_nodup.vtk"
+      file="fracture_30.vtk"
       regionAttribute="CellEntityIds"/>
   </Mesh>
 
    <Events
-    maxTime="2e3"
+    maxTime="1e3"
     logLevel="3">
     <SoloEvent
       name="preFracture"

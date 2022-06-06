@@ -48,7 +48,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      compressibility="5e-10"
+      compressibility="0.0"
       viscosibility="0.0"/>
 
     <CompressibleSolidParallelPlatesPermeability
@@ -68,13 +68,13 @@
 
     <PressurePorosity
       name="rockPorosity"
-      defaultReferencePorosity="0.01"
+      defaultReferencePorosity="0.1"
       referencePressure="0.0"
-      compressibility="1.0e-9"/>
+      compressibility="0.0"/>
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 2.0e-10, 2.0e-10, 2.0e-10 }"/>
+      permeabilityComponents="{ 2.0e-11, 2.0e-11, 2.0e-11 }"/>
 
     <PressurePorosity
       name="fracturePorosity"
@@ -101,7 +101,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/RockMatrix"
       fieldName="rockPorosity_referencePorosity"
-      scale="0.01"/>
+      scale="0.1"/>
 
     <FieldSpecification
       name="fracPorosity"
@@ -120,6 +120,14 @@
       scale="0.0"/>
 
     <FieldSpecification
+      name="initialPressureFrac"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="pressure"
+      scale="0.0"/>  
+
+    <FieldSpecification
       name="sourceTerm"
       objectPath="ElementRegions/RockMatrix/1_hexahedra"
       fieldName="pressure"
@@ -133,18 +141,5 @@
       scale="0.0"
       setNames="{all}"/>
 
-    <!--FieldSpecification
-      name="sourceTerm"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="1.0e7"
-      setNames="{ 6 }"/>
-
-   <FieldSpecification
-      name="sinkTerm"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="0.0"
-      setNames="{ 7 }"/-->  
   </FieldSpecifications>
 </Problem>

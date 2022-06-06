@@ -4,6 +4,19 @@
   <Included>
     <File name="./fractureMatrixFlow_EDFM_base.xml" />
   </Included>
+  
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 11 }"
+      ny="{ 11 }"
+      nz="{ 11 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
 
   <Geometry>
     <Box
@@ -24,6 +37,28 @@
       widthVector="{ -0.5, 0, 0.5 }"
       dimensions="{ 1.1, 1.1 }"/>
   </Geometry>
+
+  <Events
+    maxTime="2e3"
+    logLevel="3">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGenerator"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1e3"
+      target="/Solvers/SinglePhaseFlow"/>
+
+    <PeriodicEvent
+      name="outputs"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1e3"
+      target="/Outputs/sidreRestart"/>
+  </Events>
  
   <Outputs>
     <VTK
