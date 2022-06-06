@@ -21,7 +21,7 @@
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIRESOLUTIONHFSOLVER_HPP_
 
 #include "physicsSolvers/multiphysics/PhaseFieldFractureSolver.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
 
 namespace geosx
 {
@@ -65,7 +65,7 @@ public:
   virtual void setInitialCrackDamageBCs( MeshLevel const & patch, MeshLevel const & base );
 
   virtual void prepareSubProblemBCs( MeshLevel const & base,
-                                     MeshLevel const & patch );
+                                     MeshLevel & patch );
 
   real64 splitOperatorStep( real64 const & time_n,
                             real64 const & dt,

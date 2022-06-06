@@ -17,21 +17,21 @@
     </MultiResolutionHF>
 
     <SolidMechanicsEmbeddedFractures
-	name="EFEMSolve"
-	targetRegions="{base/base_cer,base/Fracture_cer}"
-	fractureRegionName="Fracture_cer"
-	initialDt="1"
-	solidSolverName="EFEMSolidMechSolve"
-	contactRelationName="fractureContact"
-	logLevel="1"> 
+      name="EFEMSolve"
+      targetRegions="{base/base_cer,base/Fracture_cer}"
+      fractureRegionName="Fracture_cer"
+      initialDt="1"
+      solidSolverName="EFEMSolidMechSolve"
+      contactRelationName="fractureContact"
+      logLevel="1"> 
       <NonlinearSolverParameters
-	  newtonTol="1.0e-6"
-	  newtonMaxIter="2"
-	  maxTimeStepCuts="1"/>
+        newtonTol="1.0e-6"
+        newtonMaxIter="2"
+        maxTimeStepCuts="1"/>
       <LinearSolverParameters
-	  solverType="direct"
-	  directParallel="0"
-	  logLevel="1"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="1"/>
     </SolidMechanicsEmbeddedFractures>
 
     <SolidMechanicsLagrangianSSLE
@@ -174,11 +174,11 @@
       cellBlocks="{ cb2 }"
       materialList="{ shale }"/>
     <SurfaceElementRegion
-	name="Fracture_cer"
-	subRegionType="embeddedElement"
-	materialList="{ fractureContact }"
-        defaultAperture="1.0e-3"
-	meshBody="base"/>
+      name="Fracture_cer"
+      subRegionType="embeddedElement"
+      materialList="{ fractureContact }"
+      defaultAperture="1.0e-3"
+	    meshBody="base"/>
   </ElementRegions>
 
   <Constitutive>
@@ -246,9 +246,9 @@
 
   <Tasks>
     <PackCollection
-	name="displacementJumpCollection"
-	objectPath="ElementRegions/Fracture_cer/embeddedSurfaceSubRegion"
-	fieldName="displacementJump"/>
+      name="displacementJumpCollection"
+      objectPath="ElementRegions/Fracture_cer/embeddedSurfaceSubRegion"
+      fieldName="displacementJump"/>
     </Tasks>
 
   <Outputs>

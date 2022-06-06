@@ -321,6 +321,10 @@
 					<xsd:selector xpath="LaplaceFEM" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversMultiResolutionHFUniqueName">
+					<xsd:selector xpath="MultiResolutionHF" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversMultiphasePoromechanicsUniqueName">
 					<xsd:selector xpath="MultiphasePoromechanics" />
 					<xsd:field xpath="@name" />
