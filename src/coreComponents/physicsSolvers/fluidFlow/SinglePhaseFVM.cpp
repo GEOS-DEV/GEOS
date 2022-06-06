@@ -254,7 +254,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
   else
   {
     dofManager.addVectorToField( localSolution,
-                                 extrinsicMeshData::flow::pressure::key(),
+                                 BASE::viewKeyStruct::elemDofFieldString(),
                                  extrinsicMeshData::flow::pressure::key(),
                                  scalingFactor );
   }
@@ -561,7 +561,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+  string const & dofKey = dofManager.getKey( BASE::viewKeyStruct::elemDofFieldString() );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
@@ -674,7 +674,7 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & elemDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+  string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
