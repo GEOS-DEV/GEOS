@@ -958,11 +958,11 @@ void VTKMeshGenerator::importNodesets( vtkUnstructuredGrid & mesh, CellBlockMana
 {
   auto & nodeSets = cellBlockManager.getNodeSets();
   localIndex const numPoints = LvArray::integerConversion< localIndex >( m_vtkMesh->GetNumberOfPoints() );
-  
+
   for( int i=0; i < m_nodesetNames.size(); ++i )
   {
     GEOSX_LOG_LEVEL_RANK_0( 2, "    " + m_nodesetNames[i] );
-    
+
     vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( m_nodesetNames[i].c_str() );
     GEOSX_THROW_IF( curArray == nullptr,
                     GEOSX_FMT( "Target nodeset '{}' not found in mesh", m_nodesetNames[i] ),
@@ -970,11 +970,11 @@ void VTKMeshGenerator::importNodesets( vtkUnstructuredGrid & mesh, CellBlockMana
     vtkTypeInt64Array const & nodesetMask = *vtkTypeInt64Array::FastDownCast( curArray );
 
     SortedArray< localIndex > & targetNodeset = nodeSets[ m_nodesetNames[i] ];
-    for (localIndex j=0; j < numPoints; ++j)
+    for( localIndex j=0; j < numPoints; ++j )
     {
-      if ( nodesetMask.GetValue( j ) == 1 )
+      if( nodesetMask.GetValue( j ) == 1 )
       {
-        targetNodeset.insert(j);
+        targetNodeset.insert( j );
       }
     }
   }
