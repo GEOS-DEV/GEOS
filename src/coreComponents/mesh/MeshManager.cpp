@@ -70,7 +70,7 @@ void MeshManager::generateMeshLevels( DomainPartition & domain )
     // THIS IS A HACK
     if( meshName.find( "well" ) == string::npos )
     {
-      domain.getMeshBodiesGrp().registerGroup< MeshBody >( meshName ).createMeshLevel( 0 );
+      domain.registerMeshBody( meshName ).createMeshLevel( 0 );
     }
   } );
 }

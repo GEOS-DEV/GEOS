@@ -174,6 +174,11 @@ public:
   Group & getMeshBodiesGrp()
   { return this->getGroup( groupKeys.meshBodies ); }
 
+  MeshBody & registerMeshBody( string const & name )
+  {
+    return this->getMeshBodiesGrp().registerGroup< MeshBody >( name );
+  }
+
   std::vector< const MeshBody * > getMeshBodies() const
   {
     std::vector< const MeshBody * > result;

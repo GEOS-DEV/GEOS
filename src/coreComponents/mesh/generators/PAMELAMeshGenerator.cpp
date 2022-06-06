@@ -279,8 +279,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
 
   domain.getMetisNeighborList() = m_pamelaMesh->getNeighborList();
-  Group & meshBodies = domain.getMeshBodiesGrp();
-  MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
+  MeshBody & meshBody = domain.registerMeshBody( this->getName() );
   //TODO for the moment we only consider on mesh level "Level0"
   meshBody.createMeshLevel( 0 );
 

@@ -50,15 +50,9 @@ public:
    */
   MeshLevel & createMeshLevel( localIndex const newLevel );
 
-  /**
-   * @brief Get the meshLevels group
-   * @return reference to the meshLevels group.
-   */
-  Group & getMeshLevelsGrp() { return m_meshLevels; }
-
-  std::vector< const MeshLevel * > getMeshLevels() const
+  std::vector< MeshLevel const * > getMeshLevels() const
   {
-    std::vector< const MeshLevel * > result;
+    std::vector< MeshLevel const * > result;
     auto filler = [&]( MeshLevel const & ml){ result.emplace_back( &ml ); };
     m_meshLevels.forSubGroups< MeshLevel >( filler );
     return result;
