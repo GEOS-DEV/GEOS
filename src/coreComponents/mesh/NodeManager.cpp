@@ -116,6 +116,8 @@ void NodeManager::setIsExternal( FaceManager const & faceManager )
   // get the "isExternal" field from for *this, and set it to zero
   m_isExternal.zero();
 
+  SortedArray< localIndex > & externalSet = externalSet();
+
   // loop through all faces
   for( localIndex kf=0; kf<faceManager.size(); ++kf )
   {
@@ -127,6 +129,7 @@ void NodeManager::setIsExternal( FaceManager const & faceManager )
       for( localIndex a = 0; a < numNodes; ++a )
       {
         m_isExternal[ faceToNodes( kf, a ) ] = 1;
+        externalSet.insert( faceToNodes( kf, a ) ); 
       }
     }
   }
