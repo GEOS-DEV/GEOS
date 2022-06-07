@@ -31,6 +31,8 @@ target_include_directories( pygeosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks( PREFIX pygeosx )
 
+install(TARGETS pygeosx LIBRARY DESTINATION lib)
+
 macro(parse_test_file filename)
   file(READ "${filename}" contents)
   string(REPLACE "\n" ";" rows ${contents})
