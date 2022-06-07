@@ -225,13 +225,13 @@ void testDruckerPragerExtendedDriver()
   StrainData data;
   data.strainIncrement[0] = -1e-3;
   real64 invariantP, invariantQ;
-  real64 total = 0;
+//  real64 total = 0;
   real64 deviator[6] = {0};
 
   //FILE* fp = fopen("pq.txt","w");
   for( localIndex loadstep=0; loadstep < 300; ++loadstep )
   {
-    total += data.strainIncrement[0];
+//    total += data.strainIncrement[0];
     forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       real64 stress[6] = {0};

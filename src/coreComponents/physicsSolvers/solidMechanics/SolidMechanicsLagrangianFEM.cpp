@@ -401,10 +401,10 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
           real64 N[numNodesPerElem];
           for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
           {
-            real64 elemMass = 0;
+//            real64 elemMass = 0;
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
-              elemMass += rho[k][q] * detJ[k][q];
+//              elemMass += rho[k][q] * detJ[k][q];
               FE_TYPE::calcN( q, N );
 
               for( localIndex a=0; a< numNodesPerElem; ++a )
