@@ -112,9 +112,9 @@ public:
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
    * @param time_n the time corresponding to the field values pressure_n
    * @param dt the simulation timestep
-   * @param var_at_np1 the field values at time_n + dt
-   * @param var_at_n the field values at time_n
-   * @param var_at_receivers the array holding the trace values, where the output is written
+   * @param var_np1 the field values at time_n + dt
+   * @param var_n the field values at time_n
+   * @param varAtReceivers the array holding the trace values, where the output is written
    */
   virtual void computeAllSeismoTraces( real64 const time_n,
                                        real64 const dt,
