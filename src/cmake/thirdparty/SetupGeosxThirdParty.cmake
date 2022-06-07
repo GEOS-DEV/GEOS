@@ -210,7 +210,6 @@ endif()
 ################################
 if(DEFINED RAJA_DIR)
     message(STATUS "RAJA_DIR = ${RAJA_DIR}")
-
     find_package(RAJA REQUIRED
                  PATHS ${RAJA_DIR}
                  NO_DEFAULT_PATH)
