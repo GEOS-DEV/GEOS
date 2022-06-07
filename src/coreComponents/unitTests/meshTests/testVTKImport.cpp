@@ -55,97 +55,97 @@ void TestMeshImport( string const & meshFilePath, V const & validate )
   validate( domain.getMeshBody( "mesh" ).getGroup< CellBlockManagerABC >( keys::cellManager ) );
 }
 
-// TEST( VTKImport, cube )
-// {
-//   auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
-//   {
-//     // `cube.vtk` is a cube made by 3 x 3 x 3 = 27 Hexahedron 3d-elements.
-//     // It contains 4 x 4 x 4 = 64 nodes.
-//     // On each face of the cube, you have 3 x 3 quad faces. Hence 9 x 6 = 54 quad 2d-elements.
-//     // On each edge of the cube, you have 3 Line elements. Hence 3 x 12 = 36 line 1d-elements.
-//     // On each vertex of the cube you have on Vertex element. Hence 8 Vertex 0d-cells.
+TEST( VTKImport, cube )
+{
+  auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
+  {
+    // `cube.vtk` is a cube made by 3 x 3 x 3 = 27 Hexahedron 3d-elements.
+    // It contains 4 x 4 x 4 = 64 nodes.
+    // On each face of the cube, you have 3 x 3 quad faces. Hence 9 x 6 = 54 quad 2d-elements.
+    // On each edge of the cube, you have 3 Line elements. Hence 3 x 12 = 36 line 1d-elements.
+    // On each vertex of the cube you have on Vertex element. Hence 8 Vertex 0d-cells.
 
-//     // The `cube.vtk` mesh contains an "attribute" field that is used to group cells together.
-//     // A region with id `-1` is considered as a non region.
-//     // For testing purpose, the "attribute" field was designed such that
-//     // - All 36 `Line` elements are in "region" 1 except the last two in regions -1 and 9.
-//     // - All 36 `Quad` elements are in "region" 2 except 4.
-//     //   Counting backwards from the end, quads number 0, 1, 3 and 4 with respectively regions 9 and -1, -1, -1.
-//     //   Those quads were selected such that they form a larger square, excluding the central node (number 55) from the region 2.
-//     //   This should appear in the test.
-//     // - All 36 `Hexahedron` elements are in "region" 3 except the last two in regions -1 and 9.
-//     // - All 36 `Vertex` elements are in "region" 4 except the last two in regions -1 and 9.
+    // The `cube.vtk` mesh contains an "attribute" field that is used to group cells together.
+    // A region with id `-1` is considered as a non region.
+    // For testing purpose, the "attribute" field was designed such that
+    // - All 36 `Line` elements are in "region" 1 except the last two in regions -1 and 9.
+    // - All 36 `Quad` elements are in "region" 2 except 4.
+    //   Counting backwards from the end, quads number 0, 1, 3 and 4 with respectively regions 9 and -1, -1, -1.
+    //   Those quads were selected such that they form a larger square, excluding the central node (number 55) from the region 2.
+    //   This should appear in the test.
+    // - All 36 `Hexahedron` elements are in "region" 3 except the last two in regions -1 and 9.
+    // - All 36 `Vertex` elements are in "region" 4 except the last two in regions -1 and 9.
 
-//     // When run in parallel with two MPI ranks, the central hexahedra are on the splitting boundary.
-//     // The VTK default pattern is to assign the cell to one unique rank.
-//     // It happens to be the first one in our case.
-//     // This way, rank 0 (lower `x`) gets 18 hexaedra and 48 nodes,
-//     // while rank 1 (greater `x`) gets 9 hexahedra and 32 nodes.
+    // When run in parallel with two MPI ranks, the central hexahedra are on the splitting boundary.
+    // The VTK default pattern is to assign the cell to one unique rank.
+    // It happens to be the first one in our case.
+    // This way, rank 0 (lower `x`) gets 18 hexaedra and 48 nodes,
+    // while rank 1 (greater `x`) gets 9 hexahedra and 32 nodes.
 
-//     // This pattern could be influenced by settings the parameters of
-//     // vtkRedistributeDataSetFilter::SetBoundaryMode(...) to
-//     // ASSIGN_TO_ALL_INTERSECTING_REGIONS, ASSIGN_TO_ONE_REGION or SPLIT_BOUNDARY_CELLS.
-//     localIndex const expectedNumNodes = expected( 64, { 48, 32 } );
-//     ASSERT_EQ( cellBlockManager.numNodes(), expectedNumNodes );
-//     ASSERT_EQ( cellBlockManager.numEdges(), expected( 144, { 104, 64 } ) );
-//     ASSERT_EQ( cellBlockManager.numFaces(), expected( 108, { 75, 42 } ) );
+    // This pattern could be influenced by settings the parameters of
+    // vtkRedistributeDataSetFilter::SetBoundaryMode(...) to
+    // ASSIGN_TO_ALL_INTERSECTING_REGIONS, ASSIGN_TO_ONE_REGION or SPLIT_BOUNDARY_CELLS.
+    localIndex const expectedNumNodes = expected( 64, { 48, 32 } );
+    ASSERT_EQ( cellBlockManager.numNodes(), expectedNumNodes );
+    ASSERT_EQ( cellBlockManager.numEdges(), expected( 144, { 104, 64 } ) );
+    ASSERT_EQ( cellBlockManager.numFaces(), expected( 108, { 75, 42 } ) );
 
-//     // The information in the tables is not filled yet. We can check the consistency of the sizes.
-//     ASSERT_EQ( cellBlockManager.getNodeToFaces().size(), expectedNumNodes );
-//     ASSERT_EQ( cellBlockManager.getNodeToElements().toCellIndex.size(), expectedNumNodes );
+    // The information in the tables is not filled yet. We can check the consistency of the sizes.
+    ASSERT_EQ( cellBlockManager.getNodeToFaces().size(), expectedNumNodes );
+    ASSERT_EQ( cellBlockManager.getNodeToElements().toCellIndex.size(), expectedNumNodes );
 
-//     // We have all the 4 x 4  x 4 = 64 nodes in the "all" set.
-//     SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" );
-//     ASSERT_EQ( allNodes.size(), expectedNumNodes );
+    // We have all the 4 x 4  x 4 = 64 nodes in the "all" set.
+    SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" );
+    ASSERT_EQ( allNodes.size(), expectedNumNodes );
 
-//     // The "2" set are all the boundary nodes (64 - 8 inside nodes = 56),
-//     // minus an extra node that belongs to regions -1 and 9 only.
-//     SortedArray< localIndex > const & nodesRegion2 = cellBlockManager.getNodeSets().at( "2" );
-//     ASSERT_EQ( nodesRegion2.size(), expected( 55, { 39, 27 } ) );
+    // The "2" set are all the boundary nodes (64 - 8 inside nodes = 56),
+    // minus an extra node that belongs to regions -1 and 9 only.
+    SortedArray< localIndex > const & nodesRegion2 = cellBlockManager.getNodeSets().at( "2" );
+    ASSERT_EQ( nodesRegion2.size(), expected( 55, { 39, 27 } ) );
 
-//     // Region "9" has only one quad, on the greater `x` direction.
-//     // This hex will belong to MPI rank 1.
-//     SortedArray< localIndex > const & nodesRegion9 = cellBlockManager.getNodeSets().at( "9" );
-//     ASSERT_EQ( nodesRegion9.size(), expected( 4, { 0, 4 } ) );
+    // Region "9" has only one quad, on the greater `x` direction.
+    // This hex will belong to MPI rank 1.
+    SortedArray< localIndex > const & nodesRegion9 = cellBlockManager.getNodeSets().at( "9" );
+    ASSERT_EQ( nodesRegion9.size(), expected( 4, { 0, 4 } ) );
 
-//     // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
-//     // 1 elements type on 3 regions ("-1", "3", "9") = 3 sub-groups
-//     std::array< std::pair< string, int >, 3 > const expectedCellBlocks =
-//     {
-//       {
-//         { "hexahedra", expected( 1, {  1, 0 } ) },
-//         { "3_hexahedra", expected( 25, { 17, 8 } ) },
-//         { "9_hexahedra", expected( 1, {  0, 1 } ) }
-//       }
-//     };
-//     ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), expectedCellBlocks.size() );
+    // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
+    // 1 elements type on 3 regions ("-1", "3", "9") = 3 sub-groups
+    std::array< std::pair< string, int >, 3 > const expectedCellBlocks =
+    {
+      {
+        { "hexahedra", expected( 1, {  1, 0 } ) },
+        { "3_hexahedra", expected( 25, { 17, 8 } ) },
+        { "9_hexahedra", expected( 1, {  0, 1 } ) }
+      }
+    };
+    ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), expectedCellBlocks.size() );
 
-//     for( const auto & nameAndSize : expectedCellBlocks )
-//     {
-//       ASSERT_TRUE( cellBlockManager.getCellBlocks().hasGroup< CellBlockABC >( nameAndSize.first ) );
-//       CellBlockABC const * h = &cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( nameAndSize.first );
-//       localIndex const expectedSize = nameAndSize.second;
+    for( const auto & nameAndSize : expectedCellBlocks )
+    {
+      ASSERT_TRUE( cellBlockManager.getCellBlocks().hasGroup< CellBlockABC >( nameAndSize.first ) );
+      CellBlockABC const * h = &cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( nameAndSize.first );
+      localIndex const expectedSize = nameAndSize.second;
 
-//       // 8 nodes, 12 edges and 6 faces per hex.
-//       ASSERT_EQ( h->getElemToNodes().size( 1 ), 8 );
-//       ASSERT_EQ( h->getElemToEdges().size( 1 ), 12 );
-//       ASSERT_EQ( h->getElemToFaces().size( 1 ), 6 );
+      // 8 nodes, 12 edges and 6 faces per hex.
+      ASSERT_EQ( h->getElemToNodes().size( 1 ), 8 );
+      ASSERT_EQ( h->getElemToEdges().size( 1 ), 12 );
+      ASSERT_EQ( h->getElemToFaces().size( 1 ), 6 );
 
-//       ASSERT_EQ( h->size(), expectedSize );
-//       ASSERT_EQ( h->getElemToNodes().size( 0 ), expectedSize );
-//       ASSERT_EQ( h->getElemToEdges().size( 0 ), expectedSize );
-//       ASSERT_EQ( h->getElemToFaces().size( 0 ), expectedSize );
-//     }
-//   };
+      ASSERT_EQ( h->size(), expectedSize );
+      ASSERT_EQ( h->getElemToNodes().size( 0 ), expectedSize );
+      ASSERT_EQ( h->getElemToEdges().size( 0 ), expectedSize );
+      ASSERT_EQ( h->getElemToFaces().size( 0 ), expectedSize );
+    }
+  };
 
-//   string const cubeVTK = testMeshDir + "/cube.vtk";
-//   string const cubeVTU = testMeshDir + "/cube.vtu";
-// //  string const cubePVTU = testMeshDir + "/cube.pvtu";
+  string const cubeVTK = testMeshDir + "/cube.vtk";
+  string const cubeVTU = testMeshDir + "/cube.vtu";
+//  string const cubePVTU = testMeshDir + "/cube.pvtu";
 
-//   TestMeshImport( cubeVTK, validate );
-//   TestMeshImport( cubeVTU, validate );
-// //  TestMeshImport( cubePVTU, validate );
-// }
+  TestMeshImport( cubeVTK, validate );
+  TestMeshImport( cubeVTU, validate );
+//  TestMeshImport( cubePVTU, validate );
+}
 
 TEST( VTKImport, medley )
 {
@@ -283,11 +283,11 @@ TEST( VTKImport, medley )
   };
 
 //  string const medleyVTK = testMeshDir + "/medley.vtk";
-//  string const medleyVTK = testMeshDir + "/medley-prism7.vtk";
+  // string const medleyVTK = testMeshDir + "/medley-prism7.vtk";
 //  string const medleyVTK = testMeshDir + "/wedge.vtk";
 //  string const medleyVTK = testMeshDir + "/hexa.vtk";
-  string const medleyVTK = testMeshDir + "/tetra.vtk";
-//string const medleyVTK = testMeshDir + "/pebi_new_3D_onlyPolyhedra.vtk";
+// string const medleyVTK = testMeshDir + "/tetra.vtk";
+string const medleyVTK = testMeshDir + "/pebi_new_3D_onlyPolyhedra.vtk";
 
   TestMeshImport( medleyVTK, validate );
 }

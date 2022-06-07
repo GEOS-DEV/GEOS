@@ -1039,6 +1039,7 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
   {
     GEOSX_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
   }
+
 }
 
 bool SolverBase::checkSystemSolution( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),

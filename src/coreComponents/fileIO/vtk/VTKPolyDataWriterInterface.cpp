@@ -65,6 +65,8 @@ static int toVTKCellType( ElementType const elementType )
     case ElementType::Hexahedron:    return VTK_HEXAHEDRON;
     case ElementType::Prism5:        return VTK_PENTAGONAL_PRISM;
     case ElementType::Prism6:        return VTK_HEXAGONAL_PRISM;
+    case ElementType::Prism7:        return VTK_POLYHEDRON;
+    case ElementType::Prism8:        return VTK_POLYHEDRON;
     case ElementType::Polyhedron:    return VTK_POLYHEDRON;
   }
   return VTK_EMPTY_CELL;
@@ -85,6 +87,8 @@ static std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elementTy
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
     case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+    case ElementType::Prism7:        return { 0 }; //TODO
+    case ElementType::Prism8:        return { 0 }; //TODO
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
   }
   return {};
