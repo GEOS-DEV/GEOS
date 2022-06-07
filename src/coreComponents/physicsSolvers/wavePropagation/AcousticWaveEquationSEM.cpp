@@ -311,7 +311,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
 
   real64 const a1 = (dt < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
   real64 const a2 = 1.0 - a1;
-
+  std::cout << "Savind seismo " << iSeismo << std::endl;
   if( m_nsamplesSeismoTrace > 0 )
   {
     forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
@@ -398,10 +398,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
     damping.zero();
 
-    /// Partial gradient if gradient as to be computed
-    arrayView1d< real64 > grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
-    grad.zero();
-
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
 
@@ -411,6 +407,10 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       arrayView1d< real64 const > const velocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
+
+      /// Partial gradient if gradient as to be computed
+      arrayView1d< real64 > grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
+      grad.zero();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -516,6 +516,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      bool const computeGradient )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+
   if (computeGradient) {
     forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                   MeshLevel & mesh,
@@ -560,6 +561,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                       bool const computeGradient)
 {
   real64 dtOut = explicitStepInternal(time_n, dt, cycleNumber, domain);
+
   if (computeGradient) {
     forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                   MeshLevel & mesh,
@@ -581,7 +583,8 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       p_dt2.move( MemorySpace::host, true );
       wf.read( (char*)&p_dt2[0], p_dt2.size()*sizeof( real64 ) );
       wf.close();
-      GEOSX_THROW_IF( remove( fileName ) , "Could not delete file "<< fileName, InputError );
+      int ret = remove( fileName.c_str() );
+      GEOSX_THROW_IF( ret , "Could not delete file "<< fileName, InputError );
 
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                   CellElementSubRegion & elementSubRegion )
@@ -685,7 +688,6 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       stiffnessVector[a] = 0.0;
       rhs[a] = 0.0;
     } );
-
   } );
   return dt;
 }
@@ -709,13 +711,25 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
                                                       real64 const dt,
                                                       arrayView1d< real64 const > const var_np1,
                                                       arrayView1d< real64 const > const var_n,
-                                                      arrayView2d< real64 > varAtReceivers )
+                                                      arrayView2d< real64 > varAtReceivers)
 {
+
+  /*
+   * In forward case we compute seismo if time_n is the first time
+   * step after the timeSeismo to write.
+   *
+   * In backward (time_n goes decreasing) case we compute seismo if
+   * time_n is the last time step before the timeSeismo to write.
+   *
+   *  time_n - dt     timeSeismo    time_n
+   *   ---|--------------|-------------|
+   */
   for( real64 timeSeismo;
-       (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace;
-       m_indexSeismoTrace++ )
+       (m_forward)?((timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace):
+         ((timeSeismo = m_dtSeismoTrace*(m_indexSeismoTrace-1)) > (time_n - dt - epsilonLoc) && m_indexSeismoTrace > 0);
+       (m_forward)?m_indexSeismoTrace++:m_indexSeismoTrace-- )
   {
-    computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, var_np1, var_n, varAtReceivers );
+    computeSeismoTrace( time_n, dt, timeSeismo, (m_forward)?m_indexSeismoTrace:m_indexSeismoTrace-1, var_np1, var_n, varAtReceivers );
   }
 }
 
