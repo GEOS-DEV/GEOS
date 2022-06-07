@@ -27,7 +27,7 @@ namespace geosx
 namespace parmetis
 {
 
-#if defined(GEOSX_USE_DEVICE)
+#if defined(GEOSX_USE_HIP) // still need int32 hypre for the current hip-capable build
 using pmet_idx_t = int32_t;
 #else
 using pmet_idx_t = int64_t;

@@ -16,7 +16,7 @@ set( codingUtilities_headers
 set( codingUtilities_sources
      StringUtilities.cpp )
 
-set( dependencyList ${commonDeps} common )
+set( dependencyList ${deviceDeps} common )
 
 blt_add_library( NAME       codingUtilities
                  SOURCES    ${codingUtilities_sources}

@@ -33,7 +33,7 @@ set( finiteElement_sources
      FiniteElementDiscretizationManager.cpp
    )
 
-set( dependencyList ${commonDeps} dataRepository )
+set( dependencyList ${deviceDeps} dataRepository )
 
 blt_add_library( NAME       finiteElement
                  SOURCES    ${finiteElement_sources}
@@ -41,7 +41,7 @@ blt_add_library( NAME       finiteElement
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
-               
+
 target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks( PREFIX finiteElement )

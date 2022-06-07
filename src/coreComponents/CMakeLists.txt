@@ -47,22 +47,22 @@ if( NOT GEOSX_BUILD_SHARED_LIBS )
   set ( geosx_core_libs "${geosx_core_list}" CACHE INTERNAL "" )
 endif()
 
-set( commonDeps "" )
+set( deviceDeps "" )
 
 if ( ENABLE_OPENMP )
-  set( commonDeps ${commonDeps} openmp )
+  set( deviceDeps ${deviceDeps} openmp )
 endif()
 
 if ( ENABLE_CUDA )
-  set( commonDeps ${commonDeps} cuda )
+  set( deviceDeps ${deviceDeps} cuda )
 endif()
 
 if( ENABLE_HIP )
-  set( commonDeps ${commonDeps} blt::hip )
+  set( deviceDeps ${deviceDeps} blt::hip )
 endif()
 
 if( ENABLE_MPI )
-  set( commonDeps ${commonDeps} mpi )
+  set( deviceDeps ${deviceDeps} mpi )
 endif()
 
 foreach( lib ${subdirs} )

@@ -35,17 +35,17 @@ set( dataRepository_sources
      xmlWrapper.cpp
    )
 
-set( dependencyList ${commonDeps} codingUtilities )
+set( dependencyList ${deviceDeps} codingUtilities )
 
 if( ENABLE_PYGEOSX )
   list( APPEND dataRepository_headers
-	python/PyGroup.hpp 
-	python/PyGroupType.hpp 
+	python/PyGroup.hpp
+	python/PyGroupType.hpp
 	python/PyWrapper.hpp )
   list( APPEND dataRepository_sources
-	python/PyGroup.cpp 
-	python/PyWrapper.cpp ) 
-  list( APPEND dependencyList Python3::Python pylvarray )  
+	python/PyGroup.cpp
+	python/PyWrapper.cpp )
+  list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 
 

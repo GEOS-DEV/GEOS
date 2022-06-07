@@ -141,7 +141,7 @@ set( physicsSolvers_sources
      wavePropagation/AcousticWaveEquationSEM.cpp
    )
 
-set( dependencyList ${commonDeps} constitutive mesh linearAlgebra discretizationMethods events )
+set( dependencyList ${deviceDeps} constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
 	python/PySolver.hpp

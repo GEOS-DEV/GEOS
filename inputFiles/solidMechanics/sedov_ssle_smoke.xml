@@ -6,7 +6,7 @@
     <File
       name="./sedov_ssle_base.xml"/>
   </Included>
-  
+
     <!-- SPHINX_INTERNAL_MESH -->
   <Mesh>
     <InternalMesh
@@ -34,33 +34,33 @@
     <!-- This event is applied every 5e-4s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <!-- <PeriodicEvent -->
-    <!--   name="blueprint" -->
-    <!--   timeFrequency="1.0e-4" -->
-    <!--   targetExactTimestep="0" -->
-    <!--   target="/Outputs/blueprint"/> -->
+    <PeriodicEvent
+      name="blueprint"
+      timeFrequency="1.0e-4"
+      targetExactTimestep="0"
+      target="/Outputs/blueprint"/>
 
-    <!-- <PeriodicEvent -->
-    <!--   name="silo" -->
-    <!--   timeFrequency="1.0e-4" -->
-    <!--   targetExactTimestep="0" -->
-    <!--   target="/Outputs/siloOutput"/> -->
+    <PeriodicEvent
+      name="silo"
+      timeFrequency="1.0e-4"
+      targetExactTimestep="0"
+      target="/Outputs/siloOutput"/>
 
-    <!-- <!-\- <PeriodicEvent -\-> -->
-    <!-- <!-\-   name="restarts" -\-> -->
-    <!-- <!-\-   timeFrequency="5.0e-4" -\-> -->
-    <!-- <!-\-   targetExactTimestep="0" -\-> -->
-    <!-- <!-\-   target="/Outputs/restartOutput"/> -\-> -->
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5.0e-4"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
 
-    <!-- <PeriodicEvent -->
-    <!--   name="timeHistoryCollection" -->
-    <!--   timeFrequency="1.0e-5" -->
-    <!--   target="/Tasks/velocityCollection"/> -->
+    <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="1.0e-5"
+      target="/Tasks/velocityCollection"/>
 
-    <!-- <PeriodicEvent -->
-    <!--   name="timeHistoryOutput" -->
-    <!--   timeFrequency="5.0e-4" -->
-    <!--   targetExactTimestep="0" -->
-    <!--   target="/Outputs/timeHistoryOutput"/> -->
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="5.0e-4"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/>
   </Events>
 </Problem>

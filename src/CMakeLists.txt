@@ -3,11 +3,11 @@ cmake_minimum_required( VERSION 3.9 )
 
 # At the moment we are manually passing the cuda arch flag.
 if(${CMAKE_VERSION} VERSION_GREATER "3.18.0")
-  cmake_policy(SET CMP0104 OLD)
+  cmake_policy(SET CMP0104 OLD) # when using nvcc populate CMAKE_CUDA_ARCHITECTURES, raise error if we can't
 endif()
-cmake_policy(SET CMP0074 NEW)
-#cmake_policy(SET CMP0066 NEW)
-#cmake_policy(SET CMP0056 NEW)
+cmake_policy(SET CMP0074 NEW) # dont ignore <PackageName>_ROOT env vars when searching for packages via find_package()
+cmake_policy(SET CMP0066 NEW) # use CMAKE_<LANG>_FLAGS_<BUILD_TYPE> for try_compile() instead of only CMAKE_<LANG>_FLAGS
+cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in addition to CMAKE_<LANG>_FLAGS
 
 
 ################################

@@ -12,7 +12,7 @@ set(testSources
     testH1_TriangleFace_Lagrange1_Gauss1.cpp
    )
 
-set( dependencyList gtest finiteElement ${commonDeps} )
+set( dependencyList gtest finiteElement ${deviceDeps} )
 
 #
 # Add gtest C++ based tests

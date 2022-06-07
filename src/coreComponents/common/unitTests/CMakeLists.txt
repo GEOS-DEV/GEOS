@@ -7,7 +7,7 @@ set(gtest_geosx_tests
     testTypeDispatch.cpp
    )
 
-set( dependencyList ${commonDeps} common hdf5 gtest )
+set( dependencyList ${deviceDeps} common hdf5 gtest )
 
 #
 # Add gtest C++ based tests

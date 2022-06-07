@@ -18,7 +18,7 @@ option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
 option( RAJA_ENABLE_TBB "" OFF )
 option( RAJA_ENABLE_OPENMP "" OFF )
 option( RAJA_ENABLE_CUDA "" OFF )
-option( RAJA_ENABLY_HIP "" OFF )
+option( RAJA_ENABLE_HIP "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
 option( ENABLE_PAMELA "" ON )

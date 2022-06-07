@@ -32,7 +32,7 @@ set( fileIO_sources
      timeHistory/TimeHistHDF.cpp
    )
 
-set( dependencyList ${commonDeps} mesh constitutive silo hdf5 )
+set( dependencyList ${deviceDeps} mesh constitutive silo hdf5 )
 if( ENABLE_PYGEOSX )
   list( APPEND fileIO_headers
 	python/PyHistoryCollectionType.hpp

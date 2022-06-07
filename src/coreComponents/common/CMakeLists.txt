@@ -33,7 +33,7 @@ set( common_sources
      initializeEnvironment.cpp
    )
 
-set( dependencyList ${commonDeps} lvarray pugixml::pugixml RAJA chai conduit::conduit fmt::fmt )
+set( dependencyList ${deviceDeps} lvarray pugixml::pugixml RAJA chai conduit::conduit fmt::fmt )
 
 if ( ENABLE_MKL )
   set( dependencyList ${dependencyList} mkl )
@@ -57,4 +57,4 @@ geosx_add_code_checks(PREFIX common )
 
 if(GEOSX_ENABLE_TESTS)
   add_subdirectory( unitTests )
-endif()	
+endif()

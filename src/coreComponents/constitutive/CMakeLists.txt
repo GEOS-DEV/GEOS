@@ -195,7 +195,7 @@ set( constitutive_sources
      thermalConductivity/VolumeWeightedThermalConductivity.cpp
    )
 
-set( dependencyList ${commonDeps} events dataRepository functions )
+set( dependencyList ${deviceDeps} events dataRepository functions )
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers

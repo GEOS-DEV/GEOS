@@ -3,7 +3,7 @@
 #
 set( fieldSpecification_headers
      DirichletBoundaryCondition.hpp
-     EquilibriumInitialCondition.hpp     
+     EquilibriumInitialCondition.hpp
      FieldSpecificationBase.hpp
      FieldSpecificationManager.hpp
      SourceFluxBoundaryCondition.hpp
@@ -16,7 +16,7 @@ set( fieldSpecification_headers
 #
 set( fieldSpecification_sources
      DirichletBoundaryCondition.cpp
-     EquilibriumInitialCondition.cpp          
+     EquilibriumInitialCondition.cpp
      FieldSpecificationBase.cpp
      FieldSpecificationManager.cpp
      SourceFluxBoundaryCondition.cpp
@@ -24,7 +24,7 @@ set( fieldSpecification_sources
      AquiferBoundaryCondition.cpp
    )
 
-set( dependencyList ${commonDeps} functions linearAlgebra )
+set( dependencyList ${deviceDeps} functions linearAlgebra )
 
 blt_add_library( NAME       fieldSpecification
                  SOURCES    ${fieldSpecification_sources}

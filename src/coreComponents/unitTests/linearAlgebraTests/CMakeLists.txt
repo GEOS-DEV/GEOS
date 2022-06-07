@@ -11,7 +11,7 @@ set( nranks 2 )
 #
 # Add gtest C++ based tests
 #
-set( dependencyList ${commonDeps} gtest )
+set( dependencyList ${deviceDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core )

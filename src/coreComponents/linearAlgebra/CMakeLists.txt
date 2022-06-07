@@ -54,7 +54,7 @@ set( linearAlgebra_sources
      solvers/SeparateComponentPreconditioner.cpp
    )
 
-set( dependencyList ${commonDeps} mesh blas lapack )
+set( dependencyList ${deviceDeps} mesh blas lapack )
 
 
 list( APPEND linearAlgebra_headers
@@ -100,7 +100,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreMatrix.hpp
           interfaces/hypre/HyprePreconditioner.hpp
           interfaces/hypre/HypreSolver.hpp
-          interfaces/hypre/HypreUtils.hpp 
+          interfaces/hypre/HypreUtils.hpp
           interfaces/hypre/HypreVector.hpp
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseFVM.hpp
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseHybridFVM.hpp
@@ -108,7 +108,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirHybridFVM.hpp
           interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/Hydrofracture.hpp
-          interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp      
+          interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp
           interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp
