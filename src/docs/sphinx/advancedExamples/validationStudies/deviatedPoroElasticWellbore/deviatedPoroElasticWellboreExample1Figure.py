@@ -7,11 +7,8 @@ import xml.etree.ElementTree as ElementTree
 
 def FFunction(s, R):
     P = kn(0, R * (s**0.5)) / (s * kn(0, s**0.5))
-    U = -(R * kn(1, R * (s**0.5)) - kn(1, s**0.5)) / (s * R *
-                                                      (s**0.5) * kn(0, s**0.5))
-    Srr = -(-R * kn(1, R *
-                    (s**0.5)) + kn(1, s**0.5)) / (R**2. *
-                                                  (s**1.5) * kn(0, s**0.5))
+    U = -(R * kn(1, R * (s**0.5)) - kn(1, s**0.5)) / (s * R * (s**0.5) * kn(0, s**0.5))
+    Srr = -(-R * kn(1, R * (s**0.5)) + kn(1, s**0.5)) / (R**2. * (s**1.5) * kn(0, s**0.5))
     Stt = -P - Srr
 
     return [P, U, Srr, Stt]
@@ -26,8 +23,7 @@ def Vfunction(i, N):
 
     for k in range(kmin, kmax + 1):
         sum1 = sum1 + (1. * (k**N) * factorial(2 * k) /
-                       (factorial(N - k) * factorial(k) * factorial(k - 1) *
-                        factorial(i - k) * factorial(2 * k - i)))
+                       (factorial(N - k) * factorial(k) * factorial(k - 1) * factorial(i - k) * factorial(2 * k - i)))
 
     return ((-1.)**(N + i)) * sum1
 
@@ -45,14 +41,10 @@ def StehfestTransform(t, R):
         sum3 = sum3 + Vfunction(j, N) * Lresult[2]
         sum4 = sum4 + Vfunction(j, N) * Lresult[3]
 
-    return [
-        sum1 * np.log(2.) / t, sum2 * np.log(2.) / t, sum3 * np.log(2.) / t,
-        sum4 * np.log(2.) / t
-    ]
+    return [sum1 * np.log(2.) / t, sum2 * np.log(2.) / t, sum3 * np.log(2.) / t, sum4 * np.log(2.) / t]
 
 
-def dimensionlessTime(t, MBiot, bBiot, nu, K, G, a, permeability,
-                      fluidViscosity):
+def dimensionlessTime(t, MBiot, bBiot, nu, K, G, a, permeability, fluidViscosity):
     eta = bBiot * (1. - 2. * nu) / 2. / (1. - nu)
     kappa = permeability / fluidViscosity
 
@@ -60,8 +52,7 @@ def dimensionlessTime(t, MBiot, bBiot, nu, K, G, a, permeability,
     nuu = (3. * Ku - 2. * G) / (6. * Ku + 2. * G)
 
     BSkempton = 3. * (nuu - nu) / (bBiot * (1. - 2. * nu) * (1. + nuu))
-    coefc = 2. * kappa * (BSkempton**2.) * G * (1. - nu) * (
-        (1. + nuu)**2.) / 9. / (1. - nuu) / (nuu - nu)
+    coefc = 2. * kappa * (BSkempton**2.) * G * (1. - nu) * ((1. + nuu)**2.) / 9. / (1. - nuu) / (nuu - nu)
 
     tstar = t * coefc / (a**2.)
     return tstar
@@ -69,10 +60,8 @@ def dimensionlessTime(t, MBiot, bBiot, nu, K, G, a, permeability,
 
 # Rotate a vector in local coodinate of an inclined borehole to the global coordinate
 def vectorRotation(x, y, z, phi_x, phi_z):
-    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.],
-                     [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
-    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.],
-                     [-np.sin(phi_z), 0., np.cos(phi_z)]])
+    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.], [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
+    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.], [-np.sin(phi_z), 0., np.cos(phi_z)]])
 
     localCoord = np.array([x, y, z])
     return np.dot(rotz, np.dot(rotx, localCoord))
@@ -81,14 +70,10 @@ def vectorRotation(x, y, z, phi_x, phi_z):
 # Rotate stress from global coordinates system to the local coordinates of an inclined borehole
 # See the description in fig.1 in Abousleiman and Cui 1998
 def stressRotation(stress, phi_x, phi_z):
-    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.],
-                     [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
-    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.],
-                     [-np.sin(phi_z), 0., np.cos(phi_z)]])
+    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.], [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
+    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.], [-np.sin(phi_z), 0., np.cos(phi_z)]])
 
-    return np.dot(
-        np.dot(np.transpose(rotz),
-               np.dot(np.dot(np.transpose(rotx), stress), rotx)), rotz)
+    return np.dot(np.dot(np.transpose(rotz), np.dot(np.dot(np.transpose(rotx), stress), rotx)), rotz)
 
 
 def getParametersFromXML(xmlFilePath):
@@ -103,55 +88,36 @@ def getParametersFromXML(xmlFilePath):
 
     fsParams = tree.findall('FieldSpecifications/FieldSpecification')
     for fsParam in fsParams:
-        if ((fsParam.get('fieldName') == "pressure") &
-            (fsParam.get('initialCondition') != "1")):
+        if ((fsParam.get('fieldName') == "pressure") & (fsParam.get('initialCondition') != "1")):
             pressure = float(fsParam.get('scale'))
             break
 
-    porosity = float(
-        tree.find('Constitutive/BiotPorosity').get('defaultReferencePorosity'))
+    porosity = float(tree.find('Constitutive/BiotPorosity').get('defaultReferencePorosity'))
 
-    skeletonBulkModulus = float(
-        tree.find('Constitutive/BiotPorosity').get('grainBulkModulus'))
-    fluidCompressibility = float(
-        tree.find('Constitutive/CompressibleSinglePhaseFluid').get(
-            'compressibility'))
+    skeletonBulkModulus = float(tree.find('Constitutive/BiotPorosity').get('grainBulkModulus'))
+    fluidCompressibility = float(tree.find('Constitutive/CompressibleSinglePhaseFluid').get('compressibility'))
 
     bBiot = 1.0 - bulkModulus / skeletonBulkModulus
-    MBiot = 1.0 / (porosity * fluidCompressibility +
-                   (bBiot - porosity) / skeletonBulkModulus)
+    MBiot = 1.0 / (porosity * fluidCompressibility + (bBiot - porosity) / skeletonBulkModulus)
 
-    permParam = tree.find('Constitutive/ConstantPermeability').get(
-        'permeabilityComponents')
-    permeability = float(
-        permParam.replace('{', '').replace('}', '').strip().split(',')[0])
+    permParam = tree.find('Constitutive/ConstantPermeability').get('permeabilityComponents')
+    permeability = float(permParam.replace('{', '').replace('}', '').strip().split(',')[0])
 
-    viscosity = float(
-        tree.find('Constitutive/CompressibleSinglePhaseFluid').get(
-            'defaultViscosity'))
+    viscosity = float(tree.find('Constitutive/CompressibleSinglePhaseFluid').get('defaultViscosity'))
 
-    return [
-        maxTime, pressure, porosity, MBiot, bBiot, bulkModulus, shearModulus,
-        permeability, viscosity
-    ]
+    return [maxTime, pressure, porosity, MBiot, bBiot, bulkModulus, shearModulus, permeability, viscosity]
 
 
 def getWellboreGeometryFromXML(xmlFilePath):
     tree = ElementTree.parse(xmlFilePath)
 
     meshParam = tree.find('Mesh/InternalWellbore')
-    radius = float(
-        meshParam.get("radius").replace('{',
-                                        '').replace('}',
-                                                    '').strip().split(',')[0])
+    radius = float(meshParam.get("radius").replace('{', '').replace('}', '').strip().split(',')[0])
 
     # Wellbore deviation
-    trajectoryParam = tree.find('Mesh/InternalWellbore').get(
-        'trajectory').replace(' ', '').split('},')
-    top = trajectoryParam[0].replace('{', '').replace('}',
-                                                      '').strip().split(',')
-    bottom = trajectoryParam[1].replace('{', '').replace('}',
-                                                         '').strip().split(',')
+    trajectoryParam = tree.find('Mesh/InternalWellbore').get('trajectory').replace(' ', '').split('},')
+    top = trajectoryParam[0].replace('{', '').replace('}', '').strip().split(',')
+    bottom = trajectoryParam[1].replace('{', '').replace('}', '').strip().split(',')
 
     dx = float(top[0]) - float(bottom[0])
     dy = float(top[1]) - float(bottom[1])
@@ -195,8 +161,7 @@ def main():
     permeability = parameters[7]
     fluidViscosity = parameters[8]
 
-    T = dimensionlessTime(t, MBiot, bBiot, nu, K, G, a, permeability,
-                          fluidViscosity)
+    T = dimensionlessTime(t, MBiot, bBiot, nu, K, G, a, permeability, fluidViscosity)
 
     listR = np.arange(1., 10., 0.01)
     listP = []
@@ -213,22 +178,11 @@ def main():
 
     listr = [R * a for R in listR]
     listp = [1e-6 * P * p0 for P in listP]
-    listUr = [
-        1e6 * U * a * p0 * bBiot * (1. - 2. * nu) / (2. * G * (1. - nu))
-        for U in listU
-    ]
-    listSigrrTot = [
-        1e-6 * Srr * bBiot * (1. - 2. * nu) / (1. - nu) * p0 for Srr in listSrr
-    ]
-    listSigttTot = [
-        1e-6 * Stt * bBiot * (1. - 2. * nu) / (1. - nu) * p0 for Stt in listStt
-    ]
-    listSigrr = [
-        bBiot * val1 + val2 for val1, val2 in zip(listp, listSigrrTot)
-    ]
-    listSigtt = [
-        bBiot * val1 + val2 for val1, val2 in zip(listp, listSigttTot)
-    ]
+    listUr = [1e6 * U * a * p0 * bBiot * (1. - 2. * nu) / (2. * G * (1. - nu)) for U in listU]
+    listSigrrTot = [1e-6 * Srr * bBiot * (1. - 2. * nu) / (1. - nu) * p0 for Srr in listSrr]
+    listSigttTot = [1e-6 * Stt * bBiot * (1. - 2. * nu) / (1. - nu) * p0 for Stt in listStt]
+    listSigrr = [bBiot * val1 + val2 for val1, val2 in zip(listp, listSigrrTot)]
+    listSigtt = [bBiot * val1 + val2 for val1, val2 in zip(listp, listSigttTot)]
 
     # Get stress_ij and pore pressure
     # Data are extracted along the y-axis from the wellbore center

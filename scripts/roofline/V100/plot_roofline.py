@@ -10,10 +10,7 @@ plt.rc('font', **font)
 filename = 'plot_' + sys.argv[0].replace('.', '_')
 markersize = 16
 colors = ['b', 'g', 'r', 'y', 'm', 'c']
-styles = [
-    'o', 's', 'v', '^', 'D', ">", "<", "*", "h", "H", "+", "1", "2", "3", "4",
-    "8", "p", "d", "|", "_", ".", ","
-]
+styles = ['o', 's', 'v', '^', 'D', ">", "<", "*", "h", "H", "+", "1", "2", "3", "4", "8", "p", "d", "|", "_", ".", ","]
 
 f = open(sys.argv[1], "r")
 
@@ -90,27 +87,18 @@ for roof in scomproofs:
 
 for roof in smemroofs:
     for ix in range(1, nx):
-        if (scomproofs[0] <= roof * x[ix]
-                and scomproofs[0] > roof * x[ix - 1]):
+        if (scomproofs[0] <= roof * x[ix] and scomproofs[0] > roof * x[ix - 1]):
             smem_x_elbow.append(x[ix - 1])
             smem_ix_elbow.append(ix - 1)
             break
 
 for i in range(0, len(scomproofs)):
     y = np.ones(len(x)) * scomproofs[i]
-    ax.plot(x[scomp_ix_elbow[i]:],
-            y[scomp_ix_elbow[i]:],
-            c='k',
-            ls='-',
-            lw='2')
+    ax.plot(x[scomp_ix_elbow[i]:], y[scomp_ix_elbow[i]:], c='k', ls='-', lw='2')
 
 for i in range(0, len(smemroofs)):
     y = x * smemroofs[i]
-    ax.plot(x[:smem_ix_elbow[i] + 1],
-            y[:smem_ix_elbow[i] + 1],
-            c='k',
-            ls='-',
-            lw='2')
+    ax.plot(x[:smem_ix_elbow[i] + 1], y[:smem_ix_elbow[i] + 1], c='k', ls='-', lw='2')
 
 marker_handles = list()
 for i in range(0, len(AI)):
@@ -122,29 +110,21 @@ for i in range(0, len(AI)):
             ms=markersize,
             label=labels[i])
     marker_handles.append(
-        ax.plot([], [],
-                c=colors[i],
-                marker=styles[i],
-                linestyle='None',
-                ms=markersize,
-                label=labels[i])[0])
+        ax.plot([], [], c=colors[i], marker=styles[i], linestyle='None', ms=markersize, label=labels[i])[0])
 
 for roof in scomproofs:
     ax.text(x[-ixx],
             roof,
-            scomp_roof_name[scomproofs.index(roof)] + ': ' +
-            '{0:.1f}'.format(float(roof)) + ' GFLOP/s',
+            scomp_roof_name[scomproofs.index(roof)] + ': ' + '{0:.1f}'.format(float(roof)) + ' GFLOP/s',
             horizontalalignment='right',
             verticalalignment='bottom')
 
 for roof in smemroofs:
     ang = np.arctan(
-        np.log10(xlim[1] / xlim[0]) / np.log10(ylim[1] / ylim[0]) *
-        fig.get_size_inches()[1] / fig.get_size_inches()[0])
+        np.log10(xlim[1] / xlim[0]) / np.log10(ylim[1] / ylim[0]) * fig.get_size_inches()[1] / fig.get_size_inches()[0])
     ax.text(x[ixx],
             x[ixx] * roof * (1 + 0.25 * np.sin(ang)**2),
-            smem_roof_name[smemroofs.index(roof)] + ': ' +
-            '{0:.1f}'.format(float(roof)) + ' GB/s',
+            smem_roof_name[smemroofs.index(roof)] + ': ' + '{0:.1f}'.format(float(roof)) + ' GB/s',
             horizontalalignment='left',
             verticalalignment='bottom',
             rotation=180 / np.pi * ang)

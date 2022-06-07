@@ -23,16 +23,12 @@ import tempfile
 import sys
 
 
-def executeSubProcess(command,
-                      workingDirectory=os.getcwd(),
-                      verbose=2,
-                      stdin=sys.stdin):
+def executeSubProcess(command, workingDirectory=os.getcwd(), verbose=2, stdin=sys.stdin):
 
     if verbose == -1:
         verbose = globalVerbosity
     if verbose > 1:
-        print("Executing: " + command + "\n\t Working Directory: " +
-              workingDirectory)
+        print("Executing: " + command + "\n\t Working Directory: " + workingDirectory)
     #***************************************************************************************************************
     #Note: Even though python's documentation says that "shell=True" opens up a computer for malicious shell commands,
     # it is needed to allow users to fully utilize shell commands, such as cd.
@@ -43,8 +39,7 @@ def executeSubProcess(command,
     # To be troubleshooted later.
     if False:
         with tempfile.NamedTemporaryFile() as tmpFile:
-            launcher = FollowableCommand(command, workingDirectory, tmpFile,
-                                         stdin)
+            launcher = FollowableCommand(command, workingDirectory, tmpFile, stdin)
             launcher.run(startStreaming=3.0)
             tmpFile.seek(0)
             output = tmpFile.read()
@@ -66,8 +61,7 @@ def executeSubProcess(command,
 
     process.output = output
     if process.returncode != 0 and verbose > 1:
-        print("Command '" + command + "': exited with error code " +
-              str(process.returncode))
+        print("Command '" + command + "': exited with error code " + str(process.returncode))
     return process
 
 
@@ -87,9 +81,7 @@ def main(platform, build, local, dryRun=False):
         if local:
             execute("cd src/thirdparty && chairajabuild", dryRun)
         if build:
-            execute(
-                "scripts/config-build.py -hc host-configs/%s-%s.cmake" %
-                (platform, host), dryRun)
+            execute("scripts/config-build.py -hc host-configs/%s-%s.cmake" % (platform, host), dryRun)
         cmd = "make " if build else "make  test"
         execute("cd build-%s-%s* && %s" % (platform, host, cmd), dryRun)
 

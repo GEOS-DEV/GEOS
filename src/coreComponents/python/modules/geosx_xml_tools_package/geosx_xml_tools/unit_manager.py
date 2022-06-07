@@ -20,22 +20,17 @@ class UnitManager():
         """
 
         # Replace all instances of units in the string with their scale defined in self.units
-        symbolicUnits = re.sub(regex_tools.patterns['units_b'],
-                               self.unitMatcher, unitStruct[1])
+        symbolicUnits = re.sub(regex_tools.patterns['units_b'], self.unitMatcher, unitStruct[1])
 
         # Strip out any undesired characters and evaluate
         # Note: the only allowed alpha characters are e and E.  This could be relaxed to allow
         #       functions such as sin, cos, etc.
-        symbolicUnits_sanitized = re.sub(regex_tools.patterns['sanitize'], '',
-                                         symbolicUnits).strip()
-        value = float(unitStruct[0]) * eval(symbolicUnits_sanitized,
-                                            {'__builtins__': None})
+        symbolicUnits_sanitized = re.sub(regex_tools.patterns['sanitize'], '', symbolicUnits).strip()
+        value = float(unitStruct[0]) * eval(symbolicUnits_sanitized, {'__builtins__': None})
 
         # Format the string, removing any trailing zeros, decimals, extraneous exponential formats
-        str_value = re.sub(regex_tools.patterns['strip_trailing'], '',
-                           regex_tools.symbolic_format % (value))
-        str_value = re.sub(regex_tools.patterns['strip_trailing_b'], '',
-                           str_value)
+        str_value = re.sub(regex_tools.patterns['strip_trailing'], '', regex_tools.symbolic_format % (value))
+        str_value = re.sub(regex_tools.patterns['strip_trailing_b'], '', str_value)
         return str_value
 
     def regexHandler(self, match):
@@ -275,17 +270,13 @@ class UnitManager():
                 prefixes[prefixes[p]['alt']] = {'value': prefixes[p]['value']}
         for u in list(unit_defs.keys()):
             for alt in unit_defs[u]['alt']:
-                unit_defs[alt] = {
-                    'value': unit_defs[u]['value'],
-                    'usePrefix': unit_defs[u]['usePrefix']
-                }
+                unit_defs[alt] = {'value': unit_defs[u]['value'], 'usePrefix': unit_defs[u]['usePrefix']}
 
         # Combine the results into the final dictionary
         for u in unit_defs.keys():
             if (unit_defs[u]['usePrefix']):
                 for p in prefixes.keys():
-                    self.units[
-                        p + u] = prefixes[p]['value'] * unit_defs[u]['value']
+                    self.units[p + u] = prefixes[p]['value'] * unit_defs[u]['value']
             else:
                 self.units[u] = unit_defs[u]['value']
 
@@ -295,8 +286,6 @@ class UnitManager():
         duplicates = [k for k, v in Counter(tmp).items() if v > 1]
         if (duplicates):
             print(duplicates)
-            raise Exception(
-                'Error: There are overlapping unit definitions in the UnitManager'
-            )
+            raise Exception('Error: There are overlapping unit definitions in the UnitManager')
 
         self.unitMatcher.target = self.units

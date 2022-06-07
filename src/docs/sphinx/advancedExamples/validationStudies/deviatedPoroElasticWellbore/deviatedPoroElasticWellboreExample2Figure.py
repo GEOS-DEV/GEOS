@@ -7,31 +7,23 @@ import xml.etree.ElementTree as ElementTree
 # Rotate stress from local coordinates of an inclined borehole to the global coordinates system
 # See the description in fig.1 in Abousleiman and Cui 1998
 def stressRotation(stress, phi_x, phi_z):
-    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.],
-                     [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
-    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.],
-                     [-np.sin(phi_z), 0., np.cos(phi_z)]])
+    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.], [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
+    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.], [-np.sin(phi_z), 0., np.cos(phi_z)]])
 
-    return np.dot(
-        np.dot(np.transpose(rotz),
-               np.dot(np.dot(np.transpose(rotx), stress), rotx)), rotz)
+    return np.dot(np.dot(np.transpose(rotz), np.dot(np.dot(np.transpose(rotx), stress), rotx)), rotz)
 
 
 # Rotate stress from global coordinates system to the local coordinates of an inclined borehole
 # See the description in fig.1 in Abousleiman and Cui 1998
 def stressRotationInv(stress, phi_x, phi_z):
-    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.],
-                     [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
-    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.],
-                     [-np.sin(phi_z), 0., np.cos(phi_z)]])
+    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.], [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
+    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.], [-np.sin(phi_z), 0., np.cos(phi_z)]])
 
-    return np.dot(
-        np.dot(np.transpose(rotx),
-               np.dot(np.dot(np.transpose(rotz), stress), rotz)), rotx)
+    return np.dot(np.dot(np.transpose(rotx), np.dot(np.dot(np.transpose(rotz), stress), rotz)), rotx)
 
 
-def analyticalResults(t, ri, theta, phi_x, phi_z, E, nu, M, Ks, kappa, bBiot,
-                      nE, nnu, nkappa, pi, pw, p0, Shmax, Shmin, Sv):
+def analyticalResults(t, ri, theta, phi_x, phi_z, E, nu, M, Ks, kappa, bBiot, nE, nnu, nkappa, pi, pw, p0, Shmax, Shmin,
+                      Sv):
 
     # For inclined borehole, the in-situ stress must be rotated to the local coordinates of the borehole
     # The solutions of Abousleiman and Cui 1998 are restricted to the case where the borehole is oriented in the direction of the material anisotropy
@@ -58,10 +50,8 @@ def analyticalResults(t, ri, theta, phi_x, phi_z, E, nu, M, Ks, kappa, bBiot,
     nu_p = nu / nnu
     kappa_p = kappa / nkappa
 
-    M11 = E * (E_p - E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu -
-                                                  2. * E * nu_p**2.)
-    M12 = E * (E_p * nu + E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu -
-                                                       2. * E * nu_p**2.)
+    M11 = E * (E_p - E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
+    M12 = E * (E_p * nu + E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
     M13 = E * E_p * nu_p / (E_p - E_p * nu - 2. * E * nu_p**2.)
     M33 = E_p**2. * (1. - nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
     M44 = E / 2. / (1. + nu)
@@ -75,9 +65,8 @@ def analyticalResults(t, ri, theta, phi_x, phi_z, E, nu, M, Ks, kappa, bBiot,
     # Fluid diffusion coefficient
     c = kappa * M * M11 / (M11 + alpha**2. * M)
 
-    p, sig_rr, sig_tt, sig_rt = analytic.inTime_mode123(
-        t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G, M11,
-        M12, kappa)
+    p, sig_rr, sig_tt, sig_rt = analytic.inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G,
+                                                        M11, M12, kappa)
     #sig_zz,tau_rz,tau_tz = analytic.inTime_outPlane(r, ri,theta,p0,Sx,Sy,Sz,Sxz,Syz,sig_rr,sig_tt,p,nu_p,alpha,alpha_p)
     return [r, sig_rr / 1e6, sig_tt / 1e6, p / 1e6]
 
@@ -94,50 +83,35 @@ def getParametersFromXML(xmlFilePath):
 
     fsParams = tree.findall('FieldSpecifications/FieldSpecification')
     for fsParam in fsParams:
-        if ((fsParam.get('fieldName') == "pressure") &
-            (fsParam.get('initialCondition') == "1")):
+        if ((fsParam.get('fieldName') == "pressure") & (fsParam.get('initialCondition') == "1")):
             p0 = float(fsParam.get('scale'))
-        if ((fsParam.get('fieldName') == "rock_stress") &
-            (fsParam.get('initialCondition') == "1") &
+        if ((fsParam.get('fieldName') == "rock_stress") & (fsParam.get('initialCondition') == "1") &
             (fsParam.get('component') == "0")):
             ShmaxEffective = float(fsParam.get('scale'))
-        if ((fsParam.get('fieldName') == "rock_stress") &
-            (fsParam.get('initialCondition') == "1") &
+        if ((fsParam.get('fieldName') == "rock_stress") & (fsParam.get('initialCondition') == "1") &
             (fsParam.get('component') == "1")):
             ShminEffective = float(fsParam.get('scale'))
-        if ((fsParam.get('fieldName') == "rock_stress") &
-            (fsParam.get('initialCondition') == "1") &
+        if ((fsParam.get('fieldName') == "rock_stress") & (fsParam.get('initialCondition') == "1") &
             (fsParam.get('component') == "2")):
             SvEffective = float(fsParam.get('scale'))
-        if ((fsParam.get('fieldName') == "pressure") &
-            (fsParam.get('initialCondition') != "1")):
+        if ((fsParam.get('fieldName') == "pressure") & (fsParam.get('initialCondition') != "1")):
             pi = float(fsParam.get('scale'))
 
-    porosity = float(
-        tree.find('Constitutive/BiotPorosity').get('defaultReferencePorosity'))
+    porosity = float(tree.find('Constitutive/BiotPorosity').get('defaultReferencePorosity'))
 
-    skeletonBulkModulus = float(
-        tree.find('Constitutive/BiotPorosity').get('grainBulkModulus'))
-    fluidCompressibility = float(
-        tree.find('Constitutive/CompressibleSinglePhaseFluid').get(
-            'compressibility'))
+    skeletonBulkModulus = float(tree.find('Constitutive/BiotPorosity').get('grainBulkModulus'))
+    fluidCompressibility = float(tree.find('Constitutive/CompressibleSinglePhaseFluid').get('compressibility'))
 
     bBiot = 1.0 - bulkModulus / skeletonBulkModulus
-    MBiot = 1.0 / (porosity * fluidCompressibility +
-                   (bBiot - porosity) / skeletonBulkModulus)
+    MBiot = 1.0 / (porosity * fluidCompressibility + (bBiot - porosity) / skeletonBulkModulus)
 
-    permParam = tree.find('Constitutive/ConstantPermeability').get(
-        'permeabilityComponents')
-    permeability = float(
-        permParam.replace('{', '').replace('}', '').strip().split(',')[0])
+    permParam = tree.find('Constitutive/ConstantPermeability').get('permeabilityComponents')
+    permeability = float(permParam.replace('{', '').replace('}', '').strip().split(',')[0])
 
-    viscosity = float(
-        tree.find('Constitutive/CompressibleSinglePhaseFluid').get(
-            'defaultViscosity'))
+    viscosity = float(tree.find('Constitutive/CompressibleSinglePhaseFluid').get('defaultViscosity'))
 
     return [
-        maxTime, MBiot, bBiot, bulkModulus, shearModulus, permeability,
-        viscosity, pi, p0, bBiot * p0 - ShmaxEffective,
+        maxTime, MBiot, bBiot, bulkModulus, shearModulus, permeability, viscosity, pi, p0, bBiot * p0 - ShmaxEffective,
         bBiot * p0 - ShminEffective, bBiot * p0 - SvEffective
     ]
 
@@ -146,18 +120,12 @@ def getWellboreGeometryFromXML(xmlFilePath):
     tree = ElementTree.parse(xmlFilePath)
 
     meshParam = tree.find('Mesh/InternalWellbore')
-    radius = float(
-        meshParam.get("radius").replace('{',
-                                        '').replace('}',
-                                                    '').strip().split(',')[0])
+    radius = float(meshParam.get("radius").replace('{', '').replace('}', '').strip().split(',')[0])
 
     # Wellbore deviation
-    trajectoryParam = tree.find('Mesh/InternalWellbore').get(
-        'trajectory').replace(' ', '').split('},')
-    top = trajectoryParam[0].replace('{', '').replace('}',
-                                                      '').strip().split(',')
-    bottom = trajectoryParam[1].replace('{', '').replace('}',
-                                                         '').strip().split(',')
+    trajectoryParam = tree.find('Mesh/InternalWellbore').get('trajectory').replace(' ', '').split('},')
+    top = trajectoryParam[0].replace('{', '').replace('}', '').strip().split(',')
+    bottom = trajectoryParam[1].replace('{', '').replace('}', '').strip().split(',')
 
     dx = float(top[0]) - float(bottom[0])
     dy = float(top[1]) - float(bottom[1])
@@ -195,8 +163,7 @@ def main():
     fluidViscosity = parameters[6]
 
     E = 1.0 / (1.0 / 9.0 / K + 1.0 / 3.0 / G)    # in-plane Young's modulus
-    nu = (3.0 * K - 2.0 * G) / (6.0 * K + 2.0 * G
-                                )    # in-plane Poisson's ratio
+    nu = (3.0 * K - 2.0 * G) / (6.0 * K + 2.0 * G)    # in-plane Poisson's ratio
     Ks = K / (1.0 - bBiot)    # Bulk modulus of the solid phase
     kappa = permeability / fluidViscosity    # (m2/Pa/s) ratio between the intrinsic permeability and the dynamic viscosity of fluid
 
@@ -215,9 +182,9 @@ def main():
     Shmin = parameters[10]
     Sv = parameters[11]
 
-    r_anal, sig_rr_anal, sig_tt_anal, pPore_anal = analyticalResults(
-        t, ri, -theta, phi_x, phi_z, E, nu, M, Ks, kappa, bBiot, nE, nnu,
-        nkappa, pi, pw, p0, Shmax, Shmin, Sv)
+    r_anal, sig_rr_anal, sig_tt_anal, pPore_anal = analyticalResults(t, ri, -theta, phi_x, phi_z, E, nu, M, Ks, kappa,
+                                                                     bBiot, nE, nnu, nkappa, pi, pw, p0, Shmax, Shmin,
+                                                                     Sv)
 
     fig = plt.figure(figsize=[13, 10])
 
@@ -287,11 +254,7 @@ def main():
 
     plt.subplot(221)
     plt.plot(r, sig_rr, 'ko', label='GEOSX result')
-    plt.plot(r_anal,
-             sig_rr_anal + bBiot * pPore_anal,
-             'k',
-             linewidth=2,
-             label='Analytic')
+    plt.plot(r_anal, sig_rr_anal + bBiot * pPore_anal, 'k', linewidth=2, label='Analytic')
     plt.ylabel('Effective radial stress (MPa)')
     plt.xlabel('r (m)')
     plt.xlim(ri, 10 * ri)
@@ -299,11 +262,7 @@ def main():
 
     plt.subplot(222)
     plt.plot(r, sig_tt, 'ko', label='GEOSX result')
-    plt.plot(r_anal,
-             sig_tt_anal + bBiot * pPore_anal,
-             'k',
-             linewidth=2,
-             label='Analytic')
+    plt.plot(r_anal, sig_tt_anal + bBiot * pPore_anal, 'k', linewidth=2, label='Analytic')
     plt.ylabel('Effective tangent stress (MPa)')
     plt.xlabel('r (m)')
     plt.xlim(ri, 10 * ri)

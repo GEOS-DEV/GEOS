@@ -27,15 +27,11 @@ plt.rc('font', **font)
 # Rotate the in-situ stress to the local coordinates of an inclined borehole
 # See the description in fig.1 in Abousleiman and Cui 1998
 def stressRotation(Sx_p, Sy_p, Sz_p, phi_x, phi_z):
-    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.],
-                     [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
-    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.],
-                     [-np.sin(phi_z), 0., np.cos(phi_z)]])
+    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.], [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
+    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.], [-np.sin(phi_z), 0., np.cos(phi_z)]])
 
     S_p = np.array([[Sx_p, 0., 0.], [0., Sy_p, 0.], [0., 0., Sz_p]])
-    return np.dot(
-        np.dot(np.transpose(rotz), np.dot(np.dot(np.transpose(rotx), S_p),
-                                          rotx)), rotz)
+    return np.dot(np.dot(np.transpose(rotz), np.dot(np.dot(np.transpose(rotx), S_p), rotx)), rotz)
 
 
 # Stehfest method for inverse Laplace transformation
@@ -45,8 +41,7 @@ def Vfunction(i, N):
     kmax = min(i, N)
     for k in range(kmin, kmax + 1):
         sum1 = sum1 + (1. * (k**N) * factorial(2 * k) /
-                       (factorial(N - k) * factorial(k) * factorial(k - 1) *
-                        factorial(i - k) * factorial(2 * k - i)))
+                       (factorial(N - k) * factorial(k) * factorial(k - 1) * factorial(i - k) * factorial(2 * k - i)))
     return ((-1.)**(N + i)) * sum1
 
 
@@ -80,12 +75,10 @@ def inLaplace_mode2(s, r, ri, p0, pi, c, alpha, G, M11):
     beta = ri * (s / c)**0.5
 
     p_2 = -(p0 - pi) / s * kv(0., xi) / kv(0., beta)
-    sig_rr_2 = -(p0 - pi) / s * (2. * G * alpha) / M11 * (
-        ri / r * kv(1., xi) - ri**2. / r**2 * kv(1., beta)) / (beta *
-                                                               kv(0., beta))
-    sig_tt_2 = (p0 - pi) / s * (2. * G * alpha) / M11 * (
-        (ri / r * kv(1., xi) - ri**2. / r**2 * kv(1., beta)) /
-        (beta * kv(0., beta)) + kv(0., xi) / kv(0., beta))
+    sig_rr_2 = -(p0 - pi) / s * (2. * G * alpha) / M11 * (ri / r * kv(1., xi) -
+                                                          ri**2. / r**2 * kv(1., beta)) / (beta * kv(0., beta))
+    sig_tt_2 = (p0 - pi) / s * (2. * G * alpha) / M11 * ((ri / r * kv(1., xi) - ri**2. / r**2 * kv(1., beta)) /
+                                                         (beta * kv(0., beta)) + kv(0., xi) / kv(0., beta))
     return [p_2, sig_rr_2, sig_tt_2]
 
 
@@ -95,15 +88,12 @@ def inTime_mode2(t, r, ri, p0, pi, c, alpha, G, M11):
     sum2 = 0.
     sum3 = 0.
     for j in range(1, 2 * N + 1):
-        Lresult = inLaplace_mode2(j * np.log(2.) / t, r, ri, p0, pi, c, alpha,
-                                  G, M11)
+        Lresult = inLaplace_mode2(j * np.log(2.) / t, r, ri, p0, pi, c, alpha, G, M11)
 
         sum1 += Vfunction(j, N) * Lresult[0]
         sum2 += Vfunction(j, N) * Lresult[1]
         sum3 += Vfunction(j, N) * Lresult[2]
-    return [
-        sum1 * np.log(2.) / t, sum2 * np.log(2.) / t, sum3 * np.log(2.) / t
-    ]
+    return [sum1 * np.log(2.) / t, sum2 * np.log(2.) / t, sum3 * np.log(2.) / t]
 
 
 # Mode 3 loading: pure shearing
@@ -124,8 +114,7 @@ def inTime_mode2(t, r, ri, p0, pi, c, alpha, G, M11):
 # The results depend on the angle theta, see the description of theta in Fig.1 in Detournay and Cheng 1988 or Fig.1b in Abousleiman and Cui 1998
 
 
-def inLaplace_mode3(s, r, ri, S0, theta, theta_r, c, alpha, M, G, M11, M12,
-                    kappa):
+def inLaplace_mode3(s, r, ri, S0, theta, theta_r, c, alpha, M, G, M11, M12, kappa):
     xi = r * (s / c)**0.5
     beta = ri * (s / c)**0.5
 
@@ -138,58 +127,44 @@ def inLaplace_mode3(s, r, ri, S0, theta, theta_r, c, alpha, M, G, M11, M12,
 
     C1 = 4. / (2. * A1 * (M3 - M2) - A2 * M1)
     C2 = -4. * M1 / (2. * A1 * (M3 - M2) - A2 * M1)
-    C3 = (2. * A1 * (M2 + M3) + 3. * A2 * M1) / 3. / (2. * A1 *
-                                                      (M3 - M2) - A2 * M1)
+    C3 = (2. * A1 * (M2 + M3) + 3. * A2 * M1) / 3. / (2. * A1 * (M3 - M2) - A2 * M1)
 
-    p_3 = np.cos(2. * (theta - theta_r)) * S0 / s * (
-        c / (2. * G * kappa) * C1 * kv(2., xi) + A1 * C2 * ri**2. / r**2.)
-    sig_rr_3 = np.cos(2. * (theta - theta_r)) * S0 / s * (
-        A1 * C1 * (kv(1., xi) / xi + 6. * kv(2., xi) / xi**2.) -
-        A2 * C2 * ri**2. / r**2. - 3. * C3 * ri**4. / r**4.)
-    sig_tt_3 = np.cos(2. * (theta - theta_r)) * S0 / s * (
-        -A1 * C1 * (kv(1., xi) / xi + kv(2., xi) + 6. * kv(2., xi) / xi**2.) +
-        3. * C3 * ri**4. / r**4.)
-    tau_rt_3 = np.sin(2. * (theta - theta_r)) * S0 / s * (
-        2. * A1 * C1 * (kv(1., xi) / xi + 3. * kv(2., xi) / xi**2.) -
-        0.5 * A2 * C2 * ri**2. / r**2. - 3. * C3 * ri**4. / r**4.)
+    p_3 = np.cos(2. * (theta - theta_r)) * S0 / s * (c / (2. * G * kappa) * C1 * kv(2., xi) + A1 * C2 * ri**2. / r**2.)
+    sig_rr_3 = np.cos(2. * (theta - theta_r)) * S0 / s * (A1 * C1 * (kv(1., xi) / xi + 6. * kv(2., xi) / xi**2.) -
+                                                          A2 * C2 * ri**2. / r**2. - 3. * C3 * ri**4. / r**4.)
+    sig_tt_3 = np.cos(2. * (theta - theta_r)) * S0 / s * (-A1 * C1 *
+                                                          (kv(1., xi) / xi + kv(2., xi) + 6. * kv(2., xi) / xi**2.) +
+                                                          3. * C3 * ri**4. / r**4.)
+    tau_rt_3 = np.sin(2. * (theta - theta_r)) * S0 / s * (2. * A1 * C1 * (kv(1., xi) / xi + 3. * kv(2., xi) / xi**2.) -
+                                                          0.5 * A2 * C2 * ri**2. / r**2. - 3. * C3 * ri**4. / r**4.)
 
     return [p_3, sig_rr_3, sig_tt_3, tau_rt_3]
 
 
-def inTime_mode3(t, r, ri, S0, theta, theta_r, c, alpha, M, G, M11, M12,
-                 kappa):
+def inTime_mode3(t, r, ri, S0, theta, theta_r, c, alpha, M, G, M11, M12, kappa):
     N = 5
     sum1 = 0.
     sum2 = 0.
     sum3 = 0.
     sum4 = 0.
     for j in range(1, 2 * N + 1):
-        Lresult = inLaplace_mode3(j * np.log(2.) / t, r, ri, S0, theta,
-                                  theta_r, c, alpha, M, G, M11, M12, kappa)
+        Lresult = inLaplace_mode3(j * np.log(2.) / t, r, ri, S0, theta, theta_r, c, alpha, M, G, M11, M12, kappa)
 
         sum1 += Vfunction(j, N) * Lresult[0]
         sum2 += Vfunction(j, N) * Lresult[1]
         sum3 += Vfunction(j, N) * Lresult[2]
         sum4 += Vfunction(j, N) * Lresult[3]
-    return [
-        sum1 * np.log(2.) / t, sum2 * np.log(2.) / t, sum3 * np.log(2.) / t,
-        sum4 * np.log(2.) / t
-    ]
+    return [sum1 * np.log(2.) / t, sum2 * np.log(2.) / t, sum3 * np.log(2.) / t, sum4 * np.log(2.) / t]
 
 
 # Plane-strain problem: sum-up modes 1, 2 and 3
-def inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M,
-                   G, M11, M12, kappa):
+def inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G, M11, M12, kappa):
     sig_rr_1, sig_tt_1 = inTime_mode1(r, ri, PP0, pw)
     p_2, sig_rr_2, sig_tt_2 = inTime_mode2(t, r, ri, p0, pi, c, alpha, G, M11)
-    p_3, sig_rr_3, sig_tt_3, sig_rt_3 = inTime_mode3(t, r, ri, S0, theta,
-                                                     theta_r, c, alpha, M, G,
-                                                     M11, M12, kappa)
+    p_3, sig_rr_3, sig_tt_3, sig_rt_3 = inTime_mode3(t, r, ri, S0, theta, theta_r, c, alpha, M, G, M11, M12, kappa)
 
-    sig_rr = -PP0 + S0 * np.cos(
-        2. * (theta - theta_r)) + sig_rr_1 + sig_rr_2 + sig_rr_3
-    sig_tt = -PP0 - S0 * np.cos(
-        2. * (theta - theta_r)) + sig_tt_1 + sig_tt_2 + sig_tt_3
+    sig_rr = -PP0 + S0 * np.cos(2. * (theta - theta_r)) + sig_rr_1 + sig_rr_2 + sig_rr_3
+    sig_tt = -PP0 - S0 * np.cos(2. * (theta - theta_r)) + sig_tt_1 + sig_tt_2 + sig_tt_3
     p = p0 + p_2 + p_3
     sig_rt = -S0 * np.sin(2. * (theta - theta_r)) + sig_rt_3
     return [p, sig_rr, sig_tt, sig_rt]
@@ -203,13 +178,10 @@ def inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M,
 # angle theta is defined in Fig.1 in Detournay and Cheng 1988 or Fig.1b in Abousleiman and Cui 1998
 
 
-def inTime_outPlane(r, ri, theta, p0, Sx, Sy, Sz, Sxz, Syz, sig_rr, sig_tt, p,
-                    nu_p, alpha, alpha_p):
-    sig_zz = nu_p * (sig_rr + sig_tt) - (
-        alpha_p - 2. * nu_p * alpha) * p - Sz + nu_p * (Sx + Sy) + (
-            alpha_p - 2. * nu_p * alpha) * p0
-    tau_rz = -(Sxz * np.cos(theta) + Syz * np.sin(theta)) * (1 -
-                                                             ri**2. / r**2.)
+def inTime_outPlane(r, ri, theta, p0, Sx, Sy, Sz, Sxz, Syz, sig_rr, sig_tt, p, nu_p, alpha, alpha_p):
+    sig_zz = nu_p * (sig_rr + sig_tt) - (alpha_p - 2. * nu_p * alpha) * p - Sz + nu_p * (Sx + Sy) + (
+        alpha_p - 2. * nu_p * alpha) * p0
+    tau_rz = -(Sxz * np.cos(theta) + Syz * np.sin(theta)) * (1 - ri**2. / r**2.)
     tau_tz = (Sxz * np.sin(theta) - Syz * np.cos(theta)) * (1 + ri**2. / r**2.)
     return [sig_zz, tau_rz, tau_tz]
 
@@ -231,37 +203,29 @@ def inLaplace_thermal(s, r, ri, Ti, G, nu, alpha, alpha_d, c, kappaT, alpha_e):
     T = T1 / s * kn(0, r * (s / kappaT)**0.5) / kn(0, ri * (s / kappaT)**0.5)
 
     # Pore pressure, see Eq.11.346 p.656
-    p = alpha_e * T1 / (1 - c / kappaT) / s * (
-        kn(0,
-           r * (s / kappaT)**0.5) / kn(0,
-                                       ri * (s / kappaT)**0.5) -
-        kn(0,
-           r * (s / c)**0.5) / kn(0,
-                                  ri * (s / c)**0.5))
+    p = alpha_e * T1 / (1 - c / kappaT) / s * (kn(0,
+                                                  r * (s / kappaT)**0.5) / kn(0,
+                                                                              ri * (s / kappaT)**0.5) -
+                                               kn(0,
+                                                  r * (s / c)**0.5) / kn(0,
+                                                                         ri * (s / c)**0.5))
 
     # The integral terms needed to determine the stresses, Eqs. 11.347 to 11.349
-    int_rT = -(T1 * r * kn(1,
-                           r *
-                           (s / kappaT)**0.5)) / (s * (s / kappaT)**0.5 *
-                                                  kn(0,
-                                                     ri * (s / kappaT)**0.5))
-    int_rp = -alpha_e / (1 - c / kappaT) * T1 * r / s * (
-        kn(1,
-           r * (s / kappaT)**0.5) /
-        ((s / kappaT)**0.5 * kn(0,
-                                ri *
-                                (s / kappaT)**0.5)) - kn(1,
-                                                         r * (s / c)**0.5) /
-        ((s / c)**0.5 * kn(0,
-                           ri * (s / c)**0.5)))
+    int_rT = -(T1 * r * kn(1, r * (s / kappaT)**0.5)) / (s * (s / kappaT)**0.5 * kn(0, ri * (s / kappaT)**0.5))
+    int_rp = -alpha_e / (1 - c / kappaT) * T1 * r / s * (kn(1,
+                                                            r * (s / kappaT)**0.5) /
+                                                         ((s / kappaT)**0.5 * kn(0,
+                                                                                 ri * (s / kappaT)**0.5)) -
+                                                         kn(1,
+                                                            r *
+                                                            (s / c)**0.5) / ((s / c)**0.5 * kn(0,
+                                                                                               ri * (s / c)**0.5)))
     A2 = T1 * ri / (1 - c / kappaT) / G / s * (
-        (eta * alpha_e + eta_d *
-         (1 - c / kappaT)) * kn(1,
-                                ri * (s / kappaT)**0.5) /
+        (eta * alpha_e + eta_d * (1 - c / kappaT)) * kn(1,
+                                                        ri * (s / kappaT)**0.5) /
         ((s / kappaT)**0.5 * kn(0,
-                                ri * (s / kappaT)**0.5)) -
-        eta * alpha_e * kn(1,
-                           ri * (s / c)**0.5) /
+                                ri * (s / kappaT)**0.5)) - eta * alpha_e * kn(1,
+                                                                              ri * (s / c)**0.5) /
         ((s / c)**0.5 * kn(0,
                            ri * (s / c)**0.5)))
 
@@ -282,8 +246,7 @@ def inTime_thermal(t, r, ri, T1, G, nu, alpha, alpha_d, c, kappaT, alpha_e):
     sum5 = 0.
     sum6 = 0.
     for j in range(1, 2 * N + 1):
-        Lresult = inLaplace_thermal(j * np.log(2.) / t, r, ri, T1, G, nu,
-                                    alpha, alpha_d, c, kappaT, alpha_e)
+        Lresult = inLaplace_thermal(j * np.log(2.) / t, r, ri, T1, G, nu, alpha, alpha_d, c, kappaT, alpha_e)
 
         sum1 += Vfunction(j, N) * Lresult[0]
         sum2 += Vfunction(j, N) * Lresult[1]
@@ -292,8 +255,8 @@ def inTime_thermal(t, r, ri, T1, G, nu, alpha, alpha_d, c, kappaT, alpha_e):
         sum5 += Vfunction(j, N) * Lresult[4]
         sum6 += Vfunction(j, N) * Lresult[5]
     return [
-        sum1 * np.log(2.) / t, sum2 * np.log(2.) / t, sum3 * np.log(2.) / t,
-        sum4 * np.log(2.) / t, sum5 * np.log(2.) / t, sum6 * np.log(2.) / t
+        sum1 * np.log(2.) / t, sum2 * np.log(2.) / t, sum3 * np.log(2.) / t, sum4 * np.log(2.) / t,
+        sum5 * np.log(2.) / t, sum6 * np.log(2.) / t
     ]
 
 
@@ -302,8 +265,8 @@ def inTime_thermal(t, r, ri, T1, G, nu, alpha, alpha_d, c, kappaT, alpha_e):
 # Limitations: rock anisotropy coincide with the axe of the hole
 
 
-def inTime(t, r, theta, ri, Ti, pi, pw, p0, Sx_p, Sy_p, Sz_p, phi_x, phi_z, E,
-           nu, M, Ks, kappa, nE, nnu, nkappa, alpha_d, kappaT, alpha_e):
+def inTime(t, r, theta, ri, Ti, pi, pw, p0, Sx_p, Sy_p, Sz_p, phi_x, phi_z, E, nu, M, Ks, kappa, nE, nnu, nkappa,
+           alpha_d, kappaT, alpha_e):
     # For inclined borehole, the in-situ stress must be rotated to the local coordinates of the borehole
     # The solutions of Abousleiman and Cui 1998 are restricted to the case where the borehole is oriented in the direction of the material anisotropy
     S = stressRotation(Sx_p, Sy_p, Sz_p, phi_x, phi_z)
@@ -328,10 +291,8 @@ def inTime(t, r, theta, ri, Ti, pi, pw, p0, Sx_p, Sy_p, Sz_p, phi_x, phi_z, E,
     kappa_p = kappa / nkappa
 
     # Elastic stiffness, see Abousleiman and Cui 1998
-    M11 = E * (E_p - E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu -
-                                                  2. * E * nu_p**2.)
-    M12 = E * (E_p * nu + E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu -
-                                                       2. * E * nu_p**2.)
+    M11 = E * (E_p - E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
+    M12 = E * (E_p * nu + E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
     M13 = E * E_p * nu_p / (E_p - E_p * nu - 2. * E * nu_p**2.)
     M33 = E_p**2. * (1. - nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
     M44 = E / 2. / (1. + nu)
@@ -345,14 +306,12 @@ def inTime(t, r, theta, ri, Ti, pi, pw, p0, Sx_p, Sy_p, Sz_p, phi_x, phi_z, E,
     # Fluid diffusion coefficient
     c = kappa * M * M11 / (M11 + alpha**2. * M)
 
-    p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0,
-                                               theta, theta_r, c, alpha, M, G,
-                                               M11, M12, kappa)
+    p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G, M11, M12,
+                                               kappa)
 
     # Out-plane loading
-    sig_zz, tau_rz, tau_tz = inTime_outPlane(r, ri, theta, p0, Sx, Sy, Sz, Sxz,
-                                             Syz, sig_rr, sig_tt, p, nu_p,
-                                             alpha, alpha_p)
+    sig_zz, tau_rz, tau_tz = inTime_outPlane(r, ri, theta, p0, Sx, Sy, Sz, Sxz, Syz, sig_rr, sig_tt, p, nu_p, alpha,
+                                             alpha_p)
 
     # Thermal loading, axisymmetric thermal and fluid diffusion
     T_thermal, p_thermal, ur_thermal, sig_rr_thermal, sig_tt_thermal, sig_zz_thermal = inTime_thermal(
@@ -440,8 +399,7 @@ def vsDetournay1988_mode3():
 
     r = np.arange(ri, 3. * ri, 0.005 * ri)
 
-    c = 2. * kappa * B**2. * G * (1. - nu) * (1. + nuu)**2. / 9. / (
-        1. - nuu) / (nuu - nu)
+    c = 2. * kappa * B**2. * G * (1. - nu) * (1. + nuu)**2. / 9. / (1. - nuu) / (nuu - nu)
 
     alpha = 3. * (nuu - nu) / B / (1. - 2. * nu) / (1. + nuu)
     K = 2. * G * (1 + nu) / 3. / (1. - 2. * nu)
@@ -454,9 +412,7 @@ def vsDetournay1988_mode3():
     for ts in tstar:
         t = ts * ri**2. / c
 
-        p, sig_rr, sig_tt, sig_rt = inTime_mode3(t, r, ri, S0, theta, theta_r,
-                                                 c, alpha, M, G, M11, M12,
-                                                 kappa)
+        p, sig_rr, sig_tt, sig_rt = inTime_mode3(t, r, ri, S0, theta, theta_r, c, alpha, M, G, M11, M12, kappa)
 
         # Note: Fig.6 in in Detournay and Cheng 1988 does not present the results of mode 3 only
         # The term - S0*np.cos( 2.*(theta - theta_r) ) need to be added to sig_tt to fit with fig.6 in Detournay and Cheng 1988.
@@ -539,8 +495,7 @@ def vsDetournay1988_mode123():
     G = 1.
     kappa = 1.
 
-    c = 2. * kappa * B**2. * G * (1. - nu) * (1. + nuu)**2. / 9. / (
-        1. - nuu) / (nuu - nu)
+    c = 2. * kappa * B**2. * G * (1. - nu) * (1. + nuu)**2. / 9. / (1. - nuu) / (nuu - nu)
     alpha = 3. * (nuu - nu) / B / (1. - 2. * nu) / (1. + nuu)
     K = 2. * G * (1 + nu) / 3. / (1. - 2. * nu)
     Ku = 2. * G * (1 + nuu) / 3. / (1. - 2. * nuu)
@@ -553,10 +508,8 @@ def vsDetournay1988_mode123():
     tstar = [1e-4, 1e-3, 1e-2, 1e-1, 1.]
     for ts in tstar:
         t = ts * ri**2. / c
-        p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi,
-                                                   S0, theta, theta_r, c,
-                                                   alpha, M, G, M11, M12,
-                                                   kappa)
+        p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G, M11,
+                                                   M12, kappa)
 
         # Compute deviatoric and mean stress, see Eqs. 57 and 58 in Detournay and Cheng 1988
         S = 1. / 2. * ((sig_tt - sig_rr)**2. + 4. * sig_rt**2.)**0.5
@@ -572,20 +525,15 @@ def vsDetournay1988_mode123():
 
     for r in list_r:
         t = tstar * ri**2. / c
-        p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi,
-                                                   S0, theta, theta_r, c,
-                                                   alpha, M, G, M11, M12,
-                                                   kappa)
+        p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G, M11,
+                                                   M12, kappa)
 
         # Compute deviatoric and mean stress, see Eqs. 57 and 58 in Detournay and Cheng 1988
         S = 1. / 2. * ((sig_tt - sig_rr)**2. + 4. * sig_rt**2.)**0.5
         P = -1. / 2. * (sig_tt + sig_rr)
 
         plt.subplot(111)
-        plt.plot((P - p) / S0,
-                 S / S0,
-                 '--',
-                 label='r/Rhole = ' + str(r) + ', t varies')
+        plt.plot((P - p) / S0, S / S0, '--', label='r/Rhole = ' + str(r) + ', t varies')
 
     plt.subplot(111)
     plt.xlabel('P_eff Terzaghi/S0')
@@ -635,59 +583,46 @@ def vsAbousleiman1998():
     for nnu in list_nnu:
 
         t = 0.001 * 24 * 3600    # 0.001 day
-        p, sig_rr, sig_tt, sig_rt, sig_zz, tau_rz, tau_tz = inTime(
-            t, r, theta, ri, 0, pi, pw, p0, Sx_p, Sy_p, Sz_p, phi_x, phi_z, E,
-            nu, M, Ks, kappa, nE, nnu, nkappa, 1., 1., 1.)
+        p, sig_rr, sig_tt, sig_rt, sig_zz, tau_rz, tau_tz = inTime(t, r, theta, ri, 0, pi, pw, p0, Sx_p, Sy_p, Sz_p,
+                                                                   phi_x, phi_z, E, nu, M, Ks, kappa, nE, nnu, nkappa,
+                                                                   1., 1., 1.)
 
         plt.subplot(221)
-        plt.plot(r / ri,
-                 p / 1e6,
-                 label='n_nu=' + str(nnu) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+        plt.plot(r / ri, p / 1e6, label='n_nu=' + str(nnu) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
         plt.subplot(222)
         plt.plot(r / ri,
                  -(sig_rr + p) / 1e6,
-                 label='n_nu=' + str(nnu) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='n_nu=' + str(nnu) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
         plt.subplot(223)
         plt.plot(r / ri,
                  -(sig_tt + p) / 1e6,
-                 label='n_nu=' + str(nnu) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='n_nu=' + str(nnu) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
         plt.subplot(224)
         plt.plot(r / ri,
                  -(sig_zz + p) / 1e6,
-                 label='n_nu=' + str(nnu) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='n_nu=' + str(nnu) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
 
         t = 1. * 24 * 3600    # 1 day
-        p, sig_rr, sig_tt, sig_rt, sig_zz, tau_rz, tau_tz = inTime(
-            t, r, theta, ri, 0, pi, pw, p0, Sx_p, Sy_p, Sz_p, phi_x, phi_z, E,
-            nu, M, Ks, kappa, nE, nnu, nkappa, 1., 1., 1.)
+        p, sig_rr, sig_tt, sig_rt, sig_zz, tau_rz, tau_tz = inTime(t, r, theta, ri, 0, pi, pw, p0, Sx_p, Sy_p, Sz_p,
+                                                                   phi_x, phi_z, E, nu, M, Ks, kappa, nE, nnu, nkappa,
+                                                                   1., 1., 1.)
         plt.subplot(221)
-        plt.plot(r / ri,
-                 p / 1e6,
-                 '--',
-                 label='n_nu=' + str(nnu) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+        plt.plot(r / ri, p / 1e6, '--', label='n_nu=' + str(nnu) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
         plt.subplot(222)
         plt.plot(r / ri,
                  -(sig_rr + p) / 1e6,
                  '--',
-                 label='n_nu=' + str(nnu) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='n_nu=' + str(nnu) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
         plt.subplot(223)
         plt.plot(r / ri,
                  -(sig_tt + p) / 1e6,
                  '--',
-                 label='n_nu=' + str(nnu) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='n_nu=' + str(nnu) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
         plt.subplot(224)
         plt.plot(r / ri,
                  -(sig_zz + p) / 1e6,
                  '--',
-                 label='n_nu=' + str(nnu) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='n_nu=' + str(nnu) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
 
     plt.subplot(221)
     plt.xlabel('r/Rhole')
@@ -747,8 +682,7 @@ def vsAbousleiman1998_continue():
 
     # For inclined borehole, the in-situ stress must be rotated to the local coordinates of the borehole
     # The solutions of Abousleiman and Cui 1998 are restricted to the case where the borehole is oriented in the direction of the material anisotropy
-    S = stressRotation(29e6, 20e6, 25e6, 30. * np.pi / 180.,
-                       60. * np.pi / 180.)
+    S = stressRotation(29e6, 20e6, 25e6, 30. * np.pi / 180., 60. * np.pi / 180.)
     Sx = S[0][0]
     Sxy = S[0][1]
     Sxz = S[0][2]
@@ -775,10 +709,8 @@ def vsAbousleiman1998_continue():
         nu_p = nu / nnu
         kappa_p = kappa / nkappa
 
-        M11 = E * (E_p - E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu -
-                                                      2. * E * nu_p**2.)
-        M12 = E * (E_p * nu + E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu -
-                                                           2. * E * nu_p**2.)
+        M11 = E * (E_p - E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
+        M12 = E * (E_p * nu + E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
         M13 = E * E_p * nu_p / (E_p - E_p * nu - 2. * E * nu_p**2.)
         M33 = E_p**2. * (1. - nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
         M44 = E / 2. / (1. + nu)
@@ -793,69 +725,50 @@ def vsAbousleiman1998_continue():
         c = kappa * M * M11 / (M11 + alpha**2. * M)
 
         t = 0.001 * 24 * 3600    # 0.001 day
-        p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi,
-                                                   S0, theta, theta_r, c,
-                                                   alpha, M, G, M11, M12,
-                                                   kappa)
-        sig_zz, tau_rz, tau_tz = inTime_outPlane(r, ri, theta, p0, Sx, Sy, Sz,
-                                                 Sxz, Syz, sig_rr, sig_tt, p,
-                                                 nu_p, alpha, alpha_p)
+        p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G, M11,
+                                                   M12, kappa)
+        sig_zz, tau_rz, tau_tz = inTime_outPlane(r, ri, theta, p0, Sx, Sy, Sz, Sxz, Syz, sig_rr, sig_tt, p, nu_p, alpha,
+                                                 alpha_p)
 
         plt.subplot(221)
-        plt.plot(r / ri,
-                 p / 1e6,
-                 label='n_nu=' + str(nnu) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+        plt.plot(r / ri, p / 1e6, label='n_nu=' + str(nnu) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
         plt.subplot(222)
         plt.plot(r / ri,
                  -(sig_rr + p) / 1e6,
-                 label='E/Ep=' + str(nE) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='E/Ep=' + str(nE) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
         plt.subplot(223)
         plt.plot(r / ri,
                  -(sig_tt + p) / 1e6,
-                 label='E/Ep=' + str(nE) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='E/Ep=' + str(nE) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
         plt.subplot(224)
         plt.plot(r / ri,
                  -(sig_zz + p) / 1e6,
-                 label='E/Ep=' + str(nE) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='E/Ep=' + str(nE) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
 
         t = 1. * 24 * 3600    # 1 day
         #p, sig_rr, sig_tt, sig_rt, sig_zz, tau_rz, tau_tz = inTime(t, r, theta, ri, 0, pi, pw, p0, Sx_p, Sy_p, Sz_p, phi_x, phi_z, E, nu, M, Ks, kappa, nE, nnu, nkappa, 1., 1., 1.)
-        p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi,
-                                                   S0, theta, theta_r, c,
-                                                   alpha, M, G, M11, M12,
-                                                   kappa)
-        sig_zz, tau_rz, tau_tz = inTime_outPlane(r, ri, theta, p0, Sx, Sy, Sz,
-                                                 Sxz, Syz, sig_rr, sig_tt, p,
-                                                 nu_p, alpha, alpha_p)
+        p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G, M11,
+                                                   M12, kappa)
+        sig_zz, tau_rz, tau_tz = inTime_outPlane(r, ri, theta, p0, Sx, Sy, Sz, Sxz, Syz, sig_rr, sig_tt, p, nu_p, alpha,
+                                                 alpha_p)
 
         plt.subplot(221)
-        plt.plot(r / ri,
-                 p / 1e6,
-                 '--',
-                 label='n_nu=' + str(nnu) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+        plt.plot(r / ri, p / 1e6, '--', label='n_nu=' + str(nnu) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
         plt.subplot(222)
         plt.plot(r / ri,
                  -(sig_rr + p) / 1e6,
                  '--',
-                 label='E/Ep=' + str(nE) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='E/Ep=' + str(nE) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
         plt.subplot(223)
         plt.plot(r / ri,
                  -(sig_tt + p) / 1e6,
                  '--',
-                 label='E/Ep=' + str(nE) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='E/Ep=' + str(nE) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
         plt.subplot(224)
         plt.plot(r / ri,
                  -(sig_zz + p) / 1e6,
                  '--',
-                 label='E/Ep=' + str(nE) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='E/Ep=' + str(nE) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
 
     plt.subplot(221)
     plt.xlabel('r/Rhole')
@@ -915,8 +828,7 @@ def vsAbousleiman1998_continue_bu():
 
     # For inclined borehole, the in-situ stress must be rotated to the local coordinates of the borehole
     # The solutions of Abousleiman and Cui 1998 are restricted to the case where the borehole is oriented in the direction of the material anisotropy
-    S = stressRotation(29e6, 20e6, 25e6, 30. * np.pi / 180.,
-                       60. * np.pi / 180.)
+    S = stressRotation(29e6, 20e6, 25e6, 30. * np.pi / 180., 60. * np.pi / 180.)
     Sx = S[0][0]
     Sxy = S[0][1]
     Sxz = S[0][2]
@@ -943,10 +855,8 @@ def vsAbousleiman1998_continue_bu():
         nu_p = nu / nnu
         kappa_p = kappa / nkappa
 
-        M11 = E * (E_p - E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu -
-                                                      2. * E * nu_p**2.)
-        M12 = E * (E_p * nu + E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu -
-                                                           2. * E * nu_p**2.)
+        M11 = E * (E_p - E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
+        M12 = E * (E_p * nu + E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
         M13 = E * E_p * nu_p / (E_p - E_p * nu - 2. * E * nu_p**2.)
         M33 = E_p**2. * (1. - nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
         M44 = E / 2. / (1. + nu)
@@ -961,34 +871,26 @@ def vsAbousleiman1998_continue_bu():
         c = kappa * M * M11 / (M11 + alpha**2. * M)
 
         t = 0.001 * 24 * 3600    # 0.001 day
-        p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi,
-                                                   S0, theta, theta_r, c,
-                                                   alpha, M, G, M11, M12,
-                                                   kappa)
-        sig_zz, tau_rz, tau_tz = inTime_outPlane(r, ri, theta, p0, Sx, Sy, Sz,
-                                                 Sxz, Syz, sig_rr, sig_tt, p,
-                                                 nu_p, alpha, alpha_p)
+        p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G, M11,
+                                                   M12, kappa)
+        sig_zz, tau_rz, tau_tz = inTime_outPlane(r, ri, theta, p0, Sx, Sy, Sz, Sxz, Syz, sig_rr, sig_tt, p, nu_p, alpha,
+                                                 alpha_p)
 
         plt.subplot(111)
         plt.plot(r / ri,
                  -(sig_zz + p) / 1e6,
-                 label='n_nu=' + str(nnu) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='n_nu=' + str(nnu) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
 
         t = 1. * 24 * 3600    # 1 day
-        p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi,
-                                                   S0, theta, theta_r, c,
-                                                   alpha, M, G, M11, M12,
-                                                   kappa)
-        sig_zz, tau_rz, tau_tz = inTime_outPlane(r, ri, theta, p0, Sx, Sy, Sz,
-                                                 Sxz, Syz, sig_rr, sig_tt, p,
-                                                 nu_p, alpha, alpha_p)
+        p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G, M11,
+                                                   M12, kappa)
+        sig_zz, tau_rz, tau_tz = inTime_outPlane(r, ri, theta, p0, Sx, Sy, Sz, Sxz, Syz, sig_rr, sig_tt, p, nu_p, alpha,
+                                                 alpha_p)
 
         plt.subplot(111)
         plt.plot(r / ri,
                  -(sig_zz + p) / 1e6,
-                 label='n_nu=' + str(nnu) + ', t=' +
-                 str(round(t / 24. / 3600., 3)) + ' (day)')
+                 label='n_nu=' + str(nnu) + ', t=' + str(round(t / 24. / 3600., 3)) + ' (day)')
 
     plt.subplot(111)
     plt.xlabel('r/Rhole')
@@ -1051,10 +953,8 @@ def vsCui1997():
     nu_p = nu / nnu
     kappa_p = kappa / nkappa
 
-    M11 = E * (E_p - E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu -
-                                                  2. * E * nu_p**2.)
-    M12 = E * (E_p * nu + E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu -
-                                                       2. * E * nu_p**2.)
+    M11 = E * (E_p - E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
+    M12 = E * (E_p * nu + E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
     M13 = E * E_p * nu_p / (E_p - E_p * nu - 2. * E * nu_p**2.)
     M33 = E_p**2. * (1. - nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
     M44 = E / 2. / (1. + nu)
@@ -1069,18 +969,16 @@ def vsCui1997():
     c = kappa * M * M11 / (M11 + alpha**2. * M)
 
     t = 1.3 * 60.    # 1.3 min
-    p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0,
-                                               theta, theta_r, c, alpha, M, G,
-                                               M11, M12, kappa)
+    p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G, M11, M12,
+                                               kappa)
     #sig_zz,tau_rz,tau_tz = inTime_outPlane(r, ri,theta,p0,Sx,Sy,Sz,Sxz,Syz,sig_rr,sig_tt,p,nu_p,alpha,alpha_p)
 
     plt.subplot(111)
     plt.plot(r / ri, p / 1e6, label='t=' + str(round(t / 60., 1)) + ' (min)')
 
     t = 21.6 * 60.    # 21.6min
-    p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0,
-                                               theta, theta_r, c, alpha, M, G,
-                                               M11, M12, kappa)
+    p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G, M11, M12,
+                                               kappa)
     #sig_zz,tau_rz,tau_tz = inTime_outPlane(r, ri,theta,p0,Sx,Sy,Sz,Sxz,Syz,sig_rr,sig_tt,p,nu_p,alpha,alpha_p)
 
     plt.subplot(111)
@@ -1148,10 +1046,8 @@ def vsCui1997_continue():
     nu_p = nu / nnu
     kappa_p = kappa / nkappa
 
-    M11 = E * (E_p - E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu -
-                                                  2. * E * nu_p**2.)
-    M12 = E * (E_p * nu + E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu -
-                                                       2. * E * nu_p**2.)
+    M11 = E * (E_p - E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
+    M12 = E * (E_p * nu + E * nu_p**2.) / (1. + nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
     M13 = E * E_p * nu_p / (E_p - E_p * nu - 2. * E * nu_p**2.)
     M33 = E_p**2. * (1. - nu) / (E_p - E_p * nu - 2. * E * nu_p**2.)
     M44 = E / 2. / (1. + nu)
@@ -1166,26 +1062,20 @@ def vsCui1997_continue():
     c = kappa * M * M11 / (M11 + alpha**2. * M)
 
     t = 1.3 * 60.    # 1.3 min
-    p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0,
-                                               theta, theta_r, c, alpha, M, G,
-                                               M11, M12, kappa)
+    p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G, M11, M12,
+                                               kappa)
     #sig_zz,tau_rz,tau_tz = inTime_outPlane(r, ri,theta,p0,Sx,Sy,Sz,Sxz,Syz,sig_rr,sig_tt,p,nu_p,alpha,alpha_p)
 
     plt.subplot(111)
-    plt.plot(r / ri,
-             -(sig_rr + p) / 1e6,
-             label='t=' + str(round(t / 60., 1)) + ' (min)')
+    plt.plot(r / ri, -(sig_rr + p) / 1e6, label='t=' + str(round(t / 60., 1)) + ' (min)')
 
     t = 21.6 * 60.    # 21.6min
-    p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0,
-                                               theta, theta_r, c, alpha, M, G,
-                                               M11, M12, kappa)
+    p, sig_rr, sig_tt, sig_rt = inTime_mode123(t, r, ri, PP0, pw, p0, pi, S0, theta, theta_r, c, alpha, M, G, M11, M12,
+                                               kappa)
     #sig_zz,tau_rz,tau_tz = inTime_outPlane(r, ri,theta,p0,Sx,Sy,Sz,Sxz,Syz,sig_rr,sig_tt,p,nu_p,alpha,alpha_p)
 
     plt.subplot(111)
-    plt.plot(r / ri,
-             -(sig_rr + p) / 1e6,
-             label='t=' + str(round(t / 60., 1)) + ' (min)')
+    plt.plot(r / ri, -(sig_rr + p) / 1e6, label='t=' + str(round(t / 60., 1)) + ' (min)')
 
     plt.subplot(111)
     plt.xlabel('r/Rhole')
@@ -1235,12 +1125,11 @@ def vsWang1994():
 
         r = np.arange(ri, 4. * ri, 0.01 * ri)
         #p, sig_rr, sig_tt, sig_rt, sig_zz, tau_rz, tau_tz                                = inTime(t, r, theta, ri, Ti, pi, pw, p0, Sx_p, Sy_p, Sz_p, phi_x, phi_z, E, nu, M, Ks, kappa, nE, nnu, nkappa, alpha_d, kappaT, alpha_e)
-        p, sig_rr, sig_tt, sig_rt, sig_zz, tau_rz, tau_tz = inTime(
-            t, r, 0., ri, T1, p1, 0., 0., 0., 0., 0., 0., 0., E, nu, M, Ks,
-            kappa, 1., 1., 1., alpha_d, kappaT, alpha_e)
+        p, sig_rr, sig_tt, sig_rt, sig_zz, tau_rz, tau_tz = inTime(t, r, 0., ri, T1, p1, 0., 0., 0., 0., 0., 0., 0., E,
+                                                                   nu, M, Ks, kappa, 1., 1., 1., alpha_d, kappaT,
+                                                                   alpha_e)
         p_thermal, sig_rr_thermal, sig_tt_thermal, sig_rt_thermal, sig_zz, tau_rz, tau_tz = inTime(
-            t, r, 0., ri, T1, 0., 0., 0., 0., 0., 0., 0., 0., E, nu, M, Ks,
-            kappa, 1., 1., 1., alpha_d, kappaT, alpha_e)
+            t, r, 0., ri, T1, 0., 0., 0., 0., 0., 0., 0., 0., E, nu, M, Ks, kappa, 1., 1., 1., alpha_d, kappaT, alpha_e)
 
         if (iTime == 0):
             line_type1 = 'k'
@@ -1252,16 +1141,8 @@ def vsWang1994():
             line_type1 = 'b'
             line_type2 = 'b--'
 
-        plt.plot(r / ri,
-                 p / p1,
-                 line_type1,
-                 linewidth=2,
-                 label=r'$tstar$=' + str(tstar))
-        plt.plot(r / ri,
-                 p_thermal / p1,
-                 line_type2,
-                 linewidth=2,
-                 label=r'Pure thermal loading: $tstar$=' + str(tstar))
+        plt.plot(r / ri, p / p1, line_type1, linewidth=2, label=r'$tstar$=' + str(tstar))
+        plt.plot(r / ri, p_thermal / p1, line_type2, linewidth=2, label=r'Pure thermal loading: $tstar$=' + str(tstar))
 
         plt.ylabel('Normalized Pore Pressure')
         plt.xlabel('Normalized Radial Distance')

@@ -65,10 +65,7 @@ def sexe(cmd, ret_output=False, echo=True):
     if echo:
         print("[exe: {}]".format(cmd))
     if ret_output:
-        p = subprocess.Popen(cmd,
-                             shell=True,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         res = p.communicate()[0]
         res = res.decode('utf8')
         return p.returncode, res
@@ -90,8 +87,7 @@ def spack_exe(spath=None):
     else:
         spack_exe = os.path.abspath(spath, "bin", "spack")
         if not os.path.isfile(spack_exec):
-            print("[ERROR: failed to find spack directory at spath={}]"
-                  ).format(spath)
+            print("[ERROR: failed to find spack directory at spath={}]").format(spath)
             sys.exit(-1)
         return spack_exe
 
@@ -128,9 +124,7 @@ def main():
     if len(pkgs) > 0:
         write_env_script(pkgs)
     else:
-        print(
-            "usage: python gen_spack_env_script.py spack_pkg_1 spack_pkg_2 ..."
-        )
+        print("usage: python gen_spack_env_script.py spack_pkg_1 spack_pkg_2 ...")
 
 
 if __name__ == "__main__":

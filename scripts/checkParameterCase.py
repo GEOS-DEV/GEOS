@@ -4,12 +4,11 @@ import argparse
 import re
 
 
-def parse_schema_element(
-        root,
-        node,
-        path,
-        xsd='{http://www.w3.org/2001/XMLSchema}',
-        recursive_types=['PeriodicEvent', 'SoloEvent', 'HaltEvent']):
+def parse_schema_element(root,
+                         node,
+                         path,
+                         xsd='{http://www.w3.org/2001/XMLSchema}',
+                         recursive_types=['PeriodicEvent', 'SoloEvent', 'HaltEvent']):
     """
   @brief Check element/attribute names at the current schema level
   @param root the root schema node
@@ -40,8 +39,7 @@ def parse_schema_element(
             if not pascal_case_regex.match(child_name):
                 print('Element is not PascalCase: %s/%s' % (path, child_name))
 
-            if not ((child_name in recursive_types) and
-                    (element_name in recursive_types)):
+            if not ((child_name in recursive_types) and (element_name in recursive_types)):
                 sub_path = '%s/%s' % (path, child_name)
                 parse_schema_element(root, child, sub_path)
 
@@ -62,11 +60,7 @@ def main():
   @brief Entry point for the name checking script
   """
     parser = argparse.ArgumentParser()
-    parser.add_argument('-r',
-                        '--root',
-                        type=str,
-                        help='GEOSX root',
-                        default='.')
+    parser.add_argument('-r', '--root', type=str, help='GEOSX root', default='.')
     args = parser.parse_args()
 
     # Parse the xml files

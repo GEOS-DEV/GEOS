@@ -51,8 +51,7 @@ class HydrofractureSolutions:
 
     ## calcualte the assymtotic solutions as given by
     # Savitski and Detournay, International Journal of Solids and Structures (2002)
-    def Solutions(self, mu, E, q, KI, time, time_radplots,
-                  distanceFromInjection):
+    def Solutions(self, mu, E, q, KI, time, time_radplots, distanceFromInjection):
         mup = 12 * mu
 
         PI = math.pi
@@ -110,12 +109,10 @@ class HydrofractureSolutions:
             # Equation 15
             KIp = 4.0 * math.sqrt(2.0 / PI) * KI
 
-            w_viscous[i] = self.epsilon_m(mup, E, t) * self.Lm(E, q, t,
-                                                               mup) * Omega_m0
+            w_viscous[i] = self.epsilon_m(mup, E, t) * self.Lm(E, q, t, mup) * Omega_m0
             p_viscous[i] = self.epsilon_m(mup, E, t) * E * PI_m0
 
-            w_tough[i] = self.epsilon_k(KIp, E, q, t) * self.Lk(q, E, t,
-                                                                KIp) * Omega_k0
+            w_tough[i] = self.epsilon_k(KIp, E, q, t) * self.Lk(q, E, t, KIp) * Omega_k0
             p_tough[i] = self.epsilon_k(KIp, E, q, t) * E * PI_k0
 
         # plots for opening values vs time
@@ -165,8 +162,8 @@ class HydrofractureSolutions:
             PvsTime_Tdom[j] = ek * E * PI_k0_wb
 
         return [
-            rho, w_tough, p_tough, w_viscous, p_viscous, PvsTime_Tdom,
-            RvsTime_Tdom, w0vsTime_Tdom, P_Vdom, R_Vdom, w0_Vdom
+            rho, w_tough, p_tough, w_viscous, p_viscous, PvsTime_Tdom, RvsTime_Tdom, w0vsTime_Tdom, P_Vdom, R_Vdom,
+            w0_Vdom
         ]
 
 
@@ -202,14 +199,11 @@ class KGDSolutions(HydrofractureSolutions):
         A1 = 1.61750
         A2 = 0.39650
         B = 0.06858
-        PIStar1 = 1.0 / (3.0 * math.pi) * scipy.special.beta(
-            0.5, 2.0 / 3.0) * scipy.special.hyp2f1(-1.0 / 6.0, 1, 0.5,
-                                                   rho * rho)
+        PIStar1 = 1.0 / (3.0 * math.pi) * scipy.special.beta(0.5, 2.0 / 3.0) * scipy.special.hyp2f1(
+            -1.0 / 6.0, 1, 0.5, rho * rho)
         PIStar2 = 3.0 / (20.0 * math.pi) * scipy.special.beta(
-            -1.5, 8.0 /
-            3.0) * (2.0 / 3.0 * rho * rho *
-                    scipy.special.hyp2f1(-1.0 / 6.0, 2, 1.5, rho * rho) -
-                    0.5 * scipy.special.hyp2f1(-7.0 / 6.0, 1, 0.5, rho * rho))
+            -1.5, 8.0 / 3.0) * (2.0 / 3.0 * rho * rho * scipy.special.hyp2f1(-1.0 / 6.0, 2, 1.5, rho * rho) -
+                                0.5 * scipy.special.hyp2f1(-7.0 / 6.0, 1, 0.5, rho * rho))
 
         return A1 * PIStar1 + A2 * PIStar2 + B * (2.0 - math.pi * abs(rho))
 
@@ -223,8 +217,7 @@ class KGDSolutions(HydrofractureSolutions):
 #              + B1*(2-math.pi*abs(rho))
 
     def Omega_k0(self, rho):
-        return self.gamma_k0() * pow(
-            math.pi, 1.0 / 3.0) / 2.0 * math.sqrt(1 - pow(rho, 2))
+        return self.gamma_k0() * pow(math.pi, 1.0 / 3.0) / 2.0 * math.sqrt(1 - pow(rho, 2))
 
     def PI_k0(self):
         return (pow(math.pi, 1.0 / 3.0) / 8.0)
@@ -257,8 +250,7 @@ class PennySolutions(HydrofractureSolutions):
         C2 = 7.098e-2
         ot1 = (math.sqrt(70.0) / 3.0 * C1 + 4.0 * math.sqrt(5.0) / 9.0 * C2 *
                (13 * rho - 6)) * pow(1.0 - rho, 2.0 / 3.0)
-        ot2 = B1 * 8.0 / math.pi * (math.sqrt(1.0 - rho) -
-                                    rho * math.acos(rho))
+        ot2 = B1 * 8.0 / math.pi * (math.sqrt(1.0 - rho) - rho * math.acos(rho))
         return (ot1 + ot2)
 
     def PI_m0(self, rho):
@@ -266,8 +258,7 @@ class PennySolutions(HydrofractureSolutions):
         A1 = 3.581e-1
         C1 = 6.846e-1
         C2 = 7.098e-2
-        return A1 * (2.479 - 2.0 / 3.0 / pow(1.0 - rho, 1.0 / 3.0)) - B1 * (
-            math.log(rho / 2.0) + 1)
+        return A1 * (2.479 - 2.0 / 3.0 / pow(1.0 - rho, 1.0 / 3.0)) - B1 * (math.log(rho / 2.0) + 1)
 
     def Omega_k0(self, rho):
         return pow(3.0 / 8.0 / math.pi, 0.2) * math.sqrt(1 - pow(rho, 2))
@@ -312,11 +303,7 @@ if __name__ == "__main__":
     matplotlib.rc('font', **font)
 
     fig1 = plt.figure(figsize=(6, 4))    # a new figure window
-    fig1.subplots_adjust(wspace=0.4,
-                         bottom=0.1,
-                         left=0.11,
-                         right=0.6,
-                         top=0.95)
+    fig1.subplots_adjust(wspace=0.4, bottom=0.1, left=0.11, right=0.6, top=0.95)
 
     ax1 = fig1.add_subplot(3, 1, 1)    # specify (nrows, ncols, axnum)
     plt.plot(time, P_Tdom / 1.0e6, 'b-', label='$\mu$ = 0')
@@ -351,9 +338,7 @@ if __name__ == "__main__":
     plt.xticks(np.arange(min(time), max(time), 100.0))
     plt.xlim([min(time), max(time)])
 
-    plt.legend(loc='center right',
-               bbox_to_anchor=(1.75, 1.1),
-               prop={'size': 10})
+    plt.legend(loc='center right', bbox_to_anchor=(1.75, 1.1), prop={'size': 10})
 
     #plt.savefig(prefix + '_vsTime.eps')
     plt.show()

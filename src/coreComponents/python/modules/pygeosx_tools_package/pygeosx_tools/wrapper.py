@@ -89,8 +89,7 @@ def get_wrapper_par(problem, target_key, allgather=False, ghost_key=''):
         if allgather:
             comm.Allgather([send_buff, MPI.DOUBLE], [receive_buff, MPI.DOUBLE])
         else:
-            comm.Gather([send_buff, MPI.DOUBLE], [receive_buff, MPI.DOUBLE],
-                        root=0)
+            comm.Gather([send_buff, MPI.DOUBLE], [receive_buff, MPI.DOUBLE], root=0)
 
         # Unpack the buffers
         all_values = []
@@ -178,11 +177,7 @@ def get_global_value_range(problem, key):
     return global_min, global_max
 
 
-def print_global_value_range(problem,
-                             key,
-                             header,
-                             scale=1.0,
-                             precision='%1.4f'):
+def print_global_value_range(problem, key, header, scale=1.0, precision='%1.4f'):
     """
     Print the range of a target value across all processes
 
@@ -227,11 +222,7 @@ def set_wrapper_to_value(problem, key, value):
     local_values[...] = value
 
 
-def set_wrapper_with_function(problem,
-                              target_key,
-                              input_keys,
-                              fn,
-                              target_index=-1):
+def set_wrapper_with_function(problem, target_key, input_keys, fn, target_index=-1):
     """
     Set the value of a wrapper using a function
 
@@ -259,13 +250,10 @@ def set_wrapper_with_function(problem,
 
         elif (len(M) == 1):
             # Apply the function output across each of the target dims
-            local_target[...] = np.tile(np.expand_dims(fn_output, axis=1),
-                                        (1, N[1]))
+            local_target[...] = np.tile(np.expand_dims(fn_output, axis=1), (1, N[1]))
 
         else:
-            raise Exception(
-                'Shape of function output %s is not compatible with target %s'
-                % (str(M), str(N)))
+            raise Exception('Shape of function output %s is not compatible with target %s' % (str(M), str(N)))
     elif (len(M) == 1):
         if (len(N) == 2):
             # 2D target, with 1D output applied to a given index
@@ -275,20 +263,14 @@ def set_wrapper_with_function(problem,
             # ND target, with 1D output tiled across intermediate indices
             expand_axes = tuple([ii for ii in range(1, len(N) - 1)])
             tile_axes = tuple([1] + [ii for ii in N[1:-1]])
-            local_target[..., target_index] = np.tile(
-                np.expand_dims(fn_output, axis=expand_axes), tile_axes)
+            local_target[..., target_index] = np.tile(np.expand_dims(fn_output, axis=expand_axes), tile_axes)
 
     else:
-        raise Exception(
-            'Shape of function output %s is not compatible with target %s (target axis=%i)'
-            % (str(M), str(N), target_index))
+        raise Exception('Shape of function output %s is not compatible with target %s (target axis=%i)' %
+                        (str(M), str(N), target_index))
 
 
-def search_datastructure_wrappers_recursive(group,
-                                            filters,
-                                            matching_paths,
-                                            level=0,
-                                            group_path=[]):
+def search_datastructure_wrappers_recursive(group, filters, matching_paths, level=0, group_path=[]):
     """
     Recursively search the group and its children for wrappers that match the filters
 
@@ -299,9 +281,7 @@ def search_datastructure_wrappers_recursive(group,
     """
     for wrapper in group.wrappers():
         wrapper_path = str(wrapper).split()[0]
-        wrapper_test = group_path + [
-            wrapper_path[wrapper_path.rfind('/') + 1:]
-        ]
+        wrapper_test = group_path + [wrapper_path[wrapper_path.rfind('/') + 1:]]
         if all(f in wrapper_test for f in filters):
             matching_paths.append('/'.join(wrapper_test))
 
@@ -311,8 +291,7 @@ def search_datastructure_wrappers_recursive(group,
                                                 filters,
                                                 matching_paths,
                                                 level=level + 1,
-                                                group_path=group_path +
-                                                [sub_group_name])
+                                                group_path=group_path + [sub_group_name])
 
 
 def get_matching_wrapper_path(problem, filters):
@@ -346,8 +325,7 @@ def get_matching_wrapper_path(problem, filters):
             print('Error occured while looking for wrappers:')
             print('Filters: [%s]' % (', '.join(filters)))
             print('Matching wrappers: [%s]' % (', '.join(matching_paths)))
-        raise Exception(
-            'Search resulted in 0 or >1 wrappers mathching filters')
+        raise Exception('Search resulted in 0 or >1 wrappers mathching filters')
 
 
 def run_queries(problem, records):
@@ -369,18 +347,12 @@ def run_queries(problem, records):
             current_time = get_wrapper(problem, "Events/time")
             records[k]['history'].append(current_time * records[k]['scale'])
         else:
-            tmp = print_global_value_range(problem,
-                                           k,
-                                           records[k]['label'],
-                                           scale=records[k]['scale'])
+            tmp = print_global_value_range(problem, k, records[k]['label'], scale=records[k]['scale'])
             records[k]['history'].append(tmp)
     sys.stdout.flush()
 
 
-def plot_history(records,
-                 output_root='.',
-                 save_figures=True,
-                 show_figures=True):
+def plot_history(records, output_root='.', save_figures=True, show_figures=True):
     """
     Plot the time-histories for the records structure.
     Note: If figures are shown, the GEOSX process will be blocked until they are closed
@@ -418,10 +390,7 @@ def plot_history(records,
 
                     # Setup axes
                     if (('axes' not in records[k]) or (len(fa.axes) == 0)):
-                        records[k]['axes'] = [
-                            plt.subplot(rows, columns, ii + 1)
-                            for ii in range(0, N[2])
-                        ]
+                        records[k]['axes'] = [plt.subplot(rows, columns, ii + 1) for ii in range(0, N[2])]
 
                     for ii in range(0, N[2]):
                         ax = records[k]['axes'][ii]
@@ -429,14 +398,12 @@ def plot_history(records,
                         ax.plot(t, x[:, 0, ii], label='min')
                         ax.plot(t, x[:, 1, ii], label='max')
                         ax.set_xlabel(records['time']['label'])
-                        ax.set_ylabel('%s (dim=%i)' %
-                                      (records[k]['label'], ii))
+                        ax.set_ylabel('%s (dim=%i)' % (records[k]['label'], ii))
                 plt.legend(loc=2)
                 records[k]['fhandle'].tight_layout(pad=1.5)
 
                 if save_figures:
                     fname = k[k.rfind('/') + 1:]
-                    plt.savefig('%s/%s.png' % (output_root, fname),
-                                format='png')
+                    plt.savefig('%s/%s.png' % (output_root, fname), format='png')
         if show_figures:
             plt.show()

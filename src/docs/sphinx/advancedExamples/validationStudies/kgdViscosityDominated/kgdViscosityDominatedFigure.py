@@ -26,25 +26,15 @@ def getParametersFromXML(xmlFilePath):
     youngModulus = float(elasticParam.get('defaultYoungModulus'))
     poissonRatio = float(elasticParam.get('defaultPoissonRatio'))
 
-    viscosity = float(
-        tree.find('Constitutive/CompressibleSinglePhaseFluid').get(
-            'defaultViscosity'))
+    viscosity = float(tree.find('Constitutive/CompressibleSinglePhaseFluid').get('defaultViscosity'))
 
-    toughness = float(
-        tree.find('Solvers/SurfaceGenerator').get('rockToughness'))
+    toughness = float(tree.find('Solvers/SurfaceGenerator').get('rockToughness'))
 
-    fluidDensity = float(
-        tree.find('Constitutive/CompressibleSinglePhaseFluid').get(
-            'defaultDensity'))
+    fluidDensity = float(tree.find('Constitutive/CompressibleSinglePhaseFluid').get('defaultDensity'))
 
-    injectionRate = -2.0 * float(
-        tree.find('FieldSpecifications/SourceFlux').get(
-            'scale')) / fluidDensity
+    injectionRate = -2.0 * float(tree.find('FieldSpecifications/SourceFlux').get('scale')) / fluidDensity
 
-    return [
-        maxTime, youngModulus, poissonRatio, toughness, viscosity,
-        injectionRate, x_source
-    ]
+    return [maxTime, youngModulus, poissonRatio, toughness, viscosity, injectionRate, x_source]
 
 
 def main():
@@ -91,21 +81,13 @@ def main():
 
     plt.subplot(222)
     plt.plot(t_geosx, inletAperture_geosx, 'ko', label='GEOSX result')
-    plt.plot(t,
-             inletAperture * 1e3,
-             'k',
-             linewidth=2,
-             label='Analytical solution')
+    plt.plot(t, inletAperture * 1e3, 'k', linewidth=2, label='Analytical solution')
     plt.ylabel('Inlet aperture (mm)')
     plt.xlabel('Injection time (s)')
 
     plt.subplot(223)
     plt.plot(t_geosx, inletPressure_geosx, 'ko', label='GEOSX result')
-    plt.plot(t,
-             inletPressure / 1e6,
-             'k',
-             linewidth=2,
-             label='Analytical solution')
+    plt.plot(t, inletPressure / 1e6, 'k', linewidth=2, label='Analytical solution')
     plt.ylabel('Inlet fluid pressure (MPa)')
     plt.xlabel('Injection time (s)')
 

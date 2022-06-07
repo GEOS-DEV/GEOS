@@ -19,10 +19,8 @@ def yieldSurface(xmlFilePath, mechanicalParameters):
 
         phi_i = mechanicalParameters["frictionAngle"]
         c_i = mechanicalParameters["cohesion"] / 1.0e6
-        f_i = atan(6.0 * sin(phi_i / 180 * np.pi) /
-                   (3.0 - sin(phi_i / 180 * np.pi))) * 180 / np.pi
-        d_i = 6.0 * c_i * cos(
-            phi_i / 180 * np.pi) / (3.0 - sin(phi_i / 180 * np.pi))
+        f_i = atan(6.0 * sin(phi_i / 180 * np.pi) / (3.0 - sin(phi_i / 180 * np.pi))) * 180 / np.pi
+        d_i = 6.0 * c_i * cos(phi_i / 180 * np.pi) / (3.0 - sin(phi_i / 180 * np.pi))
         k_i = tan(f_i / 180 * np.pi)
         p_Yield = np.linspace(0, 50, 100)
         q_iniYield = k_i * p_Yield + d_i
@@ -32,18 +30,14 @@ def yieldSurface(xmlFilePath, mechanicalParameters):
     elif model.get("material") == "ExtendedDruckerPrager":
 
         param = tree.find('Constitutive/ExtendedDruckerPrager')
-        yieldParameters = dict.fromkeys(
-            ["p_Yield", "q_iniYield", "q_resYield"])
+        yieldParameters = dict.fromkeys(["p_Yield", "q_iniYield", "q_resYield"])
 
         phi_i = mechanicalParameters["initialFrictionAngle"]
         phi_r = mechanicalParameters["residualFrictionAngle"]
         c_i = mechanicalParameters["cohesion"] / 1.0e6
-        f_i = atan(6.0 * sin(phi_i / 180 * np.pi) /
-                   (3.0 - sin(phi_i / 180 * np.pi))) * 180 / np.pi
-        f_r = atan(6.0 * sin(phi_r / 180 * np.pi) /
-                   (3.0 - sin(phi_r / 180 * np.pi))) * 180 / np.pi
-        d_i = 6.0 * c_i * cos(
-            phi_i / 180 * np.pi) / (3.0 - sin(phi_i / 180 * np.pi))
+        f_i = atan(6.0 * sin(phi_i / 180 * np.pi) / (3.0 - sin(phi_i / 180 * np.pi))) * 180 / np.pi
+        f_r = atan(6.0 * sin(phi_r / 180 * np.pi) / (3.0 - sin(phi_r / 180 * np.pi))) * 180 / np.pi
+        d_i = 6.0 * c_i * cos(phi_i / 180 * np.pi) / (3.0 - sin(phi_i / 180 * np.pi))
         po = d_i / tan(f_i / 180 * np.pi)
         d_r = po * tan(f_r / 180 * np.pi)
 
@@ -60,8 +54,7 @@ def yieldSurface(xmlFilePath, mechanicalParameters):
     elif model.get("material") == "DelftEgg":
 
         param = tree.find('Constitutive/DelftEgg')
-        yieldParameters = dict.fromkeys(
-            ["p_Yield", "q_iniYield", "p_CSL", "q_CSL"])
+        yieldParameters = dict.fromkeys(["p_Yield", "q_iniYield", "p_CSL", "q_CSL"])
 
         pc0 = -mechanicalParameters["preConsolidationPressure"] / 1.0e6
         alpha = mechanicalParameters["shapeParameter"]
@@ -72,23 +65,20 @@ def yieldSurface(xmlFilePath, mechanicalParameters):
         qlist2 = np.zeros(len(p_CSL))
         for i in range(0, len(p_CSL)):
             if alpha**2 * p_CSL[i] * (2.0 * alpha * pc0 / (alpha + 1.0) -
-                                      p_CSL[i]) - alpha**2 * (alpha - 1.0) / (
-                                          alpha + 1.0) * pc0**2 < 0.0:
+                                      p_CSL[i]) - alpha**2 * (alpha - 1.0) / (alpha + 1.0) * pc0**2 < 0.0:
                 qlist2[i] = 0.0
             else:
                 qlist2[i] = M * pow(
-                    alpha**2 * p_CSL[i] *
-                    (2.0 * alpha * pc0 / (alpha + 1.0) - p_CSL[i]) - alpha**2 *
-                    (alpha - 1.0) / (alpha + 1.0) * pc0**2, 0.5)
+                    alpha**2 * p_CSL[i] * (2.0 * alpha * pc0 / (alpha + 1.0) - p_CSL[i]) - alpha**2 * (alpha - 1.0) /
+                    (alpha + 1.0) * pc0**2, 0.5)
         idx = np.argwhere(np.diff(np.sign(q_CSL - qlist2))).flatten()
         pc1 = p_CSL[idx[-1]] * 2
         plist_MCC = np.linspace(0, pc1 / 2.0, 500)
         qlist_MCC = M * pow(plist_MCC * (pc1 - plist_MCC), 0.5)
         plist_DE = np.linspace(pc1 / 2.0, pc0, 5000)
         qlist_DE = M * pow(
-            alpha**2 * plist_DE * (2.0 * alpha * pc0 /
-                                   (alpha + 1.0) - plist_DE) - alpha**2 *
-            (alpha - 1.0) / (alpha + 1.0) * pc0**2, 0.5)
+            alpha**2 * plist_DE * (2.0 * alpha * pc0 / (alpha + 1.0) - plist_DE) - alpha**2 * (alpha - 1.0) /
+            (alpha + 1.0) * pc0**2, 0.5)
         p_Yield = np.concatenate((plist_MCC, plist_DE))
         q_iniYield = np.concatenate((qlist_MCC, qlist_DE))
 
@@ -100,8 +90,7 @@ def yieldSurface(xmlFilePath, mechanicalParameters):
     elif model.get("material") == "ModifiedCamClay":
 
         param = tree.find('Constitutive/DelftEgg')
-        yieldParameters = dict.fromkeys(
-            ["p_Yield", "q_iniYield", "p_CSL", "q_CSL"])
+        yieldParameters = dict.fromkeys(["p_Yield", "q_iniYield", "p_CSL", "q_CSL"])
 
         pc0 = -mechanicalParameters["preConsolidationPressure"] / 1.0e6
         alpha = 1.0
@@ -128,73 +117,50 @@ def getMechanicalParametersFromXML(xmlFilePath):
     if model.get("material") == "DruckerPrager":
         param = tree.find('Constitutive/DruckerPrager')
 
-        mechanicalParameters = dict.fromkeys(
-            ["bulkModulus", "shearModulus", "cohesion", "frictionangle"])
-        mechanicalParameters["bulkModulus"] = float(
-            param.get("defaultBulkModulus"))
-        mechanicalParameters["shearModulus"] = float(
-            param.get("defaultShearModulus"))
+        mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus", "cohesion", "frictionangle"])
+        mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
+        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
         mechanicalParameters["cohesion"] = float(param.get("defaultCohesion"))
-        mechanicalParameters["frictionAngle"] = float(
-            param.get("defaultFrictionAngle"))
+        mechanicalParameters["frictionAngle"] = float(param.get("defaultFrictionAngle"))
 
     elif model.get("material") == "ExtendedDruckerPrager":
         param = tree.find('Constitutive/ExtendedDruckerPrager')
 
-        mechanicalParameters = dict.fromkeys([
-            "bulkModulus", "shearModulus", "cohesion", "initialFrictionAngle",
-            "residualFrictionAngle"
-        ])
-        mechanicalParameters["bulkModulus"] = float(
-            param.get("defaultBulkModulus"))
-        mechanicalParameters["shearModulus"] = float(
-            param.get("defaultShearModulus"))
+        mechanicalParameters = dict.fromkeys(
+            ["bulkModulus", "shearModulus", "cohesion", "initialFrictionAngle", "residualFrictionAngle"])
+        mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
+        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
         mechanicalParameters["cohesion"] = float(param.get("defaultCohesion"))
-        mechanicalParameters["initialFrictionAngle"] = float(
-            param.get("defaultInitialFrictionAngle"))
-        mechanicalParameters["residualFrictionAngle"] = float(
-            param.get("defaultResidualFrictionAngle"))
+        mechanicalParameters["initialFrictionAngle"] = float(param.get("defaultInitialFrictionAngle"))
+        mechanicalParameters["residualFrictionAngle"] = float(param.get("defaultResidualFrictionAngle"))
 
     elif model.get("material") == "Elastic":
         param = tree.find('Constitutive/ElasticIsotropic')
 
         mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus"])
-        mechanicalParameters["bulkModulus"] = float(
-            param.get("defaultBulkModulus"))
-        mechanicalParameters["shearModulus"] = float(
-            param.get("defaultShearModulus"))
+        mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
+        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
 
     elif model.get("material") == "DelftEgg":
         param = tree.find('Constitutive/DelftEgg')
 
-        mechanicalParameters = dict.fromkeys([
-            "bulkModulus", "shearModulus", "preConsolidationPressure",
-            "shapeParameter", "cslSlope"
-        ])
-        mechanicalParameters["bulkModulus"] = float(
-            param.get("defaultBulkModulus"))
-        mechanicalParameters["shearModulus"] = float(
-            param.get("defaultShearModulus"))
-        mechanicalParameters["preConsolidationPressure"] = float(
-            param.get("defaultPreConsolidationPressure"))
-        mechanicalParameters["shapeParameter"] = float(
-            param.get("defaultShapeParameter"))
+        mechanicalParameters = dict.fromkeys(
+            ["bulkModulus", "shearModulus", "preConsolidationPressure", "shapeParameter", "cslSlope"])
+        mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
+        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
+        mechanicalParameters["preConsolidationPressure"] = float(param.get("defaultPreConsolidationPressure"))
+        mechanicalParameters["shapeParameter"] = float(param.get("defaultShapeParameter"))
         mechanicalParameters["cslSlope"] = float(param.get("defaultCslSlope"))
 
     elif model.get("material") == "ModifiedCamClay":
         param = tree.find('Constitutive/ModifiedCamClay')
 
-        mechanicalParameters = dict.fromkeys([
-            "shearModulus", "preConsolidationPressure", "cslSlope",
-            "recompressionIndex"
-        ])
-        mechanicalParameters["shearModulus"] = float(
-            param.get("defaultShearModulus"))
-        mechanicalParameters["preConsolidationPressure"] = float(
-            param.get("defaultPreConsolidationPressure"))
+        mechanicalParameters = dict.fromkeys(
+            ["shearModulus", "preConsolidationPressure", "cslSlope", "recompressionIndex"])
+        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
+        mechanicalParameters["preConsolidationPressure"] = float(param.get("defaultPreConsolidationPressure"))
         mechanicalParameters["cslSlope"] = float(param.get("defaultCslSlope"))
-        mechanicalParameters["recompressionIndex"] = float(
-            param.get("defaultRecompressionIndex"))
+        mechanicalParameters["recompressionIndex"] = float(param.get("defaultRecompressionIndex"))
 
     return mechanicalParameters
 
@@ -231,27 +197,14 @@ def main():
                markersize=msize,
                alpha=malpha,
                label='Triaxial Driver')
-    ax[0].plot(-ra_strain1 * 100,
-               q_num,
-               'o',
-               color=cmap(0),
-               mec='b',
-               markersize=msize,
-               alpha=malpha)
+    ax[0].plot(-ra_strain1 * 100, q_num, 'o', color=cmap(0), mec='b', markersize=msize, alpha=malpha)
     ax[0].set_xlabel(r'Strain (%)', size=fsize, weight="bold")
     ax[0].set_ylabel(r'Deviatoric Stress (MPa)', size=fsize, weight="bold")
     ax[0].legend(loc='lower right', fontsize=fsize)
     ax[0].xaxis.set_tick_params(labelsize=fsize)
     ax[0].yaxis.set_tick_params(labelsize=fsize)
 
-    ax[1].plot(p_num,
-               q_num,
-               'o',
-               color=cmap(0),
-               mec='b',
-               markersize=msize,
-               alpha=malpha,
-               label='Triaxial Driver')
+    ax[1].plot(p_num, q_num, 'o', color=cmap(0), mec='b', markersize=msize, alpha=malpha, label='Triaxial Driver')
     # Yield surface for plastic models
     tree = ElementTree.parse(xmlFilePath)
     model = tree.find('Tasks/TriaxialDriver')
@@ -259,25 +212,13 @@ def main():
         yieldParameters = yieldSurface(xmlFilePath, mechanicalParameters)
         p_Yield = yieldParameters["p_Yield"]
         q_iniYield = yieldParameters["q_iniYield"]
-        ax[1].plot(p_Yield,
-                   q_iniYield,
-                   lw=lw,
-                   alpha=0.8,
-                   color='k',
-                   linestyle='--',
-                   label='Initial Yield Surface')
+        ax[1].plot(p_Yield, q_iniYield, lw=lw, alpha=0.8, color='k', linestyle='--', label='Initial Yield Surface')
     elif model.get("material") == "ExtendedDruckerPrager":
         yieldParameters = yieldSurface(xmlFilePath, mechanicalParameters)
         p_Yield = yieldParameters["p_Yield"]
         q_iniYield = yieldParameters["q_iniYield"]
         q_resYield = yieldParameters["q_resYield"]
-        ax[1].plot(p_Yield,
-                   q_iniYield,
-                   lw=lw,
-                   alpha=0.8,
-                   color='k',
-                   linestyle='--',
-                   label='Initial Yield Surface')
+        ax[1].plot(p_Yield, q_iniYield, lw=lw, alpha=0.8, color='k', linestyle='--', label='Initial Yield Surface')
         ax[1].plot(p_Yield,
                    q_resYield,
                    lw=lw,
@@ -291,40 +232,16 @@ def main():
         q_iniYield = yieldParameters["q_iniYield"]
         p_CSL = yieldParameters["p_CSL"]
         q_CSL = yieldParameters["q_CSL"]
-        ax[1].plot(p_Yield,
-                   q_iniYield,
-                   lw=lw,
-                   alpha=0.8,
-                   color='k',
-                   linestyle='--',
-                   label='Initial Yield Surface')
-        ax[1].plot(p_CSL,
-                   q_CSL,
-                   lw=lw,
-                   alpha=0.8,
-                   color='orange',
-                   linestyle='--',
-                   label='Critical State Line')
+        ax[1].plot(p_Yield, q_iniYield, lw=lw, alpha=0.8, color='k', linestyle='--', label='Initial Yield Surface')
+        ax[1].plot(p_CSL, q_CSL, lw=lw, alpha=0.8, color='orange', linestyle='--', label='Critical State Line')
     elif model.get("material") == "ModifiedCamClay":
         yieldParameters = yieldSurface(xmlFilePath, mechanicalParameters)
         p_Yield = yieldParameters["p_Yield"]
         q_iniYield = yieldParameters["q_iniYield"]
         p_CSL = yieldParameters["p_CSL"]
         q_CSL = yieldParameters["q_CSL"]
-        ax[1].plot(p_Yield,
-                   q_iniYield,
-                   lw=lw,
-                   alpha=0.8,
-                   color='k',
-                   linestyle='--',
-                   label='Initial Yield Surface')
-        ax[1].plot(p_CSL,
-                   q_CSL,
-                   lw=lw,
-                   alpha=0.8,
-                   color='orange',
-                   linestyle='--',
-                   label='Critical State Line')
+        ax[1].plot(p_Yield, q_iniYield, lw=lw, alpha=0.8, color='k', linestyle='--', label='Initial Yield Surface')
+        ax[1].plot(p_CSL, q_CSL, lw=lw, alpha=0.8, color='orange', linestyle='--', label='Critical State Line')
 
     ax[1].set_xlabel(r'p (MPa)', size=fsize, weight="bold")
     ax[1].set_ylabel(r'q (MPa)', size=fsize, weight="bold")
@@ -346,12 +263,7 @@ def main():
     ax[2].xaxis.set_tick_params(labelsize=fsize)
     ax[2].yaxis.set_tick_params(labelsize=fsize)
 
-    plt.subplots_adjust(left=0.2,
-                        bottom=0.1,
-                        right=0.9,
-                        top=0.9,
-                        wspace=0.4,
-                        hspace=0.4)
+    plt.subplots_adjust(left=0.2, bottom=0.1, right=0.9, top=0.9, wspace=0.4, hspace=0.4)
 
     plt.show()
 

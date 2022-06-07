@@ -8,29 +8,15 @@ def main():
     # Experiments (Rubin, 1983)
     H = 0.055
     Tinj = 3.7
-    tlist = [
-        3.7, 11.9, 12.55, 15.5, 16.05, 19.25, 24.30, 30.35, 38.50, 46.15,
-        53.85, 61.50, 68.90
-    ]
-    Pblist = [
-        0, 5.43, 5.26, 4.20, 4.01, 3.23, 2.51, 2.03, 1.61, 1.39, 1.22, 1.07,
-        0.97
-    ]
+    tlist = [3.7, 11.9, 12.55, 15.5, 16.05, 19.25, 24.30, 30.35, 38.50, 46.15, 53.85, 61.50, 68.90]
+    Pblist = [0, 5.43, 5.26, 4.20, 4.01, 3.23, 2.51, 2.03, 1.61, 1.39, 1.22, 1.07, 0.97]
     lenlist = [24, 30, 31, 40, 43, 50, 60, 70, 81, 90, 97, 105, 112]
     widlist = [25, 69, 78, 133, 142, 185, 236, 294, 364, 420, 470, 514, 552]
-    P57list = [
-        0.371, 0.362, 0.365, 0.362, 0.359, 0.412, 0.886, 1.396, 1.279, 1.153,
-        1.034, 0.942, 0.861
-    ]
-    P58list = [
-        1.677, 4.145, 4.134, 3.507, 3.381, 2.827, 2.292, 1.894, 1.557, 1.345,
-        1.172, 1.050, 0.949
-    ]
+    P57list = [0.371, 0.362, 0.365, 0.362, 0.359, 0.412, 0.886, 1.396, 1.279, 1.153, 1.034, 0.942, 0.861]
+    P58list = [1.677, 4.145, 4.134, 3.507, 3.381, 2.827, 2.292, 1.894, 1.557, 1.345, 1.172, 1.050, 0.949]
 
     # Load GEOSX results
-    GTime, GWellP, G58P, G57P, GAper, GArea = np.loadtxt("model_results.txt",
-                                                         skiprows=1,
-                                                         unpack=True)
+    GTime, GWellP, G58P, G57P, GAper, GArea = np.loadtxt("model_results.txt", skiprows=1, unpack=True)
     GLength = GArea / H * 1000
     GTime = GTime + Tinj
 
@@ -53,12 +39,7 @@ def main():
                   markersize=msize,
                   mew=5,
                   label=lablelist[0])
-    ax[0, 0].plot(GTime,
-                  GWellP / 1000000,
-                  lw=lw,
-                  alpha=0.5,
-                  color=cmap(2),
-                  label=lablelist[1])
+    ax[0, 0].plot(GTime, GWellP / 1000000, lw=lw, alpha=0.5, color=cmap(2), label=lablelist[1])
     ax[0, 0].set_xlim([0, max(GTime)])
     ax[0, 0].set_ylim(0, 5)
     ax[0, 0].set_xlabel(r'Time (s)', size=fsize, weight="bold")
@@ -78,12 +59,7 @@ def main():
                   markersize=msize,
                   mew=5,
                   label=lablelist[0])
-    ax[1, 0].plot(GTime[13::1],
-                  G58P[13::1] / 1000000,
-                  lw=lw,
-                  alpha=0.5,
-                  color=cmap(2),
-                  label=lablelist[1])
+    ax[1, 0].plot(GTime[13::1], G58P[13::1] / 1000000, lw=lw, alpha=0.5, color=cmap(2), label=lablelist[1])
     ax[1, 0].set_xlim([0, max(GTime)])
     ax[1, 0].set_ylim(0, 5)
     ax[1, 0].set_xlabel(r'Time (s)', size=fsize, weight="bold")
@@ -102,12 +78,7 @@ def main():
                   markersize=msize,
                   mew=5,
                   label=lablelist[0])
-    ax[2, 0].plot(GTime[28::1],
-                  G57P[28::1] / 1000000,
-                  lw=lw,
-                  alpha=0.5,
-                  color=cmap(2),
-                  label=lablelist[1])
+    ax[2, 0].plot(GTime[28::1], G57P[28::1] / 1000000, lw=lw, alpha=0.5, color=cmap(2), label=lablelist[1])
     ax[2, 0].set_xlim([0, max(GTime)])
     ax[2, 0].set_ylim(0, 5)
     ax[2, 0].set_xlabel(r'Time (s)', size=fsize, weight="bold")
@@ -128,12 +99,7 @@ def main():
                   markersize=msize,
                   mew=5,
                   label=lablelist[0])
-    ax[1, 1].plot(GTime,
-                  GLength,
-                  lw=lw,
-                  alpha=0.5,
-                  color=cmap(2),
-                  label=lablelist[1])
+    ax[1, 1].plot(GTime, GLength, lw=lw, alpha=0.5, color=cmap(2), label=lablelist[1])
     ax[1, 1].set_xlim([0, max(GTime)])
     ax[1, 1].set_ylim(0, 150)
     ax[1, 1].set_xlabel(r'Time (s)', size=fsize, weight="bold")
@@ -152,12 +118,7 @@ def main():
                   markersize=msize,
                   mew=5,
                   label=lablelist[0])
-    ax[2, 1].plot(GTime,
-                  GAper * 1e6,
-                  lw=lw,
-                  alpha=0.5,
-                  color=cmap(2),
-                  label=lablelist[1])
+    ax[2, 1].plot(GTime, GAper * 1e6, lw=lw, alpha=0.5, color=cmap(2), label=lablelist[1])
     ax[2, 1].set_xlim([0, max(GTime)])
     ax[2, 1].set_ylim(0, 800)
     ax[2, 1].set_xlabel(r'Time (s)', size=fsize, weight="bold")

@@ -35,8 +35,7 @@ class Mandel:
                 break
         self.alpha_n = alpha_n
 
-        self.consolidationCoefficient = hydromechanicalParameters[
-            "consolidationCoefficient"]
+        self.consolidationCoefficient = hydromechanicalParameters["consolidationCoefficient"]
         self.xlength = alen
         self.p0 = p0
 
@@ -52,8 +51,8 @@ class Mandel:
         solution = 0
         for k in range(len(alpha_n)):
             an = alpha_n[k]
-            solution = solution + 2. * sin(an) / (an - sin(an) * cos(an)) * (
-                cos(an * x / Lx) - cos(an)) * exp(-an**2 * cc * t / Lx**2)
+            solution = solution + 2. * sin(an) / (an - sin(an) * cos(an)) * (cos(an * x / Lx) - cos(an)) * exp(
+                -an**2 * cc * t / Lx**2)
 
         return p0 * solution
 
@@ -66,8 +65,7 @@ class Mandel:
         solution = 0
         for k in range(len(alpha_n)):
             an = alpha_n[k]
-            solution = solution + sin(an) * cos(an) / (
-                an - sin(an) * cos(an)) * exp(-an**2 * cc * t / Lx**2)
+            solution = solution + sin(an) * cos(an) / (an - sin(an) * cos(an)) * exp(-an**2 * cc * t / Lx**2)
 
         return (scaling1 + scaling2 * solution) * z
 
@@ -81,16 +79,12 @@ def getHydromechanicalParametersFromXML(xmlFilePath):
     param4 = tree.find('Constitutive/ConstantPermeability')
 
     hydromechanicalParameters = dict.fromkeys([
-        "bulkModulus", "shearModulus", "biotCoefficient", "fluidViscosity",
-        "fluidCompressibility", "porosity", "permeability",
-        "skemptonCoefficient", "poissonRatio", "undrainedPoissonRatio",
-        "consolidationCoefficient"
+        "bulkModulus", "shearModulus", "biotCoefficient", "fluidViscosity", "fluidCompressibility", "porosity",
+        "permeability", "skemptonCoefficient", "poissonRatio", "undrainedPoissonRatio", "consolidationCoefficient"
     ])
 
-    hydromechanicalParameters["bulkModulus"] = float(
-        param1.get("defaultBulkModulus"))
-    hydromechanicalParameters["shearModulus"] = float(
-        param1.get("defaultShearModulus"))
+    hydromechanicalParameters["bulkModulus"] = float(param1.get("defaultBulkModulus"))
+    hydromechanicalParameters["shearModulus"] = float(param1.get("defaultShearModulus"))
 
     K = hydromechanicalParameters["bulkModulus"]
     G = hydromechanicalParameters["shearModulus"]
@@ -99,12 +93,9 @@ def getHydromechanicalParametersFromXML(xmlFilePath):
     Ks = float(param2.get("grainBulkModulus"))
 
     hydromechanicalParameters["biotCoefficient"] = 1.0 - K / Ks
-    hydromechanicalParameters["porosity"] = float(
-        param2.get("defaultReferencePorosity"))
-    hydromechanicalParameters["fluidViscosity"] = float(
-        param3.get("defaultViscosity"))
-    hydromechanicalParameters["fluidCompressibility"] = float(
-        param3.get("compressibility"))
+    hydromechanicalParameters["porosity"] = float(param2.get("defaultReferencePorosity"))
+    hydromechanicalParameters["fluidViscosity"] = float(param3.get("defaultViscosity"))
+    hydromechanicalParameters["fluidCompressibility"] = float(param3.get("compressibility"))
 
     perm = param4.get("permeabilityComponents")
     perm = np.array(perm[1:-1].split(','), float)
@@ -118,10 +109,8 @@ def getHydromechanicalParametersFromXML(xmlFilePath):
     M = 1. / (phi * cf + (bBiot - phi) / Ks)
     Ku = K + bBiot**2 * M
     B = bBiot * M / Ku
-    nuu = (3. * nu + bBiot * B * (1 - 2. * nu)) / (3. - bBiot * B *
-                                                   (1 - 2. * nu))
-    cc = 2. * kp / mu * B**2 * G * (1. - nu) * (1. + nuu)**2 / 9. / (
-        1. - nuu) / (nuu - nu)
+    nuu = (3. * nu + bBiot * B * (1 - 2. * nu)) / (3. - bBiot * B * (1 - 2. * nu))
+    cc = 2. * kp / mu * B**2 * G * (1. - nu) * (1. + nuu)**2 / 9. / (1. - nuu) / (nuu - nu)
     hydromechanicalParameters["skemptonCoefficient"] = B
     hydromechanicalParameters["poissonRatio"] = nu
     hydromechanicalParameters["undrainedPoissonRatio"] = nuu
@@ -177,8 +166,7 @@ def main():
     disp = hf.get('TotalDisplacement')
 
     # Extract Mechanical Properties and Fracture Geometry from XML
-    hydromechanicalParameters = getHydromechanicalParametersFromXML(
-        xmlFile1Path)
+    hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlFile1Path)
     F = 1.0e4
     La, Lb, na, nb = getGeometryFromXML(xmlFile2Path)
     B = hydromechanicalParameters["skemptonCoefficient"]
@@ -207,11 +195,8 @@ def main():
     displacement_analytical = np.zeros([len(t), len(x)])
     for i in range(len(t)):
         for j in range(len(x)):
-            pressure_analytical[i][
-                j] = mandelAnalyticalSolution.computePressure(x[j], t[i]) / p0
-            displacement_analytical[i][
-                j] = mandelAnalyticalSolution.computeVerticalDisplacement(
-                    x[j], t[i]) / u0
+            pressure_analytical[i][j] = mandelAnalyticalSolution.computePressure(x[j], t[i]) / p0
+            displacement_analytical[i][j] = mandelAnalyticalSolution.computeVerticalDisplacement(x[j], t[i]) / u0
 
     fsize = 30
     msize = 15
@@ -237,17 +222,10 @@ def main():
     ax[0].set_xlim(0, 1)
     ax[0].set_ylim(0, 1.2)
     ax[0].set_xlabel('Normalized Distance, '
-                     r'$x$/$a$',
-                     size=fsize,
-                     weight="bold")
+                     r'$x$/$a$', size=fsize, weight="bold")
     ax[0].set_ylabel('Normalized Pressure, '
-                     r'$p$/$p_{0}$',
-                     size=fsize,
-                     weight="bold")
-    ax[0].legend(bbox_to_anchor=(0.02, 0.6),
-                 loc='center left',
-                 borderaxespad=0.,
-                 fontsize=fsize * 0.7)
+                     r'$p$/$p_{0}$', size=fsize, weight="bold")
+    ax[0].legend(bbox_to_anchor=(0.02, 0.6), loc='center left', borderaxespad=0., fontsize=fsize * 0.7)
     ax[0].grid(True)
     ax[0].xaxis.set_tick_params(labelsize=fsize)
     ax[0].yaxis.set_tick_params(labelsize=fsize)
@@ -270,13 +248,9 @@ def main():
     ax[1].set_xlim(0, 1)
     ax[1].set_ylim(0, 1.5)
     ax[1].set_xlabel('Normalized Distance, '
-                     r'$z$/$b$',
-                     size=fsize,
-                     weight="bold")
+                     r'$z$/$b$', size=fsize, weight="bold")
     ax[1].set_ylabel('Normalized Displacement, '
-                     r'$u_{z}$/$u_{z=b,0}$',
-                     size=fsize,
-                     weight="bold")
+                     r'$u_{z}$/$u_{z=b,0}$', size=fsize, weight="bold")
     ax[1].legend(loc='upper left', fontsize=fsize * 0.7)
     ax[1].grid(True)
     ax[1].xaxis.set_tick_params(labelsize=fsize)

@@ -39,8 +39,7 @@ def process(fin, caliperKernelName, LABELS, FLOPS, AIL1, AIL2, AIHBM):
         # fma
         if ('smsp__sass_thread_inst_executed_op_dfma_pred_on.sum' in line):
             linesp = line.split(',')
-            lFlop.append(
-                float(linesp[len(linesp) - 1].strip('\n').strip('"')) * 2.)
+            lFlop.append(float(linesp[len(linesp) - 1].strip('\n').strip('"')) * 2.)
 
         ### L1 transactions
         # global
@@ -80,20 +79,16 @@ def process(fin, caliperKernelName, LABELS, FLOPS, AIL1, AIL2, AIHBM):
 
         ### L2 transactions
         # read and write
-        if ('lts__t_sectors_op_read.sum'
-                in line) or ('lts__t_sectors_op_write.sum' in line):
+        if ('lts__t_sectors_op_read.sum' in line) or ('lts__t_sectors_op_write.sum' in line):
             linesp = line.split(',')
             lL2.append(float(linesp[len(linesp) - 1].strip('\n').strip('"')))
         # atomic
-        if ('lts__t_sectors_op_red.sum'
-                in line) or ('lts__t_sectors_op_atom.sum' in line):
+        if ('lts__t_sectors_op_red.sum' in line) or ('lts__t_sectors_op_atom.sum' in line):
             linesp = line.split(',')
-            lL2.append(
-                float(linesp[len(linesp) - 1].strip('\n').strip('"')) * 2.)
+            lL2.append(float(linesp[len(linesp) - 1].strip('\n').strip('"')) * 2.)
 
         ### DRAM transactions
-        if ('dram__sectors_write.sum' in line) or ('dram__sectors_read.sum'
-                                                   in line):
+        if ('dram__sectors_write.sum' in line) or ('dram__sectors_read.sum' in line):
             linesp = line.split(',')
             lDram.append(float(linesp[len(linesp) - 1].strip('\n').strip('"')))
 
@@ -145,9 +140,7 @@ def process(fin, caliperKernelName, LABELS, FLOPS, AIL1, AIL2, AIHBM):
 if __name__ == "__main__":
 
     if len(sys.argv) < 2:
-        print(
-            'process.py <name_of_kernel_in_caliper> <fileroot0> <fileroot...> '
-        )
+        print('process.py <name_of_kernel_in_caliper> <fileroot0> <fileroot...> ')
         sys.exit(2)
 
     caliperKernelName = sys.argv[1]

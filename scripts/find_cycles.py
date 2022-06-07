@@ -27,11 +27,8 @@ class Compile(object):
         :return: List of strings ready to be used in a subprocess.call.
         """
         tmp = self.command.split()
-        tmp.insert(
-            1,
-            "-E")    # gcc postprocessing option to stop after preprocessing.
-        tmp.insert(
-            1, "-H")    # gcc postprocessing option to get the included headers
+        tmp.insert(1, "-E")    # gcc postprocessing option to stop after preprocessing.
+        tmp.insert(1, "-H")    # gcc postprocessing option to get the included headers
         return tmp
 
 
@@ -43,13 +40,11 @@ def get_compile_commands(ninja_compile_command: str) -> Tuple[Compile]:
     """
     with open(ninja_compile_command, "r") as f:
         raw = json.load(f)
-    return tuple(
-        map(lambda j: Compile(j["directory"], j["command"], j["file"]), raw))
+    return tuple(map(lambda j: Compile(j["directory"], j["command"], j["file"]), raw))
 
 
-def recursive_populate(edges: Tuple[str, str], root_indent: int,
-                       root_path: str, sub_graph_info: Tuple[int,
-                                                             str]) -> None:
+def recursive_populate(edges: Tuple[str, str], root_indent: int, root_path: str, sub_graph_info: Tuple[int,
+                                                                                                       str]) -> None:
     """
     Constructs the edges and populate the list.
     :param edges: List the will contain the pairs of string.
@@ -117,14 +112,10 @@ def get_gcc_output(cc: Compile) -> str:
     """
     try:
         logging.info("Extracting include information for " + cc.file)
-        process = subprocess.run(cc.include_command,
-                                 capture_output=True,
-                                 cwd=cc.directory,
-                                 check=True)
+        process = subprocess.run(cc.include_command, capture_output=True, cwd=cc.directory, check=True)
         return process.stderr.decode('utf-8')    # output is on stderr.
     except subprocess.CalledProcessError as e:
-        logging.error("Could not run " + " ".join(cc.include_command),
-                      exc_info=e)
+        logging.error("Could not run " + " ".join(cc.include_command), exc_info=e)
         sys.exit(-1)
 
 
@@ -155,14 +146,12 @@ def parse(cli_args: List[str]):
                         help="Ninja's compile_command.json file.",
                         type=str,
                         dest="ninja_compile_command")
-    parser.add_argument(
-        '-e',
-        '--exclude-dir',
-        default=[],
-        action='append',
-        dest="exclude_dirs",
-        help=
-        "Exclude a directory for cycle analysis. Can be used multiple times.")
+    parser.add_argument('-e',
+                        '--exclude-dir',
+                        default=[],
+                        action='append',
+                        dest="exclude_dirs",
+                        help="Exclude a directory for cycle analysis. Can be used multiple times.")
     args = parser.parse_args(cli_args)
     return args
 
@@ -173,8 +162,7 @@ def main():
     No cycle found will therefore exit on 0.
     :return: None
     """
-    logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s',
-                        level=logging.INFO)
+    logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.INFO)
     args = parse(sys.argv[1:])
     logging.info("Starting cycle detection process.")
     outputs = get_gcc_outputs(args.ninja_compile_command)

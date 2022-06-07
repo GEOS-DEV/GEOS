@@ -9,8 +9,7 @@ def getParametersFromXML(xmlFilePath):
 
     maxTime = float(tree.find('Events').get('maxTime'))
 
-    toughness = float(
-        tree.find('Solvers/SurfaceGenerator').get('rockToughness'))
+    toughness = float(tree.find('Solvers/SurfaceGenerator').get('rockToughness'))
 
     param = tree.findall('Geometry/Box')
     found_source = False
@@ -31,22 +30,13 @@ def getParametersFromXML(xmlFilePath):
     youngModulus = (9.0 * K * G) / (3.0 * K + G)
     poissonRatio = youngModulus / (2.0 * G) - 1.0
 
-    viscosity = float(
-        tree.find('Constitutive/CompressibleSinglePhaseFluid').get(
-            'defaultViscosity'))
+    viscosity = float(tree.find('Constitutive/CompressibleSinglePhaseFluid').get('defaultViscosity'))
 
-    fluidDensity = float(
-        tree.find('Constitutive/CompressibleSinglePhaseFluid').get(
-            'defaultDensity'))
+    fluidDensity = float(tree.find('Constitutive/CompressibleSinglePhaseFluid').get('defaultDensity'))
 
-    injectionRate = -4.0 * float(
-        tree.find('FieldSpecifications/SourceFlux').get(
-            'scale')) / fluidDensity
+    injectionRate = -4.0 * float(tree.find('FieldSpecifications/SourceFlux').get('scale')) / fluidDensity
 
-    return [
-        maxTime, youngModulus, poissonRatio, toughness, viscosity,
-        injectionRate, x_source
-    ]
+    return [maxTime, youngModulus, poissonRatio, toughness, viscosity, injectionRate, x_source]
 
 
 def main():
@@ -64,9 +54,7 @@ def main():
     inletAperture = pennyFrac[10]
 
     # Load GEOSX results
-    t_sim, p0_sim, w0_sim, fracArea_sim = np.loadtxt("model-results.txt",
-                                                     skiprows=1,
-                                                     unpack=True)
+    t_sim, p0_sim, w0_sim, fracArea_sim = np.loadtxt("model-results.txt", skiprows=1, unpack=True)
     Radius_sim = (fracArea_sim / np.pi)**0.5
 
     # Visulization
@@ -76,20 +64,12 @@ def main():
     lw = 8
     mew = 2
     malpha = 1.0
-    lablelist = [
-        'Asymptotic ( $K_{IC}$ => 0, $C_{L}$ => 0 )',
-        'GEOSX ( $K_{IC}$ => 0, $C_{L}$ => 0 )'
-    ]
+    lablelist = ['Asymptotic ( $K_{IC}$ => 0, $C_{L}$ => 0 )', 'GEOSX ( $K_{IC}$ => 0, $C_{L}$ => 0 )']
 
     fig, ax = plt.subplots(2, 2, figsize=(24, 18))
     cmap = plt.get_cmap("tab10")
 
-    ax[0, 0].plot(t,
-                  fracRadius,
-                  lw=lw,
-                  alpha=0.8,
-                  color=cmap(0),
-                  label=lablelist[0])
+    ax[0, 0].plot(t, fracRadius, lw=lw, alpha=0.8, color=cmap(0), label=lablelist[0])
     ax[0, 0].plot(t_sim,
                   Radius_sim,
                   'D',
@@ -109,12 +89,7 @@ def main():
     ax[0, 0].xaxis.set_tick_params(labelsize=fsize)
     ax[0, 0].yaxis.set_tick_params(labelsize=fsize)
 
-    ax[0, 1].plot(t,
-                  inletAperture * 1000,
-                  lw=lw,
-                  alpha=0.8,
-                  color=cmap(0),
-                  label=lablelist[0])
+    ax[0, 1].plot(t, inletAperture * 1000, lw=lw, alpha=0.8, color=cmap(0), label=lablelist[0])
     ax[0, 1].plot(t_sim,
                   w0_sim * 1000,
                   'D',
@@ -128,20 +103,13 @@ def main():
     ax[0, 1].set_xlim([min(t_sim), max(t_sim)])
     ax[0, 1].set_ylim(0, 2.0)
     ax[0, 1].set_xlabel(r'Time (s)', size=fsize, weight="bold")
-    ax[0, 1].set_ylabel(r'Fracture Mouth Opening (mm)',
-                        size=fsize,
-                        weight="bold")
+    ax[0, 1].set_ylabel(r'Fracture Mouth Opening (mm)', size=fsize, weight="bold")
     ax[0, 1].legend(loc='lower right', fontsize=fsize * 0.7)
     ax[0, 1].grid(True)
     ax[0, 1].xaxis.set_tick_params(labelsize=fsize)
     ax[0, 1].yaxis.set_tick_params(labelsize=fsize)
 
-    ax[1, 0].plot(t,
-                  inletPressure / 1.0e6,
-                  lw=lw,
-                  alpha=0.8,
-                  color=cmap(0),
-                  label=lablelist[0])
+    ax[1, 0].plot(t, inletPressure / 1.0e6, lw=lw, alpha=0.8, color=cmap(0), label=lablelist[0])
     ax[1, 0].plot(t_sim,
                   p0_sim / 1.0e6,
                   'D',
@@ -155,9 +123,7 @@ def main():
     ax[1, 0].set_xlim([min(t_sim), max(t_sim)])
     ax[1, 0].set_ylim(0, 1.5)
     ax[1, 0].set_xlabel(r'Time (s)', size=fsize, weight="bold")
-    ax[1, 0].set_ylabel(r'Net Pressure at Well (MPa)',
-                        size=fsize,
-                        weight="bold")
+    ax[1, 0].set_ylabel(r'Net Pressure at Well (MPa)', size=fsize, weight="bold")
     ax[1, 0].legend(loc='lower right', fontsize=fsize * 0.7)
     ax[1, 0].grid(True)
     ax[1, 0].xaxis.set_tick_params(labelsize=fsize)

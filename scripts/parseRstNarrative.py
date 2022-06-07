@@ -112,8 +112,7 @@ def main():
                     if (not activeVerbatimBlock):
                         outputFile.write("\n.. code:: cpp \n\n")
                         activeVerbatimBlock = True
-                    outputFile.write("\t" + str(codeCount).zfill(3) + ")  " +
-                                     rawLine)
+                    outputFile.write("\t" + str(codeCount).zfill(3) + ")  " + rawLine)
                     rawCode += "\t" + rawLine
                     codeCount += 1
 

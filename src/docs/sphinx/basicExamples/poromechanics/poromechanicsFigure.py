@@ -19,10 +19,8 @@ class terzaghi:
         k = hydromechanicalParameters["permeability"]
 
         K = E / 3.0 / (1.0 - 2.0 * nu)    # bulk modulus
-        Kv = E * (1.0 - nu) / (
-            (1.0 + nu) * (1.0 - 2.0 * nu))    # uniaxial bulk modulus
-        Se = (b - phi) * (1.0 -
-                          b) / K + phi * cf    # constrained specific storage
+        Kv = E * (1.0 - nu) / ((1.0 + nu) * (1.0 - 2.0 * nu))    # uniaxial bulk modulus
+        Se = (b - phi) * (1.0 - b) / K + phi * cf    # constrained specific storage
 
         self.characteristicLength = xMax - xMin
         self.appliedTraction = abs(appliedTraction)
@@ -38,9 +36,8 @@ class terzaghi:
             cc = self.consolidationCoefficient
             L = self.characteristicLength
             p = nsum(
-                lambda m: 1 / (2 * m + 1) * exp(-(
-                    (2 * m + 1)**2) * (math.pi**2) * cc * t / 4 / L / L) * sin(
-                        (2 * m + 1) * math.pi * x / 2 / L), [0, inf])
+                lambda m: 1 / (2 * m + 1) * exp(-((2 * m + 1)**2) * (math.pi**2) * cc * t / 4 / L / L) * sin(
+                    (2 * m + 1) * math.pi * x / 2 / L), [0, inf])
             return 4 * self.initialPressure / math.pi * p
 
 
@@ -53,14 +50,12 @@ def getHydromechanicalParametersFromXML(xmlFilePath):
     param4 = tree.find('Constitutive/ConstantPermeability')
 
     hydromechanicalParameters = dict.fromkeys([
-        "youngModulus", "poissonRation", "biotCoefficient", "fluidViscosity",
-        "fluidCompressibility", "porosity", "permeability"
+        "youngModulus", "poissonRation", "biotCoefficient", "fluidViscosity", "fluidCompressibility", "porosity",
+        "permeability"
     ])
 
-    hydromechanicalParameters["youngModulus"] = float(
-        param1.get("defaultYoungModulus"))
-    hydromechanicalParameters["poissonRation"] = float(
-        param1.get("defaultPoissonRatio"))
+    hydromechanicalParameters["youngModulus"] = float(param1.get("defaultYoungModulus"))
+    hydromechanicalParameters["poissonRation"] = float(param1.get("defaultPoissonRatio"))
 
     E = hydromechanicalParameters["youngModulus"]
     nu = hydromechanicalParameters["poissonRation"]
@@ -68,12 +63,9 @@ def getHydromechanicalParametersFromXML(xmlFilePath):
     Kg = float(param2.get("grainBulkModulus"))
 
     hydromechanicalParameters["biotCoefficient"] = 1.0 - K / Kg
-    hydromechanicalParameters["porosity"] = float(
-        param2.get("defaultReferencePorosity"))
-    hydromechanicalParameters["fluidViscosity"] = float(
-        param3.get("defaultViscosity"))
-    hydromechanicalParameters["fluidCompressibility"] = float(
-        param3.get("compressibility"))
+    hydromechanicalParameters["porosity"] = float(param2.get("defaultReferencePorosity"))
+    hydromechanicalParameters["fluidViscosity"] = float(param3.get("defaultViscosity"))
+    hydromechanicalParameters["fluidCompressibility"] = float(param3.get("compressibility"))
 
     perm = param4.get("permeabilityComponents")
     perm = np.array(perm[1:-1].split(','), float)
@@ -111,16 +103,14 @@ def main():
     x = hf.get('pressure elementCenter')
 
     # Extract info from XML
-    hydromechanicalParameters = getHydromechanicalParametersFromXML(
-        xmlBaseFilePath)
+    hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlBaseFilePath)
     appliedTraction = getAppliedTractionFromXML(xmlBaseFilePath)
 
     # Get domain min/max coordinate in the x-direction
     xMin, xMax = getDomainMaxMinXCoordFromXML(xmlSmokeFilePath)
 
     # Initialize Terzaghi's analytical solution
-    terzaghiAnalyticalSolution = terzaghi(hydromechanicalParameters, xMin,
-                                          xMax, appliedTraction)
+    terzaghiAnalyticalSolution = terzaghi(hydromechanicalParameters, xMin, xMax, appliedTraction)
 
     # Plot analytical (continuous line) and numerical (markers) pressure solution
     x_analytical = np.linspace(xMin, xMax, 51, endpoint=True)
@@ -133,15 +123,10 @@ def main():
         t = time[k, 0]
         i = 0
         for xCell in x_analytical:
-            xScaled = terzaghiAnalyticalSolution.characteristicLength * (
-                xCell - xMin) / (xMax - xMin)
-            pressure_analytical[
-                i] = terzaghiAnalyticalSolution.computePressure(xScaled, t)
+            xScaled = terzaghiAnalyticalSolution.characteristicLength * (xCell - xMin) / (xMax - xMin)
+            pressure_analytical[i] = terzaghiAnalyticalSolution.computePressure(xScaled, t)
             i += 1
-        plt.plot(x_analytical,
-                 pressure_analytical,
-                 color=cmap(iplt),
-                 label='t = ' + str(t) + ' s')
+        plt.plot(x_analytical, pressure_analytical, color=cmap(iplt), label='t = ' + str(t) + ' s')
         plt.plot(x[k, :, 0], pressure[k, :], 'o', color=cmap(iplt))
 
     plt.grid()

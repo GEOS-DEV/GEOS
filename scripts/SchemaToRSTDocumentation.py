@@ -88,8 +88,7 @@ def buildAttributeMap(root_node, xsd='{http://www.w3.org/2001/XMLSchema}'):
         # Read the values supported by the xsd format (name, type, default, use)
         for attribute_node in child_node.findall(xsd + 'attribute'):
             att_name = attribute_node.get('name')
-            att_type = format_type_data(attribute_node.get('type',
-                                                           default=' '))
+            att_type = format_type_data(attribute_node.get('type', default=' '))
             att_default = attribute_node.get('default', default=' ')
 
             # Handle the special case for required values
@@ -97,10 +96,7 @@ def buildAttributeMap(root_node, xsd='{http://www.w3.org/2001/XMLSchema}'):
             if useValue:
                 att_default = useValue
 
-            attribute_map[type_name][att_name] = {
-                'Type': att_type,
-                'Default': att_default
-            }
+            attribute_map[type_name][att_name] = {'Type': att_type, 'Default': att_default}
 
         # Parse nodes
         for choice_node in child_node.findall(xsd + 'choice'):
@@ -117,22 +113,16 @@ def buildAttributeMap(root_node, xsd='{http://www.w3.org/2001/XMLSchema}'):
                 elif (sub_unique):
                     node_use = 'unique'
 
-                attribute_map[type_name][sub_name] = {
-                    'Type': 'node',
-                    'Default': node_use
-                }
+                attribute_map[type_name][sub_name] = {'Type': 'node', 'Default': node_use}
 
         # Read the remaining values stored in comments (description, registered_by)
         for comment_node in child_node.iter(etree.Comment):
             tmp = comment_node.text.split(' => ')
             att_name = tmp[0]
-            att_description = tmp[1].replace('\\\\', '\\').replace(
-                '\n', '\\n').replace('|', '\\|')
+            att_description = tmp[1].replace('\\\\', '\\').replace('\n', '\\n').replace('|', '\\|')
             attribute_map[type_name][att_name]['Description'] = att_description
             if (len(tmp) > 2):
-                attribute_map[type_name][att_name]['Registered By'] = [
-                    x for x in tmp[2].split(', ')
-                ]
+                attribute_map[type_name][att_name]['Registered By'] = [x for x in tmp[2].split(', ')]
 
     # Build the reverse maps on the second pass (registered_on)
     for ka in attribute_map.keys():
@@ -147,10 +137,7 @@ def buildAttributeMap(root_node, xsd='{http://www.w3.org/2001/XMLSchema}'):
 
 
 def buildTableValues(type_map, link_string='XML', include_defaults=True):
-    table_headers = [
-        'Name', 'Type', 'Default', 'Registered On', 'Registered By',
-        'Description'
-    ]
+    table_headers = ['Name', 'Type', 'Default', 'Registered On', 'Registered By', 'Description']
     optional_headers = ['Default', 'Registered On', 'Registered By']
 
     # Sort the keys
@@ -187,8 +174,7 @@ def buildTableValues(type_map, link_string='XML', include_defaults=True):
     # Setup the empty table
     N_rows = len(akeys)
     N_cols = len(table_headers)
-    table_values = [[' ' for jj in range(0, N_cols)]
-                    for ii in range(0, N_rows + 1)]
+    table_values = [[' ' for jj in range(0, N_cols)] for ii in range(0, N_rows + 1)]
     table_values[0] = table_headers
 
     if (N_rows > 0):
@@ -207,10 +193,7 @@ def buildTableValues(type_map, link_string='XML', include_defaults=True):
 
                     # Format any registration entries as links
                     if ('Registered' in k):
-                        table_row[jj] = ", ".join([
-                            ':ref:`%s_%s`' % (link_string, x)
-                            for x in table_row[jj]
-                        ])
+                        table_row[jj] = ", ".join([':ref:`%s_%s`' % (link_string, x) for x in table_row[jj]])
 
             # Set the link if the target is a node
             if (table_row[1] == 'node'):
@@ -231,8 +214,7 @@ if len(sys.argv) < 2:
 schema_dir = sys.argv[1]
 schema_name = os.path.join(schema_dir, 'schema.xsd')
 additional_documentation_name = os.path.join(schema_dir, 'schema.xsd.other')
-complete_output = os.path.join(schema_dir,
-                               '../../docs/sphinx/CompleteXMLSchema')
+complete_output = os.path.join(schema_dir, '../../docs/sphinx/CompleteXMLSchema')
 output_folder = os.path.join(schema_dir, 'docs')
 sphinx_path = '../../coreComponents/schema/docs'
 xsd = '{http://www.w3.org/2001/XMLSchema}'
@@ -252,27 +234,19 @@ other_attribute_map = buildAttributeMap(include_root)
 input_keys = sorted(input_attribute_map.keys())
 input_keys_lower = [k.lower() for k in input_keys]
 input_keys_count = [input_keys_lower.count(k) for k in input_keys_lower]
-input_repeated_keys = [
-    input_keys[ii] for ii in range(0, len(input_keys))
-    if input_keys_count[ii] > 1
-]
+input_repeated_keys = [input_keys[ii] for ii in range(0, len(input_keys)) if input_keys_count[ii] > 1]
 
 other_keys = sorted(other_attribute_map.keys())
 other_keys_lower = [k.lower() for k in other_keys]
 other_keys_count = [other_keys_lower.count(k) for k in other_keys_lower]
-other_repeated_keys = [
-    other_keys[ii] for ii in range(0, len(other_keys))
-    if other_keys_count[ii] > 1
-]
+other_repeated_keys = [other_keys[ii] for ii in range(0, len(other_keys)) if other_keys_count[ii] > 1]
 
 if ((len(input_repeated_keys) > 0) | (len(other_repeated_keys) > 0)):
     print('Duplicate input documentation table names:')
     print(input_repeated_keys)
     print('Duplicate other documentation table names:')
     print(other_repeated_keys)
-    raise ValueError(
-        'Duplicate data structure names are not allowed due to .rst limitations (case-insensitive)!'
-    )
+    raise ValueError('Duplicate data structure names are not allowed due to .rst limitations (case-insensitive)!')
 
 # Setup directory
 os.system('mkdir -p %s' % (output_folder))
@@ -292,8 +266,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
     output_handle.write('Input Schema Definitions\n')
     output_handle.write('========================\n\n')
 
-    output_handle.write(':download:`XML Schema <%s/../schema.xsd>`\n\n' %
-                        (sphinx_path))
+    output_handle.write(':download:`XML Schema <%s/../schema.xsd>`\n\n' % (sphinx_path))
 
     for type_name in sorted(input_attribute_map.keys()):
         # Write the individual tables
@@ -306,8 +279,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
         output_handle.write('\n.. _XML_%s:\n\n' % (type_name))
         output_handle.write('%s\n' % (element_header))
         output_handle.write('=' * len(element_header) + '\n')
-        output_handle.write('.. include:: %s/%s.rst\n\n' %
-                            (sphinx_path, type_name))
+        output_handle.write('.. include:: %s/%s.rst\n\n' % (sphinx_path, type_name))
 
     # Parse the non-input schema definitions
     output_handle.write('********************************\n')
@@ -319,8 +291,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
         table_values = buildTableValues(other_attribute_map[type_name],
                                         link_string='DATASTRUCTURE',
                                         include_defaults=False)
-        writeTableRST('%s/%s_other.rst' % (output_folder, type_name),
-                      table_values)
+        writeTableRST('%s/%s_other.rst' % (output_folder, type_name), table_values)
         touched_files.append('%s_other.rst' % (type_name))
 
         # Write to the master list
@@ -328,8 +299,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
         output_handle.write('\n.. _DATASTRUCTURE_%s:\n\n' % (type_name))
         output_handle.write('%s\n' % (element_header))
         output_handle.write('=' * len(element_header) + '\n')
-        output_handle.write('.. include:: %s/%s_other.rst\n\n' %
-                            (sphinx_path, type_name))
+        output_handle.write('.. include:: %s/%s_other.rst\n\n' % (sphinx_path, type_name))
 
 # Check for any untouched tables
 untouched_files = []
@@ -339,5 +309,4 @@ for f in old_files:
 
 if len(untouched_files):
     tmp = '\n  '.join(untouched_files)
-    raise ValueError('Obsolete autogenerated .rst table files detected:%s' %
-                     (tmp))
+    raise ValueError('Obsolete autogenerated .rst table files detected:%s' % (tmp))

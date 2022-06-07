@@ -34,25 +34,18 @@ def convert_vtm_file(vtm_file, output_dir, root_path):
     for block in multiblock:
         for child_block in block:
             # Setup a new tree and copy parent elements
-            visit_root = ElementTree.Element(vtm_root.tag,
-                                             attrib=vtm_root.attrib)
-            visit_multiblock = ElementTree.Element(multiblock.tag,
-                                                   attrib=multiblock.attrib)
+            visit_root = ElementTree.Element(vtm_root.tag, attrib=vtm_root.attrib)
+            visit_multiblock = ElementTree.Element(multiblock.tag, attrib=multiblock.attrib)
             visit_root.append(visit_multiblock)
             visit_block = ElementTree.Element(block.tag, attrib=block.attrib)
             visit_multiblock.append(visit_block)
             for dataset in child_block:
                 # Copy the dataset, then correct the relative path
                 visit_block.append(dataset)
-                dataset_path = os.path.relpath(os.path.join(
-                    root_path, vtm_dir, dataset.get('file')),
-                                               start=output_dir)
+                dataset_path = os.path.relpath(os.path.join(root_path, vtm_dir, dataset.get('file')), start=output_dir)
                 dataset.set('file', dataset_path)
             visit_tree = ElementTree.ElementTree(element=visit_root)
-            visit_tree.write(
-                os.path.join(
-                    output_dir,
-                    '%s_%s.vtm' % (child_block.get('name'), vtm_header)))
+            visit_tree.write(os.path.join(output_dir, '%s_%s.vtm' % (child_block.get('name'), vtm_header)))
 
 
 def user_macro_convert_pvd_files():

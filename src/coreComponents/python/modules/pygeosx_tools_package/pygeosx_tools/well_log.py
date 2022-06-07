@@ -49,12 +49,7 @@ def parse_las(fname, variable_start='~C', body_start='~A'):
                         else:
                             # As a fall-back use the full line
                             variable_order.append(line[:-1])
-                            results[line[:-1]] = {
-                                'units': '',
-                                'code': '',
-                                'description': '',
-                                'values': []
-                            }
+                            results[line[:-1]] = {'units': '', 'code': '', 'description': '', 'values': []}
 
                 # Body
                 else:

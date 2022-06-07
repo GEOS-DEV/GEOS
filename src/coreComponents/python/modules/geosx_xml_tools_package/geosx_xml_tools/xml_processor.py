@@ -69,15 +69,13 @@ def merge_included_xml_files(root, fname, includeCount, maxInclude=100):
 
     # Expand the input path
     pwd = os.getcwd()
-    includePath, fname = os.path.split(
-        os.path.abspath(os.path.expanduser(fname)))
+    includePath, fname = os.path.split(os.path.abspath(os.path.expanduser(fname)))
     os.chdir(includePath)
 
     # Check to see if the code has fallen into a loop
     includeCount += 1
     if (includeCount > maxInclude):
-        raise Exception(
-            'Reached maximum recursive includes...  Is there an include loop?')
+        raise Exception('Reached maximum recursive includes...  Is there an include loop?')
 
     # Check to make sure the file exists
     if (not os.path.isfile(fname)):
@@ -86,8 +84,7 @@ def merge_included_xml_files(root, fname, includeCount, maxInclude=100):
 
     # Load target xml
     try:
-        parser = ElementTree.XMLParser(remove_comments=True,
-                                       remove_blank_text=True)
+        parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
         includeTree = ElementTree.parse(fname, parser)
         includeRoot = includeTree.getroot()
     except XMLSyntaxError as err:
@@ -118,29 +115,22 @@ def apply_regex_to_node(node):
         # Parameter format:  $Parameter or $:Parameter
         ii = 0
         while ('$' in value):
-            value = re.sub(regex_tools.patterns['parameters'],
-                           parameterHandler, value)
+            value = re.sub(regex_tools.patterns['parameters'], parameterHandler, value)
             ii += 1
             if (ii > 100):
-                raise Exception(
-                    'Reached maximum parameter expands (Node=%s, value=%s)' %
-                    (node.tag, value))
+                raise Exception('Reached maximum parameter expands (Node=%s, value=%s)' % (node.tag, value))
 
         # Unit format:       9.81[m**2/s] or 1.0 [bbl/day]
         if ('[' in value):
-            value = re.sub(regex_tools.patterns['units'],
-                           unitManager.regexHandler, value)
+            value = re.sub(regex_tools.patterns['units'], unitManager.regexHandler, value)
 
         # Symbolic format:   `1 + 2.34e5*2 * ...`
         ii = 0
         while ('`' in value):
-            value = re.sub(regex_tools.patterns['symbolic'],
-                           regex_tools.SymbolicMathRegexHandler, value)
+            value = re.sub(regex_tools.patterns['symbolic'], regex_tools.SymbolicMathRegexHandler, value)
             ii += 1
             if (ii > 100):
-                raise Exception(
-                    'Reached maximum symbolic expands (Node=%s, value=%s)' %
-                    (node.tag, value))
+                raise Exception('Reached maximum symbolic expands (Node=%s, value=%s)' % (node.tag, value))
 
         node.set(k, value)
 
@@ -188,9 +178,7 @@ def process(inputFiles,
 
     # Expand the input path
     pwd = os.getcwd()
-    expanded_files = [
-        os.path.abspath(os.path.expanduser(f)) for f in inputFiles
-    ]
+    expanded_files = [os.path.abspath(os.path.expanduser(f)) for f in inputFiles]
     single_path, single_input = os.path.split(expanded_files[0])
     os.chdir(single_path)
 
@@ -200,8 +188,7 @@ def process(inputFiles,
     if (len(expanded_files) == 1):
         # Load single files directly
         try:
-            parser = ElementTree.XMLParser(remove_comments=True,
-                                           remove_blank_text=True)
+            parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
             tree = ElementTree.parse(single_input, parser=parser)
             root = tree.getroot()
         except XMLSyntaxError as err:
@@ -258,18 +245,15 @@ def process(inputFiles,
     # Comment out or remove the Parameter, Included nodes
     for includeNode in root.findall('Included'):
         if keep_includes:
-            root.insert(-1,
-                        ElementTree.Comment(ElementTree.tostring(includeNode)))
+            root.insert(-1, ElementTree.Comment(ElementTree.tostring(includeNode)))
         root.remove(includeNode)
     for parameterNode in root.findall('Parameters'):
         if keep_parameters:
-            root.insert(
-                -1, ElementTree.Comment(ElementTree.tostring(parameterNode)))
+            root.insert(-1, ElementTree.Comment(ElementTree.tostring(parameterNode)))
         root.remove(parameterNode)
     for overrideNode in root.findall('CommandLineOverride'):
         if keep_parameters:
-            root.insert(
-                -1, ElementTree.Comment(ElementTree.tostring(overrideNode)))
+            root.insert(-1, ElementTree.Comment(ElementTree.tostring(overrideNode)))
         root.remove(overrideNode)
 
     # Generate a random output name if not specified
@@ -310,14 +294,11 @@ def validate_xml(fname, schema, verbose):
         print('Validating the xml against the schema...')
     try:
         ofile = ElementTree.parse(fname)
-        sfile = ElementTree.XMLSchema(
-            ElementTree.parse(os.path.expanduser(schema)))
+        sfile = ElementTree.XMLSchema(ElementTree.parse(os.path.expanduser(schema)))
         sfile.assertValid(ofile)
     except ElementTree.DocumentInvalid as err:
         print(err)
-        print(
-            '\nWarning: input XML contains potentially invalid input parameters:'
-        )
+        print('\nWarning: input XML contains potentially invalid input parameters:')
         print('-' * 20 + '\n')
         print(sfile.error_log)
         print('\n' + '-' * 20)

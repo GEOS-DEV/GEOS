@@ -21,15 +21,13 @@ def extract_cmake_location(file_path):
         for line in content:
             if line.startswith(cmake_line_prefix):
                 return line.split(" ")[4].strip()
-        logging.info(
-            "Could not find a cmake entry in host config file. Using ${PATH}.")
+        logging.info("Could not find a cmake entry in host config file. Using ${PATH}.")
     return None
 
 
 def setup_ats(scripts_dir, build_path):
     bin_dir = os.path.join(build_path, "bin")
-    ats_dir = os.path.abspath(
-        os.path.join(scripts_dir, "..", "integratedTests"))
+    ats_dir = os.path.abspath(os.path.join(scripts_dir, "..", "integratedTests"))
     ats_update_dir = os.path.join(ats_dir, "update", "run")
     geosxats_path = os.path.join(ats_dir, "geosxats", "geosxats")
 
@@ -39,13 +37,11 @@ def setup_ats(scripts_dir, build_path):
     # Write the bash script to run ats.
     ats_script_path = os.path.join(build_path, "geosxats.sh")
     with open(ats_script_path, "w") as f:
-        f.write("#!/bin/bash\n{} {} --workingDir {} \"$@\"\n".format(
-            geosxats_path, bin_dir, ats_update_dir))
+        f.write("#!/bin/bash\n{} {} --workingDir {} \"$@\"\n".format(geosxats_path, bin_dir, ats_update_dir))
 
     # Make the script executable
     st = os.stat(ats_script_path)
-    os.chmod(ats_script_path,
-             st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    os.chmod(ats_script_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
 def parse_args(cli_arguments):
@@ -105,24 +101,17 @@ def parse_args(cli_arguments):
                         action="store_true",
                         help="Do not create an install directory.")
 
-    parser.add_argument(
-        "-bt",
-        "--buildtype",
-        dest="build_type",
-        type=str,
-        choices=["Release", "Debug", "RelWithDebInfo", "MinSizeRel"],
-        default="Debug",
-        help="build type.")
+    parser.add_argument("-bt",
+                        "--buildtype",
+                        dest="build_type",
+                        type=str,
+                        choices=["Release", "Debug", "RelWithDebInfo", "MinSizeRel"],
+                        default="Debug",
+                        help="build type.")
 
-    parser.add_argument("-e",
-                        "--eclipse",
-                        action='store_true',
-                        help="create an eclipse project file.")
+    parser.add_argument("-e", "--eclipse", action='store_true', help="create an eclipse project file.")
 
-    parser.add_argument("-x",
-                        "--xcode",
-                        action='store_true',
-                        help="create an xcode project.")
+    parser.add_argument("-x", "--xcode", action='store_true', help="create an xcode project.")
 
     parser.add_argument(
         "-ecc",
@@ -133,24 +122,18 @@ def parse_args(cli_arguments):
         "generate a compilation database.  Can be used by the clang tools such as clang-modernize.  Will create a file called 'compile_commands.json' in build directory."
     )
 
-    parser.add_argument(
-        "-hc",
-        "--hostconfig",
-        dest="host_config",
-        required=True,
-        type=str,
-        help="select a specific host-config file to initalize CMake's cache")
+    parser.add_argument("-hc",
+                        "--hostconfig",
+                        dest="host_config",
+                        required=True,
+                        type=str,
+                        help="select a specific host-config file to initalize CMake's cache")
 
-    parser.add_argument("-gvz",
-                        "--graphviz",
-                        action="store_true",
-                        help="Generate graphviz dependency graph")
+    parser.add_argument("-gvz", "--graphviz", action="store_true", help="Generate graphviz dependency graph")
 
     args, unknown_args = parser.parse_known_args(cli_arguments)
     if unknown_args:
-        logging.info(
-            "Passing the following unknown arguments directly to cmake: %s" %
-            unknown_args)
+        logging.info("Passing the following unknown arguments directly to cmake: %s" % unknown_args)
     return args, unknown_args
 
 
@@ -165,8 +148,7 @@ def main(calling_script, args, unknown_args):
     if platform_info.endswith(".cmake"):
         platform_info = platform_info[:-6]
 
-    assert os.path.exists(
-        cache_file), "Could not find cmake cache file '%s'." % cache_file
+    assert os.path.exists(cache_file), "Could not find cmake cache file '%s'." % cache_file
     logging.info("Using host config file: '%s'." % cache_file)
 
     #####################
@@ -177,9 +159,7 @@ def main(calling_script, args, unknown_args):
         build_path = args.build_path
     else:
         # use platform info & build type
-        build_path = "-".join(
-            ["build", platform_info,
-             args.build_type.lower()])
+        build_path = "-".join(["build", platform_info, args.build_type.lower()])
         if args.build_root_dir != "":
             build_path = os.path.join(args.build_root_dir, build_path)
 
@@ -188,8 +168,7 @@ def main(calling_script, args, unknown_args):
     build_path = os.path.abspath(build_path)
 
     if os.path.exists(build_path):
-        logging.info("Build directory '%s' already exists. Deleting..." %
-                     build_path)
+        logging.info("Build directory '%s' already exists. Deleting..." % build_path)
         shutil.rmtree(build_path)
 
     logging.info("Creating build directory '%s'..." % build_path)
@@ -206,18 +185,14 @@ def main(calling_script, args, unknown_args):
             install_path = os.path.abspath(args.install_path)
         else:
             # use platform info & build type
-            install_path = "-".join(
-                ["install", platform_info,
-                 args.build_type.lower()])
+            install_path = "-".join(["install", platform_info, args.build_type.lower()])
             if args.install_root_dir != "":
-                install_path = os.path.join(args.install_root_dir,
-                                            install_path)
+                install_path = os.path.join(args.install_root_dir, install_path)
 
         install_path = os.path.abspath(install_path)
 
         if os.path.exists(install_path):
-            logging.info("Install directory '%s' already exists. Deleting..." %
-                         install_path)
+            logging.info("Install directory '%s' already exists. Deleting..." % install_path)
             shutil.rmtree(install_path)
 
         logging.info("Creating install path '%s'..." % install_path)
@@ -251,9 +226,7 @@ def main(calling_script, args, unknown_args):
 
     for unknown_arg in unknown_args:
         if not unknown_arg.startswith('-D'):
-            logging.warning(
-                "Additional argument '%s' does not start with '-D'. Keeping it nevertheless."
-                % unknown_arg)
+            logging.warning("Additional argument '%s' does not start with '-D'. Keeping it nevertheless." % unknown_arg)
         cmake_line.append(unknown_arg)
 
     # Append cache file at the end of the command line to make previous argument visible to the cache.
@@ -274,8 +247,7 @@ def main(calling_script, args, unknown_args):
     logging.info("Changing to build directory '%s'" % build_path)
     os.chdir(build_path)
     with open(cmake_cmd, "r") as cmd_file:
-        logging.info("Executing cmake line: '%s'" %
-                     cmd_file.read().rstrip(os.linesep))
+        logging.info("Executing cmake line: '%s'" % cmd_file.read().rstrip(os.linesep))
     subprocess.call(cmake_cmd, shell=True)
 
     if args.graphviz:
@@ -283,6 +255,5 @@ def main(calling_script, args, unknown_args):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='[%(filename)s]:[%(levelname)s]: %(message)s',
-                        level=logging.INFO)
+    logging.basicConfig(format='[%(filename)s]:[%(levelname)s]: %(message)s', level=logging.INFO)
     main(sys.argv[0], *parse_args(sys.argv[1:]))

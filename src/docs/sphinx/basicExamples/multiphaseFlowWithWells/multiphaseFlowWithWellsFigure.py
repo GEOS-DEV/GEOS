@@ -44,9 +44,7 @@ def main():
     plt.grid()
     plt.xlabel('time [days]')
     plt.ylabel('total rate [cubic meters per day]')
-    plt.legend(bbox_to_anchor=(0.025, 0.975),
-               loc='upper left',
-               borderaxespad=0.)
+    plt.legend(bbox_to_anchor=(0.025, 0.975), loc='upper left', borderaxespad=0.)
     plt.show()
 
 

@@ -5,10 +5,8 @@ import matplotlib.pyplot as plt
 # Rotate a vector in local coodinate of an inclined borehole to the global coordinate
 # This function is useful for extracting field around an inclined wellbore in the radial direction
 def vectorRotation(x, y, z, phi_x, phi_z):
-    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.],
-                     [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
-    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.],
-                     [-np.sin(phi_z), 0., np.cos(phi_z)]])
+    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.], [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
+    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.], [-np.sin(phi_z), 0., np.cos(phi_z)]])
 
     localCoord = np.array([x, y, z])
     return np.dot(rotz, np.dot(rotx, localCoord))
@@ -17,14 +15,10 @@ def vectorRotation(x, y, z, phi_x, phi_z):
 # Rotate stress from global coordinates system to the local coordinates of an inclined borehole
 # See the description in fig.1 in Abousleiman and Cui 1998
 def stressRotation(stress, phi_x, phi_z):
-    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.],
-                     [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
-    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.],
-                     [-np.sin(phi_z), 0., np.cos(phi_z)]])
+    rotx = np.array([[np.cos(phi_x), np.sin(phi_x), 0.], [-np.sin(phi_x), np.cos(phi_x), 0.], [0., 0., 1.]])
+    rotz = np.array([[np.cos(phi_z), 0., np.sin(phi_z)], [0., 1., 0.], [-np.sin(phi_z), 0., np.cos(phi_z)]])
 
-    return np.dot(
-        np.dot(np.transpose(rotz),
-               np.dot(np.dot(np.transpose(rotx), stress), rotx)), rotz)
+    return np.dot(np.dot(np.transpose(rotz), np.dot(np.dot(np.transpose(rotx), stress), rotx)), rotz)
 
 
 def analytic(a, p0):

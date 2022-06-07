@@ -156,9 +156,7 @@ def checkAndAddCopyrightHeader(filename, testOnly=False):
         line_to_begin_at = getLineToBeginAt(lines)
 
         if line_to_begin_at == -2:
-            print(
-                "Check missing or malformed copyright (including empty lines) : {}"
-                .format(filename))
+            print("Check missing or malformed copyright (including empty lines) : {}".format(filename))
 
         if line_to_begin_at >= 0 and not testOnly:
             lines += f.readlines()
@@ -175,8 +173,7 @@ def fileNameGenerator(rootDir, validExtensions, isRecursive=False):
 
     if isRecursive:
         for path, dirlist, filelist in os.walk(rootDir):
-            for f in (f for f in filelist
-                      if f.lower().endswith(validExtensions)):
+            for f in (f for f in filelist if f.lower().endswith(validExtensions)):
                 yield os.path.join(path, f)
     else:
         for f in os.listdir(rootDir):
@@ -187,24 +184,17 @@ def fileNameGenerator(rootDir, validExtensions, isRecursive=False):
 if __name__ == "__main__":
 
     ## Setup the argument parser, dir is required first argument
-    parser = argparse.ArgumentParser(
-        description="Append LLNL copyright message to files.")
-    parser.add_argument(
-        "dir",
-        type=str,
-        help="specify directory containing files on which we want to operate."
-    )    # TODO -- should we accept multiple directories?
+    parser = argparse.ArgumentParser(description="Append LLNL copyright message to files.")
+    parser.add_argument("dir", type=str, help="specify directory containing files on which we want to operate."
+                        )    # TODO -- should we accept multiple directories?
 
     # Option to recursively search for files
-    parser.add_argument(
-        "-r",
-        "--recursive",
-        dest='isRecursive',
-        action='store_true',
-        help="add flag to recursively descend to subdirectories.")
-    parser.add_argument("--no-recursive",
+    parser.add_argument("-r",
+                        "--recursive",
                         dest='isRecursive',
-                        action='store_false')
+                        action='store_true',
+                        help="add flag to recursively descend to subdirectories.")
+    parser.add_argument("--no-recursive", dest='isRecursive', action='store_false')
     parser.set_defaults(isRecursive=False)
 
     # Test run to see which files might require a copyright notice.
@@ -212,8 +202,7 @@ if __name__ == "__main__":
         "-t",
         "--test",
         action='store_true',
-        help=
-        "add flag if we only want to see which files are missing copyright statements, but not to modify any files."
+        help="add flag if we only want to see which files are missing copyright statements, but not to modify any files."
     )
 
     # Additional possible featues to be implemented
@@ -227,6 +216,5 @@ if __name__ == "__main__":
 
     ## Iterate through files, check for and add copyright notice
     print "Looking at directory {}".format(args.dir)
-    for fullFileName in fileNameGenerator(args.dir, valid_extensions,
-                                          args.isRecursive):
+    for fullFileName in fileNameGenerator(args.dir, valid_extensions, args.isRecursive):
         checkAndAddCopyrightHeader(fullFileName, args.test)

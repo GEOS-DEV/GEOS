@@ -11,13 +11,10 @@ markersize = 10
 markerwidth = 2
 
 colors = [
-    'tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
-    'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan'
+    'tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive',
+    'tab:cyan'
 ]
-styles = [
-    'o', 's', 'v', '^', 'D', ">", "<", "*", "h", "H", "+", "1", "2", "3", "4",
-    "8", "p", "d", "|", "_", ".", ","
-]
+styles = ['o', 's', 'v', '^', 'D', ">", "<", "*", "h", "H", "+", "1", "2", "3", "4", "8", "p", "d", "|", "_", ".", ","]
 
 
 def roofline(LABELS, FLOPS, AIL1, AIL2, AIHBM):
@@ -53,16 +50,14 @@ def roofline(LABELS, FLOPS, AIL1, AIL2, AIHBM):
     x = np.logspace(xmin, xmax, nx)
     for roof in cmpRoofs:
         for ix in range(1, nx):
-            if float(memRoofs[0][1] * x[ix]) >= roof[1] and (
-                    memRoofs[0][1] * x[ix - 1]) < roof[1]:
+            if float(memRoofs[0][1] * x[ix]) >= roof[1] and (memRoofs[0][1] * x[ix - 1]) < roof[1]:
                 scomp_x_elbow.append(x[ix - 1])
                 scomp_ix_elbow.append(ix - 1)
                 break
 
     for roof in memRoofs:
         for ix in range(1, nx):
-            if (cmpRoofs[0][1] <= roof[1] * x[ix]
-                    and cmpRoofs[0][1] > roof[1] * x[ix - 1]):
+            if (cmpRoofs[0][1] <= roof[1] * x[ix] and cmpRoofs[0][1] > roof[1] * x[ix - 1]):
                 smem_x_elbow.append(x[ix - 1])
                 smem_ix_elbow.append(ix - 1)
                 break
@@ -70,20 +65,12 @@ def roofline(LABELS, FLOPS, AIL1, AIL2, AIHBM):
     for i in range(len(cmpRoofs)):
         roof = cmpRoofs[i][1]
         y = np.ones(len(x)) * roof
-        ax.plot(x[scomp_ix_elbow[i]:],
-                y[scomp_ix_elbow[i]:],
-                c='k',
-                ls='-',
-                lw='2')
+        ax.plot(x[scomp_ix_elbow[i]:], y[scomp_ix_elbow[i]:], c='k', ls='-', lw='2')
 
     for i in range(len(memRoofs)):
         roof = memRoofs[i][1]
         y = x * roof
-        ax.plot(x[:smem_ix_elbow[i] + 1],
-                y[:smem_ix_elbow[i] + 1],
-                c='k',
-                ls='-',
-                lw='2')
+        ax.plot(x[:smem_ix_elbow[i] + 1], y[:smem_ix_elbow[i] + 1], c='k', ls='-', lw='2')
 
     marker_handles = list()
 
@@ -115,14 +102,10 @@ def roofline(LABELS, FLOPS, AIL1, AIL2, AIHBM):
                 markerfacecolor='none',
                 markeredgewidth=markerwidth,
                 label=LABELS[i])
-        ax.plot(
-            [float(AIL1[i]), float(AIL2[i]),
-             float(AIHBM[i])],
-            [float(FLOPS[i]),
-             float(FLOPS[i]),
-             float(FLOPS[i])],
-            c=colors[i],
-            linestyle='-')
+        ax.plot([float(AIL1[i]), float(AIL2[i]), float(AIHBM[i])],
+                [float(FLOPS[i]), float(FLOPS[i]), float(FLOPS[i])],
+                c=colors[i],
+                linestyle='-')
 
 
 #    ax.text(70-3*len(AIL1)+3*i,float(FLOPS[i]),str(i+1),color=colors[i],horizontalalignment='right',verticalalignment='center')
@@ -146,13 +129,12 @@ def roofline(LABELS, FLOPS, AIL1, AIL2, AIHBM):
 
     for roof in memRoofs:
         ang = np.arctan(
-            np.log10(xlim[1] / xlim[0]) / np.log10(ylim[1] / ylim[0]) *
-            fig.get_size_inches()[1] / fig.get_size_inches()[0])
+            np.log10(xlim[1] / xlim[0]) / np.log10(ylim[1] / ylim[0]) * fig.get_size_inches()[1] /
+            fig.get_size_inches()[0])
         if x[ixx] * roof[1] > ymin:
             ax.text(x[ixx],
                     x[ixx] * roof[1] * (1 + 0.25 * np.sin(ang)**2),
-                    roof[0] + ': ' + '{0:.0f}'.format(float(roof[1])) +
-                    ' GB/s',
+                    roof[0] + ': ' + '{0:.0f}'.format(float(roof[1])) + ' GB/s',
                     horizontalalignment='left',
                     verticalalignment='bottom',
                     rotation=180 / np.pi * ang)
@@ -165,35 +147,22 @@ def roofline(LABELS, FLOPS, AIL1, AIL2, AIHBM):
                     ymin_ix_elbow.append(ix - 1)
                     break
             ax.text(x[ixx + ymin_ix_elbow[0]],
-                    x[ixx + ymin_ix_elbow[0]] * roof[1] *
-                    (1 + 0.25 * np.sin(ang)**2),
-                    roof[0] + ': ' + '{0:.1f}'.format(float(roof[1])) +
-                    ' GB/s',
+                    x[ixx + ymin_ix_elbow[0]] * roof[1] * (1 + 0.25 * np.sin(ang)**2),
+                    roof[0] + ': ' + '{0:.1f}'.format(float(roof[1])) + ' GB/s',
                     horizontalalignment='left',
                     verticalalignment='bottom',
                     rotation=180 / np.pi * ang)
 
-    leg1 = plt.legend(handles=marker_handles,
-                      loc='lower center',
-                      ncol=1,
-                      bbox_to_anchor=(0.5, 0))
+    leg1 = plt.legend(handles=marker_handles, loc='lower center', ncol=1, bbox_to_anchor=(0.5, 0))
     ax.add_artist(leg1)
 
     patch_handles = list()
     for i in range(0, len(AIHBM)):
         patch_handles.append(mpatches.Patch(color=colors[i], label=LABELS[i]))
 
-    leg2 = plt.legend(handles=patch_handles,
-                      loc=4,
-                      ncol=1,
-                      bbox_to_anchor=(1, 0),
-                      scatterpoints=1)
+    leg2 = plt.legend(handles=patch_handles, loc=4, ncol=1, bbox_to_anchor=(1, 0), scatterpoints=1)
 
-    ax.text(xlim[0] * 1.1,
-            ylim[1] / 1.1,
-            'V100',
-            horizontalalignment='left',
-            verticalalignment='top')
+    ax.text(xlim[0] * 1.1, ylim[1] / 1.1, 'V100', horizontalalignment='left', verticalalignment='top')
 
     #ax.minorticks_on()
     # Customize the major grid

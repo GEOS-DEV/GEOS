@@ -26,26 +26,15 @@ def main():
 
     # Analytical results
     # Rigidity of the casing-cement-rock system
-    rigidity = np.array([[
-        r_casing_out, 1.0 / r_casing_out, -r_casing_out, -1.0 / r_casing_out,
-        0.0
-    ],
-                         [
-                             2.0 * (lambda_casing + G_casing),
-                             -2.0 * G_casing / r_casing_out / r_casing_out,
-                             -2.0 * (lambda_cement + G_cement),
-                             2.0 * G_cement / r_casing_out / r_casing_out, 0.0
-                         ], [0.0, 0.0, r_hole, 1.0 / r_hole, -1.0 / r_hole],
-                         [
-                             0.0, 0.0, 2.0 * (lambda_cement + G_cement),
-                             -2.0 * G_cement / r_hole / r_hole,
-                             2.0 * G_rock / r_hole / r_hole
-                         ],
-                         [
-                             2.0 * (lambda_casing + G_casing),
-                             -2.0 * G_casing / r_casing_in / r_casing_in, 0.0,
-                             0.0, 0.0
-                         ]])
+    rigidity = np.array([
+        [r_casing_out, 1.0 / r_casing_out, -r_casing_out, -1.0 / r_casing_out, 0.0],
+        [
+            2.0 * (lambda_casing + G_casing), -2.0 * G_casing / r_casing_out / r_casing_out,
+            -2.0 * (lambda_cement + G_cement), 2.0 * G_cement / r_casing_out / r_casing_out, 0.0
+        ], [0.0, 0.0, r_hole, 1.0 / r_hole, -1.0 / r_hole],
+        [0.0, 0.0, 2.0 * (lambda_cement + G_cement), -2.0 * G_cement / r_hole / r_hole, 2.0 * G_rock / r_hole / r_hole],
+        [2.0 * (lambda_casing + G_casing), -2.0 * G_casing / r_casing_in / r_casing_in, 0.0, 0.0, 0.0]
+    ])
 
     # Vector of force
     force = np.array([0.0, 0.0, 0.0, 0.0, P0])

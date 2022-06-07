@@ -58,12 +58,7 @@ def extrapolate_nan_values(x, y, slope_scale=0.0):
     return y
 
 
-def get_random_realization(x,
-                           bins,
-                           value,
-                           rand_fill=0,
-                           rand_scale=0,
-                           slope_scale=0):
+def get_random_realization(x, bins, value, rand_fill=0, rand_scale=0, slope_scale=0):
     """
     Get a random realization for a noisy signal with a set of bins
 

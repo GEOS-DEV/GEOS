@@ -35,10 +35,8 @@ def getMechanicalParametersFromXML(xmlFilePath):
 
     mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus"])
 
-    mechanicalParameters["bulkModulus"] = float(
-        param.get("defaultBulkModulus"))
-    mechanicalParameters["shearModulus"] = float(
-        param.get("defaultShearModulus"))
+    mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
+    mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
 
     return mechanicalParameters
 
@@ -50,8 +48,7 @@ def getFracturePressureFromXML(xmlFilePath):
 
     found_traction = False
     for elem in param:
-        if elem.get("fieldName") == "fractureTraction" and elem.get(
-                "component") == "0":
+        if elem.get("fieldName") == "fractureTraction" and elem.get("component") == "0":
             pressure = float(elem.get("scale")) * (-1)
             found_traction = True
 
@@ -103,8 +100,7 @@ def main(filesPaths):
 
     x = x - origin
     # Initialize Sneddon's analytical solution
-    sneddonAnalyticalSolution = Sneddon(mechanicalParameters, length,
-                                        appliedPressure)
+    sneddonAnalyticalSolution = Sneddon(mechanicalParameters, length, appliedPressure)
 
     # Plot analytical (continuous line) and numerical (markers) aperture solution
     x_analytical = np.linspace(-length, length, 101, endpoint=True)
@@ -117,13 +113,9 @@ def main(filesPaths):
     cmap = plt.get_cmap("tab10")
     i = 0
     for xCell in x_analytical:
-        aperture_analytical[i] = sneddonAnalyticalSolution.computeAperture(
-            xCell)
+        aperture_analytical[i] = sneddonAnalyticalSolution.computeAperture(xCell)
         i += 1
-    plt.plot(x_analytical,
-             aperture_analytical,
-             color=cmap(-1),
-             label='analytical solution')
+    plt.plot(x_analytical, aperture_analytical, color=cmap(-1), label='analytical solution')
     plt.plot(x, aperture, 'o', color=cmap(2), label='numerical solution')
 
     plt.grid()
@@ -134,20 +126,11 @@ def main(filesPaths):
 
 
 def parseArguments():
-    parser = argparse.ArgumentParser(
-        description="Sneddon comparison with analytical solution")
+    parser = argparse.ArgumentParser(description="Sneddon comparison with analytical solution")
 
-    parser.add_argument("-dp",
-                        "--datapath",
-                        type=str,
-                        default="",
-                        help="path to the hdf5 files with the data.")
+    parser.add_argument("-dp", "--datapath", type=str, default="", help="path to the hdf5 files with the data.")
 
-    parser.add_argument("-xp",
-                        "--xmlpath",
-                        type=str,
-                        default="",
-                        help="path to xml file.")
+    parser.add_argument("-xp", "--xmlpath", type=str, default="", help="path to xml file.")
 
     args, unknown_args = parser.parse_known_args()
 
@@ -156,16 +139,12 @@ def parseArguments():
         # get path to the hdf5 files
         filesPaths.append(args.datapath + "displacementJump_history.hdf5")
     else:
-        print(
-            "The path to the hdf5 files must be specified. Use -dp to specify it."
-        )
+        print("The path to the hdf5 files must be specified. Use -dp to specify it.")
 
     if args.xmlpath != "":
         filesPaths.append(args.xmlpath + "Sneddon-Validation.xml")
     else:
-        print(
-            "The path to the xml file must be specified. Use -xp to specify it."
-        )
+        print("The path to the xml file must be specified. Use -xp to specify it.")
 
     return filesPaths
 

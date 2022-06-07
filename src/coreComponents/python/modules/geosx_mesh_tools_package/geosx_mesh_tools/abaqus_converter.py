@@ -37,16 +37,12 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
         cell_ids.append(np.zeros(len(block[1]), dtype=int) - 1)
         for region_id, region in enumerate(region_list):
             mesh.field_data[region] = [region_id + 1, 3]
-            cell_ids[block_id][mesh.cell_sets[region]
-                               [block_id]] = region_id + 1
+            cell_ids[block_id][mesh.cell_sets[region][block_id]] = region_id + 1
 
         # Check for bad element region conversions
         if (-1 in cell_ids[-1]):
-            logger.warning(
-                'Some element regions in block %i did not convert correctly to tags!'
-                % (block_id))
-            logger.warning(
-                'Note: These will be indicated by a -1 in the output file.')
+            logger.warning('Some element regions in block %i did not convert correctly to tags!' % (block_id))
+            logger.warning('Note: These will be indicated by a -1 in the output file.')
             n_warnings += 1
 
     # Add to the meshio datastructure
@@ -93,11 +89,8 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
                         quad_region.append(region_id)
 
                     else:
-                        logger.warning(
-                            '  Discarding an element with an unexpected number of nodes'
-                        )
-                        logger.warning('    n_nodes=%i, element=%i, set=%s' %
-                                       (n_matching, element_id, nodeset_name))
+                        logger.warning('  Discarding an element with an unexpected number of nodes')
+                        logger.warning('    n_nodes=%i, element=%i, set=%s' % (n_matching, element_id, nodeset_name))
                         n_warnings += 1
 
     # Add new tris
@@ -105,8 +98,7 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
         logger.info('  Adding %i new triangles...' % (len(new_tris)))
         if (-1 in tri_region):
             logger.warning('Triangles with empty region information found!')
-            logger.warning(
-                'Note: These will be indicated by a -1 in the output file.')
+            logger.warning('Note: These will be indicated by a -1 in the output file.')
             n_warnings += 1
         mesh.cells.append(CellBlock('triangle', np.array(new_tris)))
         mesh.cell_data['gmsh:geometrical'].append(np.array(tri_region))
@@ -117,8 +109,7 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
         logger.info('  Adding %i new quads...' % (len(new_quads)))
         if (-1 in quad_region):
             logger.warning('Quads with empty region information found!')
-            logger.warning(
-                'Note: These will be indicated by a -1 in the output file.')
+            logger.warning('Note: These will be indicated by a -1 in the output file.')
             n_warnings += 1
         mesh.cells.append(CellBlock('quad', np.array(new_quads)))
         mesh.cell_data['gmsh:geometrical'].append(np.array(quad_region))
@@ -143,10 +134,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('input', type=str, help='Input abaqus mesh file name')
     parser.add_argument('output', type=str, help='Output gmsh mesh file name')
-    parser.add_argument('-v',
-                        '--verbose',
-                        help='Increase verbosity level',
-                        action="store_true")
+    parser.add_argument('-v', '--verbose', help='Increase verbosity level', action="store_true")
     args = parser.parse_args()
 
     # Set up a logger
@@ -158,5 +146,4 @@ def main():
     # Call the converter
     err = convert_abaqus_to_gmsh(args.input, args.output, logger)
     if err:
-        sys.exit(
-            'Warnings detected: check the output file for potential errors!')
+        sys.exit('Warnings detected: check the output file for potential errors!')

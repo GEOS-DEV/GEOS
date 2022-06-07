@@ -17,28 +17,21 @@ def findFiles(folder, extension):
                 yield os.path.join(root, filename)
 
 
-parser = argparse.ArgumentParser(
-    description='Process ats output to filter diffs.')
+parser = argparse.ArgumentParser(description='Process ats output to filter diffs.')
 
-parser.add_argument(
-    '-d',
-    '--directory',
-    type=str,
-    default='integratedTests',
-    help='directory to search recursively for files with specified extension')
-
-parser.add_argument('-ext',
-                    '--extension',
+parser.add_argument('-d',
+                    '--directory',
                     type=str,
-                    default='.data',
-                    help='extension of files to filter')
+                    default='integratedTests',
+                    help='directory to search recursively for files with specified extension')
 
-parser.add_argument(
-    '-tl',
-    '--numTrailingLines',
-    type=int,
-    default=5,
-    help='number of lines to include in block after match is found.')
+parser.add_argument('-ext', '--extension', type=str, default='.data', help='extension of files to filter')
+
+parser.add_argument('-tl',
+                    '--numTrailingLines',
+                    type=int,
+                    default=5,
+                    help='number of lines to include in block after match is found.')
 
 args, unknown_args = parser.parse_known_args()
 if unknown_args:
@@ -80,8 +73,7 @@ for fileName in findFiles(directory, extension):
                         break
                 i += j
 
-                if not any(excludeString in matchBlock
-                           for excludeString in exclusionStrings):
+                if not any(excludeString in matchBlock for excludeString in exclusionStrings):
                     filteredErrors += matchBlock
 
     if (len(filteredErrors)):

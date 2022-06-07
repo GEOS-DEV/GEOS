@@ -28,10 +28,8 @@ def getMechanicalParametersFromXML(xmlFilePath):
     param = tree.find('Constitutive/ElasticIsotropic')
 
     mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus"])
-    mechanicalParameters["bulkModulus"] = float(
-        param.get("defaultBulkModulus"))
-    mechanicalParameters["shearModulus"] = float(
-        param.get("defaultShearModulus"))
+    mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
+    mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
     return mechanicalParameters
 
 
@@ -42,8 +40,7 @@ def getFracturePressureFromXML(xmlFilePath):
     pressure = 0.0
     found_traction = False
     for elem in param:
-        if elem.get("fieldName") == "traction" and elem.get(
-                "component") == "0":
+        if elem.get("fieldName") == "traction" and elem.get("component") == "0":
             pressure = float(elem.get("scale")) * (-1)
             found_traction = True
         if found_traction: break
@@ -108,16 +105,14 @@ def main():
     length, origin = getFractureLengthFromXML(xmlFilePath)
 
     # Initialize Sneddon's analytical solution
-    sneddonAnalyticalSolution = Sneddon(mechanicalParameters, length,
-                                        appliedPressure)
+    sneddonAnalyticalSolution = Sneddon(mechanicalParameters, length, appliedPressure)
 
     # Plot analytical (continuous line) and numerical (markers) aperture solution
     x_analytical = np.linspace(-length, length, 501, endpoint=True)
     aperture_analytical = np.empty(len(x_analytical))
     i = 0
     for xCell in x_analytical:
-        aperture_analytical[i] = sneddonAnalyticalSolution.computeAperture(
-            xCell)
+        aperture_analytical[i] = sneddonAnalyticalSolution.computeAperture(xCell)
         i += 1
 
     fsize = 30
@@ -127,11 +122,7 @@ def main():
     cmap = plt.get_cmap("tab10")
 
     N1 = 1
-    ax.plot(x_analytical,
-            aperture_analytical * 1.0e3,
-            color='k',
-            label='Analytical Solution',
-            lw=lw)
+    ax.plot(x_analytical, aperture_analytical * 1.0e3, color='k', label='Analytical Solution', lw=lw)
     ax.plot(loc_EmbeddeFrac[0::N1],
             aperture_EmbeddeFrac[0::N1] * 1.0e3,
             'o',
@@ -157,10 +148,7 @@ def main():
     ax.grid()
     ax.set_xlabel('Fracture Length [m]', size=fsize, weight="bold")
     ax.set_ylabel('Fracture Aperture [mm]', size=fsize, weight="bold")
-    ax.legend(bbox_to_anchor=(0.5, 0.2),
-              loc='center',
-              borderaxespad=0.,
-              fontsize=fsize)
+    ax.legend(bbox_to_anchor=(0.5, 0.2), loc='center', borderaxespad=0., fontsize=fsize)
     ax.xaxis.set_tick_params(labelsize=fsize)
     ax.yaxis.set_tick_params(labelsize=fsize)
 

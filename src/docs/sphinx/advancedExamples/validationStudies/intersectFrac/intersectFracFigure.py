@@ -29,16 +29,12 @@ def getMechanicalParametersFromXML(xmlFilePath):
 
     param = tree.find('Constitutive/ElasticIsotropic')
 
-    mechanicalParameters = dict.fromkeys(
-        ["bulkModulus", "shearModulus", "frictionCoefficient"])
-    mechanicalParameters["bulkModulus"] = float(
-        param.get("defaultBulkModulus"))
-    mechanicalParameters["shearModulus"] = float(
-        param.get("defaultShearModulus"))
+    mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus", "frictionCoefficient"])
+    mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
+    mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
 
     param = tree.find('Constitutive/Coulomb')
-    mechanicalParameters["frictionCoefficient"] = float(
-        param.get("frictionCoefficient"))
+    mechanicalParameters["frictionCoefficient"] = float(param.get("frictionCoefficient"))
     return mechanicalParameters
 
 
@@ -49,8 +45,7 @@ def getCompressiveStressFromXML(xmlFilePath):
 
     found_stress = False
     for elem in param:
-        if elem.get("fieldName") == "rock_stress" and elem.get(
-                "component") == "1":
+        if elem.get("fieldName") == "rock_stress" and elem.get("component") == "1":
             stress = float(elem.get("scale")) * (-1)
             found_stress = True
         if found_stress: break
@@ -65,8 +60,7 @@ def getFracturePressureFromXML(xmlFilePath):
 
     found_pressure = False
     for elem in param:
-        if elem.get("name") == "NormalTraction" and elem.get(
-                "tractionType") == "normal":
+        if elem.get("name") == "NormalTraction" and elem.get("tractionType") == "normal":
             pressure = float(elem.get("scale")) * (-1)
             found_pressure = True
         if found_pressure: break
@@ -138,9 +132,7 @@ def main():
             apertlist.append(aperture[i] * 1.e3)
 
     # Load numerical solutions from literature work
-    r1, tn_literature = np.loadtxt('NormalTraction.txt',
-                                   skiprows=0,
-                                   unpack=True)
+    r1, tn_literature = np.loadtxt('NormalTraction.txt', skiprows=0, unpack=True)
     r2, gt_literature = np.loadtxt('Slip.txt', skiprows=0, unpack=True)
     r3, ap_literature = np.loadtxt('Aperture.txt', skiprows=0, unpack=True)
 
@@ -151,16 +143,14 @@ def main():
     appliedPressure = getFracturePressureFromXML(xmlFilePath)
 
     # Initialize Sneddon's analytical solution
-    sneddonAnalyticalSolution = Sneddon(mechanicalParameters, length1,
-                                        appliedPressure)
+    sneddonAnalyticalSolution = Sneddon(mechanicalParameters, length1, appliedPressure)
 
     # Plot analytical (continuous line) and numerical (markers) aperture solution
     x_analytical = np.linspace(-length1, length1, 101, endpoint=True)
     aperture_analytical = np.empty(len(x_analytical))
     i = 0
     for xCell in x_analytical:
-        aperture_analytical[i] = sneddonAnalyticalSolution.computeAperture(
-            xCell)
+        aperture_analytical[i] = sneddonAnalyticalSolution.computeAperture(xCell)
         i += 1
 
     fsize = 30
@@ -169,56 +159,26 @@ def main():
     fig, ax = plt.subplots(2, 2, figsize=(32, 18))
     cmap = plt.get_cmap("tab10")
 
-    ax[0, 0].plot(r1 - length2,
-                  tn_literature,
-                  color=cmap(-1),
-                  label='Phan et al.(2003)',
-                  lw=lw)
-    ax[0, 0].plot(xlist,
-                  tnlist,
-                  'o',
-                  alpha=0.6,
-                  color=cmap(2),
-                  mec='k',
-                  label='GEOSX Results',
-                  markersize=msize)
+    ax[0, 0].plot(r1 - length2, tn_literature, color=cmap(-1), label='Phan et al.(2003)', lw=lw)
+    ax[0, 0].plot(xlist, tnlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='GEOSX Results', markersize=msize)
     ax[0, 0].grid()
-    ax[0, 0].set_xlabel('Horizontal Frac Length [m]',
-                        size=fsize,
-                        weight="bold")
+    ax[0, 0].set_xlabel('Horizontal Frac Length [m]', size=fsize, weight="bold")
     ax[0, 0].set_ylabel('Normal Traction [MPa]', size=fsize, weight="bold")
     ax[0, 0].legend(loc='lower left', fontsize=fsize * 0.8)
     ax[0, 0].xaxis.set_tick_params(labelsize=fsize)
     ax[0, 0].yaxis.set_tick_params(labelsize=fsize)
 
-    ax[0, 1].plot(r2 - length2,
-                  gt_literature,
-                  color=cmap(-1),
-                  label='Phan et al.(2003)',
-                  lw=lw)
-    ax[0, 1].plot(xlist,
-                  gtlist,
-                  'o',
-                  alpha=0.6,
-                  color=cmap(2),
-                  mec='k',
-                  label='GEOSX Results',
-                  markersize=msize)
+    ax[0, 1].plot(r2 - length2, gt_literature, color=cmap(-1), label='Phan et al.(2003)', lw=lw)
+    ax[0, 1].plot(xlist, gtlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='GEOSX Results', markersize=msize)
     ax[0, 1].grid()
-    ax[0, 1].set_xlabel('Horizontal Frac Length [m]',
-                        size=fsize,
-                        weight="bold")
+    ax[0, 1].set_xlabel('Horizontal Frac Length [m]', size=fsize, weight="bold")
     ax[0, 1].set_ylabel('Slip [mm]', size=fsize, weight="bold")
     ax[0, 1].legend(loc='lower left', fontsize=fsize * 0.8)
     ax[0, 1].xaxis.set_tick_params(labelsize=fsize)
     ax[0, 1].yaxis.set_tick_params(labelsize=fsize)
 
     N1 = 2
-    ax[1, 0].plot(-r3 + length1,
-                  ap_literature,
-                  color=cmap(-1),
-                  label='Phan et al.(2003)',
-                  lw=lw)
+    ax[1, 0].plot(-r3 + length1, ap_literature, color=cmap(-1), label='Phan et al.(2003)', lw=lw)
     ax[1, 0].plot(ylist[0::N1],
                   apertlist[0::N1],
                   'o',
@@ -227,12 +187,7 @@ def main():
                   mec='k',
                   label='GEOSX Results',
                   markersize=msize)
-    ax[1, 0].plot(x_analytical,
-                  aperture_analytical * 1.0e3,
-                  '--',
-                  color=cmap(1),
-                  label='Sneddon Solution',
-                  lw=lw)
+    ax[1, 0].plot(x_analytical, aperture_analytical * 1.0e3, '--', color=cmap(1), label='Sneddon Solution', lw=lw)
     ax[1, 0].grid()
     ax[1, 0].set_xlabel('Vertical Frac Length [m]', size=fsize, weight="bold")
     ax[1, 0].set_ylabel('Aperture [mm]', size=fsize, weight="bold")

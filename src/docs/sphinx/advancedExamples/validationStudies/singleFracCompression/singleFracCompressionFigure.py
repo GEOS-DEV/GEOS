@@ -27,10 +27,9 @@ class Analytical:
         return -self.stress * pow(sin(self.inc), 2)
 
     def computeShearDisplacement(self, x):
-        return self.scaling * (
-            self.stress * sin(self.inc) *
-            (cos(self.inc) - sin(self.inc) * self.frictionCoefficient)) * pow(
-                (self.halfLength**2 - (self.halfLength - x - 1.)**2), 0.5)
+        return self.scaling * (self.stress * sin(self.inc) *
+                               (cos(self.inc) - sin(self.inc) * self.frictionCoefficient)) * pow(
+                                   (self.halfLength**2 - (self.halfLength - x - 1.)**2), 0.5)
 
 
 def getMechanicalParametersFromXML(xmlFilePath):
@@ -38,16 +37,12 @@ def getMechanicalParametersFromXML(xmlFilePath):
 
     param = tree.find('Constitutive/ElasticIsotropic')
 
-    mechanicalParameters = dict.fromkeys(
-        ["bulkModulus", "shearModulus", "frictionCoefficient"])
-    mechanicalParameters["bulkModulus"] = float(
-        param.get("defaultBulkModulus"))
-    mechanicalParameters["shearModulus"] = float(
-        param.get("defaultShearModulus"))
+    mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus", "frictionCoefficient"])
+    mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
+    mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
 
     param = tree.find('Constitutive/Coulomb')
-    mechanicalParameters["frictionCoefficient"] = float(
-        param.get("frictionCoefficient"))
+    mechanicalParameters["frictionCoefficient"] = float(param.get("frictionCoefficient"))
     return mechanicalParameters
 
 
@@ -58,8 +53,7 @@ def getCompressiveStressFromXML(xmlFilePath):
 
     found_stress = False
     for elem in param:
-        if elem.get("fieldName") == "rock_stress" and elem.get(
-                "component") == "0":
+        if elem.get("fieldName") == "rock_stress" and elem.get("component") == "0":
             stress = float(elem.get("scale")) * (-1)
             found_stress = True
         if found_stress: break
@@ -121,8 +115,7 @@ def main():
         if abs(zcord[i] / 0.025 - 1.) < 0.01:
             xlist.append(xcord[i])
             ylist.append(ycord[i])
-            xloc.append(
-                pow(xcord[i]**2 + ycord[i]**2, 0.5) * xcord[i] / abs(xcord[i]))
+            xloc.append(pow(xcord[i]**2 + ycord[i]**2, 0.5) * xcord[i] / abs(xcord[i]))
             tnlist.append(normalTraction[i] / 1.0e6)
             gtlist.append(displacementJump[i] * 1.e3)
 
@@ -132,8 +125,7 @@ def main():
     length, origin, inclination = getFractureGeometryFromXML(xmlFile2Path)
 
     # Initialize analytical solution
-    AnalyticalSolution = Analytical(mechanicalParameters, length, inclination,
-                                    compressiveStress)
+    AnalyticalSolution = Analytical(mechanicalParameters, length, inclination, compressiveStress)
 
     # Plot Analytical (continuous line) and Numerical (markers) Solution
     x_analytical = np.linspace(-length, length, 101, endpoint=True)
@@ -141,10 +133,8 @@ def main():
     gt_analytical = np.empty(len(x_analytical))
     i = 0
     for xCell in x_analytical:
-        tn_analytical[i] = AnalyticalSolution.computeNormalTraction(
-            xCell) / 1.0e6
-        gt_analytical[i] = AnalyticalSolution.computeShearDisplacement(
-            xCell) * 1.e3
+        tn_analytical[i] = AnalyticalSolution.computeNormalTraction(xCell) / 1.0e6
+        gt_analytical[i] = AnalyticalSolution.computeShearDisplacement(xCell) * 1.e3
         i += 1
 
     fsize = 30
@@ -153,55 +143,25 @@ def main():
     fig, ax = plt.subplots(1, 2, figsize=(32, 12))
     cmap = plt.get_cmap("tab10")
 
-    ax[0].plot(x_analytical,
-               tn_analytical,
-               color=cmap(-1),
-               label='Analytical Solution',
-               lw=lw)
-    ax[0].plot(xloc,
-               tnlist,
-               'o',
-               alpha=0.6,
-               color=cmap(2),
-               mec='k',
-               label='Numerical Solution',
-               markersize=msize)
+    ax[0].plot(x_analytical, tn_analytical, color=cmap(-1), label='Analytical Solution', lw=lw)
+    ax[0].plot(xloc, tnlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='Numerical Solution', markersize=msize)
     ax[0].grid()
     ax[0].set_xlim(-1, 1)
     ax[0].set_ylim(-18, 2)
     ax[0].set_xlabel('Length [m]', size=fsize, weight="bold")
     ax[0].set_ylabel('Normal Traction [MPa]', size=fsize, weight="bold")
-    ax[0].legend(bbox_to_anchor=(0.5, 0.2),
-                 loc='center',
-                 borderaxespad=0.,
-                 fontsize=fsize)
+    ax[0].legend(bbox_to_anchor=(0.5, 0.2), loc='center', borderaxespad=0., fontsize=fsize)
     ax[0].xaxis.set_tick_params(labelsize=fsize)
     ax[0].yaxis.set_tick_params(labelsize=fsize)
 
-    ax[1].plot(x_analytical,
-               gt_analytical,
-               color=cmap(-1),
-               label='Analytical Solution',
-               lw=lw)
-    ax[1].plot(xloc,
-               gtlist,
-               'o',
-               alpha=0.6,
-               color=cmap(2),
-               mec='k',
-               label='Numerical Solution',
-               markersize=msize)
+    ax[1].plot(x_analytical, gt_analytical, color=cmap(-1), label='Analytical Solution', lw=lw)
+    ax[1].plot(xloc, gtlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='Numerical Solution', markersize=msize)
     ax[1].grid()
     ax[1].set_xlim(-1, 1)
     ax[1].set_ylim(0, 4)
     ax[1].set_xlabel('Length [m]', size=fsize, weight="bold")
-    ax[1].set_ylabel('Relative Shear Displacement [mm]',
-                     size=fsize,
-                     weight="bold")
-    ax[1].legend(bbox_to_anchor=(0.5, 0.2),
-                 loc='center',
-                 borderaxespad=0.,
-                 fontsize=fsize)
+    ax[1].set_ylabel('Relative Shear Displacement [mm]', size=fsize, weight="bold")
+    ax[1].legend(bbox_to_anchor=(0.5, 0.2), loc='center', borderaxespad=0., fontsize=fsize)
     ax[1].xaxis.set_tick_params(labelsize=fsize)
     ax[1].yaxis.set_tick_params(labelsize=fsize)
 
