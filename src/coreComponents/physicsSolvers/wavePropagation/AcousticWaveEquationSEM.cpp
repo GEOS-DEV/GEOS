@@ -236,6 +236,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
 {
 
+  //TODO: Please make a shallow copy of face normal, face center, elemTofaces, elemCenter
   FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
   MeshLevel & mesh0 = this->getGroupByPath< MeshLevel >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/" );
   NodeManager const & nodeManager = mesh.getNodeManager();
@@ -442,6 +443,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
+    //TODO: Please make a shallow copy of face normal in the constructo for the new mesh level
     FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
     
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
