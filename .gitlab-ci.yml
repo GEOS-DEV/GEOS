@@ -137,8 +137,8 @@ nightly-job:
   stage: nightly
   script:
     - echo "~~~~~~~~~~ START - write to nightlyTests Repo ~~~~~~~~~~~~~"
-    - git clone git@github.com:bmhan12/test.git
-    - cd test
+    - git clone git@github.com:GEOSX/nightlyTests.git
+    - cd nightlyTests
     - ./update.sh
     - echo "~~~~~~~~~~ END - write to nightlyTests Repo ~~~~~~~~~~~~~"
   only:
