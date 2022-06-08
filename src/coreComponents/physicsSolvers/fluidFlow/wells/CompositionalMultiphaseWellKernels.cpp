@@ -434,7 +434,7 @@ FluxKernel::
                                                                             oneSidedDofColIndices_dPresCompUp,
                                                                             oneSidedFluxJacobian_dPresCompUp[i],
                                                                             NC+1 );
-          atomicAdd( parallelDeviceAtomic{}, &localRhs[oneSidedEqnRowIndices[i]], oneSidedFlux[i] );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[oneSidedEqnRowIndices[i]], oneSidedFlux[i] );
         }
       }
     }
@@ -497,7 +497,7 @@ FluxKernel::
                                                                             dofColIndices_dPresCompUp,
                                                                             localFluxJacobian_dPresCompUp[i],
                                                                             NC+1 );
-          atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localFlux[i] );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localFlux[i] );
         }
       }
     }
@@ -717,7 +717,7 @@ PressureRelationKernel::
                                                                           dofColIndices,
                                                                           localPresRelJacobian,
                                                                           2 * (NC+1) );
-        atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], localPresRel );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], localPresRel );
       }
     }
   } );
