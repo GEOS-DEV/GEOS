@@ -100,7 +100,7 @@ getVtkPoints( NodeManager const & nodeManager,
               arrayView1d< localIndex const > const & nodeIndices )
 {
   localIndex const numNodes = LvArray::integerConversion< localIndex >( nodeIndices.size() );
-  vtkSmartPointer< vtkPoints > points = vtkPoints::New();
+  auto points = vtkSmartPointer< vtkPoints >::New();
   points->SetNumberOfPoints( numNodes );
   auto const coord = nodeManager.referencePosition().toViewConst();
   forAll< parallelHostPolicy >( numNodes, [=, &points]( localIndex const k )
@@ -126,12 +126,12 @@ getWell( WellElementSubRegion const & subRegion,
   // - if the well represented by this subRegion is not on this rank, esr.size() = 0
   // - otherwise, esr.size() is equal to the number of well elements of the well on this rank
   // Each well element has two nodes, shared with the previous and next well elements, respectively
-  vtkSmartPointer< vtkPoints > points = vtkPoints::New();
+  auto points = vtkSmartPointer< vtkPoints >::New();
   // if esr.size() == 0, we set the number of points and cells to zero
   // if not, we set the number of points to esr.size()+1 and the number of cells to esr.size()
   localIndex const numPoints = subRegion.size() > 0 ? subRegion.size() + 1 : 0;
   points->SetNumberOfPoints( numPoints );
-  vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
+  auto cellsArray = vtkSmartPointer< vtkCellArray >::New();
   cellsArray->SetNumberOfCells( subRegion.size() );
   localIndex const numberOfNodesPerElement = subRegion.numNodesPerElement();
   GEOSX_ERROR_IF_NE( numberOfNodesPerElement, 2 );
@@ -174,7 +174,7 @@ getSurface( FaceElementSubRegion const & subRegion,
 {
   // Get unique node set composing the surface
   auto & nodeListPerElement = subRegion.nodeList();
-  vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
+  auto cellsArray = vtkSmartPointer< vtkCellArray >::New();
   cellsArray->SetNumberOfCells( subRegion.size() );
   std::unordered_map< localIndex, localIndex > geosx2VTKIndexing;
   geosx2VTKIndexing.reserve( subRegion.size() * subRegion.numNodesPerElement() );
@@ -200,7 +200,7 @@ getSurface( FaceElementSubRegion const & subRegion,
     cellsArray->InsertNextCell( elem.size(), connectivity.data() );
   }
 
-  vtkSmartPointer< vtkPoints > points = vtkPoints::New();
+  auto points = vtkSmartPointer< vtkPoints >::New();
   points->SetNumberOfPoints( geosx2VTKIndexing.size() );
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const referencePosition = nodeManager.referencePosition();
 
@@ -226,8 +226,8 @@ std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >
 getEmbeddedSurface( EmbeddedSurfaceSubRegion const & subRegion,
                     EmbeddedSurfaceNodeManager const & nodeManager )
 {
-  vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
-  vtkSmartPointer< vtkPoints > points = vtkPoints::New();
+  auto cellsArray = vtkSmartPointer< vtkCellArray >::New();
+  auto points = vtkSmartPointer< vtkPoints >::New();
 
   localIndex const numNodes = nodeManager.size();
   auto const intersectionPoints = nodeManager.referencePosition();
@@ -276,7 +276,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
   localIndex const numElems = region.getNumberOfElements< CellElementSubRegion >();
   if( numElems == 0 )
   {
-    return { {}, vtkCellArray::New(), {} };
+    return { {}, vtkSmartPointer< vtkCellArray >::New(), {} };
   }
 
   // 1. Mark (in parallel) relevant nodes
@@ -354,7 +354,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
   } );
   offsets->SetTypedComponent( elemOffset, 0, connOffset );
 
-  vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
+  auto cellsArray = vtkSmartPointer< vtkCellArray >::New();
   cellsArray->SetData( offsets, connectivity );
 
   return { std::move( cellTypes ), cellsArray, std::move( relevantNodes ) };
@@ -368,7 +368,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
 void writeTimestamp( vtkUnstructuredGrid & ug,
                      real64 const time )
 {
-  vtkDoubleArray * t = vtkDoubleArray::New();
+  auto t = vtkSmartPointer< vtkDoubleArray >::New();
   t->SetName( "TIME" );
   t->SetNumberOfTuples( 1 );
   t->SetTuple1( 0, time );
@@ -600,7 +600,7 @@ void writeElementField( Group const & subRegions,
         using ArrayType = decltype( array );
         using T = typename ArrayType::ValueType;
         auto typedData = vtkAOSDataArrayTemplate< T >::New();
-        data = typedData;
+        data.TakeReference( typedData );
         setComponentMetadata( Wrapper< ArrayType >::cast( wrapper ), *typedData );
       } );
       first = false;
@@ -645,7 +645,7 @@ void VTKPolyDataWriterInterface::writeNodeFields( NodeManager const & nodeManage
         using ArrayType = decltype( array );
         using T = typename ArrayType::ValueType;
         auto typedData = vtkAOSDataArrayTemplate< T >::New();
-        data = typedData;
+        data.TakeReference( typedData );
         setComponentMetadata( Wrapper< ArrayType >::cast( wrapper ), *typedData );
       } );
 
@@ -727,10 +727,11 @@ void VTKPolyDataWriterInterface::writeCellElementRegions( real64 const time,
     ug->SetCells( VTKCells.cellTypes.data(), VTKCells.cells );
     ug->SetPoints( VTKPoints );
 
-    writeTimestamp( *ug, time );
-    writeElementFields< CellElementSubRegion >( region, *ug->GetCellData() );
-    writeNodeFields( nodeManager, VTKCells.nodes, *ug->GetPointData() );
-    writeUnstructuredGrid( cycle, region.getName(), *ug );
+    vtkUnstructuredGrid * pug = ug.GetPointer();
+    writeTimestamp( *pug, time );
+    writeElementFields< CellElementSubRegion >( region, *pug->GetCellData() );
+    writeNodeFields( nodeManager, VTKCells.nodes, *pug->GetPointData() );
+    writeUnstructuredGrid( cycle, region.getName(), *pug );
   } );
 }
 
@@ -742,7 +743,7 @@ void VTKPolyDataWriterInterface::writeWellElementRegions( real64 const time,
   elemManager.forElementRegions< WellElementRegion >( [&]( WellElementRegion const & region )
   {
     auto const & subRegion = region.getSubRegion< WellElementSubRegion >( 0 );
-    vtkSmartPointer< vtkUnstructuredGrid > const ug = vtkUnstructuredGrid::New();
+    auto const ug = vtkSmartPointer< vtkUnstructuredGrid >::New();
     auto const VTKWell = getWell( subRegion, nodeManager );
     ug->SetPoints( VTKWell.first );
     ug->SetCells( VTK_LINE, VTKWell.second );
@@ -760,7 +761,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
 {
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
   {
-    vtkSmartPointer< vtkUnstructuredGrid > const ug = vtkUnstructuredGrid::New();
+    auto const ug = vtkSmartPointer< vtkUnstructuredGrid >::New();
     if( region.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::embeddedElement )
     {
       auto const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
@@ -853,7 +854,7 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( integer const cycle,
                                                         string const & name,
                                                         vtkUnstructuredGrid & ug ) const
 {
-  vtkSmartPointer< vtkXMLUnstructuredGridWriter > const vtuWriter = vtkXMLUnstructuredGridWriter::New();
+  auto const vtuWriter = vtkSmartPointer< vtkXMLUnstructuredGridWriter >::New();
   vtuWriter->SetInputData( &ug );
   string const vtuFilePath = joinPath( m_outputDir,
                                        m_outputName,
