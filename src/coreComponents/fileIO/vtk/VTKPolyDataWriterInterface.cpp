@@ -103,10 +103,10 @@ getVtkPoints( NodeManager const & nodeManager,
   auto points = vtkSmartPointer< vtkPoints >::New();
   points->SetNumberOfPoints( numNodes );
   auto const coord = nodeManager.referencePosition().toViewConst();
-  forAll< parallelHostPolicy >( numNodes, [=, &points]( localIndex const k )
+  forAll< parallelHostPolicy >( numNodes, [=, pts = points.GetPointer()]( localIndex const k )
   {
     localIndex const v = nodeIndices[k];
-    points->SetPoint( k, coord[v][0], coord[v][1], coord[v][2] );
+    pts->SetPoint( k, coord[v][0], coord[v][1], coord[v][2] );
   } );
   return points;
 }
@@ -624,7 +624,7 @@ void writeElementField( Group const & subRegions,
   subRegions.forSubGroups< SUBREGION >( [&]( SUBREGION const & subRegion )
   {
     WrapperBase const & wrapper = subRegion.getWrapperBase( field );
-    writeField( wrapper, offset, data );
+    writeField( wrapper, offset, data.GetPointer() );
     offset += subRegion.size();
   } );
   cellData->AddArray( data );
@@ -652,7 +652,7 @@ void VTKPolyDataWriterInterface::writeNodeFields( NodeManager const & nodeManage
       data->SetNumberOfTuples( nodeIndices.size() );
       data->SetName( wrapper.getName().c_str() );
 
-      writeField( wrapper, nodeIndices, 0, data );
+      writeField( wrapper, nodeIndices, 0, data.GetPointer() );
       pointData->AddArray( data );
     }
   }
@@ -793,8 +793,8 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
       }
       writeElementFields< FaceElementSubRegion >( region, ug->GetCellData() );
     }
-    writeTimestamp( ug, time );
-    writeUnstructuredGrid( cycle, region.getName(), ug );
+    writeTimestamp( ug.GetPointer(), time );
+    writeUnstructuredGrid( cycle, region.getName(), ug.GetPointer() );
   } );
 }
 
