@@ -95,7 +95,7 @@ set(ENABLE_PYGEOSX ON CACHE BOOL "")
 if (DEFINED ENV{OPENBLAS_ROOT})
   set(BLAS_LIBRARIES $ENV{OPENBLAS_ROOT}/lib/libopenblas.a)
   set(LAPACK_LIBRARIES $ENV{OPENBLAS_ROOT}/lib/libopenblas.a)
-else
+else()
   message(FATAL_ERROR "You must have OPENBLAS_ROOT environment variable set, we advise loading module openblas/0.3.18")
 endif()
 
