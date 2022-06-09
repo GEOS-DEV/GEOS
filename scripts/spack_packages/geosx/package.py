@@ -146,15 +146,11 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('parmetis@4.0.3+int64')
 
     #depends_on('superlu-dist+int64+openmp', when='~petsc')
-    depends_on('superlu-dist@6.3.0+int64+openmp')
+    depends_on('superlu-dist+int64+openmp')
 
-<<<<<<< HEAD
     depends_on('scotch@6.0.9: +mpi +int64', when='+scotch')
 
-    depends_on('suite-sparse@5.10.1+openmp', when='+suite-sparse')
-=======
-    depends_on('suite-sparse@5.10.1+openmp')
->>>>>>> ddf6b4506 (make suite-sparse mandatory (spack is not always adding it to spec otherwise))
+    depends_on('suite-sparse+openmp')
 
     trilinos_build_options = '+openmp'
     trilinos_packages = '+aztec+stratimikos~amesos2~anasazi~belos~ifpack2~muelu~sacado+thyra'
@@ -163,6 +159,10 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('hypre@2.24.0geosx+shared+superlu-dist+mixedint+mpi+openmp', when='+hypre~cuda')
 
     depends_on('hypre@2.24.0geosx+cuda+shared+superlu-dist+mpi+openmp+unified-memory', when='+hypre+cuda')
+    with when('+cuda'):
+        for sm_ in CudaPackage.cuda_arch_values:
+            depends_on('hypre+cuda cuda_arch={0}'.format(sm_),
+                       when='cuda_arch={0}'.format(sm_))
  
     depends_on('petsc@3.13.0~hdf5~hypre+int64+ptscotch', when='+petsc')
     depends_on('scotch@6.0.9', when='+petsc')

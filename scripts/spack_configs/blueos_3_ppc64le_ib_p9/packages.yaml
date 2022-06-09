@@ -3,8 +3,8 @@ packages:
     compiler: [gcc, clang]
     providers:
       mpi: [spectrum-mpi]
-      blas: [essl]
-      lapack: [essl]
+      blas: [netlib-lapack]
+      lapack: [netlib-lapack]
 
   spectrum-mpi:
     buildable: False
@@ -20,11 +20,11 @@ packages:
         prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-ibm-11.0.1/
 
   # Lock down blas, lapack implementation
-  essl:
-    buildable: False
-    externals:
-      - spec: essl@6.2.1 ~ilp64 threads=openmp +cuda
-        prefix: /usr/tcetmp/packages/essl/essl-6.2.1/
+  # essl:
+  #   buildable: False
+  #   externals:
+  #     - spec: essl@6.2.1 ~ilp64 threads=openmp +cuda
+  #       prefix: /usr/tcetmp/packages/essl/essl-6.2.1/
 
   cuda:
     buildable: False
