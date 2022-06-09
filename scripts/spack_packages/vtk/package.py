@@ -35,6 +35,7 @@ class Vtk(CMakePackage):
     version('6.3.0', sha256='92a493354c5fa66bea73b5fc014154af5d9f3f6cee8d20a826f4cd5d4b0e8a5e')
     version('6.1.0', sha256='bd7df10a479606d529a8b71f466c44a2bdd11fd534c62ce0aa44fad91883fa34')
 
+    variant('python', default=False, description='Enable Python support')
     variant('mpi', default=True, description='Enable MPI support')
 
     patch('VTK-9.1.0-disable_traits.patch', when='@9.1.0')

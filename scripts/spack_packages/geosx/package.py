@@ -123,10 +123,10 @@ class Geosx(CMakePackage, CudaPackage):
     # #
     # # IO
     # #
-    depends_on('hdf5@1.10.5')
-    depends_on('silo@4.10.2~fortran')
+    depends_on('hdf5@1.12.1')
+    depends_on('silo@4.11~fortran')
 
-    depends_on('conduit@0.7.2~test~fortran~hdf5_compat')
+    depends_on('conduit@0.8.2~test~fortran~hdf5_compat')
 
 
     depends_on('adiak@0.2.1', when='+caliper')
