@@ -4,5 +4,6 @@ numpy
 h5py
 mpmath
 docutils<0.18
-# using mermaid for diagrams
+# using mermaid and plantuml for diagrams
 sphinxcontrib-mermaid
+sphinxcontrib-plantuml
