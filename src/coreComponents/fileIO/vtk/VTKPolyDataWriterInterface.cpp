@@ -67,6 +67,9 @@ static int toVTKCellType( ElementType const elementType )
     case ElementType::Prism6:        return VTK_HEXAGONAL_PRISM;
     case ElementType::Prism7:        return VTK_POLYHEDRON;
     case ElementType::Prism8:        return VTK_POLYHEDRON;
+    case ElementType::Prism9:        return VTK_POLYHEDRON;
+    case ElementType::Prism10:       return VTK_POLYHEDRON;
+    case ElementType::Prism11:       return VTK_POLYHEDRON;
     case ElementType::Polyhedron:    return VTK_POLYHEDRON;
   }
   return VTK_EMPTY_CELL;
@@ -89,6 +92,9 @@ static std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elementTy
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     case ElementType::Prism7:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
     case ElementType::Prism8:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+    case ElementType::Prism9:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 };
+    case ElementType::Prism10:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
+    case ElementType::Prism11:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 };
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
   }
   return {};
@@ -318,9 +324,6 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
     localIndex numConn = 0;
     region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
     {
-      //////////////////////
-      GEOSX_LOG_RANK_VAR( numConn );
-      //////////////////////
       if( subRegion.getElementType() == ElementType::Prism7 )
       {
         numConn += subRegion.size() * 52;
@@ -329,6 +332,18 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
       {
         numConn += subRegion.size() * 59;
       }
+      else if( subRegion.getElementType() == ElementType::Prism9 )
+      {
+        numConn += subRegion.size() * 66;
+      }
+      else if( subRegion.getElementType() == ElementType::Prism10 )
+      {
+        numConn += subRegion.size() * 73;
+      }
+      else if( subRegion.getElementType() == ElementType::Prism11 )
+      {
+        numConn += subRegion.size() * 80;
+      }
       else
       {
         numConn += subRegion.size() * subRegion.numNodesPerElement();
@@ -336,10 +351,6 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
     } );
     return numConn;
   }();
-
-  ////////////
-  GEOSX_LOG_RANK_VAR( numConns );
-  ////////////
 
   std::vector< int > cellTypes;
   cellTypes.reserve( numElems );
@@ -355,15 +366,11 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
   localIndex connOffset = 0;
   region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
-    GEOSX_LOG_RANK_VAR( subRegion.size() );
     cellTypes.insert( cellTypes.end(), subRegion.size(), toVTKCellType( subRegion.getElementType() ) );
     std::vector< int > const vtkOrdering = getVtkToGeosxNodeOrdering( subRegion.getElementType() );
     auto const nodeList = subRegion.nodeList().toViewConst();
     if( subRegion.getElementType() == ElementType::Prism7 )
     {
-      //////////////////////////////
-      GEOSX_LOG_RANK_VAR( subRegion.getElementType() );
-      //////////////////////////////
       localIndex const faceStreamSize = 52;
 
       forAll< parallelHostPolicy >( subRegion.size(), [=, &connectivity, &offsets]( localIndex const c )
@@ -443,10 +450,6 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         connectivity->SetTypedComponent( elemConnOffset + 50, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
         connectivity->SetTypedComponent( elemConnOffset + 51, 0, newNodeIndices[nodes[vtkOrdering[13]]] );
 
-        //////////////////////////
-        GEOSX_LOG_RANK_VAR( elemOffset + c );
-        GEOSX_LOG_RANK_VAR( elemConnOffset );
-        //////////////////////////
         offsets->SetTypedComponent( elemOffset + c, 0, elemConnOffset );
       } );
 
@@ -455,9 +458,6 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
     }
     else if( subRegion.getElementType() == ElementType::Prism8 )
     {
-      //////////////////////////////
-      GEOSX_LOG_RANK_VAR( subRegion.getElementType() );
-      //////////////////////////////
       localIndex const faceStreamSize = 59;
 
       forAll< parallelHostPolicy >( subRegion.size(), [=, &connectivity, &offsets]( localIndex const c )
@@ -502,7 +502,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         connectivity->SetTypedComponent( elemConnOffset + 25, 0, newNodeIndices[nodes[vtkOrdering[1]]] );
         connectivity->SetTypedComponent( elemConnOffset + 26, 0, newNodeIndices[nodes[vtkOrdering[2]]] );
         connectivity->SetTypedComponent( elemConnOffset + 27, 0, newNodeIndices[nodes[vtkOrdering[10]]] );
-        connectivity->SetTypedComponent( elemConnOffset + 28, 0, newNodeIndices[nodes[vtkOrdering[11]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 28, 0, newNodeIndices[nodes[vtkOrdering[9]]] );
 
         // numFace4Pts
         connectivity->SetTypedComponent( elemConnOffset + 29, 0, 4 );
@@ -546,10 +546,348 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         connectivity->SetTypedComponent( elemConnOffset + 57, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
         connectivity->SetTypedComponent( elemConnOffset + 58, 0, newNodeIndices[nodes[vtkOrdering[15]]] );
 
-        //////////////////////////
-        GEOSX_LOG_RANK_VAR( elemOffset + c );
-        GEOSX_LOG_RANK_VAR( elemConnOffset );
-        //////////////////////////
+        offsets->SetTypedComponent( elemOffset + c, 0, elemConnOffset );
+      } );
+
+      elemOffset += subRegion.size();
+      connOffset += subRegion.size() * faceStreamSize;
+    }
+    else if( subRegion.getElementType() == ElementType::Prism9 )
+    {
+      localIndex const faceStreamSize = 66;
+
+      forAll< parallelHostPolicy >( subRegion.size(), [=, &connectivity, &offsets]( localIndex const c )
+      {
+        localIndex const elemConnOffset = connOffset + c * faceStreamSize;
+        auto const nodes = nodeList[c];
+
+        // numCellFaces
+        connectivity->SetTypedComponent( elemConnOffset + 0, 0, 11 ); 
+
+        // numFace0Pts
+        connectivity->SetTypedComponent( elemConnOffset + 1, 0, 9 );
+        connectivity->SetTypedComponent( elemConnOffset + 2, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 3, 0, newNodeIndices[nodes[vtkOrdering[1]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 4, 0, newNodeIndices[nodes[vtkOrdering[2]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 5, 0, newNodeIndices[nodes[vtkOrdering[3]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 6, 0, newNodeIndices[nodes[vtkOrdering[4]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 7, 0, newNodeIndices[nodes[vtkOrdering[5]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 8, 0, newNodeIndices[nodes[vtkOrdering[6]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 9, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 10, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
+        
+        // numFace1Pts
+        connectivity->SetTypedComponent( elemConnOffset + 11, 0, 9 );
+        connectivity->SetTypedComponent( elemConnOffset + 12, 0, newNodeIndices[nodes[vtkOrdering[9]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 13, 0, newNodeIndices[nodes[vtkOrdering[10]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 14, 0, newNodeIndices[nodes[vtkOrdering[11]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 15, 0, newNodeIndices[nodes[vtkOrdering[12]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 16, 0, newNodeIndices[nodes[vtkOrdering[13]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 17, 0, newNodeIndices[nodes[vtkOrdering[14]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 18, 0, newNodeIndices[nodes[vtkOrdering[15]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 19, 0, newNodeIndices[nodes[vtkOrdering[16]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 20, 0, newNodeIndices[nodes[vtkOrdering[17]]] );
+        
+        // numFace2Pts
+        connectivity->SetTypedComponent( elemConnOffset + 21, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 22, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 23, 0, newNodeIndices[nodes[vtkOrdering[1]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 24, 0, newNodeIndices[nodes[vtkOrdering[10]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 25, 0, newNodeIndices[nodes[vtkOrdering[9]]] );
+
+        // numFace3Pts
+        connectivity->SetTypedComponent( elemConnOffset + 26, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 27, 0, newNodeIndices[nodes[vtkOrdering[1]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 28, 0, newNodeIndices[nodes[vtkOrdering[2]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 29, 0, newNodeIndices[nodes[vtkOrdering[11]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 30, 0, newNodeIndices[nodes[vtkOrdering[10]]] );
+
+        // numFace4Pts
+        connectivity->SetTypedComponent( elemConnOffset + 31, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 32, 0, newNodeIndices[nodes[vtkOrdering[2]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 33, 0, newNodeIndices[nodes[vtkOrdering[3]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 34, 0, newNodeIndices[nodes[vtkOrdering[12]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 35, 0, newNodeIndices[nodes[vtkOrdering[11]]] );
+
+        // numFace5Pts
+        connectivity->SetTypedComponent( elemConnOffset + 36, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 37, 0, newNodeIndices[nodes[vtkOrdering[3]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 38, 0, newNodeIndices[nodes[vtkOrdering[4]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 39, 0, newNodeIndices[nodes[vtkOrdering[13]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 40, 0, newNodeIndices[nodes[vtkOrdering[12]]] );
+
+        // numFace6Pts
+        connectivity->SetTypedComponent( elemConnOffset + 41, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 42, 0, newNodeIndices[nodes[vtkOrdering[4]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 43, 0, newNodeIndices[nodes[vtkOrdering[5]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 44, 0, newNodeIndices[nodes[vtkOrdering[14]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 45, 0, newNodeIndices[nodes[vtkOrdering[13]]] );
+
+        // numFace7Pts
+        connectivity->SetTypedComponent( elemConnOffset + 46, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 47, 0, newNodeIndices[nodes[vtkOrdering[5]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 48, 0, newNodeIndices[nodes[vtkOrdering[6]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 49, 0, newNodeIndices[nodes[vtkOrdering[15]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 50, 0, newNodeIndices[nodes[vtkOrdering[14]]] );
+
+        // numFace8Pts
+        connectivity->SetTypedComponent( elemConnOffset + 51, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 52, 0, newNodeIndices[nodes[vtkOrdering[6]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 53, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 54, 0, newNodeIndices[nodes[vtkOrdering[16]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 55, 0, newNodeIndices[nodes[vtkOrdering[15]]] );
+
+        // numFace9Pts
+        connectivity->SetTypedComponent( elemConnOffset + 56, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 57, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 58, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 59, 0, newNodeIndices[nodes[vtkOrdering[17]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 60, 0, newNodeIndices[nodes[vtkOrdering[16]]] );
+
+        // numFace10Pts
+        connectivity->SetTypedComponent( elemConnOffset + 61, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 62, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 63, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 64, 0, newNodeIndices[nodes[vtkOrdering[9]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 65, 0, newNodeIndices[nodes[vtkOrdering[17]]] );
+
+        offsets->SetTypedComponent( elemOffset + c, 0, elemConnOffset );
+      } );
+
+      elemOffset += subRegion.size();
+      connOffset += subRegion.size() * faceStreamSize;
+    }
+    else if( subRegion.getElementType() == ElementType::Prism10 )
+    {
+      localIndex const faceStreamSize = 73;
+
+      forAll< parallelHostPolicy >( subRegion.size(), [=, &connectivity, &offsets]( localIndex const c )
+      {
+        localIndex const elemConnOffset = connOffset + c * faceStreamSize;
+        auto const nodes = nodeList[c];
+
+        // numCellFaces
+        connectivity->SetTypedComponent( elemConnOffset + 0, 0, 12 ); 
+
+        // numFace0Pts
+        connectivity->SetTypedComponent( elemConnOffset + 1, 0, 10 );
+        connectivity->SetTypedComponent( elemConnOffset + 2, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 3, 0, newNodeIndices[nodes[vtkOrdering[1]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 4, 0, newNodeIndices[nodes[vtkOrdering[2]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 5, 0, newNodeIndices[nodes[vtkOrdering[3]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 6, 0, newNodeIndices[nodes[vtkOrdering[4]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 7, 0, newNodeIndices[nodes[vtkOrdering[5]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 8, 0, newNodeIndices[nodes[vtkOrdering[6]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 9, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 10, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 11, 0, newNodeIndices[nodes[vtkOrdering[9]]] );
+        
+        // numFace1Pts
+        connectivity->SetTypedComponent( elemConnOffset + 12, 0, 10 );
+        connectivity->SetTypedComponent( elemConnOffset + 13, 0, newNodeIndices[nodes[vtkOrdering[10]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 14, 0, newNodeIndices[nodes[vtkOrdering[11]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 15, 0, newNodeIndices[nodes[vtkOrdering[12]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 16, 0, newNodeIndices[nodes[vtkOrdering[13]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 17, 0, newNodeIndices[nodes[vtkOrdering[14]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 18, 0, newNodeIndices[nodes[vtkOrdering[15]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 19, 0, newNodeIndices[nodes[vtkOrdering[16]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 20, 0, newNodeIndices[nodes[vtkOrdering[17]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 21, 0, newNodeIndices[nodes[vtkOrdering[18]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 22, 0, newNodeIndices[nodes[vtkOrdering[19]]] );
+        
+        // numFace2Pts
+        connectivity->SetTypedComponent( elemConnOffset + 23, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 24, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 25, 0, newNodeIndices[nodes[vtkOrdering[1]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 26, 0, newNodeIndices[nodes[vtkOrdering[11]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 27, 0, newNodeIndices[nodes[vtkOrdering[10]]] );
+
+        // numFace3Pts
+        connectivity->SetTypedComponent( elemConnOffset + 28, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 29, 0, newNodeIndices[nodes[vtkOrdering[1]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 30, 0, newNodeIndices[nodes[vtkOrdering[2]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 31, 0, newNodeIndices[nodes[vtkOrdering[12]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 32, 0, newNodeIndices[nodes[vtkOrdering[11]]] );
+
+        // numFace4Pts
+        connectivity->SetTypedComponent( elemConnOffset + 33, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 34, 0, newNodeIndices[nodes[vtkOrdering[2]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 35, 0, newNodeIndices[nodes[vtkOrdering[3]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 36, 0, newNodeIndices[nodes[vtkOrdering[13]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 37, 0, newNodeIndices[nodes[vtkOrdering[12]]] );
+
+        // numFace5Pts
+        connectivity->SetTypedComponent( elemConnOffset + 38, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 39, 0, newNodeIndices[nodes[vtkOrdering[3]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 40, 0, newNodeIndices[nodes[vtkOrdering[4]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 41, 0, newNodeIndices[nodes[vtkOrdering[14]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 42, 0, newNodeIndices[nodes[vtkOrdering[13]]] );
+
+        // numFace6Pts
+        connectivity->SetTypedComponent( elemConnOffset + 43, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 44, 0, newNodeIndices[nodes[vtkOrdering[4]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 45, 0, newNodeIndices[nodes[vtkOrdering[5]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 46, 0, newNodeIndices[nodes[vtkOrdering[15]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 47, 0, newNodeIndices[nodes[vtkOrdering[14]]] );
+
+        // numFace7Pts
+        connectivity->SetTypedComponent( elemConnOffset + 48, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 49, 0, newNodeIndices[nodes[vtkOrdering[5]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 50, 0, newNodeIndices[nodes[vtkOrdering[6]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 51, 0, newNodeIndices[nodes[vtkOrdering[16]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 52, 0, newNodeIndices[nodes[vtkOrdering[15]]] );
+
+        // numFace8Pts
+        connectivity->SetTypedComponent( elemConnOffset + 53, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 54, 0, newNodeIndices[nodes[vtkOrdering[6]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 55, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 56, 0, newNodeIndices[nodes[vtkOrdering[17]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 57, 0, newNodeIndices[nodes[vtkOrdering[16]]] );
+
+        // numFace9Pts
+        connectivity->SetTypedComponent( elemConnOffset + 58, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 59, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 60, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 61, 0, newNodeIndices[nodes[vtkOrdering[18]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 62, 0, newNodeIndices[nodes[vtkOrdering[17]]] );
+
+        // numFace10Pts
+        connectivity->SetTypedComponent( elemConnOffset + 63, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 64, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 65, 0, newNodeIndices[nodes[vtkOrdering[9]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 66, 0, newNodeIndices[nodes[vtkOrdering[19]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 67, 0, newNodeIndices[nodes[vtkOrdering[18]]] );
+
+        // numFace11Pts
+        connectivity->SetTypedComponent( elemConnOffset + 68, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 69, 0, newNodeIndices[nodes[vtkOrdering[9]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 70, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 71, 0, newNodeIndices[nodes[vtkOrdering[10]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 72, 0, newNodeIndices[nodes[vtkOrdering[19]]] );
+
+        offsets->SetTypedComponent( elemOffset + c, 0, elemConnOffset );
+      } );
+
+      elemOffset += subRegion.size();
+      connOffset += subRegion.size() * faceStreamSize;
+    }
+    else if( subRegion.getElementType() == ElementType::Prism11 )
+    {
+      localIndex const faceStreamSize = 80;
+
+      forAll< parallelHostPolicy >( subRegion.size(), [=, &connectivity, &offsets]( localIndex const c )
+      {
+        localIndex const elemConnOffset = connOffset + c * faceStreamSize;
+        auto const nodes = nodeList[c];
+
+        // numCellFaces
+        connectivity->SetTypedComponent( elemConnOffset + 0, 0, 13 ); 
+
+        // numFace0Pts
+        connectivity->SetTypedComponent( elemConnOffset + 1, 0, 11 );
+        connectivity->SetTypedComponent( elemConnOffset + 2, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 3, 0, newNodeIndices[nodes[vtkOrdering[1]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 4, 0, newNodeIndices[nodes[vtkOrdering[2]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 5, 0, newNodeIndices[nodes[vtkOrdering[3]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 6, 0, newNodeIndices[nodes[vtkOrdering[4]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 7, 0, newNodeIndices[nodes[vtkOrdering[5]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 8, 0, newNodeIndices[nodes[vtkOrdering[6]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 9, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 10, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 11, 0, newNodeIndices[nodes[vtkOrdering[9]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 12, 0, newNodeIndices[nodes[vtkOrdering[10]]] );
+        
+        // numFace1Pts
+        connectivity->SetTypedComponent( elemConnOffset + 13, 0, 11 );
+        connectivity->SetTypedComponent( elemConnOffset + 14, 0, newNodeIndices[nodes[vtkOrdering[11]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 15, 0, newNodeIndices[nodes[vtkOrdering[12]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 16, 0, newNodeIndices[nodes[vtkOrdering[13]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 17, 0, newNodeIndices[nodes[vtkOrdering[14]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 18, 0, newNodeIndices[nodes[vtkOrdering[15]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 19, 0, newNodeIndices[nodes[vtkOrdering[16]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 20, 0, newNodeIndices[nodes[vtkOrdering[17]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 21, 0, newNodeIndices[nodes[vtkOrdering[18]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 22, 0, newNodeIndices[nodes[vtkOrdering[19]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 23, 0, newNodeIndices[nodes[vtkOrdering[20]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 24, 0, newNodeIndices[nodes[vtkOrdering[21]]] );
+        
+        // numFace2Pts
+        connectivity->SetTypedComponent( elemConnOffset + 25, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 26, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 27, 0, newNodeIndices[nodes[vtkOrdering[1]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 28, 0, newNodeIndices[nodes[vtkOrdering[12]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 29, 0, newNodeIndices[nodes[vtkOrdering[11]]] );
+
+        // numFace3Pts
+        connectivity->SetTypedComponent( elemConnOffset + 30, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 31, 0, newNodeIndices[nodes[vtkOrdering[1]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 32, 0, newNodeIndices[nodes[vtkOrdering[2]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 33, 0, newNodeIndices[nodes[vtkOrdering[13]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 34, 0, newNodeIndices[nodes[vtkOrdering[12]]] );
+
+        // numFace4Pts
+        connectivity->SetTypedComponent( elemConnOffset + 35, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 36, 0, newNodeIndices[nodes[vtkOrdering[2]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 37, 0, newNodeIndices[nodes[vtkOrdering[3]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 38, 0, newNodeIndices[nodes[vtkOrdering[14]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 39, 0, newNodeIndices[nodes[vtkOrdering[13]]] );
+
+        // numFace5Pts
+        connectivity->SetTypedComponent( elemConnOffset + 40, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 41, 0, newNodeIndices[nodes[vtkOrdering[3]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 42, 0, newNodeIndices[nodes[vtkOrdering[4]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 43, 0, newNodeIndices[nodes[vtkOrdering[15]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 44, 0, newNodeIndices[nodes[vtkOrdering[14]]] );
+
+        // numFace6Pts
+        connectivity->SetTypedComponent( elemConnOffset + 45, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 46, 0, newNodeIndices[nodes[vtkOrdering[4]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 47, 0, newNodeIndices[nodes[vtkOrdering[5]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 48, 0, newNodeIndices[nodes[vtkOrdering[16]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 49, 0, newNodeIndices[nodes[vtkOrdering[15]]] );
+
+        // numFace7Pts
+        connectivity->SetTypedComponent( elemConnOffset + 50, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 51, 0, newNodeIndices[nodes[vtkOrdering[5]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 52, 0, newNodeIndices[nodes[vtkOrdering[6]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 53, 0, newNodeIndices[nodes[vtkOrdering[17]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 54, 0, newNodeIndices[nodes[vtkOrdering[16]]] );
+
+        // numFace8Pts
+        connectivity->SetTypedComponent( elemConnOffset + 55, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 56, 0, newNodeIndices[nodes[vtkOrdering[6]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 57, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 58, 0, newNodeIndices[nodes[vtkOrdering[18]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 59, 0, newNodeIndices[nodes[vtkOrdering[17]]] );
+
+        // numFace9Pts
+        connectivity->SetTypedComponent( elemConnOffset + 60, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 61, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 62, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 63, 0, newNodeIndices[nodes[vtkOrdering[19]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 64, 0, newNodeIndices[nodes[vtkOrdering[18]]] );
+
+        // numFace10Pts
+        connectivity->SetTypedComponent( elemConnOffset + 65, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 66, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 67, 0, newNodeIndices[nodes[vtkOrdering[9]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 68, 0, newNodeIndices[nodes[vtkOrdering[20]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 69, 0, newNodeIndices[nodes[vtkOrdering[19]]] );
+
+        // numFace11Pts
+        connectivity->SetTypedComponent( elemConnOffset + 70, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 71, 0, newNodeIndices[nodes[vtkOrdering[9]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 72, 0, newNodeIndices[nodes[vtkOrdering[10]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 73, 0, newNodeIndices[nodes[vtkOrdering[21]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 74, 0, newNodeIndices[nodes[vtkOrdering[20]]] );
+
+        // numFace12Pts
+        connectivity->SetTypedComponent( elemConnOffset + 75, 0, 4 );
+        connectivity->SetTypedComponent( elemConnOffset + 76, 0, newNodeIndices[nodes[vtkOrdering[10]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 77, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 78, 0, newNodeIndices[nodes[vtkOrdering[11]]] );
+        connectivity->SetTypedComponent( elemConnOffset + 79, 0, newNodeIndices[nodes[vtkOrdering[21]]] );
+
         offsets->SetTypedComponent( elemOffset + c, 0, elemConnOffset );
       } );
 
@@ -558,9 +896,6 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
     }
     else
     {
-      //////////////////////////////
-      GEOSX_LOG_RANK_VAR( subRegion.getElementType() );
-      //////////////////////////////
       localIndex const nodesPerElem = subRegion.numNodesPerElement();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=, &connectivity, &offsets]( localIndex const c )
@@ -571,10 +906,6 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         {
           connectivity->SetTypedComponent( elemConnOffset + i, 0, newNodeIndices[nodes[vtkOrdering[i]]] );
         }
-        //////////////////////////
-        GEOSX_LOG_RANK_VAR( elemOffset + c );
-        GEOSX_LOG_RANK_VAR( elemConnOffset );
-        //////////////////////////
         offsets->SetTypedComponent( elemOffset + c, 0, elemConnOffset );
       } );
 
@@ -583,11 +914,6 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
     }
   } );
   
-  //////////////////////////////
-  GEOSX_LOG_RANK_VAR( elemOffset );
-  GEOSX_LOG_RANK_VAR( connOffset );
-  GEOSX_LOG_RANK_VAR( connectivity );
-  //////////////////////////////
 
   offsets->SetTypedComponent( elemOffset, 0, connOffset );
 

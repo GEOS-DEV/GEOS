@@ -384,9 +384,9 @@ ElementType PolyhedronToPrismType( int numPolygonBaseSides )
     case 6:  return ElementType::Prism6;
     case 7:  return ElementType::Prism7;
     case 8:  return ElementType::Prism8;
-    // case 9:  return ElementType::Prism9;
-    // case 10: return ElementType::Prism10;
-    // case 11: return ElementType::Prism11;
+    case 9:  return ElementType::Prism9;
+    case 10: return ElementType::Prism10;
+    case 11: return ElementType::Prism11;
     default:
     {
       GEOSX_ERROR( "Prism not supported in GEOSX. At most 11-sided polygon base" );
@@ -1011,206 +1011,8 @@ VTKMeshGenerator::CellMapType
 buildCellMap( vtkUnstructuredGrid & mesh,
               string const & attributeName )
 {
-
-  std::vector< int >  nodeOrder;
-  int polyhedronType;
-
-#if 0
-  //for( int i = 0; i < mesh.GetNumberOfCells(); ++i )
-  for( int i = 0; i < -1; ++i )
-  {
-    cout << "Cell(" << i << ") = " << mesh.GetCell( i )->GetCellType() << "\n";
-
-    if( mesh.GetCell( i )->GetCellType() == 42 )
-      polyhedronType = PolyhedronType( mesh.GetCell( i ) );
-    else
-      polyhedronType = 0;
-
-    cout << "polyhedronType = " << polyhedronType << "\n";
-
-    if( polyhedronType == 10 )  // TETRA
-    {
-      nodeOrder = GetTetrahedronNodeOrderingFromPolyhedron( mesh.GetCell( i ) );
-
-      cout << "Bases points using local numbering:" << "\n";
-      for( const auto item : nodeOrder )
-        cout << item << ", ";
-      cout << "\n\n";
-
-      real64 Xlocal[12][3];
-      vtkCell *cell = mesh.GetCell( i );
-      real64 volume;
-
-      for( int j = 0; j < cell->GetNumberOfPoints(); ++j )
-      {
-        Xlocal[j][0]=cell->GetPoints()->GetPoint( j )[0];
-        Xlocal[j][1]=cell->GetPoints()->GetPoint( j )[1];
-        Xlocal[j][2]=cell->GetPoints()->GetPoint( j )[2];
-      }
-
-      for( int j = 0; j < cell->GetNumberOfPoints(); ++j )
-      {
-        int k = nodeOrder[j];
-        cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
-      }
-
-    }
-
-
-    if( polyhedronType == 13 )  // WEDGE
-    {
-      nodeOrder = GetWedgeNodeOrderingFromPolyhedron( mesh.GetCell( i ) );
-
-      cout << "Bases points using local numbering:" << "\n";
-      for( const auto item : nodeOrder )
-        cout << item << ", ";
-      cout << "\n\n";
-
-      real64 Xlocal[12][3];
-      vtkCell *cell = mesh.GetCell( i );
-      real64 volume;
-
-      for( int j = 0; j < cell->GetNumberOfPoints(); ++j )
-      {
-        Xlocal[j][0]=cell->GetPoints()->GetPoint( j )[0];
-        Xlocal[j][1]=cell->GetPoints()->GetPoint( j )[1];
-        Xlocal[j][2]=cell->GetPoints()->GetPoint( j )[2];
-      }
-
-      for( int j = 0; j < cell->GetNumberOfPoints(); ++j )
-      {
-        int k = nodeOrder[j];
-        cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
-      }
-
-    }
-
-    if( polyhedronType == 14 )  // PYRAMID
-    {
-      nodeOrder = GetPyramidNodeOrderingFromPolyhedron( mesh.GetCell( i ) );
-
-      cout << "Bases points using local numbering:" << "\n";
-      for( const auto item : nodeOrder )
-        cout << item << ", ";
-      cout << "\n\n";
-
-      real64 Xlocal[12][3];
-      vtkCell *cell = mesh.GetCell( i );
-      real64 volume;
-
-      for( int j = 0; j < cell->GetNumberOfPoints(); ++j )
-      {
-        Xlocal[j][0]=cell->GetPoints()->GetPoint( j )[0];
-        Xlocal[j][1]=cell->GetPoints()->GetPoint( j )[1];
-        Xlocal[j][2]=cell->GetPoints()->GetPoint( j )[2];
-      }
-
-      for( int j = 0; j < cell->GetNumberOfPoints(); ++j )
-      {
-        int k = nodeOrder[j];
-        cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
-      }
-
-    }
-
-
-    if( polyhedronType == 12 )   // HEXA
-    {
-      nodeOrder = GetHexahedronNodeOrderingFromPolyhedron( mesh.GetCell( i ) );
-
-      cout << "Bases points using local numbering:" << "\n";
-      for( const auto item : nodeOrder )
-        cout << item << ", ";
-      cout << "\n\n";
-
-      real64 Xlocal[12][3];
-      vtkCell *cell = mesh.GetCell( i );
-      real64 volume;
-
-      for( int j = 0; j < cell->GetNumberOfPoints(); ++j )
-      {
-        Xlocal[j][0]=cell->GetPoints()->GetPoint( j )[0];
-        Xlocal[j][1]=cell->GetPoints()->GetPoint( j )[1];
-        Xlocal[j][2]=cell->GetPoints()->GetPoint( j )[2];
-      }
-
-      for( int j = 0; j < cell->GetNumberOfPoints(); ++j )
-      {
-        int k = nodeOrder[j];
-        cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
-      }
-
-
-    }
-    if( polyhedronType < 0 )
-    {
-      nodeOrder = GetPrismNodeOrderingFromPolyhedron( mesh.GetCell( i ), -polyhedronType );
-
-      cout << "Bases points using local numbering:" << "\n";
-      for( const auto item : nodeOrder )
-        cout << item << ", ";
-      cout << "\n\n";
-
-      real64 Xlocal[12][3];
-      vtkCell *cell = mesh.GetCell( i );
-      real64 volume;
-
-      for( int j = 0; j < cell->GetNumberOfPoints(); ++j )
-      {
-        Xlocal[j][0]=cell->GetPoints()->GetPoint( j )[0];
-        Xlocal[j][1]=cell->GetPoints()->GetPoint( j )[1];
-        Xlocal[j][2]=cell->GetPoints()->GetPoint( j )[2];
-      }
-
-      for( int j = 0; j < cell->GetNumberOfPoints(); ++j )
-      {
-        int k = nodeOrder[j];
-        cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
-      }
-      //volume = geosx::computationalGeometry::prismVolume< 5 >( Xlocal );
-      //cout << "Volume = " << volume << "\n";
-
-    }
-
-    if( polyhedronType == 15 || polyhedronType == 16 )
-    //if( polyhedronType == 15 )
-    {
-      cout << "Prism56" << "\n";
-      nodeOrder = GetPrismNodeOrderingFromPolyhedron( mesh.GetCell( i ), polyhedronType-10 );
-
-      cout << "Bases points using local numbering:" << "\n";
-      for( const auto item : nodeOrder )
-        cout << item << ", ";
-      cout << "\n\n";
-
-      real64 Xlocal[12][3];
-      vtkCell *cell = mesh.GetCell( i );
-      real64 volume;
-
-      for( int j = 0; j < cell->GetNumberOfPoints(); ++j )
-      {
-        Xlocal[j][0]=cell->GetPoints()->GetPoint( j )[0];
-        Xlocal[j][1]=cell->GetPoints()->GetPoint( j )[1];
-        Xlocal[j][2]=cell->GetPoints()->GetPoint( j )[2];
-      }
-
-      for( int j = 0; j < cell->GetNumberOfPoints(); ++j )
-      {
-        int k = nodeOrder[j];
-        cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
-      }
-
-      //volume = geosx::real64 geosx::computationalGeometry::prismVolume< 5 >( Xlocal );
-      //cout << "Volume = " << volume << "\n";
-    }
-  }
-  // exit( 0 );
-  #endif
-
   // First, pass through all VTK cells and split them int sub-lists based on type.
   std::map< ElementType, std::vector< vtkIdType > > typeToCells = splitCellsByType( mesh );
-
-  GEOSX_LOG_RANK( "Completing splitCellsByType" );
 
   // Now, actually split into groups according to region attribute, if present
   vtkDataArray * const attributeDataArray =
@@ -1219,12 +1021,8 @@ buildCellMap( vtkUnstructuredGrid & mesh,
   VTKMeshGenerator::CellMapType cellMap =
     splitCellsByTypeAndAttribute( typeToCells, attributeDataArray );
 
-  GEOSX_LOG_RANK( "Completing splitCellsByTypeAndAttribute" );
-
   // Gather all element types encountered on any rank and enrich the local collection
   extendCellMapWithRemoteKeys( cellMap );
-
-  GEOSX_LOG_RANK( "Completing extendCellMapWithRemoteKeys" );
 
   return cellMap;
 }
@@ -1246,6 +1044,9 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     case ElementType::Prism7:        return { 0 }; // TODO
     case ElementType::Prism8:        return { 0 }; // TODO
+    case ElementType::Prism9:        return { 0 }; // TODO
+    case ElementType::Prism10:        return { 0 }; // TODO
+    case ElementType::Prism11:        return { 0 }; // TODO
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
   }
   return {};
@@ -1301,9 +1102,18 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType,
       {
         return GetPrismNodeOrderingFromPolyhedron( cell, 8 );
       }
-        // case ElementType::Prism9:
-        // case ElementType::Prism10:
-        // case ElementType::Prism11:
+      else if( elemType == ElementType::Prism9 )
+      {
+        return GetPrismNodeOrderingFromPolyhedron( cell, 9 );
+      }
+      else if( elemType == ElementType::Prism10 )
+      {
+        return GetPrismNodeOrderingFromPolyhedron( cell, 10 );
+      }
+      else if( elemType == ElementType::Prism11 )
+      {
+        return GetPrismNodeOrderingFromPolyhedron( cell, 11 );
+      }
       else
       {
         GEOSX_ERROR( "General polyhedra not supported in GEOSX at the moment" );
@@ -1371,6 +1181,9 @@ string getElementTypeName( ElementType const type )
     case ElementType::Prism6:      return "hexagonalPrisms";
     case ElementType::Prism7:      return "heptagonalPrisms";
     case ElementType::Prism8:      return "octagonalPrisms";
+    case ElementType::Prism9:      return "nonagonalPrisms";
+    case ElementType::Prism10:     return "decagonalPrisms";
+    case ElementType::Prism11:     return "hendecagonalPrisms";
     case ElementType::Polyhedron:  return "polyhedra";
     default:
     {
@@ -1840,10 +1653,6 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  writing cells..." );
   writeCells( cellBlockManager );
-
-  //////////////////////////////////////////
-  GEOSX_LOG_RANK( "writing cells -- Done" );
-  //////////////////////////////////////////
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  writing surfaces..." );
   writeSurfaces( cellBlockManager );

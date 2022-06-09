@@ -281,6 +281,18 @@ localIndex getFaceNodes( ElementType const elementType,
     {
       return getFaceNodesPrism< 8 >( faceNumber, elementToNodes[elemIdx], faceNodes );
     }
+    case ElementType::Prism9:
+    {
+      return getFaceNodesPrism< 9 >( faceNumber, elementToNodes[elemIdx], faceNodes );
+    }
+    case ElementType::Prism10:
+    {
+      return getFaceNodesPrism< 10 >( faceNumber, elementToNodes[elemIdx], faceNodes );
+    }
+    case ElementType::Prism11:
+    {
+      return getFaceNodesPrism< 11 >( faceNumber, elementToNodes[elemIdx], faceNodes );
+    }
     default:
     {
       GEOSX_ERROR( "Invalid element type: " << elementType );

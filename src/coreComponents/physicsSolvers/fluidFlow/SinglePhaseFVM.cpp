@@ -187,8 +187,6 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );
-  GEOSX_LOG_RANK_VAR( localSolution );
-  GEOSX_ERROR( "\n\n\n\n\n STOP HERE \n\n\n\n ");
 }
 
 template<>

@@ -42,6 +42,9 @@ enum class ElementType : integer
   Prism6,        ///< Twelve-node hexagonal prism
   Prism7,        ///< Fourteen-node heptagonal prism
   Prism8,        ///< Sixteen-node octagonal prism
+  Prism9,        ///< Eigthtenn-node nonagonal prism
+  Prism10,       ///< Twenty-node decagonal prism
+  Prism11,       ///< Twenty-two-node hendecagonal prism
   Polyhedron,    ///< General polyhedral element
   // NOTE: If you add anything below Polyhedron,
   // don't forget to update numElementTypes() below.
@@ -78,6 +81,9 @@ inline int getElementDim( ElementType const elementType )
     case ElementType::Prism6:
     case ElementType::Prism7:
     case ElementType::Prism8:
+    case ElementType::Prism9:
+    case ElementType::Prism10:
+    case ElementType::Prism11:
     case ElementType::Polyhedron:    return 3;
   }
   return 0;
@@ -98,6 +104,9 @@ ENUM_STRINGS( ElementType,
               "HexagonalPrism",
               "HeptagonalPrism",
               "OctagonalPrism",
+              "NonagonalPrism",
+              "DecagonalPrism",
+              "HendecagonalPrism",
               "Polyhedron" );
 
 } // namespace geosx
