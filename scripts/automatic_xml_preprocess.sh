@@ -1,13 +1,17 @@
 #!/bin/bash
 
-# Parse and modify input arguments
+
+# Parse input arguments
 INPUT_ARGS=""
 INPUT_COUNTER=0
 COMPILED_XML_NAME=""
 COMPILED_XML_NAME_OVERRIDE=""
 PARAMETER_ARGS=""
 NEW_ARGS=""
+USE_PYGEOSX=1
+PYGEOSX_WARNINGS=0
 SCRIPT_DIR=$(dirname "$0")
+PYGEOSX=$SCRIPT_DIR/../lib/PYGEOSX/bin/python
 
 while [[ $# > 0 ]]
 do
@@ -24,18 +28,22 @@ do
         shift
         ;;
         -p|--parameter)
-        echo $2
         PARAMETER_ARGS="$PARAMETER_ARGS -p $2 $3"
         shift
+        shift
+        ;;
+        -u|--use-pygeosx)
+        USE_PYGEOSX=$2
+        shift
+        ;;
+        -w|--pygeosx-warnings)
+        PYGEOSX_WARNINGS=$2
         shift
         ;;
         -h|--help)
         echo ""
         echo "Preprocessor options:"
-        echo "-i/--input          Input xml file name"
-        echo "-p/--parameter      XML parameter overrides (name and value separated by a space)"
-        echo "-c/--compiled_name  Compiled xml filename (default=[input_name].preprocessed or composite.xml.preprocessed)"
-        echo "Note: multiple -i and -p arguments are allowed"
+        $SCRIPT_DIR/preprocess_xml --help
         echo ""
         echo "GEOSX options:"
         $SCRIPT_DIR/geosx --help
@@ -50,29 +58,44 @@ do
 done
 
 
-# Preprocess the input file
-if [ -f $SCRIPT_DIR/preprocess_xml ]; then
-   if [ "$INPUT_COUNTER" -gt "1" ]
-   then
-      COMPILED_XML_NAME="composite.xml.preprocessed"
-   fi
+# Choose the compiled xml name
+if [ "$INPUT_COUNTER" -gt "1" ]
+then
+   COMPILED_XML_NAME="composite.xml.preprocessed"
+fi
 
-   if [ ! -z "$COMPILED_XML_NAME_OVERRIDE" ]
-   then
-      COMPILED_XML_NAME=$COMPILED_XML_NAME_OVERRIDE
-   fi
-
-   # Preprocess the file
-   echo "Preprocessing xml: $INPUT_ARGS"
-   $SCRIPT_DIR/preprocess_xml $INPUT_ARGS $PARAMETER_ARGS -o $COMPILED_XML_NAME -s $SCRIPT_DIR/../../src/coreComponents/schema/schema.xsd
-
-   # Continue by running GEOSX
-   echo "Running command: $SCRIPT_DIR/geosx -i $COMPILED_XML_NAME $NEW_ARGS"
-   $SCRIPT_DIR/geosx -i $COMPILED_XML_NAME $NEW_ARGS
-else
-   echo "Error: XML preprocessor not found"
-   echo "To build it, run \"make geosx_xml_tools\""
+if [ ! -z "$COMPILED_XML_NAME_OVERRIDE" ]
+then
+   COMPILED_XML_NAME=$COMPILED_XML_NAME_OVERRIDE
 fi
 
 
+# Check for pygeosx
+if [ "$USE_PYGEOSX" -eq "1" ]
+then
+   if [ -f $PYGEOSX ]
+   then
+      if [ "$PYGEOSX_WARNINGS" -eq "1" ]
+      then
+         echo "Using pygeosx to preprocess the xml file"
+      fi
+   else
+      if [ "$PYGEOSX_WARNINGS" -eq "1" ]
+      then
+         echo "Pygeosx installation not found... reverting to non-pygeosx version"
+      fi
+      USE_PYGEOSX=0
+   fi
+fi
+
+
+# Preprocess the xml files
+if [ "$USE_PYGEOSX" -eq "1" ]
+then
+   $PYGEOSX $SCRIPT_DIR/pygeosx_preprocess.py $INPUT_ARGS $PARAMETER_ARGS $NEW_ARGS -c $COMPILED_XML_NAME -s $SCRIPT_DIR/../../src/coreComponents/schema/schema.xsd
+else
+   # As a backup, manually call the preprocessor and then continue with GEOSX
+   $SCRIPT_DIR/preprocess_xml $INPUT_ARGS $PARAMETER_ARGS -c $COMPILED_XML_NAME -s $SCRIPT_DIR/../../src/coreComponents/schema/schema.xsd
+   $SCRIPT_DIR/geosx -i $COMPILED_XML_NAME $NEW_ARGS
+fi
 

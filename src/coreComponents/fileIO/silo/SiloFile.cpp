@@ -1335,6 +1335,8 @@ static std::vector< int > getSiloNodeOrdering( ElementType const elementType )
     case ElementType::Pyramid:       return { 0, 2, 3, 1, 4 };
     case ElementType::Wedge:         return { 1, 0, 2, 3, 5, 4 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ElementType::Prism5:        return { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // TODO
+    case ElementType::Prism6:        return { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // TODO
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
   }
   return {};
@@ -1352,6 +1354,8 @@ static int toSiloShapeType( ElementType const elementType )
     case ElementType::Pyramid:       return DB_ZONETYPE_PYRAMID;
     case ElementType::Wedge:         return DB_ZONETYPE_PRISM;
     case ElementType::Hexahedron:    return DB_ZONETYPE_HEX;
+    case ElementType::Prism5:        return DB_ZONETYPE_POLYHEDRON; //TODO
+    case ElementType::Prism6:        return DB_ZONETYPE_POLYHEDRON; //TODO
     case ElementType::Polyhedron:    return DB_ZONETYPE_POLYHEDRON;
     default:
     {
