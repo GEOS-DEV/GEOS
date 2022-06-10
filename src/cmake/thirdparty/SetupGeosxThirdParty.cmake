@@ -441,8 +441,10 @@ endif()
 if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
+    set( HYPRE_DEPENDS blas lapack superlu_dist )
     if( ENABLE_HYPRE_CUDA )
         set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} )
+        list( APPEND HYPRE_DEPENDS chai )
     endif()
 
     find_and_register(NAME hypre
@@ -451,7 +453,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
                       HEADER HYPRE.h
                       LIBRARIES HYPRE
                       EXTRA_LIBRARIES ${EXTRA_LIBS}
-                      DEPENDS blas lapack superlu_dist)
+                      DEPENDS ${HYPRE_DEPENDS})
 
     # if( ENABLE_CUDA AND ( NOT ENABLE_HYPRE_CUDA ) )
     #   set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
