@@ -124,30 +124,6 @@ public:
   virtual void compute( real64 const pressure,
                         real64 const temperature, 
                         real64 & density,
-                        real64 & viscosity ) const override
-  {
-    m_viscRelation.compute( pressure, viscosity );
-
-    if ( m_isThermal )
-    {
-      real64 density_pressurePart, density_temperaturePart; 
-
-      m_densPresRelation.compute( pressure, density_pressurePart ); 
-      m_densTempRelation.compute( temperature, density_temperaturePart ); 
-
-      density = density_pressurePart * density_temperaturePart; 
-    }
-    else
-    {
-      m_densPresRelation.compute( pressure, density ); 
-    }
-  }
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void compute( real64 const pressure,
-                        real64 const temperature, 
-                        real64 & density,
                         real64 & dDensity_dPressure,
                         real64 & dDensity_dTemperature, 
                         real64 & viscosity,

@@ -66,7 +66,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
 
   registerWrapper( viewKeyStruct::volumetricHeatCapacityString(), &m_volumetricHeatCapacity ).
     setApplyDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Fluid volumetric heat capacity" );
 
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).

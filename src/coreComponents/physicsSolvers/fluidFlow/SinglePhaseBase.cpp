@@ -56,7 +56,8 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
   m_isThermal( 0 )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setApplyDefaultValue( 0.0 ). 
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature" );
 
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
@@ -514,15 +515,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     elevationValues[0].resize( numPointsInTable );
     pressureValues.resize( numPointsInTable );
 
-    // Step 3.2: retrieve the user-defined tables (temperature)
-
-    FunctionManager & functionManager = FunctionManager::getInstance();
-
-    string const tempTableName = fs.getTemperatureVsElevationTableName();
-    TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
-    TableFunction::KernelWrapper tempTableWrapper = tempTable.createKernelWrapper();
-
-    // Step 3.3: retrieve the fluid model to compute densities
+    // Step 3.2: retrieve the fluid model to compute densities
     // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
 
     // filter out region not in target
@@ -543,7 +536,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     }
     SingleFluidBase & singleFluid = dynamicCast< SingleFluidBase & >( fluid );
 
-    // Step 3.4: compute the hydrostatic pressure values
+    // Step 3.3: compute the hydrostatic pressure values
 
     constitutiveUpdatePassThru( singleFluid, [&] ( auto & castedFluid )
     {
@@ -561,7 +554,6 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
                                            datumElevation,
                                            datumPressure,
                                            fluidWrapper,
-                                           tempTableWrapper,
                                            elevationValues.toNestedView(),
                                            pressureValues.toView() );
 
@@ -571,7 +563,9 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
                       std::runtime_error );
     } );
 
-    // Step 3.5: create hydrostatic pressure table
+    // Step 3.4: create hydrostatic pressure table
+
+    FunctionManager & functionManager = FunctionManager::getInstance();
 
     string const tableName = fs.getName() + "_" + subRegion.getName() + "_table";
     TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
@@ -588,16 +582,12 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     arrayView1d< real64 > const pres =
       subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
 
-    arrayView1d< real64 > const temp = 
-      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
-
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
 
       pres[k] = presTableWrapper.compute( &elevation );
-      temp[k] = tempTableWrapper.compute( &elevation ); 
     } );
   } );
 }

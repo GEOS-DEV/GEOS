@@ -173,19 +173,6 @@ private:
                         real64 & dViscosity_dPressure ) const = 0;
 
   /**
-   * @brief Compute fluid properties at a single point.
-   * @param[in]  pressure the target pressure value
-   * @param[in]  temperature the target temperature value
-   * @param[out] density fluid density
-   * @param[out] viscosity fluid viscosity
-   */
-  GEOSX_HOST_DEVICE
-  virtual void compute( real64 const pressure,
-                        real64 const temperature, 
-                        real64 & density,
-                        real64 & viscosity ) const = 0;
-
-  /**
    * @brief Compute fluid properties and derivatives at a single point.
    * @param[in]  pressure the target pressure value
    * @param[in]  temperature the target temperature value
