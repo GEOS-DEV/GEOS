@@ -158,7 +158,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('hypre@2.24.0geosx+shared+superlu-dist+mixedint+mpi+openmp', when='+hypre~cuda')
 
-    depends_on('hypre@2.24.0geosx+cuda+shared+superlu-dist+mpi+openmp+unified-memory', when='+hypre+cuda')
+    depends_on('hypre@2.24.0geosx+cuda+shared+superlu-dist+mixedint+mpi+openmp+unified-memory', when='+hypre+cuda')
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
             depends_on('hypre+cuda cuda_arch={0}'.format(sm_),
