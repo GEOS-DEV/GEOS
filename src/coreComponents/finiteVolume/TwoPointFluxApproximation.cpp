@@ -174,8 +174,25 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
       stencilWeights[ke] = faceArea / c2fDistance;
 
-      stencilStabWeights[ke] = 0.5 * elemVolume[er][esr][ei] * (ke == 0 ? 1 : -1);
+      // stencilStabWeights[ke] = 0.5 * elemVolume[er][esr][ei] * (ke == 0 ? 1 : -1);
+
+      // localIndex const er1  = elemRegionList[kf][0];
+      // localIndex const esr1 = elemSubRegionList[kf][0];
+      // localIndex const ei1  = elemList[kf][0];
+      // localIndex const er2  = elemRegionList[kf][1];
+      // localIndex const esr2 = elemSubRegionList[kf][1];
+      // localIndex const ei2  = elemList[kf][1];
+
+      // real64 equivArea1 = cbrt(elemVolume[er1][esr1][ei1])*cbrt(elemVolume[er1][esr1][ei1]);
+      // real64 equivArea2 = cbrt(elemVolume[er2][esr2][ei2])*cbrt(elemVolume[er2][esr2][ei2]);
+      // stencilStabWeights[ke] = 0.5 * (elemVolume[er1][esr1][ei1]*(faceArea/equivArea1) + elemVolume[er2][esr2][ei2]*(faceArea/equivArea2) ) * (ke == 0 ? 1 : -1);
+
+      stencilStabWeights[ke] = faceArea*c2fDistance;
     }
+
+    real64 stabAvg = (stencilStabWeights[0] + stencilStabWeights[1]);
+    stencilStabWeights[0] = stabAvg;
+    stencilStabWeights[1] = -1.0*stabAvg;
 
     // Ensure elements are added to stencil in order of global indices
     if( stencilCellsGlobalIndex[0] >= stencilCellsGlobalIndex[1] )

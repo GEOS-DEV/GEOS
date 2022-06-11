@@ -118,6 +118,8 @@ public:
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
 
     constexpr static char const * stabilizationTypeString() { return "stabilizationType"; }
+
+    constexpr static char const * stabilizationRegionsString() { return "stabilizationRegions"; }
   };
 
   enum class StabilizationType : integer
@@ -145,6 +147,8 @@ protected:
   SolidMechanicsLagrangianFEM * m_solidSolver;
 
   StabilizationType m_stabilizationType;
+
+  array1d< string > m_stabilizationRegionNames;
 
 };
 

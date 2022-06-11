@@ -204,6 +204,8 @@ public:
   {
     // using Deriv = multifluid::DerivativeOffset;
 
+    // std::cout << "Starting the function" << std::endl;
+
 
     // ***********************************************
     // First, we call the base computeFlux to compute:
@@ -243,6 +245,8 @@ public:
         tauStab = tauC * 9.0 * (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (32.0 * (10.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
 
         dPresGradStab += tauStab * m_stabWeights( iconn, i ) * (m_pres[er][esr][ei] - m_pres_n[er][esr][ei]); // jump in dp, not p
+
+        // std::cout << tauStab << std::endl;
       }
 
       // modify stabilization flux
@@ -254,16 +258,15 @@ public:
       localIndex const esr_up_stab  = m_sesri( iconn, k_up_stab );
       localIndex const ei_up_stab   = m_sei( iconn, k_up_stab );
 
-      if( stencilMacroElements[0] == stencilMacroElements[1] )
+      if( stencilMacroElements[0] == stencilMacroElements[1] && (stencilMacroElements[0] >= 0 && stencilMacroElements[1] >= 0))
       {
 
         for( integer ic = 0; ic < numComp; ++ic )
         {
 
-
           real64 const laggedUpwind = m_phaseDens_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip]
                                       * m_phaseCompFrac_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip][ic]
-                                      * m_phaseRelPerm_n[er_up_stab ][esr_up_stab ][ei_up_stab ][ip][ic];
+                                      * m_phaseRelPerm_n[er_up_stab ][esr_up_stab ][ei_up_stab][0][ip];
 
           stack.stabFlux[ic] += dPresGradStab * laggedUpwind;
 

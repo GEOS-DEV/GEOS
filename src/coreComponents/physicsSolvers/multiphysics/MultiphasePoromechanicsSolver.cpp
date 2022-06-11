@@ -68,6 +68,10 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
                     toString( StabilizationType::Global ) + " - Add stabilization to all faces,\n" +
                     toString( StabilizationType::Local ) + " - Add stabilization only to interiors of macro elements." );
 
+  registerWrapper( viewKeyStruct::stabilizationRegionsString(), &m_stabilizationRegionNames ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Regions where stabilization is applied." );
+
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
@@ -138,10 +142,80 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
 
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
+  if (m_stabilizationType == StabilizationType::Global)
+  {
+    SortedArray< localIndex > regionFilter;
+
+    DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+    forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                  MeshLevel & mesh,
+                                                  arrayView1d< string const > const &  )
+    {
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      for( string const & regionName : m_stabilizationRegionNames )
+      {
+        regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
+      }
+    } );
+
+    SortedArrayView< const localIndex > const regionFilterView = regionFilter.toView();
+
+    forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                  MeshLevel & mesh,
+                                                  arrayView1d< string const > const &  )
+    {
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      NodeManager const & nodeManager = mesh.getNodeManager();
+
+      ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > elemMacroID =
+        elemManager.constructViewAccessor< array1d< integer >, arrayView1d< integer > >( extrinsicMeshData::flow::elementMacroID::key() );
+
+      ArrayOfArraysView< localIndex const > elemRegionList = nodeManager.elementRegionList();
+      ArrayOfArraysView< localIndex const > elemSubRegionList = nodeManager.elementSubRegionList();
+      ArrayOfArraysView< localIndex const > elemList = nodeManager.elementList();
+
+      forAll< serialPolicy >( nodeManager.size(), [&] ( localIndex const a )
+      {
+
+        for( localIndex k = 0; k < elemRegionList[a].size(); ++k )
+        {
+          // collect the element number
+          localIndex const er = elemRegionList[a][k];
+          localIndex const esr = elemSubRegionList[a][k];
+          localIndex const ei = elemList[a][k];
+
+          if (regionFilterView.contains(er)) 
+          {
+            elemMacroID[er][esr][ei] = 1;
+          }
+        }
+      } );
+
+    } );
+
+
+  }
+
   if( m_stabilizationType == StabilizationType::Local )
   {
 
+    SortedArray< localIndex > regionFilter;
+
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+    forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                  MeshLevel & mesh,
+                                                  arrayView1d< string const > const &  )
+    {
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      for( string const & regionName : m_stabilizationRegionNames )
+      {
+        regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
+      }
+    } );
+
+    SortedArrayView< const localIndex > const regionFilterView = regionFilter.toView();
 
     forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                   MeshLevel & mesh,
@@ -167,12 +241,38 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
       ArrayOfArraysView< localIndex const > elemSubRegionList = nodeManager.elementSubRegionList();
       ArrayOfArraysView< localIndex const > elemList = nodeManager.elementList();
 
+      array1d< integer > mpiBdryNodes( nodeManager.size() );
+      mpiBdryNodes.setValues< serialPolicy >( 0 );
+      arrayView1d< integer > const mpiBdryNodesView = mpiBdryNodes.toView();
+      ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > elemGhostRank =
+        elemManager.constructViewAccessor< array1d< integer >, arrayView1d< integer > >( extrinsicMeshData::ghostRank::key() );
+
+      forAll< serialPolicy >( nodeManager.size(), [&] ( localIndex const a )
+      {
+        for( localIndex k = 0; k < elemRegionList[a].size(); ++k )
+        {
+          localIndex const er = elemRegionList[a][k];
+          localIndex const esr = elemSubRegionList[a][k];
+          localIndex const ei = elemList[a][k];
+
+          if (elemGhostRank[er][esr][ei] >= 0) 
+          {
+            mpiBdryNodesView[a] = 1;
+          }
+        }
+      } );
+
       integer currentID = 0;
 
       forAll< serialPolicy >( nodeManager.size(), [&] ( localIndex const a )
       {
 
         if( bdryNodes[a] == 1 )
+        {
+          // nodeVisitedView[a] = 1;
+        }
+
+        if( mpiBdryNodes[a] == 1)
         {
           nodeVisitedView[a] = 1;
         }
@@ -187,7 +287,10 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
             localIndex const esr = elemSubRegionList[a][k];
             localIndex const ei = elemList[a][k];
 
-            elemMacroID[er][esr][ei] = currentID;
+            if (regionFilterView.contains(er)) 
+            {
+              elemMacroID[er][esr][ei] = currentID;
+            }
 
             // get the elemToNodes maps
             ElementRegionBase const & region = elemManager.getRegion( er );
@@ -199,6 +302,7 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
             {
               localIndex const iNode = elemsToNodes[ei][l];
               nodeVisitedView[iNode] = 1;
+
             }
           }
 
@@ -213,11 +317,55 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
       // If not, check elements that share a face and add it to one of their macroelements
       // If no neighbors in a macroelement, reconsider this element at the end of the loop
 
-      // This may not be strictly necessary, per our discussions. Any clumps of elements that were not visited have ID of -1, and therefore
-      // will
-      // also be treated as macro elements. The main issue may be if there are a lot of single element macro elements in the mesh, but we
-      // will have to see how it works.
 
+      FaceManager const & faceManager = mesh.getFaceManager();
+
+      arrayView2d< localIndex const > elemRegionListFace = faceManager.elementRegionList();
+      arrayView2d< localIndex const > elemSubRegionListFace = faceManager.elementSubRegionList();
+      arrayView2d< localIndex const > elemListFace = faceManager.elementList();
+
+      integer badFaces = 1;
+
+      while (badFaces > 0)
+      {
+        badFaces = 0;
+        forAll< serialPolicy >(faceManager.size(), [&] ( localIndex const a )
+        {
+          localIndex er1 = elemRegionListFace[a][0];
+          localIndex esr1 = elemSubRegionListFace[a][0];
+          localIndex ei1 = elemListFace[a][0];
+
+          localIndex er2 = elemRegionListFace[a][1];
+          localIndex esr2 = elemSubRegionListFace[a][1];
+          localIndex ei2 = elemListFace[a][1];
+
+          if (er1 < 0 || esr1 < 0 || ei1 < 0 || er2 < 0 || esr2 < 0 || ei2 < 0) 
+          {}
+
+          else
+          {
+
+            if (elemMacroID[er1][esr1][ei1] == -1 && elemMacroID[er2][esr2][ei2] > -1 && elemGhostRank[er1][esr1][ei1] < 0 && regionFilterView.contains(er1) &&  regionFilterView.contains(er2) )
+            {
+              elemMacroID[er1][esr1][ei1] = elemMacroID[er2][esr2][ei2];
+            }
+
+            if (elemMacroID[er1][esr1][ei1] > -1 && elemMacroID[er2][esr2][ei2] == -1 && elemGhostRank[er2][esr2][ei2] < 0 && regionFilterView.contains(er1) &&  regionFilterView.contains(er2) )
+            {
+              elemMacroID[er2][esr2][ei2] = elemMacroID[er1][esr1][ei1];
+            }
+
+            if (elemMacroID[er1][esr1][ei1] == -1 && elemMacroID[er2][esr2][ei2] == -1 && elemGhostRank[er1][esr1][ei1] < 0 && elemGhostRank[er2][esr2][ei2] < 0 && regionFilterView.contains(er1) &&  regionFilterView.contains(er2))
+            {
+              ++badFaces;
+            }
+
+          }
+
+        } );
+
+        std::cout << badFaces << std::endl;
+      }
 
     } );
 
