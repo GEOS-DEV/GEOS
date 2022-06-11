@@ -183,6 +183,30 @@ RAJA_INLINE void forRange( INDEX const begin, INDEX const end, LAMBDA && body )
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< INDEX >( begin, end ), std::forward< LAMBDA >( body ) );
 }
 
+/*
+RAJA Teams Policy setup
+*/
+using namespace RAJA::expt;
+#if defined(MFEM_USE_RAJA) && defined(RAJA_ENABLE_CUDA)
+using device_launch_policy = LaunchPolicy<seq_launch_t, cuda_launch_t<true>>;
+using team_x = LoopPolicy<RAJA::loop_exec, cuda_block_x_direct>;
+using thread_z = LoopPolicy<RAJA::loop_exec, cuda_thread_z_loop>;
+using thread_y = LoopPolicy<RAJA::loop_exec, cuda_thread_y_loop>;
+using thread_x = LoopPolicy<RAJA::loop_exec, cuda_thread_x_loop>;
+#elif defined(MFEM_USE_RAJA) && defined(RAJA_ENABLE_HIP)
+using device_launch_policy = LaunchPolicy<seq_launch_t, hip_launch_t<true>>;
+using team_x = LoopPolicy<RAJA::loop_exec, hip_block_x_direct>;
+using thread_z = LoopPolicy<RAJA::loop_exec, hip_thread_z_loop>;
+using thread_y = LoopPolicy<RAJA::loop_exec, hip_thread_y_loop>;
+using thread_x = LoopPolicy<RAJA::loop_exec, hip_thread_x_loop>;
+#else
+using device_launch_policy = LaunchPolicy<seq_launch_t>;
+using team_x = LoopPolicy<RAJA::loop_exec>;
+using thread_z = LoopPolicy<RAJA::loop_exec>;
+using thread_y = LoopPolicy<RAJA::loop_exec>;
+using thread_x = LoopPolicy<RAJA::loop_exec>;
+#endif
+
 // #define GEOSX_FOREACH_THREAD(i,k,n) RAJA::expt::loop<team_##k> (ctx, RAJA::RangeSegment(0, n), [&] (int i)
 // Hack to avoid having to use the LaunchContext
 #ifdef __CUDA_ARCH__
