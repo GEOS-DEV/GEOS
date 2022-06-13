@@ -17,6 +17,7 @@
  *
  */
 
+#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
 #include "SinglePhasePoromechanicsSolver.hpp"
 
