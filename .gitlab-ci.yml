@@ -1,0 +1,152 @@
+variables:
+  PROJECT_ALLOC_NAME: ${CI_PROJECT_NAME}_ci_${CI_PIPELINE_ID}
+  BUILD_ROOT: ${CI_PROJECT_DIR}
+  # Should make it so we aren't doing fresh clones of GEOSX all the time
+  GIT_STRATEGY: fetch
+  # Manually update submodules
+  GIT_SUBMODULE_STRATEGY: none
+
+stages:
+  - build
+  - nightly
+
+####
+# Template
+.build_script:
+  script:
+    # Change submodule paths to absolute github paths (default is relative to GEOSX gitlab path)
+    - git submodule set-url src/coreComponents/LvArray https://github.com/GEOSX/LvArray.git
+    - git submodule set-url src/cmake/blt https://github.com/LLNL/blt.git
+    - git submodule set-url src/coreComponents/constitutive/PVTPackage https://github.com/GEOSX/PVTPackage.git
+    - git submodule set-url integratedTests git@github.com:GEOSX/integratedTests.git
+    - git submodule set-url src/coreComponents/mesh/PAMELA https://github.com/GEOSX/PAMELA.git
+    - git submodule set-url src/coreComponents/fileIO/coupling/hdf5_interface https://github.com/GEOSX/hdf5_interface.git
+
+    # Update submodules
+    - git submodule update --init --recursive src/cmake/blt
+    - git submodule update --init --recursive src/coreComponents/LvArray
+    - git submodule update --init --recursive src/coreComponents/constitutive/PVTPackage
+    - git submodule update --init --recursive integratedTests
+    - git submodule update --init src/coreComponents/mesh/PAMELA
+    - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
+
+    - mkdir ${SYSTEM}
+
+    # CONFIGURE
+    - echo "~~~~~~~~~~ START - configure ~~~~~~~~~~~"
+    - config_code=0
+    - python scripts/config-build.py -hc host-configs/LLNL/${HOST_CONFIG} -bt Release -bp build -DENABLE_DOXYGEN=OFF 2>&1 | tee ${SYSTEM}/${SYSTEM}_configure.log || config_code=$?
+    - mv ${SYSTEM}/${SYSTEM}_configure.log ${SYSTEM}/${SYSTEM}_configure_$([ $config_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
+    - echo "~~~~~~~~~~ END - configure ~~~~~~~~~~~~~"
+
+    # BUILD
+    - echo "~~~~~~~~~~ START - build ~~~~~~~~~~~"
+    - build_code=0
+    - ${ALLOC_COMMAND} make VERBOSE=1 -C build -j ${NPROC:-16} 2>&1 | tee ${SYSTEM}/${SYSTEM}_build.log || build_code=$?
+    - mv ${SYSTEM}/${SYSTEM}_build.log ${SYSTEM}/${SYSTEM}_build_$([ $build_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
+    - echo "~~~~~~~~~~ END - build ~~~~~~~~~~~~~"
+
+    # UNIT TEST
+    - echo "~~~~~~~~~~ START - unit tests ~~~~~~~~~~~"
+    - unit_code=0
+    - cd build
+    - ${ALLOC_COMMAND} ctest --output-on-failure  2>&1 | tee ../${SYSTEM}/${SYSTEM}_unit_test.log || unit_code=$?
+    - cd ..
+    - mv ${SYSTEM}/${SYSTEM}_unit_test.log ${SYSTEM}/${SYSTEM}_unit_test_$([ $unit_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
+    - echo "~~~~~~~~~~ END - unit tests ~~~~~~~~~~~~~"
+
+    # INTEGRATED TEST
+    - echo "~~~~~~~~~~ START - integrated tests ~~~~~~~~~~~"
+    - ./build/geosxats.sh -a veryclean
+    - integrated_code=0
+    - ${INTEGRATED_ALLOC_COMMAND} ./build/geosxats.sh --failIfTestsFail 2>&1 | tee ${SYSTEM}/${SYSTEM}_integrated_test.log || integrated_code=$?
+    - mv ${SYSTEM}/${SYSTEM}_integrated_test.log ${SYSTEM}/${SYSTEM}_integrated_test_$([ $integrated_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
+    - mkdir ${SYSTEM}/integratedTestsDebugFiles
+    - cp -rL build/integratedTests/TestLogs ${SYSTEM}/
+    - grep -r -l --include=*.data "Error" build/integratedTests/ | xargs cp -t ${SYSTEM}/integratedTestsDebugFiles || true
+    - grep -r -l --include=*.err --exclude-dir="TestLogs*" "error" build/integratedTests/ | xargs cp -t ${SYSTEM}/integratedTestsDebugFiles || true
+    - echo "~~~~~~~~~~ END - integrated tests ~~~~~~~~~~~~~"
+
+    # CLEANUP + PRINT SUCCESS/FAILURES
+    - echo "~~~~~~~~~~ START - cleanup ~~~~~~~~~~~"
+    - ./build/geosxats.sh -a veryclean
+    - rm -rf build
+    - if [[ $config_code -ne 0 ]]; then echo "Configuration failed"; else echo "Configuration succeeded"; fi
+    - if [[ $build_code -ne 0 ]]; then echo "Build failed"; else echo "Build succeeded"; fi
+    - if [[ $unit_code -ne 0 ]]; then echo "Unit tests failed"; else echo "Unit tests succeeded"; fi
+    - if [[ $integrated_code -ne 0 ]]; then echo "Integrated tests failed"; else echo "Integrated tests succeeded"; fi
+    - exit_val=$(( 0 | $config_code | $build_code | $unit_code | $integrated_code ))
+    - exit $exit_val
+    - echo "~~~~~~~~~~ END - cleanup ~~~~~~~~~~~~~"
+  # Job only triggers for scheduled pipelines and through web interface
+  only:
+    refs:
+      - schedules
+      - web
+  # Output a folder of logs files; these are automatically inherited by nightly-job
+  artifacts:
+    when: always
+    paths:
+      - quartz/
+      - lassen/
+  # Allow job to always fail, so nightly-job in next stage will run
+  allow_failure: true
+
+####
+# quartz template
+.build_on_quartz:
+  stage: build
+  variables:
+    ALLOC_COMMAND: "salloc -N1 -ppdebug"
+    SYSTEM: "quartz"
+  tags:
+    - shell
+    - quartz
+  extends: [.build_script]
+
+####
+# lassen template
+.build_on_lassen:
+  stage: build
+  variables:
+    ALLOC_COMMAND: "lalloc 1 -q pdebug"
+    INTEGRATED_ALLOC_COMMAND: "lalloc 10 -q pdebug"
+    SYSTEM: "lassen"
+  tags:
+    - shell
+    - lassen
+  extends: [.build_script]
+
+####
+# quartz job
+quartz_clang_10_0_0_build:
+  variables:
+    HOST_CONFIG: "quartz-clang@10.0.0.cmake"
+  extends: [.build_on_quartz]
+
+####
+# lassen job
+lassen_clang_upstream_build:
+  variables:
+    HOST_CONFIG: "lassen-clang@upstream.cmake"
+  extends: [.build_on_lassen]
+
+####
+# Pull nightlyTests repo and update files
+nightly-job:
+  stage: nightly
+  script:
+    - echo "~~~~~~~~~~ START - write to nightlyTests Repo ~~~~~~~~~~~~~"
+    - git clone git@github.com:GEOSX/nightlyTests.git
+    - cd nightlyTests
+    - ./update.sh
+    - echo "~~~~~~~~~~ END - write to nightlyTests Repo ~~~~~~~~~~~~~"
+  only:
+    refs:
+      - schedules
+      - web
+    variables:
+      - $NIGHTLY_TEST_ENABLED
+  tags:
+   - shell
+   - quartz
