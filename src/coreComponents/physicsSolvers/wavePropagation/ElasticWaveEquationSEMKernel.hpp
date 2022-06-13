@@ -208,7 +208,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 const > const faceCenter,
           arrayView2d< real64 const > const sourceCoordinates,
           arrayView1d< localIndex > const sourceIsLocal,
-          arrayView1d< localIndex > const sourceInElem,
+          arrayView1d< localIndex > const sourceElem,
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
           arrayView2d< real64 const > const receiverCoordinates,
@@ -253,7 +253,7 @@ struct PrecomputeSourceAndReceiverKernel
 
           if( sourceFound && elemGhostRank[k] < 0)
           {
-            sourceInElem[k] = 1;
+            sourceElem[isrc] = k;
             computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                              elemsToNodes[k],
                                                              X,
@@ -546,8 +546,6 @@ public:
     m_damping_x( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_x > ()),
     m_damping_y( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_y > ()),
     m_damping_z( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_z > ()),
-    m_sourceInElem( elementSubRegion.template getExtrinsicData< extrinsicMeshData::SourceInElem>() ),
-    m_rhs( nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS > ()),
     m_dt( dt )
   {
     GEOSX_UNUSED_VAR( edgeManager );
@@ -666,18 +664,6 @@ public:
     m_uz_np1[m_elemsToNodes[k][i]] = uelemz[i]/(m_mass[m_elemsToNodes[k][i]]+0.5*m_dt*m_damping_z[m_elemsToNodes[k][i]]);
     }
 
-    //Add source
-    if(m_sourceInElem[k] == 1)
-    {
-      for (localIndex i = 0; i < numNodesPerElem; i++)
-      {
-        m_ux_np1[m_elemsToNodes[k][i]]+=m_dt*(m_rhs[m_elemsToNodes[k][i]]/(m_mass[m_elemsToNodes[k][i]]));
-        m_uy_np1[m_elemsToNodes[k][i]]+=m_dt*(m_rhs[m_elemsToNodes[k][i]]/(m_mass[m_elemsToNodes[k][i]]));
-        m_uz_np1[m_elemsToNodes[k][i]]+=m_dt*(m_rhs[m_elemsToNodes[k][i]]/(m_mass[m_elemsToNodes[k][i]]));
-      }
-      
-    }
-
   }
 
 
@@ -723,12 +709,6 @@ protected:
 
   /// The array containing the diagonal of the damping matrix (z-part)
   arrayView1d< real64 const> const m_damping_z;
-
-  /// The array containing the flag to knwo if the source is inside an element or not
-  arrayView1d< localIndex const> const m_sourceInElem;
-
-  /// The array containing the RHS
-  arrayView1d< real64  > const m_rhs;
 
   /// The time increment for this time integration step.
   real64 const m_dt;
@@ -789,7 +769,12 @@ public:
                              arrayView2d < real64 > const & inputStressxy,
                              arrayView2d < real64 > const & inputStressxz,
                              arrayView2d < real64 > const & inputStressyz,
-                             real64 const & dt ):
+                             arrayView1d< localIndex const > const inputSourceElem,
+                             arrayView1d< localIndex const> const inputSourceIsLocal,
+                             arrayView2d< real64 const > const inputSourceConstants,
+                             arrayView2d< real64 const > const inputSourceValue,
+                             real64 const & dt,
+                             integer const & cycleNumber ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -806,7 +791,12 @@ public:
     m_density( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumDensity >() ),
     m_velocityVp( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumVelocityVp >() ),
     m_velocityVs( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumVelocityVs >() ),
-    m_dt( dt )
+    m_cycleNumber(cycleNumber),
+    m_dt( dt ),
+    m_sourceElem(inputSourceElem),
+    m_sourceIsLocal(inputSourceIsLocal),
+    m_sourceConstants(inputSourceConstants),
+    m_sourceValue(inputSourceValue)
   {
     GEOSX_UNUSED_VAR( edgeManager );
     GEOSX_UNUSED_VAR( faceManager );
@@ -950,16 +940,24 @@ public:
 
 
     //Source injection
-
-    // for (localIndex i = 0; i < numNodesPerElem; i++)
-    // {
-    //   m_stressxx[k][i]+= m_dt*(m_rhs[m_elemsToNodes[k][i]]/(detJ));
-    //   m_stressyy[k][i]+= m_dt*(m_rhs[m_elemsToNodes[k][i]]/(detJ));
-    //   m_stresszz[k][i]+= m_dt*(m_rhs[m_elemsToNodes[k][i]]/(detJ));
-
-    // }
-   
-
+    for (localIndex isrc = 0; isrc < m_sourceConstants.size(0); ++isrc)
+    {
+      if( m_sourceIsLocal[isrc] == 1 )
+      {
+        if (m_sourceElem[isrc]==k)
+        {
+          for (localIndex i = 0; i < numNodesPerElem; ++i)
+          {
+            m_stressxx[k][i]+= m_dt*m_sourceConstants[isrc][i]*m_sourceValue[m_cycleNumber][isrc];
+            m_stressyy[k][i]+= m_dt*m_sourceConstants[isrc][i]*m_sourceValue[m_cycleNumber][isrc];
+            m_stresszz[k][i]+= m_dt*m_sourceConstants[isrc][i]*m_sourceValue[m_cycleNumber][isrc];
+          }
+          
+        }
+        
+      }
+    }
+       
   }
 
 
@@ -1003,9 +1001,18 @@ protected:
   /// The array containing the S-wavespeed
   arrayView1d < real64 const > const m_velocityVs;
 
+  integer const m_cycleNumber;
+
   /// The time increment for this time integration step.
   real64 const m_dt;
 
+  arrayView1d< localIndex const > const m_sourceElem;
+
+  arrayView1d< localIndex const> const m_sourceIsLocal;
+
+  arrayView2d< real64 const > const m_sourceConstants;
+
+  arrayView2d< real64 const > const m_sourceValue;
 
 };
 
@@ -1021,7 +1028,12 @@ using ExplicitElasticStressSEMFactory = finiteElement::KernelFactory< ExplicitEl
                                                                       arrayView2d < real64 > const,
                                                                       arrayView2d < real64 > const,
                                                                       arrayView2d < real64 > const,
-                                                                      real64 >;                                                                 
+                                                                      arrayView1d < localIndex const  > const,
+                                                                      arrayView1d < localIndex const  > const,
+                                                                      arrayView2d < real64 const  > const,
+                                                                      arrayView2d < real64 const  > const,
+                                                                      real64,
+                                                                      integer >;                                                                 
 
 } // namespace ElasticWaveEquationSEMKernels
 

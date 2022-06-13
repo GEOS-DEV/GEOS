@@ -149,8 +149,6 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensor_xz >(this->getName());
       subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensor_yz >(this->getName());
 
-      subRegion.registerExtrinsicData < extrinsicMeshData::SourceInElem >(this->getName());
-
       finiteElement::FiniteElementBase const & fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
       finiteElement::dispatch3D( fe,
@@ -220,6 +218,7 @@ void ElasticWaveEquationSEM::postProcessInput()
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceIsLocal.resize( numSourcesGlobal );
+  m_sourceElem.resize(numSourcesGlobal);
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
@@ -247,6 +246,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
   arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
   arrayView1d< localIndex > const sourceIsLocal = m_sourceIsLocal.toView();
+  arrayView1d< localIndex > const sourceElem = m_sourceElem.toView();
   sourceNodeIds.setValues< serialPolicy >( -1 );
   sourceConstants.setValues< serialPolicy >( -1 );
   sourceIsLocal.zero();
@@ -286,7 +286,6 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
-    arrayView1d< localIndex > const sourceInElem = elementSubRegion.getExtrinsicData< extrinsicMeshData::SourceInElem >();
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -312,7 +311,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
           faceCenter,
           sourceCoordinates,
           sourceIsLocal,
-          sourceInElem,
+          sourceElem,
           sourceNodeIds,
           sourceConstants,
           receiverCoordinates,
@@ -585,6 +584,11 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
+   
+  arrayView2d< real64 const > const sourceConstants = m_sourceConstants.toView();
+  arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toView();
+  arrayView1d< localIndex const > const sourceElem = m_sourceElem.toView();
+  arrayView2d< real64 const > const sourceValue = m_sourceValue.toView();
 
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -592,7 +596,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
                                                arrayView1d< string const > const & regionNames )
 
   {
-
+    
     NodeManager & nodeManager = mesh.getNodeManager();
  
     arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
@@ -609,7 +613,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
-    arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
+    //arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
 
   
    mesh.getElemManager().forElementSubRegions < CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -627,9 +631,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
       arrayView2d< real64 > const stressxz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_xz >();
       arrayView2d< real64 > const stressyz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_yz >();
 
-      arrayView1d< localIndex const > const sourceInElem = elementSubRegion.getExtrinsicData< extrinsicMeshData::SourceInElem >();
-
-      addSourceToRightHandSide( cycleNumber, rhs );
+      //addSourceToRightHandSide( cycleNumber, rhs );
 
       auto kernelFactory = ElasticWaveEquationSEMKernels::ExplicitElasticDisplacementSEMFactory( dt );
   
@@ -648,7 +650,12 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
                                                                                            stressxy,
                                                                                            stressxz,
                                                                                            stressyz,
-                                                                                           dt );
+                                                                                           sourceElem,
+                                                                                           sourceIsLocal,
+                                                                                           sourceConstants,
+                                                                                           sourceValue,
+                                                                                           dt,
+                                                                                           cycleNumber );
 
       finiteElement::
       regionBasedKernelApplication< EXEC_POLICY,

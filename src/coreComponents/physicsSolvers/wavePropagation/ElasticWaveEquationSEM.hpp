@@ -189,6 +189,8 @@ private:
   /// Displacement_np1 at the receiver location for each time step for each receiver
   array2d< real64 > m_displacementzNp1AtReceivers;
 
+  array1d < localIndex > m_sourceElem;
+
 
 };
 
@@ -348,14 +350,6 @@ EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceNodeIndicator,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
-
-EXTRINSIC_MESH_DATA_TRAIT( SourceInElem,
-                           "sourceInElem",
-                           array1d< localIndex >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Source Indicator, 1 if the sourc eis inside the element 0 otherwise." );
 
 }
 
