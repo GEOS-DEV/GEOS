@@ -948,9 +948,9 @@ public:
         {
           for (localIndex i = 0; i < numNodesPerElem; ++i)
           {
-            m_stressxx[k][i]+= m_dt*m_sourceConstants[isrc][i]*m_sourceValue[m_cycleNumber][isrc];
-            m_stressyy[k][i]+= m_dt*m_sourceConstants[isrc][i]*m_sourceValue[m_cycleNumber][isrc];
-            m_stresszz[k][i]+= m_dt*m_sourceConstants[isrc][i]*m_sourceValue[m_cycleNumber][isrc];
+            m_stressxx[k][i]+= m_dt*(m_sourceConstants[isrc][i]*m_sourceValue[m_cycleNumber][isrc])/(detJ);
+            m_stressyy[k][i]+= m_dt*(m_sourceConstants[isrc][i]*m_sourceValue[m_cycleNumber][isrc])/(detJ);
+            m_stresszz[k][i]+= m_dt*(m_sourceConstants[isrc][i]*m_sourceValue[m_cycleNumber][isrc])/(detJ);
           }
           
         }
