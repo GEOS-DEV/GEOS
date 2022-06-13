@@ -96,8 +96,9 @@ private:
   /// Optional string indicating any specialized formulation type.
   string m_formulation;
 
-  /// Optional parameter indicating if the class should use Virtual Elements.
-  int m_useVem;
+  /// Optional parameter indicating if the class should use Virtual Elements when Finite Elements
+  /// could be used.
+  int m_forceVem;
 
   void postProcessInput() override final;
 
