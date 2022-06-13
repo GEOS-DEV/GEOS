@@ -33,56 +33,98 @@ struct PrecomputeSourceAndReceiverKernel
 {
 
   /**
-   * @brief Convert a mesh element point coordinate into a coordinate on the reference element
+   * @brief Check if the source point is inside an element or not
+   * @param numFacesPerElem number of face on an element
+   * @param elemCenter array containing the center of the elements
+   * @param faceNormal array containing the normal of all faces
+   * @param faceCenter array containing the center of all faces
+   * @param elemsToFaces map to get the global faces from element index and local face index
    * @param coords coordinate of the point
-   * @param coordsOnRefElem to contain the coordinate computed in the reference element
-   * @param elementIndex index of the element containing the coords
-   * @param faceNodeIndices array of face of the element
-   * @param elemsToNodes map to obtaint global nodes from element index
-   * @param X array of mesh nodes coordinates
+   * @return true if coords is inside the element
+   */
+
+  GEOSX_HOST_DEVICE
+  static bool
+  locateSourceElement( real64 const numFacesPerElem,
+                       real64 const (&elemCenter)[3],
+                       arrayView2d< real64 const > const faceNormal,
+                       arrayView2d< real64 const > const faceCenter,
+                       arraySlice1d< localIndex const > const elemsToFaces,
+                       real64 const (&coords)[3])
+  {
+    //Loop over the element faces
+    localIndex prevSign = 0;
+    real64 tmpVector[3]{};
+    for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
+    {
+      localIndex const iface = elemsToFaces[kfe];
+      real64  faceCenterOnFace[3] = {faceCenter[iface][0],
+                                     faceCenter[iface][1],
+                                     faceCenter[iface][2]};
+      real64  faceNormalOnFace[3] = {faceNormal[iface][0],
+                                     faceNormal[iface][1],
+                                     faceNormal[iface][2]};
+
+      //Test to make sure if the normal is outwardly directed
+      LvArray::tensorOps::copy< 3 >( tmpVector, faceCenterOnFace );
+      LvArray::tensorOps::subtract< 3 >( tmpVector, elemCenter );
+      if( LvArray::tensorOps::AiBi< 3 >( tmpVector, faceNormalOnFace ) < 0.0 )
+      {
+        LvArray::tensorOps::scale< 3 >( faceNormalOnFace, -1 );
+      }
+      // compute the vector face center to query point
+      LvArray::tensorOps::subtract<3>(faceCenterOnFace, coords);
+      localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >(faceNormalOnFace, faceCenterOnFace));
+
+      // all dot products should be non-negative (we enforce outward normals)
+
+      if( prevSign * s < 0 )
+      {
+        return false;
+      }
+      prevSign = s;
+    }
+    return true;
+  }
+  /**
+   * @brief Convert a mesh element point coordinate into a coordinate on the reference element
+   * @tparam FE_TYPE finite element type
+   * @param[in] numFacesPerElem number of face on an element
+   * @param[in] coords coordinate of the point
+   * @param[in] elemCenter array containing the center of the elements
+   * @param[in] faceNormal array containing the normal of all faces
+   * @param[in] faceCenter array containing the center of all faces
+   * @param[in] elemsToNodes map to obtaint global nodes from element index
+   * @param[in] elemsToFaces map to get the global faces from element index and local face index
+   * @param[in] X array of mesh nodes coordinates
+   * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
    * @return true if coords is inside the element num index
    */
   template< typename FE_TYPE >
   GEOSX_HOST_DEVICE
-  static bool
+  static void
   computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
-                                        real64 const (&elemCenter)[3],
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
-                                        arraySlice1d< localIndex const > const elemsToFaces,
-                                        ArrayOfArraysView< localIndex const > const & facesToNodes,
                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
                                         real64 (& coordsOnRefElem)[3] )
   {
-    bool const isInsidePolyhedron =
-      computationalGeometry::isPointInsidePolyhedron( X,
-                                                      elemsToFaces,
-                                                      facesToNodes,
-                                                      elemCenter,
-                                                      coords );
-    if( isInsidePolyhedron )
+    real64 xLocal[FE_TYPE::numNodes][3]{};
+    for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
     {
-      real64 xLocal[FE_TYPE::numNodes][3]{};
-      for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
-      {
-        LvArray::tensorOps::copy< 3 >( xLocal[a], X[ elemsToNodes[a] ] );
-      }
-
-      // coordsOnRefElem = invJ*(coords-coordsNode_0)
-      real64 invJ[3][3]{};
-      FE_TYPE::invJacobianTransformation( 0, xLocal, invJ );
-
-      for( localIndex i = 0; i < 3; ++i )
-      {
-        // init at (-1,-1,-1) as the origin of the referential elem
-        coordsOnRefElem[i] = -1.0;
-        for( localIndex j = 0; j < 3; ++j )
-        {
-          coordsOnRefElem[i] += invJ[i][j] * (coords[j] - xLocal[0][j]);
-        }
-      }
-      return true;
+      LvArray::tensorOps::copy< 3 >( xLocal[a], X[ elemsToNodes[a] ] );
     }
-    return false;
+    // coordsOnRefElem = invJ*(coords-coordsNode_0)
+    real64 invJ[3][3]{};
+    FE_TYPE::invJacobianTransformation( 0, xLocal, invJ );
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      // init at (-1,-1,-1) as the origin of the referential elem
+      coordsOnRefElem[i] = -1.0;
+      for( localIndex j = 0; j < 3; ++j )
+      {
+        coordsOnRefElem[i] += invJ[i][j] * (coords[j] - xLocal[0][j]);
+      }
+    }
 
   }
 
@@ -131,32 +173,42 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numNodesPerElem number of nodes per element
+   * @param[in] numFacesPerElem number of face on an element
    * @param[in] X coordinates of the nodes
+   * @param[in] elemGhostRank array containing the ghost rank
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
-   * @param[in] facesToNodes map from faces to nodes
    * @param[in] elemCenter coordinates of the element centers
+   * @param[in] faceNormal array containing the normal of all faces
+   * @param[in] faceCenter array containing the center of all faces
    * @param[in] sourceCoordinates coordinates of the source terms
    * @param[out] sourceIsLocal flag indicating whether the source is local or not
+   * @param[out] sourceInElem flag indicating whether the source is inside the element or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
-   * @param[out] sourceNodeConstants constant part of the source terms
+   * @param[out] sourceConstants constant part of the source terms
    * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
-   * @param[out] receiverNodeConstants constant part of the receiver term
+   * @param[out] receiverConstants constant part of the receiver term
+   * @param[out] sourceValue array containing the value of the time dependent source (Ricker for e.g)
+   * @param[in] dt time-step
+   * @param[in] timeSourceFrequency Peak frequency of the source
+   * @param[in] rickerOrder Order of the Ricker wavelet
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
-          localIndex const numNodesPerElem,
+          localIndex const numFacesPerElem,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
-          ArrayOfArraysView< localIndex const > const & facesToNodes,
           arrayView2d< real64 const > const & elemCenter,
+          arrayView2d< real64 const > const faceNormal,
+          arrayView2d< real64 const > const faceCenter,
           arrayView2d< real64 const > const sourceCoordinates,
           arrayView1d< localIndex > const sourceIsLocal,
+          arrayView1d< localIndex > const sourceInElem,
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
           arrayView2d< real64 const > const receiverCoordinates,
@@ -171,6 +223,9 @@ struct PrecomputeSourceAndReceiverKernel
 
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
+
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+
       real64 const center[3] = { elemCenter[k][0],
                                  elemCenter[k][1],
                                  elemCenter[k][2] };
@@ -187,16 +242,22 @@ struct PrecomputeSourceAndReceiverKernel
                                      sourceCoordinates[isrc][2] };
 
           real64 coordsOnRefElem[3]{};
+
           bool const sourceFound =
+            locateSourceElement( numFacesPerElem,
+                                 center,
+                                 faceNormal,
+                                 faceCenter,
+                                 elemsToFaces[k],
+                                 coords );
+
+          if( sourceFound && elemGhostRank[k] < 0)
+          {
+            sourceInElem[k] = 1;
             computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                             center,
                                                              elemsToNodes[k],
-                                                             elemsToFaces[k],
-                                                             facesToNodes,
                                                              X,
                                                              coordsOnRefElem );
-          if( sourceFound )
-          {
             sourceIsLocal[isrc] = 1;
             real64 Ntest[8];
             finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
@@ -231,15 +292,18 @@ struct PrecomputeSourceAndReceiverKernel
 
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
+            locateSourceElement( numFacesPerElem,
+                                 center,
+                                 faceNormal,
+                                 faceCenter,
+                                 elemsToFaces[k],
+                                 coords );
+          if( receiverFound && elemGhostRank[k] < 0)
+          {
             computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                             center,
                                                              elemsToNodes[k],
-                                                             elemsToFaces[k],
-                                                             facesToNodes,
                                                              X,
                                                              coordsOnRefElem );
-          if( receiverFound )
-          {
             receiverIsLocal[ircv] = 1;
 
             real64 Ntest[8];
@@ -482,6 +546,8 @@ public:
     m_damping_x( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_x > ()),
     m_damping_y( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_y > ()),
     m_damping_z( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_z > ()),
+    m_sourceInElem( elementSubRegion.template getExtrinsicData< extrinsicMeshData::SourceInElem>() ),
+    m_rhs( nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS > ()),
     m_dt( dt )
   {
     GEOSX_UNUSED_VAR( edgeManager );
@@ -600,6 +666,18 @@ public:
     m_uz_np1[m_elemsToNodes[k][i]] = uelemz[i]/(m_mass[m_elemsToNodes[k][i]]+0.5*m_dt*m_damping_z[m_elemsToNodes[k][i]]);
     }
 
+    //Add source
+    if(m_sourceInElem[k] == 1)
+    {
+      for (localIndex i = 0; i < numNodesPerElem; i++)
+      {
+        m_ux_np1[m_elemsToNodes[k][i]]+=m_dt*(m_rhs[m_elemsToNodes[k][i]]/(m_mass[m_elemsToNodes[k][i]]));
+        m_uy_np1[m_elemsToNodes[k][i]]+=m_dt*(m_rhs[m_elemsToNodes[k][i]]/(m_mass[m_elemsToNodes[k][i]]));
+        m_uz_np1[m_elemsToNodes[k][i]]+=m_dt*(m_rhs[m_elemsToNodes[k][i]]/(m_mass[m_elemsToNodes[k][i]]));
+      }
+      
+    }
+
   }
 
 
@@ -645,6 +723,12 @@ protected:
 
   /// The array containing the diagonal of the damping matrix (z-part)
   arrayView1d< real64 const> const m_damping_z;
+
+  /// The array containing the flag to knwo if the source is inside an element or not
+  arrayView1d< localIndex const> const m_sourceInElem;
+
+  /// The array containing the RHS
+  arrayView1d< real64  > const m_rhs;
 
   /// The time increment for this time integration step.
   real64 const m_dt;
@@ -722,7 +806,6 @@ public:
     m_density( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumDensity >() ),
     m_velocityVp( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumVelocityVp >() ),
     m_velocityVs( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumVelocityVs >() ),
-    m_rhs( nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS > ()),
     m_dt( dt )
   {
     GEOSX_UNUSED_VAR( edgeManager );
@@ -868,13 +951,13 @@ public:
 
     //Source injection
 
-    for (localIndex i = 0; i < numNodesPerElem; i++)
-    {
-      m_stressxx[k][i]+= m_dt*(m_rhs[m_elemsToNodes[k][i]]/(detJ));
-      m_stressyy[k][i]+= m_dt*(m_rhs[m_elemsToNodes[k][i]]/(detJ));
-      m_stresszz[k][i]+= m_dt*(m_rhs[m_elemsToNodes[k][i]]/(detJ));
+    // for (localIndex i = 0; i < numNodesPerElem; i++)
+    // {
+    //   m_stressxx[k][i]+= m_dt*(m_rhs[m_elemsToNodes[k][i]]/(detJ));
+    //   m_stressyy[k][i]+= m_dt*(m_rhs[m_elemsToNodes[k][i]]/(detJ));
+    //   m_stresszz[k][i]+= m_dt*(m_rhs[m_elemsToNodes[k][i]]/(detJ));
 
-    }
+    // }
    
 
   }
@@ -919,9 +1002,6 @@ protected:
 
   /// The array containing the S-wavespeed
   arrayView1d < real64 const > const m_velocityVs;
-
-  /// The array containing the RHS
-  arrayView1d< real64  > const m_rhs;
 
   /// The time increment for this time integration step.
   real64 const m_dt;

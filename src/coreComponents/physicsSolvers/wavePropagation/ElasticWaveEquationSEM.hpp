@@ -349,6 +349,13 @@ EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceNodeIndicator,
                            WRITE_AND_READ,
                            "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
+EXTRINSIC_MESH_DATA_TRAIT( SourceInElem,
+                           "sourceInElem",
+                           array1d< localIndex >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Source Indicator, 1 if the sourc eis inside the element 0 otherwise." );
 
 }
 

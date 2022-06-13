@@ -149,6 +149,8 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensor_xz >(this->getName());
       subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensor_yz >(this->getName());
 
+      subRegion.registerExtrinsicData < extrinsicMeshData::SourceInElem >(this->getName());
+
       finiteElement::FiniteElementBase const & fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
       finiteElement::dispatch3D( fe,
@@ -234,12 +236,12 @@ void ElasticWaveEquationSEM::postProcessInput()
 
 void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
-  NodeManager & nodeManager = mesh.getNodeManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
-  ArrayOfArraysView< localIndex const > const & facesToNodes =
-    faceManager.nodeList().toViewConst();
+  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
+  arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -283,6 +285,8 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
+    arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
+    arrayView1d< localIndex > const sourceInElem = elementSubRegion.getExtrinsicData< extrinsicMeshData::SourceInElem >();
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -292,29 +296,33 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+      localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
+
       ElasticWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
-        numNodesPerElem,
-        X,
-        elemsToNodes,
-        elemsToFaces,
-        facesToNodes,
-        elemCenter,
-        sourceCoordinates,
-        sourceIsLocal,
-        sourceNodeIds,
-        sourceConstants,
-        receiverCoordinates,
-        receiverIsLocal,
-        receiverNodeIds,
-        receiverConstants,
-        sourceValue,
-        dt,
-        timeSourceFrequency,
-        rickerOrder);
+          numFacesPerElem,
+          X,
+          elemGhostRank,
+          elemsToNodes,
+          elemsToFaces,
+          elemCenter,
+          faceNormal,
+          faceCenter,
+          sourceCoordinates,
+          sourceIsLocal,
+          sourceInElem,
+          sourceNodeIds,
+          sourceConstants,
+          receiverCoordinates,
+          receiverIsLocal,
+          receiverNodeIds,
+          receiverConstants,
+          sourceValue,
+          dt,
+          timeSourceFrequency,
+          rickerOrder);
     } );
   } );
 }
@@ -618,6 +626,8 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
       arrayView2d< real64 > const stressxy = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_xy >();
       arrayView2d< real64 > const stressxz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_xz >();
       arrayView2d< real64 > const stressyz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_yz >();
+
+      arrayView1d< localIndex const > const sourceInElem = elementSubRegion.getExtrinsicData< extrinsicMeshData::SourceInElem >();
 
       addSourceToRightHandSide( cycleNumber, rhs );
 
