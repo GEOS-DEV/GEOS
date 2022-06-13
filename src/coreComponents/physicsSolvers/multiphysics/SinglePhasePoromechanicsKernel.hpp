@@ -221,15 +221,16 @@ public:
     // is a no-operation with FEM classes)
     real64 const stabilizationScaling = computeStabilizationScaling( k );
     m_finiteElementSpace.template addGradGradStabilizationMatrix
-    < FE_TYPE, numDofPerTrialSupportPoint, true >( stack.feStack,
-                                                   stack.dLocalResidualMomentum_dDisplacement,
-                                                   -stabilizationScaling );
+    < FE_TYPE, numDofPerTrialSupportPoint, false >( stack.feStack,
+                                                    stack.dLocalResidualMomentum_dDisplacement,
+                                                    -stabilizationScaling );
     m_finiteElementSpace.template
     addEvaluatedGradGradStabilizationVector< FE_TYPE,
-                                             numDofPerTrialSupportPoint >( stack.feStack,
-                                                                           stack.uhat_local,
-                                                                           reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
-                                                                           -stabilizationScaling );
+                                             numDofPerTrialSupportPoint >
+      ( stack.feStack,
+        stack.uhat_local,
+        reinterpret_cast< real64 (&)[numNodesPerElem][numDofPerTestSupportPoint] >(stack.localResidualMomentum),
+        -stabilizationScaling );
   }
 
   GEOSX_HOST_DEVICE
@@ -450,10 +451,11 @@ public:
 //    constexpr FunctionSpace pressureTestSpace = pressureTrialSpace
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
+    localIndex const numSupportPoints =
+      m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    int nUDof = numSupportPoints * numDofPerTestSupportPoint;
 
-    constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
-
-    for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
+    for( int localNode = 0; localNode < numSupportPoints; ++localNode )
     {
       for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
       {
@@ -462,7 +464,7 @@ public:
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localRowDofIndex,
                                                                                 stack.dLocalResidualMomentum_dDisplacement[numDofPerTestSupportPoint * localNode + dim],
-                                                                                numNodesPerElem * numDofPerTrialSupportPoint );
+                                                                                nUDof );
 
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] );
         maxForce = fmax( maxForce, fabs( stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] ) );
