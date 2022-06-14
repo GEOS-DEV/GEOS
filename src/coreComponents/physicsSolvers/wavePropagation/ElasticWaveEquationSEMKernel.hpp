@@ -30,7 +30,6 @@ namespace elasticWaveEquationSEMKernels
 {
 
 struct PrecomputeSourceAndReceiverKernel
-
 {
   /**
    * @brief Check if the source point is inside an element or not
@@ -45,26 +44,26 @@ struct PrecomputeSourceAndReceiverKernel
 
   GEOSX_HOST_DEVICE
   static bool
-  locateSourceElement(real64 const numFacesPerElem,
-                      real64 const (&elemCenter)[3],
-                      arrayView2d< real64 const > const faceNormal,
-                      arrayView2d< real64 const > const faceCenter,
-                      arraySlice1d< localIndex const > const elemsToFaces,
-                      real64 const (&coords)[3])
+  locateSourceElement( real64 const numFacesPerElem,
+                       real64 const (&elemCenter)[3],
+                       arrayView2d< real64 const > const faceNormal,
+                       arrayView2d< real64 const > const faceCenter,
+                       arraySlice1d< localIndex const > const elemsToFaces,
+                       real64 const (&coords)[3] )
   {
     //Loop over the element faces
     localIndex prevSign = 0;
     real64 tmpVector[3]{};
     for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
     {
-      
+
       localIndex const iface = elemsToFaces[kfe];
-      real64  faceCenterOnFace[3] = {faceCenter[iface][0],
-                                     faceCenter[iface][1], 
-                                     faceCenter[iface][2]};
-      real64  faceNormalOnFace[3] = {faceNormal[iface][0],
-                                     faceNormal[iface][1],
-                                     faceNormal[iface][2]};
+      real64 faceCenterOnFace[3] = {faceCenter[iface][0],
+                                    faceCenter[iface][1],
+                                    faceCenter[iface][2]};
+      real64 faceNormalOnFace[3] = {faceNormal[iface][0],
+                                    faceNormal[iface][1],
+                                    faceNormal[iface][2]};
 
       //Test to make sure if the normal is outwardly directed
       LvArray::tensorOps::copy< 3 >( tmpVector, faceCenterOnFace );
@@ -73,11 +72,11 @@ struct PrecomputeSourceAndReceiverKernel
       {
         LvArray::tensorOps::scale< 3 >( faceNormalOnFace, -1 );
       }
- 
+
       // compute the vector face center to query point
-      LvArray::tensorOps::subtract<3>(faceCenterOnFace, coords);
-      localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >(faceNormalOnFace, faceCenterOnFace));
-      
+      LvArray::tensorOps::subtract< 3 >( faceCenterOnFace, coords );
+      localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >( faceNormalOnFace, faceCenterOnFace ));
+
       // all dot products should be non-negative (we enforce outward normals)
       if( prevSign * s < 0 )
       {
@@ -176,7 +175,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] size the number of cells in the subRegion
    * @param[in] numFacesPerElem number of face on an element
    * @param[in] X coordinates of the nodes
-   * @param[in] elemGhostRank array containing the ghost rank 
+   * @param[in] elemGhostRank array containing the ghost rank
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
    * @param[in] elemCenter coordinates of the element centers
@@ -255,15 +254,15 @@ struct PrecomputeSourceAndReceiverKernel
           }
 
           real64 coordsOnRefElem[3]{};
-           
+
           bool const sourceFound =
-           locateSourceElement( numFacesPerElem,
-                                center,
-                                faceNormal,
-                                faceCenter,
-                                elemsToFaces[k],
-                                coords );
-          
+            locateSourceElement( numFacesPerElem,
+                                 center,
+                                 faceNormal,
+                                 faceCenter,
+                                 elemsToFaces[k],
+                                 coords );
+
           if( sourceFound && elemGhostRank[k] < 0 )
           {
             computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
@@ -271,8 +270,9 @@ struct PrecomputeSourceAndReceiverKernel
                                                              X,
                                                              coordsOnRefElem );
             sourceIsLocal[isrc] = 1;
-            
-            //Compute source coefficients: this generate a P-wave and an "unwanted" S-wave. It is classical in the case of the elastic wave equation at order 2, the S-wave can be attenuated by refining the mesh or get to high order
+
+            //Compute source coefficients: this generate a P-wave and an "unwanted" S-wave. It is classical in the case of the elastic wave
+            // equation at order 2, the S-wave can be attenuated by refining the mesh or get to high order
             //However, we will propably use elastic wave at 1st order for the FWI case.
             for( localIndex c=0; c<2; ++c )
             {
@@ -280,15 +280,15 @@ struct PrecomputeSourceAndReceiverKernel
               {
                 for( localIndex a=0; a<2; ++a )
                 {
-                  real64 const Grad[3] = { finiteElement::LagrangeBasis1::gradient( a, coordsOnRefElem[0])*
-                                           finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1])*
-                                           finiteElement::LagrangeBasis1::value( c, coordsOnRefElem[2]),
-                                           finiteElement::LagrangeBasis1::value( a, coordsOnRefElem[0])*
-                                           finiteElement::LagrangeBasis1::gradient( b, coordsOnRefElem[1])*
-                                           finiteElement::LagrangeBasis1::value( c, coordsOnRefElem[2]),
-                                           finiteElement::LagrangeBasis1::value( a, coordsOnRefElem[0])*
-                                           finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1])*
-                                           finiteElement::LagrangeBasis1::gradient( c, coordsOnRefElem[2])};
+                  real64 const Grad[3] = { finiteElement::LagrangeBasis1::gradient( a, coordsOnRefElem[0] )*
+                                           finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1] )*
+                                           finiteElement::LagrangeBasis1::value( c, coordsOnRefElem[2] ),
+                                           finiteElement::LagrangeBasis1::value( a, coordsOnRefElem[0] )*
+                                           finiteElement::LagrangeBasis1::gradient( b, coordsOnRefElem[1] )*
+                                           finiteElement::LagrangeBasis1::value( c, coordsOnRefElem[2] ),
+                                           finiteElement::LagrangeBasis1::value( a, coordsOnRefElem[0] )*
+                                           finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1] )*
+                                           finiteElement::LagrangeBasis1::gradient( c, coordsOnRefElem[2] )};
 
                   localIndex const nodeIndex = finiteElement::LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
 
@@ -325,7 +325,7 @@ struct PrecomputeSourceAndReceiverKernel
                                      receiverCoordinates[ircv][2] };
 
           real64 coordsOnRefElem[3]{};
-          bool const receiverFound =      
+          bool const receiverFound =
             locateSourceElement( numFacesPerElem,
                                  center,
                                  faceNormal,
@@ -413,7 +413,7 @@ struct MassAndDampingMatrixKernel
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-  
+
 
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -471,7 +471,7 @@ struct MassAndDampingMatrixKernel
               localIndex numNodeGl = facesToNodes[iface][a];
 
               // Damping in x=xpos and x=xneg direction
-              if( faceNormal[iface][0] < 0.0 || faceNormal[iface][0] > 0.0)
+              if( faceNormal[iface][0] < 0.0 || faceNormal[iface][0] > 0.0 )
               {
                 real64 const alpha_x = density[k] * velocityVp[k];
                 real64 const alpha_y = density[k] * velocityVs[k];
@@ -481,7 +481,7 @@ struct MassAndDampingMatrixKernel
                 damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
               }
               // Damping in y=ypos and y=yneg direction
-              if( faceNormal[iface][1] < 0.0 || faceNormal[iface][1] > 0.0)
+              if( faceNormal[iface][1] < 0.0 || faceNormal[iface][1] > 0.0 )
               {
                 real64 const alpha_x = density[k] * velocityVs[k];
                 real64 const alpha_y = density[k] * velocityVp[k];
@@ -491,7 +491,7 @@ struct MassAndDampingMatrixKernel
                 damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
               }
               // Damping in z=zpos and z=zneg direction
-              if( faceNormal[iface][2] < 0.0 || faceNormal[iface][2] > 0.0)
+              if( faceNormal[iface][2] < 0.0 || faceNormal[iface][2] > 0.0 )
               {
                 real64 const alpha_x = density[k] * velocityVs[k];
                 real64 const alpha_y = density[k] * velocityVs[k];
@@ -615,7 +615,7 @@ public:
       xLocal()
     {}
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ]{};   
+    real64 xLocal[ numNodesPerElem ][ 3 ]{};
     real64 mu=0;
     real64 lambda=0;
   };
@@ -657,8 +657,8 @@ public:
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
-  { 
-     
+  {
+
     real64 gradN[ numNodesPerElem ][ 3 ];
 
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
@@ -666,7 +666,7 @@ public:
     for( localIndex i=0; i<numNodesPerElem; ++i )
     {
       for( localIndex j=0; j<numNodesPerElem; ++j )
-      { 
+      {
         real64 const Rxx_ij = detJ* ((stack.lambda+2.0*stack.mu)*gradN[j][0]*gradN[i][0] + stack.mu * gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][2]*gradN[i][2]);
         real64 const Ryy_ij = detJ* ((stack.lambda+2.0*stack.mu)*gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][0]*gradN[i][0] + stack.mu * gradN[j][2]*gradN[i][2]);
         real64 const Rzz_ij = detJ*((stack.lambda+2.0*stack.mu)*gradN[j][2]*gradN[i][2] + stack.mu * gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][0]*gradN[i][0]);

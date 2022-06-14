@@ -139,7 +139,7 @@ public:
     static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
     static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
 
-    static constexpr char const * displacementxNp1AtReceiversString() { return "displacementxNp1AtReceivers"; } 
+    static constexpr char const * displacementxNp1AtReceiversString() { return "displacementxNp1AtReceivers"; }
     static constexpr char const * displacementyNp1AtReceiversString() { return "displacementyNp1AtReceivers"; }
     static constexpr char const * displacementzNp1AtReceiversString() { return "displacementzNp1AtReceivers"; }
 
@@ -178,10 +178,10 @@ private:
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
   array2d< real64 > m_sourceConstants_x;
 
-   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
   array2d< real64 > m_sourceConstants_y;
 
-   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
   array2d< real64 > m_sourceConstants_z;
 
   /// Flag that indicates whether the source is local or not to the MPI rank
