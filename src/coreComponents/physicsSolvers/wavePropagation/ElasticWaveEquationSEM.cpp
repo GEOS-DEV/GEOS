@@ -646,7 +646,6 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
     {
       if( freeSurfaceNodeIndicator[a]!=1 )
       {
-        std::cout << rhs_x[a] << std::endl;
         ux_np1[a] = ux_n[a];
         ux_np1[a] *= 2.0*mass[a];
         ux_np1[a] -= (mass[a]-0.5*dt*damping_x[a])*ux_nm1[a];
