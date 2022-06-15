@@ -619,8 +619,6 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
     /// get array of indicators: 1 if node on free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
 
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
-
     arrayView1d< real64 > const rhs_x = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS_x >();
     arrayView1d< real64 > const rhs_y = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS_y >();
     arrayView1d< real64 > const rhs_z = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS_z >();

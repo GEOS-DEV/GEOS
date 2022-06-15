@@ -43,7 +43,7 @@
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.003"
+      forceDt="0.001"
       target="/Solvers/elasticSolver"/>
 
     <!-- generate an output that can be read from VTK -->
