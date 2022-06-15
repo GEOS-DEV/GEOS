@@ -444,7 +444,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     set( HYPRE_DEPENDS blas lapack superlu_dist )
     if( ENABLE_HYPRE_CUDA )
         set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} )
-        list( APPEND HYPRE_DEPENDS chai )
+        list( APPEND HYPRE_DEPENDS umpire )
     endif()
 
     find_and_register(NAME hypre
