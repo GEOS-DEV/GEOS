@@ -744,12 +744,14 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
    *  time_n - dt     timeSeismo    time_n
    *   ---|--------------|-------------|
    */
+  std::cout << "m_dtSeismoTrace " << m_dtSeismoTrace << " m_nsamplesSeismoTrace " << m_nsamplesSeismoTrace << " m_indexSeismoTrace " << m_indexSeismoTrace << " time_n " << time_n << std::endl;
+  
   for( real64 timeSeismo;
        (m_forward)?((timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace):
-       ((timeSeismo = m_dtSeismoTrace*(m_indexSeismoTrace-1)) > (time_n - dt - epsilonLoc) && m_indexSeismoTrace > 0);
-       (m_forward)?m_indexSeismoTrace++:m_indexSeismoTrace-- )
+         ((timeSeismo = m_dtSeismoTrace*(m_nsamplesSeismoTrace-m_indexSeismoTrace-1)) > (time_n - dt - epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace);
+       m_indexSeismoTrace++ )
   {
-    computeSeismoTrace( time_n, dt, timeSeismo, (m_forward)?m_indexSeismoTrace:m_indexSeismoTrace-1, var_np1, var_n, varAtReceivers );
+    computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, var_np1, var_n, varAtReceivers );
   }
   varAtReceivers.move( MemorySpace::host, false );
 }
