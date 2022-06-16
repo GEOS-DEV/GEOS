@@ -98,7 +98,7 @@ void SolverBase::initialize_postMeshGeneration()
 {
   ExecutableGroup::initialize_postMeshGeneration();
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  Group const & meshBodies = domain.getMeshBodies();
+  Group const & meshBodies = domain.getMeshBodiesGrp();
   for( auto const & target : m_targetRegionNames )
   {
     auto const delimPos = target.find_first_of( '/' );

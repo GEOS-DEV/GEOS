@@ -50,15 +50,21 @@ public:
    */
   MeshLevel & createMeshLevel( localIndex const newLevel );
 
-  /**
-   * @brief Get the meshLevels group
-   * @return reference to the meshLevels group.
-   */
-  Group & getMeshLevels() { return m_meshLevels; }
-  /**
-   * @copydoc getMeshLevels()
-   */
-  Group const & getMeshLevels() const { return m_meshLevels; }
+  std::vector< MeshLevel const * > getMeshLevels() const
+  {
+    std::vector< MeshLevel const * > result;
+    auto filler = [&]( MeshLevel const & ml){ result.emplace_back( &ml ); };
+    m_meshLevels.forSubGroups< MeshLevel >( filler );
+    return result;
+  }
+
+  std::vector< MeshLevel * > getMeshLevels()
+  {
+    std::vector< MeshLevel * > result;
+    auto filler = [&]( MeshLevel & ml){ result.emplace_back( &ml ); };
+    m_meshLevels.forSubGroups< MeshLevel >( filler );
+    return result;
+  }
 
   /**
    * @brief Get mesh level
@@ -153,6 +159,11 @@ private:
   static string intToMeshLevelString( localIndex const meshLevel );
 
 };
+
+std::vector< MeshLevel * > operator|( const std::vector< MeshBody * > & meshBodies,
+                                      std::function< std::vector< MeshLevel * >( MeshBody * ) > f );
+
+std::function< std::vector< MeshLevel * >( MeshBody * ) > flattenMeshLevels();
 
 } /* namespace geosx */
 

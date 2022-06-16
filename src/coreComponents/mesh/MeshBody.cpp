@@ -46,5 +46,24 @@ string MeshBody::intToMeshLevelString( localIndex const meshLevel )
   return GEOSX_FMT( "Level{}", meshLevel );
 }
 
+std::vector< MeshLevel * > operator|( const std::vector< MeshBody * > & meshBodies,
+                                      std::function< std::vector< MeshLevel * >( MeshBody * ) > f )
+{
+  std::vector< MeshLevel * > result;
+  for( MeshBody * mb: meshBodies )
+  {
+    for( MeshLevel * ml: f( mb ) )
+    {
+      result.emplace_back( ml );
+    }
+  }
+  return result;
+}
+
+std::function< std::vector< MeshLevel * >( MeshBody * ) > flattenMeshLevels()
+{
+  return []( MeshBody * mb )
+  { return mb->getMeshLevels(); };
+}
 
 } /* namespace geosx */

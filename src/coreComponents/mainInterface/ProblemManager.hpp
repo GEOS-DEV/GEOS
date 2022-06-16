@@ -25,6 +25,7 @@
 namespace geosx
 {
 
+class MeshBody;
 class PhysicsSolverManager;
 class DomainPartition;
 class GeometricObjectManager;
@@ -329,7 +330,7 @@ private:
    * Checks all physics solvers for targetRegions and constitutive models to
    * determine the minimum number of quadrature points for each subregion.
    */
-  map< std::tuple< string, string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );
+  map< std::tuple< string, string, string >, localIndex > calculateRegionQuadrature( std::vector< MeshBody * > const & meshBodies );
 
   /**
    * @brief Allocate constitutive relations on each subregion with appropriate
@@ -339,7 +340,7 @@ private:
    * @param regionQuadrature The map containing the number of quadrature points for every
    *  MeshBody/ElementRegion/ElementSubRegion.
    */
-  void setRegionQuadrature( Group & meshBodies,
+  void setRegionQuadrature( std::vector< MeshBody * > const & meshBodies,
                             constitutive::ConstitutiveManager const & constitutiveManager,
                             map< std::tuple< string, string, string >, localIndex > const & regionQuadrature );
 

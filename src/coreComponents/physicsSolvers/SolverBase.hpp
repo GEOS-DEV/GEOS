@@ -666,6 +666,46 @@ public:
     }
   }
 
+  template< typename LAMBDA >
+  void forMeshTargets( std::vector< const MeshBody * > const & meshBodies, LAMBDA && lambda ) const
+  {
+    for( auto const & target: m_meshTargets )
+    {
+      string const meshBodyName = target.first;
+      arrayView1d< string const > const & regionNames = target.second.toViewConst();
+      for( const MeshBody * meshBody: meshBodies )
+      {
+        if( meshBodyName != meshBody->getName() )
+        { continue; }
+
+        for( MeshLevel const * meshLevel: meshBody->getMeshLevels() )
+        {
+          lambda( meshBodyName, *meshLevel, regionNames );
+        }
+      }
+    }
+  }
+
+  template< typename LAMBDA >
+  void forMeshTargets( std::vector< MeshBody * > const & meshBodies, LAMBDA && lambda ) const
+  {
+    for( auto const & target: m_meshTargets )
+    {
+      string const meshBodyName = target.first;
+      arrayView1d< string const > const & regionNames = target.second.toViewConst();
+      for( MeshBody * meshBody: meshBodies )
+      {
+        if( meshBodyName != meshBody->getName() )
+        { continue; }
+
+        for( MeshLevel * meshLevel: meshBody->getMeshLevels() )
+        {
+          lambda( meshBodyName, *meshLevel, regionNames );
+        }
+      }
+    }
+  }
+
   string getDiscretizationName() const {return m_discretizationName;}
 
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
