@@ -18,6 +18,11 @@
 
 #include "VTKOutput.hpp"
 
+
+#if defined(GEOSX_USE_PYGEOSX)
+#include "fileIO/python/PyVTKOutputType.hpp"
+#endif
+
 namespace geosx
 {
 
@@ -64,6 +69,13 @@ void VTKOutput::postProcessInput()
   m_writer.setOutputLocation( getOutputDirectory(), m_plotFileRoot );
 }
 
+
+void VTKOutput::setPlotFileRoot( string const & root)
+{
+  m_plotFileRoot = root;
+}
+
+
 bool VTKOutput::execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM( dt ),
                          integer const cycleNumber,
@@ -79,6 +91,10 @@ bool VTKOutput::execute( real64 const time_n,
   return false;
 }
 
+#if defined(GEOSX_USE_PYGEOSX)
+PyTypeObject * VTKOutput::getPythonType() const
+{ return python::getPyVTKOutputType(); }
+#endif
 
 REGISTER_CATALOG_ENTRY( OutputBase, VTKOutput, string const &, Group * const )
 } /* namespace geosx */

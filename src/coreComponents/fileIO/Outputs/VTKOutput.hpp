@@ -47,6 +47,8 @@ public:
 
   virtual void postProcessInput() override;
 
+  void setPlotFileRoot( string const & root);
+
   /**
    * @brief Writes out a set of vtk files.
    * @copydoc EventBase::execute()
@@ -71,6 +73,12 @@ public:
     execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
   }
 
+  // /**
+  //  * @brief Getter for the file writer
+  //  * @return The writer 
+  //  **/
+  // vtk::VTKPolyDataWriterInterface getWriter() { return m_writer; }
+
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct : OutputBase::viewKeysStruct
   {
@@ -81,6 +89,14 @@ public:
     static constexpr auto outputRegionTypeString = "outputRegionType";
   } vtkOutputViewKeys;
   /// @endcond
+
+    /**
+   * @brief Return PyVTKOutput type.
+   * @return Return PyVTKOutput type.
+   */
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const override;
+#endif
 
 private:
 

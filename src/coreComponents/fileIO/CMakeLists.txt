@@ -40,10 +40,13 @@ set( dependencyList mesh constitutive silo hdf5 )
 if( ENABLE_PYGEOSX )
   list( APPEND fileIO_headers
 	python/PyHistoryCollectionType.hpp 
-	python/PyHistoryOutputType.hpp )
+	python/PyHistoryOutputType.hpp 
+  python/PyVTKOutputType.hpp)
   list( APPEND fileIO_sources 
         python/PyHistoryCollection.cpp 
-        python/PyHistoryOutput.cpp )
+        python/PyHistoryOutput.cpp 
+        python/PyVTKOutput.cpp
+        )
   list( APPEND dependencyList Python3::Python pylvarray ) 
 endif()
 
