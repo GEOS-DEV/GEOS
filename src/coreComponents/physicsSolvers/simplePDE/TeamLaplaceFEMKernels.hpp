@@ -271,9 +271,9 @@ public:
     constexpr size_t num_dofs_1d = StackVariables::num_dofs_1d;
     RAJA_TEAM_SHARED real64 maxForce = 0; // TODO take into account batch_size
     // TODO put this into a lambda "iterator" function
-    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
+    RAJA::expt::loop<thread_x> (stack.ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
     {
-      RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
+      RAJA::expt::loop<thread_y> (stack.ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
       {
         for (size_t dof_z = 0; dof_z < num_dofs_1d; dof_z++)
         {
