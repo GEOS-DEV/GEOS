@@ -19,6 +19,7 @@
 // Source includes
 #include "LaplaceFEM.hpp"
 #include "LaplaceFEMKernels.hpp"
+#include "TeamLaplaceFEMKernels.hpp"
 
 namespace geosx
 {
@@ -158,7 +159,7 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
     arrayView1d< globalIndex const > const &
     dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofKey );
 
-    LaplaceFEMKernelFactory kernelFactory( dofIndex, dofManager.rankOffset(), localMatrix, localRhs, m_fieldName );
+    TeamLaplaceFEMKernelFactory kernelFactory( dofIndex, dofManager.rankOffset(), localMatrix, localRhs, m_fieldName );
 
     string const dummyString = "dummy";
     finiteElement::
