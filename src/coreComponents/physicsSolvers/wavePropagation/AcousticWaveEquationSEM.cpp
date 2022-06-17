@@ -311,7 +311,6 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
 
   real64 const a1 = (dt < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
   real64 const a2 = 1.0 - a1;
-  std::cout << "Savind seismo " << iSeismo << std::endl;
   if( m_nsamplesSeismoTrace > 0 )
   {
     forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
