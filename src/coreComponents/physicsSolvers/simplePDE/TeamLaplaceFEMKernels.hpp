@@ -24,6 +24,7 @@
 
 #include "finiteElement/kernelInterface/TeamKernelBase.hpp"
 #include "finiteElement/kernelInterface/TeamKernelFunctions.hpp"
+#include "finiteElement/kernelInterface/QuadratureFunctionsHelper.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -171,9 +172,9 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void setup( StackVariables & stack,
-              localIndex const k ) const
+              localIndex const element_index ) const
   {
-    Base::setup( stack, k );
+    Base::setup( stack, element_index );
     /// Computation of the Jacobians
     readField( stack, stack.kernelComponent.m_X, stack.mesh_nodes );
     interpolateGradientAtQuadraturePoints( stack,
@@ -203,12 +204,14 @@ public:
   {
     constexpr int dim = StackVariables::dim;
     /// QFunction for Laplace operator
+
     // Load q-local gradients
     real64 u[dim];
     for (size_t d = 0; d < dim; d++)
     {
       u[d] = stack.q_gradient_values[quad_x][quad_y][quad_z][d];
     }
+
     // load q-local jacobian
     real64 J[dim][dim];
     for (size_t i = 0; i < dim; i++)
@@ -218,20 +221,12 @@ public:
         J[i][j] = stack.jacobians[quad_x][quad_y][quad_z][i][j];
       }
     }
-    real64 const detJ = J[0][0] * (J[1][1] * J[2][2] - J[2][1] * J[1][2])
-                      - J[1][0] * (J[0][1] * J[2][2] - J[2][1] * J[0][2])
-                      + J[2][0] * (J[0][1] * J[1][2] - J[1][1] * J[0][2]);
-    // adj(J_q)
+
+    real64 const detJ = determinant( J );
+
     real64 AdjJ[dim][dim];
-    AdjJ[0][0] = (J[1][1] * J[2][2]) - (J[1][2] * J[2][1]);
-    AdjJ[0][1] = (J[2][1] * J[0][2]) - (J[0][1] * J[2][2]);
-    AdjJ[0][2] = (J[0][1] * J[1][2]) - (J[1][1] * J[0][2]);
-    AdjJ[1][0] = (J[2][0] * J[1][2]) - (J[1][0] * J[2][2]);
-    AdjJ[1][1] = (J[0][0] * J[2][2]) - (J[0][2] * J[2][0]);
-    AdjJ[1][2] = (J[1][0] * J[0][2]) - (J[0][0] * J[1][2]);
-    AdjJ[2][0] = (J[1][0] * J[2][1]) - (J[2][0] * J[1][1]);
-    AdjJ[2][1] = (J[2][0] * J[0][1]) - (J[0][0] * J[2][1]);
-    AdjJ[2][2] = (J[0][0] * J[1][1]) - (J[0][1] * J[1][0]);
+    adjugate( J, AdjJ );
+
     // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) adj(J_q)^T
     real64 const weight = stack.weights[quad_x] * stack.weights[quad_y] * stack.weights[quad_z];
     real64 D[dim][dim];
@@ -244,6 +239,7 @@ public:
     D[0][2] = D[2][0];
     D[1][2] = D[2][1];
     D[2][2] = weight / detJ * (AdjJ[2][0]*AdjJ[2][0] + AdjJ[2][1]*AdjJ[2][1] + AdjJ[2][2]*AdjJ[2][2]);
+
     // Compute D*u
     for (size_t d = 0; d < dim; d++)
     {
