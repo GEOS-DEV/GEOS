@@ -187,13 +187,13 @@ RAJA_INLINE void forRange( INDEX const begin, INDEX const end, LAMBDA && body )
 RAJA Teams Policy setup
 */
 using namespace RAJA::expt;
-#if defined(MFEM_USE_RAJA) && defined(RAJA_ENABLE_CUDA)
+#if defined(RAJA_ENABLE_CUDA)
 using team_launch_policy = LaunchPolicy<seq_launch_t, cuda_launch_t<true>>;
 using team_x = LoopPolicy<RAJA::loop_exec, cuda_block_x_direct>;
 using thread_z = LoopPolicy<RAJA::loop_exec, cuda_thread_z_loop>;
 using thread_y = LoopPolicy<RAJA::loop_exec, cuda_thread_y_loop>;
 using thread_x = LoopPolicy<RAJA::loop_exec, cuda_thread_x_loop>;
-#elif defined(MFEM_USE_RAJA) && defined(RAJA_ENABLE_HIP)
+#elif defined(RAJA_ENABLE_HIP)
 using team_launch_policy = LaunchPolicy<seq_launch_t, hip_launch_t<true>>;
 using team_x = LoopPolicy<RAJA::loop_exec, hip_block_x_direct>;
 using thread_z = LoopPolicy<RAJA::loop_exec, hip_thread_z_loop>;
