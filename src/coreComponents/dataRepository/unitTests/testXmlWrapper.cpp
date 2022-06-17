@@ -176,38 +176,60 @@ TEST( testXmlWrapper, TensorIllFormed )
 }
 
 
-// Attribute format tests
-class real64AttributeTestFixture : public ::testing::TestWithParam< std::tuple< string, real64, bool > >
+// Templated attribute test
+template< typename T >
+class AttributeReadTestFixture : public ::testing::TestWithParam< std::tuple< string, T, bool > >
 {
-protected:
+public:
+
+  std::tuple< string, T, bool > testParams;
   string attributeString;
-  real64 expectedValue;
-  real64 parsedValue;
+  T expectedValue;
+  T parsedValue;
   bool failureFlag;
+
+  void compareValues()
+  {
+    EXPECT_EQ( expectedValue, parsedValue );
+  }
 
   void parseString()
   {
-    GEOSX_LOG_RANK_0( "Parsing string: " << attributeString );
-    xmlWrapper::stringToInputVariable< real64 >( parsedValue, attributeString );
-    ASSERT_NEAR( expectedValue, parsedValue, 1e-10 );
+    SCOPED_TRACE( "Parsing string: " + attributeString );
+    xmlWrapper::stringToInputVariable< T >( parsedValue, attributeString );
+    compareValues();
+  }
+
+  void test()
+  {
+    attributeString = std::get< 0 >( testParams );
+    expectedValue = std::get< 1 >( testParams );
+    failureFlag = std::get< 2 >( testParams );
+
+    if( failureFlag )
+    {
+      EXPECT_THROW( parseString(), InputError );
+    }
+    else
+    {
+      parseString();
+    }
+  }
+};
+
+
+class real64AttributeTestFixture : public AttributeReadTestFixture< real64 >
+{
+  void compareValues()
+  {
+    EXPECT_DOUBLE_EQ( expectedValue, parsedValue );
   }
 };
 
 TEST_P( real64AttributeTestFixture, testParsing )
 {
-  auto testParams = GetParam();
-  attributeString = std::get< 0 >( testParams );
-  expectedValue = std::get< 1 >( testParams );
-  failureFlag = std::get< 2 >( testParams );
-
-  if( failureFlag )
-  {
-    EXPECT_THROW( parseString(), InputError );
-  }
-  else
-  {
-    parseString();
-  }
+  testParams = GetParam();
+  this->test();
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -237,37 +259,18 @@ INSTANTIATE_TEST_CASE_P(
                      std::make_tuple( "1e+", 0, true )));
 
 
-class real32AttributeTestFixture : public ::testing::TestWithParam< std::tuple< string, real32, bool > >
+class real32AttributeTestFixture : public AttributeReadTestFixture< real32 >
 {
-protected:
-  string attributeString;
-  real32 expectedValue;
-  real32 parsedValue;
-  bool failureFlag;
-
-  void parseString()
+  void compareValues()
   {
-    GEOSX_LOG_RANK_0( "Parsing string: " << attributeString );
-    xmlWrapper::stringToInputVariable< real32 >( parsedValue, attributeString );
-    ASSERT_NEAR( expectedValue, parsedValue, 1e-10 );
+    EXPECT_FLOAT_EQ( expectedValue, parsedValue );
   }
 };
 
 TEST_P( real32AttributeTestFixture, testParsing )
 {
-  auto testParams = GetParam();
-  attributeString = std::get< 0 >( testParams );
-  expectedValue = std::get< 1 >( testParams );
-  failureFlag = std::get< 2 >( testParams );
-
-  if( failureFlag )
-  {
-    EXPECT_THROW( parseString(), InputError );
-  }
-  else
-  {
-    parseString();
-  }
+  testParams = GetParam();
+  this->test();
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -296,37 +299,13 @@ INSTANTIATE_TEST_CASE_P(
                      std::make_tuple( "1e-", 0, true ),
                      std::make_tuple( "1e+", 0, true )));
 
-class integerAttributeTestFixture : public ::testing::TestWithParam< std::tuple< string, integer, bool > >
-{
-protected:
-  string attributeString;
-  integer expectedValue;
-  integer parsedValue;
-  bool failureFlag;
 
-  void parseString()
-  {
-    GEOSX_LOG_RANK_0( "Parsing string: " << attributeString );
-    xmlWrapper::stringToInputVariable< integer >( parsedValue, attributeString );
-    ASSERT_TRUE( expectedValue == parsedValue );
-  }
-};
+class integerAttributeTestFixture : public AttributeReadTestFixture< integer > {};
 
 TEST_P( integerAttributeTestFixture, testParsing )
 {
-  auto testParams = GetParam();
-  attributeString = std::get< 0 >( testParams );
-  expectedValue = std::get< 1 >( testParams );
-  failureFlag = std::get< 2 >( testParams );
-
-  if( failureFlag )
-  {
-    EXPECT_THROW( parseString(), InputError );
-  }
-  else
-  {
-    parseString();
-  }
+  testParams = GetParam();
+  this->test();
 }
 
 INSTANTIATE_TEST_CASE_P(
