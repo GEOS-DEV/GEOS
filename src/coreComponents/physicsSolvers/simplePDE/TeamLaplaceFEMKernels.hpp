@@ -202,29 +202,20 @@ public:
                               localIndex const quad_y,
                               localIndex const quad_z ) const
   {
-    constexpr int dim = StackVariables::dim;
     /// QFunction for Laplace operator
+    constexpr int dim = StackVariables::dim;
 
     // Load q-local gradients
-    real64 u[dim];
-    for (size_t d = 0; d < dim; d++)
-    {
-      u[d] = stack.q_gradient_values[quad_x][quad_y][quad_z][d];
-    }
+    real64 grad_u[ dim ];
+    qLocalLoad( quad_x, quad_y, quad_z, stack.q_gradient_values, grad_u );
 
     // load q-local jacobian
-    real64 J[dim][dim];
-    for (size_t i = 0; i < dim; i++)
-    {
-      for (size_t j = 0; j < dim; j++)
-      {
-        J[i][j] = stack.jacobians[quad_x][quad_y][quad_z][i][j];
-      }
-    }
+    real64 J[ dim ][ dim ];
+    qLocalLoad( quad_x, quad_y, quad_z, stack.jacobians, J );
 
     real64 const detJ = determinant( J );
 
-    real64 AdjJ[dim][dim];
+    real64 AdjJ[ dim ][ dim ];
     adjugate( J, AdjJ );
 
     // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) adj(J_q)^T
@@ -243,9 +234,9 @@ public:
     // Compute D*u
     for (size_t d = 0; d < dim; d++)
     {
-      stack.Du[quad_x][quad_y][quad_z][d] = D[d][0] * u[0]
-                                          + D[d][1] * u[1]
-                                          + D[d][2] * u[2];
+      stack.Du[quad_x][quad_y][quad_z][d] = D[d][0] * grad_u[0]
+                                          + D[d][1] * grad_u[1]
+                                          + D[d][2] * grad_u[2];
     }
   }
 
