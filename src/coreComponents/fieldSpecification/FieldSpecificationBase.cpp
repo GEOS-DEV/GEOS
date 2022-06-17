@@ -80,6 +80,11 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Time at which the boundary condition will stop being applied." );
 
+  registerWrapper( viewKeyStruct::isThermalOnlyString(), &m_isThermalOnly ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Is thermal only." );
+  
   enableLogLevelInput();
 }
 

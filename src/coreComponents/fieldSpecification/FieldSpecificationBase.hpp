@@ -360,8 +360,12 @@ public:
     constexpr static char const * endTimeString() { return "endTime"; }
     /// @return The key for fluxBoundaryCondition
     constexpr static char const * fluxBoundaryConditionString() { return "fluxBoundaryCondition"; }
+
+    constexpr static char const * isThermalOnlyString() { return "isThermalOnly"; }    
   };
 
+  bool isThermalOnly() const { return m_isThermalOnly; }
+  
   /**
    * Accessor
    * @return const reference to m_function
@@ -507,7 +511,8 @@ protected:
 
 private:
 
-
+  integer m_isThermalOnly;
+  
   /// the names of the sets that the boundary condition is applied to
   string_array m_setNames;
 
