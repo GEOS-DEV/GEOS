@@ -184,9 +184,9 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] sourceCoordinates coordinates of the source terms
    * @param[out] sourceIsLocal flag indicating whether the source is local or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
-   * @param[out] sourceConstants_x constant part of the source terms in x-direction
-   * @param[out] sourceConstants_y constant part of the source terms in y-direction
-   * @param[out] sourceConstants_z constant part of the source terms in z-direction
+   * @param[out] sourceConstantsx constant part of the source terms in x-direction
+   * @param[out] sourceConstantsy constant part of the source terms in y-direction
+   * @param[out] sourceConstantsz constant part of the source terms in z-direction
    * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
@@ -210,9 +210,9 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 const > const sourceCoordinates,
           arrayView1d< localIndex > const sourceIsLocal,
           arrayView2d< localIndex > const sourceNodeIds,
-          arrayView2d< real64 > const sourceConstants_x,
-          arrayView2d< real64 > const sourceConstants_y,
-          arrayView2d< real64 > const sourceConstants_z,
+          arrayView2d< real64 > const sourceConstantsx,
+          arrayView2d< real64 > const sourceConstantsy,
+          arrayView2d< real64 > const sourceConstantsz,
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView2d< localIndex > const receiverNodeIds,
@@ -295,9 +295,9 @@ struct PrecomputeSourceAndReceiverKernel
                   real64 invJ[3][3]={{0}};
                   FE_TYPE::invJacobianTransformation( nodeIndex, xLocal, invJ );
                   sourceNodeIds[isrc][nodeIndex] = elemsToNodes[k][nodeIndex];
-                  sourceConstants_x[isrc][nodeIndex] = Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2];
-                  sourceConstants_y[isrc][nodeIndex] = Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2];
-                  sourceConstants_z[isrc][nodeIndex] = Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2];
+                  sourceConstantsx[isrc][nodeIndex] = Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2];
+                  sourceConstantsy[isrc][nodeIndex] = Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2];
+                  sourceConstantsz[isrc][nodeIndex] = Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2];
                 }
               }
             }
@@ -383,9 +383,9 @@ struct MassAndDampingMatrixKernel
    * @param[in] density cell-wise density
    * @param[in] velocityVp cell-wise P-wavespeed
    * @param[in] velocityVp cell-wise S-wavespeed
-   * @param[out] damping_x diagonal of the damping matrix (x-part)
-   * @param[out] damping_y diagonal of the damping matrix (y-part)
-   * @param[out] damping_z diagonal of the damping matrix (z-part)
+   * @param[out] dampingx diagonal of the damping matrix (x-part)
+   * @param[out] dampingy diagonal of the damping matrix (y-part)
+   * @param[out] dampingz diagonal of the damping matrix (z-part)
    * @param[out] mass diagonal of the mass matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
@@ -403,9 +403,9 @@ struct MassAndDampingMatrixKernel
           arrayView1d< real64 const > const density,
           arrayView1d< real64 > const velocityVp,
           arrayView1d< real64 > const velocityVs,
-          arrayView1d< real64 > const damping_x,
-          arrayView1d< real64 > const damping_y,
-          arrayView1d< real64 > const damping_z,
+          arrayView1d< real64 > const dampingx,
+          arrayView1d< real64 > const dampingy,
+          arrayView1d< real64 > const dampingz,
           arrayView1d< real64 > const mass )
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -473,32 +473,32 @@ struct MassAndDampingMatrixKernel
               // Damping in x=xpos and x=xneg direction
               if( faceNormal[iface][0] < 0.0 || faceNormal[iface][0] > 0.0 )
               {
-                real64 const alpha_x = density[k] * velocityVp[k];
-                real64 const alpha_y = density[k] * velocityVs[k];
-                real64 const alpha_z = density[k] * velocityVs[k];
-                damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
-                damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
-                damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+                real64 const alphax = density[k] * velocityVp[k];
+                real64 const alphay = density[k] * velocityVs[k];
+                real64 const alphaz = density[k] * velocityVs[k];
+                dampingx[numNodeGl] += alphax*detJ*ds*N[a];
+                dampingy[numNodeGl] += alphay*detJ*ds*N[a];
+                dampingz[numNodeGl] += alphaz*detJ*ds*N[a];
               }
               // Damping in y=ypos and y=yneg direction
               if( faceNormal[iface][1] < 0.0 || faceNormal[iface][1] > 0.0 )
               {
-                real64 const alpha_x = density[k] * velocityVs[k];
-                real64 const alpha_y = density[k] * velocityVp[k];
-                real64 const alpha_z = density[k] * velocityVs[k];
-                damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
-                damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
-                damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+                real64 const alphax = density[k] * velocityVs[k];
+                real64 const alphay = density[k] * velocityVp[k];
+                real64 const alphaz = density[k] * velocityVs[k];
+                dampingx[numNodeGl] += alphax*detJ*ds*N[a];
+                dampingy[numNodeGl] += alphay*detJ*ds*N[a];
+                dampingz[numNodeGl] += alphaz*detJ*ds*N[a];
               }
               // Damping in z=zpos and z=zneg direction
               if( faceNormal[iface][2] < 0.0 || faceNormal[iface][2] > 0.0 )
               {
-                real64 const alpha_x = density[k] * velocityVs[k];
-                real64 const alpha_y = density[k] * velocityVs[k];
-                real64 const alpha_z = density[k] * velocityVp[k];
-                damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
-                damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
-                damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+                real64 const alphax = density[k] * velocityVs[k];
+                real64 const alphay = density[k] * velocityVs[k];
+                real64 const alphaz = density[k] * velocityVp[k];
+                dampingx[numNodeGl] += alphax*detJ*ds*N[a];
+                dampingy[numNodeGl] += alphay*detJ*ds*N[a];
+                dampingz[numNodeGl] += alphaz*detJ*ds*N[a];
               }
             }
           }
@@ -514,12 +514,12 @@ struct MassAndDampingMatrixKernel
 };
 
 /**
- * @brief Implements kernels for solving the acoustic wave equations
+ * @brief Implements kernels for solving the elastic wave equations
  *   explicit central FD method and SEM
  * @copydoc geosx::finiteElement::KernelBase
  * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
  *
- * ### AcousticWaveEquationSEMKernel Description
+ * ### ElasticWaveEquationSEMKernel Description
  * Implements the KernelBase interface functions required for solving
  * the acoustic wave equations using the
  * "finite element kernel application" functions such as
@@ -585,9 +585,9 @@ public:
     m_ux_n( nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_n >() ),
     m_uy_n( nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_n >() ),
     m_uz_n( nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_n >() ),
-    m_stiffnessVector_x( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector_x >() ),
-    m_stiffnessVector_y( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector_y >() ),
-    m_stiffnessVector_z( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector_z >() ),
+    m_stiffnessVectorx( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVectorx >() ),
+    m_stiffnessVectory( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVectory >() ),
+    m_stiffnessVectorz( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVectorz >() ),
     m_density( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumDensity >() ),
     m_velocityVp( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumVelocityVp >() ),
     m_velocityVs( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumVelocityVs >() ),
@@ -604,7 +604,7 @@ public:
   /**
    * @copydoc geosx::finiteElement::KernelBase::StackVariables
    *
-   * ### ExplicitAcousticSEM Description
+   * ### ExplicitElasticSEM Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
    */
   struct StackVariables : Base::StackVariables
@@ -648,7 +648,7 @@ public:
   /**
    * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
    *
-   * ### ExplicitAcousticSEM Description
+   * ### ExplicitElasticSEM Description
    * Calculates stiffness vector
    *
    */
@@ -677,13 +677,13 @@ public:
         real64 const Ryz_ij =  detJ*(stack.mu * gradN[j][2]*gradN[i][1] + stack.lambda * gradN[j][1]*gradN[i][2]);
         real64 const Rzy_ij =  detJ*(stack.mu * gradN[j][1]*gradN[i][2] + stack.lambda * gradN[j][2]*gradN[i][1]);
 
-        real64 const localIncrement_x = (Rxx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rxy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rxz_ij*m_uz_n[m_elemsToNodes[k][j]]);
-        real64 const localIncrement_y = (Ryx_ij * m_ux_n[m_elemsToNodes[k][j]] + Ryy_ij*m_uy_n[m_elemsToNodes[k][j]] + Ryz_ij*m_uz_n[m_elemsToNodes[k][j]]);
-        real64 const localIncrement_z = (Rzx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rzy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rzz_ij*m_uz_n[m_elemsToNodes[k][j]]);
+        real64 const localIncrementx = (Rxx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rxy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rxz_ij*m_uz_n[m_elemsToNodes[k][j]]);
+        real64 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes[k][j]] + Ryy_ij*m_uy_n[m_elemsToNodes[k][j]] + Ryz_ij*m_uz_n[m_elemsToNodes[k][j]]);
+        real64 const localIncrementz = (Rzx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rzy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rzz_ij*m_uz_n[m_elemsToNodes[k][j]]);
 
-        RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_x[m_elemsToNodes[k][i]], localIncrement_x );
-        RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_y[m_elemsToNodes[k][i]], localIncrement_y );
-        RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_z[m_elemsToNodes[k][i]], localIncrement_z );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorx[m_elemsToNodes[k][i]], localIncrementx );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectory[m_elemsToNodes[k][i]], localIncrementy );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorz[m_elemsToNodes[k][i]], localIncrementz );
       }
 
     }
@@ -705,13 +705,13 @@ protected:
   arrayView1d< real64 > const m_uz_n;
 
   /// The array containing the product of the stiffness matrix and the nodal pressure.
-  arrayView1d< real64 > const m_stiffnessVector_x;
+  arrayView1d< real64 > const m_stiffnessVectorx;
 
   /// The array containing the product of the stiffness matrix and the nodal pressure.
-  arrayView1d< real64 > const m_stiffnessVector_y;
+  arrayView1d< real64 > const m_stiffnessVectory;
 
   /// The array containing the product of the stiffness matrix and the nodal pressure.
-  arrayView1d< real64 > const m_stiffnessVector_z;
+  arrayView1d< real64 > const m_stiffnessVectorz;
 
   /// The array containing the density of the medium
   arrayView1d< real64 const > const m_density;

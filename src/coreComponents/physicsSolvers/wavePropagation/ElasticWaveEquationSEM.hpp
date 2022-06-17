@@ -86,7 +86,7 @@ public:
    * @param rhs_y the right hand side vector to be computed (x-component)
    * @param rhs_z the right hand side vector to be computed (x-component)
    */
-  void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs_x, arrayView1d< real64 > const rhs_y, arrayView1d< real64 > const rhs_z );
+  void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhsx, arrayView1d< real64 > const rhsy, arrayView1d< real64 > const rhsz );
 
   /**
    * TODO: move implementation into WaveSolverBase
@@ -176,13 +176,13 @@ private:
 
 
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
-  array2d< real64 > m_sourceConstants_x;
+  array2d< real64 > m_sourceConstantsx;
 
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
-  array2d< real64 > m_sourceConstants_y;
+  array2d< real64 > m_sourceConstantsy;
 
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
-  array2d< real64 > m_sourceConstants_z;
+  array2d< real64 > m_sourceConstantsz;
 
   /// Flag that indicates whether the source is local or not to the MPI rank
   array1d< localIndex > m_sourceIsLocal;
@@ -283,24 +283,24 @@ EXTRINSIC_MESH_DATA_TRAIT( Displacementz_np1,
                            WRITE_AND_READ,
                            "z-component of displacement at time n+1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS_x,
-                           "rhs_x",
+EXTRINSIC_MESH_DATA_TRAIT( ForcingRHSx,
+                           "rhsx",
                            array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
                            "RHS for x-direction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS_y,
-                           "rhs_y",
+EXTRINSIC_MESH_DATA_TRAIT( ForcingRHSy,
+                           "rhsy",
                            array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
                            "RHS for y-direction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS_z,
-                           "rhs_z",
+EXTRINSIC_MESH_DATA_TRAIT( ForcingRHSz,
+                           "rhsz",
                            array1d< real64 >,
                            0,
                            NOPLOT,
@@ -315,48 +315,48 @@ EXTRINSIC_MESH_DATA_TRAIT( MassVector,
                            WRITE_AND_READ,
                            "Diagonal Mass Matrix." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVector_x,
-                           "dampingVector_x",
+EXTRINSIC_MESH_DATA_TRAIT( DampingVectorx,
+                           "dampingVectorx",
                            array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Diagonal Damping Matrix in x-direction." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVector_y,
-                           "dampingVector_y",
+EXTRINSIC_MESH_DATA_TRAIT( DampingVectory,
+                           "dampingVectory",
                            array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Diagonal Damping Matrix in y-direction." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVector_z,
-                           "dampingVector_z",
+EXTRINSIC_MESH_DATA_TRAIT( DampingVectorz,
+                           "dampingVectorz",
                            array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Diagonal Damping Matrix in z-direction." );
 
-EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector_x,
-                           "stiffnessVector_x",
+EXTRINSIC_MESH_DATA_TRAIT( StiffnessVectorx,
+                           "stiffnessVectorx",
                            array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
                            "x-component of stiffness vector." );
 
-EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector_y,
-                           "stiffnessVector_y",
+EXTRINSIC_MESH_DATA_TRAIT( StiffnessVectory,
+                           "stiffnessVectory",
                            array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
                            "y-component of stiffness vector." );
 
-EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector_z,
-                           "stiffnessVector_z",
+EXTRINSIC_MESH_DATA_TRAIT( StiffnessVectorz,
+                           "stiffnessVectorz",
                            array1d< real64 >,
                            0,
                            NOPLOT,

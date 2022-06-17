@@ -127,7 +127,7 @@
       setNames="{ all }"
       objectPath="nodeManager"
       fieldName="displacementx_n"
-      scale="1e-32"/>
+      scale="0.0"/>
 
     <FieldSpecification
       name="initialdisplacementny"
@@ -135,7 +135,7 @@
       setNames="{ all }"
       objectPath="nodeManager"
       fieldName="displacementy_n"
-      scale="1e-32"/>
+      scale="0.0"/>
 
     <FieldSpecification
       name="initialdisplacementnz"
@@ -143,7 +143,7 @@
       setNames="{ all }"
       objectPath="nodeManager"
       fieldName="displacementz_n"
-      scale="1e-32"/>
+      scale="0.0"/>
 
     <FieldSpecification
       name="initialdisplacementnm1x"
@@ -151,7 +151,7 @@
       setNames="{ all }"
       objectPath="nodeManager"
       fieldName="displacementx_nm1"
-      scale="1e-32"/>
+      scale="0.0"/>
 
     <FieldSpecification
       name="initialdisplacementnm1y"
@@ -159,7 +159,7 @@
       setNames="{ all }"
       objectPath="nodeManager"
       fieldName="displacementy_nm1"
-      scale="1e-32"/>
+      scale="0.0"/>
 
     <FieldSpecification
       name="initialdisplacementnm1z"
@@ -167,7 +167,7 @@
       setNames="{ all }"
       objectPath="nodeManager"
       fieldName="displacementz_nm1"
-      scale="1e-32"/>
+      scale="0.0"/>
 
     <!-- 3) The velocity in the domain -->
 
