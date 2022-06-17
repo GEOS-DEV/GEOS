@@ -28,9 +28,9 @@
       xCoords="{ 0, 2000 }"
       yCoords="{ 0, 2000 }"
       zCoords="{ 0, 500,2000 }"
-      nx="{ 20 }"
-      ny="{ 20 }"
-      nz="{ 10,30}"
+      nx="{ 100 }"
+      ny="{ 100 }"
+      nz="{ 100,300}"
       cellBlockNames="{ cb,cb1 }"/>
   </Mesh>
 
@@ -43,7 +43,7 @@
   </Geometry-->
 
   <!-- list of events-->
-  <Events maxTime="2">
+  <Events maxTime="0.2">
     <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <!-- (there are other ways to control the time step size) -->

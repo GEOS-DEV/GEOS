@@ -40,8 +40,10 @@ def getPressureAtReceivers(solver):
     """
 
     pressureAtReceivers = solver.get_wrapper("pressureNp1AtReceivers").value()
-    return pressureAtReceivers
+    return pressureAtReceivers.to_numpy()
 
+def getPressure():
+    return solver.get_wrapper("/domain/MeshBodies/mesh/meshLevels/Level0/nodeManager/pressure_n").value().to_numpy()
 
 def updateSourceAndReceivers(solver, sources_list=[], receivers_list=[]):
 
@@ -77,10 +79,37 @@ def updateSourceAndReceivers(solver, sources_list=[], receivers_list=[]):
 
     solver.reinit()
 
+def resetWaveField(solver,geosx):
+
+    """Reinitialize all pressure values on the Wavefield to 0.
+    """
+
+    meshName="mesh"
+    solver.get_wrapper("indexSeismoTrace").value()[0] = 0
+
+    nodeManagerPath = "domain/MeshBodies/"+meshName+"/meshLevels/Level0/nodeManager/"
+
+    pressure_nm1 = geosx.get_wrapper(nodeManagerPath + "pressure_nm1").value()
+    pressure_nm1.set_access_level(pylvarray.MODIFIABLE)
+
+    pressure_n = geosx.get_wrapper(nodeManagerPath + "pressure_n").value()
+    pressure_n.set_access_level(pylvarray.MODIFIABLE)
+
+    pressure_np1 = geosx.get_wrapper(nodeManagerPath + "pressure_np1").value()
+    pressure_np1.set_access_level(pylvarray.MODIFIABLE)
+
+    pressure_nm1.to_numpy()[:] = 0.0
+    pressure_n.to_numpy()[:]   = 0.0
+    pressure_np1.to_numpy()[:] = 0.0
+
 def getSourceValuesSize(solver):
     """ Retrieve the number of time steps in the source """
     src_value = solver.get_wrapper("sourceValue").value()
     return src_value.to_numpy().shape[0]
+def getSource(solver):
+    """ Retrieve the number of time steps in the source """
+    src_value = solver.get_wrapper("sourceValue").value()
+    return src_value.to_numpy()[:]
 
 def updateSourceValue(solver, value):
 
@@ -101,11 +130,11 @@ def gatherSeismos(solver):
     comm.Barrier()
     # get sismos.
     sismos = getPressureAtReceivers(solver)
-    n1=sismos.to_numpy().shape[0]
-    n2=sismos.to_numpy().shape[1]
+    n1=sismos.shape[0]
+    n2=sismos.shape[1]
     # send sismos to rank 0
     tmp=np.zeros((n1,n2))
-    tmp[:,:]=sismos.to_numpy()[:,:]
+    tmp[:,:]=sismos[:,:]
     if rank !=0:
         comm.Send(tmp,0,1)
     else:
@@ -119,10 +148,36 @@ def gatherSeismos(solver):
     comm.Barrier()
     return tmp
 
+def print_group(group, indent=0):
+    print("{}{}".format(" " * indent, group))
+
+    indent += 4
+    print("{}wrappers:".format(" " * indent))
+
+    for wrapper in group.wrappers():
+        print("{}{}".format(" " * (indent + 4), wrapper))
+        print_with_indent(str(wrapper.value(False)), indent + 8)
+
+    print("{}groups:".format(" " * indent))
+
+    for subgroup in group.groups():
+        print_group(subgroup, indent + 4)
+
+def print_with_indent(msg, indent):
+    indent_str = " " * indent
+    print(indent_str + msg.replace("\n", "\n" + indent_str))
+
+def seismo_to_txt(seismo, filename):
+    with open(filename,  "w") as f:
+        for x in np.nditer(seismo):
+            f.write(f"{x}\n")
+
 def test_WaveEquationAcousticSolverAdjoint():
     argv = [ "test_WaveEquationAcousticSolverAdjoint.py", "-i", "test_WaveEquationAcousticSolverAdjoint.xml",
              "-z", str(nRank) ]
     geosx=initialize(rank,argv)
+    #print_group(geosx)
+    #exit(1)
     # get parameters form XML file
     solver=geosx.get_group("/Solvers/acousticSolver")
     srcPos=solver.get_wrapper("sourceCoordinates").value()
@@ -164,29 +219,58 @@ def test_WaveEquationAcousticSolverAdjoint():
     time=0
     cycle=0
     nsteps = maxTime / dt
-    updateSourceAndReceivers(solver, sources_list = [[10, 10, 10]], receivers_list = [[1000, 10, 10]])
+    src_pos = [1000.01, 1000.01, 1000.01]
+    rcv_pos = [1060.01, 1060.01, 1060.01 ]
+    src_pos2 = [1000.01, 1000.01, 1000.01]
+    rcv_pos2 = [1060.01, 1060.01, 1060.01 ]
+    updateSourceAndReceivers(solver, sources_list = [src_pos], receivers_list = [rcv_pos])
     source1 = []
     source2 = []
-    sourceSize = getSourceValuesSize(solver)
-    while sourceSize > 0:
-        source1.append([10.0])
-        source2.append([30.0])
-        sourceSize-=1
-
+    source = getSource(solver)
+#    sourceSize = getSourceValuesSize(solver)
+#    while sourceSize > 0:
+#        source1.append([10.0])
+#        source2.append([10.0])
+#        sourceSize-=1
+    source1 = source
+    source2 = source*2
+    print(source)
+    #source1[1] = [10.0]
+    #source2[1] = [30.0]
     updateSourceValue(solver, source1)
 
-    while time<maxTime:
+    while time < maxTime:
         if rank == 0 and cycle%10 == 0:
             print("time = %.3fs," % time, "dt = %.4f," % dt, "iter =", cycle+1)
         oneStepForward(solver, time,dt, False, 0)
         time+=dt
         cycle+=1
-                        
+    solver.cleanup(maxTime)
     seismos1 = gatherSeismos(solver)
-    print(seismos1)
+    seismo_to_txt(seismos1, "seismo1.txt")
+    seismo_to_txt(source1, "source1.txt")
+    seismo_to_txt(source2, "source2.txt")
 
-    updateSourceAndReceivers(solver, sources_list = [[1800, 40, 20]], receivers_list = [[1400, 30, 30]])
+    time=0
+    cycle=0
+    resetWaveField(solver,geosx)
+    updateSourceAndReceivers(solver, sources_list = [src_pos], receivers_list = [rcv_pos])
+    updateSourceValue(solver, source1)
+    while time < maxTime:
+        if rank == 0 and cycle%10 == 0:
+            print("time = %.3fs," % time, "dt = %.4f," % dt, "iter =", cycle+1)
+        oneStepForward(solver, time,dt, False, 0)
+        time+=dt
+        cycle+=1
+    solver.cleanup(maxTime)
+    seismos11 = gatherSeismos(solver)
+    seismo_to_txt(seismos11, "seismo1bis.txt")
+
+#    exit(1)
+    resetWaveField(solver,geosx)
+    updateSourceAndReceivers(solver, sources_list = [src_pos2], receivers_list = [rcv_pos2])
     updateSourceValue(solver, source2)
+    dir(solver)
 
     while time>=0:
         if rank == 0 and cycle%10 == 0:
@@ -194,14 +278,23 @@ def test_WaveEquationAcousticSolverAdjoint():
         oneStepBackward(solver, time,dt, False, 0)
         time-=dt
         cycle-=1
+    solver.cleanup(maxTime)
 
     seismos2 = gatherSeismos(solver)
+    seismo_to_txt(seismos2, "seismo2_rev.txt")
+    seismos2_rev = np.copy(seismos2)
+    for i in range(seismos2.shape[0]):
+        seismos2_rev[-i] = seismos2[i]
 
-    print(seismos1)
-    print(seismos2)
-    prod21 = np.dot(np.array(seismos2, float).transpose(), np.array(source1, float))
+    seismo_to_txt(seismos2_rev, "seismo2_fixed.txt")
+    print(seismos2[0:10])
+    print(seismos2[-10:-1])
+    print(seismos2_rev[0:10])
+    print(seismos2_rev[-10:-1])
+    prod21 = np.dot(np.array(seismos2_rev, float).transpose(), np.array(source1, float))
     prod12 = np.dot(np.array(seismos1, float).transpose(), np.array(source2, float))
-
+    print(prod12)
+    print(prod21)
     assert prod21 == pytest.approx(prod12)
 
     _finalize()
