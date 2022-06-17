@@ -122,6 +122,11 @@ public:
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs );
 
+  void applyIrreversibilityConstraint( DofManager const & dofManager,
+                                       DomainPartition & domain,
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs ); 
+
   enum class timeIntegrationOption
   {
     SteadyState,

@@ -453,6 +453,11 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
   GEOSX_MARK_FUNCTION;
   applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 
+  // Apply the crack irreversibility constraint 
+#if 1 // TODO: set a flag to check whether to call the irreversibility function 
+  applyIrreversibilityConstraint( dofManager, domain, localMatrix, localRhs );
+#endif  
+
   if( getLogLevel() == 2 )
   {
     GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
@@ -606,6 +611,75 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
     fsManager.applyFieldValue< serialPolicy >( time, mesh, "ElementRegions", viewKeyStruct::coeffNameString() );
   } );
 }
+
+void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dofManager,
+                                                          DomainPartition & domain,
+                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                          arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_MARK_FUNCTION; 
+
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+
+    //should get reference to damage field here.
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( m_fieldName );
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    // begin region loop
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]
+                                                                ( localIndex const,
+                                                                  CellElementSubRegion & elementSubRegion ) 
+    {
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList(); 
+        
+      localIndex const numNodesPerElement = elementSubRegion.numNodesPerElement();
+
+      forAll< serialPolicy >( elementSubRegion.size(), [&] ( localIndex const k ) 
+      { 
+        for( localIndex a = 0; a < numNodesPerElement; ++a )
+        {
+          real64 const damageAtNode = nodalDamage[elemNodes( k, a )]; 
+
+          if ( damageAtNode >= 0.98 )
+          {
+            localIndex const dof = dofIndex[elemNodes( k, a )]; 
+
+            // Specify the contribution to rhs 
+            real64 rhsContribution; 
+
+            FieldSpecificationEqual::SpecifyFieldValue( dof, 
+                                                        dofManager.rankOffset(), 
+                                                        localMatrix,
+                                                        rhsContribution, 
+                                                        0.98, 
+                                                        damageAtNode ); 
+
+            globalIndex const localRow = dof - dofManager.rankOffset(); 
+
+            if( localRow >=0 && localRow < localRhs.size() )
+            {
+              localRhs[ localRow ] = rhsContribution; 
+            }
+
+            // Specify the nodal value
+            FieldSpecificationEqual::SpecifyFieldValue( nodeManager.getReference< array1d< real64 > >( m_fieldName ), 
+                                                        dof, 
+                                                        0, 
+                                                        0.98 ); 
+          }
+        }
+      } ); 
+    } ); 
+  } ); 
+}
+
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,
                         Group * const )
