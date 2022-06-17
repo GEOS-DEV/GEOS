@@ -232,7 +232,7 @@ TEST_P( real64AttributeTestFixture, testParsing )
   this->test();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
   real64AttributeTests,
   real64AttributeTestFixture,
   ::testing::Values( std::make_tuple( "1", 1, false ),
@@ -273,7 +273,7 @@ TEST_P( real32AttributeTestFixture, testParsing )
   this->test();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
   real32AttributeTests,
   real32AttributeTestFixture,
   ::testing::Values( std::make_tuple( "1", 1, false ),
@@ -308,7 +308,7 @@ TEST_P( integerAttributeTestFixture, testParsing )
   this->test();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
   integerAttributeTests,
   integerAttributeTestFixture,
   ::testing::Values( std::make_tuple( "1", 1, false ),
