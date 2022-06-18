@@ -247,7 +247,7 @@ computeProjectors( localIndex const & cellIndex,
     for( localIndex i = 0; i < 3; ++i )
     {
       basisDerivativesIntegralMean[numBasisFunction][i] =
-        -invCellVolume *basisTimesNormalBoundaryInt[numBasisFunction][i];
+        invCellVolume * basisTimesNormalBoundaryInt[numBasisFunction][i];
     }
     // - compute VEM dofs of piNabla projection
     for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
