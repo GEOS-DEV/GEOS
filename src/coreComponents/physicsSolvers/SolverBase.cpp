@@ -753,11 +753,11 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       isNewtonConverged = true;
       break;
     }
-    if( residualNorm > 1e8 )
-    {
-      isNewtonConverged = false;
-      break;
-    }
+    // if( residualNorm > 1e8 )
+    // {
+    //   isNewtonConverged = false;
+    //   break;
+    // }
 
     // do line search in case residual has increased
     if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None

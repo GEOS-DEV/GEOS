@@ -728,7 +728,7 @@ struct ResidualNormKernel
             }
 
             // to make sure that everything still works well if the rate is zero, we add this check
-            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] * wellElemTotalDens_n[iwelem] );
+            normalizer = LvArray::math::max( normalizer, 1e-3 * wellElemVolume[iwelem] * wellElemTotalDens_n[iwelem] );
           }
           // Step 3: compute a normalizer for the volume balance equations
 
@@ -744,7 +744,7 @@ struct ResidualNormKernel
             }
 
             // to make sure that everything still works well if the rate is zero, we add this check
-            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] );
+            normalizer = LvArray::math::max( normalizer, 1e-3 * wellElemVolume[iwelem] );
           }
 
           // Step 4: compute the contribution to the residual
