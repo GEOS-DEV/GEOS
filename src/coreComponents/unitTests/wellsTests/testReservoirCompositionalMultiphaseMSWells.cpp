@@ -278,7 +278,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
               pres[ei] += dP;
 
               // after perturbing, update the pressure-dependent quantities in the reservoir
-              flowSolver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+              flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                        MeshLevel & mesh2,
                                                                        arrayView1d< string const > const & regionNames2 )
               {
@@ -311,7 +311,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
               compDens.move( LvArray::MemorySpace::host, true );
               compDens[ei][jc] += dRho;
 
-              flowSolver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+              flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                        MeshLevel & mesh2,
                                                                        arrayView1d< string const > const & regionNames2 )
               {
@@ -344,7 +344,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
   /////////////////////////////////////////////////
 
   // loop over the wells
-  wellSolver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                            MeshLevel & mesh,
                                                            arrayView1d< string const > const & regionNames )
   {

@@ -143,7 +143,7 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
                                scalingFactor );
 
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
 
@@ -192,7 +192,7 @@ void LaplaceBaseH1::
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & )
   {

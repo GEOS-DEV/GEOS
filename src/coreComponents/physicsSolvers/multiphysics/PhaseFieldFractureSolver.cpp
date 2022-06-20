@@ -64,7 +64,7 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
 
 void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
 {
-  forMeshTargets( meshBodies, [&] ( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & meshLevel,
                                     arrayView1d< string const > const & )
   {
@@ -86,7 +86,7 @@ void PhaseFieldFractureSolver::implicitStepSetup( real64 const & GEOSX_UNUSED_PA
                                                   DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -141,7 +141,7 @@ PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
 
 void PhaseFieldFractureSolver::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -297,7 +297,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 {
 
   GEOSX_MARK_FUNCTION;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {

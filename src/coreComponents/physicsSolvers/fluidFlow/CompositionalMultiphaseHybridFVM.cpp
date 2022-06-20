@@ -131,7 +131,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
   m_lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * 1e-8;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -250,7 +250,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
   CompositionalMultiphaseBase::implicitStepSetup( time_n, dt, domain );
 
   // setup the face fields
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -315,7 +315,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
   MimeticInnerProductBase const & mimeticInnerProductBase =
     hmDiscretization.getReference< MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -444,7 +444,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
 
   real64 solutionScaling;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -567,7 +567,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   localIndex localCheck = 1;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -671,7 +671,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
   real64 localResidualNorm = 0;
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -802,7 +802,7 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
                                scalingFactor );
 
   // 3. synchronize
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -832,7 +832,7 @@ void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartit
   CompositionalMultiphaseBase::resetStateToBeginningOfStep( domain );
 
   // 2. Reset the face-based fields
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {

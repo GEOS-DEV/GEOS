@@ -76,6 +76,7 @@ SolverBase::SolverBase( string const & name,
 
   registerWrapper( viewKeyStruct::meshTargetsString(), &m_meshTargets ).
     setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "MeshBody/Region combinations that the solver will be applied to." );
 
   registerWrapper( viewKeyStruct::initialDtString(), &m_nextDt ).
@@ -98,50 +99,57 @@ void SolverBase::initialize_postMeshGeneration()
 {
   ExecutableGroup::initialize_postMeshGeneration();
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  Group const & meshBodies = domain.getMeshBodies();
-  for( auto const & target : m_targetRegionNames )
-  {
-    auto const delimPos = target.find_first_of( '/' );
-    if( delimPos == string::npos )
-    {
-      GEOSX_ERROR_IF( meshBodies.numSubGroups() != 1,
-                      "No MeshBody information is specified in SolverBase::meshTargets, but there are multiple MeshBody objects" );
-      string const meshBodyName = meshBodies.getGroup( 0 ).getName();
-      string const regionName = target;
-      m_meshTargets[meshBodyName].emplace_back( regionName );
-    }
-    else
-    {
-      string const meshBodyName = target.substr( 0, delimPos );
-      GEOSX_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
-                      "MeshBody ("<<meshBodyName<<") is specified in targetRegions, but does not exist." );
-      string const regionName = target.substr( delimPos+1 );
-      m_meshTargets[meshBodyName].emplace_back( regionName );
-    }
-  }
+  generateMeshTargetsFromTargetRegions(domain.getMeshBodies());
 }
 
 void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies )
 {
-  ExecutableGroup::initialize_postMeshGeneration();
   for( auto const & target : m_targetRegionNames )
   {
-    auto const delimPos = target.find_first_of( '/' );
-    if( delimPos == string::npos )
+
+    string_array targetTokens = stringutilities::tokenize( target, "/" );
+
+    if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {
       GEOSX_ERROR_IF( meshBodies.numSubGroups() != 1,
                       "No MeshBody information is specified in SolverBase::meshTargets, but there are multiple MeshBody objects" );
-      string const meshBodyName = meshBodies.getGroup( 0 ).getName();
+      MeshBody const & meshBody = meshBodies.getGroup<MeshBody>( 0 );
+      string const meshBodyName = meshBody.getName();
+
+      Group const & meshLevels = meshBody.getMeshLevels();
+
+      string const meshLevelName = m_discretizationName;
+//      GEOSX_ERROR_IF( !meshLevels.hasGroup<MeshLevel>(meshLevelName),
+//                      "Specified MeshBody named ("<<meshBodyName<<") does not contain a MeshLevel named "<<meshLevelName );
+
+
       string const regionName = target;
-      m_meshTargets[meshBodyName].emplace_back( regionName );
+      auto const key = std::make_pair(meshBodyName,meshLevelName);
+      m_meshTargets[key].emplace_back( regionName );
+    }
+    else if( targetTokens.size()==2 )
+    {
+      string const meshBodyName = targetTokens[0];
+      GEOSX_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
+                      "MeshBody ("<<meshBodyName<<") is specified in targetRegions, but does not exist." );
+
+      MeshBody const & meshBody = meshBodies.getGroup<MeshBody>( meshBodyName );
+
+      Group const & meshLevels = meshBody.getMeshLevels();
+
+      string const meshLevelName = m_discretizationName;
+//      GEOSX_ERROR_IF( !meshLevels.hasGroup<MeshLevel>(meshLevelName),
+//                      "Specified MeshBody named ("<<meshBodyName<<") does not contain a MeshLevel named "<<meshLevelName );
+
+      string const regionName = targetTokens[1];
+
+
+      auto const key = std::make_pair(meshBodyName,meshLevelName);
+      m_meshTargets[key].emplace_back( regionName );
     }
     else
     {
-      string const meshBodyName = target.substr( 0, delimPos );
-      GEOSX_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
-                      "MeshBody ("<<meshBodyName<<") is specified in targetRegions, but does not exist." );
-      string const regionName = target.substr( delimPos+1 );
-      m_meshTargets[meshBodyName].emplace_back( regionName );
+      GEOSX_ERROR("Invalid specification of targetRegions");
     }
   }
 }
@@ -151,7 +159,7 @@ void SolverBase::registerDataOnMesh( Group & meshBodies )
 {
   ExecutableGroup::registerDataOnMesh( meshBodies );
 
-  forMeshTargets( meshBodies, [&] ( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
                                     arrayView1d< string const > const & regionNames )
   {
@@ -733,6 +741,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                       m_localMatrix.toViewConstSizes(),
                       localRhs );
 
+//      LvArray::print<serialPolicy>( m_localMatrix.toViewConst() );
+
       // apply boundary conditions to system
       applyBoundaryConditions( time_n,
                                stepDt,
@@ -742,6 +752,9 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                                localRhs );
 
       m_rhs.close();
+
+//      m_rhs.print( std::cout );
+//      LvArray::print<serialPolicy>( m_localMatrix.toViewConst() );
 
     }
     if( m_assemblyCallback )

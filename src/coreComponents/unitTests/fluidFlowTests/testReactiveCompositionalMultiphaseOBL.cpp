@@ -202,7 +202,7 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
     operators[op] = std::to_string( op );
   }
 
-  solver.forMeshTargets( domain.getMeshBodies(),
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                          [&]( string const,
                               MeshLevel & mesh,
                               arrayView1d< string const > const & regionNames )
@@ -344,7 +344,7 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
 
   string const dofKey = dofManager.getKey( ReactiveCompositionalMultiphaseOBL::viewKeyStruct::elemDofFieldString() );
 
-  solver.forMeshTargets ( domain.getMeshBodies(),
+  solver.forDiscretizationOnMeshTargets ( domain.getMeshBodies(),
                           [&]( string const,
                                MeshLevel & mesh,
                                arrayView1d< string const > const & regionNames )
@@ -385,7 +385,7 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
           pres.move( LvArray::MemorySpace::cuda, false );
 #endif
 
-          solver.forMeshTargets( domain.getMeshBodies(),
+          solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                  [&]( string const,
                                       MeshLevel & mesh2,
                                       arrayView1d< string const > const & regionNames2 )
@@ -421,7 +421,7 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
 #endif
 
 
-          solver.forMeshTargets( domain.getMeshBodies(),
+          solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                  [&]( string const,
                                       MeshLevel & mesh2,
                                       arrayView1d< string const > const & regionNames2 )

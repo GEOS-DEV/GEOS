@@ -195,7 +195,7 @@ void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & d
     globalIndex numSlip  = 0;
     globalIndex numOpen  = 0;
 
-    forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                  MeshLevel const & mesh,
                                                  arrayView1d< string const > const & )
     {
@@ -239,7 +239,7 @@ real64 ContactSolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
 void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) const
 {
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {

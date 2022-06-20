@@ -226,7 +226,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
 {
   integer const numComp = solver.numFluidComponents();
 
-  solver.forMeshTargets( domain.getMeshBodies(),
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                          [&]( string const,
                               MeshLevel & mesh,
                               arrayView1d< string const > const & regionNames )
@@ -308,7 +308,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
   integer const numComp = solver.numFluidComponents();
   integer const numPhase = solver.numFluidPhases();
 
-  solver.forMeshTargets( domain.getMeshBodies(),
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                          [&]( string const,
                               MeshLevel & mesh,
                               arrayView1d< string const > const & regionNames )
@@ -473,7 +473,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
   integer const numComp = solver.numFluidComponents();
   integer const numPhase = solver.numFluidPhases();
 
-  solver.forMeshTargets( domain.getMeshBodies(),
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                          [&]( string const,
                               MeshLevel & mesh,
                               arrayView1d< string const > const & regionNames )
@@ -645,7 +645,7 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
   DofManager const & dofManager = solver.getDofManager();
   string const elemDofKey = dofManager.getKey( COMPOSITIONAL_SOLVER::viewKeyStruct::elemDofFieldString() );
 
-  solver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                        MeshLevel & mesh,
                                                        arrayView1d< string const > const & regionNames )
   {

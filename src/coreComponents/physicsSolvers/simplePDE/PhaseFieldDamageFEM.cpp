@@ -78,7 +78,7 @@ PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
 
 void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 {
-  forMeshTargets( meshBodies, [&] ( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
                                     arrayView1d< string const > const & regionNames )
   {
@@ -213,7 +213,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                           arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -423,7 +423,7 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( localSolution, m_fieldName, m_fieldName, scalingFactor );
 
   // Syncronize ghost nodes
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -490,7 +490,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
 
   RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -579,7 +579,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
 
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & )
   {

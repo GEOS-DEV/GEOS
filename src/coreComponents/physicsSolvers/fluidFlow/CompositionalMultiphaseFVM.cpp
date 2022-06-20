@@ -93,7 +93,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 {
   GEOSX_MARK_FUNCTION;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel const & mesh,
                                                arrayView1d< string const > const & )
   {
@@ -164,7 +164,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   GEOSX_MARK_FUNCTION;
 
   // Step 1: reset the arrays involved in the computation of CFL numbers
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -234,7 +234,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   real64 localMaxPhaseCFLNumber = 0.0;
   real64 localMaxCompCFLNumber = 0.0;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -319,7 +319,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel const & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -436,7 +436,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   real64 scalingFactor = 1.0;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel const & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -506,7 +506,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   localIndex localCheck = 1;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel const & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -579,7 +579,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
     chopNegativeDensities( domain );
   }
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -639,7 +639,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & )
   {

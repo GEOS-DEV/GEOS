@@ -59,7 +59,7 @@ void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & d
 {
   GEOSX_MARK_FUNCTION;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -154,7 +154,7 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
   using ROFFSET = singlePhaseWellKernels::RowOffset;
   using COFFSET = singlePhaseWellKernels::ColOffset;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {

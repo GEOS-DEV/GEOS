@@ -231,6 +231,12 @@ public:
    */
   bool isShallowCopyOf( MeshLevel const & comparisonLevel ) const;
 
+  static bool areShallowSiblings( MeshLevel const & level0,
+                                  MeshLevel const & level1 );
+
+  MeshLevel const & getShallowParent() const;
+  MeshLevel & getShallowParent();
+
   ///@}
 
 private:
@@ -250,6 +256,8 @@ private:
   EdgeManager * const m_embSurfEdgeManager;
 
   bool const m_isShallowCopy = false;
+
+  MeshLevel * const m_shallowParent;
 
 };
 

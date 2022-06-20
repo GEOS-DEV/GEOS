@@ -75,7 +75,7 @@ void SinglePhaseProppantBase::setConstitutiveNames( ElementSubRegionBase & subRe
 void SinglePhaseProppantBase::validateFluidModels( DomainPartition & domain ) const
 {
   // Validate fluid models in regions
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {

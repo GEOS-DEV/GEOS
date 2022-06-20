@@ -72,7 +72,7 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & meshLevel,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -140,7 +140,7 @@ void ReservoirSolverBase::addCouplingNumNonzeros( DomainPartition & domain,
   localIndex const resNDOF = m_wellSolver->numDofPerResElement();
   localIndex const wellNDOF = m_wellSolver->numDofPerWellElement();
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & meshLevel,
                                                 arrayView1d< string const > const & regionNames )
   {

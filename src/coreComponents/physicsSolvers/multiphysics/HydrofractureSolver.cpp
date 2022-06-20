@@ -452,11 +452,18 @@ void HydrofractureSolver::setupDofs( DomainPartition const & domain,
   m_solidSolver->setupDofs( domain, dofManager );
   m_flowSolver->setupDofs( domain, dofManager );
 
+  string const solidDiscretizationName = m_solidSolver->getDiscretizationName();
+  string const flowDiscretizationName = m_flowSolver->getDiscretizationName();
+
+
   // restrict coupling to fracture regions only (as done originally in setupSystem)
-  map< string, array1d< string > > meshTargets;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
-                                                MeshLevel const & meshLevel,
-                                                arrayView1d< string const > const & regionNames )
+  map< std::pair<string,string>, array1d< string > > dispMeshTargets;
+  map< std::pair<string,string>, array1d< string > > presMeshTargets;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                  [&] ( string const & meshBodyName,
+                                        MeshLevel const & meshLevel,
+                                        arrayView1d< string const > const & regionNames )
   {
     array1d< string > regions;
     ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
@@ -466,13 +473,15 @@ void HydrofractureSolver::setupDofs( DomainPartition const & domain,
     {
       regions.emplace_back( region.getName() );
     } );
-    meshTargets[meshBodyName] = std::move( regions );
+
+    dispMeshTargets[std::make_pair(meshBodyName,solidDiscretizationName)] = std::move( regions );
+    presMeshTargets[std::make_pair(meshBodyName,flowDiscretizationName)] = std::move( regions );
   } );
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           extrinsicMeshData::flow::pressure::key(),
                           DofManager::Connector::Elem,
-                          meshTargets );
+                          dispMeshTargets );
 
 }
 
@@ -841,7 +850,7 @@ HydrofractureSolver::
   CRSMatrixView< real64 const, localIndex const > const
   dFluxResidual_dAperture = getDerivativeFluxResidual_dAperture().toViewConst();
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -958,7 +967,7 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
 
   {
     localIndex numRows = 0;
-    forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                   MeshLevel & mesh,
                                                   arrayView1d< string const > const & regionNames )
     {
@@ -991,7 +1000,7 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretizationName() );
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & )
   {

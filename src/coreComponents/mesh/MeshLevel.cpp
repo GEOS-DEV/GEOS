@@ -36,7 +36,8 @@ MeshLevel::MeshLevel( string const & name,
   m_elementManager( new ElementRegionManager( groupStructKeys::elemManagerString(), this ) ),
   m_embSurfNodeManager( new EmbeddedSurfaceNodeManager( groupStructKeys::embSurfNodeManagerString, this ) ),
   m_embSurfEdgeManager( new EdgeManager( groupStructKeys::embSurfEdgeManagerString, this ) ),
-  m_isShallowCopy( false )
+  m_isShallowCopy( false ),
+  m_shallowParent( nullptr )
 {
 
   registerGroup( groupStructKeys::nodeManagerString, m_nodeManager );
@@ -68,7 +69,8 @@ MeshLevel::MeshLevel( string const & name,
   m_elementManager( source.m_elementManager ),
   m_embSurfNodeManager( source.m_embSurfNodeManager ),
   m_embSurfEdgeManager( source.m_embSurfEdgeManager ),
-  m_isShallowCopy( true )
+  m_isShallowCopy( true ),
+  m_shallowParent( &source )
 {
   this->setRestartFlags( RestartFlags::NO_WRITE );
 
@@ -673,6 +675,17 @@ void MeshLevel::generateSets()
   } );
 }
 
+MeshLevel const & MeshLevel::getShallowParent() const
+{
+  return ( m_shallowParent!=nullptr ? *m_shallowParent : *this);
+}
+
+MeshLevel & MeshLevel::getShallowParent()
+{
+  return ( m_shallowParent!=nullptr ? *m_shallowParent : *this);
+}
+
+
 bool MeshLevel::isShallowCopyOf( MeshLevel const & comparisonLevel ) const
 {
   return ( m_nodeManager == comparisonLevel.m_nodeManager ) &&
@@ -683,6 +696,20 @@ bool MeshLevel::isShallowCopyOf( MeshLevel const & comparisonLevel ) const
          ( m_embSurfEdgeManager == comparisonLevel.m_embSurfEdgeManager ) &&
          isShallowCopy();
 }
+
+bool MeshLevel::areShallowSiblings( MeshLevel const & level0,
+                                    MeshLevel const & level1 )
+{
+  return ( level0.m_nodeManager        == level1.m_nodeManager ) &&
+         ( level0.m_edgeManager        == level1.m_edgeManager ) &&
+         ( level0.m_faceManager        == level1.m_faceManager ) &&
+         ( level0.m_elementManager     == level1.m_elementManager ) &&
+         ( level0.m_embSurfNodeManager == level1.m_embSurfNodeManager) &&
+         ( level0.m_embSurfEdgeManager == level1.m_embSurfEdgeManager ) &&
+         ( level0.m_isShallowCopy      && level1.m_isShallowCopy );
+
+}
+
 
 
 } /* namespace geosx */

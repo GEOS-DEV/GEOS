@@ -93,7 +93,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
-  forMeshTargets( meshBodies, [&] ( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
                                     arrayView1d< string const > const & regionNames )
   {
@@ -199,7 +199,7 @@ void FlowSolverBase::initializePreSubGroups()
   {
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-    forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                   MeshLevel &,
                                                   arrayView1d< string const > const & regionNames )
     {
@@ -221,7 +221,7 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {

@@ -63,12 +63,12 @@ void FluxApproximationBase::initializePreSubGroups()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  Group & meshBodies = domain.getMeshBodies();
-
-  meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     meshBody.forMeshLevels( [&]( MeshLevel & mesh )
     {
+      if( !(mesh.isShallowCopy() ) )
+      {
       // Group structure: mesh1/finiteVolumeStencils/myTPFA
 
       Group & stencilParentGroup = mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
@@ -77,8 +77,23 @@ void FluxApproximationBase::initializePreSubGroups()
       registerCellStencil( stencilGroup );
 
       registerFractureStencil( stencilGroup );
+      }
     } );
   } );
+
+  domain.forMeshBodies( [&]( MeshBody & meshBody )
+  {
+    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
+    {
+      if( mesh.isShallowCopy() )
+      {
+        Group & parentMesh = mesh.getShallowParent();
+        Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
+        mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );
+      }
+    } );
+  } );
+
 }
 
 void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
@@ -88,15 +103,19 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  domain.getMeshBodies().forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     m_lengthScale = meshBody.getGlobalLengthScale();
     meshBody.forMeshLevels( [&]( MeshLevel & mesh )
     {
+
+      if( !(mesh.isShallowCopy() ) )
+      {
+        std::cout<<"FluxApproximationBase::initializePostInitialConditionsPreSubGroups(): "<<mesh.getName()<<std::endl;
       // Group structure: mesh1/finiteVolumeStencils/myTPFA
 
-      Group & stencilParentGroup = mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
-      Group & stencilGroup = stencilParentGroup.registerGroup( getName() );
+      Group & stencilParentGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
+      Group & stencilGroup = stencilParentGroup.getGroup( getName() );
       // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
       // TODO: Apply() should take a MeshLevel directly
       fsManager.apply( 0.0,
@@ -145,7 +164,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 
       // Compute the aquifer stencil weights
       computeAquiferStencil( domain, mesh );
-
+      }
     } );
   } );
 }

@@ -45,7 +45,7 @@ public:
 
   // Aliasing public/protected members/methods of SolverBase so we don't
   // have to use this->member etc.
-  using BASE::forMeshTargets;
+  using BASE::forDiscretizationOnMeshTargets;
   using BASE::m_cflFactor;
   using BASE::m_maxStableDt;
   using BASE::m_nextDt;

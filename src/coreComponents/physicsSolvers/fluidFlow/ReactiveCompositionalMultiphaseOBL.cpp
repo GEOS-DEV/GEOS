@@ -153,7 +153,7 @@ void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & ti
   GEOSX_UNUSED_VAR( time );
   GEOSX_UNUSED_VAR( dt );
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -205,7 +205,7 @@ void ReactiveCompositionalMultiphaseOBL::registerDataOnMesh( Group & meshBodies 
   FlowSolverBase::registerDataOnMesh( meshBodies );
 
   // 2. Register and resize all fields as necessary
-  forMeshTargets( meshBodies, [&]( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
                                    MeshLevel & mesh,
                                    arrayView1d< string const > const & regionNames )
   {
@@ -286,7 +286,7 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( DomainPartitio
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel const & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -368,7 +368,7 @@ real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainParti
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   real64 scalingFactor = 1.0;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel const & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -429,7 +429,7 @@ bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition co
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   localIndex localCheck = 1;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel const & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -503,7 +503,7 @@ void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const &
                                  temperatureMask );
   }
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -530,7 +530,7 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   // set mass fraction flag on fluid models
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -603,7 +603,7 @@ ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & GEOSX_UNUS
                                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
                                                        DomainPartition & domain )
 {
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -684,7 +684,7 @@ void ReactiveCompositionalMultiphaseOBL::assembleAccumulationTerms( real64 const
   GEOSX_MARK_FUNCTION;
 
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel const & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -717,7 +717,7 @@ void ReactiveCompositionalMultiphaseOBL::assembleFluxTerms( real64 const dt,
 {
   GEOSX_MARK_FUNCTION;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel const & mesh,
                                                arrayView1d< string const > const & )
   {
@@ -784,7 +784,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
   integer const enableEnergyBalance = m_enableEnergyBalance;
 
   bool bcConsistent = true;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -932,7 +932,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -1115,7 +1115,7 @@ void ReactiveCompositionalMultiphaseOBL::resetStateToBeginningOfStep( DomainPart
 {
   GEOSX_MARK_FUNCTION;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -1172,7 +1172,7 @@ void ReactiveCompositionalMultiphaseOBL::updateOBLOperators( ObjectManagerBase &
 
 void ReactiveCompositionalMultiphaseOBL::updateState( DomainPartition & domain )
 {
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {

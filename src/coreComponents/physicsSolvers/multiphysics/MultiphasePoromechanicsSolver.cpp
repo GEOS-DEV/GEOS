@@ -81,7 +81,7 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
-  forMeshTargets( meshBodies, [&] ( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
                                     arrayView1d< string const > const & regionNames )
   {
@@ -106,7 +106,7 @@ void MultiphasePoromechanicsSolver::initializePreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -158,7 +158,7 @@ void MultiphasePoromechanicsSolver::implicitStepComplete( real64 const & time_n,
   m_solidSolver->implicitStepComplete( time_n, dt, domain );
   m_flowSolver->implicitStepComplete( time_n, dt, domain );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -228,7 +228,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
   GEOSX_UNUSED_VAR( time_n );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -334,7 +334,7 @@ void MultiphasePoromechanicsSolver::applySystemSolution( DofManager const & dofM
 
 void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
 {
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {

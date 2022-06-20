@@ -60,7 +60,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
   FlowSolverBase::registerDataOnMesh( meshBodies );
 
-  forMeshTargets( meshBodies, [&] ( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
                                     arrayView1d< string const > const & regionNames )
   {
@@ -115,7 +115,7 @@ void SinglePhaseBase::initializeAquiferBC() const
 
 void SinglePhaseBase::validateFluidModels( DomainPartition & domain ) const
 {
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -204,7 +204,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -311,7 +311,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
   // Step 3: for each equil, compute a fine table with hydrostatic pressure vs elevation if the region is a target region
   // first compute the region filter
   std::set< string > regionFilter;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel &,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -480,7 +480,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
                                          DomainPartition & domain )
 {
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -536,7 +536,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
   // otherwise the aquifer flux is saved with the wrong pressure time level
   saveAquiferConvergedState( time, dt, domain );
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -621,7 +621,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -683,7 +683,7 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   string const dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -739,7 +739,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   string const dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -794,7 +794,7 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
 {
 
 // set mass fraction flag on fluid models
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -823,7 +823,7 @@ void SinglePhaseBase::solveLinearSystem( DofManager const & dofManager,
 void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   // set mass fraction flag on fluid models
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {

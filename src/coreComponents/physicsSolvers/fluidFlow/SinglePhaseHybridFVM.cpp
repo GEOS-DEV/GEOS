@@ -95,7 +95,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -161,7 +161,7 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
   SinglePhaseBase::implicitStepSetup( time_n, dt, domain );
 
   // setup the face fields
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -224,7 +224,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
     hmDiscretization.getReference< MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
 
   // node data (for transmissibility computation)
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel const & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -423,7 +423,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
   real64 defaultViscosity = 0; // for the normalization of the face residuals
   localIndex subRegionCounter = 0;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -518,7 +518,7 @@ bool SinglePhaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -600,7 +600,7 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
                                scalingFactor );
 
   // 3. synchronize
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -620,7 +620,7 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
   SinglePhaseBase::resetStateToBeginningOfStep( domain );
 
   // 2. Reset the face-based fields
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {

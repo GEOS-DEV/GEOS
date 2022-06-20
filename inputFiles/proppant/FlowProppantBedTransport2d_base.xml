@@ -23,6 +23,7 @@
       name="FlowProppantTransport"
       proppantSolverName="ProppantTransport"
       flowSolverName="SinglePhaseFVM"
+      discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       logLevel="1"/>
 

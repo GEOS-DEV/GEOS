@@ -193,7 +193,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
                                      jacobianFD.toView(),
                                      assembleFunction );
 
-  solver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                        MeshLevel & mesh,
                                                        arrayView1d< string const > const & )
   {

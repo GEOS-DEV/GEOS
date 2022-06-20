@@ -50,7 +50,7 @@ matchStrings = [ 'Error:' ]
 # What stings to look for in order to exclude a block
 #exclusionStrings = [ 'sizedFromParent', 'different shapes' ]
 #exclusionStrings = [ 'sizedFromParent', 'different shapes', 'but not the' ]
-exclusionStrings = [ 'has a child', 'different shapes', 'different types' ]
+exclusionStrings = [ 'has a child', 'different shapes', 'different types', 'differing types' ]
 
 
 directory = args.directory

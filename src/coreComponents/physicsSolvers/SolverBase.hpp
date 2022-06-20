@@ -638,58 +638,25 @@ public:
   localIndex targetRegionIndex( string const & regionName ) const;
 
 
-  template< typename LAMBDA >
-  void forMeshTargets( Group const & meshBodies, LAMBDA && lambda ) const
-  {
-    for( auto const & target: m_meshTargets )
-    {
-      string const meshBodyName = target.first;
-      arrayView1d< string const > const & regionNames = target.second.toViewConst();
-      MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
-//      meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
-//      {
-//        lambda( meshBodyName, meshLevel, regionNames );
-//      } );
-      lambda( meshBodyName,
-              meshBody.getBaseDiscretization(),
-              regionNames );
 
-    }
-  }
-
-  template< typename LAMBDA >
-  void forMeshTargets( Group & meshBodies, LAMBDA && lambda ) const
-  {
-    for( auto const & target: m_meshTargets )
-    {
-      string const meshBodyName = target.first;
-      arrayView1d< string const > const & regionNames = target.second.toViewConst();
-      MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
-
-//      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
-//      {
-//        lambda( meshBodyName, meshLevel, regionNames );
-//      } );
-
-      lambda( meshBodyName,
-              meshBody.getBaseDiscretization(),
-              regionNames );
-
-    }
-  }
-
+  /**
+   * @brief Loop over the target discretization on all mesh targets and apply callback.
+   * @tparam LAMBDA The callback function type
+   * @param meshBodies The group of MeshBodies
+   * @param lambda The callback function. Takes the name of the meshBody,
+   * reference to the MeshLevel, and a list of regionNames.
+   */
   template< typename LAMBDA >
   void forDiscretizationOnMeshTargets( Group const & meshBodies, LAMBDA && lambda ) const
   {
     for( auto const & target: m_meshTargets )
     {
-      string const meshBodyName = target.first;
+      string const meshBodyName = target.first.first;
+      string const meshLevelName = target.first.second;
       arrayView1d< string const > const & regionNames = target.second.toViewConst();
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
-      //MeshLevel const & meshLevel = meshBody.getMeshLevel( this->m_discretizationName );
-      //lambda( meshBodyName, meshLevel, regionNames );
 
-      MeshLevel const * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( this->m_discretizationName );
+      MeshLevel const * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
       if( meshLevelPtr==nullptr )
       {
         meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
@@ -698,18 +665,24 @@ public:
     }
   }
 
+  /**
+   * @brief Loop over the target discretization on all mesh targets and apply callback.
+   * @tparam LAMBDA The callback function type
+   * @param meshBodies The group of MeshBodies
+   * @param lambda The callback function. Takes the name of the meshBody,
+   * reference to the MeshLevel, and a list of regionNames.
+   */
   template< typename LAMBDA >
   void forDiscretizationOnMeshTargets( Group & meshBodies, LAMBDA && lambda ) const
   {
     for( auto const & target: m_meshTargets )
     {
-      string const meshBodyName = target.first;
+      string const meshBodyName = target.first.first;
+      string const meshLevelName = target.first.second;
       arrayView1d< string const > const & regionNames = target.second.toViewConst();
       MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
-//      MeshLevel & meshLevel = meshBody.getMeshLevel( this->m_discretizationName );
-//      lambda( meshBodyName, meshLevel, regionNames );
 
-      MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( this->m_discretizationName );
+      MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
       if( meshLevelPtr==nullptr )
       {
         meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
@@ -717,6 +690,7 @@ public:
       lambda( meshBodyName, *meshLevelPtr, regionNames );
     }
   }
+
 
   string getDiscretizationName() const {return m_discretizationName;}
 
@@ -794,7 +768,7 @@ protected:
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
   /// Map containing the array of target regions (value) for each MeshBody (key).
-  map< string, array1d< string > > m_meshTargets;
+  map< std::pair<string,string>, array1d< string > > m_meshTargets;
   /// List of names of regions the solver will be applied to
   array1d< string > m_targetRegionNames;
 

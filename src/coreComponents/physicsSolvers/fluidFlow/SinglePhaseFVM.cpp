@@ -118,7 +118,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
   string const dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -177,7 +177,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                extrinsicMeshData::flow::pressure::key(),
                                scalingFactor );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -205,7 +205,7 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UN
 
   string const & dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -260,7 +260,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const & dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -318,7 +318,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
 
   string const & pressureDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -383,10 +383,12 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
   string const & dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & )
   {
+    std::cout<<mesh.getName()<<std::endl;
+
     ElementRegionManager const & elemManager = mesh.getElemManager();
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
     elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
@@ -468,7 +470,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 
   string const & dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
@@ -581,7 +583,7 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
 
   string const & elemDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {

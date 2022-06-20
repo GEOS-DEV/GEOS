@@ -72,6 +72,7 @@
       name="FlowProppantTransport"
       proppantSolverName="ProppantTransport"
       flowSolverName="SinglePhaseFVM"
+      discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       logLevel="1"/>
 <!-- SPHINX_PROPPANT_COUPLEDSOLVER_END -->

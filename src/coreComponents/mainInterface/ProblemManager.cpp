@@ -679,7 +679,7 @@ ProblemManager::getFiniteElementDiscretizations() const
 
     if( discretization != nullptr )
     {
-      solver.forMeshTargets( meshBodies,
+      solver.forDiscretizationOnMeshTargets( meshBodies,
                              [&]( string const & meshBodyName,
                                   MeshLevel const &,
                                   auto const & regionNames )

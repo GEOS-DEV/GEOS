@@ -77,7 +77,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::registerDataOnMesh( dataRe
 
   using namespace extrinsicMeshData::contact;
 
-  forMeshTargets( meshBodies, [&] ( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
                                     arrayView1d< string const > const & regionNames )
   {
@@ -107,8 +107,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
                           extrinsicMeshData::flow::pressure::key(),
                           DofManager::Connector::Elem );
 
-  map< string, array1d< string > > meshTargets;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+  map< std::pair<string,string>, array1d< string > > meshTargets;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                 MeshLevel const & meshLevel,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -120,7 +120,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
     {
       regions.emplace_back( region.getName() );
     } );
-    meshTargets[meshBodyName] = std::move( regions );
+    meshTargets[std::make_pair(meshBodyName,meshLevel.getName())] = std::move( regions );
   } );
 
   dofManager.addCoupling( extrinsicMeshData::flow::pressure::key(),
@@ -193,7 +193,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( Do
   m_fracturesSolver->addCouplingNumNonzeros( domain, dofManager, rowLengths );
 
   // 2. Add the number of nonzeros induced by coupling jump - matrix pressure
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
 
@@ -297,7 +297,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingSparsityPattern
   // 1. Add sparsity pattern induced by coupling jump-displacement
   m_fracturesSolver->addCouplingSparsityPattern( domain, dofManager, pattern );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -409,7 +409,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
 
   //updateState( domain );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
 
@@ -594,7 +594,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
   /// 2. update the fractures
   m_fracturesSolver->updateState( domain );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {

@@ -78,7 +78,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
   SolverBase::registerDataOnMesh( meshBodies );
 
 
-  forMeshTargets( meshBodies, [&] ( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & meshLevel,
                                     arrayView1d< string const > const & regionNames )
   {
@@ -114,8 +114,8 @@ void WellSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 void WellSolverBase::setupDofs( DomainPartition const & domain,
                                 DofManager & dofManager ) const
 {
-  map< string, array1d< string > > meshTargets;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+  map< std::pair<string,string>, array1d< string > > meshTargets;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                 MeshLevel const & meshLevel,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -127,7 +127,8 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
     {
       regions.emplace_back( region.getName() );
     } );
-    meshTargets[meshBodyName] = std::move( regions );
+    auto const key = std::make_pair(meshBodyName,meshLevel.getName());
+    meshTargets[key] = std::move( regions );
   } );
 
   dofManager.addField( wellElementDofName(),
@@ -153,6 +154,14 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
   {
     initializeWells( domain );
   }
+
+//  // backup fields used in time derivative approximation
+//  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+//                                                MeshLevel & mesh,
+//                                                arrayView1d< string const > const & regionNames )
+//  {
+//    backupFields( mesh, regionNames );
+//  } );
 }
 
 void WellSolverBase::assembleSystem( real64 const time,
@@ -181,7 +190,7 @@ void WellSolverBase::assembleSystem( real64 const time,
 void WellSolverBase::updateState( DomainPartition & domain )
 {
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -208,7 +217,7 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   // make sure that nextWellElementIndex is up-to-date (will be used in well initialization and assembly)
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -226,7 +235,7 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
 void WellSolverBase::precomputeData( DomainPartition & domain )
 {
   R1Tensor const gravVector = gravityVector();
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
