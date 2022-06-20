@@ -223,6 +223,21 @@ public:
                                           arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
+   * @brief shut down wells
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void removeShutWells( real64 const time_n,
+                                real64 const dt,
+                                DomainPartition const & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs )
+  { GEOSX_UNUSED_VAR( time_n, dt, domain, dofManager, localMatrix, localRhs ); }
+
+  /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */

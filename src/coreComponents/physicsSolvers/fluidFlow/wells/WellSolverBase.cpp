@@ -176,6 +176,9 @@ void WellSolverBase::assembleSystem( real64 const time,
 
   // then compute the perforation rates (later assembled by the coupled solver)
   computePerforationRates( domain );
+
+  // remove wells that need to be shut down
+  removeShutWells( time, dt, domain, dofManager, localMatrix, localRhs );
 }
 
 void WellSolverBase::updateState( DomainPartition & domain )

@@ -168,7 +168,7 @@ void CompositionalMultiphaseReservoir::addCouplingSparsityPattern( DomainPartiti
   } );
 }
 
-void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_n,
                                                               real64 const dt,
                                                               DomainPartition const & domain,
                                                               DofManager const & dofManager,
@@ -204,6 +204,11 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const GEOSX
     bool const detectCrossflow =
       ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
       getLogLevel() >= 1; // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
+
+    if( !wellControls.isWellOpen( time_n + dt ) )
+    {
+      return;
+    }
 
     PerforationData const * const perforationData = subRegion.getPerforationData();
 
