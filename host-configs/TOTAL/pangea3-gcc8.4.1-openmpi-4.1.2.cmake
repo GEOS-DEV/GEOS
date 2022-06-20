@@ -1,33 +1,35 @@
 # hostconfig for pangea3
-# module load cmake/3.18.2 gcc/8.3.0 cuda/11.3.0 smpi/10.3.0.1 openblas/0.3.8 lapack/3.9.0
-set(CONFIG_NAME "pangea3-gcc8.3-smpi-10.3.0.1" CACHE PATH "") 
+#
+# export MODULEPATH=/workrd/SCR/NUM/geosx_num/module_files:$MODULEPATH
+# module load cmake/3.21.4 gcc/8.4.1 cuda/11.0.3 ompi/4.1.2 openblas/0.3.18 python4geosx/p3/gcc8.4.1-ompi4.1.2
+#
+set(CONFIG_NAME "pangea3-gcc8.4.1-ompi-4.1.2" CACHE PATH "") 
+
+# Set up the tpls
 if (NOT DEFINED ENV{GEOSX_TPL_DIR})
   message(FATAL_ERROR "You must set GEOSX_TPL_DIR within your environement")
 else()
   set(GEOSX_TPL_DIR $ENV{GEOSX_TPL_DIR})
 endif()
 
-if ((DEFINED ENV{CC}) AND (DEFINED ENV{CXX}) AND (DEFINED ENV{FC}))
-  # C options
-  set(CMAKE_C_COMPILER $ENV{CC} CACHE PATH "")
-  set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
-  set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g ${CMAKE_C_FLAGS_RELEASE}" CACHE STRING "")
-  set(CMAKE_C_FLAGS_DEBUG "-O0 -g" CACHE STRING "")
 
-  # C++ options
-  set(CMAKE_CXX_COMPILER $ENV{CXX} CACHE PATH "")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}" CACHE STRING "")
-  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g" CACHE STRING "")
-  set(CMAKE_CXX_STANDARD 14 CACHE STRING "")
+# C options
+set(CMAKE_C_COMPILER gcc CACHE PATH "")
+set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g ${CMAKE_C_FLAGS_RELEASE}" CACHE STRING "")
+set(CMAKE_C_FLAGS_DEBUG "-O0 -g" CACHE STRING "")
 
-  # Fortran options
-  set(CMAKE_Fortran_COMPILER $ENV{FC} CACHE PATH "")
-  set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
-  #set(FORTRAN_MANGLE_NO_UNDERSCORE ON CACHE BOOL "")
-else()
-  message(FATAL_ERROR "You must have CC/CXX/FC environment variables set, we advise loading module gcc/8.3.0")
-endif()
+# C++ options
+set(CMAKE_CXX_COMPILER g++ CACHE PATH "")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}" CACHE STRING "")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g" CACHE STRING "")
+set(CMAKE_CXX_STANDARD 14 CACHE STRING "")
+
+# Fortran options
+set(CMAKE_Fortran_COMPILER gfortran CACHE PATH "")
+set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
+#set(FORTRAN_MANGLE_NO_UNDERSCORE ON CACHE BOOL "")
 
 
 # OpenMP options
@@ -44,7 +46,7 @@ if (DEFINED ENV{MPI_ROOT})
   set(MPIEXEC                $ENV{MPI_ROOT}/bin/mpirun  CACHE STRING "")
   set(ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC ON CACHE BOOL "")
 else()
-  message(FATAL_ERROR "You must have MPI_ROOT variable set, we advise loading module smpi/10.3.0.1")
+  message(FATAL_ERROR "You must have MPI_ROOT variable set, we advise loading module ompi/4.1.2")
 endif()
 
 # Cuda options
@@ -65,7 +67,7 @@ if (DEFINED ENV{CUDA_ROOT})
   # Uncomment this line to make nvcc output register usage for each kernel.
   # set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --resource-usage" CACHE STRING "" FORCE)
 else()
-  message(FATAL_ERROR "You must have CUDA_ROOT environment variable set, we advise loading module cuda/11.3")
+  message(FATAL_ERROR "You must have CUDA_ROOT environment variable set, we advise loading module cuda/11.0.3")
 endif()
 
 # GTEST options
@@ -90,6 +92,9 @@ set(ENABLE_PAPI OFF CACHE BOOL "")
 set(ENABLE_UNCRUSTIFY OFF CACHE BOOL "")
 
 set(ENABLE_ESSL OFF CACHE BOOL "")
+
+set(ENABLE_PYGEOSX ON CACHE BOOL "")
+
 if( ENABLE_ESSL )
     set(ESSL_DIR /data_local/sw/essl/6.1 CACHE PATH "")
     set(XL_DIR /data_local/sw/xl/16.1.1.3-190404 CACHE PATH "" )
@@ -105,8 +110,8 @@ if( ENABLE_ESSL )
 		       ${XL_DIR}/xlC/16.1.1/lib/libxl.a
                        CACHE PATH "")
 else()
-  set( BLAS_LIBRARIES /data_local/sw/spack/0.14.1/opt/spack/linux-rhel7-power9le/gcc-8.3/openblas-0.3.8-v27tpg2khjbkipiyh66hpwxucbkv6qld/lib/libopenblas.a CACHE PATH "")
-  set( LAPACK_LIBRARIES /data_local/sw/lapack/3.9.0/toolchain/rhel-7.6/gcc-8.3/lib64/liblapack.a -lgfortran CACHE PATH "")
+  set(BLAS_LIBRARIES /data_local/sw/spack/0.17.0/opt/spack/linux-rhel8-power9le/gcc-8.4.1/openblas-0.3.18-udwdz2i4a3zcoyjl63h2wlsoacmifvwk/lib/libopenblas.a)
+  set(LAPACK_LIBRARIES /data_local/sw/spack/0.17.0/opt/spack/linux-rhel8-power9le/gcc-8.4.1/openblas-0.3.18-udwdz2i4a3zcoyjl63h2wlsoacmifvwk/lib/libopenblas.a)
 endif()
 
 set(ENABLE_DOXYGEN OFF CACHE PATH "")
