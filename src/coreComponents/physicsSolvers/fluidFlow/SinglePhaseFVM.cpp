@@ -84,7 +84,7 @@ void SinglePhaseFVM< BASE >::setupDofs( DomainPartition const & domain,
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  dofManager.addCoupling( BASE::viewKeyStruct::elemDofFieldString(), fluxApprox );  
+  dofManager.addCoupling( BASE::viewKeyStruct::elemDofFieldString(), fluxApprox );
 }
 
 template< typename BASE >
