@@ -638,7 +638,7 @@ struct HydrostaticPressureKernel
           real64 const & datumElevation,
           real64 const & datumPres,
           FLUID_WRAPPER fluidWrapper,
-          arrayView1d< arrayView1d< real64 > const > elevationValues, 
+          arrayView1d< arrayView1d< real64 > const > elevationValues,
           arrayView1d< real64 > pressureValues )
   {
     bool hasConverged = true;
