@@ -879,120 +879,123 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() ); 
 
-  // 1. Apply pressure Dirichlet BCs
-  fsManager.apply( time_n + dt,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                   "ElementRegions",
-                   extrinsicMeshData::flow::pressure::key(),
-                   [&]( FieldSpecificationBase const & fs,
-                        string const & setName,
-                        SortedArrayView< localIndex const > const & lset,
-                        Group & subRegion,
-                        string const & )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
   {
-    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    // 1. Apply pressure Dirichlet BCs
+    fsManager.apply( time_n + dt,
+                     mesh,
+                     "ElementRegions",
+                     extrinsicMeshData::flow::pressure::key(),
+                     [&]( FieldSpecificationBase const & fs,
+                          string const & setName,
+                          SortedArrayView< localIndex const > const & lset,
+                          Group & subRegion,
+                          string const & )
     {
-      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
-                                   getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+                                     getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+      }
+
+      // Specify the bc value of pressure 
+      fs.applyFieldValue< FieldSpecificationEqual,
+                          parallelDevicePolicy<> >( lset,
+                                                    time_n + dt,
+                                                    subRegion,
+                                                    extrinsicMeshData::flow::bcPressure::key() );
+    } );
+
+    // 2. Apply temperature Dirichlet BCs
+    if ( m_isThermal )
+    {
+      fsManager.apply( time_n + dt, 
+                       mesh, 
+                       "ElementRegions", 
+                       extrinsicMeshData::flow::temperature::key(),
+                       [&]( FieldSpecificationBase const & fs, 
+                            string const &, 
+                            SortedArrayView< localIndex const > const & lset, 
+                            Group & subRegion, 
+                            string const & ) 
+      {
+        // Specify the bc value of temperature 
+        fs.applyFieldValue< FieldSpecificationEqual, 
+                            parallelDevicePolicy<> >( lset, 
+                                                      time_n + dt, 
+                                                      subRegion, 
+                                                      extrinsicMeshData::flow::bcTemperature::key() ); 
+      } ); 
     }
 
-    // call the application of the boundary condition to alter the matrix and rhs
-    fs.applyFieldValue< FieldSpecificationEqual,
-                        parallelDevicePolicy<> >( lset,
-                                                  time_n + dt,
-                                                  subRegion,
-                                                  extrinsicMeshData::flow::bcPressure::key() );
-  } );
+    globalIndex const rankOffset = dofManager.rankOffset(); 
 
-  // 2. Apply temperature Dirichlet BCs
-  if ( m_isThermal )
-  {
+    // 3. Apply the pressure and temperature bcs to the system
     fsManager.apply( time_n + dt, 
-                     domain.getMeshBody( 0 ).getMeshLevel( 0 ), 
-                     "ElementRegions", 
-                     extrinsicMeshData::flow::temperature::key(),
-                     [&]( FieldSpecificationBase const & fs, 
+                     mesh, 
+                     "ElementRegions",
+                     extrinsicMeshData::flow::pressure::key(), 
+                     [&]( FieldSpecificationBase const & GEOSX_UNUSED_PARAM( fs ), 
                           string const &, 
                           SortedArrayView< localIndex const > const & lset, 
                           Group & subRegion, 
                           string const &) 
-    {
-      fs.applyFieldValue< FieldSpecificationEqual, 
-                          parallelDevicePolicy<> >( lset, 
-                                                    time_n + dt, 
-                                                    subRegion, 
-                                                    extrinsicMeshData::flow::bcTemperature::key() ); 
-    } ); 
-  }
+    { 
+      arrayView1d< real64 const > const bcPres =
+        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcPressure::key() );
 
-  globalIndex const rankOffset = dofManager.rankOffset(); 
-  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() ); 
+      arrayView1d< real64 const > const bcTemp =
+        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcTemperature::key() );
 
-  // 3. Apply the pressure and temperature bcs to the system
-  fsManager.apply( time_n + dt, 
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ), 
-                   "ElementRegions",
-                   extrinsicMeshData::flow::pressure::key(), 
-                   [&]( FieldSpecificationBase const & GEOSX_UNUSED_PARAM( fs ), 
-                        string const &, 
-                        SortedArrayView< localIndex const > const & lset, 
-                        Group & subRegion, 
-                        string const &) 
-  {
-    // in the isothermal case, we use the reservoir temperature to enforce the boundary condition
-    string const temperatureKey = m_isThermal ? extrinsicMeshData::flow::bcTemperature::key() : extrinsicMeshData::flow::temperature::key();
+      arrayView1d< integer const > const ghostRank =
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< globalIndex const > const dofNumber =
+        subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< real64 const > const pres =
+        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+      arrayView1d< real64 const > const temp =
+        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
 
-    arrayView1d< real64 const > const bcPres =
-      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcPressure::key() );
-
-    arrayView1d< real64 const > const bcTemp =
-      subRegion.getReference< array1d< real64 > >( temperatureKey );
-
-    arrayView1d< integer const > const ghostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-    arrayView1d< globalIndex const > const dofNumber =
-      subRegion.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< real64 const > const pres =
-      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-    arrayView1d< real64 const > const temp =
-      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
-
-    forAll< parallelDevicePolicy<> >( lset.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a ) 
-    {
-      localIndex const ei = lset[a]; 
-      if( ghostRank[ei] >= 0 )
+      forAll< parallelDevicePolicy<> >( lset.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a ) 
       {
-        return; 
-      }
+        localIndex const ei = lset[a]; 
+        if( ghostRank[ei] >= 0 )
+        {
+          return; 
+        }
 
-      globalIndex const dofIndex = dofNumber[ei]; 
-      localIndex const localRow = dofIndex - rankOffset; 
-      real64 rhsValue; 
+        globalIndex const dofIndex = dofNumber[ei]; 
+        localIndex const localRow = dofIndex - rankOffset; 
+        real64 rhsValue; 
 
-      // 4.1. Apply pressure value to the matrix/rhs
-      FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
-                                                  rankOffset,
-                                                  localMatrix,
-                                                  rhsValue,
-                                                  bcPres[ei],
-                                                  pres[ei] );
-      localRhs[localRow] = rhsValue;
-
-      // 4.2. Apply temperature value to the matrix/rhs
-      if( m_isThermal )
-      {
-        FieldSpecificationEqual::SpecifyFieldValue( dofIndex + 1,
+        // 4.1. Apply pressure value to the matrix/rhs
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
                                                     rankOffset,
                                                     localMatrix,
                                                     rhsValue,
-                                                    bcTemp[ei],
-                                                    temp[ei] );
-        localRhs[localRow + 1] = rhsValue;
-      }
-    } );
+                                                    bcPres[ei],
+                                                    pres[ei] );
+        localRhs[localRow] = rhsValue;
+
+        // 4.2. Apply temperature value to the matrix/rhs
+        if( m_isThermal )
+        {
+          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + 1,
+                                                      rankOffset,
+                                                      localMatrix,
+                                                      rhsValue,
+                                                      bcTemp[ei],
+                                                      temp[ei] );
+          localRhs[localRow + 1] = rhsValue;
+        }
+      } );
+    } ); 
   } ); 
 }
 
