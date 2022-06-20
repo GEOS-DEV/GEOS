@@ -37,6 +37,12 @@ Validation and Verification Studies
 
    kgdValidation/Example 
  
+   pennyFracToughnessDominated/Example
+
+   pennyFracViscosityDominated/Example
+
+   pknFracViscosityDominated/Example
+ 
    proppantSlotTest/Example
 
    isothermalLeakyWell/Example

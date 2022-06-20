@@ -10,10 +10,12 @@ set( fileIO_headers
      Outputs/SiloOutput.hpp
      Outputs/TimeHistoryOutput.hpp
      silo/SiloFile.hpp
-     timeHistory/HistoryIO.hpp
+     timeHistory/HDFFile.hpp
+     timeHistory/HistoryCollectionBase.hpp
+     timeHistory/BufferedHistoryIO.hpp
      timeHistory/PackCollection.hpp
-     timeHistory/TimeHistHDF.hpp
-     timeHistory/TimeHistoryCollection.hpp
+     timeHistory/HDFHistoryIO.hpp
+     timeHistory/HistoryCollection.hpp
    )
 
 #
@@ -28,11 +30,22 @@ set( fileIO_sources
      Outputs/SiloOutput.cpp
      Outputs/TimeHistoryOutput.cpp
      silo/SiloFile.cpp
+     timeHistory/HDFFile.cpp
+     timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
-     timeHistory/TimeHistHDF.cpp
+     timeHistory/HDFHistoryIO.cpp
    )
 
 set( dependencyList mesh constitutive silo hdf5 )
+if( ENABLE_PYGEOSX )
+  list( APPEND fileIO_headers
+	python/PyHistoryCollectionType.hpp 
+	python/PyHistoryOutputType.hpp )
+  list( APPEND fileIO_sources 
+        python/PyHistoryCollection.cpp 
+        python/PyHistoryOutput.cpp )
+  list( APPEND dependencyList Python3::Python pylvarray ) 
+endif()
 
 
 if( ENABLE_MPI )
@@ -77,6 +90,3 @@ target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks(PREFIX fileIO )
 
-if( ENABLE_PYGEOSX )
-  add_subdirectory( python )
-endif()

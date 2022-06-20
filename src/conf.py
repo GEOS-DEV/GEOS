@@ -99,8 +99,13 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.inheritance_diagram',
     'matplotlib.sphinxext.plot_directive',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    'sphinxcontrib.plantuml',
 ]
+
+plantuml = "/usr/bin/plantuml"
+plantuml_output_format = "svg_img"
+
 plot_html_show_source_link = True
 plot_html_show_formats = False
 

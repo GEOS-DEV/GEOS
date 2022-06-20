@@ -125,7 +125,7 @@
       name="Traction"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="fractureTraction"
+      fieldName="traction"
       component="0"
       scale="-1.00e5"/>
   </FieldSpecifications>
@@ -142,7 +142,8 @@
       name="vtkOutput"
       plotFileRoot="SneddonRotated"
       plotLevel="3"
-      writeBinaryData="1"/>
+      format="ascii"/>
+
     <Restart
       name="restartOutput"/>
   </Outputs>

@@ -16,6 +16,7 @@
 #include "Group.hpp"
 #include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
+#include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
@@ -62,10 +63,11 @@ Group::CatalogInterface::CatalogType & Group::getCatalog()
   return catalog;
 }
 
-WrapperBase & Group::registerWrapper( string const & name,
-                                      std::unique_ptr< WrapperBase > wrapper )
+WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
 {
-  return *m_wrappers.insert( name, wrapper.release(), true );
+  // Extract `wrapperName` first to prevent from UB call order in the `insert` call.
+  string const wrapperName = wrapper->getName();
+  return *m_wrappers.insert( wrapperName, wrapper.release(), true );
 }
 
 void Group::deregisterWrapper( string const & name )
@@ -145,6 +147,7 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
   }
 
   // Loop over the child nodes of the targetNode
+  array1d< string > childNames;
   for( xmlWrapper::xmlNode childNode : targetNode.children() )
   {
     // Get the child tag and name
@@ -152,6 +155,14 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     if( childName.empty() )
     {
       childName = childNode.name();
+    }
+    else
+    {
+      // Make sure child names are not duplicated
+      GEOSX_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
+                      GEOSX_FMT( "Error: An XML block cannot contain children with duplicated names ({}/{}). ",
+                                 getPath(), childName ) );
+      childNames.emplace_back( childName );
     }
 
     // Create children
@@ -274,7 +285,7 @@ void Group::initializationOrder( string_array & order )
 
 void Group::initialize_postMeshGeneration()
 {
-  string_array initOrder;
+  array1d< string > initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -288,7 +299,7 @@ void Group::initialize()
 {
   initializePreSubGroups();
 
-  string_array initOrder;
+  array1d< string > initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -304,7 +315,7 @@ void Group::initializePostInitialConditions()
 {
   initializePostInitialConditionsPreSubGroups();
 
-  string_array initOrder;
+  array1d< string > initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -315,65 +326,92 @@ void Group::initializePostInitialConditions()
   initializePostInitialConditionsPostSubGroups();
 }
 
-localIndex Group::packSize( string_array const & wrapperNames,
+template< bool DO_PACKING >
+localIndex Group::packImpl( buffer_unit_type * & buffer,
+                            array1d< string > const & wrapperNames,
                             arrayView1d< localIndex const > const & packList,
                             integer const recursive,
                             bool onDevice,
                             parallelDeviceEvents & events ) const
 {
   localIndex packedSize = 0;
-  packedSize += bufferOps::PackSize( getName());
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() );
 
-  packedSize += bufferOps::PackSize( string( "Wrappers" ));
-  if( wrapperNames.size()==0 )
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( "Wrappers" ) );
+
+  // `wrappers` are considered for packing if they match the size of this Group instance.
+  // A way to check this is to check the sufficient (but not necessary...) condition `wrapper.sizedFromParent()`.
+  std::vector< WrapperBase const * > wrappers;
+  for( string const & wrapperName: wrapperNames )
   {
-    packedSize += bufferOps::PackSize( static_cast< int >(m_wrappers.size()) );
-    for( auto const & wrapperPair : m_wrappers )
-    {
-      packedSize += bufferOps::PackSize( wrapperPair.first );
-      if( packList.empty() )
-      {
-        packedSize += wrapperPair.second->packSize( true, onDevice, events );
-      }
-      else
-      {
-        packedSize += wrapperPair.second->packByIndexSize( packList, true, onDevice, events );
-      }
-    }
-  }
-  else
-  {
-    packedSize += bufferOps::PackSize( static_cast< int >(wrapperNames.size()) );
-    for( auto const & wrapperName : wrapperNames )
+    if( hasWrapper( wrapperName ) )
     {
       WrapperBase const & wrapper = getWrapperBase( wrapperName );
-      packedSize += bufferOps::PackSize( wrapperName );
-      if( packList.empty() )
+
+      if( wrapper.sizedFromParent() )
       {
-        packedSize += wrapper.packSize( true, onDevice, events );
-      }
-      else
-      {
-        packedSize += wrapper.packByIndexSize( packList, true, onDevice, events );
+        wrappers.push_back( &wrapper );
       }
     }
+    else
+    {
+      GEOSX_ERROR( "Wrapper " << wrapperName << " not found in Group " << getName() << "." );
+    }
   }
+
+  // Now we pack the `wrappers`.
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, LvArray::integerConversion< localIndex >( wrappers.size() ) );
+  for( WrapperBase const * wrapper: wrappers )
+  {
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, wrapper->getName() );
+    if( packList.empty() )
+    {
+      packedSize += wrapper->pack< DO_PACKING >( buffer, true, onDevice, events );
+    }
+    else
+    {
+      packedSize += wrapper->packByIndex< DO_PACKING >( buffer, packList, true, onDevice, events );
+    }
+  }
+
   if( recursive > 0 )
   {
-    packedSize += bufferOps::PackSize( string( "SubGroups" ));
-    packedSize += bufferOps::PackSize( m_subGroups.size() );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( "SubGroups" ) );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, m_subGroups.size() );
     for( auto const & keyGroupPair : m_subGroups )
     {
-      packedSize += bufferOps::PackSize( keyGroupPair.first );
-      packedSize += keyGroupPair.second->packSize( wrapperNames, packList, recursive, onDevice, events );
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, keyGroupPair.first );
+      packedSize += keyGroupPair.second->packImpl< DO_PACKING >( buffer, wrapperNames, packList, recursive, onDevice, events );
     }
   }
 
   return packedSize;
 }
 
+localIndex Group::packSize( array1d< string > const & wrapperNames,
+                            arrayView1d< localIndex const > const & packList,
+                            integer const recursive,
+                            bool onDevice,
+                            parallelDeviceEvents & events ) const
+{
+  buffer_unit_type * dummy;
+  return this->packImpl< false >( dummy, wrapperNames, packList, recursive, onDevice, events );
+}
 
-localIndex Group::packSize( string_array const & wrapperNames,
+
+localIndex Group::packSize( arrayView1d< localIndex const > const & packList,
+                            integer const recursive,
+                            bool onDevice,
+                            parallelDeviceEvents & events ) const
+{
+  std::vector< string > const tmp = mapKeys( m_wrappers );
+  array1d< string > wrapperNames;
+  wrapperNames.insert( 0, tmp.begin(), tmp.end() );
+  return this->packSize( wrapperNames, packList, recursive, onDevice, events );
+}
+
+
+localIndex Group::packSize( array1d< string > const & wrapperNames,
                             integer const recursive,
                             bool onDevice,
                             parallelDeviceEvents & events ) const
@@ -384,67 +422,31 @@ localIndex Group::packSize( string_array const & wrapperNames,
 
 
 localIndex Group::pack( buffer_unit_type * & buffer,
-                        string_array const & wrapperNames,
+                        array1d< string > const & wrapperNames,
                         arrayView1d< localIndex const > const & packList,
                         integer const recursive,
                         bool onDevice,
                         parallelDeviceEvents & events ) const
 {
-  localIndex packedSize = 0;
-  packedSize += bufferOps::Pack< true >( buffer, getName() );
-
-  packedSize += bufferOps::Pack< true >( buffer, string( "Wrappers" ) );
-  if( wrapperNames.size()==0 )
-  {
-    packedSize += bufferOps::Pack< true >( buffer, m_wrappers.size() );
-    for( auto const & wrapperPair : m_wrappers )
-    {
-      packedSize += bufferOps::Pack< true >( buffer, wrapperPair.first );
-      if( packList.empty() )
-      {
-        // invoke wrapper pack kernel
-        packedSize += wrapperPair.second->pack( buffer, true, onDevice, events );
-      }
-      else
-      {
-        packedSize += wrapperPair.second->packByIndex( buffer, packList, true, onDevice, events );
-      }
-    }
-  }
-  else
-  {
-    packedSize += bufferOps::Pack< true >( buffer, wrapperNames.size() );
-    for( auto const & wrapperName : wrapperNames )
-    {
-      WrapperBase const & wrapper = getWrapperBase( wrapperName );
-      packedSize += bufferOps::Pack< true >( buffer, wrapperName );
-      if( packList.empty() )
-      {
-        packedSize += wrapper.pack( buffer, true, onDevice, events );
-      }
-      else
-      {
-        packedSize += wrapper.packByIndex( buffer, packList, true, onDevice, events );
-      }
-    }
-  }
-
-  if( recursive > 0 )
-  {
-    packedSize += bufferOps::Pack< true >( buffer, string( "SubGroups" ) );
-    packedSize += bufferOps::Pack< true >( buffer, m_subGroups.size() );
-    for( auto const & keyGroupPair : m_subGroups )
-    {
-      packedSize += bufferOps::Pack< true >( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->pack( buffer, wrapperNames, packList, recursive, onDevice, events );
-    }
-  }
-
-  return packedSize;
+  return this->packImpl< true >( buffer, wrapperNames, packList, recursive, onDevice, events );
 }
 
+
 localIndex Group::pack( buffer_unit_type * & buffer,
-                        string_array const & wrapperNames,
+                        arrayView1d< localIndex const > const & packList,
+                        integer const recursive,
+                        bool onDevice,
+                        parallelDeviceEvents & events ) const
+{
+  std::vector< string > const tmp = mapKeys( m_wrappers );
+  array1d< string > wrapperNames;
+  wrapperNames.insert( 0, tmp.begin(), tmp.end() );
+  return this->pack( buffer, wrapperNames, packList, recursive, onDevice, events );
+}
+
+
+localIndex Group::pack( buffer_unit_type * & buffer,
+                        array1d< string > const & wrapperNames,
                         integer const recursive,
                         bool onDevice,
                         parallelDeviceEvents & events ) const
@@ -462,11 +464,11 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOSX_ERROR_IF( groupName != getName(), "Group::Unpack(): group names do not match" );
+  GEOSX_ERROR_IF( groupName != getName(), "Group::unpack(): group names do not match" );
 
   string wrappersLabel;
   unpackedSize += bufferOps::Unpack( buffer, wrappersLabel );
-  GEOSX_ERROR_IF( wrappersLabel != "Wrappers", "Group::Unpack(): wrapper label incorrect" );
+  GEOSX_ERROR_IF( wrappersLabel != "Wrappers", "Group::unpack(): wrapper label incorrect" );
 
   localIndex numWrappers;
   unpackedSize += bufferOps::Unpack( buffer, numWrappers );
@@ -482,11 +484,11 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match" );
+    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::unpack(): group names do not match" );
 
     decltype( m_subGroups.size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOSX_ERROR_IF( numSubGroups != m_subGroups.size(), "Group::Unpack(): incorrect number of subGroups" );
+    GEOSX_ERROR_IF( numSubGroups != m_subGroups.size(), "Group::unpack(): incorrect number of subGroups" );
 
     for( auto const & index : m_subGroups )
     {
@@ -548,7 +550,7 @@ void Group::loadFromConduit()
     return;
   }
 
-  m_size = m_conduitNode.fetch_child( "__size__" ).value();
+  m_size = m_conduitNode.child( "__size__" ).value();
   localIndex const groupSize = m_size;
 
   forWrappers( [&]( WrapperBase & wrapper )

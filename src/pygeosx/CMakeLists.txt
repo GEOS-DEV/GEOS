@@ -4,8 +4,8 @@ set( python_headers pygeosx.hpp
 
 set( python_sources pygeosx.cpp
 		    )
-
-set( dependencyList ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python )
+	    	  
+set( dependencyList ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python ) 
 
 blt_add_library( NAME pygeosx
                  SOURCES ${python_sources}
@@ -21,11 +21,11 @@ add_custom_command( TARGET pygeosx
 
 add_custom_command( TARGET pygeosx
                     POST_BUILD
-                    COMMAND ln -sf ${CMAKE_BINARY_DIR}/lib/pygeosx.so ${CMAKE_BINARY_DIR}/lib/PYGEOSX/lib/python3.8/site-packages/ )
+                    COMMAND ln -sf ${CMAKE_BINARY_DIR}/lib/pygeosx.so ${CMAKE_BINARY_DIR}/lib/PYGEOSX/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages/ )
 
 add_custom_command( TARGET pygeosx
                     POST_BUILD
-                    COMMAND ln -sf ${CMAKE_BINARY_DIR}/lib/pylvarray.so ${CMAKE_BINARY_DIR}/lib/PYGEOSX/lib/python3.8/site-packages/ )
+                    COMMAND ln -sf ${CMAKE_BINARY_DIR}/lib/pylvarray.so ${CMAKE_BINARY_DIR}/lib/PYGEOSX/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages/ )
 
 target_include_directories( pygeosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 

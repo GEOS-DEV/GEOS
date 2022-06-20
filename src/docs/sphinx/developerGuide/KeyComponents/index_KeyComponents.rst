@@ -4,21 +4,28 @@ Code Components
 
 The main code components are described here.
 
+..
+  Note: relative paths should work for up-to-date versions of sphinx and avoid issues with double-inclusion
+
 .. toctree::
    :maxdepth: 2
 
-   ./dataRepo_link
+   ./../../../../coreComponents/dataRepository/docs/dataRepository.rst
 
    ./XML
 
    ./WorkingWithData
 
-   ./mesh_link
+   ./../../../../coreComponents/mesh/docs/meshDeveloperGuide
 
-   ./dofManager_link
+   ./../../../../coreComponents/linearAlgebra/docs/DofManager.rst
 
    ./LvArray
 
-   ./fem_link
+   ./../../../../coreComponents/finiteElement/kernelInterface/kernelInterface.rst
+
+   ./../../../../coreComponents/constitutive/docs/constitutiveDeveloperGuide.rst
+
+   ./../../../../coreComponents/constitutive/PVTPackage/docs/main.rst
 
    ./AddingNewSolver

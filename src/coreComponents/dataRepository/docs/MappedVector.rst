@@ -1,8 +1,8 @@
-.. _MappedVector:
+.. _MappedVectorDoc:
 
 
-MappedVector
-============
+Mapped Vector
+=============
 
 A superposition of a contiguous and an associative container.
 
