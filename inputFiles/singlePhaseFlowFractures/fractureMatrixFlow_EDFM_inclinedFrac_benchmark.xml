@@ -31,10 +31,10 @@
 
     <BoundedPlane
       name="FracturePlane"
-      normal="{ 1, -1, 1 }"
-      origin="{ 100, 100, 5 }"
-      lengthVector="{ 0.3333, 0.6666, 0.3333 }"
-      widthVector="{ -0.5, 0, 0.5 }"
+      normal="{ -1, 1.71, 0 }"
+      origin="{ 100, 99.9, 5 }"
+      lengthVector="{ 1.71, 1 , 0 }"
+      widthVector="{0 , 0, 1 }"
       dimensions="{ 160, 160 }"/>
   </Geometry>
 

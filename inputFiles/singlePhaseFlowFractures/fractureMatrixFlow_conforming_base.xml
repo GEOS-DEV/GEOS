@@ -74,7 +74,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 2.0e-11, 2.0e-11, 2.0e-11 }"/>
+      permeabilityComponents="{ 2.0e-15, 2.0e-15, 2.0e-15 }"/>
 
     <PressurePorosity
       name="fracturePorosity"
