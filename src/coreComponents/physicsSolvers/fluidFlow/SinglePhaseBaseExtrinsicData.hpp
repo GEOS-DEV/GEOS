@@ -56,14 +56,6 @@ EXTRINSIC_MESH_DATA_TRAIT( dMobility_dTemperature,
                            NO_WRITE,
                            "Derivative of mobility with respect to temperature" );
 
-EXTRINSIC_MESH_DATA_TRAIT( density_n,
-                           "density_n",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Density at the previous converged time step" );
-
 }
 
 }
