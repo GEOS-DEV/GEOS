@@ -232,15 +232,15 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   {
     for( integer n = 0; n <= numSteps; ++n )
     {
-      //kernelWrapper.update( i, 0, table( n, PRES ), table( n, TEMP ), composition[i] );
-      //table( n, TEMP + 1 ) = kernelWrapper.totalDensity()( i, 0 );
+      kernelWrapper.update( i, 0, table( n, PRES ), table( n, TEMP ), composition[i] );
+      table( n, TEMP + 1 ) = kernelWrapper.totalDensity()( i, 0 );
 
-      //for( integer p = 0; p < numPhases; ++p )
-      //{
-      //  table( n, TEMP + 2 + p ) = kernelWrapper.phaseFraction()( i, 0, p );
-      //  table( n, TEMP + 2 + p + numPhases ) = kernelWrapper.phaseDensity()( i, 0, p );
-      //  table( n, TEMP + 2 + p + 2 * numPhases ) = kernelWrapper.phaseViscosity()( i, 0, p );
-      //}
+      for( integer p = 0; p < numPhases; ++p )
+      {
+        table( n, TEMP + 2 + p ) = kernelWrapper.phaseFraction()( i, 0, p );
+        table( n, TEMP + 2 + p + numPhases ) = kernelWrapper.phaseDensity()( i, 0, p );
+        table( n, TEMP + 2 + p + 2 * numPhases ) = kernelWrapper.phaseViscosity()( i, 0, p );
+      }
     }
   } );
 

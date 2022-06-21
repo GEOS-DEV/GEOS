@@ -41,11 +41,11 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
 #ifdef GEOSX_USE_PVTPackage
-                               CompositionalMultiphaseFluid,
+                               CompositionalMultiphaseFluid//,
 #endif
-                               CO2BrinePhillipsFluid,
+                               /*CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
-                               CO2BrinePhillipsThermalFluid /*, // if I uncomment the two models at the same time, the compiler segfaults on
+                               CO2BrinePhillipsThermalFluid , // if I uncomment the two models at the same time, the compiler segfaults on
                                                                Lassen!
                                                                CO2BrineEzrokhiThermalFluid*/>::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
@@ -57,11 +57,11 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
 #ifdef GEOSX_USE_PVTPackage
-                               CompositionalMultiphaseFluid,
+                               CompositionalMultiphaseFluid//,
 #endif
-                               CO2BrinePhillipsFluid,
+                               /*CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
-                               CO2BrinePhillipsThermalFluid /*, // if I uncomment the two models at the same time, the compiler segfaults on
+                               CO2BrinePhillipsThermalFluid , // if I uncomment the two models at the same time, the compiler segfaults on
                                                                Lassen!
                                                                CO2BrineEzrokhiThermalFluid*/>::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
