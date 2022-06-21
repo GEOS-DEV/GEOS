@@ -43,7 +43,7 @@
   </Geometry-->
 
   <!-- list of events-->
-  <Events maxTime="0.2">
+  <Events maxTime="0.3">
     <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <!-- (there are other ways to control the time step size) -->

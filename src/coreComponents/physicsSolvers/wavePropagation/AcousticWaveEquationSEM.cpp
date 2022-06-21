@@ -304,12 +304,12 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
                                                   arrayView1d< real64 const > const var_n,
                                                   arrayView2d< real64 > varAtReceivers )
 {
-  real64 const time_np1 = time_n+dt;
+  real64 const time_np1 = time_n + dt;
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  real64 const a1 = (dt < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
+  real64 const a1 = (abs(dt) < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
   real64 const a2 = 1.0 - a1;
   if( m_nsamplesSeismoTrace > 0 )
   {
@@ -734,23 +734,24 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
 {
 
   /*
-   * In forward case we compute seismo if time_n is the first time
+   * In forward case we compute seismo if time_n + dt  is the first time
    * step after the timeSeismo to write.
+   *
+   *  time_n        timeSeismo    time_n + dt
+   *   ---|--------------|-------------|
    *
    * In backward (time_n goes decreasing) case we compute seismo if
    * time_n is the last time step before the timeSeismo to write.
    *
-   *  time_n - dt     timeSeismo    time_n
+   *  time_n - dt    timeSeismo    time_n
    *   ---|--------------|-------------|
-   */
-  std::cout << "m_dtSeismoTrace " << m_dtSeismoTrace << " m_nsamplesSeismoTrace " << m_nsamplesSeismoTrace << " m_indexSeismoTrace " << m_indexSeismoTrace << " time_n " << time_n << std::endl;
-  
+   */  
   for( real64 timeSeismo;
-       (m_forward)?((timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace):
-         ((timeSeismo = m_dtSeismoTrace*(m_nsamplesSeismoTrace-m_indexSeismoTrace-1)) > (time_n - dt - epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace);
+       (m_forward)?((timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + dt + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace):
+         ((timeSeismo = m_dtSeismoTrace*(m_nsamplesSeismoTrace-m_indexSeismoTrace-1)) >= (time_n - dt -  epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace);
        m_indexSeismoTrace++ )
   {
-    computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, var_np1, var_n, varAtReceivers );
+    computeSeismoTrace( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1), var_np1, var_n, varAtReceivers );
   }
   varAtReceivers.move( MemorySpace::host, false );
 }
