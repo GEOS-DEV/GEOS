@@ -66,6 +66,8 @@ protected:
   /// Hard coding the example case - eventually would have to be changed such that it is read from an input file
   localIndex m_numPrimarySpecies = 7;	// Currently not including H2O and O2gas
   localIndex m_numSecSpecies = 11;
+
+  // Equilibrium constants
   arrayView1d<real64>  m_log10EqConst;	
   m_log10EqConst.resize( m_numSecSpecies );	// Not sure if this is the correct way of allocating the size
   m_log10EqConst[0] = 13.99;
@@ -79,6 +81,60 @@ protected:
   m_log10EqConst[8] = 0.60;
   m_log10EqConst[9] = -2.43;
   m_log10EqConst[10] = -0.82;
+
+/*
+  // Activity coefficients
+  real64 m_DebyeHuckelA, m_DebyeHuckelB, m_WATEQBDot 
+  m_DebyeHuckelA = 0.5465;
+  m_DebyeHuckelB = 0.3346;
+  m_WATEQBDot = 0.0438;
+  arrayView1d<real64>  m_ionSizePrimary, m_ionSizeSec;  
+  m_ionSizePrimary.resize( m_numPrimarySepcies )
+  m_ionSizePrimary[0] = 9.00;
+  m_ionSizePrimary[1] = 4.00;
+  m_ionSizePrimary[2] = 6.00;
+  m_ionSizePrimary[3] = 4.00;
+  m_ionSizePrimary[4] = 3.00;
+  m_ionSizePrimary[5] = 8.00;
+  m_ionSizePrimary[6] = 4.00;
+
+  // m_ionSizeSec.resize( m_numSecSepcies )
+  m_ionSizeSec[0] = 3.50;
+  m_ionSizeSec[1] = 3.00;
+  m_ionSizeSec[2] = 4.50;
+  m_ionSizeSec[3] = 3.00;
+  m_ionSizeSec[4] = 4.00;
+  m_ionSizeSec[5] = 3.00;
+  m_ionSizeSec[6] = 3.00;
+  m_ionSizeSec[7] = 4.00;
+  m_ionSizeSec[8] = 3.00;
+  m_ionSizeSec[9] = 3.00;
+  m_ionSizeSec[10] = 4.00;
+
+  arrayView1d<real64>  m_chargePrimary, m_chargeSec;  \\ should be an integer and not real
+  m_chargePrimary.resize( m_numPrimarySepcies )
+  m_chargePrimary[0] = 1;
+  m_chargePrimary[1] = -1;
+  m_chargePrimary[2] = 2;
+  m_chargePrimary[3] = -2;
+  m_chargePrimary[4] = -1;
+  m_chargePrimary[5] = 2;
+  m_chargePrimary[6] = 1;
+
+  // m_chargeSec.resize( m_numSecSepcies )
+  m_chargeSec[0] = -1;
+  m_chargeSec[1] = 0;
+  m_chargeSec[2] = -2;
+  m_chargeSec[3] = 0;
+  m_chargeSec[4] = 1;
+  m_chargeSec[5] = 0;
+  m_chargeSec[6] = 0;
+  m_chargeSec[7] = 1;
+  m_chargeSec[8] = 0;
+  m_chargeSec[9] = 0;
+  m_chargeSec[10] = -1;
+
+*/
 
   arrayView1d<real64>  m_log10SecActCoeff;	
   m_log10SecActCoeff.resize( m_numSecSpecies );	// Not sure if this is the correct way of allocating the size

@@ -124,7 +124,44 @@ void ReactionBase::Compute( real64 const & temperature,
 }
 
 
+/*
+// Compute log10(ActivityCoefficient) for basis and dependent species along with their derivatives with respect to Ionic strength using the B-Dot Model
+// which is the same as the Extended Debye-Huckel model in GEOS.  
+void ReactionBase::ComputeLog10ActCoefBDotModel( real64 const temperature,
+                                             real64 const ionicStrength,
+                                             array1d< real64 > & log10PrimaryActCoeff,
+                                             array1d< real64 > & dLog10PrimaryActCoeff_dIonicStrength,
+                                             array1d< real64 > & log10SecActCoeff,
+                                             array1d< real64 > & dLog10SecActCoeff_dIonicStrength )
+{
+  GEOSX_UNUSED_VAR( pressure );
+  localIndex const NBasis = m_numPrimarySpecies;
+  localIndex const NDependent = m_numSecSpecies;
 
+  // Initialize the outputs to 0. Not sure if this is the right way of doing this
+  log10PrimaryActCoeff[:] = 0;
+  log10SecActCoeff[:] = 0;
+  dLog10PrimaryActCoeff_dIonicStrength[:] = 0;
+  dLog10SecActCoeff_dIonicStrength[:] = 0;
+  
+  real64 TK = temperature + 273.15;
+
+  for( localIndex i = 0; i < m_numPrimarySpecies; ++i )
+  {
+    log10PrimaryActCoeff[i] = m_WATEQBDot * ionicStrength - m_DebyeHuckelA * m_chargePrimary[i] * m_chargePrimary[i] * sqrt( ionicStrength ) / (1.0 + m_ionSizePrimary[i] * m_DebyeHuckelB * sqrt( ionicStrength ));
+    dLog10PrimaryActCoeff_dIonicStrength[i] = m_WATEQBDot - m_DebyeHuckelA * m_chargePrimary[i] * m_chargePrimary[i] *
+                      (0.5 / sqrt( ionicStrength ) / (1.0 + m_ionSizePrimary[i] * m_DebyeHuckelB * sqrt( ionicStrength )) - 0.5 * m_ionSizePrimary[i] * m_DebyeHuckelB / (1.0 + m_ionSizePrimary[i] * m_DebyeHuckelB * sqrt( ionicStrength )) /
+                      (1.0 + m_ionSizePrimary[i] * m_DebyeHuckelB * sqrt( ionicStrength ))); 
+  }
+  for( localIndex i = 0; i < m_numSecSpecies; ++i )
+  {
+    log10SecActCoeff[i] = m_WATEQBDot * ionicStrength - m_DebyeHuckelA * m_chargeSec[i] * m_chargeSec[i] * sqrt( ionicStrength ) / (1.0 + m_ionSizeSec[i] * m_DebyeHuckelB * sqrt( ionicStrength ));
+    dLog10SecActCoeff_dIonicStrength[i] = m_WATEQBDot - m_DebyeHuckelA * m_chargeSec[i] * m_chargeSec[i] *
+                      (0.5 / sqrt( ionicStrength ) / (1.0 + m_ionSizeSec[i] * m_DebyeHuckelB * sqrt( ionicStrength )) - 0.5 * m_ionSizeSec[i] * m_DebyeHuckelB / (1.0 + m_ionSizeSec[i] * m_DebyeHuckelB * sqrt( ionicStrength )) /
+                      (1.0 + m_ionSizeSec[i] * m_DebyeHuckelB * sqrt( ionicStrength ))); 
+  }
+}
+*/
 
 
 /* 	Commented out for now because for the first example we will assume that the activity coefficient is 1. 
