@@ -222,23 +222,25 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
 
   // perform fluid update using table (P,T) and save resulting total density, etc.
   // note: column indexing should be kept consistent with output file header below.
-
+ 
   integer numSteps = m_numSteps;
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
   forAll< ExecPolicy >( composition.size( 0 ),
-                        [numPhases, numSteps, kernelWrapper, table, composition] GEOSX_HOST_DEVICE ( localIndex const i )
+                        //[numPhases, numSteps, kernelWrapper, table, composition] GEOSX_HOST_DEVICE ( localIndex const i )
+                        [=] GEOSX_HOST_DEVICE ( localIndex const i )
+
   {
     for( integer n = 0; n <= numSteps; ++n )
     {
       kernelWrapper.update( i, 0, table( n, PRES ), table( n, TEMP ), composition[i] );
-      table( n, TEMP + 1 ) = kernelWrapper.totalDensity()( i, 0 );
+      //table( n, TEMP + 1 ) = kernelWrapper.totalDensity()( i, 0 );
 
-      for( integer p = 0; p < numPhases; ++p )
-      {
-        table( n, TEMP + 2 + p ) = kernelWrapper.phaseFraction()( i, 0, p );
-        table( n, TEMP + 2 + p + numPhases ) = kernelWrapper.phaseDensity()( i, 0, p );
-        table( n, TEMP + 2 + p + 2 * numPhases ) = kernelWrapper.phaseViscosity()( i, 0, p );
-      }
+      //for( integer p = 0; p < numPhases; ++p )
+      //{
+      //  table( n, TEMP + 2 + p ) = kernelWrapper.phaseFraction()( i, 0, p );
+      //  table( n, TEMP + 2 + p + numPhases ) = kernelWrapper.phaseDensity()( i, 0, p );
+      //  table( n, TEMP + 2 + p + 2 * numPhases ) = kernelWrapper.phaseViscosity()( i, 0, p );
+      //}
     }
   } );
 
