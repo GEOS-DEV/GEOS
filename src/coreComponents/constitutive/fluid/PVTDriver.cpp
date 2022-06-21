@@ -17,13 +17,22 @@
  */
 
 #include "PVTDriver.hpp"
+
+#include "common/MpiWrapper.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multiFluidSelector.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
+#include "functions/FunctionManager.hpp"
+#include "functions/TableFunction.hpp"
+
+#include <fstream>
 
 namespace geosx
 {
+
 using namespace dataRepository;
 using namespace constitutive;
-
 
 PVTDriver::PVTDriver( const string & name,
                       Group * const parent ):
@@ -61,11 +70,6 @@ PVTDriver::PVTDriver( const string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
 }
-
-
-PVTDriver::~PVTDriver()
-{}
-
 
 void PVTDriver::postProcessInput()
 {
@@ -186,8 +190,8 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
 {
   // get number of phases and components
 
-  localIndex const NC = fluid.numFluidComponents();
-  localIndex const NP = fluid.numFluidPhases();
+  integer const numComponents = fluid.numFluidComponents();
+  integer const numPhases = fluid.numFluidPhases();
 
   // prefer output in mass
 
@@ -195,28 +199,28 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
 
   // get output data views
 
-  arrayView2d< real64 const, multifluid::USD_FLUID > totalDensity   = fluid.totalDensity();
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseFraction  = fluid.phaseFraction();
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseDensity   = fluid.phaseDensity();
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseViscosity = fluid.phaseViscosity();
+  arrayView2d< real64 const, multifluid::USD_FLUID > const totalDensity   = fluid.totalDensity();
+  arrayView3d< real64 const, multifluid::USD_PHASE > const phaseFraction  = fluid.phaseFraction();
+  arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDensity   = fluid.phaseDensity();
+  arrayView3d< real64 const, multifluid::USD_PHASE > const phaseViscosity = fluid.phaseViscosity();
 
   // create kernel wrapper
 
-  typename FLUID_TYPE::KernelWrapper kernelWrapper = fluid.createKernelWrapper();
+  typename FLUID_TYPE::KernelWrapper const kernelWrapper = fluid.createKernelWrapper();
 
   // set composition to user specified feed
   // it is more convenient to provide input in molar, so perform molar to mass conversion here
 
-  GEOSX_ASSERT_EQ( NC, m_feed.size() );
-  array2d< real64, compflow::LAYOUT_COMP > compositionValues( 1, NC );
+  GEOSX_ASSERT_EQ( numComponents, m_feed.size() );
+  array2d< real64, compflow::LAYOUT_COMP > const compositionValues( 1, numComponents );
 
   real64 sum = 0.0;
-  for( localIndex i = 0; i < NC; ++i )
+  for( integer i = 0; i < numComponents; ++i )
   {
     compositionValues[0][i] = m_feed[i] * fluid.componentMolarWeights()[i];
     sum += compositionValues[0][i];
   }
-  for( localIndex i = 0; i < NC; ++i )
+  for( integer i = 0; i < numComponents; ++i )
   {
     compositionValues[0][i] /= sum;
   }
@@ -228,18 +232,21 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
 
   integer numSteps = m_numSteps;
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
-  forAll< ExecPolicy >( 1, [=]  GEOSX_HOST_DEVICE ( localIndex const ei )
+  forAll< ExecPolicy >( composition.size( 0 ),
+                        [numPhases, numSteps, kernelWrapper, table,
+                         phaseFraction, phaseDensity, phaseViscosity,
+                         composition, totalDensity] GEOSX_HOST_DEVICE ( localIndex const i )
   {
     for( integer n = 0; n <= numSteps; ++n )
     {
-      kernelWrapper.update( ei, 0, table( n, PRES ), table( n, TEMP ), composition[0] );
-      table( n, TEMP+1 ) = totalDensity( ei, 0 );
+      kernelWrapper.update( i, 0, table( n, PRES ), table( n, TEMP ), composition[i] );
+      table( n, TEMP + 1 ) = totalDensity( i, 0 );
 
-      for( integer p=0; p<NP; ++p )
+      for( integer p = 0; p < numPhases; ++p )
       {
-        table( n, TEMP+2+p ) = phaseFraction( ei, 0, p );
-        table( n, TEMP+2+p+NP ) = phaseDensity( ei, 0, p );
-        table( n, TEMP+2+p+2*NP ) = phaseViscosity( ei, 0, p );
+        table( n, TEMP + 2 + p ) = phaseFraction( i, 0, p );
+        table( n, TEMP + 2 + p + numPhases ) = phaseDensity( i, 0, p );
+        table( n, TEMP + 2 + p + 2 * numPhases ) = phaseViscosity( i, 0, p );
       }
     }
   } );
@@ -295,8 +302,6 @@ void PVTDriver::compareWithBaseline()
   // specific.
 
   real64 value;
-  real64 error;
-
   for( integer row=0; row < m_table.size( 0 ); ++row )
   {
     for( integer col=0; col < m_table.size( 1 ); ++col )
@@ -304,7 +309,7 @@ void PVTDriver::compareWithBaseline()
       GEOSX_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
-      error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
+      real64 const error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
       GEOSX_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
                                                                                           << " (row " << row+m_numColumns << " with header)"
                                                                                           << " and column " << col+1, std::runtime_error );
