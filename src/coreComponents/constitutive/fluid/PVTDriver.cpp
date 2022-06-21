@@ -197,13 +197,6 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
 
   fluid.setMassFlag( true );
 
-  // get output data views
-
-  arrayView2d< real64 const, multifluid::USD_FLUID > const totalDensity   = fluid.totalDensity();
-  arrayView3d< real64 const, multifluid::USD_PHASE > const phaseFraction  = fluid.phaseFraction();
-  arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDensity   = fluid.phaseDensity();
-  arrayView3d< real64 const, multifluid::USD_PHASE > const phaseViscosity = fluid.phaseViscosity();
-
   // create kernel wrapper
 
   typename FLUID_TYPE::KernelWrapper const kernelWrapper = fluid.createKernelWrapper();
@@ -233,20 +226,18 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   integer numSteps = m_numSteps;
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
   forAll< ExecPolicy >( composition.size( 0 ),
-                        [numPhases, numSteps, kernelWrapper, table,
-                         phaseFraction, phaseDensity, phaseViscosity,
-                         composition, totalDensity] GEOSX_HOST_DEVICE ( localIndex const i )
+                        [numPhases, numSteps, kernelWrapper, table, composition] GEOSX_HOST_DEVICE ( localIndex const i )
   {
     for( integer n = 0; n <= numSteps; ++n )
     {
       kernelWrapper.update( i, 0, table( n, PRES ), table( n, TEMP ), composition[i] );
-      table( n, TEMP + 1 ) = totalDensity( i, 0 );
+      table( n, TEMP + 1 ) = kernelWrapper.totalDensity()( i, 0 );
 
       for( integer p = 0; p < numPhases; ++p )
       {
-        table( n, TEMP + 2 + p ) = phaseFraction( i, 0, p );
-        table( n, TEMP + 2 + p + numPhases ) = phaseDensity( i, 0, p );
-        table( n, TEMP + 2 + p + 2 * numPhases ) = phaseViscosity( i, 0, p );
+        table( n, TEMP + 2 + p ) = kernelWrapper.phaseFraction()( i, 0, p );
+        table( n, TEMP + 2 + p + numPhases ) = kernelWrapper.phaseDensity()( i, 0, p );
+        table( n, TEMP + 2 + p + 2 * numPhases ) = kernelWrapper.phaseViscosity()( i, 0, p );
       }
     }
   } );
