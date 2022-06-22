@@ -936,7 +936,7 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
 
     globalIndex const rankOffset = dofManager.rankOffset(); 
 
-    // 3. Apply the pressure and temperature bcs to the system
+    // 3. Apply the pressure bc to the system
     fsManager.apply( time_n + dt, 
                      mesh, 
                      "ElementRegions",
@@ -950,17 +950,12 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
       arrayView1d< real64 const > const bcPres =
         subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcPressure::key() );
 
-      arrayView1d< real64 const > const bcTemp =
-        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcTemperature::key() );
-
       arrayView1d< integer const > const ghostRank =
         subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
       arrayView1d< globalIndex const > const dofNumber =
         subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< real64 const > const pres =
         subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-      arrayView1d< real64 const > const temp =
-        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
 
       forAll< parallelDevicePolicy<> >( lset.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a ) 
       {
@@ -974,7 +969,7 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
         localIndex const localRow = dofIndex - rankOffset; 
         real64 rhsValue; 
 
-        // 4.1. Apply pressure value to the matrix/rhs
+        // Apply pressure value to the matrix/rhs
         FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
                                                     rankOffset,
                                                     localMatrix,
@@ -982,10 +977,45 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
                                                     bcPres[ei],
                                                     pres[ei] );
         localRhs[localRow] = rhsValue;
+      } );
+    } ); 
 
-        // 4.2. Apply temperature value to the matrix/rhs
-        if( m_isThermal )
+    // 3. Apply the temperature bc to the system
+    if ( m_isThermal )
+    {
+      fsManager.apply( time_n + dt, 
+                       mesh, 
+                       "ElementRegions",
+                       extrinsicMeshData::flow::temperature::key(), 
+                       [&]( FieldSpecificationBase const & GEOSX_UNUSED_PARAM( fs ), 
+                            string const &, 
+                            SortedArrayView< localIndex const > const & lset, 
+                            Group & subRegion, 
+                            string const &) 
+      { 
+        arrayView1d< real64 const > const bcTemp =
+          subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcTemperature::key() );
+
+        arrayView1d< integer const > const ghostRank =
+          subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+        arrayView1d< globalIndex const > const dofNumber =
+          subRegion.getReference< array1d< globalIndex > >( dofKey );
+        arrayView1d< real64 const > const temp =
+          subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
+
+        forAll< parallelDevicePolicy<> >( lset.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a ) 
         {
+          localIndex const ei = lset[a]; 
+          if( ghostRank[ei] >= 0 )
+          {
+            return; 
+          }
+
+          globalIndex const dofIndex = dofNumber[ei]; 
+          localIndex const localRow = dofIndex - rankOffset; 
+          real64 rhsValue; 
+
+          // Apply temperature value to the matrix/rhs
           FieldSpecificationEqual::SpecifyFieldValue( dofIndex + 1,
                                                       rankOffset,
                                                       localMatrix,
@@ -993,9 +1023,9 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
                                                       bcTemp[ei],
                                                       temp[ei] );
           localRhs[localRow + 1] = rhsValue;
-        }
-      } );
-    } ); 
+        } );
+      } ); 
+    }
   } ); 
 }
 
