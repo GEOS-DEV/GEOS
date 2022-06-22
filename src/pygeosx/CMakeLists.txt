@@ -33,16 +33,4 @@ geosx_add_code_checks( PREFIX pygeosx )
 
 install(TARGETS pygeosx LIBRARY DESTINATION lib)
 
-macro(parse_test_file filename)
-  file(READ "${filename}" contents)
-  string(REPLACE "\n" ";" rows ${contents})
-  foreach(line ${rows})
-    string(REGEX MATCHALL "^ *def *test_([A-Za-z_0-9])+ *" found ${line})
-    if (found)
-      string(REGEX REPLACE "^ *def *test_(([A-Za-z_0-9])+) *" "\\1" name "${found}")
-      add_test(NAME ${name}COMMAND ${Python_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR}/${filename}::test_${name})
-    endif()
-  endforeach()
-endmacro(parse_test_file)
-
-#parse_test_file(test_WaveEquationAdjoint.py)
+add_subdirectory(unitTests)
