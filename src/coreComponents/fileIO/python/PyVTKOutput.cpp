@@ -78,7 +78,7 @@ static PyObject * output( PyVTKOutput * self, PyObject * args )
   {
     return nullptr;
   }
-  
+
   geosx::ProblemManager & problem = self->group->getGroupByPath< ProblemManager >( "/Problem/" );
   geosx::DomainPartition & domain = problem.getDomainPartition();
 
@@ -121,7 +121,7 @@ static PyObject * setOutputDir( PyVTKOutput * self, PyObject * args )
 
   try
   {
-    self->group->setOutputDirectory(path);
+    self->group->setOutputDirectory( path );
     self->group->postProcessInput();
   }
   catch( std::out_of_range const & e )
@@ -157,7 +157,7 @@ static PyObject * setOutputFileRootName( PyVTKOutput * self, PyObject * args )
 
   try
   {
-    self->group->setPlotFileRoot(filename);
+    self->group->setPlotFileRoot( filename );
     self->group->postProcessInput();
   }
   catch( std::out_of_range const & e )

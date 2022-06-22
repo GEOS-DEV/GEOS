@@ -70,7 +70,7 @@ void VTKOutput::postProcessInput()
 }
 
 
-void VTKOutput::setPlotFileRoot( string const & root)
+void VTKOutput::setPlotFileRoot( string const & root )
 {
   m_plotFileRoot = root;
 }
