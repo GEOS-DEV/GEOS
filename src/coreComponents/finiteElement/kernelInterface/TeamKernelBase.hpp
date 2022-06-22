@@ -143,6 +143,7 @@ public:
     /// Index of the finite element
     localIndex element_index;
 
+    static constexpr size_t batch_size = 1;
     static constexpr size_t num_quads_1d = 2; // TODO
   };
 
@@ -264,7 +265,7 @@ public:
     // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
-    constexpr size_t batch_size = 1;
+    constexpr size_t batch_size = KERNEL_TYPE::StackVariables::batch_size;
     static_assert( batch_size == 1, "batch_size > 1 not yet supported.");
 
     const size_t num_blocks = ( numElems + batch_size - 1 ) / batch_size;

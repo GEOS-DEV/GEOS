@@ -529,7 +529,7 @@ void applyTestFunctions( StackVariables & stack,
 // 3D Threaded version using RAJA teams
 template < typename StackVariables,
            size_t num_dofs_1d,
-           size_t num_quads_1d>
+           size_t num_quads_1d >
 GEOSX_HOST_DEVICE
 void interpolateGradientAtQuadraturePoints( StackVariables & stack,
                                             real64 const (& basis)[num_dofs_1d][num_quads_1d],
@@ -823,7 +823,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
 // 3D Threaded version using RAJA teams
 template < typename StackVariables,
            size_t num_dofs_1d,
-           size_t num_quads_1d>
+           size_t num_quads_1d >
 void applyGradientTestFunctions( StackVariables & stack,
                                  real64 const (& basis)[num_dofs_1d][num_quads_1d],
                                  real64 const (& basis_gradient)[num_dofs_1d][num_quads_1d],
