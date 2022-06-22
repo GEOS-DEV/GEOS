@@ -193,18 +193,24 @@ using team_x = LoopPolicy<RAJA::loop_exec, cuda_block_x_direct>;
 using thread_z = LoopPolicy<RAJA::loop_exec, cuda_thread_z_loop>;
 using thread_y = LoopPolicy<RAJA::loop_exec, cuda_thread_y_loop>;
 using thread_x = LoopPolicy<RAJA::loop_exec, cuda_thread_x_loop>;
+#define GEOSX_SHARED RAJA_TEAM_SHARED
+#define GEOSX_STATIC_SHARED RAJA_TEAM_SHARED
 #elif defined(RAJA_ENABLE_HIP)
 using team_launch_policy = LaunchPolicy<seq_launch_t, hip_launch_t<true>>;
 using team_x = LoopPolicy<RAJA::loop_exec, hip_block_x_direct>;
 using thread_z = LoopPolicy<RAJA::loop_exec, hip_thread_z_loop>;
 using thread_y = LoopPolicy<RAJA::loop_exec, hip_thread_y_loop>;
 using thread_x = LoopPolicy<RAJA::loop_exec, hip_thread_x_loop>;
+#define GEOSX_SHARED RAJA_TEAM_SHARED
+#define GEOSX_STATIC_SHARED RAJA_TEAM_SHARED
 #else
 using team_launch_policy = LaunchPolicy<seq_launch_t>;
 using team_x = LoopPolicy<RAJA::loop_exec>;
 using thread_z = LoopPolicy<RAJA::loop_exec>;
 using thread_y = LoopPolicy<RAJA::loop_exec>;
 using thread_x = LoopPolicy<RAJA::loop_exec>;
+#define GEOSX_SHARED
+#define GEOSX_STATIC_SHARED static
 #endif
 
 // #define GEOSX_FOREACH_THREAD(i,k,n) RAJA::expt::loop<team_##k> (ctx, RAJA::RangeSegment(0, n), [&] (int i)
