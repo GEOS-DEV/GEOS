@@ -375,6 +375,56 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
                          MPI_COMM_GEOSX );
 }
 
+void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
+                                                         real64 const & dt,
+                                                         DomainPartition & domain, // cannot be const...
+                                                         std::map< string, localIndex > const & bcNameToBcId,
+                                                         arrayView1d< globalIndex > const & bcAllSetsSize ) const
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & )
+  {
+    fsManager.apply( time + dt,
+                     mesh,
+                     "ElementRegions",
+                     FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
+                     [&]( FieldSpecificationBase const & fs,
+                          string const &,
+                          SortedArrayView< localIndex const > const & targetSet,
+                          Group & subRegion,
+                          string const & )
+    {
+      arrayView1d< integer const > const ghostRank =
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+
+      // loop over all the elements of this target set
+      RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > localSetSize( 0 );
+      forAll< parallelDevicePolicy<> >( targetSet.size(),
+                                        [targetSet, ghostRank, localSetSize] GEOSX_HOST_DEVICE ( localIndex const k )
+      {
+        localIndex const ei = targetSet[k];
+        if( ghostRank[ei] < 0 )
+        {
+          localSetSize += 1;
+        }
+      } );
+
+      // increment the set size for this source flux boundary conditions
+      bcAllSetsSize[bcNameToBcId.at( fs.getName())] += localSetSize.get();
+    } );
+  } );
+
+  // synchronize the set size over all the MPI ranks
+  MpiWrapper::allReduce( bcAllSetsSize.data(),
+                         bcAllSetsSize.data(),
+                         bcAllSetsSize.size(),
+                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                         MPI_COMM_GEOSX );
+}
+
 void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
                                                 real64 const & dt,
                                                 DomainPartition & domain )

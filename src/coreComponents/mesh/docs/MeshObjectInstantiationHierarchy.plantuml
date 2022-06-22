@@ -1,18 +1,16 @@
-classDiagram
-
 class DomainPartition {
-    +getMeshBodies() List~MeshBody~
+    +getMeshBodies(): List<MeshBody>
 }
 
 class MeshBody {
-    +getMeshLevels() List~MeshLevels~
+    +getMeshLevels(): List<MeshLevels>
 }
 
 class MeshLevel {
-    +getNodeManager() NodeManager
-    +getEdgeManager() EdgeManager
-    +getFaceManager() FaceManager
-    +getElemManager() ElementRegionManager
+    +getNodeManager(): NodeManager
+    +getEdgeManager(): EdgeManager
+    +getFaceManager(): FaceManager
+    +getElemManager():: ElementRegionManager
 }
 
 class NodeManager {
