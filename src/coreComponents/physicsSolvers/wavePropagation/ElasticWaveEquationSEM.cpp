@@ -126,9 +126,9 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
 
- forMeshTargets( meshBodies, [&] ( string const &,
+  forMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
-                                    arrayView1d< string const > const & )  
+                                    arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
