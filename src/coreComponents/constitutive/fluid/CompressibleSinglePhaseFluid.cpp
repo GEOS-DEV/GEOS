@@ -199,7 +199,7 @@ CompressibleSinglePhaseFluid::KernelWrapper
 CompressibleSinglePhaseFluid::createKernelWrapper()
 {
   return KernelWrapper( KernelWrapper::DensPresRelationType( m_referencePressure, m_referenceDensity, m_compressibility ),
-                        KernelWrapper::DensTempRelationType( m_referenceTemperature, 1.0, m_thermalExpansionCoeff ),
+                        KernelWrapper::DensTempRelationType( m_referenceTemperature, 1.0, - m_thermalExpansionCoeff ),
                         KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ), 
                         KernelWrapper::IntEnergyRelationType( m_referenceTemperature, m_referenceInternalEnergy, m_volumetricHeatCapacity/m_referenceInternalEnergy ), 
                         m_density,
