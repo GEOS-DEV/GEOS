@@ -102,6 +102,51 @@ void qLocalLoad( localIndex const quad_x,
   }
 }
 
+template < typename QField >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void qLocalWrite( localIndex const quad_x,
+                  localIndex const quad_y,
+                  localIndex const quad_z,
+                  real64 const & q_value,
+                  QField & q_field )
+{
+  q_field[quad_x][quad_y][quad_z] = q_value;
+}
+
+template < typename QField, size_t num_comp >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void qLocalWrite( localIndex const quad_x,
+                  localIndex const quad_y,
+                  localIndex const quad_z,
+                  real64 const (& q_value)[num_comp],
+                  QField & q_field )
+{
+  for (size_t c = 0; c < num_comp; c++)
+  {
+    q_field[quad_x][quad_y][quad_z][c] = q_value[c];
+  }
+}
+
+template < typename QField, size_t num_comp_x, size_t num_comp_y >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void qLocalWrite( localIndex const quad_x,
+                  localIndex const quad_y,
+                  localIndex const quad_z,
+                  real64 const (& q_value)[num_comp_x][num_comp_y],
+                  QField & q_field )
+{
+  for (size_t c_x = 0; c_x < num_comp_x; c_x++)
+  {
+    for (size_t c_y = 0; c_y < num_comp_y; c_y++)
+    {
+      q_field[quad_x][quad_y][quad_z][c_x][c_y] = q_value[c_x][c_y];
+    }
+  }
+}
+
 // } // namespace finiteElement
 } // namespace geosx
 
