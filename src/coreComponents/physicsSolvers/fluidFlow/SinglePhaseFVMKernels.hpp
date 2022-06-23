@@ -203,9 +203,8 @@ public:
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor
-   * @param[in] compFlowAccessors
-   * @param[in] multiFluidAccessors
-   * @param[in] capPressureAccessors
+   * @param[in] singlePhaseFlowAccessors
+   * @param[in] singlePhaseFluidAccessors
    * @param[in] permeabilityAccessors
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
@@ -324,7 +323,7 @@ public:
 
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian
-   * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
+   * @tparam FUNC the type of the function that can be used to customize the computation of the flux
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    * @param[in] NoOpFunc the function used to customize the computation of the flux
@@ -533,11 +532,8 @@ public:
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
    * @tparam STENCILWRAPPER the type of the stencil wrapper
-   * @param[in] numComps the number of fluid components
-   * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
-   * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
    * @param[in] solverName name of the solver (to name accessors)
    * @param[in] elemManager reference to the element region manager
    * @param[in] stencilWrapper reference to the stencil wrapper

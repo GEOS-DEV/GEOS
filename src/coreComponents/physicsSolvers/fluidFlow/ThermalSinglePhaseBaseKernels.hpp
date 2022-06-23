@@ -86,33 +86,6 @@ struct MobilityKernel
   }
 
   template< typename POLICY >
-  static void launch( SortedArrayView< localIndex const > targetSet,
-                      arrayView2d< real64 const > const & dens,
-                      arrayView2d< real64 const > const & dDens_dPres,
-                      arrayView2d< real64 const > const & dDens_dTemp, 
-                      arrayView2d< real64 const > const & visc,
-                      arrayView2d< real64 const > const & dVisc_dPres,
-                      arrayView2d< real64 const > const & dVisc_dTemp, 
-                      arrayView1d< real64 > const & mob,
-                      arrayView1d< real64 > const & dMob_dPres, 
-                      arrayView1d< real64 > const & dMob_dTemp)
-  {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-    {
-      localIndex const a = targetSet[ i ];
-      compute( dens[a][0],
-               dDens_dPres[a][0],
-               dDens_dTemp[a][0], 
-               visc[a][0],
-               dVisc_dPres[a][0],
-               dVisc_dTemp[a][0],
-               mob[a],
-               dMob_dPres[a], 
-               dMob_dTemp[a] );
-    } );
-  }
-
-  template< typename POLICY >
   static void launch( localIndex const size,
                       arrayView2d< real64 const > const & dens,
                       arrayView2d< real64 const > const & visc,
@@ -120,21 +93,6 @@ struct MobilityKernel
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      compute( dens[a][0],
-               visc[a][0],
-               mob[a] );
-    } );
-  }
-
-  template< typename POLICY >
-  static void launch( SortedArrayView< localIndex const > targetSet,
-                      arrayView2d< real64 const > const & dens,
-                      arrayView2d< real64 const > const & visc,
-                      arrayView1d< real64 > const & mob )
-  {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-    {
-      localIndex const a = targetSet[ i ];
       compute( dens[a][0],
                visc[a][0],
                mob[a] );
@@ -277,7 +235,6 @@ public:
 
       // Step 2: assemble the fluid part of the accumulation term of the energy equation
       real64 const fluidEnergy = stack.poreVolume * m_density[ei][0] * m_internalEnergy[ei][0]; 
-      // real64 const fluidEnergy_tmp = stack.poreVolume_n * m_density[ei][0] * m_internalEnergy[ei][0]; 
       real64 const fluidEnergy_n = stack.poreVolume_n * m_density_n[ei][0] * m_internalEnergy_n[ei][0]; 
 
       real64 const dFluidEnergy_dP = stack.dPoreVolume_dPres * m_density[ei][0] * m_internalEnergy[ei][0]

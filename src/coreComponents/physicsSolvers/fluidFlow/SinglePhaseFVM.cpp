@@ -179,7 +179,6 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
 
     // compute global residual norm
 
-    // To check: if appropriate? 
     real64 globalFlowResidualNorm[3] = {0, 0, 0};
     real64 globalEnergyResidualNorm[3] = {0, 0, 0}; 
 
@@ -196,8 +195,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
                            MPI_COMM_GEOSX );
 
     residualFlowAllMeshes += sqrt( globalFlowResidualNorm[0] ) / ( ( globalFlowResidualNorm[1] + m_fluxEstimate ) / (globalFlowResidualNorm[2]+1) );
-    // Do we need to add this m_fluxEstimate for residualEnergy?
-    residualEnergyAllMeshes += sqrt( globalEnergyResidualNorm[0] ) / ( ( globalEnergyResidualNorm[1] + m_fluxEstimate ) / (globalEnergyResidualNorm[2]+1));
+    residualEnergyAllMeshes += sqrt( globalEnergyResidualNorm[0] ) / ( ( globalEnergyResidualNorm[1] ) / (globalEnergyResidualNorm[2]+1));
 
     numMeshTargets++;
   } );

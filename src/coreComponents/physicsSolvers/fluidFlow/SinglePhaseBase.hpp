@@ -342,9 +342,6 @@ protected:
   {
     arrayView2d< real64 const > const dDens_dTemp;      ///< derivative of density w.r.t. temperature
     arrayView2d< real64 const > const dVisc_dTemp;      ///< derivative of viscosity w.r.t. temperature
-    // arrayView2d< real64 const > const intEnergy;        ///< internal energy 
-    // arrayView2d< real64 const > const dintEnergy_dPres; ///< derivative of internal energy w.r.t. pressure
-    // arrayView2d< real64 const > const dintEnergy_dTemp; ///< derivative of internal energy w.r.t. temperature
   };
 
   /**

@@ -95,14 +95,12 @@ public:
   /**
    * @brief Constructor for the kernel interface
    * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor accessor for the dofs numbers
-   * @param[in] compFlowAccessor accessor for wrappers registered by the solver
-   * @param[in] thermalCompFlowAccessors accessor for *thermal* wrappers registered by the solver
-   * @param[in] multiFluidAccessor accessor for wrappers registered by the multifluid model
-   * @param[in] thermalMultiFluidAccessors accessor for *thermal* wrappers registered by the multifluid model
-   * @param[in] capPressureAccessors accessor for wrappers registered by the cap pressure model
+   * @param[in] singlePhaseFlowAccessors accessor for wrappers registered by the solver
+   * @param[in] thermalSinglePhaseFlowAccessors accessor for *thermal* wrappers registered by the solver
+   * @param[in] singlePhaseFluidAccessors accessor for wrappers registered by the single fluid model
+   * @param[in] thermalSinglePhaseFluidAccessors accessor for *thermal* wrappers registered by the single fluid model
    * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
    * @param[in] thermalConductivityAccessors accessor for wrappers registered by the thermal conductivity model
    * @param[in] dt time step size
@@ -188,8 +186,8 @@ public:
     //  1) compFlux and its derivatives (including derivatives wrt temperature),
     //  2) enthalpy part of energyFlux  and its derivatives (including derivatives wrt temperature)
     //
-    // Computing dCompFlux_dT and the enthalpy flux requires quantities already computed in the base computeFlux,
-    // such as potGrad, phaseFlux, and the indices of the upwind cell
+    // Computing dFlux_dT and the enthalpy flux requires quantities already computed in the base computeFlux,
+    // such as potGrad, fluxVal, and the indices of the upwind cell
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
     Base::computeFlux( iconn, stack, [&] ( localIndex const k_up,
                                            localIndex const er_up,
@@ -351,7 +349,7 @@ protected:
   /// Views on derivatives of fluid densities
   ElementViewConst< arrayView2d< real64 const > > const m_dDens_dTemp;
 
-  /// Views on phase enthalpies
+  /// Views on enthalpies
   ElementViewConst< arrayView2d< real64 const > > const m_enthalpy;
   ElementViewConst< arrayView2d< real64 const > > const m_dEnthalpy_dPres;
   ElementViewConst< arrayView2d< real64 const > > const m_dEnthalpy_dTemp;

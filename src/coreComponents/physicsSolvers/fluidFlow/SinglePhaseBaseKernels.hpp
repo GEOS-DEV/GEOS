@@ -23,7 +23,6 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
-#include "functions/TableFunction.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
@@ -83,27 +82,6 @@ struct MobilityKernel
   }
 
   template< typename POLICY >
-  static void launch( SortedArrayView< localIndex const > targetSet,
-                      arrayView2d< real64 const > const & dens,
-                      arrayView2d< real64 const > const & dDens_dPres,
-                      arrayView2d< real64 const > const & visc,
-                      arrayView2d< real64 const > const & dVisc_dPres,
-                      arrayView1d< real64 > const & mob,
-                      arrayView1d< real64 > const & dMob_dPres )
-  {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-    {
-      localIndex const a = targetSet[ i ];
-      compute( dens[a][0],
-               dDens_dPres[a][0],
-               visc[a][0],
-               dVisc_dPres[a][0],
-               mob[a],
-               dMob_dPres[a] );
-    } );
-  }
-
-  template< typename POLICY >
   static void launch( localIndex const size,
                       arrayView2d< real64 const > const & dens,
                       arrayView2d< real64 const > const & visc,
@@ -111,21 +89,6 @@ struct MobilityKernel
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      compute( dens[a][0],
-               visc[a][0],
-               mob[a] );
-    } );
-  }
-
-  template< typename POLICY >
-  static void launch( SortedArrayView< localIndex const > targetSet,
-                      arrayView2d< real64 const > const & dens,
-                      arrayView2d< real64 const > const & visc,
-                      arrayView1d< real64 > const & mob )
-  {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-    {
-      localIndex const a = targetSet[ i ];
       compute( dens[a][0],
                visc[a][0],
                mob[a] );
