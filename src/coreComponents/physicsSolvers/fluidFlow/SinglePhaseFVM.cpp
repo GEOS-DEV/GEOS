@@ -180,22 +180,27 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
     // compute global residual norm
 
     real64 globalFlowResidualNorm[3] = {0, 0, 0};
-    real64 globalEnergyResidualNorm[3] = {0, 0, 0}; 
-
+    
     MpiWrapper::allReduce( localFlowResidualNorm,
                            globalFlowResidualNorm,
                            3,
                            MPI_SUM,
                            MPI_COMM_GEOSX );
 
-    MpiWrapper::allReduce( localEnergyResidualNorm,
-                           globalEnergyResidualNorm,
-                           3,
-                           MPI_SUM,
-                           MPI_COMM_GEOSX );
-
     residualFlowAllMeshes += sqrt( globalFlowResidualNorm[0] ) / ( ( globalFlowResidualNorm[1] + m_fluxEstimate ) / (globalFlowResidualNorm[2]+1) );
-    residualEnergyAllMeshes += sqrt( globalEnergyResidualNorm[0] ) / ( ( globalEnergyResidualNorm[1] ) / (globalEnergyResidualNorm[2]+1));
+
+    if( m_isThermal )
+    {
+      real64 globalEnergyResidualNorm[3] = {0, 0, 0}; 
+
+      MpiWrapper::allReduce( localEnergyResidualNorm,
+                             globalEnergyResidualNorm,
+                             3,
+                             MPI_SUM,
+                             MPI_COMM_GEOSX );
+
+      residualEnergyAllMeshes += sqrt( globalEnergyResidualNorm[0] ) / ( globalEnergyResidualNorm[1] / (globalEnergyResidualNorm[2]+1));
+    }
 
     numMeshTargets++;
   } );
