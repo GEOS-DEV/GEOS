@@ -57,7 +57,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
   registerWrapper( viewKeyStruct::thermalExpansionCoeffString(), &m_thermalExpansionCoeff ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Fluid thermal expansion coefficient" );
+    setDescription( "Fluid thermal expansion coefficient. Unit: 1/K" );
 
   registerWrapper( viewKeyStruct::viscosibilityString(), &m_viscosibility ).
     setApplyDefaultValue( 0.0 ).
@@ -67,7 +67,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
   registerWrapper( viewKeyStruct::volumetricHeatCapacityString(), &m_volumetricHeatCapacity ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Fluid volumetric heat capacity" );
+    setDescription( "Fluid volumetric heat capacity. Unit: J/kg/K" );
 
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setApplyDefaultValue( 0.0 ).
