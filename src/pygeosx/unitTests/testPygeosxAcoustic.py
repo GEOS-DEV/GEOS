@@ -10,7 +10,7 @@ def test_forwardPropagationAcoustic():
     solver = "acousticSolver"
     forwardPropagation(argv, solver)
 
-def forwardPropagation(argv, solver)
+def forwardPropagation(argv, solver):
     problem = pygeosx.initialize(rank, argv)
     pygeosx.apply_initial_conditions()
 

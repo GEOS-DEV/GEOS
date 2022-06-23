@@ -37,7 +37,7 @@ macro(parse_test_file filename)
       configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pytest_template.sh.in
         ${CMAKE_CURRENT_BINARY_DIR}/${name}.sh
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-      btl_add_test(NAME ${name} COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${name}.sh)
+      blt_add_test(NAME ${name} COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${name}.sh)
     endif()
   endforeach()
 endmacro(parse_test_file)
@@ -46,6 +46,6 @@ foreach( xmlFile IN LISTS ${xmlFiles})
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${xmlFile} ${CMAKE_CURRENT_BINARY_DIR}/${xmlFile} COPYONLY)
 endforeach()
 
-foreach( pythonFile IN LISTS ${pythonFiles})
-  parse_test_file(pythonFile)
+foreach( pythonFile ${pythonFiles})
+  parse_test_file(${pythonFile})
 endforeach()
