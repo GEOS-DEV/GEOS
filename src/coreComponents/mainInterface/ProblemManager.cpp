@@ -333,7 +333,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   Group & benchmarks = this->registerGroup< Group >( "Benchmarks" );
   benchmarks.setInputFlags( InputFlags::OPTIONAL );
 
-  for( string const & machineName : {"quartz", "lassen"} )
+  for( string const machineName : {"quartz", "lassen"} )
   {
     Group & machine = benchmarks.registerGroup< Group >( machineName );
     machine.setInputFlags( InputFlags::OPTIONAL );
