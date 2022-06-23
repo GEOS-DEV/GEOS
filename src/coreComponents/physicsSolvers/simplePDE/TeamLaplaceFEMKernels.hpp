@@ -113,6 +113,156 @@ public:
 
   }
 
+  template < size_t num_dofs_mesh_1d, size_t num_quads_1d, size_t dim, size_t batch_size >
+  struct MeshStackVariables
+  {
+    MeshStackVariables()
+    {
+      GEOSX_STATIC_SHARED real64 s_mesh_basis[num_dofs_mesh_1d][num_quads_1d];
+      mesh_basis = &s_mesh_basis;
+      // TODO initialize the mesh_basis
+
+      GEOSX_STATIC_SHARED real64 s_mesh_basis_gradient[num_dofs_mesh_1d][num_quads_1d];
+      mesh_basis_gradient = &s_mesh_basis_gradient;
+      // TODO initialize the mesh_basis_gradient
+
+      size_t const tidz = GEOSX_THREAD_ID(z);
+      GEOSX_STATIC_SHARED real64 s_mesh_nodes[batch_size][num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim];
+      mesh_nodes = &s_mesh_nodes[tidz];
+
+      GEOSX_STATIC_SHARED real64 s_jacobians[batch_size][num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim][dim];
+      jacobians = &s_jacobians[tidz];
+    }
+
+    real64 ( * mesh_basis )[num_dofs_mesh_1d][num_quads_1d];
+    real64 const ( & getBasis() const )[num_dofs_mesh_1d][num_quads_1d]
+    {
+      return *mesh_basis;
+    }
+    real64 ( & getBasis() )[num_dofs_mesh_1d][num_quads_1d]
+    {
+      return *mesh_basis;
+    }
+
+    real64 ( * mesh_basis_gradient )[num_dofs_mesh_1d][num_quads_1d];
+    real64 const ( & getBasisGradient() const )[num_dofs_mesh_1d][num_quads_1d]
+    {
+      return *mesh_basis_gradient;
+    }
+    real64 ( & getBasisGradient() )[num_dofs_mesh_1d][num_quads_1d]
+    {
+      return *mesh_basis_gradient;
+    }
+
+    real64 ( * mesh_nodes )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim]; // Could be in registers
+    real64 const ( & getNodes() const )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim]
+    {
+      return *mesh_nodes;
+    }
+    real64 ( & getNodes() )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim]
+    {
+      return *mesh_nodes;
+    }
+
+    real64 ( * jacobians )[num_quads_1d][num_quads_1d][num_quads_1d][dim][dim]; // Can be in registers
+    real64 ( & getJacobians() )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim][dim]
+    {
+      return *jacobians;
+    }
+    real64 const ( & getJacobians() const )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim][dim]
+    {
+      return *jacobians;
+    }
+  };
+
+  template < size_t num_dofs_1d, size_t num_quads_1d, size_t dim, size_t batch_size >
+  struct ElementStackVariables
+  {
+    ElementStackVariables()
+    {
+      GEOSX_STATIC_SHARED real64 s_basis[num_dofs_1d][num_quads_1d];
+      basis = &s_basis;
+      // TODO initialize the basis
+
+      GEOSX_STATIC_SHARED real64 s_basis_gradient[num_dofs_1d][num_quads_1d];
+      basis_gradient = &s_basis_gradient;
+      // TODO initialize the basis_gradient
+
+      size_t const tidz = GEOSX_THREAD_ID(z);
+      GEOSX_STATIC_SHARED real64 s_dofs_in[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d];
+      dofs_in = &s_dofs_in[tidz];
+
+      GEOSX_STATIC_SHARED real64 s_q_gradient_values[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d][dim];
+      q_gradient_values = &s_q_gradient_values[tidz];
+
+      GEOSX_STATIC_SHARED real64 s_Du[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d][dim];
+      Du = &s_Du[tidz];
+
+      GEOSX_STATIC_SHARED real64 s_dofs_out[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d];
+      dofs_out = &s_dofs_out[tidz];
+    }
+
+    real64 ( * basis )[num_dofs_1d][num_quads_1d];
+    real64 const ( & getBasis() const )[num_dofs_1d][num_quads_1d]
+    {
+      return *basis;
+    }
+    real64 ( & getBasis() )[num_dofs_1d][num_quads_1d]
+    {
+      return *basis;
+    }
+
+    real64 ( * basis_gradient )[num_dofs_1d][num_quads_1d];
+    real64 const ( & getBasisGradient() const )[num_dofs_1d][num_quads_1d]
+    {
+      return *basis_gradient;
+    }
+    real64 ( & getBasisGradient() )[num_dofs_1d][num_quads_1d]
+    {
+      return *basis_gradient;
+    }
+
+    real64 ( * dofs_in )[num_dofs_1d][num_dofs_1d][num_dofs_1d]; // Could be in registers
+    real64 const ( & getDofsIn() const )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
+    {
+      return *dofs_in;
+    }
+    real64 ( & getDofsIn() )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
+    {
+      return *dofs_in;
+    }
+
+    real64 ( * q_gradient_values )[num_quads_1d][num_quads_1d][num_quads_1d][dim]; // Can be in registers
+    real64 const ( & getGradientValues() const )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
+    {
+      return *q_gradient_values;
+    }
+    real64 ( & getGradientValues() )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
+    {
+      return *q_gradient_values;
+    }
+
+    real64 ( * Du )[num_quads_1d][num_quads_1d][num_quads_1d][dim]; // Could be in registers
+    real64 const ( & getQuadValues() const )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
+    {
+      return *Du;
+    }
+    real64 ( & getQuadValues() )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
+    {
+      return *Du;
+    }
+
+    real64 ( * dofs_out )[num_dofs_1d][num_dofs_1d][num_dofs_1d]; // Can be in registers
+    real64 const ( & getDofsOut() const )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
+    {
+      return *dofs_out;
+    }
+    real64 ( & getDofsOut() )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
+    {
+      return *dofs_out;
+    }
+  };
+
   //***************************************************************************
   /**
    * @class StackVariables
@@ -122,6 +272,12 @@ public:
    */
   struct StackVariables : public Base::StackVariables
   {
+    static constexpr size_t dim = 3;
+    static constexpr size_t num_dofs_mesh_1d = 2; // TODO
+    static constexpr size_t num_dofs_1d = 2; // TODO
+    using Base::StackVariables::num_quads_1d;
+    using Base::StackVariables::batch_size;
+  
     /**
      * @brief Constructor
      */
@@ -133,32 +289,34 @@ public:
 
     TeamLaplaceFEMKernel const & kernelComponent;
 
-    static constexpr size_t dim = 3;
-    static constexpr size_t num_dofs_mesh_1d = 2; // TODO
-    static constexpr size_t num_dofs_1d = 2; // TODO
-    static constexpr size_t num_quads_1d = Base::StackVariables::num_quads_1d; // TODO
+    // TODO alias shared buffers / Generalize for non-tensor elements
+    MeshStackVariables< num_dofs_mesh_1d, num_quads_1d, dim, batch_size > mesh;
+    ElementStackVariables< num_dofs_1d, num_quads_1d, dim, batch_size > element;
+
+    /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
+    real64 * shared_mem_buffer_1;
+    real64 * shared_mem_buffer_2;
 
     // TODO abstract and encapsulate into object
-    RAJA_TEAM_SHARED real64 mesh_basis[num_dofs_mesh_1d][num_quads_1d];
-    RAJA_TEAM_SHARED real64 mesh_basis_gradient[num_dofs_mesh_1d][num_quads_1d];
-    RAJA_TEAM_SHARED real64 basis[num_dofs_1d][num_quads_1d];
-    RAJA_TEAM_SHARED real64 basis_gradient[num_dofs_1d][num_quads_1d];
-    RAJA_TEAM_SHARED real64 weights[num_quads_1d];
-    // TODO take into account batch_size / alias shared buffers / Generalize for non-tensor elements
-    RAJA_TEAM_SHARED real64 mesh_nodes[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim];
-    RAJA_TEAM_SHARED real64 jacobians[num_quads_1d][num_quads_1d][num_quads_1d][dim][dim];
-    RAJA_TEAM_SHARED real64 dofs_in[num_dofs_1d][num_dofs_1d][num_dofs_1d];
-    RAJA_TEAM_SHARED real64 q_gradient_values[num_quads_1d][num_quads_1d][num_quads_1d][dim];
-    RAJA_TEAM_SHARED real64 Du[num_quads_1d][num_quads_1d][num_quads_1d][dim];
-    RAJA_TEAM_SHARED real64 dofs_out[num_dofs_1d][num_dofs_1d][num_dofs_1d];
+    real64 ( * weights )[num_quads_1d];
   };
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void kernelSetup( StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( stack );
-    // TODO load/compute the different B and G.
+    // "Allocate" shared memory for the buffers.
+    constexpr size_t dim = StackVariables::dim;
+    constexpr size_t num_quads_1d = StackVariables::num_quads_1d;
+    constexpr size_t batch_size = StackVariables::batch_size;
+    size_t const tidz = GEOSX_THREAD_ID(z);
+
+    GEOSX_STATIC_SHARED real64 s_weights[num_quads_1d];
+    stack.weights = &s_weights;
+    GEOSX_STATIC_SHARED real64 shared_buffer_1[batch_size][num_quads_1d][num_quads_1d][num_quads_1d][dim][dim];
+    stack.shared_mem_buffer_1 = ( real64 * )&shared_buffer_1[tidz];
+    GEOSX_STATIC_SHARED real64 shared_buffer_2[batch_size][num_quads_1d][num_quads_1d][num_quads_1d][dim][dim];
+    stack.shared_mem_buffer_2 = ( real64 * )&shared_buffer_2[tidz];
   }
 
   /**
@@ -176,20 +334,20 @@ public:
   {
     Base::setup( stack, element_index );
     /// Computation of the Jacobians
-    readField( stack, stack.kernelComponent.m_X, stack.mesh_nodes );
+    readField( stack, stack.kernelComponent.m_X, stack.mesh.getNodes() );
     interpolateGradientAtQuadraturePoints( stack,
-                                           stack.mesh_basis,
-                                           stack.mesh_basis_gradient,
-                                           stack.mesh_nodes,
-                                           stack.jacobians );
+                                           stack.mesh.getBasis(),
+                                           stack.mesh.getBasisGradient(),
+                                           stack.mesh.getNodes(),
+                                           stack.mesh.getJacobians() );
 
     /// Computation of the Gradient of the solution field
-    readField( stack, stack.kernelComponent.m_primaryField, stack.dofs_in );
+    readField( stack, stack.kernelComponent.m_primaryField, stack.element.getDofsIn() );
     interpolateGradientAtQuadraturePoints( stack,
-                                           stack.basis,
-                                           stack.basis_gradient,
-                                           stack.dofs_in,
-                                           stack.q_gradient_values );
+                                           stack.element.getBasis(),
+                                           stack.element.getBasisGradient(),
+                                           stack.element.getDofsIn(),
+                                           stack.element.getGradientValues() );
   }
 
   /**
@@ -207,20 +365,21 @@ public:
 
     // Load q-local gradients
     real64 grad_u[ dim ];
-    qLocalLoad( quad_x, quad_y, quad_z, stack.q_gradient_values, grad_u );
+    qLocalLoad( quad_x, quad_y, quad_z, stack.element.getGradientValues(), grad_u );
 
     // load q-local jacobian
     real64 J[ dim ][ dim ];
-    qLocalLoad( quad_x, quad_y, quad_z, stack.jacobians, J );
+    qLocalLoad( quad_x, quad_y, quad_z, stack.mesh.getJacobians(), J );
+
+    // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
+    real64 const weight = (*stack.weights)[ quad_x ] * (*stack.weights)[ quad_y ] * (*stack.weights)[ quad_z ];
 
     real64 const detJ = determinant( J );
 
     real64 AdjJ[ dim ][ dim ];
     adjugate( J, AdjJ );
 
-    // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) adj(J_q)^T
-    real64 const weight = stack.weights[quad_x] * stack.weights[quad_y] * stack.weights[quad_z];
-    real64 D[dim][dim];
+    real64 D[ dim ][ dim ];
     D[0][0] = weight / detJ * (AdjJ[0][0]*AdjJ[0][0] + AdjJ[0][1]*AdjJ[0][1] + AdjJ[0][2]*AdjJ[0][2]);
     D[1][0] = weight / detJ * (AdjJ[0][0]*AdjJ[1][0] + AdjJ[0][1]*AdjJ[1][1] + AdjJ[0][2]*AdjJ[1][2]);
     D[2][0] = weight / detJ * (AdjJ[0][0]*AdjJ[2][0] + AdjJ[0][1]*AdjJ[2][1] + AdjJ[0][2]*AdjJ[2][2]);
@@ -231,13 +390,15 @@ public:
     D[1][2] = D[2][1];
     D[2][2] = weight / detJ * (AdjJ[2][0]*AdjJ[2][0] + AdjJ[2][1]*AdjJ[2][1] + AdjJ[2][2]*AdjJ[2][2]);
 
-    // Compute D*u
+    // Compute D_q * grad_u_q
+    real64 Du[ dim ];
     for (size_t d = 0; d < dim; d++)
     {
-      stack.Du[quad_x][quad_y][quad_z][d] = D[d][0] * grad_u[0]
-                                          + D[d][1] * grad_u[1]
-                                          + D[d][2] * grad_u[2];
+      Du[d] = D[d][0] * grad_u[0]
+            + D[d][1] * grad_u[1]
+            + D[d][2] * grad_u[2];
     }
+    qLocalWrite( quad_x, quad_y, quad_z, Du, stack.element.getQuadValues() );
   }
 
   /**
@@ -252,19 +413,24 @@ public:
   real64 complete( StackVariables & stack ) const
   {
     // Applying gradient of the test functions
-    applyGradientTestFunctions( stack, stack.basis, stack.basis_gradient, stack.Du, stack.dofs_out );
-    writeField( stack, stack.dofs_out, stack.kernelComponent.m_rhs );
-  
+    applyGradientTestFunctions( stack,
+                                stack.element.getBasis(),
+                                stack.element.getBasisGradient(),
+                                stack.element.getQuadValues(),
+                                stack.element.getDofsOut() );
+    writeField( stack, stack.element.getDofsOut(), stack.kernelComponent.m_rhs );
+
     constexpr size_t num_dofs_1d = StackVariables::num_dofs_1d;
-    RAJA_TEAM_SHARED real64 maxForce = 0; // TODO take into account batch_size
+    GEOSX_SHARED real64 maxForce = 0; // TODO take into account batch_size
     // TODO put this into a lambda "iterator" function
+    auto & dofs_out = stack.element.getDofsOut();
     RAJA::expt::loop<thread_x> (stack.ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
     {
       RAJA::expt::loop<thread_y> (stack.ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
       {
         for (size_t dof_z = 0; dof_z < num_dofs_1d; dof_z++)
         {
-          maxForce = fmax( maxForce, fabs( stack.dofs_out[ dof_x ][ dof_y ][ dof_z ] ) ); // TODO make atomic
+          maxForce = fmax( maxForce, fabs( dofs_out[ dof_x ][ dof_y ][ dof_z ] ) ); // TODO make atomic
         }
       } );
     } );
