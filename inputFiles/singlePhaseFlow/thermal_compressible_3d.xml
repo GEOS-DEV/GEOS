@@ -104,7 +104,6 @@
 
     <ThermalCompressibleSinglePhaseFluid
       name="fluid"
-      isThermal="1"
       defaultDensity="1000"
       defaultViscosity="1e-4"
       referencePressure="0.0"
