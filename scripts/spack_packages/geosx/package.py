@@ -105,7 +105,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('umpire@4.1.2~c+openmp~examples')
 
-    depends_on('chai@2.2.2+openmp~benchmarks~examples')
+    depends_on('chai@2.2.2+raja+openmp~benchmarks~examples')
 
     depends_on('camp@0.1.0')
 
