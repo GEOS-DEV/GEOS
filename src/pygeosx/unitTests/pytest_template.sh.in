@@ -1,0 +1,3 @@
+#!/bin/sh
+
+PYTHONPATH=${CMAKE_BINARY_DIR}/lib/PYGEOSX/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages/:$PYTHONPATH ${Python3_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR}/${filename}::test_${name}

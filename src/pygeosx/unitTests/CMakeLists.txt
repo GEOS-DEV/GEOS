@@ -5,15 +5,15 @@
 
 # the following two lists must have equal length:
 # they specify the couples (python script, xml file) corresponding to each test
-set( gtest_pygeosx_tests
+set( pythonFiles
 	testPygeosxAcoustic.py
    )
 
-set( gtest_pygeosx_xmls
+set( xmlFiles
         acous_5x5x5.xml
    )
 
-set( dependencyList pygeosx gtest )
+set( dependencyList pygeosx )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core )
@@ -25,16 +25,27 @@ if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-list( LENGTH gtest_pygeosx_tests ntestsp1 )
-math( EXPR ntests "${ntestsp1} - 1" )
+# This macro parse a test file and extract test_ function from it to pass it to ctest
+macro(parse_test_file filename)
+  set(filename ${filename})
+  file(READ "${filename}" contents)
+  string(REPLACE "\n" ";" rows ${contents})
+  foreach(line ${rows})
+    string(REGEX MATCHALL "^ *def *test_([A-Za-z_0-9])+ *" found ${line})
+    if (found)
+      string(REGEX REPLACE "^ *def *test_(([A-Za-z_0-9])+) *" "\\1" name "${found}")
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pytest_template.sh.in
+        ${CMAKE_CURRENT_BINARY_DIR}/${name}.sh
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+      btl_add_test(NAME ${name} COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${name}.sh)
+    endif()
+  endforeach()
+endmacro(parse_test_file)
 
-foreach( itest RANGE ${ntests} )
-    list( GET gtest_pygeosx_tests ${itest} pytest )
-    list( GET gtest_pygeosx_xmls ${itest} xml )
-    get_filename_component( test_script_name ${pytest} NAME_WE )
-    get_filename_component( test_xml_name ${xml} NAME_WE )
-    string( CONCAT test_name ${test_script_name} "_" ${test_xml_name} )
-    blt_add_test( NAME ${test_name}
-	    COMMAND ${CMAKE_BINARY_DIR}/lib/PYGEOSX/bin/python ${CMAKE_CURRENT_LIST_DIR}/${pytest} -i ${CMAKE_CURRENT_LIST_DIR}/${xml}
-                  )
+foreach( xmlFile IN LISTS ${xmlFiles})
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${xmlFile} ${CMAKE_CURRENT_BINARY_DIR}/${xmlFile} COPYONLY)
+endforeach()
+
+foreach( pythonFile IN LISTS ${pythonFiles})
+  parse_test_file(pythonFile)
 endforeach()
