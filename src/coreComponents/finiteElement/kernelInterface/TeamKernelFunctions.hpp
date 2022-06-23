@@ -542,7 +542,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
 
   // Contraction on the first dimension
   GEOSX_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d],
-                          Gu[num_quads_1d][num_dofs_1d][num_dofs_1d];
+                      Gu[num_quads_1d][num_dofs_1d][num_dofs_1d];
 
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
   {
@@ -578,8 +578,8 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
 
   // Contraction on the second dimension
   GEOSX_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d],
-                          BGu[num_quads_1d][num_quads_1d][num_dofs_1d],
-                          GBu[num_quads_1d][num_quads_1d][num_dofs_1d];
+                      BGu[num_quads_1d][num_quads_1d][num_dofs_1d],
+                      GBu[num_quads_1d][num_quads_1d][num_dofs_1d];
 
   loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
   {
@@ -673,7 +673,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
 
   // Contraction on the first dimension
   GEOSX_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d][num_comp],
-                          Gu[num_quads_1d][num_dofs_1d][num_dofs_1d][num_comp];
+                      Gu[num_quads_1d][num_dofs_1d][num_dofs_1d][num_comp];
 
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
   {
@@ -718,8 +718,8 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
 
   // Contraction on the second dimension
   GEOSX_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp],
-                          BGu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp],
-                          GBu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp];
+                      BGu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp],
+                      GBu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp];
 
   loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
   {
@@ -835,8 +835,8 @@ void applyGradientTestFunctions( StackVariables & stack,
 
   // Contraction on the first dimension
   GEOSX_SHARED real64 Gqx[num_dofs_1d][num_quads_1d][num_quads_1d],
-                          Bqy[num_dofs_1d][num_quads_1d][num_quads_1d],
-                          Bqz[num_dofs_1d][num_quads_1d][num_quads_1d];
+                      Bqy[num_dofs_1d][num_quads_1d][num_quads_1d],
+                      Bqz[num_dofs_1d][num_quads_1d][num_quads_1d];
 
   loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
   {
@@ -879,8 +879,8 @@ void applyGradientTestFunctions( StackVariables & stack,
 
   // Contraction on the second dimension
   GEOSX_SHARED real64 BGqx[num_dofs_1d][num_dofs_1d][num_quads_1d],
-                          GBqy[num_dofs_1d][num_dofs_1d][num_quads_1d],
-                          BBqz[num_dofs_1d][num_dofs_1d][num_quads_1d];
+                      GBqy[num_dofs_1d][num_dofs_1d][num_quads_1d],
+                      BBqz[num_dofs_1d][num_dofs_1d][num_quads_1d];
 
   loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
   {
@@ -968,8 +968,8 @@ void applyGradientTestFunctions( StackVariables & stack,
 
   // Contraction on the first dimension
   GEOSX_SHARED real64 Gqx[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp],
-                          Bqy[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp],
-                          Bqz[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp];
+                      Bqy[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp],
+                      Bqz[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp];
 
   loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
   {
@@ -1021,8 +1021,8 @@ void applyGradientTestFunctions( StackVariables & stack,
 
   // Contraction on the second dimension
   GEOSX_SHARED real64 BGqx[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp],
-                          GBqy[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp],
-                          BBqz[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp];
+                      GBqy[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp],
+                      BBqz[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp];
 
   loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
   {
