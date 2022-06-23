@@ -42,7 +42,7 @@ using namespace constitutive;
 template< integer NUM_DOF, typename STENCILWRAPPER >
 class FaceBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, STENCILWRAPPER >
 {
-public: 
+public:
 
   /**
    * @brief The type for element-based data. Consists entirely of ArrayView's.
@@ -85,7 +85,7 @@ public:
     StencilMaterialAccessors< SingleFluidBase,
                               extrinsicMeshData::singlefluid::dDensity_dTemperature,
                               extrinsicMeshData::singlefluid::enthalpy,
-                              extrinsicMeshData::singlefluid::dEnthalpy_dPressure, 
+                              extrinsicMeshData::singlefluid::dEnthalpy_dPressure,
                               extrinsicMeshData::singlefluid::dEnthalpy_dTemperature >;
 
   using ThermalConductivityAccessors =
@@ -133,7 +133,7 @@ public:
     m_dDens_dTemp( thermalSinglePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::dDensity_dTemperature {} ) ),
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::enthalpy {} ) ),
     m_dEnthalpy_dPres( thermalSinglePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::dEnthalpy_dPressure {} ) ),
-    m_dEnthalpy_dTemp( thermalSinglePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::dEnthalpy_dTemperature {} ) ), 
+    m_dEnthalpy_dTemp( thermalSinglePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::dEnthalpy_dTemperature {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( extrinsicMeshData::thermalconductivity::effectiveConductivity {} ) )
   {}
 
@@ -199,16 +199,16 @@ public:
     {
       // Step 1: compute the derivatives of the mean density at the interface wrt temperature
 
-      stackArray1d< real64, maxNumElems > dDensMean_dT( stack.numFluxElems ); 
+      stackArray1d< real64, maxNumElems > dDensMean_dT( stack.numFluxElems );
 
-      for ( integer ke = 0; ke < stack.numFluxElems; ++ke )
+      for( integer ke = 0; ke < stack.numFluxElems; ++ke )
       {
         localIndex const er  = m_seri( iconn, ke );
         localIndex const esr = m_sesri( iconn, ke );
         localIndex const ei  = m_sei( iconn, ke );
 
-        real64 const dDens_dT = m_dDens_dTemp[er][esr][ei][0]; 
-        dDensMean_dT[ke] = 0.5 * dDens_dT; 
+        real64 const dDens_dT = m_dDens_dTemp[er][esr][ei][0];
+        dDensMean_dT[ke] = 0.5 * dDens_dT;
       }
 
       // Step 2: compute the derivatives of the potential difference wrt temperature
@@ -216,7 +216,7 @@ public:
 
       stackArray1d< real64, maxStencilSize > dGravHead_dT( stack.numFluxElems );
 
-      // compute potential difference 
+      // compute potential difference
       for( integer i = 0; i < stack.stencilSize; ++i )
       {
         localIndex const er  = m_seri( iconn, i );
@@ -252,9 +252,9 @@ public:
       // add dFlux_dTemp to localFluxJacobian
       for( integer i = 0; i < stack.stencilSize; ++i )
       {
-        localIndex const localDofIndexTemp = i * numDof + numDof - 1; 
-        stack.localFluxJacobian[0][localDofIndexTemp]      += m_dt * dFlux_dT[i]; 
-        stack.localFluxJacobian[numEqn][localDofIndexTemp] -= m_dt * dFlux_dT[i]; 
+        localIndex const localDofIndexTemp = i * numDof + numDof - 1;
+        stack.localFluxJacobian[0][localDofIndexTemp]      += m_dt * dFlux_dT[i];
+        stack.localFluxJacobian[numEqn][localDofIndexTemp] -= m_dt * dFlux_dT[i];
       }
 
       // Step 4: compute the enthalpy flux
@@ -270,7 +270,7 @@ public:
 
       stack.dEnergyFlux_dP[k_up] += fluxVal * m_dEnthalpy_dPres[er_up][esr_up][ei_up][0];
       stack.dEnergyFlux_dT[k_up] += fluxVal * m_dEnthalpy_dTemp[er_up][esr_up][ei_up][0];
-    }); 
+    } );
 
     // *****************************************************
     // Computation of the conduction term in the energy flux
@@ -321,14 +321,14 @@ public:
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
-    // Call Case::complete to assemble the mass balance equations 
+    // Call Case::complete to assemble the mass balance equations
     // In the lambda, add contribution to residual and jacobian into the energy balance equation
     Base::complete( iconn, stack, [&] ( integer const i,
                                         localIndex const localRow )
     {
-      // The no. of fluxes is equal to the no. of equations in m_localRhs and m_localMatrix 
-      // Different from the one in compositional multi-phase flow, which has a volume balance eqn.  
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn-1], stack.localFlux[i * numEqn + numEqn-1] ); 
+      // The no. of fluxes is equal to the no. of equations in m_localRhs and m_localMatrix
+      // Different from the one in compositional multi-phase flow, which has a volume balance eqn.
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn-1], stack.localFlux[i * numEqn + numEqn-1] );
 
       AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + numEqn-1,
                                                                                         stack.dofColIndices.data(),
@@ -357,7 +357,7 @@ protected:
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
 
-}; 
+};
 
 /**
  * @class FaceBasedAssemblyKernelFactory

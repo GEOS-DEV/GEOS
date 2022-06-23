@@ -33,15 +33,15 @@ void constitutiveUpdatePassThru( SingleFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
   ConstitutivePassThruHandler< ThermalCompressibleSinglePhaseFluid,
-  							   CompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               CompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
 void constitutiveUpdatePassThru( SingleFluidBase & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ThermalCompressibleSinglePhaseFluid, 
-  							   CompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ThermalCompressibleSinglePhaseFluid,
+                               CompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

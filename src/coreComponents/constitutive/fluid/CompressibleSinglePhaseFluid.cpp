@@ -30,8 +30,8 @@ namespace constitutive
 
 CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name, Group * const parent ):
   SingleFluidBase( name, parent ),
-  m_densityModelType( ExponentApproximationType::Linear ), 
-  m_viscosityModelType( ExponentApproximationType::Linear ) 
+  m_densityModelType( ExponentApproximationType::Linear ),
+  m_viscosityModelType( ExponentApproximationType::Linear )
 {
   registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -138,7 +138,7 @@ CompressibleSinglePhaseFluid::KernelWrapper
 CompressibleSinglePhaseFluid::createKernelWrapper()
 {
   return KernelWrapper( KernelWrapper::DensRelationType( m_referencePressure, m_referenceDensity, m_compressibility ),
-                        KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ), 
+                        KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ),
                         m_density,
                         m_dDensity_dPressure,
                         m_viscosity,

@@ -202,7 +202,7 @@ public:
   {
     static constexpr char const * elemDofFieldString() { return "primaryVariables"; }
 
-    // inputs 
+    // inputs
     static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
@@ -362,7 +362,7 @@ protected:
   real64 m_inputTemperature;
 
   /// flag to determine whether or not this is a thermal simulation
-  integer m_isThermal;   
+  integer m_isThermal;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

@@ -151,17 +151,17 @@ private:
    */
   GEOSX_HOST_DEVICE
   virtual void compute( real64 const pressure,
-                        real64 const temperature, 
+                        real64 const temperature,
                         real64 & density,
                         real64 & dDensity_dPressure,
-                        real64 & dDensity_dTemperature, 
+                        real64 & dDensity_dTemperature,
                         real64 & viscosity,
-                        real64 & dViscosity_dPressure, 
-                        real64 & dViscosity_dTemperature, 
-                        real64 & internalEnergy, 
-                        real64 & dInternalEnergy_dPressure, 
-                        real64 & dInternalEnergy_dTemperature, 
-                        real64 & enthalpy, 
+                        real64 & dViscosity_dPressure,
+                        real64 & dViscosity_dTemperature,
+                        real64 & internalEnergy,
+                        real64 & dInternalEnergy_dPressure,
+                        real64 & dInternalEnergy_dTemperature,
+                        real64 & enthalpy,
                         real64 & dEnthalpy_dPressure,
                         real64 & dEnthalpy_dTemperature ) const = 0;
 
@@ -268,23 +268,23 @@ protected:
   //START_SPHINX_INCLUDE_00
   array2d< real64 > m_density;
   array2d< real64 > m_dDensity_dPressure;
-  array2d< real64 > m_dDensity_dTemperature; 
+  array2d< real64 > m_dDensity_dTemperature;
 
   array2d< real64 > m_initialDensity;
   array2d< real64 > m_density_n;
 
   array2d< real64 > m_viscosity;
   array2d< real64 > m_dViscosity_dPressure;
-  array2d< real64 > m_dViscosity_dTemperature; 
+  array2d< real64 > m_dViscosity_dTemperature;
 
-  array2d< real64 > m_internalEnergy; 
-  array2d< real64 > m_internalEnergy_n; 
-  array2d< real64 > m_dInternalEnergy_dPressure; 
-  array2d< real64 > m_dInternalEnergy_dTemperature; 
+  array2d< real64 > m_internalEnergy;
+  array2d< real64 > m_internalEnergy_n;
+  array2d< real64 > m_dInternalEnergy_dPressure;
+  array2d< real64 > m_dInternalEnergy_dTemperature;
 
-  array2d< real64 > m_enthalpy; 
-  array2d< real64 > m_dEnthalpy_dPressure; 
-  array2d< real64 > m_dEnthalpy_dTemperature; 
+  array2d< real64 > m_enthalpy;
+  array2d< real64 > m_dEnthalpy_dPressure;
+  array2d< real64 > m_dEnthalpy_dTemperature;
   //END_SPHINX_INCLUDE_00
 };
 

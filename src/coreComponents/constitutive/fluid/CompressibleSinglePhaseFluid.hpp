@@ -31,7 +31,7 @@ namespace constitutive
 
 /**
  * @brief Update class for the model suitable for lambda capture.
- * @tparam DENS_EAT type of density exponent approximation 
+ * @tparam DENS_EAT type of density exponent approximation
  * @tparam VISC_EAT type of viscosity exponent approximation
  */
 template< ExponentApproximationType DENS_EAT, ExponentApproximationType VISC_EAT >
@@ -42,8 +42,8 @@ public:
   using DensRelationType  = ExponentialRelation< real64, DENS_EAT >;
   using ViscRelationType  = ExponentialRelation< real64, VISC_EAT >;
 
-  CompressibleSinglePhaseUpdate( DensRelationType const & densRelation, 
-                                 ViscRelationType const & viscRelation, 
+  CompressibleSinglePhaseUpdate( DensRelationType const & densRelation,
+                                 ViscRelationType const & viscRelation,
                                  arrayView2d< real64 > const & density,
                                  arrayView2d< real64 > const & dDens_dPres,
                                  arrayView2d< real64 > const & viscosity,
@@ -51,8 +51,8 @@ public:
     : SingleFluidBaseUpdate( density,
                              dDens_dPres,
                              viscosity,
-                             dVisc_dPres),
-    m_densRelation( densRelation ), 
+                             dVisc_dPres ),
+    m_densRelation( densRelation ),
     m_viscRelation( viscRelation )
   {}
 
@@ -72,7 +72,7 @@ public:
   GEOSX_FORCE_INLINE
   virtual void compute( real64 const pressure,
                         real64 & density,
-                        real64 & viscosity) const override
+                        real64 & viscosity ) const override
   {
     m_densRelation.compute( pressure, density );
     m_viscRelation.compute( pressure, viscosity );
@@ -141,10 +141,10 @@ public:
 
 private:
 
-  /// Relationship between the fluid density and pressure 
-  DensRelationType m_densRelation; 
+  /// Relationship between the fluid density and pressure
+  DensRelationType m_densRelation;
 
-  /// Relationship between the fluid viscosity and pressure 
+  /// Relationship between the fluid viscosity and pressure
   ViscRelationType m_viscRelation;
 
 };
@@ -214,10 +214,10 @@ protected:
   /// reference viscosity parameter
   real64 m_referenceViscosity;
 
-  /// type of density model in terms of pressure 
+  /// type of density model in terms of pressure
   ExponentApproximationType m_densityModelType;
 
-  /// type of viscosity model 
+  /// type of viscosity model
   ExponentApproximationType m_viscosityModelType;
 
 };

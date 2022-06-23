@@ -30,8 +30,8 @@ namespace constitutive
 
 ThermalCompressibleSinglePhaseFluid::ThermalCompressibleSinglePhaseFluid( string const & name, Group * const parent ):
   CompressibleSinglePhaseFluid( name, parent ),
-  m_densityPressureModelType( ExponentApproximationType::Full ), 
-  m_densityTemperatureModelType( ExponentApproximationType::Full ), 
+  m_densityPressureModelType( ExponentApproximationType::Full ),
+  m_densityTemperatureModelType( ExponentApproximationType::Full ),
   m_internalEnergyModelType( ExponentApproximationType::Linear )
 {
 
@@ -79,7 +79,7 @@ void ThermalCompressibleSinglePhaseFluid::allocateConstitutiveData( dataReposito
 {
   CompressibleSinglePhaseFluid::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_internalEnergy.setValues< serialPolicy >( m_referenceInternalEnergy ); 
+  m_internalEnergy.setValues< serialPolicy >( m_referenceInternalEnergy );
 }
 
 void ThermalCompressibleSinglePhaseFluid::postProcessInput()
@@ -93,9 +93,9 @@ void ThermalCompressibleSinglePhaseFluid::postProcessInput()
                            InputError );
   };
 
-  checkNonnegative( m_thermalExpansionCoeff, viewKeyStruct::thermalExpansionCoeffString() ); 
-  checkNonnegative( m_volumetricHeatCapacity, viewKeyStruct::volumetricHeatCapacityString() );  
-  checkNonnegative( m_referenceInternalEnergy, viewKeyStruct::referenceInternalEnergyString() ); 
+  checkNonnegative( m_thermalExpansionCoeff, viewKeyStruct::thermalExpansionCoeffString() );
+  checkNonnegative( m_volumetricHeatCapacity, viewKeyStruct::volumetricHeatCapacityString() );
+  checkNonnegative( m_referenceInternalEnergy, viewKeyStruct::referenceInternalEnergyString() );
 
   // Due to the way update wrapper is currently implemented, we can only support one model type
   auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
@@ -105,29 +105,29 @@ void ThermalCompressibleSinglePhaseFluid::postProcessInput()
                     InputError );
   };
   checkModelType( m_densityPressureModelType, viewKeyStruct::densityPressureModelTypeString() );
-  checkModelType( m_densityTemperatureModelType, viewKeyStruct::densityTemperatureModelTypeString() ); 
-  checkModelType( m_internalEnergyModelType, viewKeyStruct::internalEnergyModelTypeString() ); 
+  checkModelType( m_densityTemperatureModelType, viewKeyStruct::densityTemperatureModelTypeString() );
+  checkModelType( m_internalEnergyModelType, viewKeyStruct::internalEnergyModelTypeString() );
 }
 
 ThermalCompressibleSinglePhaseFluid::KernelWrapper
 ThermalCompressibleSinglePhaseFluid::createKernelWrapper()
 {
   return KernelWrapper( KernelWrapper::DensPresRelationType( m_referencePressure, m_referenceDensity, m_compressibility ),
-                        KernelWrapper::DensTempRelationType( m_referenceTemperature, 1.0, - m_thermalExpansionCoeff ),
-                        KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ), 
-                        KernelWrapper::IntEnergyRelationType( m_referenceTemperature, m_referenceInternalEnergy, m_volumetricHeatCapacity/m_referenceInternalEnergy ), 
+                        KernelWrapper::DensTempRelationType( m_referenceTemperature, 1.0, -m_thermalExpansionCoeff ),
+                        KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ),
+                        KernelWrapper::IntEnergyRelationType( m_referenceTemperature, m_referenceInternalEnergy, m_volumetricHeatCapacity/m_referenceInternalEnergy ),
                         m_density,
                         m_dDensity_dPressure,
-                        m_dDensity_dTemperature, 
+                        m_dDensity_dTemperature,
                         m_viscosity,
                         m_dViscosity_dPressure,
-                        m_dViscosity_dTemperature, 
-                        m_internalEnergy, 
+                        m_dViscosity_dTemperature,
+                        m_internalEnergy,
                         m_dInternalEnergy_dPressure,
-                        m_dInternalEnergy_dTemperature, 
-                        m_enthalpy, 
-                        m_dEnthalpy_dPressure, 
-                        m_dEnthalpy_dTemperature, 
+                        m_dInternalEnergy_dTemperature,
+                        m_enthalpy,
+                        m_dEnthalpy_dPressure,
+                        m_dEnthalpy_dTemperature,
                         m_referenceInternalEnergy );
 }
 

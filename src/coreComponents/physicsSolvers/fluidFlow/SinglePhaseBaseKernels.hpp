@@ -260,9 +260,9 @@ public:
                  StackVariables & stack ) const
   {
     // add contribution to global residual and jacobian (no need for atomics here)
-    m_localMatrix.template addToRow< serialAtomic >( stack.localRow, 
-                                                     stack.dofIndices, 
-                                                     stack.localJacobian[0], 
+    m_localMatrix.template addToRow< serialAtomic >( stack.localRow,
+                                                     stack.dofIndices,
+                                                     stack.localJacobian[0],
                                                      numDof );
     m_localRhs[stack.localRow] += stack.localResidual[0];
 

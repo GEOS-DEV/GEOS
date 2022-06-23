@@ -97,7 +97,7 @@ public:
                               extrinsicMeshData::permeability::dPerm_dPressure,
                               extrinsicMeshData::permeability::dPerm_dDispJump,
                               extrinsicMeshData::permeability::permeabilityMultiplier >;
-                              
+
   /**
    * @brief Constructor for the kernel interface
    * @param[in] rankOffset the offset of my MPI rank
@@ -131,9 +131,9 @@ public:
     m_dDens_dPres( singlePhaseFluidAccessors.get( extrinsicMeshData::singlefluid::dDensity_dPressure {} ) ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
-  {}    
+  {}
 
-protected:             
+protected:
 
   /// Offset for my MPI rank
   globalIndex const m_rankOffset;
@@ -156,13 +156,13 @@ protected:
   /// Views on pressure
   ElementViewConst< arrayView1d< real64 const > > const m_pres;
 
-  /// Views on fluid mobility 
-  ElementViewConst< arrayView1d< real64 const > > const m_mob; 
+  /// Views on fluid mobility
+  ElementViewConst< arrayView1d< real64 const > > const m_mob;
   ElementViewConst< arrayView1d< real64 const > > const m_dMob_dPres;
 
   /// Views on fluid density
-  ElementViewConst< arrayView2d< real64 const > > const m_dens; 
-  ElementViewConst< arrayView2d< real64 const > > const m_dDens_dPres; 
+  ElementViewConst< arrayView2d< real64 const > > const m_dens;
+  ElementViewConst< arrayView2d< real64 const > > const m_dDens_dPres;
 
   // Residual and jacobian
 
@@ -170,7 +170,7 @@ protected:
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
-}; 
+};
 
 /**
  * @class FaceBasedAssemblyKernel
@@ -346,14 +346,14 @@ public:
     stackArray1d< real64, maxNumElems > dDensMean_dP( stack.numFluxElems );
 
     // create local work arrays
-    real64 fluxVal = 0.0; 
-    real64 dFlux_dP[maxStencilSize]{}; 
+    real64 fluxVal = 0.0;
+    real64 dFlux_dP[maxStencilSize]{};
 
-    real64 presGrad = 0.0; 
-    stackArray1d< real64, maxStencilSize > dPresGrad_dP( stack.stencilSize ); 
+    real64 presGrad = 0.0;
+    stackArray1d< real64, maxStencilSize > dPresGrad_dP( stack.stencilSize );
 
-    real64 gravHead = 0.0; 
-    stackArray1d< real64, maxNumElems > dGravHead_dP( stack.numFluxElems ); 
+    real64 gravHead = 0.0;
+    stackArray1d< real64, maxNumElems > dGravHead_dP( stack.numFluxElems );
 
     // calculate quantities on primary connected cells
     for( integer ke = 0; ke < stack.numFluxElems; ++ke )
@@ -362,35 +362,35 @@ public:
       localIndex const esr = m_sesri( iconn, ke );
       localIndex const ei  = m_sei( iconn, ke );
 
-      // density 
-      real64 const density  = m_dens[er][esr][ei][0]; 
-      real64 const dDens_dP = m_dDens_dPres[er][esr][ei][0]; 
+      // density
+      real64 const density  = m_dens[er][esr][ei][0];
+      real64 const dDens_dP = m_dDens_dPres[er][esr][ei][0];
 
-      // average density and derivatives 
-      densMean += 0.5 * density; 
-      dDensMean_dP[ke] = 0.5 * dDens_dP; 
+      // average density and derivatives
+      densMean += 0.5 * density;
+      dDensMean_dP[ke] = 0.5 * dDens_dP;
     }
 
     //***** calculation of flux *****
 
     // compute potential difference
-    for ( integer i = 0; i < stack.stencilSize; ++i )
+    for( integer i = 0; i < stack.stencilSize; ++i )
     {
       localIndex const er  = m_seri( iconn, i );
       localIndex const esr = m_sesri( iconn, i );
       localIndex const ei  = m_sei( iconn, i );
 
-      presGrad += stack.transmissibility[0][i] * m_pres[er][esr][ei]; 
-      dPresGrad_dP[i] += stack.transmissibility[0][i] + stack.dTrans_dPres[0][i] * m_pres[er][esr][ei]; 
+      presGrad += stack.transmissibility[0][i] * m_pres[er][esr][ei];
+      dPresGrad_dP[i] += stack.transmissibility[0][i] + stack.dTrans_dPres[0][i] * m_pres[er][esr][ei];
 
-      real64 const gravD     = stack.transmissibility[0][i] * m_gravCoef[er][esr][ei]; 
-      real64 const dGravD_dP = stack.dTrans_dPres[0][i] * m_gravCoef[er][esr][ei]; 
+      real64 const gravD     = stack.transmissibility[0][i] * m_gravCoef[er][esr][ei];
+      real64 const dGravD_dP = stack.dTrans_dPres[0][i] * m_gravCoef[er][esr][ei];
 
       gravHead += densMean * gravD;
 
-      for ( integer ke = 0; ke < stack.numFluxElems; ++ke )
+      for( integer ke = 0; ke < stack.numFluxElems; ++ke )
       {
-        dGravHead_dP[ke] += dDensMean_dP[ke] * gravD + dGravD_dP * densMean; 
+        dGravHead_dP[ke] += dDensMean_dP[ke] * gravD + dGravD_dP * densMean;
       }
     }
 
@@ -399,15 +399,15 @@ public:
     // compute potential gradient
     real64 const potGrad = presGrad - gravHead;
 
-    // choose upstream cell 
+    // choose upstream cell
     localIndex const k_up = (potGrad >= 0) ? 0 : 1;
 
     localIndex const er_up  = m_seri( iconn, k_up );
     localIndex const esr_up = m_sesri( iconn, k_up );
-    localIndex const ei_up  = m_sei( iconn, k_up ); 
+    localIndex const ei_up  = m_sei( iconn, k_up );
 
-    real64 const mobility = m_mob[er_up][esr_up][ei_up]; 
-    real64 const dMob_dP = m_dMob_dPres[er_up][esr_up][ei_up]; 
+    real64 const mobility = m_mob[er_up][esr_up][ei_up];
+    real64 const dMob_dP = m_dMob_dPres[er_up][esr_up][ei_up];
 
     // pressure gradient depends on all points in the stencil
     for( integer i = 0; i < stack.stencilSize; ++i )
@@ -426,21 +426,21 @@ public:
 
     for( integer i = 0; i < stack.stencilSize; ++i )
     {
-      dFlux_dP[i] *= mobility;  
+      dFlux_dP[i] *= mobility;
     }
 
     // add contribution from upstream cell mobility derivatives
     dFlux_dP[k_up] += dMob_dP * potGrad;
 
     // populate local flux vector and derivatives
-    stack.localFlux[0]      += m_dt * fluxVal; 
-    stack.localFlux[numEqn] -= m_dt * fluxVal; 
+    stack.localFlux[0]      += m_dt * fluxVal;
+    stack.localFlux[numEqn] -= m_dt * fluxVal;
 
     for( integer i = 0; i < stack.stencilSize; ++i )
     {
-      localIndex const localDofIndexPres = i * numDof; 
-      stack.localFluxJacobian[0][localDofIndexPres]      += m_dt * dFlux_dP[i]; 
-      stack.localFluxJacobian[numEqn][localDofIndexPres] -= m_dt * dFlux_dP[i]; 
+      localIndex const localDofIndexPres = i * numDof;
+      stack.localFluxJacobian[0][localDofIndexPres]      += m_dt * dFlux_dP[i];
+      stack.localFluxJacobian[numEqn][localDofIndexPres] -= m_dt * dFlux_dP[i];
     }
 
     // Customize the kernel with this lambda
@@ -508,9 +508,9 @@ public:
   }
 
 
-protected: 
+protected:
 
-  // Stencil information 
+  // Stencil information
 
   /// Reference to the stencil wrapper
   STENCILWRAPPER const m_stencilWrapper;
