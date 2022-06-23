@@ -294,6 +294,7 @@ public:
     ElementStackVariables< num_dofs_1d, num_quads_1d, dim, batch_size > element;
 
     /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
+    constexpr size_t buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
     real64 * shared_mem_buffer_1;
     real64 * shared_mem_buffer_2;
 
@@ -313,9 +314,11 @@ public:
 
     GEOSX_STATIC_SHARED real64 s_weights[num_quads_1d];
     stack.weights = &s_weights;
-    GEOSX_STATIC_SHARED real64 shared_buffer_1[batch_size][num_quads_1d][num_quads_1d][num_quads_1d][dim][dim];
+
+    constexpr size_t buffer_size = StackVariables::buffer_size;
+    GEOSX_STATIC_SHARED real64 shared_buffer_1[batch_size][buffer_size];
     stack.shared_mem_buffer_1 = ( real64 * )&shared_buffer_1[tidz];
-    GEOSX_STATIC_SHARED real64 shared_buffer_2[batch_size][num_quads_1d][num_quads_1d][num_quads_1d][dim][dim];
+    GEOSX_STATIC_SHARED real64 shared_buffer_2[batch_size][buffer_size];
     stack.shared_mem_buffer_2 = ( real64 * )&shared_buffer_2[tidz];
   }
 
