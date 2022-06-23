@@ -19,32 +19,26 @@
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhasePoromechanics>
-    <!-- SPHINX_POROMECHANICSSOLVER_END -->
 
-    <!-- SPHINX_MECHANICALSOLVER -->
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }"/>
-    <!-- SPHINX_MECHANICALSOLVER_END -->
 
-    <!-- SPHINX_SINGLEPHASEFVM -->
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain }"/>
-    <!-- SPHINX_SINGLEPHASEFVM_END -->
   </Solvers>
 
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="1"
-        />
+        order="1"/>
     </FiniteElements>
 
     <FiniteVolume>
@@ -55,8 +49,8 @@
 
   <Mesh>
     <VTKMesh
-        name="mesh"
-        file="mandel_prism.vtk"/>
+      name="mesh"
+      file="mandel_prism.vtk"/>
   </Mesh>
 
   <ElementRegions>
@@ -101,43 +95,42 @@
 
   <Geometry>
     <Box
-        name="xneg"
-        xMin="{ -0.01, -0.01, -0.01 }"
-        xMax="{ +0.01, +1.01, +1.01 }" />
+      name="xneg"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ +0.01, +1.01, +1.01 }"/>
 
     <Box
-        name="xpos"
-        xMin="{ +0.99, -0.01, -0.01 }"
-        xMax="{ +1.01, +1.01, +1.01 }" />
+      name="xpos"
+      xMin="{ +0.99, -0.01, -0.01 }"
+      xMax="{ +1.01, +1.01, +1.01 }"/>
 
     <Box
-        name="yneg"
-        xMin="{ -0.01, -0.01, -0.01 }"
-        xMax="{ +0.01, +1.01, +1.01 }" />
+      name="yneg"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ +0.01, +1.01, +1.01 }"/>
 
     <Box
-        name="ypos"
-        xMin="{ -0.01, +0.009, -0.01 }"
-        xMax="{ +1.01, +0.011, +1.01 }" />
+      name="ypos"
+      xMin="{ -0.01, +0.009, -0.01 }"
+      xMax="{ +1.01, +0.011, +1.01 }"/>
 
     <Box
-        name="zneg"
-        xMin="{ -0.01, -0.01, -0.01 }"
-        xMax="{ +1.01, +1.01, +0.01 }" />
+      name="zneg"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ +1.01, +1.01, +0.01 }"/>
 
     <Box
-        name="zpos"
-        xMin="{ -0.01, -0.01, +0.99 }"
-        xMax="{ +1.01, +1.01, +1.01 }" />
+      name="zpos"
+      xMin="{ -0.01, -0.01, +0.99 }"
+      xMax="{ +1.01, +1.01, +1.01 }"/>
   </Geometry>
 
-  
   <FieldSpecifications>
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/"
+      objectPath="ElementRegions/Domain"
       fieldName="pressure"
       scale="4934.86"/>
 
@@ -233,17 +226,30 @@
 
   <Tasks>
     <PackCollection
-      name="pressureCollection"
-      objectPath="ElementRegions/Domain"
+      name="pressureCollection_hexa"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/hexahedra"
       fieldName="pressure"/>
+
+    <PackCollection
+      name="pressureCollection_pentaprism"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/pentagonalPrisms"
+      fieldName="pressure"/>
+
+    <PackCollection
+      name="pressureCollection_hexaprism"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/hexagonalPrisms"
+      fieldName="pressure"/>    
 
     <PackCollection
       name="displacementCollection"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"/>
   </Tasks>
-  <!-- SPHINX_TASKS_END -->
 
+  <!-- SPHINX_TASKS_END -->
   <!-- SPHINX_OUTPUT -->
   <Outputs>
     <VTK
@@ -253,19 +259,28 @@
       name="restartOutput"/>
 
     <TimeHistory
-      name="pressureHistoryOutput"
-      sources="{/Tasks/pressureCollection}"
+      name="pressureHistoryOutput_hexa"
+      sources="{/Tasks/pressureCollection_hexa}"
+      filename="pressure_history"/>
+
+    <TimeHistory
+      name="pressureHistoryOutput_pentaprism"
+      sources="{/Tasks/pressureCollection_pentaprism}"
+      filename="pressure_history"/>
+
+    <TimeHistory
+      name="pressureHistoryOutput_hexaprism"
+      sources="{/Tasks/pressureCollection_hexaprism}"
       filename="pressure_history"/>
 
     <TimeHistory
       name="displacementHistoryOutput"
-      sources="{/Tasks/displacementCollection}"
-      filename="displacement_history" />
+      sources="{ /Tasks/displacementCollection }"
+      filename="displacement_history"/>
   </Outputs>
 
-    <Events
+  <Events
     maxTime="0.1">
-  
     <PeriodicEvent
       name="outputs"
       timeFrequency="0.05"
@@ -275,32 +290,49 @@
       name="restarts"
       timeFrequency="0.05"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"
-    />
+      target="/Outputs/restartOutput"/>
 
     <PeriodicEvent
       name="solverApplication0"
       beginTime="0.0"
       endTime="10.0"
       forceDt="0.025"
-      target="/Solvers/poroSolve"/> 
+      target="/Solvers/poroSolve"/>
 
     <PeriodicEvent
-      name="pressureCollection" 
-      target="/Tasks/pressureCollection"/>
+      name="pressureCollection_hexa"
+      target="/Tasks/pressureCollection_hexa"/>
 
     <PeriodicEvent
-      name="pressureOutput"
+      name="pressureCollection_pentaprism"
+      target="/Tasks/pressureCollection_pentaprism"/>
+
+    <PeriodicEvent
+      name="pressureCollection_hexaprism"
+      target="/Tasks/pressureCollection_hexaprism"/>
+
+    <PeriodicEvent
+      name="pressureOutput_hexa"
       targetExactTimestep="0"
-      target="/Outputs/pressureHistoryOutput"/>
+      target="/Outputs/pressureHistoryOutput_hexa"/>
 
     <PeriodicEvent
-      name="displacementCollection" 
-      target="/Tasks/displacementCollection" />
+      name="pressureOutput_pentaprism"
+      targetExactTimestep="0"
+      target="/Outputs/pressureHistoryOutput_pentaprism"/>
+
+    <PeriodicEvent
+      name="pressureOutput_hexaprism"
+      targetExactTimestep="0"
+      target="/Outputs/pressureHistoryOutput_hexaprism"/>
+
+    <PeriodicEvent
+      name="displacementCollection"
+      target="/Tasks/displacementCollection"/>
 
     <PeriodicEvent
       name="displacementOutput"
-      targetExactTimestep="0" 
-      target="/Outputs/displacementHistoryOutput" />   
+      targetExactTimestep="0"
+      target="/Outputs/displacementHistoryOutput"/>
   </Events>
 </Problem>

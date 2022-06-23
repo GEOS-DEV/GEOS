@@ -228,9 +228,9 @@ public:
     addEvaluatedGradGradStabilizationVector< FE_TYPE,
                                              numDofPerTrialSupportPoint >
       ( stack.feStack,
-        stack.uhat_local,
-        reinterpret_cast< real64 (&)[numNodesPerElem][numDofPerTestSupportPoint] >(stack.localResidualMomentum),
-        -stabilizationScaling );
+      stack.uhat_local,
+      reinterpret_cast< real64 (&)[numNodesPerElem][numDofPerTestSupportPoint] >(stack.localResidualMomentum),
+      -stabilizationScaling );
   }
 
   GEOSX_HOST_DEVICE
