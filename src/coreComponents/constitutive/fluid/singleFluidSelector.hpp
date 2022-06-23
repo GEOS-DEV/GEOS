@@ -20,6 +20,7 @@
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/CompressibleSinglePhaseFluid.hpp"
+#include "constitutive/fluid/ThermalCompressibleSinglePhaseFluid.hpp"
 
 namespace geosx
 {
@@ -31,14 +32,16 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( SingleFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< CompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ThermalCompressibleSinglePhaseFluid,
+  							   CompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
 void constitutiveUpdatePassThru( SingleFluidBase & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< CompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ThermalCompressibleSinglePhaseFluid, 
+  							   CompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

@@ -103,9 +103,8 @@
       name="rockPerm"
       permeabilityComponents="{ 4.9e-11, 4.9e-11, 4.9e-11 }"/>
 
-    <CompressibleSinglePhaseFluid
+    <ThermalCompressibleSinglePhaseFluid
       name="fluid"
-      isThermal="1"
       defaultDensity="1000"
       defaultViscosity="1.3e-3"
       referencePressure="0.0"

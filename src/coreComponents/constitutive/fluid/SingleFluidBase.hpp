@@ -59,28 +59,12 @@ protected:
    */
   SingleFluidBaseUpdate( arrayView2d< real64 > const & density,
                          arrayView2d< real64 > const & dDens_dPres,
-                         arrayView2d< real64 > const & dDens_dTemp, 
                          arrayView2d< real64 > const & viscosity,
-                         arrayView2d< real64 > const & dVisc_dPres, 
-                         arrayView2d< real64 > const & dVisc_dTemp,
-                         arrayView2d< real64 > const & internalEnergy, 
-                         arrayView2d< real64 > const & dIntEnergy_dPres, 
-                         arrayView2d< real64 > const & dIntEnergy_dTemp,
-                         arrayView2d< real64 > const & enthalpy, 
-                         arrayView2d< real64 > const & dEnthalpy_dPres, 
-                         arrayView2d< real64 > const & dEnthalpy_dTemp )
+                         arrayView2d< real64 > const & dVisc_dPres )
     : m_density( density ),
     m_dDens_dPres( dDens_dPres ),
-    m_dDens_dTemp( dDens_dTemp ), 
     m_viscosity( viscosity ),
-    m_dVisc_dPres( dVisc_dPres ), 
-    m_dVisc_dTemp( dVisc_dTemp ), 
-    m_internalEnergy( internalEnergy ), 
-    m_dIntEnergy_dPres( dIntEnergy_dPres ),
-    m_dIntEnergy_dTemp( dIntEnergy_dTemp ), 
-    m_enthalpy( enthalpy ), 
-    m_dEnthalpy_dPres( dEnthalpy_dPres ), 
-    m_dEnthalpy_dTemp( dEnthalpy_dTemp )
+    m_dVisc_dPres( dVisc_dPres )
   {}
 
   /**
@@ -112,35 +96,11 @@ protected:
   /// Derivative of density w.r.t. pressure
   arrayView2d< real64 > m_dDens_dPres;
 
-  /// Derivative of density w.r.t. temperature
-  arrayView2d< real64 > m_dDens_dTemp;
-
   /// Fluid viscosity
   arrayView2d< real64 > m_viscosity;
 
   /// Derivative of viscosity w.r.t. pressure
   arrayView2d< real64 > m_dVisc_dPres;
-
-  /// Derivative of viscosity w.r.t. temperature
-  arrayView2d< real64 > m_dVisc_dTemp;
-
-  /// Fluid internal energy 
-  arrayView2d< real64 > m_internalEnergy; 
-
-  /// Derivative of internal energy w.r.t. pressure
-  arrayView2d< real64 > m_dIntEnergy_dPres;
-
-  /// Derivative of internal energy w.r.t. temperature
-  arrayView2d< real64 > m_dIntEnergy_dTemp;
-
-  /// Fluid enthalpy
-  arrayView2d< real64 > m_enthalpy; 
-
-  /// Derivative of enthalpy w.r.t. pressure
-  arrayView2d< real64 > m_dEnthalpy_dPres;
-
-  /// Derivative of enthalpy w.r.t. temperature
-  arrayView2d< real64 > m_dEnthalpy_dTemp;
 
 //END_SPHINX_INCLUDE_01
 //START_SPHINX_INCLUDE_02
@@ -245,14 +205,6 @@ public:
    * @param parent pointer to parent group
    */
   SingleFluidBase( string const & name, Group * const parent );
-
-  /**
-   * @brief Get the thermal flag.
-   * @return boolean value indicating whether the model can be used to assemble the energy balance equation or not
-   * @detail if isThermal is true, the constitutive model compute the enthalpy and internal energy of the phase.
-   *         This can be used to check the compatibility of the constitutive model with the solver
-   */
-  virtual bool isThermal() const { return false; }
 
   /**
    * @brief Save the current density into the initial density (needed for single-phase poromechanics)
