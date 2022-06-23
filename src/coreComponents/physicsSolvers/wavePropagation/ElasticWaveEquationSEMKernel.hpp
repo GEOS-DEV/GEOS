@@ -470,36 +470,19 @@ struct MassAndDampingMatrixKernel
 
               localIndex numNodeGl = facesToNodes[iface][a];
 
-              // Damping in x=xpos and x=xneg direction
-              if( faceNormal[iface][0] < 0.0 || faceNormal[iface][0] > 0.0 )
-              {
-                real64 const alphax = density[k] * velocityVp[k];
-                real64 const alphay = density[k] * velocityVs[k];
-                real64 const alphaz = density[k] * velocityVs[k];
-                dampingx[numNodeGl] += alphax*detJ*ds*N[a];
-                dampingy[numNodeGl] += alphay*detJ*ds*N[a];
-                dampingz[numNodeGl] += alphaz*detJ*ds*N[a];
-              }
-              // Damping in y=ypos and y=yneg direction
-              if( faceNormal[iface][1] < 0.0 || faceNormal[iface][1] > 0.0 )
-              {
-                real64 const alphax = density[k] * velocityVs[k];
-                real64 const alphay = density[k] * velocityVp[k];
-                real64 const alphaz = density[k] * velocityVs[k];
-                dampingx[numNodeGl] += alphax*detJ*ds*N[a];
-                dampingy[numNodeGl] += alphay*detJ*ds*N[a];
-                dampingz[numNodeGl] += alphaz*detJ*ds*N[a];
-              }
-              // Damping in z=zpos and z=zneg direction
-              if( faceNormal[iface][2] < 0.0 || faceNormal[iface][2] > 0.0 )
-              {
-                real64 const alphax = density[k] * velocityVs[k];
-                real64 const alphay = density[k] * velocityVs[k];
-                real64 const alphaz = density[k] * velocityVp[k];
-                dampingx[numNodeGl] += alphax*detJ*ds*N[a];
-                dampingy[numNodeGl] += alphay*detJ*ds*N[a];
-                dampingz[numNodeGl] += alphaz*detJ*ds*N[a];
-              }
+              real64 const alphax = density[k] * (velocityVp[k]*(faceNormal[iface][0]*faceNormal[iface][0]) + velocityVs[k]*(faceNormal[iface][1]*faceNormal[iface][1]) +
+                                                  velocityVs[k]*(faceNormal[iface][2]*faceNormal[iface][2]) );
+
+              real64 const alphay = density[k] * (velocityVs[k]*(faceNormal[iface][0]*faceNormal[iface][0]) + velocityVp[k]*(faceNormal[iface][1]*faceNormal[iface][1]) +
+                                                  velocityVs[k]*(faceNormal[iface][2]*faceNormal[iface][2]) );
+
+              real64 const alphaz = density[k] * (velocityVs[k]*(faceNormal[iface][0]*faceNormal[iface][0]) + velocityVs[k]*(faceNormal[iface][1]*faceNormal[iface][1]) +
+                                                  velocityVp[k]*(faceNormal[iface][2]*faceNormal[iface][2]) );
+
+              dampingx[numNodeGl] += alphax*detJ*ds*N[a];
+              dampingy[numNodeGl] += alphay*detJ*ds*N[a];
+              dampingz[numNodeGl] += alphaz*detJ*ds*N[a];
+
             }
           }
         }
