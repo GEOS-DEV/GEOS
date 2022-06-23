@@ -47,6 +47,11 @@ public:
 
   virtual void postProcessInput() override;
 
+  /**
+   * @brief Set the plotFileRoot name for the output
+   * 
+   * @param root The string name 
+   */
   void setPlotFileRoot( string const & root );
 
   /**
