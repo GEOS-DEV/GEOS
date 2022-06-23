@@ -45,15 +45,15 @@ class LagrangeBasis<1> : public finiteElement::LagrangeBasis1 { };
 //*****************************************************************************
 /**
  * @brief Implements kernels for solving Laplace's equation.
- * @copydoc geosx::finiteElement::KernelBase
+ * @copydoc geosx::finiteElement::TeamKernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
  *                trial space have the same number of support points.
  *
  * ### TeamLaplaceFEMKernel Description
- * Implements the KernelBase interface functions required for solving Laplace's
- * equation using on of the finite element kernel application functions such as
+ * Implements the TeamKernelBase interface functions required for solving Laplace's
+ * equation using the finite element kernel application functions such as
  * geosx::finiteElement::RegionBasedKernelApplication.
  *
  * In this implementation, the template parameter @p NUM_NODES_PER_ELEM is used
@@ -126,6 +126,7 @@ public:
     {
       using RAJA::RangeSegment;
 
+      // Mesh basis
       GEOSX_STATIC_SHARED real64 s_mesh_basis[num_dofs_mesh_1d][num_quads_1d];
       mesh_basis = &s_mesh_basis;
       loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
@@ -142,6 +143,7 @@ public:
         } );
       } );
 
+      // Mesh basis gradient
       GEOSX_STATIC_SHARED real64 s_mesh_basis_gradient[num_dofs_mesh_1d][num_quads_1d];
       mesh_basis_gradient = &s_mesh_basis_gradient;
       loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
@@ -158,14 +160,17 @@ public:
         } );
       } );
 
-      size_t const tidz = GEOSX_THREAD_ID(z);
+      size_t const batch_index = GEOSX_THREAD_ID(z);
+      // Mesh nodes
       GEOSX_STATIC_SHARED real64 s_mesh_nodes[batch_size][num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim];
-      mesh_nodes = &s_mesh_nodes[tidz];
+      mesh_nodes = &s_mesh_nodes[batch_index];
 
+      // Mesh jacobians
       GEOSX_STATIC_SHARED real64 s_jacobians[batch_size][num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim][dim];
-      jacobians = &s_jacobians[tidz];
+      jacobians = &s_jacobians[batch_index];
     }
 
+    // Mesh basis
     real64 ( * mesh_basis )[num_dofs_mesh_1d][num_quads_1d];
     real64 const ( & getBasis() const )[num_dofs_mesh_1d][num_quads_1d]
     {
@@ -176,6 +181,7 @@ public:
       return *mesh_basis;
     }
 
+    // Mesh basis gradient
     real64 ( * mesh_basis_gradient )[num_dofs_mesh_1d][num_quads_1d];
     real64 const ( & getBasisGradient() const )[num_dofs_mesh_1d][num_quads_1d]
     {
@@ -186,6 +192,7 @@ public:
       return *mesh_basis_gradient;
     }
 
+    // Mesh nodes
     real64 ( * mesh_nodes )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim]; // Could be in registers
     real64 const ( & getNodes() const )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim]
     {
@@ -196,6 +203,7 @@ public:
       return *mesh_nodes;
     }
 
+    // Mesh jacobians
     real64 ( * jacobians )[num_quads_1d][num_quads_1d][num_quads_1d][dim][dim]; // Can be in registers
     real64 ( & getJacobians() )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim][dim]
     {
@@ -214,6 +222,7 @@ public:
     {
       using RAJA::RangeSegment;
 
+      // Element basis
       GEOSX_STATIC_SHARED real64 s_basis[num_dofs_1d][num_quads_1d];
       basis = &s_basis;
       loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
@@ -230,6 +239,7 @@ public:
         } );
       } );
 
+      // Element basis gradient
       GEOSX_STATIC_SHARED real64 s_basis_gradient[num_dofs_1d][num_quads_1d];
       basis_gradient = &s_basis_gradient;
       loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
@@ -246,20 +256,25 @@ public:
         } );
       } );
 
-      size_t const tidz = GEOSX_THREAD_ID(z);
+      size_t const batch_index = GEOSX_THREAD_ID(z);
+      // Element input dofs of the primary field
       GEOSX_STATIC_SHARED real64 s_dofs_in[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d];
-      dofs_in = &s_dofs_in[tidz];
+      dofs_in = &s_dofs_in[batch_index];
 
+      // Element primary field gradients at quadrature points
       GEOSX_STATIC_SHARED real64 s_q_gradient_values[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d][dim];
-      q_gradient_values = &s_q_gradient_values[tidz];
+      q_gradient_values = &s_q_gradient_values[batch_index];
 
+      // Element "geometric factors"
       GEOSX_STATIC_SHARED real64 s_Du[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d][dim];
-      Du = &s_Du[tidz];
+      Du = &s_Du[batch_index];
 
+      // Element contribution to the residual
       GEOSX_STATIC_SHARED real64 s_dofs_out[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d];
-      dofs_out = &s_dofs_out[tidz];
+      dofs_out = &s_dofs_out[batch_index];
     }
 
+    // Element basis
     real64 ( * basis )[num_dofs_1d][num_quads_1d];
     real64 const ( & getBasis() const )[num_dofs_1d][num_quads_1d]
     {
@@ -270,6 +285,7 @@ public:
       return *basis;
     }
 
+    // Element basis gradient
     real64 ( * basis_gradient )[num_dofs_1d][num_quads_1d];
     real64 const ( & getBasisGradient() const )[num_dofs_1d][num_quads_1d]
     {
@@ -280,6 +296,7 @@ public:
       return *basis_gradient;
     }
 
+    // Element input dofs of the primary field
     real64 ( * dofs_in )[num_dofs_1d][num_dofs_1d][num_dofs_1d]; // Could be in registers
     real64 const ( & getDofsIn() const )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
     {
@@ -290,6 +307,7 @@ public:
       return *dofs_in;
     }
 
+    // Element primary field gradients at quadrature points
     real64 ( * q_gradient_values )[num_quads_1d][num_quads_1d][num_quads_1d][dim]; // Can be in registers
     real64 const ( & getGradientValues() const )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
     {
@@ -300,6 +318,7 @@ public:
       return *q_gradient_values;
     }
 
+    // Element "geometric factors"
     real64 ( * Du )[num_quads_1d][num_quads_1d][num_quads_1d][dim]; // Could be in registers
     real64 const ( & getQuadValues() const )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
     {
@@ -310,6 +329,7 @@ public:
       return *Du;
     }
 
+    // Element contribution to the residual
     real64 ( * dofs_out )[num_dofs_1d][num_dofs_1d][num_dofs_1d]; // Can be in registers
     real64 const ( & getDofsOut() const )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
     {
@@ -352,21 +372,20 @@ public:
     // TODO alias shared buffers / Generalize for non-tensor elements
     MeshStackVariables< num_dofs_mesh_1d, num_quads_1d, dim, batch_size > mesh;
     ElementStackVariables< num_dofs_1d, num_quads_1d, dim, batch_size > element;
+    // TODO abstract and encapsulate into object
+    real64 ( * weights )[num_quads_1d];
 
     /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
     static constexpr size_t buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
     real64 * shared_mem_buffer_1;
     real64 * shared_mem_buffer_2;
-
-    // TODO abstract and encapsulate into object
-    real64 ( * weights )[num_quads_1d];
   };
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void kernelSetup( StackVariables & stack ) const
   {
-
+    // Initialize quadrature weights
     GEOSX_STATIC_SHARED real64 s_weights[StackVariables::num_quads_1d];
     stack.weights = &s_weights;
     // TODO generalize
@@ -497,7 +516,7 @@ public:
       {
         for (size_t dof_z = 0; dof_z < num_dofs_1d; dof_z++)
         {
-          maxForce = fmax( maxForce, fabs( dofs_out[ dof_x ][ dof_y ][ dof_z ] ) ); // TODO make atomic
+          maxForce = fmax( maxForce, fabs( dofs_out[ dof_x ][ dof_y ][ dof_z ] ) );
         }
       } );
     } );

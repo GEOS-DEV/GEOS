@@ -266,7 +266,6 @@ public:
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
     constexpr size_t batch_size = KERNEL_TYPE::StackVariables::batch_size;
-    static_assert( batch_size == 1, "batch_size > 1 not yet supported.");
 
     const size_t num_blocks = ( numElems + batch_size - 1 ) / batch_size;
     // const size_t num_SM = 80; // For V100
@@ -276,27 +275,27 @@ public:
 
     launch< team_launch_policy >
     ( DEVICE, Resources( Teams( num_blocks ), Threads( num_quads_1d, num_quads_1d, batch_size ) ),
-    [=] RAJA_HOST_DEVICE ( LaunchContext ctx )
+    [=] GEOSX_HOST_DEVICE ( LaunchContext ctx )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent, ctx );
 
       kernelComponent.kernelSetup( stack );
 
       // Each block of threads treats "batch_size" elements.
-      loop<team_x> (ctx, RangeSegment(0, num_blocks), [&] (const int block_index)
+      loop<team_x>( ctx, RangeSegment( 0, num_blocks ), [&]( const int block_index )
       {
         // We batch elements over the z-thread dimension
-        loop<thread_z> (ctx, RangeSegment(0, batch_size), [&] (const int thread_index_z)
+        loop<thread_z>( ctx, RangeSegment( 0, batch_size ), [&]( const int thread_index_z )
         {
           const size_t element_index = block_index * batch_size + thread_index_z;
           if ( element_index >= (size_t)numElems ) { return; }
 
           kernelComponent.setup( stack, element_index );
-          loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
+          loop<thread_y>( ctx, RangeSegment( 0, num_quads_1d ), [&] ( size_t quad_y )
           {
-            loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
+            loop<thread_x>( ctx, RangeSegment( 0, num_quads_1d ), [&] ( size_t quad_x )
             {
-              for (size_t quad_z = 0; quad_z < num_quads_1d; quad_z++)
+              for( size_t quad_z = 0; quad_z < num_quads_1d; quad_z++ )
               {
                 kernelComponent.quadraturePointKernel( stack, quad_x, quad_y, quad_z );
               }
