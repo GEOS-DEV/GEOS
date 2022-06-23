@@ -477,21 +477,23 @@ public:
   GEOSX_FORCE_INLINE
   real64 complete( StackVariables & stack ) const
   {
+    using RAJA::RangeSegment;
+
     // Applying gradient of the test functions
     applyGradientTestFunctions( stack,
                                 stack.element.getBasis(),
                                 stack.element.getBasisGradient(),
                                 stack.element.getQuadValues(),
                                 stack.element.getDofsOut() );
-    writeField( stack, stack.element.getDofsOut(), stack.kernelComponent.m_rhs );
+    writeAddField( stack, stack.element.getDofsOut(), stack.kernelComponent.m_rhs );
 
     constexpr size_t num_dofs_1d = StackVariables::num_dofs_1d;
-    GEOSX_SHARED real64 maxForce = 0; // TODO take into account batch_size
+    real64 maxForce = 0;
     // TODO put this into a lambda "iterator" function
     auto & dofs_out = stack.element.getDofsOut();
-    RAJA::expt::loop<thread_x> (stack.ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
+    loop<thread_x> (stack.ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
     {
-      RAJA::expt::loop<thread_y> (stack.ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
+      loop<thread_y> (stack.ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
       {
         for (size_t dof_z = 0; dof_z < num_dofs_1d; dof_z++)
         {

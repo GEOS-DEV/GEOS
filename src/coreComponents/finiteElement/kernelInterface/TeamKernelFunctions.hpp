@@ -60,7 +60,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  RAJA_TEAM_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d];
+  GEOSX_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d];
 
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
   {
@@ -89,7 +89,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  RAJA_TEAM_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d];
+  GEOSX_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d];
 
   loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
   {
@@ -118,9 +118,9 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the third dimension
-  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
+  loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
   {
-    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
+    loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
     {
       // Cache values in registers to read them only once from shared
       real64 val[num_dofs_1d];
@@ -168,7 +168,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  RAJA_TEAM_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d][num_comp];
+  GEOSX_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d][num_comp];
 
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
   {
@@ -206,7 +206,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  RAJA_TEAM_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp];
+  GEOSX_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp];
 
   loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
   {
@@ -244,9 +244,9 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the third dimension
-  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
+  loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
   {
-    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
+    loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
     {
       // Cache values in registers to read them only once from shared
       real64 val[num_dofs_1d][num_comp];
@@ -305,7 +305,7 @@ void applyTestFunctions( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
   
   // Contraction on the first dimension
-  RAJA_TEAM_SHARED real64 Bu[num_dofs_1d][num_quads_1d][num_quads_1d];
+  GEOSX_SHARED real64 Bu[num_dofs_1d][num_quads_1d][num_quads_1d];
 
   loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
   {
@@ -334,7 +334,7 @@ void applyTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  RAJA_TEAM_SHARED real64 BBu[num_dofs_1d][num_dofs_1d][num_quads_1d];
+  GEOSX_SHARED real64 BBu[num_dofs_1d][num_dofs_1d][num_quads_1d];
 
   loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
   {
@@ -363,9 +363,9 @@ void applyTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the third dimension
-  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
+  loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
   {
-    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
+    loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
     {
       // Cache values in registers to read them only once from shared
       real64 val[num_quads_1d];
@@ -411,7 +411,7 @@ void applyTestFunctions( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
   
   // Contraction on the first dimension
-  RAJA_TEAM_SHARED real64 Bu[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp];
+  GEOSX_SHARED real64 Bu[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp];
 
   loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
   {
@@ -449,7 +449,7 @@ void applyTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  RAJA_TEAM_SHARED real64 BBu[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp];
+  GEOSX_SHARED real64 BBu[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp];
 
   loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
   {
@@ -487,9 +487,9 @@ void applyTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the third dimension
-  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
+  loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
   {
-    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
+    loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
     {
       // Cache values in registers to read them only once from shared
       real64 val[num_quads_1d][num_comp];
@@ -541,7 +541,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  RAJA_TEAM_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d],
+  GEOSX_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d],
                           Gu[num_quads_1d][num_dofs_1d][num_dofs_1d];
 
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
@@ -577,7 +577,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  RAJA_TEAM_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d],
+  GEOSX_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d],
                           BGu[num_quads_1d][num_quads_1d][num_dofs_1d],
                           GBu[num_quads_1d][num_quads_1d][num_dofs_1d];
 
@@ -619,9 +619,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the third dimension
-  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
+  loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
   {
-    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
+    loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
     {
       // Cache values in registers to read them only once from shared
       real64 bbu[num_dofs_1d];
@@ -672,7 +672,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  RAJA_TEAM_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d][num_comp],
+  GEOSX_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d][num_comp],
                           Gu[num_quads_1d][num_dofs_1d][num_dofs_1d][num_comp];
 
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
@@ -717,7 +717,7 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  RAJA_TEAM_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp],
+  GEOSX_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp],
                           BGu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp],
                           GBu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp];
 
@@ -768,9 +768,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the third dimension
-  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
+  loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
   {
-    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
+    loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
     {
       // Cache values in registers to read them only once from shared
       real64 bbu[num_dofs_1d][num_comp];
@@ -834,7 +834,7 @@ void applyGradientTestFunctions( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  RAJA_TEAM_SHARED real64 Gqx[num_dofs_1d][num_quads_1d][num_quads_1d],
+  GEOSX_SHARED real64 Gqx[num_dofs_1d][num_quads_1d][num_quads_1d],
                           Bqy[num_dofs_1d][num_quads_1d][num_quads_1d],
                           Bqz[num_dofs_1d][num_quads_1d][num_quads_1d];
 
@@ -878,7 +878,7 @@ void applyGradientTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  RAJA_TEAM_SHARED real64 BGqx[num_dofs_1d][num_dofs_1d][num_quads_1d],
+  GEOSX_SHARED real64 BGqx[num_dofs_1d][num_dofs_1d][num_quads_1d],
                           GBqy[num_dofs_1d][num_dofs_1d][num_quads_1d],
                           BBqz[num_dofs_1d][num_dofs_1d][num_quads_1d];
 
@@ -921,9 +921,9 @@ void applyGradientTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the third dimension
-  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
+  loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
   {
-    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
+    loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
     {
       // Cache values in registers to read them only once from shared
       real64 bgqx[num_quads_1d];
@@ -967,7 +967,7 @@ void applyGradientTestFunctions( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  RAJA_TEAM_SHARED real64 Gqx[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp],
+  GEOSX_SHARED real64 Gqx[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp],
                           Bqy[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp],
                           Bqz[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp];
 
@@ -1020,7 +1020,7 @@ void applyGradientTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  RAJA_TEAM_SHARED real64 BGqx[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp],
+  GEOSX_SHARED real64 BGqx[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp],
                           GBqy[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp],
                           BBqz[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp];
 
@@ -1072,9 +1072,9 @@ void applyGradientTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the third dimension
-  RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
+  loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
   {
-    RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
+    loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
     {
       // Cache values in registers to read them only once from shared
       real64 bgqx[num_quads_1d][num_comp];
@@ -1128,9 +1128,9 @@ void readField( StackVariables & stack,
   using RAJA::RangeSegment;
   LaunchContext & ctx = stack.ctx;
 
-  RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, stride_x), [&] (size_t ind_x)
+  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (size_t ind_x)
   {
-    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, stride_y), [&] (size_t ind_y)
+    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (size_t ind_y)
     {
       for (size_t ind_z = 0; ind_z < stride_z; ind_z++)
       {
@@ -1152,9 +1152,9 @@ void readField( StackVariables & stack,
   using RAJA::RangeSegment;
   LaunchContext & ctx = stack.ctx;
 
-  RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, stride_x), [&] (size_t ind_x)
+  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (size_t ind_x)
   {
-    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, stride_y), [&] (size_t ind_y)
+    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (size_t ind_y)
     {
       for (size_t ind_z = 0; ind_z < stride_z; ind_z++)
       {
@@ -1179,9 +1179,9 @@ void writeField( StackVariables & stack,
   using RAJA::RangeSegment;
   LaunchContext & ctx = stack.ctx;
 
-  RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, stride_x), [&] (size_t ind_x)
+  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (size_t ind_x)
   {
-    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, stride_y), [&] (size_t ind_y)
+    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (size_t ind_y)
     {
       for (size_t ind_z = 0; ind_z < stride_z; ind_z++)
       {
@@ -1203,9 +1203,9 @@ void writeField( StackVariables & stack,
   using RAJA::RangeSegment;
   LaunchContext & ctx = stack.ctx;
 
-  RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, stride_x), [&] (size_t ind_x)
+  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (size_t ind_x)
   {
-    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, stride_y), [&] (size_t ind_y)
+    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (size_t ind_y)
     {
       for (size_t ind_z = 0; ind_z < stride_z; ind_z++)
       {
@@ -1230,15 +1230,15 @@ void writeAddField( StackVariables & stack,
   using RAJA::RangeSegment;
   LaunchContext & ctx = stack.ctx;
 
-  RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, stride_x), [&] (size_t ind_x)
+  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (size_t ind_x)
   {
-    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, stride_y), [&] (size_t ind_y)
+    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (size_t ind_y)
     {
       for (size_t ind_z = 0; ind_z < stride_z; ind_z++)
       {
         size_t const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
         size_t const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
-        atomicAdd( field[ global_node_index ], local_field[ ind_x ][ ind_y ][ ind_z ]);
+        RAJA::atomicAdd( RAJA::auto_atomic{}, &field[ global_node_index ], local_field[ ind_x ][ ind_y ][ ind_z ]);
       }
     });
   });
@@ -1254,9 +1254,9 @@ void writeAddField( StackVariables & stack,
   using RAJA::RangeSegment;
   LaunchContext & ctx = stack.ctx;
 
-  RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, stride_x), [&] (size_t ind_x)
+  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (size_t ind_x)
   {
-    RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, stride_y), [&] (size_t ind_y)
+    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (size_t ind_y)
     {
       for (size_t ind_z = 0; ind_z < stride_z; ind_z++)
       {
@@ -1264,7 +1264,7 @@ void writeAddField( StackVariables & stack,
         size_t const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
         for (size_t d = 0; d < dim; d++)
         {
-          atomicAdd( field[ global_node_index ][ d ], local_field[ ind_x ][ ind_y ][ ind_z ][ d ] );
+          RAJA::atomicAdd( RAJA::auto_atomic{}, &field[ global_node_index ][ d ], local_field[ ind_x ][ ind_y ][ ind_z ][ d ] );
         }
       }
     });
