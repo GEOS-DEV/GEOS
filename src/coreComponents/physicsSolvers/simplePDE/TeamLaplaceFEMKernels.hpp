@@ -36,6 +36,12 @@
 namespace geosx
 {
 
+template < size_t Order >
+class LagrangeBasis;
+
+template <>
+class LagrangeBasis<1> : public finiteElement::LagrangeBasis1 { };
+
 //*****************************************************************************
 /**
  * @brief Implements kernels for solving Laplace's equation.
@@ -116,15 +122,41 @@ public:
   template < size_t num_dofs_mesh_1d, size_t num_quads_1d, size_t dim, size_t batch_size >
   struct MeshStackVariables
   {
-    MeshStackVariables()
+    MeshStackVariables( LaunchContext & ctx )
     {
+      using RAJA::RangeSegment;
+
       GEOSX_STATIC_SHARED real64 s_mesh_basis[num_dofs_mesh_1d][num_quads_1d];
       mesh_basis = &s_mesh_basis;
-      // TODO initialize the mesh_basis
+      loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
+      {
+        loop<thread_y> (ctx, RangeSegment(0, num_dofs_mesh_1d), [&] (size_t d)
+        {
+          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t q)
+          {
+            GEOSX_UNUSED_VAR( tidz );
+            s_mesh_basis[ d ][ q ] =
+              LagrangeBasis<num_dofs_mesh_1d-1>::value(
+                d, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
+          } );
+        } );
+      } );
 
       GEOSX_STATIC_SHARED real64 s_mesh_basis_gradient[num_dofs_mesh_1d][num_quads_1d];
       mesh_basis_gradient = &s_mesh_basis_gradient;
-      // TODO initialize the mesh_basis_gradient
+      loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
+      {
+        loop<thread_y> (ctx, RangeSegment(0, num_dofs_mesh_1d), [&] (size_t d)
+        {
+          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t q)
+          {
+            GEOSX_UNUSED_VAR( tidz );
+            s_mesh_basis_gradient[ d ][ q ] =
+              LagrangeBasis<num_dofs_mesh_1d-1>::gradient(
+                d, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
+          } );
+        } );
+      } );
 
       size_t const tidz = GEOSX_THREAD_ID(z);
       GEOSX_STATIC_SHARED real64 s_mesh_nodes[batch_size][num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim];
@@ -178,15 +210,41 @@ public:
   template < size_t num_dofs_1d, size_t num_quads_1d, size_t dim, size_t batch_size >
   struct ElementStackVariables
   {
-    ElementStackVariables()
+    ElementStackVariables( LaunchContext & ctx )
     {
+      using RAJA::RangeSegment;
+
       GEOSX_STATIC_SHARED real64 s_basis[num_dofs_1d][num_quads_1d];
       basis = &s_basis;
-      // TODO initialize the basis
+      loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
+      {
+        loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t d)
+        {
+          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t q)
+          {
+            GEOSX_UNUSED_VAR( tidz );
+            s_basis[ d ][ q ] =
+              LagrangeBasis<num_dofs_1d-1>::value(
+                d, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
+          } );
+        } );
+      } );
 
       GEOSX_STATIC_SHARED real64 s_basis_gradient[num_dofs_1d][num_quads_1d];
       basis_gradient = &s_basis_gradient;
-      // TODO initialize the basis_gradient
+      loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
+      {
+        loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t d)
+        {
+          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t q)
+          {
+            GEOSX_UNUSED_VAR( tidz );
+            s_basis_gradient[ d ][ q ] =
+              LagrangeBasis<num_dofs_1d-1>::gradient(
+                d, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
+          } );
+        } );
+      } );
 
       size_t const tidz = GEOSX_THREAD_ID(z);
       GEOSX_STATIC_SHARED real64 s_dofs_in[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d];
@@ -284,7 +342,9 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables( TeamLaplaceFEMKernel const & kernelComponent, LaunchContext & ctx ):
       Base::StackVariables( ctx ),
-      kernelComponent( kernelComponent )
+      kernelComponent( kernelComponent ),
+      mesh( ctx ),
+      element( ctx )
     {}
 
     TeamLaplaceFEMKernel const & kernelComponent;
@@ -294,7 +354,7 @@ public:
     ElementStackVariables< num_dofs_1d, num_quads_1d, dim, batch_size > element;
 
     /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
-    constexpr size_t buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
+    static constexpr size_t buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
     real64 * shared_mem_buffer_1;
     real64 * shared_mem_buffer_2;
 
@@ -306,16 +366,18 @@ public:
   GEOSX_FORCE_INLINE
   void kernelSetup( StackVariables & stack ) const
   {
+
+    GEOSX_STATIC_SHARED real64 s_weights[StackVariables::num_quads_1d];
+    stack.weights = &s_weights;
+    // TODO generalize
+    s_weights[0] = 1.0;
+    s_weights[1] = 1.0;
+
     // "Allocate" shared memory for the buffers.
-    constexpr size_t dim = StackVariables::dim;
-    constexpr size_t num_quads_1d = StackVariables::num_quads_1d;
     constexpr size_t batch_size = StackVariables::batch_size;
+    constexpr size_t buffer_size = StackVariables::buffer_size;
     size_t const tidz = GEOSX_THREAD_ID(z);
 
-    GEOSX_STATIC_SHARED real64 s_weights[num_quads_1d];
-    stack.weights = &s_weights;
-
-    constexpr size_t buffer_size = StackVariables::buffer_size;
     GEOSX_STATIC_SHARED real64 shared_buffer_1[batch_size][buffer_size];
     stack.shared_mem_buffer_1 = ( real64 * )&shared_buffer_1[tidz];
     GEOSX_STATIC_SHARED real64 shared_buffer_2[batch_size][buffer_size];

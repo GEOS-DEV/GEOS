@@ -283,16 +283,18 @@ public:
       kernelComponent.kernelSetup( stack );
 
       // Each block of threads treats "batch_size" elements.
-      loop<team_x> (ctx, RangeSegment(0, num_blocks), [&] (const int block_index) {
+      loop<team_x> (ctx, RangeSegment(0, num_blocks), [&] (const int block_index)
+      {
         // We batch elements over the z-thread dimension
-        loop<thread_z> (ctx, RangeSegment(0, batch_size), [&] (const int thread_index_z) {
+        loop<thread_z> (ctx, RangeSegment(0, batch_size), [&] (const int thread_index_z)
+        {
           const size_t element_index = block_index * batch_size + thread_index_z;
           if ( element_index >= (size_t)numElems ) { return; }
 
           kernelComponent.setup( stack, element_index );
-          RAJA::expt::loop<thread_y> (ctx, RAJA::RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
+          loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_y)
           {
-            RAJA::expt::loop<thread_x> (ctx, RAJA::RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
+            loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t quad_x)
             {
               for (size_t quad_z = 0; quad_z < num_quads_1d; quad_z++)
               {
