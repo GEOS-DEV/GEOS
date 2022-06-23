@@ -54,6 +54,7 @@ set( constitutive_headers
      fluid/SingleFluidExtrinsicData.hpp
      fluid/SlurryFluidBase.hpp
      fluid/SlurryFluidExtrinsicData.hpp 
+     fluid/ThermalCompressibleSinglePhaseFluid.hpp
      fluid/layouts.hpp
      fluid/multiFluidSelector.hpp
      fluid/particleFluidSelector.hpp
@@ -160,6 +161,7 @@ set( constitutive_sources
      fluid/ProppantSlurryFluid.cpp
      fluid/SingleFluidBase.cpp
      fluid/SlurryFluidBase.cpp
+     fluid/ThermalCompressibleSinglePhaseFluid.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ConstantPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
