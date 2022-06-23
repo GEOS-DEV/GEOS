@@ -98,6 +98,19 @@ public:
                        real64 ( &dWeight_dVar )[1][2] ) const;
 
   /**
+   * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
+   * Used in ReactiveCompositionalMultiphaseOBL solver for thermal transmissibility computation:
+   * here, conductivity is a part of operator and connot be used directly as a coefficient
+   * @param[in] iconn connection index
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   */
+  GEOSX_HOST_DEVICE
+  void computeWeights( localIndex iconn,
+                       real64 ( &weight )[1][2],
+                       real64 ( &dWeight_dVar )[1][2] ) const;
+
+  /**
    * @brief Compute weigths and derivatives w.r.t to one variable.
    * @param[in] iconn connection index
    * @param[in] coefficient view accessor to the coefficient used to compute the weights
@@ -193,6 +206,29 @@ EmbeddedSurfaceToCellStencilWrapper::
 
   real64 const dt0 = m_weights[iconn][0] * dCoeff_dVar[er0][esr0][ei0][0][0];
   real64 const dt1 = m_weights[iconn][1] * dCoeff_dVar[er1][esr1][ei1][0][0];
+
+  dWeight_dVar[0][0] = ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar[0][1] = ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+}
+
+GEOSX_HOST_DEVICE
+inline void
+EmbeddedSurfaceToCellStencilWrapper::
+  computeWeights( localIndex iconn,
+                  real64 ( & weight )[1][2],
+                  real64 ( & dWeight_dVar )[1][2] ) const
+{
+  real64 const t0 = m_weights[iconn][0];
+  real64 const t1 = m_weights[iconn][1];
+
+  real64 const sumOfTrans = t0+t1;
+  real64 const value = t0*t1/sumOfTrans;
+
+  weight[0][0] = value;
+  weight[0][1] = -value;
+
+  real64 const dt0 = m_weights[iconn][0];
+  real64 const dt1 = m_weights[iconn][1];
 
   dWeight_dVar[0][0] = ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
   dWeight_dVar[0][1] = ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
