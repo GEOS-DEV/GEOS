@@ -46,12 +46,14 @@ public:
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] newStress    The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress    The ArrayView holding the old stress data for each quadrature point.
+   * @param[in] disableInelasticity Flag to disable plasticity for inelastic models
    */
   ElasticIsotropicUpdates( arrayView1d< real64 const > const & bulkModulus,
                            arrayView1d< real64 const > const & shearModulus,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                           arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
-    SolidBaseUpdates( newStress, oldStress ),
+                           arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                           const bool & disableInelasticity ):
+    SolidBaseUpdates( newStress, oldStress, disableInelasticity ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus )
   {}
@@ -461,14 +463,16 @@ public:
       return ElasticIsotropicUpdates( m_bulkModulus,
                                       m_shearModulus,
                                       m_newStress,
-                                      m_oldStress );
+                                      m_oldStress,
+                                      m_disableInelasticity );
     }
     else // for "no state" updates, pass empty views to avoid transfer of stress data to device
     {
       return ElasticIsotropicUpdates( m_bulkModulus,
                                       m_shearModulus,
                                       arrayView3d< real64, solid::STRESS_USD >(),
-                                      arrayView3d< real64, solid::STRESS_USD >() );
+                                      arrayView3d< real64, solid::STRESS_USD >(),
+                                      m_disableInelasticity );
     }
   }
 
@@ -487,7 +491,8 @@ public:
                           m_bulkModulus,
                           m_shearModulus,
                           m_newStress,
-                          m_oldStress );
+                          m_oldStress,
+                          m_disableInelasticity );
   }
 
 protected:

@@ -59,6 +59,7 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
+  using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -70,6 +71,11 @@ public:
     // perform elastic update for "undamaged" stress
 
     UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );  // elastic trial update
+
+    if( m_disableInelasticity )
+    {
+      return;
+    }
 
     // compute volumetric and deviatoric strain invariants
 
