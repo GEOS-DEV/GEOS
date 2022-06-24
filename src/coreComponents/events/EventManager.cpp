@@ -122,13 +122,17 @@ bool EventManager::run( DomainPartition & domain )
   } );
 
   // Inform user if it appears this is a mid-loop restart
-  if((m_currentSubEvent > 0))
+  if( m_currentSubEvent > 0 )
   {
     GEOSX_LOG_RANK_0( "Resuming from step " << m_currentSubEvent << " of the event loop." );
   }
-  else
+  else if( !isZero( m_minTime ) )
   {
-    // we are not starting from a restart file, so we can set the current time to the start time
+    // the user has requested a "non-standard" min time (negative time possible for initialization events for instance)
+    // since we are not doing a mid-loop restart, we can set the current time to the min time
+    // note: commenting out "if( !isZero( m_minTime ) )" will not break the code, but will break the contactMechanics integrated tests
+    // restart
+    //       because it is done in an unusual fashion
     m_time = m_minTime;
   }
 
