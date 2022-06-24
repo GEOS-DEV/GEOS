@@ -36,22 +36,13 @@ namespace chemicalReactions
 
 } // namespace
 
-ReactionBase::ReactionBase( string const & name,
-                                          string_array const & inputParams,
-                                          string_array const & phaseNames,
-                                          string_array const & componentNames,
-                                          array1d< real64 > const & componentMolarWeight ):
-  ReactionBase( name,
-                componentNames,
-                componentMolarWeight )
-{
-}
+ReactionBase::ReactionBase( string const & name )
+{}
 
 ReactionBase::KernelWrapper ReactionBase::createKernelWrapper() const
 {
   return KernelWrapper(  );
 }
-
 
 
 // function to compute the derivative of the concentration of dependent species with respect to the concentration of the basis species. 

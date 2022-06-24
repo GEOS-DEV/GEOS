@@ -16,7 +16,7 @@
  * @file ReactiveMultiFluid.cpp
  */
 #include "ReactiveMultiFluid.hpp"
-
+#include "ReactiveMultiFluidExtrinsicData.hpp"
 
 
 namespace geosx
@@ -66,7 +66,6 @@ ReactiveMultiFluid( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Name of the file defining the parameters of the flash model" );
-
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >

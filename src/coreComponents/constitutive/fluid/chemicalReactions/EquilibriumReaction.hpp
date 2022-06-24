@@ -32,60 +32,22 @@ namespace constitutive
 namespace chemicalReactions
 {
 
-constexpr real64 minForDivision = 1e-10;
-
 class EquilibriumReactionUpdate final : public ReactionBaseUpdate
 {
 public:
 
-  using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
-  using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
-
   EquilibriumReactionUpdate( arrayView1d< real64 const > const & componentMolarWeight,
-                             TableFunction const & EquilibriumReactionTable,
-                             integer const CO2Index,
-                             integer const waterIndex,
-                             integer const phaseGasIndex,
-                             integer const phaseLiquidIndex )
-    : ReactionBaseUpdate( componentMolarWeight ),
-    m_CO2Index( CO2Index ),
-    m_waterIndex( waterIndex ),
-    m_phaseGasIndex( phaseGasIndex ),
-    m_phaseLiquidIndex( phaseLiquidIndex )
+                             TableFunction const & EquilibriumReactionTable )
+    : ReactionBaseUpdate( componentMolarWeight )
   {}
 
-  template< int USD1, int USD2, int USD3 >
-  GEOSX_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & compFraction,
-                arraySlice1d< real64, USD2 > const & phaseFraction,
-                arraySlice2d< real64, USD3 > const & phaseCompFraction ) const;
-
-  template< int USD1 >
-  GEOSX_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & compFraction,
-                PhaseProp::SliceType const phaseFraction,
-                PhaseComp::SliceType const phaseCompFraction ) const;
+  computeReactionTerm( real64 const & temperature,
+                       arraySlice1d< real64 > const & totalConc,
+                       arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc );
 
 protected:
 
-  /// ReactionRate
-  arrayView1d<real64> m_reactionRate;
-
-  /// Index of the CO2 phase
-  integer m_CO2Index;
-
-  /// Index of the water phase
-  integer m_waterIndex;
-
-  /// Index of the gas phase
-  integer m_phaseGasIndex;
-
-  /// Index of the liquid phase
-  integer m_phaseLiquidIndex;
+  array1Viewd< real64 >  m_log10EqConst;
 
 };
 
@@ -99,10 +61,6 @@ public:
                        string_array const & componentNames,
                        array1d< real64 > const & componentMolarWeight );
 
-  static string catalogName() { return "EquilibriumReaction"; }
-
-  virtual string getCatalogName() const final { return catalogName(); }
-
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = EquilibriumReactionUpdate;
 
@@ -114,33 +72,35 @@ public:
 
 private:
 
-  m_array1d< real64 > m_reactionRate;
+  array1d< real64 >  m_log10EqConst;
 
 };
 
-template< int USD1, int USD2, int USD3 >
-GEOSX_HOST_DEVICE
-inline void
-EquilibriumReactionUpdate::compute( real64 const & pressure,
-                                    real64 const & temperature,
-                                    arraySlice1d< real64 const, USD1 > const & compFraction,
-                                    arraySlice1d< real64, USD2 > const & phaseFraction,
-                                    arraySlice2d< real64, USD3 > const & phaseCompFraction ) const
-{
- // Jaisree: let's start by filling this function to solve for the equilibrium reaction. 
+
+// This computes the value of the function we are trying to solve (mass balance equation)
+template< typename PHASE1, typename PHASE2, typename FLASH >
+GEOSX_HOST_DEVICE inline void
+EquilibriumReactionUpdate::computeReactionTerm( real64 const & temperature,
+                                                arraySlice1d< real64 > const & totalConc,
+                                                arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc )
+
+{ 
+  stackArray1d< ReactionBase::maxNumPrimarySpecies > log10PrimaryConc(m_numPrimarySpecies), log10PrimaryActCoeff(m_numPrimarySpecies);
+  stackArray1d< ReactionBase::maxNumSecondarySpecies > log10SecConc(m_numSecSpecies);
+  stackArray2d< ReactionBase::maxNumSecondarySpecies > dLog10SecConc_dLog10PrimaryConc(m_numPrimarySpecies, m_numSecSpecies);
+
+  computeLog10SecConcAndDerivative( temperature, log10PrimaryConc, log10SecConc, dLog10SecConc_dLog10PrimaryConc );
+  
+  computeTotalConcAndDerivative( temperature, log10PrimaryConc, log10SecConc, dLog10SecConc_dLog10PrimaryConc, totalConc, dTotalConc_dLog10PrimaryConc );
+  
+  //Matteo: I assume we want to solve this.
+  stackArray1d<ReactionBase::maxNumPrimarySpecies> funValue (m_numPrimarySpecies);
+  for(int i=0; i<funValue.size(); i++)
+  {
+    funValue[i] = totalConc[i] - inputTotalConc[i];
+  }
 }
 
-template< int USD1 >
-GEOSX_HOST_DEVICE
-inline void
-EquilibriumReactionUpdate::compute( real64 const & pressure,
-                                    real64 const & temperature,
-                                    arraySlice1d< real64 const, USD1 > const & compFraction,
-                                    PhaseProp::SliceType const phaseFraction,
-                                    PhaseComp::SliceType const phaseCompFraction ) const
-{
-
-}
 
 } // end namespace chemicalReactions
 

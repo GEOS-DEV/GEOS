@@ -42,11 +42,11 @@ public:
   using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
 
   KineticReactionUpdate( arrayView1d< real64 const > const & componentMolarWeight,
-                             TableFunction const & EquilibriumReactionTable,
-                             integer const CO2Index,
-                             integer const waterIndex,
-                             integer const phaseGasIndex,
-                             integer const phaseLiquidIndex )
+                         TableFunction const & EquilibriumReactionTable,
+                         integer const CO2Index,
+                         integer const waterIndex,
+                         integer const phaseGasIndex,
+                         integer const phaseLiquidIndex )
     : ReactionBaseUpdate( componentMolarWeight ),
     m_CO2Index( CO2Index ),
     m_waterIndex( waterIndex ),
@@ -73,7 +73,7 @@ public:
 protected:
 
   /// ReactionRate
-  arrayView1d<real64> m_reactionRate;
+  arrayView1d< real64 > m_reactionRate;
 
   /// Index of the CO2 phase
   integer m_CO2Index;
@@ -122,25 +122,23 @@ template< int USD1, int USD2, int USD3 >
 GEOSX_HOST_DEVICE
 inline void
 KineticReactionUpdate::compute( real64 const & pressure,
-                                    real64 const & temperature,
-                                    arraySlice1d< real64 const, USD1 > const & compFraction,
-                                    arraySlice1d< real64, USD2 > const & phaseFraction,
-                                    arraySlice2d< real64, USD3 > const & phaseCompFraction ) const
+                                real64 const & temperature,
+                                arraySlice1d< real64 const, USD1 > const & compFraction,
+                                arraySlice1d< real64, USD2 > const & phaseFraction,
+                                arraySlice2d< real64, USD3 > const & phaseCompFraction ) const
 {
- // Jaisree: let's start by filling this function to solve for the equilibrium reaction. 
+  // Jaisree: let's start by filling this function to solve for the equilibrium reaction.
 }
 
 template< int USD1 >
 GEOSX_HOST_DEVICE
 inline void
 KineticReactionUpdate::compute( real64 const & pressure,
-                                    real64 const & temperature,
-                                    arraySlice1d< real64 const, USD1 > const & compFraction,
-                                    PhaseProp::SliceType const phaseFraction,
-                                    PhaseComp::SliceType const phaseCompFraction ) const
-{
-
-}
+                                real64 const & temperature,
+                                arraySlice1d< real64 const, USD1 > const & compFraction,
+                                PhaseProp::SliceType const phaseFraction,
+                                PhaseComp::SliceType const phaseCompFraction ) const
+{}
 
 } // end namespace chemicalReactions
 

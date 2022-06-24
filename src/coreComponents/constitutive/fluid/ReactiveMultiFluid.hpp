@@ -22,14 +22,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/MultiFluidUtils.hpp"
-#include "constitutive/fluid/PhaseModel.hpp"
-#include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
-#include "constitutive/fluid/PVTFunctions/FenghourCO2Viscosity.hpp"
-#include "constitutive/fluid/PVTFunctions/NoOpPVTFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/PhillipsBrineDensity.hpp"
-#include "constitutive/fluid/PVTFunctions/PhillipsBrineViscosity.hpp"
-#include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
+
 
 
 #include <memory>
@@ -40,7 +33,6 @@ namespace geosx
 namespace constitutive
 {
 
-template< typename PHASE1, typename PHASE2, typename FLASH >
 class ReactiveMultiFluid : public MultiFluidBase
 {
 public:
@@ -58,8 +50,6 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual bool isThermal() const override;
-
   /**
    * @brief Kernel wrapper class for ReactiveMultiFluid.
    */
@@ -67,89 +57,20 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
-    virtual void compute( real64 const pressure,
-                          real64 const temperature,
-                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
-                          real64 & totalDensity ) const override;
-
-    GEOSX_HOST_DEVICE
-    virtual void compute( real64 const pressure,
-                          real64 const temperature,
-                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                          PhaseProp::SliceType const phaseFraction,
-                          PhaseProp::SliceType const phaseDensity,
-                          PhaseProp::SliceType const phaseMassDensity,
-                          PhaseProp::SliceType const phaseViscosity,
-                          PhaseProp::SliceType const phaseEnthalpy,
-                          PhaseProp::SliceType const phaseInternalEnergy,
-                          PhaseComp::SliceType const phaseCompFraction,
-                          FluidProp::SliceType const totalDensity ) const override;
-
-    GEOSX_HOST_DEVICE
-    virtual void update( localIndex const k,
-                         localIndex const q,
-                         real64 const pressure,
-                         real64 const temperature,
-                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override;
+  /// @cond DO_NOT_DOCUMENT
+  /// We need these SMFs to avoid host-device errors with CUDA.
+    KernelWrapper() = default;
+    KernelWrapper( KernelWrapper const & ) = default;
+    KernelWrapper & operator=( KernelWrapper const & ) = default;
+    KernelWrapper & operator=( KernelWrapper && ) = default;
+  /// @endcond
 
 private:
 
     friend class ReactiveMultiFluid;
 
-    KernelWrapper( integer p1Index,
-                   integer p2Index,
-                   PHASE1 const & phase1,
-                   PHASE2 const & phase2,
-                   FLASH const & flash,
-                   arrayView1d< real64 const > componentMolarWeight,
-                   bool const useMass,
-                   PhaseProp::ViewType phaseFraction,
-                   PhaseProp::ViewType phaseDensity,
-                   PhaseProp::ViewType phaseMassDensity,
-                   PhaseProp::ViewType phaseViscosity,
-                   PhaseProp::ViewType phaseEnthalpy,
-                   PhaseProp::ViewType phaseInternalEnergy,
-                   PhaseComp::ViewType phaseCompFraction,
-                   FluidProp::ViewType totalDensity );
-
-    /// Index of the liquid phase
-    integer m_p1Index;
-
-    /// Index of the gas phase
-    integer m_p2Index;
-
-    /// Brine constitutive kernel wrappers
-    typename PHASE1::KernelWrapper m_phase1;
-
-    // CO2 constitutive kernel wrapper
-    typename PHASE2::KernelWrapper m_phase2;
-
-    // Flash kernel wrapper
-    typename FLASH::KernelWrapper m_flash;
-
-    KineticReaction m_reaction;
   };
 
-  virtual integer getWaterPhaseIndex() const override final;
-
-  /**
-   * @brief Names of the submodels for input
-   */
-  enum class SubModelInputNames : integer
-  {
-    DENSITY,         ///< the keyword for the density model
-    VISCOSITY,       ///< the keyword for the viscosity model
-    ENTHALPY,        ///< the keyword for the enthalpy model
-    INTERNALENERGY,  ///< the keyword for the internal energy model
-  };
 
   /**
    * @brief Create an update kernel wrapper.
@@ -157,10 +78,9 @@ private:
    */
   KernelWrapper createKernelWrapper();
 
-  struct viewKeyStruct : MultiFluidBase::viewKeyStruct
+  struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
-    static constexpr char const * flashModelParaFileString() { return "flashModelParaFile"; }
-    static constexpr char const * phasePVTParaFilesString() { return "phasePVTParaFiles"; }
+  
   };
 
 protected:
@@ -169,214 +89,49 @@ protected:
 
 private:
 
-  void createPVTModels();
+  /// Reaction related terms
+  integer m_numPrimarySpecies;
+  
+  integer m_numSecSpecies;
 
-  /// Names of the files defining the viscosity and density models
-  path_array m_phasePVTParaFiles;
+  EquilibriumReaction m_equilibriumReaction;
 
-  /// Name of the file defining the flash model
-  Path m_flashModelParaFile;
+  array1d<real64>  m_primarySpeciesConcentration;
 
-  /// Index of the liquid phase
-  integer m_p1Index;
+  array1d<real64>  m_secondarySpeciesConcentration;
 
-  /// Index of the gas phase
-  integer m_p2Index;
+  array1d<real64>  m_primarySpeciesTotalConcentration;
 
-  /// Brine constitutive models
-  std::unique_ptr< PHASE1 > m_phase1;
-
-  // CO2 constitutive models
-  std::unique_ptr< PHASE2 > m_phase2;
-
-  // Flash model
-  std::unique_ptr< FLASH > m_flash;
 
 };
 
-// these aliases are useful in constitutive dispatch
-using ReactiveCO2BrinePhillipsFluid =
-  ReactiveMultiFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
-                      PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
-                      PVTProps::CO2Solubility >;
-
-template< typename PHASE1, typename PHASE2, typename FLASH >
 GEOSX_HOST_DEVICE
 inline void
-ReactiveMultiFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
-  compute( real64 pressure,
-           real64 temperature,
-           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-           arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
-           real64 & totalDensity ) const
-{
-  integer constexpr numComp = 2;
-  integer constexpr numPhase = 2;
-  integer const ip1 = m_p1Index;
-  integer const ip2 = m_p2Index;
-
-  // 1. Convert input mass fractions to mole fractions and keep derivatives
-  stackArray1d< real64, numComp > compMoleFrac( numComp );
-  if( m_useMass )
-  {
-    GEOSX_ERROR( "No mass formulation for this consitutive model" );
-  }
-  else
-  {
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      compMoleFrac[ic] = composition[ic];
-    }
-  }
-
-  // 2. Compute phase fractions and phase component fractions
-
-  real64 const temperatureInCelsius = temperature - 273.15;
-  m_flash.compute( pressure,
-                   temperatureInCelsius,
-                   compMoleFrac.toSliceConst(),
-                   phaseFraction,
-                   phaseCompFraction );
-
-
-  // m_reaction.compute();
-
-  // 3. Compute phase densities and phase viscosities
-  m_phase1.density.compute( pressure,
-                            temperatureInCelsius,
-                            phaseCompFraction[ip1].toSliceConst(),
-                            phaseDensity[ip1],
-                            false );
-  m_phase1.viscosity.compute( pressure,
-                              temperatureInCelsius,
-                              phaseCompFraction[ip1].toSliceConst(),
-                              phaseViscosity[ip1],
-                              false );
-
-  m_phase2.density.compute( pressure,
-                            temperatureInCelsius,
-                            phaseCompFraction[ip2].toSliceConst(),
-                            phaseDensity[ip2],
-                            m_useMass );
-  m_phase2.viscosity.compute( pressure,
-                              temperatureInCelsius,
-                              phaseCompFraction[ip2].toSliceConst(),
-                              phaseViscosity[ip2],
-                              false );
-
-  // for now, we have to compute the phase mass density here
-  m_phase1.density.compute( pressure,
-                            temperatureInCelsius,
-                            phaseCompFraction[ip1].toSliceConst(),
-                            phaseMassDensity[ip1],
-                            true );
-  m_phase2.density.compute( pressure,
-                            temperatureInCelsius,
-                            phaseCompFraction[ip2].toSliceConst(),
-                            phaseMassDensity[ip2],
-                            true );
-
-  // 6. Compute total fluid mass/molar density
-  computeTotalDensity< numComp, numPhase >( phaseFraction,
-                                            phaseDensity,
-                                            totalDensity );
-}
-
-template< typename PHASE1, typename PHASE2, typename FLASH >
-GEOSX_HOST_DEVICE
-inline void
-ReactiveMultiFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
+ReactiveMultiFluid::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-           PhaseProp::SliceType const phaseFraction,
-           PhaseProp::SliceType const phaseDensity,
-           PhaseProp::SliceType const phaseMassDensity,
-           PhaseProp::SliceType const phaseViscosity,
-           PhaseProp::SliceType const phaseEnthalpy,
-           PhaseProp::SliceType const phaseInternalEnergy,
-           PhaseComp::SliceType const phaseCompFraction,
-           FluidProp::SliceType const totalDensity ) const
+           arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+           arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
+           arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration ) const
 {
-  integer constexpr numComp = 2;
-  integer constexpr numPhase = 2;
-  integer const ip1 = m_p1Index;
-  integer const ip2 = m_p2Index;
-
-  // 1. Convert input mass fractions to mole fractions and keep derivatives
-
-  stackArray1d< real64, numComp > compMoleFrac( numComp );
-  real64 dCompMoleFrac_dCompMassFrac[numComp][numComp]{};
-
-  if( m_useMass )
+  // I am assuming that the primary variable is the concentration of the primary species.
+  for(int i=0; i < m_numPrimarySpecies; i++ )
   {
-    GEOSX_ERROR( "No mass formulation for this consitutive model" );
-  }
-  else
-  {
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      compMoleFrac[ic] = composition[ic];
-    }
+    primarySpeciesConcentration[i] = composition[i];
   }
 
-  // 2. Compute phase fractions and phase component fractions
-  real64 const temperatureInCelsius = temperature - 273.15;
-  m_flash.compute( pressure,
-                   temperatureInCelsius,
-                   compMoleFrac.toSliceConst(),
-                   phaseFraction,
-                   phaseCompFraction );
+  m_equilibriumReactions.updateConcentrations( temperature,
+                                               primarySpeciesContentration, 
+                                               secondarySpeciesConcentration );
 
-  // 3. Compute phase densities and phase viscosities
-  m_phase1.density.compute( pressure,
-                            temperatureInCelsius,
-                            phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
-                            phaseDensity.value[ip1], phaseDensity.derivs[ip1],
-                            false );
-  m_phase1.viscosity.compute( pressure,
-                              temperatureInCelsius,
-                              phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
-                              phaseViscosity.value[ip1], phaseViscosity.derivs[ip1],
-                              false );
-  m_phase2.density.compute( pressure,
-                            temperatureInCelsius,
-                            phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
-                            phaseDensity.value[ip2], phaseDensity.derivs[ip2],
-                            false );
-  m_phase2.viscosity.compute( pressure,
-                              temperatureInCelsius,
-                              phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
-                              phaseViscosity.value[ip2], phaseViscosity.derivs[ip2],
-                              false );
-
-  // for now, we have to compute the phase mass density here
-  m_phase1.density.compute( pressure,
-                            temperatureInCelsius,
-                            phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
-                            phaseMassDensity.value[ip1], phaseMassDensity.derivs[ip1],
-                            true );
-  m_phase2.density.compute( pressure,
-                            temperatureInCelsius,
-                            phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
-                            phaseMassDensity.value[ip2], phaseMassDensity.derivs[ip2],
-                            true );
-
-  // 5. Compute total fluid mass/molar density and derivatives
-  computeTotalDensity( phaseFraction,
-                       phaseDensity,
-                       totalDensity );
+  m_kineticReactions.computeReactionRate( temperature,
+                                          primarySpeciesContentration, 
+                                          secondarySpeciesConcentration );                                                                     
 }
 
-template< typename PHASE1, typename PHASE2, typename FLASH >
 GEOSX_HOST_DEVICE inline void
-ReactiveMultiFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
+ReactiveMultiFluid::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
           real64 const pressure,
@@ -385,26 +140,8 @@ ReactiveMultiFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 {
   compute( pressure,
            temperature,
-           composition,
-           m_phaseFraction( k, q ),
-           m_phaseDensity( k, q ),
-           m_phaseMassDensity( k, q ),
-           m_phaseViscosity( k, q ),
-           m_phaseEnthalpy( k, q ),
-           m_phaseInternalEnergy( k, q ),
-           m_phaseCompFraction( k, q ),
-           m_totalDensity( k, q ) );
+           composition );
 }
-
-
-/// Declare strings associated with enumeration values
-/// Needed for now, because we don't use the catalogNames for input (yet)
-ENUM_STRINGS( ReactiveCO2BrinePhillipsFluid::SubModelInputNames,
-              "DensityFun",
-              "ViscosityFun",
-              "EnthalpyFun",
-              "InternalEnergyFun" );
-
 
 } // namespace constitutive
 
