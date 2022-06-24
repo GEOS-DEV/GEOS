@@ -3,7 +3,7 @@ import os
 import sys
 import numpy as np
 from mpi4py import MPI
-import pygeosx #from pygeosx import initialize,apply_initial_conditions,_finalize,pygeosx.pylvarray
+import pygeosx #from pygeosx import initialize, apply_initial_conditions, _finalize, pygeosx.pylvarray
 
 comm = MPI.COMM_WORLD
 nRank= comm.Get_size()
@@ -174,13 +174,13 @@ def seismo_to_txt(seismo, filename):
         
 
 def test_WaveEquationAcousticSolverAdjoint():
-    run_adjoint_validation("test_WaveEquationAcousticSolverAdjoint.xml")
+    run_adjoint_validation( "twoLayers2000x2000x2000.xml", "acousticSolver" )
 
-def run_adjoint_validation(xmlFile):
-    argv = [ "test_WaveEquationAdjoint.py", "-i", xmlFile,
+def run_adjoint_validation( xmlFile, solverName ):
+    argv = [ "testWaveEquationAdjoint.py", "-i", xmlFile,
              "-z", str(nRank) ]
     geosx=pygeosx.initialize(rank,argv)
-    solver=geosx.get_group("/Solvers/acousticSolver")
+    solver=geosx.get_group(f"/Solvers/{solverName}")
     srcPos=solver.get_wrapper("sourceCoordinates").value()
     recvPos=solver.get_wrapper("receiverCoordinates").value()
     event=geosx.get_group("/Events")
