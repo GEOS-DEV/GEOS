@@ -108,7 +108,7 @@ static PyObject * cleanup( PySolver * self, PyObject *args )
   }
 
   geosx::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  self->group->cleanup(time, 0, 0, 0.0, domain);
+  self->group->cleanup( time, 0, 0, 0.0, domain );
 
   Py_RETURN_NONE;
 }

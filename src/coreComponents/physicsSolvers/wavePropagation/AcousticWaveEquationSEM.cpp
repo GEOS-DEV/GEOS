@@ -309,7 +309,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  real64 const a1 = (abs(dt) < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
+  real64 const a1 = (abs( dt ) < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
   real64 const a2 = 1.0 - a1;
   if( m_nsamplesSeismoTrace > 0 )
   {
@@ -745,10 +745,10 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
    *
    *  time_n - dt    timeSeismo    time_n
    *   ---|--------------|-------------|
-   */  
+   */
   for( real64 timeSeismo;
        (m_forward)?((timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + dt + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace):
-         ((timeSeismo = m_dtSeismoTrace*(m_nsamplesSeismoTrace-m_indexSeismoTrace-1)) >= (time_n - dt -  epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace);
+       ((timeSeismo = m_dtSeismoTrace*(m_nsamplesSeismoTrace-m_indexSeismoTrace-1)) >= (time_n - dt -  epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace);
        m_indexSeismoTrace++ )
   {
     computeSeismoTrace( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1), var_np1, var_n, varAtReceivers );
