@@ -13,11 +13,11 @@
  */
 
 /**
- * @file MultiphasePoromechanicsInitialization.hpp
+ * @file SinglePhasePoromechanicsInitialization.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRMULTIPHASEPOROMECHANICSINITIALIZATION_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRMULTIPHASEPOROMECHANICSINITIALIZATION_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICSINITIALIZATION_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICSINITIALIZATION_HPP_
 
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
@@ -31,35 +31,28 @@ namespace mgr
 {
 
 /**
- * @brief MultiphasePoromechanicsInitialization strategy.
+ * @brief SinglePhasePoromechanicsInitialization strategy.
  *
- * Labels description stored in point_marker_array
- *   - dofLabel: 0             = nodal displacement, x-component
- *   - dofLabel: 1             = nodal displacement, y-component
- *   - dofLabel: 2             = nodal displacement, z-component
- *   - dofLabel: 3             = pressure
- *   - dofLabel: 4             = density
- *             ...             = densities
- *   - dofLabel: numLabels - 1 = density
+ * dofLabel: 0 = displacement, x-component
+ * dofLabel: 1 = displacement, y-component
+ * dofLabel: 2 = displacement, z-component
+ * dofLabel: 3 = pressure
  *
- * 1-level MGR reduction strategy using specifically during initialization
- *   - 1st level: eliminate flow variables
- *   - The coarse grid (displacements) is solved with BoomerAMG.
- *
- * The purpose of this MGR strategy is to solve the linear system arising during the initialization step
- * During this step, the flow variables are frozen by making the Jacobian flow-flow block diagonal and zero-ing out the flow-mechanics row
- * Therefore, we need a specific MGR recipe to efficiently solve the system by changing the order of the reduction compared to the standard
- * MultiphasePoromechanics recipe
+ * Ingredients:
+ * 1. F-points displacement (0,1,2), C-points pressure (3)
+ * 2. F-points smoother: AMG, single V-cycle, separate displacement components
+ * 3. C-points coarse-grid/Schur complement solver: boomer AMG
+ * 4. Global smoother: none
  */
-class MultiphasePoromechanicsInitialization : public MGRStrategyBase< 1 >
+class SinglePhasePoromechanicsInitialization : public MGRStrategyBase< 1 >
 {
 public:
+
   /**
    * @brief Constructor.
-   * @param numComponentsPerField array with number of components for each field
    */
-  explicit MultiphasePoromechanicsInitialization( arrayView1d< int const > const & numComponentsPerField )
-    : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + numComponentsPerField[1] ) )
+  explicit SinglePhasePoromechanicsInitialization( arrayView1d< int const > const & )
+    : MGRStrategyBase( 4 )
   {
     m_labels[0].push_back( 3 );
 
@@ -103,7 +96,6 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.coarseSolver.ptr, 1 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.coarseSolver.ptr, 3 ) );
 
     mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
     mgrData.coarseSolver.solve = HYPRE_BoomerAMGSolve;
@@ -117,4 +109,4 @@ public:
 
 } // namespace geosx
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRMULTIPHASEPOROMECHANICSINITIALIZATION_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICS_HPP_*/

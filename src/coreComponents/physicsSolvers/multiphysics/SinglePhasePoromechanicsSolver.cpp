@@ -123,6 +123,14 @@ void SinglePhasePoromechanicsSolver::setupDofs( DomainPartition const & domain,
                           DofManager::Connector::Elem );
 }
 
+void SinglePhasePoromechanicsSolver::useInitializationSolverConfiguration( bool useInitializationSolverConfiguration )
+{
+  m_linearSolverParameters.get().mgr.strategy =
+    useInitializationSolverConfiguration
+    ? LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics
+    : LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsInitialization;
+}
+
 void SinglePhasePoromechanicsSolver::setupSystem( DomainPartition & domain,
                                                   DofManager & dofManager,
                                                   CRSMatrix< real64, globalIndex > & localMatrix,

@@ -48,7 +48,8 @@ using namespace singlePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
-  FlowSolverBase( name, parent )
+  FlowSolverBase( name, parent ),
+  m_freezeFlowVariablesDuringStep( 0 )
 {
   m_numDofPerCell = 1;
 }
@@ -784,9 +785,17 @@ void SinglePhaseBase::applyBoundaryConditions( real64 time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  applySourceFluxBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  applyDirichletBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  applyAquiferBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  if( m_freezeFlowVariablesDuringStep )
+  {
+    // this function is going to force the current flow state to be constant during the time step
+    freezeFlowVariablesDuringStep( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+  }
+  else
+  {
+    applySourceFluxBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    applyDirichletBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    applyAquiferBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  }
 }
 
 namespace internal
@@ -996,6 +1005,61 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
     {
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
+    } );
+  } );
+}
+
+void SinglePhaseBase::freezeFlowVariablesDuringStep( real64 const time,
+                                                     real64 const dt,
+                                                     DofManager const & dofManager,
+                                                     DomainPartition & domain,
+                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                     arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time, dt );
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel const & mesh,
+                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
+    {
+      globalIndex const rankOffset = dofManager.rankOffset();
+      string const dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+
+      arrayView1d< integer const > const ghostRank =
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< globalIndex const > const dofNumber =
+        subRegion.getReference< array1d< globalIndex > >( dofKey );
+
+      arrayView1d< real64 const > const pres =
+        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] >= 0 )
+        {
+          return;
+        }
+
+        globalIndex const dofIndex = dofNumber[ei];
+        localIndex const localRow = dofIndex - rankOffset;
+        real64 rhsValue;
+
+        // 4.1. Apply pressure value to the matrix/rhs
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
+                                                    rankOffset,
+                                                    localMatrix,
+                                                    rhsValue,
+                                                    pres[ei], // freeze the current pressure value
+                                                    pres[ei] );
+        localRhs[localRow] = rhsValue;
+
+      } );
     } );
   } );
 }

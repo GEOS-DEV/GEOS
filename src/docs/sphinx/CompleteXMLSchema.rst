@@ -820,6 +820,13 @@ Element: SinglePhasePoromechanicsEmbeddedFractures
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures.rst
 
 
+.. _XML_SinglePhasePoromechanicsStateReset:
+
+Element: SinglePhasePoromechanicsStateReset
+===========================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsStateReset.rst
+
+
 .. _XML_SinglePhaseProppantFVM:
 
 Element: SinglePhaseProppantFVM
@@ -832,6 +839,13 @@ Element: SinglePhaseProppantFVM
 Element: SinglePhaseReservoir
 =============================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir.rst
+
+
+.. _XML_SinglePhaseStateReset:
+
+Element: SinglePhaseStateReset
+==============================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseStateReset.rst
 
 
 .. _XML_SinglePhaseWell:
@@ -1902,6 +1916,13 @@ Datastructure: SinglePhasePoromechanicsEmbeddedFractures
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures_other.rst
 
 
+.. _DATASTRUCTURE_SinglePhasePoromechanicsStateReset:
+
+Datastructure: SinglePhasePoromechanicsStateReset
+=================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsStateReset_other.rst
+
+
 .. _DATASTRUCTURE_SinglePhaseProppantFVM:
 
 Datastructure: SinglePhaseProppantFVM
@@ -1914,6 +1935,13 @@ Datastructure: SinglePhaseProppantFVM
 Datastructure: SinglePhaseReservoir
 ===================================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseStateReset:
+
+Datastructure: SinglePhaseStateReset
+====================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseStateReset_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseWell:

@@ -794,6 +794,8 @@
 			<xsd:element name="MultiphasePoromechanicsStateReset" type="MultiphasePoromechanicsStateResetType" />
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
+			<xsd:element name="SinglePhasePoromechanicsStateReset" type="SinglePhasePoromechanicsStateResetType" />
+			<xsd:element name="SinglePhaseStateReset" type="SinglePhaseStateResetType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
@@ -802,6 +804,8 @@
 	<xsd:complexType name="MultiphasePoromechanicsStateResetType" />
 	<xsd:complexType name="PVTDriverType" />
 	<xsd:complexType name="PackCollectionType" />
+	<xsd:complexType name="SinglePhasePoromechanicsStateResetType" />
+	<xsd:complexType name="SinglePhaseStateResetType" />
 	<xsd:complexType name="SolidMechanicsStateResetType" />
 	<xsd:complexType name="TriaxialDriverType" />
 	<xsd:complexType name="commandLineType">
