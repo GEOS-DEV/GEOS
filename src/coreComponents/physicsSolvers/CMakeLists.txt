@@ -81,6 +81,7 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
+     solidMechanics/SolidMechanicsStateReset.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
      surfaceGeneration/ParallelTopologyChange.hpp
@@ -137,6 +138,7 @@ set( physicsSolvers_sources
      simplePDE/PhaseFieldDamageFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
+     solidMechanics/SolidMechanicsStateReset.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.cpp
      surfaceGeneration/ParallelTopologyChange.cpp
