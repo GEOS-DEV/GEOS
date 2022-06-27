@@ -82,7 +82,7 @@ static PyObject * output( PyVTKOutput * self, PyObject * args )
   geosx::ProblemManager & problem = self->group->getGroupByPath< ProblemManager >( "/Problem/" );
   geosx::DomainPartition & domain = problem.getDomainPartition();
 
-  int cycleNumber = int(time/dt);
+  int cycleNumber = int(round( time/dt ));
   try
   {
     self->group->execute( time, dt, cycleNumber, 0, 0, domain );
@@ -100,7 +100,6 @@ static PyObject * setOutputDir( PyVTKOutput * self, PyObject * args )
   VERIFY_INITIALIZED( self );
 
   PyObject * unicodePath;
-  // string fileNameRoot;
 
   if( !PyArg_ParseTuple( args, "U", &unicodePath ) )
   {
