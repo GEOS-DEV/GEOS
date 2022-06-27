@@ -222,48 +222,48 @@ EXTRINSIC_MESH_DATA_TRAIT( Displacementz_np1,
                            WRITE_AND_READ,
                            "z-component of displacement at time n+1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Stresstensor_xx,
-                           "stresstensor_xx",
+EXTRINSIC_MESH_DATA_TRAIT( Stresstensorxx,
+                           "stresstensorxx",
                            array2d< real64 >,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
                            "stressxx." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Stresstensor_yy,
-                           "stresstensor_yy",
+EXTRINSIC_MESH_DATA_TRAIT( Stresstensoryy,
+                           "stresstensoryy",
                            array2d< real64 >,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
                            "stressyy." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Stresstensor_zz,
-                           "stresstensor_zz",
+EXTRINSIC_MESH_DATA_TRAIT( Stresstensorzz,
+                           "stresstensorzz",
                            array2d< real64 >,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
                            "stresszz." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Stresstensor_xy,
-                           "stresstensor_xy",
+EXTRINSIC_MESH_DATA_TRAIT( Stresstensorxy,
+                           "stresstensorxy",
                            array2d< real64 >,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
                            "stressxy." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Stresstensor_xz,
-                           "stresstensor_xz",
+EXTRINSIC_MESH_DATA_TRAIT( Stresstensorxz,
+                           "stresstensorxz",
                            array2d< real64 >,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
                            "stressxz." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Stresstensor_yz,
-                           "stresstensor_yz",
+EXTRINSIC_MESH_DATA_TRAIT( Stresstensoryz,
+                           "stresstensoryz",
                            array2d< real64 >,
                            0,
                            LEVEL_0,
@@ -287,24 +287,24 @@ EXTRINSIC_MESH_DATA_TRAIT( MassVector,
                            WRITE_AND_READ,
                            "Diagonal Mass Matrix." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVector_x,
-                           "dampingVector_x",
+EXTRINSIC_MESH_DATA_TRAIT( DampingVectorx,
+                           "dampingVectorx",
                            array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Diagonal Damping Matrix in x-direction." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVector_y,
-                           "dampingVector_y",
+EXTRINSIC_MESH_DATA_TRAIT( DampingVectory,
+                           "dampingVectory",
                            array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Diagonal Damping Matrix in y-direction." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVector_z,
-                           "dampingVector_z",
+EXTRINSIC_MESH_DATA_TRAIT( DampingVectorz,
+                           "dampingVectorz",
                            array1d< real64 >,
                            0,
                            NOPLOT,

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -89,16 +89,10 @@ struct PrecomputeSourceAndReceiverKernel
   /**
    * @brief Convert a mesh element point coordinate into a coordinate on the reference element
    * @tparam FE_TYPE finite element type
-   * @param[in] numFacesPerElem number of face on an element
    * @param[in] coords coordinate of the point
-   * @param[in] elemCenter array containing the center of the elements
-   * @param[in] faceNormal array containing the normal of all faces
-   * @param[in] faceCenter array containing the center of all faces
    * @param[in] elemsToNodes map to obtaint global nodes from element index
-   * @param[in] elemsToFaces map to get the global faces from element index and local face index
    * @param[in] X array of mesh nodes coordinates
    * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
-   * @return true if coords is inside the element num index
    */
   template< typename FE_TYPE >
   GEOSX_HOST_DEVICE
@@ -169,7 +163,7 @@ struct PrecomputeSourceAndReceiverKernel
   }
 
   /**
-   * @brief Launches the precomputation of the source and receiver terms
+    * @brief Launches the precomputation of the source and receiver terms
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
@@ -183,13 +177,14 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] faceCenter array containing the center of all faces
    * @param[in] sourceCoordinates coordinates of the source terms
    * @param[out] sourceIsLocal flag indicating whether the source is local or not
-   * @param[out] sourceInElem flag indicating whether the source is inside the element or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
-   * @param[out] sourceConstants constant part of the source terms
+   * @param[out] sourceConstantsx constant part of the source terms in x-direction
+   * @param[out] sourceConstantsy constant part of the source terms in y-direction
+   * @param[out] sourceConstantsz constant part of the source terms in z-direction
    * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
-   * @param[out] receiverConstants constant part of the receiver term
+   * @param[out] receiverNodeConstants constant part of the receiver term
    * @param[out] sourceValue array containing the value of the time dependent source (Ricker for e.g)
    * @param[in] dt time-step
    * @param[in] timeSourceFrequency Peak frequency of the source
@@ -332,10 +327,24 @@ struct MassAndDampingMatrixKernel
 
   /**
    * @brief Launches the precomputation of the mass and damping matrices
+   * @tparam EXEC_POLICY the execution policy
+   * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
+   * @param[in] numFacesPerElem number of faces per element
+   * @param[in] numNodesPerFace number of nodes per face
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
+   * @param[in] elemsToFaces map from element to faces
+   * @param[in] facesToNodes map from face to nodes
+   * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
+   * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
+   * @param[in] faceNormal normal vectors at the faces
    * @param[in] density cell-wise density
+   * @param[in] velocityVp cell-wise P-wavespeed
+   * @param[in] velocityVp cell-wise S-wavespeed
+   * @param[out] dampingx diagonal of the damping matrix (x-part)
+   * @param[out] dampingy diagonal of the damping matrix (y-part)
+   * @param[out] dampingz diagonal of the damping matrix (z-part)
    * @param[out] mass diagonal of the mass matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
@@ -353,9 +362,9 @@ struct MassAndDampingMatrixKernel
           arrayView1d< real64 const > const density,
           arrayView1d< real64 > const velocityVp,
           arrayView1d< real64 > const velocityVs,
-          arrayView1d< real64 > const damping_x,
-          arrayView1d< real64 > const damping_y,
-          arrayView1d< real64 > const damping_z,
+          arrayView1d< real64 > const dampingx,
+          arrayView1d< real64 > const dampingy,
+          arrayView1d< real64 > const dampingz,
           arrayView1d< real64 > const mass )
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -429,9 +438,9 @@ struct MassAndDampingMatrixKernel
               real64 const alphaz = density[k] * (velocityVs[k]*(faceNormal[iface][0]*faceNormal[iface][0]) + velocityVs[k]*(faceNormal[iface][1]*faceNormal[iface][1]) +
                                     velocityVp[k]*(faceNormal[iface][2]*faceNormal[iface][2]) );
 
-              damping_x[numNodeGl] += alphax*detJ*ds*N[a];
-              damping_y[numNodeGl] += alphay*detJ*ds*N[a];
-              damping_z[numNodeGl] += alphaz*detJ*ds*N[a];
+              dampingx[numNodeGl] += alphax*detJ*ds*N[a];
+              dampingy[numNodeGl] += alphay*detJ*ds*N[a];
+              dampingz[numNodeGl] += alphaz*detJ*ds*N[a];
 
             }
           }
@@ -447,14 +456,14 @@ struct MassAndDampingMatrixKernel
 };
 
 /**
- * @brief Implements kernels for solving the acoustic wave equations
+ * @brief Implements kernels for solving the first order elastic wave equations
  *   explicit central FD method and SEM
  * @copydoc geosx::finiteElement::KernelBase
  * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
  *
- * ### AcousticWaveEquationSEMKernel Description
+ * ### ElasticWaveEquationSEMKernel Description
  * Implements the KernelBase interface functions required for solving
- * the acoustic wave equations using the
+ * the elastic wave equations using the
  * "finite element kernel application" functions such as
  * geosx::finiteElement::RegionBasedKernelApplication.
  *
@@ -510,7 +519,6 @@ public:
                                    SUBREGION_TYPE const & elementSubRegion,
                                    FE_TYPE const & finiteElementSpace,
                                    CONSTITUTIVE_TYPE & inputConstitutiveType,
-
                                    real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
@@ -519,16 +527,16 @@ public:
     m_ux_np1( nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_np1 >() ),
     m_uy_np1( nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_np1 >() ),
     m_uz_np1( nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_np1 >() ),
-    m_stressxx( elementSubRegion.template getExtrinsicData< extrinsicMeshData::Stresstensor_xx>() ),
-    m_stressyy( elementSubRegion.template getExtrinsicData< extrinsicMeshData::Stresstensor_yy>() ),
-    m_stresszz( elementSubRegion.template getExtrinsicData< extrinsicMeshData::Stresstensor_zz>() ),
-    m_stressxy( elementSubRegion.template getExtrinsicData< extrinsicMeshData::Stresstensor_xy>() ),
-    m_stressxz( elementSubRegion.template getExtrinsicData< extrinsicMeshData::Stresstensor_xz>() ),
-    m_stressyz( elementSubRegion.template getExtrinsicData< extrinsicMeshData::Stresstensor_yz>() ),
+    m_stressxx( elementSubRegion.template getExtrinsicData< extrinsicMeshData::Stresstensorxx>() ),
+    m_stressyy( elementSubRegion.template getExtrinsicData< extrinsicMeshData::Stresstensoryy>() ),
+    m_stresszz( elementSubRegion.template getExtrinsicData< extrinsicMeshData::Stresstensorzz>() ),
+    m_stressxy( elementSubRegion.template getExtrinsicData< extrinsicMeshData::Stresstensorxy>() ),
+    m_stressxz( elementSubRegion.template getExtrinsicData< extrinsicMeshData::Stresstensorxz>() ),
+    m_stressyz( elementSubRegion.template getExtrinsicData< extrinsicMeshData::Stresstensoryz>() ),
     m_mass( nodeManager.getExtrinsicData< extrinsicMeshData::MassVector > ()),
-    m_damping_x( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_x > ()),
-    m_damping_y( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_y > ()),
-    m_damping_z( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_z > ()),
+    m_dampingx( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorx > ()),
+    m_dampingy( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectory > ()),
+    m_dampingz( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorz > ()),
     m_dt( dt )
   {
     GEOSX_UNUSED_VAR( edgeManager );
@@ -542,7 +550,7 @@ public:
   /**
    * @copydoc geosx::finiteElement::KernelBase::StackVariables
    *
-   * ### ExplicitAcousticSEM Description
+   * ### ExplicitElasticDisplacementSEM Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
    */
   struct StackVariables : Base::StackVariables
@@ -583,8 +591,8 @@ public:
   /**
    * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
    *
-   * ### ExplicitAcousticSEM Description
-   * Calculates stiffness vector
+   * ### ExplicitElasticDisplacementSEM Description
+   * Update the displacement in time
    *
    */
   GEOSX_HOST_DEVICE
@@ -607,19 +615,18 @@ public:
     real64 flowy[numNodesPerElem] = {{0.0}};
     real64 flowz[numNodesPerElem] = {{0.0}};
 
-    //Calcul de u pour le premier ordre
-    // Pré-multiplication par la masse globale
-    for (localIndex i = 0; i < numNodesPerElem; i++)
+    // Pre-multiplication by the global mass matrix + damping
+    for (localIndex i = 0; i < numNodesPerElem; ++i)
     {         
-      uelemx[i] = (m_mass[m_elemsToNodes[k][i]]-0.5*m_dt*m_damping_x[m_elemsToNodes[k][i]])*m_ux_np1[m_elemsToNodes[k][i]];
-      uelemy[i] = (m_mass[m_elemsToNodes[k][i]]-0.5*m_dt*m_damping_y[m_elemsToNodes[k][i]])*m_uy_np1[m_elemsToNodes[k][i]];
-      uelemz[i] = (m_mass[m_elemsToNodes[k][i]]-0.5*m_dt*m_damping_z[m_elemsToNodes[k][i]])*m_uz_np1[m_elemsToNodes[k][i]];
+      uelemx[i] = (m_mass[m_elemsToNodes[k][i]]-0.5*m_dt*m_dampingx[m_elemsToNodes[k][i]])*m_ux_np1[m_elemsToNodes[k][i]];
+      uelemy[i] = (m_mass[m_elemsToNodes[k][i]]-0.5*m_dt*m_dampingy[m_elemsToNodes[k][i]])*m_uy_np1[m_elemsToNodes[k][i]];
+      uelemz[i] = (m_mass[m_elemsToNodes[k][i]]-0.5*m_dt*m_dampingz[m_elemsToNodes[k][i]])*m_uz_np1[m_elemsToNodes[k][i]];
     }
           
-    // Intégrale de Volume
-    for (localIndex j = 0; j < numNodesPerElem; j++)
+    // Stiffness part
+    for (localIndex j = 0; j < numNodesPerElem; ++j)
     {
-      for (localIndex i = 0; i < numNodesPerElem; i++)
+      for (localIndex i = 0; i < numNodesPerElem; ++i)
       {
         real64 dfx = detJ*gradN[i][0]*N[j];
         real64 dfy = detJ*gradN[i][1]*N[j];
@@ -632,19 +639,19 @@ public:
     }
 
     // Time update
-    for (localIndex i = 0; i < numNodesPerElem; i++)
+    for (localIndex i = 0; i < numNodesPerElem; ++i)
     {
       uelemx[i]+=m_dt*flowx[i];
       uelemy[i]+=m_dt*flowy[i];
       uelemz[i]+=m_dt*flowz[i];
     }
 
-    // Mult by inverse mass matrix
-    for (localIndex i = 0; i < numNodesPerElem; i++)
+    // Mult by inverse mass matrix + damping matrix
+    for (localIndex i = 0; i < numNodesPerElem; ++i)
     {
-    m_ux_np1[m_elemsToNodes[k][i]] = uelemx[i]/(m_mass[m_elemsToNodes[k][i]]+0.5*m_dt*m_damping_x[m_elemsToNodes[k][i]]);
-    m_uy_np1[m_elemsToNodes[k][i]] = uelemy[i]/(m_mass[m_elemsToNodes[k][i]]+0.5*m_dt*m_damping_y[m_elemsToNodes[k][i]]);
-    m_uz_np1[m_elemsToNodes[k][i]] = uelemz[i]/(m_mass[m_elemsToNodes[k][i]]+0.5*m_dt*m_damping_z[m_elemsToNodes[k][i]]);
+    m_ux_np1[m_elemsToNodes[k][i]] = uelemx[i]/(m_mass[m_elemsToNodes[k][i]]+0.5*m_dt*m_dampingx[m_elemsToNodes[k][i]]);
+    m_uy_np1[m_elemsToNodes[k][i]] = uelemy[i]/(m_mass[m_elemsToNodes[k][i]]+0.5*m_dt*m_dampingy[m_elemsToNodes[k][i]]);
+    m_uz_np1[m_elemsToNodes[k][i]] = uelemz[i]/(m_mass[m_elemsToNodes[k][i]]+0.5*m_dt*m_dampingz[m_elemsToNodes[k][i]]);
     }
 
   }
@@ -685,13 +692,13 @@ protected:
   arrayView1d< real64 const > const m_mass;
 
   /// The array containing the diagonal of the damping matrix (x-part)
-  arrayView1d< real64 const> const m_damping_x;
+  arrayView1d< real64 const> const m_dampingx;
 
   /// The array containing the diagonal of the damping matrix (y-part)
-  arrayView1d< real64 const > const m_damping_y;
+  arrayView1d< real64 const > const m_dampingy;
 
   /// The array containing the diagonal of the damping matrix (z-part)
-  arrayView1d< real64 const> const m_damping_z;
+  arrayView1d< real64 const> const m_dampingz;
 
   /// The time increment for this time integration step.
   real64 const m_dt;
@@ -736,7 +743,18 @@ public:
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
    * @param targetRegionIndex Index of the region the subregion belongs to.
+   * @param inputStreessxx xx-component of the stress tensor. 
+   * @param inputStreessyy yy-component of the stress tensor.
+   * @param inputStreesszz zz-component of the stress tensor.
+   * @param inputStreessxy xy-component of the stress tensor.
+   * @param inputStreessxz xz-component of the stress tensor.
+   * @param inputStreessyz yz-component of the stress tensor.
+   * @param inputSourceElem Array containing the list of element which contains a source.
+   * @param inputSourceIsLocal Array of integer: 1 if the source is local to the MPI rank, 0 otherwise.
+   * @param inputSourceConstants Array containing the coefficients to multiply with the time source.
+   * @param inputSourceValue Array containing the value of the time source (eg. Ricker) at each time-step.
    * @param dt The time interval for the step.
+   * @param cycleNumber The number of the current iteration.
    *   elements to be processed during this kernel launch.
    */
    ExplicitElasticStressSEM( NodeManager & nodeManager,
@@ -792,8 +810,9 @@ public:
   /**
    * @copydoc geosx::finiteElement::KernelBase::StackVariables
    *
-   * ### ExplicitElasticSEM Description
+   * ### ExplicitElasticStressSEM Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
+   * Compute the Lame parameters: lambda and mu.
    */
   struct StackVariables : Base::StackVariables
   {
@@ -837,8 +856,8 @@ public:
   /**
    * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
    *
-   * ### ExplicitAcousticSEM Description
-   * Calculates stiffness vector
+   * ### ExplicitElasticStressSEM Description
+   * Update the stress tensor in time
    *
    */
   GEOSX_HOST_DEVICE
@@ -868,9 +887,8 @@ public:
     FE_TYPE::calcN( q, N );
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
 
-    // // Computation of the stress tensor
-    // //Pre-mult by mass matrix
-    for (localIndex i = 0; i < numNodesPerElem; i++)
+    //Pre-multiplication by mass matrix
+    for (localIndex i = 0; i < numNodesPerElem; ++i)
     {
       uelemxx[i] = detJ*m_stressxx[k][i];
       uelemyy[i] = detJ*m_stressyy[k][i];
@@ -881,9 +899,9 @@ public:
     }
 
     //Volume integral
-    for (localIndex j = 0; j < numNodesPerElem; j++)
+    for (localIndex j = 0; j < numNodesPerElem; ++j)
     {
-      for (localIndex i = 0; i < numNodesPerElem; i++)
+      for (localIndex i = 0; i < numNodesPerElem; ++i)
       {
         real64 dfx2 = detJ*gradN[j][0]*N[i];
         real64 dfy2 = detJ*gradN[j][1]*N[i];
@@ -899,7 +917,7 @@ public:
     }
 
     //Time integration
-    for (localIndex i = 0; i < numNodesPerElem; i++)
+    for (localIndex i = 0; i < numNodesPerElem; ++i)
     {
       real64 diag = stack.lambda*(auxx[i]+auyy[i]+auzz[i]);
       uelemxx[i]+= m_dt*(diag+2*stack.mu*auxx[i]);
@@ -911,7 +929,7 @@ public:
     }
 
     // Multiplication by inverse mass matrix
-    for (localIndex i = 0; i < numNodesPerElem; i++)
+    for (localIndex i = 0; i < numNodesPerElem; ++i)
     {
       m_stressxx[k][i] = uelemxx[i]/(detJ);
       m_stressyy[k][i] = uelemyy[i]/(detJ);
@@ -989,21 +1007,25 @@ protected:
   /// The time increment for this time integration step.
   real64 const m_dt;
 
+  // The array containing the list of element which contains a source 
   arrayView1d< localIndex const > const m_sourceElem;
 
+  // The array containing the list of element which contains a source
   arrayView1d< localIndex const> const m_sourceIsLocal;
 
+  // The array containing the coefficients to multiply with the time source.
   arrayView2d< real64 const > const m_sourceConstants;
 
+  // The array containing the value of the time source (eg. Ricker) at each time-step.
   arrayView2d< real64 const > const m_sourceValue;
 
 };
 
 
-/// The factory used to construct a ExplicitAcousticWaveEquation kernel.
+/// The factory used to construct a ExplicitElasticDisplacementWaveEquation kernel.
 using ExplicitElasticDisplacementSEMFactory = finiteElement::KernelFactory< ExplicitElasticDisplacementSEM, real64>;
 
-/// The factory used to construct a ExplicitAcousticWaveEquation kernel.
+/// The factory used to construct a ExplicitElasticStressWaveEquation kernel.
 using ExplicitElasticStressSEMFactory = finiteElement::KernelFactory< ExplicitElasticStressSEM,
                                                                       arrayView2d < real64 > const,
                                                                       arrayView2d < real64 > const,

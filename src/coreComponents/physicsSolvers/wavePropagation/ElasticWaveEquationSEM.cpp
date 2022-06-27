@@ -126,9 +126,9 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                        extrinsicMeshData::Displacementz_np1,
                                        extrinsicMeshData::ForcingRHS,
                                        extrinsicMeshData::MassVector,
-                                       extrinsicMeshData::DampingVector_x,
-                                       extrinsicMeshData::DampingVector_y,
-                                       extrinsicMeshData::DampingVector_z,
+                                       extrinsicMeshData::DampingVectorx,
+                                       extrinsicMeshData::DampingVectory,
+                                       extrinsicMeshData::DampingVectorz,
                                        extrinsicMeshData::FreeSurfaceNodeIndicator >( this->getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -142,12 +142,12 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocityVs >( this->getName() );
       subRegion.registerExtrinsicData< extrinsicMeshData::MediumDensity >( this->getName() );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensor_xx >(this->getName());
-      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensor_yy >(this->getName());
-      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensor_zz >(this->getName());
-      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensor_xy >(this->getName());
-      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensor_xz >(this->getName());
-      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensor_yz >(this->getName());
+      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensorxx >(this->getName());
+      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensoryy >(this->getName());
+      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensorzz >(this->getName());
+      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensorxy >(this->getName());
+      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensorxz >(this->getName());
+      subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensoryz >(this->getName());
 
       finiteElement::FiniteElementBase const & fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -160,12 +160,12 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-      subRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_xx >().resizeDimension < 1 > ( numNodesPerElem ) ;
-      subRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_yy >().resizeDimension < 1 > ( numNodesPerElem ) ;
-      subRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_zz >().resizeDimension < 1 > ( numNodesPerElem ) ;
-      subRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_xy >().resizeDimension < 1 > ( numNodesPerElem ) ;
-      subRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_xz >().resizeDimension < 1 > ( numNodesPerElem ) ;
-      subRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_yz >().resizeDimension < 1 > ( numNodesPerElem ) ;
+      subRegion.getExtrinsicData< extrinsicMeshData::Stresstensorxx >().resizeDimension < 1 > ( numNodesPerElem ) ;
+      subRegion.getExtrinsicData< extrinsicMeshData::Stresstensoryy >().resizeDimension < 1 > ( numNodesPerElem ) ;
+      subRegion.getExtrinsicData< extrinsicMeshData::Stresstensorzz >().resizeDimension < 1 > ( numNodesPerElem ) ;
+      subRegion.getExtrinsicData< extrinsicMeshData::Stresstensorxy >().resizeDimension < 1 > ( numNodesPerElem ) ;
+      subRegion.getExtrinsicData< extrinsicMeshData::Stresstensorxz >().resizeDimension < 1 > ( numNodesPerElem ) ;
+      subRegion.getExtrinsicData< extrinsicMeshData::Stresstensoryz >().resizeDimension < 1 > ( numNodesPerElem ) ;
       } );
 
 
@@ -449,13 +449,13 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
 
-    arrayView1d< real64 > const damping_x = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_x >();
-    arrayView1d< real64 > const damping_y = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_y >();
-    arrayView1d< real64 > const damping_z = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_z >();
+    arrayView1d< real64 > const dampingx = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorx >();
+    arrayView1d< real64 > const dampingy = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectory >();
+    arrayView1d< real64 > const dampingz = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorz >();
 
-    damping_x.zero();
-    damping_y.zero();
-    damping_z.zero();
+    dampingx.zero();
+    dampingy.zero();
+    dampingz.zero();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -493,9 +493,9 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                               density,
                                                               velocityVp,
                                                               velocityVs,
-                                                              damping_x,
-                                                              damping_y,
-                                                              damping_z,
+                                                              dampingx,
+                                                              dampingy,
+                                                              dampingz,
                                                               mass );
       } );
     } );
@@ -600,9 +600,9 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
     NodeManager & nodeManager = mesh.getNodeManager();
  
     arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-    arrayView1d< real64 const > const damping_x = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_x >();
-    arrayView1d< real64 const > const damping_y = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_y >();
-    arrayView1d< real64 const > const damping_z = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_z >();
+    arrayView1d< real64 const > const dampingx = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorx >();
+    arrayView1d< real64 const > const dampingy = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectory >();
+    arrayView1d< real64 const > const dampingz = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorz >();
 
     arrayView1d< real64 > const ux_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_np1 >();
     arrayView1d< real64 > const uy_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_np1 >();
@@ -624,12 +624,12 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
       arrayView1d< real64 const > const velocityVs = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVs >();
       arrayView1d< real64 const > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity >();
 
-      arrayView2d< real64 > const stressxx = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_xx >();
-      arrayView2d< real64 > const stressyy = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_yy >();
-      arrayView2d< real64 > const stresszz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_zz >();
-      arrayView2d< real64 > const stressxy = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_xy >();
-      arrayView2d< real64 > const stressxz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_xz >();
-      arrayView2d< real64 > const stressyz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensor_yz >();
+      arrayView2d< real64 > const stressxx = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensorxx >();
+      arrayView2d< real64 > const stressyy = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensoryy >();
+      arrayView2d< real64 > const stresszz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensorzz >();
+      arrayView2d< real64 > const stressxy = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensorxy >();
+      arrayView2d< real64 > const stressxz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensorxz >();
+      arrayView2d< real64 > const stressyz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensoryz >();
 
       //addSourceToRightHandSide( cycleNumber, rhs );
 
@@ -670,8 +670,8 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
       FieldIdentifiers fieldsToBeSync;
       fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::Displacementx_np1::key(), extrinsicMeshData::Displacementy_np1::key(),  extrinsicMeshData::Displacementz_np1::key()} );
-      fieldsToBeSync.addElementFields( {extrinsicMeshData::Stresstensor_xx::key(), extrinsicMeshData::Stresstensor_yy::key(), extrinsicMeshData::Stresstensor_zz::key(), extrinsicMeshData::Stresstensor_xy::key(), 
-                                        extrinsicMeshData::Stresstensor_xz::key(), extrinsicMeshData::Stresstensor_yz::key()}, regionNames );
+      fieldsToBeSync.addElementFields( {extrinsicMeshData::Stresstensorxx::key(), extrinsicMeshData::Stresstensoryy::key(), extrinsicMeshData::Stresstensorzz::key(), extrinsicMeshData::Stresstensorxy::key(), 
+                                        extrinsicMeshData::Stresstensorxz::key(), extrinsicMeshData::Stresstensoryz::key()}, regionNames );
 
 
       CommunicationTools & syncFields = CommunicationTools::getInstance();
