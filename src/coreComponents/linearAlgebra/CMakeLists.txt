@@ -54,7 +54,7 @@ set( linearAlgebra_sources
      solvers/SeparateComponentPreconditioner.cpp
    )
 
-set( dependencyList ${deviceDeps} mesh blas lapack )
+set( dependencyList ${parallelDeps} mesh blas lapack )
 
 
 list( APPEND linearAlgebra_headers

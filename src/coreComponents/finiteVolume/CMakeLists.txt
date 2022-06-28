@@ -40,7 +40,7 @@ set( finiteVolume_sources
      HybridMimeticDiscretization.cpp
    )
 
-set( dependencyList ${deviceDeps} mesh codingUtilities fieldSpecification )
+set( dependencyList ${parallelDeps} mesh codingUtilities fieldSpecification )
 
 blt_add_library( NAME       finiteVolume
                  SOURCES    ${finiteVolume_sources}

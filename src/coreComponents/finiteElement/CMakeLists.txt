@@ -33,7 +33,7 @@ set( finiteElement_sources
      FiniteElementDiscretizationManager.cpp
    )
 
-set( dependencyList ${deviceDeps} dataRepository )
+set( dependencyList ${parallelDeps} dataRepository )
 
 blt_add_library( NAME       finiteElement
                  SOURCES    ${finiteElement_sources}

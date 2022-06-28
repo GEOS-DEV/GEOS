@@ -25,7 +25,7 @@ set( multi_files
 #
 # Add gtest C++ based tests
 #
-set( dependencyList ${deviceDeps} gtest optionparser )
+set( dependencyList ${parallelDeps} gtest optionparser )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core)

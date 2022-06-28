@@ -47,22 +47,22 @@ if( NOT GEOSX_BUILD_SHARED_LIBS )
   set ( geosx_core_libs "${geosx_core_list}" CACHE INTERNAL "" )
 endif()
 
-set( deviceDeps "" )
+set( parallelDeps "" )
 
 if ( ENABLE_OPENMP )
-  set( deviceDeps ${deviceDeps} openmp )
+  set( parallelDeps ${parallelDeps} openmp )
 endif()
 
 if ( ENABLE_CUDA )
-  set( deviceDeps ${deviceDeps} cuda )
+  set( parallelDeps ${parallelDeps} cuda )
 endif()
 
 if( ENABLE_HIP )
-  set( deviceDeps ${deviceDeps} blt::hip )
+  set( parallelDeps ${parallelDeps} blt::hip )
 endif()
 
 if( ENABLE_MPI )
-  set( deviceDeps ${deviceDeps} mpi )
+  set( parallelDeps ${parallelDeps} mpi )
 endif()
 
 foreach( lib ${subdirs} )
@@ -102,10 +102,6 @@ endif()
 
 # To install the library with the runtime path used during the building
 set_target_properties( geosx_core PROPERTIES INSTALL_RPATH_USE_LINK_PATH ON )
-#set_target_properties( geosx_core PROPERTIES BUILD_WITH_INSTALL_RPATH FALSE
-#		       	     	  	     SKIP_BUILD_RPATH FALSE
-#					     INSTALL_RPATH_USE_LINK_PATH TRUE )
-
 
 # To install the shared library
 install( TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

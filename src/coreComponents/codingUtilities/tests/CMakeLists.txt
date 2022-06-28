@@ -6,7 +6,7 @@ set( testSources
      testGeosxTraits.cpp
      )
 
-set(dependencyList gtest codingUtilities ${deviceDeps} )
+set(dependencyList gtest codingUtilities ${parallelDeps} )
 
 #
 # Add gtest C++ based tests

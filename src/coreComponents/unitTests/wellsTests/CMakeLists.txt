@@ -10,9 +10,9 @@ set( gtest_geosx_tests
 set( dependencyList gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core ${deviceDeps} )
+  set (dependencyList ${dependencyList} geosx_core ${parallelDeps} )
 else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} ${deviceDeps} )
+  set (dependencyList ${dependencyList} ${geosx_core_libs} ${parallelDeps} )
 endif()
 
 if( ENABLE_PVTPackage )

@@ -4,10 +4,10 @@
 
 macro(find_and_register)
     set(singleValueArgs NAME HEADER)
-    set(multiValueArgs INCLUDE_DIRECTORIES 
+    set(multiValueArgs INCLUDE_DIRECTORIES
                        LIBRARY_DIRECTORIES
-                       LIBRARIES 
-                       EXTRA_LIBRARIES 
+                       LIBRARIES
+                       EXTRA_LIBRARIES
                        DEPENDS )
 
     ## parse the arguments
@@ -119,13 +119,17 @@ if(DEFINED CONDUIT_DIR)
                  PATHS ${CONDUIT_DIR}/lib/cmake
                  NO_DEFAULT_PATH)
 
+    if(NOT TARGET conduit)
+        add_library(conduit ALIAS conduit::conduit)
+    endif()
+
     set(CONDUIT_TARGETS conduit conduit_relay conduit_blueprint)
     foreach(targetName ${CONDUIT_TARGETS} )
-        get_target_property(includeDirs 
+        get_target_property(includeDirs
                             ${targetName}
                             INTERFACE_INCLUDE_DIRECTORIES)
-                             
-        set_property(TARGET ${targetName} 
+
+        set_property(TARGET ${targetName}
                      APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                      ${includeDirs})
     endforeach()
@@ -139,7 +143,7 @@ if(DEFINED CONDUIT_DIR)
     #list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES /usr/include)
     #set_target_properties(conduit_relay PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES})
 
-    set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit)
+    set(thirdPartyLibs ${thirdPartyLibs} conduit)
 else()
     message(FATAL_ERROR "GEOSX requires conduit, set CONDUIT_DIR to the conduit installation directory.")
 endif()
@@ -159,7 +163,7 @@ if(DEFINED HDF5_DIR)
 		 COMPONENTS C)
 
     # On some platforms (Summit) HDF5 lists /usr/include in it's list of include directories.
-    # When this happens you can get really opaque include errors. 
+    # When this happens you can get really opaque include errors.
     # list(REMOVE_ITEM HDF5_INCLUDE_DIRS /usr/include)
 
     blt_import_library(NAME hdf5
@@ -203,7 +207,12 @@ if(DEFINED PUGIXML_DIR)
                  NO_DEFAULT_PATH)
 
     set(ENABLE_PUGIXML ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} pugixml::pugixml )
+
+    if (NOT TARGET pugixml)
+        add_library(pugixml ALIAS pugixml::pugixml )
+    endif ()
+
+    set(thirdPartyLibs ${thirdPartyLibs} pugixml )
 else()
     message(FATAL_ERROR "GEOSX requires pugixml, set PUGIXML_DIR to the pugixml installation directory.")
 endif()
@@ -474,7 +483,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
 
     find_and_register(NAME hypre
                       INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
-                      LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib 
+                      LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib
                       HEADER HYPRE.h
                       LIBRARIES HYPRE
                       EXTRA_LIBRARIES ${EXTRA_LIBS}
@@ -488,7 +497,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     # else()
     #   set(ENABLE_HYPRE ON CACHE BOOL "")
     # endif()
-    
+
     set(ENABLE_HYPRE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} hypre ${EXTRA_DEPS} )
 else()
@@ -505,15 +514,15 @@ endif()
 ################################
 if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
     message(STATUS "TRILINOS_DIR = ${TRILINOS_DIR}")
-  
+
     include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
-  
+
     list(REMOVE_ITEM Trilinos_LIBRARIES "gtest")
     list(REMOVE_DUPLICATES Trilinos_LIBRARIES)
 
     blt_import_library(NAME trilinos
                          DEPENDS_ON ${TRILINOS_DEPENDS}
-                         INCLUDES ${Trilinos_INCLUDE_DIRS} 
+                         INCLUDES ${Trilinos_INCLUDE_DIRS}
                          LIBRARIES ${Trilinos_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON)
 
@@ -575,12 +584,12 @@ if(DEFINED VTK_DIR)
     foreach( targetName ${VTK_TARGETS} )
 
         get_target_property( includeDirs ${targetName}  INTERFACE_INCLUDE_DIRECTORIES)
-    
-        set_property(TARGET ${targetName} 
+
+        set_property(TARGET ${targetName}
                      APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                      ${includeDirs})
     endforeach()
-    
+
     set(ENABLE_VTK ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} vtk)
 else()
@@ -603,7 +612,12 @@ if(DEFINED FMT_DIR)
                  NO_DEFAULT_PATH)
 
     set(ENABLE_FMT ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt)
+
+    if(NOT TARGET fmt)
+        add_library(fmt ALIAS fmt::fmt)
+    endif()
+
+    set(thirdPartyLibs ${thirdPartyLibs} fmt)
 else()
     message(FATAL_ERROR "GEOSX requires {fmt}, set FMT_DIR to the {fmt} installation directory.")
 endif()

@@ -108,7 +108,7 @@ set( mesh_sources
      utilities/ComputationalGeometry.cpp
      )
 
-set( dependencyList ${deviceDeps} schema dataRepository constitutive finiteElement parmetis metis )
+set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
 
 if( ENABLE_PAMELA )
     message( STATUS "Adding PAMELAMeshGenerator sources and headers" )

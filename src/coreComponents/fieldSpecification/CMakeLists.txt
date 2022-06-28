@@ -24,7 +24,7 @@ set( fieldSpecification_sources
      AquiferBoundaryCondition.cpp
    )
 
-set( dependencyList ${deviceDeps} functions linearAlgebra )
+set( dependencyList ${parallelDeps} functions linearAlgebra )
 
 blt_add_library( NAME       fieldSpecification
                  SOURCES    ${fieldSpecification_sources}

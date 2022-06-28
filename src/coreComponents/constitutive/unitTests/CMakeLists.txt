@@ -11,7 +11,7 @@ set( gtest_geosx_tests
      testPropertyConversions.cpp
    )
 
-set( dependencyList gtest constitutive ${deviceDeps} )
+set( dependencyList gtest constitutive ${parallelDeps} )
 
 #
 # Add gtest C++ based tests

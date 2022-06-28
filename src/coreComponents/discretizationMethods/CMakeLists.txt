@@ -4,7 +4,7 @@
 set( mainInterface_headers
      NumericalMethodsManager.hpp )
 
-set( dependencyList ${deviceDeps} finiteVolume )
+set( dependencyList ${parallelDeps} finiteVolume )
 
 #
 # Specify all sources

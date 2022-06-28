@@ -12,7 +12,7 @@ set( schema_headers
 set( schema_sources
      schemaUtilities.cpp )
 
-set( dependencyList ${deviceDeps} dataRepository )
+set( dependencyList ${parallelDeps} dataRepository )
 
 blt_add_library( NAME       schema
                  SOURCES    ${schema_sources}

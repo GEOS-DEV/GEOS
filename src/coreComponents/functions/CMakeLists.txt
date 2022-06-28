@@ -27,7 +27,7 @@ if( ENABLE_MATHPRESSO )
 endif()
 
 
-set( dependencyList ${deviceDeps} dataRepository )
+set( dependencyList ${parallelDeps} dataRepository )
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )

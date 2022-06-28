@@ -9,7 +9,7 @@ set( dataRepository_tests
      testBufferOps.cpp
    )
 
-set( dependencyList ${deviceDeps} gtest dataRepository )
+set( dependencyList ${parallelDeps} gtest dataRepository )
 
 #
 # Add gtest C++ based tests

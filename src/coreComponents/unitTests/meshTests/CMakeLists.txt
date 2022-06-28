@@ -33,7 +33,7 @@ if( ENABLE_VTK OR ENABLE_PAMELA )
   configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshDirName.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshDirName.hpp )
 endif()
 
-set( dependencyList ${deviceDeps} gtest )
+set( dependencyList ${parallelDeps} gtest )
 
 if( GEOSX_BUILD_SHARED_LIBS )
   set( dependencyList ${dependencyList} geosx_core )
