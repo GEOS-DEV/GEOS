@@ -118,6 +118,8 @@ void ReactionBase::Compute( real64 const & temperature,
 /*
 // Compute log10(ActivityCoefficient) for basis and dependent species along with their derivatives with respect to Ionic strength using the B-Dot Model
 // which is the same as the Extended Debye-Huckel model in GEOS.  
+// Model currently does not include the special cases for gases, solids and soluble gases like O2, CO2 and H2. Aqueous CO2 is treated like any other aqueous specimen. 
+// Have to figure out where is ionic strength being computed. 
 void ReactionBase::ComputeLog10ActCoefBDotModel( real64 const temperature,
                                              real64 const ionicStrength,
                                              array1d< real64 > & log10PrimaryActCoeff,
