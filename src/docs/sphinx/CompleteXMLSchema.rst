@@ -855,6 +855,13 @@ Element: SolidMechanicsLagrangianSSLE
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangianSSLE.rst
 
 
+.. _XML_SolidMechanicsStateReset:
+
+Element: SolidMechanicsStateReset
+=================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsStateReset.rst
+
+
 .. _XML_SolidMechanics_LagrangianFEM:
 
 Element: SolidMechanics_LagrangianFEM
@@ -1914,6 +1921,13 @@ Datastructure: SolidMechanicsEmbeddedFractures
 Datastructure: SolidMechanicsLagrangianSSLE
 ===========================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangianSSLE_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanicsStateReset:
+
+Datastructure: SolidMechanicsStateReset
+=======================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsStateReset_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanics_LagrangianFEM:
