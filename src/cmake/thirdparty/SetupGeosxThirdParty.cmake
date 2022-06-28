@@ -143,7 +143,7 @@ if(DEFINED CONDUIT_DIR)
     #list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES /usr/include)
     #set_target_properties(conduit_relay PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES})
 
-    set(thirdPartyLibs ${thirdPartyLibs} conduit)
+    set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit)
 else()
     message(FATAL_ERROR "GEOSX requires conduit, set CONDUIT_DIR to the conduit installation directory.")
 endif()
