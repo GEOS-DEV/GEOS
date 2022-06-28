@@ -10,10 +10,12 @@ set( fileIO_headers
      Outputs/SiloOutput.hpp
      Outputs/TimeHistoryOutput.hpp
      silo/SiloFile.hpp
-     timeHistory/HistoryIO.hpp
+     timeHistory/HDFFile.hpp
+     timeHistory/HistoryCollectionBase.hpp
+     timeHistory/BufferedHistoryIO.hpp
      timeHistory/PackCollection.hpp
-     timeHistory/TimeHistHDF.hpp
-     timeHistory/TimeHistoryCollection.hpp
+     timeHistory/HDFHistoryIO.hpp
+     timeHistory/HistoryCollection.hpp
    )
 
 #
@@ -28,8 +30,10 @@ set( fileIO_sources
      Outputs/SiloOutput.cpp
      Outputs/TimeHistoryOutput.cpp
      silo/SiloFile.cpp
+     timeHistory/HDFFile.cpp
+     timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
-     timeHistory/TimeHistHDF.cpp
+     timeHistory/HDFHistoryIO.cpp
    )
 
 set( dependencyList ${parallelDeps} mesh constitutive silo hdf5 )

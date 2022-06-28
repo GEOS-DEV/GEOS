@@ -648,7 +648,7 @@ Element: PhaseFieldFracture
 .. _XML_PorousDelftEgg:
 
 Element: PorousDelftEgg
-============================
+=======================
 .. include:: ../../coreComponents/schema/docs/PorousDelftEgg.rst
 
 
@@ -690,7 +690,7 @@ Element: PorousExtendedDruckerPrager
 .. _XML_PorousModifiedCamClay:
 
 Element: PorousModifiedCamClay
-====================================
+==============================
 .. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay.rst
 
 
@@ -853,6 +853,13 @@ Element: SolidMechanicsEmbeddedFractures
 Element: SolidMechanicsLagrangianSSLE
 =====================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangianSSLE.rst
+
+
+.. _XML_SolidMechanicsStateReset:
+
+Element: SolidMechanicsStateReset
+=================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsStateReset.rst
 
 
 .. _XML_SolidMechanics_LagrangianFEM:
@@ -1709,7 +1716,7 @@ Datastructure: PhaseFieldFracture
 .. _DATASTRUCTURE_PorousDelftEgg:
 
 Datastructure: PorousDelftEgg
-==================================
+=============================
 .. include:: ../../coreComponents/schema/docs/PorousDelftEgg_other.rst
 
 
@@ -1751,7 +1758,7 @@ Datastructure: PorousExtendedDruckerPrager
 .. _DATASTRUCTURE_PorousModifiedCamClay:
 
 Datastructure: PorousModifiedCamClay
-==========================================
+====================================
 .. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay_other.rst
 
 
@@ -1914,6 +1921,13 @@ Datastructure: SolidMechanicsEmbeddedFractures
 Datastructure: SolidMechanicsLagrangianSSLE
 ===========================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangianSSLE_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanicsStateReset:
+
+Datastructure: SolidMechanicsStateReset
+=======================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsStateReset_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanics_LagrangianFEM:

@@ -524,7 +524,7 @@ AccumulationKernel::
           arrayView1d< real64 const > const & wellElemVolume,
           arrayView2d< real64 const > const & wellElemDensity,
           arrayView2d< real64 const > const & dWellElemDensity_dPres,
-          arrayView1d< real64 const > const & wellElemDensity_n,
+          arrayView2d< real64 const > const & wellElemDensity_n,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
@@ -539,7 +539,7 @@ AccumulationKernel::
     localIndex const eqnRowIndex = wellElemDofNumber[iwelem] + ROFFSET::MASSBAL - rankOffset;
     globalIndex const presDofColIndex = wellElemDofNumber[iwelem] + COFFSET::DPRES;
 
-    real64 const localAccum = wellElemVolume[iwelem] * ( wellElemDensity[iwelem][0] - wellElemDensity_n[iwelem] );
+    real64 const localAccum = wellElemVolume[iwelem] * ( wellElemDensity[iwelem][0] - wellElemDensity_n[iwelem][0] );
     real64 const localAccumJacobian = wellElemVolume[iwelem] * dWellElemDensity_dPres[iwelem][0];
 
     // add contribution to global residual and jacobian (no need for atomics here)

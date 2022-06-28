@@ -243,7 +243,7 @@ struct AccumulationKernel
           arrayView1d< real64 const > const & wellElemVolume,
           arrayView2d< real64 const > const & wellElemDensity,
           arrayView2d< real64 const > const & dWellElemDensity_dPres,
-          arrayView1d< real64 const > const & wellElemDensity_n,
+          arrayView2d< real64 const > const & wellElemDensity_n,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
@@ -318,7 +318,7 @@ struct ResidualNormKernel
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView1d< real64 const > wellElemVolume,
-          arrayView1d< real64 const > const & wellElemDens_n,
+          arrayView2d< real64 const > const & wellElemDens_n,
           real64 const & timeAtEndOfStep,
           real64 const dt,
           real64 * localResidualNorm )
@@ -359,10 +359,10 @@ struct ResidualNormKernel
           }
           else // SinglePhaseWell::RowOffset::MASSBAL
           {
-            normalizer = dt * absTargetRate * wellElemDens_n[iwelem];
+            normalizer = dt * absTargetRate * wellElemDens_n[iwelem][0];
 
             // to make sure that everything still works well if the rate is zero, we add this check
-            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] * wellElemDens_n[iwelem] );
+            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] * wellElemDens_n[iwelem][0] );
           }
           localIndex const lid = wellElemDofNumber[iwelem] + idof - rankOffset;
           real64 const val = localResidual[lid] / normalizer;

@@ -100,13 +100,11 @@ extensions = [
     'sphinx.ext.inheritance_diagram',
     'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.napoleon',
-    'sphinxcontrib.mermaid',
+    'sphinxcontrib.plantuml',
 ]
 
-mermaid_output_format = "svg"
-with open('/tmp/puppeteer-config.json', 'w') as f:
-    f.write('{ "args": [ "--no-sandbox" ] }')
-mermaid_params = ['--backgroundColor', 'transparent', '-p', '/tmp/puppeteer-config.json']
+plantuml = "/usr/bin/plantuml"
+plantuml_output_format = "svg_img"
 
 plot_html_show_source_link = True
 plot_html_show_formats = False
