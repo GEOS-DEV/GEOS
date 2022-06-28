@@ -157,14 +157,11 @@ if(DEFINED HDF5_DIR)
     set(HDF5_ROOT ${HDF5_DIR})
     set(HDF5_USE_STATIC_LIBRARIES FALSE)
     set(HDF5_NO_FIND_PACKAGE_CONFIG_FILE ON)
-    find_package(HDF5 REQUIRED
-                 NAMES hdf5
-		 PATHS ${HDF5_DIR}/share/cmake
-		 COMPONENTS C)
+    include(FindHDF5)
 
     # On some platforms (Summit) HDF5 lists /usr/include in it's list of include directories.
     # When this happens you can get really opaque include errors.
-    # list(REMOVE_ITEM HDF5_INCLUDE_DIRS /usr/include)
+    list(REMOVE_ITEM HDF5_INCLUDE_DIRS /usr/include)
 
     blt_import_library(NAME hdf5
                        INCLUDES ${HDF5_INCLUDE_DIRS}
