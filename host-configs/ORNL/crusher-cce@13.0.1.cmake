@@ -1,5 +1,5 @@
 include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/ORNL/crusher-cce@13.0.1.cmake)
-include(crusher-base.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/crusher-base.cmake)
 
 set( CONDUIT_DIR "${GEOSX_TPL_DIR}/conduit-0.7.2-yjtizbev4kv2xwnezjpp77zrb5r4ujje/" CACHE PATH "" )
 set( HDF5_DIR "${GEOSX_TPL_DIR}/hdf5-1.10.8-yddpmglvv6c4mam3swocgkeeomcfpoyw/" CACHE PATH "" )
