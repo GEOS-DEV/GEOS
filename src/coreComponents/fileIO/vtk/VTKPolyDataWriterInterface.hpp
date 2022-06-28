@@ -212,7 +212,7 @@ private:
    */
   void writeNodeFields( NodeManager const & nodeManager,
                         arrayView1d< localIndex const > const & nodeIndices,
-                        vtkPointData & pointData ) const;
+                        vtkPointData * pointData ) const;
 
   /**
    * @brief Writes all the fields associated to the elements of \p er if their plotlevel is <= m_plotLevel
@@ -221,7 +221,7 @@ private:
    */
   template< class SUBREGION >
   void writeElementFields( ElementRegionBase const & subRegion,
-                           vtkCellData & cellData ) const;
+                           vtkCellData * cellData ) const;
 
   /**
    * @brief Writes an unstructured grid
@@ -234,7 +234,7 @@ private:
    */
   void writeUnstructuredGrid( integer const cycle,
                               string const & name,
-                              vtkUnstructuredGrid & ug ) const;
+                              vtkUnstructuredGrid * ug ) const;
 
 private:
 
