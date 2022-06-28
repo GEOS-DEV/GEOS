@@ -86,6 +86,15 @@ public:
    */
   ///@{
 
+
+  /**
+   *
+   * @param cellBlocks
+   */
+  template< typename SUBREGION_TYPE >
+  SUBREGION_TYPE & createElementSubRegion( string const & name );
+
+
   /**
    * @brief Generate mesh.
    * @param cellBlocks cell blocks where the mesh is generated
@@ -133,6 +142,14 @@ public:
   {
     return this->getGroup( viewKeyStruct::elementSubRegions() ).getGroup< SUBREGIONTYPE >( key );
   }
+
+
+  template< typename T=ElementSubRegionBase >
+  bool hasSubRegion( string const & name ) const
+  {
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).hasGroup< T >( name );
+  }
+
 
   /**
    * @brief Get the number of subregions in the region.
@@ -340,6 +357,14 @@ string_array ElementRegionBase::getConstitutiveNames() const
   }
   return rval;
 }
+
+
+template< typename SUBREGION_TYPE  >
+SUBREGION_TYPE & ElementRegionBase::createElementSubRegion( string const & name )
+{
+  return getGroup( viewKeyStruct::elementSubRegions() ).registerGroup<SUBREGION_TYPE>(name);
+}
+
 
 }
 

@@ -38,8 +38,9 @@ string toLower( string const & input )
 /**
  * String tokenizing function
  **/
-string_array tokenize( string const & str,
-                       string const & delimiters )
+template< typename RETURN_TYPE >
+RETURN_TYPE tokenize( string const & str,
+                      string const & delimiters )
 {
   if( str.empty() )
   {
@@ -50,8 +51,9 @@ string_array tokenize( string const & str,
   bool const usesNonWhitespaceDelimiters = std::any_of( delimiters.begin(), delimiters.end(), isNonSpace );
 
   // When only whitespace delimiters, skip multiple adjacent delimiters; otherwise don't and keep empty tokens
-  string_array tokens;
-  size_t lastPos = usesNonWhitespaceDelimiters ? 0 : str.find_first_not_of( delimiters, 0 );
+  RETURN_TYPE tokens;
+//  size_t lastPos = usesNonWhitespaceDelimiters ? 0 : str.find_first_not_of( delimiters, 0 );
+  size_t lastPos = str.find_first_not_of( delimiters, 0 );
   size_t newPos;
   while( ( newPos = str.find_first_of( delimiters, lastPos ) ) != string::npos )
   {
@@ -65,6 +67,14 @@ string_array tokenize( string const & str,
 
   return tokens;
 }
+
+template string_array tokenize<string_array>( string const & str,
+                                              string const & delimiters );
+
+template std::vector<string> tokenize<std::vector<string> >( string const & str,
+                                                             string const & delimiters );
+
+
 
 string trim( string const & str,
              string const & charsToRemove )

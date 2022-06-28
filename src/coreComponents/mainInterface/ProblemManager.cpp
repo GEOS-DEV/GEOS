@@ -451,7 +451,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
     // }
 
     Group & meshBodies = domain.getMeshBodies();
-    xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::elemManagerString );
+    xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::elemManagerString() );
 
     for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
     {
