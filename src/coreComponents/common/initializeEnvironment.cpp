@@ -201,8 +201,6 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   GEOSX_ERROR_IF_NE( cudaSuccess, cudaRuntimeGetVersion( &cudaRuntimeVersion ) );
   GEOSX_ERROR_IF_NE( cudaSuccess, cudaDriverGetVersion( &cudaDriverVersion ) );
 #else
-  GEOSX_UNUSED_VAR( cudaRuntimeVersion );
-  GEOSX_UNUSED_VAR( cudaDriverVersion );
   adiak::value( "CUDA", "Off" );
 #endif
   adiak::value( "CUDA runtime version", cudaRuntimeVersion );
@@ -217,8 +215,6 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   GEOSX_ERROR_IF_NE( hipSuccess, hipDriverGetVersion( &hipDriverVersion ) );
 #else
   adiak::value( "HIP", "Off" )
-  GEOSX_UNUSED_VAR( hipRuntimeVersion );
-  GEOSX_UNUSED_VAR( hipDriverVersion );
 #endif
   adiak::value( "HIP runtime version", hipRuntimeVersion);
   adiak::value( "HIP driver version", hipDriverVersion);

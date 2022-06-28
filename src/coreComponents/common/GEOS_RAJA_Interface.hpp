@@ -106,7 +106,7 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOSX_UNUSED_PARAM( stream )
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, end ), std::forward< LAMBDA >( body ) );
   return parallelDeviceEvent();
 }
-  
+
 #else
 
 template< unsigned long BLOCK_SIZE = 0 >
@@ -201,7 +201,7 @@ RAJA_INLINE void waitAllDeviceEvents( parallelDeviceEvents & events )
   GEOSX_UNUSED_VAR( events );
   // poll device events for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
   // 10 nsecs ~= 30 clock cycles @ 3Ghz
-  // GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
+  GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
 }
 
 template< typename POLICY, typename INDEX, typename LAMBDA >
