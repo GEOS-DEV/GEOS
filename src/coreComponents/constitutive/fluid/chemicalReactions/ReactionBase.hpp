@@ -178,18 +178,36 @@ protected:
   arrayView1d<real64>  m_inputTotalConc;	
   m_inputTotalConc.resize( m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
 // Not sure if this works
-  m_inputTotalConc[0:6] = 0	// This won't work because H+ cannot be 0
+  m_inputTotalConc[0:6] = 1E-20	// Does this notation work?
   m_inputTotalConc[0] = pow( 10.0, -7 )
-
+  /*
+  // Accurate value for H+ concentration. Hopefully it is not negative
+  m_inputTotalConc[0] = 0+m_inputTotalConc[1]-2*m_inputTotalConc[2]+2*m_inputTotalConc[3]+m_inputTotalConc[4]-2*m_inputTotalConc[5]-m_inputTotalConc[6];
+*/
 
   arrayView1d<real64>  m_log10PrimaryConc;	
   m_log10PrimaryConc.resize( m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
+/*
 // Not sure if this is the right place to give the initial guess
-  m_log10PrimaryConc = m_inputTotalConc
+  // Mismatch between lhs and rhs as one is log10 and the other isn't
+  // Fixed it with the lines below
+  m_log10PrimaryConc = log10(m_inputTotalConc);
+  // If for some reason the total concentration of H+ is negative (not sure if this can happen)
+  if (2*m_inputTotalConc[2]-2*m_inputTotalConc[3]-m_inputTotalConc[4]+2*m_inputTotalConc[5]+m_inputTotalConc[6]<0)
+  {
+    m_log10PrimaryConc[0] = log10(-2*m_inputTotalConc[2]+2*m_inputTotalConc[3]+m_inputTotalConc[4]-2*m_inputTotalConc[5]-m_inputTotalConc[6]);
+  }
+  else
+  {
+    m_log10PrimaryConc[0] = -7;
+  }
+*/
+  m_log10PrimaryConc = log10(m_inputTotalConc) // what function should be used to take a log of a variable?
 
   arrayView1d<real64>  m_log10SecConc;	
   m_log10SecConc.resize( m_numSecSpecies );	// Not sure if this is the correct way of allocating the size
-// Not sure if this works
+// Not sure if this works. 
+  // Perhpas a better option is to set it to -20 given that log10(c) = 0 means c = 1 which is pretty high
   m_log10SecConc[0:10] = 0;
 
   arrayView2d<real64>  dLog10SecConc_dLog10PrimaryConc;	
