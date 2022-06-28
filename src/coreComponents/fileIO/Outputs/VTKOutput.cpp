@@ -93,7 +93,9 @@ bool VTKOutput::execute( real64 const time_n,
 
 #if defined(GEOSX_USE_PYGEOSX)
 PyTypeObject * VTKOutput::getPythonType() const
-{ return python::getPyVTKOutputType(); }
+{ 
+  return python::getPyVTKOutputType(); 
+}
 #endif
 
 REGISTER_CATALOG_ENTRY( OutputBase, VTKOutput, string const &, Group * const )
