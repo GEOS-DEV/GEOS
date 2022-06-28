@@ -89,7 +89,7 @@ static PyObject * output( PyVTKOutput * self, PyObject * args )
   }
   catch( std::out_of_range const & e )
   {
-    std::cout<<"Target not found. Impossible output."<<std::endl;
+    std::cout << "Target not found. Impossible output."<< std::endl;
   }
   Py_RETURN_NONE;
 }
@@ -125,7 +125,7 @@ static PyObject * setOutputDir( PyVTKOutput * self, PyObject * args )
   }
   catch( std::out_of_range const & e )
   {
-    std::cout<<"Target not found."<<std::endl;
+    std::cout << "Target not found." <<std::endl;
   }
   Py_RETURN_NONE;
 }
@@ -161,7 +161,7 @@ static PyObject * setOutputFileRootName( PyVTKOutput * self, PyObject * args )
   }
   catch( std::out_of_range const & e )
   {
-    std::cout<<"Target not found."<<std::endl;
+    std::cout << "Target not found." << std::endl;
   }
   Py_RETURN_NONE;
 }
@@ -183,7 +183,7 @@ BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyTypeObject PyVTKOutputType = {
   PyVarObject_HEAD_INIT( nullptr, 0 )
-    .tp_name = "pygeosx.VTKOutput",
+  .tp_name = "pygeosx.VTKOutput",
   .tp_basicsize = sizeof( PyVTKOutput ),
   .tp_itemsize = 0,
   .tp_repr = PyVTKOutput_repr,
@@ -197,7 +197,9 @@ static PyTypeObject PyVTKOutputType = {
 END_ALLOW_DESIGNATED_INITIALIZERS
 
 PyTypeObject * getPyVTKOutputType()
-{ return &PyVTKOutputType; }
+{ 
+  return &PyVTKOutputType; 
+}
 
 }
 }
