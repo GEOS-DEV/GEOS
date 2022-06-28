@@ -611,6 +611,7 @@ if(DEFINED FMT_DIR)
     set(ENABLE_FMT ON CACHE BOOL "")
 
     if(NOT TARGET fmt)
+        set_target_properties(fmt::fmt PROPERTIES IMPORTED_GLOBAL TRUE)
         add_library(fmt ALIAS fmt::fmt)
     endif()
 
