@@ -13,11 +13,11 @@
  */
 
 /**
- * @file ReactionBase.hpp
+ * @file ReactionsBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_CHEMICALREACTIONS_REACTIONBASE_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_CHEMICALREACTIONS_REACTIONBASE_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_CHEMICALREACTIONS_REACTIONSBASE_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_CHEMICALREACTIONS_REACTIONSBASE_HPP_
 
 #include "dataRepository/ObjectCatalog.hpp"
 
@@ -30,48 +30,11 @@ namespace constitutive
 namespace chemicalReactions
 {
 
-class ReactionBaseUpdate
+class ReactionsBase
 {
 public:
 
-  /**
-   * @brief Constructor.
-   * @param componentMolarWeight component molar weights
-   */
-  explicit ReactionBaseUpdate( arrayView1d< real64 const > const & componentMolarWeight )
-    :
-    m_componentMolarWeight( componentMolarWeight )
-  {}
-
-  /**
-   * @brief Move the KernelWrapper to the given execution space, optionally touching it.
-   * @param space the space to move the KernelWrapper to
-   * @param touch whether the KernelWrapper should be touched in the new space or not
-   * @note This function exists to enable holding KernelWrapper objects in an ArrayView
-   *       and have their contents properly moved between memory spaces.
-   */
-  virtual void move( LvArray::MemorySpace const space, bool const touch )
-  {
-    m_componentMolarWeight.move( space, touch );
-  }
-
-  void computeLogActCoeff();
-
-
-protected:
-  /// Hard coding the example case - eventually would have to be changed such that it is read from an input file
-  integer m_numPrimarySpecies = 7;	// Currently not including H2O and O2gas
-  integer m_numSecSpecies = 11;
-  
-  arrayView1d<real64>  m_log10EqConst;
-  arrayView2d<real64> m_stoichMatrix;
-};
-
-class ReactionBase
-{
-public:
-
-  ReactionBase( string const & name,
+  ReactionsBase( string const & name,
                   string_array const & componentNames,
                   array1d< real64 > const & componentMolarWeight ):
     m_modelName( name ),
@@ -79,9 +42,9 @@ public:
     m_componentMolarWeight( componentMolarWeight )
   {}
 
-  virtual ~ReactionBase() = default;
+  virtual ~ReactionsBase() = default;
 
-  using CatalogInterface = dataRepository::CatalogInterface< ReactionBase,
+  using CatalogInterface = dataRepository::CatalogInterface< ReactionsBase,
                                                              string const &,
                                                              string_array const &,
                                                              string_array const &,
@@ -108,7 +71,44 @@ protected:
   /// Array storing the component molar weights
   array1d< real64 > m_componentMolarWeight;
 
-  arrayView2d<real64>  m_stoichMatrix;	
+  arrayView2d<real64>  m_stoichMatrix;
+
+class KernelWrapper
+{
+public:
+
+  /**
+   * @brief Constructor.
+   * @param componentMolarWeight component molar weights
+   */
+  explicit KernelWrapper( arrayView1d< real64 const > const & componentMolarWeight ):
+    m_componentMolarWeight( componentMolarWeight )
+  {}
+
+  /**
+   * @brief Move the KernelWrapper to the given execution space, optionally touching it.
+   * @param space the space to move the KernelWrapper to
+   * @param touch whether the KernelWrapper should be touched in the new space or not
+   * @note This function exists to enable holding KernelWrapper objects in an ArrayView
+   *       and have their contents properly moved between memory spaces.
+   */
+  virtual void move( LvArray::MemorySpace const space, bool const touch )
+  {
+    m_componentMolarWeight.move( space, touch );
+  }
+
+  void computeLogActCoeff();
+
+
+protected:
+  /// Hard coding the example case - eventually would have to be changed such that it is read from an input file
+  integer m_numPrimarySpecies = 7;	// Currently not including H2O and O2gas
+  integer m_numSecSpecies = 11;
+  
+  arrayView1d<real64> m_log10EqConst;
+  arrayView2d<real64> m_stoichMatrix;
+};
+
 };
 
 } // end namespace chemicalReactions
@@ -117,4 +117,4 @@ protected:
 
 } // end namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_CHEMICALREACTIONS_REACTIONBASE_HPP_
+#endif //GEOSX_CONSTITUTIVE_FLUID_CHEMICALREACTIONS_REACTIONSBASE_HPP_

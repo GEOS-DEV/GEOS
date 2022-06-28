@@ -13,10 +13,10 @@
  */
 
 /**
- * @file EquilibriumReaction.cpp
+ * @file KineticReactions.cpp
  */
 
-#include "constitutive/fluid/PVTFunctions/EquilibriumReaction.hpp"
+#include "constitutive/fluid/PVTFunctions/KineticReactions.hpp"
 
 #include "constitutive/fluid/PVTFunctions/CO2EOSSolver.hpp"
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
@@ -33,7 +33,7 @@ namespace constitutive
 namespace chemicalReactions
 {} // namespace
 
-EquilibriumReaction::EquilibriumReaction( string const & name,
+KineticReactions::KineticReactions( string const & name,
                                           string_array const & inputParams,
                                           string_array const & phaseNames,
                                           string_array const & componentNames,
@@ -43,149 +43,25 @@ EquilibriumReaction::EquilibriumReaction( string const & name,
                 componentMolarWeight )
 {}
 
-EquilibriumReaction::KernelWrapper EquilibriumReaction::createKernelWrapper() const
+KineticReactions::KernelWrapper KineticReactions::createKernelWrapper() const
 {
   return KernelWrapper(  );
 }
 
-void EquilibriumReaction::allocateConstitutiveData( dataRepository::Group & const parent,
-                                                    localIndex const numConstitutivePointsPerParentIndex )
-{
-  ReactionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  m_databaseType = stringToDatabaseType( m_databaseTypeString );  // Have to define this datatype somewhere
-  m_activityCoefModel = stringToActivityCoefModel( m_activityCoefModelString );   // Have to define this datatype somewhere
-
-// Have to write this function somewhere
-  ReadDatabase();
-
-// Find whether H+ and H2O are specified as basis species
-  bool HplusNotFound = 1;
-  bool H2OFound = 0;
-  localIndex const NBasis = numBasisSpecies();
-  m_isHplus.resize( NBasis );
-  for( localIndex id = 0; id < NBasis; ++id )
-  {
-    if( m_basisSpeciesNames[id] == "H+" )
-    {
-      HplusNotFound = 0;
-      m_isHplus[id] = 1;
-    }
-    else
-    {
-      m_isHplus[id] = 0;
-    }
-    if( m_basisSpeciesNames[id] == "H2O" )
-      H2OFound = 1;
-  }
-
-  GEOSX_ERROR_IF( HplusNotFound, "ReactionBase: H+ is not specified in basisSpeciesNames" );
-  GEOSX_ERROR_IF( H2OFound, "ReactionBase: H2O cannot be specified in basisSpeciesNames" );
-
-  resizeFields( parent.size() );
-}
-
 // initialize the concentration of the basis and dependent species and their derivatives.
-// assignemnts associated with kinetic reaction rates have been commented out.
-void EquilibriumReaction::resizeFields( localIndex const size )
+void KineticReactions::resizeFields( localIndex const size )
 {
-  localIndex const NBasis = numBasisSpecies();    //These functions need to be defined somehwere
-  localIndex const NDependent = numDependentSpecies();
-//  localIndex const NReaction = numKineticReaction();	**** commented out as this isn't equilibrium
+  localIndex const NReaction = numKineticReaction();
 
   m_concentrationAct.resize( size, NBasis );    // I think concentration*ActivityCoefficient for the basis species
   m_dependentConc.resize( size, NDependent + 1 );
   m_dDependentConc_dConc.resize( size, NDependent + 1, NBasis + 1 );
 
-//  m_kineticReactionRate.resize( size, NReaction );	**** commented out as this isn't equilibrium
-//  m_dKineticReactionRate_dConc.resize( size, NReaction, NBasis );
+  m_kineticReactionRate.resize( size, NReaction );	
+  m_dKineticReactionRate_dConc.resize( size, NReaction, NBasis );
 
-//  m_kineticSpeciesReactionRate.resize( size, NBasis );
-//  m_dKineticSpeciesReactionRate_dConc.resize( size, NBasis, NBasis );
-
-  m_totalConc.resize( size, NBasis );     // I think this is the total concentration for mass balance. Not 100% sure
-  m_dTotalConc_dConc.resize( size, NBasis, NBasis );
-}
-
-// Compute log10(ActivityCoefficient) for basis and dependent species along with their derivatives with respect of Ionic strength.
-// Only B-Dot model has been impletemented.
-// If there are plans to implement other models, maybe it is better to create multiple functions, one each for each activity coefficient
-// model.
-void EquilibriumReaction::ComputeLogActCoef( real64 const pressure,
-                                             real64 const temperature,
-                                             real64 const ionicStrength,
-                                             array1d< real64 > & logActCoef1,
-                                             array1d< real64 > & dLogActCoef1,
-                                             array1d< real64 > & logActCoef2,
-                                             array1d< real64 > & dLogActCoef2 )
-{
-  GEOSX_UNUSED_VAR( pressure );
-  localIndex const NBasis = numBasisSpecies();
-  localIndex const NDependent = numDependentSpecies();
-  const array1d< Species > & dependentSpecies = m_thermoDatabase->GetDependentSpecies();  // Have to define the Species datatype somewhere
-  const array1d< Species > & basisSpecies = m_thermoDatabase->GetBasisSpecies();
-  const array1d< localIndex > & basisSpeciesIndices = m_thermoDatabase->GetBasisSpeciesIndices();
-  const ActCoefParameters & actCoefParameters = m_thermoDatabase->GetActCoefParameters(); // Have to define the ActCoefParameters datatype
-                                                                                          // somewhere
-
-  logActCoef1.resize( NBasis );
-  dLogActCoef1.resize( NBasis );
-  logActCoef2.resize( NDependent );
-  dLogActCoef2.resize( NDependent );
-
-  real64 DHA, DHB, Bdot, DHazero, charge;
-  interpolation( "DHA", actCoefParameters.temperatures, actCoefParameters.DHAs, temperature, DHA ); // Have to define this function
-                                                                                                    // somehwere. Maybe there is already one
-                                                                                                    // defined somewhere
-  interpolation( "DHB", actCoefParameters.temperatures, actCoefParameters.DHBs, temperature, DHB );
-
-  // constants for the BDot model
-  static real64 C=-1.0312;
-  static real64 F=0.0012806;
-  static real64 G=255.9;
-  static real64 E=0.4445;
-  static real64 H=-0.001606;
-  real64 TK = temperature + 273.15;
-
-  if( m_activityCoefModel == ActivityCoefModel::BDot )    // Have to define ActivityCoefModel somewhere
-  {
-    interpolation( "Bdot", actCoefParameters.temperatures, actCoefParameters.BDots, temperature, Bdot );
-    for( localIndex i = 0; i < NBasis; ++i )
-    {
-      localIndex ic = basisSpeciesIndices[i];
-      DHazero = basisSpecies[ic].DHazero;
-      charge = basisSpecies[ic].charge;
-      logActCoef1[i] = Bdot * ionicStrength - DHA * charge * charge * sqrt( ionicStrength ) / (1.0 + DHazero * DHB * sqrt( ionicStrength ));
-      dLogActCoef1[i] = Bdot - DHA * charge * charge *
-                        (0.5 / sqrt( ionicStrength ) / (1.0 + DHazero * DHB * sqrt( ionicStrength )) - 0.5 * DHazero * DHB / (1.0 + DHazero * DHB * sqrt( ionicStrength )) /
-                         (1.0 + DHazero * DHB * sqrt( ionicStrength ))); // dlog10(activityCoefficient)/dI
-    }
-    for( localIndex i = 0; i < dependentSpecies.size(); ++i )
-    {
-      DHazero = dependentSpecies[i].DHazero;
-      charge = dependentSpecies[i].charge;
-      // special consideration for dissolved CO2, O2 and H2
-      if( dependentSpecies[i].name == "CO2(aq)" || dependentSpecies[i].name == "H2(aq)" || dependentSpecies[i].name == "O2(aq)" )
-      {
-        logActCoef2[i] = ((C + F * TK + G / TK) * ionicStrength -(E + H * TK) * (ionicStrength / (ionicStrength+1) )) / 2.303;
-        dLogActCoef2[i] = ((C + F * TK + G / TK) - (E + H * TK) * (1.0 / (ionicStrength + 1) - ionicStrength / (ionicStrength + 1) / (ionicStrength + 1))) / 2.303;
-      }
-      else if( strstr( dependentSpecies[i].name.c_str(), "(aq)" ) || dependentSpecies[i].type == SpeciesType::Gas || dependentSpecies[i].type == SpeciesType::Solid )
-      {
-        logActCoef2[i] = 0; //Activity coefficients of gases, solid, and soluble gases other than CO2, O2, and H2 is 1 - Log10(1) = 0.
-        dLogActCoef2[i] = 0;
-      }
-      else
-      {
-        logActCoef2[i] = Bdot * ionicStrength - DHA * charge * charge * sqrt( ionicStrength ) / (1.0 + DHazero * DHB * sqrt( ionicStrength ));
-        dLogActCoef2[i] = Bdot - DHA * charge * charge *
-                          (0.5 / sqrt( ionicStrength ) / (1.0 + DHazero * DHB * sqrt( ionicStrength )) - 0.5 * DHazero * DHB / (1.0 + DHazero * DHB * sqrt( ionicStrength )) /
-                           (1.0 + DHazero * DHB * sqrt( ionicStrength )));
-      }
-    }
-  }
-  else
-    GEOSX_ERROR( "wrong activity coef model" );
+  m_kineticSpeciesReactionRate.resize( size, NBasis );
+  m_dKineticSpeciesReactionRate_dConc.resize( size, NBasis, NBasis );
 }
 
 // function to compute the derivative of the concentration of dependent species with respect to the concentration of the basis species.
@@ -194,7 +70,7 @@ void EquilibriumReaction::ComputeLogActCoef( real64 const pressure,
 // dependent concentrations not the ones computed later in the function
 // calls the function that computes acitivity coefficient and its derivatives.
 // Perhaps a more descriptive function name is useful.
-void EquilibriumReaction::Compute( real64 const pressure,
+void KineticReactions::Compute( real64 const pressure,
                                    real64 const temperature,
                                    arraySlice1d< real64 const > const & concentration,    // Looks like it is log10(concentration)
                                    arraySlice1d< real64 > const & dependentConc,    // Why are these listed as const when they are getting
@@ -288,24 +164,23 @@ void EquilibriumReaction::Compute( real64 const pressure,
 // for each basis species, total concentration = basis concentration + sum of the contribution of all dependent species to the basis
 // species.
 // The kinetic reactions aspect of the code has been commented out
-void EquilibriumReaction::ComputeChemistry( real64 const & temperature,
+void KineticReactions::ComputeChemistry( real64 const & temperature,
                                             arraySlice1d< real64 const > const & concentration,
-//                                            arraySlice1d< real64 const > const & surfaceArea0,		// All the commented out enteries are
-// related to the kinetically limited dissolution/precipitation reactions
-//                                            arraySlice1d< real64 const > const & volumeFraction0,
-//                                            arraySlice1d< real64 const > const & volumeFraction,
-//                                            real64 const & porosity0,
-//                                            real64 const & porosity,
+                                            arraySlice1d< real64 const > const & surfaceArea0,		// All the commented out enteries are
+                                            arraySlice1d< real64 const > const & volumeFraction0,
+                                            arraySlice1d< real64 const > const & volumeFraction,
+                                            real64 const & porosity0,
+                                            real64 const & porosity,
                                             arraySlice1d< real64 const > const & concAct,
                                             arraySlice1d< real64 const > const & dependentConc,
                                             arraySlice2d< real64 const > const & dDependentConc_dConc,
                                             arraySlice1d< real64 > const & totalConc,
                                             arraySlice2d< real64 > const & dTotalConc_dConc )
-//                                            arraySlice1d< real64 > const & kineticReactionRate,
-//                                            arraySlice2d< real64 > const & dKineticReactionRate_dConc, arraySlice1d< real64 > const &
-// kineticSpeciesReactionRate,
-//                                            arraySlice2d< real64 > const & dKineticSpeciesReactionRate_dConc,
-//                                            KineticReactions & kineticReactions )
+                                           arraySlice1d< real64 > const & kineticReactionRate,
+                                           arraySlice2d< real64 > const & dKineticReactionRate_dConc, 
+                                           arraySlice1d< real64 > const & kineticSpeciesReactionRate,
+                                           arraySlice2d< real64 > const & dKineticSpeciesReactionRate_dConc,
+                                           KineticReactions & kineticReactions )
 
 {
   static const real64 RConst = 8.314;
@@ -337,8 +212,6 @@ void EquilibriumReaction::ComputeChemistry( real64 const & temperature,
       }
     }
   }
-
-/* Has to do with dynamic reactions
    const array1d< KineticReaction > & kineticReactionArray = kineticReactions->GetKineticReactions();
 
    for( localIndex ir = 0; ir < NReaction; ++ir )
@@ -409,8 +282,6 @@ void EquilibriumReaction::ComputeChemistry( real64 const & temperature,
     }
 
    }
- */
-
 }
 
 // function to calculation the reaction rate. Includes impact of temperature, concentration, surface area, volume fraction and porosity
@@ -452,7 +323,7 @@ void KineticReactionUpdate::ComputeKineticReactionRate( real64 const & temperatu
 
 
 
-REGISTER_CATALOG_ENTRY( ReactionBase, EquilibriumReaction, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( ReactionBase, KineticReactions, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace chemicalReactions
 

@@ -67,8 +67,15 @@ public:
 
 private:
 
-    friend class ReactiveMultiFluid;
+  EquilibriumReactions::KernelWrapper m_equilibriumReactions;
+  
+  KineticReactions::KernelWrapper m_kineticReactions;
 
+  arrayView2d<real64>  m_primarySpeciesConcentration;
+
+  arrayView2d<real64>  m_secondarySpeciesConcentration;
+
+  arrayView2d<real64>  m_primarySpeciesTotalConcentration;
   };
 
 
@@ -96,13 +103,11 @@ private:
 
   EquilibriumReaction m_equilibriumReaction;
 
-  array1d<real64>  m_primarySpeciesConcentration;
+  array2d<real64>  m_primarySpeciesConcentration;
 
-  array1d<real64>  m_secondarySpeciesConcentration;
+  array2d<real64>  m_secondarySpeciesConcentration;
 
-  array1d<real64>  m_primarySpeciesTotalConcentration;
-
-
+  array2d<real64>  m_primarySpeciesTotalConcentration;
 };
 
 GEOSX_HOST_DEVICE
@@ -111,17 +116,20 @@ ReactiveMultiFluid::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-           arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-           arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-           arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration ) const
+           arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+           arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
+           arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration ) const
 {
   // I am assuming that the primary variable is the concentration of the primary species.
   for(int i=0; i < m_numPrimarySpecies; i++ )
   {
-    primarySpeciesConcentration[i] = composition[i];
+    primarySpeciesTotalConcentration[i] = composition[i];
   }
+  
+  // compute activity coefficients ( oldPrimarySpecies, oldSedcondarySpecies )
 
   m_equilibriumReactions.updateConcentrations( temperature,
+                                               primarySpeciesTotalConcentration,
                                                primarySpeciesContentration, 
                                                secondarySpeciesConcentration );
 
