@@ -1,0 +1,237 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="SolidMechSolve"
+      damageSolverName="DamageSolve"
+      couplingTypeOption="FixedStress"
+      logLevel="2"
+      subcycling="0"
+      discretization="FE1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="100"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </PhaseFieldFracture>
+
+    <SolidMechanicsLagrangianSSLE
+      name="SolidMechSolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region1 }"
+      >
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        newtonTol="1.0e-10"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="Damage"
+      
+      localDissipation="Linear"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        newtonTol="1.0e-10"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </PhaseFieldDamageFEM>
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Region1 }"
+      nodeBasedSIF="1"
+      
+      rockToughness="0"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 100 }"
+      yCoords="{ -300, -5, 0, 5, 300 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 200 }"
+      ny="{ 20, 20, 20, 20 }"
+      nz="{ 2 }"
+      yBias="{0.75, 0, 0, -0.75}"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="10.0">
+    <!-- <SoloEvent name="siloOutput0"
+               target="/Outputs/SiloOutput"/> -->
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="0.1"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent
+      name="vtkOutput"
+      timeFrequency="0.1"
+      target="/Outputs/DamageNucleationCalibration_VTKOutput"/>
+
+    <PeriodicEvent
+      name="siloOutputs"
+      timeFrequency="0.1"
+      target="/Outputs/DamageNucleationCalibration_SiloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ cb1 }"
+      materialList="{ graphite }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      defaultAperture="0.0"
+      materialList="{ graphite }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <DamageElasticIsotropic
+      name="graphite"
+      defaultDensity="2700"
+      defaultBulkModulus="4.4e3"
+      defaultShearModulus="4.3e3"
+      lengthScale="1.0"
+      criticalFractureEnergy="9.1e-2"
+      criticalStrainEnergy="0"
+      extDrivingForceSwitch="True"
+      tensileStrength="27.0"
+      compressiveStrength="77.0"
+      deltaCoefficient="4.0"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <Traction
+      name="topTraction"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="4.0"
+      functionName="timeFunction"
+      setNames="{ ypos }"/>
+
+    <Traction
+      name="bottomTraction"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="4.0"
+      functionName="timeFunction"
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="fixedY"
+      fieldName="TotalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ rightCenterPointy }"/>
+
+    <FieldSpecification
+      name="fixedX"
+      fieldName="TotalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="fixedZ"
+      fieldName="TotalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ rightCenterPointz }"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 0.1, 10.0 }"
+      values="{ 0.0, 0.0, 1.0 }"/>
+  </Functions>
+
+  <Outputs>
+    <Silo
+      name="DamageNucleationCalibration_SiloOutput"/>
+
+    <VTK
+      name="DamageNucleationCalibration_VTKOutput"
+      plotFileRoot="plot_damage_edf_calibration"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Geometry>
+    <Box
+      name="fracture"
+      xMin="{ -0.001, -0.001, -0.001 }"
+      xMax="{ 20.001,  0.001,  1.001 }"/>
+
+    <Box
+      name="rightCenterPointy"
+      xMin="{ 20.001, -0.001, -0.001 }"
+      xMax="{ 100.001, 0.001, 1.001 }"/>
+
+    <Box
+      name="rightCenterPointz"
+      xMin="{ 99.999, -300.001, 0.499 }"
+      xMax="{ 100.001, 300.001, 0.501 }"/>
+  </Geometry>
+</Problem>
