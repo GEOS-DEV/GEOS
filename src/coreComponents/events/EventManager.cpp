@@ -31,6 +31,7 @@ using namespace dataRepository;
 EventManager::EventManager( string const & name,
                             Group * const parent ):
   Group( name, parent ),
+  m_minTime(),
   m_maxTime(),
   m_maxCycle(),
   m_time(),
@@ -42,6 +43,11 @@ EventManager::EventManager( string const & name,
 
   // This enables logLevel filtering
   enableLogLevelInput();
+
+  registerWrapper( viewKeyStruct::minTimeString(), &m_minTime ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Start simulation time for the global event loop." );
 
   registerWrapper( viewKeyStruct::maxTimeString(), &m_maxTime ).
     setApplyDefaultValue( std::numeric_limits< real64 >::max()).
@@ -116,9 +122,18 @@ bool EventManager::run( DomainPartition & domain )
   } );
 
   // Inform user if it appears this is a mid-loop restart
-  if((m_currentSubEvent > 0))
+  if( m_currentSubEvent > 0 )
   {
     GEOSX_LOG_RANK_0( "Resuming from step " << m_currentSubEvent << " of the event loop." );
+  }
+  else if( !isZero( m_minTime ) )
+  {
+    // the user has requested a "non-standard" min time (negative time possible for initialization events for instance)
+    // since we are not doing a mid-loop restart, we can set the current time to the min time
+    // note: commenting out "if( !isZero( m_minTime ) )" will not break the code, but will break the contactMechanics integrated tests
+    // restart
+    //       because it is done in an unusual fashion
+    m_time = m_minTime;
   }
 
   // Run problem
