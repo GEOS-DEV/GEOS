@@ -154,7 +154,7 @@ TEST( PAMELAImport, testECLIPSE )
   std::stringstream inputStreamRegion;
   inputStreamRegion <<
     "<?xml version=\"1.0\" ?>" <<
-    "  <CellElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
+    "  <ElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
     "  <CellElementRegion name=\"0\" cellBlocks=\"{DEFAULT_HEX}\" materialList=\"{water, rock}\"/>" <<
     "</ElementRegions>";
   string inputStringRegion = inputStreamRegion.str();

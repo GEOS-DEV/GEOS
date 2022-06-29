@@ -95,5 +95,30 @@ string removeStringAndFollowingContent( string const & str,
   return newStr;
 }
 
+string removeTab( string const & str )
+{
+  string newStr = str;
+  std::replace( newStr.begin(), newStr.end(), '\t', ' ' );
+  return newStr;
 }
+
+string removeEndOfLine( string const & str )
+{
+  string newStr = str;
+  std::replace( newStr.begin(), newStr.end(), '\r', ' ' );
+  std::replace( newStr.begin(), newStr.end(), '\n', ' ' );
+  return newStr;
+}
+
+string removeExtraSpaces( string const & str )
+{
+  string newStr = str;
+  newStr.erase( std::unique( newStr.begin(), newStr.end(),
+                             []( char a, char b ) { return a == ' ' && b == ' '; } ), newStr.end());
+  return newStr;
+}
+
+
+}
+
 }

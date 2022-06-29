@@ -3,6 +3,7 @@
 ================ ==== ======= =========================== 
 Name             Type Default Description                 
 ================ ==== ======= =========================== 
+CornerPointMesh  node         :ref:`XML_CornerPointMesh`  
 InternalMesh     node         :ref:`XML_InternalMesh`     
 InternalWell     node         :ref:`XML_InternalWell`     
 InternalWellbore node         :ref:`XML_InternalWellbore` 

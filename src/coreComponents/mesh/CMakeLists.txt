@@ -38,6 +38,7 @@ set( mesh_headers
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
+     generators/CornerPointMeshGenerator.hpp
      generators/MeshGeneratorBase.hpp
      generators/ParMETISInterface.hpp
      generators/PrismUtilities.hpp
@@ -57,6 +58,12 @@ set( mesh_headers
      utilities/ComputationalGeometry.hpp
      utilities/MeshMapUtilities.hpp
      utilities/StructuredGridUtilities.hpp
+     generators/cornerPointMesh/CornerPointMeshParser.hpp
+     generators/cornerPointMesh/CornerPointMeshBuilder.hpp
+     generators/cornerPointMesh/CornerPointMeshPartition.hpp
+     generators/cornerPointMesh/CornerPointMeshData.hpp
+     generators/cornerPointMesh/utilities/OutputUtilities.hpp
+     generators/cornerPointMesh/utilities/GeometryUtilities.hpp
    )
 
 # Specify all sources
@@ -92,6 +99,7 @@ set( mesh_sources
      generators/InternalMeshGenerator.cpp
      generators/InternalWellGenerator.cpp
      generators/InternalWellboreGenerator.cpp
+     generators/CornerPointMeshGenerator.cpp     
      generators/MeshGeneratorBase.cpp
      generators/ParMETISInterface.cpp
      mpiCommunications/CommID.cpp
@@ -107,7 +115,10 @@ set( mesh_sources
      simpleGeometricObjects/SimpleGeometricObjectBase.cpp
      simpleGeometricObjects/ThickPlane.cpp
      utilities/ComputationalGeometry.cpp
-     )
+     generators/cornerPointMesh/CornerPointMeshParser.cpp
+     generators/cornerPointMesh/CornerPointMeshBuilder.cpp
+     generators/cornerPointMesh/CornerPointMeshPartition.cpp
+   )
 
 set( dependencyList schema dataRepository constitutive finiteElement parmetis metis )
 

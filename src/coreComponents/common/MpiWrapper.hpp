@@ -388,6 +388,21 @@ public:
   static void broadcast( T & value, int srcRank = 0, MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
+   * @brief Strongly typed wrapper around MPI_Scatter()
+   * @tparam T the type to scatter
+   * @param[in] sendValues the values to scatter across ranks
+   * @param[out] myValues the arrayView in which I receive my values
+   * @param[in] srcRank The rank of the source process within \p comm.
+   * @param[in] comm The handle to the MPI_Comm
+   * @return
+   */
+  template< typename T >
+  static int scatter( arrayView1d< T const > sendValues,
+                      arrayView1d< T > recvValues,
+                      int MPI_PARAM( srcRank ),
+                      MPI_Comm MPI_PARAM( comm ) );
+
+  /**
    * @brief Strongly typed wrapper around MPI_Gather().
    * @tparam TS The pointer type for \p sendbuf
    * @tparam TR The pointer type for \p recvbuf
@@ -682,6 +697,35 @@ int MpiWrapper::allgatherv( T_SEND const * const sendbuf,
 
 
 template< typename T >
+int MpiWrapper::scatter( arrayView1d< T const > sendValues,
+                         arrayView1d< T > recvValues,
+                         int MPI_PARAM( srcRank ),
+                         MPI_Comm MPI_PARAM( comm ) )
+{
+#ifdef GEOSX_USE_MPI
+  int const mpiSize = commSize( comm );
+  int const sizePerRank = recvValues.size();
+  GEOSX_ERROR_IF( recvValues.size() * mpiSize != sendValues.size(),
+                  "Inconsistent sizes in MpiWrapper::scatter" );
+  return MPI_Scatter( sendValues.data(),
+                      sizePerRank,
+                      internal::getMpiType< T >(),
+                      recvValues.data(),
+                      sizePerRank,
+                      internal::getMpiType< T >(),
+                      srcRank,
+                      comm );
+#else
+  for( localIndex i = 0; i < recvValues(); ++i )
+  {
+    recvValues( i ) = sendValues( i );
+  }
+  return 0;
+#endif
+}
+
+
+template< typename T >
 void MpiWrapper::allGather( T const myValue, array1d< T > & allValues, MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
@@ -697,6 +741,7 @@ void MpiWrapper::allGather( T const myValue, array1d< T > & allValues, MPI_Comm 
   allValues[0] = myValue;
 #endif
 }
+
 
 template< typename T >
 int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,

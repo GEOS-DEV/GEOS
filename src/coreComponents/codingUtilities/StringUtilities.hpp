@@ -137,6 +137,28 @@ array1d< T > fromStringToArray( string const & str )
   return v;
 }
 
+/*
+ * @brief Take a string, remove the tabs (\t) in it, and return the result
+ * @param[in] str the string from which we want to remove the tabs
+ * @return the string with the tabs removed
+ */
+string removeTab( string const & str );
+
+/*
+ * @brief Take a string, remove the end of line symbols (\r and \n) in it, and return the result
+ * @param[in] str the string from which we want to remove the end of line symbols
+ * @return the string with the end of line symbols removed
+ */
+string removeEndOfLine( string const & str );
+
+/*
+ * @brief Take a string, remove the extra spaces in it, and return the result
+ * @param[in] str the string from which we want to remove the extra spaces
+ * @return the string with the extra symbols removed
+ */
+string removeExtraSpaces( string const & str );
+
+
 } // namespace stringutilities
 } // namespace geosx
 

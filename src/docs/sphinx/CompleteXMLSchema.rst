@@ -232,6 +232,13 @@ Element: Constitutive
 .. include:: ../../coreComponents/schema/docs/Constitutive.rst
 
 
+.. _XML_CornerPointMesh:
+
+Element: CornerPointMesh
+========================
+.. include:: ../../coreComponents/schema/docs/CornerPointMesh.rst
+
+
 .. _XML_Coulomb:
 
 Element: Coulomb
@@ -1277,6 +1284,13 @@ Datastructure: Constitutive
 Datastructure: ConstitutiveModels
 =================================
 .. include:: ../../coreComponents/schema/docs/ConstitutiveModels_other.rst
+
+
+.. _DATASTRUCTURE_CornerPointMesh:
+
+Datastructure: CornerPointMesh
+==============================
+.. include:: ../../coreComponents/schema/docs/CornerPointMesh_other.rst
 
 
 .. _DATASTRUCTURE_Coulomb:
