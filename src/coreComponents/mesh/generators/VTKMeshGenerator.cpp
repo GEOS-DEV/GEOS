@@ -42,6 +42,9 @@
 #include <vtkUnstructuredGridReader.h>
 #include <vtkXMLPUnstructuredGridReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
+// ADD for vti import
+#include <vtkImageData.h>
+#include <vtkXMLImageDataReader.h>
 
 #ifdef GEOSX_USE_MPI
 #include <vtkMPIController.h>
@@ -99,11 +102,11 @@ vtkSmartPointer< vtkMultiProcessController > getController()
  * @brief Load the VTK file into the VTK data structure
  * @param[in] filePath the Path of the file to load
  */
-vtkSmartPointer< vtkUnstructuredGrid >
+vtkSmartPointer< vtkUnstructuredGrid > // TODO:ADD < vtkImageData > 
 loadMesh( Path const & filePath )
 {
   string const extension = filePath.extension();
-  vtkSmartPointer< vtkUnstructuredGrid > loadedMesh;
+  vtkSmartPointer< vtkUnstructuredGrid > loadedMesh; // vtkUnstructuredGrid > // TODO:ADD < vtkImageData > 
 
   if( extension == "pvtu" )
   {
@@ -121,8 +124,8 @@ loadMesh( Path const & filePath )
   {
     if( MpiWrapper::commRank() == 0 )
     {
-      auto const read = [&]( auto const vtkUgReader )
-      {
+      auto const read = [&]( auto const vtkUgReader ) 
+      { // change Ug to G ? 
         vtkUgReader->SetFileName( filePath.c_str() );
         vtkUgReader->Update();
         return vtkUgReader->GetOutput();
@@ -135,6 +138,10 @@ loadMesh( Path const & filePath )
       else if( extension == "vtu" )
       {
         loadedMesh = read( vtkSmartPointer< vtkXMLUnstructuredGridReader >::New() );
+      }
+      else if( extension == "vti" )
+      {
+        loadedMesh = read( vtkSmartPointer< vtkXMLImageDataReader >::New() ); // TODO:ADD
       }
       else
       {
@@ -1088,7 +1095,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   {
     GEOSX_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
-    vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = vtk::loadMesh( m_filePath );
+    vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = vtk::loadMesh( m_filePath ); // vtkUnstructuredGrid //TODO:ADD if vti loadStructuredMesh(...) ? or 'UG to ID '
     GEOSX_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
     m_vtkMesh = vtk::redistributeMesh( *loadedMesh, comm, m_partitionRefinement );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
