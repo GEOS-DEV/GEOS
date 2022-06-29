@@ -15,105 +15,156 @@ namespace geosx
 {
 using namespace dataRepository;
 
-
-//void shortPathCheck( string const & path )
-//{
-//  conduit::Node rootNode;
-//  Group meshBodies( "meshBodies", rootNode );
-//  MeshBody & meshBody1 = meshBodies.registerGroup<MeshBody>( "body1" );
-//  MeshBody & meshBody2 = meshBodies.registerGroup<MeshBody>( "body2" );
-//  meshBody1.createMeshLevel("level1");
-//  meshBody1.createMeshLevel("level2");
-//  meshBody2.createMeshLevel("level3");
-//  meshBody2.createMeshLevel("level4");
-//
-//  {
-//    MeshObjectPath meshObjectPath( path, meshBodies );
-//    auto const & meshBodyLevelMap = meshObjectPath.meshBodyLevelMap();
-////  auto const & regionSubRegionMap = meshObjectPath.regionSubRegionMap();
-//
-//    EXPECT_STREQ( meshObjectPath.getObjectType().c_str(), path.c_str() );
-//
-//    EXPECT_EQ( meshBodyLevelMap.size(), 2 );
-//
-//    auto iter = meshBodyLevelMap.begin();
-//    EXPECT_STREQ( iter->first.c_str(), "body1" );
-//    EXPECT_EQ( iter->second.size(), 2 );
-//    EXPECT_STREQ( iter->second[0].c_str(), "level1" );
-//    EXPECT_STREQ( iter->second[1].c_str(), "level2" );
-//
-//    ++iter;
-//    EXPECT_STREQ( iter->first.c_str(), "body2" );
-//    EXPECT_EQ( iter->second.size(), 2 );
-//    EXPECT_STREQ( iter->second[0].c_str(), "level3" );
-//    EXPECT_STREQ( iter->second[1].c_str(), "level4" );
-//  }
-//}
-//
-//TEST( testMeshObjectPath, shortPathInputNode )
-//{
-//  shortPathCheck( MeshLevel::groupStructKeys::nodeManagerString() );
-//}
-//TEST( testMeshObjectPath, shortPathInputEdge )
-//{
-//  shortPathCheck( MeshLevel::groupStructKeys::edgeManagerString() );
-//}
-//TEST( testMeshObjectPath, shortPathInputFace )
-//{
-//  shortPathCheck( MeshLevel::groupStructKeys::faceManagerString() );
-//}
-
-
-
-TEST( testMeshObjectPath, fullPathInputNode )
+class TestMesh
 {
-  conduit::Node rootNode;
-  Group meshBodies( "meshBodies", rootNode );
-  MeshBody & meshBody0 = meshBodies.registerGroup<MeshBody>( "body0" );
-  MeshBody & meshBody1 = meshBodies.registerGroup<MeshBody>( "body1" );
-  MeshLevel & level00 = meshBody0.createMeshLevel("level0");
-  MeshLevel & level01 = meshBody0.createMeshLevel("level1");
-  MeshLevel & level10 = meshBody1.createMeshLevel("level0");
-  MeshLevel & level11 = meshBody1.createMeshLevel("level1");
+public:
 
-  ElementRegionManager & elemRegMan00 = level00.getElemManager();
 
-  elemRegMan00.createChild( "CellElementRegion", "Region0" );
+  static TestMesh & getTestMesh()
+  {
+    static TestMesh testMesh;
+    return  testMesh;
+  }
 
-  CellElementRegion & elemRegion0 = elemRegMan00.getRegion<CellElementRegion>("Region0");
-  elemRegion0.createElementSubRegion<CellElementSubRegion>("subReg0");
+
+  MeshObjectPath::permutationMapType const & pathPermutations() const
+  {
+    return m_pathPermutations;
+  }
+
+  Group const & meshBodies() const
+  {
+    return m_meshBodies;
+  }
+
+private:
+  TestMesh():
+    m_pathPermutations(),
+    m_rootNode(),
+    m_meshBodies( "meshBodies", m_rootNode )
+  {
+    createTestMesh();
+  }
+
+  void createTestMesh();
+
+  MeshObjectPath::permutationMapType m_pathPermutations;
+  conduit::Node m_rootNode;
+  Group m_meshBodies;
+};
+
+void TestMesh::createTestMesh()
+{
+
+  m_pathPermutations["body0"]["level0"]["region0"]={"subreg0", "subreg1"};
+  m_pathPermutations["body0"]["level0"]["region1"]={"subreg0", "subreg1"};
+  m_pathPermutations["body0"]["level1"]["region0"]={"subreg0", "subreg1"};
+  m_pathPermutations["body0"]["level1"]["region1"]={"subreg0", "subreg1"};
+
+  m_pathPermutations["body1"]["level0"]["region0"]={"subreg0", "subreg1"};
+  m_pathPermutations["body1"]["level0"]["region1"]={"subreg0", "subreg1"};
+  m_pathPermutations["body1"]["level1"]["region0"]={"subreg0", "subreg1"};
+  m_pathPermutations["body1"]["level1"]["region1"]={"subreg0", "subreg1"};
+  m_pathPermutations["body1"]["level1"]["region2"]={"subreg0", "subreg2"};
+
+  m_pathPermutations["body3"]["level0"]["region0"]={"subreg0", "subreg1"};
+  m_pathPermutations["body3"]["level0"]["region1"]={"subreg0", "subreg1"};
+  m_pathPermutations["body3"]["level2"]["region0"]={"subreg0", "subreg1"};
+  m_pathPermutations["body3"]["level2"]["region1"]={"subreg0", "subreg1"};
+
+
+  for( auto const & meshBodyPair : m_pathPermutations )
+  {
+    MeshBody & meshBody = m_meshBodies.registerGroup<MeshBody>( meshBodyPair.first );
+    for( auto const & meshLevelPair : meshBodyPair.second )
+    {
+      MeshLevel & level = meshBody.createMeshLevel( meshLevelPair.first );
+      ElementRegionManager & elemRegMan = level.getElemManager();
+      for( auto const & elemRegionPair : meshLevelPair.second )
+      {
+        elemRegMan.createChild( "CellElementRegion", elemRegionPair.first );
+        CellElementRegion & elemRegion = elemRegMan.getRegion<CellElementRegion>(elemRegionPair.first);
+        for( auto const & elemSubRegionName : elemRegionPair.second )
+        {
+          elemRegion.createElementSubRegion<CellElementSubRegion>(elemSubRegionName);
+        }
+      }
+    }
+  }
+}
+
+
+TEST( testMeshObjectPath, fullPathExpansion )
+{
+  TestMesh & testMesh = TestMesh::getTestMesh();
+  Group const & meshBodies = testMesh.meshBodies();
+  MeshObjectPath::permutationMapType const &  pathPermutations = testMesh.pathPermutations();
 
   {
     string const path = "ElementRegions";
     MeshObjectPath meshObjectPath( path, meshBodies );
-//    std::vector<string> splitPath = meshObjectPath.getPath();
-//    EXPECT_STREQ( splitPath[0].c_str(), "body0" );
-//    EXPECT_STREQ( splitPath[1].c_str(), "level0" );
-//    EXPECT_STREQ( splitPath[2].c_str(), "nodeManager" );
+    EXPECT_TRUE( meshObjectPath.pathPermutations() == pathPermutations );
   }
 
 
+  MeshObjectPath::permutationMapType pathPermutationSub = pathPermutations;
 
+  for( auto & meshBodyPair : pathPermutationSub )
+  {
+    for( auto & meshLevelPair : meshBodyPair.second )
+    {
+      meshLevelPair.second.clear();
+    }
+  }
+
+  {
+    string const path = "nodeManager";
+    MeshObjectPath meshObjectPath( path, meshBodies );
+    EXPECT_TRUE( meshObjectPath.pathPermutations() == pathPermutationSub );
+  }
+  {
+    string const path = "edgeManager";
+    MeshObjectPath meshObjectPath( path, meshBodies );
+    EXPECT_TRUE( meshObjectPath.pathPermutations() == pathPermutationSub );
+  }
+  {
+    string const path = "faceManager";
+    MeshObjectPath meshObjectPath( path, meshBodies );
+    EXPECT_TRUE( meshObjectPath.pathPermutations() == pathPermutationSub );
+  }
 }
 
-//TEST( testMeshObjectPath, fullPathInputElement )
-//{
-//  conduit::Node rootNode;
-//  Group meshBodies( "meshBodies", rootNode );
-//  MeshBody & meshBody = meshBodies.registerGroup<MeshBody>( "body" );
-//  MeshLevel & meshLevel = meshBody.createMeshLevel("level");
-//
-//  string const path = "body/level/nodeManager";
-//  MeshObjectPath meshObjectPath( path, meshBodies );
-//  std::vector<string> splitPath = meshObjectPath.getPath();
-//
-//  EXPECT_STREQ( splitPath[0].c_str(), "body" );
-//  EXPECT_STREQ( splitPath[1].c_str(), "level" );
-//  EXPECT_STREQ( splitPath[2].c_str(), "nodeManager" );
-//}
+
+TEST( testMeshObjectPath, invalidMeshBody )
+{
+  TestMesh & testMesh = TestMesh::getTestMesh();
+  Group const & meshBodies = testMesh.meshBodies();
+  {
+    string const path = "{:}/level2/ElementRegions";
+    EXPECT_DEATH_IF_SUPPORTED( MeshObjectPath meshObjectPath( path, meshBodies ), ".*" );
+  }
+}
 
 
+TEST( testMeshObjectPath, invalidMeshLevel )
+{
+  TestMesh & testMesh = TestMesh::getTestMesh();
+  Group const & meshBodies = testMesh.meshBodies();
+  {
+    string const path = "{:}/{:}/ElementRegions/{region2}";
+    EXPECT_DEATH_IF_SUPPORTED( MeshObjectPath meshObjectPath( path, meshBodies ), ".*" );
+  }
+}
 
+TEST( testMeshObjectPath, invalidMeshRegion )
+{
+  TestMesh & testMesh = TestMesh::getTestMesh();
+  Group const & meshBodies = testMesh.meshBodies();
+  {
+    string const path = "{:}/{:}/ElementRegions/{:}/subreg2";
+    EXPECT_DEATH_IF_SUPPORTED( MeshObjectPath meshObjectPath( path, meshBodies ), ".*" );
+  }
+}
 
 
 

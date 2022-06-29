@@ -168,9 +168,6 @@ void MeshObjectPath::ExpandPathTokens( std::vector<string> & pathTokens,
 
   }
 
-  printPermutations();
-
-
   // **** MeshLevel *****
 
   for( auto & meshBodyPair : m_pathPermutations )
@@ -206,7 +203,6 @@ void MeshObjectPath::ExpandPathTokens( std::vector<string> & pathTokens,
       }
     }
   }
-  printPermutations();
 }
 
 void MeshObjectPath::expandElementRegions( std::vector<string> const & pathTokens,
@@ -296,6 +292,12 @@ void MeshObjectPath::printPermutations() const
       for( auto const & elemRegionPair : meshLevelPair.second )
       {
         std::cout<<"    "<<elemRegionPair.first<<": "<<std::endl;
+        std::cout<<"      ";
+        for( auto const & elemSubRegionName : elemRegionPair.second )
+        {
+          std::cout<<elemSubRegionName<<", ";
+        }
+        std::cout<<std::endl;
       }
     }
   }
