@@ -32,24 +32,20 @@ namespace constitutive
 
 /**
  * @brief Update class for the model suitable for lambda capture.
- * @tparam DENS_PRES_EAT type of density exponent approximation for the pressure part
- * @tparam DENS_TEMP_EAT type of density exponent approximation for the temperature part
+ * @tparam DENS_EAT type of density exponent approximation for the pressure part
  * @tparam VISC_EAT type of viscosity exponent approximation
  * @tparam INTENERGY_EAT type of internal energy exponent approximation
  */
-template< ExponentApproximationType DENS_PRES_EAT, ExponentApproximationType DENS_TEMP_EAT,
-          ExponentApproximationType VISC_EAT, ExponentApproximationType INTENERGY_EAT >
+template< ExponentApproximationType DENS_EAT, ExponentApproximationType VISC_EAT, ExponentApproximationType INTENERGY_EAT >
 class ThermalCompressibleSinglePhaseUpdate : public SingleFluidBaseUpdate
 {
 public:
 
-  using DensPresRelationType  = ExponentialRelation< real64, DENS_PRES_EAT >;
-  using DensTempRelationType  = ExponentialRelation< real64, DENS_TEMP_EAT >;
+  using DensRelationType      = ExponentialRelation< real64, DENS_EAT, 3 >;
   using ViscRelationType      = ExponentialRelation< real64, VISC_EAT >;
   using IntEnergyRelationType = ExponentialRelation< real64, INTENERGY_EAT >;
 
-  ThermalCompressibleSinglePhaseUpdate( DensPresRelationType const & densPresRelation,
-                                        DensTempRelationType const & densTempRelation,
+  ThermalCompressibleSinglePhaseUpdate( DensRelationType const & densRelation,
                                         ViscRelationType const & viscRelation,
                                         IntEnergyRelationType const & intEnergyRelation,
                                         arrayView2d< real64 > const & density,
@@ -77,8 +73,7 @@ public:
     m_enthalpy( enthalpy ),
     m_dEnthalpy_dPres( dEnthalpy_dPres ),
     m_dEnthalpy_dTemp( dEnthalpy_dTemp ),
-    m_densPresRelation( densPresRelation ),
-    m_densTempRelation( densTempRelation ),
+    m_densRelation( densRelation ),
     m_viscRelation( viscRelation ),
     m_intEnergyRelation( intEnergyRelation ),
     m_refIntEnergy( refIntEnergy )
@@ -102,7 +97,7 @@ public:
                         real64 & density,
                         real64 & viscosity ) const override
   {
-    m_densPresRelation.compute( pressure, density );
+    m_densRelation.compute( pressure, density );
     m_viscRelation.compute( pressure, viscosity );
   }
 
@@ -114,7 +109,7 @@ public:
                         real64 & viscosity,
                         real64 & dViscosity_dPressure ) const override
   {
-    m_densPresRelation.compute( pressure, density, dDensity_dPressure );
+    m_densRelation.compute( pressure, density, dDensity_dPressure );
     m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
   }
 
@@ -138,16 +133,7 @@ public:
     m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
     dViscosity_dTemperature = 0.0;
 
-    real64 density_pressurePart, density_temperaturePart;
-    real64 density_pressurePart_deriv, density_temperaturePart_deriv;
-
-    m_densPresRelation.compute( pressure, density_pressurePart, density_pressurePart_deriv );
-    m_densTempRelation.compute( temperature, density_temperaturePart, density_temperaturePart_deriv );
-
-    density = density_pressurePart * density_temperaturePart;
-
-    dDensity_dPressure = density_pressurePart_deriv * density_temperaturePart;
-    dDensity_dTemperature = density_temperaturePart_deriv * density_pressurePart;
+    m_densRelation.compute( pressure, temperature, density, dDensity_dPressure, dDensity_dTemperature );
 
     /// Compute the internal energy (only sensitive to temperature)
     m_intEnergyRelation.compute( temperature, internalEnergy, dInternalEnergy_dTemperature );
@@ -221,11 +207,8 @@ private:
   /// Derivative of enthalpy w.r.t. temperature
   arrayView2d< real64 > m_dEnthalpy_dTemp;
 
-  /// Relationship between the fluid density and pressure
-  DensPresRelationType m_densPresRelation;
-
-  /// Relationship between the fluid density and temperature
-  DensTempRelationType m_densTempRelation;
+  /// Relationship between the fluid density and pressure & temperature
+  DensRelationType m_densRelation;
 
   /// Relationship between the fluid viscosity and pressure
   ViscRelationType m_viscRelation;
@@ -253,9 +236,10 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
+  using CompressibleSinglePhaseFluid::m_densityModelType; 
+
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
-  using KernelWrapper = ThermalCompressibleSinglePhaseUpdate< ExponentApproximationType::Full, ExponentApproximationType::Full,
-                                                              ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
+  using KernelWrapper = ThermalCompressibleSinglePhaseUpdate< ExponentApproximationType::Full, ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -269,8 +253,6 @@ public:
     static constexpr char const * volumetricHeatCapacityString() { return "volumetricHeatCapacity"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
     static constexpr char const * referenceInternalEnergyString() { return "referenceInternalEnergy"; }
-    static constexpr char const * densityPressureModelTypeString() { return "densityPressureModelType"; }
-    static constexpr char const * densityTemperatureModelTypeString() { return "densityTemperatureModelType"; }
     static constexpr char const * internalEnergyModelTypeString() { return "internalEnergyModelType"; }
   };
 
@@ -291,12 +273,6 @@ private:
 
   /// reference internal energy parameter
   real64 m_referenceInternalEnergy;
-
-  /// type of density model in terms of pressure
-  ExponentApproximationType m_densityPressureModelType;
-
-  /// type of density model in terms of temperature
-  ExponentApproximationType m_densityTemperatureModelType;
 
   /// type of internal energy model
   ExponentApproximationType m_internalEnergyModelType;

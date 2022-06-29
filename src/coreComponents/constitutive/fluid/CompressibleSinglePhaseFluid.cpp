@@ -124,14 +124,14 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   checkModelType( m_densityModelType, viewKeyStruct::densityModelTypeString() );
   checkModelType( m_viscosityModelType, viewKeyStruct::viscosityModelTypeString() );
 
-  // // Set default values for derivatives (cannot be done in base class)
-  // // TODO: reconsider the necessity of this
+  // Set default values for derivatives (cannot be done in base class)
+  // TODO: reconsider the necessity of this
 
-  // real64 dRho_dP;
-  // real64 dVisc_dP;
-  // createKernelWrapper().compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
-  // getExtrinsicData< extrinsicMeshData::singlefluid::dDensity_dPressure >().setDefaultValue( dRho_dP );
-  // getExtrinsicData< extrinsicMeshData::singlefluid::dViscosity_dPressure >().setDefaultValue( dVisc_dP );
+  real64 dRho_dP;
+  real64 dVisc_dP;
+  createKernelWrapper().compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
+  getExtrinsicData< extrinsicMeshData::singlefluid::dDensity_dPressure >().setDefaultValue( dRho_dP );
+  getExtrinsicData< extrinsicMeshData::singlefluid::dViscosity_dPressure >().setDefaultValue( dVisc_dP );
 }
 
 CompressibleSinglePhaseFluid::KernelWrapper

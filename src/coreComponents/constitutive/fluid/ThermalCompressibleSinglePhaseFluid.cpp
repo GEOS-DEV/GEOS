@@ -30,10 +30,9 @@ namespace constitutive
 
 ThermalCompressibleSinglePhaseFluid::ThermalCompressibleSinglePhaseFluid( string const & name, Group * const parent ):
   CompressibleSinglePhaseFluid( name, parent ),
-  m_densityPressureModelType( ExponentApproximationType::Full ),
-  m_densityTemperatureModelType( ExponentApproximationType::Full ),
   m_internalEnergyModelType( ExponentApproximationType::Linear )
 {
+  m_densityModelType = ExponentApproximationType::Full; 
 
   registerWrapper( viewKeyStruct::thermalExpansionCoeffString(), &m_thermalExpansionCoeff ).
     setApplyDefaultValue( 0.0 ).
@@ -54,16 +53,6 @@ ThermalCompressibleSinglePhaseFluid::ThermalCompressibleSinglePhaseFluid( string
     setApplyDefaultValue( 0.001 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Reference fluid internal energy" );
-
-  registerWrapper( viewKeyStruct::densityPressureModelTypeString(), &m_densityPressureModelType ).
-    setApplyDefaultValue( m_densityPressureModelType ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Type of density model in terms of pressure . Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
-
-  registerWrapper( viewKeyStruct::densityTemperatureModelTypeString(), &m_densityTemperatureModelType ).
-    setApplyDefaultValue( m_densityTemperatureModelType ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Type of density model in terms of temperature . Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::internalEnergyModelTypeString(), &m_internalEnergyModelType ).
     setApplyDefaultValue( m_internalEnergyModelType ).
@@ -104,16 +93,13 @@ void ThermalCompressibleSinglePhaseFluid::postProcessInput()
                     GEOSX_FMT( "{}: invalid model type in attribute '{}' (only linear or fully exponential currently supported)", getFullName(), attribute ),
                     InputError );
   };
-  checkModelType( m_densityPressureModelType, viewKeyStruct::densityPressureModelTypeString() );
-  checkModelType( m_densityTemperatureModelType, viewKeyStruct::densityTemperatureModelTypeString() );
   checkModelType( m_internalEnergyModelType, viewKeyStruct::internalEnergyModelTypeString() );
 }
 
 ThermalCompressibleSinglePhaseFluid::KernelWrapper
 ThermalCompressibleSinglePhaseFluid::createKernelWrapper()
 {
-  return KernelWrapper( KernelWrapper::DensPresRelationType( m_referencePressure, m_referenceDensity, m_compressibility ),
-                        KernelWrapper::DensTempRelationType( m_referenceTemperature, 1.0, -m_thermalExpansionCoeff ),
+  return KernelWrapper( KernelWrapper::DensRelationType( m_referencePressure, m_referenceTemperature, m_referenceDensity, m_compressibility, -m_thermalExpansionCoeff ),
                         KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ),
                         KernelWrapper::IntEnergyRelationType( m_referenceTemperature, m_referenceInternalEnergy, m_volumetricHeatCapacity/m_referenceInternalEnergy ),
                         m_density,
