@@ -39,7 +39,7 @@ EquilibriumReactions::EquilibriumReactions( string const & name ):
   // Hardcoding values for now
 
   // Equilibrium constants
-  m_log10EqConst.resize( m_numSecSpecies );	// Not sure if this is the correct way of allocating the size
+  m_log10EqConst.resize( m_numSecSpecies );	
   m_log10EqConst[0] = 13.99;
   m_log10EqConst[1] = -6.36;
   m_log10EqConst[2] = 10.33;
@@ -52,8 +52,7 @@ EquilibriumReactions::EquilibriumReactions( string const & name ):
   m_log10EqConst[9] = -2.43;
   m_log10EqConst[10] = -0.82;
 
-/*
-  // Activity coefficients
+  // Activity coefficient related constants
   real64 m_DebyeHuckelA, m_DebyeHuckelB, m_WATEQBDot 
   m_DebyeHuckelA = 0.5465;
   m_DebyeHuckelB = 0.3346;
@@ -68,7 +67,7 @@ EquilibriumReactions::EquilibriumReactions( string const & name ):
   m_ionSizePrimary[5] = 8.00;
   m_ionSizePrimary[6] = 4.00;
 
-  // m_ionSizeSec.resize( m_numSecSepcies )
+  m_ionSizeSec.resize( m_numSecSepcies )
   m_ionSizeSec[0] = 3.50;
   m_ionSizeSec[1] = 3.00;
   m_ionSizeSec[2] = 4.50;
@@ -81,7 +80,7 @@ EquilibriumReactions::EquilibriumReactions( string const & name ):
   m_ionSizeSec[9] = 3.00;
   m_ionSizeSec[10] = 4.00;
 
-  arrayView1d<real64>  m_chargePrimary, m_chargeSec;  \\ should be an integer and not real
+  arrayView1d<real64>  m_chargePrimary, m_chargeSec;  // should be an integer and not real
   m_chargePrimary.resize( m_numPrimarySepcies )
   m_chargePrimary[0] = 1;
   m_chargePrimary[1] = -1;
@@ -91,7 +90,7 @@ EquilibriumReactions::EquilibriumReactions( string const & name ):
   m_chargePrimary[5] = 2;
   m_chargePrimary[6] = 1;
 
-  // m_chargeSec.resize( m_numSecSepcies )
+  m_chargeSec.resize( m_numSecSepcies )
   m_chargeSec[0] = -1;
   m_chargeSec[1] = 0;
   m_chargeSec[2] = -2;
@@ -104,31 +103,22 @@ EquilibriumReactions::EquilibriumReactions( string const & name ):
   m_chargeSec[9] = 0;
   m_chargeSec[10] = -1;
 
-*/
 
-//   m_log10SecActCoeff.resize( m_numSecSpecies );	// Not sure if this is the correct way of allocating the size
-// // Not sure if this works
-//   m_log10SecActCoeff[0:10] = 0	//Assume dilute solution for first pass
+  m_log10SecActCoeff.resize( m_numSecSpecies );	
+  m_log10SecActCoeff[0:10] = 0	//Assume dilute solution for first pass
 
-//   m_log10PrimaryActCoeff.resize( m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
-// // Not sure if this works
-//   m_log10PrimaryActCoeff[0:6] = 0	//Assume dilute solution for first pass
+  m_log10PrimaryActCoeff.resize( m_numPrimarySpecies );	
+  m_log10PrimaryActCoeff[0:6] = 0	//Assume dilute solution for first pass
 
-//   m_inputTotalConc.resize( m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
-// // Not sure if this works
-//   m_inputTotalConc[0:6] = 1E-20	// Does this notation work?
-//   m_inputTotalConc[0] = pow( 10.0, -7 )
-  /*
-  // Accurate value for H+ concentration. Hopefully it is not negative
+  m_inputTotalConc.resize( m_numPrimarySpecies );	
+  m_inputTotalConc[0:6] = 1E-20	
+  // Accurate value for H+ concentration. Hopefully it is not negative. Have to check about the non-negative requirement for this
   m_inputTotalConc[0] = 0+m_inputTotalConc[1]-2*m_inputTotalConc[2]+2*m_inputTotalConc[3]+m_inputTotalConc[4]-2*m_inputTotalConc[5]-m_inputTotalConc[6];
-*/
 
-  // arrayView1d<real64>  m_log10PrimaryConc;	
-  // m_log10PrimaryConc.resize( m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
-/*
-// Not sure if this is the right place to give the initial guess
-  // Mismatch between lhs and rhs as one is log10 and the other isn't
-  // Fixed it with the lines below
+  arrayView1d<real64>  m_log10PrimaryConc;	
+  m_log10PrimaryConc.resize( m_numPrimarySpecies );	
+
+  // Not sure if this is the right place to give the initial guess
   m_log10PrimaryConc = log10(m_inputTotalConc);
   // If for some reason the total concentration of H+ is negative (not sure if this can happen)
   if (2*m_inputTotalConc[2]-2*m_inputTotalConc[3]-m_inputTotalConc[4]+2*m_inputTotalConc[5]+m_inputTotalConc[6]<0)
@@ -139,24 +129,18 @@ EquilibriumReactions::EquilibriumReactions( string const & name ):
   {
     m_log10PrimaryConc[0] = -7;
   }
-*/
-//   m_log10PrimaryConc = log10(m_inputTotalConc) // what function should be used to take a log of a variable?
 
-//   arrayView1d<real64>  m_log10SecConc;	
-//   m_log10SecConc.resize( m_numSecSpecies );	// Not sure if this is the correct way of allocating the size
-// // Not sure if this works. 
-//   // Perhpas a better option is to set it to -20 given that log10(c) = 0 means c = 1 which is pretty high
-//   m_log10SecConc[0:10] = 0;
+  arrayView1d<real64>  m_log10SecConc;	
+  m_log10SecConc.resize( m_numSecSpecies );
+  m_log10SecConc[0:10] = -20;
 
-//   arrayView2d<real64>  dLog10SecConc_dLog10PrimaryConc;	
-//   dLog10SecConc_dLog10PrimaryConc.resize( m_numSecSpecies, m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
-// // Not sure if this works
-//   dLog10SecConc_dLog10PrimaryConc[0:10][0:6] = 0;
+  arrayView2d<real64>  dLog10SecConc_dLog10PrimaryConc;	
+  dLog10SecConc_dLog10PrimaryConc.resize( m_numSecSpecies, m_numPrimarySpecies );	
+  dLog10SecConc_dLog10PrimaryConc[0:10][0:6] = 0;
 
-//   arrayView2d<real64>  dTotalConc_dLog10PrimaryConc;	
-//   dTotalConc_dLog10PrimaryConc.resize( m_numPrimarySpecies, m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
-// // Not sure if this works
-//   dTotalConc_dLog10PrimaryConc[0:6][0:6] = 0;
+  arrayView2d<real64>  dTotalConc_dLog10PrimaryConc;	
+  dTotalConc_dLog10PrimaryConc.resize( m_numPrimarySpecies, m_numPrimarySpecies );
+  dTotalConc_dLog10PrimaryConc[0:6][0:6] = 0;
 
 
   // Stochiometric Matrix
@@ -187,7 +171,7 @@ EquilibriumReactions::EquilibriumReactions( string const & name ):
   m_stoichMatrix[10][3] = 1;
   
   // Equilibrium Constant
-  m_log10EqConst.resize( m_numSecSpecies );	// Not sure if this is the correct way of allocating the size
+  m_log10EqConst.resize( m_numSecSpecies );	
   m_log10EqConst[0] = 13.99;
   m_log10EqConst[1] = -6.36;
   m_log10EqConst[2] = 10.33;
@@ -255,12 +239,18 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
   stackArray1d< ReactionBase::maxNumPrimarySpecies > log10PrimaryConc(m_numPrimarySpecies);
   stackArray1d< ReactionBase::maxNumPrimarySpecies > log10PrimaryActCoeff(m_numPrimarySpecies);
   stackArray1d< ReactionBase::maxNumSecondarySpecies > log10SecConc(m_numSecSpecies);
+  stackArray1d< ReactionBase::maxNumSecondarySpecies > log10SecActCoeff(m_numSecSpecies);
 
   stackArray2d< ReactionBase::maxNumSecondarySpecies > dLog10SecConc_dLog10PrimaryConc(m_numPrimarySpecies, m_numSecSpecies);
   stackArray1d<ReactionBase::maxNumPrimarySpecies> totalConcentration( m_numPrimarySpecies );
 
   // activity coefficients
-  computeActivityCoefficients();
+  ComputeLog10ActCoefBDotModel( temperature,
+                                ionicStrength,
+                                log10PrimaryActCoeff,
+                                dLog10PrimaryActCoeff_dIonicStrength,
+                                log10SecActCoeff,
+                                dLog10SecActCoeff_dIonicStrength);
 
   computeLog10SecConcAndDerivative( temperature, 
                                     log10PrimaryConc, 
