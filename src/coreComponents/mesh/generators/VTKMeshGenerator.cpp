@@ -42,9 +42,12 @@
 #include <vtkUnstructuredGridReader.h>
 #include <vtkXMLPUnstructuredGridReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
-// ADD for vti import
+// ADDED for vti import
+#include <vtkNew.h>
+#include <vtkHexahedron.h>
 #include <vtkImageData.h>
 #include <vtkXMLImageDataReader.h>
+//#include <vtkXMLPImageDataReader.h>
 
 #ifdef GEOSX_USE_MPI
 #include <vtkMPIController.h>
@@ -60,7 +63,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-
+//template< typename GRID >
 VTKMeshGenerator::VTKMeshGenerator( string const & name,
                                     Group * const parent )
   : ExternalMeshGeneratorBase( name, parent )
@@ -76,7 +79,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setDescription( "Number of partitioning refinement iterations (defaults to 1, recommended value)."
                     "A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). "
                     "Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns." );
-}
+}// Constructor placed in .hpp file
 
 namespace vtk
 {
@@ -102,11 +105,12 @@ vtkSmartPointer< vtkMultiProcessController > getController()
  * @brief Load the VTK file into the VTK data structure
  * @param[in] filePath the Path of the file to load
  */
-vtkSmartPointer< vtkUnstructuredGrid > // TODO:ADD < vtkImageData > 
+//template< typename GRID >
+vtkSmartPointer< vtkDataSet > // vtkUnstructuredGrid > // TODO:ADD < vtkImageData > 
 loadMesh( Path const & filePath )
 {
   string const extension = filePath.extension();
-  vtkSmartPointer< vtkUnstructuredGrid > loadedMesh; // vtkUnstructuredGrid > // TODO:ADD < vtkImageData > 
+  vtkSmartPointer< vtkDataSet > loadedMesh; // < vtkUnstructuredGrid > // TODO:ADD < vtkImageData > 
 
   if( extension == "pvtu" )
   {
@@ -157,18 +161,59 @@ loadMesh( Path const & filePath )
   return loadedMesh;
 }
 
-template< typename INDEX_TYPE, typename POLICY >
+template< typename GRID >
+vtkNew<vtkCellArray> GetCellArray(GRID & mesh)
+{
+  vtkNew<vtkCellArray> cells;
+  /*if (mesh.IsTypeOf("vtkUnstructuredGrid")){ // 1 if mesh type is of vtkUnstructuredGrid, or 0 else
+    *cells = *mesh.GetCells();
+  }
+  else {*/ // to uncomment
+    double bounds[6];
+    mesh.GetBounds(bounds);
+    double xmin=bounds[0]; 
+    double xmax=bounds[1]; 
+    double ymin=bounds[2]; 
+    double ymax=bounds[3]; 
+    double zmin=bounds[4]; 
+    double zmax=bounds[5]; 
+    int nx = xmin-xmax+1;
+    int ny = ymin-ymax+1;
+    //int nz = zmin-zmax+1;
+
+    for (int k=zmin; k<zmax; k++){
+        for(int j=ymin; j<ymax; j++){
+            for (int i=xmin; i<xmax; i++){
+                vtkNew<vtkHexahedron> hexa;
+                // comment explications (vtk order for hexahedron)
+                hexa->GetPointIds()->SetId(0, i+j*nx+k*ny*nx);
+                hexa->GetPointIds()->SetId(0, i+1+j*nx+k*ny*nx);
+                hexa->GetPointIds()->SetId(0, i+1+(j+1)*nx+k*ny*nx);
+                hexa->GetPointIds()->SetId(0, i+(j+1)*nx+k*ny*nx);
+                hexa->GetPointIds()->SetId(0, i+j*nx+(k+1)*ny*nx);
+                hexa->GetPointIds()->SetId(0, i+1+j*nx+(k+1)*ny*nx);
+                hexa->GetPointIds()->SetId(0, i+1+(j+1)*nx+(k+1)*ny*nx);
+                hexa->GetPointIds()->SetId(0, i+(j+1)*nx+(k+1)*ny*nx);
+                cells->InsertNextCell(hexa);
+            }
+        }
+    }
+  //}
+  return cells;
+}
+
+template< typename INDEX_TYPE, typename POLICY, typename GRID > // template GRID added
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
-buildElemToNodesImpl( vtkUnstructuredGrid & mesh )
+buildElemToNodesImpl( GRID & mesh )
 {
   localIndex const numCells = LvArray::integerConversion< localIndex >( mesh.GetNumberOfCells() );
   array1d< INDEX_TYPE > nodeCounts( numCells );
-  vtkCellArray & cells = *mesh.GetCells();
+  const vtkNew<vtkCellArray> & cells = GetCellArray< GRID >(mesh); // *mesh.GetCells();
 
   // GetCellSize() is always thread-safe, can run in parallel
   forAll< parallelHostPolicy >( numCells, [nodeCounts = nodeCounts.toView(), &cells] ( localIndex const cellIdx )
   {
-    nodeCounts[cellIdx] = LvArray::integerConversion< INDEX_TYPE >( cells.GetCellSize( cellIdx ) );
+    nodeCounts[cellIdx] = LvArray::integerConversion< INDEX_TYPE >( cells->GetCellSize( cellIdx ) );
   } );
 
   ArrayOfArrays< INDEX_TYPE, INDEX_TYPE > elemToNodes;
@@ -181,7 +226,7 @@ buildElemToNodesImpl( vtkUnstructuredGrid & mesh )
   {
     vtkIdType numPts;
     vtkIdType const * points;
-    cells.GetCellAtId( cellIdx, numPts, points );
+    cells->GetCellAtId( cellIdx, numPts, points );
     for( int a = 0; a < numPts; ++a )
     {
       vtkIdType const pointIdx = globalPointId.GetValue( points[a] );
@@ -192,21 +237,21 @@ buildElemToNodesImpl( vtkUnstructuredGrid & mesh )
   return elemToNodes;
 }
 
-template< typename INDEX_TYPE >
+template< typename INDEX_TYPE, typename GRID >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
-buildElemToNodes( vtkUnstructuredGrid & mesh )
+buildElemToNodes( GRID & mesh )
 {
   // According to VTK docs, IsStorageShareable() indicates whether pointers extracted via
   // vtkCellArray::GetCellAtId() are pointers into internal storage rather than temp buffer
   // and thus results can be used in a thread-safe way.
-  return mesh.GetCells()->IsStorageShareable()
-       ? buildElemToNodesImpl< INDEX_TYPE, parallelHostPolicy >( mesh )
-       : buildElemToNodesImpl< INDEX_TYPE, serialPolicy >( mesh );
+  return GetCellArray<GRID>(mesh)->IsStorageShareable()                        //mesh.GetCells()->IsStorageShareable()
+       ? buildElemToNodesImpl< INDEX_TYPE, parallelHostPolicy, GRID >( mesh )
+       : buildElemToNodesImpl< INDEX_TYPE, serialPolicy, GRID >( mesh );
 }
 
-template< typename PART_INDEX >
+template< typename PART_INDEX, typename GRID >
 vtkSmartPointer< vtkPartitionedDataSet >
-splitMeshByPartition( vtkUnstructuredGrid & mesh,
+splitMeshByPartition( GRID & mesh,
                       PART_INDEX const numParts,
                       arrayView1d< PART_INDEX const > const & part )
 {
@@ -247,23 +292,25 @@ splitMeshByPartition( vtkUnstructuredGrid & mesh,
   return result;
 }
 
-vtkSmartPointer< vtkUnstructuredGrid >
-redistributeByCellGraph( vtkUnstructuredGrid & mesh,
+template< typename GRID >
+vtkSmartPointer< GRID >
+redistributeByCellGraph( GRID & mesh,
                          MPI_Comm const comm,
                          int const numRefinements )
 {
   GEOSX_MARK_FUNCTION;
 
   // Use int64_t here to match ParMETIS' idx_t
-  ArrayOfArrays< int64_t, int64_t > const elemToNodes = buildElemToNodes< int64_t >( mesh );
+  ArrayOfArrays< int64_t, int64_t > const elemToNodes = buildElemToNodes< int64_t, GRID >( mesh );
   int64_t const numProcs = MpiWrapper::commSize( comm );
   array1d< int64_t > const newParts = parmetis::partMeshKway( elemToNodes.toViewConst(), comm, 3, numRefinements );
   vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numProcs, newParts.toViewConst() );
   return vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
 }
 
-vtkSmartPointer< vtkUnstructuredGrid >
-redistributeByKdTree( vtkUnstructuredGrid & mesh )
+template< typename GRID >
+vtkSmartPointer< GRID >
+redistributeByKdTree( GRID & mesh )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -272,7 +319,7 @@ redistributeByKdTree( vtkUnstructuredGrid & mesh )
   rdsf->SetInputDataObject( &mesh );
   rdsf->SetNumberOfPartitions( MpiWrapper::commSize() );
   rdsf->Update();
-  return vtkUnstructuredGrid::SafeDownCast( rdsf->GetOutputDataObject( 0 ) );
+  return GRID::SafeDownCast( rdsf->GetOutputDataObject( 0 ) );
 }
 
 /**
@@ -311,8 +358,9 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
  * @param[in] comm the MPI communicator
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
  */
-vtkSmartPointer< vtkUnstructuredGrid >
-redistributeMesh( vtkUnstructuredGrid & loadedMesh,
+template< typename GRID >
+vtkSmartPointer< GRID >
+redistributeMesh( GRID & loadedMesh,
                   MPI_Comm const comm,
                   int const partitionRefinement )
 {
@@ -322,8 +370,8 @@ redistributeMesh( vtkUnstructuredGrid & loadedMesh,
   vtkNew< vtkGenerateGlobalIds > generator;
   generator->SetInputDataObject( &loadedMesh );
   generator->Update();
-  vtkSmartPointer< vtkUnstructuredGrid > mesh =
-    vtkUnstructuredGrid::SafeDownCast( generator->GetOutputDataObject( 0 ) );
+  vtkSmartPointer< GRID > mesh =
+    GRID::SafeDownCast( generator->GetOutputDataObject( 0 ) );
 
   // Determine if redistribution is required
   vtkIdType const minCellsOnAnyRank = MpiWrapper::min( loadedMesh.GetNumberOfCells(), comm );
@@ -404,8 +452,9 @@ ElementType convertVtkToGeosxElementType( VTKCellType const cellType )
   return ElementType::Polyhedron;
 }
 
+template< typename GRID >
 std::map< ElementType, std::vector< vtkIdType > >
-splitCellsByType( vtkUnstructuredGrid & mesh )
+splitCellsByType( GRID & mesh )
 {
   std::map< ElementType, std::vector< vtkIdType > > typeToCells;
   vtkIdType const numCells = mesh.GetNumberOfCells();
@@ -555,16 +604,17 @@ void extendCellMapWithRemoteKeys( VTKMeshGenerator::CellMapType & cellMap )
   }
 }
 
+using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector< vtkIdType > > >;
 /**
  * @brief Collect lists of VTK cell indices organized by type and attribute value.
- * @param[in] mesh the vtkUnstructuredGrid that is loaded
+ * @param[in] mesh the vtkUnstructuredGrid or vtkImageData that is loaded
  * @param[in] attributeName name of the VTK data array containing the attribute, if any
  * @return A map from element type to a map of attribute to the associated cell ids for the current rank.
  *         The map contains entries for all types and attribute values across all MPI ranks,
  *         even if there are no cells on current rank (then the list will be empty).
  */
-VTKMeshGenerator::CellMapType
-buildCellMap( vtkUnstructuredGrid & mesh,
+template< typename GRID >
+CellMapType buildCellMap( GRID & mesh,
               string const & attributeName )
 {
   // First, pass through all VTK cells and split them int sub-lists based on type.
@@ -574,7 +624,7 @@ buildCellMap( vtkUnstructuredGrid & mesh,
   vtkDataArray * const attributeDataArray =
     vtkDataArray::FastDownCast( mesh.GetCellData()->GetAbstractArray( attributeName.c_str() ) );
 
-  VTKMeshGenerator::CellMapType cellMap =
+  CellMapType cellMap =
     splitCellsByTypeAndAttribute( typeToCells, attributeDataArray );
 
   // Gather all element types encountered on any rank and enrich the local collection
@@ -607,10 +657,11 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
  * @brief Fill @p cellBlock with the appropriate nodes and local/global mappings.
  * @param[in] elemType the vtk cell type for cells of the CellBlock being written
  * @param[in] cellIds the cell indexes of cell type \p cellType within this region
- * @param[in] mesh the vtkUnstructuredGrid that is loaded
+ * @param[in] mesh the vtkUnstructuredGrid or vtkImageData that is loaded
  * @param[in,out] cellBlock The cell block to be written
  */
-void fillCellBlock( vtkUnstructuredGrid & mesh,
+template< typename GRID >
+void fillCellBlock( GRID & mesh,
                     ElementType const elemType,
                     std::vector< vtkIdType > const & cellIds,
                     CellBlock & cellBlock )
@@ -756,7 +807,7 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
     using ArrayType = decltype( dstArray );
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
     auto const view = wrapperT.reference().toView();
-
+    
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( vtkArray->GetNumberOfComponents() );
     localIndex const numComponentsDst = wrapperT.numArrayComp();
     GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
@@ -778,7 +829,7 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
   } );
 }
 
-void printMeshStatistics( vtkUnstructuredGrid & mesh,
+void printMeshStatistics( vtkDataSet & mesh,                     // vtkUnstructuredGrid
                           VTKMeshGenerator::CellMapType const & cellMap,
                           MPI_Comm const comm )
 {
@@ -835,8 +886,9 @@ void printMeshStatistics( vtkUnstructuredGrid & mesh,
  * @brief Collect the data to be imported.
  * @return A list of pointers to VTK data arrays.
  */
+template< typename GRID >
 std::vector< vtkDataArray * >
-findArraysForImport( vtkUnstructuredGrid & mesh,
+findArraysForImport( GRID & mesh,
                      arrayView1d< string const > const & srcFieldNames )
 {
   std::vector< vtkDataArray * > arrays;
@@ -861,6 +913,7 @@ findArraysForImport( vtkUnstructuredGrid & mesh,
 
 } // namespace vtk
 
+//template< typename GRID >
 void VTKMeshGenerator::
   importFieldOnCellElementSubRegion( int const regionId,
                                      ElementType const elemType,
@@ -921,6 +974,7 @@ void VTKMeshGenerator::
   } );
 }
 
+//template< typename GRID >
 void VTKMeshGenerator::importFields( DomainPartition & domain ) const
 {
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': importing field data from mesh dataset", catalogName(), getName() ) );
@@ -957,6 +1011,7 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
                                                        false );
 }
 
+// template< typename GRID >
 real64 VTKMeshGenerator::writeNodes( CellBlockManager & cellBlockManager ) const
 {
   localIndex const numPts = LvArray::integerConversion< localIndex >( m_vtkMesh->GetNumberOfPoints() );
@@ -1017,6 +1072,7 @@ real64 VTKMeshGenerator::writeNodes( CellBlockManager & cellBlockManager ) const
  * @brief Build all the cell blocks.
  * @param[in] cellBlockManager The instance that stores the cell blocks.
  */
+//template< typename GRID >
 void VTKMeshGenerator::writeCells( CellBlockManager & cellBlockManager ) const
 {
   // Creates a new cell block for each region and for each type of cell.
@@ -1048,12 +1104,13 @@ void VTKMeshGenerator::writeCells( CellBlockManager & cellBlockManager ) const
 
 /**
  * @brief Build the "surface" node sets from the surface information.
- * @param[in] mesh The vtkUnstructuredGrid that is loaded
+ * @param[in] mesh The vtkUnstructuredGrid or vtkImageData that is loaded
  * @param[in] surfacesIdsToCellsIds Map from the surfaces index to the list of cells in this surface in this rank.
  * @param[out] cellBlockManager The instance that stores the node sets.
  * @note @p surfacesIdsToCellsIds will contain all the surface ids across all the MPI ranks, but only its cell ids.
  * If the current MPI rank has no cell id for a given surface, then an empty set will be created.
  */
+//template< typename GRID >
 void VTKMeshGenerator::writeSurfaces( CellBlockManager & cellBlockManager ) const
 {
   if( m_cellMap.count( ElementType::Polygon ) == 0 )
@@ -1083,6 +1140,7 @@ void VTKMeshGenerator::writeSurfaces( CellBlockManager & cellBlockManager ) cons
   }
 }
 
+//template< typename GRID >
 void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
@@ -1095,7 +1153,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   {
     GEOSX_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
-    vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = vtk::loadMesh( m_filePath ); // vtkUnstructuredGrid //TODO:ADD if vti loadStructuredMesh(...) ? or 'UG to ID '
+    vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath ); //TODO:ADD if vti or 'UG to ID' vtkDataSet
     GEOSX_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
     m_vtkMesh = vtk::redistributeMesh( *loadedMesh, comm, m_partitionRefinement );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
@@ -1132,6 +1190,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );
 }
 
+//template< typename GRID >
 void VTKMeshGenerator::freeResources()
 {
   m_vtkMesh = nullptr;
