@@ -35,14 +35,17 @@ class ReactionsBase
 public:
 
   ReactionsBase( string const & name,
-                  string_array const & componentNames,
-                  array1d< real64 > const & componentMolarWeight ):
+                 string_array const & componentNames,
+                 array1d< real64 > const & componentMolarWeight ):
     m_modelName( name ),
     m_componentNames( componentNames ),
     m_componentMolarWeight( componentMolarWeight )
   {}
 
   virtual ~ReactionsBase() = default;
+
+  constexpr static integer maxNumPrimarySpecies = 7; 
+  constexpr static integer maxNumSecondarySpecies = 11;
 
   using CatalogInterface = dataRepository::CatalogInterface< ReactionsBase,
                                                              string const &,
@@ -71,7 +74,13 @@ protected:
   /// Array storing the component molar weights
   array1d< real64 > m_componentMolarWeight;
 
-  arrayView2d<real64>  m_stoichMatrix;
+  array2d< real64 >  m_stoichMatrix;
+
+  array1d< integer > m_chargePrimary;
+  array1d< integer > m_chargeSec;
+
+  array1d< real64>  m_ionSizePrimary;  
+  array1d< real64 >  m_ionSizeSec;
 
 class KernelWrapper
 {
@@ -107,6 +116,16 @@ protected:
   
   arrayView1d<real64> m_log10EqConst;
   arrayView2d<real64> m_stoichMatrix;
+
+  arrayView1d< integer > m_chargePrimary;
+  arrayView1d< integer > m_chargeSec;
+
+  arrayView1d<real64>  m_ionSizePrimary;  
+  arrayView1d< real64 >  m_ionSizeSec; 
+
+  real64 m_DebyeHuckelA;
+  real64 m_DebyeHuckelB;
+  real64 m_WATEQBDot; 
 };
 
 };

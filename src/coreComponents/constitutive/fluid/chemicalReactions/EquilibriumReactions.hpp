@@ -46,8 +46,6 @@ public:
 
 private:
 
-  array1d< real64 >  m_log10EqConst;
-
   class KernelWrapper final : public ReactionBase::KernelWrapper
 {
 public:
@@ -66,11 +64,29 @@ public:
   updateConcentrations( real64 const temperature,
                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                         arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesContentration, 
-                        arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration );
+                        arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const;
 
-protected:
+private:
 
-  array1Viewd< real64 >  m_log10EqConst;
+  void assembleEquilibriumReactionSystem( real64 const & temperature,
+                                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration
+                                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                                          arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
+                                          DenseMatrix & matrix,
+                                          DenseVector & rhs ) const;
+
+  void computeLog10SecConcAndDerivative( real64 const temperature,
+                                         arraySlice1d< real64 const > const & log10PrimaryConc,
+                                         arraySlice1d< real64 > & log10SecConc,
+                                         arraySlice2d< real64 > & dLog10SecConc_dLog10PrimaryConc ) const;
+
+  void computeTotalConcAndDerivative( real64 const & temperature,
+                                      arraySlice1d< real64 const > const & log10PrimaryConc,
+                                      arraySlice1d< real64 const > const & log10SecConc,
+                                      arraySlice2d< real64 const > const & dLog10SecConc_dLog10PrimaryConc,
+                                      arraySlice1d< real64 > const & totalConc,
+                                      arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc) const;                                  
+
 
 };
 
