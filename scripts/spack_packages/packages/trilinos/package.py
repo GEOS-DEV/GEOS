@@ -382,21 +382,25 @@ class Trilinos(CMakePackage, CudaPackage, ROCmPackage):
 
     # ###################### Patches ##########################
 
-    patch('umfpack_from_suitesparse.patch', when='@11.14.1:12.8.1')
-    for _compiler in ['xl', 'xl_r', 'clang']:
-        patch('xlf_seacas.patch', when='@12.10.1:12.12.1 %' + _compiler)
-        patch('xlf_tpetra.patch', when='@12.12.1 %' + _compiler)
+    # GEOSX_EDIT_START
+    # Comment out unused patches
+
+    #patch('umfpack_from_suitesparse.patch', when='@11.14.1:12.8.1')
+    #for _compiler in ['xl', 'xl_r', 'clang']:
+    #    patch('xlf_seacas.patch', when='@12.10.1:12.12.1 %' + _compiler)
+    #    patch('xlf_tpetra.patch', when='@12.12.1 %' + _compiler)
     patch('fix_clang_errors_12_18_1.patch', when='@12.18.1%clang')
-    patch('cray_secas_12_12_1.patch', when='@12.12.1%cce')
+    #patch('cray_secas_12_12_1.patch', when='@12.12.1%cce')
     patch('cray_secas.patch', when='@12.14.1:%cce')
 
     # workaround an NVCC bug with c++14 (https://github.com/trilinos/Trilinos/issues/6954)
     # avoid calling deprecated functions with CUDA-11
-    patch('fix_cxx14_cuda11.patch', when='@13.0.0:13.0.1 cxxstd=14 ^cuda@11:')
+    #patch('fix_cxx14_cuda11.patch', when='@13.0.0:13.0.1 cxxstd=14 ^cuda@11:')
     # Allow building with +teko gotype=long
-    patch('https://github.com/trilinos/Trilinos/commit/b17f20a0b91e0b9fc5b1b0af3c8a34e2a4874f3f.patch',
-          sha256='dee6c55fe38eb7f6367e1896d6bc7483f6f9ab8fa252503050cc0c68c6340610',
-          when='@13.0.0:13.0.1 +teko gotype=long')
+    #patch('https://github.com/trilinos/Trilinos/commit/b17f20a0b91e0b9fc5b1b0af3c8a34e2a4874f3f.patch',
+    #      sha256='dee6c55fe38eb7f6367e1896d6bc7483f6f9ab8fa252503050cc0c68c6340610',
+    #      when='@13.0.0:13.0.1 +teko gotype=long')
+    # GEOSX_EDIT_END
 
     def flag_handler(self, name, flags):
         is_cce = self.spec.satisfies('%cce')

@@ -55,10 +55,6 @@ class Vtk(CMakePackage):
     # We need mpi4py if buidling python wrappers and using MPI
     depends_on('py-mpi4py', when='+python+mpi', type='run')
 
-    # python3.7 compatibility patch backported from upstream
-    # https://gitlab.kitware.com/vtk/vtk/commit/706f1b397df09a27ab8981ab9464547028d0c322
-    patch('python3.7-const-char.patch', when='@7.0.0:8.1.1 ^python@3.7:')
-
     depends_on('mpi', when='+mpi')
 
     def cmake_args(self):

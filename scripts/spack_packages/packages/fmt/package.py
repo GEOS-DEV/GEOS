@@ -51,14 +51,17 @@ class Fmt(CMakePackage):
     # 4.1 fails with C++17 (https://github.com/fmtlib/fmt/issues/722)
     conflicts('cxxstd=17', when='@4.1.0')
 
+    # GEOSX_EDIT_START
     # Use CMAKE_CXX_STANDARD to define C++ flag, as in later versions
-    patch('fmt-use-cmake-cxx-standard_3.0.0.patch', when='@3.0.0')
+    #patch('fmt-use-cmake-cxx-standard_3.0.0.patch', when='@3.0.0')
 
     # Remove hardcoding of "-std=c++11/0x" in INTERFACE_COMPILE_OPTIONS
-    patch('fmt-no-export-cpp11flag_3.0.0.patch', when='@3.0.0:3.0.1')
+    #patch('fmt-no-export-cpp11flag_3.0.0.patch', when='@3.0.0:3.0.1')
 
     # Only allow [[attributes]] on C++11 and higher
-    patch('fmt-attributes-cpp11_4.1.0.patch', when='@4.1.0')
+    #patch('fmt-attributes-cpp11_4.1.0.patch', when='@4.1.0')
+    # GEOSX_EDIT_END
+
 
     def cmake_args(self):
         spec = self.spec
@@ -87,6 +90,9 @@ class Fmt(CMakePackage):
         # and call to build "doc" target
         args.append("-DFMT_DOC=OFF")
 
+        # GEOSX_EDIT_START
         # Do not build tests (is_trivially_copyable related error)
         args.append("-DFMT_TEST=OFF")
+        # GEOSX_EDIT_END
+
         return args

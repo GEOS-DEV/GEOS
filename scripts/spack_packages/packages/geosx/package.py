@@ -55,7 +55,8 @@ class Geosx(CMakePackage, CudaPackage):
     homepage = "https://github.com/GEOS-DEV/GEOS"
     git = "https://github.com/GEOS-DEV/GEOS.git"
 
-    version('develop', branch='develop', submodules='True')
+    # GEOSX needs submodules to build, but not necessary to build dependencies
+    version('develop', branch='develop')
 
     # SPHINX_BEGIN_VARIANTS
 
@@ -203,7 +204,10 @@ class Geosx(CMakePackage, CudaPackage):
     conflicts('~hypre lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
     conflicts('~petsc lai=petsc', msg='To use PETSc as the Linear Algebra Interface you must build it.')
 
-    phases = ['hostconfig', 'cmake', 'build', 'install']
+
+    # Only phase necessary for building dependencies
+    phases = ['hostconfig']
+    #phases = ['hostconfig', 'cmake', 'build', 'install']
 
     @run_after('build')
     @on_package_attributes(run_tests=True)
@@ -491,6 +495,12 @@ class Geosx(CMakePackage, CudaPackage):
 
             cfg.write(cmake_cache_option('ENABLE_MATHPRESSO', False))
             cfg.write(cmake_cache_option('ENABLE_XML_UPDATES', False))
+
+        # Copy host-config out of temporary spack build directory into install
+        # directory for geosx and current working directory
+        os.system('cp ' + host_config_path + ' ' + self.prefix)
+        cwd_path = os.path.dirname(os.path.dirname(self.prefix))
+        os.system('cp ' + host_config_path + ' ' + cwd_path)
 
     def cmake_args(self):
         pass

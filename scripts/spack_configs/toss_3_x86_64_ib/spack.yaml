@@ -1,0 +1,26 @@
+#
+# It describes a set of packages to be installed, along with
+# configuration settings.
+spack:
+  include:
+  
+  # System-specific config files
+  - compilers.yaml
+  - packages.yaml
+
+
+  
+  # General configurations
+  - ../config.yaml
+
+  # geosx specific package recipes to use over spack builtin
+  repos:
+  - ../../spack_packages
+  view: false
+  specs:
+  - geosx@develop%clang@10.0.1
+  bootstrap:
+    trusted:
+      github-actions-v0.1: false
+  config:
+    concretizer: clingo
