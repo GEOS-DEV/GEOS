@@ -204,9 +204,7 @@ public:
 
     // inputs
     static constexpr char const * inputTemperatureString() { return "temperature"; }
-    static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
-    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
   };
 
   /**
@@ -360,9 +358,6 @@ protected:
 
   /// the input temperature
   real64 m_inputTemperature;
-
-  /// flag to determine whether or not this is a thermal simulation
-  integer m_isThermal;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
