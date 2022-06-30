@@ -214,10 +214,10 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   GEOSX_ERROR_IF_NE( hipSuccess, hipRuntimeGetVersion( &hipRuntimeVersion ) );
   GEOSX_ERROR_IF_NE( hipSuccess, hipDriverGetVersion( &hipDriverVersion ) );
 #else
-  adiak::value( "HIP", "Off" )
+  adiak::value( "HIP", "Off" );
 #endif
-  adiak::value( "HIP runtime version", hipRuntimeVersion);
-  adiak::value( "HIP driver version", hipDriverVersion);
+  adiak::value( "HIP runtime version", hipRuntimeVersion );
+  adiak::value( "HIP driver version", hipDriverVersion );
 }
 #endif // defined( GEOSX_USE_CALIPER )
 
