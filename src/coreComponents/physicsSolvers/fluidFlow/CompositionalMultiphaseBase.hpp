@@ -233,8 +233,6 @@ public:
 
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
 
-    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
-
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }

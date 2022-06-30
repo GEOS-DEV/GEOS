@@ -293,18 +293,6 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
 
   if( m_isThermal )
   {
-    string & solidInternalEnergyName = subRegion.registerWrapper< string >( viewKeyStruct::solidInternalEnergyNamesString() ).
-                                         setPlotLevel( PlotLevel::NOPLOT ).
-                                         setRestartFlags( RestartFlags::NO_WRITE ).
-                                         setSizedFromParent( 0 ).
-                                         setDescription( "Name of the solid internal energy constitutive model to use" ).
-                                         reference();
-
-    solidInternalEnergyName = getConstitutiveName< SolidInternalEnergy >( subRegion );
-    GEOSX_THROW_IF( solidInternalEnergyName.empty(),
-                    GEOSX_FMT( "Solid internal energy model not found on subregion {}", subRegion.getName() ),
-                    InputError );
-
     string & thermalConductivityName = subRegion.registerWrapper< string >( viewKeyStruct::thermalConductivityNamesString() ).
                                          setPlotLevel( PlotLevel::NOPLOT ).
                                          setRestartFlags( RestartFlags::NO_WRITE ).

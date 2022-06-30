@@ -76,6 +76,7 @@ public:
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
+    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
     static constexpr char const * transMultiplierString() { return "permeabilityTransMultiplier"; }
 
