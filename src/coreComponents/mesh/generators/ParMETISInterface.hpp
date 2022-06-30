@@ -28,8 +28,10 @@ namespace parmetis
 {
 
 #if defined(GEOSX_USE_HIP) // still need int32 hypre for the current hip-capable build
+/// Typedef to allow us to specify required parmetis integer type.
 using pmet_idx_t = int32_t;
 #else
+/// Typedef to allow us to specify required parmetis integer type.
 using pmet_idx_t = int64_t;
 #endif
 
