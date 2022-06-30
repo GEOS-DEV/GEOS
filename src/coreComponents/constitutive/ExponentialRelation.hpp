@@ -96,7 +96,7 @@ struct ExponentialCompute< T, ExponentApproximationType::Full, false >
   {
     y = y0 * exp( alpha * (x - x0) + beta * (w - w0) );
     dy_dx = alpha * y;
-    dy_dw = beta * y; 
+    dy_dw = beta * y;
   }
 };
 
@@ -147,8 +147,8 @@ struct ExponentialCompute< T, ExponentApproximationType::Quadratic, false >
   static void compute( const T & x0, const T & w0, const T & y0, const T & alpha, const T & beta, const T & x, const T & w, T & y )
   {
     const T z1 = T( 1.0 ) + alpha * (x - x0);
-    const T z2 = T( 1.0 ) + beta * (w - w0); 
-    y = y0 / T( 4.0 ) * (T( 1.0 ) + z1 * z1) * (T(1.0) + z2 * z2);
+    const T z2 = T( 1.0 ) + beta * (w - w0);
+    y = y0 / T( 4.0 ) * (T( 1.0 ) + z1 * z1) * (T( 1.0 ) + z2 * z2);
   }
 
   GEOSX_HOST_DEVICE
@@ -156,11 +156,11 @@ struct ExponentialCompute< T, ExponentApproximationType::Quadratic, false >
   static void compute( const T & x0, const T & w0, const T & y0, const T & alpha, const T & beta, const T & x, const T & w, T & y, T & dy_dx, T & dy_dw )
   {
     const T z1 = T( 1.0 ) + alpha * (x - x0);
-    const T z2 = T( 1.0 ) + beta * (w - w0); 
-    y = y0 / T( 4.0 ) * (T( 1.0 ) + z1 * z1) * (T(1.0) + z2 * z2);
+    const T z2 = T( 1.0 ) + beta * (w - w0);
+    y = y0 / T( 4.0 ) * (T( 1.0 ) + z1 * z1) * (T( 1.0 ) + z2 * z2);
 
-    dy_dx = y0 / T( 2.0 ) * (T(1.0) + z2 * z2) * alpha * z1; 
-    dy_dw = y0 / T( 2.0 ) * (T(1.0) + z1 * z1) * beta * z2; 
+    dy_dx = y0 / T( 2.0 ) * (T( 1.0 ) + z2 * z2) * alpha * z1;
+    dy_dw = y0 / T( 2.0 ) * (T( 1.0 ) + z1 * z1) * beta * z2;
   }
 };
 
@@ -220,7 +220,7 @@ struct ExponentialCompute< T, ExponentApproximationType::Linear, false >
     y = y0 * (T( 1.0 ) + alpha * (x - x0)) * (T( 1.0 ) + beta * (w - w0));
 
     dy_dx = y0 * alpha * (T( 1.0 ) + beta * (w - w0));
-    dy_dw = y0 * beta * (T( 1.0 ) + alpha * (x - x0)); 
+    dy_dw = y0 * beta * (T( 1.0 ) + alpha * (x - x0));
   }
 };
 
@@ -249,11 +249,12 @@ struct ExponentialCompute< T, ExponentApproximationType::Linear, true >
 /**
  * @class ExponentialRelation
  *
- * Describes a simple exponential relationship with three or four parameters. 
+ * Describes a simple exponential relationship with three or four parameters.
  * The form of the relationship with three parameters: \f$ y = y0 * exp(a * (x - x0)) \f$.
  * The form of the relationship with four parameters: \f$ y = y0 * exp(a * (x - x0) + b * (w - w0)) \f$.
  * Optional linear and quadratic Taylor series approximation of the exponent.
- * Implements point and batch direct (y(x) and y(x, w)) and inverse (x(y) only for three parameters) compute functions and provides derivatives.
+ * Implements point and batch direct (y(x) and y(x, w)) and inverse (x(y) only for three parameters) compute functions and provides
+ * derivatives.
  *
  * @tparam T scalar real-valued type used in computation
  * @tparam EAT the type/order of exponent approximation (linear, quadratic, full, linearThreeVar, quadraticThreeVar, fullThreeVar)
@@ -334,10 +335,10 @@ public:
   void setCoefficients( T x0, T w0, T y0, T alpha, T beta )
   {
     m_x0 = x0;
-    m_w0 = w0; 
+    m_w0 = w0;
     m_y0 = y0;
     m_alpha = alpha;
-    m_beta = beta; 
+    m_beta = beta;
   }
 
   // *** no-derivative computes ***
@@ -507,7 +508,7 @@ void ExponentApproximationTypeSwitchBlock( ExponentApproximationType const type,
  * @param alpha exponential coefficient
  * @param lambda user-provided generic lambda that will be passed an instance of ExponentialRelation<T,?>
  */
-// For two variables 
+// For two variables
 template< typename T, typename LAMBDA >
 void makeExponentialRelation( ExponentApproximationType type,
                               T const & x0, T const & y0, T const & alpha,
@@ -516,7 +517,7 @@ void makeExponentialRelation( ExponentApproximationType type,
   ExponentApproximationTypeSwitchBlock( type, x0, y0, alpha, std::forward< LAMBDA >( lambda ) );
 }
 
-// For three variables 
+// For three variables
 template< typename T, typename LAMBDA >
 void makeExponentialRelation( ExponentApproximationType type,
                               T const & x0, T const & w0, T const & y0, T const & alpha, T const & beta,

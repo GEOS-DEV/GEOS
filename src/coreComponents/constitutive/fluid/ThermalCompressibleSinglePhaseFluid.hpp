@@ -236,7 +236,7 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  using CompressibleSinglePhaseFluid::m_densityModelType; 
+  using CompressibleSinglePhaseFluid::m_densityModelType;
 
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
   using KernelWrapper = ThermalCompressibleSinglePhaseUpdate< ExponentApproximationType::Full, ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
