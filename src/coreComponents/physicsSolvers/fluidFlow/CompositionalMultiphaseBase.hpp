@@ -225,8 +225,6 @@ public:
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
 
-    static constexpr char const * isThermalString()  { return "isThermal"; }
-
     static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
 
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
@@ -361,9 +359,6 @@ protected:
 
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
-
-  /// flag to determine whether or not this is a thermal simulation
-  integer m_isThermal;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;

@@ -76,11 +76,17 @@ FlowSolverBase::FlowSolverBase( string const & name,
   m_poroElasticFlag( 0 ),
   m_coupledWellsFlag( 0 ),
   m_numDofPerCell( 0 ),
+  m_isThermal( 0 ),
   m_fluxEstimate()
 {
   this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of discretization object to use for this solver." );
+
+  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether the problem is thermal or not." );
 
   this->registerWrapper( viewKeyStruct::inputFluxEstimateString(), &m_fluxEstimate ).
     setApplyDefaultValue( 1.0 ).

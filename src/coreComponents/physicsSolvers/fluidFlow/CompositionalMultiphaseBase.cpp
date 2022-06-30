@@ -62,7 +62,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_numComponents( 0 ),
   m_computeCFLNumbers( 0 ),
   m_hasCapPressure( 0 ),
-  m_isThermal( 0 ),
   m_maxCompFracChange( 1.0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
@@ -76,11 +75,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use mass formulation instead of molar" );
-
-  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether the problem is thermal or not." );
 
   this->registerWrapper( viewKeyStruct::computeCFLNumbersString(), &m_computeCFLNumbers ).
     setApplyDefaultValue( 0 ).

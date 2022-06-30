@@ -52,18 +52,12 @@ using namespace singlePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
-  FlowSolverBase( name, parent ),
-  m_isThermal( 0 )
+  FlowSolverBase( name, parent )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature" );
-
-  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether the problem is thermal or not." );
 }
 
 
