@@ -1558,7 +1558,7 @@ FluxKernel::
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const ei )
   {
 #ifdef GEOSX_CRUSHER_SUPPRESSION
-  GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
 #else
     // transmissibility matrix
     stackArray2d< real64, NF *NF > transMatrix( NF, NF );

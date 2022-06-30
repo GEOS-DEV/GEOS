@@ -249,7 +249,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   if( m_useMass )
   {
     // convert mass fractions to mole fractions
-    convertToMoleFractions< numComp >( composition,  compMoleFrac );
+    convertToMoleFractions< numComp >( composition, compMoleFrac );
   }
   else
   {

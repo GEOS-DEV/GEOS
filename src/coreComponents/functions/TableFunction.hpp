@@ -598,7 +598,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
       cornerValue *= weights[dim][corner];
       for( integer kk = 0; kk < numDimensions; ++kk )
       {
-	auto weight = ( dim == kk ) ? dWeights_dInput[dim][corner] : weights[dim][corner];
+        auto weight = ( dim == kk ) ? dWeights_dInput[dim][corner] : weights[dim][corner];
         dCornerValue_dInput[kk] *= weight;
       }
     }

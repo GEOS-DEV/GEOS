@@ -469,13 +469,6 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
 
     if( ENABLE_HYPRE_CUDA )
         set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY} )
-#    elseif( ENABLE_HYPRE_ROCM )
-#        find_and_register( NAME rocrand
-#			   INCLUDE_DIRECTORIES ${ROCM_ROOT}/rocrand/include
-#			   LIBRARY_DIRECTORIES ${ROCM_ROOT}/rocrand/lib
-#			   HEADER rocrand.h
-#			   LIBRARIES rocrand )
-#	set( EXTRA_DEPS rocrand )
     endif()
 
     find_and_register(NAME hypre
@@ -485,6 +478,13 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
                       LIBRARIES HYPRE
                       EXTRA_LIBRARIES ${EXTRA_LIBS}
                       DEPENDS blas lapack superlu_dist ${EXTRA_DEPS} )
+
+    file(READ ${HYPRE_DIR}/include/HYPRE_config.h hypre_config)
+    string(REGEX MATCH "HYPRE_RELEASE_VERSION \"([0-9]*).([0-9]*).([0-9]*)\"" hypre_version ${hypre_config} )
+    set( HYPRE_VERSION_MAJOR ${CMAKE_MATCH_1} )
+    set( HYPRE_VERSION_MINOR ${CMAKE_MATCH_2} )
+    set( HYPRE_VERSION_PATCH ${CMAKE_MATCH_3} )
+    message(STATUS "Hypre version parsed as: ${HYPRE_VERSION_MAJOR}.${HYPRE_VERSION_MINOR}.${HYPRE_VERSION_PATCH}" )
 
     # if( ENABLE_CUDA AND ( NOT ENABLE_HYPRE_CUDA ) )
     #   set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)

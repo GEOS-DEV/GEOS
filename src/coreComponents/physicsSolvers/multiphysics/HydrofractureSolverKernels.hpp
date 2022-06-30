@@ -54,21 +54,21 @@ struct DeformationUpdateKernel
           )
   {
     forAll< POLICY >( size, [elemsToFaces,
-			     faceToNodeMap,
-			     u,
-			     faceNormal,
-			     aperture,
-			     contactWrapper,
-			     hydraulicAperture,
-#ifdef GEOSX_USE_SEPERATION_COEFFICIENT			     
-			     apertureAtFailure,
-			     seperationCoeff0,
-			     seperationCoeff,
-			     dSeperationCoeff_dAper,
-#endif			     
-			     area,
-			     volume,
-			     deltaVolume] GEOSX_HOST_DEVICE ( localIndex const kfe )
+                             faceToNodeMap,
+                             u,
+                             faceNormal,
+                             aperture,
+                             contactWrapper,
+                             hydraulicAperture,
+#ifdef GEOSX_USE_SEPERATION_COEFFICIENT
+                             apertureAtFailure,
+                             seperationCoeff0,
+                             seperationCoeff,
+                             dSeperationCoeff_dAper,
+#endif
+                             area,
+                             volume,
+                             deltaVolume] GEOSX_HOST_DEVICE ( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const kf1 = elemsToFaces[kfe][1];
@@ -133,7 +133,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
         for( int i = 0; i < 3; ++i )
         {
           nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kf], a )] + i;
-	  
+
           real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
           real64 dHydraulicAperture_dAperture = 0;

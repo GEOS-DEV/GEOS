@@ -244,7 +244,7 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
                                                                               &dofColIndices[0],
                                                                               &localPerfJacobian[0][0] + 2 * i,
                                                                               2 );
-	    RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
+            RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
           }
         }
       } );

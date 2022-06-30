@@ -59,6 +59,15 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #cmakedefine GEOSX_USE_HYPRE
 
+#if defined( GEOSX_USE_HYPRE )
+  /// Parsed hypre version information
+  #define HYPRE_VERSION_MAJOR @HYPRE_VERSION_MAJOR@
+  /// Parsed hypre version information
+  #define HYPRE_VERSION_MINOR @HYPRE_VERSION_MINOR@
+  /// Parsed hypre version information
+  #define HYPRE_VERSION_PATCH @HYPRE_VERSION_PATCH@
+#endif
+
 /// Macro defined when using cuda in HYPRE  (CMake option ENABLE_HYPRE_CUDA)
 #cmakedefine GEOSX_USE_HYPRE_CUDA
 

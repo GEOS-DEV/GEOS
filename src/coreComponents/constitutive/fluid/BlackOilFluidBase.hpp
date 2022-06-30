@@ -45,7 +45,7 @@ public:
       GAS = 1,
       WATER = 2,
     };
- };
+  };
 
   BlackOilFluidBase( string const & name, Group * const parent );
 

@@ -25,11 +25,11 @@
 #define GEOSX_COMMON_GEOSXMACROS_HPP_
 
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-  #define GEOSX_DEVICE_COMPILE
+#define GEOSX_DEVICE_COMPILE
 #endif
 
 #if defined( GEOSX_DEVICE_COMPILE ) && defined( GEOSX_USE_HIP )
-  #define GEOSX_CRUSHER_SUPPRESSION "Cannot compile this on Crusher with cce@14.0.0 and rocm@5.1.0"
+#define GEOSX_CRUSHER_SUPPRESSION "Cannot compile this on Crusher with cce@14.0.0 and rocm@5.1.0"
 #endif
 
 
