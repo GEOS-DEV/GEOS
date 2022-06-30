@@ -70,6 +70,35 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
   m_localRhs( localRhs )
 {}
 
+/******************************** FaceBasedResidualAssemblyKernel ********************************/
+
+FaceBasedResidualAssemblyKernelBase::FaceBasedResidualAssemblyKernelBase( integer const numPhases,
+                                                                          globalIndex const rankOffset,
+                                                                          integer const hasCapPressure,
+                                                                          DofNumberAccessor const & dofNumberAccessor,
+                                                                          CompFlowAccessors const & compFlowAccessors,
+                                                                          MultiFluidAccessors const & multiFluidAccessors,
+                                                                          CapPressureAccessors const & capPressureAccessors,
+                                                                          PermeabilityAccessors const & permeabilityAccessors,
+                                                                          real64 const & dt,
+                                                                          arrayView1d< real64 > const & localRhs )
+  : m_numPhases( numPhases ),
+  m_rankOffset( rankOffset ),
+  m_hasCapPressure( hasCapPressure ),
+  m_dt( dt ),
+  m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
+  m_permeability( permeabilityAccessors.get( extrinsicMeshData::permeability::permeability {} ) ),
+  m_ghostRank( compFlowAccessors.get( extrinsicMeshData::ghostRank {} ) ),
+  m_gravCoef( compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient {} ) ),
+  m_pres( compFlowAccessors.get( extrinsicMeshData::flow::pressure {} ) ),
+  m_phaseMob( compFlowAccessors.get( extrinsicMeshData::flow::phaseMobility {} ) ),
+  m_phaseMassDens( multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity {} ) ),
+  m_phaseCompFrac( multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction {} ) ),
+  m_phaseCapPressure( capPressureAccessors.get( extrinsicMeshData::cappres::phaseCapPressure {} ) ),
+  m_localRhs( localRhs )
+{}
+
+
 /******************************** CFLFluxKernel ********************************/
 
 template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >

@@ -920,6 +920,458 @@ protected:
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sei;
 };
 
+/******************************** FaceBasedResidualAssemblyKernel ********************************/
+
+/**
+ * @brief Base class for FaceBasedResidualAssemblyKernel that holds all data not dependent
+ *        on template parameters (like stencil type and number of components/dofs).
+ */
+class FaceBasedResidualAssemblyKernelBase
+{
+public:
+
+  /**
+   * @brief The type for element-based data. Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::ElementViewConstAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
+
+  using CompFlowAccessors =
+    StencilAccessors< extrinsicMeshData::ghostRank,
+                      extrinsicMeshData::flow::gravityCoefficient,
+                      extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::phaseMobility >;
+  using MultiFluidAccessors =
+    StencilMaterialAccessors< MultiFluidBase,
+                              extrinsicMeshData::multifluid::phaseMassDensity,
+                              extrinsicMeshData::multifluid::phaseCompFraction >;
+
+  using CapPressureAccessors =
+    StencilMaterialAccessors< CapillaryPressureBase,
+                              extrinsicMeshData::cappres::phaseCapPressure >;
+
+  using PermeabilityAccessors =
+    StencilMaterialAccessors< PermeabilityBase,
+                              extrinsicMeshData::permeability::permeability >;
+
+  /**
+   * @brief Constructor for the kernel interface
+   * @param[in] numPhases the number of fluid phases
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
+   * @param[in] dofNumberAccessor accessor for the dof numbers
+   * @param[in] compFlowAccessors accessor for wrappers registered by the solver
+   * @param[in] multiFluidAccessors accessor for wrappers registered by the multifluid model
+   * @param[in] capPressureAccessors accessor for wrappers registered by the cap pressure model
+   * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
+   * @param[in] dt time step size
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  FaceBasedResidualAssemblyKernelBase( integer const numPhases,
+                                       globalIndex const rankOffset,
+                                       integer const hasCapPressure,
+                                       DofNumberAccessor const & dofNumberAccessor,
+                                       CompFlowAccessors const & compFlowAccessors,
+                                       MultiFluidAccessors const & multiFluidAccessors,
+                                       CapPressureAccessors const & capPressureAccessors,
+                                       PermeabilityAccessors const & permeabilityAccessors,
+                                       real64 const & dt,
+                                       arrayView1d< real64 > const & localRhs );
+
+protected:
+
+  /// Number of fluid phases
+  integer const m_numPhases;
+
+  /// Offset for my MPI rank
+  globalIndex const m_rankOffset;
+
+  /// Flag to specify whether capillary pressure is used or not
+  integer const m_hasCapPressure;
+
+  /// Time step size
+  real64 const m_dt;
+
+  /// Views on dof numbers
+  ElementViewConst< arrayView1d< globalIndex const > > const m_dofNumber;
+
+  /// Views on permeability
+  ElementViewConst< arrayView3d< real64 const > > m_permeability;
+
+  /// Views on ghost rank numbers and gravity coefficients
+  ElementViewConst< arrayView1d< integer const > > const m_ghostRank;
+  ElementViewConst< arrayView1d< real64 const > > const m_gravCoef;
+
+  // Primary and secondary variables
+
+  /// Views on pressure
+  ElementViewConst< arrayView1d< real64 const > > const m_pres;
+
+  /// Views on phase mobilities
+  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseMob;
+
+  /// Views on phase mass densities
+  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseMassDens;
+
+  /// Views on phase component fractions
+  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_phaseCompFrac;
+
+  /// Views on phase capillary pressure
+  ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const m_phaseCapPressure;
+
+  // Residual and jacobian
+
+  /// View on the local RHS
+  arrayView1d< real64 > const m_localRhs;
+};
+
+/**
+ * @class FaceBasedResidualAssemblyKernel
+ * @tparam NUM_COMP number of fluid components
+ * @tparam NUM_DOF number of degrees of freedom
+ * @tparam STENCILWRAPPER the type of the stencil wrapper
+ * @brief Define the interface for the assembly kernel in charge of flux terms
+ */
+template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
+class FaceBasedResidualAssemblyKernel : public FaceBasedResidualAssemblyKernelBase
+{
+public:
+
+  /// Compile time value for the number of components
+  static constexpr integer numComp = NUM_COMP;
+
+  /// Compute time value for the number of equations (all of them, except the volume balance equation)
+  static constexpr integer numEqn = NUM_DOF-1;
+
+  /// Maximum number of elements at the face
+  static constexpr localIndex maxNumElems = STENCILWRAPPER::maxNumPointsInFlux;
+
+  /// Maximum number of connections at the face
+  static constexpr localIndex maxNumConns = STENCILWRAPPER::maxNumConnections;
+
+  /// Maximum number of points in the stencil
+  static constexpr localIndex maxStencilSize = STENCILWRAPPER::maxStencilSize;
+
+  /**
+   * @brief Constructor for the kernel interface
+   * @param[in] numPhases the number of fluid phases
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
+   * @param[in] stencilWrapper reference to the stencil wrapper
+   * @param[in] dofNumberAccessor
+   * @param[in] compFlowAccessors
+   * @param[in] multiFluidAccessors
+   * @param[in] capPressureAccessors
+   * @param[in] permeabilityAccessors
+   * @param[in] dt time step size
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  FaceBasedResidualAssemblyKernel( integer const numPhases,
+                                   globalIndex const rankOffset,
+                                   integer const hasCapPressure,
+                                   STENCILWRAPPER const & stencilWrapper,
+                                   DofNumberAccessor const & dofNumberAccessor,
+                                   CompFlowAccessors const & compFlowAccessors,
+                                   MultiFluidAccessors const & multiFluidAccessors,
+                                   CapPressureAccessors const & capPressureAccessors,
+                                   PermeabilityAccessors const & permeabilityAccessors,
+                                   real64 const & dt,
+                                   arrayView1d< real64 > const & localRhs )
+    : FaceBasedResidualAssemblyKernelBase( numPhases,
+                                           rankOffset,
+                                           hasCapPressure,
+                                           dofNumberAccessor,
+                                           compFlowAccessors,
+                                           multiFluidAccessors,
+                                           capPressureAccessors,
+                                           permeabilityAccessors,
+                                           dt,
+                                           localRhs ),
+    m_stencilWrapper( stencilWrapper ),
+    m_seri( stencilWrapper.getElementRegionIndices() ),
+    m_sesri( stencilWrapper.getElementSubRegionIndices() ),
+    m_sei( stencilWrapper.getElementIndices() )
+  {}
+
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables located on the stack
+   */
+  struct StackVariables
+  {
+public:
+
+    /**
+     * @brief Constructor for the stack variables
+     * @param[in] size size of the stencil for this connection
+     * @param[in] numElems number of elements for this connection
+     */
+    GEOSX_HOST_DEVICE
+    StackVariables( localIndex const size, localIndex numElems )
+      : stencilSize( size ),
+      numFluxElems( numElems ),
+      compFlux( numComp ),
+      localFlux( numElems * numEqn )
+    {}
+
+    // Stencil information
+
+    /// Stencil size for a given connection
+    localIndex const stencilSize;
+
+    /// Number of elements for a given connection
+    localIndex const numFluxElems;
+
+    // Transmissibility and derivatives
+
+    /// Transmissibility
+    real64 transmissibility[maxNumConns][2]{};
+    /// Derivatives of transmissibility with respect to pressure
+    real64 dTrans_dPres[maxNumConns][2]{};
+
+    // Component fluxes and derivatives
+
+    /// Component fluxes
+    stackArray1d< real64, numComp > compFlux;
+
+    // Local degrees of freedom and local residual/jacobian
+
+    /// Storage for the face local residual vector (all equations except volume balance)
+    stackArray1d< real64, maxNumElems * numEqn > localFlux;
+  };
+
+
+  /**
+   * @brief Getter for the stencil size at this connection
+   * @param[in] iconn the connection index
+   * @return the size of the stencil at this connection
+   */
+  GEOSX_HOST_DEVICE
+  localIndex stencilSize( localIndex const iconn ) const
+  { return m_sei[iconn].size(); }
+
+  /**
+   * @brief Getter for the number of elements at this connection
+   * @param[in] iconn the connection index
+   * @return the number of elements at this connection
+   */
+  GEOSX_HOST_DEVICE
+  localIndex numPointsInFlux( localIndex const iconn ) const
+  { return m_stencilWrapper.numPointsInFlux( iconn ); }
+
+  /**
+   * @brief Performs the setup phase for the kernel.
+   * @param[in] iconn the connection index
+   * @param[in] stack the stack variables
+   */
+  GEOSX_HOST_DEVICE
+  void setup( localIndex const GEOSX_UNUSED_PARAM( iconn ),
+              StackVariables & GEOSX_UNUSED_PARAM( stack ) ) const
+  {}
+
+  /**
+   * @brief Compute the local flux contributions to the residual and Jacobian
+   * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
+   * @param[in] iconn the connection index
+   * @param[inout] stack the stack variables
+   * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
+   */
+  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  GEOSX_HOST_DEVICE
+  void computeFlux( localIndex const iconn,
+                    StackVariables & stack,
+                    FUNC && compFluxKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+  {
+    // first, compute the transmissibilities at this face
+    m_stencilWrapper.computeWeights( iconn,
+                                     m_permeability,
+                                     m_permeability,
+                                     stack.transmissibility,
+                                     stack.dTrans_dPres );
+
+    // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
+    for( integer ip = 0; ip < m_numPhases; ++ip )
+    {
+      // clear working arrays
+      real64 densMean{};
+
+      // create local work arrays
+      real64 phaseFlux{};
+      real64 presGrad{};
+      real64 gravHead{};
+
+      // calculate quantities on primary connected cells
+      for( integer i = 0; i < stack.numFluxElems; ++i )
+      {
+        localIndex const er  = m_seri( iconn, i );
+        localIndex const esr = m_sesri( iconn, i );
+        localIndex const ei  = m_sei( iconn, i );
+
+        // density
+        real64 const density  = m_phaseMassDens[er][esr][ei][0][ip];
+
+        // average density and derivatives
+        densMean += 0.5 * density;
+      }
+
+      //***** calculation of flux *****
+
+      // compute potential difference MPFA-style
+      for( integer i = 0; i < stack.stencilSize; ++i )
+      {
+        localIndex const er  = m_seri( iconn, i );
+        localIndex const esr = m_sesri( iconn, i );
+        localIndex const ei  = m_sei( iconn, i );
+
+        // capillary pressure
+        real64 capPressure = 0.0;
+        if( m_hasCapPressure )
+        {
+          capPressure = m_phaseCapPressure[er][esr][ei][0][ip];
+        }
+
+        presGrad += stack.transmissibility[0][i] * (m_pres[er][esr][ei] - capPressure);
+
+        // the density used in the potential difference is always a mass density
+        // unlike the density used in the phase mobility, which is a mass density
+        // if useMass == 1 and a molar density otherwise
+        real64 const gravD = stack.transmissibility[0][i] * m_gravCoef[er][esr][ei];
+        gravHead += densMean * gravD;
+      }
+
+      // *** upwinding ***
+
+      // compute phase potential gradient
+      real64 const potGrad = presGrad - gravHead;
+
+      // choose upstream cell
+      localIndex const k_up = (potGrad >= 0) ? 0 : 1;
+
+      localIndex const er_up  = m_seri( iconn, k_up );
+      localIndex const esr_up = m_sesri( iconn, k_up );
+      localIndex const ei_up  = m_sei( iconn, k_up );
+
+      real64 const mobility = m_phaseMob[er_up][esr_up][ei_up][ip];
+
+      // skip the phase flux if phase not present or immobile upstream
+      if( LvArray::math::abs( mobility ) < 1e-20 ) // TODO better constant
+      {
+        continue;
+      }
+
+      // compute the phase flux and derivatives using upstream cell mobility
+      phaseFlux = mobility * potGrad;
+
+      // slice some constitutive arrays to avoid too much indexing in component loop
+      arraySlice1d< real64 const, multifluid::USD_PHASE_COMP-3 > phaseCompFracSub =
+        m_phaseCompFrac[er_up][esr_up][ei_up][0][ip];
+
+      // compute component fluxes and derivatives using upstream cell composition
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        real64 const ycp = phaseCompFracSub[ic];
+        stack.compFlux[ic] += phaseFlux * ycp;
+      }
+
+      // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
+      // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
+      compFluxKernelOp( ip, k_up, er_up, esr_up, ei_up, potGrad, phaseFlux );
+
+    }
+
+    // *** end of upwinding
+
+    // populate local flux vector and derivatives
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      stack.localFlux[ic]          =  m_dt * stack.compFlux[ic];
+      stack.localFlux[numEqn + ic] = -m_dt * stack.compFlux[ic];
+    }
+  }
+
+  /**
+   * @brief Performs the complete phase for the kernel.
+   * @param[in] iconn the connection index
+   * @param[inout] stack the stack variables
+   */
+  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  GEOSX_HOST_DEVICE
+  void complete( localIndex const iconn,
+                 StackVariables & stack,
+                 FUNC && assemblyKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+  {
+    using namespace compositionalMultiphaseUtilities;
+
+    // Apply equation/variable change transformation(s)
+    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numFluxElems,
+                                                               stack.localFlux );
+
+    // add contribution to residual and jacobian into:
+    // - the component mass balance equations (i = 0 to i = numComp-1)
+    // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
+    for( integer i = 0; i < stack.numFluxElems; ++i )
+    {
+      if( m_ghostRank[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] < 0 )
+      {
+        globalIndex const globalRow = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
+        localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
+        GEOSX_ASSERT_GE( localRow, 0 );
+
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + ic], stack.localFlux[i * numEqn + ic] );
+        }
+
+        // call the lambda to assemble additional terms, such as thermal terms
+        assemblyKernelOp( i, localRow );
+      }
+    }
+  }
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numConnections the number of connections
+   * @param[inout] kernelComponent the kernel component providing access to setup/compute/complete functions and stack variables
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numConnections,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOSX_MARK_FUNCTION;
+
+    forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    {
+      typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
+                                                  kernelComponent.numPointsInFlux( iconn ) );
+
+      kernelComponent.setup( iconn, stack );
+      kernelComponent.computeFlux( iconn, stack );
+      kernelComponent.complete( iconn, stack );
+    } );
+  }
+
+protected:
+
+  // Stencil information
+
+  /// Reference to the stencil wrapper
+  STENCILWRAPPER const m_stencilWrapper;
+
+  /// Connection to element maps
+  typename STENCILWRAPPER::IndexContainerViewConstType const m_seri;
+  typename STENCILWRAPPER::IndexContainerViewConstType const m_sesri;
+  typename STENCILWRAPPER::IndexContainerViewConstType const m_sei;
+};
+
+
 /**
  * @class FaceBasedAssemblyKernelFactory
  */
@@ -931,6 +1383,7 @@ public:
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
    * @tparam STENCILWRAPPER the type of the stencil wrapper
+   * @param[in] assembleJacobian flag to decide whether the Jacobian matrix is assembled or not
    * @param[in] numComps the number of fluid components
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
@@ -945,7 +1398,8 @@ public:
    */
   template< typename POLICY, typename STENCILWRAPPER >
   static void
-  createAndLaunch( integer const numComps,
+  createAndLaunch( bool const assembleJacobian,
+                   integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
@@ -966,16 +1420,32 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      if( assembleJacobian )
+      {
+        using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
-                         compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
-                         dt, localMatrix, localRhs );
-      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+        kernelType kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
+                           compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
+                           dt, localMatrix, localRhs );
+        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+      }
+      else
+      {
+        using kernelType = FaceBasedResidualAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+
+        kernelType kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
+                           compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
+                           dt, localRhs );
+        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+      }
     } );
   }
 };

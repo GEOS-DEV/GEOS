@@ -1181,22 +1181,56 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOSX_UNUSED_PARA
 {
   GEOSX_MARK_FUNCTION;
 
+  array1d< real64 > localRhsTest;
+  localRhsTest.resize( localRhs.size() );
+  arrayView1d< real64 > const localRhsTestView = localRhsTest.toView();
+
   assembleAccumulationAndVolumeBalanceTerms( domain,
                                              dofManager,
                                              localMatrix,
                                              localRhs );
+
+
+  assembleAccumulationAndVolumeBalanceTerms( domain,
+                                             dofManager,
+                                             localMatrix,
+                                             localRhsTestView,
+                                             false );
+
+  RAJA::ReduceMax< ReducePolicy< parallelDevicePolicy<> >, real64 > maxDiff( 0.0 );
+  forAll< parallelDevicePolicy<> >( localRhs.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  {
+    maxDiff.max( LvArray::math::abs( localRhsTestView[i] - localRhs[i] ) );
+  } );
+  std::cout << "Accum: max absolute difference in residuals: " << maxDiff.get() << std::endl;
 
   assembleFluxTerms( dt,
                      domain,
                      dofManager,
                      localMatrix,
                      localRhs );
+
+  assembleFluxTerms( dt,
+                     domain,
+                     dofManager,
+                     localMatrix,
+                     localRhsTestView,
+                     false );
+
+  RAJA::ReduceMax< ReducePolicy< parallelDevicePolicy<> >, real64 > maxDiff2( 0.0 );
+  forAll< parallelDevicePolicy<> >( localRhs.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  {
+    maxDiff2.max( LvArray::math::abs( localRhsTestView[i] - localRhs[i] ) );
+  } );
+  std::cout << "Flux: Max absolute difference in residuals: " << maxDiff2.get() << std::endl;
+
 }
 
 void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( DomainPartition & domain,
                                                                              DofManager const & dofManager,
                                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                             arrayView1d< real64 > const & localRhs ) const
+                                                                             arrayView1d< real64 > const & localRhs,
+                                                                             bool const assembleJacobian ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1219,7 +1253,8 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
       {
         thermalCompositionalMultiphaseBaseKernels::
           ElementBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+          createAndLaunch< parallelDevicePolicy<> >( assembleJacobian,
+                                                     m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
                                                      dofKey,
@@ -1233,7 +1268,8 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
       {
         isothermalCompositionalMultiphaseBaseKernels::
           ElementBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+          createAndLaunch< parallelDevicePolicy<> >( assembleJacobian,
+                                                     m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
                                                      dofKey,

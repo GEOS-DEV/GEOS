@@ -89,7 +89,8 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                     DomainPartition const & domain,
                                                     DofManager const & dofManager,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                    arrayView1d< real64 > const & localRhs ) const
+                                                    arrayView1d< real64 > const & localRhs,
+                                                    bool const assembleJacobian ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -114,7 +115,8 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       {
         thermalCompositionalMultiphaseFVMKernels::
           FaceBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+          createAndLaunch< parallelDevicePolicy<> >( assembleJacobian,
+                                                     m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
                                                      elemDofKey,
@@ -130,7 +132,8 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       {
         isothermalCompositionalMultiphaseFVMKernels::
           FaceBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+          createAndLaunch< parallelDevicePolicy<> >( assembleJacobian,
+                                                     m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
                                                      elemDofKey,

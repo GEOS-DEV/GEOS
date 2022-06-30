@@ -190,11 +190,13 @@ public:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
+   * @param assembleJacobian flag to decide whether the Jacobian matrix is assembled or not
    */
   void assembleAccumulationAndVolumeBalanceTerms( DomainPartition & domain,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                  arrayView1d< real64 > const & localRhs ) const;
+                                                  arrayView1d< real64 > const & localRhs,
+                                                  bool const assembleJacobian = true ) const;
 
   /**
    * @brief assembles the flux terms for all cells
@@ -204,13 +206,15 @@ public:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
+   * @param assembleJacobian flag to decide whether the Jacobian matrix is assembled or not
    */
   virtual void
   assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                     arrayView1d< real64 > const & localRhs ) const = 0;
+                     arrayView1d< real64 > const & localRhs,
+                     bool const assembleJacobian = true ) const = 0;
 
 
   /**@}*/

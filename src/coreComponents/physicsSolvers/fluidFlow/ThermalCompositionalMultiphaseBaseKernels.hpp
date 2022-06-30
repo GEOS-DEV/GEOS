@@ -401,6 +401,166 @@ protected:
 
 };
 
+/******************************** ElementBasedResidualAssemblyKernel ********************************/
+
+/**
+ * @class ElementBasedResidualAssemblyKernel
+ * @tparam NUM_COMP number of fluid components
+ * @tparam NUM_DOF number of degrees of freedom
+ * @brief Define the interface for the assembly kernel in charge of thermal accumulation and volume balance
+ */
+template< localIndex NUM_COMP, localIndex NUM_DOF >
+class ElementBasedResidualAssemblyKernel : public isothermalCompositionalMultiphaseBaseKernels::ElementBasedResidualAssemblyKernel< NUM_COMP, NUM_DOF >
+{
+public:
+
+  using Base = isothermalCompositionalMultiphaseBaseKernels::ElementBasedResidualAssemblyKernel< NUM_COMP, NUM_DOF >;
+  using Base::numComp;
+  using Base::numEqn;
+  using Base::m_numPhases;
+  using Base::m_rankOffset;
+  using Base::m_dofNumber;
+  using Base::m_elemGhostRank;
+  using Base::m_volume;
+  using Base::m_porosity_n;
+  using Base::m_porosity;
+  using Base::m_phaseVolFrac_n;
+  using Base::m_phaseVolFrac;
+  using Base::m_phaseDens_n;
+  using Base::m_phaseDens;
+  using Base::m_phaseCompFrac_n;
+  using Base::m_phaseCompFrac;
+  using Base::m_localRhs;
+
+  /**
+   * @brief Constructor
+   * @param[in] numPhases the number of fluid phases
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   * @param[in] solid the solid model
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  ElementBasedResidualAssemblyKernel( localIndex const numPhases,
+                                      globalIndex const rankOffset,
+                                      string const dofKey,
+                                      ElementSubRegionBase const & subRegion,
+                                      MultiFluidBase const & fluid,
+                                      CoupledSolidBase const & solid,
+                                      arrayView1d< real64 > const & localRhs )
+    : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localRhs ),
+    m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() ),
+    m_phaseInternalEnergy( fluid.phaseInternalEnergy() ),
+    m_rockInternalEnergy_n( solid.getInternalEnergy_n() ),
+    m_rockInternalEnergy( solid.getInternalEnergy() )
+  {}
+
+  struct StackVariables : public Base::StackVariables
+  {
+public:
+
+    GEOSX_HOST_DEVICE
+    StackVariables()
+      : Base::StackVariables()
+    {}
+
+    using Base::StackVariables::poreVolume;
+    using Base::StackVariables::poreVolume_n;
+    using Base::StackVariables::localRow;
+    using Base::StackVariables::localResidual;
+
+    // Solid energy
+
+    /// Solid energy at time n+1
+    real64 solidEnergy = 0.0;
+
+    /// Solid energy at the previous converged time step
+    real64 solidEnergy_n = 0.0;
+  };
+
+  /**
+   * @brief Performs the setup phase for the kernel.
+   * @param[in] ei the element index
+   * @param[in] stack the stack variables
+   */
+  GEOSX_HOST_DEVICE
+  void setup( localIndex const ei,
+              StackVariables & stack ) const
+  {
+    Base::setup( ei, stack );
+
+    // initialize the solid volume
+    real64 const solidVolume = m_volume[ei] * ( 1.0 - m_porosity[ei][0] );
+    real64 const solidVolume_n = m_volume[ei] * ( 1.0 - m_porosity_n[ei][0] );
+
+    // initialize the solid internal energy
+    stack.solidEnergy = solidVolume * m_rockInternalEnergy[ei][0];
+    stack.solidEnergy_n = solidVolume_n * m_rockInternalEnergy_n[ei][0];
+  }
+
+  /**
+   * @brief Compute the local accumulation contributions to the residual and Jacobian
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   */
+  GEOSX_HOST_DEVICE
+  void computeAccumulation( localIndex const ei,
+                            StackVariables & stack ) const
+  {
+    Base::computeAccumulation( ei, stack, [&] ( integer const ip,
+                                                real64 const & phaseAmount,
+                                                real64 const & phaseAmount_n )
+    {
+      // We are in the loop over phases, ip provides the current phase index.
+      // We have to assemble the phase-dependent part of the accumulation term of the energy equation
+
+      // construct the slices
+      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
+      arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens = m_phaseDens[ei][0];
+      arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac = m_phaseCompFrac[ei][0];
+      arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseInternalEnergy_n = m_phaseInternalEnergy_n[ei][0];
+      arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseInternalEnergy = m_phaseInternalEnergy[ei][0];
+
+      // assemble the phase-dependent part of the accumulation term of the energy equation
+
+      real64 const phaseEnergy = phaseAmount * phaseInternalEnergy[ip];
+      real64 const phaseEnergy_n = phaseAmount_n * phaseInternalEnergy_n[ip];
+
+      // local accumulation
+      stack.localResidual[numEqn-1] += phaseEnergy - phaseEnergy_n;
+    } );
+
+    // Step 3: assemble the solid part of the accumulation term
+
+    // local accumulation and derivatives w.r.t. pressure and temperature
+    stack.localResidual[numEqn-1] += stack.solidEnergy - stack.solidEnergy_n;
+  }
+
+  GEOSX_HOST_DEVICE
+  void complete( localIndex const ei,
+                 StackVariables & stack ) const
+  {
+    // Step 1: assemble the component mass balance equations and volume balance equations
+    Base::complete( ei, stack );
+
+    // Step 2: assemble the energy equation
+    m_localRhs[stack.localRow + numEqn-1] += stack.localResidual[numEqn-1];
+  }
+
+protected:
+
+  /// Views on phase internal energy
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseInternalEnergy_n;
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseInternalEnergy;
+
+  /// Views on rock internal energy
+  arrayView2d< real64 const > m_rockInternalEnergy_n;
+  arrayView2d< real64 const > m_rockInternalEnergy;
+
+};
+
 /**
  * @class ElementBasedAssemblyKernelFactory
  */
@@ -411,6 +571,7 @@ public:
   /**
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] assembleJacobian flag to decide whether we assemble the Jacobian or not
    * @param[in] numComps the number of fluid components
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
@@ -423,7 +584,8 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( localIndex const numComps,
+  createAndLaunch( bool const assembleJacobian,
+                   localIndex const numComps,
                    localIndex const numPhases,
                    globalIndex const rankOffset,
                    string const dofKey,
@@ -438,10 +600,21 @@ public:
     {
       localIndex constexpr NUM_COMP = NC();
       localIndex constexpr NUM_DOF = NC()+2;
-      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
-      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template
-      launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), kernel );
+
+      if( assembleJacobian )
+      {
+        ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
+        kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
+        ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template
+        launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), kernel );
+      }
+      else
+      {
+        ElementBasedResidualAssemblyKernel< NUM_COMP, NUM_DOF >
+        kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localRhs );
+        ElementBasedResidualAssemblyKernel< NUM_COMP, NUM_DOF >::template
+        launch< POLICY, ElementBasedResidualAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), kernel );
+      }
     } );
   }
 

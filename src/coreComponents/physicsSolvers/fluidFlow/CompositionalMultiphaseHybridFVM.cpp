@@ -305,9 +305,12 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                                           DomainPartition const & domain,
                                                           DofManager const & dofManager,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                          arrayView1d< real64 > const & localRhs ) const
+                                                          arrayView1d< real64 > const & localRhs,
+                                                          bool const assembleJacobian ) const
 {
   GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( assembleJacobian );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
