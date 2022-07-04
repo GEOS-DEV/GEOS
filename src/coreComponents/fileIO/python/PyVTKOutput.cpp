@@ -183,7 +183,7 @@ BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyTypeObject PyVTKOutputType = {
   PyVarObject_HEAD_INIT( nullptr, 0 )
-  .tp_name = "pygeosx.VTKOutput",
+    .tp_name = "pygeosx.VTKOutput",
   .tp_basicsize = sizeof( PyVTKOutput ),
   .tp_itemsize = 0,
   .tp_repr = PyVTKOutput_repr,
@@ -197,8 +197,8 @@ static PyTypeObject PyVTKOutputType = {
 END_ALLOW_DESIGNATED_INITIALIZERS
 
 PyTypeObject * getPyVTKOutputType()
-{ 
-  return &PyVTKOutputType; 
+{
+  return &PyVTKOutputType;
 }
 
 }
