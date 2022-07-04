@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -107,6 +107,7 @@ private:
    * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
+   * @param regionNames name of the region you are currently on
    */
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
@@ -125,9 +126,9 @@ private:
    * @param dt the simulation timestep
    * @param timeSeismo the time at which the seismogram is computed
    * @param iSeismo the index of the seismogram time in the seismogram array
-   * @param var_at_np1 the field values at time_n + dt
-   * @param var_at_n the field values at time_n
-   * @param var_at_receivers the array holding the trace values, where the output is written
+   * @param var_np1 the field values at time_n + dt
+   * @param var_n the field values at time_n
+   * @param varAtreceivers the array holding the trace values, where the output is written
    */
   virtual void computeSeismoTrace( real64 const time_n,
                                    real64 const dt,
@@ -142,9 +143,9 @@ private:
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
    * @param time_n the time corresponding to the field values pressure_n
    * @param dt the simulation timestep
-   * @param var_at_np1 the field values at time_n + dt
-   * @param var_at_n the field values at time_n
-   * @param var_at_receivers the array holding the trace values, where the output is written
+   * @param var_np1 the field values at time_n + dt
+   * @param var_n the field values at time_n
+   * @param varAtreceivers the array holding the trace values, where the output is written
    */
   virtual void computeAllSeismoTraces( real64 const time_n,
                                        real64 const dt,
@@ -189,6 +190,7 @@ private:
   /// Displacement_np1 at the receiver location for each time step for each receiver
   array2d< real64 > m_displacementzNp1AtReceivers;
 
+  /// Array containing the elements which contain a source
   array1d < localIndex > m_sourceElem;
 
 
@@ -228,7 +230,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Stresstensorxx,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "stressxx." );
+                           "xx-components of the stress tensor." );
 
 EXTRINSIC_MESH_DATA_TRAIT( Stresstensoryy,
                            "stresstensoryy",
@@ -236,7 +238,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Stresstensoryy,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "stressyy." );
+                           "yy-components of the stress tensor." );
 
 EXTRINSIC_MESH_DATA_TRAIT( Stresstensorzz,
                            "stresstensorzz",
@@ -244,7 +246,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Stresstensorzz,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "stresszz." );
+                           "zz-components of the stress tensor." );
 
 EXTRINSIC_MESH_DATA_TRAIT( Stresstensorxy,
                            "stresstensorxy",
@@ -252,7 +254,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Stresstensorxy,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "stressxy." );
+                           "xy-components of the stress tensor (symetric of yx-component).");
 
 EXTRINSIC_MESH_DATA_TRAIT( Stresstensorxz,
                            "stresstensorxz",
@@ -260,7 +262,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Stresstensorxz,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "stressxz." );
+                           "xz-components of the stress tensor (symetric of zx-component)." );
 
 EXTRINSIC_MESH_DATA_TRAIT( Stresstensoryz,
                            "stresstensoryz",
@@ -268,7 +270,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Stresstensoryz,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "stressyz." );                           
+                           "yz-components of the stress tensor (symetric of zy-component)." );
 
 
 EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS,
