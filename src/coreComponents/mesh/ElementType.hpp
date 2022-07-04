@@ -41,6 +41,7 @@ enum class ElementType : integer
   Prism5,        ///< Ten-node pentagonal prism
   Prism6,        ///< Twelve-node hexagonal prism
   Polyhedron,    ///< General polyhedral element
+  Voxel,         ///< General cubic element ?
   // NOTE: If you add anything below Polyhedron,
   // don't forget to update numElementTypes() below.
 };
@@ -51,7 +52,7 @@ enum class ElementType : integer
  */
 inline constexpr integer numElementTypes()
 {
-  return static_cast< integer >( ElementType::Polyhedron ) + 1;
+  return static_cast< integer >( ElementType::Voxel ) + 1;
 }
 
 /**
@@ -74,7 +75,8 @@ inline int getElementDim( ElementType const elementType )
     case ElementType::Hexahedron:
     case ElementType::Prism5:
     case ElementType::Prism6:
-    case ElementType::Polyhedron:    return 3;
+    case ElementType::Polyhedron:    // return 3;
+    case ElementType::Voxel:         return 3; 
   }
   return 0;
 }
@@ -92,7 +94,8 @@ ENUM_STRINGS( ElementType,
               "C3D8",
               "PentagonalPrism",
               "HexagonalPrism",
-              "Polyhedron" );
+              "Polyhedron",
+              "Voxel");
 
 } // namespace geosx
 

@@ -149,7 +149,7 @@ loadMesh( Path const & filePath )
       }
       else
       {
-        GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu or .pvtu." );
+        GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vti or .pvtu." ); 
       }
     }
     else
@@ -171,14 +171,10 @@ vtkNew<vtkCellArray> GetCellArray(GRID & mesh)
   else {*/ // to uncomment
     double bounds[6];
     mesh.GetBounds(bounds);
-    double xmin=bounds[0]; 
-    double xmax=bounds[1]; 
-    double ymin=bounds[2]; 
-    double ymax=bounds[3]; 
-    double zmin=bounds[4]; 
-    double zmax=bounds[5]; 
-    int nx = xmin-xmax+1;
-    int ny = ymin-ymax+1;
+    double xmin=bounds[0], xmax=bounds[1]; 
+    double ymin=bounds[2], ymax=bounds[3]; 
+    double zmin=bounds[4], zmax=bounds[5]; 
+    int nx = xmin-xmax+1, ny = ymin-ymax+1;
     //int nz = zmin-zmax+1;
 
     for (int k=zmin; k<zmax; k++){
@@ -444,6 +440,7 @@ ElementType convertVtkToGeosxElementType( VTKCellType const cellType )
     case VTK_PENTAGONAL_PRISM: return ElementType::Prism5;
     case VTK_HEXAGONAL_PRISM:  return ElementType::Prism6;
     case VTK_POLYHEDRON:       return ElementType::Polyhedron;
+    case VTK_VOXEL:            return ElementType::Voxel;
     default:
     {
       GEOSX_ERROR( cellType << " is not a recognized cell type to be used with the VTKMeshGenerator" );
@@ -649,6 +646,7 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
     case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
+    case ElementType::Voxel:         return { 0, 1, 2, 3, 4, 5, 6, 7}; // For ImageData
   }
   return {};
 }
@@ -683,7 +681,9 @@ void fillCellBlock( GRID & mesh,
     {
       cellToVertex[cellCount][v] = currentCell->GetPointId( nodeOrder[v] );
     }
+    
     localToGlobal[cellCount++] = globalCellId->GetValue( c );
+    
   }
 }
 
@@ -704,6 +704,7 @@ string getElementTypeName( ElementType const type )
     case ElementType::Prism5:      return "pentagonalPrisms";
     case ElementType::Prism6:      return "hexagonalPrisms";
     case ElementType::Polyhedron:  return "polyhedra";
+    case ElementType::Voxel:       return "voxels";
     default:
     {
       GEOSX_ERROR( "Element type '" << type << "' is not supported" );
