@@ -613,10 +613,6 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
             grad[eltIdx] -= (p_dt2[nodeIdx] * p_n[nodeIdx])/numNodesPerElem;
           }
         } );
-        for( localIndex eltIdx=0; eltIdx<elementSubRegion.size(); ++eltIdx )
-        {
-          std::cout<<grad[eltIdx]<<std::endl;
-        }
       } );
     }
 
