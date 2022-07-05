@@ -231,10 +231,6 @@ public:
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
 
-    // reservoir region statistics
-
-    static constexpr char const * phasePoreVolumeString() { return "phasePoreVolume"; }
-
   };
 
   /**
@@ -320,9 +316,6 @@ protected:
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
-
-  virtual void computeRegionStatistics( MeshLevel & mesh,
-                                        arrayView1d< string const > const & regionNames ) const override;
 
   /**
    * @brief Utility function that checks the consistency of the constitutive models

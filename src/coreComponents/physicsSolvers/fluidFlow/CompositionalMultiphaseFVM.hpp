@@ -129,17 +129,7 @@ public:
 protected:
 
   virtual void
-  computeStatistics( real64 const & dt,
-                     DomainPartition & domain ) const override;
-
-  virtual void
   initializePreSubGroups() override;
-
-private:
-
-  void
-  computeCFLNumbers( real64 const & dt,
-                     DomainPartition & domain ) const;
 
 };
 

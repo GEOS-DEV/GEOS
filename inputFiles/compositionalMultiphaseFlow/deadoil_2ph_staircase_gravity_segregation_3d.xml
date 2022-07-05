@@ -8,8 +8,7 @@
       discretization="fluidTPFA"
       targetRegions="{ Channel }"
       initialDt="1"
-      temperature="300"
-      computeStatistics="1">
+      temperature="300">
       <NonlinearSolverParameters
         newtonTol="1.0e-9"
         newtonMaxIter="15"

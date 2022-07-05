@@ -23,7 +23,6 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ region }"
-      computeStatistics="1"      
       temperature="297.15"
       useMass="1"/>
 

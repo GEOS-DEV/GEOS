@@ -7,8 +7,7 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ region }"
-      temperature="300"
-      computeStatistics="1">
+      temperature="300">
       <NonlinearSolverParameters
         newtonTol="1.0e-10"
         newtonMaxIter="15"

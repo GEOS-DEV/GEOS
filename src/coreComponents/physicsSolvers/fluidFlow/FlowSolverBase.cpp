@@ -85,11 +85,6 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Initial estimate of the input flux used only for residual scaling. This should be "
                     "essentially equivalent to the input flux * dt." );
-
-  this->registerWrapper( viewKeyStruct::computeStatisticsString(), &m_computeStatistics ).
-    setApplyDefaultValue( 0 ). // do nothing by default
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether statistics are computed or not" );;
 }
 
 void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
@@ -263,24 +258,6 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh,
       gravityCoef[ kf ] = LvArray::tensorOps::AiBi< 3 >( faceCenter[ kf ], gravVector );
     } );
   }
-}
-
-void FlowSolverBase::computeStatistics( real64 const & dt,
-                                        DomainPartition & domain ) const
-{
-  if( !m_computeStatistics )
-  {
-    return;
-  }
-
-  GEOSX_UNUSED_VAR( dt );
-
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
-  {
-    computeRegionStatistics( mesh, regionNames );
-  } );
 }
 
 void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const

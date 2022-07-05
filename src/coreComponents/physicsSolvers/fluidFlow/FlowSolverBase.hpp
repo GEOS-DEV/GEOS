@@ -74,15 +74,6 @@ public:
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
     static constexpr char const * transMultiplierString() { return "permeabilityTransMultiplier"; }
 
-    // reservoir region statistics
-
-    static constexpr char const * computeStatisticsString() { return "computeStatistics"; }
-    static constexpr char const * averagePressureString() { return "averagePressure"; }
-    static constexpr char const * maximumPressureString() { return "maximumPressure"; }
-    static constexpr char const * minimumPressureString() { return "minimumPressure"; }
-    static constexpr char const * totalPoreVolumeString() { return "totalPoreVolume"; }
-    static constexpr char const * totalUncompactedPoreVolumeString() { return "totalUncompactedPoreVolume"; }
-
   };
 
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
@@ -140,23 +131,6 @@ protected:
   virtual void precomputeData( MeshLevel & mesh,
                                arrayView1d< string const > const & regionNames );
 
-  /**
-   * @brief Compute CFL numbers and reservoir statistics
-   * @param dt the time step size
-   * @param domain the domain partition
-   */
-  virtual void computeStatistics( real64 const & dt,
-                                  DomainPartition & domain ) const;
-
-  /**
-   * @brief Compute some statistics on the reservoir (average field pressure)
-   * @param[in] mesh the mesh level object
-   * @param[in] regionNames the array of target region names
-   */
-  virtual void computeRegionStatistics( MeshLevel & mesh,
-                                        arrayView1d< string const > const & regionNames ) const
-  { GEOSX_UNUSED_VAR( mesh, regionNames ); }
-
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
@@ -173,11 +147,10 @@ protected:
   integer m_computeStatistics;
 
 private:
+
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-
 };
-
 
 }
 

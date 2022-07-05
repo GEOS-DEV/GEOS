@@ -303,9 +303,6 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
-  virtual void computeRegionStatistics( MeshLevel & mesh,
-                                        arrayView1d< string const > const & regionNames ) const override;
-
   /**
    * @brief Structure holding views into fluid properties used by the base solver.
    */

@@ -22,7 +22,6 @@
       discretization="fluidTPFA"
       targetRegions="{ Channel }"
       temperature="368.15"
-      computeStatistics="1"      
       maxCompFractionChange="0.2"
       useMass="1"/>
 
