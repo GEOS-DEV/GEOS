@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -82,9 +82,9 @@ public:
   /**
    * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
    * @param cycleNumber the cycle number/step number of evaluation of the source
-   * @param rhs_x the right hand side vector to be computed (x-component)
-   * @param rhs_y the right hand side vector to be computed (x-component)
-   * @param rhs_z the right hand side vector to be computed (x-component)
+   * @param rhsx the right hand side vector to be computed (x-component)
+   * @param rhsy the right hand side vector to be computed (x-component)
+   * @param rhsz the right hand side vector to be computed (x-component)
    */
   void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhsx, arrayView1d< real64 > const rhsy, arrayView1d< real64 > const rhsz );
 
@@ -92,13 +92,13 @@ public:
    * TODO: move implementation into WaveSolverBase
    * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
    * last two timesteps.
-   * @param time_n the time corresponding to the field values pressure_n
+   * @param time_n the time corresponding to the field values at iteration n 
    * @param dt the simulation timestep
    * @param timeSeismo the time at which the seismogram is computed
    * @param iSeismo the index of the seismogram time in the seismogram array
-   * @param var_at_np1 the field values at time_n + dt
-   * @param var_at_n the field values at time_n
-   * @param var_at_receivers the array holding the trace values, where the output is written
+   * @param var_np1 the field values at time_n + dt
+   * @param var_n the field values at time_n
+   * @param varAtreceivers the array holding the trace values, where the output is written
    */
   virtual void computeSeismoTrace( real64 const time_n,
                                    real64 const dt,
@@ -111,11 +111,11 @@ public:
   /**
    * TODO: move implementation into WaveSolverBase
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
-   * @param time_n the time corresponding to the field values pressure_n
+   * @param time_n the time corresponding to the field values at iteration n 
    * @param dt the simulation timestep
-   * @param var_at_np1 the field values at time_n + dt
-   * @param var_at_n the field values at time_n
-   * @param var_at_receivers the array holding the trace values, where the output is written
+   * @param var_np1 the field values at time_n + dt
+   * @param var_n the field values at time_n
+   * @param varAtreceivers the array holding the trace values, where the output is written
    */
   virtual void computeAllSeismoTraces( real64 const time_n,
                                        real64 const dt,
@@ -158,6 +158,7 @@ private:
    * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
+   * @param regionNames the names of the region you loop on 
    */
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
