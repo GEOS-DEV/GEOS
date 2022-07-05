@@ -50,13 +50,15 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
                                                         Group * const parent )
   :
   CompositionalMultiphaseBase( name, parent )
-{
-  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
-}
+{}
 
 void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
   CompositionalMultiphaseBase::initializePreSubGroups();
+
+  m_linearSolverParameters.get().mgr.strategy = m_isThermal
+    ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM
+    : LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -72,7 +74,7 @@ void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
                                             DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::elemDofFieldString(),
-                       DofManager::Location::Elem,
+                       FieldLocation::Elem,
                        m_numDofPerCell,
                        m_meshTargets );
 
@@ -579,18 +581,17 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+                                               arrayView1d< string const > const & regionNames )
   {
-    std::map< string, string_array > fieldNames;
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::globalCompDensity::key() );
-
+    std::vector< string > fields{ extrinsicMeshData::flow::pressure::key(), extrinsicMeshData::flow::globalCompDensity::key() };
     if( m_isThermal )
     {
-      fieldNames["elems"].emplace_back( extrinsicMeshData::flow::temperature::key() );
+      fields.emplace_back( extrinsicMeshData::flow::temperature::key() );
     }
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addElementFields( fields, regionNames );
 
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );
 }
 

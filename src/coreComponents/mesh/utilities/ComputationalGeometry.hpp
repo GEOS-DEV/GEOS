@@ -21,6 +21,10 @@
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
+#include "finiteElement/elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
+#include "finiteElement/elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
+#include "finiteElement/elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
+#include "finiteElement/elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -440,53 +444,33 @@ void getBoundingBox( localIndex const elemIndex,
 }
 
 /**
+ * @brief Compute the volume of an element (tetrahedron, pyramid, wedge, hexahedron)
+ * @tparam FE_TYPE the type of finite element space
+ * @param[in] X vertices of the element
+ * @return the volume of the element
+ */
+template< typename FE_TYPE >
+GEOSX_HOST_DEVICE inline
+real64 elementVolume( real64 const (&X)[FE_TYPE::numNodes][3] )
+{
+  real64 result{};
+  for( localIndex q=0; q<FE_TYPE::numQuadraturePoints; ++q )
+  {
+    result = result + FE_TYPE::transformedQuadratureWeight( q, X );
+  }
+  return result;
+}
+
+/**
  * @brief Compute the volume of an hexahedron
  * @param[in] X vertices of the hexahedron
  * @return the volume of the hexahedron
  */
 GEOSX_HOST_DEVICE
 inline
-real64 hexVolume( real64 const X[][3] )
+real64 hexahedronVolume( real64 const (&X)[8][3] )
 {
-  real64 X7_X1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
-  LvArray::tensorOps::subtract< 3 >( X7_X1, X[1] );
-
-  real64 X6_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[6] );
-  LvArray::tensorOps::subtract< 3 >( X6_X0, X[0] );
-
-  real64 X7_X2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
-  LvArray::tensorOps::subtract< 3 >( X7_X2, X[2] );
-
-  real64 X3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] );
-  LvArray::tensorOps::subtract< 3 >( X3_X0, X[0] );
-
-  real64 X5_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] );
-  LvArray::tensorOps::subtract< 3 >( X5_X0, X[0] );
-
-  real64 X7_X4[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
-  LvArray::tensorOps::subtract< 3 >( X7_X4, X[4] );
-
-  real64 X7_X1plusX6_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X1 );
-  LvArray::tensorOps::add< 3 >( X7_X1plusX6_X0, X6_X0 );
-
-  real64 X7_X2plusX5_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X2 );
-  LvArray::tensorOps::add< 3 >( X7_X2plusX5_X0, X5_X0 );
-
-  real64 X7_X4plusX3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X4 );
-  LvArray::tensorOps::add< 3 >( X7_X4plusX3_X0, X3_X0 );
-
-  real64 X7_X2crossX3_X0[3];
-  LvArray::tensorOps::crossProduct( X7_X2crossX3_X0, X7_X2, X3_X0 );
-
-  real64 X7_X2plusX5_X0crossX7_X4[3];
-  LvArray::tensorOps::crossProduct( X7_X2plusX5_X0crossX7_X4, X7_X2plusX5_X0, X7_X4 );
-
-  real64 X5_X0crossX7_X4plusX3_X0[3];
-  LvArray::tensorOps::crossProduct( X5_X0crossX7_X4plusX3_X0, X5_X0, X7_X4plusX3_X0 );
-
-  return 1.0/12.0 * ( LvArray::tensorOps::AiBi< 3 >( X7_X1plusX6_X0, X7_X2crossX3_X0 ) +
-                      LvArray::tensorOps::AiBi< 3 >( X6_X0, X7_X2plusX5_X0crossX7_X4 ) +
-                      LvArray::tensorOps::AiBi< 3 >( X7_X1, X5_X0crossX7_X4plusX3_X0 ) );
+  return elementVolume< finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2 >( X );
 }
 
 /**
@@ -496,21 +480,9 @@ real64 hexVolume( real64 const X[][3] )
  */
 GEOSX_HOST_DEVICE
 inline
-real64 tetVolume( real64 const X[][3] )
+real64 tetrahedronVolume( real64 const (&X)[4][3] )
 {
-  real64 X1_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] );
-  LvArray::tensorOps::subtract< 3 >( X1_X0, X[0] );
-
-  real64 X2_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] );
-  LvArray::tensorOps::subtract< 3 >( X2_X0, X[0] );
-
-  real64 X3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] );
-  LvArray::tensorOps::subtract< 3 >( X3_X0, X[0] );
-
-  real64 X2_X0crossX3_X0[ 3 ];
-  LvArray::tensorOps::crossProduct( X2_X0crossX3_X0, X2_X0, X3_X0 );
-
-  return LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( X1_X0, X2_X0crossX3_X0 ) / 6.0 );
+  return elementVolume< finiteElement::H1_Tetrahedron_Lagrange1_Gauss1 >( X );
 }
 
 /**
@@ -520,24 +492,9 @@ real64 tetVolume( real64 const X[][3] )
  */
 GEOSX_HOST_DEVICE
 inline
-real64 wedgeVolume( real64 const X[][3] )
+real64 wedgeVolume( real64 const (&X)[6][3] )
 {
-  real64 const tet1[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
-
-  real64 const tet2[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] ) };
-
-  real64 const tet3[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] ) };
-
-  return tetVolume( tet1 ) + tetVolume( tet2 ) + tetVolume( tet3 );
+  return elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( X );
 }
 
 /**
@@ -547,19 +504,65 @@ real64 wedgeVolume( real64 const X[][3] )
  */
 GEOSX_HOST_DEVICE
 inline
-real64 pyramidVolume( real64 const X[][3] )
+real64 pyramidVolume( real64 const (&X)[5][3] )
 {
-  real64 const tet1[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
+  return elementVolume< finiteElement::H1_Pyramid_Lagrange1_Gauss5 >( X );
+}
 
-  real64 const tet2[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
+/**
+ * @brief Compute the volume of a prism with N-sided polygon base
+ * @tparam N the number of sides in the polygon base
+ * @param[in] X vertices of the prism
+ * @return the volume of the prism
+ *
+ * @note The volume is computed splitting the prism into wedges. The function can be called only
+ *       for N > 5. For N = 3 and N = 4 function wedgeVolume and hexahedronVolume, respectively,
+ *       should be used.
+ */
+template< integer N >
+GEOSX_HOST_DEVICE
+inline
+real64 prismVolume( real64 const (&X)[2*N][3] )
+{
+  static_assert( N > 4,
+                 "Function prismVolume can be called for a prism with N-sided polygon base where N > 5." );
 
-  return tetVolume( tet1 ) + tetVolume( tet2 );
+  real64 result{};
+
+  // Compute the barycenters of the prism bases
+  real64 XGBot[3]{};
+  real64 XGTop[3]{};
+  for( integer a = 0; a < N; ++a )
+  {
+    LvArray::tensorOps::add< 3 >( XGBot, X[a] );
+  }
+  for( integer a = N; a < 2 * N; ++a )
+  {
+    LvArray::tensorOps::add< 3 >( XGTop, X[a] );
+  }
+  LvArray::tensorOps::scale< 3 >( XGBot, 1.0 / N );
+  LvArray::tensorOps::scale< 3 >( XGTop, 1.0 / N );
+
+  real64 XWedge[6][3];
+  for( int a = 0; a < N - 1; ++a )
+  {
+
+    LvArray::tensorOps::copy< 3 >( XWedge[0], X[a] );
+    LvArray::tensorOps::copy< 3 >( XWedge[1], X[a+N] );
+    LvArray::tensorOps::copy< 3 >( XWedge[2], X[a+1] );
+    LvArray::tensorOps::copy< 3 >( XWedge[3], X[a+1+N] );
+    LvArray::tensorOps::copy< 3 >( XWedge[4], XGBot );
+    LvArray::tensorOps::copy< 3 >( XWedge[5], XGTop );
+    result = result + computationalGeometry::elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( XWedge );
+  }
+  LvArray::tensorOps::copy< 3 >( XWedge[0], X[N-1] );
+  LvArray::tensorOps::copy< 3 >( XWedge[1], X[2*N-1] );
+  LvArray::tensorOps::copy< 3 >( XWedge[2], X[0] );
+  LvArray::tensorOps::copy< 3 >( XWedge[3], X[N] );
+  LvArray::tensorOps::copy< 3 >( XWedge[4], XGBot );
+  LvArray::tensorOps::copy< 3 >( XWedge[5], XGTop );
+  result = result + computationalGeometry::elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( XWedge );
+  return result;
 }
 
 } /* namespace computationalGeometry */
