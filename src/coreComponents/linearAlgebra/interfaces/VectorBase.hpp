@@ -20,9 +20,10 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_VECTORBASE_HPP_
 
 #include "linearAlgebra/common/common.hpp"
-#include "linearAlgebra/utilities/AsyncRequest.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+
+#include <future>
 
 namespace geosx
 {
@@ -216,6 +217,7 @@ protected:
   virtual real64 dot( Vector const & vec ) const = 0;
 
 public:
+
   /**
    * @brief Local part of the dot product with the vector vec.
    * @param vec vector to dot-product with
@@ -230,7 +232,7 @@ public:
     arrayView1d< real64 const > const my_values = values();
     arrayView1d< real64 const > const vec_values = vec.values();
 
-    RAJA::ReduceSum< parallelDeviceReduce, real64 >  result( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > result( 0.0 );
     forAll< parallelDevicePolicy<> >( localSize(), [result, my_values, vec_values] GEOSX_DEVICE ( localIndex const i )
     {
       result += my_values[i] * vec_values[i];
@@ -240,59 +242,75 @@ public:
   }
 
 protected:
+
   /**
    * @brief Starts a nonblocking dot product computation with the vector vec.
    * @param vec vector to dot-product with
-   * @return an AsyncRequest object managing the asynchronous dot product completion
-   * @note Each call to iDot must be paired with a call to AsyncRequest::complete(), which
-   *       returns the dot product
+   * @return a future object managing the asynchronous dot product completion
+   * @note Each call to iDot must be paired with a call to std::future::get(),
+   *       which returns the dot product
    */
-  AsyncRequest< real64 > iDot( Vector const & vec ) const
+  std::future< real64 > iDot( Vector const & vec ) const
   {
-    real64 localDotProduct = localDot( vec );
-
-    AsyncRequest< real64 > result( [ localDotProduct, comm = comm() ]( MPI_Request & request, real64 & dotProduct )
+    struct ReduceData
     {
-      MpiWrapper::iAllReduce( &localDotProduct,
-                              &dotProduct,
-                              1,
-                              MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                              comm,
-                              &request );
-    } );
+      MPI_Request request{};
+      real64 value{};
+    };
+    std::unique_ptr< ReduceData > data = std::make_unique< ReduceData >();
+    data->value = localDot( vec );
 
-    return result;
+    MpiWrapper::iAllReduce( &data->value,
+                            &data->value,
+                            1,
+                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                            comm(),
+                            &data->request );
+
+    return std::async( std::launch::deferred, [data = std::move( data )]
+    {
+      MpiWrapper::wait( &data->request, MPI_STATUS_IGNORE );
+      return data->value;
+    } );
   }
 
   /**
    * @brief Starts a nonblocking dot product computation with the vectors vecs.
    * @tparam VECS variadic pack of vector types
    * @param vecs vectors to dot-product with
-   * @return an AsyncRequest object managing the asynchronous dot products completion
-   * @note Each call to iDot must be paired with a call to AsyncRequest::complete(), which
+   * @return a future object managing the asynchronous dot products completion
+   * @note Each call to iDot must be paired with a call to std::future::get(), which
    *       returns an std::array containing the dot products
    */
   template< typename ... VECS >
-  AsyncRequest< std::array< real64, sizeof...( VECS ) > > iDot2( VECS const & ... vecs ) const
+  std::future< std::array< real64, sizeof...( VECS ) > > iDotMultiple( VECS const & ... vecs ) const
   {
-    integer constexpr numVecs = sizeof...( VECS );
-    StackArray< real64, 1, numVecs > localDotProducts;
-    LvArray::typeManipulation::forEachArg( [ & ]( Vector const & vec )
+    std::size_t constexpr numVecs = sizeof...( VECS );
+
+    struct ReduceData
     {
-      localDotProducts.emplace_back( localDot( vec ) );
+      MPI_Request request{};
+      std::array< real64, numVecs > values{};
+    };
+    std::unique_ptr< ReduceData > data = std::make_unique< ReduceData >();
+
+    LvArray::typeManipulation::forEachArg( [&, idx = 0]( Vector const & vec ) mutable
+    {
+      data->values[idx++] = localDot( vec );
     }, vecs ... );
 
-    AsyncRequest< std::array< real64, numVecs > > result( [ =, comm = comm() ]( MPI_Request & request, std::array< real64, numVecs > & dotProducts )
-    {
-      MpiWrapper::iAllReduce( localDotProducts.data(),
-                              dotProducts.data(),
-                              numVecs,
-                              MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                              comm,
-                              &request );
-    } );
+    MpiWrapper::iAllReduce( data->values.data(),
+                            data->values.data(),
+                            data->values.size(),
+                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                            comm(),
+                            &data->request );
 
-    return result;
+    return std::async( std::launch::deferred, [data = std::move( data )]
+    {
+      MpiWrapper::wait( &data->request, MPI_STATUS_IGNORE );
+      return data->values;
+    } );
   }
 
   /**

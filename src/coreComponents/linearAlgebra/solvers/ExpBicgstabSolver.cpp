@@ -91,7 +91,7 @@ void ExpBicgstabSolver< VECTOR >::solve( Vector const & b,
       break;
     }
 
-    AsyncRequest< std::array< real64, 2 > > request = r0.iDot2( r, AMp );
+    std::future< std::array< real64, 2 > > request = r0.iDotMultiple( r, AMp );
 
     m_precond.apply( r, Mr );
     m_operator.apply( Mr, AMr );
@@ -99,7 +99,7 @@ void ExpBicgstabSolver< VECTOR >::solve( Vector const & b,
     m_precond.apply( AMp, MAMp );
     m_operator.apply( MAMp, AMAMp );
 
-    std::array< real64, 2 > const dp = request.complete();
+    std::array< real64, 2 > const dp = request.get();
     real64 const inner_r0_r   = dp[0];
     real64 const inner_r0_AMp = dp[1];
 
@@ -118,12 +118,12 @@ void ExpBicgstabSolver< VECTOR >::solve( Vector const & b,
     AMq.copy( AMr );
     AMq.axpy( -alpha, AMAMp );
 
-    AsyncRequest< std::array< real64, 4 > > request2 = AMq.iDot2( r0, AMq, r, AMp );
+    std::future< std::array< real64, 4 > > request2 = AMq.iDotMultiple( r0, AMq, r, AMp );
 
     m_precond.apply( AMq, MAMq );
     m_operator.apply( MAMq, AMAMq );
 
-    std::array< real64, 4 > const dp2 = request2.complete();
+    std::array< real64, 4 > const dp2 = request2.get();
     real64 const inner_r0_AMq  = dp2[0];
     real64 const inner_AMq_AMq = dp2[1];
     real64 const inner_r_AMq   = dp2[2];

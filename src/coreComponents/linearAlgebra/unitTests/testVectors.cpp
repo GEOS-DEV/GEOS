@@ -288,9 +288,9 @@ TYPED_TEST_P( VectorTest, nonBlockingDotProduct )
   Vector y( x );
   y.reciprocal();
 
-  AsyncRequest< real64 > request = x.iDot( y );
+  std::future< real64 > request = x.iDot( y );
 
-  real64 const dp = request.complete();
+  real64 const dp = request.get();
   EXPECT_DOUBLE_EQ( dp, x.globalSize() );
 }
 
@@ -308,9 +308,9 @@ TYPED_TEST_P( VectorTest, nonBlockingDotProductMultiple )
   z.reciprocal();
   z.scale( 3.0 );
 
-  AsyncRequest< std::array< real64, 2 > > request = x.iDot2( y, z );
+  std::future< std::array< real64, 2 > > request = x.iDotMultiple( y, z );
 
-  std::array< real64, 2 > const dp = request.complete();
+  std::array< real64, 2 > const dp = request.get();
   EXPECT_DOUBLE_EQ( dp[0], x.globalSize() );
   EXPECT_DOUBLE_EQ( dp[1], 3*x.globalSize() );
 }

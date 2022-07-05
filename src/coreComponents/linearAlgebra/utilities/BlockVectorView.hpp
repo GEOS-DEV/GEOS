@@ -20,9 +20,11 @@
 #define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORVIEW_HPP_
 
 #include "common/common.hpp"
-#include "linearAlgebra/utilities/AsyncRequest.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+
+#include <future>
+#include <numeric>
 
 namespace geosx
 {
@@ -113,23 +115,23 @@ public:
   /**
    * @brief Starts a nonblocking dot product computation with the block vector x.
    * @param x the block vector to dot-product with
-   * @return an AsyncRequest object managing the asynchronous dot product completion
-   * @note Each call to iDot must be paired with a call to AsyncRequest::complete(), which
+   * @return a future object managing the asynchronous dot product completion
+   * @note Each call to iDot must be paired with a call to std::future::get(), which
    *       returns the dot product
    */
-  AsyncRequest< real64 > iDot( BlockVectorView const & x ) const;
+  std::future< real64 > iDot( BlockVectorView const & sum ) const;
 
 
   /**
    * @brief Starts a nonblocking dot product computation with the block vectors vecs.
    * @tparam VECS variadic pack of vector types to dot product with
    * @param vecs vectors to dot-product with
-   * @return an AsyncRequest object managing the asynchronous dot products completion
-   * @note Each call to iDot must be paired with a call to AsyncRequest::complete(), which
+   * @return a future object managing the asynchronous dot products completion
+   * @note Each call to iDot must be paired with a call to std::future::get(), which
    *       returns an std::array containing the dot products
    */
   template< typename ... VECS >
-  AsyncRequest< std::array< real64, sizeof...( VECS ) > > iDot2( VECS const & ... vecs ) const;
+  std::future< std::array< real64, sizeof...( VECS ) > > iDotMultiple( VECS const & ... dotProducts ) const;
 
   /**
    * @brief 2-norm of the block vector.
@@ -361,20 +363,55 @@ real64 BlockVectorView< VECTOR >::dot( BlockVectorView const & src ) const
 }
 
 template< typename VECTOR >
-AsyncRequest< real64 > BlockVectorView< VECTOR >::iDot( BlockVectorView const & src ) const
+std::future< real64 >
+BlockVectorView< VECTOR >::iDot( BlockVectorView const & vec ) const
 {
-  GEOSX_UNUSED_VAR( src );
-  return AsyncRequest< real64 >( []( auto, auto ){} );
+  GEOSX_LAI_ASSERT_EQ( blockSize(), vec.blockSize() );
+  std::vector< std::future< real64 > > results;
+  for( localIndex i = 0; i < blockSize(); ++i )
+  {
+    results.emplace_back( block( i ).iDot( vec.block( i ) ) );
+  }
+
+  return std::async( std::launch::deferred, [results = std::move( results )]() mutable
+  {
+    return std::accumulate( results.begin(), results.end(), 0.0,
+                            []( real64 const sum, std::future< real64 > & f ){ return sum + f.get(); } );
+  } );
 }
 
 template< typename VECTOR >
-template< typename ... VECS > AsyncRequest< std::array< real64, sizeof...( VECS ) > > BlockVectorView< VECTOR >::iDot2( VECS const & ... vecs ) const
+template< typename ... VECS >
+std::future< std::array< real64, sizeof...( VECS ) > >
+BlockVectorView< VECTOR >::iDotMultiple( VECS const & ... vecs ) const
 {
-  LvArray::typeManipulation::forEachArg( [ & ]( BlockVectorView< VECTOR > const & vec )
+  LvArray::typeManipulation::forEachArg( [&]( BlockVectorView< VECTOR > const & vec )
   {
-    GEOSX_UNUSED_VAR( vec );
+   GEOSX_LAI_ASSERT_EQ( blockSize(), vec.blockSize() );
   }, vecs ... );
-  return AsyncRequest< std::array< real64, sizeof...( VECS ) > >( []( auto, auto ){} );
+
+  std::size_t constexpr numVecs = sizeof...( VECS );
+  using DotProducts = std::array< real64, numVecs >;
+
+  std::vector< std::future< DotProducts > > results;
+  for( localIndex i = 0; i < blockSize(); ++i )
+  {
+    results.emplace_back( block( i ).iDotMultiple( vecs.block( i )... ) );
+  }
+
+  return std::async( std::launch::deferred, [results = std::move( results )]() mutable
+  {
+    return std::accumulate( results.begin(), results.end(), DotProducts{},
+                            []( DotProducts dotProducts, std::future< DotProducts > & f )
+    {
+      std::array< real64, numVecs > const subArrayDotProducts = f.get();
+      for( std::size_t i = 0; i < numVecs; ++i )
+      {
+        dotProducts[i] += subArrayDotProducts[i];
+      }
+      return dotProducts;
+    } );
+  } );
 }
 
 template< typename VECTOR >

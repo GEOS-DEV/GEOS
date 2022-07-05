@@ -93,7 +93,7 @@ public:
   //  Wordaround to pass testDoxygenCheck since cannot avoid weird
   //  warning while forwarding this function
   //
-  using VectorBase::iDot2;
+  using VectorBase::iDotMultiple;
   /// @endcond
 
   /**
