@@ -750,7 +750,6 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
   {
     computeSeismoTrace( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1), var_np1, var_n, varAtReceivers );
   }
-  varAtReceivers.move( MemorySpace::host, false );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationSEM, string const &, dataRepository::Group * const )
