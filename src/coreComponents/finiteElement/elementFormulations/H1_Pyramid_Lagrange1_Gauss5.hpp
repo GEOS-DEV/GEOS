@@ -64,7 +64,6 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 5;
 
-  GEOSX_HOST_DEVICE
   virtual ~H1_Pyramid_Lagrange1_Gauss5() override
   {}
 

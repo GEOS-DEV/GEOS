@@ -69,14 +69,12 @@ protected:
    * @brief Copy Constructor
    * @param source Object to copy
    */
-  GEOSX_HOST_DEVICE
   SolidBaseUpdates( SolidBaseUpdates const & source ) = default;
 
   /**
    * @brief Move Constructor
    * @param source Object to move resources from
    */
-  GEOSX_HOST_DEVICE
   SolidBaseUpdates( SolidBaseUpdates && source ) = default;
 
   /// Deleted copy assignment operator

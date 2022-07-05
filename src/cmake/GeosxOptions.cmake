@@ -140,7 +140,7 @@ else()
     set( GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "" )
 endif()
 
-if( ENABLE_HYPRE AND ( ENABLE_HYPRE_CUDA OR ENABLE_HIP ) )
+if( ENABLE_HYPRE AND ENABLE_HIP )
     set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
     set( GEOSX_GLOBALINDEX_TYPE "int" CACHE STRING "" )
 else()

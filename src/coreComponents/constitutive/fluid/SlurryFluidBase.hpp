@@ -137,13 +137,11 @@ protected:
   /**
    * @brief Copy constructor.
    */
-  GEOSX_HOST_DEVICE
   SlurryFluidBaseUpdate( SlurryFluidBaseUpdate const & ) = default;
 
   /**
    * @brief Move constructor.
    */
-  GEOSX_HOST_DEVICE
   SlurryFluidBaseUpdate( SlurryFluidBaseUpdate && ) = default;
 
   /**

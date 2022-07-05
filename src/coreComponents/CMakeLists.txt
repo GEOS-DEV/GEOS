@@ -19,10 +19,6 @@ set( subdirs
      python
    )
 
-set( coreLibLinkLine "" PARENT_SCOPE )
-set( geosx_core_include_dirs "" )
-set( geosx_core_defines "" )
-
 if ( GEOSX_BUILD_OBJ_LIBS )
   set( LVARRAY_BUILD_OBJ_LIBS TRUE CACHE BOOL "" FORCE )
 endif()
@@ -39,13 +35,15 @@ foreach( lib ${subdirs} )
   endif()
 endforeach()
 
-if( NOT GEOSX_BUILD_SHARED_LIBS )
+if( NOT GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS ) # if we're building full static libs and not obj_libs
   set( geosx_core_list "" )
   foreach( lib ${coreLibs} )
     list( APPEND geosx_core_list ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
   endforeach()
-  set ( geosx_core_libs "${geosx_core_list}" CACHE INTERNAL "" )
-endif()
+else( )
+  set( geosx_core_list ${coreLibs} )
+endif( )
+set ( geosx_core_libs "${geosx_core_list}" CACHE INTERNAL "" )
 
 set( parallelDeps "" )
 

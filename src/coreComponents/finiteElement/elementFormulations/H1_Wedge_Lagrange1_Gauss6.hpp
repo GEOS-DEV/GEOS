@@ -61,7 +61,6 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 6;
 
-  GEOSX_HOST_DEVICE
   virtual ~H1_Wedge_Lagrange1_Gauss6() override
   {}
 

@@ -46,14 +46,12 @@ class FiniteElementBase
 public:
 
   /// Default Constructor
-  GEOSX_HOST_DEVICE
   FiniteElementBase() = default;
 
   /**
    * @brief Copy Constructor
    * @param source The object to copy.
    */
-  GEOSX_HOST_DEVICE
   FiniteElementBase( FiniteElementBase const & source ):
 #ifdef CALC_FEM_SHAPE_IN_KERNEL
     m_viewGradN(),
@@ -67,7 +65,6 @@ public:
   }
 
   /// Default Move constructor
-  GEOSX_HOST_DEVICE
   FiniteElementBase( FiniteElementBase && ) = default;
 
   /**
@@ -85,7 +82,6 @@ public:
   /**
    * @brief Destructor
    */
-  GEOSX_HOST_DEVICE
   virtual ~FiniteElementBase() = default;
 
   /**

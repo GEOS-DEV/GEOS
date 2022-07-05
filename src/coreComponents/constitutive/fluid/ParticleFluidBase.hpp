@@ -82,13 +82,11 @@ protected:
   /**
    * @brief Copy constructor.
    */
-  GEOSX_HOST_DEVICE
   ParticleFluidBaseUpdate( ParticleFluidBaseUpdate const & ) = default;
 
   /**
    * @brief Move constructor.
    */
-  GEOSX_HOST_DEVICE
   ParticleFluidBaseUpdate( ParticleFluidBaseUpdate && ) = default;
 
   /**

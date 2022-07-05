@@ -62,11 +62,9 @@ public:
   ElasticIsotropicUpdates() = delete;
 
   /// Default copy constructor
-  GEOSX_HOST_DEVICE
   ElasticIsotropicUpdates( ElasticIsotropicUpdates const & ) = default;
 
   /// Default move constructor
-  GEOSX_HOST_DEVICE
   ElasticIsotropicUpdates( ElasticIsotropicUpdates && ) = default;
 
   /// Deleted copy assignment operator

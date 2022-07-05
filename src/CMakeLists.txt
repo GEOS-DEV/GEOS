@@ -8,7 +8,7 @@ endif()
 cmake_policy(SET CMP0074 NEW) # dont ignore <PackageName>_ROOT env vars when searching for packages via find_package()
 cmake_policy(SET CMP0066 NEW) # use CMAKE_<LANG>_FLAGS_<BUILD_TYPE> for try_compile() instead of only CMAKE_<LANG>_FLAGS
 cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in addition to CMAKE_<LANG>_FLAGS
-
+cmake_policy(SET CMP0104 OLD ) # Allow empty CUDA_ARCHITECTURES, this should be handled by internally by blt but suppress the warnings for now
 
 ################################
 # GEOSX
@@ -144,7 +144,9 @@ endif()
 # Removing all transitive link dependencies from geosx_core target to circumvent
 # the BLT behavior which imposes all dependencies to be public
 #set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "")
-target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+target_include_directories( geosx PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>
+                                         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/coreComponents>
+                                         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>)
 
 # To change the runtime path during installation
 set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
@@ -159,20 +161,20 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
 
   add_custom_target( geosx_generate_schema
                      ALL
-		     COMMAND geosx -s ${SCHEMA_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
+                     COMMAND geosx -s ${SCHEMA_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx
                      COMMENT "Generating XML schema" )
 
   add_custom_target( geosx_update_rst_tables
-  		     ALL
+                     ALL
                      COMMAND python ${SCRIPT_DIR}/SchemaToRSTDocumentation.py ${SCHEMA_DIR} >update_rst_tables.log 2>&1 || (cat update_rst_tables.log && exit 1)
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_generate_schema
                      COMMENT "Generating schema-dependent RST files" )
 
   add_custom_target( geosx_validate_all_xml_files
-  		     ALL
+                     ALL
                      COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples ${CMAKE_SOURCE_DIR}/../inputFiles
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_update_rst_tables
