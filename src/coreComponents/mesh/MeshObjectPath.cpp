@@ -8,13 +8,15 @@
 #include "MeshObjectPath.hpp"
 #include "MeshBody.hpp"
 
+#include <fnmatch.h>
+
 namespace geosx
 {
 
 MeshObjectPath::MeshObjectPath( string const path,
                                 dataRepository::Group const & meshBodies ):
-    m_objectType( getObjectType(path) ),
-    m_pathPermutations()
+  m_objectType( getObjectType(path) ),
+  m_pathPermutations()
 {
   processPath( path, meshBodies );
 }
@@ -77,8 +79,8 @@ void MeshObjectPath::fillPathTokens( string const & path,
   // No MeshBody or MeshLevels were specified. add all of them
   if( objectIndex==0 )
   {
-    pathTokens.insert( pathTokens.begin(), "{:}" );
-    pathTokens.insert( pathTokens.begin(), "{:}" );
+    pathTokens.insert( pathTokens.begin(), "{*}" );
+    pathTokens.insert( pathTokens.begin(), "{*}" );
   }
   // MeshBody OR MeshLevel specified. Check which one, and add all of the other.
   else if( objectIndex==1 )
@@ -88,12 +90,12 @@ void MeshObjectPath::fillPathTokens( string const & path,
     if( meshBodies.hasGroup( unidentifiedName ) )
     {
       pathTokens.insert( pathTokens.begin(), unidentifiedName );
-      pathTokens.insert( pathTokens.begin()+1, "{:}" );
+      pathTokens.insert( pathTokens.begin()+1, "{*}" );
     }
     // It wasn't the MeshBody that was specified, it was the MeshLevel?? Check and add.
     else
     {
-      pathTokens.insert( pathTokens.begin(), "{:}" );
+      pathTokens.insert( pathTokens.begin(), "{*}" );
 
       string existingMeshBodyAndLevel;
       bool levelNameFound = false;
@@ -134,17 +136,75 @@ void MeshObjectPath::fillPathTokens( string const & path,
     // there are no regions specified
     if( targetTokenLength == 3 )
     {
-      pathTokens.push_back( "{:}" );
-      pathTokens.push_back( "{:}" );
+      pathTokens.push_back( "{*}" );
+      pathTokens.push_back( "{*}" );
     }
     // there are no subregions specified
     else if( targetTokenLength == 4)
     {
-      pathTokens.push_back( "{:}" );
+      pathTokens.push_back( "{*}" );
     }
   }
 
 
+}
+
+
+template< typename NODETYPE >
+struct expandPathTokenHelper
+{
+  using SUBNODETYPE = typename NODETYPE::value_type::second_type;
+
+  static SUBNODETYPE & insert( NODETYPE & node, string const & name )
+  {
+    return node[ name ];
+  }
+};
+
+template<>
+struct expandPathTokenHelper< std::vector<string> >
+{
+  using SUBNODETYPE = string;
+
+  static SUBNODETYPE & insert( std::vector<string> & node, string & name )
+  {
+    node.push_back(name);
+    return name;
+  }
+};
+
+template< typename TYPE, typename NODETYPE, typename CALLBACK >
+void expandPathToken( dataRepository::Group const & parentGroup,
+                      string const & pathToken,
+                      NODETYPE & node,
+                      CALLBACK && cbfunc)
+{
+  array1d<string> namesInRepository;
+  parentGroup.forSubGroups<TYPE>( [&]( TYPE const & group )
+  {
+    namesInRepository.emplace_back( group.getName() );
+  } );
+
+  for( string const & inputEntry : stringutilities::tokenize<std::vector<string>>( pathToken, " " ) )
+  {
+    bool foundMatch = false;
+    for( string const & candidateName : namesInRepository )
+    {
+      string name = candidateName;
+      if( fnmatch( candidateName.c_str(), inputEntry.c_str(), 0 ) )
+      {
+        auto & subNode = expandPathTokenHelper<NODETYPE>::insert( node, name );
+        foundMatch=true;
+        // recursive call
+        cbfunc( parentGroup.getGroup<TYPE>(name),
+                subNode );
+
+      }
+    }
+    GEOSX_ERROR_IF( !foundMatch,
+                    "Specified name ("<<inputEntry<<") did not find a match with a object in the repository. "
+                    "Objects that are present in repository are:\n"<<namesInRepository );
+  }
 }
 
 
@@ -155,118 +215,41 @@ void MeshObjectPath::ExpandPathTokens( std::vector<string> & pathTokens,
   {
     pathTokens[a].erase( std::remove( pathTokens[a].begin(), pathTokens[a].end(), '{'), pathTokens[a].end());
     pathTokens[a].erase( std::remove( pathTokens[a].begin(), pathTokens[a].end(), '}'), pathTokens[a].end());
-    pathTokens[a].erase( std::remove( pathTokens[a].begin(), pathTokens[a].end(), ' '), pathTokens[a].end());
   }
 
-  // **** MeshBody *****
-  if( pathTokens[0] == ":" )
+  expandPathToken< MeshBody >( meshBodies,
+                               pathTokens[0],
+                               m_pathPermutations,
+                               [this,&pathTokens] ( MeshBody const & meshBody,
+                                                    std::map< string, std::map< string, std::vector< string > > > & meshBodyNode)
   {
-    meshBodies.forSubGroups<MeshBody>( [&]( MeshBody const & meshBody )
-    {
-      m_pathPermutations[ meshBody.getName() ];
-    } );
-
-  }
-
-  // **** MeshLevel *****
-
-  for( auto & meshBodyPair : m_pathPermutations )
-  {
-    string const & meshBodyName = meshBodyPair.first;
-    auto & meshBodyNode = meshBodyPair.second;
-    MeshBody const & meshBody = meshBodies.getGroup<MeshBody>( meshBodyName );
-
-    if( pathTokens[1] == ":" )
-    {
-      meshBody.forMeshLevels([&](MeshLevel const & meshLevel)
+    dataRepository::Group const & meshLevels = meshBody.getMeshLevels();
+    expandPathToken< MeshLevel >( meshLevels,
+                                  pathTokens[1],
+                                  meshBodyNode,
+                                  [this,&pathTokens]( MeshLevel const & meshLevel,
+                                                      std::map< string, std::vector< string > > & meshLevelNode )
       {
-        auto & meshLevelNode = meshBodyNode[ meshLevel.getName() ];
-        expandElementRegions( pathTokens, meshLevel, meshLevelNode );
+        if( m_objectType == MeshLevel::groupStructKeys::elemManagerString() )
+        {
+          dataRepository::Group const & elemRegionGroup = meshLevel.getElemManager().getGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
+          expandPathToken< ElementRegionBase >( elemRegionGroup,
+                                                pathTokens[3],
+                                                meshLevelNode,
+                                                [&]( ElementRegionBase const & elemRegion,
+                                                     std::vector< string > & elemRegionNode )
+          {
+            dataRepository::Group const & elemSubRegionGroup = elemRegion.getGroup(ElementRegionBase::viewKeyStruct::elementSubRegions() );
+            expandPathToken< ElementSubRegionBase >( elemSubRegionGroup,
+                                                     pathTokens[4],
+                                                     elemRegionNode,
+                                                     [&]( ElementSubRegionBase const & ,
+                                                          string &  )
+            {});
+          });
+        }
       });
-    }
-    else
-    {
-      for( auto & meshLevelName : stringutilities::tokenize< std::vector<string> >( pathTokens[1], "," ) )
-      {
-        GEOSX_ERROR_IF( !(meshBody.getMeshLevels().hasGroup<MeshLevel>(meshLevelName)),
-                        "Inconsistent MeshLevel specifications in path. "
-                        "Specified MeshLevel(s) must exist in all specified MeshBody(s)."
-                        "The list of specified MeshLevel are: \n"<<
-                        pathTokens[1]<<std::endl<<
-                        "while the MeshBody \""<<meshBody.getName()<<
-                        "\" does not contain MeshLevel \""<<meshLevelName<<"\".");
-
-        auto & meshLevelNode = meshBodyNode[ meshLevelName ];
-        expandElementRegions( pathTokens,
-                              meshBody.getMeshLevel(meshLevelName),
-                              meshLevelNode );
-      }
-    }
-  }
-}
-
-void MeshObjectPath::expandElementRegions( std::vector<string> const & pathTokens,
-                                           MeshLevel const & meshLevel,
-                                           std::map< string, std::vector< string > > & meshLevelNode )
-{
-  // ***** ElementRegions *****
-  if( m_objectType == MeshLevel::groupStructKeys::elemManagerString() )
-  {
-    // expand element regions
-    ElementRegionManager const & elemRegions = meshLevel.getElemManager();
-    if( pathTokens[3] == ":" )
-    {
-      elemRegions.forElementRegions( [&]( ElementRegionBase const & elemRegion )
-      {
-        auto & elemRegionNode = meshLevelNode[ elemRegion.getName() ];
-        expandElementSubRegions( pathTokens, elemRegion, elemRegionNode );
-      });
-    }
-    else
-    {
-      for( auto & regionName : stringutilities::tokenize< std::vector<string> >( pathTokens[3], "," ) )
-      {
-        GEOSX_ERROR_IF( !(elemRegions.hasRegion(regionName)),
-                        "Inconsistent ElementRegion specifications in path. "
-                        "Specified ElementRegion(s) must exist in all specified MeshLevel(s)."
-                        "The list of specified ElementRegion(s) are: \n"<<
-                        pathTokens[3]<<std::endl<<
-                        "while the MeshLevel \""<<meshLevel.getName()<<
-                        "\" does not contain ElementRegion \""<<regionName<<"\".");
-        auto & elemRegionNode =meshLevelNode[ regionName ];
-        expandElementSubRegions( pathTokens,
-                                 elemRegions.getRegion(regionName),
-                                 elemRegionNode );
-      }
-    }
-  }
-}
-
-void MeshObjectPath::expandElementSubRegions( std::vector<string> const & pathTokens,
-                                              ElementRegionBase const & elemRegion,
-                                              std::vector< string > & elemRegionNode )
-{
-  if( pathTokens[4] == ":" )
-  {
-    elemRegion.forElementSubRegions( [&]( ElementSubRegionBase const & subRegion )
-    {
-      elemRegionNode.push_back( subRegion.getName() );
-    });
-  }
-  else
-  {
-    for( auto & subRegionName : stringutilities::tokenize< std::vector<string> >( pathTokens[4], "," ) )
-    {
-      GEOSX_ERROR_IF( !(elemRegion.hasSubRegion(subRegionName)),
-                      "Inconsistent ElementSubRegion specifications in path. "
-                      "Specified ElementSubRegion(s) must exist in all specified ElementRegion(s)."
-                      "The list of specified ElementSubRegion(s) are: \n"<<
-                      pathTokens[4]<<std::endl<<
-                      "while the ElementRegion \""<<elemRegion.getName()<<
-                      "\" does not contain ElementSubRegion \""<<subRegionName<<"\".");
-      elemRegionNode.push_back( subRegionName  );
-    }
-  }
+  });
 }
 
 

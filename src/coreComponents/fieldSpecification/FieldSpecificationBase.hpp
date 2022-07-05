@@ -28,6 +28,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "common/FieldSpecificationOps.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "mesh/MeshObjectPath.hpp"
 #include "functions/FunctionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -499,8 +500,10 @@ public:
   }
 
 
+  void setMeshObjectPath( Group const & meshBodies );
+
 protected:
-  virtual void postProcessInput() override;
+
 
 private:
 
@@ -510,6 +513,8 @@ private:
 
   /// the path to the object which contains the fields that the boundary condition is applied to
   string m_objectPath;
+
+  std::unique_ptr<MeshObjectPath> m_meshObjectPaths;
 
   /// the name of the field the boundary condition is applied to or a key string to use for
   /// determining whether or not to apply the boundary condition.

@@ -13,6 +13,7 @@
 
 namespace geosx
 {
+class MeshBody;
 class MeshLevel;
 class ElementRegionBase;
 
@@ -25,6 +26,7 @@ public:
 
   MeshObjectPath( string const path,
                   dataRepository::Group const & meshBodies );
+
   virtual ~MeshObjectPath();
 
 
@@ -38,14 +40,6 @@ public:
   void ExpandPathTokens( std::vector<string> & pathTokens,
                          dataRepository::Group const & meshBodies );
 
-
-  void expandElementRegions( std::vector<string> const & pathTokens,
-                             MeshLevel const & meshLevel,
-                             std::map< string, std::vector< string > > & meshLevelNode );
-
-  void expandElementSubRegions( std::vector<string> const & pathTokens,
-                                ElementRegionBase const & elemRegion,
-                                std::vector< string > & elemRegionNode );
 
   void processPath( string const path,
                     dataRepository::Group const & meshBodies );

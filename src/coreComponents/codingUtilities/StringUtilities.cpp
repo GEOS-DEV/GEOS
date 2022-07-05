@@ -75,6 +75,21 @@ template std::vector<string> tokenize<std::vector<string> >( string const & str,
                                                              string const & delimiters );
 
 
+bool areAnyCharsInString( string const & str, string const & chars )
+{
+  bool rval = false;
+
+  for( size_t a=0; a<chars.size(); ++a )
+  {
+    if( str.find(chars[a])!=string::npos )
+    {
+      rval = true;
+    }
+  }
+  return rval;
+}
+
+
 
 string trim( string const & str,
              string const & charsToRemove )

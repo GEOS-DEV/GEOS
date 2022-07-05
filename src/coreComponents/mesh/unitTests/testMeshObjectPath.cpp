@@ -101,7 +101,7 @@ TEST( testMeshObjectPath, fullPathExpansion )
   MeshObjectPath::permutationMapType const &  pathPermutations = testMesh.pathPermutations();
 
   {
-    string const path = "ElementRegions";
+    string const path = "*/*/ElementRegions";
     MeshObjectPath meshObjectPath( path, meshBodies );
     EXPECT_TRUE( meshObjectPath.pathPermutations() == pathPermutations );
   }

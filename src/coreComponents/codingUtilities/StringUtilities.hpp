@@ -100,6 +100,8 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
 template< typename RETURN_TYPE = string_array >
 RETURN_TYPE tokenize( string const & str, string const & delimiters );
 
+bool areAnyCharsInString( string const & str, string const & chars );
+
 /**
  * @brief Trim the string
  * @param[in] str the string to trim

@@ -230,6 +230,10 @@ public:
               LAMBDA && lambda ) const
   {
     GEOSX_MARK_FUNCTION;
+
+    string const meshBodyName = mesh.getParent().getParent().getName();
+    string const meshLevelName = mesh.getName();
+
     // loop over all FieldSpecificationBase objects
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {

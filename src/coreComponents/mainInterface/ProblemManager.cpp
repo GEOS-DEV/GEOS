@@ -821,6 +821,12 @@ DomainPartition const & ProblemManager::getDomainPartition() const
 
 void ProblemManager::applyInitialConditions()
 {
+
+  m_fieldSpecificationManager->forSubGroups<FieldSpecificationBase>([&]( FieldSpecificationBase & fs)
+  {
+    fs.setMeshObjectPath( getDomainPartition().getMeshBodies() );
+  });
+
   getDomainPartition().forMeshBodies( [&] ( MeshBody & meshBody )
   {
     meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
