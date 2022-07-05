@@ -341,110 +341,160 @@ public:
                                      stack.transmissibility,
                                      stack.dTrans_dPres );
 
-    // clear working arrays
-    real64 densMean = 0.0;
-    stackArray1d< real64, maxNumElems > dDensMean_dP( stack.numFluxElems );
+    localIndex k[2]; 
+    localIndex connectionIndex = 0;
 
-    // create local work arrays
-    real64 fluxVal = 0.0;
-    real64 dFlux_dP[maxStencilSize]{};
-
-    real64 presGrad = 0.0;
-    stackArray1d< real64, maxStencilSize > dPresGrad_dP( stack.stencilSize );
-
-    real64 gravHead = 0.0;
-    stackArray1d< real64, maxNumElems > dGravHead_dP( stack.numFluxElems );
-
-    // calculate quantities on primary connected cells
-    for( integer ke = 0; ke < stack.numFluxElems; ++ke )
+    for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
     {
-      localIndex const er  = m_seri( iconn, ke );
-      localIndex const esr = m_sesri( iconn, ke );
-      localIndex const ei  = m_sei( iconn, ke );
-
-      // density
-      real64 const density  = m_dens[er][esr][ei][0];
-      real64 const dDens_dP = m_dDens_dPres[er][esr][ei][0];
-
-      // average density and derivatives
-      densMean += 0.5 * density;
-      dDensMean_dP[ke] = 0.5 * dDens_dP;
-    }
-
-    //***** calculation of flux *****
-
-    // compute potential difference
-    for( integer i = 0; i < stack.stencilSize; ++i )
-    {
-      localIndex const er  = m_seri( iconn, i );
-      localIndex const esr = m_sesri( iconn, i );
-      localIndex const ei  = m_sei( iconn, i );
-
-      presGrad += stack.transmissibility[0][i] * m_pres[er][esr][ei];
-      dPresGrad_dP[i] += stack.transmissibility[0][i] + stack.dTrans_dPres[0][i] * m_pres[er][esr][ei];
-
-      real64 const gravD     = stack.transmissibility[0][i] * m_gravCoef[er][esr][ei];
-      real64 const dGravD_dP = stack.dTrans_dPres[0][i] * m_gravCoef[er][esr][ei];
-
-      gravHead += densMean * gravD;
-
-      for( integer ke = 0; ke < stack.numFluxElems; ++ke )
+      for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )
       {
-        dGravHead_dP[ke] += dDensMean_dP[ke] * gravD + dGravD_dP * densMean;
+        // clear working arrays
+        real64 densMean = 0.0;
+        real64 dDensMean_dP[2]{0.0, 0.0};
+
+        // create local work arrays
+        real64 fluxVal = 0.0;
+        real64 dFlux_dP[2]{0.0, 0.0};
+
+        real64 const trans[2] = { stack.transmissibility[connectionIndex][0], stack.transmissibility[connectionIndex][1] };
+        real64 const dTrans_dP[2] = { stack.dTrans_dPres[connectionIndex][0], stack.dTrans_dPres[connectionIndex][1] };
+
+        real64 presGrad = 0.0;
+        real64 dPresGrad_dP[2]{0.0, 0.0};
+
+        real64 gravHead = 0.0;
+        real64 dGravHead_dP[2]{0.0, 0.0};
+
+        localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )}; 
+        localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )}; 
+        localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )}; 
+
+        // calculate quantities on primary connected cells
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          // density
+          real64 const density  = m_dens[seri[ke]][sesri[ke]][sei[ke]][0];
+          real64 const dDens_dP = m_dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][0];
+
+          // average density and derivatives
+          densMean += 0.5 * density;
+          dDensMean_dP[ke] = 0.5 * dDens_dP;
+        }
+
+        //***** calculation of flux *****
+
+        // compute potential difference
+        real64 potScale = 0.0; 
+        real64 dPresGrad_dTrans = 0.0; 
+        real64 dGravHead_dTrans = 0.0; 
+        int signPotDiff[2] = {1, -1};
+
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          localIndex const er  = seri[ke];
+          localIndex const esr = sesri[ke];
+          localIndex const ei  = sei[ke];
+
+          real64 const pressure = m_pres[er][esr][ei]; 
+          presGrad += trans[ke] * pressure;
+          dPresGrad_dTrans += signPotDiff[ke] * pressure; 
+          dPresGrad_dP[ke] = trans[ke];
+
+          real64 const gravD = trans[ke] * m_gravCoef[er][esr][ei];
+          real64 const pot = trans[ke] * pressure - densMean * gravD; 
+
+          gravHead += densMean * gravD;
+          dGravHead_dTrans += signPotDiff[ke] * densMean * m_gravCoef[er][esr][ei]; 
+
+          for( integer i = 0; i < 2; ++i )
+          {
+            dGravHead_dP[i] += dDensMean_dP[i] * gravD;
+          }
+
+          potScale = fmax( potScale, fabs( pot ) ); 
+        }
+
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          dPresGrad_dP[ke] += dTrans_dP[ke] * dPresGrad_dTrans; 
+          dGravHead_dP[ke] += dTrans_dP[ke] * dGravHead_dTrans; 
+        }
+
+        // *** upwinding ***
+
+        // compute potential gradient
+        real64 const potGrad = presGrad - gravHead;
+
+        // compute upwinding tolerance
+        real64 constexpr upwRelTol = 1e-8;
+        real64 const upwAbsTol = fmax( potScale * upwRelTol, LvArray::NumericLimits< real64 >::epsilon );
+
+        // decide mobility coefficients - smooth variation in [-upwAbsTol; upwAbsTol]
+        real64 const alpha = ( potGrad + upwAbsTol ) / ( 2 * upwAbsTol );
+
+        // choose upstream cell
+        real64 mobility{}; 
+        real64 dMob_dP[2]{}; 
+        if( alpha <= 0.0 || alpha >= 1.0 )
+        {
+          localIndex const k_up = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) );
+
+          mobility = m_mob[seri[k_up]][sesri[k_up]][sei[k_up]];
+          dMob_dP[k_up] = m_dMob_dPres[seri[k_up]][sesri[k_up]][sei[k_up]];
+        }
+        else
+        {
+          real64 const mobWeights[2] = { alpha, 1.0 - alpha };
+          for( integer ke = 0; ke < 2; ++ke )
+          {
+            mobility += mobWeights[ke] * m_mob[seri[ke]][sesri[ke]][sei[ke]];
+            dMob_dP[ke] = mobWeights[ke] * m_dMob_dPres[seri[ke]][sesri[ke]][sei[ke]];
+          }
+        }
+
+        // pressure gradient depends on all points in the stencil
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          dFlux_dP[ke] += dPresGrad_dP[ke];
+        }
+
+        // gravitational head depends only on the two cells connected (same as mean density)
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          dFlux_dP[ke] -= dGravHead_dP[ke];
+        }
+
+        // compute the flux and derivatives using upstream cell mobility
+        fluxVal = mobility * potGrad;
+
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          dFlux_dP[ke] *= mobility;
+        }
+
+        // add contribution from upstream cell mobility derivatives
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          dFlux_dP[ke] += dMob_dP[ke] * potGrad; 
+        }
+
+        // populate local flux vector and derivatives
+        stack.localFlux[k[0]*numEqn] += m_dt * fluxVal;
+        stack.localFlux[k[1]*numEqn] -= m_dt * fluxVal;
+
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          localIndex const localDofIndexPres = k[ke] * numDof;
+          stack.localFluxJacobian[k[0]*numEqn][localDofIndexPres] += m_dt * dFlux_dP[ke];
+          stack.localFluxJacobian[k[1]*numEqn][localDofIndexPres] -= m_dt * dFlux_dP[ke];
+        }
+
+        // Customize the kernel with this lambda
+        kernelOp( k, seri, sesri, sei, connectionIndex, alpha, mobility, potGrad, fluxVal, dFlux_dP );
+
+        connectionIndex++;
       }
     }
-
-    // *** upwinding ***
-
-    // compute potential gradient
-    real64 const potGrad = presGrad - gravHead;
-
-    // choose upstream cell
-    localIndex const k_up = (potGrad >= 0) ? 0 : 1;
-
-    localIndex const er_up  = m_seri( iconn, k_up );
-    localIndex const esr_up = m_sesri( iconn, k_up );
-    localIndex const ei_up  = m_sei( iconn, k_up );
-
-    real64 const mobility = m_mob[er_up][esr_up][ei_up];
-    real64 const dMob_dP = m_dMob_dPres[er_up][esr_up][ei_up];
-
-    // pressure gradient depends on all points in the stencil
-    for( integer i = 0; i < stack.stencilSize; ++i )
-    {
-      dFlux_dP[i] += dPresGrad_dP[i];
-    }
-
-    // gravitational head depends only on the two cells connected (same as mean density)
-    for( integer ke = 0; ke < stack.numFluxElems; ++ke )
-    {
-      dFlux_dP[ke] -= dGravHead_dP[ke];
-    }
-
-    // compute the flux and derivatives using upstream cell mobility
-    fluxVal = mobility * potGrad;
-
-    for( integer i = 0; i < stack.stencilSize; ++i )
-    {
-      dFlux_dP[i] *= mobility;
-    }
-
-    // add contribution from upstream cell mobility derivatives
-    dFlux_dP[k_up] += dMob_dP * potGrad;
-
-    // populate local flux vector and derivatives
-    stack.localFlux[0]      += m_dt * fluxVal;
-    stack.localFlux[numEqn] -= m_dt * fluxVal;
-
-    for( integer i = 0; i < stack.stencilSize; ++i )
-    {
-      localIndex const localDofIndexPres = i * numDof;
-      stack.localFluxJacobian[0][localDofIndexPres]      += m_dt * dFlux_dP[i];
-      stack.localFluxJacobian[numEqn][localDofIndexPres] -= m_dt * dFlux_dP[i];
-    }
-
-    // Customize the kernel with this lambda
-    kernelOp( k_up, er_up, esr_up, ei_up, potGrad, fluxVal, dFlux_dP );
   }
 
   /**
