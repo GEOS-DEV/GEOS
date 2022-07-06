@@ -189,13 +189,13 @@ public:
     // Computing dFlux_dT and the enthalpy flux requires quantities already computed in the base computeFlux,
     // such as potGrad, fluxVal, and the indices of the upwind cell
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
-    Base::computeFlux( iconn, stack, [&] ( localIndex const (&k)[2], 
-                                           localIndex const (&seri)[2], 
-                                           localIndex const (&sesri)[2], 
-                                           localIndex const (&sei)[2], 
-                                           localIndex const connectionIndex, 
+    Base::computeFlux( iconn, stack, [&] ( localIndex const (&k)[2],
+                                           localIndex const (&seri)[2],
+                                           localIndex const (&sesri)[2],
+                                           localIndex const (&sei)[2],
+                                           localIndex const connectionIndex,
                                            real64 const alpha,
-                                           real64 const mobility, 
+                                           real64 const mobility,
                                            real64 const & potGrad,
                                            real64 const & fluxVal,
                                            real64 const (&dFlux_dP)[2] )
@@ -249,7 +249,7 @@ public:
         dFlux_dT[ke] *= mobility;
       }
 
-      real64 dMob_dT[2]{}; 
+      real64 dMob_dT[2]{};
 
       if( alpha <= 0.0 || alpha >= 1.0 )
       {
@@ -269,7 +269,7 @@ public:
       // add contribution from upstream cell mobility derivatives
       for( integer ke = 0; ke < 2; ++ke )
       {
-        dFlux_dT[ke] += dMob_dT[ke] * potGrad; 
+        dFlux_dT[ke] += dMob_dT[ke] * potGrad;
       }
 
       // add dFlux_dTemp to localFluxJacobian
@@ -281,17 +281,17 @@ public:
       }
 
       // Step 4: compute the enthalpy flux
-      real64 enthalpy = 0.0; 
-      real64 dEnthalpy_dP[2]{0.0, 0.0}; 
-      real64 dEnthalpy_dT[2]{0.0, 0.0}; 
+      real64 enthalpy = 0.0;
+      real64 dEnthalpy_dP[2]{0.0, 0.0};
+      real64 dEnthalpy_dT[2]{0.0, 0.0};
 
       if( alpha <= 0.0 || alpha >= 1.0 )
       {
         localIndex const k_up = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) );
 
         enthalpy = m_enthalpy[seri[k_up]][sesri[k_up]][sei[k_up]][0];
-        dEnthalpy_dP[k_up] = m_dEnthalpy_dPres[seri[k_up]][sesri[k_up]][sei[k_up]][0]; 
-        dEnthalpy_dT[k_up] = m_dEnthalpy_dTemp[seri[k_up]][sesri[k_up]][sei[k_up]][0]; 
+        dEnthalpy_dP[k_up] = m_dEnthalpy_dPres[seri[k_up]][sesri[k_up]][sei[k_up]][0];
+        dEnthalpy_dT[k_up] = m_dEnthalpy_dTemp[seri[k_up]][sesri[k_up]][sei[k_up]][0];
       }
       else
       {
@@ -299,8 +299,8 @@ public:
         for( integer ke = 0; ke < 2; ++ke )
         {
           enthalpy += mobWeights[ke] * m_enthalpy[seri[ke]][sesri[ke]][sei[ke]][0];
-          dEnthalpy_dP[ke] = mobWeights[ke] * m_dEnthalpy_dPres[seri[ke]][sesri[ke]][sei[ke]][0]; 
-          dEnthalpy_dT[ke] = mobWeights[ke] * m_dEnthalpy_dTemp[seri[ke]][sesri[ke]][sei[ke]][0]; 
+          dEnthalpy_dP[ke] = mobWeights[ke] * m_dEnthalpy_dPres[seri[ke]][sesri[ke]][sei[ke]][0];
+          dEnthalpy_dT[ke] = mobWeights[ke] * m_dEnthalpy_dTemp[seri[ke]][sesri[ke]][sei[ke]][0];
         }
       }
 
@@ -315,7 +315,7 @@ public:
       for( integer ke = 0; ke < 2; ++ke )
       {
         stack.dEnergyFlux_dP[ke] += fluxVal * dEnthalpy_dP[ke];
-        stack.dEnergyFlux_dT[ke] += fluxVal * dEnthalpy_dT[ke];  
+        stack.dEnergyFlux_dT[ke] += fluxVal * dEnthalpy_dT[ke];
       }
 
     } );
@@ -333,17 +333,17 @@ public:
                                      stack.thermalTransmissibility,
                                      stack.dTrans_dPres ); // again, we have to pass something here, but this is unused for now
 
-    localIndex k[2]; 
+    localIndex k[2];
     localIndex connectionIndex = 0;
 
     for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
     {
       for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )
       {
-        real64 const thermalTrans[2] = { stack.thermalTransmissibility[connectionIndex][0], stack.thermalTransmissibility[connectionIndex][1] }; 
+        real64 const thermalTrans[2] = { stack.thermalTransmissibility[connectionIndex][0], stack.thermalTransmissibility[connectionIndex][1] };
 
-        localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )}; 
-        localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )}; 
+        localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
+        localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
         localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         // Step 2: compute temperature difference at the interface
@@ -353,8 +353,8 @@ public:
           localIndex const esr = sesri[ke];
           localIndex const ei  = sei[ke];
 
-          stack.energyFlux += thermalTrans[ke] * m_temp[er][esr][ei]; 
-          stack.dEnergyFlux_dT[ke] += thermalTrans[ke]; 
+          stack.energyFlux += thermalTrans[ke] * m_temp[er][esr][ei];
+          stack.dEnergyFlux_dT[ke] += thermalTrans[ke];
         }
 
         // add energyFlux and its derivatives to localFlux and localFluxJacobian
@@ -371,9 +371,9 @@ public:
           stack.localFluxJacobian[k[1]*numEqn + numEqn - 1][localDofIndexTemp] = -m_dt * stack.dEnergyFlux_dT[ke];
         }
 
-        connectionIndex++; 
-      } 
-    } 
+        connectionIndex++;
+      }
+    }
   }
 
   /**

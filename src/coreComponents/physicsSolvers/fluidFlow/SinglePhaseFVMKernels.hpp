@@ -341,7 +341,7 @@ public:
                                      stack.transmissibility,
                                      stack.dTrans_dPres );
 
-    localIndex k[2]; 
+    localIndex k[2];
     localIndex connectionIndex = 0;
 
     for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
@@ -365,9 +365,9 @@ public:
         real64 gravHead = 0.0;
         real64 dGravHead_dP[2]{0.0, 0.0};
 
-        localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )}; 
-        localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )}; 
-        localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )}; 
+        localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
+        localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
+        localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         // calculate quantities on primary connected cells
         for( integer ke = 0; ke < 2; ++ke )
@@ -384,9 +384,9 @@ public:
         //***** calculation of flux *****
 
         // compute potential difference
-        real64 potScale = 0.0; 
-        real64 dPresGrad_dTrans = 0.0; 
-        real64 dGravHead_dTrans = 0.0; 
+        real64 potScale = 0.0;
+        real64 dPresGrad_dTrans = 0.0;
+        real64 dGravHead_dTrans = 0.0;
         int signPotDiff[2] = {1, -1};
 
         for( integer ke = 0; ke < 2; ++ke )
@@ -395,29 +395,29 @@ public:
           localIndex const esr = sesri[ke];
           localIndex const ei  = sei[ke];
 
-          real64 const pressure = m_pres[er][esr][ei]; 
+          real64 const pressure = m_pres[er][esr][ei];
           presGrad += trans[ke] * pressure;
-          dPresGrad_dTrans += signPotDiff[ke] * pressure; 
+          dPresGrad_dTrans += signPotDiff[ke] * pressure;
           dPresGrad_dP[ke] = trans[ke];
 
           real64 const gravD = trans[ke] * m_gravCoef[er][esr][ei];
-          real64 const pot = trans[ke] * pressure - densMean * gravD; 
+          real64 const pot = trans[ke] * pressure - densMean * gravD;
 
           gravHead += densMean * gravD;
-          dGravHead_dTrans += signPotDiff[ke] * densMean * m_gravCoef[er][esr][ei]; 
+          dGravHead_dTrans += signPotDiff[ke] * densMean * m_gravCoef[er][esr][ei];
 
           for( integer i = 0; i < 2; ++i )
           {
             dGravHead_dP[i] += dDensMean_dP[i] * gravD;
           }
 
-          potScale = fmax( potScale, fabs( pot ) ); 
+          potScale = fmax( potScale, fabs( pot ) );
         }
 
         for( integer ke = 0; ke < 2; ++ke )
         {
-          dPresGrad_dP[ke] += dTrans_dP[ke] * dPresGrad_dTrans; 
-          dGravHead_dP[ke] += dTrans_dP[ke] * dGravHead_dTrans; 
+          dPresGrad_dP[ke] += dTrans_dP[ke] * dPresGrad_dTrans;
+          dGravHead_dP[ke] += dTrans_dP[ke] * dGravHead_dTrans;
         }
 
         // *** upwinding ***
@@ -433,8 +433,8 @@ public:
         real64 const alpha = ( potGrad + upwAbsTol ) / ( 2 * upwAbsTol );
 
         // choose upstream cell
-        real64 mobility{}; 
-        real64 dMob_dP[2]{}; 
+        real64 mobility{};
+        real64 dMob_dP[2]{};
         if( alpha <= 0.0 || alpha >= 1.0 )
         {
           localIndex const k_up = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) );
@@ -475,7 +475,7 @@ public:
         // add contribution from upstream cell mobility derivatives
         for( integer ke = 0; ke < 2; ++ke )
         {
-          dFlux_dP[ke] += dMob_dP[ke] * potGrad; 
+          dFlux_dP[ke] += dMob_dP[ke] * potGrad;
         }
 
         // populate local flux vector and derivatives
