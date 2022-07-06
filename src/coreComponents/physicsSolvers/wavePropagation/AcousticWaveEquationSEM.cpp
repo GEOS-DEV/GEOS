@@ -444,7 +444,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 }
 
 
-void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
+void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
@@ -510,9 +510,9 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
 
 real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      real64 const & dt,
-                                                     integer const cycleNumber,
+                                                     integer cycleNumber,
                                                      DomainPartition & domain,
-                                                     bool const computeGradient )
+                                                     bool computeGradient )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
@@ -564,9 +564,9 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
 real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                       real64 const & dt,
-                                                      integer const cycleNumber,
+                                                      integer cycleNumber,
                                                       DomainPartition & domain,
-                                                      bool const computeGradient )
+                                                      bool computeGradient )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -628,7 +628,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 
 real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                       real64 const & dt,
-                                                      integer const cycleNumber,
+                                                      integer cycleNumber,
                                                       DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
