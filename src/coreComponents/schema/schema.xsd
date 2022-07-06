@@ -2101,6 +2101,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxProppantConcentration => Maximum proppant concentration-->
@@ -2137,6 +2139,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
@@ -3518,16 +3522,6 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 * linear
 * quadratic-->
 		<xsd:attribute name="densityModelType" type="geosx_constitutive_ExponentApproximationType" default="linear" />
-		<!--densityPressureModelType => Type of density model in terms of pressure . Valid options:
-* exponential
-* linear
-* quadratic-->
-		<xsd:attribute name="densityPressureModelType" type="geosx_constitutive_ExponentApproximationType" default="exponential" />
-		<!--densityTemperatureModelType => Type of density model in terms of temperature . Valid options:
-* exponential
-* linear
-* quadratic-->
-		<xsd:attribute name="densityTemperatureModelType" type="geosx_constitutive_ExponentApproximationType" default="exponential" />
 		<!--internalEnergyModelType => Type of internal energy model. Valid options:
 * exponential
 * linear
