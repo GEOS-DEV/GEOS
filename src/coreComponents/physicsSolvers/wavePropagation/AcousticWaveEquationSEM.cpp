@@ -595,7 +595,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       p_dt2.move( MemorySpace::host, true );
       wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real64 ) );
       wf.close();
-      remove( fileName );
+      remove( fileName.c_str() );
 
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                   CellElementSubRegion & elementSubRegion )
