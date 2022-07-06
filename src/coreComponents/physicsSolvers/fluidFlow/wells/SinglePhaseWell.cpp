@@ -500,14 +500,14 @@ void SinglePhaseWell::assemblePressureRelations( DomainPartition const & domain,
         if( wellControls.getControl() == WellControls::Control::BHP )
         {
           wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( timeAtEndOfStep ) );
-          GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
-                                                                << " from BHP constraint to rate constraint" );
+          GEOSX_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
+                                                         << " from BHP constraint to rate constraint" );
         }
         else
         {
           wellControls.switchToBHPControl( wellControls.getTargetBHP( timeAtEndOfStep ) );
-          GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
-                                                                << " from rate constraint to BHP constraint" );
+          GEOSX_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
+                                                         << " from rate constraint to BHP constraint" );
         }
       }
 

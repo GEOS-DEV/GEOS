@@ -1668,21 +1668,21 @@ void CompositionalMultiphaseWell::assemblePressureRelations( DomainPartition con
           if( wellControls.isProducer() )
           {
             wellControls.switchToPhaseRateControl( wellControls.getTargetPhaseRate( timeAtEndOfStep ) );
-            GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
-                                                                  << " from BHP constraint to phase volumetric rate constraint" );
+            GEOSX_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
+                                                           << " from BHP constraint to phase volumetric rate constraint" );
           }
           else
           {
             wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( timeAtEndOfStep ) );
-            GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
-                                                                  << " from BHP constraint to total volumetric rate constraint" );
+            GEOSX_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
+                                                           << " from BHP constraint to total volumetric rate constraint" );
           }
         }
         else
         {
           wellControls.switchToBHPControl( wellControls.getTargetBHP( timeAtEndOfStep ) );
-          GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
-                                                                << " from rate constraint to BHP constraint" );
+          GEOSX_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
+                                                         << " from rate constraint to BHP constraint" );
         }
       }
     } );
