@@ -47,20 +47,6 @@ public:
   constexpr static integer maxNumPrimarySpecies = 7; 
   constexpr static integer maxNumSecondarySpecies = 11;
 
-  using CatalogInterface = dataRepository::CatalogInterface< ReactionsBase,
-                                                             string const &,
-                                                             string_array const &,
-                                                             string_array const &,
-                                                             string_array const &,
-                                                             array1d< real64 > const & >;
-  static typename CatalogInterface::CatalogType & getCatalog()
-  {
-    static CatalogInterface::CatalogType catalog;
-    return catalog;
-  }
-
-  virtual string getCatalogName() const = 0;
-
   string const & reactionName() const { return m_reactionName; }
 
 protected:
@@ -74,6 +60,8 @@ protected:
   /// Array storing the component molar weights
   array1d< real64 > m_componentMolarWeight;
 
+  array1d< real64 > m_log10EqConst;
+
   array2d< real64 >  m_stoichMatrix;
 
   array1d< integer > m_chargePrimary;
@@ -82,45 +70,87 @@ protected:
   array1d< real64>  m_ionSizePrimary;  
   array1d< real64 >  m_ionSizeSec;
 
+  real64 m_DebyeHuckelA;
+  real64 m_DebyeHuckelB;
+  real64 m_WATEQBDot; 
+
 class KernelWrapper
 {
 public:
 
-  /**
-   * @brief Constructor.
-   * @param componentMolarWeight component molar weights
-   */
-  explicit KernelWrapper( arrayView1d< real64 const > const & componentMolarWeight ):
-    m_componentMolarWeight( componentMolarWeight )
+ /**
+  * @brief Construct a new Kernel Wrapper object
+  * 
+  * @param log10EqConst 
+  * @param stoichMatrix 
+  * @param chargePrimary 
+  * @param chargeSec 
+  * @param m_ionSizePrimary 
+  * @param ionSizeSec 
+  * @param DebyeHuckelA 
+  * @param DebyeHuckelB 
+  * @param WATEQBDot 
+  */
+  KernelWrapper( arrayView1d< real64 const > const & log10EqConst,
+                 arrayView2d< real64 const > const &  stoichMatrix,
+                 arrayView1d< integer const > const & chargePrimary,
+                 arrayView1d< integer const > const & chargeSec, 
+                 arrayView1d< real64 const > const & ionSizePrimary,  
+                 arrayView1d< real64 const > const & ionSizeSec,
+                 real64 const DebyeHuckelA,
+                 real64 const DebyeHuckelB,
+                 real64 const WATEQBDot ):
+  m_log10EqConst(log10EqConst),
+  m_stoichMatrix(stoichMatrix),
+  m_chargePrimary(chargePrimary),
+  m_chargeSec(chargeSec),
+  m_ionSizePrimary(m_ionSizePrimary),  
+  m_ionSizeSec(ionSizeSec),
+  m_DebyeHuckelA(DebyeHuckelA),
+  m_DebyeHuckelB(DebyeHuckelB),
+  m_WATEQBDot(WATEQBDot)
   {}
 
-  /**
-   * @brief Move the KernelWrapper to the given execution space, optionally touching it.
-   * @param space the space to move the KernelWrapper to
-   * @param touch whether the KernelWrapper should be touched in the new space or not
-   * @note This function exists to enable holding KernelWrapper objects in an ArrayView
-   *       and have their contents properly moved between memory spaces.
-   */
-  virtual void move( LvArray::MemorySpace const space, bool const touch )
-  {
-    m_componentMolarWeight.move( space, touch );
-  }
-
-  void computeLogActCoeff();
-
-
 protected:
+
+  /**
+   * @brief 
+   * 
+   * @param temperature 
+   * @param ionicStrength 
+   * @param log10PrimaryActCoeff 
+   * @param dLog10PrimaryActCoeff_dIonicStrength 
+   * @param log10SecActCoeff 
+   * @param dLog10SecActCoeff_dIonicStrength  
+   */
+  GEOSX_HOST_DEVICE
+  void computeLog10ActCoefBDotModel( real64 const temperature,
+                                     real64 const ionicStrength,
+                                     arraySlice1d< real64 > & log10PrimaryActCoeff,
+                                     arraySlice1d< real64 > & dLog10PrimaryActCoeff_dIonicStrength,
+                                     arraySlice1d< real64 > & log10SecActCoeff,
+                                     arraySlice1d< real64 > & dLog10SecActCoeff_dIonicStrength ) const;
+  /**
+   * @brief 
+   * 
+   * @return  
+   */
+  GEOSX_HOST_DEVICE
+  real64 computeIonicStrength(  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                              arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const;
+
+
   /// Hard coding the example case - eventually would have to be changed such that it is read from an input file
   integer m_numPrimarySpecies = 7;	// Currently not including H2O and O2gas
   integer m_numSecSpecies = 11;
   
-  arrayView1d<real64> m_log10EqConst;
-  arrayView2d<real64> m_stoichMatrix;
+  arrayView1d< real64 > m_log10EqConst;
+  arrayView2d< real64 > m_stoichMatrix;
 
   arrayView1d< integer > m_chargePrimary;
   arrayView1d< integer > m_chargeSec;
 
-  arrayView1d<real64>  m_ionSizePrimary;  
+  arrayView1d< real64 >  m_ionSizePrimary;  
   arrayView1d< real64 >  m_ionSizeSec; 
 
   real64 m_DebyeHuckelA;

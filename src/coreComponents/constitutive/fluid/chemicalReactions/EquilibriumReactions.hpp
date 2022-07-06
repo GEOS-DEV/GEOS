@@ -50,8 +50,24 @@ private:
 {
 public:
 
-  KernelWrapper( arrayView1d< real64 const > const & componentMolarWeight ): 
-    ReactionBase::KernelWrapper( componentMolarWeight )
+  KernelWrapper( arrayView1d< real64 const > const & log10EqConst,
+                 arrayView2d< real64 const > const &  stoichMatrix,
+                 arrayView1d< integer const > const & chargePrimary,
+                 arrayView1d< integer const > const & chargeSec, 
+                 arrayView1d< real64 const > const & ionSizePrimary,  
+                 arrayView1d< real64 const > const & ionSizeSec,
+                 real64 const DebyeHuckelA,
+                 real64 const DebyeHuckelB,
+                 real64 const WATEQBDot ): 
+  ReactionsBase::KernelWrapper( log10EqConst,
+                                stoichMatrix,
+                                chargePrimary,
+                                chargeSec, 
+                                ionSizePrimary,  
+                                ionSizeSec,
+                                DebyeHuckelA,
+                                DebyeHuckelB,
+                                WATEQBDot )
   {}
   
   /**
@@ -75,14 +91,14 @@ private:
                                           DenseMatrix & matrix,
                                           DenseVector & rhs ) const;
 
-  void computeLog10SecConcAndDerivative( real64 const temperature,
-                                         arraySlice1d< real64 const > const & log10PrimaryConc,
-                                         arraySlice1d< real64 > & log10SecConc,
-                                         arraySlice2d< real64 > & dLog10SecConc_dLog10PrimaryConc ) const;
+  void computeSeondarySpeciesConcAndDerivative( real64 const temperature,
+                                                arraySlice1d< real64 const > const & primarySpeciesConcentration,
+                                                arraySlice1d< real64 > const & secondarySpeciesConcentration,
+                                                arraySlice2d< real64 > const & dLog10SecConc_dLog10PrimaryConc ) const;
 
   void computeTotalConcAndDerivative( real64 const & temperature,
-                                      arraySlice1d< real64 const > const & log10PrimaryConc,
-                                      arraySlice1d< real64 const > const & log10SecConc,
+                                      arraySlice1d< real64 const > const & primarySpeciesConcentration,
+                                      arraySlice1d< real64 const > const & secondarySpeciesConcentration,
                                       arraySlice2d< real64 const > const & dLog10SecConc_dLog10PrimaryConc,
                                       arraySlice1d< real64 > const & totalConc,
                                       arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc) const;                                  

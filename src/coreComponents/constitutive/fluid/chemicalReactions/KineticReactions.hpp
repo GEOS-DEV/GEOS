@@ -36,11 +36,7 @@ class KineticReactions : public ReactionsBase
 {
 public:
 
-  EquilibriumReaction( string const & name );
-
-  static string catalogName() { return "EquilibriumReaction"; }
-
-  virtual string getCatalogName() const final { return catalogName(); }
+  KineticReactions( string const & name );
 
   /**
    * @brief Create an update kernel wrapper.
@@ -50,15 +46,34 @@ public:
 
 private:
 
-  m_array1d< real64 > m_reactionRate;
+  m_array1d< real64 > m_reactionRateConstant;
 
-
-  class KernelWrapper final : public ReactionBase::KernelWrapper
+  class KernelWrapper final : public ReactionsBase::KernelWrapper
 {
 public:
 
-  KernelWrapper( arrayView1d< real64 const > const & componentMolarWeight )
-    : ReactionsBase::KernelWrapper( componentMolarWeight )
+  static constexpr real64 RConst = 8.314;
+
+  KernelWrapper( arrayView1d< real64 const > const & log10EqConst,
+                 arrayView2d< real64 const > const &  stoichMatrix,
+                 arrayView1d< integer const > const & chargePrimary,
+                 arrayView1d< integer const > const & chargeSec, 
+                 arrayView1d< real64 const > const & ionSizePrimary,  
+                 arrayView1d< real64 const > const & ionSizeSec,
+                 real64 const DebyeHuckelA,
+                 real64 const DebyeHuckelB,
+                 real64 const WATEQBDot,
+                 arrayView1d< real64 > const & reactionRateConstant): 
+  ReactionsBase::KernelWrapper( log10EqConst,
+                                stoichMatrix,
+                                chargePrimary,
+                                chargeSec, 
+                                ionSizePrimary,  
+                                ionSizeSec,
+                                DebyeHuckelA,
+                                DebyeHuckelB,
+                                WATEQBDot ),
+  m_reactionRateConstant(reactionRateConstant)
   {}
 
   GEOSX_HOST_DEVICE
@@ -66,7 +81,9 @@ public:
                             arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                             arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration, ) const;
 
-protected:
+private:
+
+  arrayView1d< real64 > m_reactionRateConstant;
 
 };
 

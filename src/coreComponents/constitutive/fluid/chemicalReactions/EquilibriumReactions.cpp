@@ -37,10 +37,13 @@ namespace chemicalReactions
 EquilibriumReactions::EquilibriumReactions( string const & name ):
   ReactionBase( name )
 {
+  // Here we should either read the database or the input values.
+
+
   // Hardcoding values for now
 
   // Equilibrium constants
-  m_log10EqConst.resize( m_numSecSpecies );	// Not sure if this is the correct way of allocating the size
+  m_log10EqConst.resize( m_numSecSpecies );	
   m_log10EqConst[0] = 13.99;
   m_log10EqConst[1] = -6.36;
   m_log10EqConst[2] = 10.33;
@@ -53,7 +56,8 @@ EquilibriumReactions::EquilibriumReactions( string const & name ):
   m_log10EqConst[9] = -2.43;
   m_log10EqConst[10] = -0.82;
 
-  // Activity coefficients
+
+  // Activity coefficient related constants
   m_DebyeHuckelA = 0.5465;
   m_DebyeHuckelB = 0.3346;
   m_WATEQBDot = 0.0438;
@@ -79,7 +83,7 @@ EquilibriumReactions::EquilibriumReactions( string const & name ):
   m_ionSizeSec[8] = 3.00;
   m_ionSizeSec[9] = 3.00;
   m_ionSizeSec[10] = 4.00;
-
+ 
   m_chargePrimary.resize( m_numPrimarySepcies )
   m_chargePrimary[0] = 1;
   m_chargePrimary[1] = -1;
@@ -130,7 +134,7 @@ EquilibriumReactions::EquilibriumReactions( string const & name ):
   m_stoichMatrix[10][3] = 1;
   
   // Equilibrium Constant
-  m_log10EqConst.resize( m_numSecSpecies );	// Not sure if this is the correct way of allocating the size
+  m_log10EqConst.resize( m_numSecSpecies );	
   m_log10EqConst[0] = 13.99;
   m_log10EqConst[1] = -6.36;
   m_log10EqConst[2] = 10.33;
@@ -146,7 +150,15 @@ EquilibriumReactions::EquilibriumReactions( string const & name ):
 
 EquilibriumReactions::KernelWrapper EquilibriumReactions::createKernelWrapper() const
 {
-  return KernelWrapper(  );
+  return KernelWrapper( m_log10EqConst,
+                        m_stoichMatrix,
+                        m_chargePrimary,
+                        m_chargeSec, 
+                        m_ionSizePrimary,  
+                        m_ionSizeSec,
+                        m_DebyeHuckelA,
+                        m_DebyeHuckelB,
+                        m_WATEQBDot );
 }
 
 
@@ -158,14 +170,15 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const & t
 
 { 
   DenseMatrix matrix(m_numPrimarySpecies, m_numPrimarySpecies);
-  DenseVector rhs(m_numPrimarySpecies), solution(m_numPrimarySpecies);
+  DenseVector rhs(m_numPrimarySpecies); 
+  DenseVector solution(m_numPrimarySpecies);
 
   bool converged = false;
-
   for( int iteration = 0; iteration < m_maxNumIterations; iteration++ )
   {
     matrix.zero();
     rhs.zero();
+    solution.zero();
 
     assembleEquilibriumReactionSystem( temperature,
                                        primarySpeciesTotalConcentration,
@@ -182,7 +195,7 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const & t
 
     m_denseLinearSolver.solve( matrix, rhs, solution );
 
-    updateSolution( solution );
+    updatePrimarySpeciesConcentrations( solution, primarySpeciesConcentration );
  }
 }
 
@@ -195,24 +208,31 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
                                                                              DenseVector & rhs ) const
 {
 
-  stackArray1d< ReactionBase::maxNumPrimarySpecies > log10PrimaryConc(m_numPrimarySpecies);
   stackArray1d< ReactionBase::maxNumPrimarySpecies > log10PrimaryActCoeff(m_numPrimarySpecies); 
-  stackArray1d< ReactionBase::maxNumSecondarySpecies > log10SecConc(m_numSecSpecies);
-
+  stackArray1d< ReactionBase::maxNumSecondarySpecies > log10SecActCoeff(m_numSecSpecies);
   stackArray2d< ReactionBase::maxNumSecondarySpecies > dLog10SecConc_dLog10PrimaryConc(m_numPrimarySpecies, m_numSecSpecies);
   stackArray1d< ReactionBase::maxNumPrimarySpecies> totalConcentration( m_numPrimarySpecies );
 
-  // activity coefficients
-  computeActivityCoefficients();
+  /// activity coefficients
+  real64 const ionicStrength = computeIonicStrength( primarySpeciesConcentration,
+                                                     secondarySpeciesConcentration,
+                                                     ionicStrength );                    
+
+  computeLog10ActCoefBDotModel( temperature,
+                                ionicStrength,
+                                log10PrimaryActCoeff,
+                                dLog10PrimaryActCoeff_dIonicStrength,
+                                log10SecActCoeff,
+                                dLog10SecActCoeff_dIonicStrength );
 
   computeLog10SecConcAndDerivative( temperature, 
-                                    log10PrimaryConc, 
-                                    log10SecConc, 
+                                    primarySpeciesConcentration, 
+                                    secondarySpeciesConcentration, 
                                     dLog10SecConc_dLog10PrimaryConc );
   
   computeTotalConcAndDerivative( temperature, 
-                                 log10PrimaryConc, 
-                                 log10SecConc, 
+                                 primarySpeciesConcentration, 
+                                 secondarySpeciesConcentration, 
                                  dLog10SecConc_dLog10PrimaryConc, 
                                  totalConcentration, 
                                  dTotalConc_dLog10PrimaryConc );
@@ -220,29 +240,30 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
   //Matteo: I assume we want to solve this to find the primary and the secondary species concentrations?
   for(int i=0; i<m_numPrimarySpecies; i++)
   {
-    rhs[i] = totalConcentration[i] - primarySpeciesTotalConcentration[i];
+    rhs[i] = 1 - totalConcentration[i] / primarySpeciesTotalConcentration[i] ;
     for ( int j=0; j<m_numPrimarySpecies; j++)
     {
-      matrix[i][j] = dTotalConc_dLog10PrimaryConc[i][j];
+      matrix[i][j] = - dTotalConc_dLog10PrimaryConc[i][j] / primarySpeciesTotalConcentration[i];
     }
   }
 }
 
 // function to compute the derivative of the concentration of dependent species with respect to the concentration of the basis species.
 GEOSX_HOST_DEVICE 
-void EquilibriumReactions::KernelWrapper::computeLog10SecConcAndDerivative( real64 const temperature,
-                                                                            arraySlice1d< real64 const > const & log10PrimaryConc,
-                                                                            arraySlice1d< real64 > & log10SecConc,
-                                                                            arraySlice2d< real64 > & dLog10SecConc_dLog10PrimaryConc ) const 
+void EquilibriumReactions::KernelWrapper::computeSeondarySpeciesConcAndDerivative( real64 const temperature,
+                                                                                   arraySlice1d< real64 const > const & primarySpeciesConcentration,
+                                                                                   arraySlice1d< real64 > const & secondarySpeciesConectration,
+                                                                                   arraySlice2d< real64 > const & dLog10SecConc_dLog10PrimaryConc ) const 
 {
   // Compute d(concentration of dependent species)/d(concentration of basis species)
   for( int iSec = 0; iSec < m_numSecSpecies; ++iSec )
   {
-    log10SecConc[iSec] = -m_log10EqConst[iSec] - m_log10SecActCoeff[iSec];
+    real64 log10SecConc = -m_log10EqConst[iSec] - m_log10SecActCoeff[iSec];
 
     for( int jPri = 0; j < m_numPrimarySpecies; ++j )
     {
-      log10SecConc[iSec] += m_stoichMatrix[iSec][jPri] * (log10PrimaryConc[jPri] + m_log10PrimaryActCoeff[jPri]);
+      log10SecConc += m_stoichMatrix[iSec][jPri] * ( log10( primarySpeciesConcentration[jPri] ) + m_log10PrimaryActCoeff[jPri]);
+      secondarySpeciesConectration[iSec] = pow(10, log10SecConc);
       dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stoichMatrix[iSec][jPri];
     }
   }
@@ -251,8 +272,8 @@ void EquilibriumReactions::KernelWrapper::computeLog10SecConcAndDerivative( real
 
 GEOSX_HOST_DEVICE 
 void EquilibriumReactions::KernelWrapper::computeTotalConcAndDerivative( real64 const & temperature,
-                                                                         arraySlice1d< real64 const > const & log10PrimaryConc,
-                                                                         arraySlice1d< real64 const > const & log10SecConc,
+                                                                         arraySlice1d< real64 const > const & primarySpeciesConcentration,
+                                                                         arraySlice1d< real64 const > const & secondarySpeciesConectration,
                                                                          arraySlice2d< real64 const > const & dLog10SecConc_dLog10PrimaryConc,
                                                                          arraySlice1d< real64 > const & totalConc,
                                                                          arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc) const
@@ -262,23 +283,34 @@ void EquilibriumReactions::KernelWrapper::computeTotalConcAndDerivative( real64 
   // This function computes the total concentration and its derivative with respect to log10(basis species concentrations). 
   for( int iPri = 0; iPri < m_numPrimarySpecies; ++iPri )
   {
-    real64 const primaryConc = pow( 10.0, log10PrimaryConc[iPri] );		
-    totalConc[iPri] = primaryConc;			
-    dTotalConc_dLog10PrimaryConc[iPri][iPri] = log( 10.0 ) * primaryConc;		// d(total concentration)/d(log10(concentration))
+    totalConc[iPri] = primarySpeciesConcentration[iPri];
+    // d(total concentration)/d(log10(concentration))			
+    dTotalConc_dLog10PrimaryConc[iPri][iPri] = log( 10.0 ) * primarySpeciesConcentration[iPri];	
     // contribution from all dependent species
     for( int jSec = 0;  jSec < m_numSecSpecies; ++jSec )
     {
-      real64 const concSec = pow( 10.0, log10SecConc[jSec] );
-      totalConc[iPri] += m_stoichMatrix[jSec][iPri] * concSec;	
-      for( int kDerivative = 0; kDerivative < m_numPrimarySpecies; ++kDerivative )		// add contribution to the derivtive from dependent species via the chain rule
+      totalConc[iPri] += m_stoichMatrix[jSec][iPri] * secondarySpeciesConectration[jSec];	
+      for( int kDerivative = 0; kDerivative < m_numPrimarySpecies; ++kDerivative )		
       {
-        dTotalConc_dLog10PrimaryConc[iPri][kDerivative] += m_stoichMatrix[jSec][iPri] * log( 10.0 ) * concSec * dLog10SecConc_dLog10PrimaryConc[jSec][kDerivative];
+        // add contribution to the derivtive from dependent species via the chain rule
+        dTotalConc_dLog10PrimaryConc[iPri][kDerivative] += m_stoichMatrix[jSec][iPri] * log( 10.0 ) * 
+                                                           secondarySpeciesConectration[jSec] * dLog10SecConc_dLog10PrimaryConc[jSec][kDerivative];
       }
     }
   }
 }
 
-REGISTER_CATALOG_ENTRY( ReactionBase, EquilibriumReactions, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
+GEOSX_HOST_DEVICE
+void EquilibriumReactions::KernelWrapper::
+updatePrimarySpeciesConcentrations( DenseVector const & solution,
+                                    arraySlice1d< real64 const > & initialConcentration,
+                                    arraySlice1d< real64  > & primarySpeciesConcentration ) const
+{
+  for(integer i = 0; i < m_numPrimarySpecies; i++)
+  {
+    primarySpeciesConcentration[i] += pow( 10, solution[i] );
+  }
+}
 
 } // end namespace chemicalReactions
 
