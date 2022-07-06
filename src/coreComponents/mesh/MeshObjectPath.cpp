@@ -191,7 +191,8 @@ void expandPathToken( dataRepository::Group const & parentGroup,
     for( string const & candidateName : namesInRepository )
     {
       string name = candidateName;
-      if( fnmatch( candidateName.c_str(), inputEntry.c_str(), 0 ) )
+      int const fnmatchResult = fnmatch( inputEntry.c_str(), candidateName.c_str(), 0 );
+      if( fnmatchResult != FNM_NOMATCH )
       {
         auto & subNode = expandPathTokenHelper<NODETYPE>::insert( node, name );
         foundMatch=true;
@@ -202,8 +203,9 @@ void expandPathToken( dataRepository::Group const & parentGroup,
       }
     }
     GEOSX_ERROR_IF( !foundMatch,
-                    "Specified name ("<<inputEntry<<") did not find a match with a object in the repository. "
-                    "Objects that are present in repository are:\n"<<namesInRepository );
+                    "Specified name ("<<inputEntry<<") did not find a match with a object in group ("<<
+                    parentGroup.getName()<<"). Objects that are present in ("<<
+                    parentGroup.getName()<<") are:\n"<<namesInRepository );
   }
 }
 

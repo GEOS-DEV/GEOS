@@ -106,7 +106,6 @@ TEST( testMeshObjectPath, fullPathExpansion )
     EXPECT_TRUE( meshObjectPath.pathPermutations() == pathPermutations );
   }
 
-
   MeshObjectPath::permutationMapType pathPermutationSub = pathPermutations;
 
   for( auto & meshBodyPair : pathPermutationSub )
@@ -140,7 +139,7 @@ TEST( testMeshObjectPath, invalidMeshBody )
   TestMesh & testMesh = TestMesh::getTestMesh();
   Group const & meshBodies = testMesh.meshBodies();
   {
-    string const path = "{:}/level2/ElementRegions";
+    string const path = "*/level2/ElementRegions";
     EXPECT_DEATH_IF_SUPPORTED( MeshObjectPath meshObjectPath( path, meshBodies ), ".*" );
   }
 }
@@ -151,7 +150,7 @@ TEST( testMeshObjectPath, invalidMeshLevel )
   TestMesh & testMesh = TestMesh::getTestMesh();
   Group const & meshBodies = testMesh.meshBodies();
   {
-    string const path = "{:}/{:}/ElementRegions/{region2}";
+    string const path = "*/*/ElementRegions/{region2}";
     EXPECT_DEATH_IF_SUPPORTED( MeshObjectPath meshObjectPath( path, meshBodies ), ".*" );
   }
 }
@@ -161,7 +160,7 @@ TEST( testMeshObjectPath, invalidMeshRegion )
   TestMesh & testMesh = TestMesh::getTestMesh();
   Group const & meshBodies = testMesh.meshBodies();
   {
-    string const path = "{:}/{:}/ElementRegions/{:}/subreg2";
+    string const path = "*/*/ElementRegions/{:}/subreg2";
     EXPECT_DEATH_IF_SUPPORTED( MeshObjectPath meshObjectPath( path, meshBodies ), ".*" );
   }
 }
