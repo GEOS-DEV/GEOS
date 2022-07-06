@@ -60,8 +60,6 @@ public:
 
   // Aliasing public/protected members/methods of FlowSolverBase so we don't
   // have to use this->member etc.
-  using BASE::m_poroElasticFlag;
-  using BASE::m_coupledWellsFlag;
   using BASE::m_numDofPerCell;
   using BASE::m_fluxEstimate;
 

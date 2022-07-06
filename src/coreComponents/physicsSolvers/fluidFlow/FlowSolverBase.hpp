@@ -33,6 +33,10 @@ namespace geosx
 class FlowSolverBase : public SolverBase
 {
 public:
+
+/// String used to form the solverName used to register single-physics solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "flow"; }
+
 /**
  * @brief main constructor for Group Objects
  * @param name the name of this instantiation of Group in the repository
@@ -58,10 +62,6 @@ public:
   FlowSolverBase & operator=( FlowSolverBase && ) = delete;
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
-
-  void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
-
-  void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
 
@@ -135,12 +135,6 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
-
-  /// flag to determine whether or not coupled with solid solver
-  integer m_poroElasticFlag;
-
-  /// flag to determine whether or not coupled with wells
-  integer m_coupledWellsFlag;
 
   /// the number of Degrees of Freedom per cell
   integer m_numDofPerCell;

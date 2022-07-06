@@ -73,8 +73,6 @@ void execute2( POROUSWRAPPER_TYPE porousWrapper,
 FlowSolverBase::FlowSolverBase( string const & name,
                                 Group * const parent ):
   SolverBase( name, parent ),
-  m_poroElasticFlag( 0 ),
-  m_coupledWellsFlag( 0 ),
   m_numDofPerCell( 0 ),
   m_fluxEstimate()
 {
