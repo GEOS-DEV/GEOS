@@ -167,10 +167,24 @@ static PyObject * setOutputFileRootName( PyVTKOutput * self, PyObject * args )
 }
 
 
+static PyObject * reinit( PyVTKOutput * self, PyObject *args )
+{
+  VERIFY_NON_NULL_SELF( self );
+  VERIFY_INITIALIZED( self );
+  GEOSX_UNUSED_VAR( args );
+
+  self->group->reinit();
+
+
+  Py_RETURN_NONE;
+}
+
+
 static PyMethodDef PyVTKOutput_methods[] = {
   { "output", (PyCFunction) output, METH_VARARGS, "wrapper to routine VTKOutput::execute"},
   { "setOutputDir", (PyCFunction) setOutputDir, METH_VARARGS, "wrapper to change directory output"},
   { "setOutputFileRootName", (PyCFunction) setOutputFileRootName, METH_VARARGS, "wrapper to change the root name of the output files and subfolders"},
+  { "reinit", (PyCFunction) reinit, METH_VARARGS, "reinitialization function"},
   { nullptr, nullptr, 0, nullptr }      /* Sentinel */
 };
 

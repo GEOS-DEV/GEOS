@@ -78,6 +78,11 @@ public:
     execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
   }
 
+  /**
+   * @brief Performs re-initialization of the datasets accumulated in the PVD writer.
+   */
+  void reinit();
+
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct : OutputBase::viewKeysStruct
   {

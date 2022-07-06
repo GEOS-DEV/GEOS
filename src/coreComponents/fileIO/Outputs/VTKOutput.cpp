@@ -76,6 +76,12 @@ void VTKOutput::setPlotFileRoot( string const & root )
 }
 
 
+void VTKOutput::reinit()
+{
+  m_writer.clearData();
+
+}
+
 bool VTKOutput::execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM( dt ),
                          integer const cycleNumber,

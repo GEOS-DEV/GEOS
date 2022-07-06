@@ -916,5 +916,10 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   m_previousCycle = cycle;
 }
 
+void VTKPolyDataWriterInterface::clearData()
+{
+  m_pvd.reinitData();
+}
+
 } // namespace vtk
 } // namespace geosx

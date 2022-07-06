@@ -152,6 +152,13 @@ public:
    */
   void write( real64 time, integer cycle, DomainPartition const & domain );
 
+  /**
+   * @brief Clears the datasets accumulated in the pvd writer
+   *
+   */
+  void clearData();
+
+
 private:
 
   /**
