@@ -242,7 +242,10 @@ void SchemaConstruction( Group & group,
             attributeNode.append_attribute( "name" ) = attributeName.c_str();
 
             string const wrappedTypeName = rtTypes::typeNames( wrapper.getTypeId() );
-            string const xmlSafeName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
+            string const sanitizedName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
+
+            // Note: Some type names involving strings can vary on compiler and be ugly.  Convert these to "string"
+            string const xmlSafeName = std::regex_replace( sanitizedName, std::regex( "std_(__cxx11_basic_)?string(<\\s*char,\\s*std_char_traits<char>,\\s*std_allocator<char>\\s*>)?" ), "string" );
             GEOSX_LOG_VAR( wrappedTypeName );
             GEOSX_LOG_VAR( xmlSafeName );
             attributeNode.append_attribute( "type" ) = xmlSafeName.c_str();
