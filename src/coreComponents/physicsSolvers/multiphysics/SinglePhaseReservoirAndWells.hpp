@@ -13,61 +13,48 @@
  */
 
 /**
- * @file CompositionalMultiphaseReservoir.hpp
+ * @file SinglePhaseReservoirAndWells.hpp
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COMPOSITIONALMULTIPHASERESERVOIR_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COMPOSITIONALMULTIPHASERESERVOIR_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASERESERVOIRANDWELLS_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASERESERVOIRANDWELLS_HPP_
 
-#include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
+#include "physicsSolvers/multiphysics/CoupledReservoirAndWellsBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
 
 namespace geosx
 {
 
-class CompositionalMultiphaseReservoir : public ReservoirSolverBase
+template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+class SinglePhaseReservoirAndWells : public CoupledReservoirAndWellsBase< SINGLEPHASE_RESERVOIR_SOLVER,
+                                                                          SinglePhaseWell >
 {
 public:
+
+  using Base = CoupledReservoirAndWellsBase< SINGLEPHASE_RESERVOIR_SOLVER,
+                                             SinglePhaseWell >;
+  using Base::m_solvers;
+  using Base::m_linearSolverParameters;
 
   /**
    * @brief main constructor for ManagedGroup Objects
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  CompositionalMultiphaseReservoir( const string & name,
-                                    Group * const parent );
+  SinglePhaseReservoirAndWells( const string & name,
+                                dataRepository::Group * const parent );
 
   /**
    * @brief default destructor
    */
-  virtual ~CompositionalMultiphaseReservoir() override;
-
-  /// deleted copy constructor
-  CompositionalMultiphaseReservoir( CompositionalMultiphaseReservoir const & ) = delete;
-
-  /// default move constructor
-  CompositionalMultiphaseReservoir( CompositionalMultiphaseReservoir && ) = default;
-
-  /// deleted assignment operator
-  CompositionalMultiphaseReservoir & operator=( CompositionalMultiphaseReservoir const & ) = delete;
-
-  /// deleted move operator
-  CompositionalMultiphaseReservoir & operator=( CompositionalMultiphaseReservoir && ) = delete;
+  virtual ~SinglePhaseReservoirAndWells() override;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string catalogName() { return "CompositionalMultiphaseReservoir"; }
-
-  /**
-   * @defgroup Solver Interface Functions
-   *
-   * These functions provide the primary interface that is required for derived classes
-   */
-  /**@{*/
-
-  /**@}*/
+  static string catalogName();
 
   virtual void addCouplingSparsityPattern( DomainPartition const & domain,
                                            DofManager const & dofManager,
@@ -82,12 +69,10 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
-
-  virtual void initializePostInitialConditionsPreSubGroups() override;
+  virtual void initializePreSubGroups() override;
 
 };
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COMPOSITIONALMULTIPHASERESERVOIR_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASERESERVOIRANDWELLS_HPP_ */

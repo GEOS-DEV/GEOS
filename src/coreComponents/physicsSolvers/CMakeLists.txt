@@ -53,7 +53,9 @@ set( physicsSolvers_headers
      fluidFlow/wells/WellControls.hpp
      fluidFlow/wells/WellSolverBase.hpp
      fluidFlow/wells/WellSolverBaseExtrinsicData.hpp
-     multiphysics/CompositionalMultiphaseReservoir.hpp
+     multiphysics/CompositionalMultiphaseReservoirAndWells.hpp          
+     multiphysics/CoupledReservoirAndWellsBase.hpp     
+     multiphysics/CoupledSolver.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/HydrofractureSolverKernels.hpp
@@ -61,14 +63,13 @@ set( physicsSolvers_headers
      multiphysics/MultiphasePoromechanicsKernel.hpp
      multiphysics/MultiphasePoromechanicsSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
-     multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhasePoromechanicsKernel.hpp
      multiphysics/SinglePhasePoromechanicsEFEMKernel.hpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
      multiphysics/SinglePhasePoromechanicsSolver.hpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.hpp
      multiphysics/SinglePhasePoromechanicsLagrangianContactSolver.hpp
-     multiphysics/SinglePhaseReservoir.hpp
+     multiphysics/SinglePhaseReservoirAndWells.hpp
      simplePDE/LaplaceBaseH1.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
@@ -121,18 +122,18 @@ set( physicsSolvers_sources
      fluidFlow/wells/SinglePhaseWellKernels.cpp
      fluidFlow/wells/WellControls.cpp
      fluidFlow/wells/WellSolverBase.cpp
-     multiphysics/CompositionalMultiphaseReservoir.cpp
+     multiphysics/CompositionalMultiphaseReservoirAndWells.cpp               
+     multiphysics/CoupledReservoirAndWellsBase.cpp		
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/LagrangianContactFlowSolver.cpp
      multiphysics/MultiphasePoromechanicsSolver.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
-     multiphysics/ReservoirSolverBase.cpp
      multiphysics/SinglePhasePoromechanicsSolver.cpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
      multiphysics/SinglePhasePoromechanicsLagrangianContactSolver.cpp
-     multiphysics/SinglePhaseReservoir.cpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.cpp
+     multiphysics/SinglePhaseReservoirAndWells.cpp
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
