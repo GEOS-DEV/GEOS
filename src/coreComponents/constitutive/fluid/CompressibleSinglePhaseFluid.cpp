@@ -118,8 +118,8 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
   {
     GEOSX_THROW_IF_NE_MSG( value, ExponentApproximationType::Linear,
-                           GEOSX_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
-                           InputError );
+                    	   GEOSX_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
+                    	   InputError );
   };
   checkModelType( m_densityModelType, viewKeyStruct::densityModelTypeString() );
   checkModelType( m_viscosityModelType, viewKeyStruct::viscosityModelTypeString() );
