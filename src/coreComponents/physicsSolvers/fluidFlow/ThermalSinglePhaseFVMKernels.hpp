@@ -277,7 +277,7 @@ public:
       {
         localIndex const localDofIndexTemp = k[ke] * numDof + numDof - 1;
         stack.localFluxJacobian[k[0]*numEqn][localDofIndexTemp] += m_dt * dFlux_dT[ke];
-        stack.localFluxJacobian[k[0]*numEqn][localDofIndexTemp] -= m_dt * dFlux_dT[ke];
+        stack.localFluxJacobian[k[1]*numEqn][localDofIndexTemp] -= m_dt * dFlux_dT[ke];
       }
 
       // Step 4: compute the enthalpy flux
