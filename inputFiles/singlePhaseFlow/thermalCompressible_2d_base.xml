@@ -1,12 +1,13 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="singleFlow"
       logLevel="1"
       discretization="tpfaFlow"
-      temperature="353.0"
+      temperature="285.0"
       isThermal="1"
       targetRegions="{ region }">
       <NonlinearSolverParameters
@@ -17,48 +18,17 @@
     </SinglePhaseFVM>
   </Solvers>
 
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 100 }"
-      yCoords="{ 0, 100 }"
-      zCoords="{ 0, 100 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
-      nz="{ 10 }"
-      cellBlockNames="{ cb }"/>
-  </Mesh>
-
   <Geometry>
     <Box
       name="sink"
-      xMin="{ 89.99, 89.99, 89.99 }"
-      xMax="{ 100.01, 100.01, 100.01 }"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 150.01, 1.01, 3.01 }"/>
 
     <Box
       name="source"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 10.01, 10.01, 10.01 }"/>
+      xMin="{ -0.01, -0.01, 146.99 }"
+      xMax="{ 300.01, 1.01, 150.01 }"/>
   </Geometry>
-
-  <Events
-    maxTime="1.5e7">
-    <PeriodicEvent
-      name="outputs"
-      timeFrequency="2.5e6"
-      target="/Outputs/vtkOutput"/>
-
-    <PeriodicEvent
-      name="solverApplications"
-      maxEventDt="2.5e6"
-      target="/Solvers/singleFlow"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="7.5e6"
-      target="/Outputs/restartOutput"/>
-  </Events>
 
   <NumericalMethods>
     <FiniteVolume>
@@ -88,27 +58,27 @@
 
     <PressurePorosity
       name="rockPorosity"
-      defaultReferencePorosity="0.01"
+      defaultReferencePorosity="0.1"
       referencePressure="0.0"
-      compressibility="3.0e-11"/>
+      compressibility="0.0"/>
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
-      volumetricHeatCapacity="1.95e6"
-      referenceTemperature="273.0"
-      referenceInternalEnergy="5.33e8"/>
+      volumetricHeatCapacity="0.0"
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0"/>
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }"/>
+      permeabilityComponents="{ 4.9e-11, 4.9e-11, 4.9e-11 }"/>
 
     <ThermalCompressibleSinglePhaseFluid
       name="fluid"
       defaultDensity="1000"
-      defaultViscosity="1e-4"
+      defaultViscosity="1.3e-3"
       referencePressure="0.0"
       referenceTemperature="273.0"
-      compressibility="5e-10"
+      compressibility="1e-10"
       thermalExpansionCoeff="3e-4"
       viscosibility="0.0"
       volumetricHeatCapacity="4.0e3"
@@ -116,7 +86,7 @@
 
     <SinglePhaseConstantThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 3.5, 3.5, 3.5 }"/>
+      thermalConductivityComponents="{ 1.49, 1.49, 1.49 }"/>
     
   </Constitutive>
 
@@ -128,7 +98,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/region/cb"
       fieldName="pressure"
-      scale="9e6"/>
+      scale="1e5"/>
 
     <FieldSpecification
       name="initialTemperature"
@@ -136,35 +106,21 @@
       setNames="{ all }"
       objectPath="ElementRegions/region/cb"
       fieldName="temperature"
-      scale="353.0"/>
-
-    <FieldSpecification
-      name="sinkPressure"
-      setNames="{ sink }"       
-      objectPath="ElementRegions/region/cb"
-      fieldName="pressure"
-      scale="7e6"/>
+      scale="285.0"/>
 
     <FieldSpecification
       name="sinkTemperature"
       setNames="{ sink }"       
       objectPath="ElementRegions/region/cb"
       fieldName="temperature"
-      scale="473.0"/>
-
-    <FieldSpecification
-      name="sourcePressure"
-      setNames="{ source }"     
-      objectPath="ElementRegions/region/cb"
-      fieldName="pressure"
-      scale="1.45e7"/>
+      scale="293.0"/>
 
     <FieldSpecification
       name="sourceTemperature"
       setNames="{ source }"     
       objectPath="ElementRegions/region/cb"
       fieldName="temperature"
-      scale="323.0"/>
+      scale="285.0"/>
 
   </FieldSpecifications>
 
