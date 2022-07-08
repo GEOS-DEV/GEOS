@@ -13,11 +13,12 @@
  */
 
 /**
- * @file ThermalConductivityBase.cpp
+ * @file MultiPhaseThermalConductivityBase.cpp
  */
 
-#include "ThermalConductivityBase.hpp"
+#include "MultiPhaseThermalConductivityBase.hpp"
 #include "ThermalConductivityExtrinsicData.hpp"
+#include "MultiPhaseThermalConductivityExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -27,7 +28,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ThermalConductivityBase::ThermalConductivityBase( string const & name, Group * const parent )
+MultiPhaseThermalConductivityBase::MultiPhaseThermalConductivityBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
@@ -38,7 +39,7 @@ ThermalConductivityBase::ThermalConductivityBase( string const & name, Group * c
   registerExtrinsicData( extrinsicMeshData::thermalconductivity::dEffectiveConductivity_dPhaseVolFraction{}, &m_dEffectiveConductivity_dPhaseVolFrac );
 }
 
-void ThermalConductivityBase::postProcessInput()
+void MultiPhaseThermalConductivityBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
 
@@ -54,8 +55,8 @@ void ThermalConductivityBase::postProcessInput()
   m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 0, 3, numPhases );
 }
 
-void ThermalConductivityBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                        localIndex const numConstitutivePointsPerParentIndex )
+void MultiPhaseThermalConductivityBase::allocateConstitutiveData( dataRepository::Group & parent,
+                                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   // NOTE: enforcing 1 quadrature point
   integer const numPhases = numFluidPhases();

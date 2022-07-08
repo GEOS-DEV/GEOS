@@ -48,6 +48,22 @@ EXTRINSIC_MESH_DATA_TRAIT( pressure_n,
                            WRITE_AND_READ,
                            "Pressure at the previous converged time step" );
 
+EXTRINSIC_MESH_DATA_TRAIT( temperature,
+                           "wellTemperature",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Temperature" );
+
+EXTRINSIC_MESH_DATA_TRAIT( temperature_n,
+                           "wellTemperature_n",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Temperature at the previous converged time step" );
+
 EXTRINSIC_MESH_DATA_TRAIT( gravityCoefficient,
                            "gravityCoefficient",
                            array1d< real64 >,

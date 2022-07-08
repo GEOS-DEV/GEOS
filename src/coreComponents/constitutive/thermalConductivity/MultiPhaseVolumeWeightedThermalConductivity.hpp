@@ -13,13 +13,13 @@
  */
 
 /**
- * @file VolumeWeightedThermalConductivity.hpp
+ * @file MultiPhaseVolumeWeightedThermalConductivity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_THERMALCONDUCTIVITY_VOLUMEWEIGHTEDTHERMALCONDUCTIVITY_HPP_
-#define GEOSX_CONSTITUTIVE_THERMALCONDUCTIVITY_VOLUMEWEIGHTEDTHERMALCONDUCTIVITY_HPP_
+#ifndef GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_VOLUMEWEIGHTEDTHERMALCONDUCTIVITY_HPP_
+#define GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_VOLUMEWEIGHTEDTHERMALCONDUCTIVITY_HPP_
 
-#include "constitutive/thermalConductivity/ThermalConductivityBase.hpp"
+#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityBase.hpp"
 
 
 namespace geosx
@@ -30,7 +30,7 @@ namespace constitutive
 /**
  * @brief The update class for volume-weighted thermal conductivity
  */
-class VolumeWeightedThermalConductivityUpdate : public ThermalConductivityBaseUpdate
+class MultiPhaseVolumeWeightedThermalConductivityUpdate : public MultiPhaseThermalConductivityBaseUpdate
 {
 public:
 
@@ -42,11 +42,11 @@ public:
    * @param rockThermalConductivity the array of cell-wise rock thermal conductivities
    * @param phaseThermalConductivity the array of fluid phase thermal conductivities
    */
-  VolumeWeightedThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity,
-                                           arrayView4d< real64 > const & dEffectiveConductivity_dPhaseVolFrac,
-                                           arrayView3d< real64 const > const & rockThermalConductivity,
-                                           arrayView1d< real64 const > const & phaseThermalConductivity )
-    : ThermalConductivityBaseUpdate( effectiveConductivity, dEffectiveConductivity_dPhaseVolFrac ),
+  MultiPhaseVolumeWeightedThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity,
+                                                     arrayView4d< real64 > const & dEffectiveConductivity_dPhaseVolFrac,
+                                                     arrayView3d< real64 const > const & rockThermalConductivity,
+                                                     arrayView1d< real64 const > const & phaseThermalConductivity )
+    : MultiPhaseThermalConductivityBaseUpdate( effectiveConductivity, dEffectiveConductivity_dPhaseVolFrac ),
     m_rockThermalConductivity( rockThermalConductivity ),
     m_phaseThermalConductivity( phaseThermalConductivity )
   {}
@@ -110,7 +110,7 @@ private:
 /**
  * @brief The class for volume-weighted thermal conductivity
  */
-class VolumeWeightedThermalConductivity : public ThermalConductivityBase
+class MultiPhaseVolumeWeightedThermalConductivity : public MultiPhaseThermalConductivityBase
 {
 public:
 
@@ -119,7 +119,7 @@ public:
    * @param[in] name the name of the class
    * @param[in] parent pointer to the parent Group
    */
-  VolumeWeightedThermalConductivity( string const & name, Group * const parent );
+  MultiPhaseVolumeWeightedThermalConductivity( string const & name, Group * const parent );
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
@@ -133,12 +133,12 @@ public:
   virtual void saveConvergedRockFluidState( arrayView2d< real64 const > const & convergedPorosity,
                                             arrayView2d< real64 const, compflow::USD_PHASE > const & convergedPhaseVolumeFraction ) const override;
 
-  static string catalogName() { return "VolumeWeightedThermalConductivity"; }
+  static string catalogName() { return "MultiPhaseVolumeWeightedThermalConductivity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = VolumeWeightedThermalConductivityUpdate;
+  using KernelWrapper = MultiPhaseVolumeWeightedThermalConductivityUpdate;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -152,7 +152,7 @@ public:
                           m_phaseThermalConductivity );
   }
 
-  struct viewKeyStruct : public ThermalConductivityBase::viewKeyStruct
+  struct viewKeyStruct : public MultiPhaseThermalConductivityBase::viewKeyStruct
   {
     static constexpr char const * rockThermalConductivityComponentsString() { return "rockThermalConductivityComponents"; }
     static constexpr char const * phaseThermalConductivityString() { return "phaseThermalConductivity"; }
@@ -180,4 +180,4 @@ private:
 } // namespace geosx
 
 
-#endif //GEOSX_CONSTITUTIVE_THERMALCONDUCTIVITY_VOLUMEWEIGHTEDTHERMALCONDUCTIVITY_HPP_
+#endif //GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_VOLUMEWEIGHTEDTHERMALCONDUCTIVITY_HPP_

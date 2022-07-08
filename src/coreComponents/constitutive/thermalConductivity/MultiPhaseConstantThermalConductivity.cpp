@@ -13,10 +13,10 @@
  */
 
 /**
- * @file ConstantThermalConductivity.cpp
+ * @file MultiPhaseConstantThermalConductivity.cpp
  */
 
-#include "ConstantThermalConductivity.hpp"
+#include "MultiPhaseConstantThermalConductivity.hpp"
 
 namespace geosx
 {
@@ -26,8 +26,8 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ConstantThermalConductivity::ConstantThermalConductivity( string const & name, Group * const parent ):
-  ThermalConductivityBase( name, parent )
+MultiPhaseConstantThermalConductivity::MultiPhaseConstantThermalConductivity( string const & name, Group * const parent ):
+  MultiPhaseThermalConductivityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::thermalConductivityComponentsString(), &m_thermalConductivityComponents ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -36,16 +36,16 @@ ConstantThermalConductivity::ConstantThermalConductivity( string const & name, G
 }
 
 std::unique_ptr< ConstitutiveBase >
-ConstantThermalConductivity::deliverClone( string const & name,
-                                           Group * const parent ) const
+MultiPhaseConstantThermalConductivity::deliverClone( string const & name,
+                                                     Group * const parent ) const
 {
-  return ThermalConductivityBase::deliverClone( name, parent );
+  return MultiPhaseThermalConductivityBase::deliverClone( name, parent );
 }
 
-void ConstantThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                            localIndex const numConstitutivePointsPerParentIndex )
+void MultiPhaseConstantThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
+                                                                      localIndex const numConstitutivePointsPerParentIndex )
 {
-  ThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
@@ -59,7 +59,7 @@ void ConstantThermalConductivity::allocateConstitutiveData( dataRepository::Grou
   }
 }
 
-void ConstantThermalConductivity::postProcessInput()
+void MultiPhaseConstantThermalConductivity::postProcessInput()
 {
   GEOSX_THROW_IF( m_thermalConductivityComponents[0] <= 0 ||
                   m_thermalConductivityComponents[1] <= 0 ||
@@ -69,7 +69,7 @@ void ConstantThermalConductivity::postProcessInput()
                   InputError );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ConstantThermalConductivity, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, MultiPhaseConstantThermalConductivity, string const &, Group * const )
 
 } // namespace constitutive
 
