@@ -193,7 +193,8 @@ class Geosx(CMakePackage, CudaPackage):
     @run_after('build')
     @on_package_attributes(run_tests=True)
     def check(self):
-        """Searches the CMake-generated Makefile for the target ``test``
+        """
+        Searches the CMake-generated Makefile for the target ``test``
         and runs it if found.
         """
         with working_dir(self.build_directory):

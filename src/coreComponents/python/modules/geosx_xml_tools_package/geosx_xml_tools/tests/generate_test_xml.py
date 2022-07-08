@@ -9,7 +9,7 @@ def generate_test_xml_files(root_dir):
     """Build example input/output xml files, which can be used to test the parser.
      These are derived from a GEOSX integrated test xml.
 
-     @param root_dir The folder to write the example xml files.
+    @param root_dir The folder to write the example xml files.
     """
 
     # Build segments of an xml file that can be compiled to form a test

@@ -39,15 +39,15 @@ def format_xml_level(output,
                      include_namespace=False):
     """Iteratively format the xml file
 
-     @param output the output filename
-     @param node the current xml element
-     @param level the xml depth
-     @param indent the xml indent style
-     @param block_separation_max_depth the maximum depth to separate adjacent elements
-     @param modify_attribute_indent option to have flexible attribute indentation
-     @param sort_attributes option to sort attributes alphabetically
-     @param close_tag_newline option to place close tag on a separate line
-     @param include_namespace option to include the xml namespace in the output
+    @param output the output filename
+    @param node the current xml element
+    @param level the xml depth
+    @param indent the xml indent style
+    @param block_separation_max_depth the maximum depth to separate adjacent elements
+    @param modify_attribute_indent option to have flexible attribute indentation
+    @param sort_attributes option to sort attributes alphabetically
+    @param close_tag_newline option to place close tag on a separate line
+    @param include_namespace option to include the xml namespace in the output
     """
 
     # Handle comments

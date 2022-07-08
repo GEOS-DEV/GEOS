@@ -32,7 +32,7 @@ symbolic_format = '%1.6e'
 def SymbolicMathRegexHandler(match):
     """Evaluate symbolic expressions that are identified using the regex_tools.patterns['symbolic'].
 
-       @param match A matching string identified by the regex.
+    @param match A matching string identified by the regex.
     """
     k = match.group(1)
     if k:
@@ -53,15 +53,15 @@ class DictRegexHandler():
 
     def __init__(self):
         """Initialize the handler with an empty target list.
-           The key/value pairs of self.target indicate which values
-           to look for and the values they will replace with.
+        The key/value pairs of self.target indicate which values
+        to look for and the values they will replace with.
         """
         self.target = {}
 
     def __call__(self, match):
         """Replace the matching strings with their target.
 
-           @param match A matching string identified by the regex.
+        @param match A matching string identified by the regex.
         """
 
         k = match.group(1)

@@ -10,13 +10,13 @@ def parse_schema_element(root,
                          xsd='{http://www.w3.org/2001/XMLSchema}',
                          recursive_types=['PeriodicEvent', 'SoloEvent', 'HaltEvent']):
     """
-  @brief Check element/attribute names at the current schema level
-  @param root the root schema node
-  @param node the current node
-  @param path the path to the current level
-  @param xsd a string cointaining namespace information
-  @param recursive_types a list of elements which are recursive
-  """
+    @brief Check element/attribute names at the current schema level
+    @param root the root schema node
+    @param node the current node
+    @param path the path to the current level
+    @param xsd a string cointaining namespace information
+    @param recursive_types a list of elements which are recursive
+    """
     # Attributes should be in camelCase, Elements should be in PascalCase
     camel_case_regex = re.compile(r'[a-z][a-zA-Z]*')
     pascal_case_regex = re.compile(r'[A-Z][a-zA-Z]*')
@@ -46,9 +46,9 @@ def parse_schema_element(root,
 
 def parse_schema(fname):
     """
-  @brief Check the element/attribute names in the schema
-  @param fname the schema file name
-  """
+    @brief Check the element/attribute names in the schema
+    @param fname the schema file name
+    """
     xml_tree = ElementTree.parse(fname)
     xml_root = xml_tree.getroot()
     problem_node = xml_root.find("{http://www.w3.org/2001/XMLSchema}element")
@@ -57,8 +57,8 @@ def parse_schema(fname):
 
 def main():
     """
-  @brief Entry point for the name checking script
-  """
+    @brief Entry point for the name checking script
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--root', type=str, help='GEOSX root', default='.')
     args = parser.parse_args()
