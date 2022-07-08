@@ -39,22 +39,6 @@ using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
 using array3dLayoutComp_dC = array3d< real64, compflow::LAYOUT_COMP_DC >;
 using array3dLayoutPhaseComp = array3d< real64, compflow::LAYOUT_PHASE_COMP >;
 
-EXTRINSIC_MESH_DATA_TRAIT( temperature,
-                           "temperature",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Temperature" );
-
-EXTRINSIC_MESH_DATA_TRAIT( temperature_n,
-                           "temperature_n",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Temperature at the previous converged time step" );
-
 EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
                            "globalCompDensity",
                            array2dLayoutComp,
@@ -198,22 +182,6 @@ EXTRINSIC_MESH_DATA_TRAIT( componentCFLNumber,
                            LEVEL_0,
                            NO_WRITE,
                            "Component CFL number" );
-
-EXTRINSIC_MESH_DATA_TRAIT( bcPressure,
-                           "bcPressure",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Boundary condition pressure" );
-
-EXTRINSIC_MESH_DATA_TRAIT( bcTemperature,
-                           "bcTemperature",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Boundary temperature" );
 
 
 }

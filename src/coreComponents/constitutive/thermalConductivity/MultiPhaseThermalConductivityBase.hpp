@@ -13,11 +13,11 @@
  */
 
 /**
- * @file ThermalConductivityBase.hpp
+ * @file MultiPhaseThermalConductivityBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYBASE_HPP
-#define GEOSX_CONSTITUTIVE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYBASE_HPP
+#ifndef GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYBASE_HPP
+#define GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYBASE_HPP
 
 #include "common/DataLayouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -32,7 +32,7 @@ namespace constitutive
 /**
  * @brief The abstract base class to perform the thermal conductivity
  */
-class ThermalConductivityBaseUpdate
+class MultiPhaseThermalConductivityBaseUpdate
 {
 public:
 
@@ -65,8 +65,8 @@ protected:
    * @param dEffectiveConductivity_dPhaseVolFrac the array of cell-wise derivatives of effective conductivities wrt phase vol fractions in
    * the subregion
    */
-  ThermalConductivityBaseUpdate( arrayView3d< real64 > const & effectiveConductivity,
-                                 arrayView4d< real64 > const & dEffectiveConductivity_dPhaseVolFrac )
+  MultiPhaseThermalConductivityBaseUpdate( arrayView3d< real64 > const & effectiveConductivity,
+                                           arrayView4d< real64 > const & dEffectiveConductivity_dPhaseVolFrac )
     : m_effectiveConductivity( effectiveConductivity ),
     m_dEffectiveConductivity_dPhaseVolFrac( dEffectiveConductivity_dPhaseVolFrac )
   {}
@@ -96,7 +96,7 @@ private:
 /**
  * @brief The abstract base class for thermal conductivity
  */
-class ThermalConductivityBase : public ConstitutiveBase
+class MultiPhaseThermalConductivityBase : public ConstitutiveBase
 {
 public:
 
@@ -108,7 +108,7 @@ public:
    * @param[in] name the name of the class
    * @param[in] parent pointer to the parent Group
    */
-  ThermalConductivityBase( string const & name, dataRepository::Group * const parent );
+  MultiPhaseThermalConductivityBase( string const & name, dataRepository::Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
@@ -196,4 +196,4 @@ protected:
 } // namespace geosx
 
 
-#endif //GEOSX_CONSTITUTIVE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYBASE_HPP
+#endif //GEOSX_CONSTITUTIVE_MULTIPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYBASE_HPP

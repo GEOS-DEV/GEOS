@@ -19,8 +19,9 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
-#include "constitutive/thermalConductivity/ThermalConductivityBase.hpp"
+#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityBase.hpp"
 #include "constitutive/thermalConductivity/ThermalConductivityExtrinsicData.hpp"
+#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
 namespace geosx
@@ -231,7 +232,7 @@ public:
                               extrinsicMeshData::multifluid::dPhaseEnthalpy >;
 
   using ThermalConductivityAccessors =
-    StencilMaterialAccessors< ThermalConductivityBase,
+    StencilMaterialAccessors< MultiPhaseThermalConductivityBase,
                               extrinsicMeshData::thermalconductivity::effectiveConductivity >;
   // for now, we treat thermal conductivity explicitly
 

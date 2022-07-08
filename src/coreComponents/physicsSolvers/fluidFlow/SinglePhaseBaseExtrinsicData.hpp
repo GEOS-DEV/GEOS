@@ -48,6 +48,14 @@ EXTRINSIC_MESH_DATA_TRAIT( dMobility_dPressure,
                            NO_WRITE,
                            "Derivative of mobility with respect to pressure" );
 
+EXTRINSIC_MESH_DATA_TRAIT( dMobility_dTemperature,
+                           "dMobility_dTemperature",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Derivative of mobility with respect to temperature" );
+
 }
 
 }

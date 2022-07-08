@@ -119,7 +119,7 @@ void SinglePhasePoromechanicsSolver::setupDofs( DomainPartition const & domain,
   m_flowSolver->setupDofs( domain, dofManager );
 
   dofManager.addCoupling( keys::TotalDisplacement,
-                          extrinsicMeshData::flow::pressure::key(),
+                          SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
 }
 
@@ -227,7 +227,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
     string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
     arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-    string const pDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+    string const pDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
 //  m_solidSolver->resetStressToBeginningOfStep( domain );
 
