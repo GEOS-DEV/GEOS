@@ -57,7 +57,8 @@ set( constitutive_headers
      fluid/SingleFluidBase.hpp
      fluid/SingleFluidExtrinsicData.hpp
      fluid/SlurryFluidBase.hpp
-     fluid/SlurryFluidExtrinsicData.hpp     
+     fluid/SlurryFluidExtrinsicData.hpp 
+     fluid/ThermalCompressibleSinglePhaseFluid.hpp
      fluid/layouts.hpp
      fluid/multiFluidSelector.hpp
      fluid/particleFluidSelector.hpp
@@ -112,11 +113,16 @@ set( constitutive_headers
      solid/porosity/PorosityBase.hpp
      solid/porosity/PressurePorosity.hpp
      solid/porosity/ProppantPorosity.hpp
-     thermalConductivity/ConstantThermalConductivity.hpp
-     thermalConductivity/ThermalConductivityBase.hpp
+     thermalConductivity/MultiPhaseConstantThermalConductivity.hpp
+     thermalConductivity/MultiPhaseThermalConductivityBase.hpp
+     thermalConductivity/MultiPhaseThermalConductivityExtrinsicData.hpp
+     thermalConductivity/multiPhaseThermalConductivitySelector.hpp
+     thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.hpp
+     thermalConductivity/SinglePhaseConstantThermalConductivity.hpp
+     thermalConductivity/SinglePhaseThermalConductivityBase.hpp
+     thermalConductivity/SinglePhaseThermalConductivityExtrinsicData.hpp
+     thermalConductivity/singlePhaseThermalConductivitySelector.hpp
      thermalConductivity/ThermalConductivityExtrinsicData.hpp
-     thermalConductivity/thermalConductivitySelector.hpp
-     thermalConductivity/VolumeWeightedThermalConductivity.hpp
    )
 #
 # Specify all sources
@@ -163,6 +169,7 @@ set( constitutive_sources
      fluid/ReactiveMultiFluid.cpp
      fluid/SingleFluidBase.cpp
      fluid/SlurryFluidBase.cpp
+     fluid/ThermalCompressibleSinglePhaseFluid.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ConstantPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
@@ -198,9 +205,11 @@ set( constitutive_sources
      solid/porosity/PorosityBase.cpp
      solid/porosity/PressurePorosity.cpp
      solid/porosity/ProppantPorosity.cpp
-     thermalConductivity/ConstantThermalConductivity.cpp     
-     thermalConductivity/ThermalConductivityBase.cpp
-     thermalConductivity/VolumeWeightedThermalConductivity.cpp     
+     thermalConductivity/MultiPhaseConstantThermalConductivity.cpp     
+     thermalConductivity/MultiPhaseThermalConductivityBase.cpp
+     thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.cpp    
+     thermalConductivity/SinglePhaseConstantThermalConductivity.cpp     
+     thermalConductivity/SinglePhaseThermalConductivityBase.cpp
    )
 
 set( dependencyList events dataRepository functions)
