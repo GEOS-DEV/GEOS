@@ -33,8 +33,8 @@ namespace constitutive
 namespace chemicalReactions
 { // namespace
 
-KineticReactions::KineticReactions( string const & name ):
-  ReactionsBase( name )
+KineticReactions::KineticReactions( string const & name, integer const numPrimarySpecies, integer const numSecSpecies ):
+  ReactionBase( name, numPrimarySpecies, numSecSpecies )
 {
   // Here we should either read the database or the input values.
 }

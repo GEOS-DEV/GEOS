@@ -36,7 +36,7 @@ class EquilibriumReactions : public ReactionBase
 {
 public:
 
-  EquilibriumReactions( string const & name );
+  EquilibriumReactions( string const & name, integer const numPrimarySpecies, integer const numSecSpecies );
 
   /**
    * @brief Create an update kernel wrapper.

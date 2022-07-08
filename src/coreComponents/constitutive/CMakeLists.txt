@@ -23,6 +23,9 @@ set( constitutive_headers
      contact/FrictionlessContact.hpp
      fluid/BlackOilFluidBase.hpp	
      fluid/BlackOilFluid.hpp
+     fluid/chemicalReactions/EquilibriumReaction.hpp
+     fluid/chemicalReactions/KineticReactions.hpp
+     fluid/chemicalReactions/ReactionsBase.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
      fluid/CO2BrineFluid.hpp          
      fluid/DeadOilFluid.hpp
@@ -131,6 +134,9 @@ set( constitutive_sources
      contact/ContactBase.cpp
      contact/CoulombContact.cpp
      contact/FrictionlessContact.cpp
+     fluid/chemicalReactions/EquilibriumReaction.cpp
+     fluid/chemicalReactions/KineticReactions.cpp
+     fluid/chemicalReactions/ReactionsBase.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
      fluid/CO2BrineFluid.cpp     
      fluid/BlackOilFluidBase.cpp

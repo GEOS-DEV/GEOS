@@ -34,13 +34,11 @@ namespace chemicalReactions
 
 } // namespace
 
-ReactionsBase::ReactionsBase( string const & name )
+ReactionsBase::ReactionsBase( string const & name, integer const numPrimarySpecies, integer const numSecSpecies )
+m_name(name),
+m_numPrimarySepcies(numPrimarySpecies),
+m_numSecSepcies(numSecSpecies)
 {}
-
-ReactionsBase::KernelWrapper ReactionsBase::createKernelWrapper() const
-{
-  return KernelWrapper(  );
-}
 
 void ReactionsBase::KernelWrapper::computeLog10ActCoefBDotModel( real64 const temperature,
                                                                  real64 const ionicStrength,

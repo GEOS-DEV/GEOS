@@ -36,7 +36,7 @@ class KineticReactions : public ReactionsBase
 {
 public:
 
-  KineticReactions( string const & name );
+  KineticReactions( string const & name, integer const numPrimarySpecies, integer const numSecSpecies );
 
   /**
    * @brief Create an update kernel wrapper.

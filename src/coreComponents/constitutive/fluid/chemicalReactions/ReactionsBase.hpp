@@ -34,13 +34,7 @@ class ReactionsBase
 {
 public:
 
-  ReactionsBase( string const & name,
-                 string_array const & componentNames,
-                 array1d< real64 > const & componentMolarWeight ):
-    m_modelName( name ),
-    m_componentNames( componentNames ),
-    m_componentMolarWeight( componentMolarWeight )
-  {}
+  ReactionsBase( string const & name, integer const numPrimarySpecies, integer const numSecSpecies );
 
   virtual ~ReactionsBase() = default;
 
@@ -51,8 +45,12 @@ public:
 
 protected:
 
+  integer m_numPrimarySepcies;
+
+  integer m_numSecSepcies;
+
   /// Name the solubility model
-  string m_reactionName;
+  string m_name;
 
   /// Array storing the name of the components
   string_array m_componentNames;

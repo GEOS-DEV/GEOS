@@ -34,11 +34,10 @@ namespace constitutive
 namespace chemicalReactions
 {
 
-EquilibriumReactions::EquilibriumReactions( string const & name ):
-  ReactionBase( name )
+EquilibriumReactions::EquilibriumReactions( string const & name, integer const numPrimarySpecies, integer const numSecSpecies ):
+  ReactionBase( name, numPrimarySpecies, numSecSpecies )
 {
-  // Here we should either read the database or the input values.
-
+  // Here we should either read the database or the input values. 
 
   // Hardcoding values for now
 
@@ -263,9 +262,9 @@ void EquilibriumReactions::KernelWrapper::computeSeondarySpeciesConcAndDerivativ
     for( int jPri = 0; j < m_numPrimarySpecies; ++j )
     {
       log10SecConc += m_stoichMatrix[iSec][jPri] * ( log10( primarySpeciesConcentration[jPri] ) + m_log10PrimaryActCoeff[jPri]);
-      secondarySpeciesConectration[iSec] = pow(10, log10SecConc);
-      dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stoichMatrix[iSec][jPri];
+      dLog10SecConc_dLog10PrimaryConc[iSec][jPri] = m_stoichMatrix[iSec][jPri];
     }
+    secondarySpeciesConectration[iSec] = pow(10, log10SecConc);
   }
 
 }
@@ -308,7 +307,7 @@ updatePrimarySpeciesConcentrations( DenseVector const & solution,
 {
   for(integer i = 0; i < m_numPrimarySpecies; i++)
   {
-    primarySpeciesConcentration[i] += pow( 10, solution[i] );
+    primarySpeciesConcentration[i] *= pow( 10, solution[i] );
   }
 }
 

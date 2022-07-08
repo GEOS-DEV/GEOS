@@ -22,8 +22,8 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-
-
+#include "constitutive/fluid/chemicalReactions/EquilibriumReactions.hpp"
+#include "constitutive/fluid/chemicalReactions/KineticReactions.hpp"
 
 #include <memory>
 
@@ -55,17 +55,26 @@ public:
    */
   class KernelWrapper final : public MultiFluidBase::KernelWrapper
   {
-public:
-
-  /// @cond DO_NOT_DOCUMENT
-  /// We need these SMFs to avoid host-device errors with CUDA.
-    KernelWrapper() = default;
-    KernelWrapper( KernelWrapper const & ) = default;
-    KernelWrapper & operator=( KernelWrapper const & ) = default;
-    KernelWrapper & operator=( KernelWrapper && ) = default;
-  /// @endcond
 
 private:
+  
+  KernelWrapper( arrayView1d< real64 const > componentMolarWeight,
+                 bool const useMass,
+                 bool const isThermal,
+                 PhaseProp::ViewType phaseFraction,
+                 PhaseProp::ViewType phaseDensity,
+                 PhaseProp::ViewType phaseMassDensity,
+                 PhaseProp::ViewType phaseViscosity,
+                 PhaseProp::ViewType phaseEnthalpy,
+                 PhaseProp::ViewType phaseInternalEnergy,
+                 PhaseComp::ViewType phaseCompFraction,
+                 FluidProp::ViewType totalDensity,
+                 EquilibriumReactions const & equilibriumReactions,
+                 KineticReactions const & kineticReactions, 
+                 arrayView2d<real64> const &  primarySpeciesConcentration,
+                 arrayView2d<real64> const & secondarySpeciesConcentration,
+                 arrayView2d<real64> const & primarySpeciesTotalConcentration,
+                 arrayView2d<real64> const & kineticReactionRates );        
 
   EquilibriumReactions::KernelWrapper m_equilibriumReactions;
   
@@ -101,9 +110,11 @@ private:
   /// Reaction related terms
   integer m_numPrimarySpecies;
   
-  integer m_numSecSpecies;
+  integer m_numSecondarySpecies;
 
-  EquilibriumReaction m_equilibriumReaction;
+  std::unique_ptr< EquilibriumReactions > m_equilibriumReaction;
+  
+  std::unique_ptr< KineticReactions > m_kineticReactions;
 
   array2d<real64>  m_primarySpeciesConcentration;
 
