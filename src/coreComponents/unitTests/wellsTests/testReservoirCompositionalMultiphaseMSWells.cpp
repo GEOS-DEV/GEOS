@@ -22,8 +22,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
-#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoir.hpp"
+#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
@@ -197,14 +196,14 @@ char const * xmlInput =
 
 
 template< typename LAMBDA >
-void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
+void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > & solver,
                             DomainPartition & domain,
                             real64 const perturbParameter,
                             real64 const relTol,
                             LAMBDA && assembleFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = dynamicCast< CompositionalMultiphaseWell & >( *solver.getWellSolver() );
-  CompositionalMultiphaseFVM & flowSolver = dynamicCast< CompositionalMultiphaseFVM & >( *solver.getFlowSolver() );
+  CompositionalMultiphaseWell & wellSolver = *solver.getWellSolver();
+  CompositionalMultiphaseFVM & flowSolver = dynamicCast< CompositionalMultiphaseFVM & >( *solver.getReservoirSolver() );
 
   localIndex const NC = flowSolver.numFluidComponents();
 
@@ -472,7 +471,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseReservoir >( "reservoirSystem" );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > >( "reservoirSystem" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
@@ -490,7 +489,7 @@ protected:
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  CompositionalMultiphaseReservoir * solver;
+  CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > * solver;
 };
 
 real64 constexpr CompositionalMultiphaseReservoirSolverTest::time;
