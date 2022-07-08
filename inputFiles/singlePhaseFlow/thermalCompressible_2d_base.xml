@@ -18,18 +18,6 @@
     </SinglePhaseFVM>
   </Solvers>
 
-  <Geometry>
-    <Box
-      name="sink"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 150.01, 1.01, 3.01 }"/>
-
-    <Box
-      name="source"
-      xMin="{ -0.01, -0.01, 146.99 }"
-      xMax="{ 300.01, 1.01, 150.01 }"/>
-  </Geometry>
-
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
