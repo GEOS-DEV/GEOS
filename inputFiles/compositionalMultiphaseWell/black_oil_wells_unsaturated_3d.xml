@@ -120,6 +120,11 @@
       name="solverApplications"
       maxEventDt="315360"      
       target="/Solvers/reservoirSystem"/>
+
+    <PeriodicEvent
+      name="statistics"
+      timeFrequency="3153600"
+      target="/Tasks/compositionalMultiphaseFlowStatistics"/>
     
     <PeriodicEvent
       name="timeHistoryCollection"
@@ -221,7 +226,14 @@
       scale="0.00001"/>
   </FieldSpecifications>
 
-  <Tasks>
+   <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="compositionalMultiphaseFlowStatistics"
+      compositionalMultiphaseSolverName="compositionalMultiphaseFlow"
+      logLevel="1"
+      computeCFLNumbers="0"
+      computeRegionStatistics="1"/>
+    
     <PackCollection
       name="wellRateCollection"
       objectPath="ElementRegions/wellRegion1/wellRegion1uniqueSubRegion"

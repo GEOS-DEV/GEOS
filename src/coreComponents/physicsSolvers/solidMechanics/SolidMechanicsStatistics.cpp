@@ -67,7 +67,9 @@ void SolidMechanicsStatistics::initializePostInitialConditionsPreSubGroups()
                                                                         arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    nodeManager.registerWrapper< NodeStatistics >( viewKeyStruct::nodeStatisticsString() );
+    nodeManager.registerWrapper< NodeStatistics >( viewKeyStruct::nodeStatisticsString() ).
+      setRestartFlags( RestartFlags::NO_WRITE );
+    nodeManager.excludeWrappersFromPacking( { viewKeyStruct::nodeStatisticsString() } );
     NodeStatistics & nodeStatistics = nodeManager.getReference< NodeStatistics >( viewKeyStruct::nodeStatisticsString() );
 
     nodeStatistics.minDisplacement.resizeDimension< 0 >( 3 );

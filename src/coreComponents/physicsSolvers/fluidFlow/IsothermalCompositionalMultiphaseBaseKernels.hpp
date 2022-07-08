@@ -1018,8 +1018,6 @@ struct SolutionCheckKernel
 
 /******************************** StatisticsKernel ********************************/
 
-/******************************** StatisticsKernel ********************************/
-
 struct StatisticsKernel
 {
   template< typename POLICY >
@@ -1050,18 +1048,36 @@ struct StatisticsKernel
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPresNumerator( 0.0 );
     RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPres( 0.0 );
-
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinTemp( LvArray::NumericLimits< real64 >::max );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgTempNumerator( 0.0 );
     RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTemp( 0.0 );
-
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalUncompactedPoreVol( 0.0 );
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionPhaseDynamicPoreVol[MultiFluidBase::MAX_NUM_PHASES]{};
 
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionPhaseMass[MultiFluidBase::MAX_NUM_PHASES]{};
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionDissolvedComponentMass[MultiFluidBase::MAX_NUM_PHASES *MultiFluidBase::MAX_NUM_COMPONENTS]{};
+    // For this arrays phaseDynamicPoreVol, phaseMass, dissolvedComponentMass,
+    // using an array of ReduceSum leads to a formal parameter overflow in CUDA.
+    // As a workaround, we use a slice with RAJA::atomicAdd instead
 
-    forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( size, [numComps,
+                                             numPhases,
+                                             elemGhostRank,
+                                             volume,
+                                             refPorosity,
+                                             porosity,
+                                             pres,
+                                             temp,
+                                             phaseDensity,
+                                             phaseVolFrac,
+                                             phaseCompFraction,
+                                             subRegionMinPres,
+                                             subRegionAvgPresNumerator,
+                                             subRegionMaxPres,
+                                             subRegionMinTemp,
+                                             subRegionAvgTempNumerator,
+                                             subRegionMaxTemp,
+                                             subRegionTotalUncompactedPoreVol,
+                                             phaseDynamicPoreVol,
+                                             phaseMass,
+                                             dissolvedComponentMass] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       if( elemGhostRank[ei] >= 0 )
       {
@@ -1083,11 +1099,13 @@ struct StatisticsKernel
       {
         real64 const elemPhaseVolume = dynamicPoreVol * phaseVolFrac[ei][ip];
         real64 const elemPhaseMass = phaseDensity[ei][0][ip] * elemPhaseVolume;
-        subRegionPhaseDynamicPoreVol[ip] += elemPhaseVolume;
-        subRegionPhaseMass[ip] += elemPhaseMass;
+        // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseDynamicPoreVol[ip], elemPhaseVolume );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseMass[ip], elemPhaseMass );
         for( integer ic = 0; ic < numComps; ++ic )
         {
-          subRegionDissolvedComponentMass[ip*numPhases+ic] += phaseCompFraction[ei][0][ip][ic] * elemPhaseMass;
+          // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &dissolvedComponentMass[ip][ic], phaseCompFraction[ei][0][ip][ic] * elemPhaseMass );
         }
       }
 
@@ -1099,17 +1117,13 @@ struct StatisticsKernel
     minTemp = subRegionMinTemp.get();
     avgTempNumerator = subRegionAvgTempNumerator.get();
     maxTemp = subRegionMaxTemp.get();
-
     totalUncompactedPoreVol = subRegionTotalUncompactedPoreVol.get();
-    for( integer ip = 0; ip < numPhases; ++ip )
+
+    // dummy loop to bring data back to the CPU
+    forAll< serialPolicy >( 1, [phaseDynamicPoreVol, phaseMass, dissolvedComponentMass] ( localIndex const )
     {
-      phaseDynamicPoreVol[ip] = subRegionPhaseDynamicPoreVol[ip].get();
-      phaseMass[ip] = subRegionPhaseMass[ip].get();
-      for( integer ic = 0; ic < numComps; ++ic )
-      {
-        dissolvedComponentMass[ip][ic] = subRegionDissolvedComponentMass[ip*numPhases+ic].get();
-      }
-    }
+      GEOSX_UNUSED_VAR( phaseDynamicPoreVol, phaseMass, dissolvedComponentMass );
+    } );
   }
 };
 

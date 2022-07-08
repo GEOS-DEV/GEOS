@@ -62,6 +62,11 @@
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
+      name="statistics"
+      timeFrequency="1e6"
+      target="/Tasks/compflowStatistics"/>
+
+    <PeriodicEvent
       name="restarts"
       timeFrequency="1e7"
       targetExactTimestep="0"
@@ -231,4 +236,14 @@
     <Restart
       name="restartOutput"/>
   </Outputs>
+  
+  <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      compositionalMultiphaseSolverName="compflow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+  </Tasks>
+  
 </Problem>

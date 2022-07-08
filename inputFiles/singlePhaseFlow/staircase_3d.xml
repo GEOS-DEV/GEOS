@@ -60,6 +60,11 @@
       target="/Solvers/SinglePhaseFlow"/>
 
     <PeriodicEvent
+      name="statistics"
+      timeFrequency="5000.0"
+      target="/Tasks/SinglePhaseFlowStatistics"/>
+    
+    <PeriodicEvent
       name="restarts"
       timeFrequency="5e4"
       targetExactTimestep="0"
@@ -155,6 +160,13 @@
 
   </FieldSpecifications>
 
+  <Tasks>
+    <SinglePhaseStatistics
+      name="SinglePhaseFlowStatistics"
+      singlePhaseSolverName="SinglePhaseFlow"
+      logLevel="1"/>
+  </Tasks>
+  
   <Outputs>
     <VTK
       name="vtkOutput"

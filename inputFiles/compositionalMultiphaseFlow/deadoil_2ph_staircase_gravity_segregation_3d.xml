@@ -55,6 +55,11 @@
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
+      name="statistics"
+      timeFrequency="2e7"
+      target="/Tasks/compflowStatistics"/>
+
+    <PeriodicEvent
       name="restarts"
       timeFrequency="2e7"
       targetExactTimestep="0"
@@ -174,6 +179,15 @@
       name="restartOutput"/>
   </Outputs>
 
+  <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      compositionalMultiphaseSolverName="compflow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+  </Tasks>
+  
   <Functions>
     <TableFunction
       name="drainageWaterRelativePermeabilityTable"

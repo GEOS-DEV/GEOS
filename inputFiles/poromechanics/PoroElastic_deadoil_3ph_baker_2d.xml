@@ -83,6 +83,15 @@
       target="/Solvers/MultiphasePoroelasticitySolver"/>
 
     <PeriodicEvent
+      name="LinearElasticityStatistics"
+      timeFrequency="1e5"
+      target="/Tasks/LinearElasticityStatistics"/>
+    <PeriodicEvent
+      name="TwoPhaseFlowStatistics"
+      timeFrequency="1e5"
+      target="/Tasks/TwoPhaseFlowStatistics"/>
+
+    <PeriodicEvent
       name="restarts"
       timeFrequency="3e5"
       target="/Outputs/restartOutput"/>
@@ -277,13 +286,24 @@
       setNames="{ zneg }"/>
   </FieldSpecifications>
 
+  <Tasks>
+    <SolidMechanicsStatistics
+      name="LinearElasticityStatistics"
+      solidMechanicsSolverName="LinearElasticitySolver"
+      logLevel="1"/>
+    <CompositionalMultiphaseStatistics
+      name="TwoPhaseFlowStatistics"
+      compositionalMultiphaseSolverName="TwoPhaseFlowSolver"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+  </Tasks>
+  
   <Outputs>
     <Silo
       name="siloOutput"/>
-
     <VTK
       name="vtkOutput"/>
-
     <Restart
       name="restartOutput"/>
   </Outputs>

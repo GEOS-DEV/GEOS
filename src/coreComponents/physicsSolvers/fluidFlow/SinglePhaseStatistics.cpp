@@ -73,7 +73,9 @@ void SinglePhaseStatistics::initializePostInitialConditionsPreSubGroups()
     for( integer i = 0; i < regionNames.size(); ++i )
     {
       ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
-      region.registerWrapper< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
+      region.registerWrapper< RegionStatistics >( viewKeyStruct::regionStatisticsString() ).
+        setRestartFlags( RestartFlags::NO_WRITE );
+      region.excludeWrappersFromPacking( { viewKeyStruct::regionStatisticsString() } );
     }
   } );
 }

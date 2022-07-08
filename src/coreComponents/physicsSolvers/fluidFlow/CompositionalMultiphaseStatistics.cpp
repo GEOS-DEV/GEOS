@@ -27,6 +27,7 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
@@ -78,6 +79,14 @@ void CompositionalMultiphaseStatistics::postProcessInput()
 
   m_compositionalMultiphaseSolver =
     &physicsSolverManager.getGroup< CompositionalMultiphaseBase >( m_compositionalMultiphaseSolverName );
+
+  if( dynamicCast< CompositionalMultiphaseHybridFVM * >( m_compositionalMultiphaseSolver ) &&
+      m_computeCFLNumbers != 0 )
+  {
+    GEOSX_THROW( GEOSX_FMT( "{} {}: the option to compute CFL numbers is incompatible with CompositionalMultiphaseHybridFVM",
+                            catalogName(), getName() ),
+                 InputError );
+  }
 }
 
 void CompositionalMultiphaseStatistics::initializePostInitialConditionsPreSubGroups()
@@ -100,7 +109,9 @@ void CompositionalMultiphaseStatistics::initializePostInitialConditionsPreSubGro
       {
         ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
 
-        region.registerWrapper< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
+        region.registerWrapper< RegionStatistics >( viewKeyStruct::regionStatisticsString() ).
+          setRestartFlags( RestartFlags::NO_WRITE );
+        region.excludeWrappersFromPacking( { viewKeyStruct::regionStatisticsString() } );
         RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
 
         regionStatistics.phasePoreVolume.resizeDimension< 0 >( numPhases );
@@ -305,6 +316,9 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     regionStatistics.averageTemperature = MpiWrapper::sum( regionStatistics.averageTemperature );
     regionStatistics.averageTemperature /= regionStatistics.totalUncompactedPoreVolume;
 
+    integer const useMass = m_compositionalMultiphaseSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
+    string const massUnit = useMass ? "kg" : "mol";
+
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Pressure (min, average, max): "
                                          << regionStatistics.minPressure << ", " << regionStatistics.averagePressure << ", " << regionStatistics.maxPressure << " Pa" );
@@ -316,9 +330,9 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Phase dynamic pore volumes: " << regionStatistics.phasePoreVolume << " rm^3" );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Phase mass: " << regionStatistics.phaseMass << " kg" );
+                                         << ": Phase mass: " << regionStatistics.phaseMass << " " << massUnit );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Dissolved component mass: " << regionStatistics.dissolvedComponentMass << " kg" );
+                                         << ": Dissolved component mass: " << regionStatistics.dissolvedComponentMass << " " << massUnit );
   }
 }
 
