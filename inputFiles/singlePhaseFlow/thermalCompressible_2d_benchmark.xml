@@ -35,7 +35,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="6e5"
-      target="/Outputs/nonuniformHeating"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
