@@ -52,7 +52,6 @@
 
 #include <numeric>
 #include <unordered_set>
-#include <algorithm>
 #include "mesh/CellElementSubRegion.hpp"
 #include "common/TypeDispatch.hpp"
 #include "mesh/MeshLevel.hpp"
@@ -552,25 +551,31 @@ void extendCellMapWithRemoteKeys( VTKMeshGenerator::CellMapType & cellMap )
     cellMap[ElementType::Polygon][attrValue];
   }
 }
-
-///////////////////////////////////////////////////////////////////////////////
-int PolyhedronType( vtkCell* const cell )
+/**
+ * @brief Identify the type of the polyhedron
+ * 
+ * @param cell The VTK cell, type polyhedron (42)
+ * @return int The type of polyhedron:
+ *              =0 represent a general polyhedron
+ *              >0 correspond to the equivalent vtk cell (10, 12, 13, 14, 15, 16)
+ *             N<0 identify a prism with (-N) sides
+ */
+int polyhedronType( vtkCell* const cell )
 {
-int numberOfFaces = cell->GetNumberOfFaces();
-int numberOfQuads = 0;
-int numberOfTriangles = 0;
-set < int > ListQuadsPoints;
-set < int > ListNoQuadsPoints;
+localIndex numberOfFaces = cell->GetNumberOfFaces();
+localIndex numberOfQuads = 0;
+localIndex numberOfTriangles = 0;
+set < localIndex > ListQuadsPoints;
+set < localIndex > ListNoQuadsPoints;
 
-if( cell->GetCellType() != 42 ) return 1;     // Stop with error
-//if( cell->GetCellType() != 42 ) GEOSX_ERROR( "Input for PolyhedronType() must be a polyhedron." );
+if( cell->GetCellType() != 42 ) GEOSX_ERROR( "Input for polyhedronType() must be a polyhedron (42)." );
 
 // Compute the number of triangles
-for( int iFace = 0 ; iFace < numberOfFaces ; ++iFace )
+for( localIndex iFace = 0; iFace < numberOfFaces; ++iFace )
  if( cell->GetFace(iFace)->GetNumberOfPoints() == 3 ) numberOfTriangles++;
 
 // Compute the number of quads
-for( int iFace = 0 ; iFace < numberOfFaces ; ++iFace )
+for( localIndex iFace = 0; iFace < numberOfFaces; ++iFace )
  if( cell->GetFace(iFace)->GetNumberOfPoints() == 4 ) numberOfQuads++;
 
 // VTK_TETRA (=10) 
@@ -587,30 +592,34 @@ if(numberOfTriangles == 4 && numberOfQuads == 1 && numberOfFaces == 5) return 14
 
 // Check if the polyhedron is a prism
 if( numberOfFaces - numberOfQuads == 2)
- {
-  for( int iFace = 0 ; iFace < numberOfFaces ; ++iFace )
-   if( cell->GetFace(iFace)->GetNumberOfPoints() == 4)
-    for( int iPoint = 0 ; iPoint < 4 ; ++iPoint )
-     ListQuadsPoints.insert( cell->GetFace(iFace)->GetPointId(iPoint) );
-   else
-    for( int iPoint = 0 ; iPoint < cell->GetFace(iFace)->GetNumberOfPoints() ; ++iPoint )
-     ListNoQuadsPoints.insert( cell->GetFace(iFace)->GetPointId(iPoint) );
- }
+{
+ for( localIndex iFace = 0; iFace < numberOfFaces ; ++iFace )
+  if( cell->GetFace(iFace)->GetNumberOfPoints() == 4)
+   for( localIndex iPoint = 0; iPoint < 4; ++iPoint )
+    ListQuadsPoints.insert( cell->GetFace(iFace)->GetPointId(iPoint) );
+  else
+   for( localIndex iPoint = 0 ; iPoint < cell->GetFace(iFace)->GetNumberOfPoints() ; ++iPoint )
+    ListNoQuadsPoints.insert( cell->GetFace(iFace)->GetPointId(iPoint) );
+}
 else return 0;     // General polyhedron
 
 if(ListQuadsPoints == ListNoQuadsPoints)   // The polyhedron is a prism
- {
-  if( numberOfQuads == 5) return 15;   // VTK_PENTAGONAL_PRISM (=15)
-  if( numberOfQuads == 6) return 16;   // VTK_HEXAGONAL_PRISM (=16)
-  return (-numberOfQuads);             // N_PRISM
- }
+{
+ if( numberOfQuads == 5 ) return 15;      // VTK_PENTAGONAL_PRISM (=15)
+ if( numberOfQuads == 6 ) return 16;      // VTK_HEXAGONAL_PRISM (=16)
+ return (-numberOfQuads);                 // N_PRISM
+}
 else return 0;     // General polyhedron
 }
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-std::vector< int > GetTetraNodeOrderingFromPolyhedron( vtkCell* const cell )
+/**
+ * @brief Get the Tetra Node Ordering From Polyhedron object
+ * 
+ * @param cell The VTK cell, type polyhedron (42)
+ * @return std::vector< localIndex > list of nodes
+ */
+std::vector< localIndex > getTetraNodeOrderingFromPolyhedron( vtkCell* const cell )
 {
-std::vector < int > nodeOrder(4);
+std::vector < localIndex > nodeOrder(4);
 
 // Check if the orientation is correct
 real64 vectorA[3];
@@ -618,7 +627,7 @@ real64 vectorB[3];
 real64 vectorC[3];
 real64 vectorN[3];
 
-for( int i = 0; i < 3; ++i )        // HOW TO AVOID FOR LOOP?!?!?
+for( localIndex i = 0; i < 3; ++i )
  {
    vectorA[i] = cell->GetPoints()->GetPoint(1)[i] - cell->GetPoints()->GetPoint(0)[i];
    vectorB[i] = cell->GetPoints()->GetPoint(2)[i] - cell->GetPoints()->GetPoint(0)[i];
@@ -627,14 +636,14 @@ for( int i = 0; i < 3; ++i )        // HOW TO AVOID FOR LOOP?!?!?
 
 LvArray::tensorOps::crossProduct( vectorN, vectorA, vectorB );
 
-if( LvArray::tensorOps::AiBi< 3 >( vectorN, vectorC ) > 0 ) // The orientation is correctly
+if( LvArray::tensorOps::AiBi< 3 >( vectorN, vectorC ) > 0 ) // The orientation is correct
  {
   nodeOrder[0] = 0;
   nodeOrder[1] = 1;
   nodeOrder[2] = 2;
   nodeOrder[3] = 3;
  }
-else // The orientation is incorrectly
+else // The orientation is incorrect, renumber nodes
  {
   nodeOrder[0] = 0;
   nodeOrder[1] = 2;
@@ -644,16 +653,20 @@ else // The orientation is incorrectly
 
 return nodeOrder;
 }
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-std::vector< int > GetHexahedronNodeOrderingFromPolyhedron( vtkCell* const cell )
+/**
+ * @brief Get the Hexahedron Node Ordering From Polyhedron object
+ * 
+ * @param cell The VTK cell, type polyhedron (42)
+ * @return std::vector< localIndex >  list of nodes
+ */
+std::vector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell* const cell )
 {
-int iFace;
-std::vector < int > nodeOrder(8);
-std::map < int , int > G2L;
+localIndex iFace;
+std::vector < localIndex > nodeOrder(8);
+std::map < localIndex , localIndex > G2L;
 
 // Generate global to local map
-for( int iPoint = 0 ; iPoint < 8 ; ++iPoint ) G2L.insert({cell->GetPointId(iPoint),iPoint});
+for( localIndex iPoint = 0 ; iPoint < 8 ; ++iPoint ) G2L.insert({cell->GetPointId(iPoint),iPoint});
 
 // Assuming the input parameters are correct, take the first quad
 iFace = 0;
@@ -665,7 +678,7 @@ nodeOrder[2] = cell->GetFace(iFace)->GetPointId(3);
 nodeOrder[3] = cell->GetFace(iFace)->GetPointId(2);
 
 // Using the edges, generate the global pointIds for the opposit quad
-for( int iEdge = 0 ; iEdge < 12 ; ++iEdge )
+for( localIndex iEdge = 0; iEdge < 12; ++iEdge )
  {
   auto edgeNode0 = cell->GetEdge(iEdge)->GetPointId(0);
   auto edgeNode1 = cell->GetEdge(iEdge)->GetPointId(1);
@@ -680,52 +693,55 @@ for( int iEdge = 0 ; iEdge < 12 ; ++iEdge )
  }
 
 // Convert global numbering to local numbering
-for ( int iPoint = 0; iPoint < 8; ++iPoint ) nodeOrder[iPoint] = G2L.find(nodeOrder[iPoint])->second;
+for ( localIndex iPoint = 0; iPoint < 8; ++iPoint ) nodeOrder[iPoint] = G2L.find(nodeOrder[iPoint])->second;
 
-// Check if the quads are correctly positioned
-real64 vectorA[3];
-real64 vectorB[3];
-real64 vectorC[3];
-real64 vectorN[3];
+real64 Xlocal[8][3];
+real64 cellVolume;
+for( localIndex iPoint = 0; iPoint < 8; ++iPoint )
+ for( localIndex i = 0; i < 3; ++i ) Xlocal[iPoint][i] = cell->GetPoints()->GetPoint(nodeOrder[iPoint])[i];
 
-for( int i = 0; i < 3; ++i )        // HOW TO AVOID FOR LOOP?!?!?
- {
-   vectorA[i] = cell->GetPoints()->GetPoint(nodeOrder[1])[i] - cell->GetPoints()->GetPoint(nodeOrder[0])[i];
-   vectorB[i] = cell->GetPoints()->GetPoint(nodeOrder[2])[i] - cell->GetPoints()->GetPoint(nodeOrder[0])[i];
-   vectorC[i] = cell->GetPoints()->GetPoint(nodeOrder[4])[i] - cell->GetPoints()->GetPoint(nodeOrder[0])[i];
- }
+cellVolume = computationalGeometry::hexahedronVolume( Xlocal );
 
-LvArray::tensorOps::crossProduct( vectorN, vectorA, vectorB );
+cout << "cellVolumeHex = " << cellVolume << "\n";
 
-// If incorrect swap the quads
-if( LvArray::tensorOps::AiBi< 3 >( vectorN, vectorC ) < 0 )
- std::rotate( nodeOrder.begin(), nodeOrder.begin()+4, nodeOrder.end());
+// If cell volume is negative swap the quads
+if( cellVolume < 0 ) std::rotate( nodeOrder.begin(), nodeOrder.begin()+4, nodeOrder.end());
+
+for( localIndex iPoint = 0; iPoint < 8; ++iPoint )
+ for( localIndex i = 0; i < 3; ++i ) Xlocal[iPoint][i] = cell->GetPoints()->GetPoint(nodeOrder[iPoint])[i];
+
+cellVolume = computationalGeometry::hexahedronVolume( Xlocal );
+
+cout << "cellVolumeHex = " << cellVolume << "\n";
 
 return nodeOrder;
 }
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-std::vector< int > GetWedgeNodeOrderingFromPolyhedron( vtkCell* const cell )
+/**
+ * @brief Get the Wedge Node Ordering From Polyhedron object
+ * 
+ * @param cell The VTK cell, type polyhedron (42)
+ * @return std::vector< localIndex > list of nodes
+ */
+std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell* const cell )
 {
-int iFace;
-std::vector < int > nodeTri0(3);
-std::vector < int > nodeTri1(3);
-std::vector < int > nodeOrder(6);
-std::map < int , int > G2L;
+localIndex iFace;
+std::vector < localIndex > nodeTri0(3);
+std::vector < localIndex > nodeTri1(3);
+std::vector < localIndex > nodeOrder(6);
+std::map < localIndex , localIndex > G2L;
 
 // Generate global to local map
-for( int iPoint = 0 ; iPoint < 6 ; ++iPoint ) G2L.insert({cell->GetPointId(iPoint),iPoint});
+for( localIndex iPoint = 0; iPoint < 6; ++iPoint ) G2L.insert({cell->GetPointId(iPoint),iPoint});
 
 // Assuming the input parameters are correct, identify one of the triangles
-iFace = 0; while( cell->GetFace(iFace)->GetNumberOfPoints() != 3 ) iFace++;
+iFace = 0; 
+while( cell->GetFace(iFace)->GetNumberOfPoints() != 3 ) iFace++;
 
 // Get global pointIds for the first triangle
-nodeTri0[0] = cell->GetFace(iFace)->GetPointId(0);
-nodeTri0[1] = cell->GetFace(iFace)->GetPointId(1);
-nodeTri0[2] = cell->GetFace(iFace)->GetPointId(2);
+for( localIndex i = 0; i < 3; ++i ) nodeTri0[i] = cell->GetFace(iFace)->GetPointId(i);
 
 // Using the edges, generate the global pointIds for the second triangle
-for( int iEdge = 0 ; iEdge < 9 ; ++iEdge )
+for( localIndex iEdge = 0 ; iEdge < 9 ; ++iEdge )
 {
   auto edgeNode0 = cell->GetEdge(iEdge)->GetPointId(0);
   auto edgeNode1 = cell->GetEdge(iEdge)->GetPointId(1);
@@ -746,56 +762,63 @@ for ( int iPoint = 0; iPoint < 3; ++iPoint )
   nodeTri1[iPoint] = G2L.find(nodeTri1[iPoint])->second;
  }
 
-// Check if the bases are correctly positioned
-real64 vectorA[3];
-real64 vectorB[3];
-real64 vectorC[3];
-real64 vectorN[3];
+// Set nodes numbering
+nodeOrder[0] = nodeTri0[0];
+nodeOrder[1] = nodeTri1[0];
+nodeOrder[2] = nodeTri0[1];
+nodeOrder[3] = nodeTri1[1];
+nodeOrder[4] = nodeTri0[2];
+nodeOrder[5] = nodeTri1[2];
 
-for( int i = 0; i < 3; ++i )        // HOW TO AVOID FOR LOOP?!?!?
- {
-   vectorA[i] = cell->GetPoints()->GetPoint(nodeTri0[1])[i] - cell->GetPoints()->GetPoint(nodeTri0[0])[i];
-   vectorB[i] = cell->GetPoints()->GetPoint(nodeTri0[2])[i] - cell->GetPoints()->GetPoint(nodeTri0[0])[i];
-   vectorC[i] = cell->GetPoints()->GetPoint(nodeTri1[0])[i] - cell->GetPoints()->GetPoint(nodeTri0[0])[i];
- }
+// Compute cell volume
+real64 Xlocal[6][3];
+real64 cellVolume;
+for( localIndex iPoint = 0; iPoint < 6; ++iPoint )
+ for( localIndex i = 0; i < 3; ++i ) Xlocal[iPoint][i] = cell->GetPoints()->GetPoint(nodeOrder[iPoint])[i];
 
-LvArray::tensorOps::crossProduct( vectorN, vectorA, vectorB );
+cellVolume = computationalGeometry::wedgeVolume( Xlocal );
 
-if( LvArray::tensorOps::AiBi< 3 >( vectorN, vectorC ) > 0 ) // Bases are correctly positioned
- {
-  nodeOrder[0]=nodeTri0[0];
-  nodeOrder[1]=nodeTri1[0];
-  nodeOrder[2]=nodeTri0[1];
-  nodeOrder[3]=nodeTri1[1];
-  nodeOrder[4]=nodeTri0[2];
-  nodeOrder[5]=nodeTri1[2];
- }
-else // Bases are incorrectly positioned
- {
-  nodeOrder[0]=nodeTri0[0];
-  nodeOrder[1]=nodeTri1[0];
-  nodeOrder[2]=nodeTri0[2];
-  nodeOrder[3]=nodeTri1[2];
-  nodeOrder[4]=nodeTri0[1];
-  nodeOrder[5]=nodeTri1[1];   
- }
+cout << "cellVolumeWedge = " << cellVolume << "\n";
+
+// If cell volume is negative reorder nodes
+if( cellVolume < 0 )
+{
+ nodeOrder[0] = nodeTri0[0];
+ nodeOrder[1] = nodeTri1[0];
+ nodeOrder[2] = nodeTri0[2];
+ nodeOrder[3] = nodeTri1[2];
+ nodeOrder[4] = nodeTri0[1];
+ nodeOrder[5] = nodeTri1[1];   
+}
+
+for( localIndex iPoint = 0; iPoint < 6; ++iPoint )
+ for( localIndex i = 0; i < 3; ++i ) Xlocal[iPoint][i] = cell->GetPoints()->GetPoint(nodeOrder[iPoint])[i];
+
+cellVolume = computationalGeometry::wedgeVolume( Xlocal );
+
+cout << "cellVolumeWedge = " << cellVolume << "\n";
 
 return nodeOrder;
 }
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-std::vector< int > GetPyramidNodeOrderingFromPolyhedron( vtkCell* const cell )
+/**
+ * @brief Get the Pyramid Node Ordering From Polyhedron object
+ * 
+ * @param cell The VTK cell, type polyhedron (42)
+ * @return std::vector< localIndex > list of nodes
+ */
+std::vector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell* const cell )
 {
-int iPoint;
-int iFace;
-std::vector < int > nodeOrder(5);
-std::map < int , int > G2L;
+localIndex iPoint;
+localIndex iFace;
+std::vector < localIndex > nodeOrder(5);
+std::map < localIndex , localIndex > G2L;
 
 // Generate global to local map
-for(iPoint = 0 ; iPoint < 5 ; ++iPoint ) G2L.insert({cell->GetPointId(iPoint),iPoint});
+for(iPoint = 0; iPoint < 5; ++iPoint ) G2L.insert({cell->GetPointId(iPoint),iPoint});
 
 // Assuming the input parameters are correct, identify the base
-iFace = 0; while( cell->GetFace(iFace)->GetNumberOfPoints() != 4 ) iFace++;
+iFace = 0;
+while( cell->GetFace(iFace)->GetNumberOfPoints() != 4 ) iFace++;
 
 // Get global pointIds for the base
 nodeOrder[0] = cell->GetFace(iFace)->GetPointId(0);
@@ -804,87 +827,99 @@ nodeOrder[2] = cell->GetFace(iFace)->GetPointId(3);
 nodeOrder[3] = cell->GetFace(iFace)->GetPointId(2);
 
 // Identify the missing node
-iPoint = 0; while(std::find( &nodeOrder[0] , &nodeOrder[4] , cell->GetPointId(iPoint) ) != &nodeOrder[4]) iPoint++;
+iPoint = 0;
+while(std::find( &nodeOrder[0] , &nodeOrder[4] , cell->GetPointId(iPoint) ) != &nodeOrder[4]) iPoint++;
 
-// Add it to "nodeOrder"
+// Add it to nodeOrder
 nodeOrder[4] = cell->GetPointId(iPoint);
 
 // Convert global numbering to local numbering
 for (iPoint = 0; iPoint < 5; ++iPoint ) nodeOrder[iPoint] = G2L.find(nodeOrder[iPoint])->second;
 
-// Check the orientation of the pyramid
-real64 vectorA[3];
-real64 vectorB[3];
-real64 vectorC[3];
-real64 vectorN[3];
+// Compute cell volume
+real64 Xlocal[5][3];
+real64 cellVolume;
+for( iPoint = 0; iPoint < 5; ++iPoint )
+ for( localIndex i = 0; i < 3; ++i ) Xlocal[iPoint][i] = cell->GetPoints()->GetPoint(nodeOrder[iPoint])[i];
 
-for( int i = 0; i < 3; ++i )        // HOW TO AVOID FOR LOOP?!?!?
- {
-   vectorA[i] = cell->GetPoints()->GetPoint(nodeOrder[1])[i] - cell->GetPoints()->GetPoint(nodeOrder[0])[i];
-   vectorB[i] = cell->GetPoints()->GetPoint(nodeOrder[2])[i] - cell->GetPoints()->GetPoint(nodeOrder[0])[i];
-   vectorC[i] = cell->GetPoints()->GetPoint(nodeOrder[4])[i] - cell->GetPoints()->GetPoint(nodeOrder[0])[i];
- }
+cellVolume = computationalGeometry::pyramidVolume( Xlocal );
 
-LvArray::tensorOps::crossProduct( vectorN, vectorA, vectorB );
+cout << "cellVolumePyramid = " << cellVolume << "\n";
 
-// If incorrect swap two nodes from the base
-if( LvArray::tensorOps::AiBi< 3 >( vectorN, vectorC ) < 0 ) std::swap(nodeOrder[1],nodeOrder[2]);
+// If cell volume is negative swap two nodes from the base
+if( cellVolume < 0 ) std::swap(nodeOrder[1],nodeOrder[2]);
+
+for( iPoint = 0; iPoint < 5; ++iPoint )
+ for( localIndex i = 0; i < 3; ++i ) Xlocal[iPoint][i] = cell->GetPoints()->GetPoint(nodeOrder[iPoint])[i];
+
+cellVolume = computationalGeometry::pyramidVolume( Xlocal );
+
+cout << "cellVolumePyramid = " << cellVolume << "\n";
 
 return nodeOrder;
 }
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-std::vector< int > GetPrismNodeOrderingFromPolyhedron( vtkCell* const cell , int numberOfSides )
+/**
+ * @brief Get the Prism Node Ordering From Polyhedron object
+ * 
+ * @tparam numberOfSides number of sides of the prism
+ * @param cell The VTK cell, type polyhedron (42)
+ * @return std::vector< localIndex > list of nodes
+ */
+template< integer numberOfSides >
+std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell* const cell )
 {
-int iFace;
-std::vector < int > nodeOrder(2*numberOfSides);
-std::map < int , int > G2L;
+localIndex iFace; 
+std::vector < localIndex > nodeOrder(2*numberOfSides);
+std::map < localIndex , localIndex > G2L;
 
 // Generate global to local map
-for( int iPoint = 0 ; iPoint < cell->GetNumberOfPoints() ; ++iPoint ) G2L.insert({cell->GetPointId(iPoint),iPoint});
+for( localIndex iPoint = 0 ; iPoint < cell->GetNumberOfPoints() ; ++iPoint ) G2L.insert({cell->GetPointId(iPoint),iPoint});
 
 // Assuming the input parameters are correct, identify one of the bases
-iFace = 0; while( cell->GetFace(iFace)->GetNumberOfPoints() != numberOfSides ) iFace++;
+iFace = 0; 
+while( cell->GetFace(iFace)->GetNumberOfPoints() != numberOfSides ) iFace++;
 
 // Get global pointIds for the first base
-for( int iPoint = 0 ; iPoint < numberOfSides ; ++iPoint ) nodeOrder[iPoint] = cell->GetFace(iFace)->GetPointId(iPoint);
+for( localIndex iPoint = 0; iPoint < numberOfSides; ++iPoint ) nodeOrder[iPoint] = cell->GetFace(iFace)->GetPointId(iPoint);
 
 // Using the edges, generate the global pointIds for the second base
-for( int iEdge = 0 ; iEdge < cell->GetNumberOfEdges() ; ++iEdge )
+for( localIndex iEdge = 0 ; iEdge < cell->GetNumberOfEdges() ; ++iEdge )
 {
-  auto edgeNode0 = cell->GetEdge(iEdge)->GetPointId(0);
-  auto edgeNode1 = cell->GetEdge(iEdge)->GetPointId(1);
-  auto it0 = std::find( &nodeOrder[0] , &nodeOrder[numberOfSides] , edgeNode0 );
-  auto it1 = std::find( &nodeOrder[0] , &nodeOrder[numberOfSides] , edgeNode1 );
+ auto edgeNode0 = cell->GetEdge(iEdge)->GetPointId(0);
+ auto edgeNode1 = cell->GetEdge(iEdge)->GetPointId(1);
+ auto it0 = std::find( &nodeOrder[0] , &nodeOrder[numberOfSides] , edgeNode0 );
+ auto it1 = std::find( &nodeOrder[0] , &nodeOrder[numberOfSides] , edgeNode1 );
 
-  if( it0 != &nodeOrder[numberOfSides] && it1 == &nodeOrder[numberOfSides] )
-   nodeOrder[numberOfSides + std::distance(&nodeOrder[0],it0)] = edgeNode1;
+ if( it0 != &nodeOrder[numberOfSides] && it1 == &nodeOrder[numberOfSides] )
+  nodeOrder[numberOfSides + std::distance(&nodeOrder[0],it0)] = edgeNode1;
 
-  if( it0 == &nodeOrder[numberOfSides] && it1 != &nodeOrder[numberOfSides] )
-   nodeOrder[numberOfSides + std::distance(&nodeOrder[0],it1)] = edgeNode0;
+ if( it0 == &nodeOrder[numberOfSides] && it1 != &nodeOrder[numberOfSides] )
+  nodeOrder[numberOfSides + std::distance(&nodeOrder[0],it1)] = edgeNode0;
 }
 
 // Convert global numbering to local numbering
-for ( int iPoint = 0; iPoint < 2*numberOfSides; ++iPoint ) nodeOrder[iPoint] = G2L.find(nodeOrder[iPoint])->second;
+for ( localIndex iPoint = 0; iPoint < 2*numberOfSides; ++iPoint ) nodeOrder[iPoint] = G2L.find(nodeOrder[iPoint])->second;
 
-// Check if the bases are correctly positioned
-real64 vectorA[3];
-real64 vectorB[3];
-real64 vectorC[3];
-real64 vectorN[3];
+// Compute cell volume
+real64 Xlocal[2*numberOfSides][3];
+real64 cellVolume;
+for( localIndex iPoint = 0; iPoint < 2*numberOfSides; ++iPoint )
+ for( localIndex i = 0; i < 3; ++i ) Xlocal[iPoint][i] = cell->GetPoints()->GetPoint(nodeOrder[iPoint])[i];
 
-for( int i = 0; i < 3; ++i )        // HOW TO AVOID FOR LOOP?!?!?
- {
-   vectorA[i] = cell->GetPoints()->GetPoint(nodeOrder[1])[i] - cell->GetPoints()->GetPoint(nodeOrder[0])[i];
-   vectorB[i] = cell->GetPoints()->GetPoint(nodeOrder[(numberOfSides+1)/2])[i] - cell->GetPoints()->GetPoint(nodeOrder[0])[i];
-   vectorC[i] = cell->GetPoints()->GetPoint(nodeOrder[numberOfSides])[i] - cell->GetPoints()->GetPoint(nodeOrder[0])[i];
- }
+cellVolume = computationalGeometry::prismVolume< numberOfSides >( Xlocal );
 
-LvArray::tensorOps::crossProduct( vectorN, vectorA, vectorB );
+cout << "cellVolumeT = " << cellVolume << "\n";
 
-// If incorrect swap the bases
-if( LvArray::tensorOps::AiBi< 3 >( vectorN, vectorC ) < 0 )
- std::rotate( nodeOrder.begin(), nodeOrder.begin()+numberOfSides, nodeOrder.end());
+// If cell volume is negative swap the bases
+if( cellVolume < 0 ) std::rotate( nodeOrder.begin(), nodeOrder.begin()+numberOfSides, nodeOrder.end());
+
+// Compute cell volume
+for( localIndex iPoint = 0; iPoint < 2*numberOfSides; ++iPoint )
+ for( localIndex i = 0; i < 3; ++i ) Xlocal[iPoint][i] = cell->GetPoints()->GetPoint(nodeOrder[iPoint])[i];
+
+cellVolume = computationalGeometry::prismVolume< numberOfSides >( Xlocal );
+
+cout << "cellVolumeT = " << cellVolume << "\n";
 
 return nodeOrder;
 }
@@ -903,192 +938,200 @@ buildCellMap( vtkUnstructuredGrid & mesh,
               string const & attributeName )
 {
 
-std::vector < int >  nodeOrder;
-int polyhedronType;
+// std::vector < int >  nodeOrder;
+// int phType;
 
-for ( int i = 0 ; i < mesh.GetNumberOfCells() ; ++i )
- {
-  cout << "Cell(" << i << ") = " << mesh.GetCell(i)->GetCellType() << "\n";
+// for ( int i = 0 ; i < mesh.GetNumberOfCells() ; ++i )
+//  {
+//   cout << "Cell(" << i << ") = " << mesh.GetCell(i)->GetCellType() << "\n";
 
-  if (mesh.GetCell(i)->GetCellType() == 42) polyhedronType = PolyhedronType( mesh.GetCell(i) );
-  else    polyhedronType = 0 ;
+//   if (mesh.GetCell(i)->GetCellType() == 42) phType = polyhedronType( mesh.GetCell(i) );
+//   else phType = 0;
 
- cout << "polyhedronType = " << polyhedronType << "\n";
+//  cout << "phType = " << phType << "\n";
 
-  if( polyhedronType == 10 )    // TETRA
-   {
-    nodeOrder = GetTetraNodeOrderingFromPolyhedron( mesh.GetCell(i) );
+//   if( phType == 10 )    // TETRA
+//    {
+//     nodeOrder = getTetraNodeOrderingFromPolyhedron( mesh.GetCell(i) );
 
-    cout << "Bases points using local numbering:" << "\n"; 
-    for (const auto item : nodeOrder) cout << item << ", ";
-    cout << "\n\n";
+//     cout << "Bases points using local numbering:" << "\n"; 
+//     for (const auto item : nodeOrder) cout << item << ", ";
+//     cout << "\n\n";
 
-  real64 Xlocal[12][3];
-  vtkCell *cell = mesh.GetCell(i);
-  real64 volume;
+//   real64 Xlocal[12][3];
+//   vtkCell *cell = mesh.GetCell(i);
+//   real64 volume;
 
-  for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
-   {
-     Xlocal[j][0]=cell->GetPoints()->GetPoint(j)[0];
-     Xlocal[j][1]=cell->GetPoints()->GetPoint(j)[1];
-     Xlocal[j][2]=cell->GetPoints()->GetPoint(j)[2];
-   }
+//   for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
+//    {
+//      Xlocal[j][0]=cell->GetPoints()->GetPoint(j)[0];
+//      Xlocal[j][1]=cell->GetPoints()->GetPoint(j)[1];
+//      Xlocal[j][2]=cell->GetPoints()->GetPoint(j)[2];
+//    }
 
-   for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
-    {
-    int k = nodeOrder[j];
-    cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
-    }    
+//    for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
+//     {
+//     int k = nodeOrder[j];
+//     cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
+//     }    
    
-   } 
+//    } 
 
+//   if( phType == 13 )    // WEDGE
+//    {
+//     nodeOrder = getWedgeNodeOrderingFromPolyhedron( mesh.GetCell(i) );
 
-  if( polyhedronType == 13 )    // WEDGE
-   {
-    nodeOrder = GetWedgeNodeOrderingFromPolyhedron( mesh.GetCell(i) );
+//     cout << "Bases points using local numbering:" << "\n"; 
+//     for (const auto item : nodeOrder) cout << item << ", ";
+//     cout << "\n\n";
 
-    cout << "Bases points using local numbering:" << "\n"; 
-    for (const auto item : nodeOrder) cout << item << ", ";
-    cout << "\n\n";
+//   real64 Xlocal[12][3];
+//   vtkCell *cell = mesh.GetCell(i);
+//   real64 volume;
 
-  real64 Xlocal[12][3];
-  vtkCell *cell = mesh.GetCell(i);
-  real64 volume;
+//   for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
+//    {
+//      Xlocal[j][0]=cell->GetPoints()->GetPoint(j)[0];
+//      Xlocal[j][1]=cell->GetPoints()->GetPoint(j)[1];
+//      Xlocal[j][2]=cell->GetPoints()->GetPoint(j)[2];
+//    }
 
-  for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
-   {
-     Xlocal[j][0]=cell->GetPoints()->GetPoint(j)[0];
-     Xlocal[j][1]=cell->GetPoints()->GetPoint(j)[1];
-     Xlocal[j][2]=cell->GetPoints()->GetPoint(j)[2];
-   }
-
-   for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
-    {
-    int k = nodeOrder[j];
-    cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
-    }    
+//    for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
+//     {
+//     int k = nodeOrder[j];
+//     cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
+//     }    
    
-   } 
+//    } 
 
-  if( polyhedronType == 14 )    // PYRAMID
-   {
-    nodeOrder = GetPyramidNodeOrderingFromPolyhedron( mesh.GetCell(i) );
+//   if( phType == 14 )    // PYRAMID
+//    {
+//     nodeOrder = getPyramidNodeOrderingFromPolyhedron( mesh.GetCell(i) );
 
-    cout << "Bases points using local numbering:" << "\n"; 
-    for (const auto item : nodeOrder) cout << item << ", ";
-    cout << "\n\n";
+//     cout << "Bases points using local numbering:" << "\n"; 
+//     for (const auto item : nodeOrder) cout << item << ", ";
+//     cout << "\n\n";
 
-  real64 Xlocal[12][3];
-  vtkCell *cell = mesh.GetCell(i);
-  real64 volume;
+//   real64 Xlocal[12][3];
+//   vtkCell *cell = mesh.GetCell(i);
+//   real64 volume;
 
-  for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
-   {
-     Xlocal[j][0]=cell->GetPoints()->GetPoint(j)[0];
-     Xlocal[j][1]=cell->GetPoints()->GetPoint(j)[1];
-     Xlocal[j][2]=cell->GetPoints()->GetPoint(j)[2];
-   }
+//   for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
+//    {
+//      Xlocal[j][0]=cell->GetPoints()->GetPoint(j)[0];
+//      Xlocal[j][1]=cell->GetPoints()->GetPoint(j)[1];
+//      Xlocal[j][2]=cell->GetPoints()->GetPoint(j)[2];
+//    }
 
-   for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
-    {
-    int k = nodeOrder[j];
-    cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
-    }    
+//    for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
+//     {
+//     int k = nodeOrder[j];
+//     cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
+//     }    
    
-   } 
+//    } 
 
+//   if( phType == 12 )     // HEXA
+//    {
+//     nodeOrder = getHexahedronNodeOrderingFromPolyhedron( mesh.GetCell(i) );
 
-  if( polyhedronType == 12 )     // HEXA
-   {
-    nodeOrder = GetHexahedronNodeOrderingFromPolyhedron( mesh.GetCell(i) );
+//     cout << "Bases points using local numbering:" << "\n"; 
+//     for (const auto item : nodeOrder) cout << item << ", ";
+//     cout << "\n\n";
 
-    cout << "Bases points using local numbering:" << "\n"; 
-    for (const auto item : nodeOrder) cout << item << ", ";
-    cout << "\n\n";
+//   real64 Xlocal[12][3];
+//   vtkCell *cell = mesh.GetCell(i);
+//   real64 volume;
 
-  real64 Xlocal[12][3];
-  vtkCell *cell = mesh.GetCell(i);
-  real64 volume;
+//   // for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
+//   //  {
+//   //    Xlocal[j][0]=cell->GetPoints()->GetPoint(j)[0];
+//   //    Xlocal[j][1]=cell->GetPoints()->GetPoint(j)[1];
+//   //    Xlocal[j][2]=cell->GetPoints()->GetPoint(j)[2];
+//   //  }
 
-  for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
-   {
-     Xlocal[j][0]=cell->GetPoints()->GetPoint(j)[0];
-     Xlocal[j][1]=cell->GetPoints()->GetPoint(j)[1];
-     Xlocal[j][2]=cell->GetPoints()->GetPoint(j)[2];
-   }
+//   //  for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
+//   //   {
+//   //   int k = nodeOrder[j];
+//   //   cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
+//   //   }    
 
-   for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
-    {
-    int k = nodeOrder[j];
-    cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
-    }    
+//    }
 
+//   if( phType == -7 ) 
+//   {
+//    nodeOrder = getPrismNodeOrderingFromPolyhedron < 7 > (mesh.GetCell(i));
 
-   }
-  if( polyhedronType < 0 ) 
-  {
-   nodeOrder = GetPrismNodeOrderingFromPolyhedron(mesh.GetCell(i), -polyhedronType );
+//    cout << "Bases points using local numbering:" << "\n"; 
+//    for (const auto item : nodeOrder) cout << item << ", ";
+//    cout << "\n\n";
 
-   cout << "Bases points using local numbering:" << "\n"; 
-   for (const auto item : nodeOrder) cout << item << ", ";
-   cout << "\n\n";
+//   }
 
-  real64 Xlocal[12][3];
-  vtkCell *cell = mesh.GetCell(i);
-  real64 volume;
+//   if( phType == -8 ) 
+//   {
+//    nodeOrder = getPrismNodeOrderingFromPolyhedron < 8 > (mesh.GetCell(i));
 
-  for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
-   {
-     Xlocal[j][0]=cell->GetPoints()->GetPoint(j)[0];
-     Xlocal[j][1]=cell->GetPoints()->GetPoint(j)[1];
-     Xlocal[j][2]=cell->GetPoints()->GetPoint(j)[2];
-   }
+//    cout << "Bases points using local numbering:" << "\n"; 
+//    for (const auto item : nodeOrder) cout << item << ", ";
+//    cout << "\n\n";
 
-   for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
-    {
-    int k = nodeOrder[j];
-    cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
-    }
-   //volume = geosx::computationalGeometry::prismVolume< 5 >( Xlocal );
-   //cout << "Volume = " << volume << "\n";
+//   // real64 Xlocal[12][3];
+//   // vtkCell *cell = mesh.GetCell(i);
+//   // real64 volume;
 
-   }
+//   // for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
+//   //  {
+//   //    Xlocal[j][0]=cell->GetPoints()->GetPoint(j)[0];
+//   //    Xlocal[j][1]=cell->GetPoints()->GetPoint(j)[1];
+//   //    Xlocal[j][2]=cell->GetPoints()->GetPoint(j)[2];
+//   //  }
 
-  if( polyhedronType == 15 || polyhedronType == 16 ) 
-  //if( polyhedronType == 15 ) 
-  {
-    cout << "Prism56" << "\n";
-   nodeOrder = GetPrismNodeOrderingFromPolyhedron(mesh.GetCell(i), polyhedronType-10 );
+//   //  for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
+//   //   {
+//   //   int k = nodeOrder[j];
+//   //   cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
+//   //   }
+//   //  //volume = geosx::computationalGeometry::prismVolume< 5 >( Xlocal );
+//   //  //cout << "Volume = " << volume << "\n";
 
-   cout << "Bases points using local numbering:" << "\n"; 
-   for (const auto item : nodeOrder) cout << item << ", ";
-   cout << "\n\n";
+//    }
 
-  real64 Xlocal[12][3];
-  vtkCell *cell = mesh.GetCell(i);
-  real64 volume;
+//   if( phType == 15 )  
+//   {
+//   cout << "Prism5" << "\n";
+//    nodeOrder = getPrismNodeOrderingFromPolyhedron< 5 >(mesh.GetCell(i)); 
 
-  for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
-   {
-     Xlocal[j][0]=cell->GetPoints()->GetPoint(j)[0];
-     Xlocal[j][1]=cell->GetPoints()->GetPoint(j)[1];
-     Xlocal[j][2]=cell->GetPoints()->GetPoint(j)[2];
-   }
+//    cout << "Bases points using local numbering:" << "\n"; 
+//    for (const auto item : nodeOrder) cout << item << ", ";
+//    cout << "\n\n";
+//   }
 
-   for (int j = 0 ; j < cell->GetNumberOfPoints() ; ++j)
-   {
-    int k = nodeOrder[j];
-    cout << Xlocal[k][0] << " " << Xlocal[k][1] << " " << Xlocal[k][2] << " " << k << " " << j << "\n";
-   }
-   
-   //volume = geosx::real64 geosx::computationalGeometry::prismVolume< 5 >( Xlocal );
-   //cout << "Volume = " << volume << "\n";
-   }
- }
-exit(0);
+//   if( phType == 16 )  
+//   {
+//   cout << "Prism6" << "\n";
+//    nodeOrder = getPrismNodeOrderingFromPolyhedron< 6 >(mesh.GetCell(i)); 
+
+//    cout << "Bases points using local numbering:" << "\n"; 
+//    for (const auto item : nodeOrder) cout << item << ", ";
+//    cout << "\n\n";
+//   }
+
+//  }
+// exit(0);
 
   // First, pass through all VTK cells and split them int sub-lists based on type.
   std::map< ElementType, std::vector< vtkIdType > > typeToCells = splitCellsByType( mesh );
+
+cout << "COUCOU!\n";
+
+cout << typeToCells.size() << "\n";
+for( auto it = typeToCells.begin(); it != typeToCells.end(); ++it )
+{
+cout << it->first << " " << it->second.size() << "\n";
+for(int i=0; i< static_cast<integer> (it->second.size()); ++i  ) cout << it->second[i] << ",";
+cout << "\n";
+}
 
   // Now, actually split into groups according to region attribute, if present
   vtkDataArray * const attributeDataArray =
