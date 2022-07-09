@@ -13,16 +13,16 @@
  */
 
 /**
- * @file SinglePhaseReservoir.cpp
+ * @file SinglePhaseReservoirAndWells.cpp
  *
  */
 
-#include "SinglePhaseReservoir.hpp"
+#include "SinglePhaseReservoirAndWells.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "mesh/PerforationExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
@@ -33,35 +33,84 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-SinglePhaseReservoir::SinglePhaseReservoir( const string & name,
-                                            Group * const parent ):
-  ReservoirSolverBase( name, parent )
+namespace
 {
-  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
+
+// This is meant to be specialized to work, see below
+template< typename SINGLEPHASE_RESERVOIR_SOLVER > class
+  SinglePhaseCatalogNames {};
+
+// Class specialization for a RESERVOIR_SOLVER set to SinglePhaseFlow
+template<> class SinglePhaseCatalogNames< SinglePhaseBase >
+{
+public:
+  static string name() { return "SinglePhaseReservoir"; }
+};
+/*
+   // Class specialization for a RESERVOIR_SOLVER set to SinglePhasePoromechanics
+   template<> class SinglePhaseCatalogNames< SinglePhasePoromechanics >
+   {
+   public:
+   static string name() { return "SinglePhasePoromechanicsReservoir"; }
+   };
+ */
 }
 
-SinglePhaseReservoir::~SinglePhaseReservoir()
+// provide a definition for catalogName()
+template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+string
+SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+catalogName()
+{
+  return SinglePhaseCatalogNames< SINGLEPHASE_RESERVOIR_SOLVER >::name();
+}
+
+template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+SinglePhaseReservoirAndWells( const string & name,
+                              Group * const parent )
+  : Base( name, parent )
 {}
 
-void SinglePhaseReservoir::initializePostInitialConditionsPreSubGroups()
-{
-  ReservoirSolverBase::initializePostInitialConditionsPreSubGroups();
+template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+~SinglePhaseReservoirAndWells()
+{}
 
-  if( m_flowSolver->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
+template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+void
+SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+initializePreSubGroups()
+{
+  if( catalogName() == SinglePhaseCatalogNames< SinglePhaseBase >::name() )
   {
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM;
+    if( dynamicCast< SinglePhaseFVM< SinglePhaseBase > * >( this->getReservoirSolver() ) )
+    {
+      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
+    }
+    else if( dynamicCast< SinglePhaseHybridFVM * >( this->getReservoirSolver() ) )
+    {
+      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM;
+    }
+  }
+  else
+  {
+    GEOSX_ERROR( "This option is not available yet" );
   }
 }
 
-void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & domain,
-                                                       DofManager const & dofManager,
-                                                       SparsityPatternView< globalIndex > const & pattern ) const
+template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+void
+SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+addCouplingSparsityPattern( DomainPartition const & domain,
+                            DofManager const & dofManager,
+                            SparsityPatternView< globalIndex > const & pattern ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  this->template forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -69,10 +118,10 @@ void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & d
 
     // Populate off-diagonal sparsity between well and reservoir
 
-    string const resDofKey  = dofManager.getKey( m_wellSolver->resElementDofName() );
-    string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
+    string const resDofKey  = dofManager.getKey( Base::getWellSolver()->resElementDofName() );
+    string const wellDofKey = dofManager.getKey( Base::getWellSolver()->wellElementDofName() );
 
-    localIndex const wellNDOF = m_wellSolver->numDofPerWellElement();
+    integer const wellNDOF = Base::getWellSolver()->numDofPerWellElement();
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resDofNumber =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
@@ -90,15 +139,15 @@ void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & d
 
       // get the well element indices corresponding to each perforation
       arrayView1d< localIndex const > const & perfWellElemIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const & resElementSubRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const & resElementIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       // Insert the entries corresponding to reservoir-well perforations
       // This will fill J_WR, and J_RW
@@ -117,7 +166,7 @@ void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & d
         stackArray1d< globalIndex, 2 > eqnRowIndicesWell( wellNDOF );
         stackArray1d< globalIndex, 2 > dofColIndicesWell( wellNDOF );
 
-        for( localIndex idof = 0; idof < wellNDOF; ++idof )
+        for( integer idof = 0; idof < wellNDOF; ++idof )
         {
           eqnRowIndicesWell[idof] = wellElemDofNumber[iwelem] + idof - rankOffset;
           dofColIndicesWell[idof] = wellElemDofNumber[iwelem] + idof;
@@ -143,24 +192,27 @@ void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & d
   } );
 }
 
-void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                                  real64 const dt,
-                                                  DomainPartition const & domain,
-                                                  DofManager const & dofManager,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                  arrayView1d< real64 > const & localRhs )
+template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+void
+SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                       real64 const dt,
+                       DomainPartition const & domain,
+                       DofManager const & dofManager,
+                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       arrayView1d< real64 > const & localRhs )
 {
   using TAG = singlePhaseWellKernels::SubRegionTag;
   using ROFFSET = singlePhaseWellKernels::RowOffset;
   using COFFSET = singlePhaseWellKernels::ColOffset;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  this->template forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const resDofKey = dofManager.getKey( m_wellSolver->resElementDofName() );
+    string const resDofKey = dofManager.getKey( Base::getWellSolver()->resElementDofName() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const resDofNumberAccessor =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
     ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber =
@@ -171,11 +223,10 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 WellElementSubRegion const & subRegion )
     {
-
       PerforationData const * const perforationData = subRegion.getPerforationData();
 
       // get the degrees of freedom
-      string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
+      string const wellDofKey = dofManager.getKey( Base::getWellSolver()->wellElementDofName() );
       arrayView1d< globalIndex const > const wellElemDofNumber =
         subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
@@ -186,15 +237,15 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
         perforationData->getExtrinsicData< extrinsicMeshData::well::dPerforationRate_dPres >();
 
       arrayView1d< localIndex const > const perfWellElemIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const resElementRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const resElementSubRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const resElementIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       // loop over the perforations and add the rates to the residual and jacobian
       forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
@@ -204,8 +255,8 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
         globalIndex dofColIndices[ 2 ] = { -1 };
 
 
-        real64 localPerf[ 2 ] = { 0.0 };
-        real64 localPerfJacobian[ 2 ][ 2 ] = {{ 0.0 }};
+        real64 localPerf[ 2 ]{};
+        real64 localPerfJacobian[ 2 ][ 2 ]{};
 
         // get the reservoir (sub)region and element indices
         localIndex const er = resElementRegion[iperf];
@@ -230,13 +281,13 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
         localPerf[TAG::RES] = dt * perfRate[iperf];
         localPerf[TAG::WELL] = -localPerf[TAG::RES];
 
-        for( localIndex ke = 0; ke < 2; ++ke )
+        for( integer ke = 0; ke < 2; ++ke )
         {
           localPerfJacobian[TAG::RES][ke] = dt * dPerfRate_dPres[iperf][ke];
           localPerfJacobian[TAG::WELL][ke] = -localPerfJacobian[TAG::RES][ke];
         }
 
-        for( localIndex i = 0; i < 2; ++i )
+        for( integer i = 0; i < 2; ++i )
         {
           if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < localMatrix.numRows() )
           {
@@ -253,6 +304,12 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
 
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoir, string const &, Group * const )
+namespace
+{
+typedef SinglePhaseReservoirAndWells< SinglePhaseBase > SinglePhaseFlowAndWells;
+//typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanics > SinglePhasePoromechanicsAndWells;
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlowAndWells, string const &, Group * const )
+//REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsAndWells, string const &, Group * const )
+}
 
 } /* namespace geosx */
