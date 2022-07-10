@@ -48,6 +48,11 @@ string MeshObjectPath::getObjectType( string const & path )
   return objectType;
 }
 
+bool MeshObjectPath::isElementPath() const
+{
+  return m_objectType == MeshLevel::groupStructKeys::elemManagerString();
+}
+
 void MeshObjectPath::fillPathTokens( string const & path,
                                      std::vector<string> & pathTokens,
                                      dataRepository::Group const & meshBodies )
