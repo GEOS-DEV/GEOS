@@ -63,14 +63,14 @@ if ( ENABLE_YAPF )
      set( python_module_sources )
      file( GLOB_RECURSE python_module_sources "*py" )
 
+     # Note: blt throws an error if sources doesn't include a c-file, so include dummy.cpp
      blt_add_code_checks( PREFIX  python_modules_yapf_style
-                          SOURCES ${python_module_sources}
+                          SOURCES ${python_module_sources} ${CMAKE_SOURCE_DIR}/coreComponents/dummy.cpp
                           YAPF_CFG_FILE ${PROJECT_SOURCE_DIR}/yapf.cfg )
 
      set( python_script_sources )
      file( GLOB_RECURSE python_script_sources "${CMAKE_SOURCE_DIR}/../scripts/*py" )
 
-     # Note: blt throws an error if sources doesn't include a c-file, so include dummy.cpp
      blt_add_code_checks( PREFIX  python_scripts_yapf_style
                           SOURCES ${python_script_sources} ${CMAKE_SOURCE_DIR}/coreComponents/dummy.cpp
                           YAPF_CFG_FILE ${PROJECT_SOURCE_DIR}/yapf.cfg )
