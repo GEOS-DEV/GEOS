@@ -45,6 +45,8 @@ Validation and Verification Studies
  
    proppantSlotTest/Example
 
+   faultVerification/Example
+
    isothermalLeakyWell/Example
   
 
