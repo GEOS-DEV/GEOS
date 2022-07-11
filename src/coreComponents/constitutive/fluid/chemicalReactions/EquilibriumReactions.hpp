@@ -32,79 +32,89 @@ namespace constitutive
 namespace chemicalReactions
 {
 
-class EquilibriumReactions : public ReactionBase
+class EquilibriumReactions : public ReactionsBase
 {
 public:
 
   EquilibriumReactions( string const & name, integer const numPrimarySpecies, integer const numSecSpecies );
 
-  /**
-   * @brief Create an update kernel wrapper.
-   * @return the wrapper
-   */
-  KernelWrapper createKernelWrapper() const;
-
-private:
-
-  class KernelWrapper final : public ReactionBase::KernelWrapper
-{
+  class KernelWrapper final : public ReactionsBase::KernelWrapper
+  {
 public:
 
-  KernelWrapper( arrayView1d< real64 const > const & log10EqConst,
-                 arrayView2d< real64 const > const &  stoichMatrix,
-                 arrayView1d< integer const > const & chargePrimary,
-                 arrayView1d< integer const > const & chargeSec, 
-                 arrayView1d< real64 const > const & ionSizePrimary,  
-                 arrayView1d< real64 const > const & ionSizeSec,
-                 real64 const DebyeHuckelA,
-                 real64 const DebyeHuckelB,
-                 real64 const WATEQBDot ): 
-  ReactionsBase::KernelWrapper( log10EqConst,
-                                stoichMatrix,
-                                chargePrimary,
-                                chargeSec, 
-                                ionSizePrimary,  
-                                ionSizeSec,
-                                DebyeHuckelA,
-                                DebyeHuckelB,
-                                WATEQBDot )
-  {}
-  
-  /**
-   * @brief Construct a new update Concentrations object
-   * 
-   * @param temperature 
-   * @param totalConc 
-   * @param dLog10PrimaryConc_dTotalConc 
-   */
-  updateConcentrations( real64 const temperature,
-                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
-                        arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesContentration, 
-                        arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const;
+    using DenseMatrix = stackArray2d< real64, ReactionsBase::maxNumPrimarySpecies * ReactionsBase::maxNumPrimarySpecies >;
+    using DenseVector = stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies >;
+
+    KernelWrapper( arrayView1d< real64 > const & log10EqConst,
+                   arrayView2d< real64 > const & stoichMatrix,
+                   arrayView1d< integer > const & chargePrimary,
+                   arrayView1d< integer > const & chargeSec,
+                   arrayView1d< real64 > const & ionSizePrimary,
+                   arrayView1d< real64 > const & ionSizeSec,
+                   real64 const DebyeHuckelA,
+                   real64 const DebyeHuckelB,
+                   real64 const WATEQBDot ):
+      ReactionsBase::KernelWrapper( log10EqConst,
+                                    stoichMatrix,
+                                    chargePrimary,
+                                    chargeSec,
+                                    ionSizePrimary,
+                                    ionSizeSec,
+                                    DebyeHuckelA,
+                                    DebyeHuckelB,
+                                    WATEQBDot )
+    {}
+
+    /**
+     * @brief Construct a new update Concentrations object
+     *
+     * @param temperature
+     * @param totalConc
+     * @param dLog10PrimaryConc_dTotalConc
+     */
+    void updateConcentrations( real64 const temperature,
+                               arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
+                               arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesContentration,
+                               arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const;
 
 private:
 
-  void assembleEquilibriumReactionSystem( real64 const & temperature,
-                                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration
-                                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                                          arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                                          DenseMatrix & matrix,
-                                          DenseVector & rhs ) const;
+    void assembleEquilibriumReactionSystem( real64 const temperature,
+                                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
+                                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
+                                            DenseMatrix & matrix,
+                                            DenseVector & rhs ) const;
 
-  void computeSeondarySpeciesConcAndDerivative( real64 const temperature,
-                                                arraySlice1d< real64 const > const & primarySpeciesConcentration,
-                                                arraySlice1d< real64 > const & secondarySpeciesConcentration,
-                                                arraySlice2d< real64 > const & dLog10SecConc_dLog10PrimaryConc ) const;
+    void computeSeondarySpeciesConcAndDerivative( real64 const temperature,
+                                                  arraySlice1d< real64 const > const & primarySpeciesConcentration,
+                                                  arraySlice1d< real64 const > const & log10PrimaryActCoeff,
+                                                  arraySlice1d< real64 const > const & log10SecActCoeff,
+                                                  arraySlice1d< real64 > const & secondarySpeciesConcentration,
+                                                  arraySlice2d< real64 > const & dLog10SecConc_dLog10PrimaryConc ) const;
 
-  void computeTotalConcAndDerivative( real64 const & temperature,
-                                      arraySlice1d< real64 const > const & primarySpeciesConcentration,
-                                      arraySlice1d< real64 const > const & secondarySpeciesConcentration,
-                                      arraySlice2d< real64 const > const & dLog10SecConc_dLog10PrimaryConc,
-                                      arraySlice1d< real64 > const & totalConc,
-                                      arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc) const;                                  
+    void computeTotalConcAndDerivative( real64 const temperature,
+                                        arraySlice1d< real64 const > const & primarySpeciesConcentration,
+                                        arraySlice1d< real64 const > const & secondarySpeciesConcentration,
+                                        arraySlice2d< real64 const > const & dLog10SecConc_dLog10PrimaryConc,
+                                        arraySlice1d< real64 > const & totalConc,
+                                        arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc ) const;
+
+    GEOSX_HOST_DEVICE
+    void updatePrimarySpeciesConcentrations( DenseVector const & solution,
+                                             arraySlice1d< real64 > const & primarySpeciesConcentration ) const;
 
 
-};
+
+    integer m_maxNumIterations = 100;
+    real64 m_newtonTol = 1e-6;
+  };
+
+/**
+ * @brief Create an update kernel wrapper.
+ * @return the wrapper
+ */
+  KernelWrapper createKernelWrapper() const;
 
 };
 

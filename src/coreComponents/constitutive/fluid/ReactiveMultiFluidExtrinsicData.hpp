@@ -39,7 +39,7 @@ EXTRINSIC_MESH_DATA_TRAIT( log10PrimaryConc,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "log10PrimaryConc" );                              
+                           "log10PrimaryConc" );
 
 EXTRINSIC_MESH_DATA_TRAIT( log10SecConc,
                            "log10SecConc",
