@@ -30,7 +30,7 @@
 #include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
-#include "constitutive/thermalConductivity/thermalConductivitySelector.hpp"
+#include "constitutive/thermalConductivity/multiPhaseThermalConductivitySelector.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
@@ -61,7 +61,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_hasCapPressure( 0 ),
-  m_isThermal( 0 ),
   m_maxCompFracChange( 1.0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
@@ -75,11 +74,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use mass formulation instead of molar" );
-
-  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether the problem is thermal or not." );
 
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setSizedFromParent( 0 ).
@@ -282,18 +276,6 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
 
   if( m_isThermal )
   {
-    string & solidInternalEnergyName = subRegion.registerWrapper< string >( viewKeyStruct::solidInternalEnergyNamesString() ).
-                                         setPlotLevel( PlotLevel::NOPLOT ).
-                                         setRestartFlags( RestartFlags::NO_WRITE ).
-                                         setSizedFromParent( 0 ).
-                                         setDescription( "Name of the solid internal energy constitutive model to use" ).
-                                         reference();
-
-    solidInternalEnergyName = getConstitutiveName< SolidInternalEnergy >( subRegion );
-    GEOSX_THROW_IF( solidInternalEnergyName.empty(),
-                    GEOSX_FMT( "Solid internal energy model not found on subregion {}", subRegion.getName() ),
-                    InputError );
-
     string & thermalConductivityName = subRegion.registerWrapper< string >( viewKeyStruct::thermalConductivityNamesString() ).
                                          setPlotLevel( PlotLevel::NOPLOT ).
                                          setRestartFlags( RestartFlags::NO_WRITE ).
@@ -301,7 +283,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
                                          setDescription( "Name of the thermal conductivity constitutive model to use" ).
                                          reference();
 
-    thermalConductivityName = getConstitutiveName< ThermalConductivityBase >( subRegion );
+    thermalConductivityName = getConstitutiveName< MultiPhaseThermalConductivityBase >( subRegion );
     GEOSX_THROW_IF( thermalConductivityName.empty(),
                     GEOSX_FMT( "Thermal conductivity model not found on subregion {}", subRegion.getName() ),
                     InputError );
@@ -456,7 +438,7 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
       if( m_isThermal )
       {
         string const & thermalConductivityName = subRegion.getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
-        ThermalConductivityBase const & conductivity = getConstitutiveModel< ThermalConductivityBase >( subRegion, thermalConductivityName );
+        MultiPhaseThermalConductivityBase const & conductivity = getConstitutiveModel< MultiPhaseThermalConductivityBase >( subRegion, thermalConductivityName );
         compareMultiphaseModels( conductivity, referenceFluid );
       }
     } );
@@ -736,8 +718,8 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
 
       string const & thermalConductivityName = subRegion.template getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
-      ThermalConductivityBase const & conductivityMaterial =
-        getConstitutiveModel< ThermalConductivityBase >( subRegion, thermalConductivityName );
+      MultiPhaseThermalConductivityBase const & conductivityMaterial =
+        getConstitutiveModel< MultiPhaseThermalConductivityBase >( subRegion, thermalConductivityName );
       conductivityMaterial.initializeRockFluidState( porosity, phaseVolFrac );
       // note that there is nothing to update here because thermal conductivity is explicit for now
 
@@ -1893,8 +1875,8 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
         arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
 
         string const & thermName = subRegion.getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
-        ThermalConductivityBase const & thermalConductivityMaterial =
-          getConstitutiveModel< ThermalConductivityBase >( subRegion, thermName );
+        MultiPhaseThermalConductivityBase const & thermalConductivityMaterial =
+          getConstitutiveModel< MultiPhaseThermalConductivityBase >( subRegion, thermName );
         thermalConductivityMaterial.saveConvergedRockFluidState( porosity, phaseVolFrac );
       }
     } );

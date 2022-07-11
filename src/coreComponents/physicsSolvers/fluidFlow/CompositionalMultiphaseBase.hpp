@@ -223,11 +223,9 @@ public:
 
     static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * useMassFlagString() { return "useMass"; }
-    static constexpr char const * isThermalString()  { return "isThermal"; }
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
-    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
 
@@ -349,9 +347,6 @@ protected:
 
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
-
-  /// flag to determine whether or not this is a thermal simulation
-  integer m_isThermal;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;

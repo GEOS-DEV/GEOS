@@ -225,13 +225,6 @@ Element: ConstantPermeability
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability.rst
 
 
-.. _XML_ConstantThermalConductivity:
-
-Element: ConstantThermalConductivity
-====================================
-.. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity.rst
-
-
 .. _XML_Constitutive:
 
 Element: Constitutive
@@ -526,6 +519,20 @@ Element: ModifiedCamClay
 .. include:: ../../coreComponents/schema/docs/ModifiedCamClay.rst
 
 
+.. _XML_MultiPhaseConstantThermalConductivity:
+
+Element: MultiPhaseConstantThermalConductivity
+==============================================
+.. include:: ../../coreComponents/schema/docs/MultiPhaseConstantThermalConductivity.rst
+
+
+.. _XML_MultiPhaseVolumeWeightedThermalConductivity:
+
+Element: MultiPhaseVolumeWeightedThermalConductivity
+====================================================
+.. include:: ../../coreComponents/schema/docs/MultiPhaseVolumeWeightedThermalConductivity.rst
+
+
 .. _XML_MultiphasePoromechanics:
 
 Element: MultiphasePoromechanics
@@ -785,6 +792,13 @@ Element: Silo
 .. include:: ../../coreComponents/schema/docs/Silo.rst
 
 
+.. _XML_SinglePhaseConstantThermalConductivity:
+
+Element: SinglePhaseConstantThermalConductivity
+===============================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseConstantThermalConductivity.rst
+
+
 .. _XML_SinglePhaseFVM:
 
 Element: SinglePhaseFVM
@@ -967,6 +981,13 @@ Element: Tasks
 .. include:: ../../coreComponents/schema/docs/Tasks.rst
 
 
+.. _XML_ThermalCompressibleSinglePhaseFluid:
+
+Element: ThermalCompressibleSinglePhaseFluid
+============================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSinglePhaseFluid.rst
+
+
 .. _XML_ThickPlane:
 
 Element: ThickPlane
@@ -1028,13 +1049,6 @@ Element: VanGenuchtenBakerRelativePermeability
 Element: VanGenuchtenCapillaryPressure
 ======================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
-
-
-.. _XML_VolumeWeightedThermalConductivity:
-
-Element: VolumeWeightedThermalConductivity
-==========================================
-.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity.rst
 
 
 .. _XML_WellControls:
@@ -1284,13 +1298,6 @@ Datastructure: CompressibleSolidSlipDependentPermeability
 Datastructure: ConstantPermeability
 ===================================
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability_other.rst
-
-
-.. _DATASTRUCTURE_ConstantThermalConductivity:
-
-Datastructure: ConstantThermalConductivity
-==========================================
-.. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity_other.rst
 
 
 .. _DATASTRUCTURE_Constitutive:
@@ -1615,6 +1622,20 @@ Datastructure: ModifiedCamClay
 .. include:: ../../coreComponents/schema/docs/ModifiedCamClay_other.rst
 
 
+.. _DATASTRUCTURE_MultiPhaseConstantThermalConductivity:
+
+Datastructure: MultiPhaseConstantThermalConductivity
+====================================================
+.. include:: ../../coreComponents/schema/docs/MultiPhaseConstantThermalConductivity_other.rst
+
+
+.. _DATASTRUCTURE_MultiPhaseVolumeWeightedThermalConductivity:
+
+Datastructure: MultiPhaseVolumeWeightedThermalConductivity
+==========================================================
+.. include:: ../../coreComponents/schema/docs/MultiPhaseVolumeWeightedThermalConductivity_other.rst
+
+
 .. _DATASTRUCTURE_MultiphasePoromechanics:
 
 Datastructure: MultiphasePoromechanics
@@ -1874,6 +1895,13 @@ Datastructure: Silo
 .. include:: ../../coreComponents/schema/docs/Silo_other.rst
 
 
+.. _DATASTRUCTURE_SinglePhaseConstantThermalConductivity:
+
+Datastructure: SinglePhaseConstantThermalConductivity
+=====================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseConstantThermalConductivity_other.rst
+
+
 .. _DATASTRUCTURE_SinglePhaseFVM:
 
 Datastructure: SinglePhaseFVM
@@ -2056,6 +2084,13 @@ Datastructure: Tasks
 .. include:: ../../coreComponents/schema/docs/Tasks_other.rst
 
 
+.. _DATASTRUCTURE_ThermalCompressibleSinglePhaseFluid:
+
+Datastructure: ThermalCompressibleSinglePhaseFluid
+==================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSinglePhaseFluid_other.rst
+
+
 .. _DATASTRUCTURE_ThickPlane:
 
 Datastructure: ThickPlane
@@ -2117,13 +2152,6 @@ Datastructure: VanGenuchtenBakerRelativePermeability
 Datastructure: VanGenuchtenCapillaryPressure
 ============================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
-
-
-.. _DATASTRUCTURE_VolumeWeightedThermalConductivity:
-
-Datastructure: VolumeWeightedThermalConductivity
-================================================
-.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity_other.rst
 
 
 .. _DATASTRUCTURE_WellControls:
