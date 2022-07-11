@@ -70,6 +70,9 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< extrinsicMeshData::well::pressure >( getName() ).
         setRestartFlags( RestartFlags::WRITE_AND_READ );
 
+      subRegion.registerExtrinsicData< extrinsicMeshData::well::temperature_n >( getName() );
+      subRegion.registerExtrinsicData< extrinsicMeshData::well::temperature >( getName() );
+
       subRegion.registerExtrinsicData< extrinsicMeshData::well::connectionRate_n >( getName() );
       subRegion.registerExtrinsicData< extrinsicMeshData::well::connectionRate >( getName() );
 
@@ -115,7 +118,7 @@ void SinglePhaseWell::initializePostSubGroups()
 
 string SinglePhaseWell::resElementDofName() const
 {
-  return extrinsicMeshData::flow::pressure::key();
+  return SinglePhaseBase::viewKeyStruct::elemDofFieldString();
 }
 
 void SinglePhaseWell::validateWellConstraints( WellElementSubRegion const & subRegion ) const
@@ -278,6 +281,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+  arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::well::temperature >();
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   SingleFluidBase & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
@@ -285,7 +289,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres );
+    thermalSinglePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
 }
 
