@@ -101,13 +101,13 @@ getVtkPoints( NodeManager const & nodeManager,
               arrayView1d< localIndex const > const & nodeIndices )
 {
   localIndex const numNodes = LvArray::integerConversion< localIndex >( nodeIndices.size() );
-  vtkSmartPointer< vtkPoints > points = vtkPoints::New();
+  auto points = vtkSmartPointer< vtkPoints >::New();
   points->SetNumberOfPoints( numNodes );
   auto const coord = nodeManager.referencePosition().toViewConst();
-  forAll< parallelHostPolicy >( numNodes, [=, &points]( localIndex const k )
+  forAll< parallelHostPolicy >( numNodes, [=, pts = points.GetPointer()]( localIndex const k )
   {
     localIndex const v = nodeIndices[k];
-    points->SetPoint( k, coord[v][0], coord[v][1], coord[v][2] );
+    pts->SetPoint( k, coord[v][0], coord[v][1], coord[v][2] );
   } );
   return points;
 }
@@ -127,12 +127,12 @@ getWell( WellElementSubRegion const & subRegion,
   // - if the well represented by this subRegion is not on this rank, esr.size() = 0
   // - otherwise, esr.size() is equal to the number of well elements of the well on this rank
   // Each well element has two nodes, shared with the previous and next well elements, respectively
-  vtkSmartPointer< vtkPoints > points = vtkPoints::New();
+  auto points = vtkSmartPointer< vtkPoints >::New();
   // if esr.size() == 0, we set the number of points and cells to zero
   // if not, we set the number of points to esr.size()+1 and the number of cells to esr.size()
   localIndex const numPoints = subRegion.size() > 0 ? subRegion.size() + 1 : 0;
   points->SetNumberOfPoints( numPoints );
-  vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
+  auto cellsArray = vtkSmartPointer< vtkCellArray >::New();
   cellsArray->SetNumberOfCells( subRegion.size() );
   localIndex const numberOfNodesPerElement = subRegion.numNodesPerElement();
   GEOSX_ERROR_IF_NE( numberOfNodesPerElement, 2 );
@@ -175,7 +175,7 @@ getSurface( FaceElementSubRegion const & subRegion,
 {
   // Get unique node set composing the surface
   auto & nodeListPerElement = subRegion.nodeList();
-  vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
+  auto cellsArray = vtkSmartPointer< vtkCellArray >::New();
   cellsArray->SetNumberOfCells( subRegion.size() );
   std::unordered_map< localIndex, localIndex > geosx2VTKIndexing;
   geosx2VTKIndexing.reserve( subRegion.size() * subRegion.numNodesPerElement() );
@@ -201,7 +201,7 @@ getSurface( FaceElementSubRegion const & subRegion,
     cellsArray->InsertNextCell( elem.size(), connectivity.data() );
   }
 
-  vtkSmartPointer< vtkPoints > points = vtkPoints::New();
+  auto points = vtkSmartPointer< vtkPoints >::New();
   points->SetNumberOfPoints( geosx2VTKIndexing.size() );
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const referencePosition = nodeManager.referencePosition();
 
@@ -227,8 +227,8 @@ std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >
 getEmbeddedSurface( EmbeddedSurfaceSubRegion const & subRegion,
                     EmbeddedSurfaceNodeManager const & nodeManager )
 {
-  vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
-  vtkSmartPointer< vtkPoints > points = vtkPoints::New();
+  auto cellsArray = vtkSmartPointer< vtkCellArray >::New();
+  auto points = vtkSmartPointer< vtkPoints >::New();
 
   localIndex const numNodes = nodeManager.size();
   auto const intersectionPoints = nodeManager.referencePosition();
@@ -277,7 +277,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
   localIndex const numElems = region.getNumberOfElements< CellElementSubRegion >();
   if( numElems == 0 )
   {
-    return { {}, vtkCellArray::New(), {} };
+    return { {}, vtkSmartPointer< vtkCellArray >::New(), {} };
   }
 
   // 1. Mark (in parallel) relevant nodes
@@ -355,7 +355,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
   } );
   offsets->SetTypedComponent( elemOffset, 0, connOffset );
 
-  vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
+  auto cellsArray = vtkSmartPointer< vtkCellArray >::New();
   cellsArray->SetData( offsets, connectivity );
 
   return { std::move( cellTypes ), cellsArray, std::move( relevantNodes ) };
@@ -366,14 +366,14 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
  * @param[in] ug the VTK unstructured grid.
  * @param[in] time the current time-step
  */
-void writeTimestamp( vtkUnstructuredGrid & ug,
+void writeTimestamp( vtkUnstructuredGrid * ug,
                      real64 const time )
 {
-  vtkDoubleArray * t = vtkDoubleArray::New();
+  auto t = vtkSmartPointer< vtkDoubleArray >::New();
   t->SetName( "TIME" );
   t->SetNumberOfTuples( 1 );
   t->SetTuple1( 0, time );
-  ug.GetFieldData()->AddArray( t );
+  ug->GetFieldData()->AddArray( t );
 }
 
 /**
@@ -384,20 +384,20 @@ void writeTimestamp( vtkUnstructuredGrid & ug,
  */
 void writeField( WrapperBase const & wrapper,
                  localIndex const offset,
-                 vtkDataArray & data )
+                 vtkDataArray * data )
 {
   types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
   {
     using ArrayType = decltype( array );
     using T = typename ArrayType::ValueType;
-    vtkAOSDataArrayTemplate< T > & typedData = *vtkAOSDataArrayTemplate< T >::FastDownCast( &data );
+    vtkAOSDataArrayTemplate< T > * typedData = vtkAOSDataArrayTemplate< T >::FastDownCast( data );
     auto const sourceArray = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
 
-    forAll< parallelHostPolicy >( sourceArray.size( 0 ), [sourceArray, offset, &typedData]( localIndex const i )
+    forAll< parallelHostPolicy >( sourceArray.size( 0 ), [sourceArray, offset, typedData]( localIndex const i )
     {
       LvArray::forValuesInSlice( sourceArray[i], [&, compIndex = 0]( T const & value ) mutable
       {
-        typedData.SetTypedComponent( offset + i, compIndex++, value );
+        typedData->SetTypedComponent( offset + i, compIndex++, value );
       } );
     } );
   } );
@@ -413,20 +413,20 @@ void writeField( WrapperBase const & wrapper,
 void writeField( WrapperBase const & wrapper,
                  arrayView1d< localIndex const > const & indices,
                  localIndex const offset,
-                 vtkDataArray & data )
+                 vtkDataArray * data )
 {
   types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
   {
     using ArrayType = decltype( array );
     using T = typename ArrayType::ValueType;
-    vtkAOSDataArrayTemplate< T > & typedData = *vtkAOSDataArrayTemplate< T >::FastDownCast( &data );
+    vtkAOSDataArrayTemplate< T > * typedData = vtkAOSDataArrayTemplate< T >::FastDownCast( data );
     auto const sourceArray = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
 
-    forAll< parallelHostPolicy >( indices.size(), [=, &typedData]( localIndex const i )
+    forAll< parallelHostPolicy >( indices.size(), [=]( localIndex const i )
     {
       LvArray::forValuesInSlice( sourceArray[indices[i]], [&, compIndex = 0]( T const & value ) mutable
       {
-        typedData.SetTypedComponent( offset + i, compIndex++, value );
+        typedData->SetTypedComponent( offset + i, compIndex++, value );
       } );
     } );
   } );
@@ -501,9 +501,9 @@ string makeComponentName( Span< string const >(&dimLabels)[sizeof...(Ts)],
  */
 template< typename T, typename PERM >
 void setComponentMetadata( Wrapper< Array< T, 1, PERM > > const & GEOSX_UNUSED_PARAM( wrapper ),
-                           vtkAOSDataArrayTemplate< T > & data )
+                           vtkAOSDataArrayTemplate< T > * data )
 {
-  data.SetNumberOfComponents( 1 );
+  data->SetNumberOfComponents( 1 );
 }
 
 /**
@@ -517,10 +517,10 @@ void setComponentMetadata( Wrapper< Array< T, 1, PERM > > const & GEOSX_UNUSED_P
  */
 template< typename T, typename PERM >
 void setComponentMetadata( Wrapper< Array< T, 2, PERM > > const & wrapper,
-                           vtkAOSDataArrayTemplate< T > & data )
+                           vtkAOSDataArrayTemplate< T > * data )
 {
   auto const view = wrapper.referenceAsView();
-  data.SetNumberOfComponents( view.size( 1 ) );
+  data->SetNumberOfComponents( view.size( 1 ) );
 
   Span< string const > const labels = wrapper.getDimLabels( 1 );
   if( !labels.empty() )
@@ -528,7 +528,7 @@ void setComponentMetadata( Wrapper< Array< T, 2, PERM > > const & wrapper,
     checkLabels( wrapper, 1 );
     for( localIndex i = 0; i < view.size( 1 ); ++i )
     {
-      data.SetComponentName( i, labels[i].c_str() );
+      data->SetComponentName( i, labels[i].c_str() );
     }
   }
 }
@@ -559,9 +559,9 @@ makeTemporarySlice( ArrayView< T const, NDIM, USD > const & view )
  */
 template< typename T, int NDIM, typename PERM >
 void setComponentMetadata( Wrapper< Array< T, NDIM, PERM > > const & wrapper,
-                           vtkAOSDataArrayTemplate< T > & data )
+                           vtkAOSDataArrayTemplate< T > * data )
 {
-  data.SetNumberOfComponents( wrapper.numArrayComp() );
+  data->SetNumberOfComponents( wrapper.numArrayComp() );
 
   Span< string const > labels[NDIM-1];
   for( integer dim = 1; dim < NDIM; ++dim )
@@ -576,14 +576,14 @@ void setComponentMetadata( Wrapper< Array< T, NDIM, PERM > > const & wrapper,
   LvArray::forValuesInSliceWithIndices( slice, [&]( T const &, auto const ... indices )
   {
     using idx_seq = std::make_integer_sequence< integer, sizeof...(indices) >;
-    data.SetComponentName( compIndex++, makeComponentName( labels, idx_seq{}, indices ... ).c_str() );
+    data->SetComponentName( compIndex++, makeComponentName( labels, idx_seq{}, indices ... ).c_str() );
   } );
 }
 
 template< class SUBREGION = Group >
 void writeElementField( Group const & subRegions,
                         string const & field,
-                        vtkCellData & cellData )
+                        vtkCellData * cellData )
 {
   // instantiate vtk array of the correct type
   vtkSmartPointer< vtkDataArray > data;
@@ -601,8 +601,8 @@ void writeElementField( Group const & subRegions,
         using ArrayType = decltype( array );
         using T = typename ArrayType::ValueType;
         auto typedData = vtkAOSDataArrayTemplate< T >::New();
-        data = typedData;
-        setComponentMetadata( Wrapper< ArrayType >::cast( wrapper ), *typedData );
+        data.TakeReference( typedData );
+        setComponentMetadata( Wrapper< ArrayType >::cast( wrapper ), typedData );
       } );
       first = false;
       numDims = wrapper.numArrayDims();
@@ -625,15 +625,15 @@ void writeElementField( Group const & subRegions,
   subRegions.forSubGroups< SUBREGION >( [&]( SUBREGION const & subRegion )
   {
     WrapperBase const & wrapper = subRegion.getWrapperBase( field );
-    writeField( wrapper, offset, *data );
+    writeField( wrapper, offset, data.GetPointer() );
     offset += subRegion.size();
   } );
-  cellData.AddArray( data );
+  cellData->AddArray( data );
 }
 
 void VTKPolyDataWriterInterface::writeNodeFields( NodeManager const & nodeManager,
                                                   arrayView1d< localIndex const > const & nodeIndices,
-                                                  vtkPointData & pointData ) const
+                                                  vtkPointData * pointData ) const
 {
   for( auto const & wrapperIter : nodeManager.wrappers() )
   {
@@ -646,22 +646,22 @@ void VTKPolyDataWriterInterface::writeNodeFields( NodeManager const & nodeManage
         using ArrayType = decltype( array );
         using T = typename ArrayType::ValueType;
         auto typedData = vtkAOSDataArrayTemplate< T >::New();
-        data = typedData;
-        setComponentMetadata( Wrapper< ArrayType >::cast( wrapper ), *typedData );
+        data.TakeReference( typedData );
+        setComponentMetadata( Wrapper< ArrayType >::cast( wrapper ), typedData );
       } );
 
       data->SetNumberOfTuples( nodeIndices.size() );
       data->SetName( wrapper.getName().c_str() );
 
-      writeField( wrapper, nodeIndices, 0, *data );
-      pointData.AddArray( data );
+      writeField( wrapper, nodeIndices, 0, data.GetPointer() );
+      pointData->AddArray( data );
     }
   }
 }
 
 template< class SUBREGION >
 void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & region,
-                                                     vtkCellData & cellData ) const
+                                                     vtkCellData * cellData ) const
 {
   std::unordered_set< string > materialFields;
   conduit::Node fakeRoot;
@@ -728,10 +728,10 @@ void VTKPolyDataWriterInterface::writeCellElementRegions( real64 const time,
     ug->SetCells( VTKCells.cellTypes.data(), VTKCells.cells );
     ug->SetPoints( VTKPoints );
 
-    writeTimestamp( *ug, time );
-    writeElementFields< CellElementSubRegion >( region, *ug->GetCellData() );
-    writeNodeFields( nodeManager, VTKCells.nodes, *ug->GetPointData() );
-    writeUnstructuredGrid( cycle, region.getName(), *ug );
+    writeTimestamp( ug.GetPointer(), time );
+    writeElementFields< CellElementSubRegion >( region, ug->GetCellData() );
+    writeNodeFields( nodeManager, VTKCells.nodes, ug->GetPointData() );
+    writeUnstructuredGrid( cycle, region.getName(), ug.GetPointer() );
   } );
 }
 
@@ -743,13 +743,13 @@ void VTKPolyDataWriterInterface::writeWellElementRegions( real64 const time,
   elemManager.forElementRegions< WellElementRegion >( [&]( WellElementRegion const & region )
   {
     auto const & subRegion = region.getSubRegion< WellElementSubRegion >( 0 );
-    vtkSmartPointer< vtkUnstructuredGrid > const ug = vtkUnstructuredGrid::New();
+    auto const ug = vtkSmartPointer< vtkUnstructuredGrid >::New();
     auto const VTKWell = getWell( subRegion, nodeManager );
     ug->SetPoints( VTKWell.first );
     ug->SetCells( VTK_LINE, VTKWell.second );
-    writeTimestamp( *ug, time );
-    writeElementFields< WellElementSubRegion >( region, *ug->GetCellData() );
-    writeUnstructuredGrid( cycle, region.getName(), *ug );
+    writeTimestamp( ug.GetPointer(), time );
+    writeElementFields< WellElementSubRegion >( region, ug->GetCellData() );
+    writeUnstructuredGrid( cycle, region.getName(), ug.GetPointer() );
   } );
 }
 
@@ -761,7 +761,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
 {
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
   {
-    vtkSmartPointer< vtkUnstructuredGrid > const ug = vtkUnstructuredGrid::New();
+    auto const ug = vtkSmartPointer< vtkUnstructuredGrid >::New();
     if( region.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::embeddedElement )
     {
       auto const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
@@ -770,7 +770,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
       ug->SetPoints( VTKSurface.first );
       ug->SetCells( VTK_POLYGON, VTKSurface.second );
 
-      writeElementFields< EmbeddedSurfaceSubRegion >( region, *ug->GetCellData() );
+      writeElementFields< EmbeddedSurfaceSubRegion >( region, ug->GetCellData() );
     }
     else if( region.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::faceElement )
     {
@@ -792,10 +792,10 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
         GEOSX_ERROR( "Elements with " << subRegion.numNodesPerElement() << " nodes can't be output "
                                       << "in the FaceElementRegion " << region.getName() );
       }
-      writeElementFields< FaceElementSubRegion >( region, *ug->GetCellData() );
+      writeElementFields< FaceElementSubRegion >( region, ug->GetCellData() );
     }
-    writeTimestamp( *ug, time );
-    writeUnstructuredGrid( cycle, region.getName(), *ug );
+    writeTimestamp( ug.GetPointer(), time );
+    writeUnstructuredGrid( cycle, region.getName(), ug.GetPointer() );
   } );
 }
 
@@ -852,10 +852,10 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
 
 void VTKPolyDataWriterInterface::writeUnstructuredGrid( integer const cycle,
                                                         string const & name,
-                                                        vtkUnstructuredGrid & ug ) const
+                                                        vtkUnstructuredGrid * ug ) const
 {
-  vtkSmartPointer< vtkXMLUnstructuredGridWriter > const vtuWriter = vtkXMLUnstructuredGridWriter::New();
-  vtuWriter->SetInputData( &ug );
+  auto const vtuWriter = vtkSmartPointer< vtkXMLUnstructuredGridWriter >::New();
+  vtuWriter->SetInputData( ug );
   string const vtuFilePath = joinPath( m_outputDir,
                                        m_outputName,
                                        getCycleSubFolder( cycle ),
