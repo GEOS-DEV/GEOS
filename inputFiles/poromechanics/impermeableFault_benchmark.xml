@@ -59,11 +59,13 @@
   </Solvers>
 <!-- SPHINX_SINGLEPHASEFVM_END -->
 
+<!-- SPHINX_MESH -->
   <Mesh>
     <PAMELAMesh
       name="FaultModel"
       file="faultMesh.msh"/>
   </Mesh>
+<!-- SPHINX_MESH_END -->
 
 <!-- SPHINX_INJECTION -->
   <FieldSpecifications>
@@ -73,7 +75,7 @@
       setNames="{all}"
       objectPath="ElementRegions/Domain/HANDINGWALL_HEX"
       fieldName="pressure"      
-      scale="40.0e6"/>   	  
+      scale="55.0e6"/>   	  
   </FieldSpecifications>
 <!-- SPHINX_INJECTION_END -->
 

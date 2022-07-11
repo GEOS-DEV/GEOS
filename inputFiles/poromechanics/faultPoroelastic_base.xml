@@ -74,7 +74,7 @@
       setNames="{all}"
       objectPath="ElementRegions/Domain"
       fieldName="pressure"
-      scale="20.0e6"
+      scale="35.0e6"
     />
     	     
     <FieldSpecification 

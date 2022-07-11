@@ -59,7 +59,7 @@
       setNames="{all}"
       objectPath="ElementRegions/Domain/HANDINGWALL_HEX"
       fieldName="pressure"      
-      scale="40.0e6"/>
+      scale="55.0e6"/>
 
     <FieldSpecification 
       name="injection2"
@@ -67,7 +67,7 @@
       setNames="{all}"
       objectPath="ElementRegions/Domain/FOOTWALL_HEX"
       fieldName="pressure"      
-      scale="40.0e6"/>	  
+      scale="55.0e6"/>	  
   </FieldSpecifications>
 
   <Events maxTime="2.0">
