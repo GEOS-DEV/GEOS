@@ -186,18 +186,21 @@ vtkNew<vtkCellArray> GetCellArray(GRID & mesh)
   vtkNew<vtkCellArray> cells;
   /*if (mesh.IsA("vtkUnstructuredGrid")) // 1 if mesh type is of vtkUnstructuredGrid, 0 otherwise
   { 
+    std::cout << "mesh is a vtkUnstructuredGrid \n";
     *cells = *mesh.GetCells();
   }
-  else if (mesh.IsA("vtkStructuredGrid"))
-  {*/
+  else*/ if (mesh.IsA("vtkStructuredGrid") || mesh.IsA("vtkUnstructuredGrid"))
+  {
+    std::cout << "mesh is a vtkStructuredGrid or a vtkUnstructuredGrid\n";
     int numCell = mesh.GetNumberOfCells();
     for (int c = 0; c < numCell; c++)
     {
       cells->InsertNextCell(mesh.GetCell(c));
     }
-  /*}
+  }
   else 
   { // "}" to uncomment
+    std::cout << "mesh is not UG or SG\n";
     double bounds[6];
     mesh.GetBounds(bounds);
     double xmin=bounds[0], xmax=bounds[1]; 
@@ -224,7 +227,8 @@ vtkNew<vtkCellArray> GetCellArray(GRID & mesh)
             }
         }
     }
-  //}*/
+  }
+  std::cout << "Sortie equivalent de GetCells \n";
   return cells;
 }
 
@@ -232,13 +236,9 @@ template< typename INDEX_TYPE, typename POLICY, typename GRID > // template GRID
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
 buildElemToNodesImpl( GRID & mesh )
 { 
-  std::cout << "where \n";
   localIndex const numCells = LvArray::integerConversion< localIndex >( mesh.GetNumberOfCells() );
-  std::cout << "is \n";
   array1d< INDEX_TYPE > nodeCounts( numCells );
-  std::cout << "the \n";
   const vtkNew<vtkCellArray> & cells = GetCellArray< GRID >(mesh); // *mesh.GetCells();
-  std::cout << "seg \n";
 
   // GetCellSize() is always thread-safe, can run in parallel
   forAll< parallelHostPolicy >( numCells, [nodeCounts = nodeCounts.toView(), &cells] ( localIndex const cellIdx )
@@ -246,14 +246,9 @@ buildElemToNodesImpl( GRID & mesh )
     nodeCounts[cellIdx] = LvArray::integerConversion< INDEX_TYPE >( cells->GetCellSize( cellIdx ) );
   } );
 
-  std::cout << "fault \n";
   ArrayOfArrays< INDEX_TYPE, INDEX_TYPE > elemToNodes;
-  std::cout << "core \n";
   elemToNodes.template resizeFromCapacities< parallelHostPolicy >( numCells, nodeCounts.data() );
-  std::cout << "dumped \n";
-
   vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( mesh.GetPointData()->GetGlobalIds() );
-  std::cout << "? \n";
 
   // GetCellAtId() is conditionally thread-safe, use POLICY argument
   forAll< POLICY >( numCells, [&cells, &globalPointId, elemToNodes = elemToNodes.toView()] ( localIndex const cellIdx )
@@ -267,7 +262,6 @@ buildElemToNodesImpl( GRID & mesh )
       elemToNodes.emplaceBack( cellIdx, LvArray::integerConversion< INDEX_TYPE >( pointIdx ) );
     }
   } );
-  std::cout << "not here \n";
   return elemToNodes;
 }
 
