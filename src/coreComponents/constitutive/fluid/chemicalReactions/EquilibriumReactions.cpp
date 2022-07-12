@@ -194,7 +194,7 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
 
     #if defined(GEOSX_USE_CUDA)
     // for now we do this. We ll need a gpu solver for dense matrices.
-    GEOSX_ERROR( "Geochem only works on CPUs." );
+    GEOSX_ERROR( "Geochem only works on CPUs for now." );
     #else
     BlasLapackLA::solveLinearSystem( matrix, rhs, solution );
     #endif

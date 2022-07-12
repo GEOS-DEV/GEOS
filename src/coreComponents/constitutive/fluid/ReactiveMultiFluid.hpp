@@ -54,6 +54,16 @@ public:
 
   virtual integer getWaterPhaseIndex() const override { return 0; }
 
+  arrayView2d< real64 const, compflow::USD_COMP > primarySpeciesConcentration() const
+  { return m_primarySpeciesConcentration; }
+
+  arrayView2d< real64 const, compflow::USD_COMP > secondarySpeciesConcentration() const
+  { return m_secondarySpeciesConcentration; }
+
+  integer numPrimarySpecies() const { return m_numPrimarySpecies; }
+
+  integer numSecondarySpecies() const { return m_numSecondarySpecies; }
+
   /**
    * @brief Kernel wrapper class for ReactiveMultiFluid.
    */

@@ -54,6 +54,7 @@ set( constitutive_headers
      fluid/ParticleFluidBase.hpp
      fluid/ProppantSlurryFluid.hpp
      fluid/ReactiveMultiFluid.hpp
+     fluid/ReactiveFluidDriver.hpp
      fluid/SingleFluidBase.hpp
      fluid/SingleFluidExtrinsicData.hpp
      fluid/SlurryFluidBase.hpp
@@ -167,6 +168,7 @@ set( constitutive_sources
      fluid/ParticleFluidBase.cpp
      fluid/ProppantSlurryFluid.cpp
      fluid/ReactiveMultiFluid.cpp
+     fluid/ReactiveFluidDriver.cpp
      fluid/SingleFluidBase.cpp
      fluid/SlurryFluidBase.cpp
      fluid/ThermalCompressibleSinglePhaseFluid.cpp

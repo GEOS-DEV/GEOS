@@ -77,7 +77,7 @@ void ReactiveFluidDriver::postProcessInput()
   m_numPhases = fluid.numFluidPhases();
   m_numPrimarySpecies = fluid.numPrimarySpecies();
   m_numSecondarySpecies = fluid.numSecondarySpecies();
-  m_numComponents = fluid.numFluidComponents();
+  // m_numComponents = fluid.numFluidComponents();
 
   // resize data table to fit number of timesteps and concentrations
   // (numRows,numCols) = (numSteps+1,3+numPrimarySpecies + numSecSpecies)
@@ -156,7 +156,7 @@ bool ReactiveFluidDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   fluid.allocateConstitutiveData( discretization, 1 );   // one quadrature point
 
   // Eventually we will dispatch but for now there is only one model.
-  runTest< ReactiveMultiFluid >( selectedFluid, m_table );
+  runTest( fluid, m_table );
 
   // move table back to host for output
   m_table.move( LvArray::MemorySpace::host );
@@ -174,9 +174,7 @@ bool ReactiveFluidDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   return false;
 }
 
-
-template< typename FLUID_TYPE >
-void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table )
+void ReactiveFluidDriver::runTest( ReactiveMultiFluid & fluid, arrayView2d< real64 > const & table )
 {
   // get number of phases and components
   localIndex const numPhases = fluid.numFluidPhases();
@@ -189,7 +187,7 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
 
   // create kernel wrapper
 
-  typename FLUID_TYPE::KernelWrapper kernelWrapper = fluid.createKernelWrapper();
+  typename ReactiveMultiFluid::KernelWrapper kernelWrapper = fluid.createKernelWrapper();
 
   // set composition to user specified feed
   // it is more convenient to provide input in molar, so perform molar to mass conversion here
@@ -202,13 +200,13 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
     primarySpeciesTotalConcentrationValues[0][i] = m_feed[i];
   }
 
-  arrayView2d< real64 const, compflow::USD_COMP > const primarySpeciesTotalConcentration = compositionValues;
+  arrayView2d< real64 const, compflow::USD_COMP > const primarySpeciesTotalConcentration = primarySpeciesTotalConcentrationValues;
 
   // perform fluid update using table (P,T) and save resulting compositions, etc.
   // note: column indexing should be kept consistent with output file header below.
 
   integer numSteps = m_numSteps;
-  using ExecPolicy = typename FLUID_TYPE::exec_policy;
+  using ExecPolicy = typename ReactiveMultiFluid::exec_policy;
   forAll< ExecPolicy >( 1, [=]  GEOSX_HOST_DEVICE ( localIndex const ei )
   {
     for( integer n = 0; n <= numSteps; ++n )
@@ -216,11 +214,11 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
       kernelWrapper.update( ei, 0, table( n, PRES ), table( n, TEMP ), primarySpeciesTotalConcentration[0] );
       for( integer p=0; p<numPrimarySpecies; ++p )
       {
-        table( n, TEMP+1+p ) = primarySpeciesConcentration( ei, 0, p );
+        table( n, TEMP+1+p ) = primarySpeciesConcentration( ei, p );
       }
       for( integer s=0; s<numSecondarySpecies; ++s )
       {
-        table( n, TEMP+1+numPrimarySpecies+s ) = secondarySpeciesConcentration( ei, 0, s );
+        table( n, TEMP+1+numPrimarySpecies+s ) = secondarySpeciesConcentration( ei, s );
       }
     }
   } );
