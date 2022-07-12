@@ -25,15 +25,16 @@
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/TypeDispatch.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/contact/ContactBase.hpp"
 #include "constitutive/NullModel.hpp"
+#include "fileIO/Outputs/OutputUtilities.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "common/MpiWrapper.hpp"
 
 #include <iostream>
 
@@ -262,6 +263,7 @@ SiloFile::SiloFile():
   m_writeCellElementMesh( 1 ),
   m_writeFaceElementMesh( 1 ),
   m_plotLevel( dataRepository::PlotLevel::LEVEL_1 ),
+  m_requireFieldRegistrationCheck( true ),
   m_ghostFlags( true )
 {
   DBSetAllowEmptyObjects( 1 );
@@ -1628,9 +1630,17 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
   coords[1] = ycoords.data();
   coords[2] = zcoords.data();
 
-
-
   ElementRegionManager const & elementManager = meshLevel.getElemManager();
+
+  if( m_requireFieldRegistrationCheck && !m_fieldNames.empty() )
+  {
+    outputUtilities::checkFieldRegistration( elementManager,
+                                             nodeManager,
+                                             m_fieldNames,
+                                             "SiloOutput" );
+    m_requireFieldRegistrationCheck = false;
+  }
+
   elementManager.forElementRegions( [&]( ElementRegionBase const & elemRegion )
   {
     string const & regionName = elemRegion.getName();
@@ -3172,21 +3182,14 @@ int SiloFile::getMeshType( string const & meshName ) const
   return meshType;
 }
 
-bool SiloFile::isFieldPlotEnabled( PlotLevel const wrapperPlotLevel,
-                                   string const & wrapperName ) const
+bool SiloFile::isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const
 {
-  // check if the logLevel is sufficient high for plotting
-  bool plotEnabled = ( wrapperPlotLevel <= m_plotLevel );
-
-  // override the logLevel if the fieldNames list was provided
-  if( !m_fieldNames.empty() )
-  {
-    auto search = m_fieldNames.find( wrapperName );
-    plotEnabled = ( search != m_fieldNames.end() );
-  }
-  return plotEnabled;
+  return outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(),
+                                              m_plotLevel,
+                                              wrapper.getName(),
+                                              m_fieldNames,
+                                              m_onlyPlotSpecifiedFieldNames );
 }
-
 
 }
 #pragma GCC diagnostic pop

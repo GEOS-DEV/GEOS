@@ -19,6 +19,7 @@
 #include "common/TypeDispatch.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "fileIO/Outputs/OutputUtilities.hpp"
 
 // TPL includes
 #include <vtkCellArray.h>
@@ -46,6 +47,7 @@ VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string name ):
   m_outputName( std::move( name ) ),
   m_pvd( m_outputName + ".pvd" ),
   m_plotLevel( PlotLevel::LEVEL_1 ),
+  m_requireFieldRegistrationCheck( true ),
   m_previousCycle( -1 ),
   m_outputMode( VTKOutputMode::BINARY ),
   m_outputRegionType( VTKRegionTypes::ALL )
@@ -678,7 +680,7 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
       material.forWrappers( [&]( WrapperBase const & wrapper )
       {
         string const fieldName = constitutive::ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
-        if( isFieldPlotEnabled( wrapper.getPlotLevel(), fieldName ) )
+        if( outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(), m_plotLevel, fieldName, m_fieldNames, m_onlyPlotSpecifiedFieldNames ) )
         {
           subReg.registerWrapper( wrapper.averageOverSecondDim( fieldName, subReg ) );
           materialFields.insert( fieldName );
@@ -897,6 +899,16 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
   NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
   EmbeddedSurfaceNodeManager const & embSurfNodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getEmbSurfNodeManager();
+
+  if( m_requireFieldRegistrationCheck && !m_fieldNames.empty() )
+  {
+    outputUtilities::checkFieldRegistration( elemManager,
+                                             nodeManager,
+                                             m_fieldNames,
+                                             "VTKOutput" );
+    m_requireFieldRegistrationCheck = false;
+  }
+
   writeCellElementRegions( time, cycle, elemManager, nodeManager );
   writeWellElementRegions( time, cycle, elemManager, nodeManager );
   writeSurfaceElementRegions( time, cycle, elemManager, nodeManager, embSurfNodeManager );
@@ -917,21 +929,14 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   m_previousCycle = cycle;
 }
 
-bool VTKPolyDataWriterInterface::isFieldPlotEnabled( PlotLevel const wrapperPlotLevel,
-                                                     string const & wrapperName ) const
+bool VTKPolyDataWriterInterface::isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const
 {
-  // check if the logLevel is sufficient high for plotting
-  bool plotEnabled = ( wrapperPlotLevel <= m_plotLevel );
-
-  // override the logLevel if the fieldNames list was provided
-  if( !m_fieldNames.empty() )
-  {
-    auto search = m_fieldNames.find( wrapperName );
-    plotEnabled = ( search != m_fieldNames.end() );
-  }
-  return plotEnabled;
+  return outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(),
+                                              m_plotLevel,
+                                              wrapper.getName(),
+                                              m_fieldNames,
+                                              m_onlyPlotSpecifiedFieldNames );
 }
-
 
 } // namespace vtk
 } // namespace geosx

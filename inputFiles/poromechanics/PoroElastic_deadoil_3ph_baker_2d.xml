@@ -278,13 +278,16 @@
   </FieldSpecifications>
 
   <Outputs>
+
+    <!-- We add deltaPressure just to trigger the warning since this field is not registered -->
     <Silo
       name="siloOutput"
-      fieldNames="{ TotalDisplacement, pressure, skeleton_stress }"/>
+      fieldNames="{ TotalDisplacement, pressure, skeleton_stress, deltaPressure }"/>
 
     <VTK
       name="vtkOutput"
-      fieldNames="{ TotalDisplacement, pressure, skeleton_stress }"/>
+      onlyPlotSpecifiedFieldNames="1"
+      fieldNames="{ TotalDisplacement, pressure, skeleton_stress, skeleton_density }"/>
 
     <Restart
       name="restartOutput"/>

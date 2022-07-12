@@ -663,6 +663,15 @@ public:
   }
 
   /**
+   * @brief Set the flag to decide whether we only plot the fields specified by fieldNames, or if we also plot fields based on plotLevel
+   * @param[in] onlyPlotSpecifiedFieldNames the flag
+   */
+  void setOnlyPlotSpecifiedFieldNamesFlag( integer const onlyPlotSpecifiedFieldNames )
+  {
+    m_onlyPlotSpecifiedFieldNames = onlyPlotSpecifiedFieldNames;
+  }
+
+  /**
    * @brief Set the names of the fields to output
    * @param[in] fieldNames the fields to output
    */
@@ -678,20 +687,7 @@ private:
    * @param[in] wrapper the wrapper
    * @return true if this wrapper should be plot, false otherwise
    */
-  bool isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const
-  {
-    return this->isFieldPlotEnabled( wrapper.getPlotLevel(), wrapper.getName() );
-  }
-
-  /**
-   * @brief Check if plotting is enabled for this field
-   * @param[in] wrapperPlotLevel the plot level of the wrapper
-   * @param[in] wrapperName the name of the wrapper
-   * @return true if this wrapper should be plot, false otherwise
-   */
-  bool isFieldPlotEnabled( dataRepository::PlotLevel const wrapperPlotLevel,
-                           string const & wrapperName ) const;
-
+  bool isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const;
 
   /// pointer to the DBfile that this class is working on
   DBfile * m_dbFilePtr;
@@ -731,6 +727,12 @@ private:
   integer m_writeFaceElementMesh;
 
   dataRepository::PlotLevel m_plotLevel;
+
+  /// Flag to decide whether we only plot the fields specified by fieldNames, or if we also plot fields based on plotLevel
+  integer m_onlyPlotSpecifiedFieldNames;
+
+  /// Flag to decide whether we check that the specified fieldNames are actually registered
+  bool m_requireFieldRegistrationCheck;
 
   /// Names of the fields to output
   std::set< string > m_fieldNames;
