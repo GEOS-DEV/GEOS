@@ -140,11 +140,11 @@ loadMesh( Path const & filePath )
   {
     if( MpiWrapper::commRank() == 0 )
     {
-      auto const read = [&]( auto const vtkUgReader ) 
-      { // change Ug to G ? 
-        vtkUgReader->SetFileName( filePath.c_str() );
-        vtkUgReader->Update();
-        return vtkUgReader->GetOutput();
+      auto const read = [&]( auto const vtkGridReader ) 
+      { 
+        vtkGridReader->SetFileName( filePath.c_str() );
+        vtkGridReader->Update();
+        return vtkGridReader->GetOutput();
       };
 
       if( extension == "vtk" )
@@ -157,7 +157,6 @@ loadMesh( Path const & filePath )
       }
       else if( extension == "vts" )
       {
-        std::cout << "Lecture du vts \n";
         loadedMesh = read( vtkSmartPointer< vtkXMLStructuredGridReader >::New() );
       }
       /*else if( extension == "vti" )
@@ -180,16 +179,10 @@ loadMesh( Path const & filePath )
 }
 
 template< typename GRID >
-vtkNew<vtkCellArray> GetCellArray(GRID & mesh)
+vtkNew<vtkCellArray> GetCellArray(GRID & mesh) // replaces GetCells() that exist only in vtkUnstructuredGrid
 {
-  std::cout << "Dans l'equivalent de GetCells \n";
   vtkNew<vtkCellArray> cells;
-  /*if (mesh.IsA("vtkUnstructuredGrid")) // 1 if mesh type is of vtkUnstructuredGrid, 0 otherwise
-  { 
-    std::cout << "mesh is a vtkUnstructuredGrid \n";
-    *cells = *mesh.GetCells();
-  }
-  else*/ if (mesh.IsA("vtkStructuredGrid") || mesh.IsA("vtkUnstructuredGrid"))
+  if (mesh.IsA("vtkStructuredGrid") || mesh.IsA("vtkUnstructuredGrid")) 
   {
     std::cout << "mesh is a vtkStructuredGrid or a vtkUnstructuredGrid\n";
     int numCell = mesh.GetNumberOfCells();
@@ -199,7 +192,7 @@ vtkNew<vtkCellArray> GetCellArray(GRID & mesh)
     }
   }
   else 
-  { // "}" to uncomment
+  { 
     std::cout << "mesh is not UG or SG\n";
     double bounds[6];
     mesh.GetBounds(bounds);
@@ -228,7 +221,6 @@ vtkNew<vtkCellArray> GetCellArray(GRID & mesh)
         }
     }
   }
-  std::cout << "Sortie equivalent de GetCells \n";
   return cells;
 }
 
