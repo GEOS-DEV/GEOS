@@ -444,6 +444,25 @@ struct BlasLapackLA
                              MatColMajor< real64 > const & Ainv );
 
   /**
+   * @brief Solves the linear system ;
+   * \p Ainv  \p solution = \p rhs.
+   *
+   * @param [in]  A GEOSX array2d.
+   * @param [in]  rhs GEOSX array1d.
+   * @param [out] solution GEOSX array1d.
+   */
+  static void solveLinearSystem( MatRowMajor< real64 const > const & A,
+                                 Vec< real64 const > const & rhs,
+                                 Vec< real64 > const & solution );
+
+  /**
+   * @copydoc solveLinearSystem( MatRowMajor<real64 const> const &, Vec< real64 const > const &, Vec< real64 const > const & )
+   */
+  static void solveLinearSystem( MatColMajor< real64 const > const & A,
+                                 Vec< real64 const > const & rhs,
+                                 Vec< real64 > const & solution );
+
+  /**
    * @brief Vector copy;
    * \p Y = \p X.
    *

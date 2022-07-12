@@ -123,7 +123,7 @@ ReactiveMultiFluid::KernelWrapper::
                                    std::move( phaseInternalEnergy ),
                                    std::move( phaseCompFraction ),
                                    std::move( totalDensity ) ),
-  m_numPrimarySpecies(numPrimarySpecies),
+  m_numPrimarySpecies( numPrimarySpecies ),
   m_equilibriumReactions( equilibriumReactions.createKernelWrapper() ),
   m_kineticReactions( kineticReactions.createKernelWrapper() ),
   m_primarySpeciesConcentration( primarySpeciesConcentration ),

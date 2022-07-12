@@ -91,12 +91,12 @@ public:
 
     GEOSX_HOST_DEVICE
     void compute( real64 const pressure,
-             real64 const temperature,
-             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-             arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-             arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-             arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
-             arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const;                    
+                  real64 const temperature,
+                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                  arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                  arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
+                  arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
+                  arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const;
 
     GEOSX_HOST_DEVICE
     virtual void update( localIndex const k,
@@ -106,7 +106,7 @@ public:
                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override;
 
 private:
-    
+
     friend class ReactiveMultiFluid;
 
     KernelWrapper( arrayView1d< real64 const > componentMolarWeight,

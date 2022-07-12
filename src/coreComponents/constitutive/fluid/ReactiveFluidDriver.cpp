@@ -37,7 +37,7 @@ ReactiveFluidDriver::ReactiveFluidDriver( const string & name,
 
   registerWrapper( viewKeyStruct::feedString(), &m_feed ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Feed composition array [mol fraction]" );
+    setDescription( "Feed composition array: total concentration of the primary species " );
 
   registerWrapper( viewKeyStruct::pressureFunctionString(), &m_pressureFunctionName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -218,7 +218,7 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
       {
         table( n, TEMP+1+p ) = primarySpeciesConcentration( ei, 0, p );
       }
-       for( integer s=0; s<numSecondarySpecies; ++s )
+      for( integer s=0; s<numSecondarySpecies; ++s )
       {
         table( n, TEMP+1+numPrimarySpecies+s ) = secondarySpeciesConcentration( ei, 0, s );
       }

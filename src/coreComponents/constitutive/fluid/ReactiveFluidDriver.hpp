@@ -44,7 +44,7 @@ class ReactiveFluidDriver : public TaskBase
 {
 public:
   ReactiveFluidDriver( const string & name,
-             Group * const parent );
+                       Group * const parent );
   ~ReactiveFluidDriver() override;
 
   static string catalogName() { return "ReactiveFluidDriver"; }
