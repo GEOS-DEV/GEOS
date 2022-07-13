@@ -143,8 +143,8 @@ public:
     /// Index of the finite element
     localIndex element_index;
 
-    static constexpr size_t batch_size = 1;
-    static constexpr size_t num_quads_1d = 2; // TODO
+    static constexpr localIndex batch_size = 1;
+    static constexpr localIndex num_quads_1d = 2; // TODO
   };
 
   /**
@@ -265,16 +265,16 @@ public:
     // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
-    constexpr size_t batch_size = KERNEL_TYPE::StackVariables::batch_size;
+    constexpr localIndex batch_size = KERNEL_TYPE::StackVariables::batch_size;
 
-    const size_t num_blocks = ( numElems + batch_size - 1 ) / batch_size;
-    // const size_t num_SM = 80; // For V100
-    // const size_t num_blocks = 2 * num_SM;
+    const localIndex num_blocks = ( numElems + batch_size - 1 ) / batch_size;
+    // const localIndex num_SM = 80; // For V100
+    // const localIndex num_blocks = 2 * num_SM;
 
-    constexpr size_t num_quads_1d = KERNEL_TYPE::StackVariables::num_quads_1d;
+    constexpr localIndex num_quads_1d = KERNEL_TYPE::StackVariables::num_quads_1d;
 
     launch< team_launch_policy >
-    ( DEVICE, Resources( Teams( num_blocks ), Threads( num_quads_1d, num_quads_1d, batch_size ) ),
+    ( HOST, Resources( Teams( num_blocks ), Threads( num_quads_1d, num_quads_1d, batch_size ) ),
     [=] GEOSX_HOST_DEVICE ( LaunchContext ctx )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent, ctx );
@@ -287,15 +287,15 @@ public:
         // We batch elements over the z-thread dimension
         loop<thread_z>( ctx, RangeSegment( 0, batch_size ), [&]( const int thread_index_z )
         {
-          const size_t element_index = block_index * batch_size + thread_index_z;
-          if ( element_index >= (size_t)numElems ) { return; }
+          const localIndex element_index = block_index * batch_size + thread_index_z;
+          if ( element_index >= (localIndex)numElems ) { return; }
 
           kernelComponent.setup( stack, element_index );
-          loop<thread_y>( ctx, RangeSegment( 0, num_quads_1d ), [&] ( size_t quad_y )
+          loop<thread_y>( ctx, RangeSegment( 0, num_quads_1d ), [&] ( localIndex quad_y )
           {
-            loop<thread_x>( ctx, RangeSegment( 0, num_quads_1d ), [&] ( size_t quad_x )
+            loop<thread_x>( ctx, RangeSegment( 0, num_quads_1d ), [&] ( localIndex quad_x )
             {
-              for( size_t quad_z = 0; quad_z < num_quads_1d; quad_z++ )
+              for( localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++ )
               {
                 kernelComponent.quadraturePointKernel( stack, quad_x, quad_y, quad_z );
               }

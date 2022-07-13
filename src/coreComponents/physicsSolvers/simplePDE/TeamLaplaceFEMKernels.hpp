@@ -36,7 +36,7 @@
 namespace geosx
 {
 
-template < size_t Order >
+template < localIndex Order >
 class LagrangeBasis;
 
 template <>
@@ -119,7 +119,7 @@ public:
 
   }
 
-  template < size_t num_dofs_mesh_1d, size_t num_quads_1d, size_t dim, size_t batch_size >
+  template < localIndex num_dofs_mesh_1d, localIndex num_quads_1d, localIndex dim, localIndex batch_size >
   struct MeshStackVariables
   {
     MeshStackVariables( LaunchContext & ctx )
@@ -131,9 +131,9 @@ public:
       mesh_basis = &s_mesh_basis;
       loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
       {
-        loop<thread_y> (ctx, RangeSegment(0, num_dofs_mesh_1d), [&] (size_t d)
+        loop<thread_y> (ctx, RangeSegment(0, num_dofs_mesh_1d), [&] (localIndex d)
         {
-          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t q)
+          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex q)
           {
             GEOSX_UNUSED_VAR( tidz );
             s_mesh_basis[ d ][ q ] =
@@ -148,9 +148,9 @@ public:
       mesh_basis_gradient = &s_mesh_basis_gradient;
       loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
       {
-        loop<thread_y> (ctx, RangeSegment(0, num_dofs_mesh_1d), [&] (size_t d)
+        loop<thread_y> (ctx, RangeSegment(0, num_dofs_mesh_1d), [&] (localIndex d)
         {
-          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t q)
+          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex q)
           {
             GEOSX_UNUSED_VAR( tidz );
             s_mesh_basis_gradient[ d ][ q ] =
@@ -160,7 +160,7 @@ public:
         } );
       } );
 
-      size_t const batch_index = GEOSX_THREAD_ID(z);
+      localIndex const batch_index = GEOSX_THREAD_ID(z);
       // Mesh nodes
       GEOSX_STATIC_SHARED real64 s_mesh_nodes[batch_size][num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim];
       mesh_nodes = &s_mesh_nodes[batch_index];
@@ -215,7 +215,7 @@ public:
     }
   };
 
-  template < size_t num_dofs_1d, size_t num_quads_1d, size_t dim, size_t batch_size >
+  template < localIndex num_dofs_1d, localIndex num_quads_1d, localIndex dim, localIndex batch_size >
   struct ElementStackVariables
   {
     ElementStackVariables( LaunchContext & ctx )
@@ -227,9 +227,9 @@ public:
       basis = &s_basis;
       loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
       {
-        loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t d)
+        loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex d)
         {
-          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t q)
+          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex q)
           {
             GEOSX_UNUSED_VAR( tidz );
             s_basis[ d ][ q ] =
@@ -244,9 +244,9 @@ public:
       basis_gradient = &s_basis_gradient;
       loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
       {
-        loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (size_t d)
+        loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex d)
         {
-          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (size_t q)
+          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex q)
           {
             GEOSX_UNUSED_VAR( tidz );
             s_basis_gradient[ d ][ q ] =
@@ -256,7 +256,7 @@ public:
         } );
       } );
 
-      size_t const batch_index = GEOSX_THREAD_ID(z);
+      localIndex const batch_index = GEOSX_THREAD_ID(z);
       // Element input dofs of the primary field
       GEOSX_STATIC_SHARED real64 s_dofs_in[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d];
       dofs_in = &s_dofs_in[batch_index];
@@ -350,9 +350,9 @@ public:
    */
   struct StackVariables : public Base::StackVariables
   {
-    static constexpr size_t dim = 3;
-    static constexpr size_t num_dofs_mesh_1d = 2; // TODO
-    static constexpr size_t num_dofs_1d = 2; // TODO
+    static constexpr localIndex dim = 3;
+    static constexpr localIndex num_dofs_mesh_1d = 2; // TODO
+    static constexpr localIndex num_dofs_1d = 2; // TODO
     using Base::StackVariables::num_quads_1d;
     using Base::StackVariables::batch_size;
   
@@ -376,7 +376,7 @@ public:
     real64 ( * weights )[num_quads_1d];
 
     /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
-    static constexpr size_t buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
+    static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
     real64 * shared_mem_buffer_1;
     real64 * shared_mem_buffer_2;
   };
@@ -393,9 +393,9 @@ public:
     s_weights[1] = 1.0;
 
     // "Allocate" shared memory for the buffers.
-    constexpr size_t batch_size = StackVariables::batch_size;
-    constexpr size_t buffer_size = StackVariables::buffer_size;
-    size_t const tidz = GEOSX_THREAD_ID(z);
+    constexpr localIndex batch_size = StackVariables::batch_size;
+    constexpr localIndex buffer_size = StackVariables::buffer_size;
+    localIndex const tidz = GEOSX_THREAD_ID(z);
 
     GEOSX_STATIC_SHARED real64 shared_buffer_1[batch_size][buffer_size];
     stack.shared_mem_buffer_1 = ( real64 * )&shared_buffer_1[tidz];
@@ -476,7 +476,7 @@ public:
 
     // Compute D_q * grad_u_q
     real64 Du[ dim ];
-    for (size_t d = 0; d < dim; d++)
+    for (localIndex d = 0; d < dim; d++)
     {
       Du[d] = D[d][0] * grad_u[0]
             + D[d][1] * grad_u[1]
@@ -506,15 +506,15 @@ public:
                                 stack.element.getDofsOut() );
     writeAddField( stack, stack.element.getDofsOut(), stack.kernelComponent.m_rhs );
 
-    constexpr size_t num_dofs_1d = StackVariables::num_dofs_1d;
+    constexpr localIndex num_dofs_1d = StackVariables::num_dofs_1d;
     real64 maxForce = 0;
     // TODO put this into a lambda "iterator" function
     auto & dofs_out = stack.element.getDofsOut();
-    loop<thread_x> (stack.ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_x)
+    loop<thread_x> (stack.ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
     {
-      loop<thread_y> (stack.ctx, RangeSegment(0, num_dofs_1d), [&] (size_t dof_y)
+      loop<thread_y> (stack.ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
       {
-        for (size_t dof_z = 0; dof_z < num_dofs_1d; dof_z++)
+        for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
         {
           maxForce = fmax( maxForce, fabs( dofs_out[ dof_x ][ dof_y ][ dof_z ] ) );
         }
