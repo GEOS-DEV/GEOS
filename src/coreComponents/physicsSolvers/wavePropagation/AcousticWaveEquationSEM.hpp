@@ -166,6 +166,13 @@ private:
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
 
   /**
+   * @brief Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
+   * @param time the time to apply the BC
+   * @param domain the partition domain
+   */
+  virtual void applyPML( real64 const time, DomainPartition & domain ) override;
+
+  /**
    * @brief Temporary debug function. Saves the sismo trace to a file.
    * @param iSeismo index number of the seismo trace
    * @param val value to be written in seismo
@@ -193,7 +200,6 @@ private:
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real64 > m_pressureNp1AtReceivers;
-
 
 };
 
@@ -281,7 +287,37 @@ EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceNodeIndicator,
                            WRITE_AND_READ,
                            "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar1PML_n,
+                           "auxiliaryVar1PML_n",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "PML vectorial auxiliary variable at time n." );
 
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar1PML_np1,
+                           "auxiliaryVar1PML_np1",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "PML vectorial auxiliary variable at time n + 1." );
+
+EXTRINSIC_MESH_DATA_TRAIT( DivAuxiliaryVar1PML,
+                           "divAuxiliaryVar1PML",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Divergence of the PML vectorial auxiliary variable." );
+
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar2PML,
+                           "auxiliaryVar2PML",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "PML scalar auxiliary variable." );
 }
 
 

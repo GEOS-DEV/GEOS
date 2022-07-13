@@ -76,6 +76,51 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Count for output pressure at receivers" );
 
+  registerWrapper( viewKeyStruct::xMinPMLString(), &m_xMinPML ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Minimum x-coordinate used to compute the damping profile for the PMLs" );
+
+  registerWrapper( viewKeyStruct::yMinPMLString(), &m_yMinPML ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Minimum y-coordinate used to compute the damping profile for the PMLs" );
+
+  registerWrapper( viewKeyStruct::zMinPMLString(), &m_zMinPML ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Minimum z-coordinate used to compute the damping profile for the PMLs" );
+
+  registerWrapper( viewKeyStruct::xMaxPMLString(), &m_xMaxPML ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 999999 ).
+    setDescription( "Maximum x-coordinate used to compute the damping profile for the PMLs" );
+
+  registerWrapper( viewKeyStruct::yMaxPMLString(), &m_yMaxPML ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 999999 ).
+    setDescription( "Maximum y-coordinate used to compute the damping profile for the PMLs" );
+
+  registerWrapper( viewKeyStruct::zMaxPMLString(), &m_zMaxPML ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 999999 ).
+    setDescription( "Maximum z-coordinate used to compute the damping profile for the PMLs" );
+
+  registerWrapper( viewKeyStruct::maxThicknessPMLString(), &m_maxThicknessPML ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Maximum thickness used to compute the damping profile for the PMLs" );
+
+  registerWrapper( viewKeyStruct::reflectivityPMLString(), &m_reflectivityPML ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0001 ).
+    setDescription( "Desired reflectivity of the PMLs" );
+
+  registerWrapper( viewKeyStruct::flagPMLString(), &m_flagPML ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Temporary flag for PML testing" );
+
 }
 
 WaveSolverBase::~WaveSolverBase()
