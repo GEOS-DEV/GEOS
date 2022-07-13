@@ -222,7 +222,6 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
                                 log10SecActCoeff,
                                 dLog10SecActCoeff_dIonicStrength );
 
-<<<<<<< HEAD
   computeLog10SecConcAndDerivative( temperature, 
                                     log10PrimaryActCoeff,
                                     dLog10PrimaryActCoeff_dIonicStrength,
@@ -250,7 +249,7 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
   }
 }
 
-// function to compute the derivative of the concentration of dependent species with respect to the concentration of the basis species.
+// function to compute the derivative of the concentration of secondary species with respect to the concentration of the primary species.
 GEOSX_HOST_DEVICE
 void EquilibriumReactions::KernelWrapper::computeSeondarySpeciesConcAndDerivative( real64 const temperature,
                                                                                    arraySlice1d< real64 const > const & log10PrimaryActCoeff,
@@ -258,8 +257,6 @@ void EquilibriumReactions::KernelWrapper::computeSeondarySpeciesConcAndDerivativ
                                                                                    arraySlice1d< real64 const > const & log10SecActCoeff,
                                                                                    arraySlice1d< real64 const > const & dLog10SecActCoeff_dIonicStrength,
                                                                                    arraySlice1d< real64 const > const & primarySpeciesConcentration,
-                                                                                   arraySlice1d< real64 const > const & log10PrimaryActCoeff,
-                                                                                   arraySlice1d< real64 const > const & log10SecActCoeff,
                                                                                    arraySlice1d< real64 > const & secondarySpeciesConectration,
                                                                                    arraySlice2d< real64 > const & dLog10SecConc_dLog10PrimaryConc ) const
 {
@@ -271,7 +268,15 @@ void EquilibriumReactions::KernelWrapper::computeSeondarySpeciesConcAndDerivativ
     for( int jPri = 0; jPri < m_numPrimarySpecies; ++jPri )
     {
       log10SecConc += m_stoichMatrix[iSec][jPri] * ( log10( primarySpeciesConcentration[jPri] ) + log10PrimaryActCoeff[jPri]);
-      dLog10SecConc_dLog10PrimaryConc[iSec][jPri] = m_stoichMatrix[iSec][jPri];
+      dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stoichMatrix[iSec][jPri] - dLog10SecActCoeff_dIonicStrength[iSec] * primarySpeciesConcentration[jPri] * 
+                                                     log( 10 ) * 0.5 * m_ionSizePrimary[jPri] * m_ionSizePrimary[jPri];
+      for( int kDerivative = 0; kDerivative < m_numPrimarySpecies; ++kDerivative )
+      {
+        // add contribution to the derivtive from all primary activity coefficients
+        dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stoichMatrix[jSec][kDerivative] * dLog10PrimaryActCoeff_dIonicStrength[kDerivative] * primarySpeciesConcentration[jPri] * 
+                                                     log( 10 ) * 0.5 * m_ionSizePrimary[jPri] * m_ionSizePrimary[jPri];
+      }
+
     }
     secondarySpeciesConectration[iSec] = pow( 10, log10SecConc );
   }

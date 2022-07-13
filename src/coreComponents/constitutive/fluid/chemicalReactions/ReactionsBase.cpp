@@ -63,7 +63,8 @@ void ReactionsBase::KernelWrapper::computeLog10ActCoefBDotModel( real64 const te
   }
   for( localIndex i = 0; i < m_numSecSpecies; ++i )
   {
-    log10SecActCoeff[i] = m_WATEQBDot * ionicStrength - m_DebyeHuckelA * m_chargeSec[i] * m_chargeSec[i] * sqrt( ionicStrength ) / (1.0 + m_ionSizeSec[i] * m_DebyeHuckelB * sqrt( ionicStrength ));
+    log10SecActCoeff[i] = m_WATEQBDot * ionicStrength - m_DebyeHuckelA * m_chargeSec[i] * m_chargeSec[i] * sqrt( ionicStrength ) /
+                          (1.0 + m_ionSizeSec[i] * m_DebyeHuckelB * sqrt( ionicStrength ));
     dLog10SecActCoeff_dIonicStrength[i] = m_WATEQBDot - m_DebyeHuckelA * m_chargeSec[i] * m_chargeSec[i] *
                                           (0.5 / sqrt( ionicStrength ) / (1.0 + m_ionSizeSec[i] * m_DebyeHuckelB * sqrt( ionicStrength )) - 0.5 * m_ionSizeSec[i] * m_DebyeHuckelB /
                                            (1.0 + m_ionSizeSec[i] * m_DebyeHuckelB * sqrt( ionicStrength )) /

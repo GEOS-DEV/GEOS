@@ -87,9 +87,11 @@ private:
                                             DenseVector & rhs ) const;
 
     void computeSeondarySpeciesConcAndDerivative( real64 const temperature,
-                                                  arraySlice1d< real64 const > const & primarySpeciesConcentration,
                                                   arraySlice1d< real64 const > const & log10PrimaryActCoeff,
+                                                  arraySlice1d< real64 const > const & dLog10PrimaryActCoeff_dIonicStrength,
                                                   arraySlice1d< real64 const > const & log10SecActCoeff,
+                                                  arraySlice1d< real64 const > const & dLog10SecActCoeff_dIonicStrength,
+                                                  arraySlice1d< real64 const > const & primarySpeciesConcentration,
                                                   arraySlice1d< real64 > const & secondarySpeciesConcentration,
                                                   arraySlice2d< real64 > const & dLog10SecConc_dLog10PrimaryConc ) const;
 
