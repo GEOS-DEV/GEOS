@@ -222,20 +222,20 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
                                 log10SecActCoeff,
                                 dLog10SecActCoeff_dIonicStrength );
 
-  computeLog10SecConcAndDerivative( temperature, 
-                                    log10PrimaryActCoeff,
-                                    dLog10PrimaryActCoeff_dIonicStrength,
-                                    log10SecActCoeff,
-                                    dLog10SecActCoeff_dIonicStrength, 
-                                    primarySpeciesConcentration, 
-                                    secondarySpeciesConcentration, 
-                                    dLog10SecConc_dLog10PrimaryConc );
-  
-  computeTotalConcAndDerivative( temperature, 
-                                 primarySpeciesConcentration, 
-                                 secondarySpeciesConcentration, 
-                                 dLog10SecConc_dLog10PrimaryConc, 
-                                 totalConcentration, 
+  computeSeondarySpeciesConcAndDerivative( temperature,
+                                           log10PrimaryActCoeff,
+                                           dLog10PrimaryActCoeff_dIonicStrength,
+                                           log10SecActCoeff,
+                                           dLog10SecActCoeff_dIonicStrength,
+                                           primarySpeciesConcentration,
+                                           secondarySpeciesConcentration,
+                                           dLog10SecConc_dLog10PrimaryConc );
+
+  computeTotalConcAndDerivative( temperature,
+                                 primarySpeciesConcentration,
+                                 secondarySpeciesConcentration,
+                                 dLog10SecConc_dLog10PrimaryConc,
+                                 totalConcentration,
                                  dTotalConc_dLog10PrimaryConc );
 
   //Matteo: I assume we want to solve this to find the primary and the secondary species concentrations?
@@ -267,14 +267,14 @@ void EquilibriumReactions::KernelWrapper::computeSeondarySpeciesConcAndDerivativ
 
     for( int jPri = 0; jPri < m_numPrimarySpecies; ++jPri )
     {
-      log10SecConc += m_stoichMatrix[iSec][jPri] * ( log10( primarySpeciesConcentration[jPri] ) + log10PrimaryActCoeff[jPri]);
-      dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stoichMatrix[iSec][jPri] - dLog10SecActCoeff_dIonicStrength[iSec] * primarySpeciesConcentration[jPri] * 
+      log10SecConc += m_stoichMatrix[iSec][jPri] * ( log10( primarySpeciesConcentration[jPri] ) + log10PrimaryActCoeff[jPri] );
+      dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stoichMatrix[iSec][jPri] - dLog10SecActCoeff_dIonicStrength[iSec] * primarySpeciesConcentration[jPri] *
                                                      log( 10 ) * 0.5 * m_ionSizePrimary[jPri] * m_ionSizePrimary[jPri];
       for( int kDerivative = 0; kDerivative < m_numPrimarySpecies; ++kDerivative )
       {
         // add contribution to the derivtive from all primary activity coefficients
-        dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stoichMatrix[jSec][kDerivative] * dLog10PrimaryActCoeff_dIonicStrength[kDerivative] * primarySpeciesConcentration[jPri] * 
-                                                     log( 10 ) * 0.5 * m_ionSizePrimary[jPri] * m_ionSizePrimary[jPri];
+        dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stoichMatrix[iSec][kDerivative] * dLog10PrimaryActCoeff_dIonicStrength[kDerivative] * primarySpeciesConcentration[jPri] *
+                                                       log( 10 ) * 0.5 * m_ionSizePrimary[jPri] * m_ionSizePrimary[jPri];
       }
 
     }
