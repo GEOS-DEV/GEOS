@@ -151,6 +151,17 @@ void GEOSX_dgeev( char const * JOBVL,
                   int * LWORK,
                   int * INFO );
 
+#define GEOSX_dgetrs FORTRAN_MANGLE( dgetrs )
+void GEOSX_dgetrs( char const * TRANS,
+                   int const * N,
+                   int const * NRHS,
+                   double * A,
+                   int const * LDA,
+                   int const * IPIV,
+                   double * B,
+                   int const * LDB,
+                   int * INFO );
+
 }
 #endif
 

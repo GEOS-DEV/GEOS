@@ -855,4 +855,62 @@ void BlasLapackLA::matrixEigenvalues( MatRowMajor< real64 const > const & A,
   matrixEigenvalues( AT.toSliceConst(), lambda );
 }
 
+void BlasLapackLA::solveLinearSystem( MatColMajor< real64 const > const & A,
+                                      arraySlice1d< real64 const > const & rhs,
+                                      arraySlice1d< real64 > const & solution )
+{
+  // --- Check that source matrix is square
+  int const NN = LvArray::integerConversion< int >( A.size( 0 ));
+  GEOSX_ASSERT_MSG( NN > 0 &&
+                    NN == A.size( 1 ),
+                    "Matrix must be square" );
+
+  // --- Check that rhs and solution have appropriate dimension
+  GEOSX_ASSERT_MSG( rhs.size( 0 ) == NN,
+                    "right-hand-side vector has wrong dimensions" );
+
+  GEOSX_ASSERT_MSG( solution.size( 0 ) == NN,
+                    "solution vector has wrong dimensions" );
+
+  array1d< int > IPIV;
+  IPIV.resize( NN );
+  int const NRHS = 1; // we only allow for 1 rhs vector.
+  int INFO;
+
+  // make a copy of A, since dgeev destroys contents
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > ACOPY( A.size( 0 ), A.size( 1 ) );
+  BlasLapackLA::matrixCopy( A, ACOPY );
+
+  // copy the rhs in the solution vector
+  BlasLapackLA::vectorCopy( rhs, solution );
+
+  GEOSX_dgetrf( &NN, &NN, ACOPY.data(), &NN, IPIV.data(), &INFO );
+
+  GEOSX_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
+
+  GEOSX_dgetrs( "N", &NN, &NRHS, ACOPY.data(), &NN, IPIV.data(), solution.dataIfContiguous(), &NN, &INFO );
+
+  GEOSX_ASSERT_MSG( INFO == 0, "LAPACK dgetrs error code: " << INFO );
+}
+
+void BlasLapackLA::solveLinearSystem( MatRowMajor< real64 const > const & A,
+                                      arraySlice1d< real64 const > const & rhs,
+                                      arraySlice1d< real64 > const & solution )
+{
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > AT( A.size( 0 ), A.size( 1 ) );
+
+  // convert A to a column major format
+  for( int i = 0; i < A.size( 0 ); ++i )
+  {
+    for( int j = 0; j < A.size( 1 ); ++j )
+    {
+      AT( i, j ) = A( i, j );
+    }
+  }
+
+  solveLinearSystem( AT.toSliceConst(), rhs, solution );
+}
+
+
+
 } // end geosx namespace
