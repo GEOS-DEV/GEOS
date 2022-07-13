@@ -90,6 +90,8 @@ set( physicsSolvers_headers
      wavePropagation/WaveSolverBase.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
      wavePropagation/AcousticWaveEquationSEMKernel.hpp
+     wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp
+     wavePropagation/AcousticFirstOrderWaveEquationSEMKernel.hpp
    )
 
 #
@@ -144,6 +146,8 @@ set( physicsSolvers_sources
      surfaceGeneration/SurfaceGenerator.cpp
      wavePropagation/WaveSolverBase.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
+     wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
+
    )
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
