@@ -52,7 +52,7 @@ struct PrecomputeSourceAndReceiverKernel
                        real64 const (&coords)[3] )
   {
     //Loop over the element faces
-    localIndex prevSign = 0;
+    localIndex prevSign = 1;
     real64 tmpVector[3]{};
     for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
     {
@@ -248,7 +248,6 @@ struct PrecomputeSourceAndReceiverKernel
             }
           }
 
-          real64 coordsOnRefElem[3]{};
 
           bool const sourceFound =
             locateSourceElement( numFacesPerElem,
@@ -260,6 +259,9 @@ struct PrecomputeSourceAndReceiverKernel
 
           if( sourceFound && elemGhostRank[k] < 0 )
           {
+            real64 coordsOnRefElem[3]{};
+
+
             computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                              elemsToNodes[k],
                                                              X,
@@ -546,7 +548,6 @@ public:
    * @param faceManager Reference to the FaceManager object.
    * @param targetRegionIndex Index of the region the subregion belongs to.
    * @param dt The time interval for the step.
-   *   elements to be processed during this kernel launch.
    */
   ExplicitElasticSEM( NodeManager & nodeManager,
                       EdgeManager const & edgeManager,
