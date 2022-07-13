@@ -142,7 +142,7 @@ private:
    * @brief The VTK mesh to be imported into GEOSX.
    * @note We keep this smart pointer as a member for use in @p importFields().
    */
-  vtkSmartPointer< vtkDataSet > m_vtkMesh; // UnstructuredGrid
+  vtkSmartPointer< vtkDataSet > m_vtkMesh; // changed vtkUnstructuredGrid to vtkDataSet
 
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;

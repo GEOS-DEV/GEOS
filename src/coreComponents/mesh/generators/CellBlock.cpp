@@ -72,6 +72,13 @@ void CellBlock::setElementType( ElementType elementType )
       m_numFacesPerElement = 8;
       break;
     }
+    /*case ElementType::Voxel:
+    {
+      m_numNodesPerElement = 8;
+      m_numEdgesPerElement = 12;
+      m_numFacesPerElement = 6;
+      break;
+    }*/
     default:
     {
       GEOSX_ERROR( "Invalid element type " << m_elementType << " for CellBlock " << getName() );
