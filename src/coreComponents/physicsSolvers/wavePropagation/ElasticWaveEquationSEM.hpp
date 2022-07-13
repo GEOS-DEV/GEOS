@@ -92,7 +92,7 @@ public:
    * TODO: move implementation into WaveSolverBase
    * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
    * last two timesteps.
-   * @param time_n the time corresponding to the field values at iteration n 
+   * @param time_n the time corresponding to the field values at iteration n
    * @param dt the simulation timestep
    * @param timeSeismo the time at which the seismogram is computed
    * @param iSeismo the index of the seismogram time in the seismogram array
@@ -111,7 +111,7 @@ public:
   /**
    * TODO: move implementation into WaveSolverBase
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
-   * @param time_n the time corresponding to the field values at iteration n 
+   * @param time_n the time corresponding to the field values at iteration n
    * @param dt the simulation timestep
    * @param var_np1 the field values at time_n + dt
    * @param var_n the field values at time_n
@@ -158,7 +158,7 @@ private:
    * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
-   * @param regionNames the names of the region you loop on 
+   * @param regionNames the names of the region you loop on
    */
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
