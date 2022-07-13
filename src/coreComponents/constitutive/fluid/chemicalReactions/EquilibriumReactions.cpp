@@ -134,6 +134,7 @@ EquilibriumReactions::EquilibriumReactions( string const & name ):
   m_stoichMatrix[10][3] = 1;
   
   // Equilibrium Constant
+  // Jaisree: This is duplicated here. Perhaps better to keep the one here and delete the one on top
   m_log10EqConst.resize( m_numSecSpecies );	
   m_log10EqConst[0] = 13.99;
   m_log10EqConst[1] = -6.36;
