@@ -55,7 +55,7 @@ namespace tensor
 
 /// Dynamically sized tensor
 /** DyncamicTensor represent stack allocated tensors with sizes known at runtime.
-    ex: `DynamicTensor<4,double> u(2,3,4,5);',
+    ex: `DynamicTensor<4,real64> u(2,3,4,5);',
     represents a dynamically sized stack allocated rank 4 tensor with respective
     dimensions 2,3,4, and 5. The memory stack allocated being
     `pow(DynamicMaxSize,Rank)'.
@@ -64,14 +64,14 @@ template <int Rank, typename T, int MaxSize = pow(DynamicMaxSize,Rank)>
 using DynamicTensor = TensorBase<StackContainer<T, MaxSize>,
                              DynamicLayout<Rank> >;
 
-/// Helper type for DynamicTensor with double.
+/// Helper type for DynamicTensor with real64.
 template <int Rank, int MaxSize = pow(DynamicMaxSize,Rank)>
-using DynamicDTensor = DynamicTensor<Rank,double,MaxSize>;
+using DynamicDTensor = DynamicTensor<Rank,real64,MaxSize>;
 
 /// Statically sized Tensor
 /** StaticTensor represent stack allocated tensors with dimensions known at the
     compilation.
-    ex: `StaticTensor<double,2,3,4,5> u;',
+    ex: `StaticTensor<real64,2,3,4,5> u;',
     represents a stack allocated rank 4 tensor with compilation time dimensions
     2, 3, 4, and 5.
     These tensors have the propriety to be thread private on GPU.
@@ -80,9 +80,9 @@ template <typename T, int... Sizes>
 using StaticTensor = TensorBase<StackContainer<T, prod(Sizes...)>,
                             StaticLayout<Sizes...> >;
 
-/// Helper type for StaticTensor with double
+/// Helper type for StaticTensor with real64
 template <int... Sizes>
-using StaticDTensor = StaticTensor<double,Sizes...>;
+using StaticDTensor = StaticTensor<real64,Sizes...>;
 
 /// A Tensor dynamically distributed over threads
 /** Dynamic1dThreadTensor represent stack allocated tensors whith dimensions
@@ -98,9 +98,9 @@ using Dynamic1dThreadTensor = TensorBase<
                               Dynamic1dThreadLayout<Rank,BatchSize>
                            >;
 
-/// Helper type for Dynamic1dThreadTensor with double
+/// Helper type for Dynamic1dThreadTensor with real64
 template <int Rank, int BatchSize, int MaxSize = DynamicMaxSize>
-using Dynamic1dThreadDTensor = Dynamic1dThreadTensor<Rank,double,BatchSize,MaxSize>;
+using Dynamic1dThreadDTensor = Dynamic1dThreadTensor<Rank,real64,BatchSize,MaxSize>;
 
 /// A Tensor statically distributed over threads
 /** Static1dThreadTensor represent stack allocated tensors whith dimensions
@@ -115,9 +115,9 @@ using Static1dThreadTensor = TensorBase<StackContainer<
                                     Static1dThreadLayout<BatchSize, Sizes...>
                              >;
 
-/// Helper type for Static1dThreadTensor with double
+/// Helper type for Static1dThreadTensor with real64
 template <int BatchSize, int... Sizes>
-using Static1dThreadDTensor = Static1dThreadTensor<double,BatchSize,Sizes...>;
+using Static1dThreadDTensor = Static1dThreadTensor<real64,BatchSize,Sizes...>;
 
 /// A Tensor dynamically distributed over a plane of threads
 /** Dynamic2dThreadTensor represent stack allocated tensors whith dimensions
@@ -134,9 +134,9 @@ using Dynamic2dThreadTensor = TensorBase<
                               Dynamic2dThreadLayout<Rank,BatchSize>
                            >;
 
-/// Helper type for Dynamic2dThreadTensor with double
+/// Helper type for Dynamic2dThreadTensor with real64
 template <int Rank, int BatchSize, int MaxSize = DynamicMaxSize>
-using Dynamic2dThreadDTensor = Dynamic2dThreadTensor<Rank,double,BatchSize,MaxSize>;
+using Dynamic2dThreadDTensor = Dynamic2dThreadTensor<Rank,real64,BatchSize,MaxSize>;
 
 /// A Tensor statically distributed over a plane of threads
 /** Static2dThreadTensor represent stack allocated tensors whith dimensions
@@ -152,9 +152,9 @@ using Static2dThreadTensor = TensorBase<StackContainer<
                                     Static2dThreadLayout<BatchSize, Sizes...>
                              >;
 
-/// Helper type for Static2dThreadTensor with double
+/// Helper type for Static2dThreadTensor with real64
 template <int BatchSize, int... Sizes>
-using Static2dThreadDTensor = Static2dThreadTensor<double,BatchSize,Sizes...>;
+using Static2dThreadDTensor = Static2dThreadTensor<real64,BatchSize,Sizes...>;
 
 /// A Tensor dynamically distributed over a cube of threads
 /** Dynamic3dThreadTensor represent stack allocated tensors whith dimensions
@@ -171,9 +171,9 @@ using Dynamic3dThreadTensor = TensorBase<
                                  Dynamic3dThreadLayout<Rank,BatchSize>
                               >;
 
-/// Helper type for Dynamic3dThreadTensor with double
+/// Helper type for Dynamic3dThreadTensor with real64
 template <int Rank, int BatchSize, int MaxSize = DynamicMaxSize>
-using Dynamic3dThreadDTensor = Dynamic3dThreadTensor<Rank,double,BatchSize,MaxSize>;
+using Dynamic3dThreadDTensor = Dynamic3dThreadTensor<Rank,real64,BatchSize,MaxSize>;
 
 /// A Tensor statically distributed over a cube of threads
 /** Static3dThreadTensor represent stack allocated tensors whith dimensions
@@ -190,7 +190,7 @@ using Static3dThreadTensor = TensorBase<StackContainer<
                              >;
 
 template <int BatchSize, int... Sizes>
-using Static3dThreadDTensor = Static3dThreadTensor<double,BatchSize,Sizes...>;
+using Static3dThreadDTensor = Static3dThreadTensor<real64,BatchSize,Sizes...>;
 
 /// A threaded tensor type with Dim threaded dimensions
 /** ThreadTensor<Dim> contains static_type, and dynamic_type corresponding to
@@ -252,7 +252,7 @@ using MyDeviceTensor = TensorBase<DeviceContainer<T>,
                               DynamicLayout<Rank> >;
 
 template <int Rank>
-using DeviceDTensor = MyDeviceTensor<Rank,double>;
+using DeviceDTensor = MyDeviceTensor<Rank,real64>;
 
 /// Dynamically sized tensors using a pointer as container.
 template <int Rank, typename T>
@@ -260,7 +260,7 @@ using DynamicPointerTensor = TensorBase<DeviceContainer<T>,
                                     DynamicLayout<Rank> >;
 
 template <int Rank>
-using DynamicPointerDTensor = DynamicPointerTensor<Rank,double>;
+using DynamicPointerDTensor = DynamicPointerTensor<Rank,real64>;
 
 /// Statically sized tensor using a pointer container.
 template <typename T, int... Sizes>
@@ -268,7 +268,7 @@ using StaticPointerTensor = TensorBase<DeviceContainer<T>,
                                    StaticLayout<Sizes...> >;
 
 template <int... Sizes>
-using StaticPointerDTensor = StaticPointerTensor<double,Sizes...>;
+using StaticPointerDTensor = StaticPointerTensor<real64,Sizes...>;
 
 /// A tensor using a read only const pointer and a dynamic data layout.
 template <int Rank, typename T>
@@ -276,7 +276,7 @@ using ReadTensor = TensorBase<ReadContainer<T>,
                           DynamicLayout<Rank> >;
 
 template <int Rank>
-using ReadDTensor = ReadTensor<Rank,double>;
+using ReadDTensor = ReadTensor<Rank,real64>;
 
 } // namespace tensor
 

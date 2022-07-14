@@ -26,6 +26,7 @@
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "tensor/tensor_types.hpp"
 
 namespace geosx
 {
@@ -35,6 +36,9 @@ namespace geosx
  */
 namespace finiteElement
 {
+
+template < localIndex... Sizes >
+using SharedTensor = tensor::StaticPointerDTensor< Sizes... >;
 
 /** @brief 3D interpolation operator using 2D block of threads with RAJA teams
  * 
@@ -60,8 +64,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  GEOSX_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d];
-
+  SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d > Bu( stack.shared_mem_buffers[0] );
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
     loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
@@ -81,7 +84,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
       }
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
-        Bu[quad_x][dof_y][dof_z] = res[dof_z];
+        Bu( quad_x, dof_y, dof_z ) = res[dof_z];
       }
     });
   });
@@ -89,7 +92,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  GEOSX_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d];
+  SharedTensor< num_quads_1d, num_quads_1d, num_dofs_1d > BBu( stack.shared_mem_buffers[1] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
   {
@@ -105,12 +108,12 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
         real64 const b = basis[dof_y][quad_y];
         for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
         {
-          res[dof_z] += b * Bu[quad_x][dof_y][dof_z];
+          res[dof_z] += b * Bu( quad_x, dof_y, dof_z );
         }
       }
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
-        BBu[quad_x][quad_y][dof_z] = res[dof_z];
+        BBu( quad_x, quad_y, dof_z ) = res[dof_z];
       }
     });
   });
@@ -126,7 +129,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
       real64 val[num_dofs_1d];
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
-        val[dof_z] = BBu[quad_x][quad_y][dof_z];
+        val[dof_z] = BBu( quad_x, quad_y, dof_z );
       }
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
@@ -168,7 +171,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  GEOSX_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d][num_comp];
+  SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d, num_comp > Bu( stack.shared_mem_buffers[0] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
@@ -197,7 +200,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
       {
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
-          Bu[quad_x][dof_y][dof_z][comp] = res[dof_z][comp];
+          Bu( quad_x, dof_y, dof_z, comp ) = res[dof_z][comp];
         }
       }
     });
@@ -206,7 +209,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  GEOSX_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp];
+  SharedTensor< num_quads_1d, num_quads_1d, num_dofs_1d, num_comp > BBu( stack.shared_mem_buffers[1] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
   {
@@ -227,7 +230,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
         {
           for (localIndex comp = 0; comp < num_comp; comp++)
           {
-            res[dof_z][comp] += b * Bu[quad_x][dof_y][dof_z][comp];
+            res[dof_z][comp] += b * Bu( quad_x, dof_y, dof_z, comp );
           }
         }
       }
@@ -235,7 +238,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
       {
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
-          BBu[quad_x][quad_y][dof_z][comp] = res[dof_z][comp];
+          BBu( quad_x, quad_y, dof_z, comp ) = res[dof_z][comp];
         }
       }
     });
@@ -254,7 +257,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
       {
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
-          val[dof_z][comp] = BBu[quad_x][quad_y][dof_z][comp];
+          val[dof_z][comp] = BBu( quad_x, quad_y, dof_z, comp );
         }
       }
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
@@ -305,7 +308,7 @@ void applyTestFunctions( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
   
   // Contraction on the first dimension
-  GEOSX_SHARED real64 Bu[num_dofs_1d][num_quads_1d][num_quads_1d];
+  SharedTensor< num_dofs_1d, num_quads_1d, num_quads_1d > Bu( stack.shared_mem_buffers[0] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
@@ -326,7 +329,7 @@ void applyTestFunctions( StackVariables & stack,
       }
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
-        Bu[dof_x][quad_y][quad_z] = res[quad_z];
+        Bu( dof_x, quad_y, quad_z ) = res[quad_z];
       }
     });
   });
@@ -334,7 +337,7 @@ void applyTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  GEOSX_SHARED real64 BBu[num_dofs_1d][num_dofs_1d][num_quads_1d];
+  SharedTensor< num_dofs_1d, num_dofs_1d, num_quads_1d > BBu( stack.shared_mem_buffers[1] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
   {
@@ -350,12 +353,12 @@ void applyTestFunctions( StackVariables & stack,
         real64 const b = basis[dof_y][quad_y];
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
-          res[quad_z] += b * Bu[dof_x][quad_y][quad_z];
+          res[quad_z] += b * Bu( dof_x, quad_y, quad_z );
         }
       }
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
-        BBu[dof_x][dof_y][quad_z] = res[quad_z];
+        BBu( dof_x, dof_y, quad_z ) = res[quad_z];
       }
     });
   });
@@ -371,7 +374,7 @@ void applyTestFunctions( StackVariables & stack,
       real64 val[num_quads_1d];
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
-        val[quad_z] = BBu[dof_x][dof_y][quad_z];
+        val[quad_z] = BBu( dof_x, dof_y, quad_z );
       }
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
@@ -411,7 +414,7 @@ void applyTestFunctions( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
   
   // Contraction on the first dimension
-  GEOSX_SHARED real64 Bu[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp];
+  SharedTensor< num_dofs_1d, num_quads_1d, num_quads_1d, num_comp > Bu( stack.shared_mem_buffers[0] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
@@ -440,7 +443,7 @@ void applyTestFunctions( StackVariables & stack,
       {
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
-          Bu[dof_x][quad_y][quad_z][comp] = res[quad_z][comp];
+          Bu( dof_x, quad_y, quad_z, comp ) = res[quad_z][comp];
         }
       }
     });
@@ -449,7 +452,7 @@ void applyTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  GEOSX_SHARED real64 BBu[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp];
+  SharedTensor< num_dofs_1d, num_dofs_1d, num_quads_1d, num_comp > BBu( stack.shared_mem_buffers[1] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
   {
@@ -470,7 +473,7 @@ void applyTestFunctions( StackVariables & stack,
         {
           for (localIndex comp = 0; comp < num_comp; comp++)
           {
-            res[quad_z][comp] += b * Bu[dof_x][quad_y][quad_z][comp];
+            res[quad_z][comp] += b * Bu( dof_x, quad_y, quad_z, comp );
           }
         }
       }
@@ -478,7 +481,7 @@ void applyTestFunctions( StackVariables & stack,
       {
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
-          BBu[dof_x][dof_y][quad_z][comp] = res[quad_z][comp];
+          BBu( dof_x, dof_y, quad_z, comp ) = res[quad_z][comp];
         }
       }
     });
@@ -497,7 +500,7 @@ void applyTestFunctions( StackVariables & stack,
       {
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
-          val[quad_z][comp] = BBu[dof_x][dof_y][quad_z][comp];
+          val[quad_z][comp] = BBu( dof_x, dof_y, quad_z, comp );
         }
       }
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
@@ -541,8 +544,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  GEOSX_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d],
-                      Gu[num_quads_1d][num_dofs_1d][num_dofs_1d];
+  SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d >
+    Bu( stack.shared_mem_buffers[0] ),
+    Gu( stack.shared_mem_buffers[1] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
@@ -568,8 +572,8 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
       }
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
-        Bu[quad_x][dof_y][dof_z] = bu[dof_z];
-        Gu[quad_x][dof_y][dof_z] = gu[dof_z];
+        Bu( quad_x, dof_y, dof_z ) = bu[dof_z];
+        Gu( quad_x, dof_y, dof_z ) = gu[dof_z];
       }
     });
   });
@@ -577,9 +581,10 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  GEOSX_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d],
-                      BGu[num_quads_1d][num_quads_1d][num_dofs_1d],
-                      GBu[num_quads_1d][num_quads_1d][num_dofs_1d];
+  SharedTensor< num_quads_1d, num_quads_1d, num_dofs_1d >
+    BBu( stack.shared_mem_buffers[2] ),
+    BGu( stack.shared_mem_buffers[3] ),
+    GBu( stack.shared_mem_buffers[4] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
   {
@@ -600,8 +605,8 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
         real64 const g = basis_gradient[dof_y][quad_y];
         for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
         {
-          real64 const bu = Bu[quad_x][dof_y][dof_z];
-          real64 const gu = Gu[quad_x][dof_y][dof_z];
+          real64 const bu = Bu( quad_x, dof_y, dof_z );
+          real64 const gu = Gu( quad_x, dof_y, dof_z );
           bbu[dof_z] += b * bu;
           bgu[dof_z] += b * gu;
           gbu[dof_z] += g * bu;
@@ -609,9 +614,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
       }
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
-        BBu[quad_x][quad_y][dof_z] = bbu[dof_z];
-        BGu[quad_x][quad_y][dof_z] = bgu[dof_z];
-        GBu[quad_x][quad_y][dof_z] = gbu[dof_z];
+        BBu( quad_x, quad_y, dof_z ) = bbu[dof_z];
+        BGu( quad_x, quad_y, dof_z ) = bgu[dof_z];
+        GBu( quad_x, quad_y, dof_z ) = gbu[dof_z];
       }
     });
   });
@@ -629,9 +634,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
       real64 gbu[num_dofs_1d];
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
-        bbu[dof_z] = BBu[quad_x][quad_y][dof_z];
-        bgu[dof_z] = BGu[quad_x][quad_y][dof_z];
-        gbu[dof_z] = GBu[quad_x][quad_y][dof_z];
+        bbu[dof_z] = BBu( quad_x, quad_y, dof_z );
+        bgu[dof_z] = BGu( quad_x, quad_y, dof_z );
+        gbu[dof_z] = GBu( quad_x, quad_y, dof_z );
       }
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
@@ -672,8 +677,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  GEOSX_SHARED real64 Bu[num_quads_1d][num_dofs_1d][num_dofs_1d][num_comp],
-                      Gu[num_quads_1d][num_dofs_1d][num_dofs_1d][num_comp];
+  SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d, num_comp >
+    Bu( stack.shared_mem_buffers[0] ),
+    Gu( stack.shared_mem_buffers[1] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
@@ -707,8 +713,8 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
       {
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
-          Bu[quad_x][dof_y][dof_z][comp] = bu[dof_z][comp];
-          Gu[quad_x][dof_y][dof_z][comp] = gu[dof_z][comp];
+          Bu( quad_x, dof_y, dof_z, comp ) = bu[dof_z][comp];
+          Gu( quad_x, dof_y, dof_z, comp ) = gu[dof_z][comp];
         }
       }
     });
@@ -717,9 +723,10 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  GEOSX_SHARED real64 BBu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp],
-                      BGu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp],
-                      GBu[num_quads_1d][num_quads_1d][num_dofs_1d][num_comp];
+  SharedTensor< num_quads_1d, num_quads_1d, num_dofs_1d, num_comp >
+    BBu( stack.shared_mem_buffers[2] ),
+    BGu( stack.shared_mem_buffers[3] ),
+    GBu( stack.shared_mem_buffers[4] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
   {
@@ -745,8 +752,8 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
         {
           for (localIndex comp = 0; comp < num_comp; comp++)
           {
-            real64 const bu = Bu[quad_x][dof_y][dof_z][comp];
-            real64 const gu = Gu[quad_x][dof_y][dof_z][comp];
+            real64 const bu = Bu( quad_x, dof_y, dof_z, comp );
+            real64 const gu = Gu( quad_x, dof_y, dof_z, comp );
             bbu[dof_z][comp] += b * bu;
             bgu[dof_z][comp] += b * gu;
             gbu[dof_z][comp] += g * bu;
@@ -757,9 +764,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
       {
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
-          BBu[quad_x][quad_y][dof_z][comp] = bbu[dof_z][comp];
-          BGu[quad_x][quad_y][dof_z][comp] = bgu[dof_z][comp];
-          GBu[quad_x][quad_y][dof_z][comp] = gbu[dof_z][comp];
+          BBu( quad_x, quad_y, dof_z, comp ) = bbu[dof_z][comp];
+          BGu( quad_x, quad_y, dof_z, comp ) = bgu[dof_z][comp];
+          GBu( quad_x, quad_y, dof_z, comp ) = gbu[dof_z][comp];
         }
       }
     });
@@ -780,9 +787,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
       {
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
-          bbu[dof_z][comp] = BBu[quad_x][quad_y][dof_z][comp];
-          bgu[dof_z][comp] = BGu[quad_x][quad_y][dof_z][comp];
-          gbu[dof_z][comp] = GBu[quad_x][quad_y][dof_z][comp];
+          bbu[dof_z][comp] = BBu( quad_x, quad_y, dof_z, comp );
+          bgu[dof_z][comp] = BGu( quad_x, quad_y, dof_z, comp );
+          gbu[dof_z][comp] = GBu( quad_x, quad_y, dof_z, comp );
         }
       }
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
@@ -834,9 +841,10 @@ void applyGradientTestFunctions( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  GEOSX_SHARED real64 Gqx[num_dofs_1d][num_quads_1d][num_quads_1d],
-                      Bqy[num_dofs_1d][num_quads_1d][num_quads_1d],
-                      Bqz[num_dofs_1d][num_quads_1d][num_quads_1d];
+  SharedTensor< num_dofs_1d, num_quads_1d, num_quads_1d >
+    Gqx( stack.shared_mem_buffers[0] ),
+    Bqy( stack.shared_mem_buffers[1] ),
+    Bqz( stack.shared_mem_buffers[2] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
@@ -868,9 +876,9 @@ void applyGradientTestFunctions( StackVariables & stack,
       }
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
-        Gqx[dof_x][quad_y][quad_z] = gqx[quad_z];
-        Bqy[dof_x][quad_y][quad_z] = bqy[quad_z];
-        Bqz[dof_x][quad_y][quad_z] = bqz[quad_z];
+        Gqx( dof_x, quad_y, quad_z ) = gqx[quad_z];
+        Bqy( dof_x, quad_y, quad_z ) = bqy[quad_z];
+        Bqz( dof_x, quad_y, quad_z ) = bqz[quad_z];
       }
     });
   });
@@ -878,9 +886,10 @@ void applyGradientTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  GEOSX_SHARED real64 BGqx[num_dofs_1d][num_dofs_1d][num_quads_1d],
-                      GBqy[num_dofs_1d][num_dofs_1d][num_quads_1d],
-                      BBqz[num_dofs_1d][num_dofs_1d][num_quads_1d];
+  SharedTensor< num_dofs_1d, num_dofs_1d, num_quads_1d >
+    BGqx( stack.shared_mem_buffers[3] ),
+    GBqy( stack.shared_mem_buffers[4] ),
+    BBqz( stack.shared_mem_buffers[5] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
   {
@@ -901,9 +910,9 @@ void applyGradientTestFunctions( StackVariables & stack,
         real64 const g = basis_gradient[dof_y][quad_y];
         for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
         {
-          real64 const gqx = Gqx[dof_x][quad_y][quad_z];
-          real64 const bqy = Bqy[dof_x][quad_y][quad_z];
-          real64 const bqz = Bqz[dof_x][quad_y][quad_z];
+          real64 const gqx = Gqx( dof_x, quad_y, quad_z );
+          real64 const bqy = Bqy( dof_x, quad_y, quad_z );
+          real64 const bqz = Bqz( dof_x, quad_y, quad_z );
           bgqx[quad_z] += b * gqx;
           gbqy[quad_z] += g * bqy;
           bbqz[quad_z] += b * bqz;
@@ -911,9 +920,9 @@ void applyGradientTestFunctions( StackVariables & stack,
       }
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
-        BGqx[dof_x][dof_y][quad_z] = bgqx[quad_z];
-        GBqy[dof_x][dof_y][quad_z] = gbqy[quad_z];
-        BBqz[dof_x][dof_y][quad_z] = bbqz[quad_z];
+        BGqx( dof_x, dof_y, quad_z ) = bgqx[quad_z];
+        GBqy( dof_x, dof_y, quad_z ) = gbqy[quad_z];
+        BBqz( dof_x, dof_y, quad_z ) = bbqz[quad_z];
       }
     });
   });
@@ -931,9 +940,9 @@ void applyGradientTestFunctions( StackVariables & stack,
       real64 bbqz[num_quads_1d];
       for (localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++)
       {
-        bgqx[quad_z] = BGqx[dof_x][dof_y][quad_z];
-        gbqy[quad_z] = GBqy[dof_x][dof_y][quad_z];
-        bbqz[quad_z] = BBqz[dof_x][dof_y][quad_z];
+        bgqx[quad_z] = BGqx( dof_x, dof_y, quad_z );
+        gbqy[quad_z] = GBqy( dof_x, dof_y, quad_z );
+        bbqz[quad_z] = BBqz( dof_x, dof_y, quad_z );
       }
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
       {
@@ -967,9 +976,10 @@ void applyGradientTestFunctions( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  GEOSX_SHARED real64 Gqx[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp],
-                      Bqy[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp],
-                      Bqz[num_dofs_1d][num_quads_1d][num_quads_1d][num_comp];
+  SharedTensor< num_dofs_1d, num_quads_1d, num_quads_1d, num_comp >
+    Gqx( stack.shared_mem_buffers[0] ),
+    Bqy( stack.shared_mem_buffers[1] ),
+    Bqz( stack.shared_mem_buffers[2] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
@@ -1009,9 +1019,9 @@ void applyGradientTestFunctions( StackVariables & stack,
       {
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
-          Gqx[dof_x][quad_y][quad_z][comp] = gqx[quad_z][comp];
-          Bqy[dof_x][quad_y][quad_z][comp] = bqy[quad_z][comp];
-          Bqz[dof_x][quad_y][quad_z][comp] = bqz[quad_z][comp];
+          Gqx( dof_x, quad_y, quad_z, comp ) = gqx[quad_z][comp];
+          Bqy( dof_x, quad_y, quad_z, comp ) = bqy[quad_z][comp];
+          Bqz( dof_x, quad_y, quad_z, comp ) = bqz[quad_z][comp];
         }
       }
     });
@@ -1020,9 +1030,10 @@ void applyGradientTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  GEOSX_SHARED real64 BGqx[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp],
-                      GBqy[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp],
-                      BBqz[num_dofs_1d][num_dofs_1d][num_quads_1d][num_comp];
+  SharedTensor< num_dofs_1d, num_dofs_1d, num_quads_1d, num_comp >
+    BGqx( stack.shared_mem_buffers[3] ),
+    GBqy( stack.shared_mem_buffers[4] ),
+    BBqz( stack.shared_mem_buffers[5] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
   {
@@ -1048,9 +1059,9 @@ void applyGradientTestFunctions( StackVariables & stack,
         {
           for (localIndex comp = 0; comp < num_comp; comp++)
           {
-            real64 const gqx = Gqx[dof_x][quad_y][quad_z][comp];
-            real64 const bqy = Bqy[dof_x][quad_y][quad_z][comp];
-            real64 const bqz = Bqz[dof_x][quad_y][quad_z][comp];
+            real64 const gqx = Gqx( dof_x, quad_y, quad_z, comp );
+            real64 const bqy = Bqy( dof_x, quad_y, quad_z, comp );
+            real64 const bqz = Bqz( dof_x, quad_y, quad_z, comp );
             bgqx[quad_z][comp] += b * gqx;
             gbqy[quad_z][comp] += g * bqy;
             bbqz[quad_z][comp] += b * bqz;
@@ -1061,9 +1072,9 @@ void applyGradientTestFunctions( StackVariables & stack,
       {
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
-          BGqx[dof_x][dof_y][quad_z][comp] = bgqx[quad_z][comp];
-          GBqy[dof_x][dof_y][quad_z][comp] = gbqy[quad_z][comp];
-          BBqz[dof_x][dof_y][quad_z][comp] = bbqz[quad_z][comp];
+          BGqx( dof_x, dof_y, quad_z, comp ) = bgqx[quad_z][comp];
+          GBqy( dof_x, dof_y, quad_z, comp ) = gbqy[quad_z][comp];
+          BBqz( dof_x, dof_y, quad_z, comp ) = bbqz[quad_z][comp];
         }
       }
     });
@@ -1084,9 +1095,9 @@ void applyGradientTestFunctions( StackVariables & stack,
       {
         for (localIndex comp = 0; comp < num_comp; comp++)
         {
-          bgqx[quad_z][comp] = BGqx[dof_x][dof_y][quad_z][comp];
-          gbqy[quad_z][comp] = GBqy[dof_x][dof_y][quad_z][comp];
-          bbqz[quad_z][comp] = BBqz[dof_x][dof_y][quad_z][comp];
+          bgqx[quad_z][comp] = BGqx( dof_x, dof_y, quad_z, comp );
+          gbqy[quad_z][comp] = GBqy( dof_x, dof_y, quad_z, comp );
+          bbqz[quad_z][comp] = BBqz( dof_x, dof_y, quad_z, comp );
         }
       }
       for (localIndex dof_z = 0; dof_z < num_dofs_1d; dof_z++)
