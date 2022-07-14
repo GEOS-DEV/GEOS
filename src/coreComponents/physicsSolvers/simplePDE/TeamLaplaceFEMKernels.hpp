@@ -181,16 +181,16 @@ public:
     /// Computation of the Jacobians
     readField( stack, stack.kernelComponent.m_X, stack.mesh.getNodes() );
     interpolateGradientAtQuadraturePoints( stack,
-                                           stack.mesh.basis.getQuadValues(),
-                                           stack.mesh.basis.getQuadGradientValues(),
+                                           stack.mesh.basis.getValuesAtQuadPts(),
+                                           stack.mesh.basis.getGradientValuesAtQuadPts(),
                                            stack.mesh.getNodes(),
                                            stack.mesh.getJacobians() );
 
     /// Computation of the Gradient of the solution field
     readField( stack, stack.kernelComponent.m_primaryField, stack.element.getDofsIn() );
     interpolateGradientAtQuadraturePoints( stack,
-                                           stack.element.basis.getQuadValues(),
-                                           stack.element.basis.getQuadGradientValues(),
+                                           stack.element.basis.getValuesAtQuadPts(),
+                                           stack.element.basis.getGradientValuesAtQuadPts(),
                                            stack.element.getDofsIn(),
                                            stack.element.getGradientValues() );
   }
@@ -261,8 +261,8 @@ public:
 
     // Applying gradient of the test functions
     applyGradientTestFunctions( stack,
-                                stack.element.basis.getQuadValues(),
-                                stack.element.basis.getQuadGradientValues(),
+                                stack.element.basis.getValuesAtQuadPts(),
+                                stack.element.basis.getGradientValuesAtQuadPts(),
                                 stack.element.getQuadValues(),
                                 stack.element.getDofsOut() );
     writeAddField( stack, stack.element.getDofsOut(), stack.kernelComponent.m_rhs );

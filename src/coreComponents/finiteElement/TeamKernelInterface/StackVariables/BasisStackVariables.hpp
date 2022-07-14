@@ -75,22 +75,22 @@ struct BasisStackVariables
 
   // basis accessor
   real64 ( * basis )[num_dofs_1d][num_quads_1d];
-  real64 const ( & getQuadValues() const )[num_dofs_1d][num_quads_1d]
+  real64 const ( & getValuesAtQuadPts() const )[num_dofs_1d][num_quads_1d]
   {
     return *basis;
   }
-  real64 ( & getQuadValues() )[num_dofs_1d][num_quads_1d]
+  real64 ( & getValuesAtQuadPts() )[num_dofs_1d][num_quads_1d]
   {
     return *basis;
   }
 
   // basis gradient accessor
   real64 ( * basis_gradient )[num_dofs_1d][num_quads_1d];
-  real64 const ( & getQuadGradientValues() const )[num_dofs_1d][num_quads_1d]
+  real64 const ( & getGradientValuesAtQuadPts() const )[num_dofs_1d][num_quads_1d]
   {
     return *basis_gradient;
   }
-  real64 ( & getQuadGradientValues() )[num_dofs_1d][num_quads_1d]
+  real64 ( & getGradientValuesAtQuadPts() )[num_dofs_1d][num_quads_1d]
   {
     return *basis_gradient;
   }
