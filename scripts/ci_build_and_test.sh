@@ -27,7 +27,7 @@ CONTAINER_NAME=geosx_build
 while sleep 5m; do echo "... still building ..."; done & 
 docker run \
 --name=${CONTAINER_NAME} \
---volume=${BUILD_SOURCESDIRECTORY}:${BUILD_DIR_MOUNT_POINT} \
+--volume=${BUILD_DIR}:${BUILD_DIR_MOUNT_POINT} \
 --cap-add=ALL \
 -e HOST_CONFIG=${HOST_CONFIG:-host-configs/environment.cmake} \
 -e CMAKE_BUILD_TYPE \
