@@ -263,7 +263,7 @@ Inspecting results
 ---------------------------------
 
 We request VTK-format output files and use Paraview to visualize the results.
-The following figure shows the distribution of resulted shear stress (:math:`\sigma_{xy}`) in the computational domain for two different cases (a permeable vs. an impermeable fault). Numerical solutions for both cases are also compared with the corresponding analytical solutions.
+The following figure shows the distribution of resulting shear stress (:math:`\sigma_{xy}`) in the computational domain for two different cases (a permeable vs. an impermeable fault). Numerical solutions for both cases are also compared with the corresponding analytical solutions.
 
 .. _problemFaultVerificationFig1:
 .. figure:: contour.PNG
@@ -274,7 +274,7 @@ The following figure shows the distribution of resulted shear stress (:math:`\si
    Simulation results of :math:`\sigma_{xy}`
 
 
-The figure below compares the results from GEOSX (marks) and the corresponding analytical solution (solid curves) for the change of total stresses (:math:`\sigma_{xx}`, :math:`\sigma_{yy}` and :math:`\sigma_{xy}`) along the fault plane. As shown, GEOSX reliably captures the mechanical deformation of the faulted reservoir and shows excellent agreement with the analytical solutions for two different scenarios. Discrepancies on the stress perturbations between the cases with permeable and impermeable fault are also noticeable, which suggests that fault permeability plays a crucial role in governing reservoir deformation for the problems with reservoir pressurization or depletion. 
+The figure below compares the results from GEOSX (marks) and the corresponding analytical solution (solid curves) for the change of total stresses (:math:`\sigma_{xx}`, :math:`\sigma_{yy}` and :math:`\sigma_{xy}`) along the fault plane. As shown, GEOSX reliably captures the mechanical deformation of the faulted reservoir and shows excellent agreement with the analytical solutions for two different scenarios. Differences in the stress perturbations between the cases with permeable and impermeable fault are also noticeable, which suggests that fault permeability plays a crucial role in governing reservoir deformation for the problems with reservoir pressurization or depletion. 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/faultVerification/faultVerificationFigure.py
 
