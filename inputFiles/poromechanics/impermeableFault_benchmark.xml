@@ -8,9 +8,9 @@
 <!-- SPHINX_POROMECHANICSSOLVER -->
   <Solvers gravityVector="{0.0, 0.0, 0.0}">
     <SinglePhasePoromechanics 
-      name="PoromechanicsSolver" 
+      name="poromechanicsSolver" 
       solidSolverName="mechanicsSolver"
-      fluidSolverName="SinglePhaseFlowSolver"
+      fluidSolverName="singlePhaseFlowSolver"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
@@ -44,7 +44,7 @@
 
 <!-- SPHINX_SINGLEPHASEFVM -->
     <SinglePhaseFVM 
-      name="SinglePhaseFlowSolver"
+      name="singlePhaseFlowSolver"
       logLevel="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain }"> 
@@ -61,10 +61,11 @@
 
 <!-- SPHINX_MESH -->
   <Mesh>
-    <PAMELAMesh
-      name="FaultModel"
-      file="faultMesh.msh"/>
-  </Mesh>
+     <VTKMesh         
+      name="FaultModel"      
+      file="faultMesh.vtk"
+      regionAttribute="CellEntityIds"/>
+  </Mesh> 
 <!-- SPHINX_MESH_END -->
 
 <!-- SPHINX_INJECTION -->
@@ -73,7 +74,7 @@
       name="injection"
       initialCondition="0"
       setNames="{all}"
-      objectPath="ElementRegions/Domain/HANDINGWALL_HEX"
+      objectPath="ElementRegions/Domain/97_hexahedra"
       fieldName="pressure"      
       scale="55.0e6"/>   	  
   </FieldSpecifications>
@@ -88,7 +89,7 @@
      <PeriodicEvent
       name="solverApplications"
       forceDt="10"
-      target="/Solvers/PoromechanicsSolver"/>	     
+      target="/Solvers/poromechanicsSolver"/>	     
   </Events>
 
 </Problem>

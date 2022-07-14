@@ -5,7 +5,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ BEDROCK_HEX, CAPROCK_HEX, FOOTWALL_HEX, HANDINGWALL_HEX }"
+      cellBlocks="{ 94_hexahedra, 95_hexahedra, 96_hexahedra, 97_hexahedra }"
       materialList="{ water, porousRock }"/>  
   </ElementRegions> 
   <!-- SPHINX_ELEMENTREGIONS_END -->
@@ -113,7 +113,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ lhsX, rhsX }"/>
+      setNames="{ 89, 88 }"/>
 
     <FieldSpecification
       name="yconstraint"
@@ -121,7 +121,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ botY }"/>
+      setNames="{ 90 }"/>
 
     <FieldSpecification
       name="zconstraintFront"
@@ -129,14 +129,14 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ frontZ, backZ }"/>
+      setNames="{ 92, 93 }"/>
 
     <Traction
       name="NormalTraction"
       objectPath="faceManager"
       tractionType="normal"
       scale="-70.0e6"      
-      setNames="{ topY }"/>  	  
+      setNames="{ 91 }"/>  	  
   </FieldSpecifications>
   <!-- SPHINX_BC_END -->
 

@@ -7,9 +7,9 @@
 
   <Solvers gravityVector="{0.0, 0.0, 0.0}">
     <SinglePhasePoromechanics 
-      name="PoromechanicsSolver" 
+      name="poromechanicsSolver" 
       solidSolverName="mechanicsSolver"
-      fluidSolverName="SinglePhaseFlowSolver"
+      fluidSolverName="singlePhaseFlowSolver"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
@@ -35,7 +35,7 @@
     </SolidMechanics_LagrangianFEM>
 
     <SinglePhaseFVM 
-      name="SinglePhaseFlowSolver"
+      name="singlePhaseFlowSolver"
       logLevel="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain }"> 
@@ -47,17 +47,18 @@
   </Solvers>
 
   <Mesh>
-    <PAMELAMesh
-      name="FaultModel"
-      file="faultMesh_smoke.msh"/>
-  </Mesh>
+     <VTKMesh         
+      name="FaultModel"      
+      file="faultMesh_smoke.vtk"
+      regionAttribute="CellEntityIds"/>
+  </Mesh> 
 
   <FieldSpecifications>
     <FieldSpecification 
       name="injection"
       initialCondition="0"
       setNames="{all}"
-      objectPath="ElementRegions/Domain/HANDINGWALL_HEX"
+      objectPath="ElementRegions/Domain/97_hexahedra"
       fieldName="pressure"      
       scale="55.0e6"/>
 
@@ -65,7 +66,7 @@
       name="injection2"
       initialCondition="0"
       setNames="{all}"
-      objectPath="ElementRegions/Domain/FOOTWALL_HEX"
+      objectPath="ElementRegions/Domain/96_hexahedra"
       fieldName="pressure"      
       scale="55.0e6"/>	  
   </FieldSpecifications>
@@ -79,7 +80,7 @@
     <PeriodicEvent
       name="solverApplications"
       forceDt="10"
-      target="/Solvers/PoromechanicsSolver"/>	
+      target="/Solvers/poromechanicsSolver"/>	
 
     <PeriodicEvent
       name="restarts"

@@ -78,9 +78,9 @@ The following figure shows the mesh used in this problem.
 
    Imported mesh
 
-Here, we load the mesh with ``PAMELAMesh`` (see :ref:`ImportingExternalMesh`).
+Here, we load the mesh with ``VTKMesh``.
 The syntax to import external meshes is simple: in the XML file,
-the mesh file ``faultMesh.msh`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified label (here ``FaultModel``) is given to the mesh object. This mesh contains quadrilateral elements and local refinement to conform with the fault geometry and two reservoir compartments displaced by the fault. The size of the reservoir should be large enough to avoid boundary effects.
+the mesh file ``faultMesh.vtk`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified label (here ``FaultModel``) is given to the mesh object. This mesh contains quadrilateral elements and local refinement to conform with the fault geometry and two reservoir compartments displaced by the fault. The size of the reservoir should be large enough to avoid boundary effects.
 
 
 .. literalinclude:: ../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
@@ -115,7 +115,7 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
   :end-before: <!-- SPHINX_MECHANICALSOLVER_END -->
 
 
-- the single-phase flow solver, a solver of type ``SinglePhaseFVM`` called here ``SinglePhaseFlowSolver`` (more information on these solvers at :ref:`SinglePhaseFlow`),
+- the single-phase flow solver, a solver of type ``SinglePhaseFVM`` called here ``singlePhaseFlowSolver`` (more information on these solvers at :ref:`SinglePhaseFlow`),
 
 
 .. literalinclude:: ../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
@@ -124,7 +124,7 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
   :end-before: <!-- SPHINX_SINGLEPHASEFVM_END -->
 
 
-- the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, which is named as ``PoromechanicsSolver`` (more information at :ref:`PoroelasticSolver`).
+- the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, which is named as ``poromechanicsSolver`` (more information at :ref:`PoroelasticSolver`).
 
 
 .. literalinclude:: ../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
@@ -137,9 +137,9 @@ The two single-physics solvers are parameterized as explained
 in their corresponding documents. 
 
 In this example, let us focus on the coupling solver.
-This solver (``PoromechanicsSolver``) uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
-For instance, we must point this solver to the designated fluid solver (here: ``SinglePhaseFlowSolver``) and solid solver (here: ``mechanicsSolver``).
-These solvers are forced to interact with all the constitutive models in the target regions. We specify the discretization method (``FE1``, defined in the ``NumericalMethods`` section), and the target regions (here, we only have one, ``Domain``).
+This solver (``poromechanicsSolver``) uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
+For instance, we must point this solver to the designated fluid solver (here: ``singlePhaseFlowSolver``) and solid solver (here: ``mechanicsSolver``).
+These solvers are forced to interact with all the constitutive models in the target regions (here, we only have one, ``Domain``).
 More parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). In this way, the two single-physics solvers will be simultaneously called and executed for solving the problem.
 
 ------------------------------------------------
@@ -189,7 +189,7 @@ The next step is to specify fields, including:
   - The boundary conditions (pressure buildup within the reservoir and constraints of the outer boundaries have to be set)
 
 In this example, we need to specify isotropic horizontal stress (:math:`\sigma_h` = -60.0 MPa and :math:`\sigma_H` = -60.0 MPa), vertical stress (:math:`\sigma_v` = -70.0 MPa), and initial reservoir pressure (:math:`P_0` = 35.0 MPa). 
-When initializing the model, a normal traction (``name="NormalTraction"``) of -70.0 MPa is imposed on the upper boundary (``setNames="{ topY }"``) to reach mechanical equilibrium.
+When initializing the model, a normal traction (``name="NormalTraction"``) of -70.0 MPa is imposed on the upper boundary (``setNames="{ 91 }"``) to reach mechanical equilibrium.
 The lateral and lower boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
@@ -201,7 +201,7 @@ These boundary conditions are set up through the ``FieldSpecifications`` section
 
 
 In this example, the only difference between the impermeable fault and permeable fault cases is how to apply pressure buildup.
-For the impermeable fault case, a constant pressure buildup is imposed to the left compartment of the reservoir (``objectPath="ElementRegions/Domain/HANDINGWALL_HEX"``):
+For the impermeable fault case, a constant pressure buildup is imposed to the left compartment of the reservoir (``objectPath="ElementRegions/Domain/97_hexahedra"``):
 
 
 .. literalinclude:: ../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
@@ -210,7 +210,7 @@ For the impermeable fault case, a constant pressure buildup is imposed to the le
     :end-before: <!-- SPHINX_INJECTION_END -->
 
 
-For the permeable fault case, a constant pressure buildup is imposed to both compartments of the reservoir: (``objectPath="ElementRegions/Domain/HANDINGWALL_HEX"`` and ``objectPath="ElementRegions/Domain/FOOTWALL_HEX"``): 
+For the permeable fault case, a constant pressure buildup is imposed to both compartments of the reservoir: (``objectPath="ElementRegions/Domain/97_hexahedra"`` and ``objectPath="ElementRegions/Domain/96_hexahedra"``): 
 
 .. literalinclude:: ../../../../../../inputFiles/poromechanics/permeableFault_benchmark.xml
     :language: xml
@@ -236,7 +236,7 @@ The parameters used in the simulation are summarized in the following table, whi
 +------------------+-----------------------------+------------------+--------------------+
 | :math:`p_0`      | Initial Reservoir Pressure  | [MPa]            | 35.0               |
 +------------------+-----------------------------+------------------+--------------------+
-| :math:`\Delta_p` | Pressure Buildup            | [MPa]            | 20.0               |
+| :math:`{\Delta}p`| Pressure Buildup            | [MPa]            | 20.0               |
 +------------------+-----------------------------+------------------+--------------------+
 | :math:`K_s`      | Grain Bulk Modulus          | [GPa]            | 71.2               |
 +------------------+-----------------------------+------------------+--------------------+
