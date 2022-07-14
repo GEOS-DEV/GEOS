@@ -188,7 +188,7 @@ The next step is to specify fields, including:
   - The initial value (the in-situ stresses and pore pressure have to be initialized)
   - The boundary conditions (pressure buildup within the reservoir and constraints of the outer boundaries have to be set)
 
-In this example, we need to specify isotropic horizontal stress (:math:`\sigma_h` = -60.0 MPa and :math:`\sigma_H` = -60.0 MPa), vertical stress (:math:`\sigma_v` = -70.0 MPa), and intial reservoir pressure (:math:`P_0` = 35.0 MPa). 
+In this example, we need to specify isotropic horizontal stress (:math:`\sigma_h` = -60.0 MPa and :math:`\sigma_H` = -60.0 MPa), vertical stress (:math:`\sigma_v` = -70.0 MPa), and initial reservoir pressure (:math:`P_0` = 35.0 MPa). 
 When initializing the model, a normal traction (``name="NormalTraction"``) of -70.0 MPa is imposed on the upper boundary (``setNames="{ topY }"``) to reach mechanical equilibrium.
 The lateral and lower boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
