@@ -80,7 +80,7 @@ The following figure shows the mesh used in this problem.
 
 Here, we load the mesh with ``PAMELAMesh`` (see :ref:`ImportingExternalMesh`).
 The syntax to import external meshes is simple: in the XML file,
-the mesh file ``faultMesh.msh`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified label (here ``FaultModel``) is given to the mesh object. This mesh contains quadrilaterals elements and local refinements to conform with the fault geometry and two reservoir compartments displaced by the fault. The size of the reservoir should be large enough to avoid boundary effects.
+the mesh file ``faultMesh.msh`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified label (here ``FaultModel``) is given to the mesh object. This mesh contains quadrilateral elements and local refinement to conform with the fault geometry and two reservoir compartments displaced by the fault. The size of the reservoir should be large enough to avoid boundary effects.
 
 
 .. literalinclude:: ../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
