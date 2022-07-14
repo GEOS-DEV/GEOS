@@ -20,11 +20,11 @@
 #ifndef GEOSX_FINITEELEMENT_TEAMKERNELFUNCTION_HPP_
 #define GEOSX_FINITEELEMENT_TEAMKERNELFUNCTION_HPP_
 
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/readField.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/writeField.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/writeAddField.hpp"
+
 #include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
-#include "constitutive/ConstitutivePassThru.hpp"
-#include "finiteElement/FiniteElementDispatch.hpp"
-#include "mesh/ElementRegionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "tensor/tensor_types.hpp"
 
@@ -1129,162 +1129,7 @@ void applyGradientTestFunctions( StackVariables & stack,
   ctx.teamSync();
 }
 
-template < typename StackVariables,
-           typename Field,
-           localIndex stride_x, localIndex stride_y, localIndex stride_z >
-void readField( StackVariables & stack,
-                Field & field,
-                real64 (& local_field)[stride_x][stride_y][stride_z] )
-{
-  using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
-
-  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
-  {
-    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
-    {
-      for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
-      {
-        localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
-        localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
-        local_field[ ind_x ][ ind_y ][ ind_z ] = field[ global_node_index ];
-      }
-    });
-  });
-}
-
-template < typename StackVariables,
-           typename Field,
-           localIndex stride_x, localIndex stride_y, localIndex stride_z, localIndex dim >
-void readField( StackVariables & stack,
-                Field & field,
-                real64 (& local_field)[stride_x][stride_y][stride_z][dim] )
-{
-  using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
-
-  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
-  {
-    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
-    {
-      for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
-      {
-        localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
-        localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
-        for (localIndex d = 0; d < dim; d++)
-        {
-          local_field[ ind_x ][ ind_y ][ ind_z ][ d ] = field[ global_node_index ][ d ];
-        }
-      }
-    });
-  });
-}
-
-template < typename StackVariables,
-           typename Field,
-           localIndex stride_x, localIndex stride_y, localIndex stride_z >
-void writeField( StackVariables & stack,
-                 real64 const (& local_field)[stride_x][stride_y][stride_z],
-                 Field & field )
-{
-  using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
-
-  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
-  {
-    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
-    {
-      for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
-      {
-        localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
-        localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
-        field[ global_node_index ] = local_field[ ind_x ][ ind_y ][ ind_z ];
-      }
-    });
-  });
-}
-
-template < typename StackVariables,
-           typename Field,
-           localIndex stride_x, localIndex stride_y, localIndex stride_z, localIndex dim >
-void writeField( StackVariables & stack,
-                 real64 const (& local_field)[stride_x][stride_y][stride_z][dim], 
-                 Field & field )
-{
-  using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
-
-  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
-  {
-    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
-    {
-      for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
-      {
-        localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
-        localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
-        for (localIndex d = 0; d < dim; d++)
-        {
-          field[ global_node_index ][ d ] = local_field[ ind_x ][ ind_y ][ ind_z ][ d ];
-        }
-      }
-    });
-  });
-}
-
-template < typename StackVariables,
-           typename Field,
-           localIndex stride_x, localIndex stride_y, localIndex stride_z >
-void writeAddField( StackVariables & stack,
-                    real64 const (& local_field)[stride_x][stride_y][stride_z],
-                    Field & field )
-{
-  using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
-
-  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
-  {
-    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
-    {
-      for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
-      {
-        localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
-        localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
-        RAJA::atomicAdd( RAJA::auto_atomic{}, &field[ global_node_index ], local_field[ ind_x ][ ind_y ][ ind_z ]);
-      }
-    });
-  });
-}
-
-template < typename StackVariables,
-           typename Field,
-           localIndex stride_x, localIndex stride_y, localIndex stride_z, localIndex dim >
-void writeAddField( StackVariables & stack,
-                    real64 const (& local_field)[stride_x][stride_y][stride_z][dim], 
-                    Field & field )
-{
-  using RAJA::RangeSegment;
-  LaunchContext & ctx = stack.ctx;
-
-  loop<thread_x> (ctx, RangeSegment(0, stride_x), [&] (localIndex ind_x)
-  {
-    loop<thread_y> (ctx, RangeSegment(0, stride_y), [&] (localIndex ind_y)
-    {
-      for (localIndex ind_z = 0; ind_z < stride_z; ind_z++)
-      {
-        localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
-        localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
-        for (localIndex d = 0; d < dim; d++)
-        {
-          RAJA::atomicAdd( RAJA::auto_atomic{}, &field[ global_node_index ][ d ], local_field[ ind_x ][ ind_y ][ ind_z ][ d ] );
-        }
-      }
-    });
-  });
-}
-
 } // namespace finiteElement
 } // namespace geosx
-
-
 
 #endif /* GEOSX_FINITEELEMENT_TEAMKERNELFUNCTION_HPP_ */
