@@ -188,6 +188,7 @@ RAJA Teams Policy setup
 */
 using namespace RAJA::expt;
 #if defined(RAJA_ENABLE_CUDA)
+#define GEOSX_RAJA_DEVICE RAJA::expt::ExecPlace::DEVICE
 using team_launch_policy = LaunchPolicy<seq_launch_t, cuda_launch_t<true>>;
 using team_x = LoopPolicy<RAJA::loop_exec, cuda_block_x_direct>;
 using thread_z = LoopPolicy<RAJA::loop_exec, cuda_thread_z_loop>;
@@ -197,6 +198,7 @@ using thread_x = LoopPolicy<RAJA::loop_exec, cuda_thread_x_loop>;
 #define GEOSX_STATIC_SHARED RAJA_TEAM_SHARED
 #define GEOSX_THREAD_ID(k) threadIdx.k
 #elif defined(RAJA_ENABLE_HIP)
+#define GEOSX_RAJA_DEVICE RAJA::expt::ExecPlace::DEVICE
 using team_launch_policy = LaunchPolicy<seq_launch_t, hip_launch_t<true>>;
 using team_x = LoopPolicy<RAJA::loop_exec, hip_block_x_direct>;
 using thread_z = LoopPolicy<RAJA::loop_exec, hip_thread_z_loop>;
@@ -206,6 +208,7 @@ using thread_x = LoopPolicy<RAJA::loop_exec, hip_thread_x_loop>;
 #define GEOSX_STATIC_SHARED RAJA_TEAM_SHARED
 #define GEOSX_THREAD_ID(k) hipThreadIdx_ ##k
 #else
+#define GEOSX_RAJA_DEVICE RAJA::expt::ExecPlace::HOST
 using team_launch_policy = LaunchPolicy<seq_launch_t>;
 using team_x = LoopPolicy<RAJA::loop_exec>;
 using thread_z = LoopPolicy<RAJA::loop_exec>;
