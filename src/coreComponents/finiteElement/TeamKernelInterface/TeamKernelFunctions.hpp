@@ -64,7 +64,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d > Bu( stack.shared_mem_buffers[0] );
+  SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d > Bu( stack.shared_mem[0] );
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
     loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
@@ -92,7 +92,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  SharedTensor< num_quads_1d, num_quads_1d, num_dofs_1d > BBu( stack.shared_mem_buffers[1] );
+  SharedTensor< num_quads_1d, num_quads_1d, num_dofs_1d > BBu( stack.shared_mem[1] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
   {
@@ -171,7 +171,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
 
   // Contraction on the first dimension
-  SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d, num_comp > Bu( stack.shared_mem_buffers[0] );
+  SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d, num_comp > Bu( stack.shared_mem[0] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
@@ -209,7 +209,7 @@ void interpolateAtQuadraturePoints( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  SharedTensor< num_quads_1d, num_quads_1d, num_dofs_1d, num_comp > BBu( stack.shared_mem_buffers[1] );
+  SharedTensor< num_quads_1d, num_quads_1d, num_dofs_1d, num_comp > BBu( stack.shared_mem[1] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
   {
@@ -308,7 +308,7 @@ void applyTestFunctions( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
   
   // Contraction on the first dimension
-  SharedTensor< num_dofs_1d, num_quads_1d, num_quads_1d > Bu( stack.shared_mem_buffers[0] );
+  SharedTensor< num_dofs_1d, num_quads_1d, num_quads_1d > Bu( stack.shared_mem[0] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
@@ -337,7 +337,7 @@ void applyTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  SharedTensor< num_dofs_1d, num_dofs_1d, num_quads_1d > BBu( stack.shared_mem_buffers[1] );
+  SharedTensor< num_dofs_1d, num_dofs_1d, num_quads_1d > BBu( stack.shared_mem[1] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
   {
@@ -414,7 +414,7 @@ void applyTestFunctions( StackVariables & stack,
   LaunchContext & ctx = stack.ctx;
   
   // Contraction on the first dimension
-  SharedTensor< num_dofs_1d, num_quads_1d, num_quads_1d, num_comp > Bu( stack.shared_mem_buffers[0] );
+  SharedTensor< num_dofs_1d, num_quads_1d, num_quads_1d, num_comp > Bu( stack.shared_mem[0] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
@@ -452,7 +452,7 @@ void applyTestFunctions( StackVariables & stack,
   ctx.teamSync();
 
   // Contraction on the second dimension
-  SharedTensor< num_dofs_1d, num_dofs_1d, num_quads_1d, num_comp > BBu( stack.shared_mem_buffers[1] );
+  SharedTensor< num_dofs_1d, num_dofs_1d, num_quads_1d, num_comp > BBu( stack.shared_mem[1] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
   {
@@ -545,8 +545,8 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
 
   // Contraction on the first dimension
   SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d >
-    Bu( stack.shared_mem_buffers[0] ),
-    Gu( stack.shared_mem_buffers[1] );
+    Bu( stack.shared_mem[0] ),
+    Gu( stack.shared_mem[1] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
@@ -582,9 +582,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
 
   // Contraction on the second dimension
   SharedTensor< num_quads_1d, num_quads_1d, num_dofs_1d >
-    BBu( stack.shared_mem_buffers[2] ),
-    BGu( stack.shared_mem_buffers[3] ),
-    GBu( stack.shared_mem_buffers[4] );
+    BBu( stack.shared_mem[2] ),
+    BGu( stack.shared_mem[3] ),
+    GBu( stack.shared_mem[4] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
   {
@@ -678,8 +678,8 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
 
   // Contraction on the first dimension
   SharedTensor< num_quads_1d, num_dofs_1d, num_dofs_1d, num_comp >
-    Bu( stack.shared_mem_buffers[0] ),
-    Gu( stack.shared_mem_buffers[1] );
+    Bu( stack.shared_mem[0] ),
+    Gu( stack.shared_mem[1] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_y)
   {
@@ -724,9 +724,9 @@ void interpolateGradientAtQuadraturePoints( StackVariables & stack,
 
   // Contraction on the second dimension
   SharedTensor< num_quads_1d, num_quads_1d, num_dofs_1d, num_comp >
-    BBu( stack.shared_mem_buffers[2] ),
-    BGu( stack.shared_mem_buffers[3] ),
-    GBu( stack.shared_mem_buffers[4] );
+    BBu( stack.shared_mem[2] ),
+    BGu( stack.shared_mem[3] ),
+    GBu( stack.shared_mem[4] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_x)
   {
@@ -842,9 +842,9 @@ void applyGradientTestFunctions( StackVariables & stack,
 
   // Contraction on the first dimension
   SharedTensor< num_dofs_1d, num_quads_1d, num_quads_1d >
-    Gqx( stack.shared_mem_buffers[0] ),
-    Bqy( stack.shared_mem_buffers[1] ),
-    Bqz( stack.shared_mem_buffers[2] );
+    Gqx( stack.shared_mem[0] ),
+    Bqy( stack.shared_mem[1] ),
+    Bqz( stack.shared_mem[2] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
@@ -887,9 +887,9 @@ void applyGradientTestFunctions( StackVariables & stack,
 
   // Contraction on the second dimension
   SharedTensor< num_dofs_1d, num_dofs_1d, num_quads_1d >
-    BGqx( stack.shared_mem_buffers[3] ),
-    GBqy( stack.shared_mem_buffers[4] ),
-    BBqz( stack.shared_mem_buffers[5] );
+    BGqx( stack.shared_mem[3] ),
+    GBqy( stack.shared_mem[4] ),
+    BBqz( stack.shared_mem[5] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
   {
@@ -977,9 +977,9 @@ void applyGradientTestFunctions( StackVariables & stack,
 
   // Contraction on the first dimension
   SharedTensor< num_dofs_1d, num_quads_1d, num_quads_1d, num_comp >
-    Gqx( stack.shared_mem_buffers[0] ),
-    Bqy( stack.shared_mem_buffers[1] ),
-    Bqz( stack.shared_mem_buffers[2] );
+    Gqx( stack.shared_mem[0] ),
+    Bqy( stack.shared_mem[1] ),
+    Bqz( stack.shared_mem[2] );
 
   loop<thread_y> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex quad_y)
   {
@@ -1031,9 +1031,9 @@ void applyGradientTestFunctions( StackVariables & stack,
 
   // Contraction on the second dimension
   SharedTensor< num_dofs_1d, num_dofs_1d, num_quads_1d, num_comp >
-    BGqx( stack.shared_mem_buffers[3] ),
-    GBqy( stack.shared_mem_buffers[4] ),
-    BBqz( stack.shared_mem_buffers[5] );
+    BGqx( stack.shared_mem[3] ),
+    GBqy( stack.shared_mem[4] ),
+    BBqz( stack.shared_mem[5] );
 
   loop<thread_x> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex dof_x)
   {

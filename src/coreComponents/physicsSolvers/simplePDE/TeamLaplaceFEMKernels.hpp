@@ -22,9 +22,13 @@
 
 #define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
-#include "finiteElement/kernelInterface/TeamKernelBase.hpp"
-#include "finiteElement/kernelInterface/TeamKernelFunctions.hpp"
-#include "finiteElement/kernelInterface/QuadratureFunctionsHelper.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelBase.hpp"
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions.hpp"
+#include "finiteElement/TeamKernelInterface/QuadratureFunctionsHelper.hpp"
+#include "finiteElement/TeamKernelInterface/StackVariables/MeshStackVariables.hpp"
+#include "finiteElement/TeamKernelInterface/StackVariables/ElementStackVariables.hpp"
+#include "finiteElement/TeamKernelInterface/StackVariables/QuadratureWeightsStackVariables.hpp"
+#include "finiteElement/TeamKernelInterface/StackVariables/SharedMemStackVariables.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -35,12 +39,6 @@
 
 namespace geosx
 {
-
-template < localIndex Order >
-class LagrangeBasis;
-
-template <>
-class LagrangeBasis<1> : public finiteElement::LagrangeBasis1 { };
 
 //*****************************************************************************
 /**
@@ -119,228 +117,6 @@ public:
 
   }
 
-  template < localIndex num_dofs_mesh_1d, localIndex num_quads_1d, localIndex dim, localIndex batch_size >
-  struct MeshStackVariables
-  {
-    MeshStackVariables( LaunchContext & ctx )
-    {
-      using RAJA::RangeSegment;
-
-      // Mesh basis
-      GEOSX_STATIC_SHARED real64 s_mesh_basis[num_dofs_mesh_1d][num_quads_1d];
-      mesh_basis = &s_mesh_basis;
-      loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
-      {
-        loop<thread_y> (ctx, RangeSegment(0, num_dofs_mesh_1d), [&] (localIndex d)
-        {
-          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex q)
-          {
-            GEOSX_UNUSED_VAR( tidz );
-            s_mesh_basis[ d ][ q ] =
-              LagrangeBasis<num_dofs_mesh_1d-1>::value(
-                d, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
-          } );
-        } );
-      } );
-
-      // Mesh basis gradient
-      GEOSX_STATIC_SHARED real64 s_mesh_basis_gradient[num_dofs_mesh_1d][num_quads_1d];
-      mesh_basis_gradient = &s_mesh_basis_gradient;
-      loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
-      {
-        loop<thread_y> (ctx, RangeSegment(0, num_dofs_mesh_1d), [&] (localIndex d)
-        {
-          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex q)
-          {
-            GEOSX_UNUSED_VAR( tidz );
-            s_mesh_basis_gradient[ d ][ q ] =
-              LagrangeBasis<num_dofs_mesh_1d-1>::gradient(
-                d, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
-          } );
-        } );
-      } );
-
-      localIndex const batch_index = GEOSX_THREAD_ID(z);
-      // Mesh nodes
-      GEOSX_STATIC_SHARED real64 s_mesh_nodes[batch_size][num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim];
-      mesh_nodes = &s_mesh_nodes[batch_index];
-
-      // Mesh jacobians
-      GEOSX_STATIC_SHARED real64 s_jacobians[batch_size][num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim][dim];
-      jacobians = &s_jacobians[batch_index];
-    }
-
-    // Mesh basis
-    real64 ( * mesh_basis )[num_dofs_mesh_1d][num_quads_1d];
-    real64 const ( & getBasis() const )[num_dofs_mesh_1d][num_quads_1d]
-    {
-      return *mesh_basis;
-    }
-    real64 ( & getBasis() )[num_dofs_mesh_1d][num_quads_1d]
-    {
-      return *mesh_basis;
-    }
-
-    // Mesh basis gradient
-    real64 ( * mesh_basis_gradient )[num_dofs_mesh_1d][num_quads_1d];
-    real64 const ( & getBasisGradient() const )[num_dofs_mesh_1d][num_quads_1d]
-    {
-      return *mesh_basis_gradient;
-    }
-    real64 ( & getBasisGradient() )[num_dofs_mesh_1d][num_quads_1d]
-    {
-      return *mesh_basis_gradient;
-    }
-
-    // Mesh nodes
-    real64 ( * mesh_nodes )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim]; // Could be in registers
-    real64 const ( & getNodes() const )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim]
-    {
-      return *mesh_nodes;
-    }
-    real64 ( & getNodes() )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim]
-    {
-      return *mesh_nodes;
-    }
-
-    // Mesh jacobians
-    real64 ( * jacobians )[num_quads_1d][num_quads_1d][num_quads_1d][dim][dim]; // Can be in registers
-    real64 ( & getJacobians() )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim][dim]
-    {
-      return *jacobians;
-    }
-    real64 const ( & getJacobians() const )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim][dim]
-    {
-      return *jacobians;
-    }
-  };
-
-  template < localIndex num_dofs_1d, localIndex num_quads_1d, localIndex dim, localIndex batch_size >
-  struct ElementStackVariables
-  {
-    ElementStackVariables( LaunchContext & ctx )
-    {
-      using RAJA::RangeSegment;
-
-      // Element basis
-      GEOSX_STATIC_SHARED real64 s_basis[num_dofs_1d][num_quads_1d];
-      basis = &s_basis;
-      loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
-      {
-        loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex d)
-        {
-          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex q)
-          {
-            GEOSX_UNUSED_VAR( tidz );
-            s_basis[ d ][ q ] =
-              LagrangeBasis<num_dofs_1d-1>::value(
-                d, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
-          } );
-        } );
-      } );
-
-      // Element basis gradient
-      GEOSX_STATIC_SHARED real64 s_basis_gradient[num_dofs_1d][num_quads_1d];
-      basis_gradient = &s_basis_gradient;
-      loop<thread_z> (ctx, RangeSegment(0, 1), [&] (const int tidz)
-      {
-        loop<thread_y> (ctx, RangeSegment(0, num_dofs_1d), [&] (localIndex d)
-        {
-          loop<thread_x> (ctx, RangeSegment(0, num_quads_1d), [&] (localIndex q)
-          {
-            GEOSX_UNUSED_VAR( tidz );
-            s_basis_gradient[ d ][ q ] =
-              LagrangeBasis<num_dofs_1d-1>::gradient(
-                d, LagrangeBasis<num_quads_1d-1>::parentSupportCoord( q ) );
-          } );
-        } );
-      } );
-
-      localIndex const batch_index = GEOSX_THREAD_ID(z);
-      // Element input dofs of the primary field
-      GEOSX_STATIC_SHARED real64 s_dofs_in[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d];
-      dofs_in = &s_dofs_in[batch_index];
-
-      // Element primary field gradients at quadrature points
-      GEOSX_STATIC_SHARED real64 s_q_gradient_values[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d][dim];
-      q_gradient_values = &s_q_gradient_values[batch_index];
-
-      // Element "geometric factors"
-      GEOSX_STATIC_SHARED real64 s_Du[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d][dim];
-      Du = &s_Du[batch_index];
-
-      // Element contribution to the residual
-      GEOSX_STATIC_SHARED real64 s_dofs_out[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d];
-      dofs_out = &s_dofs_out[batch_index];
-    }
-
-    // Element basis
-    real64 ( * basis )[num_dofs_1d][num_quads_1d];
-    real64 const ( & getBasis() const )[num_dofs_1d][num_quads_1d]
-    {
-      return *basis;
-    }
-    real64 ( & getBasis() )[num_dofs_1d][num_quads_1d]
-    {
-      return *basis;
-    }
-
-    // Element basis gradient
-    real64 ( * basis_gradient )[num_dofs_1d][num_quads_1d];
-    real64 const ( & getBasisGradient() const )[num_dofs_1d][num_quads_1d]
-    {
-      return *basis_gradient;
-    }
-    real64 ( & getBasisGradient() )[num_dofs_1d][num_quads_1d]
-    {
-      return *basis_gradient;
-    }
-
-    // Element input dofs of the primary field
-    real64 ( * dofs_in )[num_dofs_1d][num_dofs_1d][num_dofs_1d]; // Could be in registers
-    real64 const ( & getDofsIn() const )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
-    {
-      return *dofs_in;
-    }
-    real64 ( & getDofsIn() )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
-    {
-      return *dofs_in;
-    }
-
-    // Element primary field gradients at quadrature points
-    real64 ( * q_gradient_values )[num_quads_1d][num_quads_1d][num_quads_1d][dim]; // Can be in registers
-    real64 const ( & getGradientValues() const )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
-    {
-      return *q_gradient_values;
-    }
-    real64 ( & getGradientValues() )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
-    {
-      return *q_gradient_values;
-    }
-
-    // Element "geometric factors"
-    real64 ( * Du )[num_quads_1d][num_quads_1d][num_quads_1d][dim]; // Could be in registers
-    real64 const ( & getQuadValues() const )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
-    {
-      return *Du;
-    }
-    real64 ( & getQuadValues() )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
-    {
-      return *Du;
-    }
-
-    // Element contribution to the residual
-    real64 ( * dofs_out )[num_dofs_1d][num_dofs_1d][num_dofs_1d]; // Can be in registers
-    real64 const ( & getDofsOut() const )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
-    {
-      return *dofs_out;
-    }
-    real64 ( & getDofsOut() )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
-    {
-      return *dofs_out;
-    }
-  };
-
   //***************************************************************************
   /**
    * @class StackVariables
@@ -364,7 +140,9 @@ public:
       Base::StackVariables( ctx ),
       kernelComponent( kernelComponent ),
       mesh( ctx ),
-      element( ctx )
+      element( ctx ),
+      weights( ctx ),
+      shared_mem( ctx )
     {}
 
     TeamLaplaceFEMKernel const & kernelComponent;
@@ -372,35 +150,18 @@ public:
     // TODO alias shared buffers / Generalize for non-tensor elements
     MeshStackVariables< num_dofs_mesh_1d, num_quads_1d, dim, batch_size > mesh;
     ElementStackVariables< num_dofs_1d, num_quads_1d, dim, batch_size > element;
-    // TODO abstract and encapsulate into object
-    real64 ( * weights )[num_quads_1d];
+    QuadratureWeightsStackVariables< num_quads_1d > weights;
 
     /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
-    static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
-    real64 * shared_mem_buffer_1;
-    real64 * shared_mem_buffer_2;
+    static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim;
+    static constexpr localIndex num_buffers = 2 * dim;
+    SharedMemStackVariables< buffer_size, num_buffers, batch_size > shared_mem;
   };
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void kernelSetup( StackVariables & stack ) const
   {
-    // Initialize quadrature weights
-    GEOSX_STATIC_SHARED real64 s_weights[StackVariables::num_quads_1d];
-    stack.weights = &s_weights;
-    // TODO generalize
-    s_weights[0] = 1.0;
-    s_weights[1] = 1.0;
-
-    // "Allocate" shared memory for the buffers.
-    constexpr localIndex batch_size = StackVariables::batch_size;
-    constexpr localIndex buffer_size = StackVariables::buffer_size;
-    localIndex const tidz = GEOSX_THREAD_ID(z);
-
-    GEOSX_STATIC_SHARED real64 shared_buffer_1[batch_size][buffer_size];
-    stack.shared_mem_buffer_1 = ( real64 * )&shared_buffer_1[tidz];
-    GEOSX_STATIC_SHARED real64 shared_buffer_2[batch_size][buffer_size];
-    stack.shared_mem_buffer_2 = ( real64 * )&shared_buffer_2[tidz];
   }
 
   /**
@@ -420,16 +181,16 @@ public:
     /// Computation of the Jacobians
     readField( stack, stack.kernelComponent.m_X, stack.mesh.getNodes() );
     interpolateGradientAtQuadraturePoints( stack,
-                                           stack.mesh.getBasis(),
-                                           stack.mesh.getBasisGradient(),
+                                           stack.mesh.basis.getQuadValues(),
+                                           stack.mesh.basis.getQuadGradientValues(),
                                            stack.mesh.getNodes(),
                                            stack.mesh.getJacobians() );
 
     /// Computation of the Gradient of the solution field
     readField( stack, stack.kernelComponent.m_primaryField, stack.element.getDofsIn() );
     interpolateGradientAtQuadraturePoints( stack,
-                                           stack.element.getBasis(),
-                                           stack.element.getBasisGradient(),
+                                           stack.element.basis.getQuadValues(),
+                                           stack.element.basis.getQuadGradientValues(),
                                            stack.element.getDofsIn(),
                                            stack.element.getGradientValues() );
   }
@@ -456,7 +217,7 @@ public:
     qLocalLoad( quad_x, quad_y, quad_z, stack.mesh.getJacobians(), J );
 
     // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
-    real64 const weight = (*stack.weights)[ quad_x ] * (*stack.weights)[ quad_y ] * (*stack.weights)[ quad_z ];
+    real64 const weight = stack.weights( quad_x, quad_y, quad_z );
 
     real64 const detJ = determinant( J );
 
@@ -500,8 +261,8 @@ public:
 
     // Applying gradient of the test functions
     applyGradientTestFunctions( stack,
-                                stack.element.getBasis(),
-                                stack.element.getBasisGradient(),
+                                stack.element.basis.getQuadValues(),
+                                stack.element.basis.getQuadGradientValues(),
                                 stack.element.getQuadValues(),
                                 stack.element.getDofsOut() );
     writeAddField( stack, stack.element.getDofsOut(), stack.kernelComponent.m_rhs );

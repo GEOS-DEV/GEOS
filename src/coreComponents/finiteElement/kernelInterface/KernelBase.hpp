@@ -26,7 +26,6 @@
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "finiteElement/kernelInterface/TeamKernelFunctions.hpp"
 
 #include "tensor/tensor_traits.hpp"
 #include "finiteElement/basis/basis.hpp"
