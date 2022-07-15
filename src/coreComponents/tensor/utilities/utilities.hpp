@@ -27,12 +27,6 @@
 
 /// Helper constants
 #include "helper_constants.hpp"
-/// Factories for kernel configurations
-#include "config.hpp"
-/// Function to iterate on tensor dimensions
-#include "foreach.hpp"
-/// GEOSX_FORALL_CONFIG selecting threading strategy according to the KernelConfig
-#include "forall.hpp"
 /// TMP patterns to manipulate integer lists at compilation
 #include "int_list.hpp"
 /// Utility functions, and TMP patterns
