@@ -44,7 +44,8 @@ A mesh file and a python script for post-processing the simulation results are a
 Description of the case
 ------------------------------------------------------------------
 
-We simulate induced stresses along a normal fault in a pressurized reservoir, as shown below. The reservoir is offset and divided into two parts by an inclined fault. This mega fault crosses the entire reservoir and extends into both overburden and underburden. The whole domain is assumed to be horizontal, infinite, homogeneous, isotropic, and elastic. To resemble the analytical example, the reservoir is simply assumed to be uniformly pressurized upon injection and the transient effect of fluid flow is excluded. A pressure buildup is applied to: (i) the whole reservoir in the case of a permeable fault; (ii) the left compartment in the case of an impermeable fault. Both overburden and underburden are impermeable and no pressure changes are allowed. Due to the poromechanical effect, pore pressure change in the reservoir causes the mechanical deformation of the entire domain and thus, leads to a stress perturbation on the fault plane, which could potentially trigger sliding of the fault.  Here, the fault serves only as a flow boundary and the mechanical separation of the fault plane (either shear slippage or normal opening) is prohibited to mimic the analytical example. For verification purposes, a plane strain deformation is considered in the numerical model. 
+We simulate induced stresses along a normal fault in a pressurized reservoir and compare our results against an analytical solution.
+In conformity to the analytical set-up, the reservoir is divided into two parts by an inclined fault. The fault crosses the entire domain, extending into the overburden and the underburden. The domain is horizontal, infinite, homogeneous, isotropic, and elastic. The reservoir is pressurized uniformely upon injection, and we neglect the transient effect of fluid flow. A pressure buildup is applied to: (i) the whole reservoir in the case of a permeable fault; (ii) the left compartment in the case of an impermeable fault. The overburden and underburden are impermeable (no pressure changes). Due to poromechanical effects, pore pressure changes in the reservoir cause a mechanical deformation of the entire domain. This deformation leads to a stress perturbation on the fault plane that could potentially trigger sliding of the fault. Here, the fault serves only as a flow boundary, and the mechanical separation of the fault plane (either by shear slippage or normal opening) is prohibited, like in the analytical example. For verification purposes, a plane strain deformation is considered in the numerical model.
 
 
 .. _problemSketchFaultVerification:
@@ -56,7 +57,7 @@ We simulate induced stresses along a normal fault in a pressurized reservoir, as
    Sketch of the problem 
 
 
-In this example, we set up and solve a poroelastic model to obtain the spatial solutions of displacement and stress field across the domain upon pressurization. Changes of total stresses along the fault plane are evaluated and compared with the corresponding literature work `(Wu et al., 2020)  <https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2020JB020436>`__. 
+In this example, we set up and solve a poroelastic model to obtain the spatial solutions of displacement and stress fields across the domain upon pressurization. Changes of total stresses along the fault plane are evaluated and compared with the corresponding published work `(Wu et al., 2020)  <https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2020JB020436>`__. 
 
 
 
@@ -80,7 +81,7 @@ The following figure shows the mesh used in this problem.
 
 Here, we load the mesh with ``VTKMesh``.
 The syntax to import external meshes is simple: in the XML file,
-the mesh file ``faultMesh.vtk`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified label (here ``FaultModel``) is given to the mesh object. This mesh contains quadrilateral elements and local refinement to conform with the fault geometry and two reservoir compartments displaced by the fault. The size of the reservoir should be large enough to avoid boundary effects.
+the mesh file ``faultMesh.vtk`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified label (here ``FaultModel``) is given to the mesh object. This mesh contains quadrilateral elements and local refinement to conform with the fault geometry, and two reservoir compartments displaced by the fault. The size of the reservoir should be large enough to avoid boundary effects.
 
 
 .. literalinclude:: ../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
@@ -101,8 +102,8 @@ To specify a coupling between two different solvers, we define and characterize 
 Then, we customize a *coupling solver* between these single-physics
 solvers as an additional solver.
 This approach allows for generality and flexibility in constructing multi-physics solvers.
-The order of specifying these solvers is not restricted in GEOSX.
-Note that end-users should give each single-physics solver a meaningful and distinct name, as GEOSX will recognize these single-physics solvers based on their customized names and create user-expected coupling.
+The order in which solvers are specified is not important in GEOSX.
+Note that end-users should give each single-physics solver a meaningful and distinct name, as GEOSX will recognize these single-physics solvers based on their customized names to create the expected couplings.
 
 As demonstrated in this example, to setup a poromechanical coupling, we need to define three different solvers in the XML file:
 
@@ -124,7 +125,7 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
   :end-before: <!-- SPHINX_SINGLEPHASEFVM_END -->
 
 
-- the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, which is named as ``poromechanicsSolver`` (more information at :ref:`PoroelasticSolver`).
+- the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, named ``poromechanicsSolver`` (more information at :ref:`PoroelasticSolver`).
 
 
 .. literalinclude:: ../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
@@ -140,7 +141,7 @@ In this example, let us focus on the coupling solver.
 This solver (``poromechanicsSolver``) uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
 For instance, we must point this solver to the designated fluid solver (here: ``singlePhaseFlowSolver``) and solid solver (here: ``mechanicsSolver``).
 These solvers are forced to interact with all the constitutive models in the target regions (here, we only have one, ``Domain``).
-More parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). In this way, the two single-physics solvers will be simultaneously called and executed for solving the problem.
+More parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). This way, the two single-physics solvers will be simultaneously called and executed for solving the problem.
 
 ------------------------------------------------
 Discretization methods for multiphysics solvers
@@ -167,8 +168,8 @@ Here, we use a two-point flux approximation scheme (``singlePhaseTPFA``), as des
 Constitutive laws
 ------------------------------
 
-For this problem, a homogeneous and isotropic domain with one solid material is assumed for both reservoir and its surroundings.  
-The solid and fluid materials are named as ``rock`` and ``water`` respectively, whose mechanical properties are specified in the ``Constitutive`` section. ``PorousElasticIsotropic`` model is used to describe the linear elastic isotropic response of ``rock`` when subjected to fluid injection. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the flow of ``water``.
+For this problem, a homogeneous and isotropic domain with one solid material is assumed for both the reservoir and its surroundings.  
+The solid and fluid materials are named as ``rock`` and ``water`` respectively, and their mechanical properties are specified in the ``Constitutive`` section. ``PorousElasticIsotropic`` model is used to describe the linear elastic isotropic response of ``rock`` when subjected to fluid injection. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the flow of ``water``.
 
 
 .. literalinclude:: ../../../../../../inputFiles/poromechanics/faultPoroelastic_base.xml
@@ -185,8 +186,8 @@ Initial and boundary conditions
 
 The next step is to specify fields, including:
 
-  - The initial value (the in-situ stresses and pore pressure have to be initialized)
-  - The boundary conditions (pressure buildup within the reservoir and constraints of the outer boundaries have to be set)
+  - The initial value (the in-situ stresses and pore pressure have to be initialized),
+  - The boundary conditions (pressure buildup within the reservoir and constraints of the outer boundaries have to be set).
 
 In this example, we need to specify isotropic horizontal stress (:math:`\sigma_h` = -60.0 MPa and :math:`\sigma_H` = -60.0 MPa), vertical stress (:math:`\sigma_v` = -70.0 MPa), and initial reservoir pressure (:math:`P_0` = 35.0 MPa). 
 When initializing the model, a normal traction (``name="NormalTraction"``) of -70.0 MPa is imposed on the upper boundary (``setNames="{ 91 }"``) to reach mechanical equilibrium.
