@@ -15,7 +15,9 @@
       <NonlinearSolverParameters
         newtonMaxIter="100"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        solverType="gmres"
+        preconditionerType="amg"
+        logLevel="0"/>
     </PhaseFieldFracture>
 
     <SolidMechanicsLagrangianSSLE
@@ -27,9 +29,11 @@
       >
       <NonlinearSolverParameters
         newtonMaxIter="200"
-        newtonTol="1.0e-8"/>
+        newtonTol="1.0e-6"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        solverType="gmres"
+        preconditionerType="amg"
+        logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <PhaseFieldDamageFEM
@@ -37,15 +41,16 @@
       discretization="FE1"
       timeIntegrationOption="SteadyState"
       fieldName="Damage"
-      
       localDissipation="Linear"
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="200"
-        newtonTol="1.0e-8"/>
+        newtonTol="1.0e-6"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        solverType="gmres"
+        preconditionerType="amg"
+        logLevel="0"/>
     </PhaseFieldDamageFEM>
   </Solvers>
 
@@ -56,9 +61,9 @@
       radius="{ 13, 100.0 }"
       theta="{ 0, 180 }"
       zCoords="{ 0, 200 }"
-      nr="{ 40 }"
-      nt="{ 40 }"
-      nz="{ 20 }"
+      nr="{ 100 }"
+      nt="{ 180 }"
+      nz="{ 4 }"
       trajectory="{ { 0.0, 0.0, -1.0 },
                     { 0.0, 0.0, 1.0 } }"
       autoSpaceRadialElems="{ 1 }"
@@ -76,29 +81,29 @@
 
     <PeriodicEvent
       name="vtkOutput"
-      timeFrequency="1.0"
+      timeFrequency="0.01"
       target="/Outputs/WellboreVTKOutput"/>
 
     <PeriodicEvent
       name="siloOutputs"
-      timeFrequency="1.0"
+      timeFrequency="0.01"
       target="/Outputs/WellboreSiloOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="1.0"
+      timeFrequency="0.5"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
 
     <PeriodicEvent
       name="stressCollection"
-      timeFrequency="1"
+      timeFrequency="0.01"
       targetExactTimestep="1"
       target="/Tasks/stressCollection" />
 
     <PeriodicEvent
       name="stressOutput"
-      timeFrequency="1"
+      timeFrequency="0.01"
       targetExactTimestep="0"
       target="/Outputs/stressOutput"/>
 
@@ -219,8 +224,8 @@
     <TableFunction
       name="pressure"
       inputVarNames="{ time }"
-      coordinates="{ 0, 1 }"
-      values="{ 0.0, 0.0 }"/>
+      coordinates="{ 0, 0.68, 1 }"
+      values="{ 0.0, 27.2, 30.4 }"/>
   </Functions>
 
   <Outputs>
@@ -229,7 +234,7 @@
 
     <VTK
       name="WellboreVTKOutput"
-      plotFileRoot="wellbore"/>
+      plotFileRoot="wellbore_nucleation_Sxx=9MPa"/>
 
     <TimeHistory
       name="stressOutput"
