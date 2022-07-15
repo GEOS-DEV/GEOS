@@ -514,7 +514,7 @@ private:
   /// the path to the object which contains the fields that the boundary condition is applied to
   string m_objectPath;
 
-  std::unique_ptr<MeshObjectPath> m_meshObjectPaths;
+  std::unique_ptr< MeshObjectPath > m_meshObjectPaths;
 
   /// the name of the field the boundary condition is applied to or a key string to use for
   /// determining whether or not to apply the boundary condition.

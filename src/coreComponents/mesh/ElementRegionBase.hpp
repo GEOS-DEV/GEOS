@@ -359,10 +359,10 @@ string_array ElementRegionBase::getConstitutiveNames() const
 }
 
 
-template< typename SUBREGION_TYPE  >
+template< typename SUBREGION_TYPE >
 SUBREGION_TYPE & ElementRegionBase::createElementSubRegion( string const & name )
 {
-  return getGroup( viewKeyStruct::elementSubRegions() ).registerGroup<SUBREGION_TYPE>(name);
+  return getGroup( viewKeyStruct::elementSubRegions() ).registerGroup< SUBREGION_TYPE >( name );
 }
 
 

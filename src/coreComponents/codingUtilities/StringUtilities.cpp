@@ -68,11 +68,11 @@ RETURN_TYPE tokenize( string const & str,
   return tokens;
 }
 
-template string_array tokenize<string_array>( string const & str,
-                                              string const & delimiters );
+template string_array tokenize< string_array >( string const & str,
+                                                string const & delimiters );
 
-template std::vector<string> tokenize<std::vector<string> >( string const & str,
-                                                             string const & delimiters );
+template std::vector< string > tokenize< std::vector< string > >( string const & str,
+                                                                  string const & delimiters );
 
 
 bool areAnyCharsInString( string const & str, string const & chars )
@@ -81,7 +81,7 @@ bool areAnyCharsInString( string const & str, string const & chars )
 
   for( size_t a=0; a<chars.size(); ++a )
   {
-    if( str.find(chars[a])!=string::npos )
+    if( str.find( chars[a] )!=string::npos )
     {
       rval = true;
     }

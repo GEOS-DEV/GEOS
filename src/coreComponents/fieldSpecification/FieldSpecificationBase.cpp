@@ -97,7 +97,7 @@ FieldSpecificationBase::getCatalog()
 
 void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
 {
-  m_meshObjectPaths = std::make_unique<MeshObjectPath>( m_objectPath, meshBodies );
+  m_meshObjectPaths = std::make_unique< MeshObjectPath >( m_objectPath, meshBodies );
 }
 
 

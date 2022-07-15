@@ -1,10 +1,22 @@
 /*
- * testMeshPath.cpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Jun 21, 2022
- *      Author: settgast
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
+/**
+ * @file testMeshObjectPath.cpp
+ */
+
+#define MESH_OBJECT_PATH_PRIVATE_FUNCTION_UNIT_TESTING
 #include "../MeshObjectPath.hpp"
 #include "../MeshBody.hpp"
 #include "dataRepository/Group.hpp"
@@ -23,7 +35,7 @@ public:
   static TestMesh & getTestMesh()
   {
     static TestMesh testMesh;
-    return  testMesh;
+    return testMesh;
   }
 
 
@@ -78,7 +90,7 @@ void TestMesh::createTestMesh()
 
   for( auto const & meshBodyPair : m_pathPermutations )
   {
-    MeshBody & meshBody = m_meshBodies.registerGroup<MeshBody>( meshBodyPair.first );
+    MeshBody & meshBody = m_meshBodies.registerGroup< MeshBody >( meshBodyPair.first );
     for( auto const & meshLevelPair : meshBodyPair.second )
     {
       MeshLevel & level = meshBody.createMeshLevel( meshLevelPair.first );
@@ -86,22 +98,93 @@ void TestMesh::createTestMesh()
       for( auto const & elemRegionPair : meshLevelPair.second )
       {
         elemRegMan.createChild( "CellElementRegion", elemRegionPair.first );
-        CellElementRegion & elemRegion = elemRegMan.getRegion<CellElementRegion>(elemRegionPair.first);
+        CellElementRegion & elemRegion = elemRegMan.getRegion< CellElementRegion >( elemRegionPair.first );
         for( auto const & elemSubRegionName : elemRegionPair.second )
         {
-          elemRegion.createElementSubRegion<CellElementSubRegion>(elemSubRegionName);
+          elemRegion.createElementSubRegion< CellElementSubRegion >( elemSubRegionName );
         }
       }
     }
   }
 }
 
+TEST( testMeshObjectPath, checkObjectTypeConsistency )
+{
+  TestMesh & testMesh = TestMesh::getTestMesh();
+  Group const & meshBodies = testMesh.meshBodies();
+
+  {
+    string const path = "nodeManager";
+    MeshObjectPath meshObjectPath( path, meshBodies );
+    meshObjectPath.testCheckObjectTypeConsistency< NodeManager >();
+    EXPECT_DEATH_IF_SUPPORTED( meshObjectPath.testCheckObjectTypeConsistency< EdgeManager >(); , ".*" );
+    EXPECT_DEATH_IF_SUPPORTED( meshObjectPath.testCheckObjectTypeConsistency< FaceManager >(); , ".*" );
+    EXPECT_DEATH_IF_SUPPORTED( meshObjectPath.testCheckObjectTypeConsistency< ElementRegionManager >(); , ".*" );
+  }
+}
+
+TEST( testMeshObjectPath, fillPathTokens )
+{
+  TestMesh & testMesh = TestMesh::getTestMesh();
+  Group const & meshBodies = testMesh.meshBodies();
+
+  {
+    string const path = "ElementRegions";
+    MeshObjectPath meshObjectPath( path, meshBodies );
+    auto pathTokens = meshObjectPath.testFillPathTokens( path, meshBodies );
+
+    EXPECT_TRUE( pathTokens.size() == 5 );
+    EXPECT_TRUE( pathTokens[0] == "*" );
+    EXPECT_TRUE( pathTokens[1] == "*" );
+    EXPECT_TRUE( pathTokens[2] == "ElementRegions" );
+    EXPECT_TRUE( pathTokens[3] == "*" );
+    EXPECT_TRUE( pathTokens[4] == "*" );
+  }
+
+  {
+    string const path = "nodeManager";
+    MeshObjectPath meshObjectPath( path, meshBodies );
+    auto pathTokens = meshObjectPath.testFillPathTokens( path, meshBodies );
+
+    EXPECT_TRUE( pathTokens.size() == 3 );
+    EXPECT_TRUE( pathTokens[0] == "*" );
+    EXPECT_TRUE( pathTokens[1] == "*" );
+    EXPECT_TRUE( pathTokens[2] == "nodeManager" );
+  }
+
+  {
+    string const path = "edgeManager";
+    MeshObjectPath meshObjectPath( path, meshBodies );
+    auto pathTokens = meshObjectPath.testFillPathTokens( path, meshBodies );
+
+    EXPECT_TRUE( pathTokens.size() == 3 );
+    EXPECT_TRUE( pathTokens[0] == "*" );
+    EXPECT_TRUE( pathTokens[1] == "*" );
+    EXPECT_TRUE( pathTokens[2] == "edgeManager" );
+  }
+
+  {
+    string const path = "faceManager";
+    MeshObjectPath meshObjectPath( path, meshBodies );
+    auto pathTokens = meshObjectPath.testFillPathTokens( path, meshBodies );
+
+    EXPECT_TRUE( pathTokens.size() == 3 );
+    EXPECT_TRUE( pathTokens[0] == "*" );
+    EXPECT_TRUE( pathTokens[1] == "*" );
+    EXPECT_TRUE( pathTokens[2] == "faceManager" );
+  }
+
+}
+
+TEST( testMeshObjectPath, ExpandPathTokens )
+{}
+
 
 TEST( testMeshObjectPath, fullPathExpansion )
 {
   TestMesh & testMesh = TestMesh::getTestMesh();
   Group const & meshBodies = testMesh.meshBodies();
-  MeshObjectPath::permutationMapType const &  pathPermutations = testMesh.pathPermutations();
+  MeshObjectPath::permutationMapType const & pathPermutations = testMesh.pathPermutations();
 
   {
     string const path = "*/*/ElementRegions";
@@ -169,7 +252,7 @@ TEST( testMeshObjectPath, invalidMeshRegion )
 }
 
 
-void checkSubRegionNames( std::vector<string> const & names )
+void checkSubRegionNames( std::vector< string > const & names )
 {
   EXPECT_TRUE( names[0] == "subreg0" );
   EXPECT_TRUE( names[1] == "subreg1" );
@@ -199,7 +282,7 @@ void checkSubRegionNames( std::vector<string> const & names )
   EXPECT_TRUE( names[25] == "subreg1" );
 }
 
-void checkRegionNames( std::vector<string> const & names )
+void checkRegionNames( std::vector< string > const & names )
 {
   EXPECT_TRUE( names[0] == "region0" );
   EXPECT_TRUE( names[1] == "region1" );
@@ -225,32 +308,32 @@ TEST( testMeshObjectPath, forObjectsInPath )
   MeshObjectPath meshObjectPath( path, meshBodiesConst );
 
   {
-    std::vector<string> names;
-    meshObjectPath.forObjectsInPath<CellElementSubRegion>( meshBodiesConst,
-                                                       [&]( ElementSubRegionBase const & elemSubRegionBase )
+    std::vector< string > names;
+    meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodiesConst,
+                                                             [&]( ElementSubRegionBase const & elemSubRegionBase )
     {
       names.push_back( elemSubRegionBase.getName() );
-    });
+    } );
     checkSubRegionNames( names );
   }
 
   {
-    std::vector<string> names;
-    meshObjectPath.forObjectsInPath<CellElementSubRegion>( meshBodies,
-                                                       [&]( ElementSubRegionBase & elemSubRegionBase )
+    std::vector< string > names;
+    meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodies,
+                                                             [&]( ElementSubRegionBase & elemSubRegionBase )
     {
       names.push_back( elemSubRegionBase.getName() );
-    });
+    } );
     checkSubRegionNames( names );
   }
 
   {
-    std::vector<string> names;
-    meshObjectPath.forObjectsInPath<CellElementRegion>( meshBodiesConst,
-                                                       [&]( CellElementRegion const & elemRegionBase )
+    std::vector< string > names;
+    meshObjectPath.forObjectsInPath< CellElementRegion >( meshBodiesConst,
+                                                          [&]( CellElementRegion const & elemRegionBase )
     {
       names.push_back( elemRegionBase.getName() );
-    });
+    } );
     checkRegionNames( names );
   }
 }
