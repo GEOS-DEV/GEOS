@@ -114,7 +114,6 @@ public:
     GEOSX_UNUSED_VAR( rankOffset );
     GEOSX_UNUSED_VAR( inputMatrix );
     GEOSX_UNUSED_VAR( inputRhs );
-
   }
 
   //***************************************************************************
