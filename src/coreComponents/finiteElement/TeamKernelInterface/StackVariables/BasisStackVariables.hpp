@@ -21,6 +21,7 @@
 #define GEOSX_FINITEELEMENT_TEAMKERNELBASE_STACKVARIABLES_BASIS_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {

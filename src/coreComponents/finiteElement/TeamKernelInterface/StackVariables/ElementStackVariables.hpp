@@ -20,6 +20,7 @@
 #ifndef GEOSX_FINITEELEMENT_TEAMKERNELBASE_STACKVARIABLES_ELEMENT_HPP_
 #define GEOSX_FINITEELEMENT_TEAMKERNELBASE_STACKVARIABLES_ELEMENT_HPP_
 
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/BasisStackVariables.hpp"
 
 namespace geosx
