@@ -542,6 +542,11 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::implicitStepComplete( real
   double * min_disp = std::min_element( disp.begin(), disp.end());
   //std::cout << "min disp " << * min_disp << std::endl;
   GEOSX_LOG_RANK_0( GEOSX_FMT( "min disp      {:15.6e}", *min_disp ) );
+  double * max_disp = std::max_element( disp.begin(), disp.end());
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "max disp      {:15.6e}", *max_disp ) );
+
+  real64 const totalFlux = m_flowSolver->computeFluxFaceDirichlet( time_n, dt, m_dofManager, domain );
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsSolverEmbeddedFractures::implicitStepComplete -- total flux through Dirichlet faces {:15.6e}", totalFlux ) );
   // end Laura
 
 }
