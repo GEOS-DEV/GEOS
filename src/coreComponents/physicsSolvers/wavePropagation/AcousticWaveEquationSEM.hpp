@@ -287,37 +287,37 @@ EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceNodeIndicator,
                            WRITE_AND_READ,
                            "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
-EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar1PML_n,
-                           "auxiliaryVar1PML_n",
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar1PML,
+                           "auxiliaryVar1PML",
                            array2d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "PML vectorial auxiliary variable at time n." );
-
-EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar1PML_np1,
-                           "auxiliaryVar1PML_np1",
-                           array2d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "PML vectorial auxiliary variable at time n + 1." );
-
-EXTRINSIC_MESH_DATA_TRAIT( DivAuxiliaryVar1PML,
-                           "divAuxiliaryVar1PML",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Divergence of the PML vectorial auxiliary variable." );
+                           "PML vectorial auxiliary variable 1." );
 
 EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar2PML,
                            "auxiliaryVar2PML",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "PML vectorial auxiliary variable 2." );
+
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar3PML,
+                           "auxiliaryVar3PML",
                            array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "PML scalar auxiliary variable." );
+                           "PML scalar auxiliary variable 3." );
+
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar4PML,
+                           "auxiliaryVar4PML",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "PML scalar auxiliary variable 4." );
 }
 
 

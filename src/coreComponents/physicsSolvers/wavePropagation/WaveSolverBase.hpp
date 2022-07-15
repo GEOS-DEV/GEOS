@@ -145,24 +145,7 @@ protected:
       sigma[2] = factor*(xLocal[2]-zMax)*(xLocal[2]-zMax);
     }
   }
-
-  template<int numNodesPerElem>
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void computeGradientPML( real64 const (&gradN)[numNodesPerElem][3],
-                                  real64 const (&var)[numNodesPerElem],
-                                  real64 (&varGrad)[3])
-  {
-    for (int j=0; j<3; ++j)
-    {
-      varGrad[j]=0;
-      for (int i=0; i<numNodesPerElem; ++i)
-      {
-        varGrad[j] += var[i]*gradN[i][j];
-      }
-    }
-  }
-
+  
 
   /**
    * @brief Compute the value of a Ricker (a Gaussian function)

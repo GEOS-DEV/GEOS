@@ -116,13 +116,13 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                        extrinsicMeshData::DampingVector,
                                        extrinsicMeshData::StiffnessVector,
                                        extrinsicMeshData::FreeSurfaceNodeIndicator,
-                                       extrinsicMeshData::AuxiliaryVar1PML_n,
-                                       extrinsicMeshData::AuxiliaryVar1PML_np1,
-                                       extrinsicMeshData::DivAuxiliaryVar1PML,
-                                       extrinsicMeshData::AuxiliaryVar2PML >( this->getName() );
+                                       extrinsicMeshData::AuxiliaryVar1PML,
+                                       extrinsicMeshData::AuxiliaryVar2PML,
+                                       extrinsicMeshData::AuxiliaryVar3PML,
+                                       extrinsicMeshData::AuxiliaryVar4PML >( this->getName() );
 
-    nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML_n >().resizeDimension< 1 >( 3 );
-    nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML_np1 >().resizeDimension< 1 >( 3 );
+    nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >().resizeDimension< 1 >( 3 );
+    nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >().resizeDimension< 1 >( 3 );
 
     FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >( this->getName() );
@@ -353,7 +353,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
           std::ofstream f( GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
           for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
           {
-            f<< varAtReceivers[iSample][ircv] << std::endl;
+            f << iSeismo << " " << varAtReceivers[iSample][ircv] << std::endl;
           }
           f.close();
         }
@@ -516,8 +516,6 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
 {
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  //GEOSX_UNUSED_VAR (time);
-  //GEOSX_UNUSED_VAR (fsManager);
 
   // Loop over the different mesh bodies; for wave propagation, there is only one mesh body
   // which is the whole mesh
@@ -528,13 +526,12 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
 
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    // Array views of the pressure p, particle velocity v, stiffness PML vector K.v, and node coordinates 
+    // Array views of the pressure p, PML auxiliary variables, and node coordinates 
     arrayView1d< real64 const > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
-    arrayView2d< real64 const > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML_n >();
-    arrayView2d< real64 > const v_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML_np1 >();
-    arrayView1d< real64 > const divV = nodeManager.getExtrinsicData< extrinsicMeshData::DivAuxiliaryVar1PML >();
-    arrayView1d< real64 const > const u = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+    arrayView2d< real64 const > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
+    arrayView2d< real64 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+    arrayView1d< real64 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+    arrayView1d< real64 const > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
     
     // Select the subregions concerned by the PML (specified in the xml by the Field Specification)
@@ -543,15 +540,13 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
                      mesh,
                      "ElementRegions",
                      //FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                     "PML",
+                     string( "PML" ),
                      [&]( FieldSpecificationBase const & fs,
                           string const &,
                           SortedArrayView< localIndex const > const & targetSet,
                           Group & subRegion,
                           string const & )
     
-    //mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-    //                                                                                      CellElementSubRegion & subRegion )
     {
       GEOSX_UNUSED_VAR (fs);
 
@@ -561,9 +556,8 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
 
       // Get a const ArrayView of the mapping above
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
-      
-      //arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodesViewConst = subRegion.nodeList();
-      
+            
+      // Array view of the wave speed
       arrayView1d< real64 const > const vel = subRegion.getReference< array1d<real64> > (extrinsicMeshData::MediumVelocity::key());
 
       // Get the object needed to determine the type of the element in the subregion
@@ -578,7 +572,6 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
         using FE_TYPE = TYPEOFREF( finiteElement );
 
         int const numNodesPerElem = FE_TYPE::numNodes;
-        //int const numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
         real64 const xMin = m_xMinPML;
         real64 const yMin = m_yMinPML;
@@ -588,21 +581,20 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
         real64 const zMax = m_zMaxPML;
         real64 const dPML = m_maxThicknessPML;
         real64 const rPML = m_reflectivityPML;
+        int const flagPML = m_flagPML;
 
-        // The kernel starts here, loops over elements in the subregion, 'k' is the element index
+        // The kernel starts here, loops over elements in the subregion, 'l' is the element index within the target set
         forAll< EXEC_POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
-        //forAll< EXEC_POLICY >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
         {
 
-          //printf("x=%.2f y=%.2f z=%.2f \n\n",
-          //  X[elemToNodesViewConst[k][0]][0],
-          //  X[elemToNodesViewConst[k][0]][1],
-          //  X[elemToNodesViewConst[k][0]][2]);
-
+          // global element index
           localIndex const k = targetSet[l];
 
           // wave speed at the element
           real64 const c = vel[k];
+
+          // wave speed to compute PML damping profile
+          real64 const cPML = c;
 
           // coordinates of the element nodes
           real64 xLocal[ numNodesPerElem ][ 3 ];
@@ -623,10 +615,24 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
           real64 sigma[ 3 ];
 
           // copy from global to local arrays
-          for( int i=0; i<numNodesPerElem; ++i )
+          for( localIndex i=0; i<numNodesPerElem; ++i )
           {
-            computeDampingProfilePML( xLocal[i],
-                                      c,
+            pressure[i] = p_n[elemToNodesViewConst[k][i]];
+            auxU[i] = u_n[elemToNodesViewConst[k][i]];
+            for( int j=0; j<3; ++j )
+            {
+              xLocal[i][j] =  X[elemToNodesViewConst[k][i]][j];
+              auxV[j][i] = v_n[elemToNodesViewConst[k][i]][j];
+            }
+          }
+
+          if (flagPML>1)
+          {
+            for( localIndex i=0; i<numNodesPerElem; ++i )
+            {
+              // compute the PML damping profile
+              computeDampingProfilePML( xLocal[i],
+                                      cPML,
                                       xMin,
                                       xMax,
                                       yMin,
@@ -637,42 +643,38 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
                                       rPML,
                                       sigma);
 
-            pressure[i] = p_n[elemToNodesViewConst[k][i]];
-            auxU[i] = u[elemToNodesViewConst[k][i]];
-            for( int j=0; j<3; ++j )
-            {
-              xLocal[i][j] =  X[elemToNodesViewConst[k][i]][j];
-              auxV[j][i] = sigma[j] * v_n[elemToNodesViewConst[k][i]][j];
+              for( int j=0; j<3; ++j )
+              {
+                auxV[j][i] *= sigma[j];
+              }
             }
           }
 
-          // local arrays to store shape functions and their gradients
-          real64 N[ numNodesPerElem ];
+          // local arrays to store shape functions gradients
           real64 gradN[ numNodesPerElem ][ 3 ];
           using GRADIENT_TYPE = TYPEOFREF( gradN );
     
           // loop over the nodes i in the element k
           // the nodes are implicitly assumed the same as quadrature points
-          for( int i=0; i<numNodesPerElem; ++i )
+          for( localIndex i=0; i<numNodesPerElem; ++i )
           {
             // compute the PML damping profile
-            computeDampingProfilePML( xLocal[i],
-                                      c,
-                                      xMin,
-                                      xMax,
-                                      yMin,
-                                      yMax,
-                                      zMin,
-                                      zMax,
-                                      dPML,
-                                      rPML,
-                                      sigma);
+            if (flagPML==1)
+            {
+              computeDampingProfilePML( xLocal[i],
+                                        cPML,
+                                        xMin,
+                                        xMax,
+                                        yMin,
+                                        yMax,
+                                        zMin,
+                                        zMax,
+                                        dPML,
+                                        rPML,
+                                        sigma);
+            }
 
-            //if( freeSurfaceNodeIndicator[elemToNodesViewConst[k][i]] != 1 )
-            //{
-
-            // compute the shape functions and their gradients
-            FE_TYPE::calcN( i, N );
+            // compute the shape functions gradients
             real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, i, xLocal, gradN );
             GEOSX_UNUSED_VAR (detJ);
 
@@ -683,73 +685,38 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
             {
               finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >(gradN, auxV[j], auxVGrad[j] );
             }
-            //computeGradientPML(gradN, pressure, pressureGrad);
-            //computeGradientPML(gradN, auxU, auxUGrad);
-            //for( int j=0; j<3; ++j )
-            //{
-            //  computeGradientPML(gradN, auxV[j], auxVGrad[j]);
-            //}
 
-
-            // compute B.pressureGrad - C.auxUGrad where B and C are functions of the damping profile
-            //v_np1[elemToNodesViewConst[k][i]][0] = (sigma[0]-sigma[1]-sigma[2])*pressureGrad[0] - (sigma[1]*sigma[2])*auxUGrad[0];
-            //v_np1[elemToNodesViewConst[k][i]][1] = (sigma[1]-sigma[0]-sigma[2])*pressureGrad[1] - (sigma[0]*sigma[2])*auxUGrad[1];
-            //v_np1[elemToNodesViewConst[k][i]][2] = (sigma[2]-sigma[0]-sigma[1])*pressureGrad[2] - (sigma[0]*sigma[1])*auxUGrad[2];
-            for (int j=0; j<3; ++j)
+            if (flagPML==1)
             {
-              //v_np1[elemToNodesViewConst[k][i]][j] = pressureGrad[j];
-              RAJA::atomicAdd< ATOMIC_POLICY >( &v_np1[elemToNodesViewConst[k][i]][j], pressureGrad[j]/8.0 );
-            }
-
-            // compute beta.pressure + gamma.u - c^2 * divV where beta and gamma are functions of the damping profile
-            //real64 const beta = 0*(sigma[0]*sigma[1]+sigma[0]*sigma[2]+sigma[1]*sigma[2]);
-            //real64 const gamma = 0*(sigma[0]*sigma[1]*sigma[2]);
-            //divV[elemToNodesViewConst[k][i]] = beta*p_n[elemToNodesViewConst[k][i]]
-            //                                 + gamma*u[elemToNodesViewConst[k][i]]
-            //                                 - c*c*( auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2] );
-            //divV[elemToNodesViewConst[k][i]] = auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2];
-            RAJA::atomicAdd< ATOMIC_POLICY >( &divV[elemToNodesViewConst[k][i]], (auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2])/8.0);
-
-
-
-            /*
-            for (int i=0; i<3; ++i)
-            {
-              v_np1[elemToNodesViewConst[k][q]][i] = pressureGrad[i];
-              //RAJA::atomicExchange< ATOMIC_POLICY >( &v_np1[elemToNodesViewConst[k][q]][i], pressureGrad[i] );
-            }
-
-            // compute the stiffness vector
-            for( int i=0; i<numNodesPerElem; ++i )
-            {
-              real64 const a = detJ * N[ i ];
-              for( int j=0; j<numNodesPerElem; ++j )
+              // compute B.pressureGrad - C.auxUGrad where B and C are functions of the damping profile
+              real64 localIncrementArray[3];
+              localIncrementArray[0] = (sigma[0]-sigma[1]-sigma[2])*pressureGrad[0] - (sigma[1]*sigma[2])*auxUGrad[0];
+              localIncrementArray[1] = (sigma[1]-sigma[0]-sigma[2])*pressureGrad[1] - (sigma[0]*sigma[2])*auxUGrad[1];
+              localIncrementArray[2] = (sigma[2]-sigma[0]-sigma[1])*pressureGrad[2] - (sigma[0]*sigma[1])*auxUGrad[2];
+              for (int j=0; j<3; ++j)
               {
-                computeDampingProfilePML( xLocal[j],
-                                          c,
-                                          xMin,
-                                          xMax,
-                                          yMin,
-                                          yMax,
-                                          zMin,
-                                          zMax,
-                                          dPML,
-                                          rPML,
-                                          sigma,
-                                          sigmaPrime);
-                real64 const localIncrement = ( sigma[0] * gradN[j][0] + sigmaPrime[0] * N[j] ) * v_n[elemToNodesViewConst[k][j]][0]
-                                            + ( sigma[1] * gradN[j][1] + sigmaPrime[1] * N[j] ) * v_n[elemToNodesViewConst[k][j]][1]
-                                            + ( sigma[2] * gradN[j][2] + sigmaPrime[2] * N[j] ) * v_n[elemToNodesViewConst[k][j]][2] ;
-                //real64 const localIncrement = gradN[j][0] * v_n[elemToNodesViewConst[k][j]]
-                //                            + gradN[j][1] * v_n[elemToNodesViewConst[k][j]]
-                //                            + gradN[j][2] * v_n[elemToNodesViewConst[k][j]] ;
-                
-                RAJA::atomicAdd< ATOMIC_POLICY >( &stiffnessPMLVector[elemToNodesViewConst[k][i]], a * localIncrement );
+                RAJA::atomicAdd< ATOMIC_POLICY >( &grad_n[elemToNodesViewConst[k][i]][j], localIncrementArray[j]/numNodesPerElem );
               }
-            } */
 
-            //}
-          } 
+              // compute beta.pressure + gamma.u - c^2 * divV where beta and gamma are functions of the damping profile
+              real64 const beta = sigma[0]*sigma[1]+sigma[0]*sigma[2]+sigma[1]*sigma[2];
+              real64 const gamma = sigma[0]*sigma[1]*sigma[2];
+              real64 const localIncrement = beta*p_n[elemToNodesViewConst[k][i]]
+                                          + gamma*u_n[elemToNodesViewConst[k][i]]
+                                          - c*c*( auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2] );
+
+              RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem);
+            }
+            else
+            {
+              for (int j=0; j<3; ++j)
+              {
+                RAJA::atomicAdd< ATOMIC_POLICY >( &grad_n[elemToNodesViewConst[k][i]][j], pressureGrad[j]/numNodesPerElem );
+              }
+              real64 const localIncrement = -c*c*(auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2]);
+              RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem);
+            }
+            }
         } );
       } );
     } );
@@ -797,10 +764,10 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     arrayView1d< real64 > const stiffnessVector = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
     arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
 
-    arrayView2d< real64 > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML_n >();
-    arrayView2d< real64 > const v_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML_np1 >();
-    arrayView1d< real64 > const divV = nodeManager.getExtrinsicData< extrinsicMeshData::DivAuxiliaryVar1PML >();
-    arrayView1d< real64 > const u = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+    arrayView2d< real64 > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
+    arrayView2d< real64 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+    arrayView1d< real64 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+    arrayView1d< real64 > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     real64 const xMin = m_xMinPML;
@@ -840,31 +807,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
 
-      // wave speed at the node to compute PML damping profile
-      real64 const c = 2000;
-
-      real64 sigma[3];
-      real64 xLocal[ 3 ];
-
-      for (int i=0; i<3; ++i)
-      {
-        xLocal[i] = X[a][i];
-      }
-
-      computeDampingProfilePML( xLocal,
-                                c,
-                                xMin,
-                                xMax,
-                                yMin,
-                                yMax,
-                                zMin,
-                                zMax,
-                                dPML,
-                                rPML,
-                                sigma);
-
-      real64 alpha = sigma[0] + sigma[1] + sigma[2];
-
       if( freeSurfaceNodeIndicator[a] != 1 )
       {
         if (flagPML==0)
@@ -877,11 +819,32 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                 
         else
         {
-          //p_np1[a] = dt2/mass[a]*1.0/(1+0.5*sMax*dt)*(rhs[a] - stiffnessVector[a] - c*c*mass[a]*(flagPML-1.0)*stiffnessPMLVector[a])
-          //         + (2*p_n[a] - p_nm1[a])/(1+0.5*sMax*dt)
-          //         + 0.5*sMax*dt/(1+0.5*sMax*dt) * p_nm1[a];
-
-          p_np1[a] = dt2*( (rhs[a] - stiffnessVector[a])/mass[a] + c*c*(flagPML - 1.0)*divV[a])
+          // wave speed to compute PML damping profile
+          real64 const cPML = 2000.;
+          
+          real64 sigma[3];
+          real64 xLocal[ 3 ];
+          
+          for (int i=0; i<3; ++i)
+          {
+            xLocal[i] = X[a][i];
+          }
+          
+          computeDampingProfilePML( xLocal,
+                                    cPML,
+                                    xMin,
+                                    xMax,
+                                    yMin,
+                                    yMax,
+                                    zMin,
+                                    zMax,
+                                    dPML,
+                                    rPML,
+                                    sigma);
+          
+          real64 const alpha = sigma[0] + sigma[1] + sigma[2];
+          
+          p_np1[a] = dt2*( (rhs[a] - stiffnessVector[a])/mass[a] - divV_n[a])
                    - (1 - 0.5*alpha*dt)*p_nm1[a]
                    + 2*p_n[a];
           
@@ -889,29 +852,19 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
           for (int i=0; i<3; ++i)
           {
-            v_n[a][i] = (1 - dt*sigma[i])*v_n[a][i] - dt*v_np1[a][i];
+            v_n[a][i] = (1 - dt*sigma[i])*v_n[a][i] - dt*grad_n[a][i];
           }
-          u[a] += dt*p_n[a]; 
-
+          u_n[a] += dt*p_n[a]; 
         }
           
       }
-
-      //if (flagPML>0)
-      //{
-      //  for (int i=0; i<3; ++i)
-      //  {
-      //    v_np1[a][i] = dt/(1+0.5*sigma[i]*dt)*v_np1[a][i]  
-      //      + (1-0.5*sigma[i]*dt)/(1+0.5*sigma[i]*dt) * v_n[a][i];
-      //  }
-      //}
 
     } );
 
     /// synchronize pressure fields
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::Pressure_np1::key(),
-      extrinsicMeshData::AuxiliaryVar1PML_n::key(),
+      extrinsicMeshData::AuxiliaryVar1PML::key(),
       extrinsicMeshData::AuxiliaryVar2PML::key() } );
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
@@ -933,11 +886,14 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       stiffnessVector[a] = 0.0;
       rhs[a] = 0.0;
 
-      divV[a] = 0;
-      for (int i=0; i<3; ++i)
+      if (flagPML>0)
+      {
+        divV_n[a] = 0;
+        for (int i=0; i<3; ++i)
           {
-            v_np1[a][i] = 0;
+            grad_n[a][i] = 0;
           }
+      }
     } );
 
   } );
