@@ -21,6 +21,7 @@
 #define GEOSX_STATIC_LAYOUT_HPP_
 
 #include "layout_traits.hpp"
+#include "layout_impl.hpp"
 
 namespace geosx
 {

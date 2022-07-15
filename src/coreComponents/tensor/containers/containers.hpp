@@ -26,12 +26,8 @@
  * */
 
 /// A read/write access pointer container
-#include "device_container.hpp"
-/// A read only access pointer container
-#include "read_container.hpp"
+#include "pointer_container.hpp"
 /// A statically sized container allocated on the stack
 #include "stack_container.hpp"
-/// A view container (reference) to another container
-#include "view_container.hpp"
 
 #endif // GEOSX_TENSOR_CONTAINERS_HPP_

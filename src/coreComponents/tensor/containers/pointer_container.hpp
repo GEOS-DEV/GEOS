@@ -14,11 +14,11 @@
 
 
 /**
- * @file read_container.hpp
+ * @file device_container.hpp
  */
 
-#ifndef GEOSX_READ_CONTAINER_HPP_
-#define GEOSX_READ_CONTAINER_HPP_
+#ifndef GEOSX_DEVICE_CONTAINER_HPP_
+#define GEOSX_DEVICE_CONTAINER_HPP_
 
 #include "container_traits.hpp"
 
@@ -28,31 +28,31 @@ namespace geosx
 namespace tensor
 {
 
-/// Non-owning const Container that can be moved between host and device.
+/// Non-owning modifiable Container that can be moved between host and device.
 template <typename T>
-class ReadContainer
+class PointerContainer
 {
-private:
-   const T* data;
+protected:
+   T* data;
 
 public:
    template <typename... Sizes> GEOSX_HOST_DEVICE
-   ReadContainer(int size0, Sizes... sizes) : data(nullptr)
+   PointerContainer(int size0, Sizes... sizes) : data(nullptr)
    {
       GEOSX_UNUSED_VAR(size0, sizes...);
       // static_assert(false,"Read Container are not supposed to be created like this");
    }
 
    GEOSX_HOST_DEVICE
-   ReadContainer(const T* data) : data(data)
+   PointerContainer(T* data) : data(data)
    { }
 
    GEOSX_HOST_DEVICE
-   ReadContainer(const ReadContainer &rhs) : data(rhs.data)
+   PointerContainer(const PointerContainer &rhs) : data(rhs.data)
    { }
 
    GEOSX_HOST_DEVICE
-   const T& operator[](int i) const
+   T& operator[](int i) const
    {
       return data[ i ];
    }
@@ -60,20 +60,20 @@ public:
 
 // get_container_type
 template <typename T>
-struct get_container_type_t<ReadContainer<T>>
+struct get_container_type_t<PointerContainer<T>>
 {
    using type = T;
 };
 
 // is_pointer_container
 template <typename T>
-struct is_pointer_container_v<ReadContainer<T>>
+struct is_pointer_container_v<PointerContainer<T>>
 {
    static constexpr bool value = true;
 };
 
 } // namespace tensor
 
-} // namespace geosx
+} // namespace mfem
 
-#endif // GEOSX_READ_CONTAINER_HPP_
+#endif // GEOSX_DEVICE_CONTAINER_HPP_

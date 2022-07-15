@@ -22,8 +22,6 @@
 
 /// Contain compilation time functions used with tensors
 #include "tensor_traits.hpp"
-/// Utility functions to abstract iterating over the tensor dimensions
-#include "utilities/foreach.hpp"
 
 namespace geosx
 {
@@ -61,14 +59,6 @@ public:
    TensorBase() : Container(), Layout() { }
 
    /// Main Constructors
-   /** Construct a Tensor by providing the sizes of its different dimensions,
-       both the Container and the Layout need to have similar constructors for
-       this Tensor constructor to be usable.
-   */
-   template <typename... Sizes> GEOSX_HOST_DEVICE
-   TensorBase(int size0, Sizes... sizes)
-   : Container(size0,sizes...), Layout(size0,sizes...) { }
-
    /** Construct a Tensor by providing a pointer to its data, and the sizes of
        its Layout. The Container needs to have a constructor using a pointer for
        this constructor to be usable.
@@ -76,38 +66,6 @@ public:
    template <typename... Sizes> GEOSX_HOST_DEVICE
    TensorBase(T* ptr, Sizes... sizes)
    : Container(ptr), Layout(sizes...) { }
-
-   /// Utility Constructors
-   /** Construct a tensor based on a Layout, the Container needs to be default
-       constructible. Note: A Tensor is a Layout (through inheritance).
-   */
-   GEOSX_HOST_DEVICE
-   TensorBase(Layout index): Container(), Layout(index) { }
-
-   /** Construct a Tensor by providing a Container object and a Layout object.
-   */
-   GEOSX_HOST_DEVICE
-   TensorBase(Container data, Layout index): Container(data), Layout(index) { }
-
-   /// Copy Constructors
-   /** Copy a Tensor of the same type, the copy is deep or shallow depending on
-       the Container.
-   */
-   GEOSX_HOST_DEVICE
-   TensorBase(const TensorBase &rhs): Container(rhs), Layout(rhs) { }
-
-   /** Deep copy of a Tensor of a different type. */
-   template <typename OtherTensor,
-             std::enable_if_t<
-               is_tensor<OtherTensor>,
-               bool> = true > GEOSX_HOST_DEVICE
-   TensorBase(const OtherTensor &rhs): Container(), Layout(rhs)
-   {
-      ForallDims<TensorBase>::ApplyBinOp(*this, rhs, [&](auto... idx)
-      {
-         (*this)(idx...) = rhs(idx...);
-      });
-   }
 
    /// Accessor
    /** This operator allows to access a value inside a Tensor by providing
@@ -132,59 +90,6 @@ public:
       static_assert(get_tensor_rank<TensorBase> == sizeof...(Idx),
                     "Wrong number of indices");
       return this->operator[]( this->index(args...) );
-   }
-
-   /// Initialization of a Tensor to a constant value.
-   GEOSX_HOST_DEVICE inline
-   TensorBase<Container,Layout>& operator=(const T &val)
-   {
-      ForallDims<TensorBase>::Apply(*this, [&](auto... idx)
-      {
-         (*this)(idx...) = val;
-      });
-      return *this;
-   }
-
-   /// operator=, compatible with other types of Tensors
-   template <typename OtherTensor,
-             std::enable_if_t<
-               is_tensor<OtherTensor>,
-               bool> = true > GEOSX_HOST_DEVICE inline
-   TensorBase<Container,Layout>& operator=(const OtherTensor &rhs)
-   {
-      ForallDims<TensorBase>::ApplyBinOp(*this, rhs, [&](auto... idx)
-      {
-         (*this)(idx...) = rhs(idx...);
-      });
-      return *this;
-   }
-
-   /// operator+=, compatible with other types of Tensors
-   template <typename OtherTensor,
-             std::enable_if_t<
-               is_tensor<OtherTensor>,
-               bool> = true > GEOSX_HOST_DEVICE inline
-   TensorBase<Container,Layout>& operator+=(const OtherTensor &rhs)
-   {
-      ForallDims<TensorBase>::ApplyBinOp(*this, rhs, [&](auto... idx)
-      {
-         (*this)(idx...) += rhs(idx...);
-      });
-      return *this;
-   }
-
-   /// operator-=, compatible with other types of Tensors
-   template <typename OtherTensor,
-             std::enable_if_t<
-               is_tensor<OtherTensor>,
-               bool> = true > GEOSX_HOST_DEVICE inline
-   TensorBase<Container,Layout>& operator-=(const OtherTensor &rhs)
-   {
-      ForallDims<TensorBase>::ApplyBinOp(*this, rhs, [&](auto... idx)
-      {
-         (*this)(idx...) -= rhs(idx...);
-      });
-      return *this;
    }
 };
 

@@ -26,6 +26,8 @@
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/writeField.hpp"
 /// Functions to write-add using atomics a field in local memory to global memory.
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/writeAddField.hpp"
+
+
 /// Functions to interpolate a field at quadrature points.
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/interpolateAtQuadraturePoints.hpp"
 /// Functions to interpolate gradient of a field at quadrature points.
