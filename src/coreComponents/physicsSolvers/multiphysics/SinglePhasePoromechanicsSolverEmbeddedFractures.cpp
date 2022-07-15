@@ -104,7 +104,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
 
   // Add coupling between displacement and cell pressures
   dofManager.addCoupling( keys::TotalDisplacement,
-                          extrinsicMeshData::flow::pressure::key(),
+                          SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
 
   map< string, array1d< string > > meshTargets;
@@ -123,7 +123,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
     meshTargets[meshBodyName] = std::move( regions );
   } );
 
-  dofManager.addCoupling( extrinsicMeshData::flow::pressure::key(),
+  dofManager.addCoupling( SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           extrinsicMeshData::contact::dispJump::key(),
                           DofManager::Connector::Elem,
                           meshTargets );
@@ -201,7 +201,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( Do
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     string const jumpDofKey = dofManager.getKey( extrinsicMeshData::contact::dispJump::key() );
-    string const pressureDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+    string const pressureDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -304,7 +304,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingSparsityPattern
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     string const jumpDofKey = dofManager.getKey( extrinsicMeshData::contact::dispJump::key() );
-    string const pressureDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+    string const pressureDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -425,7 +425,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
     arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
     arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
-    string const pDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+    string const pDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
