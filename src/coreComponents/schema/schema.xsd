@@ -2861,6 +2861,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
+		<!--compressiveStrength => Compressive strength from the uniaxial compression test-->
+		<xsd:attribute name="compressiveStrength" type="real64" default="0" />
 		<!--criticalFractureEnergy => Critical fracture energy-->
 		<xsd:attribute name="criticalFractureEnergy" type="real64" use="required" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
@@ -2875,12 +2877,20 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--deltaCoefficient => Coefficient in the calculation of the external driving force-->
+		<xsd:attribute name="deltaCoefficient" type="real64" default="0" />
+		<!--extDrivingForceSwitch => Whether to have external driving force. Can be True or False-->
+		<xsd:attribute name="extDrivingForceSwitch" type="string" use="required" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--tensileStrength => Tensile strength from the uniaxial tension test-->
+		<xsd:attribute name="tensileStrength" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageSpectralElasticIsotropicType">
+		<!--compressiveStrength => Compressive strength from the uniaxial compression test-->
+		<xsd:attribute name="compressiveStrength" type="real64" default="0" />
 		<!--criticalFractureEnergy => Critical fracture energy-->
 		<xsd:attribute name="criticalFractureEnergy" type="real64" use="required" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
@@ -2895,12 +2905,20 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--deltaCoefficient => Coefficient in the calculation of the external driving force-->
+		<xsd:attribute name="deltaCoefficient" type="real64" default="0" />
+		<!--extDrivingForceSwitch => Whether to have external driving force. Can be True or False-->
+		<xsd:attribute name="extDrivingForceSwitch" type="string" use="required" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--tensileStrength => Tensile strength from the uniaxial tension test-->
+		<xsd:attribute name="tensileStrength" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
+		<!--compressiveStrength => Compressive strength from the uniaxial compression test-->
+		<xsd:attribute name="compressiveStrength" type="real64" default="0" />
 		<!--criticalFractureEnergy => Critical fracture energy-->
 		<xsd:attribute name="criticalFractureEnergy" type="real64" use="required" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
@@ -2915,8 +2933,14 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--deltaCoefficient => Coefficient in the calculation of the external driving force-->
+		<xsd:attribute name="deltaCoefficient" type="real64" default="0" />
+		<!--extDrivingForceSwitch => Whether to have external driving force. Can be True or False-->
+		<xsd:attribute name="extDrivingForceSwitch" type="string" use="required" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--tensileStrength => Tensile strength from the uniaxial tension test-->
+		<xsd:attribute name="tensileStrength" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
