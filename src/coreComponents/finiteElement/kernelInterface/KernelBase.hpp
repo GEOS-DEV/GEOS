@@ -27,8 +27,6 @@
 #include "mesh/ElementRegionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-#include "tensor/tensor_traits.hpp"
-
 namespace geosx
 {
 
