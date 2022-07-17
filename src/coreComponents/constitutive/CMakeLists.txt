@@ -54,6 +54,7 @@ set( constitutive_headers
      fluid/ParticleFluidBase.hpp
      fluid/ProppantSlurryFluid.hpp
      fluid/ReactiveMultiFluid.hpp
+     fluid/ReactiveMultiFluidExtrinsicData.hpp
      fluid/ReactiveFluidDriver.hpp
      fluid/SingleFluidBase.hpp
      fluid/SingleFluidExtrinsicData.hpp
@@ -214,7 +215,7 @@ set( constitutive_sources
      thermalConductivity/SinglePhaseThermalConductivityBase.cpp
    )
 
-set( dependencyList events dataRepository functions)
+set( dependencyList events dataRepository functions linearAlgebra)
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers

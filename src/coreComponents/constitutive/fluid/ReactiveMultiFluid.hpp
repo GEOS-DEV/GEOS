@@ -46,7 +46,7 @@ public:
   deliverClone( string const & name,
                 Group * const parent ) const override;
 
-  static string catalogName() { return "ReactiveFluid";}
+  static string catalogName() { return "ReactiveMultiFluid";}
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -171,6 +171,8 @@ protected:
   void createChemicalReactions();
 
 private:
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// Reaction related terms
   integer m_numPrimarySpecies;

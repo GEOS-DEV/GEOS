@@ -34,6 +34,11 @@ ReactiveMultiFluid::
   // For now this is being hardcoded. We will see where this should come from.
   m_numPrimarySpecies = 7;
   m_numSecondarySpecies = 11;
+  
+  registerExtrinsicData( extrinsicMeshData::reactivefluid::primarySpeciesConcentration{}, &m_primarySpeciesConcentration);
+  registerExtrinsicData( extrinsicMeshData::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
+  registerExtrinsicData( extrinsicMeshData::reactivefluid::primarySpeciesTotalConcentration{}, &m_primarySpeciesTotalConcentration );
+  registerExtrinsicData( extrinsicMeshData::reactivefluid::kineticReactionRates{}, &m_kineticReactionRates );
 }
 
 bool ReactiveMultiFluid::isThermal() const
@@ -62,6 +67,19 @@ void ReactiveMultiFluid::postProcessInput()
                          InputError );
 
   createChemicalReactions();
+}
+
+void ReactiveMultiFluid::resizeFields( localIndex const size, localIndex const numPts )
+{ 
+  MultiFluidBase::resizeFields(size, numPts);
+
+  integer const numPrimarySpecies = this->numPrimarySpecies();
+  integer const numSecondarySpecies = this->numSecondarySpecies();
+
+  m_primarySpeciesConcentration.resize( size, numPrimarySpecies );
+  m_secondarySpeciesConcentration.resize( size, numSecondarySpecies );
+  m_primarySpeciesTotalConcentration.resize( size, numPrimarySpecies );
+  m_kineticReactionRates.resize( size, numPrimarySpecies );
 }
 
 void ReactiveMultiFluid::createChemicalReactions()

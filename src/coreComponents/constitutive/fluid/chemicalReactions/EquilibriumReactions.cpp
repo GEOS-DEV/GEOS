@@ -16,7 +16,7 @@
  * @file EquilibriumReactions.cpp
  */
 
-#include "constitutive/fluid/chemicalReactions/EquilibriumReactions.hpp"
+#include "EquilibriumReactions.hpp"
 
 #include "functions/FunctionManager.hpp"
 #include "linearAlgebra/interfaces/dense/BlasLapackLA.hpp"
@@ -53,7 +53,7 @@ EquilibriumReactions::EquilibriumReactions( string const & name, integer const n
   m_ionSizePrimary[5] = 8.00;
   m_ionSizePrimary[6] = 4.00;
 
-  m_ionSizeSec.resize( m_numSecSpecies );
+  m_ionSizeSec.resize( m_numSecondarySpecies );
   m_ionSizeSec[0] = 3.50;
   m_ionSizeSec[1] = 3.00;
   m_ionSizeSec[2] = 4.50;
@@ -75,7 +75,7 @@ EquilibriumReactions::EquilibriumReactions( string const & name, integer const n
   m_chargePrimary[5] = 2;
   m_chargePrimary[6] = 1;
 
-  m_chargeSec.resize( m_numSecSpecies );
+  m_chargeSec.resize( m_numSecondarySpecies );
   m_chargeSec[0] = -1;
   m_chargeSec[1] = 0;
   m_chargeSec[2] = -2;
@@ -91,7 +91,7 @@ EquilibriumReactions::EquilibriumReactions( string const & name, integer const n
   // Stochiometric Matrix
   // First index: 0 = OH-, 1 = CO2, 2 = CO3-2, 3 = H2CO3, 4 = CaHCO3+, 5 = CaCO3, 6 = CaSO4, 7 = CaCl+, 8 = CaCl2, 9 = MgSO4, 10 = NaSO4-
   // Second index: 0 = H+, 1 = HCO3-, 2 = Ca+2, 3 = SO4-2, 4 = Cl-, 5 = Mg+2, 6 = Na+1
-  m_stoichMatrix.resize( m_numSecSpecies, m_numPrimarySpecies );
+  m_stoichMatrix.resize( m_numSecondarySpecies, m_numPrimarySpecies );
   m_stoichMatrix[0][0] = -1;
   m_stoichMatrix[1][0] = 1;
   m_stoichMatrix[1][1] = 1;
@@ -116,7 +116,7 @@ EquilibriumReactions::EquilibriumReactions( string const & name, integer const n
   m_stoichMatrix[10][3] = 1;
 
   // Equilibrium Constant
-  m_log10EqConst.resize( m_numSecSpecies );
+  m_log10EqConst.resize( m_numSecondarySpecies );
   m_log10EqConst[0] = 13.99;
   m_log10EqConst[1] = -6.36;
   m_log10EqConst[2] = 10.33;
@@ -132,7 +132,9 @@ EquilibriumReactions::EquilibriumReactions( string const & name, integer const n
 
 EquilibriumReactions::KernelWrapper EquilibriumReactions::createKernelWrapper() const
 {
-  return KernelWrapper( m_log10EqConst,
+  return KernelWrapper( m_numPrimarySpecies,
+                        m_numSecondarySpecies,
+                        m_log10EqConst,
                         m_stoichMatrix,
                         m_chargePrimary,
                         m_chargeSec,
@@ -151,9 +153,9 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
                                                                 arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const
 
 {
-  DenseMatrix matrix( m_numPrimarySpecies, m_numPrimarySpecies );
-  DenseVector rhs( m_numPrimarySpecies );
-  DenseVector solution( m_numPrimarySpecies );
+  array2d<real64> matrix( m_numPrimarySpecies, m_numPrimarySpecies );
+  array1d<real64> rhs( m_numPrimarySpecies );
+  array1d<real64> solution( m_numPrimarySpecies );
 
   bool converged = false;
   for( int iteration = 0; iteration < m_maxNumIterations; iteration++ )
@@ -169,7 +171,7 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
                                        matrix,
                                        rhs );
 
-    real64 const residualNorm = BlasLapackLA::vectorNorm2( rhs ); // may need the size as constexpr
+    real64 const residualNorm = BlasLapackLA::vectorNorm2( rhs.toSliceConst() );
 
     if( residualNorm < m_newtonTol && iteration >= 1 )
     {
@@ -193,22 +195,20 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
                                                                              arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                                                                              arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                                                                              arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                                                                             DenseMatrix & matrix,
-                                                                             DenseVector & rhs ) const
+                                                                             arrayView2d<real64> const matrix,
+                                                                             arrayView1d<real64> const rhs ) const
 {
 
   stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > log10PrimaryActCoeff( m_numPrimarySpecies );
-  stackArray1d< real64, ReactionsBase::maxNumSecondarySpecies > log10SecActCoeff( m_numSecSpecies );
-  stackArray2d< real64, ReactionsBase::maxNumSecondarySpecies * ReactionsBase::maxNumPrimarySpecies > dLog10SecConc_dLog10PrimaryConc( m_numPrimarySpecies, m_numSecSpecies );
+  stackArray1d< real64, ReactionsBase::maxNumSecondarySpecies > log10SecActCoeff( m_numSecondarySpecies );
+  stackArray2d< real64, ReactionsBase::maxNumSecondarySpecies * ReactionsBase::maxNumPrimarySpecies > dLog10SecConc_dLog10PrimaryConc( m_numPrimarySpecies, m_numSecondarySpecies );
   stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > totalConcentration( m_numPrimarySpecies );
   stackArray2d< real64, ReactionsBase::maxNumPrimarySpecies * ReactionsBase::maxNumPrimarySpecies > dTotalConc_dLog10PrimaryConc( m_numPrimarySpecies, m_numPrimarySpecies );
-
 
   real64 ionicStrength = 0.0;
   stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > dIonicStrength_dPrimaryConcentration( m_numPrimarySpecies );
   stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > dLog10PrimaryActCoeff_dIonicStrength( m_numPrimarySpecies );
-  stackArray1d< real64, ReactionsBase::maxNumSecondarySpecies > dLog10SecActCoeff_dIonicStrength( m_numSecSpecies );
-
+  stackArray1d< real64, ReactionsBase::maxNumSecondarySpecies > dLog10SecActCoeff_dIonicStrength( m_numSecondarySpecies );
 
   /// activity coefficients
   computeIonicStrength( primarySpeciesConcentration,
@@ -261,20 +261,22 @@ void EquilibriumReactions::KernelWrapper::computeSeondarySpeciesConcAndDerivativ
                                                                                    arraySlice2d< real64 > const & dLog10SecConc_dLog10PrimaryConc ) const
 {
   // Compute d(concentration of dependent species)/d(concentration of basis species)
-  for( int iSec = 0; iSec < m_numSecSpecies; ++iSec )
+  for( int iSec = 0; iSec < m_numSecondarySpecies; ++iSec )
   {
     real64 log10SecConc = -m_log10EqConst[iSec] - log10SecActCoeff[iSec];
 
     for( int jPri = 0; jPri < m_numPrimarySpecies; ++jPri )
     {
+      real64 const dIonicStrength_dPrimaryConc = log( 10 ) * 0.5 * m_chargePrimary[jPri] * m_chargePrimary[jPri];
+
       log10SecConc += m_stoichMatrix[iSec][jPri] * ( log10( primarySpeciesConcentration[jPri] ) + log10PrimaryActCoeff[jPri] );
       dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stoichMatrix[iSec][jPri] - dLog10SecActCoeff_dIonicStrength[iSec] * primarySpeciesConcentration[jPri] *
-                                                     log( 10 ) * 0.5 * m_ionSizePrimary[jPri] * m_ionSizePrimary[jPri];
+                                                     dIonicStrength_dPrimaryConc;
       for( int kDerivative = 0; kDerivative < m_numPrimarySpecies; ++kDerivative )
       {
         // add contribution to the derivtive from all primary activity coefficients
         dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stoichMatrix[iSec][kDerivative] * dLog10PrimaryActCoeff_dIonicStrength[kDerivative] * primarySpeciesConcentration[jPri] *
-                                                       log( 10 ) * 0.5 * m_ionSizePrimary[jPri] * m_ionSizePrimary[jPri];
+                                                       dIonicStrength_dPrimaryConc;
       }
 
     }
@@ -300,7 +302,7 @@ void EquilibriumReactions::KernelWrapper::computeTotalConcAndDerivative( real64 
     // d(total concentration)/d(log10(concentration))
     dTotalConc_dLog10PrimaryConc[iPri][iPri] = log( 10.0 ) * primarySpeciesConcentration[iPri];
     // contribution from all dependent species
-    for( int jSec = 0; jSec < m_numSecSpecies; ++jSec )
+    for( int jSec = 0; jSec < m_numSecondarySpecies; ++jSec )
     {
       totalConc[iPri] += m_stoichMatrix[jSec][iPri] * secondarySpeciesConectration[jSec];
       for( int kDerivative = 0; kDerivative < m_numPrimarySpecies; ++kDerivative )
@@ -315,7 +317,7 @@ void EquilibriumReactions::KernelWrapper::computeTotalConcAndDerivative( real64 
 
 GEOSX_HOST_DEVICE
 void EquilibriumReactions::KernelWrapper::
-  updatePrimarySpeciesConcentrations( DenseVector const & solution,
+  updatePrimarySpeciesConcentrations( arrayView1d<real64 const> const solution,
                                       arraySlice1d< real64 > const & primarySpeciesConcentration ) const
 {
   for( integer i = 0; i < m_numPrimarySpecies; i++ )

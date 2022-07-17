@@ -28,26 +28,42 @@ namespace geosx
 namespace extrinsicMeshData
 {
 
-namespace multifluid
+namespace reactivefluid
 {
 
 using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
 
-EXTRINSIC_MESH_DATA_TRAIT( log10PrimaryConc,
-                           "log10PrimaryConc",
+EXTRINSIC_MESH_DATA_TRAIT( primarySpeciesConcentration,
+                           "primarySpeciesConcentration",
                            array2dLayoutComp,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "log10PrimaryConc" );
+                           "primarySpeciesConcentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( log10SecConc,
-                           "log10SecConc",
+EXTRINSIC_MESH_DATA_TRAIT( primarySpeciesTotalConcentration,
+                           "primarySpeciesTotalConcentration",
                            array2dLayoutComp,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "log10SecConc" );
+                           "primarySpeciesTotalConcentration" );                           
+
+EXTRINSIC_MESH_DATA_TRAIT( secondarySpeciesConcentration,
+                           "secondarySpeciesConcentration",
+                           array2dLayoutComp,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "secondarySpeciesConcentration" );
+
+EXTRINSIC_MESH_DATA_TRAIT( kineticReactionRates,
+                           "kineticReactionRates",
+                           array2dLayoutComp,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "kineticReactionRates" );                                 
 }
 
 }

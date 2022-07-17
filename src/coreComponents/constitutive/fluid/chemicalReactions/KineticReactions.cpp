@@ -38,7 +38,9 @@ KineticReactions::KineticReactions( string const & name, integer const numPrimar
 
 KineticReactions::KernelWrapper KineticReactions::createKernelWrapper() const
 {
-  return KernelWrapper( m_log10EqConst,
+  return KernelWrapper( m_numPrimarySpecies,
+                        m_numSecondarySpecies,
+                        m_log10EqConst,
                         m_stoichMatrix,
                         m_chargePrimary,
                         m_chargeSec,

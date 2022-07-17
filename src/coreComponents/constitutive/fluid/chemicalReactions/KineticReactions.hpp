@@ -44,7 +44,9 @@ public:
 
     static constexpr real64 RConst = 8.314;
 
-    KernelWrapper( arrayView1d< real64 > const & log10EqConst,
+    KernelWrapper( integer const numPrimarySpecies,
+                   integer const numSecondarySpecies,
+                   arrayView1d< real64 > const & log10EqConst,
                    arrayView2d< real64 > const & stoichMatrix,
                    arrayView1d< integer > const & chargePrimary,
                    arrayView1d< integer > const & chargeSec,
@@ -54,7 +56,9 @@ public:
                    real64 const DebyeHuckelB,
                    real64 const WATEQBDot,
                    arrayView1d< real64 > const & reactionRateConstant ):
-      ReactionsBase::KernelWrapper( log10EqConst,
+      ReactionsBase::KernelWrapper( numPrimarySpecies,
+                                    numSecondarySpecies,
+                                    log10EqConst,
                                     stoichMatrix,
                                     chargePrimary,
                                     chargeSec,

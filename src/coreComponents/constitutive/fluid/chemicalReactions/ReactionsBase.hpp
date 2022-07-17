@@ -38,8 +38,8 @@ public:
 
   virtual ~ReactionsBase() = default;
 
-  constexpr static integer maxNumPrimarySpecies = 7;
-  constexpr static integer maxNumSecondarySpecies = 11;
+  constexpr static integer maxNumPrimarySpecies = 12;
+  constexpr static integer maxNumSecondarySpecies = 15;
 
   string const & reactionName() const { return m_name; }
 
@@ -49,7 +49,7 @@ protected:
 
   integer m_numPrimarySpecies;
 
-  integer m_numSecSpecies;
+  integer m_numSecondarySpecies;
 
   /// Array storing the name of the components
   string_array m_componentNames;
@@ -88,7 +88,9 @@ public:
      * @param DebyeHuckelB
      * @param WATEQBDot
      */
-    KernelWrapper( arrayView1d< real64 > const & log10EqConst,
+    KernelWrapper( integer const numPrimarySpecies,
+                   integer const numSecondarySpecies,
+                   arrayView1d< real64 > const & log10EqConst,
                    arrayView2d< real64 > const & stoichMatrix,
                    arrayView1d< integer > const & chargePrimary,
                    arrayView1d< integer > const & chargeSec,
@@ -97,6 +99,8 @@ public:
                    real64 const DebyeHuckelA,
                    real64 const DebyeHuckelB,
                    real64 const WATEQBDot ):
+      m_numPrimarySpecies( numPrimarySpecies ),
+      m_numSecondarySpecies( numSecondarySpecies ),                   
       m_log10EqConst( log10EqConst ),
       m_stoichMatrix( stoichMatrix ),
       m_chargePrimary( chargePrimary ),
@@ -140,7 +144,7 @@ protected:
 
     /// Hard coding the example case - eventually would have to be changed such that it is read from an input file
     integer m_numPrimarySpecies; // Currently not including H2O and O2gas
-    integer m_numSecSpecies;
+    integer m_numSecondarySpecies;
 
     arrayView1d< real64 > m_log10EqConst;
     arrayView2d< real64 > m_stoichMatrix;

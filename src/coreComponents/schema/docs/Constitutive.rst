@@ -53,6 +53,7 @@ ProppantPermeability                        node         :ref:`XML_ProppantPerme
 ProppantPorosity                            node         :ref:`XML_ProppantPorosity`                            
 ProppantSlurryFluid                         node         :ref:`XML_ProppantSlurryFluid`                         
 ProppantSolidProppantPermeability           node         :ref:`XML_ProppantSolidProppantPermeability`           
+ReactiveMultiFluid                          node         :ref:`XML_ReactiveMultiFluid`                          
 SinglePhaseConstantThermalConductivity      node         :ref:`XML_SinglePhaseConstantThermalConductivity`      
 SlipDependentPermeability                   node         :ref:`XML_SlipDependentPermeability`                   
 SolidInternalEnergy                         node         :ref:`XML_SolidInternalEnergy`                         

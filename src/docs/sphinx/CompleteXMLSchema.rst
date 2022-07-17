@@ -764,6 +764,20 @@ Element: ReactiveCompositionalMultiphaseOBL
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
 
 
+.. _XML_ReactiveFluidDriver:
+
+Element: ReactiveFluidDriver
+============================
+.. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver.rst
+
+
+.. _XML_ReactiveMultiFluid:
+
+Element: ReactiveMultiFluid
+===========================
+.. include:: ../../coreComponents/schema/docs/ReactiveMultiFluid.rst
+
+
 .. _XML_Restart:
 
 Element: Restart
@@ -1844,6 +1858,20 @@ Datastructure: Python
 Datastructure: ReactiveCompositionalMultiphaseOBL
 =================================================
 .. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
+
+
+.. _DATASTRUCTURE_ReactiveFluidDriver:
+
+Datastructure: ReactiveFluidDriver
+==================================
+.. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver_other.rst
+
+
+.. _DATASTRUCTURE_ReactiveMultiFluid:
+
+Datastructure: ReactiveMultiFluid
+=================================
+.. include:: ../../coreComponents/schema/docs/ReactiveMultiFluid_other.rst
 
 
 .. _DATASTRUCTURE_Restart:

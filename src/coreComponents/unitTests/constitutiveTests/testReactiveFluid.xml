@@ -2,14 +2,15 @@
 
 <Problem>
   <Tasks>
+    <!-- primary species (feed): 1. H+, 2. HCO3-, 3. Ca+2, 4. SO4-2, 5. Cl-, 6. Mg+2, 7. Na+1-->
+    <!-- secondary species: 1. OH-, 2. CO2, 3. CO3-2, 4. H2CO3, 5. CaHCO3+, 6. CaCO3, 7. CaSO4, 8. CaCl+, 9. CaCl2, 10. MgSO4, 11. NaSO4-->
     <ReactiveFluidDriver
-      name=""
+      name="testDistilledWaterCO2"
       fluid="reactiveFluid"
-      feedComposition="{  }"
+      feedComposition="{1e-20, 1e-1, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
-      steps="49"
-      baseline=""
+      steps="1"
       logLevel="1"/>
   </Tasks>
 
@@ -17,15 +18,15 @@
     maxTime="1">
     <SoloEvent
       name="eventA"
-      target="/Tasks/testHydrogenMixtureA"/>
+      target="/Tasks/testDistilledWaterCO2"/>
   </Events>
 
   <Constitutive>
     <ReactiveMultiFluid
       name="reactiveFluid"
       phaseNames="{ water }"
-      componentNames="{ co2, water }"
-      componentMolarWeight="{ 44e-3, 18e-3 }"/>
+      componentNames="{ water }"
+      componentMolarWeight="{ 18e-3 }"/>
   </Constitutive>
 
   <Functions>
@@ -33,7 +34,7 @@
       name="pressureFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0 }"
-      values="{ 1e6, 50e6 }"/>
+      values="{ 1e6, 1e6 }"/>
 
     <TableFunction
       name="temperatureFunction"

@@ -34,7 +34,7 @@ namespace chemicalReactions
 ReactionsBase::ReactionsBase( string const & name, integer const numPrimarySpecies, integer const numSecSpecies ):
   m_name( name ),
   m_numPrimarySpecies( numPrimarySpecies ),
-  m_numSecSpecies( numSecSpecies )
+  m_numSecondarySpecies( numSecSpecies )
 {}
 
 void ReactionsBase::KernelWrapper::computeLog10ActCoefBDotModel( real64 const temperature,
@@ -48,7 +48,7 @@ void ReactionsBase::KernelWrapper::computeLog10ActCoefBDotModel( real64 const te
   // derivatives with respect to Ionic strength using the B-Dot Model
   // which is the same as the Extended Debye-Huckel model in GEOS.
   // localIndex const NBasis = m_numPrimarySpecies;
-  // localIndex const NDependent = m_numSecSpecies;
+  // localIndex const NDependent = m_numSecondarySpecies;
 
   real64 const TK = temperature + 273.15;
 
@@ -61,7 +61,7 @@ void ReactionsBase::KernelWrapper::computeLog10ActCoefBDotModel( real64 const te
                                                (1.0 + m_ionSizePrimary[i] * m_DebyeHuckelB * sqrt( ionicStrength )) /
                                                (1.0 + m_ionSizePrimary[i] * m_DebyeHuckelB * sqrt( ionicStrength )));
   }
-  for( localIndex i = 0; i < m_numSecSpecies; ++i )
+  for( localIndex i = 0; i < m_numSecondarySpecies; ++i )
   {
     log10SecActCoeff[i] = m_WATEQBDot * ionicStrength - m_DebyeHuckelA * m_chargeSec[i] * m_chargeSec[i] * sqrt( ionicStrength ) /
                           (1.0 + m_ionSizeSec[i] * m_DebyeHuckelB * sqrt( ionicStrength ));
@@ -84,7 +84,7 @@ void ReactionsBase::KernelWrapper::computeIonicStrength( arraySlice1d< real64 co
     ionicStrength += 0.5 * m_chargePrimary[i] * m_chargePrimary[i] * primarySpeciesConcentration[i];
   }
   // Secondary species
-  for( int j = 0; j < m_numSecSpecies; ++j )
+  for( int j = 0; j < m_numSecondarySpecies; ++j )
   {
     ionicStrength += 0.5 * m_chargeSec[j] * m_chargeSec[j] * secondarySpeciesConcentration[j];
   }

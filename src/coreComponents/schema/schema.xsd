@@ -395,6 +395,10 @@
 					<xsd:selector xpath="PackCollection" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="TasksReactiveFluidDriverUniqueName">
+					<xsd:selector xpath="ReactiveFluidDriver" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksSolidMechanicsStateResetUniqueName">
 					<xsd:selector xpath="SolidMechanicsStateReset" />
 					<xsd:field xpath="@name" />
@@ -603,6 +607,10 @@
 				</xsd:unique>
 				<xsd:unique name="ConstitutiveProppantSolidProppantPermeabilityUniqueName">
 					<xsd:selector xpath="ProppantSolidProppantPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="ConstitutiveReactiveMultiFluidUniqueName">
+					<xsd:selector xpath="ReactiveMultiFluid" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="ConstitutiveSinglePhaseConstantThermalConductivityUniqueName">
@@ -2452,6 +2460,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
+			<xsd:element name="ReactiveFluidDriver" type="ReactiveFluidDriverType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
@@ -2485,6 +2494,26 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="onlyOnSetChange" type="integer" default="0" />
 		<!--setNames => The set(s) for which to retrieve data.-->
 		<xsd:attribute name="setNames" type="string_array" default="{}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ReactiveFluidDriverType">
+		<!--baseline => Baseline file-->
+		<xsd:attribute name="baseline" type="path" default="none" />
+		<!--feedComposition => Feed composition array: total concentration of the primary species -->
+		<xsd:attribute name="feedComposition" type="real64_array" use="required" />
+		<!--fluid => Fluid to test-->
+		<xsd:attribute name="fluid" type="string" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--output => Output file-->
+		<xsd:attribute name="output" type="string" default="none" />
+		<!--pressureControl => Function controlling pressure time history-->
+		<xsd:attribute name="pressureControl" type="string" use="required" />
+		<!--steps => Number of load steps to take-->
+		<xsd:attribute name="steps" type="integer" use="required" />
+		<!--temperatureControl => Function controlling temperature time history-->
+		<xsd:attribute name="temperatureControl" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2574,6 +2603,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="ProppantPorosity" type="ProppantPorosityType" />
 			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="ProppantSolidProppantPermeability" type="ProppantSolidProppantPermeabilityType" />
+			<xsd:element name="ReactiveMultiFluid" type="ReactiveMultiFluidType" />
 			<xsd:element name="SinglePhaseConstantThermalConductivity" type="SinglePhaseConstantThermalConductivityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
 			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
@@ -3409,6 +3439,16 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ReactiveMultiFluidType">
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

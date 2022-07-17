@@ -45,7 +45,9 @@ public:
     using DenseMatrix = stackArray2d< real64, ReactionsBase::maxNumPrimarySpecies * ReactionsBase::maxNumPrimarySpecies >;
     using DenseVector = stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies >;
 
-    KernelWrapper( arrayView1d< real64 > const & log10EqConst,
+    KernelWrapper( integer const numPrimarySpecies,
+                   integer const numSecondarySpecies,
+                   arrayView1d< real64 > const & log10EqConst,
                    arrayView2d< real64 > const & stoichMatrix,
                    arrayView1d< integer > const & chargePrimary,
                    arrayView1d< integer > const & chargeSec,
@@ -54,7 +56,9 @@ public:
                    real64 const DebyeHuckelA,
                    real64 const DebyeHuckelB,
                    real64 const WATEQBDot ):
-      ReactionsBase::KernelWrapper( log10EqConst,
+      ReactionsBase::KernelWrapper( numPrimarySpecies,
+                                    numSecondarySpecies,
+                                    log10EqConst,
                                     stoichMatrix,
                                     chargePrimary,
                                     chargeSec,
@@ -83,8 +87,8 @@ private:
                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                                             arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                                            DenseMatrix & matrix,
-                                            DenseVector & rhs ) const;
+                                            arrayView2d<real64> const matrix,
+                                            arrayView1d<real64> const rhs ) const;
 
     void computeSeondarySpeciesConcAndDerivative( real64 const temperature,
                                                   arraySlice1d< real64 const > const & log10PrimaryActCoeff,
@@ -103,7 +107,7 @@ private:
                                         arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc ) const;
 
     GEOSX_HOST_DEVICE
-    void updatePrimarySpeciesConcentrations( DenseVector const & solution,
+    void updatePrimarySpeciesConcentrations( arrayView1d<real64 const> const solution,
                                              arraySlice1d< real64 > const & primarySpeciesConcentration ) const;
 
 
