@@ -160,7 +160,7 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
   setInitialGuess(primarySpeciesTotalConcentration, primarySpeciesConcentration);
 
   bool converged = false;
-  for( int iteration = 0; iteration < m_maxNumIterations; iteration++ )
+  for( int iteration = 0; iteration < 3; iteration++ )
   {
     matrix.zero();
     rhs.zero();
@@ -181,6 +181,22 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
       break;
     }
 
+    std::cout<<"iteration " << iteration <<std::endl;
+
+    std::cout<<"Matrix"<<std::endl;
+
+    for(int i =0; i<matrix.size(0); i++)
+    {
+      std::cout<< "row: " << i;
+      for(int j=0; j<matrix.size(1); j++)
+      {
+        std::cout<< "   "<< matrix(i, j);
+      }
+      std::cout << std::endl;
+    }
+
+    std::cout << "rhs: " << rhs <<std::endl;   
+
     #if defined(GEOSX_USE_CUDA)
     // for now we do this. We ll need a gpu solver for dense matrices.
     GEOSX_ERROR( "Geochem only works on CPUs for now." );
@@ -190,6 +206,7 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
 
     updatePrimarySpeciesConcentrations( solution, primarySpeciesConcentration );
   }
+    GEOSX_ERROR_IF(converged, "Equilibrium reactions did not converge." );
 }
 
 GEOSX_HOST_DEVICE
