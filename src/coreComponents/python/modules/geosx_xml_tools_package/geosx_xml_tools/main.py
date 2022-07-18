@@ -11,10 +11,19 @@ def parse_arguments():
     # Parse the user arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input', type=str, action='append', help='Input file name (multiple allowed)')
-    parser.add_argument('-c', '--compiled-name', type=str, help='Compiled xml file name (otherwise, it is randomly genrated)', default='')
+    parser.add_argument('-c',
+                        '--compiled-name',
+                        type=str,
+                        help='Compiled xml file name (otherwise, it is randomly genrated)',
+                        default='')
     parser.add_argument('-s', '--schema', type=str, help='GEOSX schema to use for validation', default='')
     parser.add_argument('-v', '--verbose', type=int, help='Verbosity of outputs', default=0)
-    parser.add_argument('-p', '--parameters', nargs='+', action='append', help='Parameter overrides (name value, multiple allowed)', default=[])
+    parser.add_argument('-p',
+                        '--parameters',
+                        nargs='+',
+                        action='append',
+                        help='Parameter overrides (name value, multiple allowed)',
+                        default=[])
     return parser.parse_known_args()
 
 
@@ -28,7 +37,9 @@ def check_mpi_rank():
 
 
 def wait_for_file_write_rank_0(target_file_argument=0, max_wait_time=100, max_startup_delay=1):
+
     def wait_for_file_write_rank_0_inner(writer):
+
         def wait_for_file_write_rank_0_decorator(*args, **kwargs):
             # Check the target file status
             rank = check_mpi_rank()
@@ -46,14 +57,14 @@ def wait_for_file_write_rank_0(target_file_argument=0, max_wait_time=100, max_st
                 # Variations in thread startup times may mean the file has already been processed
                 # If the last edit was done within the specified time, then allow the thread to proceed
                 if (abs(target_file_edit_time - time.time()) < max_startup_delay):
-                    target_file_edit_time = 0                    
+                    target_file_edit_time = 0
 
             # Go into the target process or wait for the expected file update
             if (rank == 0):
                 return writer(*args, **kwargs)
             else:
                 ta = time.time()
-                while(time.time() - ta < max_wait_time):
+                while (time.time() - ta < max_wait_time):
                     if target_file_exists:
                         if (os.path.getmtime(fname) > target_file_edit_time):
                             break
@@ -61,7 +72,9 @@ def wait_for_file_write_rank_0(target_file_argument=0, max_wait_time=100, max_st
                         if os.path.isfile(fname):
                             break
                     time.sleep(0.1)
+
         return wait_for_file_write_rank_0_decorator
+
     return wait_for_file_write_rank_0_inner
 
 
@@ -89,7 +102,9 @@ def preprocess_serial():
         if args.compiled_name:
             compiled_name = args.compiled_name
         else:
-            raise Exception('When applying the preprocessor in parallel (outside of pygeosx), the --compiled_name argument is required')
+            raise Exception(
+                'When applying the preprocessor in parallel (outside of pygeosx), the --compiled_name argument is required'
+            )
 
     # Note: the return value may be passed to sys.exit, and cause bash to report an error
     # return format_geosx_arguments(compiled_name, unknown_args)
