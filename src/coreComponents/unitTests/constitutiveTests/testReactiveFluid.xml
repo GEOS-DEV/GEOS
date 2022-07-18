@@ -7,7 +7,7 @@
     <ReactiveFluidDriver
       name="testDistilledWaterCO2"
       fluid="reactiveFluid"
-      feedComposition="{1e-20, 1e-1, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20 }"
+      feedComposition="{1e-1, 1e-1, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="1"

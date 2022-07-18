@@ -117,7 +117,7 @@ private:
 
 
 
-    integer m_maxNumIterations = 100;
+    integer m_maxNumIterations = 3;
     real64 m_newtonTol = 1e-6;
   };
 

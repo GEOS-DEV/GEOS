@@ -160,7 +160,7 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
   setInitialGuess(primarySpeciesTotalConcentration, primarySpeciesConcentration);
 
   bool converged = false;
-  for( int iteration = 0; iteration < 3; iteration++ )
+  for( int iteration = 0; iteration < m_maxNumIterations; iteration++ )
   {
     matrix.zero();
     rhs.zero();
