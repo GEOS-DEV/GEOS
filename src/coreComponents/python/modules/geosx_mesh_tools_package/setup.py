@@ -8,4 +8,3 @@ setup(name='geosx_mesh_tools',
       packages=['geosx_mesh_tools'],
       entry_points={'console_scripts': ['convert_abaqus = geosx_mesh_tools.abaqus_converter:main']},
       install_requires=['meshio'])
-

@@ -26,10 +26,9 @@ def make_cuboctahedron(center):
     vertices = [p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11]
 
     # Define faces
-    faces = [(p0, p3, p2, p1), (p0, p4, p8, p7), (p1, p5, p9, p4),
-             (p2, p6, p10, p5), (p3, p7, p11, p6), (p8, p9, p10, p11),
-             (p0, p1, p4), (p1, p2, p5), (p2, p3, p6), (p0, p7, p3),
-             (p4, p9, p8), (p5, p10, p9), (p6, p11, p10), (p7, p8, p11)]
+    faces = [(p0, p3, p2, p1), (p0, p4, p8, p7), (p1, p5, p9, p4), (p2, p6, p10, p5), (p3, p7, p11, p6),
+             (p8, p9, p10, p11), (p0, p1, p4), (p1, p2, p5), (p2, p3, p6), (p0, p7, p3), (p4, p9, p8), (p5, p10, p9),
+             (p6, p11, p10), (p7, p8, p11)]
 
     return vertices, faces
 
@@ -46,8 +45,8 @@ def make_octahedron(center):
     vertices = [p0, p1, p2, p3, p4, p5]
 
     # Define faces
-    faces = [(p0, p2, p1), (p0, p3, p2), (p0, p4, p3), (p0, p1, p4),
-             (p1, p2, p5), (p2, p3, p5), (p3, p4, p5), (p1, p5, p4)]
+    faces = [(p0, p2, p1), (p0, p3, p2), (p0, p4, p3), (p0, p1, p4), (p1, p2, p5), (p2, p3, p5), (p3, p4, p5),
+             (p1, p5, p4)]
 
     return vertices, faces
 
@@ -145,7 +144,7 @@ def open_node(outfile, space_count, name, **kwargs):
     for arg, value in kwargs.items():
         arg_string += f' {arg}="{value}"'
 
-    outfile.write(space_count*' ' + f'<{name}' + arg_string + '>\n')
+    outfile.write(space_count * ' ' + f'<{name}' + arg_string + '>\n')
     space_count += 2
 
     return space_count
@@ -153,21 +152,21 @@ def open_node(outfile, space_count, name, **kwargs):
 
 def close_node(outfile, space_count, name):
     space_count -= 2
-    outfile.write(space_count*' ' + f'</{name}>\n')
+    outfile.write(space_count * ' ' + f'</{name}>\n')
 
     return space_count
 
 
 def write_data(outfile, space_count, data, **kwargs):
     space_count = open_node(outfile, space_count, 'DataArray', **kwargs)
-    outfile.write(space_count*' ')
+    outfile.write(space_count * ' ')
 
     for index, value in enumerate(data, 1):
         outfile.write(f' {value}')
         # Write a newline every 15 values
 
         if (index % 15) == 0:
-            outfile.write('\n' + space_count*' ')
+            outfile.write('\n' + space_count * ' ')
 
     outfile.write('\n')
     space_count = close_node(outfile, space_count, 'DataArray')
@@ -187,33 +186,27 @@ def print_to_vtu(fname, nodes, faces, index_map):
     with open(fname, 'w') as outfile:
         write_header(outfile)
         space_count = 2
-        space_count = open_node(outfile, space_count, 'VTKFile',
-                                type='UnstructuredGrid', version='0.1',
+        space_count = open_node(outfile,
+                                space_count,
+                                'VTKFile',
+                                type='UnstructuredGrid',
+                                version='0.1',
                                 byte_order='LittleEndian')
         space_count = open_node(outfile, space_count, 'UnstructuredGrid')
-        space_count = open_node(outfile, space_count, 'Piece',
-                                NumberOfPoints=npoints, NumberOfCells=ncells)
+        space_count = open_node(outfile, space_count, 'Piece', NumberOfPoints=npoints, NumberOfCells=ncells)
         # Optional: add PointData later
-        space_count = open_node(outfile, space_count,
-                                'CellData', Scalars='cell_scalars')
-        write_data(outfile, space_count, cell_data, type='Int32',
-                   Name='cell_scalars', format='ascii')
+        space_count = open_node(outfile, space_count, 'CellData', Scalars='cell_scalars')
+        write_data(outfile, space_count, cell_data, type='Int32', Name='cell_scalars', format='ascii')
         space_count = close_node(outfile, space_count, 'CellData')
         space_count = open_node(outfile, space_count, 'Points')
-        write_data(outfile, space_count, points, type='Float32',
-                   NumberOfComponents=3, format='ascii')
+        write_data(outfile, space_count, points, type='Float32', NumberOfComponents=3, format='ascii')
         space_count = close_node(outfile, space_count, 'Points')
         space_count = open_node(outfile, space_count, 'Cells')
-        write_data(outfile, space_count, cell_connectivity,
-                   type='Int64', IdType=1, Name='connectivity', format='ascii')
-        write_data(outfile, space_count, cell_offsets, type='Int64',
-                   IdType=1, Name='offsets', format='ascii')
-        write_data(outfile, space_count, cell_types,
-                   type='UInt8', Name='types', format='ascii')
-        write_data(outfile, space_count, face_connectivity,
-                   type='Int64', IdType=1, Name='faces', format='ascii')
-        write_data(outfile, space_count, face_offsets, type='Int64',
-                   IdType=1, Name='faceoffsets', format='ascii')
+        write_data(outfile, space_count, cell_connectivity, type='Int64', IdType=1, Name='connectivity', format='ascii')
+        write_data(outfile, space_count, cell_offsets, type='Int64', IdType=1, Name='offsets', format='ascii')
+        write_data(outfile, space_count, cell_types, type='UInt8', Name='types', format='ascii')
+        write_data(outfile, space_count, face_connectivity, type='Int64', IdType=1, Name='faces', format='ascii')
+        write_data(outfile, space_count, face_offsets, type='Int64', IdType=1, Name='faceoffsets', format='ascii')
         space_count = close_node(outfile, space_count, 'Cells')
         space_count = close_node(outfile, space_count, 'Piece')
         space_count = close_node(outfile, space_count, 'UnstructuredGrid')
@@ -243,15 +236,9 @@ def make_cuboctahedral_mesh(nx, ny, nz, fname):
 if __name__ == "__main__":
     # Read input arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("nx",
-                        help="Number of cuboctahedra in the x direction",
-                        type=int)
-    parser.add_argument("ny",
-                        help="Number of cuboctahedra in the y direction",
-                        type=int)
-    parser.add_argument("nz",
-                        help="Number of cuboctahedra in the z direction",
-                        type=int)
+    parser.add_argument("nx", help="Number of cuboctahedra in the x direction", type=int)
+    parser.add_argument("ny", help="Number of cuboctahedra in the y direction", type=int)
+    parser.add_argument("nz", help="Number of cuboctahedra in the z direction", type=int)
     parser.add_argument("outfile", help="Output file name")
     args = parser.parse_args()
     nx, ny, nz = (args.nx, args.ny, args.nz)

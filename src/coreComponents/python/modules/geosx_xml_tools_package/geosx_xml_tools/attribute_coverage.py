@@ -1,4 +1,3 @@
-
 from lxml import etree as ElementTree
 import os
 from pathlib import Path
@@ -65,9 +64,7 @@ def collect_xml_attributes_level(local_types, node, folder):
 
     for child in node:
         if child.tag in local_types['children']:
-            collect_xml_attributes_level(local_types['children'][child.tag],
-                                         child,
-                                         folder)
+            collect_xml_attributes_level(local_types['children'][child.tag], child, folder)
 
 
 def collect_xml_attributes(xml_types, fname, folder):
