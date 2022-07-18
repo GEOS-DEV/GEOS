@@ -5,6 +5,7 @@ set( fileIO_headers
      Outputs/BlueprintOutput.hpp
      Outputs/OutputBase.hpp
      Outputs/OutputManager.hpp
+     Outputs/OutputUtilities.hpp     
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
      Outputs/SiloOutput.hpp
@@ -25,6 +26,7 @@ set( fileIO_sources
      Outputs/BlueprintOutput.cpp
      Outputs/OutputBase.cpp
      Outputs/OutputManager.cpp
+     Outputs/OutputUtilities.cpp
      Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
      Outputs/SiloOutput.cpp
