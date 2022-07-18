@@ -4,7 +4,7 @@
   <Solvers>
     <SinglePhaseReservoir
       name="reservoirSystem"
-      flowSolverName="SinglePhaseFlow"
+      fluidSolverName="SinglePhaseFlow"
       wellSolverName="SinglePhaseWell"
       logLevel="1"
       targetRegions="{ Channel, wellRegion1, wellRegion2 }">

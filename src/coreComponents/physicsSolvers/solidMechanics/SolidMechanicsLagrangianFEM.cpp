@@ -1178,12 +1178,12 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( localSolution,
                                keys::TotalDisplacement,
                                keys::IncrementalDisplacement,
-                               -scalingFactor );
+                               scalingFactor );
 
   dofManager.addVectorToField( localSolution,
                                keys::TotalDisplacement,
                                keys::TotalDisplacement,
-                               -scalingFactor );
+                               scalingFactor );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
@@ -1206,6 +1206,7 @@ void SolidMechanicsLagrangianFEM::solveLinearSystem( DofManager const & dofManag
                                                      ParallelVector & rhs,
                                                      ParallelVector & solution )
 {
+  rhs.scale( -1.0 );
   solution.zero();
   SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }

@@ -14,13 +14,12 @@
 
 /**
  * @file FlowProppantTransportSolver.hpp
- *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVERNEW_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVERNEW_HPP_
 
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 
 namespace geosx
 {
@@ -28,56 +27,97 @@ namespace geosx
 class ProppantTransport;
 class FlowSolverBase;
 
-class FlowProppantTransportSolver : public SolverBase
+class FlowProppantTransportSolver : public CoupledSolver< ProppantTransport,
+                                                          FlowSolverBase >
 {
 public:
+
+  using Base = CoupledSolver< ProppantTransport, FlowSolverBase >;
+  using Base::m_solvers;
+  using Base::m_dofManager;
+  using Base::m_localMatrix;
+  using Base::m_rhs;
+  using Base::m_solution;
+
+  enum class SolverType : integer
+  {
+    ProppantTransport = 0,
+    Flow = 1
+  };
+
+  /**
+   * @brief main constructor for FlowProppantTransportSolver Objects
+   * @param name the name of this instantiation of ManagedGroup in the repository
+   * @param parent the parent group of this instantiation of FlowProppantTransportSolver
+   */
   FlowProppantTransportSolver( const string & name,
                                Group * const parent );
-  ~FlowProppantTransportSolver() override;
+
+  /// Destructor for the class
+  ~FlowProppantTransportSolver() override {};
 
   /**
    * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   * @return string that contains the catalog name to generate a new FlowProppantTransportSolver object through the object catalog.
    */
   static string catalogName() { return "FlowProppantTransport"; }
 
-  virtual real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              int const cycleNumber,
-              DomainPartition & domain ) override;
-
-  virtual void
-  resetStateToBeginningOfStep( DomainPartition & domain ) override;
-
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  /**
+   * @brief accessor for the pointer to the proppant transport solver
+   * @return a pointer to the proppant transport solver
+   */
+  ProppantTransport * proppantTransportSolver() const
   {
-    constexpr static char const * proppantSolverNameString() { return "proppantSolverName"; }
-    constexpr static char const * flowSolverNameString() { return "flowSolverName"; }
-  };
+    return std::get< toUnderlying( SolverType::ProppantTransport ) >( m_solvers );
+  }
 
+  /**
+   * @brief accessor for the pointer to the flow solver
+   * @return a pointer to the flow solver
+   */
+  FlowSolverBase * flowSolver() const
+  {
+    return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
+  }
+
+  /**
+   * @defgroup Solver Interface Functions
+   *
+   * These functions provide the primary interface that is required for derived classes
+   */
+  /**@{*/
+
+  virtual real64 solverStep( real64 const & time_n,
+                             real64 const & dt,
+                             int const cycleNumber,
+                             DomainPartition & domain ) override;
+
+  /**@}*/
+
+private:
+
+  /**
+   * @brief Utility function to perform the pre-step Update
+   * @param[in] time_n the time at the previous converged time step
+   * @param[in] dt the time step size
+   * @param[in] domain the domain partition
+   */
   void preStepUpdate( real64 const & time_n,
                       real64 const & dt,
                       DomainPartition & domain );
 
+  /**
+   * @brief Utility function to perform the post-step Update
+   * @param[in] time_n the time at the previous converged time step
+   * @param[in] dt the time step size
+   * @param[in] domain the domain partition
+   */
   void postStepUpdate( real64 const & time_n,
                        real64 const & dt,
                        DomainPartition & domain );
-
-protected:
-
-  virtual void postProcessInput() override final;
-
-private:
-
-  string m_proppantSolverName;
-  string m_flowSolverName;
-
-  FlowSolverBase * m_flowSolver;
-  ProppantTransport * m_proppantSolver;
 
 };
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVERNEW_HPP_ */

@@ -232,7 +232,18 @@ real64 ContactSolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   return dt;
 }
 
+void ContactSolverBase::solveLinearSystem( DofManager const & dofManager,
+                                           ParallelMatrix & matrix,
+                                           ParallelVector & rhs,
+                                           ParallelVector & solution )
+{
+  GEOSX_MARK_FUNCTION;
 
+  rhs.scale( -1.0 );
+  solution.zero();
+
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
+}
 
 void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) const
 {

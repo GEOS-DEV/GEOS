@@ -6,7 +6,7 @@
   <Solvers>
     <CompositionalMultiphaseReservoir
       name="coupledFlowAndWells"
-      flowSolverName="compositionalMultiphaseFlow"
+      fluidSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
       initialDt="1e2"

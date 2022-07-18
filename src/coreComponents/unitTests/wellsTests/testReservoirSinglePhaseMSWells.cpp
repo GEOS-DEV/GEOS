@@ -41,7 +41,7 @@ char const * xmlInput =
   "<Problem>\n"
   "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
   "    <SinglePhaseReservoir name=\"reservoirSystem\"\n"
-  "               flowSolverName=\"singlePhaseFlow\"\n"
+  "               fluidSolverName=\"singlePhaseFlow\"\n"
   "               wellSolverName=\"singlePhaseWell\"\n"
   "               logLevel=\"1\"\n"
   "               targetRegions=\"{Region1,wellRegion1,wellRegion2}\">\n"
@@ -158,8 +158,8 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
                             real64 const relTol,
                             LAMBDA && assembleFunction )
 {
-  SinglePhaseWell & wellSolver = *solver.getWellSolver();
-  SinglePhaseFVM< SinglePhaseBase > & flowSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > & >( *solver.getReservoirSolver() );
+  SinglePhaseWell & wellSolver = *solver.wellSolver();
+  SinglePhaseFVM< SinglePhaseBase > & flowSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > & >( *solver.reservoirSolver() );
 
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
@@ -412,7 +412,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Flux )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
@@ -427,7 +427,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_PressureRel )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->assemblePressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assemblePressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
@@ -442,7 +442,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Accum )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->assembleAccumulationTerms( domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assembleAccumulationTerms( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 

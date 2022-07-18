@@ -14,43 +14,87 @@
 
 /**
  * @file HydrofractureSolver.hpp
- *
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
+#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 
 namespace geosx
 {
 
+class SinglePhaseBase;
+class SolidMechanicsLagrangianFEM;
 class SurfaceGenerator;
 
-
-class HydrofractureSolver : public SinglePhasePoromechanicsSolver
+class HydrofractureSolver : public CoupledSolver< SolidMechanicsLagrangianFEM,
+                                                  SinglePhaseBase >
 {
 public:
+
+  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, SinglePhaseBase >;
+  using Base::m_solvers;
+  using Base::m_dofManager;
+  using Base::m_localMatrix;
+  using Base::m_rhs;
+  using Base::m_solution;
+
+  enum class SolverType : integer
+  {
+    SolidMechanics = 0,
+    Flow = 1
+  };
+
+  /**
+   * @brief main constructor for HydrofractureSolver objects
+   * @param name the name of this instantiation of HydrofractureSolver in the repository
+   * @param parent the parent group of this instantiation of HydrofractureSolver
+   */
   HydrofractureSolver( const string & name,
                        Group * const parent );
 
-  ~HydrofractureSolver() override;
+  /// Destructor for the class
+  ~HydrofractureSolver() override {}
 
   /**
    * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   * @return string that contains the catalog name to generate a new HydrofractureSolver object through the object catalog.
    */
   static string catalogName()
   {
     return "Hydrofracture";
   }
 
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  virtual void RegisterDataOnMesh( Group & MeshBodies ) override final;
-#endif
+  /**
+   * @brief accessor for the pointer to the solid mechanics solver
+   * @return a pointer to the solid mechanics solver
+   */
+  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
+  {
+    return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
+  }
 
-  virtual void setupDofs( DomainPartition const & domain,
-                          DofManager & dofManager ) const override;
+  /**
+   * @brief accessor for the pointer to the flow solver
+   * @return a pointer to the flow solver
+   */
+  SinglePhaseBase * flowSolver() const
+  {
+    return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
+  }
+
+  /**
+   * @defgroup Solver Interface Functions
+   *
+   * These functions provide the primary interface that is required for derived classes
+   */
+  /**@{*/
+
+  virtual void registerDataOnMesh( Group & MeshBodies ) override final;
+
+  virtual void setupCoupling( DomainPartition const & domain,
+                              DofManager & dofManager ) const override;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -59,10 +103,9 @@ public:
                             ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
-  virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override final;
+  virtual void implicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override final;
 
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
@@ -71,25 +114,10 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
-  virtual void applyBoundaryConditions( real64 const time,
-                                        real64 const dt,
-                                        DomainPartition & domain,
-                                        DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                        arrayView1d< real64 > const & localRhs ) override;
-
-  virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
-                            DofManager const & dofManager,
-                            arrayView1d< real64 const > const & localSolution ) override;
-
-  virtual void
-  applySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor,
-                       DomainPartition & domain ) override;
-
-  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
+  virtual void solveLinearSystem( DofManager const & dofManager,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution ) override;
 
   virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
@@ -107,10 +135,9 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override final;
 
-  void updateDeformationForCoupling( DomainPartition & domain );
+  /**@}*/
 
-//  void ApplyFractureFluidCoupling( DomainPartition * const domain,
-//                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
+  void updateDeformationForCoupling( DomainPartition & domain );
 
   void assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -124,9 +151,6 @@ public:
                             real64 const & dt,
                             integer const cycleNumber,
                             DomainPartition & domain );
-
-  void initializeNewFaceElements( DomainPartition const & domain );
-
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
   {
@@ -153,13 +177,13 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOptionEnum"; }
-
     constexpr static char const * couplingTypeOptionStringString() { return "couplingTypeOption"; }
 
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
 
     constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
+
+    constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
 
     constexpr static char const * maxNumResolvesString() { return "maxNumResolves"; }
 
@@ -170,10 +194,10 @@ public:
   };
 
 protected:
+
   virtual void postProcessInput() override final;
 
-  virtual void
-  initializePostInitialConditionsPreSubGroups() override final;
+  virtual void initializePreSubGroups() override final;
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling

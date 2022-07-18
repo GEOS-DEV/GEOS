@@ -13,37 +13,84 @@
  */
 
 /**
- * @file PoroelasticSolver.hpp
- *
+ * @file SinglePhasePoromechanicsSolver.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVERNEW_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVERNEW_HPP_
 
-#include "codingUtilities/EnumStrings.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 
 namespace geosx
 {
 
-
-class SolidMechanicsLagrangianFEM;
 class SinglePhaseBase;
+class SolidMechanicsLagrangianFEM;
 
-class SinglePhasePoromechanicsSolver : public SolverBase
+class SinglePhasePoromechanicsSolver : public CoupledSolver< SolidMechanicsLagrangianFEM,
+                                                             SinglePhaseBase >
 {
 public:
+
+  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, SinglePhaseBase >;
+  using Base::m_solvers;
+  using Base::m_dofManager;
+  using Base::m_localMatrix;
+  using Base::m_rhs;
+  using Base::m_solution;
+
+  enum class SolverType : integer
+  {
+    SolidMechanics = 0,
+    Flow = 1
+  };
+
+  /**
+   * @brief main constructor for SinglePhasePoromechanicsSolver objects
+   * @param name the name of this instantiation of SinglePhasePoromechanicsSolver in the repository
+   * @param parent the parent group of this instantiation of SinglePhasePoromechanicsSolver
+   */
   SinglePhasePoromechanicsSolver( const string & name,
                                   Group * const parent );
-  ~SinglePhasePoromechanicsSolver() override;
+
+  /// Destructor for the class
+  ~SinglePhasePoromechanicsSolver() override {}
 
   /**
    * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   * @return string that contains the catalog name to generate a new SinglePhasePoromechanicsSolver object through the object catalog.
    */
   static string catalogName() { return "SinglePhasePoromechanics"; }
 
+  /**
+   * @brief accessor for the pointer to the solid mechanics solver
+   * @return a pointer to the solid mechanics solver
+   */
+  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
+  {
+    return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
+  }
+
+  /**
+   * @brief accessor for the pointer to the flow solver
+   * @return a pointer to the flow solver
+   */
+  SinglePhaseBase * flowSolver() const
+  {
+    return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
+  }
+
+  /**
+   * @defgroup Solver Interface Functions
+   *
+   * These functions provide the primary interface that is required for derived classes
+   */
+  /**@{*/
+
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
+
+  virtual void setupCoupling( DomainPartition const & domain,
+                              DofManager & dofManager ) const override;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -52,89 +99,37 @@ public:
                             ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
-  virtual void
-  setupDofs( DomainPartition const & domain,
-             DofManager & dofManager ) const override;
+  virtual void assembleSystem( real64 const time,
+                               real64 const dt,
+                               DomainPartition & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override;
 
-  virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override;
+  virtual void solveLinearSystem( DofManager const & dofManager,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution ) override;
 
-  virtual void
-  assembleSystem( real64 const time,
-                  real64 const dt,
-                  DomainPartition & domain,
-                  DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                  arrayView1d< real64 > const & localRhs ) override;
-
-  virtual void
-  applyBoundaryConditions( real64 const time_n,
-                           real64 const dt,
-                           DomainPartition & domain,
-                           DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs ) override;
-
-  virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
-                         DofManager const & dofManager,
-                         arrayView1d< real64 const > const & localRhs ) override;
-
-  virtual void
-  solveLinearSystem( DofManager const & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override;
-
-  virtual void
-  applySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor,
-                       DomainPartition & domain ) override;
+  virtual real64 solverStep( real64 const & time_n,
+                             real64 const & dt,
+                             int const cycleNumber,
+                             DomainPartition & domain ) override;
 
   virtual void updateState( DomainPartition & domain ) override;
 
-
-  virtual void
-  implicitStepComplete( real64 const & time_n,
-                        real64 const & dt,
-                        DomainPartition & domain ) override;
-
-  virtual void
-  resetStateToBeginningOfStep( DomainPartition & domain ) override;
-
-  virtual real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              int const cycleNumber,
-              DomainPartition & domain ) override;
-
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static char const * dPerm_dDisplacementString() { return "dPerm_dDisplacement"; }
-    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
-    constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
-    constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
-  };
+  /**@}*/
 
 protected:
 
-  virtual void postProcessInput() override;
+  struct viewKeyStruct : SolverBase::viewKeyStruct
+  {
+    constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
+  };
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void initializePreSubGroups() override;
-
-  string m_solidSolverName;
-  string m_flowSolverName;
-
-  // pointer to the flow sub-solver
-  SinglePhaseBase * m_flowSolver;
-
-  // pointer to the solid mechanics sub-solver
-  SolidMechanicsLagrangianFEM * m_solidSolver;
 
 private:
 
@@ -144,4 +139,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVERNEW_HPP_ */

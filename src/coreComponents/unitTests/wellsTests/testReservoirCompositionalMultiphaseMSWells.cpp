@@ -40,7 +40,7 @@ char const * xmlInput =
   "<Problem>\n"
   "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
   "    <CompositionalMultiphaseReservoir name=\"reservoirSystem\"\n"
-  "               flowSolverName=\"compositionalMultiphaseFlow\"\n"
+  "               fluidSolverName=\"compositionalMultiphaseFlow\"\n"
   "               wellSolverName=\"compositionalMultiphaseWell\"\n"
   "               logLevel=\"1\"\n"
   "               targetRegions=\"{Region1,wellRegion1,wellRegion2}\">\n"
@@ -202,8 +202,8 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
                             real64 const relTol,
                             LAMBDA && assembleFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = *solver.getWellSolver();
-  CompositionalMultiphaseFVM & flowSolver = dynamicCast< CompositionalMultiphaseFVM & >( *solver.getReservoirSolver() );
+  CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
+  CompositionalMultiphaseFVM & flowSolver = dynamicCast< CompositionalMultiphaseFVM & >( *solver.reservoirSolver() );
 
   localIndex const NC = flowSolver.numFluidComponents();
 
@@ -527,7 +527,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Flux 
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
@@ -543,7 +543,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Volum
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->assembleVolumeBalanceTerms( domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assembleVolumeBalanceTerms( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
@@ -558,7 +558,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Press
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->assemblePressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assemblePressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
