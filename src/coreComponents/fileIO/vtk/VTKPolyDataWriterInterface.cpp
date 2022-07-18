@@ -15,9 +15,11 @@
 // Source includes
 #include "VTKPolyDataWriterInterface.hpp"
 
+#include "common/Logger.hpp"
 #include "common/TypeDispatch.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "fileIO/Outputs/OutputUtilities.hpp"
 
 // TPL includes
 #include <vtkCellArray.h>
@@ -45,6 +47,7 @@ VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string name ):
   m_outputName( std::move( name ) ),
   m_pvd( m_outputName + ".pvd" ),
   m_plotLevel( PlotLevel::LEVEL_1 ),
+  m_requireFieldRegistrationCheck( true ),
   m_previousCycle( -1 ),
   m_outputMode( VTKOutputMode::BINARY ),
   m_outputRegionType( VTKRegionTypes::ALL )
@@ -637,7 +640,7 @@ void VTKPolyDataWriterInterface::writeNodeFields( NodeManager const & nodeManage
   for( auto const & wrapperIter : nodeManager.wrappers() )
   {
     auto const & wrapper = *wrapperIter.second;
-    if( wrapper.getPlotLevel() <= m_plotLevel )
+    if( isFieldPlotEnabled( wrapper ) )
     {
       vtkSmartPointer< vtkDataArray > data;
       types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
@@ -676,9 +679,9 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
     {
       material.forWrappers( [&]( WrapperBase const & wrapper )
       {
-        if( wrapper.getPlotLevel() <= m_plotLevel )
+        string const fieldName = constitutive::ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
+        if( outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(), m_plotLevel, fieldName, m_fieldNames, m_onlyPlotSpecifiedFieldNames ) )
         {
-          string const fieldName = constitutive::ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
           subReg.registerWrapper( wrapper.averageOverSecondDim( fieldName, subReg ) );
           materialFields.insert( fieldName );
         }
@@ -699,7 +702,7 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
   {
     for( auto const & wrapperIter : subRegion.wrappers() )
     {
-      if( wrapperIter.second->getPlotLevel() <= m_plotLevel && materialFields.count( wrapperIter.first ) == 0 )
+      if( isFieldPlotEnabled( *wrapperIter.second ) && materialFields.count( wrapperIter.first ) == 0 )
       {
         regularFields.insert( wrapperIter.first );
       }
@@ -896,6 +899,16 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
   NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
   EmbeddedSurfaceNodeManager const & embSurfNodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getEmbSurfNodeManager();
+
+  if( m_requireFieldRegistrationCheck && !m_fieldNames.empty() )
+  {
+    outputUtilities::checkFieldRegistration( elemManager,
+                                             nodeManager,
+                                             m_fieldNames,
+                                             "VTKOutput" );
+    m_requireFieldRegistrationCheck = false;
+  }
+
   writeCellElementRegions( time, cycle, elemManager, nodeManager );
   writeWellElementRegions( time, cycle, elemManager, nodeManager );
   writeSurfaceElementRegions( time, cycle, elemManager, nodeManager, embSurfNodeManager );
@@ -914,6 +927,15 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   }
 
   m_previousCycle = cycle;
+}
+
+bool VTKPolyDataWriterInterface::isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const
+{
+  return outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(),
+                                              m_plotLevel,
+                                              wrapper.getName(),
+                                              m_fieldNames,
+                                              m_onlyPlotSpecifiedFieldNames );
 }
 
 } // namespace vtk
