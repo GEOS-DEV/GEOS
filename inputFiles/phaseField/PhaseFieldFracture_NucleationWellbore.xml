@@ -17,7 +17,7 @@
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"
-        logLevel="0"/>
+        logLevel="1"/>
     </PhaseFieldFracture>
 
     <SolidMechanicsLagrangianSSLE
@@ -31,9 +31,7 @@
         newtonMaxIter="200"
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"
-        logLevel="0"/>
+        solverType="gmres"/>
     </SolidMechanicsLagrangianSSLE>
 
     <PhaseFieldDamageFEM
@@ -48,9 +46,7 @@
         newtonMaxIter="200"
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"
-        logLevel="0"/>
+        solverType="gmres"/>
     </PhaseFieldDamageFEM>
   </Solvers>
 
@@ -62,8 +58,8 @@
       theta="{ 0, 180 }"
       zCoords="{ 0, 200 }"
       nr="{ 100 }"
-      nt="{ 180 }"
-      nz="{ 4 }"
+      nt="{ 200 }"
+      nz="{ 10 }"
       trajectory="{ { 0.0, 0.0, -1.0 },
                     { 0.0, 0.0, 1.0 } }"
       autoSpaceRadialElems="{ 1 }"
