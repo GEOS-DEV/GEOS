@@ -1,4 +1,3 @@
-
 import meshio
 from meshio._mesh import CellBlock
 import numpy as np
@@ -19,8 +18,8 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
     """
     # Initialize the logger if it is empty
     if not logger:
-      logging.basicConfig(level=logging.WARNING)
-      logger = logging.getLogger(__name__)
+        logging.basicConfig(level=logging.WARNING)
+        logger = logging.getLogger(__name__)
 
     # Keep track of the number of warnings
     n_warnings = 0
@@ -142,10 +141,9 @@ def main():
     logging.basicConfig(level=logging.WARNING)
     logger = logging.getLogger(__name__)
     if args.verbose:
-      logger.setLevel(logging.INFO)
+        logger.setLevel(logging.INFO)
 
     # Call the converter
     err = convert_abaqus_to_gmsh(args.input, args.output, logger)
     if err:
         sys.exit('Warnings detected: check the output file for potential errors!')
-

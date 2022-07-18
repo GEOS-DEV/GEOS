@@ -1,4 +1,3 @@
-
 import os
 import numpy as np
 
@@ -47,16 +46,10 @@ def save_tables(axes, properties, table_root='./tables', axes_names=[]):
     # Write the axes
     os.makedirs(table_root, exist_ok=True)
     for g, a in zip(axes, axes_names):
-        np.savetxt('%s/%s.csv' % (table_root, a),
-                   g,
-                   fmt='%1.5f',
-                   delimiter=',')
+        np.savetxt('%s/%s.csv' % (table_root, a), g, fmt='%1.5f', delimiter=',')
 
     for k, p in properties.items():
-        np.savetxt('%s/%s.csv' % (table_root, k),
-                   np.reshape(p, (-1), order='F'),
-                   fmt='%1.5e',
-                   delimiter=',')
+        np.savetxt('%s/%s.csv' % (table_root, k), np.reshape(p, (-1), order='F'), fmt='%1.5e', delimiter=',')
 
 
 def load_tables(axes_names, property_names, table_root='./tables', extension='csv'):
@@ -77,7 +70,9 @@ def load_tables(axes_names, property_names, table_root='./tables', extension='cs
     N = tuple([len(x) for x in axes])
 
     # Load properties
-    properties = {p: np.reshape(np.loadtxt('%s/%s.%s' % (table_root, p, extension)), N, order='F') for p in property_names}
+    properties = {
+        p: np.reshape(np.loadtxt('%s/%s.%s' % (table_root, p, extension)), N, order='F')
+        for p in property_names
+    }
 
     return axes, properties
-
