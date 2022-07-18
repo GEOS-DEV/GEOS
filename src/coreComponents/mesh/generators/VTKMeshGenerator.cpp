@@ -46,6 +46,7 @@
 #include <vtkNew.h>
 #include <vtkStructuredGrid.h>
 #include <vtkXMLStructuredGridReader.h>
+#include <vtkXMLPStructuredGridReader.h>
 // TODO ? for vti import
 #include <vtkHexahedron.h>
 //#include <vtkImageData.h>
@@ -125,7 +126,7 @@ loadMesh( Path const & filePath )
     //       https://gitlab.kitware.com/vtk/vtk/-/blob/master/Filters/Core/vtkStaticCleanUnstructuredGrid.h
     //       This removes duplicate points, either present in the dataset, or resulting from merging pieces.
   }
-  /*
+  
   else if (extension == "pvts") // TODO
   {
     auto const vtkSgReader = vtkSmartPointer< vtkXMLPStructuredGridReader >::New();
@@ -135,7 +136,7 @@ loadMesh( Path const & filePath )
     loadedMesh = vtkSgReader->GetOutput();
 
   }
-  */
+  
   else
   {
     if( MpiWrapper::commRank() == 0 )
@@ -203,7 +204,7 @@ vtkNew<vtkCellArray> GetCellArray(vtkDataSet & mesh) // replaces GetCells() that
         for(int j=ymin; j<ymax; j++){
             for (int i=xmin; i<xmax; i++){
                 vtkNew<vtkHexahedron> hexa;
-                // add points to the hexahedron cell in vtk order for hexahedron)
+                // add points to the hexahedron cell in vtk order for hexahedron
                 hexa->GetPointIds()->SetId(0, i+j*nx+k*ny*nx);
                 hexa->GetPointIds()->SetId(1, i+1+j*nx+k*ny*nx);
                 hexa->GetPointIds()->SetId(2, i+1+(j+1)*nx+k*ny*nx);
@@ -1161,7 +1162,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   {
     GEOSX_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
-    vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath ); //TODO:ADD if vti or 'UG to ID' vtkDataSet
+    vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath ); 
     GEOSX_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
     m_vtkMesh = vtk::redistributeMesh( *loadedMesh, comm, m_partitionRefinement );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
