@@ -110,6 +110,11 @@ private:
     void updatePrimarySpeciesConcentrations( arrayView1d<real64 const> const solution,
                                              arraySlice1d< real64 > const & primarySpeciesConcentration ) const;
 
+    GEOSX_HOST_DEVICE
+    void setInitialGuess( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
+                          arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration ) const;
+                                                                   
+
 
 
     integer m_maxNumIterations = 100;

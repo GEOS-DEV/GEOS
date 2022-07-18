@@ -157,6 +157,8 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
   array1d<real64> rhs( m_numPrimarySpecies );
   array1d<real64> solution( m_numPrimarySpecies );
 
+  setInitialGuess(primarySpeciesTotalConcentration, primarySpeciesConcentration);
+
   bool converged = false;
   for( int iteration = 0; iteration < m_maxNumIterations; iteration++ )
   {
@@ -201,7 +203,7 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
 
   stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > log10PrimaryActCoeff( m_numPrimarySpecies );
   stackArray1d< real64, ReactionsBase::maxNumSecondarySpecies > log10SecActCoeff( m_numSecondarySpecies );
-  stackArray2d< real64, ReactionsBase::maxNumSecondarySpecies * ReactionsBase::maxNumPrimarySpecies > dLog10SecConc_dLog10PrimaryConc( m_numPrimarySpecies, m_numSecondarySpecies );
+  stackArray2d< real64, ReactionsBase::maxNumSecondarySpecies * ReactionsBase::maxNumPrimarySpecies > dLog10SecConc_dLog10PrimaryConc( m_numSecondarySpecies, m_numPrimarySpecies );
   stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > totalConcentration( m_numPrimarySpecies );
   stackArray2d< real64, ReactionsBase::maxNumPrimarySpecies * ReactionsBase::maxNumPrimarySpecies > dTotalConc_dLog10PrimaryConc( m_numPrimarySpecies, m_numPrimarySpecies );
 
@@ -261,18 +263,18 @@ void EquilibriumReactions::KernelWrapper::computeSeondarySpeciesConcAndDerivativ
                                                                                    arraySlice2d< real64 > const & dLog10SecConc_dLog10PrimaryConc ) const
 {
   // Compute d(concentration of dependent species)/d(concentration of basis species)
-  for( int iSec = 0; iSec < m_numSecondarySpecies; ++iSec )
+  for( int iSec = 0; iSec < m_numSecondarySpecies; iSec++ )
   {
     real64 log10SecConc = -m_log10EqConst[iSec] - log10SecActCoeff[iSec];
 
-    for( int jPri = 0; jPri < m_numPrimarySpecies; ++jPri )
+    for( int jPri = 0; jPri < m_numPrimarySpecies; jPri++ )
     {
-      real64 const dIonicStrength_dPrimaryConc = log( 10 ) * 0.5 * m_chargePrimary[jPri] * m_chargePrimary[jPri];
-
+      real64 const dIonicStrength_dPrimaryConc = log( 10 ) * 0.5 * m_chargePrimary[jPri] * m_chargePrimary[jPri]; 
+      
       log10SecConc += m_stoichMatrix[iSec][jPri] * ( log10( primarySpeciesConcentration[jPri] ) + log10PrimaryActCoeff[jPri] );
       dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stoichMatrix[iSec][jPri] - dLog10SecActCoeff_dIonicStrength[iSec] * primarySpeciesConcentration[jPri] *
                                                      dIonicStrength_dPrimaryConc;
-      for( int kDerivative = 0; kDerivative < m_numPrimarySpecies; ++kDerivative )
+      for( int kDerivative = 0; kDerivative < m_numPrimarySpecies; kDerivative++ )
       {
         // add contribution to the derivtive from all primary activity coefficients
         dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stoichMatrix[iSec][kDerivative] * dLog10PrimaryActCoeff_dIonicStrength[kDerivative] * primarySpeciesConcentration[jPri] *
@@ -296,16 +298,16 @@ void EquilibriumReactions::KernelWrapper::computeTotalConcAndDerivative( real64 
 
 {
   // This function computes the total concentration and its derivative with respect to log10(basis species concentrations).
-  for( int iPri = 0; iPri < m_numPrimarySpecies; ++iPri )
+  for( int iPri = 0; iPri < m_numPrimarySpecies; iPri++ )
   {
     totalConc[iPri] = primarySpeciesConcentration[iPri];
     // d(total concentration)/d(log10(concentration))
     dTotalConc_dLog10PrimaryConc[iPri][iPri] = log( 10.0 ) * primarySpeciesConcentration[iPri];
     // contribution from all dependent species
-    for( int jSec = 0; jSec < m_numSecondarySpecies; ++jSec )
+    for( int jSec = 0; jSec < m_numSecondarySpecies; jSec++ )
     {
       totalConc[iPri] += m_stoichMatrix[jSec][iPri] * secondarySpeciesConectration[jSec];
-      for( int kDerivative = 0; kDerivative < m_numPrimarySpecies; ++kDerivative )
+      for( int kDerivative = 0; kDerivative < m_numPrimarySpecies; kDerivative++ )
       {
         // add contribution to the derivtive from dependent species via the chain rule
         dTotalConc_dLog10PrimaryConc[iPri][kDerivative] += m_stoichMatrix[jSec][iPri] * log( 10.0 ) *
@@ -325,6 +327,17 @@ void EquilibriumReactions::KernelWrapper::
     primarySpeciesConcentration[i] *= pow( 10, solution[i] );
   }
 }
+
+GEOSX_HOST_DEVICE
+void EquilibriumReactions::KernelWrapper::setInitialGuess( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
+                                                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration ) const
+{
+  for( integer i = 0; i < m_numPrimarySpecies; i++ )
+  {
+    primarySpeciesConcentration[i] = primarySpeciesTotalConcentration[i];
+  }
+}
+
 
 } // end namespace chemicalReactions
 
