@@ -159,6 +159,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 const > const & elemCenter,
           arrayView2d< real64 const > const sourceCoordinates,
           arrayView1d< localIndex > const sourceIsLocal,
+          arrayView1d< localIndex > const sourceElem,
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
           arrayView2d< real64 const > const receiverCoordinates,
@@ -200,6 +201,7 @@ struct PrecomputeSourceAndReceiverKernel
           if( sourceFound )
           {
             sourceIsLocal[isrc] = 1;
+            sourceElem[isrc] = k;
             real64 Ntest[8];
             finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
@@ -448,7 +450,12 @@ public:
                        SUBREGION_TYPE const & elementSubRegion,
                        FE_TYPE const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
-                       real64 const dt ):
+                       arrayView1d< localIndex const > const inputSourceElem,
+                       arrayView1d< localIndex const> const inputSourceIsLocal,
+                       arrayView2d< real64 const > const inputSourceConstants,
+                       arrayView2d< real64 const > const inputSourceValue,
+                       real64 const dt,
+                       integer const & cycleNumber ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -458,9 +465,14 @@ public:
     m_velocity_y(elementSubRegion.template getExtrinsicData< extrinsicMeshData::Velocity_y>()),
     m_velocity_z(elementSubRegion.template getExtrinsicData< extrinsicMeshData::Velocity_z>()),
     m_mass( nodeManager.getExtrinsicData< extrinsicMeshData::MassVector > ()),
-    m_rhs( nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS > ()),
+    //m_rhs( nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS > ()),
     // m_stiffnessVector( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >() ),
-    m_dt( dt )
+    m_cycleNumber(cycleNumber),
+    m_dt( dt ),
+    m_sourceElem(inputSourceElem),
+    m_sourceIsLocal(inputSourceIsLocal),
+    m_sourceConstants(inputSourceConstants),
+    m_sourceValue(inputSourceValue)
   {
     GEOSX_UNUSED_VAR( edgeManager );
     GEOSX_UNUSED_VAR( faceManager );
@@ -528,10 +540,10 @@ public:
     real64 N[numNodesPerElem];
     real64 gradN[ numNodesPerElem ][ 3 ];
 
-    real64 auxx[numNodesPerElem]  = {{0.0}};
-    real64 auyy[numNodesPerElem]  = {{0.0}};
-    real64 auzz[numNodesPerElem]  = {{0.0}};
-    real64 uelemx[numNodesPerElem] = {{0.0}};
+    real64 auxx[numNodesPerElem]  = {0.0};
+    real64 auyy[numNodesPerElem]  = {0.0};
+    real64 auzz[numNodesPerElem]  = {0.0};
+    real64 uelemx[numNodesPerElem] = {0.0};
 
     FE_TYPE::calcN( q, N );
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
@@ -567,9 +579,19 @@ public:
       m_p_np1[m_elemsToNodes[k][i]]= uelemx[i]/m_mass[m_elemsToNodes[k][i]];
     }
 
-    for (localIndex i = 0; i < numNodesPerElem; ++i)
+    //Source Injection
+    for (localIndex isrc = 0; isrc < m_sourceConstants.size(0); ++isrc)
     {
-      m_p_np1[m_elemsToNodes[k][i]]+=m_dt*(m_rhs[m_elemsToNodes[k][i]]/(detJ));      
+      if( m_sourceIsLocal[isrc] == 1 )
+      {
+        if (m_sourceElem[isrc]==k)
+        {
+          for (localIndex i = 0; i < numNodesPerElem; ++i)
+          {
+            m_p_np1[m_elemsToNodes[k][i]]+=m_dt*(m_sourceConstants[isrc][i]*m_sourceValue[m_cycleNumber][isrc])/(detJ);
+          }
+        }
+      }
     }
 
   }
@@ -598,10 +620,24 @@ protected:
   arrayView1d< real64 const > const m_mass;
 
   /// The array containing the RHS
-  arrayView1d< real64  > const m_rhs;
+  //arrayView1d< real64  > const m_rhs;
 
-    /// The time increment for this time integration step.
+  integer const m_cycleNumber;
+
+  /// The time increment for this time integration step.
   real64 const m_dt;
+
+  // The array containing the list of element which contains a source
+  arrayView1d< localIndex const > const m_sourceElem;
+
+  // The array containing the list of element which contains a source
+  arrayView1d< localIndex const> const m_sourceIsLocal;
+
+  // The array containing the coefficients to multiply with the time source.
+  arrayView2d< real64 const > const m_sourceConstants;
+
+  // The array containing the value of the time source (eg. Ricker) at each time-step.
+  arrayView2d< real64 const > const m_sourceValue;
 
 };
 
@@ -734,12 +770,12 @@ public:
     real64 N[numNodesPerElem];
     real64 gradN[ numNodesPerElem ][ 3 ];
 
-    real64 uelemx[numNodesPerElem] = {{0.0}};
-    real64 uelemy[numNodesPerElem] = {{0.0}};
-    real64 uelemz[numNodesPerElem] = {{0.0}};
-    real64 flowx[numNodesPerElem] = {{0.0}};
-    real64 flowy[numNodesPerElem] = {{0.0}};
-    real64 flowz[numNodesPerElem] = {{0.0}};
+    real64 uelemx[numNodesPerElem] = {0.0};
+    real64 uelemy[numNodesPerElem] = {0.0};
+    real64 uelemz[numNodesPerElem] = {0.0};
+    real64 flowx[numNodesPerElem] = {0.0};
+    real64 flowy[numNodesPerElem] = {0.0};
+    real64 flowz[numNodesPerElem] = {0.0};
 
     FE_TYPE::calcN( q, N );
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
@@ -813,7 +849,12 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticPressureWaveEquation kernel.
 using ExplicitAcousticPressureSEMFactory = finiteElement::KernelFactory< ExplicitAcousticPressureSEM,
-                                                                 real64 >;
+                                                                         arrayView1d < localIndex const  > const,
+                                                                         arrayView1d < localIndex const  > const,
+                                                                         arrayView2d < real64 const  > const,
+                                                                         arrayView2d < real64 const  > const,
+                                                                         real64,
+                                                                         integer>;
                                                                 
 using ExplicitAcousticVelocitySEMFactory = finiteElement::KernelFactory< ExplicitAcousticVelocitySEM,
                                                                          arrayView2d< real64 > const,

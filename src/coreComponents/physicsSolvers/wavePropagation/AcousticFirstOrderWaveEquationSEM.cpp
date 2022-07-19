@@ -73,6 +73,11 @@ AcousticFirstOrderWaveEquationSEM::AcousticFirstOrderWaveEquationSEM( const std:
     setSizedFromParent( 0 ).
     setDescription( "Pressure value at each receiver for each timestep" );
 
+  registerWrapper( viewKeyStruct::sourceElemString(), &m_sourceElem ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Element containing the sources" );
+
 }
 
 AcousticFirstOrderWaveEquationSEM::~AcousticFirstOrderWaveEquationSEM()
@@ -193,6 +198,7 @@ void AcousticFirstOrderWaveEquationSEM::postProcessInput()
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceIsLocal.resize( numSourcesGlobal );
+  m_sourceElem.resize( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
@@ -218,8 +224,10 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
   arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
   arrayView1d< localIndex > const sourceIsLocal = m_sourceIsLocal.toView();
+  arrayView1d< localIndex > const sourceElem = m_sourceElem.toView();
   sourceNodeIds.setValues< EXEC_POLICY >( -1 );
   sourceConstants.setValues< EXEC_POLICY >( -1 );
+  sourceElem.setValues< EXEC_POLICY >( -1 );
   sourceIsLocal.zero();
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
@@ -278,6 +286,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
         elemCenter,
         sourceCoordinates,
         sourceIsLocal,
+        sourceElem,
         sourceNodeIds,
         sourceConstants,
         receiverCoordinates,
@@ -545,6 +554,11 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
+  arrayView2d< real64 const > const sourceConstants = m_sourceConstants.toView();
+  arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toView();
+  arrayView1d< localIndex const > const sourceElem = m_sourceElem.toView();
+  arrayView2d< real64 const > const sourceValue = m_sourceValue.toView();
+
   GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -596,7 +610,12 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
                                                               "",
                                                               kernelFactory );
 
-        auto kernelFactory2 = acousticFirstOrderWaveEquationSEMKernels::ExplicitAcousticPressureSEMFactory( dt );
+        auto kernelFactory2 = acousticFirstOrderWaveEquationSEMKernels::ExplicitAcousticPressureSEMFactory( sourceElem,
+                                                                                                            sourceIsLocal,
+                                                                                                            sourceConstants,
+                                                                                                            sourceValue,
+                                                                                                            dt,
+                                                                                                            cycleNumber);
 
         finiteElement::
         regionBasedKernelApplication< EXEC_POLICY,

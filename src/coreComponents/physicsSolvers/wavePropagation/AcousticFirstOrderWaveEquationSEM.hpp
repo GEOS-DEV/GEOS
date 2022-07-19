@@ -141,6 +141,8 @@ public:
 
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
 
+    static constexpr char const * sourceElemString() { return "sourceElem"; }
+
   } waveEquationViewKeys;
 
 
@@ -195,6 +197,8 @@ private:
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real64 > m_pressureNp1AtReceivers;
 
+  /// Array containing the elements which contain a source
+  array1d < localIndex > m_sourceElem;
 
 };
 
