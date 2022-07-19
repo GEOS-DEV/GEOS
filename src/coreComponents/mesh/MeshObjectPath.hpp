@@ -127,10 +127,7 @@ void MeshObjectPath::checkObjectTypeConsistency() const
   }
   else if( m_objectType == ObjectTypes::elems )
   {
-    consistent = std::is_same< ElementRegionManager, OBJECT_TYPE >::value ||
-                 std::is_same< ElementRegionBase, OBJECT_TYPE >::value ||
-                 std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value ||
-                 std::is_same< ElementSubRegionBase, OBJECT_TYPE >::value ||
+    consistent = std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value ||
                  std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value;
   }
 
@@ -182,8 +179,7 @@ void MeshObjectPath::forObjectsInPath( dataRepository::Group const & meshBodies,
         for( auto const & elemRegionPair : meshLevelPair.second )
         {
           ElementRegionBase const & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
-          if( std::is_same< ElementRegionBase, OBJECT_TYPE >::value ||
-              std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value )
+          if( std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value )
           {
             func( dynamic_cast< OBJECT_TYPE const & >(elemRegion) );
           }
@@ -192,8 +188,7 @@ void MeshObjectPath::forObjectsInPath( dataRepository::Group const & meshBodies,
             for( auto const & elemSubRegionName : elemRegionPair.second )
             {
               ElementSubRegionBase const & subRegion = elemRegion.getSubRegion( elemSubRegionName );
-              if( std::is_same< ElementSubRegionBase, OBJECT_TYPE >::value ||
-                  std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value )
+              if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value )
               {
                 func( dynamic_cast< OBJECT_TYPE const & >(subRegion) );
               }
