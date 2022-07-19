@@ -465,6 +465,7 @@ public:
     m_velocity_y(elementSubRegion.template getExtrinsicData< extrinsicMeshData::Velocity_y>()),
     m_velocity_z(elementSubRegion.template getExtrinsicData< extrinsicMeshData::Velocity_z>()),
     m_mass( nodeManager.getExtrinsicData< extrinsicMeshData::MassVector > ()),
+    m_damping( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector > ()),
     //m_rhs( nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS > ()),
     // m_stiffnessVector( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >() ),
     m_cycleNumber(cycleNumber),
@@ -550,7 +551,7 @@ public:
 
     for (localIndex i = 0; i < numNodesPerElem; ++i)
     {
-      uelemx[i] = m_mass[m_elemsToNodes[k][i]]*m_p_np1[m_elemsToNodes[k][i]];
+      uelemx[i] = (m_mass[m_elemsToNodes[k][i]]-0.5*m_dt*m_damping[m_elemsToNodes[k][i]])*m_p_np1[m_elemsToNodes[k][i]];
     }
 
     for (localIndex j = 0; j < numNodesPerElem; ++j)
@@ -576,7 +577,7 @@ public:
 
     for (localIndex i = 0; i < numNodesPerElem; ++i)
     {
-      m_p_np1[m_elemsToNodes[k][i]]= uelemx[i]/m_mass[m_elemsToNodes[k][i]];
+      m_p_np1[m_elemsToNodes[k][i]]= uelemx[i]/(m_mass[m_elemsToNodes[k][i]]-0.5*m_dt*m_damping[m_elemsToNodes[k][i]]);
     }
 
     //Source Injection
@@ -618,6 +619,9 @@ protected:
 
   /// The array containing the diagonal of the mass matrix
   arrayView1d< real64 const > const m_mass;
+
+  /// The array containing the diagonal of the damping matrix
+  arrayView1d< real64 const> const m_damping;
 
   /// The array containing the RHS
   //arrayView1d< real64  > const m_rhs;
