@@ -82,7 +82,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
-  ElementRegionManager const & elemManager = mesh.getElemManager();
+  ElementRegionManager & elemManager = mesh.getElemManager();
 
   CellElementStencilTPFA & stencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() );
 
@@ -93,6 +93,9 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
   arrayView1d< real64 const > const & transMultiplier =
     faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() );
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > const cellType =
+    elemManager.constructViewAccessor< array1d< integer >, arrayView1d< integer > >( CellElementSubRegion::viewKeyStruct::cellTypeString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
@@ -117,11 +120,19 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   real64 const lengthTolerance = m_lengthScale * m_areaRelTol;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
 
-  forAll< serialPolicy >( faceManager.size(), [=, &stencil]( localIndex const kf )
+  forAll< serialPolicy >( faceManager.size(), [=, &stencil, &cellType]( localIndex const kf )
   {
     // Filter out boundary faces
     if( elemList[kf][0] < 0 || elemList[kf][1] < 0 || isZero( transMultiplier[kf] ) )
     {
+      if( elemRegionList[kf][0] >= 0 && elemSubRegionList[kf][0] >= 0 && elemList[kf][0] >= 0 )
+      {
+        cellType[elemRegionList[kf][0]][elemSubRegionList[kf][0]][elemList[kf][0]] = 1;
+      }
+      if( elemRegionList[kf][1] >= 0 && elemSubRegionList[kf][1] >= 0 && elemList[kf][1] >= 0 )
+      {
+        cellType[elemRegionList[kf][1]][elemSubRegionList[kf][1]][elemList[kf][1]] = 1;
+      }
       return;
     }
 
@@ -188,6 +199,69 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
     stencil.addVectors( transMultiplier[kf], faceNormal, cellToFaceVec );
   } );
+
+  integer const myRank = MpiWrapper::commRank();
+
+  std::ofstream graphFile;
+  graphFile.open ( "connectivity_"+ std::to_string( myRank ) +".txt" );
+
+  typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+  typename TYPEOFREF( stencil ) ::IndexContainerViewConstType const seri  = stencilWrapper.getElementRegionIndices();
+  typename TYPEOFREF( stencil ) ::IndexContainerViewConstType const sesri = stencilWrapper.getElementSubRegionIndices();
+  typename TYPEOFREF( stencil ) ::IndexContainerViewConstType const sei   = stencilWrapper.getElementIndices();
+
+  forAll< serialPolicy >( stencilWrapper.size(), [&]( localIndex const iconn )
+  {
+    localIndex const er0  = seri[iconn][0];
+    localIndex const esr0 = sesri[iconn][0];
+    localIndex const ei0  = sei[iconn][0];
+    localIndex const er1  = seri[iconn][1];
+    localIndex const esr1 = sesri[iconn][1];
+    localIndex const ei1  = sei[iconn][1];
+
+    ElementRegionBase const & region0 = elemManager.getRegion( er0 );
+    CellElementSubRegion const & subRegion0 = region0.getSubRegion< CellElementSubRegion, localIndex >( esr0 );
+    ElementRegionBase const & region1 = elemManager.getRegion( er1 );
+    CellElementSubRegion const & subRegion1 = region1.getSubRegion< CellElementSubRegion, localIndex >( esr1 );
+
+    bool const bothSidesOwned = ( elemGhostRank[er0][esr0][ei0] < 0 ) && ( elemGhostRank[er1][esr1][ei1] < 0 );
+
+    if( bothSidesOwned ||
+        ( ( elemGhostRank[er0][esr0][ei0] < 0 ) && ( myRank < elemGhostRank[er1][esr1][ei1] ) ) ||
+        ( ( elemGhostRank[er1][esr1][ei1] < 0 ) && ( myRank < elemGhostRank[er0][esr0][ei0] ) ) )
+    {
+      graphFile << iconn << " " << subRegion0.localToGlobalMap()[ei0] << " " << subRegion1.localToGlobalMap()[ei1] << std::endl;
+      graphFile << iconn << " " << subRegion0.localToGlobalMap()[ei1] << " " << subRegion1.localToGlobalMap()[ei0] << std::endl;
+    }
+  } );
+
+  graphFile.close();
+
+  std::ofstream cellTypeFile;
+  cellTypeFile.open ( "cellType_"+ std::to_string( myRank ) +".txt" );
+
+  elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & region )
+  {
+    region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+    {
+
+      arrayView1d< integer const > const & subRegionCellType = subRegion.getReference< array1d< integer > >( CellElementSubRegion::viewKeyStruct::cellTypeString() );
+      arrayView1d< integer const > const & subRegionGhostRank = subRegion.getReference< array1d< integer > >( CellElementSubRegion::viewKeyStruct::ghostRankString() );
+      arrayView2d< real64 const > const & subRegionElementCenter = subRegion.getReference< array2d< real64 > >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
+
+      forAll< serialPolicy >( subRegion.size(), [&]( localIndex const ei )
+      {
+        if( subRegionGhostRank[ei] < 0 )
+        {
+          cellTypeFile << subRegion.localToGlobalMap()[ei] << " " << subRegionCellType[ei] << " "
+                       << subRegionElementCenter[ei][0] << " " << subRegionElementCenter[ei][1] << " " << subRegionElementCenter[ei][2] << std::endl;
+        }
+      } );
+    } );
+  } );
+
+  cellTypeFile.close();
 }
 
 void TwoPointFluxApproximation::registerFractureStencil( Group & stencilGroup ) const

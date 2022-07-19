@@ -186,6 +186,8 @@ public:
     static constexpr char const * toEmbSurfString() { return "ToEmbeddedSurfaces"; }
     /// @return String key to fracturedCells
     static constexpr char const * fracturedCellsString() { return "fracturedCells"; }
+    /// @return String key for cell type
+    static constexpr char const * cellTypeString() { return "cellType"; }
 
     /// ViewKey for the constitutive grouping
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
@@ -364,6 +366,9 @@ private:
 
   /// The array of shape function derivaties.
   array4d< real64 > m_dNdX;
+
+  /// The array storing the cell types
+  array1d< integer > m_cellType;
 
   /// The array of jacobian determinantes.
   array2d< real64 > m_detJ;
