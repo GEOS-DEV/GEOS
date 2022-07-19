@@ -523,6 +523,9 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
+  // reset statistics (if needed)
+  m_solverStatistics.initializeTimeStepStatistics();
+
   GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -596,11 +599,22 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     } );
 
   } );
+
+  // increment the number of time steps
+  m_solverStatistics.saveTimeStepStatistics();
+
   return dt;
 }
 
-void AcousticWaveEquationSEM::cleanup( real64 const time_n, integer const, integer const, real64 const, DomainPartition & domain )
+void AcousticWaveEquationSEM::cleanup( real64 const time_n,
+                                       integer const cycleNumber,
+                                       integer const eventCounter,
+                                       real64 const eventProgress,
+                                       DomainPartition & domain )
 {
+  // call the base class cleanup (for reporting purposes)
+  SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+
   // compute the remaining seismic traces, if needed
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,

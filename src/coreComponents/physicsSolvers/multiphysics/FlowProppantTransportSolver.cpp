@@ -127,12 +127,15 @@ real64 FlowProppantTransportSolver::solverStep( real64 const & time_n,
 
   preStepUpdate( time_n, dt, domain );
 
+  // reset number of nonlinear iterations
+  m_solverStatistics.initializeTimeStepStatistics();
+
   int iter = 0;
   while( iter < this->m_nonlinearSolverParameters.m_maxIterNewton )
   {
     if( iter == 0 )
     {
-      // reset the states of all slave solvers if any of them has been reset
+      // reset the states of all sub-solvers if any of them has been reset
       resetStateToBeginningOfStep( domain );
     }
 
@@ -150,6 +153,7 @@ real64 FlowProppantTransportSolver::solverStep( real64 const & time_n,
     NonlinearSolverParameters const & fluidNonLinearParams = m_flowSolver->getNonlinearSolverParameters();
     if( fluidNonLinearParams.m_numNewtonIterations <= this->m_nonlinearSolverParameters.m_minIterNewton && iter > 0 )
     {
+      m_solverStatistics.logNonlinearIteration();
       GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
     }
@@ -167,6 +171,9 @@ real64 FlowProppantTransportSolver::solverStep( real64 const & time_n,
 
     ++iter;
   }
+
+  // increment the cumulative number of nonlinear iterations
+  m_solverStatistics.saveTimeStepStatistics();
 
   postStepUpdate( time_n, dtReturn, domain );
 

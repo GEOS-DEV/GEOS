@@ -529,6 +529,9 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
   #define USE_PHYSICS_LOOP
 
+  // reset statistics (if needed)
+  m_solverStatistics.initializeTimeStepStatistics();
+
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
@@ -643,6 +646,10 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
 
   } );
+
+  // increment the number of time steps
+  m_solverStatistics.saveTimeStepStatistics();
+
   return dt;
 }
 
