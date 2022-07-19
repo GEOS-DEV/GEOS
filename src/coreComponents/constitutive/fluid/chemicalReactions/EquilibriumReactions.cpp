@@ -19,7 +19,7 @@
 #include "EquilibriumReactions.hpp"
 
 #include "functions/FunctionManager.hpp"
-#include "linearAlgebra/interfaces/dense/BlasLapackLA.hpp"
+#include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 
 namespace geosx
 {

@@ -20,7 +20,7 @@
 #include "BlasLapackLA.hpp"
 
 // BLAS and LAPACK function declaration
-#include "linearAlgebra/interfaces/dense/BlasLapackFunctions.h"
+#include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackFunctions.h"
 
 #include <random>
 

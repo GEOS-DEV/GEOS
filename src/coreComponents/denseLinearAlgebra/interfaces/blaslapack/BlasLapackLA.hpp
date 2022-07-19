@@ -15,11 +15,11 @@
 /**
  * @file BlasLapackLA.hpp
  */
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKLA_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKLA_HPP_
+#ifndef GEOSX_DENSELINEARALGEBRA_INTERFACES_BLASLAPACK_BLASLAPACKLA_HPP_
+#define GEOSX_DENSELINEARALGEBRA_INTERFACES_BLASLAPACK_BLASLAPACKLA_HPP_
 
 #include "common/DataTypes.hpp"
-#include "linearAlgebra/common/common.hpp"
+#include "denseLinearAlgebra/common/common.hpp"
 
 #include <complex>
 
@@ -595,4 +595,4 @@ struct BlasLapackLA
 
 }
 
-#endif /*GEOSX_LINEARALGEBRA_BLASLAPACKLA_HPP_*/
+#endif /*GEOSX_DENSELINEARALGEBRA_BLASLAPACK_BLASLAPACKLA_HPP_*/

@@ -7,6 +7,7 @@ set( subdirs
      functions
      constitutive
      mesh
+     denseLinearAlgebra
      linearAlgebra
      fieldSpecification
      finiteElement

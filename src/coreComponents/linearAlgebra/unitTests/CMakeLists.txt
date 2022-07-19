@@ -1,6 +1,5 @@
 set( serial_tests
      LinearSolverParametersEnums
-     BlasLapack
      ComponentMask )
 
 set( parallel_tests

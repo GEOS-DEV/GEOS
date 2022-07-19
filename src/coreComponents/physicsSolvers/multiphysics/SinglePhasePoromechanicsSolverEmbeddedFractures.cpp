@@ -25,7 +25,7 @@
 #include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "finiteElement/Kinematics.h"
-#include "linearAlgebra/interfaces/dense/BlasLapackLA.hpp"
+#include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "mesh/DomainPartition.hpp"
