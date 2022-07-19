@@ -1073,6 +1073,8 @@ real64 CompositionalMultiphaseBase::solverStep( real64 const & time_n,
   // currently the only method is implicit time integration
   real64 const dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
+  m_cycleNumber = cycleNumber;
+  
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   implicitStepComplete( time_n, dt_return, domain );
 
@@ -1913,6 +1915,30 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
           getConstitutiveModel< ThermalConductivityBase >( subRegion, thermName );
         thermalConductivityMaterial.saveConvergedRockFluidState( porosity, phaseVolFrac );
       }
+
+      integer const myRank = MpiWrapper::commRank();
+      
+      std::ofstream pressureFile;
+      std::ofstream saturationFile;      
+      pressureFile.open ( "pressure_"+ std::to_string( myRank ) + "_" + std::to_string( m_cycleNumber ) + ".txt" );
+      saturationFile.open ( "saturation_"+ std::to_string( myRank ) + "_" + std::to_string( m_cycleNumber ) + ".txt" );
+
+      arrayView1d< real64 const > const pressure =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      arrayView2d< real64 const > const elemCenter =
+        subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+      arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();      
+      
+      forAll< serialPolicy >( subRegion.size(), [&] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+	if( elemGhostRank[ei] < 0 )
+	{
+	  pressureFile << ei << " " << elemCenter[ei][0] << " " << elemCenter[ei][1] << " " << elemCenter[ei][2] << " " << pressure[ei] << std::endl;
+	  saturationFile << ei << " " << elemCenter[ei][0] << " " << elemCenter[ei][1] << " " << elemCenter[ei][2] << " " << phaseVolFrac[ei][0] << " " << phaseVolFrac[ei][1] << std::endl;
+	}
+      } );
+      
+      
     } );
   } );
 }

@@ -119,6 +119,8 @@ real64 ReservoirSolverBase::solverStep( real64 const & time_n,
   // currently the only method is implicit time integration
   dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
+  m_flowSolver->setCycleNumber( cycleNumber );
+  
   // complete time step in reservoir and well systems
   implicitStepComplete( time_n, dt_return, domain );
 

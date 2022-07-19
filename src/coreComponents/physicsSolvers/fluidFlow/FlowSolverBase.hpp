@@ -112,6 +112,8 @@ public:
                                            arrayView1d< globalIndex > const & bcAllSetsSize ) const;
 
 
+  void setCycleNumber( integer const cycleNumber ) { m_cycleNumber = cycleNumber; } 
+  
 protected:
 
   /**
@@ -147,6 +149,7 @@ protected:
 
   real64 m_fluxEstimate;
 
+  integer m_cycleNumber;  
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

@@ -377,6 +377,8 @@ protected:
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
 
+
+  
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
