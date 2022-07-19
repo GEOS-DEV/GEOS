@@ -8,16 +8,10 @@
       solidSolverName="SolidMechSolve"
       damageSolverName="DamageSolve"
       couplingTypeOption="FixedStress"
-      logLevel="2"
+      logLevel="1"
       subcycling="0"
       discretization="FE1"
       targetRegions="{ Region1 }">
-      <NonlinearSolverParameters
-        newtonMaxIter="100"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"
-        logLevel="1"/>
     </PhaseFieldFracture>
 
     <SolidMechanicsLagrangianSSLE
@@ -25,13 +19,14 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region1 }"
-      >
+      targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="200"
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
-        solverType="gmres"/>
+        logLevel="0"
+        solverType="gmres"
+        preconditionerType="amg"/>
     </SolidMechanicsLagrangianSSLE>
 
     <PhaseFieldDamageFEM
@@ -46,7 +41,9 @@
         newtonMaxIter="200"
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
-        solverType="gmres"/>
+        logLevel="0"
+        solverType="gmres"
+        preconditionerType="amg"/>
     </PhaseFieldDamageFEM>
   </Solvers>
 
