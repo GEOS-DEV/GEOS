@@ -128,94 +128,140 @@ TEST( testMeshObjectPath, fillPathTokens )
   TestMesh & testMesh = TestMesh::getTestMesh();
   Group const & meshBodies = testMesh.meshBodies();
 
+  map< string, std::vector< string > >
+  entries =
   {
-    string const path = "ElementRegions";
+    { "ElementRegions", { "*", "*", "ElementRegions", "*", "*" } },
+    { "nodeManager", { "*", "*", "nodeManager" } },
+    { "edgeManager", { "*", "*", "edgeManager" } },
+    { "faceManager", { "*", "*", "faceManager" } }
+  };
+
+  for( auto const & entry : entries )
+  {
+    string const & path = entry.first;
+    std::vector< string > const & expectedPath = entry.second;
+    size_t const pathSize = expectedPath.size();
+
     MeshObjectPath meshObjectPath( path, meshBodies );
     auto pathTokens = meshObjectPath.testFillPathTokens( path, meshBodies );
 
-    EXPECT_TRUE( pathTokens.size() == 5 );
-    EXPECT_TRUE( pathTokens[0] == "*" );
-    EXPECT_TRUE( pathTokens[1] == "*" );
-    EXPECT_TRUE( pathTokens[2] == "ElementRegions" );
-    EXPECT_TRUE( pathTokens[3] == "*" );
-    EXPECT_TRUE( pathTokens[4] == "*" );
+    EXPECT_TRUE( pathSize == pathTokens.size() );
+    for( size_t a=0; a<pathTokens.size(); ++a )
+    {
+      EXPECT_TRUE( pathTokens[a] == expectedPath[a] );
+    }
   }
-
-  {
-    string const path = "nodeManager";
-    MeshObjectPath meshObjectPath( path, meshBodies );
-    auto pathTokens = meshObjectPath.testFillPathTokens( path, meshBodies );
-
-    EXPECT_TRUE( pathTokens.size() == 3 );
-    EXPECT_TRUE( pathTokens[0] == "*" );
-    EXPECT_TRUE( pathTokens[1] == "*" );
-    EXPECT_TRUE( pathTokens[2] == "nodeManager" );
-  }
-
-  {
-    string const path = "edgeManager";
-    MeshObjectPath meshObjectPath( path, meshBodies );
-    auto pathTokens = meshObjectPath.testFillPathTokens( path, meshBodies );
-
-    EXPECT_TRUE( pathTokens.size() == 3 );
-    EXPECT_TRUE( pathTokens[0] == "*" );
-    EXPECT_TRUE( pathTokens[1] == "*" );
-    EXPECT_TRUE( pathTokens[2] == "edgeManager" );
-  }
-
-  {
-    string const path = "faceManager";
-    MeshObjectPath meshObjectPath( path, meshBodies );
-    auto pathTokens = meshObjectPath.testFillPathTokens( path, meshBodies );
-
-    EXPECT_TRUE( pathTokens.size() == 3 );
-    EXPECT_TRUE( pathTokens[0] == "*" );
-    EXPECT_TRUE( pathTokens[1] == "*" );
-    EXPECT_TRUE( pathTokens[2] == "faceManager" );
-  }
-
 }
 
-TEST( testMeshObjectPath, ExpandPathTokens )
-{}
-
-
-TEST( testMeshObjectPath, fullPathExpansion )
+TEST( testMeshObjectPath, meshObjectPathConstuction )
 {
   TestMesh & testMesh = TestMesh::getTestMesh();
   Group const & meshBodies = testMesh.meshBodies();
   MeshObjectPath::permutationMapType const & pathPermutations = testMesh.pathPermutations();
 
-  {
-    string const path = "*/*/ElementRegions";
-    MeshObjectPath meshObjectPath( path, meshBodies );
-    EXPECT_TRUE( meshObjectPath.pathPermutations() == pathPermutations );
-  }
 
-  MeshObjectPath::permutationMapType pathPermutationSub = pathPermutations;
 
-  for( auto & meshBodyPair : pathPermutationSub )
+  std::map< string, MeshObjectPath::permutationMapType > pathsAndResults =
   {
-    for( auto & meshLevelPair : meshBodyPair.second )
-    {
-      meshLevelPair.second.clear();
+    { "ElementRegions",
+      { { "body0",
+        { { "level0",
+          { { "region0", {"subreg0", "subreg1"} },
+            { "region1", {"subreg0", "subreg1"} }
+          }
+        },
+          { "level1",
+            { { "region0", {"subreg0", "subreg1"} },
+              { "region1", {"subreg0", "subreg1"} }
+            }
+          }
+        }
+      },
+        { "body1",
+          { { "level0",
+            { { "region0", {"subreg0", "subreg1"} },
+              { "region1", {"subreg0", "subreg1"} }
+            }
+          },
+            { "level1",
+              { { "region0", {"subreg0", "subreg1"} },
+                { "region1", {"subreg0", "subreg1"} },
+                { "region2", {"subreg0", "subreg2"} }
+              }
+            }
+          }
+        },
+        { "body3",
+          { { "level0",
+            { { "region0", {"subreg0", "subreg1"} },
+              { "region1", {"subreg0", "subreg1"} }
+            }
+          },
+            { "level2",
+              { { "region0", {"subreg0", "subreg1"} },
+                { "region1", {"subreg0", "subreg1"} }
+              }
+            }
+          }
+        }
+      }
+    },
+    { "body0/level0/ElementRegions/{region0}",
+      { { "body0",
+        { { "level0",
+          { { "region0", {"subreg0", "subreg1"} } }
+        }
+        }
+      }
+      }
+    },
+    { "{body0 body1}/*/nodeManager",
+      { { "body0",
+        { { "level0", {} },
+          { "level1", {} }
+        }
+      },
+        { "body1",
+          { { "level0", {} },
+            { "level1", {} }
+          }
+        }
+      }
+    },
+    { "{body0 body3}/*/edgeManager",
+      { { "body0",
+        { { "level0", {} },
+          { "level1", {} }
+        }
+      },
+        { "body3",
+          { { "level0", {} },
+            { "level2", {} }
+          }
+        }
+      }
+    },
+    { "{body0 body3}/level0/faceManager",
+      { { "body0",
+        { { "level0", {} } }
+      },
+        { "body3",
+          { { "level0", {} }}
+        }
+      }
     }
-  }
 
+
+
+  };
+
+  for( auto const & entry : pathsAndResults )
   {
-    string const path = "nodeManager";
+    string const & path = entry.first;
+    MeshObjectPath::permutationMapType const & answer = entry.second;
     MeshObjectPath meshObjectPath( path, meshBodies );
-    EXPECT_TRUE( meshObjectPath.pathPermutations() == pathPermutationSub );
-  }
-  {
-    string const path = "edgeManager";
-    MeshObjectPath meshObjectPath( path, meshBodies );
-    EXPECT_TRUE( meshObjectPath.pathPermutations() == pathPermutationSub );
-  }
-  {
-    string const path = "faceManager";
-    MeshObjectPath meshObjectPath( path, meshBodies );
-    EXPECT_TRUE( meshObjectPath.pathPermutations() == pathPermutationSub );
+    EXPECT_TRUE( meshObjectPath.pathPermutations() == answer );
   }
 }
 

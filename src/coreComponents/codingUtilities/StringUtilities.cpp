@@ -40,25 +40,21 @@ string toLower( string const & input )
  **/
 template< typename RETURN_TYPE >
 RETURN_TYPE tokenize( string const & str,
-                      string const & delimiters )
+                      string const & delimiters,
+                      bool const treatConsecutiveDelimAsOne )
 {
   if( str.empty() )
   {
     return {};
   }
 
-  auto const isNonSpace = []( char const c ){ return !isspace( c ); };
-  bool const usesNonWhitespaceDelimiters = std::any_of( delimiters.begin(), delimiters.end(), isNonSpace );
-
-  // When only whitespace delimiters, skip multiple adjacent delimiters; otherwise don't and keep empty tokens
   RETURN_TYPE tokens;
-//  size_t lastPos = usesNonWhitespaceDelimiters ? 0 : str.find_first_not_of( delimiters, 0 );
-  size_t lastPos = str.find_first_not_of( delimiters, 0 );
+  size_t lastPos = 0;
   size_t newPos;
   while( ( newPos = str.find_first_of( delimiters, lastPos ) ) != string::npos )
   {
     tokens.emplace_back( str.substr( lastPos, newPos - lastPos ) );
-    lastPos = usesNonWhitespaceDelimiters ? newPos + 1 : str.find_first_not_of( delimiters, newPos );
+    lastPos = !treatConsecutiveDelimAsOne ? newPos + 1 : str.find_first_not_of( delimiters, newPos );
   }
   if( lastPos != string::npos )
   {
@@ -69,26 +65,12 @@ RETURN_TYPE tokenize( string const & str,
 }
 
 template string_array tokenize< string_array >( string const & str,
-                                                string const & delimiters );
+                                                string const & delimiters,
+                                                bool const treatConsecutiveDelimAsOne );
 
 template std::vector< string > tokenize< std::vector< string > >( string const & str,
-                                                                  string const & delimiters );
-
-
-bool areAnyCharsInString( string const & str, string const & chars )
-{
-  bool rval = false;
-
-  for( size_t a=0; a<chars.size(); ++a )
-  {
-    if( str.find( chars[a] )!=string::npos )
-    {
-      rval = true;
-    }
-  }
-  return rval;
-}
-
+                                                                  string const & delimiters,
+                                                                  bool const treatConsecutiveDelimAsOne );
 
 
 string trim( string const & str,

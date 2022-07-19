@@ -46,10 +46,6 @@ public:
   MeshObjectPath( string const path,
                   dataRepository::Group const & meshBodies );
 
-  virtual ~MeshObjectPath();
-
-
-
   void processPath( string const path,
                     dataRepository::Group const & meshBodies );
 
@@ -65,14 +61,14 @@ public:
 
 
   template< typename OBJECT_TYPE = ObjectManagerBase,
-            typename FUNC = std::function< void( dataRepository::Group &) > >
+            typename FUNC >
   void forObjectsInPath( dataRepository::Group & meshBodies,
-                         FUNC && func );
+                         FUNC && func ) const;
 
   template< typename OBJECT_TYPE = ObjectManagerBase,
-            typename FUNC = std::function< void( dataRepository::Group const &) > >
+            typename FUNC >
   void forObjectsInPath( dataRepository::Group const & meshBodies,
-                         FUNC && func );
+                         FUNC && func ) const;
 
 #if defined(MESH_OBJECT_PATH_PRIVATE_FUNCTION_UNIT_TESTING)
   template< typename OBJECT_TYPE >
@@ -90,12 +86,12 @@ public:
 
 private:
   template< typename OBJECT_TYPE >
-  void checkObjectTypeConsistency();
+  void checkObjectTypeConsistency() const;
 
   void printPermutations() const;
 
   std::vector< string > fillPathTokens( string const & path,
-                                        dataRepository::Group const & meshBodies );
+                                        dataRepository::Group const & meshBodies ) const;
 
   void processPathTokens( std::vector< string > const & pathTokens,
                           dataRepository::Group const & meshBodies );
@@ -114,7 +110,7 @@ namespace geosx
 
 
 template< typename OBJECT_TYPE >
-void MeshObjectPath::checkObjectTypeConsistency()
+void MeshObjectPath::checkObjectTypeConsistency() const
 {
   bool consistent = false;
   if( m_objectType == ObjectTypes::nodes )
@@ -147,7 +143,7 @@ void MeshObjectPath::checkObjectTypeConsistency()
 template< typename OBJECT_TYPE,
           typename FUNC >
 void MeshObjectPath::forObjectsInPath( dataRepository::Group & meshBodies,
-                                       FUNC && func )
+                                       FUNC && func ) const
 {
   forObjectsInPath< OBJECT_TYPE >( const_cast< dataRepository::Group const & >(meshBodies),
                                    [&]( auto const & object )
@@ -158,7 +154,7 @@ void MeshObjectPath::forObjectsInPath( dataRepository::Group & meshBodies,
 
 template< typename OBJECT_TYPE, typename FUNC >
 void MeshObjectPath::forObjectsInPath( dataRepository::Group const & meshBodies,
-                                       FUNC && func )
+                                       FUNC && func ) const
 {
   checkObjectTypeConsistency< OBJECT_TYPE >();
   for( auto const & meshBodyPair : m_pathPermutations )
