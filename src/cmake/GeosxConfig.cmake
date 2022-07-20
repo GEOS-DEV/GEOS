@@ -2,6 +2,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           CALIPER
                           CHAI
                           CUDA
+                          CUDA_NVTOOLSEXT
                           FORTRAN_MANGLE_NO_UNDERSCORE
                           FPE
                           HYPRE
@@ -31,6 +32,7 @@ foreach( DEP in ${PREPROCESSOR_DEFINES} )
         set( GEOSX_USE_${DEP} TRUE )
     endif()
 endforeach()
+
 
 set( GEOSX_CMAKE_BUILD_TYPE "\"${CMAKE_BUILD_TYPE}\"" )
 

@@ -116,6 +116,10 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
+endif()
+
 if( ENABLE_PAMELA )
     message( STATUS "Adding PAMELAMeshGenerator sources and headers" )
     list( APPEND mesh_headers generators/PAMELAMeshGenerator.hpp )

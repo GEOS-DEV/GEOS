@@ -37,6 +37,10 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
+endif()
+
 # create test executables
 foreach(test ${gtest_geosx_tests} ${gtest_tests_with_input})
     get_filename_component( test_name ${test} NAME_WE )

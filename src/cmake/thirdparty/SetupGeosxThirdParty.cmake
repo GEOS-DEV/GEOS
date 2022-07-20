@@ -644,4 +644,12 @@ if(NOT ENABLE_${upper_LAI})
 endif()
 option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
 
+###############################
+# NvToolExt
+###############################
+if (ENABLE_CUDA_NVTOOLSEXT)
+  find_package(CUDAToolkit REQUIRED)
+  set(thirdPartyLibs ${thirdPartyLibs} CUDA::nvToolsExt)
+endif()
+
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
