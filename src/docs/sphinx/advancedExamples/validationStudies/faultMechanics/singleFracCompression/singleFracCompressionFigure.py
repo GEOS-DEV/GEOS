@@ -5,31 +5,34 @@ import h5py
 import xml.etree.ElementTree as ElementTree
 from mpmath import *
 import math
-from math import sin,cos,tan,exp,atan,asin
-from mpl_toolkits.mplot3d import axes3d 
+from math import sin, cos, tan, exp, atan, asin
+from mpl_toolkits.mplot3d import axes3d
+
 
 class Analytical:
 
     def __init__(self, mechanicalParameters, length, inclination, stress):
         K = mechanicalParameters["bulkModulus"]
         G = mechanicalParameters["shearModulus"]
-        E = (9 * K * G) / (3*K+G)
+        E = (9 * K * G) / (3 * K + G)
         nu = E / (2 * G) - 1
-  
-        self.halfLength = length;
-        self.inc = inclination;
-        self.stress = stress;
-        self.scaling = ( 4 * (1 - nu**2) ) / E;
+
+        self.halfLength = length
+        self.inc = inclination
+        self.stress = stress
+        self.scaling = (4 * (1 - nu**2)) / E
         self.frictionCoefficient = mechanicalParameters["frictionCoefficient"]
 
     def computeNormalTraction(self, x):
-        return -self.stress*pow(sin(self.inc),2);
+        return -self.stress * pow(sin(self.inc), 2)
 
     def computeShearDisplacement(self, x):
-        return self.scaling*(self.stress*sin(self.inc)*(cos(self.inc)-sin(self.inc)*self.frictionCoefficient))*pow((self.halfLength**2-(self.halfLength-x-1.)**2),0.5);
+        return self.scaling * (self.stress * sin(self.inc) *
+                               (cos(self.inc) - sin(self.inc) * self.frictionCoefficient)) * pow(
+                                   (self.halfLength**2 - (self.halfLength - x - 1.)**2), 0.5)
 
 
-def getMechanicalParametersFromXML( xmlFilePath ):
+def getMechanicalParametersFromXML(xmlFilePath):
     tree = ElementTree.parse(xmlFilePath)
 
     param = tree.find('Constitutive/ElasticIsotropic')
@@ -43,7 +46,7 @@ def getMechanicalParametersFromXML( xmlFilePath ):
     return mechanicalParameters
 
 
-def getCompressiveStressFromXML( xmlFilePath ):
+def getCompressiveStressFromXML(xmlFilePath):
     tree = ElementTree.parse(xmlFilePath)
 
     param = tree.findall('FieldSpecifications/FieldSpecification')
@@ -51,7 +54,7 @@ def getCompressiveStressFromXML( xmlFilePath ):
     found_stress = False
     for elem in param:
         if elem.get("fieldName") == "rock_stress" and elem.get("component") == "0":
-            stress = float(elem.get("scale"))*(-1)
+            stress = float(elem.get("scale")) * (-1)
             found_stress = True
         if found_stress: break
 
@@ -69,7 +72,7 @@ def getFractureGeometryFromXML(xmlFilePath):
     origin = [float(i) for i in origin[1:-1].split(",")]
     direction = boundedPlane.get("lengthVector")
     direction = [float(i) for i in direction[1:-1].split(",")]
-    inclination = atan(direction[1]/direction[0])
+    inclination = atan(direction[1] / direction[0])
 
     return length, origin[0], inclination
 
@@ -86,21 +89,21 @@ def main():
     hf = h5py.File(hdf5File1Path, 'r')
     xl = hf.get('traction elementCenter')
     xl = np.array(xl)
-    xcord = xl[0,:,0]
-    ycord = xl[0,:,1]
-    zcord = xl[0,:,2]
+    xcord = xl[0, :, 0]
+    ycord = xl[0, :, 1]
+    zcord = xl[0, :, 2]
 
     # Local Normal Traction
     hf = h5py.File(hdf5File1Path, 'r')
     trac = hf.get('traction')
     trac = np.array(trac)
-    normalTraction = trac[0,:,0]
+    normalTraction = trac[0, :, 0]
 
     # Local Shear Displacement
     hf = h5py.File(hdf5File2Path, 'r')
     jump = hf.get('displacementJump')
     jump = np.array(jump)
-    displacementJump = jump[0,:,1]
+    displacementJump = jump[0, :, 1]
 
     # Extract Local Inform for The Middle Layer
     xlist = []
@@ -108,14 +111,13 @@ def main():
     xloc = []
     tnlist = []
     gtlist = []
-    for i in range(0,len(zcord)):
-        if abs(zcord[i]/0.025-1.) < 0.01:
-           xlist.append(xcord[i])
-           ylist.append(ycord[i])
-           xloc.append(pow(xcord[i]**2+ycord[i]**2, 0.5)*xcord[i]/abs(xcord[i]))
-           tnlist.append(normalTraction[i]/1.0e6)
-           gtlist.append(displacementJump[i]*1.e3)
-
+    for i in range(0, len(zcord)):
+        if abs(zcord[i] / 0.025 - 1.) < 0.01:
+            xlist.append(xcord[i])
+            ylist.append(ycord[i])
+            xloc.append(pow(xcord[i]**2 + ycord[i]**2, 0.5) * xcord[i] / abs(xcord[i]))
+            tnlist.append(normalTraction[i] / 1.0e6)
+            gtlist.append(displacementJump[i] * 1.e3)
 
     # Extract Mechanical Properties and Fracture Geometry from XML
     mechanicalParameters = getMechanicalParametersFromXML(xmlFile1Path)
@@ -128,21 +130,21 @@ def main():
     # Plot Analytical (continuous line) and Numerical (markers) Solution
     x_analytical = np.linspace(-length, length, 101, endpoint=True)
     tn_analytical = np.empty(len(x_analytical))
-    gt_analytical = np.empty(len(x_analytical))  
-    i=0
+    gt_analytical = np.empty(len(x_analytical))
+    i = 0
     for xCell in x_analytical:
-        tn_analytical[i] = AnalyticalSolution.computeNormalTraction( xCell )/1.0e6
-        gt_analytical[i]= AnalyticalSolution.computeShearDisplacement( xCell )*1.e3
+        tn_analytical[i] = AnalyticalSolution.computeNormalTraction(xCell) / 1.0e6
+        gt_analytical[i] = AnalyticalSolution.computeShearDisplacement(xCell) * 1.e3
         i += 1
 
     fsize = 30
     msize = 10
-    lw=8
-    fig, ax = plt.subplots(1,2,figsize=(32, 12))
+    lw = 8
+    fig, ax = plt.subplots(1, 2, figsize=(32, 12))
     cmap = plt.get_cmap("tab10")
 
     ax[0].plot(x_analytical, tn_analytical, color=cmap(-1), label='Analytical Solution', lw=lw)
-    ax[0].plot(xloc, tnlist, 'o', alpha=0.6, color=cmap(2), mec = 'k', label='Numerical Solution', markersize=msize)    
+    ax[0].plot(xloc, tnlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='Numerical Solution', markersize=msize)
     ax[0].grid()
     ax[0].set_xlim(-1, 1)
     ax[0].set_ylim(-18, 2)
@@ -152,9 +154,8 @@ def main():
     ax[0].xaxis.set_tick_params(labelsize=fsize)
     ax[0].yaxis.set_tick_params(labelsize=fsize)
 
-
     ax[1].plot(x_analytical, gt_analytical, color=cmap(-1), label='Analytical Solution', lw=lw)
-    ax[1].plot(xloc, gtlist, 'o', alpha=0.6, color=cmap(2), mec = 'k', label='Numerical Solution', markersize=msize)
+    ax[1].plot(xloc, gtlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='Numerical Solution', markersize=msize)
     ax[1].grid()
     ax[1].set_xlim(-1, 1)
     ax[1].set_ylim(0, 4)
@@ -165,6 +166,7 @@ def main():
     ax[1].yaxis.set_tick_params(labelsize=fsize)
 
     plt.show()
+
 
 if __name__ == "__main__":
     main()

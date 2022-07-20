@@ -35,7 +35,9 @@ SiloOutput::SiloOutput( string const & name,
   m_writeFaceMesh( 0 ),
   m_writeCellElementMesh( 1 ),
   m_writeFaceElementMesh( 1 ),
-  m_plotLevel()
+  m_plotLevel(),
+  m_onlyPlotSpecifiedFieldNames(),
+  m_fieldNames()
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -67,11 +69,41 @@ SiloOutput::SiloOutput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "" );
 
+  registerWrapper( viewKeysStruct::onlyPlotSpecifiedFieldNames, &m_onlyPlotSpecifiedFieldNames ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription(
+    "If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`" );
+
+  registerWrapper( viewKeysStruct::fieldNames, &m_fieldNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of the fields to output. If this attribute is specified, GEOSX outputs all (and only) the fields specified by the user, regardless of their plotLevel" );
+
 }
 
 SiloOutput::~SiloOutput()
 {}
 
+void SiloOutput::postProcessInput()
+{
+  string const fieldNamesString = viewKeysStruct::fieldNames;
+  string const onlyPlotSpecifiedFieldNamesString = viewKeysStruct::onlyPlotSpecifiedFieldNames;
+
+  GEOSX_THROW_IF( ( m_onlyPlotSpecifiedFieldNames != 0 ) && m_fieldNames.empty(),
+                  GEOSX_FMT( "{} `{}`: the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
+                             catalogName(), getName(), onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
+                  InputError );
+
+  GEOSX_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
+                       GEOSX_FMT(
+                         "{} `{}`: found {} fields to plot in `{}`. These fields will be output regardless of the `plotLevel` specified by the user. No other field will be output.",
+                         catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString ) );
+
+  GEOSX_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames == 0 ),
+                       GEOSX_FMT(
+                         "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with `plotLevel` smaller or equal to {}.",
+                         catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
+}
 
 
 bool SiloOutput::execute( real64 const time_n,
@@ -99,6 +131,8 @@ bool SiloOutput::execute( real64 const time_n,
   silo.setWriteFaceMesh( m_writeFaceMesh );
   silo.setWriteCellElementMesh( m_writeCellElementMesh );
   silo.setWriteFaceElementMesh( m_writeFaceElementMesh );
+  silo.setOnlyPlotSpecifiedFieldNamesFlag( m_onlyPlotSpecifiedFieldNames );
+  silo.setFieldNames( m_fieldNames.toViewConst() );
   silo.setPlotFileRoot( m_plotFileRoot );
   silo.initialize( numFiles );
   silo.waitForBatonWrite( rank, cycleNumber, eventCounter, false );
