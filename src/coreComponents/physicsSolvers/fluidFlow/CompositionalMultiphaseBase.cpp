@@ -30,7 +30,7 @@
 #include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
-#include "constitutive/thermalConductivity/thermalConductivitySelector.hpp"
+#include "constitutive/thermalConductivity/multiPhaseThermalConductivitySelector.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
@@ -62,7 +62,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_numComponents( 0 ),
   m_computeCFLNumbers( 0 ),
   m_hasCapPressure( 0 ),
-  m_isThermal( 0 ),
   m_maxCompFracChange( 1.0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
@@ -76,11 +75,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use mass formulation instead of molar" );
-
-  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether the problem is thermal or not." );
 
   this->registerWrapper( viewKeyStruct::computeCFLNumbersString(), &m_computeCFLNumbers ).
     setApplyDefaultValue( 0 ).
@@ -299,18 +293,6 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
 
   if( m_isThermal )
   {
-    string & solidInternalEnergyName = subRegion.registerWrapper< string >( viewKeyStruct::solidInternalEnergyNamesString() ).
-                                         setPlotLevel( PlotLevel::NOPLOT ).
-                                         setRestartFlags( RestartFlags::NO_WRITE ).
-                                         setSizedFromParent( 0 ).
-                                         setDescription( "Name of the solid internal energy constitutive model to use" ).
-                                         reference();
-
-    solidInternalEnergyName = getConstitutiveName< SolidInternalEnergy >( subRegion );
-    GEOSX_THROW_IF( solidInternalEnergyName.empty(),
-                    GEOSX_FMT( "Solid internal energy model not found on subregion {}", subRegion.getName() ),
-                    InputError );
-
     string & thermalConductivityName = subRegion.registerWrapper< string >( viewKeyStruct::thermalConductivityNamesString() ).
                                          setPlotLevel( PlotLevel::NOPLOT ).
                                          setRestartFlags( RestartFlags::NO_WRITE ).
@@ -318,7 +300,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
                                          setDescription( "Name of the thermal conductivity constitutive model to use" ).
                                          reference();
 
-    thermalConductivityName = getConstitutiveName< ThermalConductivityBase >( subRegion );
+    thermalConductivityName = getConstitutiveName< MultiPhaseThermalConductivityBase >( subRegion );
     GEOSX_THROW_IF( thermalConductivityName.empty(),
                     GEOSX_FMT( "Thermal conductivity model not found on subregion {}", subRegion.getName() ),
                     InputError );
@@ -472,7 +454,7 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
       if( m_isThermal )
       {
         string const & thermalConductivityName = subRegion.getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
-        ThermalConductivityBase const & conductivity = getConstitutiveModel< ThermalConductivityBase >( subRegion, thermalConductivityName );
+        MultiPhaseThermalConductivityBase const & conductivity = getConstitutiveModel< MultiPhaseThermalConductivityBase >( subRegion, thermalConductivityName );
         compareMultiphaseModels( conductivity, referenceFluid );
       }
     } );
@@ -753,8 +735,8 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
 
       string const & thermalConductivityName = subRegion.template getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
-      ThermalConductivityBase const & conductivityMaterial =
-        getConstitutiveModel< ThermalConductivityBase >( subRegion, thermalConductivityName );
+      MultiPhaseThermalConductivityBase const & conductivityMaterial =
+        getConstitutiveModel< MultiPhaseThermalConductivityBase >( subRegion, thermalConductivityName );
       conductivityMaterial.initializeRockFluidState( porosity, phaseVolFrac );
       // note that there is nothing to update here because thermal conductivity is explicit for now
 
@@ -1288,85 +1270,129 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-  fsManager.apply( time + dt,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                   "ElementRegions",
-                   FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                   [&]( FieldSpecificationBase const & fs,
-                        string const & setName,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group & subRegion,
-                        string const & )
+  // Step 1: count individual source flux boundary conditions
+
+  std::map< string, localIndex > bcNameToBcId;
+  localIndex bcCounter = 0;
+
+  fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
-    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    // collect all the bc names to idx
+    bcNameToBcId[bc.getName()] = bcCounter;
+    bcCounter++;
+  } );
+
+  if( bcCounter == 0 )
+  {
+    return;
+  }
+
+  // Step 2: count the set size for each source flux (each source flux may have multiple target sets)
+
+  array1d< globalIndex > bcAllSetsSize( bcNameToBcId.size() );
+
+  computeSourceFluxSizeScalingFactor( time,
+                                      dt,
+                                      domain,
+                                      bcNameToBcId,
+                                      bcAllSetsSize.toView() );
+
+  // Step 3: we are ready to impose the boundary condition, normalized by the set size
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & )
+  {
+    fsManager.apply( time + dt,
+                     mesh,
+                     "ElementRegions",
+                     FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
+                     [&]( FieldSpecificationBase const & fs,
+                          string const & setName,
+                          SortedArrayView< localIndex const > const & targetSet,
+                          Group & subRegion,
+                          string const & )
     {
-      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
-                                   getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
-                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
-    }
+      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+                                     getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
+                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+      }
 
-    arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< integer const > const ghostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-
-    // Step 1: get the values of the source boundary condition that need to be added to the rhs
-    // We don't use FieldSpecificationBase::applyConditionToSystem here because we want to account for the row permutation used in the
-    // compositional solvers
-
-    array1d< globalIndex > dofArray( targetSet.size() );
-    array1d< real64 > rhsContributionArray( targetSet.size() );
-    arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
-    localIndex const rankOffset = dofManager.rankOffset();
-
-    // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-    fs.computeRhsContribution< FieldSpecificationAdd,
-                               parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                         time + dt,
-                                                         dt,
-                                                         subRegion,
-                                                         dofNumber,
-                                                         rankOffset,
-                                                         localMatrix,
-                                                         dofArray.toView(),
-                                                         rhsContributionArrayView,
-                                                         [] GEOSX_HOST_DEVICE ( localIndex const )
-    {
-      return 0.0;
-    } );
-
-    // Step 2: we are ready to add the right-hand side contributions, taking into account our equation layout
-
-    integer const fluidComponentId = fs.getComponent();
-    integer const numFluidComponents = m_numComponents;
-    forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
-                                                         rankOffset,
-                                                         ghostRank,
-                                                         fluidComponentId,
-                                                         numFluidComponents,
-                                                         dofNumber,
-                                                         rhsContributionArrayView,
-                                                         localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
-    {
-      // we need to filter out ghosts here, because targetSet may contain them
-      localIndex const ei = targetSet[a];
-      if( ghostRank[ei] >= 0 )
+      if( targetSet.size() == 0 )
       {
         return;
       }
 
-      // for all "fluid components", we add the value to the total mass balance equation
-      globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
-      localRhs[totalMassBalanceRow] += rhsContributionArrayView[a];
+      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const ghostRank =
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-      // for all "fluid components" except the last one, we add the value to the component mass balance equation (shifted appropriately)
-      if( fluidComponentId < numFluidComponents - 1 )
+      // Step 3.1: get the values of the source boundary condition that need to be added to the rhs
+      // We don't use FieldSpecificationBase::applyConditionToSystem here because we want to account for the row permutation used in the
+      // compositional solvers
+
+      array1d< globalIndex > dofArray( targetSet.size() );
+      array1d< real64 > rhsContributionArray( targetSet.size() );
+      arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
+      localIndex const rankOffset = dofManager.rankOffset();
+
+      // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
+      fs.computeRhsContribution< FieldSpecificationAdd,
+                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
+                                                           time + dt,
+                                                           dt,
+                                                           subRegion,
+                                                           dofNumber,
+                                                           rankOffset,
+                                                           localMatrix,
+                                                           dofArray.toView(),
+                                                           rhsContributionArrayView,
+                                                           [] GEOSX_HOST_DEVICE ( localIndex const )
       {
-        globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
-        localRhs[compMassBalanceRow] += rhsContributionArrayView[a];
-      }
-    } );
+        return 0.0;
+      } );
 
+      // Step 3.2: we are ready to add the right-hand side contributions, taking into account our equation layout
+
+      // get the normalizer
+      real64 const sizeScalingFactor = bcAllSetsSize[bcNameToBcId.at( fs.getName())];
+
+      integer const fluidComponentId = fs.getComponent();
+      integer const numFluidComponents = m_numComponents;
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
+                                                           targetSet,
+                                                           rankOffset,
+                                                           ghostRank,
+                                                           fluidComponentId,
+                                                           numFluidComponents,
+                                                           dofNumber,
+                                                           rhsContributionArrayView,
+                                                           localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
+      {
+        // we need to filter out ghosts here, because targetSet may contain them
+        localIndex const ei = targetSet[a];
+        if( ghostRank[ei] >= 0 )
+        {
+          return;
+        }
+
+        // for all "fluid components", we add the value to the total mass balance equation
+        globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
+        localRhs[totalMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor
+                                                                                          // here
+
+        // for all "fluid components" except the last one, we add the value to the component mass balance equation (shifted appropriately)
+        if( fluidComponentId < numFluidComponents - 1 )
+        {
+          globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
+          localRhs[compMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
+                                                                                           // sizeScalingFactor here
+        }
+      } );
+    } );
   } );
 }
 
@@ -1865,8 +1891,8 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
         arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
 
         string const & thermName = subRegion.getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
-        ThermalConductivityBase const & thermalConductivityMaterial =
-          getConstitutiveModel< ThermalConductivityBase >( subRegion, thermName );
+        MultiPhaseThermalConductivityBase const & thermalConductivityMaterial =
+          getConstitutiveModel< MultiPhaseThermalConductivityBase >( subRegion, thermName );
         thermalConductivityMaterial.saveConvergedRockFluidState( porosity, phaseVolFrac );
       }
     } );

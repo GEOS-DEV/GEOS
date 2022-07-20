@@ -72,6 +72,22 @@ EXTRINSIC_MESH_DATA_TRAIT( facePressure_n,
                            NO_WRITE,
                            "Face pressure at the previous converged time step" );
 
+EXTRINSIC_MESH_DATA_TRAIT( temperature,
+                           "temperature",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Temperature" );
+
+EXTRINSIC_MESH_DATA_TRAIT( temperature_n,
+                           "temperature_n",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Temperature at the previous converged time step" );
+
 EXTRINSIC_MESH_DATA_TRAIT( deltaVolume,
                            "deltaVolume",
                            array1d< real64 >,
@@ -111,6 +127,22 @@ EXTRINSIC_MESH_DATA_TRAIT( mimGravityCoefficient,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Mimetic gravity coefficient" );
+
+EXTRINSIC_MESH_DATA_TRAIT( bcPressure,
+                           "bcPressure",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Boundary condition pressure" );
+
+EXTRINSIC_MESH_DATA_TRAIT( bcTemperature,
+                           "bcTemperature",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Boundary temperature" );
 
 }
 
