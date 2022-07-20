@@ -68,7 +68,7 @@ Such eight-node hexahedral elements are defined as ``C3D8`` elementTypes, and th
 with one group of cell blocks named here ``cb1``. Along the y-axis, refinement is performed for the elements in the vicinity of the fracture plane.
 
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdValidation_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/kgdValidation_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -77,7 +77,7 @@ with one group of cell blocks named here ``cb1``. Along the y-axis, refinement i
 The fracture plane is defined by a nodeset occupying a small region within the computation domain, where the fracture tends to open and propagate upon fluid injection:
 
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdValidation_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/kgdValidation_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_FRACPLANE -->
   :end-before: <!-- SPHINX_FRACPLANE_END -->
@@ -95,7 +95,7 @@ The ``Solvers`` tag in the XML file is used to list and parameterize these solve
 Three elementary solvers are combined in the solver ``Hydrofracture`` to model the coupling between fluid flow within the fracture, rock deformation, fracture deformation and propagation:
 
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_HYDROFRACSOLVER -->
   :end-before: <!-- SPHINX_HYDROFRACSOLVER_END -->
@@ -104,7 +104,7 @@ Three elementary solvers are combined in the solver ``Hydrofracture`` to model t
 - Rock and fracture deformation are modeled by the solid mechanics solver ``SolidMechanicsLagrangianSSLE``. In this solver, we define ``targetRegions`` that includes both the continuum region and the fracture region. The name of the contact constitutive behavior is specified in this solver by the ``contactRelationName``.
 
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_MECHANICALSOLVER -->
   :end-before: <!-- SPHINX_MECHANICALSOLVER_END -->
@@ -113,7 +113,7 @@ Three elementary solvers are combined in the solver ``Hydrofracture`` to model t
 - The single-phase fluid flow inside the fracture is solved by the finite volume method in the solver ``SinglePhaseFVM``.
 
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_SINGLEPHASEFVM -->
   :end-before: <!-- SPHINX_SINGLEPHASEFVM_END -->
@@ -122,7 +122,7 @@ Three elementary solvers are combined in the solver ``Hydrofracture`` to model t
 - The solver ``SurfaceGenerator`` defines the fracture region and rock toughness. With ``nodeBasedSIF="0"``, edge-based Stress Intensity Factor (SIF) calculation is chosen for the fracture propagation criterion. 
 
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml
   :language: xml
   :start-after: <!-- SPHINX_SURFACEGENERATOR -->
   :end-before: <!-- SPHINX_SURFACEGENERATOR_END -->
@@ -136,7 +136,7 @@ For this problem, a homogeneous and isotropic domain with one solid material is 
 ``ElasticIsotropic`` model is used to describe the mechanical behavior of ``rock``, when subjected to fluid injection. The single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the response of ``water`` upon fracture propagation.
 
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL -->
     :end-before: <!-- SPHINX_MATERIAL_END -->
@@ -160,7 +160,7 @@ The remaining parts of the outer boundaries are subjected to roller constraints.
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml
     :language: xml
     :start-after: <!-- SPHINX_BC -->
     :end-before: <!-- SPHINX_BC_END -->
@@ -212,7 +212,7 @@ the modelling predictions (green curves) for the pressure at three gage location
 aperture at LVDT location correlate well with the experimental data (blue circles).  
 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/kgdValidation/kgdValidationFigure.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdValidation/kgdValidationFigure.py
 
 
 ------------------------------------------------------------------
