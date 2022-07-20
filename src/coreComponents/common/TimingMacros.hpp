@@ -74,12 +74,17 @@ namespace timingHelpers
   };
 
 }
+/// Mark a scope with NVTX with name and color (only a local helper should not be used elsewhere)
 #  define GEOSX_NVTX_MARK_SCOPE_2(name, color) timingHelpers::NVTXScopeTracer __FILE__ ## _ ## __LINE__ ## _ ## scopeTracer = timingHelpers::NVTXScopeTracer(name, color)
+/// Mark a scope with NVTX with a given name and color purple
 #  define GEOSX_NVTX_MARK_SCOPE(name) GEOSX_NVTX_MARK_SCOPE_2(STRINGIZE_NX(name), timingHelpers::PURPLE)
-#  define GEOSX_NVTX_MARK_FUNCTION GEOSX_NVTX_MARK_SCOPE_2(__PRETTY_FUNCTION__, timingHelpers::BLUE)
+/// Mark a function with NVTX using function name and color blue
+#  define GEOSX_NVTX_MARK_FUNCTION GEOSX_NVTX_MARK_SCOPE_2(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str(), timingHelpers::BLUE)
 #else
+/// @cond DO_NOT_DOCUMENT
 #  define GEOSX_NVTX_MARK_SCOPE(name)
 #  define GEOSX_NVTX_MARK_FUNCTION
+/// @endcond
 #endif /* USE_CUDA */
 
 
@@ -111,7 +116,6 @@ namespace timingHelpers
 
 /// @cond DO_NOT_DOCUMENT
 #define GEOSX_CALIPER_MARK_SCOPE(name)
-#define GEOSX_CALIPER_MARK_FUNCTION_SCOPED
 #define GEOSX_CALIPER_MARK_FUNCTION
 
 #define GEOSX_CALIPER_MARK_BEGIN(name)
@@ -123,12 +127,17 @@ namespace timingHelpers
 
 #endif // GEOSX_USE_CALIPER
 
+/// Mark scope with both Caliper and NVTX if enabled
 #define GEOSX_MARK_SCOPE(name) GEOSX_CALIPER_MARK_SCOPE(name); GEOSX_NVTX_MARK_SCOPE(name)
+/// Mark function with both Caliper and NVTX if enabled
 #define GEOSX_MARK_FUNCTION GEOSX_CALIPER_MARK_FUNCTION; GEOSX_NVTX_MARK_FUNCTION
-#define GEOSX_MARK_FUNCTION_SCOPED GEOSX_CALIPER_MARK_FUNCTION_SCOPED
+/// Mark the beginning of function, only useful when you don't want to or can't mark the whole function.
 #define GEOSX_MARK_FUNCTION_BEGIN(name) GEOSX_CALIPER_MARK_FUNCTION_BEGIN(name)
+/// Mark the end of function, only useful when you don't want to or can't mark the whole function.
 #define GEOSX_MARK_FUNCTION_END(name) GEOSX_CALIPER_MARK_FUNCTION_END(name)
+/// Mark the beginning of timed statement group
 #define GEOSX_MARK_BEGIN(name) GEOSX_CALIPER_MARK_BEGIN(name)
+/// Mark the end of timed statements group
 #define GEOSX_MARK_END(name) GEOSX_CALIPER_MARK_END(name)
 
 /// Get current time of day as a floating point number of seconds in a variable @p time.
