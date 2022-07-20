@@ -37,7 +37,6 @@ namespace timingHelpers
     std::string::size_type const beg = input.find_last_of( ' ', end)+1;
     return input.substr( beg, end-beg );
   }
-  
 }
 
 
