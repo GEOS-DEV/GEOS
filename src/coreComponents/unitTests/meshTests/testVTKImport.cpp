@@ -283,11 +283,11 @@ TEST( VTKImport, medley )
   };
 
 //  string const medleyVTK = testMeshDir + "/medley.vtk";
-  // string const medleyVTK = testMeshDir + "/medley-prism7.vtk";
+// string const medleyVTK = testMeshDir + "/medley-prism7.vtk";
 //  string const medleyVTK = testMeshDir + "/wedge.vtk";
 //  string const medleyVTK = testMeshDir + "/hexa.vtk";
 // string const medleyVTK = testMeshDir + "/tetra.vtk";
-string const medleyVTK = testMeshDir + "/pebi_new_3D_onlyPolyhedra.vtk";
+  string const medleyVTK = testMeshDir + "/pebi_new_3D_onlyPolyhedra.vtk";
 
   TestMeshImport( medleyVTK, validate );
 }

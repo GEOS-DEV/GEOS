@@ -378,7 +378,7 @@ protected:
   string m_referenceFluidModelName;
 
 
-  
+
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 

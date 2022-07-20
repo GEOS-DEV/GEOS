@@ -379,7 +379,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         auto const nodes = nodeList[c];
 
         // numCellFaces
-        connectivity->SetTypedComponent( elemConnOffset + 0, 0, 9 ); 
+        connectivity->SetTypedComponent( elemConnOffset + 0, 0, 9 );
 
         // numFace0Pts
         connectivity->SetTypedComponent( elemConnOffset + 1, 0, 7 );
@@ -390,7 +390,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         connectivity->SetTypedComponent( elemConnOffset + 6, 0, newNodeIndices[nodes[vtkOrdering[4]]] );
         connectivity->SetTypedComponent( elemConnOffset + 7, 0, newNodeIndices[nodes[vtkOrdering[5]]] );
         connectivity->SetTypedComponent( elemConnOffset + 8, 0, newNodeIndices[nodes[vtkOrdering[6]]] );
-        
+
         // numFace1Pts
         connectivity->SetTypedComponent( elemConnOffset + 9, 0, 7 );
         connectivity->SetTypedComponent( elemConnOffset + 10, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
@@ -400,7 +400,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         connectivity->SetTypedComponent( elemConnOffset + 14, 0, newNodeIndices[nodes[vtkOrdering[11]]] );
         connectivity->SetTypedComponent( elemConnOffset + 15, 0, newNodeIndices[nodes[vtkOrdering[12]]] );
         connectivity->SetTypedComponent( elemConnOffset + 16, 0, newNodeIndices[nodes[vtkOrdering[13]]] );
-        
+
         // numFace2Pts
         connectivity->SetTypedComponent( elemConnOffset + 17, 0, 4 );
         connectivity->SetTypedComponent( elemConnOffset + 18, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
@@ -466,7 +466,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         auto const nodes = nodeList[c];
 
         // numCellFaces
-        connectivity->SetTypedComponent( elemConnOffset + 0, 0, 10 ); 
+        connectivity->SetTypedComponent( elemConnOffset + 0, 0, 10 );
 
         // numFace0Pts
         connectivity->SetTypedComponent( elemConnOffset + 1, 0, 8 );
@@ -478,7 +478,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         connectivity->SetTypedComponent( elemConnOffset + 7, 0, newNodeIndices[nodes[vtkOrdering[5]]] );
         connectivity->SetTypedComponent( elemConnOffset + 8, 0, newNodeIndices[nodes[vtkOrdering[6]]] );
         connectivity->SetTypedComponent( elemConnOffset + 9, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
-        
+
         // numFace1Pts
         connectivity->SetTypedComponent( elemConnOffset + 10, 0, 8 );
         connectivity->SetTypedComponent( elemConnOffset + 11, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
@@ -489,7 +489,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         connectivity->SetTypedComponent( elemConnOffset + 16, 0, newNodeIndices[nodes[vtkOrdering[13]]] );
         connectivity->SetTypedComponent( elemConnOffset + 17, 0, newNodeIndices[nodes[vtkOrdering[14]]] );
         connectivity->SetTypedComponent( elemConnOffset + 18, 0, newNodeIndices[nodes[vtkOrdering[15]]] );
-        
+
         // numFace2Pts
         connectivity->SetTypedComponent( elemConnOffset + 19, 0, 4 );
         connectivity->SetTypedComponent( elemConnOffset + 20, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
@@ -562,7 +562,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         auto const nodes = nodeList[c];
 
         // numCellFaces
-        connectivity->SetTypedComponent( elemConnOffset + 0, 0, 11 ); 
+        connectivity->SetTypedComponent( elemConnOffset + 0, 0, 11 );
 
         // numFace0Pts
         connectivity->SetTypedComponent( elemConnOffset + 1, 0, 9 );
@@ -575,7 +575,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         connectivity->SetTypedComponent( elemConnOffset + 8, 0, newNodeIndices[nodes[vtkOrdering[6]]] );
         connectivity->SetTypedComponent( elemConnOffset + 9, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
         connectivity->SetTypedComponent( elemConnOffset + 10, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
-        
+
         // numFace1Pts
         connectivity->SetTypedComponent( elemConnOffset + 11, 0, 9 );
         connectivity->SetTypedComponent( elemConnOffset + 12, 0, newNodeIndices[nodes[vtkOrdering[9]]] );
@@ -587,7 +587,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         connectivity->SetTypedComponent( elemConnOffset + 18, 0, newNodeIndices[nodes[vtkOrdering[15]]] );
         connectivity->SetTypedComponent( elemConnOffset + 19, 0, newNodeIndices[nodes[vtkOrdering[16]]] );
         connectivity->SetTypedComponent( elemConnOffset + 20, 0, newNodeIndices[nodes[vtkOrdering[17]]] );
-        
+
         // numFace2Pts
         connectivity->SetTypedComponent( elemConnOffset + 21, 0, 4 );
         connectivity->SetTypedComponent( elemConnOffset + 22, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
@@ -667,7 +667,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         auto const nodes = nodeList[c];
 
         // numCellFaces
-        connectivity->SetTypedComponent( elemConnOffset + 0, 0, 12 ); 
+        connectivity->SetTypedComponent( elemConnOffset + 0, 0, 12 );
 
         // numFace0Pts
         connectivity->SetTypedComponent( elemConnOffset + 1, 0, 10 );
@@ -681,7 +681,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         connectivity->SetTypedComponent( elemConnOffset + 9, 0, newNodeIndices[nodes[vtkOrdering[7]]] );
         connectivity->SetTypedComponent( elemConnOffset + 10, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
         connectivity->SetTypedComponent( elemConnOffset + 11, 0, newNodeIndices[nodes[vtkOrdering[9]]] );
-        
+
         // numFace1Pts
         connectivity->SetTypedComponent( elemConnOffset + 12, 0, 10 );
         connectivity->SetTypedComponent( elemConnOffset + 13, 0, newNodeIndices[nodes[vtkOrdering[10]]] );
@@ -694,7 +694,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         connectivity->SetTypedComponent( elemConnOffset + 20, 0, newNodeIndices[nodes[vtkOrdering[17]]] );
         connectivity->SetTypedComponent( elemConnOffset + 21, 0, newNodeIndices[nodes[vtkOrdering[18]]] );
         connectivity->SetTypedComponent( elemConnOffset + 22, 0, newNodeIndices[nodes[vtkOrdering[19]]] );
-        
+
         // numFace2Pts
         connectivity->SetTypedComponent( elemConnOffset + 23, 0, 4 );
         connectivity->SetTypedComponent( elemConnOffset + 24, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
@@ -781,7 +781,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         auto const nodes = nodeList[c];
 
         // numCellFaces
-        connectivity->SetTypedComponent( elemConnOffset + 0, 0, 13 ); 
+        connectivity->SetTypedComponent( elemConnOffset + 0, 0, 13 );
 
         // numFace0Pts
         connectivity->SetTypedComponent( elemConnOffset + 1, 0, 11 );
@@ -796,7 +796,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         connectivity->SetTypedComponent( elemConnOffset + 10, 0, newNodeIndices[nodes[vtkOrdering[8]]] );
         connectivity->SetTypedComponent( elemConnOffset + 11, 0, newNodeIndices[nodes[vtkOrdering[9]]] );
         connectivity->SetTypedComponent( elemConnOffset + 12, 0, newNodeIndices[nodes[vtkOrdering[10]]] );
-        
+
         // numFace1Pts
         connectivity->SetTypedComponent( elemConnOffset + 13, 0, 11 );
         connectivity->SetTypedComponent( elemConnOffset + 14, 0, newNodeIndices[nodes[vtkOrdering[11]]] );
@@ -810,7 +810,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
         connectivity->SetTypedComponent( elemConnOffset + 22, 0, newNodeIndices[nodes[vtkOrdering[19]]] );
         connectivity->SetTypedComponent( elemConnOffset + 23, 0, newNodeIndices[nodes[vtkOrdering[20]]] );
         connectivity->SetTypedComponent( elemConnOffset + 24, 0, newNodeIndices[nodes[vtkOrdering[21]]] );
-        
+
         // numFace2Pts
         connectivity->SetTypedComponent( elemConnOffset + 25, 0, 4 );
         connectivity->SetTypedComponent( elemConnOffset + 26, 0, newNodeIndices[nodes[vtkOrdering[0]]] );
@@ -913,7 +913,7 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
       connOffset += subRegion.size() * nodesPerElem;
     }
   } );
-  
+
 
   offsets->SetTypedComponent( elemOffset, 0, connOffset );
 

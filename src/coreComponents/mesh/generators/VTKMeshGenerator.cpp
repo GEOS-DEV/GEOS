@@ -543,7 +543,7 @@ ElementType convertVtkToGeosxElementType( vtkCell * const cell )
     case VTK_HEXAHEDRON:       return ElementType::Hexahedron;
     case VTK_PENTAGONAL_PRISM: return ElementType::Prism5;
     case VTK_HEXAGONAL_PRISM:  return ElementType::Prism6;
-    case VTK_POLYHEDRON:       return PolyhedronToElementType( cell ) ;
+    case VTK_POLYHEDRON:       return PolyhedronToElementType( cell );
     default:
     {
       GEOSX_ERROR( cell->GetCellType() << " is not a recognized cell type to be used with the VTKMeshGenerator" );
@@ -1151,7 +1151,7 @@ void fillCellBlock( vtkUnstructuredGrid & mesh,
     //////////////////////////
     // for( auto i: nodeOrder )
     // {
-      // std::cout << i << ' '; 
+    // std::cout << i << ' ';
     // }
     // std::cout << std::endl;
     //////////////////////////

@@ -15,6 +15,7 @@ set( physicsSolvers_headers
      contact/SolidMechanicsEFEMKernelsHelper.hpp
      contact/SolidMechanicsEmbeddedFractures.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
+     fluidFlow/PressureSaturationOutput.hpp     
      fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp
      fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp     
@@ -100,6 +101,7 @@ set( physicsSolvers_sources
      contact/LagrangianContactSolver.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
+     fluidFlow/PressureSaturationOutput.cpp	
      fluidFlow/CompositionalMultiphaseFVM.cpp          
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.cpp
      fluidFlow/CompositionalMultiphaseHybridFVM.cpp
