@@ -79,7 +79,6 @@ namespace timingHelpers
 #  define GEOSX_NVTX_MARK_SCOPE(name) GEOSX_NVTX_MARK_SCOPE_2(STRINGIZE_NX(name), timingHelpers::PURPLE)
 #  define GEOSX_NVTX_MARK_FUNCTION GEOSX_NVTX_MARK_SCOPE_2(__PRETTY_FUNCTION__, timingHelpers::BLUE)
 #else
-#error 1
 #  define GEOSX_NVTX_MARK_SCOPE(name)
 #  define GEOSX_NVTX_MARK_FUNCTION
 #endif /* USE_CUDA */
