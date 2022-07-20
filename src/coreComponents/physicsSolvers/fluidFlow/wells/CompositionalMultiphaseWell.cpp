@@ -871,9 +871,9 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
         localIndex const ei = resElementIndex[iperf];
 
         ElementRegionBase const & region = elemManager.getRegion( er );
-        CellElementSubRegion const & thisSubRegion = region.getSubRegion< CellElementSubRegion, localIndex >( esr );
+        CellElementSubRegion const & subRegionWell = region.getSubRegion< CellElementSubRegion, localIndex >( esr );
 
-        wellFile << thisSubRegion.localToGlobalMap()[ei] << " 2" << std::endl;
+        wellFile << subRegionWell.localToGlobalMap()[ei] << " 2" << std::endl;
       } );
 
       wellFile.close();
