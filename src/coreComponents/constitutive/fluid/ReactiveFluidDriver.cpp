@@ -203,11 +203,11 @@ void ReactiveFluidDriver::runTest( ReactiveMultiFluid & fluid, arrayView2d< real
   real64 const hPlusConcentration = 2*m_feed[2]-2*m_feed[3]-m_feed[4]+2*m_feed[5]+m_feed[6];
   if ( hPlusConcentration < 0 )
   {
-    primarySpeciesTotalConcentrationValues[0][0] = -hPlusConcentration;
+    primarySpeciesTotalConcentrationValues[0][0] = -hPlusConcentration+m_feed[1];
   }
   else
   {
-    primarySpeciesTotalConcentrationValues[0][0] = 1e-7;
+    primarySpeciesTotalConcentrationValues[0][0] = m_feed[1];
   }
 
   arrayView2d< real64 const, compflow::USD_COMP > const primarySpeciesTotalConcentration = primarySpeciesTotalConcentrationValues;

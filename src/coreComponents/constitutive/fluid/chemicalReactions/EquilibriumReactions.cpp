@@ -353,6 +353,16 @@ void EquilibriumReactions::KernelWrapper::setInitialGuess( arraySlice1d< real64 
   {
     primarySpeciesConcentration[i] = primarySpeciesTotalConcentration[i];
   }
+  real64 const hPlusConcentration = 2*primarySpeciesConcentration[2]-2*primarySpeciesConcentration[3]-primarySpeciesConcentration[4]+2*primarySpeciesConcentration[5]+primarySpeciesConcentration[6];
+  if ( hPlusConcentration < 0 )
+  {
+    primarySpeciesConcentration[0] = -hPlusConcentration;
+  }
+  else
+  {
+    primarySpeciesConcentration[0] = 1e-7;
+  }
+
 }
 
 
