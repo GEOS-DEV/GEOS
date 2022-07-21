@@ -20,6 +20,7 @@
 
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
@@ -73,14 +74,18 @@ void execute2( POROUSWRAPPER_TYPE porousWrapper,
 FlowSolverBase::FlowSolverBase( string const & name,
                                 Group * const parent ):
   SolverBase( name, parent ),
-  m_poroElasticFlag( 0 ),
-  m_coupledWellsFlag( 0 ),
   m_numDofPerCell( 0 ),
+  m_isThermal( 0 ),
   m_fluxEstimate()
 {
   this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of discretization object to use for this solver." );
+
+  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether the problem is thermal or not." );
 
   this->registerWrapper( viewKeyStruct::inputFluxEstimateString(), &m_fluxEstimate ).
     setApplyDefaultValue( 1.0 ).
@@ -178,6 +183,21 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
   string & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
   permName = getConstitutiveName< PermeabilityBase >( subRegion );
   GEOSX_ERROR_IF( permName.empty(), GEOSX_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
+
+  if( m_isThermal )
+  {
+    string & solidInternalEnergyName = subRegion.registerWrapper< string >( viewKeyStruct::solidInternalEnergyNamesString() ).
+                                         setPlotLevel( PlotLevel::NOPLOT ).
+                                         setRestartFlags( RestartFlags::NO_WRITE ).
+                                         setSizedFromParent( 0 ).
+                                         setDescription( "Name of the solid internal energy constitutive model to use" ).
+                                         reference();
+
+    solidInternalEnergyName = getConstitutiveName< SolidInternalEnergy >( subRegion );
+    GEOSX_THROW_IF( solidInternalEnergyName.empty(),
+                    GEOSX_FMT( "Solid internal energy model not found on subregion {}", subRegion.getName() ),
+                    InputError );
+  }
 }
 
 void FlowSolverBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
@@ -351,6 +371,56 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
                          minElevation.data(),
                          localMinElevation.size(),
                          MpiWrapper::getMpiOp( MpiWrapper::Reduction::Min ),
+                         MPI_COMM_GEOSX );
+}
+
+void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
+                                                         real64 const & dt,
+                                                         DomainPartition & domain, // cannot be const...
+                                                         std::map< string, localIndex > const & bcNameToBcId,
+                                                         arrayView1d< globalIndex > const & bcAllSetsSize ) const
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & )
+  {
+    fsManager.apply( time + dt,
+                     mesh,
+                     "ElementRegions",
+                     FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
+                     [&]( FieldSpecificationBase const & fs,
+                          string const &,
+                          SortedArrayView< localIndex const > const & targetSet,
+                          Group & subRegion,
+                          string const & )
+    {
+      arrayView1d< integer const > const ghostRank =
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+
+      // loop over all the elements of this target set
+      RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > localSetSize( 0 );
+      forAll< parallelDevicePolicy<> >( targetSet.size(),
+                                        [targetSet, ghostRank, localSetSize] GEOSX_HOST_DEVICE ( localIndex const k )
+      {
+        localIndex const ei = targetSet[k];
+        if( ghostRank[ei] < 0 )
+        {
+          localSetSize += 1;
+        }
+      } );
+
+      // increment the set size for this source flux boundary conditions
+      bcAllSetsSize[bcNameToBcId.at( fs.getName())] += localSetSize.get();
+    } );
+  } );
+
+  // synchronize the set size over all the MPI ranks
+  MpiWrapper::allReduce( bcAllSetsSize.data(),
+                         bcAllSetsSize.data(),
+                         bcAllSetsSize.size(),
+                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                          MPI_COMM_GEOSX );
 }
 

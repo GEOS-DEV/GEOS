@@ -13,12 +13,13 @@
  */
 
 /**
- * @file VolumeWeightedThermalConductivity.cpp
+ * @file MultiPhaseVolumeWeightedThermalConductivity.cpp
  */
 
-#include "VolumeWeightedThermalConductivity.hpp"
+#include "MultiPhaseVolumeWeightedThermalConductivity.hpp"
 
 #include "ThermalConductivityExtrinsicData.hpp"
+#include "MultiPhaseThermalConductivityExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -28,8 +29,8 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-VolumeWeightedThermalConductivity::VolumeWeightedThermalConductivity( string const & name, Group * const parent ):
-  ThermalConductivityBase( name, parent )
+MultiPhaseVolumeWeightedThermalConductivity::MultiPhaseVolumeWeightedThermalConductivity( string const & name, Group * const parent ):
+  MultiPhaseThermalConductivityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::rockThermalConductivityComponentsString(), &m_rockThermalConductivityComponents ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -45,19 +46,19 @@ VolumeWeightedThermalConductivity::VolumeWeightedThermalConductivity( string con
 }
 
 std::unique_ptr< ConstitutiveBase >
-VolumeWeightedThermalConductivity::deliverClone( string const & name,
-                                                 Group * const parent ) const
+MultiPhaseVolumeWeightedThermalConductivity::deliverClone( string const & name,
+                                                           Group * const parent ) const
 {
-  return ThermalConductivityBase::deliverClone( name, parent );
+  return MultiPhaseThermalConductivityBase::deliverClone( name, parent );
 }
 
-void VolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                  localIndex const numConstitutivePointsPerParentIndex )
+void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
+                                                                            localIndex const numConstitutivePointsPerParentIndex )
 {
   // NOTE: enforcing 1 quadrature point
   m_rockThermalConductivity.resize( 0, 1, 3 );
 
-  ThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
@@ -70,7 +71,7 @@ void VolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository
   }
 }
 
-void VolumeWeightedThermalConductivity::postProcessInput()
+void MultiPhaseVolumeWeightedThermalConductivity::postProcessInput()
 {
   GEOSX_THROW_IF( m_rockThermalConductivityComponents[0] <= 0 ||
                   m_rockThermalConductivityComponents[1] <= 0 ||
@@ -88,14 +89,14 @@ void VolumeWeightedThermalConductivity::postProcessInput()
   }
 }
 
-void VolumeWeightedThermalConductivity::initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity,
-                                                                  arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolumeFraction ) const
+void MultiPhaseVolumeWeightedThermalConductivity::initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity,
+                                                                            arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolumeFraction ) const
 {
   saveConvergedRockFluidState( initialPorosity, initialPhaseVolumeFraction );
 }
 
-void VolumeWeightedThermalConductivity::saveConvergedRockFluidState( arrayView2d< real64 const > const & convergedPorosity,
-                                                                     arrayView2d< real64 const, compflow::USD_PHASE > const & convergedPhaseVolumeFraction ) const
+void MultiPhaseVolumeWeightedThermalConductivity::saveConvergedRockFluidState( arrayView2d< real64 const > const & convergedPorosity,
+                                                                               arrayView2d< real64 const, compflow::USD_PHASE > const & convergedPhaseVolumeFraction ) const
 {
   // note that the update function is called here, and not in the solver, because porosity and phase volume fraction are treated explicitly
 
@@ -111,7 +112,7 @@ void VolumeWeightedThermalConductivity::saveConvergedRockFluidState( arrayView2d
 }
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, VolumeWeightedThermalConductivity, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, MultiPhaseVolumeWeightedThermalConductivity, string const &, Group * const )
 
 } // namespace constitutive
 

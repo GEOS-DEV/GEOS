@@ -12,21 +12,21 @@ import os
 from os import environ as env
 from os.path import join as pjoin
 
-
 # ./scripts/uberenv/uberenv.py --spec="%clang +mkl ^chai ^caliper+papi"
 
 # ./scripts/uberenv/uberenv.py --spec="%clang +mkl ^raja build_type=Release ^umpire build_type=Release ^chai build_type=Release ^adiak build_type=Release ^caliper+papi build_type=Release ^pugixml build_type=Release ^parmetis build_type=Release ^superlu-dist build_type=Release ^trilinos build_type=Release"
 
 # ./scripts/uberenv/uberenv.py --spec="%clang +essl +cuda ~petsc cuda_arch=70 ^raja build_type=Release cuda_arch=70 ^umpire build_type=Release cuda_arch=70 ^chai build_type=Release cuda_arch=70 ^adiak build_type=Release ^caliper~papi build_type=Release ^pugixml build_type=Release ^parmetis build_type=Release ^superlu-dist build_type=Release ^trilinos build_type=Release"
 
-
 # PETSC doesn't compile on Lassen
 # ./scripts/uberenv/uberenv.py --spec="%gcc +essl ~petsc +cuda cuda_arch=70 ^cuda@10.1.243 ^raja cuda_arch=70 ^umpire cuda_arch=70 ^chai cuda_arch=70 ^caliper~papi"
+
 
 def cmake_cache_entry(name, value, comment=""):
     """Generate a string for a cmake cache variable"""
 
     return 'set(%s "%s" CACHE PATH "%s")\n\n' % (name, value, comment)
+
 
 def cmake_cache_list(name, value, comment=""):
     """Generate a list for a cmake cache variable"""
@@ -53,7 +53,7 @@ class Geosx(CMakePackage, CudaPackage):
     """GEOSX simulation framework."""
 
     homepage = "https://github.com/GEOSX/GEOSX"
-    git      = "https://github.com/GEOSX/GEOSX.git"
+    git = "https://github.com/GEOSX/GEOSX.git"
 
     version('develop', branch='develop', submodules='True')
 
@@ -68,8 +68,11 @@ class Geosx(CMakePackage, CudaPackage):
     variant('hypre', default=True, description='Build HYPRE support.')
     variant('hypre-cuda', default=False, description='Build HYPRE with CUDA support.')
     variant('petsc', default=True, description='Build PETSc support.')
-    variant('lai', default='trilinos', description='Linear algebra interface.',
-            values=('trilinos', 'hypre', 'petsc'), multi=False)
+    variant('lai',
+            default='trilinos',
+            description='Linear algebra interface.',
+            values=('trilinos', 'hypre', 'petsc'),
+            multi=False)
     variant('pygeosx', default=False, description='Build the GEOSX python interface.')
 
     # SPHINX_END_VARIANTS
@@ -145,7 +148,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('hypre@2.20.300 +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
     depends_on('hypre@2.20.300 +cuda +shared +superlu-dist +mpi +openmp +unified-memory +cusparse', when='+hypre-cuda')
- 
+
     petsc_build_options = '+shared +mpi'
     petsc_tpls = '+metis ~hdf5 ~hypre +superlu-dist +int64'
     depends_on('petsc@3.13.0: ' + petsc_build_options + petsc_tpls, when='+petsc')
@@ -190,7 +193,8 @@ class Geosx(CMakePackage, CudaPackage):
     @run_after('build')
     @on_package_attributes(run_tests=True)
     def check(self):
-        """Searches the CMake-generated Makefile for the target ``test``
+        """
+        Searches the CMake-generated Makefile for the target ``test``
         and runs it if found.
         """
         with working_dir(self.build_directory):
@@ -215,9 +219,7 @@ class Geosx(CMakePackage, CudaPackage):
             var = '-'.join([var, 'cuda'])
 
         hostname = socket.gethostname().rstrip('1234567890')
-        host_config_path = "%s-%s-%s%s.cmake" % (hostname,
-                                                 self._get_sys_type(spec),
-                                                 spec.compiler, var)
+        host_config_path = "%s-%s-%s%s.cmake" % (hostname, self._get_sys_type(spec), spec.compiler, var)
 
         dest_dir = self.stage.source_path
         host_config_path = os.path.abspath(pjoin(dest_dir, host_config_path))
@@ -330,8 +332,7 @@ class Geosx(CMakePackage, CudaPackage):
                 cfg.write(cmake_cache_entry('CMAKE_CUDA_STANDARD', 14))
 
                 cudatoolkitdir = spec['cuda'].prefix
-                cfg.write(cmake_cache_entry('CUDA_TOOLKIT_ROOT_DIR',
-                                            cudatoolkitdir))
+                cfg.write(cmake_cache_entry('CUDA_TOOLKIT_ROOT_DIR', cudatoolkitdir))
                 cudacompiler = '${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc'
                 cfg.write(cmake_cache_entry('CMAKE_CUDA_COMPILER', cudacompiler))
 
@@ -351,19 +352,14 @@ class Geosx(CMakePackage, CudaPackage):
 
                 cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS', cmake_cuda_flags))
 
-                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELEASE',
-                                            '-O3 -Xcompiler -O3 -DNDEBUG'))
-                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELWITHDEBINFO',
-                                            '-O3 -g -lineinfo -Xcompiler -O3'))
-                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_DEBUG',
-                                            '-O0 -Xcompiler -O0 -g -G'))
+                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELEASE', '-O3 -Xcompiler -O3 -DNDEBUG'))
+                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELWITHDEBINFO', '-O3 -g -lineinfo -Xcompiler -O3'))
+                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_DEBUG', '-O0 -Xcompiler -O0 -g -G'))
 
             else:
                 cfg.write(cmake_cache_option('ENABLE_CUDA', False))
 
-            performance_portability_tpls = (('raja', 'RAJA', True),
-                                            ('umpire', 'UMPIRE', True),
-                                            ('chai', 'CHAI', True))
+            performance_portability_tpls = (('raja', 'RAJA', True), ('umpire', 'UMPIRE', True), ('chai', 'CHAI', True))
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Performance Portability TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
@@ -373,14 +369,10 @@ class Geosx(CMakePackage, CudaPackage):
                 else:
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
-            io_tpls = (('hdf5', 'HDF5', True),
-                       ('conduit', 'CONDUIT', True),
-                       ('silo', 'SILO', True),
-                       ('adiak', 'ADIAK', '+caliper' in spec),
-                       ('caliper', 'CALIPER', '+caliper' in spec),
-                       ('pugixml', 'PUGIXML', True),
-                       ('vtk', 'VTK', False)
-                       ('fmt', 'FMT', True))
+            io_tpls = (('hdf5', 'HDF5', True), ('conduit', 'CONDUIT', True), ('silo', 'SILO', True),
+                       ('adiak', 'ADIAK', '+caliper'
+                        in spec), ('caliper', 'CALIPER', '+caliper'
+                                   in spec), ('pugixml', 'PUGIXML', True), ('vtk', 'VTK', False)('fmt', 'FMT', True))
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# IO TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
@@ -407,13 +399,12 @@ class Geosx(CMakePackage, CudaPackage):
                 cfg.write(cmake_cache_list('BLAS_LIBRARIES', spec['blas'].libs))
                 cfg.write(cmake_cache_list('LAPACK_LIBRARIES', spec['lapack'].libs))
 
-            math_tpls = (('metis', 'METIS', True),
-                        ('parmetis', 'PARMETIS', True),
-                        ('superlu-dist', 'SUPERLU_DIST', True),
-                        ('suite-sparse', 'SUITESPARSE', '+suite-sparse' in spec),
-                        ('trilinos', 'TRILINOS', '+trilinos' in spec),
-                        ('hypre', 'HYPRE', '+hypre' in spec or '+hypre-cuda' in spec),
-                        ('petsc', 'PETSC', '+petsc' in spec))
+            math_tpls = (('metis', 'METIS', True), ('parmetis', 'PARMETIS', True), ('superlu-dist', 'SUPERLU_DIST',
+                                                                                    True),
+                         ('suite-sparse', 'SUITESPARSE', '+suite-sparse'
+                          in spec), ('trilinos', 'TRILINOS', '+trilinos'
+                                     in spec), ('hypre', 'HYPRE', '+hypre' in spec
+                                                or '+hypre-cuda' in spec), ('petsc', 'PETSC', '+petsc' in spec))
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Math TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
@@ -446,12 +437,10 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write('#{0}\n\n'.format('-' * 80))
             if '+docs' in spec:
                 sphinx_bin_dir = spec['py-sphinx'].prefix.bin
-                cfg.write(cmake_cache_entry('SPHINX_EXECUTABLE',
-                                            os.path.join(sphinx_bin_dir, 'sphinx-build')))
+                cfg.write(cmake_cache_entry('SPHINX_EXECUTABLE', os.path.join(sphinx_bin_dir, 'sphinx-build')))
 
                 doxygen_bin_dir = spec['doxygen'].prefix.bin
-                cfg.write(cmake_cache_entry('DOXYGEN_EXECUTABLE',
-                                            os.path.join(doxygen_bin_dir, 'doxygen')))
+                cfg.write(cmake_cache_entry('DOXYGEN_EXECUTABLE', os.path.join(doxygen_bin_dir, 'doxygen')))
             else:
                 cfg.write(cmake_cache_option('ENABLE_DOCS', False))
                 cfg.write(cmake_cache_option('ENABLE_DOXYGEN', False))
@@ -460,8 +449,8 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Development tools\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
-            cfg.write(cmake_cache_entry('UNCRUSTIFY_EXECUTABLE',
-                                        os.path.join(spec['uncrustify'].prefix.bin, 'uncrustify')))
+            cfg.write(
+                cmake_cache_entry('UNCRUSTIFY_EXECUTABLE', os.path.join(spec['uncrustify'].prefix.bin, 'uncrustify')))
 
             # cfg.write('#{0}\n'.format('-' * 80))
             # cfg.write('# addr2line\n')
@@ -474,7 +463,6 @@ class Geosx(CMakePackage, CudaPackage):
 
             cfg.write(cmake_cache_option('ENABLE_MATHPRESSO', False))
             cfg.write(cmake_cache_option('ENABLE_XML_UPDATES', False))
-
 
     def cmake_args(self):
         pass

@@ -225,8 +225,6 @@ public:
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
 
-    static constexpr char const * isThermalString()  { return "isThermal"; }
-
     static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
 
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
@@ -234,8 +232,6 @@ public:
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
 
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
-
-    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
 
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
@@ -388,9 +384,6 @@ protected:
 
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
-
-  /// flag to determine whether or not this is a thermal simulation
-  integer m_isThermal;
 
   /// flag to fix the initial state during initialization in coupled problems
   integer m_freezeFlowVariablesDuringStep;

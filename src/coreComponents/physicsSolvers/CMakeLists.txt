@@ -45,6 +45,8 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseProppantBase.hpp
      fluidFlow/SinglePhaseProppantBaseKernels.hpp
      fluidFlow/StencilAccessors.hpp
+     fluidFlow/ThermalSinglePhaseBaseKernels.hpp
+     fluidFlow/ThermalSinglePhaseFVMKernels.hpp
      fluidFlow/wells/CompositionalMultiphaseWell.hpp
      fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp
      fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
@@ -54,7 +56,9 @@ set( physicsSolvers_headers
      fluidFlow/wells/WellControls.hpp
      fluidFlow/wells/WellSolverBase.hpp
      fluidFlow/wells/WellSolverBaseExtrinsicData.hpp
-     multiphysics/CompositionalMultiphaseReservoir.hpp
+     multiphysics/CompositionalMultiphaseReservoirAndWells.hpp          
+     multiphysics/CoupledReservoirAndWellsBase.hpp     
+     multiphysics/CoupledSolver.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/HydrofractureSolverKernels.hpp
@@ -62,13 +66,12 @@ set( physicsSolvers_headers
      multiphysics/MultiphasePoromechanicsSolver.hpp
      multiphysics/MultiphasePoromechanicsStateReset.hpp     
      multiphysics/PhaseFieldFractureSolver.hpp
-     multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhasePoromechanicsKernel.hpp
      multiphysics/SinglePhasePoromechanicsEFEMKernel.hpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
      multiphysics/SinglePhasePoromechanicsSolver.hpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.hpp
-     multiphysics/SinglePhaseReservoir.hpp
+     multiphysics/SinglePhaseReservoirAndWells.hpp
      simplePDE/LaplaceBaseH1.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
@@ -81,6 +84,7 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
+     solidMechanics/SolidMechanicsStateReset.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
      surfaceGeneration/ParallelTopologyChange.hpp
@@ -121,22 +125,23 @@ set( physicsSolvers_sources
      fluidFlow/wells/SinglePhaseWellKernels.cpp
      fluidFlow/wells/WellControls.cpp
      fluidFlow/wells/WellSolverBase.cpp
-     multiphysics/CompositionalMultiphaseReservoir.cpp
+     multiphysics/CompositionalMultiphaseReservoirAndWells.cpp               
+     multiphysics/CoupledReservoirAndWellsBase.cpp		
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/MultiphasePoromechanicsSolver.cpp
      multiphysics/MultiphasePoromechanicsStateReset.cpp          
      multiphysics/PhaseFieldFractureSolver.cpp
-     multiphysics/ReservoirSolverBase.cpp
      multiphysics/SinglePhasePoromechanicsSolver.cpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
-     multiphysics/SinglePhaseReservoir.cpp
      multiphysics/SinglePhasePoromechanicsFluxKernels.cpp
+     multiphysics/SinglePhaseReservoirAndWells.cpp
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
+     solidMechanics/SolidMechanicsStateReset.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.cpp
      surfaceGeneration/ParallelTopologyChange.cpp
