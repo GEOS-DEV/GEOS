@@ -523,9 +523,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
-  // reset statistics (if needed)
-  m_solverStatistics.initializeTimeStepStatistics();
-
   GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -599,9 +596,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     } );
 
   } );
-
-  // increment the number of time steps
-  m_solverStatistics.saveTimeStepStatistics();
 
   return dt;
 }

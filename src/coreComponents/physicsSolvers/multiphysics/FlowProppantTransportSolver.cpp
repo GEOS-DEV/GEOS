@@ -127,9 +127,6 @@ real64 FlowProppantTransportSolver::solverStep( real64 const & time_n,
 
   preStepUpdate( time_n, dt, domain );
 
-  // reset number of nonlinear iterations
-  m_solverStatistics.initializeTimeStepStatistics();
-
   int iter = 0;
   while( iter < this->m_nonlinearSolverParameters.m_maxIterNewton )
   {
@@ -171,9 +168,6 @@ real64 FlowProppantTransportSolver::solverStep( real64 const & time_n,
 
     ++iter;
   }
-
-  // increment the cumulative number of nonlinear iterations
-  m_solverStatistics.saveTimeStepStatistics();
 
   postStepUpdate( time_n, dtReturn, domain );
 

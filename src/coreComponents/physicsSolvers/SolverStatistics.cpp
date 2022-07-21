@@ -26,30 +26,41 @@ using namespace dataRepository;
 SolverStatistics::SolverStatistics( string const & name, Group * const parent )
   : Group( name, parent ),
   m_currentNumNonlinearIterations( 0 ),
+  m_currentNumConfigurationIterations( 0 ),
   m_currentNumLinearIterations( 0 )
 {
   registerWrapper( viewKeyStruct::numTimeStepsString(), &m_numTimeSteps ).
-    setApplyDefaultValue( 0.0 ).
+    setApplyDefaultValue( 0 ).
     setDescription( "Number of time steps" );
 
   registerWrapper( viewKeyStruct::numTimeStepCutsString(), &m_numTimeStepCuts ).
-    setApplyDefaultValue( 0.0 ).
+    setApplyDefaultValue( 0 ).
     setDescription( "Number of time step cuts" );
 
+
   registerWrapper( viewKeyStruct::numSuccessfulNonlinearIterationsString(), &m_numSuccessfulNonlinearIterations ).
-    setApplyDefaultValue( 0.0 ).
+    setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of successful nonlinear iterations" );
 
+  registerWrapper( viewKeyStruct::numSuccessfulConfigurationIterationsString(), &m_numSuccessfulConfigurationIterations ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Cumulative number of successful configuration iterations" );
+
   registerWrapper( viewKeyStruct::numSuccessfulLinearIterationsString(), &m_numSuccessfulLinearIterations ).
-    setApplyDefaultValue( 0.0 ).
+    setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of successful linear iterations" );
 
+
   registerWrapper( viewKeyStruct::numFailedNonlinearIterationsString(), &m_numFailedNonlinearIterations ).
-    setApplyDefaultValue( 0.0 ).
+    setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of failed nonlinear iterations" );
 
+  registerWrapper( viewKeyStruct::numFailedConfigurationIterationsString(), &m_numFailedConfigurationIterations ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Cumulative number of failed configuration iterations" );
+
   registerWrapper( viewKeyStruct::numFailedLinearIterationsString(), &m_numFailedLinearIterations ).
-    setApplyDefaultValue( 0.0 ).
+    setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of failed linear iterations" );
 }
 
@@ -57,6 +68,7 @@ void SolverStatistics::initializeTimeStepStatistics()
 {
   // the time step begins, we reset the individual-timestep counters
   m_currentNumNonlinearIterations = 0;
+  m_currentNumConfigurationIterations = 0;
   m_currentNumLinearIterations = 0;
 }
 
@@ -73,10 +85,18 @@ void SolverStatistics::logNonlinearIteration()
   m_currentNumNonlinearIterations++;
 }
 
+void SolverStatistics::logConfigurationIteration()
+{
+  // we have just performed a configuration iteration, so we increment the individual-timestep counter for configuration iterations
+  m_currentNumConfigurationIterations++;
+}
+
+
 void SolverStatistics::logTimeStepCut()
 {
   // we have just cut the time step, so we increment the cumulative counters for failed timesteps
   m_numFailedNonlinearIterations += m_currentNumNonlinearIterations;
+  m_numFailedConfigurationIterations += m_currentNumConfigurationIterations;
   m_numFailedLinearIterations += m_currentNumLinearIterations;
   m_numTimeStepCuts++;
 
@@ -88,6 +108,7 @@ void SolverStatistics::saveTimeStepStatistics()
 {
   // the timestep has converged, so we increment the cumulative counters for successful timesteps
   m_numSuccessfulNonlinearIterations += m_currentNumNonlinearIterations;
+  m_numSuccessfulConfigurationIterations += m_currentNumConfigurationIterations;
   m_numSuccessfulLinearIterations += m_currentNumLinearIterations;
   m_numTimeSteps++;
 }
@@ -97,20 +118,28 @@ void SolverStatistics::outputStatistics() const
   bool const isExplicitScheme = m_numSuccessfulNonlinearIterations == 0 && m_numFailedNonlinearIterations == 0;
   bool const isOuterLoopSolver = m_numSuccessfulLinearIterations == 0 && m_numFailedLinearIterations == 0;
 
-  GEOSX_LOG_RANK_0( getParent().getName() << ", number of time steps: " << m_numTimeSteps );
+  auto const logStat = [&]( auto const name, auto const value )
+  {
+    GEOSX_LOG_RANK_0( GEOSX_FMT( "{}, number of {}: {}",
+                                 getParent().getName(), name, value ) );
+  };
+
+  logStat( "time steps", m_numTimeSteps );
   if( !isExplicitScheme )
   {
-    GEOSX_LOG_RANK_0( getParent().getName() << ", number of successful nonlinear iterations: " << m_numSuccessfulNonlinearIterations );
+    logStat( "successful nonlinear iterations", m_numSuccessfulNonlinearIterations );
+    logStat( "successful configuration iterations", m_numSuccessfulConfigurationIterations );
     if( !isOuterLoopSolver ) // don't print for the outer iterations in sequential schemes
     {
-      GEOSX_LOG_RANK_0( getParent().getName() << ", number of successful linear iterations: " << m_numSuccessfulLinearIterations ); //
+      logStat( "successful linear iterations", m_numSuccessfulLinearIterations );
     }
 
-    GEOSX_LOG_RANK_0( getParent().getName() << ", number of time step cuts: " << m_numTimeStepCuts );
-    GEOSX_LOG_RANK_0( getParent().getName() << ", number of failed nonlinear iterations: " << m_numFailedNonlinearIterations );
+    logStat( "time step cuts", m_numTimeStepCuts );
+    logStat( "failed nonlinear iterations", m_numFailedNonlinearIterations );
+    logStat( "failed configuration iterations", m_numFailedConfigurationIterations );
     if( !isOuterLoopSolver ) // don't print for the outer iterations in sequential schemes
     {
-      GEOSX_LOG_RANK_0( getParent().getName() << ", number of failed linear iterations: " << m_numFailedLinearIterations );
+      logStat( "failed linear iterations", m_numFailedLinearIterations );
     }
   }
 }

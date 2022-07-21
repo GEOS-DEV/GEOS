@@ -42,37 +42,6 @@ public:
                     dataRepository::Group * const parent );
 
   /**
-   * @brief Default destructor
-   */
-  virtual ~SolverStatistics() = default;
-
-  /**
-   * @brief Deleted default constructor.
-   */
-  SolverStatistics() = delete;
-
-  /**
-   * @brief Deleted copy constructor.
-   */
-  SolverStatistics( SolverStatistics const & ) = delete;
-
-  /**
-   * @brief Default move Constructor
-   * @param The source object of the move.
-   */
-  SolverStatistics( SolverStatistics && ) = default;
-
-  /**
-   * @brief Deleted assignment operator.
-   */
-  SolverStatistics & operator=( SolverStatistics const & ) = delete;
-
-  /**
-   * @brief Deleted move operator.
-   */
-  SolverStatistics & operator=( SolverStatistics && ) = delete;
-
-  /**
    * @brief Initialize the counters used for an individual time step
    */
   void initializeTimeStepStatistics();
@@ -89,6 +58,11 @@ public:
    * @detail This function is well suited for the outer loop in sequential schemes
    */
   void logNonlinearIteration();
+
+  /**
+   * @brief Tell the solverStatistics that we are doing a configuration iteration
+   */
+  void logConfigurationIteration();
 
   /**
    * @brief Tell the solverStatistics that there is a time step cut
@@ -120,10 +94,15 @@ private:
 
     /// String key for the successful number of nonlinear iterations
     static constexpr char const * numSuccessfulNonlinearIterationsString() { return "numSuccessfulNonlinearIterations"; }
+    /// String key for the successful number of configuration iterations
+    static constexpr char const * numSuccessfulConfigurationIterationsString() { return "numSuccessfulConfigurationIterations"; }
     /// String key for the successful number of linear iterations
     static constexpr char const * numSuccessfulLinearIterationsString() { return "numSuccessfulLinearIterations"; }
+
     /// String key for the failed number of nonlinear iterations
     static constexpr char const * numFailedNonlinearIterationsString() { return "numFailedNonlinearIterations"; }
+    /// String key for the failed number of configuration iterations
+    static constexpr char const * numFailedConfigurationIterationsString() { return "numFailedConfigurationIterations"; }
     /// String key for the failed number of linear iterations
     static constexpr char const * numFailedLinearIterationsString() { return "numFailedLinearIterations"; }
   };
@@ -134,20 +113,32 @@ private:
   /// Number of time step cuts
   integer m_numTimeStepCuts;
 
+
   /// Number of nonlinear iterations in the current time step (utility variable constantly overwritten)
   integer m_currentNumNonlinearIterations;
+
+  /// Number of configuration iterations in the current time step (utility variable constantly overwritten)
+  integer m_currentNumConfigurationIterations;
 
   /// Number of linear iterations in the current time step (utility variable constantly overwritten)
   integer m_currentNumLinearIterations;
 
+
   /// Cumulative number of successful nonlinear iterations
   integer m_numSuccessfulNonlinearIterations;
+
+  /// Cumulative number of successful configuration iterations
+  integer m_numSuccessfulConfigurationIterations;
 
   /// Cumulative number of successful linear iterations
   integer m_numSuccessfulLinearIterations;
 
+
   /// Cumulative number of failed nonlinear iterations
   integer m_numFailedNonlinearIterations;
+
+  /// Cumulative number of failed configuration iterations
+  integer m_numFailedConfigurationIterations;
 
   /// Cumulative number of failed linear iterations
   integer m_numFailedLinearIterations;

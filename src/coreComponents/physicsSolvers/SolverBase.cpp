@@ -198,10 +198,17 @@ bool SolverBase::execute( real64 const time_n,
 
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
+    // reset number of nonlinear and linear iterations
+    m_solverStatistics.initializeTimeStepStatistics();
+
     real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
                                           nextDt,
                                           cycleNumber,
                                           domain );
+
+    // increment the cumulative number of nonlinear and linear iterations
+    m_solverStatistics.saveTimeStepStatistics();
+
     /*
      * Let us check convergence history of previous solve:
      * - number of nonlinear iter.
@@ -267,9 +274,6 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
                                        integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                                        DomainPartition & domain )
 {
-  // reset number of nonlinear and linear iterations
-  m_solverStatistics.initializeTimeStepStatistics();
-
   // call setup for physics solver. Pre step allocations etc.
   // TODO: Nonlinear step does not call its own setup, need to decide on consistent behavior
   implicitStepSetup( time_n, dt, domain );
@@ -337,9 +341,6 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   implicitStepComplete( time_n, dt, domain );
-
-  // increment the cumulative number of nonlinear and linear iterations
-  m_solverStatistics.saveTimeStepStatistics();
 
   // return the achieved timestep
   return dt;
@@ -594,9 +595,6 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
   bool isConfigurationLoopConverged = false;
 
-  // reset number of nonlinear and linear iterations
-  m_solverStatistics.initializeTimeStepStatistics();
-
   // outer loop attempts to apply full timestep, and managed the cutting of the timestep if
   // required.
   for( dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
@@ -632,6 +630,9 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
         }
         else
         {
+          // increment the solver statistics for reporting purposes
+          m_solverStatistics.logConfigurationIteration();
+
           GEOSX_LOG_LEVEL_RANK_0( 1, "   " );
           GEOSX_LOG_LEVEL_RANK_0( 1, "---------- Configuration did not converge. Testing new configuration. ----------" );
           GEOSX_LOG_LEVEL_RANK_0( 1, "   " );
@@ -669,9 +670,6 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       m_solverStatistics.logTimeStepCut();
     }
   } // end of outer loop (dt chopping strategy)
-
-  // increment the cumulative number of nonlinear and linear iterations
-  m_solverStatistics.saveTimeStepStatistics();
 
   if( !isConfigurationLoopConverged )
   {
