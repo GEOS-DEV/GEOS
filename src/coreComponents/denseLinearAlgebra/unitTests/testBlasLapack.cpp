@@ -17,7 +17,7 @@
  */
 
 #include "common/DataTypes.hpp"
-#include "linearAlgebra/interfaces/dense/BlasLapackLA.hpp"
+#include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 #include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
 
 #include "gtest/gtest.h"

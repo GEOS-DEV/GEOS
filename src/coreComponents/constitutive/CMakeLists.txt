@@ -215,7 +215,7 @@ set( constitutive_sources
      thermalConductivity/SinglePhaseThermalConductivityBase.cpp
    )
 
-set( dependencyList events dataRepository functions linearAlgebra hypre trilinos suitesparse superlu_dist )
+set( dependencyList events dataRepository functions denseLinearAlgebra )
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers

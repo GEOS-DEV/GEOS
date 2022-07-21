@@ -21,6 +21,8 @@
 #include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/solvers/KrylovUtils.hpp"
+#include "denseLinearAlgebra/common/common.hpp"
+
 
 namespace geosx
 {

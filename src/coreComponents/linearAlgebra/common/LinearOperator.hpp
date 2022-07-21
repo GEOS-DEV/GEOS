@@ -20,6 +20,7 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_LINEAROPERATOR_HPP_
 
 #include "common/DataTypes.hpp"
+#include "linearAlgebra/common/common.hpp"
 
 namespace geosx
 {
