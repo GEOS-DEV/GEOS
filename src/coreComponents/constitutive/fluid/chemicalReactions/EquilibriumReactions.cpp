@@ -158,6 +158,9 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
   array1d<real64> solution( m_numPrimarySpecies );
 
   setInitialGuess(primarySpeciesTotalConcentration, primarySpeciesConcentration);
+  std::cout<<"Initial guess " << primarySpeciesConcentration <<std::endl;
+  std::cout<<"Total concentration to solve for " << primarySpeciesTotalConcentration <<std::endl;
+
 
   bool converged = false;
   for( int iteration = 0; iteration < m_maxNumIterations; iteration++ )
@@ -240,6 +243,11 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
                                 dLog10PrimaryActCoeff_dIonicStrength,
                                 log10SecActCoeff,
                                 dLog10SecActCoeff_dIonicStrength );
+  std::cout << "log10 of primary species activity coefficient: " << log10PrimaryActCoeff <<std::endl;   
+  std::cout << "log10 of secondary species activity coefficient: " << log10SecActCoeff <<std::endl;   
+  std::cout << "Derivative of log10 of primary species activity coefficient: " << dLog10PrimaryActCoeff_dIonicStrength <<std::endl;   
+  std::cout << "Derivative of log10 of secondary species activity coefficient: " << dLog10SecActCoeff_dIonicStrength <<std::endl;   
+
 
   computeSeondarySpeciesConcAndDerivative( temperature,
                                            log10PrimaryActCoeff,
@@ -249,6 +257,8 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
                                            primarySpeciesConcentration,
                                            secondarySpeciesConcentration,
                                            dLog10SecConc_dLog10PrimaryConc );
+  std::cout << "Secondary species concentration: " << secondarySpeciesConcentration <<std::endl;   
+  std::cout << "Derivative of Secondary species concentration: " << dLog10SecConc_dLog10PrimaryConc <<std::endl;   
 
   computeTotalConcAndDerivative( temperature,
                                  primarySpeciesConcentration,
@@ -256,11 +266,14 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
                                  dLog10SecConc_dLog10PrimaryConc,
                                  totalConcentration,
                                  dTotalConc_dLog10PrimaryConc );
+  std::cout << "Total concentration: " << totalConcentration <<std::endl;   
+  std::cout << "Derivative of total concentration: " << dTotalConc_dLog10PrimaryConc <<std::endl;   
 
   //Matteo: I assume we want to solve this to find the primary and the secondary species concentrations?
   for( int i=0; i<m_numPrimarySpecies; i++ )
   {
     rhs[i] = 1 - totalConcentration[i] / primarySpeciesTotalConcentration[i];
+    rhs[i] = -rhs[i];
     for( int j=0; j<m_numPrimarySpecies; j++ )
     {
       matrix[i][j] = -dTotalConc_dLog10PrimaryConc[i][j] / primarySpeciesTotalConcentration[i];
