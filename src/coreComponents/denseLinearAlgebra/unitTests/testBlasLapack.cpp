@@ -16,9 +16,13 @@
  * @file testBlasLapack.cpp
  */
 
+// Source includes
+#include "mainInterface/ProblemManager.hpp"
+#include "mainInterface/initialization.hpp"
+#include "mainInterface/GeosxState.hpp"
+
 #include "common/DataTypes.hpp"
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
-#include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
 
 #include "gtest/gtest.h"
 
@@ -1263,6 +1267,12 @@ TEST( DenseLAInterface, matrixSVD )
 
 int main( int argc, char * * argv )
 {
-  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
-  return RUN_ALL_TESTS();
+  ::testing::InitGoogleTest( &argc, argv );
+  geosx::setupEnvironment( argc, argv );
+
+  int const result = RUN_ALL_TESTS();
+
+  geosx::cleanupEnvironment();
+
+  return result;
 }
