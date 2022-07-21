@@ -47,7 +47,15 @@ set( common_sources
      Units.cpp
    )
 
-set( dependencyList ${parallelDeps} lvarray pugixml::pugixml RAJA chai conduit::conduit fmt::fmt )
+set( dependencyList ${parallelDeps} lvarray RAJA chai conduit::conduit fmt::fmt )
+
+if (TARGET pugixml::pugixml)
+  set( dependencyList ${dependencyList} pugixml::pugixml )
+endif()
+
+if (TARGET pugixml)
+  set( dependencyList ${dependencyList} pugixml )
+endif()
 
 if ( ENABLE_MKL )
   list( APPEND dependencyList mkl )
