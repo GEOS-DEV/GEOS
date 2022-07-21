@@ -181,6 +181,7 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
     if( residualNorm < m_newtonTol && iteration >= 1 )
     {
       converged = true;
+      std::cout << "primary species concentration: " << primarySpeciesConcentration <<std::endl;   
       break;
     }
 
@@ -209,7 +210,7 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
 
     updatePrimarySpeciesConcentrations( solution, primarySpeciesConcentration );
   }
-    GEOSX_ERROR_IF(converged, "Equilibrium reactions did not converge." );
+    GEOSX_ERROR_IF(!converged, "Equilibrium reactions did not converge." );
 }
 
 GEOSX_HOST_DEVICE
