@@ -24,7 +24,9 @@
 
 #include "finiteElement/TeamKernelInterface/TeamKernelBase.hpp"
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/TeamKernelFunctions.hpp"
-#include "finiteElement/TeamKernelInterface/QuadratureFunctionsHelper.hpp"
+#include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/QuadratureFunctionsHelper.hpp"
+#include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/qLocalLoad.hpp"
+#include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/qLocalWrite.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/MeshStackVariables.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/ElementStackVariables.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/QuadratureWeightsStackVariables.hpp"
@@ -197,26 +199,25 @@ public:
   /**
    * @copydoc geosx::finiteElement::TeamKernelBase::quadraturePointKernel
    */
+  template < typename QuadraturePointIndex >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointKernel( StackVariables & stack,
-                              localIndex const quad_x,
-                              localIndex const quad_y,
-                              localIndex const quad_z ) const
+                              QuadraturePointIndex const & quad_index ) const
   {
     /// QFunction for Laplace operator
     constexpr int dim = StackVariables::dim;
 
     // Load q-local gradients
     real64 grad_u[ dim ];
-    qLocalLoad( quad_x, quad_y, quad_z, stack.element.getGradientValues(), grad_u );
+    qLocalLoad( quad_index, stack.element.getGradientValues(), grad_u );
 
     // load q-local jacobian
     real64 J[ dim ][ dim ];
-    qLocalLoad( quad_x, quad_y, quad_z, stack.mesh.getJacobians(), J );
+    qLocalLoad( quad_index, stack.mesh.getJacobians(), J );
 
     // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
-    real64 const weight = stack.weights( quad_x, quad_y, quad_z );
+    real64 const weight = stack.weights( quad_index );
 
     real64 const detJ = determinant( J );
 
@@ -242,7 +243,7 @@ public:
             + D[d][1] * grad_u[1]
             + D[d][2] * grad_u[2];
     }
-    qLocalWrite( quad_x, quad_y, quad_z, Du, stack.element.getQuadValues() );
+    qLocalWrite( quad_index, Du, stack.element.getQuadValues() );
   }
 
   /**

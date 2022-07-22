@@ -22,6 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "finiteElement/TeamKernelInterface/common.hpp"
 
 namespace geosx
 {
@@ -41,9 +42,9 @@ struct QuadratureWeightsStackVariables
     s_weights[1] = 1.0;
   }
 
-  real64 operator()( localIndex quad_x, localIndex quad_y, localIndex quad_z )
+  real64 operator()( TensorIndex const & quad_index )
   {
-    return (*weights)[ quad_x ] * (*weights)[ quad_y ] * (*weights)[ quad_z ];
+    return (*weights)[ quad_index.x ] * (*weights)[ quad_index.y ] * (*weights)[ quad_index.z ];
   }
 };
 

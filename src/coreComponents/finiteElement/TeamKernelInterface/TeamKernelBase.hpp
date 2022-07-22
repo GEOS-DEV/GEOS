@@ -26,6 +26,7 @@
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "finiteElement/TeamKernelInterface/common.hpp"
 
 namespace geosx
 {
@@ -203,17 +204,14 @@ public:
    * state of the constitutive model is updated if required by the physics
    * package.
    */
+  template < typename QuadraturePointIndex >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointKernel( StackVariables & stack,
-                              localIndex const quad_x,
-                              localIndex const quad_y,
-                              localIndex const quad_z ) const
+                              QuadraturePointIndex const & quad_index ) const
   {
     GEOSX_UNUSED_VAR( stack );
-    GEOSX_UNUSED_VAR( quad_x );
-    GEOSX_UNUSED_VAR( quad_y );
-    GEOSX_UNUSED_VAR( quad_z );
+    GEOSX_UNUSED_VAR( quad_index );
   }
 
   /**
@@ -297,7 +295,8 @@ public:
             {
               for( localIndex quad_z = 0; quad_z < num_quads_1d; quad_z++ )
               {
-                kernelComponent.quadraturePointKernel( stack, quad_x, quad_y, quad_z );
+                TensorIndex quad_index { quad_x, quad_y, quad_z };
+                kernelComponent.quadraturePointKernel( stack, quad_index );
               }
             } );
           } );
