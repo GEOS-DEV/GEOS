@@ -34,6 +34,8 @@ VTKOutput::VTKOutput( string const & name,
   m_plotFileRoot( name ),
   m_writeFaceMesh(),
   m_plotLevel(),
+  m_onlyPlotSpecifiedFieldNames(),
+  m_fieldNames(),
   m_writer( getOutputDirectory() + '/' + m_plotFileRoot )
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
@@ -49,6 +51,16 @@ VTKOutput::VTKOutput( string const & name,
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Level detail plot. Only fields with lower of equal plot level will be output." );
+
+  registerWrapper( viewKeysStruct::onlyPlotSpecifiedFieldNames, &m_onlyPlotSpecifiedFieldNames ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription(
+    "If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`" );
+
+  registerWrapper( viewKeysStruct::fieldNames, &m_fieldNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of the fields to output. If this attribute is specified, GEOSX outputs all the fields specified by the user, regardless of their `plotLevel`" );
 
   registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData ).
     setApplyDefaultValue( m_writeBinaryData ).
@@ -67,6 +79,26 @@ VTKOutput::~VTKOutput()
 void VTKOutput::postProcessInput()
 {
   m_writer.setOutputLocation( getOutputDirectory(), m_plotFileRoot );
+  m_writer.setFieldNames( m_fieldNames.toViewConst() );
+  m_writer.setOnlyPlotSpecifiedFieldNamesFlag( m_onlyPlotSpecifiedFieldNames );
+
+  string const fieldNamesString = viewKeysStruct::fieldNames;
+  string const onlyPlotSpecifiedFieldNamesString = viewKeysStruct::onlyPlotSpecifiedFieldNames;
+
+  GEOSX_THROW_IF( ( m_onlyPlotSpecifiedFieldNames != 0 ) && m_fieldNames.empty(),
+                  GEOSX_FMT( "{} `{}`: the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
+                             catalogName(), getName(), onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
+                  InputError );
+
+  GEOSX_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
+                       GEOSX_FMT(
+                         "{} `{}`: found {} fields to plot in `{}`. These fields will be output regardless of the `plotLevel` specified by the user. No other field will be output.",
+                         catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString ) );
+
+  GEOSX_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames == 0 ),
+                       GEOSX_FMT(
+                         "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with `plotLevel` smaller or equal to {}.",
+                         catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
 }
 
 

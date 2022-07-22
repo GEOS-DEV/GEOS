@@ -56,6 +56,11 @@ namespace constitutive
 //       by the damage factor whenever the true stress is requested through an update
 //       function.  The developer should be very cautious if accessing the stress
 //       directly through an arrayView, as it does not represent the true stress.
+//
+// NOTE: This model is designed to work with phase field implementation where m_damage
+//       is updated externally to the material model routine.  A modified implementation
+//       would be required to use this directly within a SolidMechanics-only solver, to
+//       internally update the damage variable and consistently linearize the system.
 
 template< typename UPDATE_BASE >
 class DamageUpdates : public UPDATE_BASE
@@ -87,6 +92,8 @@ public:
   using UPDATE_BASE::hyperUpdate;
   using UPDATE_BASE::hyperUpdate_StressOnly;
   using UPDATE_BASE::saveConvergedState;
+
+  using UPDATE_BASE::m_disableInelasticity;
 
   //Standard quadratic degradation functions
 
@@ -124,6 +131,12 @@ public:
                                   DiscretizationOps & stiffness ) const override
   {
     UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+
+    if( m_disableInelasticity )
+    {
+      return;
+    }
+
     real64 factor = getDegradationValue( k, q );
     LvArray::tensorOps::scale< 6 >( stress, factor );
     stiffness.scaleParams( factor );

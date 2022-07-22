@@ -91,6 +91,8 @@ public:
     static constexpr auto plotLevel = "plotLevel";
     static constexpr auto binaryString = "format";
     static constexpr auto outputRegionTypeString = "outputRegionType";
+    static constexpr auto onlyPlotSpecifiedFieldNames = "onlyPlotSpecifiedFieldNames";
+    static constexpr auto fieldNames = "fieldNames";
   } vtkOutputViewKeys;
   /// @endcond
 
@@ -107,6 +109,12 @@ private:
   string m_plotFileRoot;
   integer m_writeFaceMesh;
   integer m_plotLevel;
+
+  /// flag to decide whether we only plot the specified field names
+  integer m_onlyPlotSpecifiedFieldNames;
+
+  /// array of names of the fields to output
+  array1d< string > m_fieldNames;
 
   /// VTK output mode
   vtk::VTKOutputMode m_writeBinaryData = vtk::VTKOutputMode::BINARY;

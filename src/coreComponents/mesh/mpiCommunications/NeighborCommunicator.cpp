@@ -616,7 +616,7 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
 
   for( auto const & iter : fieldsToBeSync.getFields() )
   {
-    FieldLocation location;
+    FieldLocation location{};
     fieldsToBeSync.getLocation( iter.first, location );
     switch( location )
     {
