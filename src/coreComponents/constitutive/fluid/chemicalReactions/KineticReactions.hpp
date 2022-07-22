@@ -79,6 +79,9 @@ private:
 
     arrayView1d< real64 > m_reactionRateConstant;
 
+    integer m_numKineticReactions;
+
+
   };
 
   /**
@@ -90,6 +93,7 @@ private:
 private:
 
   array1d< real64 > m_reactionRateConstant;
+  integer m_numKineticReactions;
 };
 
 } // end namespace chemicalReactions
