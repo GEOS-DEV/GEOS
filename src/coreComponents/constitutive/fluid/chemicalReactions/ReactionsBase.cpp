@@ -60,8 +60,8 @@ void ReactionsBase::KernelWrapper::computeLog10ActCoefBDotModel( real64 const te
                                               (0.5 / sqrt( ionicStrength ) / (1.0 + m_ionSizePrimary[i] * m_DebyeHuckelB * sqrt( ionicStrength )) - 0.5 * m_ionSizePrimary[i] * m_DebyeHuckelB /
                                                (1.0 + m_ionSizePrimary[i] * m_DebyeHuckelB * sqrt( ionicStrength )) /
                                                (1.0 + m_ionSizePrimary[i] * m_DebyeHuckelB * sqrt( ionicStrength )));
-    log10PrimaryActCoeff[i] = 0;
-    dLog10PrimaryActCoeff_dIonicStrength[i] = 0;
+//    log10PrimaryActCoeff[i] = 0;
+//    dLog10PrimaryActCoeff_dIonicStrength[i] = 0;
   }
   for( localIndex i = 0; i < m_numSecondarySpecies; ++i )
   {
@@ -71,8 +71,8 @@ void ReactionsBase::KernelWrapper::computeLog10ActCoefBDotModel( real64 const te
                                           (0.5 / sqrt( ionicStrength ) / (1.0 + m_ionSizeSec[i] * m_DebyeHuckelB * sqrt( ionicStrength )) - 0.5 * m_ionSizeSec[i] * m_DebyeHuckelB /
                                            (1.0 + m_ionSizeSec[i] * m_DebyeHuckelB * sqrt( ionicStrength )) /
                                            (1.0 + m_ionSizeSec[i] * m_DebyeHuckelB * sqrt( ionicStrength )));
-    log10SecActCoeff[i] = 0;
-    dLog10SecActCoeff_dIonicStrength[i] = 0;
+//    log10SecActCoeff[i] = 0;
+//    dLog10SecActCoeff_dIonicStrength[i] = 0;
   }
 }
 
