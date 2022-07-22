@@ -7,7 +7,7 @@ Validation and Verification Studies
 .. toctree::
    :maxdepth: 2
 
-   co2Flow/Index
+   carbonStorage/Index
 
    faultMechanics/Index
 

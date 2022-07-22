@@ -287,7 +287,7 @@ flow at midway between top and bottom aquifers divided by the injection rate (8.
 The GEOSX leakage rate is shown in the figure below:
 
 .. _isothermalLeakyWell_GEOSXLeakageRate:
-.. plot:: docs/sphinx/advancedExamples/validationStudies/co2Flow/isothermalLeakyWell/isothermalLeakyWellFigure.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/carbonStorage/isothermalLeakyWell/isothermalLeakyWellFigure.py
 
 
 The leakage rates computed by the codes considered in

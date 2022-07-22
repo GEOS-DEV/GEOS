@@ -1,7 +1,7 @@
-.. _ValidationStudiesCO2Flow:
+.. _ValidationStudiesCarbonStorage:
 
 
-CO2 Flow
+Carbon Storage
 ===================================
 
 .. toctree::
