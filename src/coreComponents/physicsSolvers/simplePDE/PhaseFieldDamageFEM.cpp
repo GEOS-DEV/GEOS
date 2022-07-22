@@ -647,7 +647,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
         {
           real64 const damageAtNode = nodalDamage[elemNodes( k, a )]; 
 
-          if ( damageAtNode >= 0.98 )
+          if ( damageAtNode >= 1.01 )
           {
             localIndex const dof = dofIndex[elemNodes( k, a )]; 
 
@@ -658,21 +658,15 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
                                                         dofManager.rankOffset(), 
                                                         localMatrix,
                                                         rhsContribution, 
-                                                        0.98, 
+                                                        1.01, 
                                                         damageAtNode ); 
 
             globalIndex const localRow = dof - dofManager.rankOffset(); 
 
-            if( localRow >=0 && localRow < localRhs.size() )
+            if( localRow >= 0 && localRow < localRhs.size() )
             {
               localRhs[ localRow ] = rhsContribution; 
             }
-
-            // Specify the nodal value
-            FieldSpecificationEqual::SpecifyFieldValue( nodeManager.getReference< array1d< real64 > >( m_fieldName ), 
-                                                        dof, 
-                                                        0, 
-                                                        0.98 ); 
           }
         }
       } ); 
