@@ -15,7 +15,11 @@ Preprints and Early-Views
        | H Tang, P Fu, H Jo, S Jiang, CS Sherman, F Hamon, NA Azzolina, JP Morris
        | arXiv preprint
        | `arXiv:2201.08543 <https://arxiv.org/abs/2201.08543>`_
-
+       
+   * - | **A Multi-Resolution Approach to Hydraulic Fracture Simulation**
+       | A Costa, M Cusini, T Jin, R Settgast, J Dolbow
+       | arXiv preprint
+       | `arXiv:2207.00661 <https://arxiv.org/abs/2207.00661>`_ 
 
 2022
 ====
