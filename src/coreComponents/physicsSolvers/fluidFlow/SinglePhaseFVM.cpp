@@ -600,6 +600,15 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         return;
       }
 
+      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::faceBcLogMessage,
+                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+      }
+
+
       // first, evaluate BC to get primary field values (pressure)
       fs.applyFieldValue< FieldSpecificationEqual,
                           parallelDevicePolicy<> >( targetSet,
@@ -614,7 +623,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       localIndex const er = stencil.getElementRegionIndices()( 0, 0 );
       localIndex const esr = stencil.getElementSubRegionIndices()( 0, 0 );
       ElementSubRegionBase & subRegion = mesh.getElemManager().getRegion( er ).getSubRegion( esr );
-      string & fluidName = subRegion.getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
+      string const & fluidName = subRegion.getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
       SingleFluidBase & fluidBase = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
 
       constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )

@@ -63,6 +63,14 @@ EXTRINSIC_MESH_DATA_TRAIT( globalCompFraction,
                            WRITE_AND_READ,
                            "Global component fraction" );
 
+EXTRINSIC_MESH_DATA_TRAIT( faceGlobalCompFraction,
+                           "faceGlobalCompFraction",
+                           array2dLayoutComp,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Face global component fraction" );
+
 EXTRINSIC_MESH_DATA_TRAIT( dGlobalCompFraction_dGlobalCompDensity,
                            "dGlobalCompFraction_dGlobalCompDensity",
                            array3dLayoutComp_dC,
