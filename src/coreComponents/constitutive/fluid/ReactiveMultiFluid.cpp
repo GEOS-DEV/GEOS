@@ -34,6 +34,7 @@ ReactiveMultiFluid::
   // For now this is being hardcoded. We will see where this should come from.
   m_numPrimarySpecies = 7;
   m_numSecondarySpecies = 11;
+  m_numKineticReactions = 2;
   
   registerExtrinsicData( extrinsicMeshData::reactivefluid::primarySpeciesConcentration{}, &m_primarySpeciesConcentration);
   registerExtrinsicData( extrinsicMeshData::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
@@ -86,7 +87,7 @@ void ReactiveMultiFluid::createChemicalReactions()
 {
   // instantiate reactions objects
   m_equilibriumReactions = std::make_unique< chemicalReactions::EquilibriumReactions >( getName() + "_equilibriumReactions", m_numPrimarySpecies, m_numSecondarySpecies );
-  m_kineticReactions = std::make_unique< chemicalReactions::KineticReactions >( getName() + "_kineticReactions", m_numPrimarySpecies, m_numSecondarySpecies );
+  m_kineticReactions = std::make_unique< chemicalReactions::KineticReactions >( getName() + "_kineticReactions", m_numPrimarySpecies, m_numSecondarySpecies, m_numKineticReactions );
 }
 
 ReactiveMultiFluid::KernelWrapper

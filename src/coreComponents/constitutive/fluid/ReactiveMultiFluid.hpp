@@ -60,9 +60,14 @@ public:
   arrayView2d< real64 const, compflow::USD_COMP > secondarySpeciesConcentration() const
   { return m_secondarySpeciesConcentration; }
 
+  arrayView2d< real64 const, compflow::USD_COMP > kineticReactionRates() const
+  { return m_kineticReactionRates; }
+
   integer numPrimarySpecies() const { return m_numPrimarySpecies; }
 
   integer numSecondarySpecies() const { return m_numSecondarySpecies; }
+
+  integer numKineticReactions() const { return m_numKineticReactions; }
 
   /**
    * @brief Kernel wrapper class for ReactiveMultiFluid.
@@ -179,6 +184,8 @@ private:
 
   integer m_numSecondarySpecies;
 
+  integer m_numKineticReactions;
+
   std::unique_ptr< chemicalReactions::EquilibriumReactions > m_equilibriumReactions;
 
   std::unique_ptr< chemicalReactions::KineticReactions > m_kineticReactions;
@@ -246,10 +253,10 @@ ReactiveMultiFluid::KernelWrapper::
                                                primarySpeciesConcentration,
                                                secondarySpeciesConcentration );
 
-  // m_kineticReactions.computeReactionRates( temperature,
-  //                                          primarySpeciesContentration,
-  //                                          secondarySpeciesConcentration,
-  //                                          kineticReactionRates );
+  m_kineticReactions.computeReactionRates( temperature,
+                                           primarySpeciesConcentration,
+                                           secondarySpeciesConcentration,
+                                           kineticReactionRates );
 }
 
 GEOSX_HOST_DEVICE inline void

@@ -36,7 +36,7 @@ class KineticReactions : public ReactionsBase
 {
 public:
 
-  KineticReactions( string const & name, integer const numPrimarySpecies, integer const numSecSpecies );
+  KineticReactions( string const & name, integer const numPrimarySpecies, integer const numSecSpecies, integer const numKineticReactions );
 
   class KernelWrapper final : public ReactionsBase::KernelWrapper
   {
@@ -46,6 +46,7 @@ public:
 
     KernelWrapper( integer const numPrimarySpecies,
                    integer const numSecondarySpecies,
+                   integer const numKineticReactions,
                    arrayView1d< real64 > const & log10EqConst,
                    arrayView2d< real64 > const & stoichMatrix,
                    arrayView1d< integer > const & chargePrimary,
@@ -55,7 +56,8 @@ public:
                    real64 const DebyeHuckelA,
                    real64 const DebyeHuckelB,
                    real64 const WATEQBDot,
-                   arrayView1d< real64 > const & reactionRateConstant ):
+                   arrayView1d< real64 > const & reactionRateConstant,
+                   real64 const specificSurfaceArea ):
       ReactionsBase::KernelWrapper( numPrimarySpecies,
                                     numSecondarySpecies,
                                     log10EqConst,
@@ -67,13 +69,25 @@ public:
                                     DebyeHuckelA,
                                     DebyeHuckelB,
                                     WATEQBDot ),
-      m_reactionRateConstant( reactionRateConstant )
+      m_reactionRateConstant( reactionRateConstant ),
+      m_numKineticReactions( numKineticReactions ),
+      m_specificSurfaceArea( specificSurfaceArea )
     {}
-
+    
+    /**
+     * @brief Compute kinetic reaction rates.
+     * 
+     * @param temperature 
+     * @param primarySpeciesConcentration concentration of the primary species
+     * @param log10PrimaryActCoeff 
+     * @param specificSurfaceArea the surface area available per unit volume
+     * @param reactionRates  
+     */
     GEOSX_HOST_DEVICE
-    void computeReactionsRate( real64 const & temperature,
-                               arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                               arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const;
+    void computeReactionRates( real64 const & temperature,
+                               arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                               arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
+                               arraySlice1d< real64 > const & reactionRates ) const;
 
 private:
 
@@ -81,6 +95,7 @@ private:
 
     integer m_numKineticReactions;
 
+    real64 m_specificSurfaceArea;
 
   };
 
@@ -93,7 +108,10 @@ private:
 private:
 
   array1d< real64 > m_reactionRateConstant;
+  
   integer m_numKineticReactions;
+  
+  real64 m_specificSurfaceArea;
 };
 
 } // end namespace chemicalReactions

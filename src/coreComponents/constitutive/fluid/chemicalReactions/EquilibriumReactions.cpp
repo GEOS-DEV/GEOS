@@ -270,7 +270,6 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
   std::cout << "Total concentration: " << totalConcentration <<std::endl;   
   std::cout << "Derivative of total concentration: " << dTotalConc_dLog10PrimaryConc <<std::endl;   
 
-  //Matteo: I assume we want to solve this to find the primary and the secondary species concentrations?
   for( int i=0; i<m_numPrimarySpecies; i++ )
   {
     rhs[i] = 1 - totalConcentration[i] / primarySpeciesTotalConcentration[i];
@@ -385,30 +384,3 @@ void EquilibriumReactions::KernelWrapper::setInitialGuess( arraySlice1d< real64 
 } // namespace constitutive
 
 } // end namespace geosx
-
-
-// // Not sure if this works
-//   m_inputTotalConc[0:6] = 1E-20	// Does this notation work?
-//   m_inputTotalConc[0] = pow( 10.0, -7 )
-/*
-   // Accurate value for H+ concentration. Hopefully it is not negative
-   m_inputTotalConc[0] =
-      0+m_inputTotalConc[1]-2*m_inputTotalConc[2]+2*m_inputTotalConc[3]+m_inputTotalConc[4]-2*m_inputTotalConc[5]-m_inputTotalConc[6];
- */
-
-/*
-   // Not sure if this is the right place to give the initial guess
-   // Mismatch between lhs and rhs as one is log10 and the other isn't
-   // Fixed it with the lines below
-   m_log10PrimaryConc = log10(m_inputTotalConc);
-   // If for some reason the total concentration of H+ is negative (not sure if this can happen)
-   if (2*m_inputTotalConc[2]-2*m_inputTotalConc[3]-m_inputTotalConc[4]+2*m_inputTotalConc[5]+m_inputTotalConc[6]<0)
-   {
-    m_log10PrimaryConc[0] =
-       log10(-2*m_inputTotalConc[2]+2*m_inputTotalConc[3]+m_inputTotalConc[4]-2*m_inputTotalConc[5]-m_inputTotalConc[6]);
-   }
-   else
-   {
-    m_log10PrimaryConc[0] = -7;
-   }
- */

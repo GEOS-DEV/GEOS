@@ -30,13 +30,15 @@ namespace constitutive
 namespace chemicalReactions
 {
 
-KineticReactions::KineticReactions( string const & name, integer const numPrimarySpecies, integer const numSecSpecies ):
-  ReactionsBase( name, numPrimarySpecies, numSecSpecies )
+KineticReactions::KineticReactions( string const & name, integer const numPrimarySpecies, integer const numSecSpecies, integer const numKineticReactions ):
+  ReactionsBase( name, numPrimarySpecies, numSecSpecies ),
+  m_numKineticReactions(numKineticReactions)
 {
+  
   // Stochiometric Matrix for the kinetic reactions (in terms of primary species only)
   // First index: 0 = Ca(OH)2 dissolution, 1 = CaCO3 dissolution
   // Second index: 0 = H+, 1 = HCO3-, 2 = Ca+2, 3 = SO4-2, 4 = Cl-, 5 = Mg+2, 6 = Na+1
-  m_stoichMatrix.resize( m_numKineticReaction, m_numPrimarySpecies );
+  m_stoichMatrix.resize( m_numKineticReactions, m_numPrimarySpecies );
   m_stoichMatrix[0][0] = -2;
   m_stoichMatrix[0][2] = 1;
   m_stoichMatrix[1][0] = -1;
@@ -60,6 +62,7 @@ KineticReactions::KernelWrapper KineticReactions::createKernelWrapper() const
 {
   return KernelWrapper( m_numPrimarySpecies,
                         m_numSecondarySpecies,
+                        m_numKineticReactions,
                         m_log10EqConst,
                         m_stoichMatrix,
                         m_chargePrimary,
@@ -69,17 +72,39 @@ KineticReactions::KernelWrapper KineticReactions::createKernelWrapper() const
                         m_DebyeHuckelA,
                         m_DebyeHuckelB,
                         m_WATEQBDot,
-                        m_reactionRateConstant );
+                        m_reactionRateConstant,
+                        m_specificSurfaceArea );
 }
 
-// function to calculation the reaction rate. Includes impact of temperature, concentration, surface area, volume fraction and porosity
-void KineticReactions::KernelWrapper::computeReactionsRate( real64 const & temperature,
-                                                            arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                                                            arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & log10PrimaryActCoeff,
-                                                            real64 const & specificSurfaceArea,
-                                                            arraySlice1d< real64 const > & reactionRates ) const
+// function to  the reaction rate. Includes impact of temperature, concentration, surface area, volume fraction and porosity
+void KineticReactions::KernelWrapper::computeReactionRates( real64 const & temperature,
+                                                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                                                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
+                                                            arraySlice1d< real64 > const & reactionRates ) const
 {
+  /// 1. Create local vectors
+  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > log10PrimaryActCoeff( m_numPrimarySpecies );
+  stackArray1d< real64, ReactionsBase::maxNumSecondarySpecies > log10SecActCoeff( m_numSecondarySpecies );
 
+  real64 ionicStrength = 0.0;
+  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > dIonicStrength_dPrimaryConcentration( m_numPrimarySpecies );
+  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > dLog10PrimaryActCoeff_dIonicStrength( m_numPrimarySpecies );
+  stackArray1d< real64, ReactionsBase::maxNumSecondarySpecies > dLog10SecActCoeff_dIonicStrength( m_numSecondarySpecies );
+
+  /// 2. Compute activity coefficients
+  computeIonicStrength( primarySpeciesConcentration,
+                        secondarySpeciesConcentration,
+                        ionicStrength );
+
+  computeLog10ActCoefBDotModel( temperature,
+                                ionicStrength,
+                                log10PrimaryActCoeff,
+                                dLog10PrimaryActCoeff_dIonicStrength,
+                                log10SecActCoeff,
+                                dLog10SecActCoeff_dIonicStrength );
+
+
+  /// 3. Compute reaction rates
   for( int iRxn = 0; iRxn < m_numKineticReactions; iRxn++ )
   {
     real64 saturationIndex = -m_log10EqConst[iRxn];
@@ -90,7 +115,7 @@ void KineticReactions::KernelWrapper::computeReactionsRate( real64 const & tempe
       saturationIndex += m_stoichMatrix[iRxn][iPri] * log10PrimaryActCoeff[iPri];
     }
 
-    reactionRates[iRxn] = specificSurfaceArea * (1.0 - pow( 10, saturationIndex ) ) * m_reactionRateConstant[ir];
+    reactionRates[iRxn] = m_specificSurfaceArea * (1.0 - pow( 10, saturationIndex ) ) * m_reactionRateConstant[iRxn];
   }
 }
 
