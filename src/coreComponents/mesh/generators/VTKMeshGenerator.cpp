@@ -126,8 +126,7 @@ loadMesh( Path const & filePath )
     //       https://gitlab.kitware.com/vtk/vtk/-/blob/master/Filters/Core/vtkStaticCleanUnstructuredGrid.h
     //       This removes duplicate points, either present in the dataset, or resulting from merging pieces.
   }
-  
-  else if (extension == "pvts") // TODO
+  else if( extension == "pvts" ) // TODO
   {
     auto const vtkSgReader = vtkSmartPointer< vtkXMLPStructuredGridReader >::New();
     vtkSgReader->SetFileName( filePath.c_str() );
@@ -136,13 +135,12 @@ loadMesh( Path const & filePath )
     loadedMesh = vtkSgReader->GetOutput();
 
   }
-  
   else
   {
     if( MpiWrapper::commRank() == 0 )
     {
-      auto const read = [&]( auto const vtkGridReader ) 
-      { 
+      auto const read = [&]( auto const vtkGridReader )
+      {
         vtkGridReader->SetFileName( filePath.c_str() );
         vtkGridReader->Update();
         return vtkGridReader->GetOutput();
@@ -160,13 +158,13 @@ loadMesh( Path const & filePath )
       {
         loadedMesh = read( vtkSmartPointer< vtkXMLStructuredGridReader >::New() );
       }
-      /*else if( extension == "vti" ) // TODO ? 
+      /*else if( extension == "vti" ) // TODO ?
       {
-        loadedMesh = read( vtkSmartPointer< vtkXMLImageDataReader >::New() ); 
+        loadedMesh = read( vtkSmartPointer< vtkXMLImageDataReader >::New() );
       }*/
       else
       {
-        GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vts or .pvtu." ); 
+        GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vts or .pvtu." );
       }
     }
     else
@@ -178,56 +176,59 @@ loadMesh( Path const & filePath )
   return loadedMesh;
 }
 
-vtkNew<vtkCellArray> GetCellArray(vtkDataSet & mesh) // replaces GetCells() that exist only in vtkUnstructuredGrid
+vtkNew< vtkCellArray > GetCellArray( vtkDataSet & mesh ) // replaces GetCells() that exist only in vtkUnstructuredGrid
 {
-  vtkNew<vtkCellArray> cells;
-  if (mesh.IsA("vtkStructuredGrid") || mesh.IsA("vtkUnstructuredGrid")) 
+  vtkNew< vtkCellArray > cells;
+  if( mesh.IsA( "vtkStructuredGrid" ) || mesh.IsA( "vtkUnstructuredGrid" ))
   {
     int numCell = mesh.GetNumberOfCells();
-    for (int c = 0; c < numCell; c++)
+    for( int c = 0; c < numCell; c++ )
     {
-      cells->InsertNextCell(mesh.GetCell(c));
+      cells->InsertNextCell( mesh.GetCell( c ));
     }
   }
-  else 
-  { 
+  else
+  {
     double bounds[6];
-    mesh.GetBounds(bounds);
-    double xmin=bounds[0], xmax=bounds[1]; 
-    double ymin=bounds[2], ymax=bounds[3]; 
-    double zmin=bounds[4], zmax=bounds[5]; 
+    mesh.GetBounds( bounds );
+    double xmin=bounds[0], xmax=bounds[1];
+    double ymin=bounds[2], ymax=bounds[3];
+    double zmin=bounds[4], zmax=bounds[5];
     int dx = 1, dy = 1;
     int nx = (xmax-xmin)/dx +1, ny = (ymax-ymin)/dy +1;
     //int nz = (zmax-zmin)/dz +1; // not used
 
-    for (int k=zmin; k<zmax; k++){
-        for(int j=ymin; j<ymax; j++){
-            for (int i=xmin; i<xmax; i++){
-                vtkNew<vtkHexahedron> hexa;
-                // add points to the hexahedron cell in vtk order for hexahedron
-                hexa->GetPointIds()->SetId(0, i+j*nx+k*ny*nx);
-                hexa->GetPointIds()->SetId(1, i+1+j*nx+k*ny*nx);
-                hexa->GetPointIds()->SetId(2, i+1+(j+1)*nx+k*ny*nx);
-                hexa->GetPointIds()->SetId(3, i+(j+1)*nx+k*ny*nx);
-                hexa->GetPointIds()->SetId(4, i+j*nx+(k+1)*ny*nx);
-                hexa->GetPointIds()->SetId(5, i+1+j*nx+(k+1)*ny*nx);
-                hexa->GetPointIds()->SetId(6, i+1+(j+1)*nx+(k+1)*ny*nx);
-                hexa->GetPointIds()->SetId(7, i+(j+1)*nx+(k+1)*ny*nx);
-                cells->InsertNextCell(hexa);
-            }
+    for( int k=zmin; k<zmax; k++ )
+    {
+      for( int j=ymin; j<ymax; j++ )
+      {
+        for( int i=xmin; i<xmax; i++ )
+        {
+          vtkNew< vtkHexahedron > hexa;
+          // add points to the hexahedron cell in vtk order for hexahedron
+          hexa->GetPointIds()->SetId( 0, i+j*nx+k*ny*nx );
+          hexa->GetPointIds()->SetId( 1, i+1+j*nx+k*ny*nx );
+          hexa->GetPointIds()->SetId( 2, i+1+(j+1)*nx+k*ny*nx );
+          hexa->GetPointIds()->SetId( 3, i+(j+1)*nx+k*ny*nx );
+          hexa->GetPointIds()->SetId( 4, i+j*nx+(k+1)*ny*nx );
+          hexa->GetPointIds()->SetId( 5, i+1+j*nx+(k+1)*ny*nx );
+          hexa->GetPointIds()->SetId( 6, i+1+(j+1)*nx+(k+1)*ny*nx );
+          hexa->GetPointIds()->SetId( 7, i+(j+1)*nx+(k+1)*ny*nx );
+          cells->InsertNextCell( hexa );
         }
+      }
     }
   }
   return cells;
 }
 
-template< typename INDEX_TYPE, typename POLICY > 
+template< typename INDEX_TYPE, typename POLICY >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
 buildElemToNodesImpl( vtkDataSet & mesh )
-{ 
+{
   localIndex const numCells = LvArray::integerConversion< localIndex >( mesh.GetNumberOfCells() );
   array1d< INDEX_TYPE > nodeCounts( numCells );
-  const vtkNew<vtkCellArray> & cells = GetCellArray(mesh); // changed *mesh.GetCells(); to GetCellArray(mesh)
+  const vtkNew< vtkCellArray > & cells = GetCellArray( mesh ); // changed *mesh.GetCells(); to GetCellArray(mesh)
 
   // GetCellSize() is always thread-safe, can run in parallel
   forAll< parallelHostPolicy >( numCells, [nodeCounts = nodeCounts.toView(), &cells] ( localIndex const cellIdx )
@@ -261,7 +262,7 @@ buildElemToNodes( vtkDataSet & mesh )
   // According to VTK docs, IsStorageShareable() indicates whether pointers extracted via
   // vtkCellArray::GetCellAtId() are pointers into internal storage rather than temp buffer
   // and thus results can be used in a thread-safe way.
-  return GetCellArray(mesh)->IsStorageShareable()                        // changed mesh.GetCells() to GetCellArray
+  return GetCellArray( mesh )->IsStorageShareable()                        // changed mesh.GetCells() to GetCellArray
        ? buildElemToNodesImpl< INDEX_TYPE, parallelHostPolicy >( mesh )
        : buildElemToNodesImpl< INDEX_TYPE, serialPolicy >( mesh );
 }
@@ -628,7 +629,7 @@ using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector<
  *         even if there are no cells on current rank (then the list will be empty).
  */
 CellMapType buildCellMap( vtkDataSet & mesh,
-              string const & attributeName )
+                          string const & attributeName )
 {
   // First, pass through all VTK cells and split them int sub-lists based on type.
   std::map< ElementType, std::vector< vtkIdType > > typeToCells = splitCellsByType( mesh );
@@ -662,7 +663,7 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
     case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
-    //case ElementType::Voxel:         return { 0, 1, 2, 3, 4, 5, 6, 7}; // For ImageData
+    // case ElementType::Voxel:         return { 0, 1, 2, 3, 4, 5, 6, 7}; // For ImageData
   }
   return {};
 }
@@ -696,9 +697,9 @@ void fillCellBlock( vtkDataSet & mesh,
     {
       cellToVertex[cellCount][v] = currentCell->GetPointId( nodeOrder[v] );
     }
-    
+
     localToGlobal[cellCount++] = globalCellId->GetValue( c );
-    
+
   }
 }
 
@@ -823,7 +824,7 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
     using ArrayType = decltype( dstArray );
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
     auto const view = wrapperT.reference().toView();
-    
+
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( vtkArray->GetNumberOfComponents() );
     localIndex const numComponentsDst = wrapperT.numArrayComp();
     GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
@@ -1162,7 +1163,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   {
     GEOSX_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
-    vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath ); 
+    vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
     m_vtkMesh = vtk::redistributeMesh( *loadedMesh, comm, m_partitionRefinement );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
