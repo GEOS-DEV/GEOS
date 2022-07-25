@@ -930,6 +930,8 @@ void VTKPolyDataWriterInterface::write( real64 const time,
 void VTKPolyDataWriterInterface::clearData()
 {
   m_pvd.reinitData();
+}
+
 bool VTKPolyDataWriterInterface::isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const
 {
   return outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(),

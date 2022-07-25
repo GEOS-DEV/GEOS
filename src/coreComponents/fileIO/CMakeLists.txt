@@ -38,7 +38,7 @@ set( fileIO_sources
      timeHistory/HDFHistoryIO.cpp
    )
 
-set( dependencyList mesh constitutive silo hdf5 )
+set( dependencyList mesh constitutive silo hdf5)
 if( ENABLE_PYGEOSX )
   list( APPEND fileIO_headers
         python/PyHistoryCollectionType.hpp 
@@ -50,7 +50,7 @@ if( ENABLE_PYGEOSX )
         python/PyHistoryOutput.cpp 
         python/PyVTKOutput.cpp
         )
-  list( APPEND dependencyList Python3::Python pylvarray ) 
+  list( APPEND dependencyList Python3::Python pylvarray mainInterface) 
 endif()
 
 
