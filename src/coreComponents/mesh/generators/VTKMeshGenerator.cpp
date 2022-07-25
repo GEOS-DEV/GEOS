@@ -159,9 +159,9 @@ loadMesh( Path const & filePath )
         loadedMesh = read( vtkSmartPointer< vtkXMLStructuredGridReader >::New() );
       }
       /*else if( extension == "vti" ) // TODO ?
-      {
-        loadedMesh = read( vtkSmartPointer< vtkXMLImageDataReader >::New() );
-      }*/
+         {
+         loadedMesh = read( vtkSmartPointer< vtkXMLImageDataReader >::New() );
+         }*/
       else
       {
         GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vts or .pvtu." );
@@ -663,7 +663,7 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
     case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
-    // case ElementType::Voxel:         return { 0, 1, 2, 3, 4, 5, 6, 7}; // For ImageData
+      // case ElementType::Voxel:         return { 0, 1, 2, 3, 4, 5, 6, 7}; // For ImageData
   }
   return {};
 }
