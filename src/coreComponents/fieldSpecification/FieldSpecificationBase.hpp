@@ -502,6 +502,12 @@ public:
 
   void setMeshObjectPath( Group const & meshBodies );
 
+  MeshObjectPath const & getMeshObjectPaths() const
+  {
+    return *(m_meshObjectPaths.get());
+  }
+
+
 protected:
 
 

@@ -70,6 +70,11 @@ public:
   void forObjectsInPath( dataRepository::Group const & meshBodies,
                          FUNC && func ) const;
 
+  template< typename OBJECT_TYPE = ObjectManagerBase,
+            typename FUNC >
+  void forObjectsInPath( MeshLevel const & level
+                         FUNC && func ) const;
+
 #if defined(MESH_OBJECT_PATH_PRIVATE_FUNCTION_UNIT_TESTING)
   template< typename OBJECT_TYPE >
   void testCheckObjectTypeConsistency()
@@ -86,7 +91,7 @@ public:
 
 private:
   template< typename OBJECT_TYPE >
-  void checkObjectTypeConsistency() const;
+  ObjectTypes checkObjectTypeConsistency() const;
 
   void printPermutations() const;
 
@@ -95,6 +100,8 @@ private:
 
   void processPathTokens( std::vector< string > const & pathTokens,
                           dataRepository::Group const & meshBodies );
+
+
 
   ObjectTypes const m_objectType;
   permutationMapType m_pathPermutations;
@@ -110,7 +117,7 @@ namespace geosx
 
 
 template< typename OBJECT_TYPE >
-void MeshObjectPath::checkObjectTypeConsistency() const
+ObjectTypes MeshObjectPath::checkObjectTypeConsistency() const
 {
   bool consistent = false;
   if( m_objectType == ObjectTypes::nodes )
@@ -135,6 +142,8 @@ void MeshObjectPath::checkObjectTypeConsistency() const
                   GEOSX_FMT( "Inconsistent type specified. Type {} is not consistent with m_objectType of {}",
                              OBJECT_TYPE::catalogName(),
                              m_objectType ) );
+
+  return m_objectType;
 }
 
 template< typename OBJECT_TYPE,
@@ -203,6 +212,64 @@ void MeshObjectPath::forObjectsInPath( dataRepository::Group const & meshBodies,
     }
   }
 }
+
+template< typename OBJECT_TYPE,
+          typename FUNC >
+void MeshObjectPath::forObjectsInPath( MeshLevel const & level
+                                       FUNC && func ) const
+{
+  string const bodyName = level.getParent().getParent().getName();
+  string const levelName = level.getName();
+
+  auto const bodyIter = m_pathPermutations.find( bodyName );
+  if( bodyIter != m_pathPermutations.end() )
+  {
+    auto const levelIter = bodyIter->second.find( levelName );
+    if( levelIter != bodyIter->second.end() )
+    {
+      if( m_objectType == ObjectTypes::nodes )
+      {
+        func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getNodeManager() ) );
+      }
+      else if( m_objectType == ObjectTypes::edges )
+      {
+        func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getEdgeManager()) );
+      }
+      else if( m_objectType == ObjectTypes::faces )
+      {
+        func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getFaceManager()) );
+      }
+      else if( m_objectType == ObjectTypes::elems )
+      {
+        ElementRegionManager const & elemRegionMan = meshLevel.getElemManager();
+        for( auto const & elemRegionPair : meshLevelPair.second )
+        {
+          ElementRegionBase const & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
+          if( std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value )
+          {
+            func( dynamic_cast< OBJECT_TYPE const & >(elemRegion) );
+          }
+          else
+          {
+            for( auto const & elemSubRegionName : elemRegionPair.second )
+            {
+              ElementSubRegionBase const & subRegion = elemRegion.getSubRegion( elemSubRegionName );
+              if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value )
+              {
+                func( dynamic_cast< OBJECT_TYPE const & >(subRegion) );
+              }
+              else
+              {
+                GEOSX_ERROR( "You shouldn't be here" );
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 
 ENUM_STRINGS( MeshObjectPath::ObjectTypes,
               MeshLevel::groupStructKeys::nodeManagerString(),

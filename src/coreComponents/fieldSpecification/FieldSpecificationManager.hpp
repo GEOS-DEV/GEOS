@@ -237,6 +237,10 @@ public:
     // loop over all FieldSpecificationBase objects
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
+
+      MeshObjectPath const & meshObjectPaths = fs.getMeshObjectPaths();
+      meshObjectPaths.forObjectsInPath([&](){});
+
       int const isInitialCondition = fs.initialCondition();
 
       if( ( isInitialCondition && fieldPath.empty() ) ||
