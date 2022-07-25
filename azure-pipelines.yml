@@ -89,11 +89,6 @@ stages:
           DOCKER_REPOSITORY: 'geosx/ubuntu20.04-gcc9'
           CMAKE_BUILD_TYPE: 'Release'
           VM_ImageName: 'ubuntu-latest'
-        ubuntu20_gcc10_openmpi4_debug:
-          JOB_NAME: 'Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3)'
-          DOCKER_REPOSITORY: 'geosx/ubuntu20.04-gcc10'
-          CMAKE_BUILD_TYPE: 'Debug'
-          VM_ImageName: 'ubuntu-latest'
         ubuntu20_gcc10_openmpi4_release:
           JOB_NAME: 'Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3)'
           DOCKER_REPOSITORY: 'geosx/ubuntu20.04-gcc10'
