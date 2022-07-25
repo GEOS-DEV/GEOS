@@ -30,7 +30,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/PerforationData.hpp"
+#include "mesh/PerforationExtrinsicData.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
@@ -849,12 +849,12 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
         subRegion.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
 
       // get the element region, subregion, index
-      arrayView1d< localIndex const > const & resElementRegion =
-        perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
-      arrayView1d< localIndex const > const & resElementSubRegion =
-        perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
-      arrayView1d< localIndex const > const & resElementIndex =
-        perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+      arrayView1d< localIndex const > const resElementRegion =
+        perforationData.getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
+      arrayView1d< localIndex const > const resElementSubRegion =
+        perforationData.getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
+      arrayView1d< localIndex const > const resElementIndex =
+        perforationData.getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       arrayView1d< real64 const > const & perfGravCoef =
         perforationData.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
@@ -1341,10 +1341,10 @@ void CompositionalMultiphaseWell::computePerforationRates( DomainPartition & dom
       // get well variables on perforations
       arrayView1d< real64 const > const & perfGravCoef =
         perforationData->getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
-      arrayView1d< localIndex const > const & perfWellElemIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
-      arrayView1d< real64 const > const & perfTrans =
-        perforationData->getReference< array1d< real64 > >( PerforationData::viewKeyStruct::wellTransmissibilityString() );
+      arrayView1d< localIndex const > const perfWellElemIndex =
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
+      arrayView1d< real64 const > const perfTrans =
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellTransmissibility >();
 
       arrayView2d< real64 > const & compPerfRate =
         perforationData->getExtrinsicData< extrinsicMeshData::well::compPerforationRate >();
@@ -1354,12 +1354,12 @@ void CompositionalMultiphaseWell::computePerforationRates( DomainPartition & dom
         perforationData->getExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dComp >();
 
       // get the element region, subregion, index
-      arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
-      arrayView1d< localIndex const > const & resElementSubRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
-      arrayView1d< localIndex const > const & resElementIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+      arrayView1d< localIndex const > const resElementRegion =
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
+      arrayView1d< localIndex const > const resElementSubRegion =
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
+      arrayView1d< localIndex const > const resElementIndex =
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       isothermalCompositionalMultiphaseBaseKernels::
         KernelLaunchSelector2< PerforationKernel >( numFluidComponents(),
@@ -1668,21 +1668,21 @@ void CompositionalMultiphaseWell::assemblePressureRelations( DomainPartition con
           if( wellControls.isProducer() )
           {
             wellControls.switchToPhaseRateControl( wellControls.getTargetPhaseRate( timeAtEndOfStep ) );
-            GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
-                                                                  << " from BHP constraint to phase volumetric rate constraint" );
+            GEOSX_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
+                                                           << " from BHP constraint to phase volumetric rate constraint" );
           }
           else
           {
             wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( timeAtEndOfStep ) );
-            GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
-                                                                  << " from BHP constraint to total volumetric rate constraint" );
+            GEOSX_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
+                                                           << " from BHP constraint to total volumetric rate constraint" );
           }
         }
         else
         {
           wellControls.switchToBHPControl( wellControls.getTargetBHP( timeAtEndOfStep ) );
-          GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
-                                                                << " from rate constraint to BHP constraint" );
+          GEOSX_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
+                                                         << " from rate constraint to BHP constraint" );
         }
       }
     } );
