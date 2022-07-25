@@ -76,13 +76,12 @@ void ReactiveFluidDriver::postProcessInput()
 
   m_numPhases = fluid.numFluidPhases();
   m_numPrimarySpecies = fluid.numPrimarySpecies();
-  m_numSecondarySpecies = fluid.numSecondarySpecies();
-  // m_numComponents = fluid.numFluidComponents();
+  m_numKineticReactions = fluid.numKineticReactions();
 
   // resize data table to fit number of timesteps and concentrations
-  // (numRows,numCols) = (numSteps+1,3+numPrimarySpecies + numSecSpecies)
-  // column order = time, pressure, temp, primarySpeciesConcentration, secondarySpeciesConcentration
-  m_table.resize( m_numSteps+1, m_numPrimarySpecies + m_numSecondarySpecies + 3 );
+  // (numRows,numCols) = (numSteps+1,3+numPrimarySpecies + numSecSpecies + numKineticReactions)
+  // column order = time, pressure, temp, primarySpeciesConcentration, secondarySpeciesConcentration, reaction rates, 
+  m_table.resize( m_numSteps+1, m_numPrimarySpecies + m_numSecondarySpecies + m_numKineticReactions + 3 );
 
   // initialize functions
 
@@ -138,6 +137,7 @@ bool ReactiveFluidDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
     GEOSX_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
     GEOSX_LOG_RANK_0( "  No. of Primary Species ...... " << m_numPrimarySpecies );
     GEOSX_LOG_RANK_0( "  No. of Secondary Species ...... " << m_numSecondarySpecies );
+    GEOSX_LOG_RANK_0( "  No. of Kinetic Reactions ...... " << m_numKineticReactions );
     GEOSX_LOG_RANK_0( "  Pressure Control ....... " << m_pressureFunctionName );
     GEOSX_LOG_RANK_0( "  Temperature Control .... " << m_temperatureFunctionName );
     GEOSX_LOG_RANK_0( "  Steps .................. " << m_numSteps );
@@ -180,10 +180,13 @@ void ReactiveFluidDriver::runTest( ReactiveMultiFluid & fluid, arrayView2d< real
   localIndex const numPhases = fluid.numFluidPhases();
   localIndex const numPrimarySpecies = fluid.numPrimarySpecies();
   localIndex const numSecondarySpecies = fluid.numSecondarySpecies();
+  localIndex const numKineticReactions = fluid.numKineticReactions();
 
   // get output data views
-  arrayView2d< real64 const, multifluid::USD_FLUID > primarySpeciesConcentration   = fluid.primarySpeciesConcentration();
-  arrayView2d< real64 const, multifluid::USD_FLUID > secondarySpeciesConcentration   = fluid.secondarySpeciesConcentration();
+  arrayView2d< real64 const, multifluid::USD_FLUID > primarySpeciesConcentration = fluid.primarySpeciesConcentration();
+  arrayView2d< real64 const, multifluid::USD_FLUID > secondarySpeciesConcentration = fluid.secondarySpeciesConcentration();
+  arrayView2d< real64 const, multifluid::USD_FLUID > kineticReactionRates = fluid.kineticReactionRates();
+
 
   // create kernel wrapper
 
@@ -226,6 +229,10 @@ void ReactiveFluidDriver::runTest( ReactiveMultiFluid & fluid, arrayView2d< real
       for( integer s=0; s<numSecondarySpecies; ++s )
       {
         table( n, TEMP+1+numPrimarySpecies+s ) = secondarySpeciesConcentration( ei, s );
+      }
+      for ( integer k=0; k<numKineticReactions; ++k)
+      {
+         table( n, TEMP+1+numPrimarySpecies+numSecondarySpecies+k ) = kineticReactionRates( ei, k );
       }
     }
   } );
