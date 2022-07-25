@@ -103,7 +103,7 @@ TEST( VTKImport, cube )
     std::cout << "> NodeSets : \n";
     std::map< string, SortedArray< localIndex > > m = cellBlockManager.getNodeSets();
     for(std::map<string, SortedArray<localIndex>>::iterator it = m.begin(); it != m.end(); ++it) {
-      std::cout << "Key: " << it->first << std::endl; all, -1, 2, 9
+      std::cout << "Key: " << it->first << std::endl; // all, -1, 2, 9
       std::cout << "Value: " << it->second << std::endl;
     }
 
