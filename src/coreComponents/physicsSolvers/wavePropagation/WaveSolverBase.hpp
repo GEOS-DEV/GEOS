@@ -30,6 +30,10 @@ namespace geosx
 class WaveSolverBase : public SolverBase
 {
 public:
+
+  using EXEC_POLICY = parallelDevicePolicy< 32 >;
+
+
   WaveSolverBase( const std::string & name,
                   Group * const parent );
 
@@ -57,15 +61,8 @@ public:
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
-
-    static constexpr char const * xMinPMLString() { return "xMinPML"; }
-    static constexpr char const * xMaxPMLString() { return "xMaxPML"; }
-    static constexpr char const * yMinPMLString() { return "yMinPML"; }
-    static constexpr char const * yMaxPMLString() { return "yMaxPML"; }
-    static constexpr char const * zMinPMLString() { return "zMinPML"; }
-    static constexpr char const * zMaxPMLString() { return "zMaxPML"; }
-    static constexpr char const * maxThicknessPMLString() { return "maxThicknessPML"; }
-    static constexpr char const * reflectivityPMLString() { return "reflectivityPML"; }
+    
+    
     static constexpr char const * flagPMLString() { return "flagPML"; }
 
   };
@@ -77,6 +74,8 @@ public:
 
 protected:
 
+  virtual void postProcessInput() override;
+
   /**
    * @brief Apply free surface condition to the face defined in the geometry box of the xml
    * @param time the time to apply the BC
@@ -84,6 +83,10 @@ protected:
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) = 0;
 
+  /**
+   * @brief Initialize Perfectly Matched Layer (PML) information
+   */
+  virtual void initializePML() = 0;
 
   /**
    * @brief Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
@@ -91,60 +94,6 @@ protected:
    * @param domain the partition domain
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) = 0;
-
-  /**
-   * @brief Compute the damping profile for the Perfectly Matched Layer (PML)
-   * @param xLocal a given x-y-z coordinates (3-components array)
-   * @param c wave speed at the location xLocal
-   * @param xMin etc... coordinate limits used to compute the damping profile
-   * @param dPML maximum thickness used to compute the damping profile
-   * @param rPML desired reflectivity of the PMLs
-   * @param sigma 3-components array to hold the damping profile in each direction
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void computeDampingProfilePML( real64 const (&xLocal)[3],
-                                        real64 const c,
-                                        real64 const xMin,
-                                        real64 const xMax,
-                                        real64 const yMin,
-                                        real64 const yMax,
-                                        real64 const zMin,
-                                        real64 const zMax,
-                                        real64 const dPML,
-                                        real64 const rPML,
-                                        real64 (&sigma)[3])
-  {
-    real64 const factor =  -3.0/2.0*c*log(rPML)/(dPML*dPML*dPML);
-
-    sigma[0] = 0;
-    sigma[1] = 0;
-    sigma[2] = 0;
-    if (xLocal[0] < xMin)
-    {
-      sigma[0] = factor*(xLocal[0]-xMin)*(xLocal[0]-xMin);
-    }
-    else if (xLocal[0] > xMax)
-    {
-      sigma[0] = factor*(xLocal[0]-xMax)*(xLocal[0]-xMax);
-    }
-    if (xLocal[1] < yMin)
-    {
-      sigma[1] = factor*(xLocal[1]-yMin)*(xLocal[1]-yMin);
-    }
-    else if (xLocal[1] > yMax)
-    {
-      sigma[1] = factor*(xLocal[1]-yMax)*(xLocal[1]-yMax);
-    }
-    if (xLocal[2] < zMin)
-    {
-      sigma[2] = factor*(xLocal[2]-zMin)*(xLocal[2]-zMin);
-    }
-    else if (xLocal[2] > zMax)
-    {
-      sigma[2] = factor*(xLocal[2]-zMax)*(xLocal[2]-zMax);
-    }
-  }
   
 
   /**
@@ -226,19 +175,24 @@ protected:
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
 
-  /// Limits to be used to compute the damping profile for the PMLs
-  real64 m_xMinPML;
-  real64 m_xMaxPML;
-  real64 m_yMinPML;
-  real64 m_yMaxPML;
-  real64 m_zMinPML;
-  real64 m_zMaxPML;
+  /// Mininum (x,y,z) coordinates of inner PML boundaries
+  R1Tensor m_xMinPML;
 
-  /// Desired reflectivity and maximum thickness of the PMLs
-  real64 m_maxThicknessPML;
+  /// Maximum (x,y,z) coordinates of inner PML boundaries
+  R1Tensor m_xMaxPML;
+
+  /// Desired reflectivity of the PML region, used to compute the damping profile
   real64 m_reflectivityPML;
 
-  /// Temporary flag for PML testing
+  /// Thickness of the PML region, used to compute the damping profile
+  R1Tensor m_thicknessMinXYZPML;
+  R1Tensor m_thicknessMaxXYZPML;
+
+  /// Wave speed in the PML region, used to compute the damping profile
+  R1Tensor m_waveSpeedMinXYZPML;
+  R1Tensor m_waveSpeedMaxXYZPML;
+
+  /// Flag to apply PML
   int m_flagPML;
 
 };

@@ -22,6 +22,7 @@
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
@@ -76,50 +77,10 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Count for output pressure at receivers" );
 
-  registerWrapper( viewKeyStruct::xMinPMLString(), &m_xMinPML ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Minimum x-coordinate used to compute the damping profile for the PMLs" );
-
-  registerWrapper( viewKeyStruct::yMinPMLString(), &m_yMinPML ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Minimum y-coordinate used to compute the damping profile for the PMLs" );
-
-  registerWrapper( viewKeyStruct::zMinPMLString(), &m_zMinPML ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Minimum z-coordinate used to compute the damping profile for the PMLs" );
-
-  registerWrapper( viewKeyStruct::xMaxPMLString(), &m_xMaxPML ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 999999 ).
-    setDescription( "Maximum x-coordinate used to compute the damping profile for the PMLs" );
-
-  registerWrapper( viewKeyStruct::yMaxPMLString(), &m_yMaxPML ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 999999 ).
-    setDescription( "Maximum y-coordinate used to compute the damping profile for the PMLs" );
-
-  registerWrapper( viewKeyStruct::zMaxPMLString(), &m_zMaxPML ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 999999 ).
-    setDescription( "Maximum z-coordinate used to compute the damping profile for the PMLs" );
-
-  registerWrapper( viewKeyStruct::maxThicknessPMLString(), &m_maxThicknessPML ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Maximum thickness used to compute the damping profile for the PMLs" );
-
-  registerWrapper( viewKeyStruct::reflectivityPMLString(), &m_reflectivityPML ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0.0001 ).
-    setDescription( "Desired reflectivity of the PMLs" );
-
   registerWrapper( viewKeyStruct::flagPMLString(), &m_flagPML ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Temporary flag for PML testing" );
+    setDescription( "Flag to apply PML" );
 
 }
 
@@ -137,6 +98,18 @@ void WaveSolverBase::reinit()
 void WaveSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
+}
+
+void WaveSolverBase::postProcessInput()
+{
+  SolverBase::postProcessInput();
+
+  /// set flag PML to one if a PML field is specified in the xml
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & )
+  {
+    m_flagPML=1;
+  } );
 }
 
 
