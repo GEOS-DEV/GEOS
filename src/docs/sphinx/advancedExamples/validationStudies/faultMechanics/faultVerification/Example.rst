@@ -37,7 +37,7 @@ A mesh file and a python script for post-processing the simulation results are a
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/faultVerification/faultVerificationFigure.py
+  src/docs/sphinx/advancedExamples/validationStudies/faultMechanics/faultVerification/faultVerificationFigure.py
 
 
 ------------------------------------------------------------------
@@ -84,7 +84,7 @@ The syntax to import external meshes is simple: in the XML file,
 the mesh file ``faultMesh.vtk`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified label (here ``FaultModel``) is given to the mesh object. This mesh contains quadrilateral elements and local refinement to conform with the fault geometry, and two reservoir compartments displaced by the fault. The size of the reservoir should be large enough to avoid boundary effects.
 
 
-.. literalinclude:: ../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -110,7 +110,7 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
 - the mechanics solver, a solver of type ``SolidMechanics_LagrangianFEM`` called here ``mechanicsSolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
 
 
-.. literalinclude:: ../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_MECHANICALSOLVER -->
   :end-before: <!-- SPHINX_MECHANICALSOLVER_END -->
@@ -119,7 +119,7 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
 - the single-phase flow solver, a solver of type ``SinglePhaseFVM`` called here ``singlePhaseFlowSolver`` (more information on these solvers at :ref:`SinglePhaseFlow`),
 
 
-.. literalinclude:: ../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_SINGLEPHASEFVM -->
   :end-before: <!-- SPHINX_SINGLEPHASEFVM_END -->
@@ -128,7 +128,7 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
 - the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, named ``poromechanicsSolver`` (more information at :ref:`PoroelasticSolver`).
 
 
-.. literalinclude:: ../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_POROMECHANICSSOLVER -->
   :end-before: <!-- SPHINX_POROMECHANICSSOLVER_END -->
@@ -159,7 +159,7 @@ The finite volume method requires the specification of a discretization scheme.
 Here, we use a two-point flux approximation scheme (``singlePhaseTPFA``), as described in the dedicated documentation (found here: :ref:`FiniteVolume`).
 
 
-.. literalinclude:: ../../../../../../inputFiles/poromechanics/faultPoroelastic_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanics/faultPoroelastic_base.xml
   :language: xml
   :start-after: <!-- SPHINX_NUMERICAL -->
   :end-before: <!-- SPHINX_NUMERICAL_END -->
@@ -172,7 +172,7 @@ For this problem, a homogeneous and isotropic domain with one solid material is 
 The solid and fluid materials are named as ``rock`` and ``water`` respectively, and their mechanical properties are specified in the ``Constitutive`` section. ``PorousElasticIsotropic`` model is used to describe the linear elastic isotropic response of ``rock`` when subjected to fluid injection. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the flow of ``water``.
 
 
-.. literalinclude:: ../../../../../../inputFiles/poromechanics/faultPoroelastic_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanics/faultPoroelastic_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL -->
     :end-before: <!-- SPHINX_MATERIAL_END -->
@@ -195,7 +195,7 @@ The lateral and lower boundaries are subjected to roller constraints.
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
 
-.. literalinclude:: ../../../../../../inputFiles/poromechanics/faultPoroelastic_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanics/faultPoroelastic_base.xml
     :language: xml
     :start-after: <!-- SPHINX_BC -->
     :end-before: <!-- SPHINX_BC_END -->
@@ -205,7 +205,7 @@ In this example, the only difference between the impermeable fault and permeable
 For the impermeable fault case, a constant pressure buildup is imposed to the left compartment of the reservoir (``objectPath="ElementRegions/Domain/97_hexahedra"``):
 
 
-.. literalinclude:: ../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanics/impermeableFault_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_INJECTION -->
     :end-before: <!-- SPHINX_INJECTION_END -->
@@ -213,7 +213,7 @@ For the impermeable fault case, a constant pressure buildup is imposed to the le
 
 For the permeable fault case, a constant pressure buildup is imposed to both compartments of the reservoir: (``objectPath="ElementRegions/Domain/97_hexahedra"`` and ``objectPath="ElementRegions/Domain/96_hexahedra"``): 
 
-.. literalinclude:: ../../../../../../inputFiles/poromechanics/permeableFault_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanics/permeableFault_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_INJECTION -->
     :end-before: <!-- SPHINX_INJECTION_END -->
@@ -277,7 +277,7 @@ The following figure shows the distribution of resulting shear stress (:math:`\s
 
 The figure below compares the results from GEOSX (marks) and the corresponding analytical solution (solid curves) for the change of total stresses (:math:`\sigma_{xx}`, :math:`\sigma_{yy}` and :math:`\sigma_{xy}`) along the fault plane. As shown, GEOSX reliably captures the mechanical deformation of the faulted reservoir and shows excellent agreement with the analytical solutions for two different scenarios. Differences in the stress perturbations between the cases with permeable and impermeable fault are also noticeable, which suggests that fault permeability plays a crucial role in governing reservoir deformation for the problems with reservoir pressurization or depletion. 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/faultVerification/faultVerificationFigure.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/faultMechanics/faultVerification/faultVerificationFigure.py
 
 
 ------------------------------------------------------------------

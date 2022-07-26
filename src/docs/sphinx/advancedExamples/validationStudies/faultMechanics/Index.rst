@@ -13,9 +13,9 @@ Fault Mechanics
 
    sneddon/Example
 
-   mandel/Example 
-   
+   mandel/Example
 
+   faultVerification/Example
 
 
 

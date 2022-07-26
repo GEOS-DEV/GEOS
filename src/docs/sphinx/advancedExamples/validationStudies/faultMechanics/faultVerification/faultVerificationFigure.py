@@ -81,7 +81,7 @@ def getCompressiveStressFromXML( xmlFilePath ):
 
 def main():
     # File path
-    xmlFilePath = "../../../../../../inputFiles/poromechanics/faultPoroelastic_base.xml"
+    xmlFilePath = "../../../../../../../inputFiles/poromechanics/faultPoroelastic_base.xml"
 
     # Extract info from XML
     hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlFilePath)
