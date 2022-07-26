@@ -423,11 +423,12 @@ struct VelocityComputation
           }
         }
 
-        real64 N[numNodesPerElem];
-        real64 gradN[ numNodesPerElem ][ 3 ];
-
         for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
         {
+
+          real64 N[numNodesPerElem];
+          real64 gradN[ numNodesPerElem ][ 3 ];
+
           real64 uelemx[numNodesPerElem] = {0.0};
           real64 uelemy[numNodesPerElem] = {0.0};
           real64 uelemz[numNodesPerElem] = {0.0};
@@ -527,18 +528,19 @@ struct PressureComputation
           xLocal[a][i] = X( elemsToNodes( k, a ), i );
         }
       }
-
-      real64 N[numNodesPerElem];
-      real64 gradN[ numNodesPerElem ][ 3 ];
-  
-      real64 auxx[numNodesPerElem]  = {0.0};
-      real64 auyy[numNodesPerElem]  = {0.0};
-      real64 auzz[numNodesPerElem]  = {0.0};
-      real64 uelemx[numNodesPerElem] = {0.0};
   
       
       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
+        real64 N[numNodesPerElem];
+        real64 gradN[ numNodesPerElem ][ 3 ];
+  
+        real64 auxx[numNodesPerElem]  = {0.0};
+        real64 auyy[numNodesPerElem]  = {0.0};
+        real64 auzz[numNodesPerElem]  = {0.0};
+        real64 uelemx[numNodesPerElem] = {0.0};
+
+        
         FE_TYPE::calcN( q, N );
         real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
     
