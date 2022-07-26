@@ -385,6 +385,215 @@ struct MassAndDampingMatrixKernel
 };
 
 
+template< typename FE_TYPE >
+struct VelocityComputation
+{
+
+  VelocityComputation( FE_TYPE const & finiteElement )
+    : m_finiteElement( finiteElement )
+  {}
+
+  /**
+   * Add Comments
+   */
+
+   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+   void
+   launch( localIndex const size,
+           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+           arrayView1d < real64 const > const  p_np1,
+           arrayView1d < real64 const > const density,
+           real64 const dt,
+           arrayView2d < real64 > const velocity_x,
+           arrayView2d < real64 > const velocity_y,
+           arrayView2d < real64 > const velocity_z)
+    {
+      forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+      {
+        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+        real64 xLocal[numNodesPerElem][3];
+        for( localIndex a=0; a< numNodesPerElem; ++a )
+        {
+          for( localIndex i=0; i<3; ++i )
+          {
+            xLocal[a][i] = X( elemsToNodes( k, a ), i );
+          }
+        }
+
+        real64 N[numNodesPerElem];
+        real64 gradN[ numNodesPerElem ][ 3 ];
+
+        for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+        {
+          real64 uelemx[numNodesPerElem] = {0.0};
+          real64 uelemy[numNodesPerElem] = {0.0};
+          real64 uelemz[numNodesPerElem] = {0.0};
+          real64 flowx[numNodesPerElem] = {0.0};
+          real64 flowy[numNodesPerElem] = {0.0};
+          real64 flowz[numNodesPerElem] = {0.0};
+ 
+          FE_TYPE::calcN( q, N );
+          real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+      
+          for (localIndex i = 0; i < numNodesPerElem; ++i)
+          {
+            uelemx[i] = detJ*velocity_x[k][i];
+            uelemy[i] = detJ*velocity_y[k][i];
+            uelemz[i] = detJ*velocity_z[k][i];
+          }
+      
+          for (localIndex j = 0; j < numNodesPerElem; ++j)
+          {
+            for (localIndex i = 0; i < numNodesPerElem; ++i)
+            {
+              real64 dfx2 = detJ*gradN[j][0]*N[i];
+              real64 dfy2 = detJ*gradN[j][1]*N[i];
+              real64 dfz2 = detJ*gradN[j][2]*N[i];
+      
+              flowx[i] += dfx2*p_np1[elemsToNodes[k][j]];
+              flowy[i] += dfy2*p_np1[elemsToNodes[k][j]];
+              flowz[i] += dfz2*p_np1[elemsToNodes[k][j]];
+            }
+          }
+      
+          for (localIndex i = 0; i < numNodesPerElem; ++i)
+          {
+            uelemx[i]+=dt*flowx[i]/density[i];
+            uelemy[i]+=dt*flowy[i]/density[i];
+            uelemz[i]+=dt*flowz[i]/density[i];
+          }
+      
+          for (localIndex i = 0; i < numNodesPerElem; ++i)
+          {
+            velocity_x[k][i] = uelemx[i]/(detJ);
+            velocity_y[k][i] = uelemy[i]/(detJ);
+            velocity_z[k][i] = uelemz[i]/(detJ);
+          }
+
+        }
+      } );
+    }
+
+    /// The finite element space/discretization object for the element type in the subRegion
+    FE_TYPE const & m_finiteElement;
+};
+
+template< typename FE_TYPE >
+struct PressureComputation
+{
+
+  PressureComputation( FE_TYPE const & finiteElement )
+    : m_finiteElement( finiteElement )
+  {}
+
+  /**
+   * Add doc
+   */
+
+   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+   void 
+   launch( localIndex const size,
+           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+           arrayView2d < real64 const > const velocity_x,
+           arrayView2d < real64 const > const velocity_y,
+           arrayView2d < real64 const > const velocity_z,
+           arrayView1d< const real64 > const mass,
+           arrayView1d< const real64 > const rhs,
+           arrayView1d< const real64 > const mediumVelocity,
+           arrayView1d< const real64 > const density,
+           arrayView2d< real64 const > const sourceConstants,
+           arrayView1d< localIndex const > const sourceIsLocal,
+           arrayView1d< localIndex const > const sourceElem,
+           arrayView2d< real64 const > const sourceValue,
+           real64 const dt,
+           integer const cycleNumber,
+           arrayView1d < real64 > const  p_np1)
+
+  {
+    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+      real64 xLocal[numNodesPerElem][3];
+      for( localIndex a=0; a< numNodesPerElem; ++a )
+      {
+        for( localIndex i=0; i<3; ++i )
+        {
+          xLocal[a][i] = X( elemsToNodes( k, a ), i );
+        }
+      }
+
+      real64 N[numNodesPerElem];
+      real64 gradN[ numNodesPerElem ][ 3 ];
+  
+      real64 auxx[numNodesPerElem]  = {0.0};
+      real64 auyy[numNodesPerElem]  = {0.0};
+      real64 auzz[numNodesPerElem]  = {0.0};
+      real64 uelemx[numNodesPerElem] = {0.0};
+  
+      
+      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      {
+        FE_TYPE::calcN( q, N );
+        real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+    
+        for (localIndex j = 0; j < numNodesPerElem; ++j)
+        {
+          for (localIndex i = 0; i < numNodesPerElem; ++i)
+          {
+            real64 dfx = detJ*gradN[i][0]*N[j];
+            real64 dfy = detJ*gradN[i][1]*N[j];
+            real64 dfz = detJ*gradN[i][2]*N[j];
+            auxx[i] -= dfx*velocity_x[k][j];
+            auyy[i] -= dfy*velocity_y[k][j];
+            auzz[i] -= dfz*velocity_z[k][j];
+          }
+    
+        }
+    
+        // Time update
+        for (localIndex i = 0; i < numNodesPerElem; ++i)
+        {
+          real64 diag=(auxx[i]+auyy[i]+auzz[i]);
+          uelemx[i]+=dt*diag;
+        }
+    
+        for (localIndex i = 0; i < numNodesPerElem; ++i)
+        {
+          real64 const localIncrement = uelemx[i]/mass[elemsToNodes[k][i]];
+          RAJA::atomicAdd< ATOMIC_POLICY >(&p_np1[elemsToNodes[k][i]],localIncrement);
+        }
+    
+        //Source Injection
+        for (localIndex isrc = 0; isrc < sourceConstants.size(0); ++isrc)
+        {
+          if( sourceIsLocal[isrc] == 1 )
+          {
+            if (sourceElem[isrc]==k)
+            {
+              for (localIndex i = 0; i < numNodesPerElem; ++i)
+              {  
+                real64 const localIncrement2 = dt*(rhs[elemsToNodes[k][i]])/(mass[elemsToNodes[k][i]]*mediumVelocity[k]*mediumVelocity[k]*density[k]);
+                RAJA::atomicAdd< ATOMIC_POLICY >(&p_np1[elemsToNodes[k][i]],localIncrement2);
+              }
+            }
+          }
+        }
+
+      }
+
+    } );
+  }
+
+  /// The finite element space/discretization object for the element type in the subRegion
+  FE_TYPE const & m_finiteElement;
+
+};
 /**
  * @brief Implements kernels for solving the acoustic wave equations
  *   explicit central FD method and SEM
@@ -402,469 +611,469 @@ struct MassAndDampingMatrixKernel
  */
 
 
-template< typename SUBREGION_TYPE,
-          typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
-class ExplicitAcousticPressureSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                              CONSTITUTIVE_TYPE,
-                                                              FE_TYPE,
-                                                              1,
-                                                              1 >
-{
-public:
+// template< typename SUBREGION_TYPE,
+//           typename CONSTITUTIVE_TYPE,
+//           typename FE_TYPE >
+// class ExplicitAcousticPressureSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
+//                                                               CONSTITUTIVE_TYPE,
+//                                                               FE_TYPE,
+//                                                               1,
+//                                                               1 >
+// {
+// public:
 
-  /// Alias for the base class;
-  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
-                                          CONSTITUTIVE_TYPE,
-                                          FE_TYPE,
-                                          1,
-                                          1 >;
+//   /// Alias for the base class;
+//   using Base = finiteElement::KernelBase< SUBREGION_TYPE,
+//                                           CONSTITUTIVE_TYPE,
+//                                           FE_TYPE,
+//                                           1,
+//                                           1 >;
 
-  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
-  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
-  /// will be the actual number of nodes per element.
-  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
+//   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+//   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+//   /// will be the actual number of nodes per element.
+//   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
-  using Base::numDofPerTestSupportPoint;
-  using Base::numDofPerTrialSupportPoint;
-  using Base::m_elemsToNodes;
-  using Base::m_elemGhostRank;
-  using Base::m_constitutiveUpdate;
-  using Base::m_finiteElementSpace;
+//   using Base::numDofPerTestSupportPoint;
+//   using Base::numDofPerTrialSupportPoint;
+//   using Base::m_elemsToNodes;
+//   using Base::m_elemGhostRank;
+//   using Base::m_constitutiveUpdate;
+//   using Base::m_finiteElementSpace;
 
-//*****************************************************************************
-  /**
-   * @brief Constructor
-   * @copydoc geosx::finiteElement::KernelBase::KernelBase
-   * @param nodeManager Reference to the NodeManager object.
-   * @param edgeManager Reference to the EdgeManager object.
-   * @param faceManager Reference to the FaceManager object.
-   * @param targetRegionIndex Index of the region the subregion belongs to.
-   * @param dt The time interval for the step.
-   *   elements to be processed during this kernel launch.
-   */
-  ExplicitAcousticPressureSEM( NodeManager & nodeManager,
-                       EdgeManager const & edgeManager,
-                       FaceManager const & faceManager,
-                       localIndex const targetRegionIndex,
-                       SUBREGION_TYPE const & elementSubRegion,
-                       FE_TYPE const & finiteElementSpace,
-                       CONSTITUTIVE_TYPE & inputConstitutiveType,
-                       arrayView1d< localIndex const > const inputSourceElem,
-                       arrayView1d< localIndex const> const inputSourceIsLocal,
-                       arrayView2d< real64 const > const inputSourceConstants,
-                       arrayView2d< real64 const > const inputSourceValue,
-                       real64 const dt,
-                       integer const & cycleNumber ):
-    Base( elementSubRegion,
-          finiteElementSpace,
-          inputConstitutiveType ),
-    m_X( nodeManager.referencePosition() ),
-    m_p_np1( nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >() ),
-    m_velocity_x(elementSubRegion.template getExtrinsicData< extrinsicMeshData::Velocity_x>()),
-    m_velocity_y(elementSubRegion.template getExtrinsicData< extrinsicMeshData::Velocity_y>()),
-    m_velocity_z(elementSubRegion.template getExtrinsicData< extrinsicMeshData::Velocity_z>()),
-    m_mass( nodeManager.getExtrinsicData< extrinsicMeshData::MassVector > ()),
-    m_damping( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector > ()),
-    //m_rhs( nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS > ()),
-    // m_stiffnessVector( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >() ),
-    m_cycleNumber(cycleNumber),
-    m_dt( dt ),
-    m_sourceElem(inputSourceElem),
-    m_sourceIsLocal(inputSourceIsLocal),
-    m_sourceConstants(inputSourceConstants),
-    m_sourceValue(inputSourceValue)
-  {
-    GEOSX_UNUSED_VAR( edgeManager );
-    GEOSX_UNUSED_VAR( faceManager );
-    GEOSX_UNUSED_VAR( targetRegionIndex );
-  }
-
-
-
-  //*****************************************************************************
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::StackVariables
-   *
-   * ### ExplicitAcousticSEM Description
-   * Adds a stack arrays for the nodal force, primary displacement variable, etc.
-   */
-  struct StackVariables : Base::StackVariables
-  {
-public:
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      xLocal()
-    {}
-
-    /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
-  };
-  //***************************************************************************
+// //*****************************************************************************
+//   /**
+//    * @brief Constructor
+//    * @copydoc geosx::finiteElement::KernelBase::KernelBase
+//    * @param nodeManager Reference to the NodeManager object.
+//    * @param edgeManager Reference to the EdgeManager object.
+//    * @param faceManager Reference to the FaceManager object.
+//    * @param targetRegionIndex Index of the region the subregion belongs to.
+//    * @param dt The time interval for the step.
+//    *   elements to be processed during this kernel launch.
+//    */
+//   ExplicitAcousticPressureSEM( NodeManager & nodeManager,
+//                        EdgeManager const & edgeManager,
+//                        FaceManager const & faceManager,
+//                        localIndex const targetRegionIndex,
+//                        SUBREGION_TYPE const & elementSubRegion,
+//                        FE_TYPE const & finiteElementSpace,
+//                        CONSTITUTIVE_TYPE & inputConstitutiveType,
+//                        arrayView1d< localIndex const > const inputSourceElem,
+//                        arrayView1d< localIndex const> const inputSourceIsLocal,
+//                        arrayView2d< real64 const > const inputSourceConstants,
+//                        arrayView2d< real64 const > const inputSourceValue,
+//                        real64 const dt,
+//                        integer const & cycleNumber ):
+//     Base( elementSubRegion,
+//           finiteElementSpace,
+//           inputConstitutiveType ),
+//     m_X( nodeManager.referencePosition() ),
+//     m_p_np1( nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >() ),
+//     m_velocity_x(elementSubRegion.template getExtrinsicData< extrinsicMeshData::Velocity_x>()),
+//     m_velocity_y(elementSubRegion.template getExtrinsicData< extrinsicMeshData::Velocity_y>()),
+//     m_velocity_z(elementSubRegion.template getExtrinsicData< extrinsicMeshData::Velocity_z>()),
+//     m_mass( nodeManager.getExtrinsicData< extrinsicMeshData::MassVector > ()),
+//     m_damping( nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector > ()),
+//     //m_rhs( nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS > ()),
+//     // m_stiffnessVector( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >() ),
+//     m_cycleNumber(cycleNumber),
+//     m_dt( dt ),
+//     m_sourceElem(inputSourceElem),
+//     m_sourceIsLocal(inputSourceIsLocal),
+//     m_sourceConstants(inputSourceConstants),
+//     m_sourceValue(inputSourceValue)
+//   {
+//     GEOSX_UNUSED_VAR( edgeManager );
+//     GEOSX_UNUSED_VAR( faceManager );
+//     GEOSX_UNUSED_VAR( targetRegionIndex );
+//   }
 
 
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::setup
-   *
-   * Copies the primary variable, and position into the local stack array.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void setup( localIndex const k,
-              StackVariables & stack ) const
-  {
-    /// numDofPerTrialSupportPoint = 1
-    for( localIndex a=0; a< numNodesPerElem; ++a )
-    {
-      localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int i=0; i< 3; ++i )
-      {
-        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
-      }
-    }
-  }
 
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
-   *
-   * ### ExplicitAcousticSEM Description
-   * Calculates stiffness vector
-   *
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointKernel( localIndex const k,
-                              localIndex const q,
-                              StackVariables & stack ) const
-  {
+//   //*****************************************************************************
+//   /**
+//    * @copydoc geosx::finiteElement::KernelBase::StackVariables
+//    *
+//    * ### ExplicitAcousticSEM Description
+//    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
+//    */
+//   struct StackVariables : Base::StackVariables
+//   {
+// public:
+//     GEOSX_HOST_DEVICE
+//     StackVariables():
+//       xLocal()
+//     {}
+
+//     /// C-array stack storage for element local the nodal positions.
+//     real64 xLocal[ numNodesPerElem ][ 3 ];
+//   };
+//   //***************************************************************************
+
+
+//   /**
+//    * @copydoc geosx::finiteElement::KernelBase::setup
+//    *
+//    * Copies the primary variable, and position into the local stack array.
+//    */
+//   GEOSX_HOST_DEVICE
+//   GEOSX_FORCE_INLINE
+//   void setup( localIndex const k,
+//               StackVariables & stack ) const
+//   {
+//     /// numDofPerTrialSupportPoint = 1
+//     for( localIndex a=0; a< numNodesPerElem; ++a )
+//     {
+//       localIndex const nodeIndex = m_elemsToNodes( k, a );
+//       for( int i=0; i< 3; ++i )
+//       {
+//         stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+//       }
+//     }
+//   }
+
+//   /**
+//    * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+//    *
+//    * ### ExplicitAcousticSEM Description
+//    * Calculates stiffness vector
+//    *
+//    */
+//   GEOSX_HOST_DEVICE
+//   GEOSX_FORCE_INLINE
+//   void quadraturePointKernel( localIndex const k,
+//                               localIndex const q,
+//                               StackVariables & stack ) const
+//   {
   
-    real64 N[numNodesPerElem];
-    real64 gradN[ numNodesPerElem ][ 3 ];
+//     real64 N[numNodesPerElem];
+//     real64 gradN[ numNodesPerElem ][ 3 ];
 
-    real64 auxx[numNodesPerElem]  = {0.0};
-    real64 auyy[numNodesPerElem]  = {0.0};
-    real64 auzz[numNodesPerElem]  = {0.0};
-    real64 uelemx[numNodesPerElem] = {0.0};
+//     real64 auxx[numNodesPerElem]  = {0.0};
+//     real64 auyy[numNodesPerElem]  = {0.0};
+//     real64 auzz[numNodesPerElem]  = {0.0};
+//     real64 uelemx[numNodesPerElem] = {0.0};
 
-    FE_TYPE::calcN( q, N );
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
+//     FE_TYPE::calcN( q, N );
+//     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
 
-    for (localIndex i = 0; i < numNodesPerElem; ++i)
-    {
-      uelemx[i] = (m_mass[m_elemsToNodes[k][i]]-0.5*m_dt*m_damping[m_elemsToNodes[k][i]])*m_p_np1[m_elemsToNodes[k][i]];
-    }
+//     for (localIndex i = 0; i < numNodesPerElem; ++i)
+//     {
+//       uelemx[i] = (m_mass[m_elemsToNodes[k][i]]-0.5*m_dt*m_damping[m_elemsToNodes[k][i]])*m_p_np1[m_elemsToNodes[k][i]];
+//     }
 
-    for (localIndex j = 0; j < numNodesPerElem; ++j)
-    {
-      for (localIndex i = 0; i < numNodesPerElem; ++i)
-      {
-        real64 dfx = detJ*gradN[i][0]*N[j];
-        real64 dfy = detJ*gradN[i][1]*N[j];
-        real64 dfz = detJ*gradN[i][2]*N[j];
-        auxx[i] -= dfx*m_velocity_x[k][j];
-        auyy[i] -= dfy*m_velocity_y[k][j];
-        auzz[i] -= dfz*m_velocity_z[k][j];
-      }
+//     for (localIndex j = 0; j < numNodesPerElem; ++j)
+//     {
+//       for (localIndex i = 0; i < numNodesPerElem; ++i)
+//       {
+//         real64 dfx = detJ*gradN[i][0]*N[j];
+//         real64 dfy = detJ*gradN[i][1]*N[j];
+//         real64 dfz = detJ*gradN[i][2]*N[j];
+//         auxx[i] -= dfx*m_velocity_x[k][j];
+//         auyy[i] -= dfy*m_velocity_y[k][j];
+//         auzz[i] -= dfz*m_velocity_z[k][j];
+//       }
 
-    }
+//     }
 
-    // Time update
-    for (localIndex i = 0; i < numNodesPerElem; ++i)
-    {
-      real64 diag=(auxx[i]+auyy[i]+auzz[i]);
-      uelemx[i]+=m_dt*diag;
-    }
+//     // Time update
+//     for (localIndex i = 0; i < numNodesPerElem; ++i)
+//     {
+//       real64 diag=(auxx[i]+auyy[i]+auzz[i]);
+//       uelemx[i]+=m_dt*diag;
+//     }
 
-    for (localIndex i = 0; i < numNodesPerElem; ++i)
-    {
-      m_p_np1[m_elemsToNodes[k][i]]= uelemx[i]/(m_mass[m_elemsToNodes[k][i]]-0.5*m_dt*m_damping[m_elemsToNodes[k][i]]);
-    }
+//     for (localIndex i = 0; i < numNodesPerElem; ++i)
+//     {
+//       m_p_np1[m_elemsToNodes[k][i]]= uelemx[i]/(m_mass[m_elemsToNodes[k][i]]-0.5*m_dt*m_damping[m_elemsToNodes[k][i]]);
+//     }
 
-    //Source Injection
-    for (localIndex isrc = 0; isrc < m_sourceConstants.size(0); ++isrc)
-    {
-      if( m_sourceIsLocal[isrc] == 1 )
-      {
-        if (m_sourceElem[isrc]==k)
-        {
-          for (localIndex i = 0; i < numNodesPerElem; ++i)
-          {
-            m_p_np1[m_elemsToNodes[k][i]]+=m_dt*(m_sourceConstants[isrc][i]*m_sourceValue[m_cycleNumber][isrc])/(detJ);
-          }
-        }
-      }
-    }
+//     //Source Injection
+//     for (localIndex isrc = 0; isrc < m_sourceConstants.size(0); ++isrc)
+//     {
+//       if( m_sourceIsLocal[isrc] == 1 )
+//       {
+//         if (m_sourceElem[isrc]==k)
+//         {
+//           for (localIndex i = 0; i < numNodesPerElem; ++i)
+//           {
+//             m_p_np1[m_elemsToNodes[k][i]]+=m_dt*(m_sourceConstants[isrc][i]*m_sourceValue[m_cycleNumber][isrc])/(detJ);
+//           }
+//         }
+//       }
+//     }
 
-  }
+//   }
 
 
-protected:
-  /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+// protected:
+//   /// The array containing the nodal position array.
+//   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
-  /// The array containing the nodal pressure array.
-  arrayView1d< real64  > const m_p_np1;
+//   /// The array containing the nodal pressure array.
+//   arrayView1d< real64  > const m_p_np1;
 
-  /// The array containing the product of the stiffness matrix and the nodal pressure.
-  //arrayView1d< real64 > const m_stiffnessVector;
+//   /// The array containing the product of the stiffness matrix and the nodal pressure.
+//   //arrayView1d< real64 > const m_stiffnessVector;
   
-  /// The array containing the x component of the velocity
-  arrayView2d < real64 const > const m_velocity_x;
+//   /// The array containing the x component of the velocity
+//   arrayView2d < real64 const > const m_velocity_x;
 
-  /// The array containing the y component of the velocity
-  arrayView2d < real64 const > const m_velocity_y;
+//   /// The array containing the y component of the velocity
+//   arrayView2d < real64 const > const m_velocity_y;
 
-  /// The array containing the z component of the velocity
-  arrayView2d < real64 const > const m_velocity_z;
+//   /// The array containing the z component of the velocity
+//   arrayView2d < real64 const > const m_velocity_z;
 
-  /// The array containing the diagonal of the mass matrix
-  arrayView1d< real64 const > const m_mass;
+//   /// The array containing the diagonal of the mass matrix
+//   arrayView1d< real64 const > const m_mass;
 
-  /// The array containing the diagonal of the damping matrix
-  arrayView1d< real64 const> const m_damping;
+//   /// The array containing the diagonal of the damping matrix
+//   arrayView1d< real64 const> const m_damping;
 
-  /// The array containing the RHS
-  //arrayView1d< real64  > const m_rhs;
+//   /// The array containing the RHS
+//   //arrayView1d< real64  > const m_rhs;
 
-  integer const m_cycleNumber;
+//   integer const m_cycleNumber;
 
-  /// The time increment for this time integration step.
-  real64 const m_dt;
+//   /// The time increment for this time integration step.
+//   real64 const m_dt;
 
-  // The array containing the list of element which contains a source
-  arrayView1d< localIndex const > const m_sourceElem;
+//   // The array containing the list of element which contains a source
+//   arrayView1d< localIndex const > const m_sourceElem;
 
-  // The array containing the list of element which contains a source
-  arrayView1d< localIndex const> const m_sourceIsLocal;
+//   // The array containing the list of element which contains a source
+//   arrayView1d< localIndex const> const m_sourceIsLocal;
 
-  // The array containing the coefficients to multiply with the time source.
-  arrayView2d< real64 const > const m_sourceConstants;
+//   // The array containing the coefficients to multiply with the time source.
+//   arrayView2d< real64 const > const m_sourceConstants;
 
-  // The array containing the value of the time source (eg. Ricker) at each time-step.
-  arrayView2d< real64 const > const m_sourceValue;
+//   // The array containing the value of the time source (eg. Ricker) at each time-step.
+//   arrayView2d< real64 const > const m_sourceValue;
 
-};
+// };
 
-template< typename SUBREGION_TYPE,
-          typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
-class ExplicitAcousticVelocitySEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                              CONSTITUTIVE_TYPE,
-                                                              FE_TYPE,
-                                                              1,
-                                                              1 >
-{
-public:
+// template< typename SUBREGION_TYPE,
+//           typename CONSTITUTIVE_TYPE,
+//           typename FE_TYPE >
+// class ExplicitAcousticVelocitySEM : public finiteElement::KernelBase< SUBREGION_TYPE,
+//                                                               CONSTITUTIVE_TYPE,
+//                                                               FE_TYPE,
+//                                                               1,
+//                                                               1 >
+// {
+// public:
 
-  /// Alias for the base class;
-  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
-                                          CONSTITUTIVE_TYPE,
-                                          FE_TYPE,
-                                          1,
-                                          1 >;
+//   /// Alias for the base class;
+//   using Base = finiteElement::KernelBase< SUBREGION_TYPE,
+//                                           CONSTITUTIVE_TYPE,
+//                                           FE_TYPE,
+//                                           1,
+//                                           1 >;
 
-  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
-  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
-  /// will be the actual number of nodes per element.
-  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
+//   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+//   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+//   /// will be the actual number of nodes per element.
+//   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
-  using Base::numDofPerTestSupportPoint;
-  using Base::numDofPerTrialSupportPoint;
-  using Base::m_elemsToNodes;
-  using Base::m_elemGhostRank;
-  using Base::m_constitutiveUpdate;
-  using Base::m_finiteElementSpace;
+//   using Base::numDofPerTestSupportPoint;
+//   using Base::numDofPerTrialSupportPoint;
+//   using Base::m_elemsToNodes;
+//   using Base::m_elemGhostRank;
+//   using Base::m_constitutiveUpdate;
+//   using Base::m_finiteElementSpace;
 
-//*****************************************************************************
-  /**
-   * @brief Constructor
-   * @copydoc geosx::finiteElement::KernelBase::KernelBase
-   * @param nodeManager Reference to the NodeManager object.
-   * @param edgeManager Reference to the EdgeManager object.
-   * @param faceManager Reference to the FaceManager object.
-   * @param targetRegionIndex Index of the region the subregion belongs to.
-   * @param dt The time interval for the step.
-   *   elements to be processed during this kernel launch.
-   */
-  ExplicitAcousticVelocitySEM( NodeManager & nodeManager,
-                       EdgeManager const & edgeManager,
-                       FaceManager const & faceManager,
-                       localIndex const targetRegionIndex,
-                       SUBREGION_TYPE const & elementSubRegion,
-                       FE_TYPE const & finiteElementSpace,
-                       CONSTITUTIVE_TYPE & inputConstitutiveType,
-                       arrayView2d < real64 > const & inputVelocityx,
-                       arrayView2d < real64 > const & inputVelocityy,
-                       arrayView2d < real64 > const & inputVelocityz,
-                       real64 const dt ):
-    Base( elementSubRegion,
-          finiteElementSpace,
-          inputConstitutiveType ),
-    m_X( nodeManager.referencePosition() ),
-    m_p_np1( nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >() ),
-    m_velocity_x(inputVelocityx),
-    m_velocity_y(inputVelocityy),
-    m_velocity_z(inputVelocityz),
-    m_density( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumDensity >() ),
-    // m_stiffnessVector( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >() ),
-    m_dt( dt )
-  {
-    GEOSX_UNUSED_VAR( edgeManager );
-    GEOSX_UNUSED_VAR( faceManager );
-    GEOSX_UNUSED_VAR( targetRegionIndex );
-  }
-
-
-
-  //*****************************************************************************
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::StackVariables
-   *
-   * ### ExplicitAcousticSEM Description
-   * Adds a stack arrays for the nodal force, primary displacement variable, etc.
-   */
-  struct StackVariables : Base::StackVariables
-  {
-public:
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      xLocal()
-    {}
-
-    /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
-  };
-  //***************************************************************************
+// //*****************************************************************************
+//   /**
+//    * @brief Constructor
+//    * @copydoc geosx::finiteElement::KernelBase::KernelBase
+//    * @param nodeManager Reference to the NodeManager object.
+//    * @param edgeManager Reference to the EdgeManager object.
+//    * @param faceManager Reference to the FaceManager object.
+//    * @param targetRegionIndex Index of the region the subregion belongs to.
+//    * @param dt The time interval for the step.
+//    *   elements to be processed during this kernel launch.
+//    */
+//   ExplicitAcousticVelocitySEM( NodeManager & nodeManager,
+//                        EdgeManager const & edgeManager,
+//                        FaceManager const & faceManager,
+//                        localIndex const targetRegionIndex,
+//                        SUBREGION_TYPE const & elementSubRegion,
+//                        FE_TYPE const & finiteElementSpace,
+//                        CONSTITUTIVE_TYPE & inputConstitutiveType,
+//                        arrayView2d < real64 > const & inputVelocityx,
+//                        arrayView2d < real64 > const & inputVelocityy,
+//                        arrayView2d < real64 > const & inputVelocityz,
+//                        real64 const dt ):
+//     Base( elementSubRegion,
+//           finiteElementSpace,
+//           inputConstitutiveType ),
+//     m_X( nodeManager.referencePosition() ),
+//     m_p_np1( nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >() ),
+//     m_velocity_x(inputVelocityx),
+//     m_velocity_y(inputVelocityy),
+//     m_velocity_z(inputVelocityz),
+//     m_density( elementSubRegion.template getExtrinsicData< extrinsicMeshData::MediumDensity >() ),
+//     // m_stiffnessVector( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >() ),
+//     m_dt( dt )
+//   {
+//     GEOSX_UNUSED_VAR( edgeManager );
+//     GEOSX_UNUSED_VAR( faceManager );
+//     GEOSX_UNUSED_VAR( targetRegionIndex );
+//   }
 
 
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::setup
-   *
-   * Copies the primary variable, and position into the local stack array.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void setup( localIndex const k,
-              StackVariables & stack ) const
-  {
-    /// numDofPerTrialSupportPoint = 1
-    for( localIndex a=0; a< numNodesPerElem; ++a )
-    {
-      localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int i=0; i< 3; ++i )
-      {
-        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
-      }
-    }
-  }
 
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
-   *
-   * ### ExplicitAcousticSEM Description
-   * Calculates stiffness vector
-   *
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointKernel( localIndex const k,
-                              localIndex const q,
-                              StackVariables & stack ) const
-  {
-    real64 N[numNodesPerElem];
-    real64 gradN[ numNodesPerElem ][ 3 ];
+//   //*****************************************************************************
+//   /**
+//    * @copydoc geosx::finiteElement::KernelBase::StackVariables
+//    *
+//    * ### ExplicitAcousticSEM Description
+//    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
+//    */
+//   struct StackVariables : Base::StackVariables
+//   {
+// public:
+//     GEOSX_HOST_DEVICE
+//     StackVariables():
+//       xLocal()
+//     {}
 
-    real64 uelemx[numNodesPerElem] = {0.0};
-    real64 uelemy[numNodesPerElem] = {0.0};
-    real64 uelemz[numNodesPerElem] = {0.0};
-    real64 flowx[numNodesPerElem] = {0.0};
-    real64 flowy[numNodesPerElem] = {0.0};
-    real64 flowz[numNodesPerElem] = {0.0};
+//     /// C-array stack storage for element local the nodal positions.
+//     real64 xLocal[ numNodesPerElem ][ 3 ];
+//   };
+//   //***************************************************************************
 
-    FE_TYPE::calcN( q, N );
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
 
-    for (localIndex i = 0; i < numNodesPerElem; ++i)
-    {
-      uelemx[i] = detJ*m_velocity_x[k][i];
-      uelemy[i] = detJ*m_velocity_y[k][i];
-      uelemz[i] = detJ*m_velocity_z[k][i];
-    }
+//   /**
+//    * @copydoc geosx::finiteElement::KernelBase::setup
+//    *
+//    * Copies the primary variable, and position into the local stack array.
+//    */
+//   GEOSX_HOST_DEVICE
+//   GEOSX_FORCE_INLINE
+//   void setup( localIndex const k,
+//               StackVariables & stack ) const
+//   {
+//     /// numDofPerTrialSupportPoint = 1
+//     for( localIndex a=0; a< numNodesPerElem; ++a )
+//     {
+//       localIndex const nodeIndex = m_elemsToNodes( k, a );
+//       for( int i=0; i< 3; ++i )
+//       {
+//         stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+//       }
+//     }
+//   }
 
-    for (localIndex j = 0; j < numNodesPerElem; ++j)
-    {
-      for (localIndex i = 0; i < numNodesPerElem; ++i)
-      {
-        real64 dfx2 = detJ*gradN[j][0]*N[i];
-        real64 dfy2 = detJ*gradN[j][1]*N[i];
-        real64 dfz2 = detJ*gradN[j][2]*N[i];
+//   /**
+//    * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+//    *
+//    * ### ExplicitAcousticSEM Description
+//    * Calculates stiffness vector
+//    *
+//    */
+//   GEOSX_HOST_DEVICE
+//   GEOSX_FORCE_INLINE
+//   void quadraturePointKernel( localIndex const k,
+//                               localIndex const q,
+//                               StackVariables & stack ) const
+//   {
+//     real64 N[numNodesPerElem];
+//     real64 gradN[ numNodesPerElem ][ 3 ];
 
-        flowx[i] += dfx2*m_p_np1[m_elemsToNodes[k][j]];
-        flowy[i] += dfy2*m_p_np1[m_elemsToNodes[k][j]];
-        flowz[i] += dfz2*m_p_np1[m_elemsToNodes[k][j]];
-      }
-    }
+//     real64 uelemx[numNodesPerElem] = {0.0};
+//     real64 uelemy[numNodesPerElem] = {0.0};
+//     real64 uelemz[numNodesPerElem] = {0.0};
+//     real64 flowx[numNodesPerElem] = {0.0};
+//     real64 flowy[numNodesPerElem] = {0.0};
+//     real64 flowz[numNodesPerElem] = {0.0};
 
-    for (localIndex i = 0; i < numNodesPerElem; ++i)
-    {
-      uelemx[i]+=m_dt*flowx[i]/m_density[i];
-      uelemy[i]+=m_dt*flowy[i]/m_density[i];
-      uelemz[i]+=m_dt*flowz[i]/m_density[i];
-    }
+//     FE_TYPE::calcN( q, N );
+//     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
 
-    for (localIndex i = 0; i < numNodesPerElem; ++i)
-    {
-      m_velocity_x[k][i] = uelemx[i]/(detJ);
-      m_velocity_y[k][i] = uelemy[i]/(detJ);
-      m_velocity_z[k][i] = uelemz[i]/(detJ);
-    }
+//     for (localIndex i = 0; i < numNodesPerElem; ++i)
+//     {
+//       uelemx[i] = detJ*m_velocity_x[k][i];
+//       uelemy[i] = detJ*m_velocity_y[k][i];
+//       uelemz[i] = detJ*m_velocity_z[k][i];
+//     }
+
+//     for (localIndex j = 0; j < numNodesPerElem; ++j)
+//     {
+//       for (localIndex i = 0; i < numNodesPerElem; ++i)
+//       {
+//         real64 dfx2 = detJ*gradN[j][0]*N[i];
+//         real64 dfy2 = detJ*gradN[j][1]*N[i];
+//         real64 dfz2 = detJ*gradN[j][2]*N[i];
+
+//         flowx[i] += dfx2*m_p_np1[m_elemsToNodes[k][j]];
+//         flowy[i] += dfy2*m_p_np1[m_elemsToNodes[k][j]];
+//         flowz[i] += dfz2*m_p_np1[m_elemsToNodes[k][j]];
+//       }
+//     }
+
+//     for (localIndex i = 0; i < numNodesPerElem; ++i)
+//     {
+//       uelemx[i]+=m_dt*flowx[i]/m_density[i];
+//       uelemy[i]+=m_dt*flowy[i]/m_density[i];
+//       uelemz[i]+=m_dt*flowz[i]/m_density[i];
+//     }
+
+//     for (localIndex i = 0; i < numNodesPerElem; ++i)
+//     {
+//       m_velocity_x[k][i] = uelemx[i]/(detJ);
+//       m_velocity_y[k][i] = uelemy[i]/(detJ);
+//       m_velocity_z[k][i] = uelemz[i]/(detJ);
+//     }
 
  
-  }
+//   }
 
 
-protected:
-  /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+// protected:
+//   /// The array containing the nodal position array.
+//   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
-  /// The array containing the nodal pressure array.
-  arrayView1d< real64 const > const m_p_np1;
+//   /// The array containing the nodal pressure array.
+//   arrayView1d< real64 const > const m_p_np1;
 
-  /// The array containing the product of the stiffness matrix and the nodal pressure.
-  //arrayView1d< real64 > const m_stiffnessVector;
+//   /// The array containing the product of the stiffness matrix and the nodal pressure.
+//   //arrayView1d< real64 > const m_stiffnessVector;
   
-  /// The array containing the x component of the velocity
-  arrayView2d < real64  > const m_velocity_x;
+//   /// The array containing the x component of the velocity
+//   arrayView2d < real64  > const m_velocity_x;
 
-  /// The array containing the y component of the velocity
-  arrayView2d < real64  > const m_velocity_y;
+//   /// The array containing the y component of the velocity
+//   arrayView2d < real64  > const m_velocity_y;
 
-  /// The array containing the z component of the velocity
-  arrayView2d < real64  > const m_velocity_z;
+//   /// The array containing the z component of the velocity
+//   arrayView2d < real64  > const m_velocity_z;
 
-  /// The array containing the density of the medium
-  arrayView1d< real64 const > const m_density;
+//   /// The array containing the density of the medium
+//   arrayView1d< real64 const > const m_density;
 
-  /// The time increment for this time integration step.
-  real64 const m_dt;
+//   /// The time increment for this time integration step.
+//   real64 const m_dt;
 
-};
+// };
 
 
-/// The factory used to construct a ExplicitAcousticPressureWaveEquation kernel.
-using ExplicitAcousticPressureSEMFactory = finiteElement::KernelFactory< ExplicitAcousticPressureSEM,
-                                                                         arrayView1d < localIndex const  > const,
-                                                                         arrayView1d < localIndex const  > const,
-                                                                         arrayView2d < real64 const  > const,
-                                                                         arrayView2d < real64 const  > const,
-                                                                         real64,
-                                                                         integer>;
+// /// The factory used to construct a ExplicitAcousticPressureWaveEquation kernel.
+// using ExplicitAcousticPressureSEMFactory = finiteElement::KernelFactory< ExplicitAcousticPressureSEM,
+//                                                                          arrayView1d < localIndex const  > const,
+//                                                                          arrayView1d < localIndex const  > const,
+//                                                                          arrayView2d < real64 const  > const,
+//                                                                          arrayView2d < real64 const  > const,
+//                                                                          real64,
+//                                                                          integer>;
                                                                 
-using ExplicitAcousticVelocitySEMFactory = finiteElement::KernelFactory< ExplicitAcousticVelocitySEM,
-                                                                         arrayView2d< real64 > const,
-                                                                         arrayView2d< real64 > const,
-                                                                         arrayView2d< real64 > const,
-                                                                         real64 >;
+// using ExplicitAcousticVelocitySEMFactory = finiteElement::KernelFactory< ExplicitAcousticVelocitySEM,
+//                                                                          arrayView2d< real64 > const,
+//                                                                          arrayView2d< real64 > const,
+//                                                                          arrayView2d< real64 > const,
+//                                                                          real64 >;
 
 } // namespace AcousticFirstOrderWaveEquationSEMKernels
 

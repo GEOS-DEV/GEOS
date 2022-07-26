@@ -424,6 +424,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
     /// damping matrix to be computed for each dof in the boundary of the mesh
     arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
     damping.zero();
+    mass.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
@@ -567,6 +568,8 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+
     arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
     //arrayView1d< real64 const > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
 
@@ -589,42 +592,91 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
                                                                                           CellElementSubRegion & elementSubRegion )
       {
 
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+
         arrayView1d< real64 const > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity >();
+        arrayView1d< real64 const > const mediumVelocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
 
-        arrayView2d< real64 > const velocityx = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_x >();
-        arrayView2d< real64 > const velocityy = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_y >();
-        arrayView2d< real64 > const velocityz = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_z >();
+        arrayView2d< real64 > const velocity_x = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_x >();
+        arrayView2d< real64 > const velocity_y = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_y >();
+        arrayView2d< real64 > const velocity_z = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_z >();
+
+        finiteElement::FiniteElementBase const &
+        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+        finiteElement::dispatch3D( fe,
+                                   [&]
+                                       ( auto const finiteElement )
+        {
+          using FE_TYPE = TYPEOFREF( finiteElement ); 
+          
+
+          acousticFirstOrderWaveEquationSEMKernels::
+            VelocityComputation< FE_TYPE > kernel( finiteElement );
+          kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
+          (elementSubRegion.size(),
+           X,
+           elemsToNodes,
+           p_np1,
+           density,
+           dt,
+           velocity_x,
+           velocity_y,
+           velocity_z);
+
+           acousticFirstOrderWaveEquationSEMKernels::
+             PressureComputation< FE_TYPE > kernel2( finiteElement );
+           kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
+           (elementSubRegion.size(),
+            X,
+            elemsToNodes,
+            velocity_x,
+            velocity_y,
+            velocity_z,
+            mass,
+            rhs,
+            mediumVelocity,
+            density,
+            sourceConstants,
+            sourceIsLocal,
+            sourceElem,
+            sourceValue,
+            dt,
+            cycleNumber,
+            p_np1);
 
 
-       auto kernelFactory = acousticFirstOrderWaveEquationSEMKernels::ExplicitAcousticVelocitySEMFactory( velocityx,
-                                                                                                  velocityy,
-                                                                                                  velocityz,
-                                                                                                  dt );
+        } );
 
-        finiteElement::
-        regionBasedKernelApplication< EXEC_POLICY,
-                                      constitutive::NullModel,
-                                      CellElementSubRegion >( mesh,
-                                                              regionNames,
-                                                              getDiscretizationName(),
-                                                              "",
-                                                              kernelFactory );
 
-        auto kernelFactory2 = acousticFirstOrderWaveEquationSEMKernels::ExplicitAcousticPressureSEMFactory( sourceElem,
-                                                                                                            sourceIsLocal,
-                                                                                                            sourceConstants,
-                                                                                                            sourceValue,
-                                                                                                            dt,
-                                                                                                            cycleNumber);
+      //  auto kernelFactory = acousticFirstOrderWaveEquationSEMKernels::ExplicitAcousticVelocitySEMFactory( velocityx,
+      //                                                                                             velocityy,
+      //                                                                                             velocityz,
+      //                                                                                             dt );
 
-        finiteElement::
-        regionBasedKernelApplication< EXEC_POLICY,
-                                      constitutive::NullModel,
-                                      CellElementSubRegion >( mesh,
-                                                              regionNames,
-                                                              getDiscretizationName(),
-                                                              "",
-                                                              kernelFactory2 );
+      //   finiteElement::
+      //   regionBasedKernelApplication< EXEC_POLICY,
+      //                                 constitutive::NullModel,
+      //                                 CellElementSubRegion >( mesh,
+      //                                                         regionNames,
+      //                                                         getDiscretizationName(),
+      //                                                         "",
+      //                                                         kernelFactory );
+
+      //   auto kernelFactory2 = acousticFirstOrderWaveEquationSEMKernels::ExplicitAcousticPressureSEMFactory( sourceElem,
+      //                                                                                                       sourceIsLocal,
+      //                                                                                                       sourceConstants,
+      //                                                                                                       sourceValue,
+      //                                                                                                       dt,
+      //                                                                                                       cycleNumber);
+
+      //   finiteElement::
+      //   regionBasedKernelApplication< EXEC_POLICY,
+      //                                 constitutive::NullModel,
+      //                                 CellElementSubRegion >( mesh,
+      //                                                         regionNames,
+      //                                                         getDiscretizationName(),
+      //                                                         "",
+      //                                                         kernelFactory2 );
 
 
 
