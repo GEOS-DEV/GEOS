@@ -866,10 +866,6 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                            string const & )
     {
       BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
-      if( stencil.size() == 0 )
-      {
-        return;
-      }
 
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
@@ -879,6 +875,10 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                      fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }
 
+      if( stencil.size() == 0 )
+      {
+        return;
+      }
 
       // TODO: same issue as in the single-phase case
       //       currently we just use model from the first cell in this stencil
@@ -1014,8 +1014,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                                         compFlowAccessors.get( extrinsicMeshData::flow::pressure_n{} ),
                                                                         compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient{} ),
                                                                         compFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
-                                                                        compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure{} ),
-                                                                        compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity{} ),
+                                                                        compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction{} ),
                                                                         compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
                                                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
                                                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity{} ),

@@ -208,27 +208,14 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< phaseVolumeFraction >( getName() ).
         setDimLabels( 1, fluid.phaseNames() ).
         reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< dPhaseVolumeFraction_dPressure >( getName() ).
-        reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< dPhaseVolumeFraction_dGlobalCompDensity >( getName() ).
-        reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
+      subRegion.registerExtrinsicData< dPhaseVolumeFraction >( getName() ).
+        reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents + 2 ); // dP, dT, dC
 
       subRegion.registerExtrinsicData< phaseMobility >( getName() ).
         setDimLabels( 1, fluid.phaseNames() ).
         reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< dPhaseMobility_dPressure >( getName() ).
-        reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< dPhaseMobility_dGlobalCompDensity >( getName() ).
-        reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
-
-      if( m_isThermal )
-      {
-        subRegion.registerExtrinsicData< dPhaseVolumeFraction_dTemperature >( getName() ).
-          reference().resizeDimension< 1 >( m_numPhases );
-
-        subRegion.registerExtrinsicData< dPhaseMobility_dTemperature >( getName() ).
-          reference().resizeDimension< 1 >( m_numPhases );
-      }
+      subRegion.registerExtrinsicData< dPhaseMobility >( getName() ).
+        reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents + 2 ); // dP, dT, dC
 
       if( m_computeCFLNumbers )
       {

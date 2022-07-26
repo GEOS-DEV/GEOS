@@ -47,6 +47,8 @@ public:
 
   using Base = isothermalCompositionalMultiphaseFVMKernels::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >;
   using Base::numPhase;
+  using Base::m_dPhaseVolFrac;
+  using Base::m_dPhaseMob;
   using Base::m_phaseDens;
   using Base::m_dPhaseDens;
   using Base::m_phaseVisc;
@@ -62,9 +64,7 @@ public:
   PhaseMobilityKernel( ObjectManagerBase & subRegion,
                        MultiFluidBase const & fluid,
                        RelativePermeabilityBase const & relperm )
-    : Base( subRegion, fluid, relperm ),
-    m_dPhaseVolFrac_dTemp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >() ),
-    m_dPhaseMob_dTemp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dTemperature >() )
+    : Base( subRegion, fluid, relperm )
   {}
 
   /**
@@ -81,40 +81,24 @@ public:
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseVisc = m_phaseVisc[ei][0];
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc = m_dPhaseVisc[ei][0];
     arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[ei][0];
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const dPhaseVolFrac_dTemp = m_dPhaseVolFrac_dTemp[ei];
-
-    arraySlice1d< real64, compflow::USD_PHASE - 1 > const dPhaseMob_dTemp = m_dPhaseMob_dTemp[ei];
-    LvArray::forValuesInSlice( dPhaseMob_dTemp, []( real64 & val ){ val = 0.0; } );
+    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
     Base::compute( ei, [&] ( localIndex const ip,
                              real64 const & phaseMob,
-                             real64 const & GEOSX_UNUSED_PARAM( dPhaseMob_dPres ),
-                             arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > const & GEOSX_UNUSED_PARAM( dPhaseMob_dComp ) )
+                             arraySlice1d< real64, compflow::USD_PHASE_DC - 2 > const & dPhaseMob )
     {
       // Step 1: compute the derivative of relPerm[ip] wrt temperature
       real64 dRelPerm_dT = 0.0;
       for( integer jp = 0; jp < numPhase; ++jp )
       {
-        dRelPerm_dT += dPhaseRelPerm_dPhaseVolFrac[ip][jp] * dPhaseVolFrac_dTemp[jp];
+        dRelPerm_dT += dPhaseRelPerm_dPhaseVolFrac[ip][jp] * dPhaseVolFrac[jp][Deriv::dT];
       }
 
       // Step 2: compute the derivative of phaseMob[ip] wrt temperature
-      dPhaseMob_dTemp[ip] = dRelPerm_dT * phaseDens[ip] / phaseVisc[ip]
-                            + phaseMob * (dPhaseDens[ip][Deriv::dT] / phaseDens[ip] - dPhaseVisc[ip][Deriv::dT] / phaseVisc[ip] );
+      dPhaseMob[Deriv::dT] = dRelPerm_dT * phaseDens[ip] / phaseVisc[ip]
+                             + phaseMob * (dPhaseDens[ip][Deriv::dT] / phaseDens[ip] - dPhaseVisc[ip][Deriv::dT] / phaseVisc[ip] );
     } );
   }
-
-protected:
-
-  // inputs
-
-  /// Views on thermal derivatives of phase volume fractions
-  arrayView2d< real64 const, compflow::USD_PHASE > const m_dPhaseVolFrac_dTemp;
-
-  // outputs
-
-  /// Views on thermal derivatives of phase mobilities
-  arrayView2d< real64, compflow::USD_PHASE > const m_dPhaseMob_dTemp;
 
 };
 
@@ -203,6 +187,8 @@ public:
   using AbstractBase::m_dofNumber;
   using AbstractBase::m_gravCoef;
   using AbstractBase::m_phaseMob;
+  using AbstractBase::m_dPhaseMob;
+  using AbstractBase::m_dPhaseVolFrac;
   using AbstractBase::m_dPhaseMassDens;
   using AbstractBase::m_phaseCompFrac;
   using AbstractBase::m_dPhaseCompFrac;
@@ -222,9 +208,7 @@ public:
   using Base::m_sei;
 
   using ThermalCompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::temperature,
-                      extrinsicMeshData::flow::dPhaseMobility_dTemperature,
-                      extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >;
+    StencilAccessors< extrinsicMeshData::flow::temperature >;
 
   using ThermalMultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
@@ -282,8 +266,6 @@ public:
             localMatrix,
             localRhs ),
     m_temp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::temperature {} ) ),
-    m_dPhaseMob_dTemp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dTemperature {} ) ),
-    m_dPhaseVolFrac_dTemp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature {} ) ),
     m_phaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseEnthalpy {} ) ),
     m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( extrinsicMeshData::thermalconductivity::effectiveConductivity {} ) )
@@ -398,7 +380,7 @@ public:
           for( integer jp = 0; jp < m_numPhases; ++jp )
           {
             real64 const dCapPressure_dS = m_dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-            dCapPressure_dT += dCapPressure_dS * m_dPhaseVolFrac_dTemp[er][esr][ei][jp];
+            dCapPressure_dT += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dT];
           }
         }
 
@@ -434,7 +416,7 @@ public:
       {
         dPhaseFlux_dT[ke] *= m_phaseMob[er_up][esr_up][ei_up][ip];
       }
-      dPhaseFlux_dT[k_up] += m_dPhaseMob_dTemp[er_up][esr_up][ei_up][ip] * potGrad;
+      dPhaseFlux_dT[k_up] += m_dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dT] * potGrad;
 
       // Step 3.2: compute the derivative of component flux wrt temperature
 
@@ -581,10 +563,6 @@ protected:
   /// Views on temperature
   ElementViewConst< arrayView1d< real64 const > > const m_temp;
 
-  /// Views on derivatives of phase mobilities, volume fractions, mass densities and phase comp fractions
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseMob_dTemp;
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseVolFrac_dTemp;
-
   /// Views on phase enthalpies
   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseEnthalpy;
   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dPhaseEnthalpy;
@@ -700,6 +678,7 @@ public:
   using AbstractBase::m_dofNumber;
   using AbstractBase::m_gravCoef;
   using AbstractBase::m_phaseMob;
+  using AbstractBase::m_dPhaseMob;
   using AbstractBase::m_dPhaseMassDens;
   using AbstractBase::m_phaseCompFrac;
   using AbstractBase::m_dPhaseCompFrac;
@@ -719,8 +698,7 @@ public:
 
 
   using ThermalCompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::temperature,
-                      extrinsicMeshData::flow::dPhaseMobility_dTemperature >;
+    StencilAccessors< extrinsicMeshData::flow::temperature >;
 
   using ThermalMultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
@@ -784,7 +762,6 @@ public:
             localMatrix,
             localRhs ),
     m_temp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::temperature {} ) ),
-    m_dPhaseMob_dTemp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dTemperature {} ) ),
     m_phaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseEnthalpy {} ) ),
     m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( extrinsicMeshData::thermalconductivity::effectiveConductivity {} ) )
@@ -884,7 +861,7 @@ public:
       {
 
         // Step 3.1.a: compute the derivative of phase flux wrt temperature
-        real64 const dPhaseFlux_dT = m_phaseMob[er][esr][ei][ip] * dF_dT + m_dPhaseMob_dTemp[er][esr][ei][ip] * f;
+        real64 const dPhaseFlux_dT = m_phaseMob[er][esr][ei][ip] * dF_dT + m_dPhaseMob[er][esr][ei][ip][Deriv::dT] * f;
 
         // Step 3.2.a: compute the derivative of component flux wrt temperature
 
@@ -1023,15 +1000,12 @@ protected:
   /// Views on temperature
   ElementViewConst< arrayView1d< real64 const > > const m_temp;
 
-  /// Views on derivatives of phase mobilities, volume fractions, mass densities and phase comp fractions
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseMob_dTemp;
-
   /// Views on phase enthalpies
   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseEnthalpy;
   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dPhaseEnthalpy;
 
   /// View on thermal conductivity
-  ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
+  ElementViewConst< arrayView3d< real64 const > > const m_thermalConductivity;
   // for now, we treat thermal conductivity explicitly
 
 };

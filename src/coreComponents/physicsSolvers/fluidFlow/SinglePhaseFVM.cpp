@@ -595,10 +595,6 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                            string const & )
     {
       BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
-      if( stencil.size() == 0 )
-      {
-        return;
-      }
 
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
@@ -608,6 +604,10 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                      fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }
 
+      if( stencil.size() == 0 )
+      {
+        return;
+      }
 
       // first, evaluate BC to get primary field values (pressure)
       fs.applyFieldValue< FieldSpecificationEqual,

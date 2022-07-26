@@ -78,8 +78,7 @@ public:
                        RelativePermeabilityBase const & relperm )
     : Base(),
     m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
-    m_dPhaseVolFrac_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
+    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
     m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens( fluid.dPhaseDensity() ),
@@ -88,8 +87,7 @@ public:
     m_phaseRelPerm( relperm.phaseRelPerm() ),
     m_dPhaseRelPerm_dPhaseVolFrac( relperm.dPhaseRelPerm_dPhaseVolFraction() ),
     m_phaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >() ),
-    m_dPhaseMob_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dPressure >() ),
-    m_dPhaseMob_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >() )
+    m_dPhaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility >() )
   {}
 
   /**
@@ -113,11 +111,9 @@ public:
     arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > const phaseRelPerm = m_phaseRelPerm[ei][0];
     arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[ei][0];
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac = m_phaseVolFrac[ei];
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
-    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac_dComp = m_dPhaseVolFrac_dComp[ei];
+    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
     arraySlice1d< real64, compflow::USD_PHASE - 1 > const phaseMob = m_phaseMob[ei];
-    arraySlice1d< real64, compflow::USD_PHASE - 1 > const dPhaseMob_dPres = m_dPhaseMob_dPres[ei];
-    arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseMob_dComp = m_dPhaseMob_dComp[ei];
+    arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseMob = m_dPhaseMob[ei];
 
     real64 dRelPerm_dC[numComp]{};
     real64 dDens_dC[numComp]{};
@@ -131,10 +127,9 @@ public:
       if( !phaseExists )
       {
         phaseMob[ip] = 0.0;
-        dPhaseMob_dPres[ip] = 0.0;
-        for( integer jc = 0; jc < numComp; ++jc )
+        for( integer jc = 0; jc < numComp + 2; ++jc )
         {
-          dPhaseMob_dComp[ip][jc] = 0.0;
+          dPhaseMob[ip][jc] = 0.0;
         }
         continue;
       }
@@ -157,30 +152,30 @@ public:
       for( integer jp = 0; jp < numPhase; ++jp )
       {
         real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[ip][jp];
-        dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac_dPres[jp];
+        dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac[jp][Deriv::dP];
 
         for( integer jc = 0; jc < numComp; ++jc )
         {
-          dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac_dComp[jp][jc];
+          dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac[jp][Deriv::dC+jc];
         }
       }
 
       real64 const mobility = relPerm * density / viscosity;
 
       phaseMob[ip] = mobility;
-      dPhaseMob_dPres[ip] = dRelPerm_dP * density / viscosity
-                            + mobility * (dDens_dP / density - dVisc_dP / viscosity);
+      dPhaseMob[ip][Deriv::dP] = dRelPerm_dP * density / viscosity
+                                 + mobility * (dDens_dP / density - dVisc_dP / viscosity);
 
       // compositional derivatives
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseMob_dComp[ip][jc] = dRelPerm_dC[jc] * density / viscosity
-                                  + mobility * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
+        dPhaseMob[ip][Deriv::dC+jc] = dRelPerm_dC[jc] * density / viscosity
+                                      + mobility * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
       }
 
       // call the lambda in the phase loop to allow the reuse of the relperm, density, viscosity, and mobility
       // possible use: assemble the derivatives wrt temperature
-      phaseMobilityKernelOp( ip, phaseMob[ip], dPhaseMob_dPres[ip], dPhaseMob_dComp[ip] );
+      phaseMobilityKernelOp( ip, phaseMob[ip], dPhaseMob[ip] );
     }
   }
 
@@ -190,8 +185,7 @@ protected:
 
   /// Views on the phase volume fractions
   arrayView2d< real64 const, compflow::USD_PHASE > m_phaseVolFrac;
-  arrayView2d< real64 const, compflow::USD_PHASE > m_dPhaseVolFrac_dPres;
-  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dPhaseVolFrac_dComp;
+  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dPhaseVolFrac;
   arrayView3d< real64 const, compflow::USD_COMP_DC > m_dCompFrac_dCompDens;
 
   /// Views on the phase densities
@@ -210,8 +204,7 @@ protected:
 
   /// Views on the phase mobilities
   arrayView2d< real64, compflow::USD_PHASE > m_phaseMob;
-  arrayView2d< real64, compflow::USD_PHASE > m_dPhaseMob_dPres;
-  arrayView3d< real64, compflow::USD_PHASE_DC > m_dPhaseMob_dComp;
+  arrayView3d< real64, compflow::USD_PHASE_DC > m_dPhaseMob;
 
 };
 
@@ -287,11 +280,9 @@ public:
                       extrinsicMeshData::flow::gravityCoefficient,
                       extrinsicMeshData::flow::pressure,
                       extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity,
-                      extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
-                      extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction,
                       extrinsicMeshData::flow::phaseMobility,
-                      extrinsicMeshData::flow::dPhaseMobility_dPressure,
-                      extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >;
+                      extrinsicMeshData::flow::dPhaseMobility >;
   using MultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
                               extrinsicMeshData::multifluid::phaseMassDensity,
@@ -367,13 +358,11 @@ protected:
 
   /// Views on derivatives of phase volume fractions and comp fractions
   ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const m_dCompFrac_dCompDens;
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseVolFrac_dPres;
-  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const m_dPhaseVolFrac_dCompDens;
+  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const m_dPhaseVolFrac;
 
   /// Views on phase mobilities
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseMob;
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseMob_dPres;
-  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const m_dPhaseMob_dCompDens;
+  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const m_dPhaseMob;
 
   /// Views on phase mass densities
   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseMassDens;
@@ -670,11 +659,11 @@ public:
           for( integer jp = 0; jp < m_numPhases; ++jp )
           {
             real64 const dCapPressure_dS = m_dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-            dCapPressure_dP += dCapPressure_dS * m_dPhaseVolFrac_dPres[er][esr][ei][jp];
+            dCapPressure_dP += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
 
             for( integer jc = 0; jc < numComp; ++jc )
             {
-              dCapPressure_dC[jc] += dCapPressure_dS * m_dPhaseVolFrac_dCompDens[er][esr][ei][jp][jc];
+              dCapPressure_dC[jc] += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
             }
           }
         }
@@ -757,15 +746,15 @@ public:
         }
       }
 
-      real64 const dMob_dP  = m_dPhaseMob_dPres[er_up][esr_up][ei_up][ip];
-      arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > dPhaseMob_dCompSub =
-        m_dPhaseMob_dCompDens[er_up][esr_up][ei_up][ip];
+      real64 const dMob_dP  = m_dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
+      arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > dPhaseMobSub =
+        m_dPhaseMob[er_up][esr_up][ei_up][ip];
 
       // add contribution from upstream cell mobility derivatives
       dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseFlux_dC[k_up][jc] += dPhaseMob_dCompSub[jc] * potGrad;
+        dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
       }
 
       // slice some constitutive arrays to avoid too much indexing in component loop
@@ -1021,8 +1010,7 @@ public:
   using AbstractBase::m_gravCoef;
   using AbstractBase::m_pres;
   using AbstractBase::m_phaseMob;
-  using AbstractBase::m_dPhaseMob_dPres;
-  using AbstractBase::m_dPhaseMob_dCompDens;
+  using AbstractBase::m_dPhaseMob;
   using AbstractBase::m_phaseMassDens;
   using AbstractBase::m_dPhaseMassDens;
   using AbstractBase::m_phaseCompFrac;
@@ -1279,11 +1267,11 @@ public:
 
         // compute the phase flux and derivatives using the element mobility
         phaseFlux = m_phaseMob[er][esr][ei][ip] * f;
-        dPhaseFlux_dP = m_phaseMob[er][esr][ei][ip] * dF_dP + m_dPhaseMob_dPres[er][esr][ei][ip] * f;
+        dPhaseFlux_dP = m_phaseMob[er][esr][ei][ip] * dF_dP + m_dPhaseMob[er][esr][ei][ip][Deriv::dP] * f;
         for( integer jc = 0; jc < numComp; ++jc )
         {
           dPhaseFlux_dC[jc] =
-            m_phaseMob[er][esr][ei][ip] * dF_dC[jc] + m_dPhaseMob_dCompDens[er][esr][ei][ip][jc] * f;
+            m_phaseMob[er][esr][ei][ip] * dF_dC[jc] + m_dPhaseMob[er][esr][ei][ip][Deriv::dC+jc] * f;
         }
 
         // slice some constitutive arrays to avoid too much indexing in component loop
@@ -1646,8 +1634,7 @@ struct AquiferBCKernel
                       extrinsicMeshData::flow::pressure_n,
                       extrinsicMeshData::flow::gravityCoefficient,
                       extrinsicMeshData::flow::phaseVolumeFraction,
-                      extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
-                      extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction,
                       extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
@@ -1670,8 +1657,7 @@ struct AquiferBCKernel
              arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens,
              arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens,
              arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
-             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres,
-             arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens,
+             arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac,
              arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac,
              arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac,
              arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens,
@@ -1695,8 +1681,7 @@ struct AquiferBCKernel
           ElementViewConst< arrayView1d< real64 const > > const & pres_n,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
-          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
-          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dCompDens,
+          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
