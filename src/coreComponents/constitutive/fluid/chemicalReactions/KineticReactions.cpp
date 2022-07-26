@@ -56,6 +56,8 @@ KineticReactions::KineticReactions( string const & name, integer const numPrimar
   m_reactionRateConstant[0] = 9.95e-1;
   m_reactionRateConstant[1] = 9.95e-3;
   // Here we should either read the database or the input values.
+
+  m_specificSurfaceArea = 1.0;
 }
 
 KineticReactions::KernelWrapper KineticReactions::createKernelWrapper() const
@@ -117,6 +119,8 @@ void KineticReactions::KernelWrapper::computeReactionRates( real64 const & tempe
 
     reactionRates[iRxn] = m_specificSurfaceArea * (1.0 - pow( 10, saturationIndex ) ) * m_reactionRateConstant[iRxn];
   }
+
+  std::cout << "reactionRates: " << reactionRates << std::endl;
 }
 
 } // end namespace chemicalReactions

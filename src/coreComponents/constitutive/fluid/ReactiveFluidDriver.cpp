@@ -76,6 +76,7 @@ void ReactiveFluidDriver::postProcessInput()
 
   m_numPhases = fluid.numFluidPhases();
   m_numPrimarySpecies = fluid.numPrimarySpecies();
+  m_numSecondarySpecies = fluid.numSecondarySpecies();
   m_numKineticReactions = fluid.numKineticReactions();
 
   // resize data table to fit number of timesteps and concentrations

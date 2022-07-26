@@ -76,11 +76,12 @@ void ReactiveMultiFluid::resizeFields( localIndex const size, localIndex const n
 
   integer const numPrimarySpecies = this->numPrimarySpecies();
   integer const numSecondarySpecies = this->numSecondarySpecies();
+  integer const numKineticReactions = this->numKineticReactions();
 
   m_primarySpeciesConcentration.resize( size, numPrimarySpecies );
   m_secondarySpeciesConcentration.resize( size, numSecondarySpecies );
   m_primarySpeciesTotalConcentration.resize( size, numPrimarySpecies );
-  m_kineticReactionRates.resize( size, numPrimarySpecies );
+  m_kineticReactionRates.resize( size, numKineticReactions );
 }
 
 void ReactiveMultiFluid::createChemicalReactions()
