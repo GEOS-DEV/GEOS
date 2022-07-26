@@ -7,13 +7,13 @@ from geosx_xml_tools.tests import generate_test_xml
 import argparse
 from parameterized import parameterized
 
-
 # Create an instance of the unit manager
 unitManager = unit_manager.UnitManager()
 
 
 # Test the unit manager definitions
 class TestUnitManager(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.tol = 1e-6
@@ -23,30 +23,14 @@ class TestUnitManager(unittest.TestCase):
         self.assertTrue(bool(unitManager.units))
 
     # Scale value tests
-    @parameterized.expand([['meter', '2', 2.0],
-                           ['meter', '1.234', 1.234],
-                           ['meter', '1.234e1', 12.34],
-                           ['meter', '1.234E1', 12.34],
-                           ['meter', '1.234e+1', 12.34],
-                           ['meter', '1.234e-1', 0.1234],
-                           ['mumeter', '1', 1.0e-6],
-                           ['micrometer', '1', 1.0e-6],
-                           ['kilometer', '1', 1.0e3],
-                           ['ms', '1', 1.0e-3],
-                           ['millisecond', '1', 1.0e-3],
-                           ['Ms', '1', 1.0e6],
-                           ['m/s', '1', 1.0],
-                           ['micrometer/s', '1', 1.0e-6],
-                           ['micrometer/ms', '1', 1.0e-3],
-                           ['micrometer/microsecond', '1', 1.0],
-                           ['m**2', '1', 1.0],
-                           ['km**2', '1', 1.0e6],
-                           ['kilometer**2', '1', 1.0e6],
-                           ['(km*mm)', '1', 1.0],
-                           ['(km*mm)**2', '1', 1.0],
-                           ['km^2', '1', 1.0e6, True],
-                           ['bbl/day', '1', 0.000001840130728333],
-                           ['cP', '1', 0.001]])
+    @parameterized.expand([['meter', '2', 2.0], ['meter', '1.234', 1.234], ['meter', '1.234e1', 12.34],
+                           ['meter', '1.234E1', 12.34], ['meter', '1.234e+1', 12.34], ['meter', '1.234e-1', 0.1234],
+                           ['mumeter', '1', 1.0e-6], ['micrometer', '1', 1.0e-6], ['kilometer', '1', 1.0e3],
+                           ['ms', '1', 1.0e-3], ['millisecond', '1', 1.0e-3], ['Ms', '1', 1.0e6], ['m/s', '1', 1.0],
+                           ['micrometer/s', '1', 1.0e-6], ['micrometer/ms', '1', 1.0e-3],
+                           ['micrometer/microsecond', '1', 1.0], ['m**2', '1', 1.0], ['km**2', '1', 1.0e6],
+                           ['kilometer**2', '1', 1.0e6], ['(km*mm)', '1', 1.0], ['(km*mm)**2', '1', 1.0],
+                           ['km^2', '1', 1.0e6, True], ['bbl/day', '1', 0.000001840130728333], ['cP', '1', 0.001]])
     def test_units(self, unit, scale, expected_value, expect_fail=False):
         try:
             val = float(unitManager([scale, unit]))
@@ -64,11 +48,9 @@ class TestParameterRegex(unittest.TestCase):
         cls.regexHandler.target['foo'] = '1.23'
         cls.regexHandler.target['bar'] = '4.56e7'
 
-    @parameterized.expand([['$:foo*1.234', '1.23*1.234'],
-                           ['$:foo*1.234/$:bar', '1.23*1.234/4.56e7'],
+    @parameterized.expand([['$:foo*1.234', '1.23*1.234'], ['$:foo*1.234/$:bar', '1.23*1.234/4.56e7'],
                            ['$:foo*1.234/($:bar*$:foo)', '1.23*1.234/(4.56e7*1.23)'],
-                           ['$foo*1.234/$bar', '1.23*1.234/4.56e7'],
-                           ['$foo$*1.234/$bar', '1.23*1.234/4.56e7'],
+                           ['$foo*1.234/$bar', '1.23*1.234/4.56e7'], ['$foo$*1.234/$bar', '1.23*1.234/4.56e7'],
                            ['$foo$*1.234/$bar$', '1.23*1.234/4.56e7'],
                            ['$blah$*1.234/$bar$', '1.23*1.234/4.56e7', True],
                            ['$foo$*1.234/$bar$', '4.56e7*1.234/4.56e7', True]])
@@ -87,9 +69,7 @@ class TestUnitsRegex(unittest.TestCase):
     def setUpClass(cls):
         cls.tol = 1e-6
 
-    @parameterized.expand([['1.234[m**2/s]', '1.234'],
-                           ['1.234 [m**2/s]', '1.234'],
-                           ['1.234[m**2/s]*3.4', '1.234*3.4'],
+    @parameterized.expand([['1.234[m**2/s]', '1.234'], ['1.234 [m**2/s]', '1.234'], ['1.234[m**2/s]*3.4', '1.234*3.4'],
                            ['1.234[m**2/s] + 5.678[mm/s]', '1.234 + 5.678e-3'],
                            ['1.234 [m**2/s] + 5.678 [mm/s]', '1.234 + 5.678e-3'],
                            ['(1.234[m**2/s])*5.678', '(1.234)*5.678']])
@@ -108,19 +88,10 @@ class TestSymbolicRegex(unittest.TestCase):
     def setUpClass(cls):
         cls.tol = 1e-6
 
-    @parameterized.expand([['`1.234`', '1.234'],
-                           ['`1.234*2.0`', '2.468'],
-                           ['`10`', '1e1'],
-                           ['`10*2`', '2e1'],
-                           ['`1.0/2.0`', '5e-1'],
-                           ['`2.0**2`', '4'],
-                           ['`1.0 + 2.0**2`', '5'],
-                           ['`(1.0 + 2.0)**2`', '9'],
-                           ['`((1.0 + 2.0)**2)**(0.5)`', '3'],
-                           ['`(1.2e3)*2`', '2.4e3'],
-                           ['`1.2e3*2`', '2.4e3'],
-                           ['`2.0^2`', '4', True],
-                           ['`sqrt(4.0)`', '2', True]])
+    @parameterized.expand([['`1.234`', '1.234'], ['`1.234*2.0`', '2.468'], ['`10`', '1e1'], ['`10*2`', '2e1'],
+                           ['`1.0/2.0`', '5e-1'], ['`2.0**2`', '4'], ['`1.0 + 2.0**2`', '5'], ['`(1.0 + 2.0)**2`', '9'],
+                           ['`((1.0 + 2.0)**2)**(0.5)`', '3'], ['`(1.2e3)*2`', '2.4e3'], ['`1.2e3*2`', '2.4e3'],
+                           ['`2.0^2`', '4', True], ['`sqrt(4.0)`', '2', True]])
     def test_symbolic_regex(self, symbolicInput, expectedValue, expect_fail=False):
         try:
             result = re.sub(regex_tools.patterns['symbolic'], regex_tools.SymbolicMathRegexHandler, symbolicInput)
@@ -131,6 +102,7 @@ class TestSymbolicRegex(unittest.TestCase):
 
 # Test the complete xml processor
 class TestXMLProcessor(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         generate_test_xml.generate_test_xml_files('.')

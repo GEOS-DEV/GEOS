@@ -118,7 +118,7 @@
       phaseRelPermExponent="{ 1.5, 1.5 }"
       phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
 
-    <ConstantThermalConductivity
+    <MultiPhaseConstantThermalConductivity
       name="thermalCond"
       phaseNames="{ gas, water }"
       thermalConductivityComponents="{ 0.6, 0.6, 0.6 }"/>
