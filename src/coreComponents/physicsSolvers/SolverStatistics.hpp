@@ -60,9 +60,9 @@ public:
   void logNonlinearIteration();
 
   /**
-   * @brief Tell the solverStatistics that we are doing a configuration iteration
+   * @brief Tell the solverStatistics that we are doing an outer loop iteration
    */
-  void logConfigurationIteration();
+  void logOuterLoopIteration();
 
   /**
    * @brief Tell the solverStatistics that there is a time step cut
@@ -89,22 +89,22 @@ private:
   {
     /// String key for the number of time steps
     static constexpr char const * numTimeStepsString() { return "numTimeSteps"; }
-    /// String key for the number of time steps
+    /// String key for the number of time step cuts
     static constexpr char const * numTimeStepCutsString() { return "numTimeStepCuts"; }
 
     /// String key for the successful number of nonlinear iterations
     static constexpr char const * numSuccessfulNonlinearIterationsString() { return "numSuccessfulNonlinearIterations"; }
-    /// String key for the successful number of configuration iterations
-    static constexpr char const * numSuccessfulConfigurationIterationsString() { return "numSuccessfulConfigurationIterations"; }
+    /// String key for the successful number of outer loop iterations
+    static constexpr char const * numSuccessfulOuterLoopIterationsString() { return "numSuccessfulOuterLoopIterations"; }
     /// String key for the successful number of linear iterations
     static constexpr char const * numSuccessfulLinearIterationsString() { return "numSuccessfulLinearIterations"; }
 
-    /// String key for the failed number of nonlinear iterations
-    static constexpr char const * numFailedNonlinearIterationsString() { return "numFailedNonlinearIterations"; }
-    /// String key for the failed number of configuration iterations
-    static constexpr char const * numFailedConfigurationIterationsString() { return "numFailedConfigurationIterations"; }
-    /// String key for the failed number of linear iterations
-    static constexpr char const * numFailedLinearIterationsString() { return "numFailedLinearIterations"; }
+    /// String key for the wasted number of nonlinear iterations
+    static constexpr char const * numWastedNonlinearIterationsString() { return "numWastedNonlinearIterations"; }
+    /// String key for the wasted number of outer loop iterations
+    static constexpr char const * numWastedOuterLoopIterationsString() { return "numWastedOuterLoopIterations"; }
+    /// String key for the wasted number of linear iterations
+    static constexpr char const * numWastedLinearIterationsString() { return "numWastedLinearIterations"; }
   };
 
   /// Number of time steps
@@ -117,8 +117,8 @@ private:
   /// Number of nonlinear iterations in the current time step (utility variable constantly overwritten)
   integer m_currentNumNonlinearIterations;
 
-  /// Number of configuration iterations in the current time step (utility variable constantly overwritten)
-  integer m_currentNumConfigurationIterations;
+  /// Number of outer loop iterations in the current time step (utility variable constantly overwritten)
+  integer m_currentNumOuterLoopIterations;
 
   /// Number of linear iterations in the current time step (utility variable constantly overwritten)
   integer m_currentNumLinearIterations;
@@ -127,21 +127,21 @@ private:
   /// Cumulative number of successful nonlinear iterations
   integer m_numSuccessfulNonlinearIterations;
 
-  /// Cumulative number of successful configuration iterations
-  integer m_numSuccessfulConfigurationIterations;
+  /// Cumulative number of successful outer loop iterations
+  integer m_numSuccessfulOuterLoopIterations;
 
   /// Cumulative number of successful linear iterations
   integer m_numSuccessfulLinearIterations;
 
 
-  /// Cumulative number of failed nonlinear iterations
-  integer m_numFailedNonlinearIterations;
+  /// Cumulative number of wasted nonlinear iterations
+  integer m_numWastedNonlinearIterations;
 
-  /// Cumulative number of failed configuration iterations
-  integer m_numFailedConfigurationIterations;
+  /// Cumulative number of wasted outer loop iterations
+  integer m_numWastedOuterLoopIterations;
 
-  /// Cumulative number of failed linear iterations
-  integer m_numFailedLinearIterations;
+  /// Cumulative number of wasted linear iterations
+  integer m_numWastedLinearIterations;
 
 };
 

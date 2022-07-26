@@ -26,7 +26,7 @@ using namespace dataRepository;
 SolverStatistics::SolverStatistics( string const & name, Group * const parent )
   : Group( name, parent ),
   m_currentNumNonlinearIterations( 0 ),
-  m_currentNumConfigurationIterations( 0 ),
+  m_currentNumOuterLoopIterations( 0 ),
   m_currentNumLinearIterations( 0 )
 {
   registerWrapper( viewKeyStruct::numTimeStepsString(), &m_numTimeSteps ).
@@ -42,33 +42,33 @@ SolverStatistics::SolverStatistics( string const & name, Group * const parent )
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of successful nonlinear iterations" );
 
-  registerWrapper( viewKeyStruct::numSuccessfulConfigurationIterationsString(), &m_numSuccessfulConfigurationIterations ).
+  registerWrapper( viewKeyStruct::numSuccessfulOuterLoopIterationsString(), &m_numSuccessfulOuterLoopIterations ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of successful configuration iterations" );
+    setDescription( "Cumulative number of successful outer loop iterations" );
 
   registerWrapper( viewKeyStruct::numSuccessfulLinearIterationsString(), &m_numSuccessfulLinearIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of successful linear iterations" );
 
 
-  registerWrapper( viewKeyStruct::numFailedNonlinearIterationsString(), &m_numFailedNonlinearIterations ).
+  registerWrapper( viewKeyStruct::numWastedNonlinearIterationsString(), &m_numWastedNonlinearIterations ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of failed nonlinear iterations" );
+    setDescription( "Cumulative number of wasted nonlinear iterations" );
 
-  registerWrapper( viewKeyStruct::numFailedConfigurationIterationsString(), &m_numFailedConfigurationIterations ).
+  registerWrapper( viewKeyStruct::numWastedOuterLoopIterationsString(), &m_numWastedOuterLoopIterations ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of failed configuration iterations" );
+    setDescription( "Cumulative number of wasted outer loop iterations" );
 
-  registerWrapper( viewKeyStruct::numFailedLinearIterationsString(), &m_numFailedLinearIterations ).
+  registerWrapper( viewKeyStruct::numWastedLinearIterationsString(), &m_numWastedLinearIterations ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of failed linear iterations" );
+    setDescription( "Cumulative number of wasted linear iterations" );
 }
 
 void SolverStatistics::initializeTimeStepStatistics()
 {
   // the time step begins, we reset the individual-timestep counters
   m_currentNumNonlinearIterations = 0;
-  m_currentNumConfigurationIterations = 0;
+  m_currentNumOuterLoopIterations = 0;
   m_currentNumLinearIterations = 0;
 }
 
@@ -85,19 +85,19 @@ void SolverStatistics::logNonlinearIteration()
   m_currentNumNonlinearIterations++;
 }
 
-void SolverStatistics::logConfigurationIteration()
+void SolverStatistics::logOuterLoopIteration()
 {
-  // we have just performed a configuration iteration, so we increment the individual-timestep counter for configuration iterations
-  m_currentNumConfigurationIterations++;
+  // we have just performed an outer loop iteration, so we increment the individual-timestep counter for outer loop iterations
+  m_currentNumOuterLoopIterations++;
 }
 
 
 void SolverStatistics::logTimeStepCut()
 {
-  // we have just cut the time step, so we increment the cumulative counters for failed timesteps
-  m_numFailedNonlinearIterations += m_currentNumNonlinearIterations;
-  m_numFailedConfigurationIterations += m_currentNumConfigurationIterations;
-  m_numFailedLinearIterations += m_currentNumLinearIterations;
+  // we have just cut the time step, so we increment the cumulative counters for wasted timesteps
+  m_numWastedNonlinearIterations += m_currentNumNonlinearIterations;
+  m_numWastedOuterLoopIterations += m_currentNumOuterLoopIterations;
+  m_numWastedLinearIterations += m_currentNumLinearIterations;
   m_numTimeStepCuts++;
 
   // we are going to restart the timestep from the previous converged time step, so we have to re-initialize the statistics
@@ -108,15 +108,16 @@ void SolverStatistics::saveTimeStepStatistics()
 {
   // the timestep has converged, so we increment the cumulative counters for successful timesteps
   m_numSuccessfulNonlinearIterations += m_currentNumNonlinearIterations;
-  m_numSuccessfulConfigurationIterations += m_currentNumConfigurationIterations;
+  m_numSuccessfulOuterLoopIterations += m_currentNumOuterLoopIterations;
   m_numSuccessfulLinearIterations += m_currentNumLinearIterations;
   m_numTimeSteps++;
 }
 
 void SolverStatistics::outputStatistics() const
 {
-  bool const isExplicitScheme = m_numSuccessfulNonlinearIterations == 0 && m_numFailedNonlinearIterations == 0;
-  bool const isOuterLoopSolver = m_numSuccessfulLinearIterations == 0 && m_numFailedLinearIterations == 0;
+  bool const printIterations = !(m_numSuccessfulNonlinearIterations == 0 && m_numWastedNonlinearIterations == 0);
+  bool const printOuterLoopIterations = !(m_numSuccessfulOuterLoopIterations == 0 && m_numWastedOuterLoopIterations == 0);
+  bool const printLinearIterations = !(m_numSuccessfulLinearIterations == 0 && m_numWastedLinearIterations == 0);
 
   auto const logStat = [&]( auto const name, auto const value )
   {
@@ -124,22 +125,30 @@ void SolverStatistics::outputStatistics() const
                                  getParent().getName(), name, value ) );
   };
 
+  // TODO: the print logic is really convoluted to accomodate the needs of different solvers, needs simplification
+
   logStat( "time steps", m_numTimeSteps );
-  if( !isExplicitScheme )
+  if( printIterations )
   {
+    if( printOuterLoopIterations )
+    {
+      logStat( "successful outer loop iterations", m_numSuccessfulOuterLoopIterations );
+    }
     logStat( "successful nonlinear iterations", m_numSuccessfulNonlinearIterations );
-    logStat( "successful configuration iterations", m_numSuccessfulConfigurationIterations );
-    if( !isOuterLoopSolver ) // don't print for the outer iterations in sequential schemes
+    if( printLinearIterations ) // don't print for the outer iterations in sequential schemes
     {
       logStat( "successful linear iterations", m_numSuccessfulLinearIterations );
     }
 
     logStat( "time step cuts", m_numTimeStepCuts );
-    logStat( "failed nonlinear iterations", m_numFailedNonlinearIterations );
-    logStat( "failed configuration iterations", m_numFailedConfigurationIterations );
-    if( !isOuterLoopSolver ) // don't print for the outer iterations in sequential schemes
+    if( printOuterLoopIterations )
     {
-      logStat( "failed linear iterations", m_numFailedLinearIterations );
+      logStat( "wasted outer loop iterations", m_numWastedOuterLoopIterations );
+    }
+    logStat( "wasted nonlinear iterations", m_numWastedNonlinearIterations );
+    if( printLinearIterations ) // don't print for the outer iterations in sequential schemes
+    {
+      logStat( "wasted linear iterations", m_numWastedLinearIterations );
     }
   }
 }

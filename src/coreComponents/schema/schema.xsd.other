@@ -499,22 +499,22 @@
 		<xsd:attribute name="sourceValue" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="SolverStatisticsType">
-		<!--numFailedConfigurationIterations => Cumulative number of failed configuration iterations-->
-		<xsd:attribute name="numFailedConfigurationIterations" type="integer" />
-		<!--numFailedLinearIterations => Cumulative number of failed linear iterations-->
-		<xsd:attribute name="numFailedLinearIterations" type="integer" />
-		<!--numFailedNonlinearIterations => Cumulative number of failed nonlinear iterations-->
-		<xsd:attribute name="numFailedNonlinearIterations" type="integer" />
-		<!--numSuccessfulConfigurationIterations => Cumulative number of successful configuration iterations-->
-		<xsd:attribute name="numSuccessfulConfigurationIterations" type="integer" />
 		<!--numSuccessfulLinearIterations => Cumulative number of successful linear iterations-->
 		<xsd:attribute name="numSuccessfulLinearIterations" type="integer" />
 		<!--numSuccessfulNonlinearIterations => Cumulative number of successful nonlinear iterations-->
 		<xsd:attribute name="numSuccessfulNonlinearIterations" type="integer" />
+		<!--numSuccessfulOuterLoopIterations => Cumulative number of successful outer loop iterations-->
+		<xsd:attribute name="numSuccessfulOuterLoopIterations" type="integer" />
 		<!--numTimeStepCuts => Number of time step cuts-->
 		<xsd:attribute name="numTimeStepCuts" type="integer" />
 		<!--numTimeSteps => Number of time steps-->
 		<xsd:attribute name="numTimeSteps" type="integer" />
+		<!--numWastedLinearIterations => Cumulative number of wasted linear iterations-->
+		<xsd:attribute name="numWastedLinearIterations" type="integer" />
+		<!--numWastedNonlinearIterations => Cumulative number of wasted nonlinear iterations-->
+		<xsd:attribute name="numWastedNonlinearIterations" type="integer" />
+		<!--numWastedOuterLoopIterations => Cumulative number of wasted outer loop iterations-->
+		<xsd:attribute name="numWastedOuterLoopIterations" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

@@ -631,7 +631,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
         else
         {
           // increment the solver statistics for reporting purposes
-          m_solverStatistics.logConfigurationIteration();
+          m_solverStatistics.logOuterLoopIteration();
 
           GEOSX_LOG_LEVEL_RANK_0( 1, "   " );
           GEOSX_LOG_LEVEL_RANK_0( 1, "---------- Configuration did not converge. Testing new configuration. ----------" );
