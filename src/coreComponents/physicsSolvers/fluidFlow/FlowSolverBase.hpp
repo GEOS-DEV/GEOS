@@ -129,11 +129,6 @@ protected:
                                           real64 const & dt,
                                           DomainPartition & domain );
 
-  /**
-   * @brief Precompute the data needed by the flow solvers, like the gravity coefficient
-   * @param[in] mesh the mesh level
-   * @param[in] regionNames the array of target region names
-   */
   virtual void precomputeData( MeshLevel & mesh,
                                arrayView1d< string const > const & regionNames );
 
@@ -149,17 +144,15 @@ protected:
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
-  /// flux estimate used for normalization in single-phase flow
   real64 m_fluxEstimate;
 
-  /// flag to decide whether statistics (avg pressure, CFL) are computed or not
-  integer m_computeStatistics;
 
 private:
-
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+
 };
+
 
 }
 

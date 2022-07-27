@@ -21,9 +21,7 @@ using namespace dataRepository;
 
 NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
                                                       Group * const parent ):
-  Group( name, parent ),
-  m_totalSuccessfulNewtonNumIterations( 0 ),
-  m_totalWastedNewtonNumIterations( 0 )
+  Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
 
@@ -113,8 +111,6 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Max number of times that the configuration can be changed" );
 
-  registerWrapper( viewKeysStruct::totalSuccessfulNewtonNumIterationsString, &m_totalSuccessfulNewtonNumIterations );
-  registerWrapper( viewKeysStruct::totalWastedNewtonNumIterationsString, &m_totalWastedNewtonNumIterations );
 }
 
 void NonlinearSolverParameters::postProcessInput()

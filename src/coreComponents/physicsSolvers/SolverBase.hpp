@@ -474,7 +474,7 @@ public:
    * instance, a line search may apply a negative scaling factor to remove part of the previously
    * applied solution.
    *
-   * @note This function must be overridden in the derived physics solver in order to use an implicit
+   * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    *
    */
@@ -524,7 +524,7 @@ public:
    * the beginning of the step. This is useful for cases where convergence was not achieved, and
    * a cut in timestep was required.
    *
-   * @note This function must be overridden in the derived physics solver in order to use an implicit
+   * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
@@ -540,7 +540,7 @@ public:
    * example, the acceptance of the solution will occur during this step, and deallocation of
    * temporaries will be be performed in this function.
    *
-   * @note This function must be overridden in the derived physics solver in order to use an implicit
+   * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void

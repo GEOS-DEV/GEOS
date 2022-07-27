@@ -319,6 +319,7 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
+
   /**
    * @brief Structure holding views into fluid properties used by the base solver.
    */
@@ -359,7 +360,6 @@ protected:
   real64 m_inputTemperature;
 
 private:
-
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };

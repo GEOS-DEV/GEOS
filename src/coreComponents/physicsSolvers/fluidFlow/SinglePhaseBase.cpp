@@ -400,7 +400,6 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       arrayView1d< real64 > const presInit   = subRegion.getExtrinsicData< extrinsicMeshData::flow::initialPressure >();
       presInit.setValues< parallelDevicePolicy<> >( pres );
     } );
-
   } );
 }
 
