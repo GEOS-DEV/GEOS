@@ -49,9 +49,10 @@
 #include <vtkXMLPStructuredGridReader.h>
 // TODO ? for vti import
 #include <vtkHexahedron.h>
-//#include <vtkImageData.h>
-//#include <vtkXMLImageDataReader.h>
-//#include <vtkXMLPImageDataReader.h>
+// #include <vtkImageData.h>
+// #include <vtkXMLImageDataReader.h>
+// #include <vtkXMLPImageDataReader.h>
+// #include <vtkImageDataToPointSet.h>
 
 #ifdef GEOSX_USE_MPI
 #include <vtkMPIController.h>
@@ -159,9 +160,14 @@ loadMesh( Path const & filePath )
         loadedMesh = read( vtkSmartPointer< vtkXMLStructuredGridReader >::New() );
       }
       /*else if( extension == "vti" ) // TODO ?
-         {
-         loadedMesh = read( vtkSmartPointer< vtkXMLImageDataReader >::New() );
-         }*/
+      {
+        vtkSmartPointer< vtkImageData > = read( vtkSmartPointer< vtkXMLImageDataReader >::New() );
+        vtkNew<vtkImageDataToPointSet> imageDataToSg;
+        imageDataToSg->SetInputData(*image);
+        imageDataToSg->Update();
+        vtkStructuredGrid * sGrid = imageDataToSg->GetOutput();
+        loadedMesh = sGrid;
+      }*/
       else
       {
         GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vts, .pvtu or .ptvs." );
@@ -223,11 +229,11 @@ vtkNew< vtkCellArray > GetCellArray( vtkDataSet & mesh ) // replaces GetCells() 
 
 template< typename INDEX_TYPE, typename POLICY >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
-buildElemToNodesImpl( vtkDataSet & mesh )
+buildElemToNodesImpl( vtkDataSet & mesh,
+                      const vtkNew< vtkCellArray > & cells )
 {
   localIndex const numCells = LvArray::integerConversion< localIndex >( mesh.GetNumberOfCells() );
   array1d< INDEX_TYPE > nodeCounts( numCells );
-  const vtkNew< vtkCellArray > & cells = GetCellArray( mesh );
 
   // GetCellSize() is always thread-safe, can run in parallel
   forAll< parallelHostPolicy >( numCells, [nodeCounts = nodeCounts.toView(), &cells] ( localIndex const cellIdx )
@@ -260,12 +266,13 @@ template< typename INDEX_TYPE >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
 buildElemToNodes( vtkDataSet & mesh )
 {
+  const vtkNew< vtkCellArray > & cells = GetCellArray( mesh );
   // According to VTK docs, IsStorageShareable() indicates whether pointers extracted via
   // vtkCellArray::GetCellAtId() are pointers into internal storage rather than temp buffer
   // and thus results can be used in a thread-safe way.
-  return GetCellArray( mesh )->IsStorageShareable()
-       ? buildElemToNodesImpl< INDEX_TYPE, parallelHostPolicy >( mesh )
-       : buildElemToNodesImpl< INDEX_TYPE, serialPolicy >( mesh );
+  return cells->IsStorageShareable()
+       ? buildElemToNodesImpl< INDEX_TYPE, parallelHostPolicy >( mesh, cells )
+       : buildElemToNodesImpl< INDEX_TYPE, serialPolicy >( mesh, cells );
 }
 
 template< typename PART_INDEX >
