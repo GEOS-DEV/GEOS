@@ -74,7 +74,7 @@ inline int getElementDim( ElementType const elementType )
     case ElementType::Hexahedron:
     case ElementType::Prism5:
     case ElementType::Prism6:
-    case ElementType::Polyhedron:     return 3;
+    case ElementType::Polyhedron:    return 3;
   }
   return 0;
 }
