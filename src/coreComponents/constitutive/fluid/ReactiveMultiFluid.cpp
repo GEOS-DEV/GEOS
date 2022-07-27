@@ -91,29 +91,6 @@ void ReactiveMultiFluid::createChemicalReactions()
   m_kineticReactions = std::make_unique< chemicalReactions::KineticReactions >( getName() + "_kineticReactions", m_numPrimarySpecies, m_numSecondarySpecies, m_numKineticReactions );
 }
 
-ReactiveMultiFluid::KernelWrapper
-ReactiveMultiFluid::createKernelWrapper()
-{
-  return KernelWrapper( m_componentMolarWeight.toViewConst(),
-                        m_useMass,
-                        isThermal(),
-                        m_phaseFraction.toView(),
-                        m_phaseDensity.toView(),
-                        m_phaseMassDensity.toView(),
-                        m_phaseViscosity.toView(),
-                        m_phaseEnthalpy.toView(),
-                        m_phaseInternalEnergy.toView(),
-                        m_phaseCompFraction.toView(),
-                        m_totalDensity.toView(),
-                        m_numPrimarySpecies,
-                        *m_equilibriumReactions,
-                        *m_kineticReactions,
-                        m_primarySpeciesConcentration.toView(),
-                        m_secondarySpeciesConcentration.toView(),
-                        m_primarySpeciesTotalConcentration.toView(),
-                        m_kineticReactionRates.toView() );
-}
-
 ReactiveMultiFluid::KernelWrapper::
   KernelWrapper( arrayView1d< geosx::real64 const > componentMolarWeight,
                  bool const useMass,

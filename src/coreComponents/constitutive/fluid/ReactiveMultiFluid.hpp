@@ -78,40 +78,13 @@ public:
 public:
 
     GEOSX_HOST_DEVICE
-    virtual void compute( real64 const pressure,
-                          real64 const temperature,
-                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
-                          real64 & totalDensity ) const override;
-
-    GEOSX_HOST_DEVICE
-    virtual void compute( real64 const pressure,
-                          real64 const temperature,
-                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                          PhaseProp::SliceType const phaseFraction,
-                          PhaseProp::SliceType const phaseDensity,
-                          PhaseProp::SliceType const phaseMassDensity,
-                          PhaseProp::SliceType const phaseViscosity,
-                          PhaseProp::SliceType const phaseEnthalpy,
-                          PhaseProp::SliceType const phaseInternalEnergy,
-                          PhaseComp::SliceType const phaseCompFraction,
-                          FluidProp::SliceType const totalDensity ) const override;
-
-
-    GEOSX_HOST_DEVICE
-    void compute( real64 const pressure,
-                  real64 const temperature,
-                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                  arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                  arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                  arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
-                  arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const;
+    void computeChemistry( real64 const pressure,
+                           real64 const temperature,
+                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
+                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
+                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const;
 
     GEOSX_HOST_DEVICE
     virtual void update( localIndex const k,
@@ -159,13 +132,6 @@ private:
     arrayView2d< real64 >  m_kineticReactionRates;
   };
 
-
-  /**
-   * @brief Create an update kernel wrapper.
-   * @return the wrapper
-   */
-  KernelWrapper createKernelWrapper();
-
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {};
 
@@ -174,8 +140,6 @@ protected:
   virtual void postProcessInput() override;
 
   void createChemicalReactions();
-
-private:
 
   virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
@@ -199,48 +163,16 @@ private:
   array2d< real64 >  m_kineticReactionRates;
 };
 
-
-
-GEOSX_HOST_DEVICE
-inline void
-ReactiveMultiFluid::KernelWrapper::compute( real64 const pressure,
-                                            real64 const temperature,
-                                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                                            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-                                            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-                                            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-                                            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-                                            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
-                                            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-                                            arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
-                                            real64 & totalDensity ) const
-{}
-
-GEOSX_HOST_DEVICE
-inline void
-ReactiveMultiFluid::KernelWrapper::compute( real64 const pressure,
-                                            real64 const temperature,
-                                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                                            PhaseProp::SliceType const phaseFraction,
-                                            PhaseProp::SliceType const phaseDensity,
-                                            PhaseProp::SliceType const phaseMassDensity,
-                                            PhaseProp::SliceType const phaseViscosity,
-                                            PhaseProp::SliceType const phaseEnthalpy,
-                                            PhaseProp::SliceType const phaseInternalEnergy,
-                                            PhaseComp::SliceType const phaseCompFraction,
-                                            FluidProp::SliceType const totalDensity ) const
-{}
-
 GEOSX_HOST_DEVICE
 inline void
 ReactiveMultiFluid::KernelWrapper::
-  compute( real64 const pressure,
-           real64 const temperature,
-           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-           arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-           arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-           arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
-           arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const
+  computeChemistry( real64 const pressure,
+                    real64 const temperature,
+                    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
+                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
+                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const
 {
   // I am assuming that the primary variable is the concentration of the primary species.
   for( int i=0; i < m_numPrimarySpecies; i++ )
@@ -258,27 +190,6 @@ ReactiveMultiFluid::KernelWrapper::
                                            secondarySpeciesConcentration,
                                            kineticReactionRates );
 }
-
-GEOSX_HOST_DEVICE inline void
-ReactiveMultiFluid::KernelWrapper::
-  update( localIndex const k,
-          localIndex const q,
-          real64 const pressure,
-          real64 const temperature,
-          arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
-{
-  GEOSX_UNUSED_VAR( q );
-
-  compute( pressure,
-           temperature,
-           composition,
-           m_primarySpeciesConcentration[k],
-           m_secondarySpeciesConcentration[k],
-           m_primarySpeciesTotalConcentration[k],
-           m_kineticReactionRates[k] );
-}
-
-
 
 } // namespace constitutive
 
