@@ -459,7 +459,6 @@ ElementType convertVtkToGeosxElementType( VTKCellType const cellType )
     case VTK_PENTAGONAL_PRISM: return ElementType::Prism5;
     case VTK_HEXAGONAL_PRISM:  return ElementType::Prism6;
     case VTK_POLYHEDRON:       return ElementType::Polyhedron;
-    //case VTK_VOXEL:            return ElementType::Voxel;
     default:
     {
       GEOSX_ERROR( cellType << " is not a recognized cell type to be used with the VTKMeshGenerator" );
@@ -663,7 +662,6 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
     case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
-      // case ElementType::Voxel:         return { 0, 1, 2, 3, 4, 5, 6, 7}; // For ImageData
   }
   return {};
 }
@@ -720,7 +718,6 @@ string getElementTypeName( ElementType const type )
     case ElementType::Prism5:      return "pentagonalPrisms";
     case ElementType::Prism6:      return "hexagonalPrisms";
     case ElementType::Polyhedron:  return "polyhedra";
-    //case ElementType::Voxel:       return "voxels";
     default:
     {
       GEOSX_ERROR( "Element type '" << type << "' is not supported" );
