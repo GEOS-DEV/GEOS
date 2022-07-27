@@ -223,12 +223,10 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   // perform fluid update using table (P,T) and save resulting total density, etc.
   // note: column indexing should be kept consistent with output file header below.
  
-  integer numSteps = m_numSteps;
+  integer const numSteps = m_numSteps;
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
   forAll< ExecPolicy >( composition.size( 0 ),
-                        //[numPhases, numSteps, kernelWrapper, table, composition] GEOSX_HOST_DEVICE ( localIndex const i )
-                        [=] GEOSX_HOST_DEVICE ( localIndex const i )
-
+                        [numPhases, numSteps, kernelWrapper, table, composition] GEOSX_HOST_DEVICE ( localIndex const i )
   {
     for( integer n = 0; n <= numSteps; ++n )
     {
