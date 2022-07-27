@@ -3,8 +3,6 @@
 
 // Source includes
 #include "fileIO/Outputs/VTKOutput.hpp"
-#include "mainInterface/ProblemManager.hpp"
-
 #include "PyVTKOutputType.hpp"
 #include "dataRepository/python/PyGroupType.hpp"
 
@@ -79,8 +77,7 @@ static PyObject * output( PyVTKOutput * self, PyObject * args )
     return nullptr;
   }
 
-  geosx::ProblemManager & problem = self->group->getGroupByPath< ProblemManager >( "/Problem/" );
-  geosx::DomainPartition & domain = problem.getDomainPartition();
+  geosx::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   int cycleNumber = int(round( time/dt ));
   try
