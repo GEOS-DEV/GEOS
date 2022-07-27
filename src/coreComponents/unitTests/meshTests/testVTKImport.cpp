@@ -91,34 +91,23 @@ TEST( VTKImport, cube )
     ASSERT_EQ( cellBlockManager.numFaces(), expected( 108, { 75, 42 } ) );
 
     // The information in the tables is not filled yet. We can check the consistency of the sizes.
-    ASSERT_EQ( cellBlockManager.getNodeToFaces().size(), expectedNumNodes ); //64
-    ASSERT_EQ( cellBlockManager.getNodeToElements().toCellIndex.size(), expectedNumNodes ); //64
+    ASSERT_EQ( cellBlockManager.getNodeToFaces().size(), expectedNumNodes );
+    ASSERT_EQ( cellBlockManager.getNodeToElements().toCellIndex.size(), expectedNumNodes );
 
     // We have all the 4 x 4  x 4 = 64 nodes in the "all" set.
-    SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" ); //64
+    SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" );
     ASSERT_EQ( allNodes.size(), expectedNumNodes );
-
-    // The "2" set are all the boundary nodes (64 - 8 inside nodes = 56),
-    // minus an extra node that belongs to regions -1 and 9 only.
-    std::cout << "> NodeSets : \n";
-    std::map< string, SortedArray< localIndex > > m = cellBlockManager.getNodeSets();
-    for( std::map< string, SortedArray< localIndex > >::iterator it = m.begin(); it != m.end(); ++it )
-    {
-      std::cout << "Key: " << it->first << std::endl; // all, -1, 2, 9
-      std::cout << "Value: " << it->second << std::endl;
-    }
 
     if( cellBlockManager.getNodeSets().size()>1 )
     {
-      SortedArray< localIndex > const & nodesRegion2 = cellBlockManager.getNodeSets().at( "2" ); // here failure (unknown file)
-      // (ERROR) C++ exception with description "map::at" thrown in the test body.
-      std::cout << "> nodesRegion2.size : " << nodesRegion2.size() << std::endl;
+      // The "2" set are all the boundary nodes (64 - 8 inside nodes = 56),
+      // minus an extra node that belongs to regions -1 and 9 only.
+      SortedArray< localIndex > const & nodesRegion2 = cellBlockManager.getNodeSets().at( "2" );
       ASSERT_EQ( nodesRegion2.size(), expected( 55, { 39, 27 } ) );
 
       // Region "9" has only one quad, on the greater `x` direction.
       // This hex will belong to MPI rank 1.
       SortedArray< localIndex > const & nodesRegion9 = cellBlockManager.getNodeSets().at( "9" );
-      std::cout << "> nodesRegion9.size : " << nodesRegion9.size() << std::endl;
       ASSERT_EQ( nodesRegion9.size(), expected( 4, { 0, 4 } ) );
 
       // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
@@ -131,18 +120,6 @@ TEST( VTKImport, cube )
           { "9_hexahedra", expected( 1, {  0, 1 } ) }
         }
       };
-      std::cout << "> CellBlocks().numSubGroups() : " << cellBlockManager.getCellBlocks().numSubGroups() << std::endl; //3 vtu, 1 vts
-      // Group grp = cellBlockManager.getCellBlocks();
-      std::cout << "> CellBlocks.subGroup : \n"; //<< cellBlockManager.getCellBlocks().getSubGroups() << std::endl;
-      geosx::MappedVector< geosx::dataRepository::Group, geosx::dataRepository::Group *, string, int > subgrp;
-      std::vector< string > keys;
-      std::vector< int > values;
-      for( geosx::MappedVector< geosx::dataRepository::Group, geosx::dataRepository::Group *, string, int >::iterator it = subgrp.begin(); it != subgrp.end(); ++it )
-      {
-        std::cout << "Key: " << it->first << std::endl;
-        //std::cout << "Value: " << it->second << std::endl;
-      }
-
       ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), expectedCellBlocks.size() );
 
       for( const auto & nameAndSize : expectedCellBlocks )
@@ -154,21 +131,13 @@ TEST( VTKImport, cube )
 
         // 8 nodes, 12 edges and 6 faces per hex.
         ASSERT_EQ( h->getElemToNodes().size( 1 ), 8 );
-        std::cout << "> ElemToNodes 1 : " << h->getElemToNodes().size( 1 ) << std::endl; //8
         ASSERT_EQ( h->getElemToEdges().size( 1 ), 12 );
-        std::cout << "> ElemToEdges 1 : " << h->getElemToEdges().size( 1 ) << std::endl; //12
         ASSERT_EQ( h->getElemToFaces().size( 1 ), 6 );
-        std::cout << "> ElemToFaces 1 : " << h->getElemToFaces().size( 1 ) << std::endl; //6
 
         ASSERT_EQ( h->size(), expectedSize );
-        std::cout << "> h size : " << h->size() << std::endl; //1, 25, 1
         ASSERT_EQ( h->getElemToNodes().size( 0 ), expectedSize );
-        std::cout << "> ElemToNodes 0 : " << h->getElemToNodes().size( 0 ) << std::endl; //1, 25, 1
-
         ASSERT_EQ( h->getElemToEdges().size( 0 ), expectedSize );
-        std::cout << "> ElemToEdges 0 : " << h->getElemToEdges().size( 0 ) << std::endl; //1, 25, 1
         ASSERT_EQ( h->getElemToFaces().size( 0 ), expectedSize );
-        std::cout << "> ElemToFaces 0 : " << h->getElemToFaces().size( 0 ) << std::endl; //1, 25, 1
       }
     }
   };
