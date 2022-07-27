@@ -93,6 +93,7 @@ ENUM_STRINGS( ElementType,
               "PentagonalPrism",
               "HexagonalPrism",
               "Polyhedron" );
+
 } // namespace geosx
 
 #endif //GEOSX_MESH_ELEMENTTYPE_HPP

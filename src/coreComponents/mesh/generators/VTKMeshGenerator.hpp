@@ -32,7 +32,6 @@
 #include <unordered_map>
 
 class vtkUnstructuredGrid;
-// class vtkImageData;
 class vtkDataSet;
 class vtkDataArray;
 
@@ -142,7 +141,7 @@ private:
    * @brief The VTK mesh to be imported into GEOSX.
    * @note We keep this smart pointer as a member for use in @p importFields().
    */
-  vtkSmartPointer< vtkDataSet > m_vtkMesh; // changed vtkUnstructuredGrid to vtkDataSet
+  vtkSmartPointer< vtkDataSet > m_vtkMesh;
 
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;
