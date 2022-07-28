@@ -145,7 +145,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('hypre@2.20.300 +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
     depends_on('hypre@2.20.300 +cuda +shared +superlu-dist +mpi +openmp +unified-memory +cusparse', when='+hypre-cuda')
- 
+
     petsc_build_options = '+shared +mpi'
     petsc_tpls = '+metis ~hdf5 ~hypre +superlu-dist +int64'
     depends_on('petsc@3.13.0: ' + petsc_build_options + petsc_tpls, when='+petsc')
@@ -421,7 +421,9 @@ class Geosx(CMakePackage, CudaPackage):
                 if enable:
                     cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
                     if tpl == 'hypre' and '+hypre-cuda' in spec:
-                        cfg.write(cmake_cache_option('ENABLE_HYPRE_CUDA'.format(cmake_name), True))
+                        cfg.write(cmake_cache_string('ENABLE_HYPRE_DEVICE', "CUDA"))
+                    elif tpl == 'hypre' and '+hypre-hip' in spec:
+                        cfg.write(cmake_cache_string('ENABLE_HYPRE_DEVICE', "HIP"))
                 else:
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 

@@ -467,7 +467,7 @@ endif()
 if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
-    if( ENABLE_HYPRE_CUDA )
+    if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
         set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY} )
     endif()
 
@@ -486,10 +486,10 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     set( HYPRE_VERSION_PATCH ${CMAKE_MATCH_3} )
     message(STATUS "Hypre version parsed as: ${HYPRE_VERSION_MAJOR}.${HYPRE_VERSION_MINOR}.${HYPRE_VERSION_PATCH}" )
 
-    # if( ENABLE_CUDA AND ( NOT ENABLE_HYPRE_CUDA ) )
+    # if( ENABLE_CUDA AND ( NOT ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" ) )
     #   set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
     #   if( GEOSX_LA_INTERFACE STREQUAL "Hypre")
-    #     message( FATAL_ERROR "Hypre LAI selected, but ENABLE_HYPRE_CUDA not ON while ENABLE_CUDA is ON.")
+    #     message( FATAL_ERROR "Hypre LAI selected, but ENABLE_HYPRE_DEVICE not 'CUDA' while ENABLE_CUDA is ON.")
     #   endif()
     # else()
     #   set(ENABLE_HYPRE ON CACHE BOOL "")
@@ -525,7 +525,7 @@ if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
 
     # This conditional is due to the lack of mixedInt support on hypre GPU.
     # This can be removed when support is added into hypre.
-    if( NOT ENABLE_HYPRE_CUDA )
+    if( ENABLE_HYPRE_DEVIC E != "CUDA" )
         set(ENABLE_TRILINOS ON CACHE BOOL "")
     endif()
     set(thirdPartyLibs ${thirdPartyLibs} trilinos)

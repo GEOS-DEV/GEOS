@@ -110,7 +110,7 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::jacobi ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
 
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_HIP
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
 #endif
 
@@ -119,7 +119,7 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.coarseSolver.ptr, 2 ) ); // pressure and temperature (CPTR)
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_HIP
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.coarseSolver.ptr, toUnderlying( AMGCoarseningType::PMIS ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );

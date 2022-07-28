@@ -37,7 +37,7 @@ geosx_linux_build: &geosx_linux_build
     # but that would not have solved the problem for the TPLs (we would require extra action to copy them to the mount point).
   - CONTAINER_NAME=geosx_build
     # Now we can build GEOSX.
-  - while sleep 5m; do echo "... still building ..."; done & 
+  - while sleep 5m; do echo "... still building ..."; done &
   - docker run
     --name=${CONTAINER_NAME}
     --volume=${TRAVIS_BUILD_DIR}:${TRAVIS_BUILD_DIR_MOUNT_POINT}
@@ -46,7 +46,7 @@ geosx_linux_build: &geosx_linux_build
     -e CMAKE_BUILD_TYPE
     -e GEOSX_DIR=${GEOSX_DIR}
     -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF}
-    -e ENABLE_HYPRE_CUDA=${ENABLE_HYPRE_CUDA:-OFF}
+    -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-NONE}
     -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON}
     ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG}
     ${TRAVIS_BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
@@ -191,7 +191,7 @@ jobs:
     - CMAKE_BUILD_TYPE=Debug
     - BUILD_AND_TEST_ARGS="--disable-unit-tests --build-exe-only"
     - ENABLE_HYPRE=ON
-    - ENABLE_HYPRE_CUDA=ON
+    - ENABLE_HYPRE_DEVICE=CUDA
     - ENABLE_TRILINOS=OFF
   - stage: builds
     name: Ubuntu CUDA (18.04, clang 8.0.0 + gcc 8.3.1, open-mpi 2.1.1, cuda-10.1.243)
@@ -201,7 +201,7 @@ jobs:
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
     - ENABLE_HYPRE=ON
-    - ENABLE_HYPRE_CUDA=ON
+    - ENABLE_HYPRE_DEVICE=CUDA
     - ENABLE_TRILINOS=OFF
   - stage: builds
     name: Centos (7.6, gcc 8.3.1, open-mpi 1.10.7, cuda 10.1.243)

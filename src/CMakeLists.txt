@@ -13,7 +13,7 @@ cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in a
 # GEOSX
 ################################
 project( geosx LANGUAGES C CXX )
-set( BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard" )
+set( BLT_CXX_STD "c++17" CACHE STRING "Version of C++ standard" )
 set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "" )
 set( CMAKE_ENABLE_EXPORTS ON )
 
@@ -136,7 +136,7 @@ blt_add_executable( NAME geosx
                                ${externalComponentsLinkList} )
 
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
-if( ENABLE_HYPRE_CUDA )
+if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
     set_target_properties( geosx PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
 endif()
 

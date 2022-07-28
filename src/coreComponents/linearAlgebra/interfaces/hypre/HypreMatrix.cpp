@@ -18,6 +18,7 @@
 
 #include "HypreMatrix.hpp"
 
+#include "common/GeosxConfig.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreKernels.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
@@ -321,7 +322,7 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
 {
   GEOSX_LAI_ASSERT( insertable() );
 
-#if defined(GEOSX_USE_HYPRE_CUDA)
+#if GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_HIP
   array1d< HYPRE_BigInt > rowIndexDevice( 1 );
   array1d< HYPRE_BigInt > colIndexDevice( 1 );
   array1d< HYPRE_Int > ncolsDevice( 1 );
@@ -402,7 +403,7 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
 {
   GEOSX_LAI_ASSERT( insertable() );
 
-#if defined(GEOSX_USE_HYPRE_CUDA)
+#if GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_HIP
   array1d< globalIndex > rowIndexDevice( 1 );
   array1d< HYPRE_Int > ncolsDevice( 1 );
 
@@ -555,7 +556,7 @@ void HypreMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,
   {
     nCols[i] = 1;
   }
-#if defined(GEOSX_USE_HYPRE_CUDA)
+#if GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_HIP
   rowIndices.move( LvArray::MemorySpace::cuda, false );
   colIndices.move( LvArray::MemorySpace::cuda, false );
   values.move( LvArray::MemorySpace::cuda, false );
@@ -974,10 +975,14 @@ localIndex HypreMatrix::rowLength( globalIndex const globalRowIndex ) const
   HYPRE_Int ia_diag_h[2];
   HYPRE_Int ia_offd_h[2];
 
-#if defined(GEOSX_USE_HYPRE_CUDA)
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_HYPRE_USE_CUDA
   // Don't know if this is faster or slower than launching a kernel. We should deprecate this function in any case.
   cudaMemcpy( ia_diag_h, ia_diag + localRow, 2 * sizeof( HYPRE_Int ), cudaMemcpyDeviceToHost );
   cudaMemcpy( ia_offd_h, ia_offd + localRow, 2 * sizeof( HYPRE_Int ), cudaMemcpyDeviceToHost );
+#elif GEOSX_USE_HYPRE_DEVICE == GEOSX_HYPRE_USE_HIP
+  // Don't know if this is faster or slower than launching a kernel. We should deprecate this function in any case.
+  hipMemcpy( ia_diag_h, ia_diag + localRow, 2 * sizeof( HYPRE_Int ), hipMemcpyDeviceToHost );
+  hipMemcpy( ia_offd_h, ia_offd + localRow, 2 * sizeof( HYPRE_Int ), hipMemcpyDeviceToHost );
 #else
   ia_diag_h[0] = ia_diag[localRow]; ia_diag_h[1] = ia_diag[localRow + 1];
   ia_offd_h[0] = ia_offd[localRow]; ia_offd_h[1] = ia_offd[localRow + 1];

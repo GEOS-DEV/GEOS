@@ -249,9 +249,7 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-#ifdef GEOSX_CRUSHER_SUPPRESSION
-    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
-#else
+
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
@@ -268,12 +266,16 @@ public:
       }
     }
 
-    stack.localPressureDofIndex[0] = m_flowDofNumber[k];
+    auto flowDof = m_flowDofNumber[k];
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+#else
+    stack.localPressureDofIndex[0] = flowDof;
+#endif
     for( int flowDofIndex=0; flowDofIndex < numMaxComponents; ++flowDofIndex )
     {
       stack.localComponentDofIndices[flowDofIndex] = stack.localPressureDofIndex[0] + flowDofIndex + 1;
     }
-#endif
   }
 
   GEOSX_HOST_DEVICE

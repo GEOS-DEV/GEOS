@@ -68,8 +68,11 @@
   #define HYPRE_VERSION_PATCH @HYPRE_VERSION_PATCH@
 #endif
 
-/// Macro defined when using cuda in HYPRE  (CMake option ENABLE_HYPRE_CUDA)
-#cmakedefine GEOSX_USE_HYPRE_CUDA
+/// Macro defined when using cuda in HYPRE  (CMake option ENABLE_HYPRE_DEVICE)
+#define GEOSX_USE_HYPRE_CPU 0
+#define GEOSX_USE_HYPRE_CUDA 1
+#define GEOSX_USE_HYPRE_HIP 2
+#cmakedefine GEOSX_USE_HYPRE_DEVICE @GEOSX_USE_HYPRE_DEVICE@
 
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #cmakedefine GEOSX_USE_PETSC

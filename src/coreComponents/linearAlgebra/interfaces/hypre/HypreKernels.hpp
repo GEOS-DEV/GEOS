@@ -39,14 +39,14 @@ namespace ops
 {
 
 template< typename T >
-GEOSX_HYPRE_DEVICE
+GEOSX_HYPRE_HOST_DEVICE
 constexpr T identity( T const v )
 {
   return v;
 }
 
 template< typename T >
-GEOSX_HYPRE_DEVICE
+GEOSX_HYPRE_HOST_DEVICE
 constexpr T plus( T const lhs, T const rhs )
 {
   return lhs + rhs;
@@ -200,7 +200,7 @@ makeSortedPermutation( HYPRE_Int const * const indices,
   {
     perm[i] = i; // std::iota
   }
-  auto const comp = [indices, map] GEOSX_HYPRE_DEVICE ( HYPRE_Int i, HYPRE_Int j ) { return map( indices[i] ) < map( indices[j] ); };
+  auto const comp = [indices, map] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int i, HYPRE_Int j ) { return map( indices[i] ) < map( indices[j] ); };
   LvArray::sortedArrayManipulation::makeSorted( perm, perm + size, comp );
 }
 

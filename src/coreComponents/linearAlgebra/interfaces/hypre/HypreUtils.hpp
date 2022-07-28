@@ -28,9 +28,10 @@
 #include <HYPRE_krylov.h>
 #include <HYPRE_parcsr_ls.h>
 
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA || GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
 /// Host-device marker for custom hypre kernels
 #define GEOSX_HYPRE_DEVICE GEOSX_DEVICE
+#define GEOSX_HYPRE_HOST_DEVICE GEOSX_HOST_DEVICE
 #else
 /// Host-device marker for custom hypre kernels
 #define GEOSX_HYPRE_DEVICE
@@ -77,8 +78,11 @@ constexpr HYPRE_MemoryLocation getMemoryLocation( LvArray::MemorySpace const spa
   switch( space )
   {
     case LvArray::MemorySpace::host: return HYPRE_MEMORY_HOST;
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA
     case LvArray::MemorySpace::cuda: return HYPRE_MEMORY_DEVICE;
+#endif
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
+  case LvArray::MemorySpace::hip: return HYPRE_MEMORY_DEVICE;
 #endif
     default: return HYPRE_MEMORY_HOST;
   }
@@ -93,18 +97,28 @@ constexpr LvArray::MemorySpace getLvArrayMemorySpace( HYPRE_MemoryLocation const
   switch( location )
   {
     case HYPRE_MEMORY_HOST: return LvArray::MemorySpace::host;
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA
     case HYPRE_MEMORY_DEVICE: return LvArray::MemorySpace::cuda;
+#endif
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
+    case HYPRE_MEMORY_DEVICE: return LvArray::MemorySpace::hip;
 #endif
     default: return LvArray::MemorySpace::host;
   }
 }
 
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA
 /// Execution policy for operations on hypre data
 using execPolicy = parallelDevicePolicy<>;
 /// Memory space used by hypre matrix/vector objects
 constexpr LvArray::MemorySpace memorySpace = LvArray::MemorySpace::cuda;
+/// Memory location used by hypre matrix/vector objects
+constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_DEVICE;
+#elif GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
+/// Execution policy for operations on hypre data
+using execPolicy = parallelDevicePolicy<>;
+/// Memory space used by hypre matrix/vector objects
+constexpr LvArray::MemorySpace memorySpace = LvArray::MemorySpace::hip;
 /// Memory location used by hypre matrix/vector objects
 constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_DEVICE;
 #else
@@ -123,7 +137,7 @@ constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_HOST;
 //          localIndex to int. We are getting away with this because we do not
 //          pass ( localIndex * ) to hypre except when it is on the GPU, in
 //          which case we are using int for localIndex.
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA || GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
 static_assert( sizeof( HYPRE_Int ) == sizeof( geosx::localIndex ),
                "HYPRE_Int and geosx::localIndex must have the same size" );
 static_assert( std::is_signed< HYPRE_Int >::value == std::is_signed< geosx::localIndex >::value,
@@ -138,9 +152,12 @@ static_assert( std::is_signed< HYPRE_Int >::value == std::is_signed< geosx::loca
  */
 inline void checkDeviceErrors( char const * msg, char const * file, int const line )
 {
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA
   cudaError_t const err = cudaGetLastError();
   GEOSX_ERROR_IF( err != cudaSuccess, GEOSX_FMT( "Previous CUDA errors found: {} ({} at {}:{})", msg, cudaGetErrorString( err ), file, line ) );
+#elif GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
+  hipError_t const err = hipGetLastError();
+  GEOSX_ERROR_IF( err != hipSuccess, GEOSX_FMT( "Previous HIP errors found: {} ({} at {}:{})", msg, hipGetErrorString( err ), file, line ) );
 #else
   GEOSX_UNUSED_VAR( msg, file, line );
 #endif
@@ -289,7 +306,7 @@ inline HYPRE_Int getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType
   static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::SmootherType::default_, -1 },
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA || GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
     { LinearSolverParameters::AMG::SmootherType::jacobi, 7 },
 #else
     { LinearSolverParameters::AMG::SmootherType::jacobi, 0 },
@@ -329,7 +346,7 @@ inline HYPRE_Int getAMGCoarseType( LinearSolverParameters::AMG::CoarseType const
   static map< LinearSolverParameters::AMG::CoarseType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::CoarseType::default_, -1 },
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA || GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
     { LinearSolverParameters::AMG::CoarseType::jacobi, 7 },
 #else
     { LinearSolverParameters::AMG::CoarseType::jacobi, 0 },
@@ -376,7 +393,7 @@ inline HYPRE_Int getRelaxationType( LinearSolverParameters::PreconditionerType c
 {
   static map< LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
   {
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA || GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
     { LinearSolverParameters::PreconditionerType::jacobi, 7 },
 #else
     { LinearSolverParameters::PreconditionerType::jacobi, 0 },

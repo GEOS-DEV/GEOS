@@ -34,7 +34,7 @@ namespace geosx
 
 // Check matching requirements on index/value types between GEOSX and SuperLU_Dist
 
-#if !defined(GEOSX_USE_HYPRE_CUDA)
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CPU
 static_assert( sizeof( int_t ) == sizeof( globalIndex ),
                "SuperLU_Dist int_t and geosx::globalIndex must have the same size" );
 

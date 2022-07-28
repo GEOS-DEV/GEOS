@@ -75,16 +75,16 @@
 
     <FrictionlessContact
       name="fractureContact"
-      penaltyStiffness="1.0e0" 
+      penaltyStiffness="1.0e0"
       apertureTableName="aperTable"/>
   </Constitutive>
 
   <Outputs>
-      <VTK name="siloOutput"
+      <!-- <VTK name="siloOutput"
             plotFileRoot="walshQuarter"
             plotLevel="3"
             parallelThreads="48"/>
-      <Restart name="sidreRestart"/>
+      <Restart name="sidreRestart"/> -->
 
       <!-- ChomboIO name="chomboCoupling"
        beginCycle="1"

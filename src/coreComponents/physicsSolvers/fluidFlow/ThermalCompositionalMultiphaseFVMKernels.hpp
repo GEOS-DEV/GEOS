@@ -343,6 +343,7 @@ public:
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
+
     using Deriv = multifluid::DerivativeOffset;
 
     // ***********************************************
@@ -514,6 +515,7 @@ public:
       stack.dEnergyFlux_dT[i] += stack.thermalTransmissibility[0][i];
     }
 
+
     // **********************************************************************************
     // At this point, we have computed the energyFlux and the compFlux for all components
     // We have to do two things here:
@@ -530,6 +532,7 @@ public:
         stack.localFluxJacobian[numEqn + ic][localDofIndexTemp] = -m_dt * stack.dCompFlux_dT[ke][ic];
       }
     }
+
 
     // Step 2: add energyFlux and its derivatives to localFlux and localFluxJacobian
     integer const localRowIndexEnergy = numEqn-1;

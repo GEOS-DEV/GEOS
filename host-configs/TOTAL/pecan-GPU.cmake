@@ -17,4 +17,4 @@ set(CMAKE_CUDA_FLAGS_DEBUG "-g -G -O0 -Xcompiler -O0" CACHE STRING "")
 
 # Current version of hypre does not build with GPU support.
 # Most recent version does build. Let's wait for an upgrade on our side.
-set(ENABLE_HYPRE_CUDA OFF CACHE BOOL "" FORCE)
+set(ENABLE_HYPRE_DEVICE "NONE" CACHE STRING "" FORCE)

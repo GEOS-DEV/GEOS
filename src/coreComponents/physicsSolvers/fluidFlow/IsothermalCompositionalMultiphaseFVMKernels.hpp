@@ -683,9 +683,16 @@ public:
           }
         }
 
-        presGrad += stack.transmissibility[0][i] * (m_pres[er][esr][ei] - capPressure);
-        dPresGrad_dP[i] += stack.transmissibility[0][i] * (1 - dCapPressure_dP)
-                           + stack.dTrans_dPres[0][i] * (m_pres[er][esr][ei] - capPressure);
+        real64 v1 = m_pres[er][esr][ei];
+#ifdef GEOSX_CRUSHER_SUPPRESSION
+        GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
+#else
+        v1 -= capPressure;
+#endif
+        presGrad += stack.transmissibility[0][i] * v1;
+        dPresGrad_dP[i] += stack.transmissibility[0][i] * (1 - dCapPressure_dP);
+        dPresGrad_dP[i] += stack.dTrans_dPres[0][i] * v1;
+
         for( integer jc = 0; jc < numComp; ++jc )
         {
           dPresGrad_dC[i][jc] += -stack.transmissibility[0][i] * dCapPressure_dC[jc];
@@ -812,7 +819,6 @@ public:
       // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
       // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
       compFluxKernelOp( ip, k_up, er_up, esr_up, ei_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
-
     }
 
     // *** end of upwinding
@@ -902,19 +908,14 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
-#ifdef GEOSX_CRUSHER_SUPPRESSION
-    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
-#else
     forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
-
       kernelComponent.setup( iconn, stack );
       kernelComponent.computeFlux( iconn, stack );
       kernelComponent.complete( iconn, stack );
     } );
-#endif
   }
 
 protected:

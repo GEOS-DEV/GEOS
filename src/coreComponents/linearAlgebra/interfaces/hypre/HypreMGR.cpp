@@ -159,7 +159,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.mechSolver.ptr, 1.0 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.mechSolver.ptr, 0.8 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.mechSolver.ptr, 0 ) );
-#ifdef GEOSX_USE_HYPRE_CUDA
+#if GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_HIP
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.mechSolver.ptr, hypre::getAMGCoarseningType( "PMIS" ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.mechSolver.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.mechSolver.ptr, 2 ) );
