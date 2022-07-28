@@ -14,11 +14,11 @@
 
 
 /**
- * @file ElasticWaveEquationSEM.cpp
+ * @file ElasticFirstOrderWaveEquationSEM.cpp
  */
 
-#include "ElasticWaveEquationSEM.hpp"
-#include "ElasticWaveEquationSEMKernel.hpp"
+#include "ElasticFirstOrderWaveEquationSEM.hpp"
+#include "ElasticFirstOrderWaveEquationSEMKernel.hpp"
 
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
@@ -32,8 +32,8 @@ namespace geosx
 
 using namespace dataRepository;
 
-ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
-                                                  Group * const parent ):
+ElasticFirstOrderWaveEquationSEM::ElasticFirstOrderWaveEquationSEM( const std::string & name,
+                                                                    Group * const parent ):
 
   WaveSolverBase( name,
               parent )
@@ -86,12 +86,12 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
 
 }
 
-ElasticWaveEquationSEM::~ElasticWaveEquationSEM()
+ElasticFirstOrderWaveEquationSEM::~ElasticFirstOrderWaveEquationSEM()
 {
   // TODO Auto-generated destructor stub
 }
 
-void ElasticWaveEquationSEM::initializePreSubGroups()
+void ElasticFirstOrderWaveEquationSEM::initializePreSubGroups()
 {
 
   WaveSolverBase::initializePreSubGroups();
@@ -111,7 +111,7 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 }
 
 
-void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
+void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
 
   forMeshTargets( meshBodies, [&] ( string const &,
@@ -176,7 +176,7 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 
 
-void ElasticWaveEquationSEM::postProcessInput()
+void ElasticFirstOrderWaveEquationSEM::postProcessInput()
 {
 
   WaveSolverBase::postProcessInput();
@@ -233,7 +233,7 @@ void ElasticWaveEquationSEM::postProcessInput()
 }
 
 
-void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -297,7 +297,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
 
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
-      ElasticWaveEquationSEMKernels::
+      elasticFirstOrderWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
@@ -327,7 +327,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
 }
 
 
-void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs )
+void ElasticFirstOrderWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
@@ -348,7 +348,7 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumb
   } );
 }
 
-void ElasticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
+void ElasticFirstOrderWaveEquationSEM::computeSeismoTrace( real64 const time_n,
                                                   real64 const dt,
                                                   real64 const timeSeismo,
                                                   localIndex iSeismo,
@@ -408,7 +408,7 @@ void ElasticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
 
 }
 
-void ElasticWaveEquationSEM::saveSeismo( localIndex iseismo, real64 val, string const & filename)
+void ElasticFirstOrderWaveEquationSEM::saveSeismo( localIndex iseismo, real64 val, string const & filename)
 {
   std::ofstream f( filename, std::ios::app );
   f<< iseismo << " " << val << std::endl;
@@ -418,7 +418,7 @@ void ElasticWaveEquationSEM::saveSeismo( localIndex iseismo, real64 val, string 
 
 
 
-void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
+void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
 
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
@@ -479,7 +479,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         localIndex const numNodesPerFace = 4;
 
-        ElasticWaveEquationSEMKernels::MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
+        elasticFirstOrderWaveEquationSEMKernels::MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                               numFacesPerElem,
                                                               numNodesPerFace,
@@ -503,7 +503,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 }
 
 
-void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
+void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
@@ -566,7 +566,7 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   } );
 }
 
-real64 ElasticWaveEquationSEM::solverStep( real64 const & time_n,
+real64 ElasticFirstOrderWaveEquationSEM::solverStep( real64 const & time_n,
                                             real64 const & dt,
                                             integer const cycleNumber,
                                             DomainPartition & domain )
@@ -574,7 +574,7 @@ real64 ElasticWaveEquationSEM::solverStep( real64 const & time_n,
   return explicitStep( time_n, dt, cycleNumber, domain );
 }
 
-real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
+real64 ElasticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
                                               real64 const & dt,
                                               integer const cycleNumber,
                                               DomainPartition & domain )
@@ -633,7 +633,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
       //addSourceToRightHandSide( cycleNumber, rhs );
 
-      auto kernelFactory = ElasticWaveEquationSEMKernels::ExplicitElasticDisplacementSEMFactory( dt );
+      auto kernelFactory = elasticFirstOrderWaveEquationSEMKernels::ExplicitElasticDisplacementSEMFactory( dt );
   
       finiteElement::
       regionBasedKernelApplication< EXEC_POLICY,
@@ -644,7 +644,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
                                                             "",
                                                             kernelFactory );
 
-      auto kernelFactory2 = ElasticWaveEquationSEMKernels::ExplicitElasticStressSEMFactory(stressxx,
+      auto kernelFactory2 = elasticFirstOrderWaveEquationSEMKernels::ExplicitElasticStressSEMFactory(stressxx,
                                                                                            stressyy,
                                                                                            stresszz,
                                                                                            stressxy,
@@ -695,7 +695,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
 }
 
-void ElasticWaveEquationSEM::cleanup( real64 const time_n, integer const, integer const, real64 const, DomainPartition & domain )
+void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n, integer const, integer const, real64 const, DomainPartition & domain )
 {
   // compute the remaining seismic traces, if needed
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -719,7 +719,7 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n, integer const, intege
   } );
 }
 
-void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
+void ElasticFirstOrderWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
                                                       real64 const dt,
                                                       arrayView1d< real64 const > const var_np1,
                                                       arrayView1d< real64 const > const var_n,
@@ -733,6 +733,6 @@ void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
   }
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, ElasticWaveEquationSEM, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, ElasticFirstOrderWaveEquationSEM, string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

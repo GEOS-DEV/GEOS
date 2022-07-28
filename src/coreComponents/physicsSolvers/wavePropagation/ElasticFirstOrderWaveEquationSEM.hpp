@@ -14,11 +14,11 @@
 
 
 /**
- * @file ElasticWaveEquationSEM.hpp
+ * @file ElasticFirstOrderWaveEquationSEM.hpp
  */
 
-#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEM_HPP_
-#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEM_HPP_
+#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_
+#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_
 
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
@@ -29,7 +29,7 @@
 namespace geosx
 {
 
-class ElasticWaveEquationSEM : public WaveSolverBase
+class ElasticFirstOrderWaveEquationSEM : public WaveSolverBase
 {
 public:
 
@@ -38,20 +38,20 @@ public:
 
   static constexpr real64 epsilonLoc = 1e-8;
  
-  ElasticWaveEquationSEM( const std::string & name,
+  ElasticFirstOrderWaveEquationSEM( const std::string & name,
                            Group * const parent );
 
-  virtual ~ElasticWaveEquationSEM() override;
+  virtual ~ElasticFirstOrderWaveEquationSEM() override;
 
-  ElasticWaveEquationSEM() = delete;
-  ElasticWaveEquationSEM( ElasticWaveEquationSEM const & ) = delete;
-  ElasticWaveEquationSEM( ElasticWaveEquationSEM && ) = default;
+  ElasticFirstOrderWaveEquationSEM() = delete;
+  ElasticFirstOrderWaveEquationSEM( ElasticFirstOrderWaveEquationSEM const & ) = delete;
+  ElasticFirstOrderWaveEquationSEM( ElasticFirstOrderWaveEquationSEM && ) = default;
 
-  ElasticWaveEquationSEM & operator=( ElasticWaveEquationSEM const & ) = delete;
-  ElasticWaveEquationSEM & operator=( ElasticWaveEquationSEM && ) = delete;
+  ElasticFirstOrderWaveEquationSEM & operator=( ElasticFirstOrderWaveEquationSEM const & ) = delete;
+  ElasticFirstOrderWaveEquationSEM & operator=( ElasticFirstOrderWaveEquationSEM && ) = delete;
 
 
-  static string catalogName() { return "ElasticSEM"; }
+  static string catalogName() { return "ElasticFirstOrderSEM"; }
 
   virtual void initializePreSubGroups() override;
 

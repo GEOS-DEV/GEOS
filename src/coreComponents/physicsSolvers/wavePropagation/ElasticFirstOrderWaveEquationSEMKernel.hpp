@@ -13,11 +13,11 @@
  */
 
 /**
- * @file ElasticWaveEquationSEMKernel.hpp
+ * @file ElasticFirstOrderWaveEquationSEMKernel.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEMKERNEL_HPP_
-#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEMKERNEL_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEMKERNEL_HPP_
+#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 
@@ -26,7 +26,7 @@ namespace geosx
 {
 
 /// Namespace to contain the elastic wave kernels.
-namespace ElasticWaveEquationSEMKernels
+namespace elasticFirstOrderWaveEquationSEMKernels
 {
 
 struct PrecomputeSourceAndReceiverKernel
@@ -455,13 +455,14 @@ struct MassAndDampingMatrixKernel
 
 };
 
+
 /**
  * @brief Implements kernels for solving the first order elastic wave equations
  *   explicit central FD method and SEM
  * @copydoc geosx::finiteElement::KernelBase
  * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
  *
- * ### ElasticWaveEquationSEMKernel Description
+ * ### ElasticFirstOrderWaveEquationSEMKernel Description
  * Implements the KernelBase interface functions required for solving
  * the elastic wave equations using the
  * "finite element kernel application" functions such as
@@ -1040,8 +1041,8 @@ using ExplicitElasticStressSEMFactory = finiteElement::KernelFactory< ExplicitEl
                                                                       real64,
                                                                       integer >;                                                                 
 
-} // namespace ElasticWaveEquationSEMKernels
+} // namespace ElasticFirstOrderWaveEquationSEMKernels
 
 } // namespace geosx
 
-#endif //GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEMKERNEL_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ElasticFirstOrderWaveEquationSEMKERNEL_HPP_
