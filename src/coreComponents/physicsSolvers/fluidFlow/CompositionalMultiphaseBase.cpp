@@ -1243,13 +1243,14 @@ void CompositionalMultiphaseBase::applyBoundaryConditions( real64 const time_n,
   applyAquiferBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 }
 
-namespace internal
+namespace
 {
-string const bcLogMessage = string( "CompositionalMultiphaseBase {}: at time {}s, " )
-                            + string( "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. " )
-                            + string( "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). " )
-                            + string( "\nThe total number of target elements (including ghost elements) is {}. " )
-                            + string( "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set." );
+char const bcLogMessage[] =
+  "CompositionalMultiphaseBase {}: at time {}s, "
+  "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. "
+  "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). "
+  "\nThe total number of target elements (including ghost elements) is {}. "
+  "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.";
 }
 
 void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
@@ -1311,7 +1312,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
                                      getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
@@ -1404,6 +1405,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
                                                arrayView1d< string const > const & )
   {
     // maps to check consistent application of BC
+    // maps: regionName -> subRegionName -> setName (-> numComps)
     map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcPresCompStatusMap; // check that pressure/comp are
                                                                                               // present/consistent
     map< string, map< string, set< string > > > bcTempStatusMap; // check that temperature is present/consistent
@@ -1578,7 +1580,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
                                      getName(), time+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }

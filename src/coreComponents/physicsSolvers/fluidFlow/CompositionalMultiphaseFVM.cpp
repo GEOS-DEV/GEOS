@@ -652,6 +652,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
   {
 
     // maps to check consistent application of BC
+    // maps: setName (-> numComps)
     map< string, ComponentMask< MAX_NC > > bcPresCompStatusMap; // check that pressure/comp are present/consistent
     set< string > bcTempStatusMap; // check that temperature is present/consistent
 
@@ -762,12 +763,13 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
   return bcConsistent;
 }
 
-namespace internal
+namespace
 {
-string const faceBcLogMessage = string( "CompositionalMultiphaseFVM {}: at time {}s, " )
-                                + string( "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. " )
-                                + string( "\nThe total number of target faces (including ghost faces) is {}. " )
-                                + string( "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set." );
+char const faceBcLogMessage[] =
+  "CompositionalMultiphaseFVM {}: at time {}s, "
+  "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'.\n"
+  "The total number of target faces (including ghost faces) is {}.\n"
+  "Note that if this number is equal to zero, the boundary condition will not be applied on this face set.";
 }
 
 void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
@@ -870,7 +872,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::faceBcLogMessage,
+        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
                                      getName(), time_n+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }
@@ -977,11 +979,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       if( bc.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        string const logMessage = string( "CompositionalMultiphaseFVM {}: at time {}s, " )
-                                  + string( "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. " )
-                                  + string( "\nThe total number of target faces (including ghost faces) is {}. " )
-                                  + string( "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set." );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( logMessage,
+        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
                                      getName(), time+dt, AquiferBoundaryCondition::catalogName(),
                                      bc.getName(), setName, subRegion.getName(), numTargetFaces ) );
       }

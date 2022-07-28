@@ -539,12 +539,13 @@ SinglePhaseFVM< BASE >::applyBoundaryConditions( real64 const time_n,
   applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
 }
 
-namespace internal
+namespace
 {
-string const faceBcLogMessage = string( "SinglePhaseFVM {}: at time {}s, " )
-                                + string( "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. " )
-                                + string( "\nThe total number of target faces (including ghost faces) is {}. " )
-                                + string( "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set." );
+char const faceBcLogMessage[] =
+  "SinglePhaseFVM {}: at time {}s, "
+  "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. "
+  "\nThe total number of target faces (including ghost faces) is {}. "
+  "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
 }
 
 
@@ -599,7 +600,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::faceBcLogMessage,
+        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
                                      this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }
