@@ -673,7 +673,7 @@ real64 SinglePhaseFVM< SinglePhaseBase >::computeFluxFaceDirichlet( real64 const
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+  string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
   real64 totalFlux = 0.0;
 

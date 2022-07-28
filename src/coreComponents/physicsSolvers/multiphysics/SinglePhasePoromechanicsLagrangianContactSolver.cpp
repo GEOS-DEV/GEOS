@@ -134,9 +134,9 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
   m_flowSolver->setupDofs( domain, dofManager );
 
   dofManager.addCoupling( keys::TotalDisplacement,
-                          extrinsicMeshData::flow::pressure::key(),
+                          SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
-  dofManager.addCoupling( extrinsicMeshData::flow::pressure::key(),
+  dofManager.addCoupling( SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           extrinsicMeshData::contact::traction::key(),
                           DofManager::Connector::None );
 //  dofManager.addCoupling( extrinsicMeshData::contact::traction::key(),
@@ -434,7 +434,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
     string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
     arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-    string const pDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+    string const pDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
     // TODO TMP to be used if no coupling terms are assembled
     //GEOSX_UNUSED_VAR( regionNames );

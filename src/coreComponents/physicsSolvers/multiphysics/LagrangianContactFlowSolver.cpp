@@ -256,7 +256,7 @@ void LagrangianContactFlowSolver::updateOpeningForFlow( DomainPartition & domain
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      if( subRegion.hasWrapper( m_pressureKey ) )
+      if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
       {
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
         arrayView2d< real64 const > const & dispJump = subRegion.getReference< array2d< real64 > >( extrinsicMeshData::contact::dispJump::key() );
@@ -1210,7 +1210,7 @@ void LagrangianContactFlowSolver::
     surfaceGenerator = this->getParent().getGroup< SurfaceGenerator >( "SurfaceGen" );
     SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator.getFractureRegionName() );
     FaceElementSubRegion const & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
-    GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( m_pressureKey ), "The fracture subregion must contain pressure field." );
+    GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ), "The fracture subregion must contain pressure field." );
     arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
     GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
@@ -1295,11 +1295,11 @@ void LagrangianContactFlowSolver::
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
     {
-      if( subRegion.hasWrapper( m_pressureKey ) )
+      if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
       {
         arrayView1d< globalIndex const > const &
         presDofNumber = subRegion.getReference< globalIndex_array >( presDofKey );
-        arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( m_pressureKey );
+        arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
         arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
         forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
@@ -1408,7 +1408,7 @@ void LagrangianContactFlowSolver::
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion const & subRegion )
     {
-      if( subRegion.hasWrapper( m_pressureKey ) )
+      if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
       {
 //        string const &
 //        fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
@@ -1553,13 +1553,13 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
     surfaceGenerator = this->getParent().getGroup< SurfaceGenerator >( "SurfaceGen" );
     SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator.getFractureRegionName() );
     FaceElementSubRegion const & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
-    GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( m_pressureKey ), "The fracture subregion must contain pressure field." );
+    GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ), "The fracture subregion must contain pressure field." );
     arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
     GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
     // Get the pressures
     arrayView1d< real64 const > const &
-    pressure = fractureSubRegion.getReference< array1d< real64 > >( m_pressureKey );
+    pressure = fractureSubRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
 
     //  string const &
     //  fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( fractureRegion.getName() )];
@@ -1919,7 +1919,7 @@ void LagrangianContactFlowSolver::setNextDt( real64 const & currentDt,
 
 
 void LagrangianContactFlowSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
-                                                              DofManager const & dofManager,
+                                                              DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
                                                               CRSMatrix< real64, globalIndex > & localMatrix )
 {
 //  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
@@ -1958,8 +1958,6 @@ void LagrangianContactFlowSolver::setUpDflux_dApertureMatrix( DomainPartition & 
         derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
       }
     }
-
-    string const presDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
