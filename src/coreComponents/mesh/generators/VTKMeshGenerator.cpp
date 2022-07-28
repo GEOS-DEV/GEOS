@@ -42,15 +42,15 @@
 #include <vtkUnstructuredGridReader.h>
 #include <vtkXMLPUnstructuredGridReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
-// ADDED for vts import
+// for vts import
 #include <vtkNew.h>
 #include <vtkStructuredGrid.h>
 #include <vtkXMLStructuredGridReader.h>
 #include <vtkXMLPStructuredGridReader.h>
-// TODO for vti import
+// for vti import
 #include <vtkImageData.h>
 #include <vtkXMLImageDataReader.h>
-#include <vtkXMLPImageDataReader.h>
+// #include <vtkXMLPImageDataReader.h>
 #include <vtkImageDataToPointSet.h>
 
 #ifdef GEOSX_USE_MPI
@@ -82,7 +82,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setDescription( "Number of partitioning refinement iterations (defaults to 1, recommended value)."
                     "A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). "
                     "Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns." );
-} // Constructor placed in .hpp file
+}
 
 namespace vtk
 {
@@ -126,7 +126,7 @@ loadMesh( Path const & filePath )
     //       https://gitlab.kitware.com/vtk/vtk/-/blob/master/Filters/Core/vtkStaticCleanUnstructuredGrid.h
     //       This removes duplicate points, either present in the dataset, or resulting from merging pieces.
   }
-  else if( extension == "pvts" ) // TODO
+  else if( extension == "pvts" )
   {
     auto const vtkSgReader = vtkSmartPointer< vtkXMLPStructuredGridReader >::New();
     vtkSgReader->SetFileName( filePath.c_str() );
