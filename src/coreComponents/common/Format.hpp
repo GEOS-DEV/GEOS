@@ -22,6 +22,7 @@
 #ifdef GEOSX_USE_FMT
 #include <fmt/core.h>
 #include <fmt/chrono.h>
+#include <fmt/ranges.h>
 #define GEOSX_FMT_NS ::fmt
 #else // use C++20's <format>
 #include <format>
