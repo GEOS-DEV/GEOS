@@ -757,6 +757,20 @@ Element: Python
 .. include:: ../../coreComponents/schema/docs/Python.rst
 
 
+.. _XML_ReactiveBrinePhillipsFluid:
+
+Element: ReactiveBrinePhillipsFluid
+===================================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrinePhillipsFluid.rst
+
+
+.. _XML_ReactiveBrinePhillipsThermalFluid:
+
+Element: ReactiveBrinePhillipsThermalFluid
+==========================================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrinePhillipsThermalFluid.rst
+
+
 .. _XML_ReactiveCompositionalMultiphaseOBL:
 
 Element: ReactiveCompositionalMultiphaseOBL
@@ -769,13 +783,6 @@ Element: ReactiveCompositionalMultiphaseOBL
 Element: ReactiveFluidDriver
 ============================
 .. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver.rst
-
-
-.. _XML_ReactiveMultiFluid:
-
-Element: ReactiveMultiFluid
-===========================
-.. include:: ../../coreComponents/schema/docs/ReactiveMultiFluid.rst
 
 
 .. _XML_Restart:
@@ -1853,6 +1860,20 @@ Datastructure: Python
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
 
 
+.. _DATASTRUCTURE_ReactiveBrinePhillipsFluid:
+
+Datastructure: ReactiveBrinePhillipsFluid
+=========================================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrinePhillipsFluid_other.rst
+
+
+.. _DATASTRUCTURE_ReactiveBrinePhillipsThermalFluid:
+
+Datastructure: ReactiveBrinePhillipsThermalFluid
+================================================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrinePhillipsThermalFluid_other.rst
+
+
 .. _DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL:
 
 Datastructure: ReactiveCompositionalMultiphaseOBL
@@ -1865,13 +1886,6 @@ Datastructure: ReactiveCompositionalMultiphaseOBL
 Datastructure: ReactiveFluidDriver
 ==================================
 .. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver_other.rst
-
-
-.. _DATASTRUCTURE_ReactiveMultiFluid:
-
-Datastructure: ReactiveMultiFluid
-=================================
-.. include:: ../../coreComponents/schema/docs/ReactiveMultiFluid_other.rst
 
 
 .. _DATASTRUCTURE_Restart:
