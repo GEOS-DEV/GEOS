@@ -21,7 +21,7 @@
 
 #include "common/MpiWrapper.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/fluid/ReactiveMultiFluid.hpp"
+#include "constitutive/fluid/reactiveFluidSelector.hpp"
 #include "events/tasks/TaskBase.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
@@ -62,7 +62,8 @@ public:
    * @param fluid Fluid constitutive model
    * @param table Table with input/output time history
    */
-  void runTest( ReactiveMultiFluid & fluid, arrayView2d< real64 > const & table );
+  template< typename FLUID_TYPE >
+  void runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table );
 
   /**
    * @brief Ouput table to file for easy plotting

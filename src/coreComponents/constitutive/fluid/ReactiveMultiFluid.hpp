@@ -46,13 +46,7 @@ public:
   deliverClone( string const & name,
                 Group * const parent ) const override;
 
-  static string catalogName() { return "ReactiveMultiFluid";}
-
-  virtual string getCatalogName() const override { return catalogName(); }
-
   virtual bool isThermal() const override;
-
-  virtual integer getWaterPhaseIndex() const override { return 0; }
 
   arrayView2d< real64 const, compflow::USD_COMP > primarySpeciesConcentration() const
   { return m_primarySpeciesConcentration; }
@@ -72,7 +66,7 @@ public:
   /**
    * @brief Kernel wrapper class for ReactiveMultiFluid.
    */
-  class KernelWrapper final : public MultiFluidBase::KernelWrapper
+  class KernelWrapper : public MultiFluidBase::KernelWrapper
   {
 
 public:
@@ -86,17 +80,28 @@ public:
                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const;
 
-    GEOSX_HOST_DEVICE
-    virtual void update( localIndex const k,
-                         localIndex const q,
-                         real64 const pressure,
-                         real64 const temperature,
-                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override;
-
-private:
-
-    friend class ReactiveMultiFluid;
-
+    /**
+     * @brief Construct a new Kernel Wrapper object
+     * 
+     * @param componentMolarWeight 
+     * @param useMass 
+     * @param isThermal 
+     * @param phaseFraction 
+     * @param phaseDensity 
+     * @param phaseMassDensity 
+     * @param phaseViscosity 
+     * @param phaseEnthalpy 
+     * @param phaseInternalEnergy 
+     * @param phaseCompFraction 
+     * @param totalDensity 
+     * @param numPrimarySpecies 
+     * @param equilibriumReactions 
+     * @param kineticReactions 
+     * @param primarySpeciesConcentration 
+     * @param secondarySpeciesConcentration 
+     * @param primarySpeciesTotalConcentration 
+     * @param kineticReactionRates 
+     */
     KernelWrapper( arrayView1d< real64 const > componentMolarWeight,
                    bool const useMass,
                    bool const isThermal,
@@ -114,8 +119,29 @@ private:
                    arrayView2d< real64 > const & primarySpeciesConcentration,
                    arrayView2d< real64 > const & secondarySpeciesConcentration,
                    arrayView2d< real64 > const & primarySpeciesTotalConcentration,
-                   arrayView2d< real64 > const & kineticReactionRates );
+                   arrayView2d< real64 > const & kineticReactionRates ):
+    MultiFluidBase::KernelWrapper( std::move( componentMolarWeight ),
+                                   useMass,
+                                   std::move( phaseFraction ),
+                                   std::move( phaseDensity ),
+                                   std::move( phaseMassDensity ),
+                                   std::move( phaseViscosity ),
+                                   std::move( phaseEnthalpy ),
+                                   std::move( phaseInternalEnergy ),
+                                   std::move( phaseCompFraction ),
+                                   std::move( totalDensity )  ),
+    m_numPrimarySpecies( numPrimarySpecies ),
+    m_equilibriumReactions( equilibriumReactions.createKernelWrapper() ),
+    m_kineticReactions( kineticReactions.createKernelWrapper() ),
+    m_primarySpeciesConcentration( primarySpeciesConcentration ),
+    m_secondarySpeciesConcentration( secondarySpeciesConcentration ),
+    m_primarySpeciesTotalConcentration( primarySpeciesTotalConcentration ),
+    m_kineticReactionRates( kineticReactionRates )
+    {}
+    
+  protected:
 
+    friend class ReactiveMultiFluid;
     /// Reaction related terms
     integer m_numPrimarySpecies;
 

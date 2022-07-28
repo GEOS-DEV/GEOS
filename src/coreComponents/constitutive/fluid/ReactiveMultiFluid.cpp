@@ -91,46 +91,6 @@ void ReactiveMultiFluid::createChemicalReactions()
   m_kineticReactions = std::make_unique< chemicalReactions::KineticReactions >( getName() + "_kineticReactions", m_numPrimarySpecies, m_numSecondarySpecies, m_numKineticReactions );
 }
 
-ReactiveMultiFluid::KernelWrapper::
-  KernelWrapper( arrayView1d< geosx::real64 const > componentMolarWeight,
-                 bool const useMass,
-                 bool const isThermal,
-                 PhaseProp::ViewType phaseFraction,
-                 PhaseProp::ViewType phaseDensity,
-                 PhaseProp::ViewType phaseMassDensity,
-                 PhaseProp::ViewType phaseViscosity,
-                 PhaseProp::ViewType phaseEnthalpy,
-                 PhaseProp::ViewType phaseInternalEnergy,
-                 PhaseComp::ViewType phaseCompFraction,
-                 FluidProp::ViewType totalDensity,
-                 integer const numPrimarySpecies,
-                 chemicalReactions::EquilibriumReactions const & equilibriumReactions,
-                 chemicalReactions::KineticReactions const & kineticReactions,
-                 arrayView2d< real64 > const & primarySpeciesConcentration,
-                 arrayView2d< real64 > const & secondarySpeciesConcentration,
-                 arrayView2d< real64 > const & primarySpeciesTotalConcentration,
-                 arrayView2d< real64 > const & kineticReactionRates )
-  : MultiFluidBase::KernelWrapper( std::move( componentMolarWeight ),
-                                   useMass,
-                                   std::move( phaseFraction ),
-                                   std::move( phaseDensity ),
-                                   std::move( phaseMassDensity ),
-                                   std::move( phaseViscosity ),
-                                   std::move( phaseEnthalpy ),
-                                   std::move( phaseInternalEnergy ),
-                                   std::move( phaseCompFraction ),
-                                   std::move( totalDensity ) ),
-  m_numPrimarySpecies( numPrimarySpecies ),
-  m_equilibriumReactions( equilibriumReactions.createKernelWrapper() ),
-  m_kineticReactions( kineticReactions.createKernelWrapper() ),
-  m_primarySpeciesConcentration( primarySpeciesConcentration ),
-  m_secondarySpeciesConcentration( secondarySpeciesConcentration ),
-  m_primarySpeciesTotalConcentration( primarySpeciesTotalConcentration ),
-  m_kineticReactionRates( kineticReactionRates )
-{}
-
-
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveMultiFluid, string const &, Group * const )
 } //namespace constitutive
 
 } //namespace geosx

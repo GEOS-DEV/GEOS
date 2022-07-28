@@ -126,7 +126,7 @@ bool ReactiveFluidDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   // for the moment it is of type MultiFluidBase.
 
   ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  ReactiveMultiFluid & fluid = constitutiveManager.getGroup< ReactiveMultiFluid >( m_fluidName );
+  ReactiveMultiFluid & baseFluid = constitutiveManager.getGroup< ReactiveMultiFluid >( m_fluidName );
 
   // depending on logLevel, print some useful info
 
@@ -134,7 +134,7 @@ bool ReactiveFluidDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   {
     GEOSX_LOG_RANK_0( "Launching ReactiveFluid Driver" );
     GEOSX_LOG_RANK_0( "  Fluid .................. " << m_fluidName );
-    GEOSX_LOG_RANK_0( "  Type ................... " << fluid.getCatalogName() );
+    GEOSX_LOG_RANK_0( "  Type ................... " << baseFluid.getCatalogName() );
     GEOSX_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
     GEOSX_LOG_RANK_0( "  No. of Primary Species ...... " << m_numPrimarySpecies );
     GEOSX_LOG_RANK_0( "  No. of Secondary Species ...... " << m_numSecondarySpecies );
@@ -154,10 +154,13 @@ bool ReactiveFluidDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   dataRepository::Group discretization( "discretization", &rootGroup );
 
   discretization.resize( 1 );   // one element
-  fluid.allocateConstitutiveData( discretization, 1 );   // one quadrature point
+  baseFluid.allocateConstitutiveData( discretization, 1 );   // one quadrature point
 
-  // Eventually we will dispatch but for now there is only one model.
-  runTest( fluid, m_table );
+  constitutiveUpdatePassThru( baseFluid, [&] ( auto & selectedFluid )
+  {
+    using FLUID_TYPE = TYPEOFREF( selectedFluid );
+    runTest< FLUID_TYPE >( selectedFluid, m_table );
+  } );
 
   // move table back to host for output
   m_table.move( LvArray::MemorySpace::host );
@@ -175,7 +178,8 @@ bool ReactiveFluidDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   return false;
 }
 
-void ReactiveFluidDriver::runTest( ReactiveMultiFluid & fluid, arrayView2d< real64 > const & table )
+template< typename FLUID_TYPE >
+void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table )
 {
   // get number of phases and components
   localIndex const numPhases = fluid.numFluidPhases();
@@ -191,7 +195,7 @@ void ReactiveFluidDriver::runTest( ReactiveMultiFluid & fluid, arrayView2d< real
 
   // create kernel wrapper
 
-  typename ReactiveMultiFluid::KernelWrapper kernelWrapper = fluid.createKernelWrapper();
+   typename FLUID_TYPE::KernelWrapper kernelWrapper = fluid.createKernelWrapper();
 
   // set composition to user specified feed
   // it is more convenient to provide input in molar, so perform molar to mass conversion here

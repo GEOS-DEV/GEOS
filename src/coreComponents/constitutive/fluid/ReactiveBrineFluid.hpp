@@ -54,7 +54,7 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual bool isThermal() const override;
+  virtual bool isThermal() const override final;
 
   /**
    * @brief Kernel wrapper class for ReactiveBrineFluid.
@@ -160,20 +160,19 @@ private:
 
   void createPVTModels();
 
+  /// Names of the files defining the viscosity and density models
+  path_array m_phasePVTParaFiles;
+
   /// Brine constitutive models
   std::unique_ptr< PHASE > m_phase;
 
 };
 
 // these aliases are useful in constitutive dispatch
-using BrinePhillipsFluid =
-  ReactiveBrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction >,
-                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction >,
-                 PVTProps::CO2Solubility >;
-using BrinePhillipsThermalFluid =
-  ReactiveBrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy >,
-                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy >,
-                 PVTProps::CO2Solubility >;
+using ReactiveBrinePhillipsFluid =
+  ReactiveBrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction > >;
+using ReactiveBrinePhillipsThermalFluid =
+  ReactiveBrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy > >;
 
 template< typename PHASE >
 GEOSX_HOST_DEVICE
@@ -191,7 +190,7 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
            arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
            real64 & totalDensity ) const
 {
-  integer constexpr numComp = 2;
+  integer constexpr numComp = chemicalReactions::ReactionsBase::maxNumPrimarySpecies;
   integer constexpr numPhase = 1;
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
@@ -251,7 +250,7 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
 template< typename PHASE >
 GEOSX_HOST_DEVICE
 inline void
-ReactiveBrineFluid< PHASE, PHASE2, FLASH >::KernelWrapper::
+ReactiveBrineFluid< PHASE >::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -264,7 +263,7 @@ ReactiveBrineFluid< PHASE, PHASE2, FLASH >::KernelWrapper::
            PhaseComp::SliceType const phaseCompFraction,
            FluidProp::SliceType const totalDensity ) const
 {
-  integer constexpr numComp = 2;
+  integer constexpr numComp = chemicalReactions::ReactionsBase::maxNumPrimarySpecies;
   integer constexpr numPhase = 1;
 
   stackArray1d< real64, numComp > compMoleFrac( numComp );
