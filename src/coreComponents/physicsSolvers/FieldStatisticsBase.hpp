@@ -44,7 +44,8 @@ public:
    */
   FieldStatisticsBase( const string & name,
                        Group * const parent )
-    : TaskBase( name, parent )
+    : TaskBase( name, parent ),
+    m_solver( nullptr )
   {
     enableLogLevelInput();
 

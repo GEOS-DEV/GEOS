@@ -70,22 +70,18 @@ void CompositionalMultiphaseStatistics::postProcessInput()
 
 void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
 {
-  GEOSX_UNUSED_VAR( meshBodies );
-
   // the fields have to be registered in "registerDataOnMesh" (and not later)
   // otherwise they cannot be targeted by TimeHistory
 
   // for now, this guard is needed to avoid breaking the xml schema generation
-  if( !m_solver )
+  if( m_solver == nullptr )
   {
     return;
   }
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  m_solver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                          MeshLevel & mesh,
-                                                          arrayView1d< string const > const & regionNames )
+  m_solver->forMeshTargets( meshBodies, [&] ( string const &,
+                                              MeshLevel & mesh,
+                                              arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
