@@ -390,10 +390,6 @@
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--newtonNumberOfIterations => Number of Newton's iterations.-->
 		<xsd:attribute name="newtonNumberOfIterations" type="integer" />
-		<!--numberWastedNewtonNumIterations => (no description available)-->
-		<xsd:attribute name="numberWastedNewtonNumIterations" type="integer" />
-		<!--totalSuccessfulNewtonNumIterations => (no description available)-->
-		<xsd:attribute name="totalSuccessfulNewtonNumIterations" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

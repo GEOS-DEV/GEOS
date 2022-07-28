@@ -289,11 +289,11 @@
   <Tasks>
     <SolidMechanicsStatistics
       name="LinearElasticityStatistics"
-      solidMechanicsSolverName="LinearElasticitySolver"
+      solidSolverName="LinearElasticitySolver"
       logLevel="1"/>
     <CompositionalMultiphaseStatistics
       name="TwoPhaseFlowStatistics"
-      compositionalMultiphaseSolverName="TwoPhaseFlowSolver"
+      flowSolverName="TwoPhaseFlowSolver"
       logLevel="1"
       computeCFLNumbers="1"
       computeRegionStatistics="1"/>

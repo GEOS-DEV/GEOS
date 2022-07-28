@@ -19,8 +19,7 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSTATISTICS_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSTATISTICS_HPP_
 
-#include "events/tasks/TaskBase.hpp"
-#include "mesh/MeshLevel.hpp"
+#include "physicsSolvers/FieldStatisticsBase.hpp"
 
 namespace geosx
 {
@@ -32,9 +31,11 @@ class SolidMechanicsLagrangianFEM;
  *
  * Task class allowing for the computation of aggregate statistics in solid mechanics simulations
  */
-class SolidMechanicsStatistics : public TaskBase
+class SolidMechanicsStatistics : public FieldStatisticsBase< SolidMechanicsLagrangianFEM >
 {
 public:
+
+  using Base = FieldStatisticsBase< SolidMechanicsLagrangianFEM >;
 
   /**
    * @brief Constructor for the state reset class
@@ -43,9 +44,6 @@ public:
    */
   SolidMechanicsStatistics( const string & name,
                             Group * const parent );
-
-  /// Destructor for the class
-  ~SolidMechanicsStatistics() override;
 
   /// Accessor for the catalog name
   static string catalogName() { return "SolidMechanicsStatistics"; }
@@ -66,12 +64,6 @@ public:
 
   /**@}*/
 
-  /**
-   * @brief Compute node-based statistics on the reservoir
-   * @param[in] mesh the mesh level object
-   */
-  void computeNodeStatistics( MeshLevel & mesh ) const;
-
 private:
 
   /**
@@ -79,29 +71,25 @@ private:
    */
   struct viewKeyStruct
   {
-    /// String for the compositional multiphase flow solver name
-    constexpr static char const * solidMechanicsSolverNameString() { return "solidMechanicsSolverName"; }
     /// String for the node-based statistics
     constexpr static char const * nodeStatisticsString() { return "nodeStatistics"; }
   };
 
   struct NodeStatistics
   {
-    /// minimum displacement in each direction
+    /// minimum displacement in each direction (x, y, z)
     array1d< real64 > minDisplacement;
-    /// maximum displacement in each direction
+    /// maximum displacement in each direction (x, y, z)
     array1d< real64 > maxDisplacement;
   };
 
-  void postProcessInput() override;
+  /**
+   * @brief Compute node-based statistics on the reservoir
+   * @param[in] mesh the mesh level object
+   */
+  void computeNodeStatistics( MeshLevel & mesh ) const;
 
-  void initializePostInitialConditionsPreSubGroups() override;
-
-  /// Name of the solid mechanics solver
-  string m_solidMechanicsSolverName;
-
-  /// Pointer to the solid mechanics solver
-  SolidMechanicsLagrangianFEM * m_solidMechanicsSolver;
+  void registerDataOnMesh( Group & meshBodies ) override;
 };
 
 

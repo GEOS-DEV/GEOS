@@ -41,13 +41,10 @@ using namespace dataRepository;
 
 CompositionalMultiphaseStatistics::CompositionalMultiphaseStatistics( const string & name,
                                                                       Group * const parent ):
-  TaskBase( name, parent ),
+  Base( name, parent ),
   m_computeCFLNumbers( 0 ),
-  m_computeRegionStatistics( 1 ),
-  m_compositionalMultiphaseSolverName()
+  m_computeRegionStatistics( 1 )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::computeCFLNumbersString(), &m_computeCFLNumbers ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -57,31 +54,13 @@ CompositionalMultiphaseStatistics::CompositionalMultiphaseStatistics( const stri
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to decide whether region statistics are computed or not" );
-
-  registerWrapper( viewKeyStruct::compositionalMultiphaseSolverNameString(), &m_compositionalMultiphaseSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the compositional multiphase solver" );
-
 }
-
-CompositionalMultiphaseStatistics::~CompositionalMultiphaseStatistics()
-{}
 
 void CompositionalMultiphaseStatistics::postProcessInput()
 {
-  ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
-  PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
+  Base::postProcessInput();
 
-  GEOSX_THROW_IF( !physicsSolverManager.hasGroup( m_compositionalMultiphaseSolverName ),
-                  GEOSX_FMT( "Task {}: physics solver named {} not found",
-                             getName(), m_compositionalMultiphaseSolverName ),
-                  InputError );
-
-  m_compositionalMultiphaseSolver =
-    &physicsSolverManager.getGroup< CompositionalMultiphaseBase >( m_compositionalMultiphaseSolverName );
-
-  if( dynamicCast< CompositionalMultiphaseHybridFVM * >( m_compositionalMultiphaseSolver ) &&
-      m_computeCFLNumbers != 0 )
+  if( dynamicCast< CompositionalMultiphaseHybridFVM * >( m_solver ) && m_computeCFLNumbers != 0 )
   {
     GEOSX_THROW( GEOSX_FMT( "{} {}: the option to compute CFL numbers is incompatible with CompositionalMultiphaseHybridFVM",
                             catalogName(), getName() ),
@@ -89,18 +68,29 @@ void CompositionalMultiphaseStatistics::postProcessInput()
   }
 }
 
-void CompositionalMultiphaseStatistics::initializePostInitialConditionsPreSubGroups()
+void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
 {
+  GEOSX_UNUSED_VAR( meshBodies );
+
+  // the fields have to be registered in "registerDataOnMesh" (and not later)
+  // otherwise they cannot be targeted by TimeHistory
+
+  // for now, this guard is needed to avoid breaking the xml schema generation
+  if( !m_solver )
+  {
+    return;
+  }
+
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  m_compositionalMultiphaseSolver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                                 MeshLevel & mesh,
-                                                                                 arrayView1d< string const > const & regionNames )
+  m_solver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                          MeshLevel & mesh,
+                                                          arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
-    integer const numPhases = m_compositionalMultiphaseSolver->numFluidPhases();
-    integer const numComps = m_compositionalMultiphaseSolver->numFluidComponents();
+    integer const numPhases = m_solver->numFluidPhases();
+    integer const numComps = m_solver->numFluidComponents();
 
     // if we have to report region statistics, we have to register them first here
     if( m_computeRegionStatistics )
@@ -144,9 +134,9 @@ bool CompositionalMultiphaseStatistics::execute( real64 const GEOSX_UNUSED_PARAM
                                                  real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                                                  DomainPartition & domain )
 {
-  m_compositionalMultiphaseSolver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                                 MeshLevel & mesh,
-                                                                                 arrayView1d< string const > const & regionNames )
+  m_solver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                          MeshLevel & mesh,
+                                                          arrayView1d< string const > const & regionNames )
   {
     if( m_computeRegionStatistics )
     {
@@ -167,8 +157,8 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
 {
   GEOSX_MARK_FUNCTION;
 
-  integer const numPhases = m_compositionalMultiphaseSolver->numFluidPhases();
-  integer const numComps = m_compositionalMultiphaseSolver->numFluidComponents();
+  integer const numPhases = m_solver->numFluidPhases();
+  integer const numComps = m_solver->numFluidComponents();
 
   // Step 1: initialize the average/min/max quantities
   ElementRegionManager & elemManager = mesh.getElemManager();
@@ -316,7 +306,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     regionStatistics.averageTemperature = MpiWrapper::sum( regionStatistics.averageTemperature );
     regionStatistics.averageTemperature /= regionStatistics.totalUncompactedPoreVolume;
 
-    integer const useMass = m_compositionalMultiphaseSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
+    integer const useMass = m_solver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
     string const massUnit = useMass ? "kg" : "mol";
 
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
@@ -341,13 +331,13 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
 {
   GEOSX_MARK_FUNCTION;
 
-  integer const numPhases = m_compositionalMultiphaseSolver->numFluidPhases();
-  integer const numComps = m_compositionalMultiphaseSolver->numFluidComponents();
+  integer const numPhases = m_solver->numFluidPhases();
+  integer const numComps = m_solver->numFluidComponents();
 
   // Step 1: reset the arrays involved in the computation of CFL numbers
-  m_compositionalMultiphaseSolver->forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                MeshLevel & mesh,
-                                                                                arrayView1d< string const > const & regionNames )
+  m_solver->forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                         MeshLevel & mesh,
+                                                         arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -364,7 +354,7 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
     // Step 2: compute the total volumetric outflux for each reservoir cell by looping over faces
     NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_compositionalMultiphaseSolver->getDiscretizationName() );
+    FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_solver->getDiscretizationName() );
 
     isothermalCompositionalMultiphaseFVMKernels::
       CFLFluxKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
@@ -415,9 +405,9 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
   real64 localMaxPhaseCFLNumber = 0.0;
   real64 localMaxCompCFLNumber = 0.0;
 
-  m_compositionalMultiphaseSolver->forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                MeshLevel & mesh,
-                                                                                arrayView1d< string const > const & regionNames )
+  m_solver->forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                         MeshLevel & mesh,
+                                                         arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,

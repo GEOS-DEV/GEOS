@@ -163,7 +163,7 @@
   <Tasks>
     <SinglePhaseStatistics
       name="SinglePhaseFlowStatistics"
-      singlePhaseSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       logLevel="1"/>
   </Tasks>
   

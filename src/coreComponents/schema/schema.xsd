@@ -2476,12 +2476,12 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseStatisticsType">
-		<!--compositionalMultiphaseSolverName => Name of the compositional multiphase solver-->
-		<xsd:attribute name="compositionalMultiphaseSolverName" type="string" use="required" />
 		<!--computeCFLNumbers => Flag to decide whether CFL numbers are computed or not-->
 		<xsd:attribute name="computeCFLNumbers" type="integer" default="0" />
 		<!--computeRegionStatistics => Flag to decide whether region statistics are computed or not-->
 		<xsd:attribute name="computeRegionStatistics" type="integer" default="1" />
+		<!--flowSolverName => Name of the flow solver-->
+		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2520,10 +2520,10 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseStatisticsType">
+		<!--flowSolverName => Name of the flow solver-->
+		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--singlePhaseSolverName => Name of the single-phase solver-->
-		<xsd:attribute name="singlePhaseSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2542,8 +2542,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 	<xsd:complexType name="SolidMechanicsStatisticsType">
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--solidMechanicsSolverName => Name of the solid mechanics solver-->
-		<xsd:attribute name="solidMechanicsSolverName" type="string" use="required" />
+		<!--solidSolverName => Name of the solid solver-->
+		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

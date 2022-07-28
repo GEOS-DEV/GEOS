@@ -229,7 +229,7 @@
    <Tasks>
     <CompositionalMultiphaseStatistics
       name="compositionalMultiphaseFlowStatistics"
-      compositionalMultiphaseSolverName="compositionalMultiphaseFlow"
+      flowSolverName="compositionalMultiphaseFlow"
       logLevel="1"
       computeCFLNumbers="0"
       computeRegionStatistics="1"/>

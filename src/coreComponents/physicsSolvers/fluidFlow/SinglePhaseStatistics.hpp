@@ -19,8 +19,7 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASESTATISTICS_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASESTATISTICS_HPP_
 
-#include "events/tasks/TaskBase.hpp"
-#include "mesh/MeshLevel.hpp"
+#include "physicsSolvers/FieldStatisticsBase.hpp"
 
 namespace geosx
 {
@@ -32,9 +31,11 @@ class SinglePhaseBase;
  *
  * Task class allowing for the computation of aggregate statistics in single-phase simulations
  */
-class SinglePhaseStatistics : public TaskBase
+class SinglePhaseStatistics : public FieldStatisticsBase< SinglePhaseBase >
 {
 public:
+
+  using Base = FieldStatisticsBase< SinglePhaseBase >;
 
   /**
    * @brief Constructor for the state reset class
@@ -43,9 +44,6 @@ public:
    */
   SinglePhaseStatistics( const string & name,
                          Group * const parent );
-
-  /// Destructor for the class
-  ~SinglePhaseStatistics() override;
 
   /// Accessor for the catalog name
   static string catalogName() { return "SinglePhaseStatistics"; }
@@ -73,8 +71,6 @@ private:
    */
   struct viewKeyStruct
   {
-    /// String for the single-phase multiphase flow solver name
-    constexpr static char const * singlePhaseSolverNameString() { return "singlePhaseSolverName"; }
     /// String for the region statistics
     constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
   };
@@ -103,15 +99,8 @@ private:
                                 arrayView1d< string const > const & regionNames ) const;
 
 
-  void postProcessInput() override;
+  void registerDataOnMesh( Group & meshBodies ) override;
 
-  void initializePostInitialConditionsPreSubGroups() override;
-
-  /// Name of the single-phase solver
-  string m_singlePhaseSolverName;
-
-  /// Pointer to the single-phase solver
-  SinglePhaseBase * m_singlePhaseSolver;
 };
 
 

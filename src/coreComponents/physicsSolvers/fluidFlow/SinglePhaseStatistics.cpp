@@ -33,40 +33,27 @@ using namespace dataRepository;
 
 SinglePhaseStatistics::SinglePhaseStatistics( const string & name,
                                               Group * const parent ):
-  TaskBase( name, parent ),
-  m_singlePhaseSolverName()
-{
-  enableLogLevelInput();
-
-  registerWrapper( viewKeyStruct::singlePhaseSolverNameString(), &m_singlePhaseSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the single-phase solver" );
-}
-
-SinglePhaseStatistics::~SinglePhaseStatistics()
+  Base( name, parent )
 {}
 
-void SinglePhaseStatistics::postProcessInput()
+void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
 {
-  ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
-  PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
+  GEOSX_UNUSED_VAR( meshBodies );
 
-  GEOSX_THROW_IF( !physicsSolverManager.hasGroup( m_singlePhaseSolverName ),
-                  GEOSX_FMT( "Task {}: physics solver named {} not found",
-                             getName(), m_singlePhaseSolverName ),
-                  InputError );
+  // the fields have to be registered in "registerDataOnMesh" (and not later)
+  // otherwise they cannot be targeted by TimeHistory
 
-  m_singlePhaseSolver =
-    &physicsSolverManager.getGroup< SinglePhaseBase >( m_singlePhaseSolverName );
-}
+  // for now, this guard is needed to avoid breaking the xml schema generation
+  if( !m_solver )
+  {
+    return;
+  }
 
-void SinglePhaseStatistics::initializePostInitialConditionsPreSubGroups()
-{
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  m_singlePhaseSolver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                     MeshLevel & mesh,
-                                                                     arrayView1d< string const > const & regionNames )
+  m_solver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                          MeshLevel & mesh,
+                                                          arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -87,9 +74,9 @@ bool SinglePhaseStatistics::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                      real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                                      DomainPartition & domain )
 {
-  m_singlePhaseSolver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                     MeshLevel & mesh,
-                                                                     arrayView1d< string const > const & regionNames )
+  m_solver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                          MeshLevel & mesh,
+                                                          arrayView1d< string const > const & regionNames )
   {
     computeRegionStatistics( mesh, regionNames );
   } );

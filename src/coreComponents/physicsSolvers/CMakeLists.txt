@@ -6,6 +6,7 @@ set( physicsSolvers_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
+     FieldStatisticsBase.hpp
      contact/ContactSolverBase.hpp
      contact/ContactExtrinsicData.hpp
      contact/LagrangianContactSolver.hpp

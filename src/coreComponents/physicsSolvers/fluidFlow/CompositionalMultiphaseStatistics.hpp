@@ -19,8 +19,7 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICS_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICS_HPP_
 
-#include "events/tasks/TaskBase.hpp"
-#include "mesh/MeshLevel.hpp"
+#include "physicsSolvers/FieldStatisticsBase.hpp"
 
 namespace geosx
 {
@@ -32,9 +31,11 @@ class CompositionalMultiphaseBase;
  *
  * Task class allowing for the computation of aggregate statistics in compositional multiphase simulations
  */
-class CompositionalMultiphaseStatistics : public TaskBase
+class CompositionalMultiphaseStatistics : public FieldStatisticsBase< CompositionalMultiphaseBase >
 {
 public:
+
+  using Base = FieldStatisticsBase< CompositionalMultiphaseBase >;
 
   /**
    * @brief Constructor for the state reset class
@@ -43,9 +44,6 @@ public:
    */
   CompositionalMultiphaseStatistics( const string & name,
                                      Group * const parent );
-
-  /// Destructor for the class
-  ~CompositionalMultiphaseStatistics() override;
 
   /// Accessor for the catalog name
   static string catalogName() { return "CompositionalMultiphaseStatistics"; }
@@ -73,8 +71,6 @@ private:
    */
   struct viewKeyStruct
   {
-    /// String for the compositional multiphase flow solver name
-    constexpr static char const * compositionalMultiphaseSolverNameString() { return "compositionalMultiphaseSolverName"; }
     /// String for the flag deciding the computation of the CFL numbers
     constexpr static char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
     /// String for the flag deciding the computation of the region statistics
@@ -130,7 +126,7 @@ private:
 
   void postProcessInput() override;
 
-  void initializePostInitialConditionsPreSubGroups() override;
+  void registerDataOnMesh( Group & meshBodies ) override;
 
   /// Flag to decide whether CFL numbers are computed or not
   integer m_computeCFLNumbers;
@@ -138,11 +134,6 @@ private:
   /// Flag to decide whether region statistics are computed or not
   integer m_computeRegionStatistics;
 
-  /// Name of the compositional multiphase solver
-  string m_compositionalMultiphaseSolverName;
-
-  /// Pointer to the compositional multiphase solver
-  CompositionalMultiphaseBase * m_compositionalMultiphaseSolver;
 };
 
 

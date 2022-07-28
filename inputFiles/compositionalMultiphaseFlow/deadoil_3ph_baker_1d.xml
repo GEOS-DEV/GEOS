@@ -240,7 +240,7 @@
   <Tasks>
     <CompositionalMultiphaseStatistics
       name="compflowStatistics"
-      compositionalMultiphaseSolverName="compflow"
+      flowSolverName="compflow"
       logLevel="1"
       computeCFLNumbers="1"
       computeRegionStatistics="1"/>

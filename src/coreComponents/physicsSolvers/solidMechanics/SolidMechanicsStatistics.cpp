@@ -31,40 +31,27 @@ using namespace dataRepository;
 
 SolidMechanicsStatistics::SolidMechanicsStatistics( const string & name,
                                                     Group * const parent ):
-  TaskBase( name, parent ),
-  m_solidMechanicsSolverName()
-{
-  enableLogLevelInput();
-
-  registerWrapper( viewKeyStruct::solidMechanicsSolverNameString(), &m_solidMechanicsSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the solid mechanics solver" );
-}
-
-SolidMechanicsStatistics::~SolidMechanicsStatistics()
+  Base( name, parent )
 {}
 
-void SolidMechanicsStatistics::postProcessInput()
+void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
 {
-  ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
-  PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
+  GEOSX_UNUSED_VAR( meshBodies );
 
-  GEOSX_THROW_IF( !physicsSolverManager.hasGroup( m_solidMechanicsSolverName ),
-                  GEOSX_FMT( "Task {}: physics solver named {} not found",
-                             getName(), m_solidMechanicsSolverName ),
-                  InputError );
+  // the fields have to be registered in "registerDataOnMesh" (and not later)
+  // otherwise they cannot be targeted by TimeHistory
 
-  m_solidMechanicsSolver =
-    &physicsSolverManager.getGroup< SolidMechanicsLagrangianFEM >( m_solidMechanicsSolverName );
-}
+  // for now, this guard is needed to avoid breaking the xml schema generation
+  if( !m_solver )
+  {
+    return;
+  }
 
-void SolidMechanicsStatistics::initializePostInitialConditionsPreSubGroups()
-{
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  m_solidMechanicsSolver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                        MeshLevel & mesh,
-                                                                        arrayView1d< string const > const & )
+  m_solver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                          MeshLevel & mesh,
+                                                          arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     nodeManager.registerWrapper< NodeStatistics >( viewKeyStruct::nodeStatisticsString() ).
@@ -84,9 +71,9 @@ bool SolidMechanicsStatistics::execute( real64 const GEOSX_UNUSED_PARAM( time_n 
                                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                                         DomainPartition & domain )
 {
-  m_solidMechanicsSolver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                        MeshLevel & mesh,
-                                                                        arrayView1d< string const > const & )
+  m_solver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                          MeshLevel & mesh,
+                                                          arrayView1d< string const > const & )
   {
     computeNodeStatistics( mesh );
   } );
@@ -154,9 +141,13 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh ) const
                          MPI_COMM_GEOSX );
 
   GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Min displacement (X, Y, Z): "
-                                       << nodeStatistics.minDisplacement[0] << ", " << nodeStatistics.minDisplacement[1] << ", " << nodeStatistics.minDisplacement[2] << " m" );
+                                       << nodeStatistics.minDisplacement[0] << ", "
+                                       << nodeStatistics.minDisplacement[1] << ", "
+                                       << nodeStatistics.minDisplacement[2] << " m" );
   GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max displacement (X, Y, Z): "
-                                       << nodeStatistics.maxDisplacement[0] << ", " << nodeStatistics.maxDisplacement[1] << ", " << nodeStatistics.maxDisplacement[2] << " m" );
+                                       << nodeStatistics.maxDisplacement[0] << ", "
+                                       << nodeStatistics.maxDisplacement[1] << ", "
+                                       << nodeStatistics.maxDisplacement[2] << " m" );
 }
 
 REGISTER_CATALOG_ENTRY( TaskBase,
