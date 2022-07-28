@@ -161,8 +161,8 @@ loadMesh( Path const & filePath )
       else if( extension == "vti" )
       {
         vtkSmartPointer< vtkImageData > image = read( vtkSmartPointer< vtkXMLImageDataReader >::New() );
-        vtkNew<vtkImageDataToPointSet> imageDataToSg;
-        imageDataToSg->SetInputData(image);
+        vtkNew< vtkImageDataToPointSet > imageDataToSg;
+        imageDataToSg->SetInputData( image );
         imageDataToSg->Update();
         vtkStructuredGrid * sGrid = imageDataToSg->GetOutput();
         loadedMesh = sGrid;
