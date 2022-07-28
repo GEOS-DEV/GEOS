@@ -146,7 +146,8 @@ set( constitutive_sources
      fluid/PVTDriver.cpp
      fluid/PVTDriverRunTestDeadOilFluid.cpp
      fluid/PVTDriverRunTestCompositionalMultiphaseFluid.cpp
-     fluid/PVTDriverRunTestCO2Brine.cpp
+     fluid/PVTDriverRunTestCO2BrinePhillips.cpp
+     fluid/PVTDriverRunTestCO2BrineEzrokhi.cpp
      fluid/PVTOData.cpp
      fluid/PVTFunctions/PhillipsBrineDensity.cpp
      fluid/PVTFunctions/PhillipsBrineViscosity.cpp
