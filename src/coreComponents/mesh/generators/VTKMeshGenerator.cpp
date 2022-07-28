@@ -47,12 +47,11 @@
 #include <vtkStructuredGrid.h>
 #include <vtkXMLStructuredGridReader.h>
 #include <vtkXMLPStructuredGridReader.h>
-// TODO ? for vti import
-#include <vtkHexahedron.h>
-// #include <vtkImageData.h>
-// #include <vtkXMLImageDataReader.h>
-// #include <vtkXMLPImageDataReader.h>
-// #include <vtkImageDataToPointSet.h>
+// TODO for vti import
+#include <vtkImageData.h>
+#include <vtkXMLImageDataReader.h>
+#include <vtkXMLPImageDataReader.h>
+#include <vtkImageDataToPointSet.h>
 
 #ifdef GEOSX_USE_MPI
 #include <vtkMPIController.h>
@@ -159,18 +158,18 @@ loadMesh( Path const & filePath )
       {
         loadedMesh = read( vtkSmartPointer< vtkXMLStructuredGridReader >::New() );
       }
-      /*else if( extension == "vti" ) // TODO ?
+      else if( extension == "vti" )
       {
-        vtkSmartPointer< vtkImageData > = read( vtkSmartPointer< vtkXMLImageDataReader >::New() );
+        vtkSmartPointer< vtkImageData > image = read( vtkSmartPointer< vtkXMLImageDataReader >::New() );
         vtkNew<vtkImageDataToPointSet> imageDataToSg;
-        imageDataToSg->SetInputData(*image);
+        imageDataToSg->SetInputData(image);
         imageDataToSg->Update();
         vtkStructuredGrid * sGrid = imageDataToSg->GetOutput();
         loadedMesh = sGrid;
-      }*/
+      }
       else
       {
-        GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vts, .pvtu or .ptvs." );
+        GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vts, .vti, .pvtu or .ptvs." );
       }
     }
     else
@@ -191,37 +190,6 @@ vtkNew< vtkCellArray > GetCellArray( vtkDataSet & mesh ) // replaces GetCells() 
     for( int c = 0; c < numCell; c++ )
     {
       cells->InsertNextCell( mesh.GetCell( c ));
-    }
-  }
-  else
-  {
-    double bounds[6];
-    mesh.GetBounds( bounds );
-    double xmin=bounds[0], xmax=bounds[1];
-    double ymin=bounds[2], ymax=bounds[3];
-    double zmin=bounds[4], zmax=bounds[5];
-    int dx = 1, dy = 1;
-    int nx = (xmax-xmin)/dx +1, ny = (ymax-ymin)/dy +1;
-
-    for( int k=zmin; k<zmax; k++ )
-    {
-      for( int j=ymin; j<ymax; j++ )
-      {
-        for( int i=xmin; i<xmax; i++ )
-        {
-          vtkNew< vtkHexahedron > hexa;
-          // add points to the hexahedron cell in vtk order for hexahedron
-          hexa->GetPointIds()->SetId( 0, i+j*nx+k*ny*nx );
-          hexa->GetPointIds()->SetId( 1, i+1+j*nx+k*ny*nx );
-          hexa->GetPointIds()->SetId( 2, i+1+(j+1)*nx+k*ny*nx );
-          hexa->GetPointIds()->SetId( 3, i+(j+1)*nx+k*ny*nx );
-          hexa->GetPointIds()->SetId( 4, i+j*nx+(k+1)*ny*nx );
-          hexa->GetPointIds()->SetId( 5, i+1+j*nx+(k+1)*ny*nx );
-          hexa->GetPointIds()->SetId( 6, i+1+(j+1)*nx+(k+1)*ny*nx );
-          hexa->GetPointIds()->SetId( 7, i+(j+1)*nx+(k+1)*ny*nx );
-          cells->InsertNextCell( hexa );
-        }
-      }
     }
   }
   return cells;
