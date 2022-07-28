@@ -64,6 +64,12 @@ public:
 
   /**@}*/
 
+  /**
+   * @brief Compute node-based statistics on the reservoir
+   * @param[in] mesh the mesh level object
+   */
+  void computeNodeStatistics( MeshLevel & mesh ) const;
+
 private:
 
   /**
@@ -82,12 +88,6 @@ private:
     /// maximum displacement in each direction (x, y, z)
     array1d< real64 > maxDisplacement;
   };
-
-  /**
-   * @brief Compute node-based statistics on the reservoir
-   * @param[in] mesh the mesh level object
-   */
-  void computeNodeStatistics( MeshLevel & mesh ) const;
 
   void registerDataOnMesh( Group & meshBodies ) override;
 };
