@@ -14,5 +14,4 @@
 namespace geosx
 {
 template void PVTDriver::runTest<constitutive::CO2BrinePhillipsFluid>( constitutive::CO2BrinePhillipsFluid &, arrayView2d< real64 > const & );
-template void PVTDriver::runTest<constitutive::CO2BrinePhillipsThermalFluid>( constitutive::CO2BrinePhillipsThermalFluid &, arrayView2d< real64 > const & );
 }
