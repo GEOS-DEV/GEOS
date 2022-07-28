@@ -81,7 +81,7 @@ if( GEOSX_BUILD_OBJ_LIBS )
                     OBJECT ${GEOSX_BUILD_OBJ_LIBS}
                     SHARED ${GEOSX_BUILD_SHARED_BOOL}
                   )
-elseif( GEOSX_BUILD_SHARED_LIBS )
+elseif( )
   message( "Using blt blt_combine_static_libraries" )
   blt_combine_static_libraries( NAME          geosx_core
                                 SOURCE_LIBS   ${coreLibs}
@@ -91,21 +91,18 @@ elseif( GEOSX_BUILD_SHARED_LIBS )
                               )
 endif()
 
-if( GEOSX_BUILD_OBJ_LIBS OR GEOSX_BUILD_SHARED_LIBS )
-
-    # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
-    if( ENABLE_HYPRE_CUDA )
-      set_target_properties( geosx_core PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
-    endif()
-    
-    # To install the library with the runtime path used during the building
-    set_target_properties( geosx_core PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
-    
-    # To install the shared library
-    install( TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
-    
-    target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+# Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
+if( ENABLE_HYPRE_CUDA )
+  set_target_properties( geosx_core PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
 endif()
+
+# To install the library with the runtime path used during the building
+set_target_properties( geosx_core PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
+
+# To install the shared library
+install( TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
+target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks( PREFIX coreComponents
                        EXCLUDES cmake

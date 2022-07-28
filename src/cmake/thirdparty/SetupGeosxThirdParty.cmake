@@ -455,6 +455,10 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
                       EXTRA_LIBRARIES ${EXTRA_LIBS}
                       DEPENDS ${HYPRE_DEPENDS})
 
+
+   # Fix for hypre not appearing before Umpire on the link line
+   blt_add_target_link_flags (TO hypre FLAGS "-Wl,--whole-archive ${HYPRE_DIR}/lib/libHYPRE.a -Wl,--no-whole-archive")
+
     # if( ENABLE_CUDA AND ( NOT ENABLE_HYPRE_CUDA ) )
     #   set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
     #   if( GEOSX_LA_INTERFACE STREQUAL "Hypre")
