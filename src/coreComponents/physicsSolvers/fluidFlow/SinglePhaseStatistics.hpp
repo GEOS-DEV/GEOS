@@ -38,7 +38,7 @@ public:
   using Base = FieldStatisticsBase< SinglePhaseBase >;
 
   /**
-   * @brief Constructor for the state reset class
+   * @brief Constructor for the statistics class
    * @param[in] name the name of the task coming from the xml
    * @param[in] parent the parent group of the task
    */
