@@ -25,8 +25,8 @@ using namespace dataRepository;
 
 SolverStatistics::SolverStatistics( string const & name, Group * const parent )
   : Group( name, parent ),
-  m_currentNumNonlinearIterations( 0 ),
   m_currentNumOuterLoopIterations( 0 ),
+  m_currentNumNonlinearIterations( 0 ),
   m_currentNumLinearIterations( 0 )
 {
   registerWrapper( viewKeyStruct::numTimeStepsString(), &m_numTimeSteps ).
@@ -38,37 +38,37 @@ SolverStatistics::SolverStatistics( string const & name, Group * const parent )
     setDescription( "Number of time step cuts" );
 
 
-  registerWrapper( viewKeyStruct::numSuccessfulNonlinearIterationsString(), &m_numSuccessfulNonlinearIterations ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of successful nonlinear iterations" );
-
   registerWrapper( viewKeyStruct::numSuccessfulOuterLoopIterationsString(), &m_numSuccessfulOuterLoopIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of successful outer loop iterations" );
+
+  registerWrapper( viewKeyStruct::numSuccessfulNonlinearIterationsString(), &m_numSuccessfulNonlinearIterations ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Cumulative number of successful nonlinear iterations" );
 
   registerWrapper( viewKeyStruct::numSuccessfulLinearIterationsString(), &m_numSuccessfulLinearIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of successful linear iterations" );
 
 
-  registerWrapper( viewKeyStruct::numWastedNonlinearIterationsString(), &m_numWastedNonlinearIterations ).
+  registerWrapper( viewKeyStruct::numDiscardedOuterLoopIterationsString(), &m_numDiscardedOuterLoopIterations ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of wasted nonlinear iterations" );
+    setDescription( "Cumulative number of discarded outer loop iterations" );
 
-  registerWrapper( viewKeyStruct::numWastedOuterLoopIterationsString(), &m_numWastedOuterLoopIterations ).
+  registerWrapper( viewKeyStruct::numDiscardedNonlinearIterationsString(), &m_numDiscardedNonlinearIterations ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of wasted outer loop iterations" );
+    setDescription( "Cumulative number of discarded nonlinear iterations" );
 
-  registerWrapper( viewKeyStruct::numWastedLinearIterationsString(), &m_numWastedLinearIterations ).
+  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_numDiscardedLinearIterations ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of wasted linear iterations" );
+    setDescription( "Cumulative number of discarded linear iterations" );
 }
 
 void SolverStatistics::initializeTimeStepStatistics()
 {
   // the time step begins, we reset the individual-timestep counters
-  m_currentNumNonlinearIterations = 0;
   m_currentNumOuterLoopIterations = 0;
+  m_currentNumNonlinearIterations = 0;
   m_currentNumLinearIterations = 0;
 }
 
@@ -94,10 +94,10 @@ void SolverStatistics::logOuterLoopIteration()
 
 void SolverStatistics::logTimeStepCut()
 {
-  // we have just cut the time step, so we increment the cumulative counters for wasted timesteps
-  m_numWastedNonlinearIterations += m_currentNumNonlinearIterations;
-  m_numWastedOuterLoopIterations += m_currentNumOuterLoopIterations;
-  m_numWastedLinearIterations += m_currentNumLinearIterations;
+  // we have just cut the time step, so we increment the cumulative counters for discarded timesteps
+  m_numDiscardedOuterLoopIterations += m_currentNumOuterLoopIterations;
+  m_numDiscardedNonlinearIterations += m_currentNumNonlinearIterations;
+  m_numDiscardedLinearIterations += m_currentNumLinearIterations;
   m_numTimeStepCuts++;
 
   // we are going to restart the timestep from the previous converged time step, so we have to re-initialize the statistics
@@ -107,17 +107,17 @@ void SolverStatistics::logTimeStepCut()
 void SolverStatistics::saveTimeStepStatistics()
 {
   // the timestep has converged, so we increment the cumulative counters for successful timesteps
-  m_numSuccessfulNonlinearIterations += m_currentNumNonlinearIterations;
   m_numSuccessfulOuterLoopIterations += m_currentNumOuterLoopIterations;
+  m_numSuccessfulNonlinearIterations += m_currentNumNonlinearIterations;
   m_numSuccessfulLinearIterations += m_currentNumLinearIterations;
   m_numTimeSteps++;
 }
 
 void SolverStatistics::outputStatistics() const
 {
-  bool const printIterations = !(m_numSuccessfulNonlinearIterations == 0 && m_numWastedNonlinearIterations == 0);
-  bool const printOuterLoopIterations = !(m_numSuccessfulOuterLoopIterations == 0 && m_numWastedOuterLoopIterations == 0);
-  bool const printLinearIterations = !(m_numSuccessfulLinearIterations == 0 && m_numWastedLinearIterations == 0);
+  bool const printOuterLoopIterations = !(m_numSuccessfulOuterLoopIterations == 0 && m_numDiscardedOuterLoopIterations == 0);
+  bool const printIterations = !(m_numSuccessfulNonlinearIterations == 0 && m_numDiscardedNonlinearIterations == 0);
+  bool const printLinearIterations = !(m_numSuccessfulLinearIterations == 0 && m_numDiscardedLinearIterations == 0);
 
   auto const logStat = [&]( auto const name, auto const value )
   {
@@ -125,7 +125,7 @@ void SolverStatistics::outputStatistics() const
                                  getParent().getName(), name, value ) );
   };
 
-  // TODO: the print logic is really convoluted to accomodate the needs of different solvers, needs simplification
+  // TODO: the print logic is really convoluted to accomodate the needs of the different solvers, needs simplification
 
   logStat( "time steps", m_numTimeSteps );
   if( printIterations )
@@ -143,12 +143,12 @@ void SolverStatistics::outputStatistics() const
     logStat( "time step cuts", m_numTimeStepCuts );
     if( printOuterLoopIterations )
     {
-      logStat( "wasted outer loop iterations", m_numWastedOuterLoopIterations );
+      logStat( "discarded outer loop iterations", m_numDiscardedOuterLoopIterations );
     }
-    logStat( "wasted nonlinear iterations", m_numWastedNonlinearIterations );
+    logStat( "discarded nonlinear iterations", m_numDiscardedNonlinearIterations );
     if( printLinearIterations ) // don't print for the outer iterations in sequential schemes
     {
-      logStat( "wasted linear iterations", m_numWastedLinearIterations );
+      logStat( "discarded linear iterations", m_numDiscardedLinearIterations );
     }
   }
 }

@@ -92,19 +92,19 @@ private:
     /// String key for the number of time step cuts
     static constexpr char const * numTimeStepCutsString() { return "numTimeStepCuts"; }
 
-    /// String key for the successful number of nonlinear iterations
-    static constexpr char const * numSuccessfulNonlinearIterationsString() { return "numSuccessfulNonlinearIterations"; }
     /// String key for the successful number of outer loop iterations
     static constexpr char const * numSuccessfulOuterLoopIterationsString() { return "numSuccessfulOuterLoopIterations"; }
+    /// String key for the successful number of nonlinear iterations
+    static constexpr char const * numSuccessfulNonlinearIterationsString() { return "numSuccessfulNonlinearIterations"; }
     /// String key for the successful number of linear iterations
     static constexpr char const * numSuccessfulLinearIterationsString() { return "numSuccessfulLinearIterations"; }
 
-    /// String key for the wasted number of nonlinear iterations
-    static constexpr char const * numWastedNonlinearIterationsString() { return "numWastedNonlinearIterations"; }
-    /// String key for the wasted number of outer loop iterations
-    static constexpr char const * numWastedOuterLoopIterationsString() { return "numWastedOuterLoopIterations"; }
-    /// String key for the wasted number of linear iterations
-    static constexpr char const * numWastedLinearIterationsString() { return "numWastedLinearIterations"; }
+    /// String key for the discarded number of outer loop iterations
+    static constexpr char const * numDiscardedOuterLoopIterationsString() { return "numDiscardedOuterLoopIterations"; }
+    /// String key for the discarded number of nonlinear iterations
+    static constexpr char const * numDiscardedNonlinearIterationsString() { return "numDiscardedNonlinearIterations"; }
+    /// String key for the discarded number of linear iterations
+    static constexpr char const * numDiscardedLinearIterationsString() { return "numDiscardedLinearIterations"; }
   };
 
   /// Number of time steps
@@ -114,34 +114,34 @@ private:
   integer m_numTimeStepCuts;
 
 
-  /// Number of nonlinear iterations in the current time step (utility variable constantly overwritten)
-  integer m_currentNumNonlinearIterations;
-
   /// Number of outer loop iterations in the current time step (utility variable constantly overwritten)
   integer m_currentNumOuterLoopIterations;
+
+  /// Number of nonlinear iterations in the current time step (utility variable constantly overwritten)
+  integer m_currentNumNonlinearIterations;
 
   /// Number of linear iterations in the current time step (utility variable constantly overwritten)
   integer m_currentNumLinearIterations;
 
 
-  /// Cumulative number of successful nonlinear iterations
-  integer m_numSuccessfulNonlinearIterations;
-
   /// Cumulative number of successful outer loop iterations
   integer m_numSuccessfulOuterLoopIterations;
+
+  /// Cumulative number of successful nonlinear iterations
+  integer m_numSuccessfulNonlinearIterations;
 
   /// Cumulative number of successful linear iterations
   integer m_numSuccessfulLinearIterations;
 
 
-  /// Cumulative number of wasted nonlinear iterations
-  integer m_numWastedNonlinearIterations;
+  /// Cumulative number of discarded outer loop iterations
+  integer m_numDiscardedOuterLoopIterations;
 
-  /// Cumulative number of wasted outer loop iterations
-  integer m_numWastedOuterLoopIterations;
+  /// Cumulative number of discarded nonlinear iterations
+  integer m_numDiscardedNonlinearIterations;
 
-  /// Cumulative number of wasted linear iterations
-  integer m_numWastedLinearIterations;
+  /// Cumulative number of discarded linear iterations
+  integer m_numDiscardedLinearIterations;
 
 };
 
