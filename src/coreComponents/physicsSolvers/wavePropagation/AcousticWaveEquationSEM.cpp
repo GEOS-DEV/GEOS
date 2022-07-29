@@ -58,7 +58,7 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Indices of the nodes (in the right order) for each receiver point" );
 
-  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants ).
+  registerWrapper( viewKeyStruct::receiverConstantsString(), &m_receiverConstants ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Constant part of the receiver for the nodes listed in m_receiverNodeIds" );
@@ -306,6 +306,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
     {
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
+        /// WARNING: there should be an atomic add here below
         rhs[sourceNodeIds[isrc][inode]] = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
       }
     }
@@ -527,6 +528,7 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
 
 void AcousticWaveEquationSEM::initializePML()
 {
+  GEOSX_MARK_FUNCTION;
 
   /// Get the default thicknesses and wave speeds in the PML regions from the PerfectlyMatchedLayer 
   /// field specification parameters (from the xml)
@@ -551,6 +553,7 @@ void AcousticWaveEquationSEM::initializePML()
   {
 
     NodeManager & nodeManager = mesh.getNodeManager();
+    /// WARNING: the array below is one of the PML auxiliary variables
     arrayView1d< real64 > const indicatorPML = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
     indicatorPML.zero();
@@ -589,25 +592,25 @@ void AcousticWaveEquationSEM::initializePML()
 
         for( localIndex i=0; i<numNodesPerElem; ++i )
         {
-          indicatorPML[elemToNodesViewConst[k][i]]=999;
+          indicatorPML[elemToNodesViewConst[k][i]]=1.0;
         }
       } );
     } );
 
 
     /// find the interior and global coordinates limits
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > xMinGlobal( 999999.9 );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > yMinGlobal( 999999.9 );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > zMinGlobal( 999999.9 );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > xMaxGlobal( -999999.9 );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > yMaxGlobal( -999999.9 );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > zMaxGlobal( -999999.9 );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > xMinInterior( 999999.9 );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > yMinInterior( 999999.9 );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > zMinInterior( 999999.9 );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > xMaxInterior( -999999.9 );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > yMaxInterior( -999999.9 );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > zMaxInterior( -999999.9 );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > xMinGlobal( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > yMinGlobal( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > zMinGlobal( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > xMaxGlobal( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > yMaxGlobal( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > zMaxGlobal( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > xMinInterior( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > yMinInterior( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > zMinInterior( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > xMaxInterior( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > yMaxInterior( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > zMaxInterior( -LvArray::NumericLimits< real64 >::max );
 
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -617,7 +620,7 @@ void AcousticWaveEquationSEM::initializePML()
       xMaxGlobal.max(X[a][0]);
       yMaxGlobal.max(X[a][1]);
       zMaxGlobal.max(X[a][2]);
-      if (indicatorPML[a] < 1)
+      if (!isZero( indicatorPML[a] - 1.0 ))
       {
         xMinInterior.min(X[a][0]);
         yMinInterior.min(X[a][1]);
@@ -741,7 +744,8 @@ void AcousticWaveEquationSEM::initializePML()
       }
     }
 
-    /// don't forget to reset the indicator to zero
+    /// WARNING: don't forget to reset the indicator to zero
+    /// so it can be used by the PML application
     indicatorPML.zero();
 
   } );
@@ -869,8 +873,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                               DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-
-  GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
   GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 

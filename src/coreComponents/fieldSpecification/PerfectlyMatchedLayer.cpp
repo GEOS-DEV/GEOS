@@ -38,7 +38,7 @@ PerfectlyMatchedLayer::PerfectlyMatchedLayer( string const & name, Group * const
 
   registerWrapper( viewKeyStruct::reflectivityString(), &m_reflectivity ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0.0001 ).
+    setApplyDefaultValue( 0.001 ).
     setDescription( "Desired reflectivity of the PML region, used to compute the damping profile" );
 
   registerWrapper( viewKeyStruct::thicknessMinXYZString(), &m_thicknessMinXYZ ).
@@ -119,8 +119,8 @@ void PerfectlyMatchedLayer::postProcessInput()
 
 void PerfectlyMatchedLayer::initializePreSubGroups()
 {
+  /// do nothing
 }
-
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, PerfectlyMatchedLayer, string const &, Group * const )
 
