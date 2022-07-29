@@ -5,12 +5,12 @@
   <ElementRegions>
     <CellElementRegion
       name="Reservoir"
-      cellBlocks="{ Reservoir_TETRA }"
+      cellBlocks="{ 2_tetrahedra }"
       materialList="{ water, rock }"/>
 
     <CellElementRegion
       name="Burden"
-      cellBlocks="{ Overburden_TETRA, Underburden_TETRA }"
+      cellBlocks="{ 1_tetrahedra, 3_tetrahedra }"
       materialList="{ water, rock }"/>
   </ElementRegions>
 <!-- SPHINX_FIELD_CASE_REGION_END -->
@@ -68,6 +68,7 @@
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"
+	amgSmootherType="l1jacobi"
         krylovTol="1.0e-10"/>
     </SinglePhaseFVM>
   </Solvers>
