@@ -119,7 +119,7 @@ plantuml_output_format = "svg_img"
 plot_html_show_source_link = True
 plot_html_show_formats = False
 
-autodoc_mock_imports = ["pygeosx", "pylvarray", "meshio"]
+autodoc_mock_imports = ["pygeosx", "pylvarray", "meshio", "lxml", "mpi4py"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
