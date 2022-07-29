@@ -67,6 +67,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
+
 VTKMeshGenerator::VTKMeshGenerator( string const & name,
                                     Group * const parent )
   : ExternalMeshGeneratorBase( name, parent )
@@ -133,7 +134,6 @@ loadMesh( Path const & filePath )
     vtkSgReader->UpdateInformation();
     vtkSgReader->UpdatePiece( MpiWrapper::commRank(), MpiWrapper::commSize(), 0 );
     loadedMesh = vtkSgReader->GetOutput();
-
   }
   else
   {
@@ -181,10 +181,14 @@ loadMesh( Path const & filePath )
   return loadedMesh;
 }
 
-vtkNew< vtkCellArray > GetCellArray( vtkDataSet & mesh ) // replaces GetCells() that exist only in vtkUnstructuredGrid
+vtkSmartPointer< vtkCellArray > GetCellArray( vtkDataSet & mesh ) // replaces GetCells() that exist only in vtkUnstructuredGrid
 {
-  vtkNew< vtkCellArray > cells;
-  if( mesh.IsA( "vtkStructuredGrid" ) || mesh.IsA( "vtkUnstructuredGrid" ))
+  vtkSmartPointer< vtkCellArray > cells = vtkSmartPointer< vtkCellArray >::New();
+  if( mesh.IsA( "vtkUnstructuredGrid" ))
+  {
+    cells = vtkUnstructuredGrid::SafeDownCast( &mesh )->GetCells();
+  }
+  else
   {
     int numCell = mesh.GetNumberOfCells();
     for( int c = 0; c < numCell; c++ )
@@ -198,7 +202,7 @@ vtkNew< vtkCellArray > GetCellArray( vtkDataSet & mesh ) // replaces GetCells() 
 template< typename INDEX_TYPE, typename POLICY >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
 buildElemToNodesImpl( vtkDataSet & mesh,
-                      const vtkNew< vtkCellArray > & cells )
+                      vtkSmartPointer< vtkCellArray > const & cells )
 {
   localIndex const numCells = LvArray::integerConversion< localIndex >( mesh.GetNumberOfCells() );
   array1d< INDEX_TYPE > nodeCounts( numCells );
@@ -234,7 +238,7 @@ template< typename INDEX_TYPE >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
 buildElemToNodes( vtkDataSet & mesh )
 {
-  const vtkNew< vtkCellArray > & cells = GetCellArray( mesh );
+  vtkSmartPointer< vtkCellArray > const & cells = GetCellArray( mesh );
   // According to VTK docs, IsStorageShareable() indicates whether pointers extracted via
   // vtkCellArray::GetCellAtId() are pointers into internal storage rather than temp buffer
   // and thus results can be used in a thread-safe way.
@@ -671,9 +675,7 @@ void fillCellBlock( vtkDataSet & mesh,
     {
       cellToVertex[cellCount][v] = currentCell->GetPointId( nodeOrder[v] );
     }
-
     localToGlobal[cellCount++] = globalCellId->GetValue( c );
-
   }
 }
 
