@@ -4,7 +4,7 @@
   <Solvers>
     <CompositionalMultiphaseReservoir
       name="reservoirSystem"
-      fluidSolverName="compositionalMultiphaseFlow"
+      flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ Region1, wellRegion1, wellRegion2 }">

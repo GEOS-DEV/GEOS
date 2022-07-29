@@ -550,14 +550,14 @@ real64 SinglePhasePoromechanicsSolverEmbeddedFractures::calculateResidualNorm( D
                                                                                arrayView1d< real64 const > const & localRhs )
 {
   // compute norm of momentum balance residual equations
-  real64 const momemtumResidualNorm = m_fracturesSolver->calculateResidualNorm( domain, dofManager, localRhs );
+  real64 const momentumResidualNorm = m_fracturesSolver->calculateResidualNorm( domain, dofManager, localRhs );
 
   // compute norm of mass balance residual equations
   real64 const massResidualNorm = flowSolver()->calculateResidualNorm( domain, dofManager, localRhs );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rsolid, Rfluid ) = ( {:4.2e}, {:4.2e} )", momemtumResidualNorm, massResidualNorm ) );
+  real64 const residual = sqrt( momentumResidualNorm * momentumResidualNorm + massResidualNorm * massResidualNorm );
 
-  return sqrt( momemtumResidualNorm * momemtumResidualNorm + massResidualNorm * massResidualNorm );
+  return residual;
 }
 
 void SinglePhasePoromechanicsSolverEmbeddedFractures::applySystemSolution( DofManager const & dofManager,

@@ -35,7 +35,7 @@ class FlowSolverBase : public SolverBase
 public:
 
   /// String used to form the solverName used to register single-physics solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "fluid"; }
+  static string coupledSolverAttributePrefix() { return "flow"; }
 
 /**
  * @brief main constructor for Group Objects

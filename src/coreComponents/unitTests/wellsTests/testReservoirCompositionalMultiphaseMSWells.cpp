@@ -40,7 +40,7 @@ char const * xmlInput =
   "<Problem>\n"
   "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
   "    <CompositionalMultiphaseReservoir name=\"reservoirSystem\"\n"
-  "               fluidSolverName=\"compositionalMultiphaseFlow\"\n"
+  "               flowSolverName=\"compositionalMultiphaseFlow\"\n"
   "               wellSolverName=\"compositionalMultiphaseWell\"\n"
   "               logLevel=\"1\"\n"
   "               targetRegions=\"{Region1,wellRegion1,wellRegion2}\">\n"

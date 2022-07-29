@@ -41,7 +41,7 @@ char const * xmlInput =
   "<Problem>\n"
   "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
   "    <SinglePhaseReservoir name=\"reservoirSystem\"\n"
-  "               fluidSolverName=\"singlePhaseFlow\"\n"
+  "               flowSolverName=\"singlePhaseFlow\"\n"
   "               wellSolverName=\"singlePhaseWell\"\n"
   "               logLevel=\"1\"\n"
   "               targetRegions=\"{Region1,wellRegion1,wellRegion2}\">\n"

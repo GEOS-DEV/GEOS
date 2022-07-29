@@ -237,7 +237,9 @@ public:
       real64 const singlePhysicsNorm = solver->calculateResidualNorm( domain, dofManager, localRhs );
       norm += singlePhysicsNorm * singlePhysicsNorm;
     } );
-    return sqrt( norm );
+
+    real64 const residual = sqrt( norm );
+    return residual;
   }
 
   virtual void

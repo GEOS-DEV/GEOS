@@ -71,7 +71,7 @@
     <FlowProppantTransport
       name="FlowProppantTransport"
       proppantSolverName="ProppantTransport"
-      fluidSolverName="SinglePhaseFVM"
+      flowSolverName="SinglePhaseFVM"
       targetRegions="{ Fracture }"
       logLevel="1"/>
 <!-- SPHINX_PROPPANT_COUPLEDSOLVER_END -->
