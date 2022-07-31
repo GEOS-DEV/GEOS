@@ -56,9 +56,9 @@ struct MultiFluidVarSlice
 {
   GEOSX_HOST_DEVICE
   MultiFluidVarSlice( internal::ArraySliceOrRef< T, DIM, USD > inputValue,
-                      internal::ArraySliceOrRef< T, DIM+1, USD_DC > inputDerivs):
-    value(inputValue),
-    derivs(inputDerivs)
+                      internal::ArraySliceOrRef< T, DIM+1, USD_DC > inputDerivs ):
+    value( inputValue ),
+    derivs( inputDerivs )
   {}
 
   internal::ArraySliceOrRef< T, DIM, USD > value;        /// variable value
