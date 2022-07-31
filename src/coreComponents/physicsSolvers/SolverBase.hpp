@@ -25,6 +25,7 @@
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
+#include "physicsSolvers/SolverStatistics.hpp"
 
 
 #include <limits>
@@ -55,8 +56,13 @@ public:
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
-
   virtual void initialize_postMeshGeneration() override;
+
+  virtual void cleanup( real64 const time_n,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        DomainPartition & domain ) override;
 
   /**
    * This method is called when its host event is triggered
@@ -144,8 +150,6 @@ public:
    * @param [in]  time_n time at the beginning of the step
    * @param [in]  dt the perscribed timestep
    * @param [out] return the timestep that was achieved during the step.
-   *
-   * T
    */
   void setNextDtBasedOnNewtonIter( real64 const & currentDt,
                                    real64 & nextDt );
@@ -556,7 +560,7 @@ public:
   {return m_nextDt;};
   /**@}*/
 
-  real64 GetTimestepRequest()
+  real64 getTimestepRequest()
   {return m_nextDt;};
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
@@ -579,6 +583,7 @@ public:
   {
     static constexpr char const * linearSolverParametersString() { return "LinearSolverParameters"; }
     static constexpr char const * nonlinearSolverParametersString() { return "NonlinearSolverParameters"; }
+    static constexpr char const * solverStatisticsString() { return "SolverStatistics"; }
   };
 
 
@@ -738,6 +743,9 @@ protected:
 
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;
+
+  /// Solver statistics
+  SolverStatistics m_solverStatistics;
 
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
