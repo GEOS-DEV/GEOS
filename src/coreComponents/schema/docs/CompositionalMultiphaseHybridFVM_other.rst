@@ -9,6 +9,7 @@ facePressure_n            real64_array                                          
 mimGravityCoefficient     real64_array                                                                                                                                :ref:`DATASTRUCTURE_FaceManager` Mimetic gravity coefficient                                      
 LinearSolverParameters    node                                                                                                                                                                         :ref:`DATASTRUCTURE_LinearSolverParameters`                      
 NonlinearSolverParameters node                                                                                                                                                                         :ref:`DATASTRUCTURE_NonlinearSolverParameters`                   
+SolverStatistics          node                                                                                                                                                                         :ref:`DATASTRUCTURE_SolverStatistics`                            
 ========================= =========================================================================================================================================== ================================ ================================================================ 
 
 

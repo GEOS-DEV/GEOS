@@ -39,7 +39,8 @@ SolverBase::SolverBase( string const & name,
   m_nextDt( 1e99 ),
   m_dofManager( name ),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
-  m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this )
+  m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
+  m_solverStatistics( groupKeyStruct::solverStatisticsString(), this )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -86,6 +87,7 @@ SolverBase::SolverBase( string const & name,
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
+  registerGroup( groupKeyStruct::solverStatisticsString(), &m_solverStatistics );
 
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_matrix.setDofManager( &m_dofManager );
@@ -196,10 +198,17 @@ bool SolverBase::execute( real64 const time_n,
 
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
+    // reset number of nonlinear and linear iterations
+    m_solverStatistics.initializeTimeStepStatistics();
+
     real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
                                           nextDt,
                                           cycleNumber,
                                           domain );
+
+    // increment the cumulative number of nonlinear and linear iterations
+    m_solverStatistics.saveTimeStepStatistics();
+
     /*
      * Let us check convergence history of previous solve:
      * - number of nonlinear iter.
@@ -317,6 +326,9 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
 
   // Solve the linear system
   solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+
+  // Increment the solver statistics for reporting purposes
+  m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
 
   // Output the linear system solution for debugging purposes
   debugOutputSolution( 0.0, 0, 0, m_solution );
@@ -618,6 +630,9 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
         }
         else
         {
+          // increment the solver statistics for reporting purposes
+          m_solverStatistics.logOuterLoopIteration();
+
           GEOSX_LOG_LEVEL_RANK_0( 1, "   " );
           GEOSX_LOG_LEVEL_RANK_0( 1, "---------- Configuration did not converge. Testing new configuration. ----------" );
           GEOSX_LOG_LEVEL_RANK_0( 1, "   " );
@@ -642,13 +657,17 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
     if( isConfigurationLoopConverged )
     {
-      break; // get out of outer loop
+      // get out of outer loop
+      break;
     }
     else
     {
       // cut timestep, go back to beginning of step and restart the Newton loop
       stepDt *= dtCutFactor;
       GEOSX_LOG_LEVEL_RANK_0 ( 1, GEOSX_FMT( "New dt = {}", stepDt ) );
+
+      // notify the solver statistics counter that this is a time step cut
+      m_solverStatistics.logTimeStepCut();
     }
   } // end of outer loop (dt chopping strategy)
 
@@ -725,9 +744,6 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
       m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
     }
-
-    // TODO: maybe add scale function here?
-    // Scale()
 
     // get residual norm
     real64 residualNorm = calculateResidualNorm( domain, m_dofManager, m_rhs.values() );
@@ -821,9 +837,13 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // Solve the linear system
     solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
+    // Increment the solver statistics for reporting purposes
+    m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
+
     // Output the linear system solution for debugging purposes
     debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
 
+    // Compute the scaling factor for the Newton update
     scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
 
     if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
@@ -1100,6 +1120,15 @@ void SolverBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time )
                                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden." );
+}
+
+void SolverBase::cleanup( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                          integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                          real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                          DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+{
+  m_solverStatistics.outputStatistics();
 }
 
 R1Tensor const SolverBase::gravityVector() const

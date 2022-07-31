@@ -8,6 +8,7 @@ meshTargets               geosx_mapBase< string, LvArray_Array< string, 1, camp_
 facePressure_n            real64_array                                                                                                                                :ref:`DATASTRUCTURE_FaceManager` Face pressure at the previous converged time step                
 LinearSolverParameters    node                                                                                                                                                                         :ref:`DATASTRUCTURE_LinearSolverParameters`                      
 NonlinearSolverParameters node                                                                                                                                                                         :ref:`DATASTRUCTURE_NonlinearSolverParameters`                   
+SolverStatistics          node                                                                                                                                                                         :ref:`DATASTRUCTURE_SolverStatistics`                            
 ========================= =========================================================================================================================================== ================================ ================================================================ 
 
 

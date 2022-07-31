@@ -643,6 +643,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
 
   } );
+
   return dt;
 }
 

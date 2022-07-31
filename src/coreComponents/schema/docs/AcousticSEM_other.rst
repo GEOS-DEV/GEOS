@@ -15,6 +15,7 @@ sourceNodeIds             integer_array2d                                       
 sourceValue               real64_array2d                                                                                                                              Source Value of the sources                                             
 LinearSolverParameters    node                                                                                                                                        :ref:`DATASTRUCTURE_LinearSolverParameters`                             
 NonlinearSolverParameters node                                                                                                                                        :ref:`DATASTRUCTURE_NonlinearSolverParameters`                          
+SolverStatistics          node                                                                                                                                        :ref:`DATASTRUCTURE_SolverStatistics`                                   
 ========================= =========================================================================================================================================== ======================================================================= 
 
 
