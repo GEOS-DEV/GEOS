@@ -46,7 +46,7 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
                                CO2BrinePhillipsThermalFluid
-//                               ,CO2BrineEzrokhiThermalFluid
+//                               ,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation units for all the options"
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
@@ -62,7 +62,7 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
                                CO2BrinePhillipsThermalFluid
-//                               ,CO2BrineEzrokhiThermalFluid
+//                               ,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation units for all the options"
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 

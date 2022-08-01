@@ -322,11 +322,9 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
   MpiWrapper::allGather( embSurfNodeManager.size(), numberOfNodesPerRank );
 
   globalIndexOffset[0] = 0; // offSet for the globalIndex
-//  localIndex totalNumberOfNodes = numberOfNodesPerRank[ 0 ];  // Sum across all ranks
   for( int rank = 1; rank < commSize; ++rank )
   {
     globalIndexOffset[rank] = globalIndexOffset[rank - 1] + numberOfNodesPerRank[rank - 1];
-//    totalNumberOfNodes += numberOfNodesPerRank[rank];
   }
 
   arrayView1d< globalIndex > const & nodesLocalToGlobal = embSurfNodeManager.localToGlobalMap();

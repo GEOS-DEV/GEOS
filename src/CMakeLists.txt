@@ -109,10 +109,6 @@ blt_add_executable( NAME geosx
                                ${externalComponentsLinkList} 
                    )
 
-#set( hardLinkFlags "-L${UMPIRE_DIR}/lib -lumpire" )
-#target_link_options( geosx PUBLIC SHELL:${hardLinkFlags} )
-#blt_print_target_properties(TARGET geosx  )
-
 
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
 if( ENABLE_HYPRE_CUDA )

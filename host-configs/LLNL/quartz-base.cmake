@@ -14,10 +14,6 @@ set(ENABLE_FORTRAN OFF CACHE BOOL "")
 set(ENABLE_MPI ON CACHE BOOL "")
 set(MPI_C_COMPILER ${MPI_HOME}/bin/mpicc CACHE PATH "")
 set(MPI_CXX_COMPILER  ${MPI_HOME}/bin/mpicxx CACHE PATH "")
-
-message( "MPI_CXX_COMPILER = ${MPI_CXX_COMPILER}" )
-
-
 set(MPI_Fortran_COMPILER ${MPI_HOME}/bin/mpifort CACHE PATH "")
 set(MPIEXEC /usr/bin/srun CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE STRING "")
