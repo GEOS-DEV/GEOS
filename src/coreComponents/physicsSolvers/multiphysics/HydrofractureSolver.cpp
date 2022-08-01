@@ -938,7 +938,7 @@ void HydrofractureSolver::setNextDt( real64 const & currentDt,
   else
   {
     SolverBase & surfaceGenerator = this->getParent().getGroup< SolverBase >( "SurfaceGen" );
-    nextDt = surfaceGenerator.GetTimestepRequest() < 1e99 ? surfaceGenerator.GetTimestepRequest() : currentDt;
+    nextDt = surfaceGenerator.getTimestepRequest() < 1e99 ? surfaceGenerator.getTimestepRequest() : currentDt;
   }
 
   GEOSX_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );
