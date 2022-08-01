@@ -791,7 +791,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
     {
 
       /// Get the element to nodes mapping in the subregion
-      CellElementSubRegion::NodeMapType const elemToNodes = 
+      CellElementSubRegion::NodeMapType const & elemToNodes = 
         subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
 
       /// Get a const ArrayView of the mapping above
