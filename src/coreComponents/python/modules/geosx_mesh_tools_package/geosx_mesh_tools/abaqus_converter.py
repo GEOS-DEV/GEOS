@@ -123,11 +123,49 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
     return (n_warnings > 0)
 
 
+def convert_abaqus_to_vtu(input_mesh, output_mesh, logger=None):
+    """
+    @brief Convert an abaqus mesh to vtu format, preserving nodeset information.
+    @details If the code encounters any issues with region/element indices,
+             the conversion will attempt to continue, with errors
+             indicated by -1 values in the output file.
+    @param input_mesh path of the input abaqus file
+    @param output_mesh path of the output vtu file
+    @param logger an instance of logging.Logger
+    """
+    # Initialize the logger if it is empty
+    if not logger:
+        logging.basicConfig(level=logging.WARNING)
+        logger = logging.getLogger(__name__)
+
+    # Keep track of the number of warnings
+    n_warnings = 0
+
+    # Load the mesh
+    logger.info('Reading abaqus mesh...')
+    mesh = meshio.read(input_mesh, file_format="abaqus")
+
+    # Converting nodesets to binary masks
+    for k, nodeset in mesh.point_sets.items():
+        mesh.point_data[k] = np.zeros(len(mesh.points), dtype=int)
+        mesh.point_data[k][nodeset] = 1
+
+    # Overwrite point sets to suppress conversion warnings
+    mesh.point_sets = {}
+
+    # Write the final mesh
+    logger.info('Writing vtu mesh...')
+    meshio.write(output_mesh, mesh, file_format="vtu")
+    logger.info('Done!')
+
+    return (n_warnings > 0)
+
+
 def main():
     """
     @brief Entry point for the abaqus convertor console script
     @arg input_mesh Input abaqus file name
-    @arg output_mesh Output gmsh file name
+    @arg output_mesh Output gmsh or vtu file name
     """
 
     # Parse the user arguments
@@ -144,6 +182,10 @@ def main():
         logger.setLevel(logging.INFO)
 
     # Call the converter
-    err = convert_abaqus_to_gmsh(args.input, args.output, logger)
+    err = 0
+    if ('.msh' in args.output):
+        err = convert_abaqus_to_gmsh(args.input, args.output, logger)
+    else:
+        err = convert_abaqus_to_vtu(args.input, args.output, logger)
     if err:
         sys.exit('Warnings detected: check the output file for potential errors!')
