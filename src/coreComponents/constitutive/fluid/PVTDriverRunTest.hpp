@@ -1,12 +1,23 @@
 /*
- * PVTDriverRunTest.hpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Jul 27, 2022
- *      Author: settgast
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SRC_CORECOMPONENTS_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_
-#define SRC_CORECOMPONENTS_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_
+/**
+ * @file PVTDriverRunTest.hpp
+ */
+
+#ifndef GEOSX_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_
+#define GEOSX_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_
 
 #include "PVTDriver.hpp"
 
@@ -75,4 +86,4 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
 }
 
 
-#endif /* SRC_CORECOMPONENTS_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_ */
