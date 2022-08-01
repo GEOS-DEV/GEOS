@@ -126,10 +126,13 @@ if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}" )
 endif()
 
-set(CMAKE_CUDA_STANDARD 14 CACHE STRING "")
-set(CMAKE_CUDA_FLAGS_RELEASE "-O3 -DNDEBUG -Xcompiler -DNDEBUG -Xcompiler -O3" CACHE STRING "")
-set(CMAKE_CUDA_FLAGS_RELWITHDEBINFO "-g -lineinfo ${CMAKE_CUDA_FLAGS_RELEASE}" CACHE STRING "")
-set(CMAKE_CUDA_FLAGS_DEBUG "-g -G -O0 -Xcompiler -O0" CACHE STRING "")
+set(CMAKE_CUDA_STANDARD 14 CACHE STRING "" FORCE)
+blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELEASE 
+                                 DEFAULT "-O3 -DNDEBUG -Xcompiler -DNDEBUG -Xcompiler -O3" )
+blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELWITHDEBINFO 
+                                 DEFAULT "-lineinfo ${CMAKE_CUDA_FLAGS_RELEASE}" )
+blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_DEBUG 
+                                 DEFAULT "-G -O0 -Xcompiler -O0" )
 
 
 if( CMAKE_HOST_APPLE )

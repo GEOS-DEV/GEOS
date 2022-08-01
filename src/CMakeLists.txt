@@ -38,6 +38,7 @@ endif()
 ################################
 # Include standard build system logic and options
 ################################
+CMAKE_CUDA_FLAGS_DEBUG
 include( cmake/CMakeBasics.cmake )
 set( CMAKE_DEBUG_POSTFIX "" CACHE STRING "" FORCE )
 
