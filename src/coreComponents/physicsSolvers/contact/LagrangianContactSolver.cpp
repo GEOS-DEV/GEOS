@@ -1890,12 +1890,15 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
             }
             checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
 
-            std::cout << "element " << kfe << " traction: " << traction[kfe]
-                      << " previous state <"
-                      << ( originalFractureState )
-                      << "> current state <"
-                      << ( fractureState[kfe] )
-                      << ">\n";
+            if( !compareFractureStates( originalFractureState, fractureState[kfe] ) )
+            {
+              std::cout << "element " << kfe << " traction: " << traction[kfe]
+                        << " previous state <"
+                        << ( originalFractureState )
+                        << "> current state <"
+                        << ( fractureState[kfe] )
+                        << ">\n";
+            }
             //            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
             //                                                   << " previous state <"
             //                                                   << FractureStateToString( originalFractureState )
