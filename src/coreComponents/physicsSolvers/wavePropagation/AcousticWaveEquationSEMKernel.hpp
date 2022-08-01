@@ -407,41 +407,41 @@ struct PMLKernelHelper
                                         real64 const (&cMin)[3],
                                         real64 const (&cMax)[3],
                                         real64 const r,
-                                        real64 (&sigma)[3])
+                                        real64 (& sigma)[3] )
   {
 
     sigma[0] = 0;
     sigma[1] = 0;
     sigma[2] = 0;
-    
-    if (xLocal[0] < xMin[0])
+
+    if( xLocal[0] < xMin[0] )
     {
-      real64 const factor =  -3.0/2.0*cMin[0]*log(r)/(dMin[0]*dMin[0]*dMin[0]);
+      real64 const factor =  -3.0/2.0*cMin[0]*log( r )/(dMin[0]*dMin[0]*dMin[0]);
       sigma[0] = factor*(xLocal[0]-xMin[0])*(xLocal[0]-xMin[0]);
     }
-    else if (xLocal[0] > xMax[0])
+    else if( xLocal[0] > xMax[0] )
     {
-      real64 const factor =  -3.0/2.0*cMax[0]*log(r)/(dMax[0]*dMax[0]*dMax[0]);
+      real64 const factor =  -3.0/2.0*cMax[0]*log( r )/(dMax[0]*dMax[0]*dMax[0]);
       sigma[0] = factor*(xLocal[0]-xMax[0])*(xLocal[0]-xMax[0]);
     }
-    if (xLocal[1] < xMin[1])
+    if( xLocal[1] < xMin[1] )
     {
-      real64 const factor =  -3.0/2.0*cMin[1]*log(r)/(dMin[1]*dMin[1]*dMin[1]);
+      real64 const factor =  -3.0/2.0*cMin[1]*log( r )/(dMin[1]*dMin[1]*dMin[1]);
       sigma[1] = factor*(xLocal[1]-xMin[1])*(xLocal[1]-xMin[1]);
     }
-    else if (xLocal[1] > xMax[1])
+    else if( xLocal[1] > xMax[1] )
     {
-      real64 const factor =  -3.0/2.0*cMax[1]*log(r)/(dMax[1]*dMax[1]*dMax[1]);
+      real64 const factor =  -3.0/2.0*cMax[1]*log( r )/(dMax[1]*dMax[1]*dMax[1]);
       sigma[1] = factor*(xLocal[1]-xMax[1])*(xLocal[1]-xMax[1]);
     }
-    if (xLocal[2] < xMin[2])
+    if( xLocal[2] < xMin[2] )
     {
-      real64 const factor =  -3.0/2.0*cMin[2]*log(r)/(dMin[2]*dMin[2]*dMin[2]);
+      real64 const factor =  -3.0/2.0*cMin[2]*log( r )/(dMin[2]*dMin[2]*dMin[2]);
       sigma[2] = factor*(xLocal[2]-xMin[2])*(xLocal[2]-xMin[2]);
     }
-    else if (xLocal[2] > xMax[2])
+    else if( xLocal[2] > xMax[2] )
     {
-      real64 const factor =  -3.0/2.0*cMax[2]*log(r)/(dMax[2]*dMax[2]*dMax[2]);
+      real64 const factor =  -3.0/2.0*cMax[2]*log( r )/(dMax[2]*dMax[2]*dMax[2]);
       sigma[2] = factor*(xLocal[2]-xMax[2])*(xLocal[2]-xMax[2]);
     }
   }
@@ -497,7 +497,7 @@ struct PMLKernel
           arrayView2d< real64 > const grad_n,
           arrayView1d< real64 > const divV_n )
   {
-    
+
     /// Loop over elements in the subregion, 'l' is the element index within the target set
     forAll< EXEC_POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
     {
@@ -539,12 +539,12 @@ struct PMLKernel
         }
       }
 
-      if (flagPML>1)
+      if( flagPML>1 )
       {
         for( localIndex i=0; i<numNodesPerElem; ++i )
         {
           /// compute the PML damping profile
-          PMLKernelHelper::computeDampingProfilePML( 
+          PMLKernelHelper::computeDampingProfilePML(
             xLocal[i],
             xMin,
             xMax,
@@ -553,7 +553,7 @@ struct PMLKernel
             cMin,
             cMax,
             r,
-            sigma);
+            sigma );
           for( int j=0; j<3; ++j )
           {
             auxV[j][i] *= sigma[j];
@@ -564,28 +564,28 @@ struct PMLKernel
       /// local arrays to store shape functions gradients
       real64 gradN[ numNodesPerElem ][ 3 ];
       using GRADIENT_TYPE = TYPEOFREF( gradN );
-    
+
       /// loop over the nodes i in the element k
       /// the nodes are implicitly assumed the same as quadrature points
       for( localIndex i=0; i<numNodesPerElem; ++i )
       {
-        
+
         /// compute the shape functions gradients
         real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, i, xLocal, gradN );
-        GEOSX_UNUSED_VAR (detJ);
+        GEOSX_UNUSED_VAR ( detJ );
 
         /// compute the gradient of the pressure and the PML auxiliary variables at the node
-        m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >(gradN, pressure, pressureGrad );
-        m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >(gradN, auxU, auxUGrad );
+        m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, pressure, pressureGrad );
+        m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, auxU, auxUGrad );
         for( int j=0; j<3; ++j )
         {
-          m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >(gradN, auxV[j], auxVGrad[j] );
+          m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, auxV[j], auxVGrad[j] );
         }
 
-        if (flagPML==1)
+        if( flagPML==1 )
         {
           /// compute the PML damping profile
-          PMLKernelHelper::computeDampingProfilePML( 
+          PMLKernelHelper::computeDampingProfilePML(
             xLocal[i],
             xMin,
             xMax,
@@ -594,14 +594,14 @@ struct PMLKernel
             cMin,
             cMax,
             r,
-            sigma);
+            sigma );
 
           /// compute B.pressureGrad - C.auxUGrad where B and C are functions of the damping profile
           real64 localIncrementArray[3];
           localIncrementArray[0] = (sigma[0]-sigma[1]-sigma[2])*pressureGrad[0] - (sigma[1]*sigma[2])*auxUGrad[0];
           localIncrementArray[1] = (sigma[1]-sigma[0]-sigma[2])*pressureGrad[1] - (sigma[0]*sigma[2])*auxUGrad[1];
           localIncrementArray[2] = (sigma[2]-sigma[0]-sigma[1])*pressureGrad[2] - (sigma[0]*sigma[1])*auxUGrad[2];
-          for (int j=0; j<3; ++j)
+          for( int j=0; j<3; ++j )
           {
             RAJA::atomicAdd< ATOMIC_POLICY >( &grad_n[elemToNodesViewConst[k][i]][j], localIncrementArray[j]/numNodesPerElem );
           }
@@ -609,19 +609,19 @@ struct PMLKernel
           real64 const beta = sigma[0]*sigma[1]+sigma[0]*sigma[2]+sigma[1]*sigma[2];
           real64 const gamma = sigma[0]*sigma[1]*sigma[2];
           real64 const localIncrement = beta*p_n[elemToNodesViewConst[k][i]]
-                                      + gamma*u_n[elemToNodesViewConst[k][i]]
-                                      - c*c*( auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2] );
+                                        + gamma*u_n[elemToNodesViewConst[k][i]]
+                                        - c*c*( auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2] );
 
-          RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem);
+          RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem );
         }
         else
         {
-          for (int j=0; j<3; ++j)
+          for( int j=0; j<3; ++j )
           {
             RAJA::atomicAdd< ATOMIC_POLICY >( &grad_n[elemToNodesViewConst[k][i]][j], pressureGrad[j]/numNodesPerElem );
           }
           real64 const localIncrement = -c*c*(auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2]);
-          RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem);
+          RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem );
         }
       }
     } );
@@ -663,12 +663,12 @@ struct waveSpeedPMLKernel
           arrayView1d< real64 const > const velocity,
           real64 const (&xMin)[3],
           real64 const (&xMax)[3],
-          real64 (&cMin)[3],
-          real64 (&cMax)[3],
-          int (&counterMin)[3],
-          int (&counterMax)[3])
+          real64 (& cMin)[3],
+          real64 (& cMax)[3],
+          int (& counterMin)[3],
+          int (& counterMax)[3] )
   {
-    
+
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgWaveSpeedLeft( 0.0 );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgWaveSpeedRight( 0.0 );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgWaveSpeedFront( 0.0 );
@@ -706,44 +706,44 @@ struct waveSpeedPMLKernel
         xLocal[j] /= numNodesPerElem;
       }
 
-      if ( xLocal[0] < xMin[0] 
-           && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1]
-           && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
+      if( xLocal[0] < xMin[0]
+          && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1]
+          && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
       {
         subRegionAvgWaveSpeedLeft += c;
         subRegionAvgWaveSpeedCounterLeft += 1;
       }
-      else if ( xLocal[0] > xMax[0]
-                && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1]
-                && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
+      else if( xLocal[0] > xMax[0]
+               && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1]
+               && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
       {
         subRegionAvgWaveSpeedRight += c;
         subRegionAvgWaveSpeedCounterRight += 1;
       }
-      if ( xLocal[1] < xMin[1]
-           && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
-           && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
+      if( xLocal[1] < xMin[1]
+          && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
+          && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
       {
         subRegionAvgWaveSpeedFront += c;
         subRegionAvgWaveSpeedCounterFront += 1;
       }
-      else if ( xLocal[1] > xMax[1]
-                && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
-                && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
+      else if( xLocal[1] > xMax[1]
+               && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
+               && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
       {
         subRegionAvgWaveSpeedBack += c;
         subRegionAvgWaveSpeedCounterBack += 1;
       }
-      if ( xLocal[2] < xMin[2]
-           && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
-           && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1] )
+      if( xLocal[2] < xMin[2]
+          && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
+          && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1] )
       {
         subRegionAvgWaveSpeedTop += c;
         subRegionAvgWaveSpeedCounterTop += 1;
       }
-      else if ( xLocal[2] > xMax[2]
-                && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
-                && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1] )
+      else if( xLocal[2] > xMax[2]
+               && xLocal[0] >= xMin[0] && xLocal[0] <= xMax[0]
+               && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1] )
       {
         subRegionAvgWaveSpeedBottom += c;
         subRegionAvgWaveSpeedCounterBottom += 1;
@@ -767,7 +767,6 @@ struct waveSpeedPMLKernel
   /// The finite element space/discretization object for the element type in the subRegion
   FE_TYPE const & m_finiteElement;
 };
-
 
 
 

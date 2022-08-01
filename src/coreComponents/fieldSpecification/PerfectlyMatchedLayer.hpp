@@ -68,7 +68,7 @@ public:
    * @brief Copy for the PML minimum coordinates
    * @param arr Mininum (x,y,z) coordinates of inner PML boundaries
    */
-  void copyMin(real64 (&arr)[3]) const { for (int i=0; i<3; ++i) arr[i]=m_xMin[i]; }
+  void copyMin( real64 (& arr)[3] ) const { for( int i=0; i<3; ++i ) arr[i]=m_xMin[i]; }
 
   /**
    * @brief Getter for the PML maximum coordinates
@@ -80,7 +80,7 @@ public:
    * @brief Copy for the PML maximum coordinates
    * @param arr Maximum (x,y,z) coordinates of inner PML boundaries
    */
-  void copyMax(real64 (&arr)[3]) const { for (int i=0; i<3; ++i) arr[i]=m_xMax[i]; }
+  void copyMax( real64 (& arr)[3] ) const { for( int i=0; i<3; ++i ) arr[i]=m_xMax[i]; }
 
   /**
    * @brief Getter for the PML reflectivity
@@ -99,8 +99,8 @@ public:
    * @brief Copy for the PML thickness
    * @param arr Thickness of the PML region
    */
-  void copyThicknessMinXYZ(real64 (&arr)[3]) const { for (int i=0; i<3; ++i) arr[i]=m_thicknessMinXYZ[i]; }
-  void copyThicknessMaxXYZ(real64 (&arr)[3]) const { for (int i=0; i<3; ++i) arr[i]=m_thicknessMaxXYZ[i]; }
+  void copyThicknessMinXYZ( real64 (& arr)[3] ) const { for( int i=0; i<3; ++i ) arr[i]=m_thicknessMinXYZ[i]; }
+  void copyThicknessMaxXYZ( real64 (& arr)[3] ) const { for( int i=0; i<3; ++i ) arr[i]=m_thicknessMaxXYZ[i]; }
 
   /**
    * @brief Getter for the PML wave speed
@@ -113,34 +113,34 @@ public:
    * @brief Copy for the PML wave speed
    * @param arr Wave speed of the PML region
    */
-  void copyWaveSpeedMinXYZ(real64 (&arr)[3]) const { for (int i=0; i<3; ++i) arr[i]=m_waveSpeedMinXYZ[i]; }
-  void copyWaveSpeedMaxXYZ(real64 (&arr)[3]) const { for (int i=0; i<3; ++i) arr[i]=m_waveSpeedMaxXYZ[i]; }
+  void copyWaveSpeedMinXYZ( real64 (& arr)[3] ) const { for( int i=0; i<3; ++i ) arr[i]=m_waveSpeedMinXYZ[i]; }
+  void copyWaveSpeedMaxXYZ( real64 (& arr)[3] ) const { for( int i=0; i<3; ++i ) arr[i]=m_waveSpeedMaxXYZ[i]; }
 
   /**
    * @brief Setter for the PML minimum coordinates
    * @param arr Mininum (x,y,z) coordinates of inner PML boundaries
    */
-  void setMin(real64 const (&arr)[3]) { for (int i=0; i<3; ++i) m_xMin[i]=arr[i]; }
+  void setMin( real64 const (&arr)[3] ) { for( int i=0; i<3; ++i ) m_xMin[i]=arr[i]; }
 
   /**
    * @brief Setter for the PML maximum coordinates
    * @param arr Maximum (x,y,z) coordinates of inner PML boundaries
    */
-  void setMax(real64 const (&arr)[3]) { for (int i=0; i<3; ++i) m_xMax[i]=arr[i]; }
+  void setMax( real64 const (&arr)[3] ) { for( int i=0; i<3; ++i ) m_xMax[i]=arr[i]; }
 
   /**
    * @brief Setter for the PML thickness
    * @param arr Thickness of the PML region
    */
-  void setThicknessMinXYZ(real64 const (&arr)[3]) { for (int i=0; i<3; ++i) m_thicknessMinXYZ[i]=arr[i]; }
-  void setThicknessMaxXYZ(real64 const (&arr)[3]) { for (int i=0; i<3; ++i) m_thicknessMaxXYZ[i]=arr[i]; }
+  void setThicknessMinXYZ( real64 const (&arr)[3] ) { for( int i=0; i<3; ++i ) m_thicknessMinXYZ[i]=arr[i]; }
+  void setThicknessMaxXYZ( real64 const (&arr)[3] ) { for( int i=0; i<3; ++i ) m_thicknessMaxXYZ[i]=arr[i]; }
 
   /**
    * @brief Setter for the PML wave speed
    * @param arr Wave speed of the PML region
    */
-  void setWaveSpeedMinXYZ(real64 arr [3]) { for (int i=0; i<3; ++i) m_waveSpeedMinXYZ[i]=arr[i]; }
-  void setWaveSpeedMaxXYZ(real64 arr [3]) { for (int i=0; i<3; ++i) m_waveSpeedMaxXYZ[i]=arr[i]; }
+  void setWaveSpeedMinXYZ( real64 arr[3] ) { for( int i=0; i<3; ++i ) m_waveSpeedMinXYZ[i]=arr[i]; }
+  void setWaveSpeedMaxXYZ( real64 arr[3] ) { for( int i=0; i<3; ++i ) m_waveSpeedMaxXYZ[i]=arr[i]; }
 
   /**
    * @brief View keys

@@ -128,7 +128,7 @@ public:
    */
   virtual void initializePML() override;
 
-  
+
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
    */

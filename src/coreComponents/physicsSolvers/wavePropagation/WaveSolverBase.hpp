@@ -59,8 +59,8 @@ public:
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
-    
-    
+
+
     static constexpr char const * flagPMLString() { return "flagPML"; }
 
   };
@@ -92,7 +92,7 @@ protected:
    * @param domain the partition domain
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) = 0;
-  
+
 
   /**
    * @brief Compute the value of a Ricker (a Gaussian function)

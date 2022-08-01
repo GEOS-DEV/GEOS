@@ -50,7 +50,7 @@ PerfectlyMatchedLayer::PerfectlyMatchedLayer( string const & name, Group * const
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( {-1.0, -1.0, -1.0} ).
     setDescription( "Thickness of the PML region, used to compute the damping profile" );
-  
+
   registerWrapper( viewKeyStruct::waveSpeedMinXYZString(), &m_waveSpeedMinXYZ ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( {-1.0, -1.0, -1.0} ).
@@ -75,46 +75,46 @@ void PerfectlyMatchedLayer::postProcessInput()
 {
   GEOSX_THROW_IF( (m_xMax[0]<m_xMin[0] || m_xMax[1]<m_xMin[1] || m_xMax[2]<m_xMin[2]),
                   getCatalogName() << " " << getName() << " "
-                  << viewKeyStruct::xMinString()
-                  << " must be smaller than "
-                  << viewKeyStruct::xMaxString(),
+                                   << viewKeyStruct::xMinString()
+                                   << " must be smaller than "
+                                   << viewKeyStruct::xMaxString(),
                   InputError );
 
   GEOSX_THROW_IF( (m_reflectivity<=0 || m_reflectivity>1),
                   getCatalogName() << " " << getName() << " "
-                  << viewKeyStruct::reflectivityString()
-                  << " must satisfy 0 < reflectivity <= 1",
+                                   << viewKeyStruct::reflectivityString()
+                                   << " must satisfy 0 < reflectivity <= 1",
                   InputError );
 
-  GEOSX_LOG_RANK_0_IF( (m_xMin[0]<-999999 || m_xMin[1]<-999999 || m_xMin[2]<-999999), 
+  GEOSX_LOG_RANK_0_IF( (m_xMin[0]<-999999 || m_xMin[1]<-999999 || m_xMin[2]<-999999),
                        getCatalogName() << " " << getName() << " "
-                       << viewKeyStruct::xMinString()
-                       << " will be computed internally" );
-                
-  GEOSX_LOG_RANK_0_IF( (m_xMax[0]>999999 || m_xMax[1]>999999 || m_xMax[2]>999999), 
-                       getCatalogName() << " " << getName() << " "
-                       << viewKeyStruct::xMaxString()
-                       << " will be computed internally" );
+                                        << viewKeyStruct::xMinString()
+                                        << " will be computed internally" );
 
-  GEOSX_LOG_RANK_0_IF( (m_thicknessMinXYZ[0]<0 || m_thicknessMinXYZ[1]<0 || m_thicknessMinXYZ[2]<0), 
+  GEOSX_LOG_RANK_0_IF( (m_xMax[0]>999999 || m_xMax[1]>999999 || m_xMax[2]>999999),
                        getCatalogName() << " " << getName() << " "
-                       << viewKeyStruct::thicknessMinXYZString()
-                       << " will be computed internally" );
+                                        << viewKeyStruct::xMaxString()
+                                        << " will be computed internally" );
 
-  GEOSX_LOG_RANK_0_IF( (m_thicknessMaxXYZ[0]<0 || m_thicknessMaxXYZ[1]<0 || m_thicknessMaxXYZ[2]<0), 
+  GEOSX_LOG_RANK_0_IF( (m_thicknessMinXYZ[0]<0 || m_thicknessMinXYZ[1]<0 || m_thicknessMinXYZ[2]<0),
                        getCatalogName() << " " << getName() << " "
-                       << viewKeyStruct::thicknessMaxXYZString()
-                       << " will be computed internally" );
+                                        << viewKeyStruct::thicknessMinXYZString()
+                                        << " will be computed internally" );
 
-  GEOSX_LOG_RANK_0_IF( (m_waveSpeedMinXYZ[0]<0 || m_waveSpeedMinXYZ[1]<0 || m_waveSpeedMinXYZ[2]<0), 
+  GEOSX_LOG_RANK_0_IF( (m_thicknessMaxXYZ[0]<0 || m_thicknessMaxXYZ[1]<0 || m_thicknessMaxXYZ[2]<0),
                        getCatalogName() << " " << getName() << " "
-                       << viewKeyStruct::waveSpeedMinXYZString()
-                       << " will be computed internally" );
+                                        << viewKeyStruct::thicknessMaxXYZString()
+                                        << " will be computed internally" );
 
-  GEOSX_LOG_RANK_0_IF( (m_waveSpeedMaxXYZ[0]<0 || m_waveSpeedMaxXYZ[1]<0 || m_waveSpeedMaxXYZ[2]<0), 
+  GEOSX_LOG_RANK_0_IF( (m_waveSpeedMinXYZ[0]<0 || m_waveSpeedMinXYZ[1]<0 || m_waveSpeedMinXYZ[2]<0),
                        getCatalogName() << " " << getName() << " "
-                       << viewKeyStruct::waveSpeedMaxXYZString()
-                       << " will be computed internally" );    
+                                        << viewKeyStruct::waveSpeedMinXYZString()
+                                        << " will be computed internally" );
+
+  GEOSX_LOG_RANK_0_IF( (m_waveSpeedMaxXYZ[0]<0 || m_waveSpeedMaxXYZ[1]<0 || m_waveSpeedMaxXYZ[2]<0),
+                       getCatalogName() << " " << getName() << " "
+                                        << viewKeyStruct::waveSpeedMaxXYZString()
+                                        << " will be computed internally" );
 }
 
 void PerfectlyMatchedLayer::initializePreSubGroups()
