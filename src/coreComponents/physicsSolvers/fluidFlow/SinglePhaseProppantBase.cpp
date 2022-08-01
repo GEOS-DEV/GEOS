@@ -72,7 +72,7 @@ void SinglePhaseProppantBase::setConstitutiveNames( ElementSubRegionBase & subRe
   GEOSX_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 }
 
-void SinglePhaseProppantBase::validateFluidModels( DomainPartition & domain ) const
+void SinglePhaseProppantBase::validateConstitutiveModels( DomainPartition & domain ) const
 {
   // Validate fluid models in regions
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,

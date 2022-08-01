@@ -415,7 +415,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     // mass matrix to be computed in this function
     arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-
+    mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
     arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
     damping.zero();
@@ -1033,11 +1033,19 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     } );
 
   } );
+
   return dt;
 }
 
-void AcousticWaveEquationSEM::cleanup( real64 const time_n, integer const, integer const, real64 const, DomainPartition & domain )
+void AcousticWaveEquationSEM::cleanup( real64 const time_n,
+                                       integer const cycleNumber,
+                                       integer const eventCounter,
+                                       real64 const eventProgress,
+                                       DomainPartition & domain )
 {
+  // call the base class cleanup (for reporting purposes)
+  SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+
   // compute the remaining seismic traces, if needed
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,

@@ -7,4 +7,3 @@ setup(name='pygeosx_tools',
       author_email='sherman27@llnl.gov',
       packages=['pygeosx_tools'],
       install_requires=['matplotlib'])
-
