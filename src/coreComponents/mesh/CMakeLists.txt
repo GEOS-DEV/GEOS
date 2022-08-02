@@ -25,6 +25,7 @@ set( mesh_headers
      ObjectManagerBase.hpp
      Perforation.hpp
      PerforationData.hpp
+     PerforationExtrinsicData.hpp	     
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp

@@ -470,7 +470,7 @@ void HydrofractureSolver::setupDofs( DomainPartition const & domain,
   } );
 
   dofManager.addCoupling( keys::TotalDisplacement,
-                          extrinsicMeshData::flow::pressure::key(),
+                          SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem,
                           meshTargets );
 
@@ -545,7 +545,7 @@ void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  string const presDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+  string const presDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -605,7 +605,7 @@ void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartitio
   NodeManager const & nodeManager = mesh.getNodeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  string const presDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+  string const presDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -744,7 +744,7 @@ HydrofractureSolver::
   fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() );
   fext.zero();
 
-  string const presDofKey = m_dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+  string const presDofKey = m_dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
   string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
 
   globalIndex const rankOffset = m_dofManager.rankOffset();
@@ -833,7 +833,7 @@ HydrofractureSolver::
 {
   GEOSX_MARK_FUNCTION;
 
-  string const presDofKey = m_dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+  string const presDofKey = m_dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
   string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
 
   globalIndex const rankOffset = m_dofManager.rankOffset();
@@ -938,7 +938,7 @@ void HydrofractureSolver::setNextDt( real64 const & currentDt,
   else
   {
     SolverBase & surfaceGenerator = this->getParent().getGroup< SolverBase >( "SurfaceGen" );
-    nextDt = surfaceGenerator.GetTimestepRequest() < 1e99 ? surfaceGenerator.GetTimestepRequest() : currentDt;
+    nextDt = surfaceGenerator.getTimestepRequest() < 1e99 ? surfaceGenerator.getTimestepRequest() : currentDt;
   }
 
   GEOSX_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );
@@ -986,7 +986,7 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
     }
   }
 
-  string const presDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+  string const presDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
