@@ -1732,19 +1732,6 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
 
 }
 
-void CompositionalMultiphaseBase::solveLinearSystem( DofManager const & dofManager,
-                                                     ParallelMatrix & matrix,
-                                                     ParallelVector & rhs,
-                                                     ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-
-  rhs.scale( -1.0 );
-  solution.zero();
-
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
-}
-
 void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;

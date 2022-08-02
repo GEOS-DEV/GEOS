@@ -1202,16 +1202,6 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
   } );
 }
 
-void SolidMechanicsLagrangianFEM::solveLinearSystem( DofManager const & dofManager,
-                                                     ParallelMatrix & matrix,
-                                                     ParallelVector & rhs,
-                                                     ParallelVector & solution )
-{
-  rhs.scale( -1.0 );
-  solution.zero();
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
-}
-
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;

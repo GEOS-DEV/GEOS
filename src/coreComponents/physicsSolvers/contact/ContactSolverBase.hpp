@@ -42,11 +42,6 @@ public:
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
-  virtual void solveLinearSystem( DofManager const & dofManager,
-                                  ParallelMatrix & matrix,
-                                  ParallelVector & rhs,
-                                  ParallelVector & solution ) override;
-
   virtual real64
   explicitStep( real64 const & time_n,
                 real64 const & dt,

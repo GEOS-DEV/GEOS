@@ -125,19 +125,6 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
                                    localRhs );
 }
 
-void MultiphasePoromechanicsSolver::solveLinearSystem( DofManager const & dofManager,
-                                                       ParallelMatrix & matrix,
-                                                       ParallelVector & rhs,
-                                                       ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-
-  rhs.scale( -1.0 );
-  solution.zero();
-
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
-}
-
 real64 MultiphasePoromechanicsSolver::solverStep( real64 const & time_n,
                                                   real64 const & dt,
                                                   int const cycleNumber,

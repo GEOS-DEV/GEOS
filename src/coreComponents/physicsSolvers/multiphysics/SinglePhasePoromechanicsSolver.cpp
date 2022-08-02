@@ -224,19 +224,6 @@ void SinglePhasePoromechanicsSolver::createPreconditioner()
   }
 }
 
-void SinglePhasePoromechanicsSolver::solveLinearSystem( DofManager const & dofManager,
-                                                        ParallelMatrix & matrix,
-                                                        ParallelVector & rhs,
-                                                        ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-
-  rhs.scale( -1.0 );
-  solution.zero();
-
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
-}
-
 void SinglePhasePoromechanicsSolver::updateState( DomainPartition & domain )
 {
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,

@@ -57,22 +57,6 @@ addCouplingNumNonzeros( SolverBase const * const solver,
                         string const & resElemDofName,
                         string const & wellElemDofName );
 
-
-/**
- * @brief Utility function for the implementation details of solveLinearSystem
- * @param solver the coupled solver
- * @param dofManager the degree of freedom manager
- * @param matrix the Jacobian matrix
- * @param rhs the residual
- * @param solution the solution of the Jacobian system
- */
-void
-solveLinearSystem( SolverBase * const solver,
-                   DofManager const & dofManager,
-                   ParallelMatrix & matrix,
-                   ParallelVector & rhs,
-                   ParallelVector & solution );
-
 }
 
 template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
@@ -173,23 +157,6 @@ public:
 
     solution.setName( this->getName() + "/solution" );
     solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
-  }
-
-
-  virtual void
-  solveLinearSystem( DofManager const & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override
-  {
-    GEOSX_MARK_FUNCTION;
-
-    coupledReservoirAndWellsInternal::
-      solveLinearSystem( this,
-                         dofManager,
-                         matrix,
-                         rhs,
-                         solution );
   }
 
   /**@}*/

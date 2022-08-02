@@ -768,19 +768,6 @@ HydrofractureSolver::
   } );
 }
 
-void HydrofractureSolver::solveLinearSystem( DofManager const & dofManager,
-                                             ParallelMatrix & matrix,
-                                             ParallelVector & rhs,
-                                             ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-
-  rhs.scale( -1.0 );
-  solution.zero();
-
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
-}
-
 void HydrofractureSolver::updateState( DomainPartition & domain )
 {
   updateDeformationForCoupling( domain );
