@@ -706,6 +706,8 @@ struct waveSpeedPMLKernel
         xLocal[j] /= numNodesPerElem;
       }
 
+      /// check the location of the cell and increment wave speed
+      /// and counters accordingly
       if( xLocal[0] < xMin[0]
           && xLocal[1] >= xMin[1] && xLocal[1] <= xMax[1]
           && xLocal[2] >= xMin[2] && xLocal[2] <= xMax[2] )
@@ -750,6 +752,7 @@ struct waveSpeedPMLKernel
       }
     } );
 
+    /// transfer local results to global variables
     cMin[0]+=subRegionAvgWaveSpeedLeft.get();
     cMin[1]+=subRegionAvgWaveSpeedFront.get();
     cMin[2]+=subRegionAvgWaveSpeedTop.get();

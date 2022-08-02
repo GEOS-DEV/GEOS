@@ -836,6 +836,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
+        /// apply the PML kernel
         acousticWaveEquationSEMKernels::
           PMLKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
@@ -928,6 +929,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
     addSourceToRightHandSide( cycleNumber, rhs );
 
+    /// apply the main function to update some of the PML auxiliary variables
     /// Compute (divV) and (B.pressureGrad - C.auxUGrad) vectors for the PML region
     if( flagPML>0 )
     {

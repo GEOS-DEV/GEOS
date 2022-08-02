@@ -105,6 +105,7 @@ void WaveSolverBase::postProcessInput()
   SolverBase::postProcessInput();
 
   /// set flag PML to one if a PML field is specified in the xml
+  /// if flagPML>1, a different and approximate PML implementation will be applied
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & )
   {

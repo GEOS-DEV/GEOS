@@ -182,6 +182,10 @@
 					<xsd:selector xpath="HydrostaticEquilibrium" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="FieldSpecificationsPMLUniqueName">
+					<xsd:selector xpath="PML" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="FieldSpecificationsSourceFluxUniqueName">
 					<xsd:selector xpath="SourceFlux" />
 					<xsd:field xpath="@name" />
@@ -817,6 +821,7 @@
 			<xsd:element name="Dirichlet" type="DirichletType" />
 			<xsd:element name="FieldSpecification" type="FieldSpecificationType" />
 			<xsd:element name="HydrostaticEquilibrium" type="HydrostaticEquilibriumType" />
+			<xsd:element name="PML" type="PMLType" />
 			<xsd:element name="SourceFlux" type="SourceFluxType" />
 			<xsd:element name="Traction" type="TractionType" />
 		</xsd:choice>
@@ -968,6 +973,44 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--temperatureVsElevationTableName => Name of the table specifying the (temperature [K] vs elevation) relationship-->
 		<xsd:attribute name="temperatureVsElevationTableName" type="string" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PMLType">
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
+		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<!--beginTime => Time at which the boundary condition will start being applied.-->
+		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
+		<!--component => Component of field (if tensor) to apply boundary condition to.-->
+		<xsd:attribute name="component" type="integer" default="-1" />
+		<!--direction => Direction to apply boundary condition to.-->
+		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
+		<!--endTime => Time at which the boundary condition will stop being applied.-->
+		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
+		<xsd:attribute name="functionName" type="string" default="" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--objectPath => Path to the target field-->
+		<xsd:attribute name="objectPath" type="string" default="" />
+		<!--reflectivity => Desired reflectivity of the PML region, used to compute the damping profile-->
+		<xsd:attribute name="reflectivity" type="real64" default="0.001" />
+		<!--scale => Scale factor for value of the boundary condition.-->
+		<xsd:attribute name="scale" type="real64" default="0" />
+		<!--setNames => Name of sets that boundary condition is applied to.-->
+		<xsd:attribute name="setNames" type="string_array" use="required" />
+		<!--thicknessMaxXYZ => Thickness of the PML region, at right, back, and bottom sides, used to compute the damping profile-->
+		<xsd:attribute name="thicknessMaxXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<!--thicknessMinXYZ => Thickness of the PML region, at left, front, and top sides, used to compute the damping profile-->
+		<xsd:attribute name="thicknessMinXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<!--waveSpeedMaxXYZ => Wave speed in the PML, at right, back, and bottom sides, used to compute the damping profile-->
+		<xsd:attribute name="waveSpeedMaxXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<!--waveSpeedMinXYZ => Wave speed in the PML, at left, front, and top sides, used to compute the damping profile-->
+		<xsd:attribute name="waveSpeedMinXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<!--xMax => Maximum (x,y,z) coordinates of the inner PML boundaries-->
+		<xsd:attribute name="xMax" type="R1Tensor" default="{1e+06,1e+06,1e+06}" />
+		<!--xMin => Minimum (x,y,z) coordinates of the inner PML boundaries-->
+		<xsd:attribute name="xMin" type="R1Tensor" default="{-1e+06,-1e+06,-1e+06}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

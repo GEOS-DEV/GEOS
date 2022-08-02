@@ -44,22 +44,22 @@ PerfectlyMatchedLayer::PerfectlyMatchedLayer( string const & name, Group * const
   registerWrapper( viewKeyStruct::thicknessMinXYZString(), &m_thicknessMinXYZ ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( {-1.0, -1.0, -1.0} ).
-    setDescription( "Thickness of the PML region, used to compute the damping profile" );
+    setDescription( "Thickness of the PML region, at left, front, and top sides, used to compute the damping profile" );
 
   registerWrapper( viewKeyStruct::thicknessMaxXYZString(), &m_thicknessMaxXYZ ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( {-1.0, -1.0, -1.0} ).
-    setDescription( "Thickness of the PML region, used to compute the damping profile" );
+    setDescription( "Thickness of the PML region, at right, back, and bottom sides, used to compute the damping profile" );
 
   registerWrapper( viewKeyStruct::waveSpeedMinXYZString(), &m_waveSpeedMinXYZ ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( {-1.0, -1.0, -1.0} ).
-    setDescription( "Wave speed in the PML, used to compute the damping profile" );
+    setDescription( "Wave speed in the PML, at left, front, and top sides, used to compute the damping profile" );
 
   registerWrapper( viewKeyStruct::waveSpeedMaxXYZString(), &m_waveSpeedMaxXYZ ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( {-1.0, -1.0, -1.0} ).
-    setDescription( "Wave speed in the PML, used to compute the damping profile" );
+    setDescription( "Wave speed in the PML, at right, back, and bottom sides, used to compute the damping profile" );
 
   getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
