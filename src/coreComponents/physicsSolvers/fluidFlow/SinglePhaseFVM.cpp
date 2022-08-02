@@ -197,33 +197,33 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
 
   // step 3: second reduction across MPI ranks
 
-  real64 residual = 0.0;
+  real64 residualNorm = 0.0;
   if( m_isThermal )
   {
-    real64 const flowResidual = ( BASE::m_normType == solverBaseKernels::NormType::Linf )
+    real64 const flowResidualNorm = ( BASE::m_normType == solverBaseKernels::NormType::Linf )
       ? MpiWrapper::max( localResidualNorm[0] )
       : sqrt( MpiWrapper::sum( localResidualNorm[0] ) ) / MpiWrapper::sum( localResidualNormalizer[0] );
-    real64 const energyResidual = ( BASE::m_normType == solverBaseKernels::NormType::Linf )
+    real64 const energyResidualNorm = ( BASE::m_normType == solverBaseKernels::NormType::Linf )
       ? MpiWrapper::max( localResidualNorm[1] )
       : sqrt( MpiWrapper::sum( localResidualNorm[1] ) ) / MpiWrapper::sum( localResidualNormalizer[1] );
-    residual = ( flowResidual > energyResidual ) ? flowResidual : energyResidual;
+    residualNorm = ( flowResidualNorm > energyResidualNorm ) ? flowResidualNorm : energyResidualNorm;
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
       std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
-                              FlowSolverBase::coupledSolverAttributePrefix(), flowResidual, energyResidual );
+                              FlowSolverBase::coupledSolverAttributePrefix(), flowResidualNorm, energyResidualNorm );
     }
   }
   else
   {
-    residual = ( BASE::m_normType == solverBaseKernels::NormType::Linf )
+    residualNorm = ( BASE::m_normType == solverBaseKernels::NormType::Linf )
       ? MpiWrapper::max( localResidualNorm[0] )
       : sqrt( MpiWrapper::sum( localResidualNorm[0] ) ) / MpiWrapper::sum( localResidualNormalizer[0] );
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", FlowSolverBase::coupledSolverAttributePrefix(), residual );
+      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm );
     }
   }
-  return residual;
+  return residualNorm;
 }
 
 

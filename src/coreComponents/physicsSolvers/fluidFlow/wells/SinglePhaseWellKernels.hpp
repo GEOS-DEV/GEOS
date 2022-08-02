@@ -320,8 +320,8 @@ public:
                       WellElementSubRegion const & subRegion,
                       constitutive::SingleFluidBase const & fluid,
                       WellControls const & wellControls,
-		      real64 const & timeAtEndOfStep,
-		      real64 const & dt )
+                      real64 const & timeAtEndOfStep,
+                      real64 const & dt )
     : Base( rankOffset,
             localResidual,
             dofNumber,
@@ -345,34 +345,34 @@ public:
       real64 normalizer = 0.0;
       if( idof == singlePhaseWellKernels::RowOffset::CONTROL )
       {
-	// for the top well element, normalize using the current control
-	if( m_isLocallyOwned && iwelem == m_iwelemControl )
+        // for the top well element, normalize using the current control
+        if( m_isLocallyOwned && iwelem == m_iwelemControl )
         {
-	  if( m_currentControl == WellControls::Control::BHP )
-	  {
-	    // this residual entry is in pressure units
-	    normalizer = m_targetBHP;
-	  }
-	  else if( m_currentControl == WellControls::Control::TOTALVOLRATE )
-	  {
-	    // this residual entry is in volume / time units
-	    normalizer = LvArray::math::max( LvArray::math::abs( m_targetRate ), minNormalizer );
-	  }
-	}
-	// for the pressure difference equation, always normalize by the BHP
-	else
-	{
-	  // this residual is in pressure units
-	  normalizer = m_targetBHP;
-	}
+          if( m_currentControl == WellControls::Control::BHP )
+          {
+            // this residual entry is in pressure units
+            normalizer = m_targetBHP;
+          }
+          else if( m_currentControl == WellControls::Control::TOTALVOLRATE )
+          {
+            // this residual entry is in volume / time units
+            normalizer = LvArray::math::max( LvArray::math::abs( m_targetRate ), minNormalizer );
+          }
+        }
+        // for the pressure difference equation, always normalize by the BHP
+        else
+        {
+          // this residual is in pressure units
+          normalizer = m_targetBHP;
+        }
       }
       else // SinglePhaseWell::RowOffset::MASSBAL
       {
-	// this residual entry is in mass units 
-	normalizer = m_dt * LvArray::math::abs( m_targetRate ) * m_density_n[iwelem][0];
+        // this residual entry is in mass units
+        normalizer = m_dt * LvArray::math::abs( m_targetRate ) * m_density_n[iwelem][0];
 
-	// to make sure that everything still works well if the rate is zero, we add this check
-	normalizer = LvArray::math::max( normalizer, m_volume[iwelem] * m_density_n[iwelem][0] );
+        // to make sure that everything still works well if the rate is zero, we add this check
+        normalizer = LvArray::math::max( normalizer, m_volume[iwelem] * m_density_n[iwelem][0] );
       }
 
       // we have the normalizer now, we can compute a dimensionless Linfty norm contribution
@@ -384,16 +384,16 @@ public:
   virtual void computeL2( localIndex const iwelem,
                           L2StackVariables & stack ) const override
   {
-    GEOSX_UNUSED_VAR( iwelem, stack ); 
+    GEOSX_UNUSED_VAR( iwelem, stack );
     GEOSX_ERROR( "The L2 norm is not implemented for SinglePhaseWell" );
   }
 
 
 protected:
-  
+
   /// Time step size
   real64 const m_dt;
-  
+
   /// Flag indicating whether the well is locally owned or not
   bool const m_isLocallyOwned;
 
@@ -441,8 +441,8 @@ public:
                    WellElementSubRegion const & subRegion,
                    constitutive::SingleFluidBase const & fluid,
                    WellControls const & wellControls,
-		   real64 const & timeAtEndOfStep,
-		   real64 const & dt,
+                   real64 const & timeAtEndOfStep,
+                   real64 const & dt,
                    real64 (& residualNorm)[1] )
   {
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );

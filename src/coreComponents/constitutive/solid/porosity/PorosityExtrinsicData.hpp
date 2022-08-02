@@ -53,7 +53,7 @@ EXTRINSIC_MESH_DATA_TRAIT( dPorosity_dPressure,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Derivative of rock porosity with respect to pressure" );
-  
+
 EXTRINSIC_MESH_DATA_TRAIT( initialPorosity,
                            "initialPorosity",
                            array2d< real64 >,
@@ -69,7 +69,7 @@ EXTRINSIC_MESH_DATA_TRAIT( referencePorosity,
                            LEVEL_0,
                            WRITE_AND_READ,
                            "Reference porosity" );
-  
+
 }
 
 }

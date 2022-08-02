@@ -664,9 +664,9 @@ SinglePhaseWell::calculateResidualNorm( DomainPartition const & domain,
 
   real64 localResidualNorm = 0.0;
 
-  globalIndex const rankOffset = dofManager.rankOffset();  
+  globalIndex const rankOffset = dofManager.rankOffset();
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
-  
+
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
@@ -679,7 +679,7 @@ SinglePhaseWell::calculateResidualNorm( DomainPartition const & domain,
                                                                    WellElementSubRegion const & subRegion )
     {
       real64 subRegionResidualNorm[1]{};
-      
+
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
 
@@ -688,29 +688,36 @@ SinglePhaseWell::calculateResidualNorm( DomainPartition const & domain,
       // step 1: compute the norm in the subRegion
 
       ResidualNormKernelFactory::
-	createAndLaunch< parallelDevicePolicy<> >( rankOffset,
+        createAndLaunch< parallelDevicePolicy<> >( rankOffset,
                                                    wellDofKey,
-						   localRhs,
-						   subRegion,
-						   fluid,
+                                                   localRhs,
+                                                   subRegion,
+                                                   fluid,
                                                    wellControls,
-						   m_currentTime + m_currentDt,
-						   m_currentDt,
-						   subRegionResidualNorm );
-		
+                                                   m_currentTime + m_currentDt,
+                                                   m_currentDt,
+                                                   subRegionResidualNorm );
+
       // step 2: reduction across meshBodies/regions/subRegions
 
       if( subRegionResidualNorm[0] > localResidualNorm )
       {
-	localResidualNorm = subRegionResidualNorm[0];
+        localResidualNorm = subRegionResidualNorm[0];
       }
 
     } );
   } );
 
-  // step 3: second reduction across MPI ranks  
-  
-  return MpiWrapper::max( localResidualNorm );
+
+  // step 3: second reduction across MPI ranks
+
+  real64 const residualNorm = MpiWrapper::max( localResidualNorm );
+
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  {
+    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+  }
+  return residualNorm;
 }
 
 bool SinglePhaseWell::checkSystemSolution( DomainPartition const & domain,

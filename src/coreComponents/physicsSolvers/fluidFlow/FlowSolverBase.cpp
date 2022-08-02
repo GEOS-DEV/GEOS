@@ -81,7 +81,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( solverBaseKernels::NormType::Linf ).
     setDescription( "Norm used by the solver to check nonlinear convergence. Valid options:\n* " + EnumStrings< solverBaseKernels::NormType >::concat( "\n* " ) );
-  
+
   this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of discretization object to use for this solver." );

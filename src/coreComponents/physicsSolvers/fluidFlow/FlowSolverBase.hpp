@@ -35,7 +35,7 @@ class FlowSolverBase : public SolverBase
 {
 public:
 
-/// String used to form the solverName used to register single-physics solvers in CoupledSolver
+  /// String used to form the solverName used to register single-physics solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "flow"; }
 
 /**
@@ -69,7 +69,7 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // misc inputs
-    static constexpr char const * normTypeString() { return "normType"; }    
+    static constexpr char const * normTypeString() { return "normType"; }
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
