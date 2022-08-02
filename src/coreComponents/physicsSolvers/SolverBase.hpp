@@ -685,7 +685,6 @@ public:
 
 protected:
 
-
   static real64 eisenstatWalker( real64 const newNewtonNorm,
                                  real64 const oldNewtonNorm,
                                  real64 const weakestTol );

@@ -75,9 +75,13 @@ FlowSolverBase::FlowSolverBase( string const & name,
                                 Group * const parent ):
   SolverBase( name, parent ),
   m_numDofPerCell( 0 ),
-  m_isThermal( 0 ),
-  m_fluxEstimate()
+  m_isThermal( 0 )
 {
+  this->registerWrapper( viewKeyStruct::normTypeString(), &m_normType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( solverBaseKernels::NormType::Linf ).
+    setDescription( "Norm used by the solver to check nonlinear convergence. Valid options:\n* " + EnumStrings< solverBaseKernels::NormType >::concat( "\n* " ) );
+  
   this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of discretization object to use for this solver." );
@@ -86,12 +90,6 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
-
-  this->registerWrapper( viewKeyStruct::inputFluxEstimateString(), &m_fluxEstimate ).
-    setApplyDefaultValue( 1.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Initial estimate of the input flux used only for residual scaling. This should be "
-                    "essentially equivalent to the input flux * dt." );
 }
 
 void FlowSolverBase::registerDataOnMesh( Group & meshBodies )

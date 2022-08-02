@@ -667,102 +667,112 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
 {
   GEOSX_MARK_FUNCTION;
 
+  real64 localResidualNorm = 0.0;
+  real64 localResidualNormalizer = 0.0;
+
   // local residual
-  real64 localResidualNorm = 0;
   globalIndex const rankOffset = dofManager.rankOffset();
+  string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
+    ElementRegionManager const & elemManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
 
-    // here we compute the cell-centered residual norm in the derived class
-    // to avoid duplicating a synchronization point
+    // step 1: compute the residual for the element-based mass conservation equations
 
-    // get a view into local residual vector
-
-    string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-    string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
-
-
-    StencilAccessors< extrinsicMeshData::elementVolume,
-                      extrinsicMeshData::flow::phaseMobility_n >
-    compFlowAccessors( mesh.getElemManager(), getName() );
-
-
-    // 1. Compute the residual for the mass conservation equations
-
-    mesh.getElemManager().forElementSubRegionsComplete< ElementSubRegionBase >( regionNames,
-                                                                                [&]( localIndex const,
-                                                                                     localIndex const,
-                                                                                     localIndex const,
-                                                                                     ElementRegionBase const &,
-                                                                                     ElementSubRegionBase const & subRegion )
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase const & subRegion )
     {
-      arrayView1d< globalIndex const > const & elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
-      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
+      real64 subRegionResidualNorm[1]{};
+      real64 subRegionResidualNormalizer[1]{};
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens_n = fluid.totalDensity_n();
 
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-      arrayView1d< real64 const > const & referencePorosity = solid.getReferencePorosity();
 
-      real64 subRegionResidualNorm = 0.0;
+      // step 1.1: compute the norm in the subRegion
+
       isothermalCompositionalMultiphaseBaseKernels::
-        ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
-                                                              rankOffset,
-                                                              numFluidComponents(),
-                                                              elemDofNumber,
-                                                              elemGhostRank,
-                                                              referencePorosity,
-                                                              volume,
-                                                              totalDens_n,
-                                                              subRegionResidualNorm );
-      localResidualNorm += subRegionResidualNorm;
+        ResidualNormKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( m_normType,
+                                                   numFluidComponents(),
+                                                   rankOffset,
+                                                   elemDofKey,
+                                                   localRhs,
+                                                   subRegion,
+                                                   fluid,
+                                                   solid,
+                                                   subRegionResidualNorm,
+                                                   subRegionResidualNormalizer );
+
+      // step 1.2: reduction across meshBodies/regions/subRegions
+
+      if( m_normType == solverBaseKernels::NormType::Linf )
+      {
+        if( subRegionResidualNorm[0] > localResidualNorm )
+        {
+          localResidualNorm = subRegionResidualNorm[0];
+        }
+      }
+      else
+      {
+        localResidualNorm += subRegionResidualNorm[0];
+        localResidualNormalizer += subRegionResidualNormalizer[0];
+      }
     } );
 
-    arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
-    arrayView1d< globalIndex const > const & faceDofNumber =
-      faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+    // step 2: compute the residual for the face-based constraints
 
-    arrayView2d< localIndex const > const & elemRegionList    = faceManager.elementRegionList();
-    arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
-    arrayView2d< localIndex const > const & elemList          = faceManager.elementList();
+    real64 faceResidualNorm[1]{};
+    real64 faceResidualNormalizer[1]{};
 
-    // 2. Compute the residual for the face-based constraints
-    real64 faceResidualNorm = 0.0;
+    // step 2.1: compute the norm for the local faces
+
+    real64 dt = 0; /////////////// FRANCOIS
+
     compositionalMultiphaseHybridFVMKernels::
-      ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
-                                                            rankOffset,
-                                                            numFluidPhases(),
-                                                            faceDofNumber.toNestedViewConst(),
-                                                            faceGhostRank.toNestedViewConst(),
-                                                            m_regionFilter.toViewConst(),
-                                                            elemRegionList.toNestedViewConst(),
-                                                            elemSubRegionList.toNestedViewConst(),
-                                                            elemList.toNestedViewConst(),
-                                                            compFlowAccessors.get( extrinsicMeshData::elementVolume{} ),
-                                                            compFlowAccessors.get( extrinsicMeshData::flow::phaseMobility_n{} ),
-                                                            faceResidualNorm );
-    localResidualNorm += faceResidualNorm;
+      ResidualNormKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_normType,
+                                                 rankOffset,
+                                                 faceDofKey,
+                                                 localRhs,
+                                                 m_regionFilter.toViewConst(),
+                                                 getName(),
+                                                 elemManager,
+                                                 faceManager,
+                                                 dt,
+                                                 faceResidualNorm,
+                                                 faceResidualNormalizer );
+
+    // step 2.2: reduction across meshBodies/regions/subRegions
+
+    if( m_normType == solverBaseKernels::NormType::Linf )
+    {
+      if( faceResidualNorm[0] > localResidualNorm )
+      {
+        localResidualNorm = faceResidualNorm[0];
+      }
+    }
+    else
+    {
+      localResidualNorm += faceResidualNorm[0];
+      localResidualNormalizer += faceResidualNormalizer[0];
+    }
+
   } );
 
-  // 3. Combine the two norms
+  // step 3: second reduction across MPI ranks
 
-  // compute global residual norm
-  real64 const residual = std::sqrt( MpiWrapper::sum( localResidualNorm ) );
-
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-  {
-    std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ;", residual );
-  }
-
-  return residual;
+  return ( m_normType == solverBaseKernels::NormType::Linf )
+    ? MpiWrapper::max( localResidualNorm )
+    : sqrt( MpiWrapper::sum( localResidualNorm ) ) / MpiWrapper::sum( localResidualNormalizer );
 }
 
 void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & dofManager,

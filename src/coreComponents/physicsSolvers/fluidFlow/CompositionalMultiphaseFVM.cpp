@@ -313,8 +313,9 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
 {
   GEOSX_MARK_FUNCTION;
 
-  real64 localFlowResidualNorm = 0.0;
-  real64 localEnergyResidualNorm = 0.0;
+  integer constexpr numNorm = 2;
+  real64 localResidualNorm[numNorm]{};
+  real64 localResidualNormalizer[numNorm]{};
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
@@ -327,88 +328,103 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-
-      arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+      real64 subRegionResidualNorm[numNorm]{};
+      real64 subRegionResidualNormalizer[numNorm]{};
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      arrayView2d< real64 const, multifluid::USD_FLUID > const totalDens_n = fluid.totalDensity_n();
 
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
-      CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-      arrayView1d< real64 const > const referencePorosity = solidModel.getReferencePorosity();
+      CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-      real64 subRegionFlowResidualNorm = 0.0;
-      real64 subRegionEnergyResidualNorm = 0.0;
+      // step 1: compute the norm in the subRegion
 
       if( m_isThermal )
       {
-        arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac_n =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction_n >();
-        arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDens_n = fluid.phaseDensity_n();
-        arrayView3d< real64 const, multifluid::USD_PHASE > const phaseInternalEnergy_n = fluid.phaseInternalEnergy_n();
-
         string const & solidInternalEnergyName = subRegion.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
         SolidInternalEnergy const & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
-        arrayView2d< real64 const > const solidInternalEnergy_n = solidInternalEnergy.getInternalEnergy_n();
 
         thermalCompositionalMultiphaseBaseKernels::
-          ResidualNormKernel::
-          launch< parallelDevicePolicy<> >( localRhs,
-                                            rankOffset,
-                                            numFluidPhases(),
-                                            numFluidComponents(),
-                                            dofNumber,
-                                            elemGhostRank,
-                                            referencePorosity,
-                                            volume,
-                                            solidInternalEnergy_n,
-                                            phaseVolFrac_n,
-                                            totalDens_n,
-                                            phaseDens_n,
-                                            phaseInternalEnergy_n,
-                                            subRegionFlowResidualNorm,
-                                            subRegionEnergyResidualNorm );
+          ResidualNormKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_normType,
+                                                     numFluidComponents(),
+                                                     numFluidPhases(),
+                                                     rankOffset,
+                                                     dofKey,
+                                                     localRhs,
+                                                     subRegion,
+                                                     fluid,
+                                                     solid,
+                                                     solidInternalEnergy,
+                                                     subRegionResidualNorm,
+                                                     subRegionResidualNormalizer );
       }
       else
       {
+        real64 subRegionFlowResidualNorm[1]{};
+        real64 subRegionFlowResidualNormalizer[1]{};
         isothermalCompositionalMultiphaseBaseKernels::
-          ResidualNormKernel::
-          launch< parallelDevicePolicy<> >( localRhs,
-                                            rankOffset,
-                                            numFluidComponents(),
-                                            dofNumber,
-                                            elemGhostRank,
-                                            referencePorosity,
-                                            volume,
-                                            totalDens_n,
-                                            subRegionFlowResidualNorm );
+          ResidualNormKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_normType,
+                                                     numFluidComponents(),
+                                                     rankOffset,
+                                                     dofKey,
+                                                     localRhs,
+                                                     subRegion,
+                                                     fluid,
+                                                     solid,
+                                                     subRegionFlowResidualNorm,
+                                                     subRegionFlowResidualNormalizer );
+        subRegionResidualNorm[0] = subRegionFlowResidualNorm[0];
+        subRegionResidualNormalizer[0] = subRegionFlowResidualNormalizer[0];
       }
-      localFlowResidualNorm   += subRegionFlowResidualNorm;
-      localEnergyResidualNorm += subRegionEnergyResidualNorm;
+
+      // step 2: first reduction across meshBodies/regions/subRegions
+
+      for( integer i = 0; i < numNorm; ++i )
+      {
+        if( m_normType == solverBaseKernels::NormType::Linf )
+        {
+          if( subRegionResidualNorm[i] > localResidualNorm[i] )
+          {
+            localResidualNorm[i] = subRegionResidualNorm[i];
+          }
+        }
+        else
+        {
+          localResidualNorm[i] += subRegionResidualNorm[i];
+          localResidualNormalizer[i] += subRegionResidualNormalizer[i];
+        }
+      }
     } );
   } );
 
-  // compute global residual norms
+  // step 3: second reduction across MPI ranks
+
   real64 residual = 0.0;
   if( m_isThermal )
   {
-    real64 const flowResidual = std::sqrt( MpiWrapper::sum( localFlowResidualNorm ) );
-    real64 const energyResidual = std::sqrt( MpiWrapper::sum( localEnergyResidualNorm ) );
-    residual = std::sqrt( flowResidual*flowResidual + energyResidual*energyResidual );
+    real64 const flowResidual = ( m_normType == solverBaseKernels::NormType::Linf )
+      ? MpiWrapper::max( localResidualNorm[0] )
+      : sqrt( MpiWrapper::sum( localResidualNorm[0] ) ) / MpiWrapper::sum( localResidualNormalizer[0] );
+    real64 const energyResidual = ( m_normType == solverBaseKernels::NormType::Linf )
+      ? MpiWrapper::max( localResidualNorm[1] )
+      : sqrt( MpiWrapper::sum( localResidualNorm[1] ) ) / MpiWrapper::sum( localResidualNormalizer[1] );
+    residual = ( flowResidual > energyResidual ) ? flowResidual : energyResidual;
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ", flowResidual, energyResidual );
+      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
+                              coupledSolverAttributePrefix(), flowResidual, energyResidual );
     }
   }
   else
   {
-    residual = std::sqrt( MpiWrapper::sum( localFlowResidualNorm ) );
+    residual = ( m_normType == solverBaseKernels::NormType::Linf )
+      ? MpiWrapper::max( localResidualNorm[0] )
+      : sqrt( MpiWrapper::sum( localResidualNorm[0] ) ) / MpiWrapper::sum( localResidualNormalizer[0] );
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ; ", residual );
+      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residual );
     }
   }
   return residual;

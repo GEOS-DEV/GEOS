@@ -138,12 +138,7 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr char const * newPorosityString() { return "porosity"; }
-    static constexpr char const * oldPorosityString() { return "porosity_n"; }
-    static constexpr char const * dPorosity_dPressureString() { return "dPorosity_dPressure"; }
-    static constexpr char const * initialPorosityString() { return "initialPorosity"; }
-    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
-    static constexpr char const * defaultRefererencePorosityString() { return "defaultReferencePorosity"; }
+    static constexpr char const * defaultReferencePorosityString() { return "defaultReferencePorosity"; }
   } viewKeys;
 
   /**

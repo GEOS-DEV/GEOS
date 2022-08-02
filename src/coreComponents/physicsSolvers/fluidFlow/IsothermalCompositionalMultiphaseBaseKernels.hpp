@@ -27,6 +27,7 @@
 #include "functions/TableFunction.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "physicsSolvers/SolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 
@@ -922,41 +923,155 @@ public:
 
 /******************************** ResidualNormKernel ********************************/
 
-struct ResidualNormKernel
+/**
+ * @class ResidualNormKernel
+ */
+class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
 {
+public:
 
-  template< typename POLICY >
-  static void launch( arrayView1d< real64 const > const & localResidual,
-                      globalIndex const rankOffset,
-                      integer const numComponents,
+  using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
+  using Base::minNormalizer;
+  using Base::m_rankOffset;
+  using Base::m_localResidual;
+  using Base::m_dofNumber;
+
+  ResidualNormKernel( globalIndex const rankOffset,
+                      arrayView1d< real64 const > const & localResidual,
                       arrayView1d< globalIndex const > const & dofNumber,
-                      arrayView1d< integer const > const & ghostRank,
-                      arrayView1d< real64 const > const & refPoro,
-                      arrayView1d< real64 const > const & volume,
-                      arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens_n,
-                      real64 & localResidualNorm )
+                      arrayView1d< localIndex const > const & ghostRank,
+                      integer const numComponents,
+                      ElementSubRegionBase const & subRegion,
+                      MultiFluidBase const & fluid,
+                      CoupledSolidBase const & solid )
+    : Base( rankOffset,
+            localResidual,
+            dofNumber,
+            ghostRank ),
+    m_numComponents( numComponents ),
+    m_volume( subRegion.getElementVolume() ),
+    m_porosity_n( solid.getPorosity_n() ),
+    m_totalDens_n( fluid.totalDensity_n() )
+  {}
+
+  GEOSX_HOST_DEVICE
+  virtual void computeLinf( localIndex const ei,
+                            LinfStackVariables & stack ) const override
   {
-    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localSum( 0.0 );
+    // this should never be zero if the simulation is set up correctly, but we never know
+    real64 const massNormalizer = LvArray::math::max( minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const volumeNormalizer = LvArray::math::max( minNormalizer, m_porosity_n[ei][0] * m_volume[ei] );
 
-    forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    // step 1: mass residuals
+
+    for( integer idof = 0; idof < m_numComponents; ++idof )
     {
-      if( ghostRank[ei] < 0 )
+      real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow + idof] ) / massNormalizer;
+      if( valMass > stack.localValue[0] )
       {
-        localIndex const localRow = dofNumber[ei] - rankOffset;
-        real64 const normalizer = totalDens_n[ei][0] * refPoro[ei] * volume[ei];
-
-        for( integer idof = 0; idof < numComponents + 1; ++idof )
-        {
-          real64 const val = localResidual[localRow + idof] / normalizer;
-          localSum += val * val;
-        }
+        stack.localValue[0] = valMass;
       }
-    } );
-    localResidualNorm += localSum.get();
+    }
+
+    // step 2: volume residual
+
+    real64 const valVol = LvArray::math::abs( m_localResidual[stack.localRow + m_numComponents] ) / volumeNormalizer;
+    if( valVol > stack.localValue[0] )
+    {
+      stack.localValue[0] = valVol;
+    }
   }
+
+  GEOSX_HOST_DEVICE
+  virtual void computeL2( localIndex const ei,
+                          L2StackVariables & stack ) const override
+  {
+    // note: for the L2 norm, we bundle the volume and mass residuals/normalizers
+
+    real64 const massNormalizer = LvArray::math::max( minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+
+    // step 1: mass residuals
+
+    for( integer idof = 0; idof < m_numComponents; ++idof )
+    {
+      stack.localValue[0] += m_localResidual[stack.localRow + idof] * m_localResidual[stack.localRow + idof];
+      stack.localNormalizer[0] += massNormalizer;
+    }
+
+    // step 2: volume residual
+
+    real64 const val = m_localResidual[stack.localRow + m_numComponents] * m_totalDens_n[ei][0]; // we need a mass here, hence the
+                                                                                                 // multiplication
+    stack.localValue[0] += val * val;
+    stack.localNormalizer[0] += massNormalizer;
+  }
+
+
+protected:
+
+  /// Number of fluid coponents
+  integer const m_numComponents;
+
+  /// View on the volume
+  arrayView1d< real64 const > const m_volume;
+
+  /// View on porosity at the previous converged time step
+  arrayView2d< real64 const > const m_porosity_n;
+
+  /// View on total mass/molar density at the previous converged time step
+  arrayView2d< real64 const, multifluid::USD_FLUID > const m_totalDens_n;
 
 };
 
+/**
+ * @class ResidualNormKernelFactory
+ */
+class ResidualNormKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] normType the type of norm used (Linf or L2)
+   * @param[in] numComps the number of fluid components
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] localResidual the residual vector on my MPI rank
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   * @param[in] solid the solid model
+   * @param[out] residualNorm the residual norm on the subRegion
+   * @param[out] residualNormalizer the residual normalizer on the subRegion
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( solverBaseKernels::NormType const normType,
+                   integer const numComps,
+                   globalIndex const rankOffset,
+                   string const dofKey,
+                   arrayView1d< real64 const > const & localResidual,
+                   ElementSubRegionBase const & subRegion,
+                   MultiFluidBase const & fluid,
+                   CoupledSolidBase const & solid,
+                   real64 (& residualNorm)[1],
+                   real64 (& residualNormalizer)[1] )
+  {
+    arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, numComps, subRegion, fluid, solid );
+    if( normType == solverBaseKernels::NormType::Linf )
+    {
+      ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
+    }
+    else // L2 norm
+    {
+      ResidualNormKernel::launchL2< POLICY >( subRegion.size(), kernel, residualNorm, residualNormalizer );
+    }
+  }
+
+};
 
 /******************************** SolutionCheckKernel ********************************/
 

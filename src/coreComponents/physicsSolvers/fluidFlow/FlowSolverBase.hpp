@@ -20,6 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/SolverBaseKernels.hpp"
 
 namespace geosx
 {
@@ -67,17 +68,13 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    // input data
-    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
-    static constexpr char const * permeabilityString() { return "permeability"; }
-
     // misc inputs
+    static constexpr char const * normTypeString() { return "normType"; }    
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
-    static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
     static constexpr char const * transMultiplierString() { return "permeabilityTransMultiplier"; }
 
   };
@@ -138,14 +135,14 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
+  /// Norm used to check the nonlinear loop convergence
+  solverBaseKernels::NormType m_normType;
+
   /// the number of Degrees of Freedom per cell
   integer m_numDofPerCell;
 
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
-
-  real64 m_fluxEstimate;
-
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
