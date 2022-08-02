@@ -57,22 +57,6 @@ addCouplingNumNonzeros( SolverBase const * const solver,
                         string const & resElemDofName,
                         string const & wellElemDofName );
 
-
-/**
- * @brief Utility function for the implementation details of solveLinearSystem
- * @param solver the coupled solver
- * @param dofManager the degree of freedom manager
- * @param matrix the Jacobian matrix
- * @param rhs the residual
- * @param solution the solution of the Jacobian system
- */
-void
-solveLinearSystem( SolverBase * const solver,
-                   DofManager const & dofManager,
-                   ParallelMatrix & matrix,
-                   ParallelVector & rhs,
-                   ParallelVector & solution );
-
 }
 
 template< typename RESERVOIR_SOLVER, typename WELL_SOLVER >
@@ -175,23 +159,6 @@ public:
     solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   }
 
-
-  virtual void
-  solveLinearSystem( DofManager const & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override
-  {
-    GEOSX_MARK_FUNCTION;
-
-    coupledReservoirAndWellsInternal::
-      solveLinearSystem( this,
-                         dofManager,
-                         matrix,
-                         rhs,
-                         solution );
-  }
-
   /**@}*/
 
   /**
@@ -199,14 +166,14 @@ public:
    * @return a pointer to the reservoir solver
    */
   RESERVOIR_SOLVER *
-  getReservoirSolver() const { return std::get< toUnderlying( SolverType::Reservoir ) >( m_solvers ); }
+  reservoirSolver() const { return std::get< toUnderlying( SolverType::Reservoir ) >( m_solvers ); }
 
   /**
    * @brief accessor for the pointer to the well solver
    * @return a pointer to the well solver
    */
   WELL_SOLVER *
-  getWellSolver() const { return std::get< toUnderlying( SolverType::Well ) >( m_solvers ); }
+  wellSolver() const { return std::get< toUnderlying( SolverType::Well ) >( m_solvers ); }
 
 protected:
 
@@ -215,7 +182,7 @@ protected:
   {
     Base::postProcessInput();
 
-    getWellSolver()->setFlowSolverName( m_names[toUnderlying( SolverType::Reservoir )] );
+    wellSolver()->setFlowSolverName( m_names[toUnderlying( SolverType::Reservoir )] );
   }
 
   virtual void
@@ -242,10 +209,10 @@ protected:
                               domain,
                               dofManager,
                               rowLengths,
-                              getWellSolver()->numDofPerResElement(),
-                              getWellSolver()->numDofPerWellElement(),
-                              getWellSolver()->resElementDofName(),
-                              getWellSolver()->wellElementDofName() );
+                              wellSolver()->numDofPerResElement(),
+                              wellSolver()->numDofPerWellElement(),
+                              wellSolver()->resElementDofName(),
+                              wellSolver()->wellElementDofName() );
   }
 
   /**
