@@ -288,8 +288,8 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
     {
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
-        /// TODO: should be an atomic add
-        rhs[sourceNodeIds[isrc][inode]] = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
+        real64 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
+        RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
       }
     }
   } );
