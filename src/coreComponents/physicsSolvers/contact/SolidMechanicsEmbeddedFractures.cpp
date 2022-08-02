@@ -651,9 +651,9 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 
   if( !m_useStaticCondensation )
   {
-    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(), extrinsicMeshData::contact::deltaDispJump::key(), -scalingFactor );
+    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(), extrinsicMeshData::contact::deltaDispJump::key(), scalingFactor );
 
-    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(), extrinsicMeshData::contact::dispJump::key(), -scalingFactor );
+    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(), extrinsicMeshData::contact::dispJump::key(), scalingFactor );
   }
   else
   {
