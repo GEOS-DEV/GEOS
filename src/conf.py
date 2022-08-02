@@ -18,11 +18,11 @@ import shutil
 
 # Add python modules to be documented
 python_root = './coreComponents/python/modules'
-python_modules = ['geosx_mesh_tools_package',
+python_modules = ('geosx_mesh_tools_package',
                   'geosx_xml_tools_package',
                   'hdf5_wrapper_package',
                   'pygeosx_tools_package',
-                  'timehistory_package']
+                  'timehistory_package')
 for m in python_modules:
     sys.path.insert(0, os.path.abspath(os.path.join(python_root, m)))
 
@@ -119,7 +119,7 @@ plantuml_output_format = "svg_img"
 plot_html_show_source_link = True
 plot_html_show_formats = False
 
-autodoc_mock_imports = ["pygeosx", "pylvarray", "meshio", "lxml", "mpi4py"]
+autodoc_mock_imports = ["pygeosx", "pylvarray", "meshio", "lxml", "mpi4py", "h5py"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
