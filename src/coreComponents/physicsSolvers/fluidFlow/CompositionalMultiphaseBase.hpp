@@ -248,12 +248,6 @@ public:
   void computeHydrostaticEquilibrium();
 
   /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param domain the domain containing the mesh and fields
-   */
-  void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const;
-
-  /**
    * @brief Function to perform the Application of Dirichlet type BC's
    * @param time current time
    * @param dt time step

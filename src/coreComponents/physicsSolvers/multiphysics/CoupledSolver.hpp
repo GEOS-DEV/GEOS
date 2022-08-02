@@ -238,8 +238,7 @@ public:
       norm += singlePhysicsNorm * singlePhysicsNorm;
     } );
 
-    real64 const residual = sqrt( norm );
-    return residual;
+    return sqrt( norm );
   }
 
   virtual void
