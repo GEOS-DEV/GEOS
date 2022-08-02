@@ -14,33 +14,18 @@
 
 /**
  * @file PoroelasticSolverEmbeddedFractures.cpp
- *
  */
-
 
 #include "SinglePhasePoromechanicsSolverEmbeddedFractures.hpp"
 
-#include "common/DataLayouts.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
-#include "finiteElement/Kinematics.h"
-#include "linearAlgebra/interfaces/dense/BlasLapackLA.hpp"
-#include "linearAlgebra/solvers/BlockPreconditioner.hpp"
-#include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "mainInterface/ProblemManager.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsEFEMKernel.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsKernel.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "SinglePhasePoromechanicsKernel.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
-#include "SinglePhasePoromechanicsEFEMKernel.hpp"
 
 namespace geosx
 {
@@ -100,7 +85,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
 {
   GEOSX_MARK_FUNCTION;
   m_fracturesSolver->setupDofs( domain, dofManager );
-  m_flowSolver->setupDofs( domain, dofManager );
+  flowSolver()->setupDofs( domain, dofManager );
 
   // Add coupling between displacement and cell pressures
   dofManager.addCoupling( keys::TotalDisplacement,
@@ -250,7 +235,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( Do
     // 3. Add the number of nonzeros induced by coupling jump (aperture) - fracture pressure due to flux term
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretizationName() );
+    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( flowSolver()->getDiscretizationName() );
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {
@@ -350,7 +335,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingSparsityPattern
     // 3. Add the sparsity pattern induced by coupling jump (aperture) - fracture pressure due to flux term
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretizationName() );
+    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( flowSolver()->getDiscretizationName() );
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {
@@ -439,13 +424,13 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
                                                                   gravityVectorData,
                                                                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
-    m_solidSolver->getMaxForce() =
+    solidMechanicsSolver()->getMaxForce() =
       finiteElement::
         regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                       constitutive::PorousSolidBase,
                                       CellElementSubRegion >( mesh,
                                                               regionNames,
-                                                              m_solidSolver->getDiscretizationName(),
+                                                              solidMechanicsSolver()->getDiscretizationName(),
                                                               viewKeyStruct::porousMaterialNamesString(),
                                                               kernelFactory );
 
@@ -466,14 +451,14 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
                                       constitutive::PorousSolidBase,
                                       CellElementSubRegion >( mesh,
                                                               regionNames,
-                                                              m_solidSolver->getDiscretizationName(),
+                                                              solidMechanicsSolver()->getDiscretizationName(),
                                                               viewKeyStruct::porousMaterialNamesString(),
                                                               EFEMkernelFactory );
 
     GEOSX_UNUSED_VAR( maxTraction );
 
     // 3. Assemble poroelastic fluxes and all derivatives
-    m_flowSolver->assemblePoroelasticFluxTerms( time_n, dt,
+    flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,
                                                 domain,
                                                 dofManager,
                                                 localMatrix,
@@ -497,7 +482,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::applyBoundaryConditions( r
                                               localMatrix,
                                               localRhs );
 
-  m_flowSolver->applyBoundaryConditions( time_n, dt,
+  flowSolver()->applyBoundaryConditions( time_n, dt,
                                          domain,
                                          dofManager,
                                          localMatrix,
@@ -508,7 +493,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::implicitStepSetup( real64 
                                                                          real64 const & dt,
                                                                          DomainPartition & domain )
 {
-  m_flowSolver->implicitStepSetup( time_n, dt, domain );
+  flowSolver()->implicitStepSetup( time_n, dt, domain );
   m_fracturesSolver->implicitStepSetup( time_n, dt, domain );
 }
 
@@ -517,12 +502,12 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::implicitStepComplete( real
                                                                             DomainPartition & domain )
 {
   m_fracturesSolver->implicitStepComplete( time_n, dt, domain );
-  m_flowSolver->implicitStepComplete( time_n, dt, domain );
+  flowSolver()->implicitStepComplete( time_n, dt, domain );
 }
 
 void SinglePhasePoromechanicsSolverEmbeddedFractures::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  m_flowSolver->resetStateToBeginningOfStep( domain );
+  flowSolver()->resetStateToBeginningOfStep( domain );
   m_fracturesSolver->resetStateToBeginningOfStep( domain );
 }
 
@@ -565,14 +550,14 @@ real64 SinglePhasePoromechanicsSolverEmbeddedFractures::calculateResidualNorm( D
                                                                                arrayView1d< real64 const > const & localRhs )
 {
   // compute norm of momentum balance residual equations
-  real64 const momementumResidualNorm = m_fracturesSolver->calculateResidualNorm( domain, dofManager, localRhs );
+  real64 const momentumResidualNorm = m_fracturesSolver->calculateResidualNorm( domain, dofManager, localRhs );
 
   // compute norm of mass balance residual equations
-  real64 const massResidualNorm = m_flowSolver->calculateResidualNorm( domain, dofManager, localRhs );
+  real64 const massResidualNorm = flowSolver()->calculateResidualNorm( domain, dofManager, localRhs );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rsolid, Rfluid ) = ( {:4.2e}, {:4.2e} )", momementumResidualNorm, massResidualNorm ) );
+  real64 const residual = sqrt( momentumResidualNorm * momentumResidualNorm + massResidualNorm * massResidualNorm );
 
-  return sqrt( momementumResidualNorm * momementumResidualNorm + massResidualNorm * massResidualNorm );
+  return residual;
 }
 
 void SinglePhasePoromechanicsSolverEmbeddedFractures::applySystemSolution( DofManager const & dofManager,
@@ -583,7 +568,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::applySystemSolution( DofMa
   // update displacement and jump
   m_fracturesSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
   // update pressure field
-  m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
+  flowSolver()->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
 }
 
 void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartition & domain )
@@ -657,9 +642,9 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
       } );
 
       // update fracture's permeability and porosity
-      m_flowSolver->updatePorosityAndPermeability( subRegion );
+      flowSolver()->updatePorosityAndPermeability( subRegion );
       // update fluid model
-      m_flowSolver->updateFluidState( subRegion );
+      flowSolver()->updateFluidState( subRegion );
 
     } );
   } );
