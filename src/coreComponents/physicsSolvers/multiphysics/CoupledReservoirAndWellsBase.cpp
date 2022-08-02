@@ -141,19 +141,6 @@ addCouplingNumNonzeros( SolverBase const * const solver,
   } );
 }
 
-void
-solveLinearSystem( SolverBase * const solver,
-                   DofManager const & dofManager,
-                   ParallelMatrix & matrix,
-                   ParallelVector & rhs,
-                   ParallelVector & solution )
-{
-  rhs.scale( -1.0 );
-  solution.zero();
-  solver->SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
-}
-
-
 }
 
 } /* namespace geosx */

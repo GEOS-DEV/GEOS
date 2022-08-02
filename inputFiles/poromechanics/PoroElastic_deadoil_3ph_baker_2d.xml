@@ -6,7 +6,7 @@
     <MultiphasePoromechanics
       name="MultiphasePoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
-      fluidSolverName="TwoPhaseFlowSolver"
+      flowSolverName="TwoPhaseFlowSolver"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
