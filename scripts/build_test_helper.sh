@@ -68,13 +68,8 @@ fi
 
 # "Make" target check (builds geosx executable target only if true)
 if [[ "$*" == *--build-exe-only* ]]; then
-  #grep MemTotal /proc/meminfo
-  #or_die make -j $(nproc) mesh VERBOSE=1
-  #or_die make -j 1 constitutive VERBOSE=1
   or_die make -j $(nproc) geosx VERBOSE=1
 else
-  #or_die make -j $(nproc) mesh VERBOSE=1
-  #or_die make -j 1 constitutive VERBOSE=1
   or_die make -j $(nproc) VERBOSE=1
   or_die make install VERBOSE=1
 fi
