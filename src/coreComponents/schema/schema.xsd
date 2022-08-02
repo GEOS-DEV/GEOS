@@ -1298,6 +1298,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="file" type="path" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--nodesetNames => Names of the VTK nodesets to import-->
+		<xsd:attribute name="nodesetNames" type="string_array" default="{}" />
 		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
 		<xsd:attribute name="partitionRefinement" type="integer" default="1" />
 		<!--regionAttribute => Name of the VTK cell attribute to use as region marker-->
@@ -1827,7 +1829,8 @@ the relative residual norm satisfies:
 		<!--control => Well control. Valid options:
 * BHP
 * phaseVolRate
-* totalVolRate-->
+* totalVolRate
+* uninitialized-->
 		<xsd:attribute name="control" type="geosx_WellControls_Control" use="required" />
 		<!--enableCrossflow => Flag to enable crossflow. Currently only supported for injectors: 
  - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
@@ -1873,7 +1876,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_WellControls_Control">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate" />
+			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|uninitialized" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_WellControls_Type">
