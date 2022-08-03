@@ -305,7 +305,7 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
   buffer_type const & receiveBuff = receiveBuffer( commID );
   buffer_unit_type const * receiveBufferPtr = receiveBuff.data();
 
-  int unpackedSize = 0;
+  buffer_type::size_type unpackedSize = 0;
 
   localIndex_array nodeUnpackList;
   unpackedSize += nodeManager.unpackGlobalMaps( receiveBufferPtr, nodeUnpackList, 0 );
@@ -337,6 +337,9 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
   unpackedSize += faceManager.unpack( receiveBufferPtr, faceUnpackList, 0, false, events );
   unpackedSize += elemManager.unpack( receiveBufferPtr, elementAdjacencyReceiveList );
   waitAllDeviceEvents( events );
+
+  GEOSX_ERROR_IF_NE( receiveBuff.size(), unpackedSize );
+
 }
 
 void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
