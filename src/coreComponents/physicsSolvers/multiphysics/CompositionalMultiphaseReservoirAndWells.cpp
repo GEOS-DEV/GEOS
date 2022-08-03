@@ -374,7 +374,7 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                                               dofColIndices.data(),
                                                                               localPerfJacobian[i].dataIfContiguous(),
                                                                               2 * resNumDofs );
-            atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
+            RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
           }
         }
       } );
