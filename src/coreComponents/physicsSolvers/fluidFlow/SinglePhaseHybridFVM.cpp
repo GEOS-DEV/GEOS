@@ -514,6 +514,11 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
                             ? elemResidualNorm
                             : faceResidualNorm;
 
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  {
+    GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+  }
+
   return residualNorm;
 }
 

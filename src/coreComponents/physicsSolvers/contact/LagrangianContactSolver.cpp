@@ -1731,8 +1731,8 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
 
   m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
 
-  dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::deltaTraction::key(), -scalingFactor );
-  dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::traction::key(), -scalingFactor );
+  dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::deltaTraction::key(), scalingFactor );
+  dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::traction::key(), scalingFactor );
 
   // fractureStateString is synchronized in UpdateFractureState
   // oldFractureStateString and oldDispJumpString used locally only

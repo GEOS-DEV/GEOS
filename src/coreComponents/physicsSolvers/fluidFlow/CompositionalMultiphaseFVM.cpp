@@ -400,7 +400,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
     residual = std::sqrt( flowResidual*flowResidual + energyResidual*energyResidual );
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ", flowResidual, energyResidual );
+      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), flowResidual, energyResidual );
     }
   }
   else
@@ -408,7 +408,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
     residual = std::sqrt( MpiWrapper::sum( localFlowResidualNorm ) );
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ; ", residual );
+      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residual );
     }
   }
   return residual;

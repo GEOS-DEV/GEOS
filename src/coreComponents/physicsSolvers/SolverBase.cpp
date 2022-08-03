@@ -1033,6 +1033,9 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
+  rhs.scale( -1.0 );
+  solution.zero();
+
   LinearSolverParameters const & params = m_linearSolverParameters.get();
   matrix.setDofManager( &dofManager );
 
