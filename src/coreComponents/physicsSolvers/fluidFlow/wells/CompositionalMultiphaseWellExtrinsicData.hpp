@@ -121,30 +121,6 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseVolumeFraction_n,
                            WRITE_AND_READ,
                            "Phase volume fraction at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseDensity_n,
-                           "phaseDensity_n",
-                           array2dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase density at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( totalDensity_n,
-                           "totalDensity_n",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Total density at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( phaseComponentFraction_n,
-                           "phaseComponentFraction_n",
-                           array3dLayoutPhaseComp,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase component fraction at the previous converged time step" );
-
 EXTRINSIC_MESH_DATA_TRAIT( totalMassDensity,
                            "totalMassDensity",
                            array1d< real64 >,
