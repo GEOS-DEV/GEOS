@@ -462,9 +462,8 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
             normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+7;
             slidingTolerance[kfe] = sqrt( rotatedInvStiffApprox[ 1 ][ 1 ] * rotatedInvStiffApprox[ 1 ][ 1 ] +
                                           rotatedInvStiffApprox[ 2 ][ 2 ] * rotatedInvStiffApprox[ 2 ][ 2 ] ) * averageYoungModulus / 2.e+7;
-            normalTractionTolerance[kfe] = 1.0 / 2.0 * averageConstrainedModulus / averageBoxSize0 * normalDisplacementTolerance[kfe] / 1e3;
+            normalTractionTolerance[kfe] = 1.0 / 2.0 * averageConstrainedModulus / averageBoxSize0 * normalDisplacementTolerance[kfe] / 1.e+3;
 
-            std::cout << kfe << " " << normalTractionTolerance[kfe] << " " << normalDisplacementTolerance[kfe] << " " << slidingTolerance[kfe] << std::endl;
           }
         } );
       }
