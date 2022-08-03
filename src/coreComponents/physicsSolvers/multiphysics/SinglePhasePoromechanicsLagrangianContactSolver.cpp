@@ -752,7 +752,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::applySystemSolution( DofMa
   // update displacement field
   m_contactSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
   // update pressure field
-  flowSolver()->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
+  flowSolver()->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::updateState( DomainPartition & domain )

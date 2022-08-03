@@ -1867,7 +1867,7 @@ void LagrangianContactFlowSolver::applySystemSolution( DofManager const & dofMan
 
   m_flowSolver->applySystemSolution( dofManager,
                                      localSolution,
-                                     -scalingFactor,
+                                     scalingFactor,
                                      domain );
 
   updateOpeningForFlow( domain );
