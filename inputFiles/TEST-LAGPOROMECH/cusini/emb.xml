@@ -7,7 +7,7 @@
       name="poroSolver"
       fracturesSolverName="mechSolve"
       solidSolverName="matrixSolver"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       logLevel="1"
       initialDt="0.1"
       targetRegions="{ Domain, Fracture }">
