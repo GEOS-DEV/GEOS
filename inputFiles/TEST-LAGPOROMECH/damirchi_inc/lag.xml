@@ -8,7 +8,7 @@
       contactSolverName="lagrangiancontact"
       contactFlowSolverName="lagrangiancontactflow"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       logLevel="1"
       initialDt="8.64e4"
       discretization="FE1"
