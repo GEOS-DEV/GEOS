@@ -26,6 +26,7 @@
 namespace geosx
 {
 class MeshBody;
+class MeshLevel;
 
 class MeshObjectPath
 {
@@ -72,8 +73,7 @@ public:
 
   template< typename OBJECT_TYPE = ObjectManagerBase,
             typename FUNC >
-  void forObjectsInPath( MeshLevel const & level
-                         FUNC && func ) const;
+  void forObjectsInPath( MeshLevel & level, FUNC && func ) const;
 
 #if defined(MESH_OBJECT_PATH_PRIVATE_FUNCTION_UNIT_TESTING)
   template< typename OBJECT_TYPE >
@@ -117,7 +117,7 @@ namespace geosx
 
 
 template< typename OBJECT_TYPE >
-ObjectTypes MeshObjectPath::checkObjectTypeConsistency() const
+MeshObjectPath::ObjectTypes MeshObjectPath::checkObjectTypeConsistency() const
 {
   bool consistent = false;
   if( m_objectType == ObjectTypes::nodes )
@@ -215,13 +215,13 @@ void MeshObjectPath::forObjectsInPath( dataRepository::Group const & meshBodies,
 
 template< typename OBJECT_TYPE,
           typename FUNC >
-void MeshObjectPath::forObjectsInPath( MeshLevel const & level
+void MeshObjectPath::forObjectsInPath( MeshLevel & meshLevel,
                                        FUNC && func ) const
 {
-  string const bodyName = level.getParent().getParent().getName();
-  string const levelName = level.getName();
+  string const bodyName = meshLevel.getParent().getParent().getName();
+  string const levelName = meshLevel.getName();
 
-  auto const bodyIter = m_pathPermutations.find( bodyName );
+  auto bodyIter = m_pathPermutations.find( bodyName );
   if( bodyIter != m_pathPermutations.end() )
   {
     auto const levelIter = bodyIter->second.find( levelName );
@@ -229,34 +229,34 @@ void MeshObjectPath::forObjectsInPath( MeshLevel const & level
     {
       if( m_objectType == ObjectTypes::nodes )
       {
-        func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getNodeManager() ) );
+        func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getNodeManager() ) );
       }
       else if( m_objectType == ObjectTypes::edges )
       {
-        func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getEdgeManager()) );
+        func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getEdgeManager()) );
       }
       else if( m_objectType == ObjectTypes::faces )
       {
-        func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getFaceManager()) );
+        func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getFaceManager()) );
       }
       else if( m_objectType == ObjectTypes::elems )
       {
-        ElementRegionManager const & elemRegionMan = meshLevel.getElemManager();
-        for( auto const & elemRegionPair : meshLevelPair.second )
+        ElementRegionManager & elemRegionMan = meshLevel.getElemManager();
+        for( auto & elemRegionPair : levelIter->second )
         {
-          ElementRegionBase const & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
+          ElementRegionBase & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
           if( std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value )
           {
-            func( dynamic_cast< OBJECT_TYPE const & >(elemRegion) );
+            func( dynamic_cast< OBJECT_TYPE & >(elemRegion) );
           }
           else
           {
-            for( auto const & elemSubRegionName : elemRegionPair.second )
+            for( auto & elemSubRegionName : elemRegionPair.second )
             {
-              ElementSubRegionBase const & subRegion = elemRegion.getSubRegion( elemSubRegionName );
+              ElementSubRegionBase & subRegion = elemRegion.getSubRegion( elemSubRegionName );
               if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value )
               {
-                func( dynamic_cast< OBJECT_TYPE const & >(subRegion) );
+                func( dynamic_cast< OBJECT_TYPE & >(subRegion) );
               }
               else
               {

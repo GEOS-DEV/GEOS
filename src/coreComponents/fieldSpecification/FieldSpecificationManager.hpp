@@ -239,7 +239,11 @@ public:
     {
 
       MeshObjectPath const & meshObjectPaths = fs.getMeshObjectPaths();
-      meshObjectPaths.forObjectsInPath([&](){});
+      meshObjectPaths.forObjectsInPath( mesh, 
+                                        [&] ( ObjectManagerBase & object ) 
+      {
+        if( object.getCatalogName() == fieldPath )
+      });
 
       int const isInitialCondition = fs.initialCondition();
 
