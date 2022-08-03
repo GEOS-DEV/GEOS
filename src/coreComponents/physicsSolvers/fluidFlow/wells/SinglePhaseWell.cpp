@@ -704,8 +704,15 @@ SinglePhaseWell::calculateResidualNorm( DomainPartition const & domain,
 
     } );
   } );
+
   // compute global residual norm
-  return sqrt( MpiWrapper::sum( localResidualNorm, MPI_COMM_GEOSX ) );
+  real64 const residual = sqrt( MpiWrapper::sum( localResidualNorm, MPI_COMM_GEOSX ) );
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  {
+    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residual );
+  }
+
+  return residual;
 }
 
 bool SinglePhaseWell::checkSystemSolution( DomainPartition const & domain,

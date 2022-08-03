@@ -77,6 +77,10 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setApplyDefaultValue( "attribute" ).
     setDescription( "Name of the VTK cell attribute to use as region marker" );
 
+  registerWrapper( viewKeyStruct::nodesetNamesString(), &m_nodesetNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of the VTK nodesets to import" );
+
   registerWrapper( viewKeyStruct::partitionRefinementString(), &m_partitionRefinement ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
@@ -1000,6 +1004,32 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
                                                        false );
 }
 
+void VTKMeshGenerator::importNodesets( vtkUnstructuredGrid & mesh, CellBlockManager & cellBlockManager ) const
+{
+  auto & nodeSets = cellBlockManager.getNodeSets();
+  localIndex const numPoints = LvArray::integerConversion< localIndex >( m_vtkMesh->GetNumberOfPoints() );
+
+  for( int i=0; i < m_nodesetNames.size(); ++i )
+  {
+    GEOSX_LOG_LEVEL_RANK_0( 2, "    " + m_nodesetNames[i] );
+
+    vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( m_nodesetNames[i].c_str() );
+    GEOSX_THROW_IF( curArray == nullptr,
+                    GEOSX_FMT( "Target nodeset '{}' not found in mesh", m_nodesetNames[i] ),
+                    InputError );
+    vtkTypeInt64Array const & nodesetMask = *vtkTypeInt64Array::FastDownCast( curArray );
+
+    SortedArray< localIndex > & targetNodeset = nodeSets[ m_nodesetNames[i] ];
+    for( localIndex j=0; j < numPoints; ++j )
+    {
+      if( nodesetMask.GetValue( j ) == 1 )
+      {
+        targetNodeset.insert( j );
+      }
+    }
+  }
+}
+
 real64 VTKMeshGenerator::writeNodes( CellBlockManager & cellBlockManager ) const
 {
   localIndex const numPts = LvArray::integerConversion< localIndex >( m_vtkMesh->GetNumberOfPoints() );
@@ -1037,6 +1067,9 @@ real64 VTKMeshGenerator::writeNodes( CellBlockManager & cellBlockManager ) const
   std::iota( allNodes.begin(), allNodes.end(), 0 );
   SortedArray< localIndex > & allNodeSet = cellBlockManager.getNodeSets()[ "all" ];
   allNodeSet.insert( allNodes.begin(), allNodes.end() );
+
+  // Import remaining nodesets
+  importNodesets( *m_vtkMesh, cellBlockManager );
 
   constexpr real64 minReal = LvArray::NumericLimits< real64 >::min;
   constexpr real64 maxReal = LvArray::NumericLimits< real64 >::max;
