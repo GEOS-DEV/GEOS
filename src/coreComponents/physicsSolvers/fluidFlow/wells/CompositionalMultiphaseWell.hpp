@@ -89,7 +89,9 @@ public:
 
 
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
@@ -222,12 +224,16 @@ public:
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head
+   * @param time_n time at the beginning of the time step
+   * @param dt the time step size
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assemblePressureRelations( DomainPartition const & domain,
+  virtual void assemblePressureRelations( real64 const & time_n,
+                                          real64 const & dt,
+                                          DomainPartition const & domain,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
@@ -311,9 +317,13 @@ protected:
 
   /**
    * @brief Make sure that the well constraints are compatible
+   * @param time_n the time at the beginning of the time step
+   * @param dt the time step dt
    * @param subRegion the well subRegion
    */
-  void validateWellConstraints( WellElementSubRegion const & subRegion );
+  void validateWellConstraints( real64 const & time_n,
+                                real64 const & dt,
+                                WellElementSubRegion const & subRegion );
 
 private:
 

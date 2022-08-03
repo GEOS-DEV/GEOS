@@ -59,8 +59,7 @@
       name="SinglePhaseFlow"
       logLevel="0"
       discretization="singlePhaseTPFA"
-      targetRegions="{Fracture}"
-      inputFluxEstimate="1.0"/>
+      targetRegions="{Fracture}"/>
 
     <SurfaceGenerator
       name="SurfaceGen"

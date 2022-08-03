@@ -34,8 +34,7 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      inputFluxEstimate="1.0">
+      targetRegions="{ Fracture }">
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-12"/>

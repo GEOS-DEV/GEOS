@@ -37,8 +37,7 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"      
-      inputFluxEstimate="0.00000366"/>
+      targetRegions="{ Fracture }"/>
     <!-- SPHINX_SINGLEPHASEFVM_END -->
 
     <!-- SPHINX_SURFACEGENERATOR -->

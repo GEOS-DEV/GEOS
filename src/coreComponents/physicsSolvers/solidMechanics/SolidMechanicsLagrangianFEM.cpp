@@ -1083,7 +1083,9 @@ SolidMechanicsLagrangianFEM::
 
 real64
 SolidMechanicsLagrangianFEM::
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                         real64 const & GEOSX_UNUSED_PARAM( dt ),
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs )
 {

@@ -34,6 +34,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/HybridFVMHelperKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "physicsSolvers/SolverBaseKernels.hpp"
 
 namespace geosx
 {
@@ -658,6 +659,7 @@ public:
                       arrayView1d< real64 const > const & localResidual,
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< localIndex const > const & ghostRank,
+                      SortedArrayView< localIndex const > const & regionFilter,
                       FaceManager const & faceManager,
                       SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
                       SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
@@ -669,6 +671,7 @@ public:
             dofNumber,
             ghostRank ),
     m_dt( dt ),
+    m_regionFilter( regionFilter ),
     m_defaultViscosity( defaultViscosity ),
     m_elemRegionList( faceManager.elementRegionList() ),
     m_elemSubRegionList( faceManager.elementSubRegionList() ),
@@ -691,9 +694,10 @@ public:
       localIndex const esr = m_elemSubRegionList[kf][k];
       localIndex const ei  = m_elemList[kf][k];
       bool const onBoundary = (er == -1 || esr == -1 || ei == -1);
+      bool const isInTarget = m_regionFilter.contains( er );
 
       // if not on boundary, increment the normalizer
-      if( !onBoundary )
+      if( !onBoundary && isInTarget )
       {
         massNormalizer += m_density_n[er][esr][ei][0] * m_porosity_n[er][esr][ei][0] * m_volume[er][esr][ei];
         multiplier += m_density_n[er][esr][ei][0];
@@ -742,6 +746,9 @@ protected:
   /// Time step size
   real64 const m_dt;
 
+  /// Filter to identify the target regions of the solver
+  SortedArrayView< localIndex const > const m_regionFilter;
+
   /// Value of the default viscosity
   real64 const m_defaultViscosity;
 
@@ -774,6 +781,7 @@ public:
    * @param[in] normType the type of norm used (Linf or L2)
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] regionFilter filter to identify the target regions of the solver
    * @param[in] localResidual the residual vector on my MPI rank
    * @param[in] solverName the name of the solver
    * @param[in] elemManager reference to the element region manager
@@ -789,6 +797,7 @@ public:
                    globalIndex const rankOffset,
                    string const dofKey,
                    arrayView1d< real64 const > const & localResidual,
+                   SortedArrayView< localIndex const > const & regionFilter,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    FaceManager const & faceManager,
@@ -806,7 +815,7 @@ public:
     typename kernelType::PorosityAccessors poroAccessors( elemManager, solverName );
 
     ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
-                               faceManager, flowAccessors, fluidAccessors, poroAccessors, defaultViscosity, dt );
+                               regionFilter, faceManager, flowAccessors, fluidAccessors, poroAccessors, defaultViscosity, dt );
     if( normType == solverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( faceManager.size(), kernel, residualNorm );

@@ -661,7 +661,9 @@ void CompositionalMultiphaseHybridFVM::saveAquiferConvergedState( real64 const &
 }
 
 
-real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition const & domain,
+real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                                                real64 const & dt,
+                                                                DomainPartition const & domain,
                                                                 DofManager const & dofManager,
                                                                 arrayView1d< real64 const > const & localRhs )
 {
@@ -734,8 +736,6 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
     real64 faceResidualNormalizer[1]{};
 
     // step 2.1: compute the norm for the local faces
-
-    real64 dt = 0; /////////////// FRANCOIS
 
     compositionalMultiphaseHybridFVMKernels::
       ResidualNormKernelFactory::

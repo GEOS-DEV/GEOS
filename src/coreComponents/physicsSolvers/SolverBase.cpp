@@ -408,7 +408,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
     }
 
     // get residual norm
-    residualNorm = calculateResidualNorm( domain, dofManager, rhs.values() );
+    residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
@@ -508,7 +508,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
     }
 
     // get residual norm
-    residualNormT = calculateResidualNorm( domain, dofManager, rhs.values() );
+    residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
     ffm = ffT;
     ffT = residualNormT*residualNormT;
     lineSearchIteration += 1;
@@ -746,7 +746,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     // get residual norm
-    real64 residualNorm = calculateResidualNorm( domain, m_dofManager, m_rhs.values() );
+    real64 residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
 
 
     GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
@@ -1018,7 +1018,9 @@ void SolverBase::debugOutputSolution( real64 const & time,
 }
 
 real64
-SolverBase::calculateResidualNorm( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+SolverBase::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                   real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                   DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                    DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
                                    arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( localRhs ) )
 {

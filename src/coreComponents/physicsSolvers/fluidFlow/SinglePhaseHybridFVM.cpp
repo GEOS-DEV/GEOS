@@ -398,7 +398,9 @@ void SinglePhaseHybridFVM::saveAquiferConvergedState( real64 const & time,
 }
 
 
-real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & domain,
+real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                                    real64 const & dt,
+                                                    DomainPartition const & domain,
                                                     DofManager const & dofManager,
                                                     arrayView1d< real64 const > const & localRhs )
 {
@@ -478,14 +480,13 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
 
     // step 2.1: compute the norm for the local faces
 
-    real64 dt = 0; /////////////// FRANCOIS
-
     singlePhaseHybridFVMKernels::
       ResidualNormKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_normType,
                                                  rankOffset,
                                                  faceDofKey,
                                                  localRhs,
+                                                 m_regionFilter.toViewConst(),
                                                  getName(),
                                                  elemManager,
                                                  faceManager,

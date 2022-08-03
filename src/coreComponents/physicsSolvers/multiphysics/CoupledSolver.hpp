@@ -227,14 +227,16 @@ public:
 
 
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override
   {
     real64 norm = 0.0;
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      real64 const singlePhysicsNorm = solver->calculateResidualNorm( domain, dofManager, localRhs );
+      real64 const singlePhysicsNorm = solver->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
       norm += singlePhysicsNorm * singlePhysicsNorm;
     } );
 

@@ -376,7 +376,12 @@ public:
       }
 
       // we have the normalizer now, we can compute a dimensionless Linfty norm contribution
-      stack.localValue[0] = LvArray::math::abs( m_localResidual[stack.localRow + idof] ) / normalizer;
+      real64 const val = LvArray::math::abs( m_localResidual[stack.localRow + idof] ) / normalizer;
+      if( val > stack.localValue[0] )
+      {
+        stack.localValue[0] = val;
+      }
+
     }
   }
 

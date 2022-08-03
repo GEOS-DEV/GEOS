@@ -351,7 +351,9 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
   }
 }
 
-void CompositionalMultiphaseWell::validateWellConstraints( WellElementSubRegion const & subRegion )
+void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n,
+                                                           real64 const & dt,
+                                                           WellElementSubRegion const & subRegion )
 {
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
   MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
@@ -359,8 +361,8 @@ void CompositionalMultiphaseWell::validateWellConstraints( WellElementSubRegion 
   // now that we know we are single-phase, we can check a few things in the constraints
   WellControls const & wellControls = getWellControls( subRegion );
   WellControls::Control const currentControl = wellControls.getControl();
-  real64 const & targetTotalRate = wellControls.getTargetTotalRate( m_currentTime + m_currentDt );
-  real64 const & targetPhaseRate = wellControls.getTargetPhaseRate( m_currentTime + m_currentDt );
+  real64 const & targetTotalRate = wellControls.getTargetTotalRate( time_n + dt );
+  real64 const & targetPhaseRate = wellControls.getTargetPhaseRate( time_n + dt );
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
   real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
 
@@ -440,7 +442,7 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
                       InputError );
 
       validateInjectionStreams( subRegion );
-      validateWellConstraints( subRegion );
+      validateWellConstraints( 0, 0, subRegion );
 
     } );
   } );
@@ -1114,13 +1116,19 @@ void CompositionalMultiphaseWell::assembleVolumeBalanceTerms( DomainPartition co
 
 
 real64
-CompositionalMultiphaseWell::calculateResidualNorm( DomainPartition const & domain,
+CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
+                                                    real64 const & dt,
+                                                    DomainPartition const & domain,
                                                     DofManager const & dofManager,
                                                     arrayView1d< real64 const > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  real64 localResidualNorm = 0;
+  real64 localResidualNorm = 0.0;
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
+
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
@@ -1133,52 +1141,48 @@ CompositionalMultiphaseWell::calculateResidualNorm( DomainPartition const & doma
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion const & subRegion )
     {
-      // get the degree of freedom numbers
-      string const wellDofKey = dofManager.getKey( wellElementDofName() );
-      arrayView1d< globalIndex const > const & wellElemDofNumber =
-        subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-      arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
-
-      arrayView1d< real64 const > const & wellElemVolume =
-        subRegion.getReference< array1d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
-
+      real64 subRegionResidualNorm[1]{};
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-      arrayView3d< real64 const, multifluid::USD_PHASE > const & wellElemPhaseDens_n = fluid.phaseDensity_n();
-      arrayView2d< real64 const, multifluid::USD_FLUID > const & wellElemTotalDens_n = fluid.totalDensity_n();
 
       WellControls const & wellControls = getWellControls( subRegion );
 
-      ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
-                                                            dofManager.rankOffset(),
-                                                            subRegion.isLocallyOwned(),
-                                                            subRegion.getTopWellElementIndex(),
-                                                            m_numComponents,
-                                                            numDofPerWellElement(),
-                                                            m_targetPhaseIndex,
-                                                            wellControls,
-                                                            wellElemDofNumber,
-                                                            wellElemGhostRank,
-                                                            wellElemVolume,
-                                                            wellElemPhaseDens_n,
-                                                            wellElemTotalDens_n,
-                                                            m_currentTime + m_currentDt, // residual normalized with rate of the end of the
-                                                            // time
-                                                            // interval
-                                                            m_currentDt,
-                                                            &localResidualNorm );
+      // step 1: compute the norm in the subRegion
+
+      ResidualNormKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                   numDofPerWellElement(),
+                                                   m_targetPhaseIndex,
+                                                   rankOffset,
+                                                   wellDofKey,
+                                                   localRhs,
+                                                   subRegion,
+                                                   fluid,
+                                                   wellControls,
+                                                   time_n + dt,
+                                                   dt,
+                                                   subRegionResidualNorm );
+
+      // step 2: reduction across meshBodies/regions/subRegions
+
+      if( subRegionResidualNorm[0] > localResidualNorm )
+      {
+        localResidualNorm = subRegionResidualNorm[0];
+      }
+
     } );
   } );
 
-  // compute global residual norm
-  real64 const residual = sqrt( MpiWrapper::sum( localResidualNorm, MPI_COMM_GEOSX ) );
+  // step 3: second reduction across MPI ranks
+
+  real64 const residualNorm = MpiWrapper::max( localResidualNorm );
+
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residual );
+    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
   }
-
-  return residual;
+  return residualNorm;
 }
 
 real64
@@ -1535,7 +1539,9 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition &
   } );
 }
 
-void CompositionalMultiphaseWell::assemblePressureRelations( DomainPartition const & domain,
+void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time_n,
+                                                             real64 const & dt,
+                                                             DomainPartition const & domain,
                                                              DofManager const & dofManager,
                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs )
@@ -1587,9 +1593,7 @@ void CompositionalMultiphaseWell::assemblePressureRelations( DomainPartition con
                                                          subRegion.getTopWellElementIndex(),
                                                          m_targetPhaseIndex,
                                                          wellControls,
-                                                         m_currentTime + m_currentDt,     // controls evaluated with BHP/rate of the end of
-                                                                                          // the
-                                                                                          // time interval
+                                                         time_n + dt, // controls evaluated with BHP/rate of the end of step
                                                          wellElemDofNumber,
                                                          wellElemGravCoef,
                                                          nextWellElemIndex,
@@ -1606,7 +1610,7 @@ void CompositionalMultiphaseWell::assemblePressureRelations( DomainPartition con
         // TODO: move the switch logic into wellControls
         // TODO: implement a more general switch when more then two constraints per well type are allowed
 
-        real64 const timeAtEndOfStep = m_currentTime + m_currentDt;
+        real64 const timeAtEndOfStep = time_n + dt;
 
         if( wellControls.getControl() == WellControls::Control::BHP )
         {
@@ -1680,7 +1684,7 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
       fluid.saveConvergedState();
 
-      validateWellConstraints( subRegion );
+      validateWellConstraints( time_n, dt, subRegion );
 
       updateSubRegionState( subRegion );
     } );

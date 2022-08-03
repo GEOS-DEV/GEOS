@@ -557,7 +557,8 @@ public:
     {
       energyNormalizer += m_phaseInternalEnergy_n[ei][0][ip] * m_phaseDens_n[ei][0][ip] * m_phaseVolFrac_n[ei][ip] * poreVolume;
     }
-    energyNormalizer = LvArray::math::max( minNormalizer, energyNormalizer );
+    // warning: internal energy can be negative
+    energyNormalizer = LvArray::math::max( minNormalizer, LvArray::math::abs( energyNormalizer ) );
   }
 
   GEOSX_HOST_DEVICE

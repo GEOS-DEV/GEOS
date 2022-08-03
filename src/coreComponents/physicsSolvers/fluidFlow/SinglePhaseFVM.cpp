@@ -106,15 +106,19 @@ void SinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
 }
 
 template< typename BASE >
-real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & domain,
+real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                                      real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                      DomainPartition const & domain,
                                                       DofManager const & dofManager,
                                                       arrayView1d< real64 const > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  integer constexpr numNorm = 2;
-  real64 localResidualNorm[numNorm]{};
-  real64 localResidualNormalizer[numNorm]{};
+  integer const numNorm = m_isThermal ? 2 : 1;
+  array1d< real64 > localResidualNorm;
+  array1d< real64 > localResidualNormalizer;
+  localResidualNorm.resize( numNorm );
+  localResidualNormalizer.resize( numNorm );
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( BASE::viewKeyStruct::elemDofFieldString() );
@@ -127,8 +131,8 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-      real64 subRegionResidualNorm[numNorm]{};
-      real64 subRegionResidualNormalizer[numNorm]{};
+      real64 subRegionResidualNorm[2]{};
+      real64 subRegionResidualNormalizer[2]{};
 
       string const & fluidName = subRegion.template getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
       SingleFluidBase const & fluid = SolverBase::getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
@@ -206,7 +210,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
     real64 const energyResidualNorm = ( BASE::m_normType == solverBaseKernels::NormType::Linf )
       ? MpiWrapper::max( localResidualNorm[1] )
       : sqrt( MpiWrapper::sum( localResidualNorm[1] ) ) / MpiWrapper::sum( localResidualNormalizer[1] );
-    residualNorm = ( flowResidualNorm > energyResidualNorm ) ? flowResidualNorm : energyResidualNorm;
+    residualNorm = sqrt( flowResidualNorm * flowResidualNorm + energyResidualNorm * energyResidualNorm );
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
       std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",

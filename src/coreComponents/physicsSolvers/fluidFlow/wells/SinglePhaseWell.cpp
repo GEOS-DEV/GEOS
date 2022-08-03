@@ -109,7 +109,7 @@ void SinglePhaseWell::initializePostSubGroups()
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
-      validateWellConstraints( subRegion );
+      validateWellConstraints( 0, 0, subRegion );
     } );
   } );
 }
@@ -119,12 +119,14 @@ string SinglePhaseWell::resElementDofName() const
   return SinglePhaseBase::viewKeyStruct::elemDofFieldString();
 }
 
-void SinglePhaseWell::validateWellConstraints( WellElementSubRegion const & subRegion ) const
+void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
+                                               real64 const & dt,
+                                               WellElementSubRegion const & subRegion ) const
 {
   WellControls const & wellControls = getWellControls( subRegion );
   WellControls::Control const currentControl = wellControls.getControl();
-  real64 const targetTotalRate = wellControls.getTargetTotalRate( m_currentTime + m_currentDt );
-  real64 const targetPhaseRate = wellControls.getTargetPhaseRate( m_currentTime + m_currentDt );
+  real64 const targetTotalRate = wellControls.getTargetTotalRate( time_n + dt );
+  real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time_n + dt );
   GEOSX_THROW_IF( currentControl == WellControls::Control::PHASEVOLRATE,
                   "WellControls named " << wellControls.getName() <<
                   ": Phase rate control is not available for SinglePhaseWell",
@@ -435,7 +437,9 @@ void SinglePhaseWell::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n
   } );
 }
 
-void SinglePhaseWell::assemblePressureRelations( DomainPartition const & domain,
+void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
+                                                 real64 const & dt,
+                                                 DomainPartition const & domain,
                                                  DofManager const & dofManager,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
@@ -482,7 +486,7 @@ void SinglePhaseWell::assemblePressureRelations( DomainPartition const & domain,
                                         subRegion.isLocallyOwned(),
                                         subRegion.getTopWellElementIndex(),
                                         wellControls,
-                                        m_currentTime + m_currentDt, // controls evaluated with BHP/rate of the end of the time interval
+                                        time_n + dt, // controls evaluated with BHP/rate of the end of the time interval
                                         wellElemDofNumber,
                                         wellElemGravCoef,
                                         nextWellElemIndex,
@@ -497,7 +501,7 @@ void SinglePhaseWell::assemblePressureRelations( DomainPartition const & domain,
         // Note: if BHP control is not viable, we switch to TOTALVOLRATE
         //       if TOTALVOLRATE is not viable, we switch to BHP
 
-        real64 const timeAtEndOfStep = m_currentTime + m_currentDt;
+        real64 const timeAtEndOfStep = time_n + dt;
 
         if( wellControls.getControl() == WellControls::Control::BHP )
         {
@@ -656,7 +660,9 @@ void SinglePhaseWell::computePerforationRates( DomainPartition & domain )
 
 
 real64
-SinglePhaseWell::calculateResidualNorm( DomainPartition const & domain,
+SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
+                                        real64 const & dt,
+                                        DomainPartition const & domain,
                                         DofManager const & dofManager,
                                         arrayView1d< real64 const > const & localRhs )
 {
@@ -694,8 +700,8 @@ SinglePhaseWell::calculateResidualNorm( DomainPartition const & domain,
                                                    subRegion,
                                                    fluid,
                                                    wellControls,
-                                                   m_currentTime + m_currentDt,
-                                                   m_currentDt,
+                                                   time_n + dt,
+                                                   dt,
                                                    subRegionResidualNorm );
 
       // step 2: reduction across meshBodies/regions/subRegions
@@ -868,7 +874,7 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
         getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
       fluid.saveConvergedState();
 
-      validateWellConstraints( subRegion );
+      validateWellConstraints( time, dt, subRegion );
 
       updateSubRegionState( subRegion );
     } );

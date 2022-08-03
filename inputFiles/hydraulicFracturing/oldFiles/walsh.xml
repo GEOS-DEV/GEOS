@@ -112,7 +112,6 @@
       logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
-      inputFluxEstimate="1.0"
       >
       <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="10"/>

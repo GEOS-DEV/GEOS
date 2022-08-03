@@ -482,7 +482,9 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
 }
 
 real64
-PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
+PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                            real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                            DomainPartition const & domain,
                                             DofManager const & dofManager,
                                             arrayView1d< real64 const > const & localRhs )
 {

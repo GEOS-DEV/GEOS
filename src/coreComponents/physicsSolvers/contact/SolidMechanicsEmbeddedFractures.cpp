@@ -544,14 +544,16 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
   } );
 }
 
-real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition const & domain,
+real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & time,
+                                                               real64 const & dt,
+                                                               DomainPartition const & domain,
                                                                DofManager const & dofManager,
                                                                arrayView1d< real64 const > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
   // Matrix residual
-  real64 const solidResidualNorm = m_solidSolver->calculateResidualNorm( domain, dofManager, localRhs );
+  real64 const solidResidualNorm = m_solidSolver->calculateResidualNorm( time, dt, domain, dofManager, localRhs );
 
   if( !m_useStaticCondensation )
   {

@@ -223,12 +223,16 @@ public:
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head
+   * @param time_n time at the beginning of the time step
+   * @param dt the time step size
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assemblePressureRelations( DomainPartition const & domain,
+  virtual void assemblePressureRelations( real64 const & time_n,
+                                          real64 const & dt,
+                                          DomainPartition const & domain,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) = 0;
@@ -294,12 +298,6 @@ protected:
 
   /// the number of Degrees of Freedom per reservoir element
   integer m_numDofPerResElement;
-
-  // copy of the current time saved in this class for time-dependent
-  real64 m_currentTime;
-
-  /// copy of the time step size saved in this class for residual normalization
-  real64 m_currentDt;
 
 };
 

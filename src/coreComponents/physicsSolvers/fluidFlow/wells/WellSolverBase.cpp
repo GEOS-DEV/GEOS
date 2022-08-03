@@ -37,9 +37,7 @@ WellSolverBase::WellSolverBase( string const & name,
                                 Group * const parent )
   : SolverBase( name, parent ),
   m_numDofPerWellElement( 0 ),
-  m_numDofPerResElement( 0 ),
-  m_currentTime( 0 ),
-  m_currentDt( 0 )
+  m_numDofPerResElement( 0 )
 {
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
@@ -141,13 +139,9 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
 }
 
 void WellSolverBase::implicitStepSetup( real64 const & time_n,
-                                        real64 const & dt,
+                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
                                         DomainPartition & domain )
 {
-  // saved time and current dt for residual normalization and time-dependent tables
-  m_currentDt = dt;
-  m_currentTime = time_n;
-
   // Initialize the primary and secondary variables for the first time step
   if( time_n <= 0.0 )
   {
@@ -172,7 +166,7 @@ void WellSolverBase::assembleSystem( real64 const time,
   assembleVolumeBalanceTerms( domain, dofManager, localMatrix, localRhs );
 
   // then assemble the pressure relations between well elements
-  assemblePressureRelations( domain, dofManager, localMatrix, localRhs );
+  assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // then compute the perforation rates (later assembled by the coupled solver)
   computePerforationRates( domain );

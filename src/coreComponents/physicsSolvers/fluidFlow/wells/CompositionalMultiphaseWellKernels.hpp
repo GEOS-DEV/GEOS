@@ -645,117 +645,227 @@ public:
 
 /******************************** ResidualNormKernel ********************************/
 
-struct ResidualNormKernel
+/**
+ * @class ResidualNormKernel
+ */
+class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
 {
+public:
 
-  template< typename POLICY >
-  static void
-  launch( arrayView1d< real64 const > const & localResidual,
-          globalIndex const rankOffset,
-          bool const isLocallyOwned,
-          localIndex const iwelemControl,
-          integer const numComponents,
-          integer const numDofPerWellElement,
-          integer const targetPhaseIndex,
-          WellControls const & wellControls,
-          arrayView1d< globalIndex const > const & wellElemDofNumber,
-          arrayView1d< integer const > const & wellElemGhostRank,
-          arrayView1d< real64 const > wellElemVolume,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & wellElemPhaseDens_n,
-          arrayView2d< real64 const, multifluid::USD_FLUID > const & wellElemTotalDens_n,
-          real64 const & timeAtEndOfStep,
-          real64 const dt,
-          real64 * localResidualNorm )
+  using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
+  using Base::minNormalizer;
+  using Base::m_rankOffset;
+  using Base::m_localResidual;
+  using Base::m_dofNumber;
+
+  ResidualNormKernel( globalIndex const rankOffset,
+                      arrayView1d< real64 const > const & localResidual,
+                      arrayView1d< globalIndex const > const & dofNumber,
+                      arrayView1d< localIndex const > const & ghostRank,
+                      integer const numComp,
+                      integer const numDof,
+                      integer const targetPhaseIndex,
+                      WellElementSubRegion const & subRegion,
+                      MultiFluidBase const & fluid,
+                      WellControls const & wellControls,
+                      real64 const & timeAtEndOfStep,
+                      real64 const & dt )
+    : Base( rankOffset,
+            localResidual,
+            dofNumber,
+            ghostRank ),
+    m_numComp( numComp ),
+    m_numDof( numDof ),
+    m_targetPhaseIndex( targetPhaseIndex ),
+    m_dt( dt ),
+    m_isLocallyOwned( subRegion.isLocallyOwned() ),
+    m_iwelemControl( subRegion.getTopWellElementIndex() ),
+    m_isProducer( wellControls.isProducer() ),
+    m_currentControl( wellControls.getControl() ),
+    m_targetBHP( wellControls.getTargetBHP( timeAtEndOfStep ) ),
+    m_targetTotalRate( wellControls.getTargetTotalRate( timeAtEndOfStep ) ),
+    m_targetPhaseRate( wellControls.getTargetPhaseRate( timeAtEndOfStep ) ),
+    m_volume( subRegion.getElementVolume() ),
+    m_phaseDens_n( fluid.phaseDensity_n() ),
+    m_totalDens_n( fluid.totalDensity_n() )
+  {}
+
+  GEOSX_HOST_DEVICE
+  virtual void computeLinf( localIndex const iwelem,
+                            LinfStackVariables & stack ) const override
   {
     using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
 
-    bool const isProducer = wellControls.isProducer();
-    WellControls::Control const currentControl = wellControls.getControl();
-    real64 const targetBHP = wellControls.getTargetBHP( timeAtEndOfStep );
-    real64 const targetTotalRate = wellControls.getTargetTotalRate( timeAtEndOfStep );
-    real64 const targetPhaseRate = wellControls.getTargetPhaseRate( timeAtEndOfStep );
-    real64 const absTargetTotalRate = LvArray::math::abs( targetTotalRate );
-    real64 const absTargetPhaseRate = LvArray::math::abs( targetPhaseRate );
-
-    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > sumScaled( 0.0 );
-
-    forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+    real64 normalizer = 0.0;
+    for( integer idof = 0; idof < m_numDof; ++idof )
     {
-      if( wellElemGhostRank[iwelem] < 0 )
+
+      // Step 1: compute a normalizer for the control or pressure equation
+
+      // for the control equation, we distinguish two cases
+      if( idof == ROFFSET::CONTROL )
       {
-        real64 normalizer = 0.0;
-        for( integer idof = 0; idof < numDofPerWellElement; ++idof )
+
+        // for the top well element, normalize using the current control
+        if( m_isLocallyOwned && iwelem == m_iwelemControl )
         {
-
-          // Step 1: compute a normalizer for the control or pressure equation
-
-          // for the control equation, we distinguish two cases
-          if( idof == ROFFSET::CONTROL )
+          if( m_currentControl == WellControls::Control::BHP )
           {
-            // for the top well element, normalize using the current control
-            if( isLocallyOwned && iwelem == iwelemControl )
-            {
-              if( currentControl == WellControls::Control::BHP )
-              {
-                normalizer = targetBHP;
-              }
-              else if( currentControl == WellControls::Control::TOTALVOLRATE )
-              {
-                normalizer = LvArray::math::max( absTargetTotalRate, 1e-12 );
-              }
-              else if( currentControl == WellControls::Control::PHASEVOLRATE )
-              {
-                normalizer = LvArray::math::max( absTargetPhaseRate, 1e-12 );
-              }
-            }
-            // for the pressure difference equation, always normalize by the BHP
-            else
-            {
-              normalizer = targetBHP;
-            }
+            // the residual entry is in pressure units
+            normalizer = m_targetBHP;
           }
-          // Step 2: compute a normalizer for the mass balance equations
-
-          else if( idof >= ROFFSET::MASSBAL && idof < ROFFSET::MASSBAL + numComponents )
+          else if( m_currentControl == WellControls::Control::TOTALVOLRATE )
           {
-            if( isProducer ) // only PHASEVOLRATE is supported for now
-            {
-              normalizer = dt * absTargetPhaseRate * wellElemPhaseDens_n[iwelem][0][targetPhaseIndex];
-            }
-            else // Type::INJECTOR, only TOTALVOLRATE is supported for now
-            {
-              normalizer = dt * absTargetTotalRate * wellElemTotalDens_n[iwelem][0];
-            }
-
-            // to make sure that everything still works well if the rate is zero, we add this check
-            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] * wellElemTotalDens_n[iwelem][0] );
+            // the residual entry is in volume / time units
+            normalizer = LvArray::math::max( LvArray::math::abs( m_targetTotalRate ), minNormalizer );
           }
-          // Step 3: compute a normalizer for the volume balance equations
-
-          else
+          else if( m_currentControl == WellControls::Control::PHASEVOLRATE )
           {
-            if( isProducer ) // only PHASEVOLRATE is supported for now
-            {
-              normalizer = dt * absTargetPhaseRate;
-            }
-            else // Type::INJECTOR, only TOTALVOLRATE is supported for now
-            {
-              normalizer = dt * absTargetTotalRate;
-            }
-
-            // to make sure that everything still works well if the rate is zero, we add this check
-            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] );
+            // the residual entry is in volume / time units
+            normalizer = LvArray::math::max( LvArray::math::abs( m_targetPhaseRate ), minNormalizer );
           }
-
-          // Step 4: compute the contribution to the residual
-
-          localIndex const lid = wellElemDofNumber[iwelem] + idof - rankOffset;
-          real64 const val = localResidual[lid] / normalizer;
-          sumScaled += val * val;
+        }
+        // for the pressure difference equation, always normalize by the BHP
+        else
+        {
+          normalizer = m_targetBHP;
         }
       }
-    } );
-    *localResidualNorm = *localResidualNorm + sumScaled.get();
+      // Step 2: compute a normalizer for the mass balance equations
+      else if( idof >= ROFFSET::MASSBAL && idof < ROFFSET::MASSBAL + m_numComp )
+      {
+        if( m_isProducer ) // only PHASEVOLRATE is supported for now
+        {
+          // the residual is in mass units
+          normalizer = m_dt * LvArray::math::abs( m_targetPhaseRate ) * m_phaseDens_n[iwelem][0][m_targetPhaseIndex];
+        }
+        else // Type::INJECTOR, only TOTALVOLRATE is supported for now
+        {
+          // the residual is in mass units
+          normalizer = m_dt * LvArray::math::abs( m_targetTotalRate ) * m_totalDens_n[iwelem][0];
+        }
+
+        // to make sure that everything still works well if the rate is zero, we add this check
+        normalizer = LvArray::math::max( normalizer, m_volume[iwelem] * m_totalDens_n[iwelem][0] );
+      }
+      // Step 3: compute a normalizer for the volume balance equations
+      else
+      {
+        if( m_isProducer ) // only PHASEVOLRATE is supported for now
+        {
+          // the residual is in volume units
+          normalizer = m_dt * LvArray::math::abs( m_targetPhaseRate );
+        }
+        else // Type::INJECTOR, only TOTALVOLRATE is supported for now
+        {
+          normalizer = m_dt * LvArray::math::abs( m_targetTotalRate );
+        }
+
+        // to make sure that everything still works well if the rate is zero, we add this check
+        normalizer = LvArray::math::max( normalizer, m_volume[iwelem] );
+      }
+      normalizer = LvArray::math::max( minNormalizer, normalizer );
+
+      // Step 4: compute the contribution to the residual
+      real64 const val = LvArray::math::abs( m_localResidual[stack.localRow + idof] ) / normalizer;
+      if( val > stack.localValue[0] )
+      {
+        stack.localValue[0] = val;
+      }
+    }
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual void computeL2( localIndex const iwelem,
+                          L2StackVariables & stack ) const override
+  {
+    GEOSX_UNUSED_VAR( iwelem, stack );
+    GEOSX_ERROR( "The L2 norm is not implemented for CompositionalMultiphaseWell" );
+  }
+
+
+protected:
+
+  /// Number of fluid components
+  integer const m_numComp;
+
+  /// Number of dof per well element
+  integer const m_numDof;
+
+  /// Index of the target phase
+  integer const m_targetPhaseIndex;
+
+  /// Time step size
+  real64 const m_dt;
+
+  /// Flag indicating whether the well is locally owned or not
+  bool const m_isLocallyOwned;
+
+  /// Index of the element where the control is enforced
+  localIndex const m_iwelemControl;
+
+  /// Flag indicating whether the well is a producer or an injector
+  bool const m_isProducer;
+
+  /// Controls
+  WellControls::Control const m_currentControl;
+  real64 const m_targetBHP;
+  real64 const m_targetTotalRate;
+  real64 const m_targetPhaseRate;
+
+  /// View on the volume
+  arrayView1d< real64 const > const m_volume;
+
+  /// View on phase/total density at the previous converged time step
+  arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseDens_n;
+  arrayView2d< real64 const, multifluid::USD_FLUID > const m_totalDens_n;
+
+};
+
+/**
+ * @class ResidualNormKernelFactory
+ */
+class ResidualNormKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] numComp number of fluid components
+   * @param[in] numDof number of dofs per well element
+   * @param[in] targetPhaseIndex the index of the target phase (for phase volume control)
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] localResidual the residual vector on my MPI rank
+   * @param[in] subRegion the well element subregion
+   * @param[in] fluid the fluid model
+   * @param[in] wellControls the controls
+   * @param[in] timeAtEndOfStep the time at the end of the step (time_n + dt)
+   * @param[in] dt the time step size
+   * @param[out] residualNorm the residual norm on the subRegion
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( integer const numComp,
+                   integer const numDof,
+                   integer const targetPhaseIndex,
+                   globalIndex const rankOffset,
+                   string const dofKey,
+                   arrayView1d< real64 const > const & localResidual,
+                   WellElementSubRegion const & subRegion,
+                   MultiFluidBase const & fluid,
+                   WellControls const & wellControls,
+                   real64 const & timeAtEndOfStep,
+                   real64 const & dt,
+                   real64 (& residualNorm)[1] )
+  {
+    arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
+                               numComp, numDof, targetPhaseIndex, subRegion, fluid, wellControls, timeAtEndOfStep, dt );
+    ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
   }
 
 };
