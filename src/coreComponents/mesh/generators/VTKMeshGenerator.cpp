@@ -1004,7 +1004,7 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
                                                        false );
 }
 
-void VTKMeshGenerator::importNodesets( vtkUnstructuredGrid & mesh, CellBlockManager & cellBlockManager ) const
+void VTKMeshGenerator::importNodesets( vtkDataSet & mesh, CellBlockManager & cellBlockManager ) const
 {
   auto & nodeSets = cellBlockManager.getNodeSets();
   localIndex const numPoints = LvArray::integerConversion< localIndex >( m_vtkMesh->GetNumberOfPoints() );
