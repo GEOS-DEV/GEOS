@@ -113,6 +113,11 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
+
+  virtual void implicitStepComplete( real64 const & time_n,
+                                     real64 const & dt,
+                                     DomainPartition & domain ) override;
+
   /**@}*/
 
 protected:

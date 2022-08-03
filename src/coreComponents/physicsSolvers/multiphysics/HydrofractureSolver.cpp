@@ -582,13 +582,13 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                            dofManager,
                                            localMatrix,
                                            localRhs );
-  flowSolver()->assembleHydrofracFluxTerms( time,
-                                            dt,
-                                            domain,
-                                            dofManager,
-                                            localMatrix,
-                                            localRhs,
-                                            getDerivativeFluxResidual_dAperture() );
+  flowSolver()->assemblePoroelasticFluxTerms( time,
+                                              dt,
+                                              domain,
+                                              dofManager,
+                                              localMatrix,
+                                              localRhs,
+                                              getDerivativeFluxResidual_dAperture() );
 
   assembleForceResidualDerivativeWrtPressure( domain, localMatrix, localRhs );
   assembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
