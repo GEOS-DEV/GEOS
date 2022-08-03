@@ -139,8 +139,11 @@ void ConstantPlusParallelPlatesPermeabilityUpdate::compute( real64 const & oldHy
 
   GEOSX_UNUSED_VAR( oldHydraulicAperture );
 
-  real64 const perm  = m_defaultConductivity + newHydraulicAperture*newHydraulicAperture*newHydraulicAperture / 12.0;
-  real64 const dPerm = newHydraulicAperture*newHydraulicAperture / 4.0;
+  //real64 const perm  = m_defaultConductivity + newHydraulicAperture*newHydraulicAperture*newHydraulicAperture / 12.0;
+  //real64 const dPerm = newHydraulicAperture*newHydraulicAperture / 4.0;
+  // TOREMOVE: CONSTANT PERMEABILITY
+  real64 const perm  = m_defaultConductivity + newHydraulicAperture*newHydraulicAperture*newHydraulicAperture / 12.0 * 0;
+  real64 const dPerm = newHydraulicAperture*newHydraulicAperture / 4.0 * 0;
 
   for( int dim=0; dim < 3; dim++ )
   {
