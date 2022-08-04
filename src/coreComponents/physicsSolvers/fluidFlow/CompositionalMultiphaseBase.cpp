@@ -828,7 +828,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       real64 const minElevation = LvArray::math::min( globalMinElevation[equilIndex], datumElevation );
       real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
       real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
-      localIndex const numPointsInTable = std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1;
+      localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 : 1;
 
       real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
       GEOSX_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
@@ -1045,47 +1045,6 @@ real64 CompositionalMultiphaseBase::solverStep( real64 const & time_n,
   return dt_return;
 }
 
-void CompositionalMultiphaseBase::backupFields( MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  integer const numPhase = m_numPhases;
-
-  // backup some fields used in time derivative approximation
-  mesh.getElemManager().forElementSubRegions( regionNames,
-                                              [&]( localIndex const,
-                                                   ElementSubRegionBase & subRegion )
-  {
-    arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
-
-    arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
-    arrayView2d< real64 const, compflow::USD_PHASE > const phaseMob =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >();
-
-    arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac_n =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction_n >();
-    arrayView2d< real64, compflow::USD_PHASE > const phaseMob_n =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility_n >();
-
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      if( elemGhostRank[ei] >= 0 )
-      {
-        return;
-      }
-
-      for( integer ip = 0; ip < numPhase; ++ip )
-      {
-        phaseVolFrac_n[ei][ip] = phaseVolFrac[ei][ip];
-        phaseMob_n[ei][ip] = phaseMob[ei][ip];
-      }
-    } );
-
-  } );
-}
-
 void
 CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                                 real64 const & GEOSX_UNUSED_PARAM( dt ),
@@ -1131,10 +1090,20 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARA
         updateSolidInternalEnergyModel( subRegion );
       }
 
-    } );
+      // after the update, save the new saturation and phase mobilities
+      arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+        subRegion.template getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+      arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac_n =
+        subRegion.template getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction_n >();
+      phaseVolFrac_n.setValues< parallelDevicePolicy<> >( phaseVolFrac );
 
-    // backup fields used in time derivative approximation
-    backupFields( mesh, regionNames );
+      arrayView2d< real64 const, compflow::USD_PHASE > const phaseMob =
+        subRegion.template getExtrinsicData< extrinsicMeshData::flow::phaseMobility >();
+      arrayView2d< real64, compflow::USD_PHASE > const phaseMob_n =
+        subRegion.template getExtrinsicData< extrinsicMeshData::flow::phaseMobility_n >();
+      phaseMob_n.setValues< parallelDevicePolicy<> >( phaseMob );
+
+    } );
   } );
 }
 
@@ -1714,19 +1683,6 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
     } );
   } );
 
-}
-
-void CompositionalMultiphaseBase::solveLinearSystem( DofManager const & dofManager,
-                                                     ParallelMatrix & matrix,
-                                                     ParallelVector & rhs,
-                                                     ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-
-  rhs.scale( -1.0 );
-  solution.zero();
-
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domain )

@@ -35,8 +35,6 @@ class SinglePhaseStatistics : public FieldStatisticsBase< SinglePhaseBase >
 {
 public:
 
-  using Base = FieldStatisticsBase< SinglePhaseBase >;
-
   /**
    * @brief Constructor for the statistics class
    * @param[in] name the name of the task coming from the xml
@@ -65,6 +63,8 @@ public:
   /**@}*/
 
 private:
+
+  using Base = FieldStatisticsBase< SinglePhaseBase >;
 
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup

@@ -35,8 +35,6 @@ class SolidMechanicsStatistics : public FieldStatisticsBase< SolidMechanicsLagra
 {
 public:
 
-  using Base = FieldStatisticsBase< SolidMechanicsLagrangianFEM >;
-
   /**
    * @brief Constructor for the statistics class
    * @param[in] name the name of the task coming from the xml
@@ -71,6 +69,8 @@ public:
   void computeNodeStatistics( MeshLevel & mesh ) const;
 
 private:
+
+  using Base = FieldStatisticsBase< SolidMechanicsLagrangianFEM >;
 
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup

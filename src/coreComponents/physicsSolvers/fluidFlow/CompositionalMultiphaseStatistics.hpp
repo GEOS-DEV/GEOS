@@ -35,8 +35,6 @@ class CompositionalMultiphaseStatistics : public FieldStatisticsBase< Compositio
 {
 public:
 
-  using Base = FieldStatisticsBase< CompositionalMultiphaseBase >;
-
   /**
    * @brief Constructor for the statistics class
    * @param[in] name the name of the task coming from the xml
@@ -65,6 +63,8 @@ public:
   /**@}*/
 
 private:
+
+  using Base = FieldStatisticsBase< CompositionalMultiphaseBase >;
 
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup

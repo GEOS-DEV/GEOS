@@ -85,11 +85,13 @@ protected:
                     InputError );
   }
 
-  /// Name of the solver
-  string m_solverName;
-
   /// Pointer to the physics solver
   SOLVER * m_solver;
+
+private:
+
+  /// Name of the solver
+  string m_solverName;
 
 };
 
