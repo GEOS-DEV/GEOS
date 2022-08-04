@@ -1972,6 +1972,13 @@ Datastructure: SoloEvent
 .. include:: ../../coreComponents/schema/docs/SoloEvent_other.rst
 
 
+.. _DATASTRUCTURE_SolverStatistics:
+
+Datastructure: SolverStatistics
+===============================
+.. include:: ../../coreComponents/schema/docs/SolverStatistics_other.rst
+
+
 .. _DATASTRUCTURE_Solvers:
 
 Datastructure: Solvers
