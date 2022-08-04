@@ -22,6 +22,7 @@ BUILD_DIR_MOUNT_POINT=/tmp/GEOSX
 # We need to keep track of the building container (hence the `CONTAINER_NAME`)
 # so we can extract the data from it later (if needed). Another solution would have been to use a mount point,
 # but that would not have solved the problem for the TPLs (we would require extra action to copy them to the mount point).
+# Warning, `CONTAINER_NAME` is duplicated during the azure/travis migration. Consider modifying with care.
 CONTAINER_NAME=geosx_build
 # Now we can build GEOSX.
 while sleep 5m; do echo "... still building ..."; done & 
