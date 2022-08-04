@@ -261,7 +261,13 @@ public:
     using RAJA::RangeSegment;
 
     // Define a RAJA reduction variable to get the maximum residual contribution.
-    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
+    // RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
+    // RAJA::ReduceMax< RAJA::seq_reduce, real64 > maxResidual( 0 );
+#if defined(RAJA_ENABLE_CUDA)
+    // RAJA::ReduceMax< RAJA::cuda_reduce, real64 > maxResidual( 0 );
+#else
+    RAJA::ReduceMax< RAJA::seq_reduce, real64 > maxResidual( 0 );
+#endif
 
     constexpr localIndex batch_size = KERNEL_TYPE::StackVariables::batch_size;
 
@@ -271,7 +277,7 @@ public:
 
     constexpr localIndex num_quads_1d = KERNEL_TYPE::StackVariables::num_quads_1d;
 
-    launch< team_launch_policy >
+    launch< POLICY >
     ( GEOSX_RAJA_DEVICE, Resources( Teams( num_blocks ), Threads( num_quads_1d, num_quads_1d, batch_size ) ),
     [=] GEOSX_HOST_DEVICE ( LaunchContext ctx )
     {
