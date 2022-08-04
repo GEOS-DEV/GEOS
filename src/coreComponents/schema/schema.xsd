@@ -1298,6 +1298,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="file" type="path" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--nodesetNames => Names of the VTK nodesets to import-->
+		<xsd:attribute name="nodesetNames" type="string_array" default="{}" />
 		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
 		<xsd:attribute name="partitionRefinement" type="integer" default="1" />
 		<!--regionAttribute => Name of the VTK cell attribute to use as region marker-->
@@ -1573,6 +1575,10 @@ the relative residual norm satisfies:
 	<xsd:complexType name="SiloType">
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
+		<!--fieldNames => Names of the fields to output. If this attribute is specified, GEOSX outputs all (and only) the fields specified by the user, regardless of their plotLevel-->
+		<xsd:attribute name="fieldNames" type="string_array" default="{}" />
+		<!--onlyPlotSpecifiedFieldNames => If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`-->
+		<xsd:attribute name="onlyPlotSpecifiedFieldNames" type="integer" default="0" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--plotFileRoot => (no description available)-->
@@ -1607,8 +1613,12 @@ the relative residual norm satisfies:
 	<xsd:complexType name="VTKType">
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
+		<!--fieldNames => Names of the fields to output. If this attribute is specified, GEOSX outputs all the fields specified by the user, regardless of their `plotLevel`-->
+		<xsd:attribute name="fieldNames" type="string_array" default="{}" />
 		<!--format => Output data format.  Valid options: ``binary``, ``ascii``-->
 		<xsd:attribute name="format" type="geosx_vtk_VTKOutputMode" default="binary" />
+		<!--onlyPlotSpecifiedFieldNames => If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`-->
+		<xsd:attribute name="onlyPlotSpecifiedFieldNames" type="integer" default="0" />
 		<!--outputRegionType => Output region types.  Valid options: ``cell``, ``well``, ``surface``, ``all``-->
 		<xsd:attribute name="outputRegionType" type="geosx_vtk_VTKRegionTypes" default="all" />
 		<!--parallelThreads => Number of plot files.-->
@@ -1777,7 +1787,7 @@ the relative residual norm satisfies:
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--flowSolverName => (no description available)-->
+		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
@@ -1785,7 +1795,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--wellSolverName => (no description available)-->
+		<!--wellSolverName => Name of the well solver used by the coupled solver-->
 		<xsd:attribute name="wellSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
@@ -1819,7 +1829,8 @@ the relative residual norm satisfies:
 		<!--control => Well control. Valid options:
 * BHP
 * phaseVolRate
-* totalVolRate-->
+* totalVolRate
+* uninitialized-->
 		<xsd:attribute name="control" type="geosx_WellControls_Control" use="required" />
 		<!--enableCrossflow => Flag to enable crossflow. Currently only supported for injectors: 
  - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
@@ -1865,7 +1876,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_WellControls_Control">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate" />
+			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|uninitialized" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_WellControls_Type">
@@ -1900,13 +1911,13 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--flowSolverName => Name of the flow solver to use in the flowProppantTransport solver-->
+		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--proppantSolverName => Name of the proppant transport solver to use in the flowProppantTransport solver-->
+		<!--proppantSolverName => Name of the proppant solver used by the coupled solver-->
 		<xsd:attribute name="proppantSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
@@ -1928,15 +1939,15 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="couplingTypeOption" type="geosx_HydrofractureSolver_CouplingTypeOption" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
-		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poromechanics solver-->
-		<xsd:attribute name="fluidSolverName" type="string" use="required" />
+		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
+		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
-		<!--solidSolverName => Name of the solid mechanics solver to use in the poromechanics solver-->
+		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--surfaceGeneratorName => Name of the surface generator to use in the hydrofracture solver-->
 		<xsd:attribute name="surfaceGeneratorName" type="string" use="required" />
@@ -2012,13 +2023,13 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
-		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
-		<xsd:attribute name="fluidSolverName" type="string" use="required" />
+		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
+		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
+		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
@@ -2217,13 +2228,13 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
-		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poromechanics solver-->
-		<xsd:attribute name="fluidSolverName" type="string" use="required" />
+		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
+		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--solidSolverName => Name of the solid mechanics solver to use in the poromechanics solver-->
+		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
@@ -2237,15 +2248,15 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poromechanics solver-->
-		<xsd:attribute name="fluidSolverName" type="string" use="required" />
+		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
+		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--fracturesSolverName => Name of the fractures solver to use in the fractured poroelastic solver-->
 		<xsd:attribute name="fracturesSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--solidSolverName => Name of the solid mechanics solver to use in the poromechanics solver-->
+		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
@@ -2283,7 +2294,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--flowSolverName => (no description available)-->
+		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
@@ -2291,7 +2302,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--wellSolverName => (no description available)-->
+		<!--wellSolverName => Name of the well solver used by the coupled solver-->
 		<xsd:attribute name="wellSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />

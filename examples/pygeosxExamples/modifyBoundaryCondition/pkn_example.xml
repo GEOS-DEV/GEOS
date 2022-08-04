@@ -23,7 +23,7 @@
       solidSolverName="lagsolve"
       logLevel="1"
       contactRelationName="fractureContact"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       couplingTypeOption="FIM"
       discretization="FE1"
