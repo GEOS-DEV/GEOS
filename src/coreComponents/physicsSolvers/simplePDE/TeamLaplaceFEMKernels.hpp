@@ -96,10 +96,7 @@ public:
                         localIndex const targetRegionIndex,
                         SUBREGION_TYPE const & elementSubRegion,
                         FE_TYPE const & finiteElementSpace,
-                        CONSTITUTIVE_TYPE & inputConstitutiveType,
-                        arrayView1d< globalIndex const > const inputDofNumber,
-                        globalIndex const rankOffset,
-                        CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                        CONSTITUTIVE_TYPE & inputConstitutiveType, // end of default args
                         arrayView1d< real64 > const inputRhs,
                         string const fieldName ):
     Base( elementSubRegion,
@@ -112,9 +109,6 @@ public:
     GEOSX_UNUSED_VAR( edgeManager );
     GEOSX_UNUSED_VAR( faceManager );
     GEOSX_UNUSED_VAR( targetRegionIndex );
-    GEOSX_UNUSED_VAR( inputDofNumber );
-    GEOSX_UNUSED_VAR( rankOffset );
-    GEOSX_UNUSED_VAR( inputMatrix );
     GEOSX_UNUSED_VAR( inputRhs );
   }
 
@@ -296,9 +290,6 @@ public:
 
 /// The factory used to construct a TeamLaplaceFEMKernel.
 using TeamLaplaceFEMKernelFactory = finiteElement::KernelFactory< TeamLaplaceFEMKernel,
-                                                                  arrayView1d< globalIndex const > const,
-                                                                  globalIndex const,
-                                                                  CRSMatrixView< real64, globalIndex const > const,
                                                                   arrayView1d< real64 > const,
                                                                   string const >;
 
