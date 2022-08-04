@@ -154,7 +154,7 @@
 <SinglePhasePoromechanics 
   name="PoromechanicsSolver" 
   solidSolverName="mechanicsSolver"
-  fluidSolverName="SinglePhaseFlowSolver"
+  flowSolverName="SinglePhaseFlowSolver"
   logLevel="1"
   discretization="FE1"
   targetRegions="{Omega}">

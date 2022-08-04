@@ -6,12 +6,13 @@
     <MultiphasePoromechanics
       name="MultiphasePoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
-      fluidSolverName="TwoPhaseFlowSolver"
+      flowSolverName="TwoPhaseFlowSolver"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Channel, Barrier }"
       initialDt="8.64"
-      stabilizationType="Local">
+      stabilizationType="None"
+      stabilizationRegionNames="{ Channel, Barrier }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="15"

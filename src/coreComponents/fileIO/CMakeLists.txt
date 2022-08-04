@@ -5,15 +5,18 @@ set( fileIO_headers
      Outputs/BlueprintOutput.hpp
      Outputs/OutputBase.hpp
      Outputs/OutputManager.hpp
+     Outputs/OutputUtilities.hpp     
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
      Outputs/SiloOutput.hpp
      Outputs/TimeHistoryOutput.hpp
      silo/SiloFile.hpp
-     timeHistory/HistoryIO.hpp
+     timeHistory/HDFFile.hpp
+     timeHistory/HistoryCollectionBase.hpp
+     timeHistory/BufferedHistoryIO.hpp
      timeHistory/PackCollection.hpp
-     timeHistory/TimeHistHDF.hpp
-     timeHistory/TimeHistoryCollection.hpp
+     timeHistory/HDFHistoryIO.hpp
+     timeHistory/HistoryCollection.hpp
    )
 
 #
@@ -23,13 +26,16 @@ set( fileIO_sources
      Outputs/BlueprintOutput.cpp
      Outputs/OutputBase.cpp
      Outputs/OutputManager.cpp
+     Outputs/OutputUtilities.cpp
      Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
      Outputs/SiloOutput.cpp
      Outputs/TimeHistoryOutput.cpp
      silo/SiloFile.cpp
+     timeHistory/HDFFile.cpp
+     timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
-     timeHistory/TimeHistHDF.cpp
+     timeHistory/HDFHistoryIO.cpp
    )
 
 set( dependencyList mesh constitutive silo hdf5 )

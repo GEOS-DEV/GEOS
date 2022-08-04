@@ -185,7 +185,8 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
       // real64 equivArea1 = cbrt(elemVolume[er1][esr1][ei1])*cbrt(elemVolume[er1][esr1][ei1]);
       // real64 equivArea2 = cbrt(elemVolume[er2][esr2][ei2])*cbrt(elemVolume[er2][esr2][ei2]);
-      // stencilStabWeights[ke] = 0.5 * (elemVolume[er1][esr1][ei1]*(faceArea/equivArea1) + elemVolume[er2][esr2][ei2]*(faceArea/equivArea2) ) * (ke == 0 ? 1 : -1);
+      // stencilStabWeights[ke] = 0.5 * (elemVolume[er1][esr1][ei1]*(faceArea/equivArea1) + elemVolume[er2][esr2][ei2]*(faceArea/equivArea2)
+      // ) * (ke == 0 ? 1 : -1);
 
       stencilStabWeights[ke] = faceArea*c2fDistance;
     }

@@ -23,6 +23,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
+#include "mesh/FieldIdentifiers.hpp"
 
 // TODO can we remove this and use unique_ptr to hold mesh?
 #include <vtkSmartPointer.h>
@@ -115,6 +116,8 @@ private:
 
   real64 writeNodes( CellBlockManager & cellBlockManager ) const;
 
+  void importNodesets( vtkUnstructuredGrid & mesh, CellBlockManager & cellBlockManager ) const;
+
   void writeCells( CellBlockManager & cellBlockManager ) const;
 
   void writeSurfaces( CellBlockManager & cellBlockManager ) const;
@@ -124,12 +127,14 @@ private:
                                           std::vector< vtkIdType > const & cellIds,
                                           ElementRegionManager & elemManager,
                                           arrayView1d< string const > const & fieldNames,
-                                          std::vector< vtkDataArray * > const & srcArrays ) const;
+                                          std::vector< vtkDataArray * > const & srcArrays,
+                                          FieldIdentifiers & fieldsToBeSync ) const;
 
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
   };
   /// @endcond
@@ -142,6 +147,9 @@ private:
 
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;
+
+  /// Names of VTK nodesets to import
+  string_array m_nodesetNames;
 
   /// Number of graph partitioning refinement iterations
   integer m_partitionRefinement = 0;

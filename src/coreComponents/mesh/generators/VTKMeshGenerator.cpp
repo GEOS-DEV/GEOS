@@ -67,6 +67,10 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setApplyDefaultValue( "attribute" ).
     setDescription( "Name of the VTK cell attribute to use as region marker" );
 
+  registerWrapper( viewKeyStruct::nodesetNamesString(), &m_nodesetNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of the VTK nodesets to import" );
+
   registerWrapper( viewKeyStruct::partitionRefinementString(), &m_partitionRefinement ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
@@ -377,16 +381,18 @@ ElementType convertVtkToGeosxElementType( VTKCellType const cellType )
 {
   switch( cellType )
   {
-    case VTK_VERTEX:     return ElementType::Vertex;
-    case VTK_LINE:       return ElementType::Line;
-    case VTK_TRIANGLE:   return ElementType::Triangle;
-    case VTK_QUAD:       return ElementType::Quadrilateral;
-    case VTK_POLYGON:    return ElementType::Polygon;
-    case VTK_TETRA:      return ElementType::Tetrahedron;
-    case VTK_PYRAMID:    return ElementType::Pyramid;
-    case VTK_WEDGE:      return ElementType::Wedge;
-    case VTK_HEXAHEDRON: return ElementType::Hexahedron;
-    case VTK_POLYHEDRON: return ElementType::Polyhedron;
+    case VTK_VERTEX:           return ElementType::Vertex;
+    case VTK_LINE:             return ElementType::Line;
+    case VTK_TRIANGLE:         return ElementType::Triangle;
+    case VTK_QUAD:             return ElementType::Quadrilateral;
+    case VTK_POLYGON:          return ElementType::Polygon;
+    case VTK_TETRA:            return ElementType::Tetrahedron;
+    case VTK_PYRAMID:          return ElementType::Pyramid;
+    case VTK_WEDGE:            return ElementType::Wedge;
+    case VTK_HEXAHEDRON:       return ElementType::Hexahedron;
+    case VTK_PENTAGONAL_PRISM: return ElementType::Prism5;
+    case VTK_HEXAGONAL_PRISM:  return ElementType::Prism6;
+    case VTK_POLYHEDRON:       return ElementType::Polyhedron;
     default:
     {
       GEOSX_ERROR( cellType << " is not a recognized cell type to be used with the VTKMeshGenerator" );
@@ -587,6 +593,8 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
     case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
     case ElementType::Wedge:         return { 0, 3, 2, 5, 1, 4 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
   }
   return {};
@@ -639,6 +647,8 @@ string getElementTypeName( ElementType const type )
     case ElementType::Tetrahedron: return "tetrahedra";
     case ElementType::Wedge:       return "wedges";
     case ElementType::Pyramid:     return "pyramids";
+    case ElementType::Prism5:      return "pentagonalPrisms";
+    case ElementType::Prism6:      return "hexagonalPrisms";
     case ElementType::Polyhedron:  return "polyhedra";
     default:
     {
@@ -854,7 +864,8 @@ void VTKMeshGenerator::
                                      std::vector< vtkIdType > const & cellIds,
                                      ElementRegionManager & elemManager,
                                      arrayView1d< string const > const & fieldNames,
-                                     std::vector< vtkDataArray * > const & srcArrays ) const
+                                     std::vector< vtkDataArray * > const & srcArrays,
+                                     FieldIdentifiers & fieldsToBeSync ) const
 {
   string const cellBlockName = vtk::buildCellBlockName( elemType, regionId );
 
@@ -883,8 +894,13 @@ void VTKMeshGenerator::
         // Skip - the user may have not enabled a particular physics model/solver on this dstRegion.
         GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
                                               vtkArray->GetName(), wrapperName, region.getName(), subRegion.getName() ) );
+
         continue;
       }
+
+      // Now that we know that the subRegion has this wrapper, we can add the wrapperName to the list of fields to synchronize
+      fieldsToBeSync.addElementFields( {wrapperName}, {region.getName()} );
+
       WrapperBase & wrapper = subRegion.getWrapperBase( wrapperName );
 
       GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Importing field {} -> {} on {}/{}",
@@ -912,6 +928,8 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
 
   std::vector< vtkDataArray * > const srcArrays = vtk::findArraysForImport( *m_vtkMesh, m_fieldsToImport );
 
+  FieldIdentifiers fieldsToBeSync;
+
   for( auto const & typeRegions : m_cellMap )
   {
     // Restrict data import to 3D cells
@@ -924,15 +942,42 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
                                            regionCells.second,
                                            elemManager,
                                            m_fieldNamesInGEOSX,
-                                           srcArrays );
+                                           srcArrays,
+                                           fieldsToBeSync );
       }
     }
   }
 
-  CommunicationTools::getInstance().synchronizeFields( { { "elems", m_fieldNamesInGEOSX } },
+  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                        domain.getMeshBody( this->getName() ).getMeshLevel( 0 ),
                                                        domain.getNeighbors(),
                                                        false );
+}
+
+void VTKMeshGenerator::importNodesets( vtkUnstructuredGrid & mesh, CellBlockManager & cellBlockManager ) const
+{
+  auto & nodeSets = cellBlockManager.getNodeSets();
+  localIndex const numPoints = LvArray::integerConversion< localIndex >( m_vtkMesh->GetNumberOfPoints() );
+
+  for( int i=0; i < m_nodesetNames.size(); ++i )
+  {
+    GEOSX_LOG_LEVEL_RANK_0( 2, "    " + m_nodesetNames[i] );
+
+    vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( m_nodesetNames[i].c_str() );
+    GEOSX_THROW_IF( curArray == nullptr,
+                    GEOSX_FMT( "Target nodeset '{}' not found in mesh", m_nodesetNames[i] ),
+                    InputError );
+    vtkTypeInt64Array const & nodesetMask = *vtkTypeInt64Array::FastDownCast( curArray );
+
+    SortedArray< localIndex > & targetNodeset = nodeSets[ m_nodesetNames[i] ];
+    for( localIndex j=0; j < numPoints; ++j )
+    {
+      if( nodesetMask.GetValue( j ) == 1 )
+      {
+        targetNodeset.insert( j );
+      }
+    }
+  }
 }
 
 real64 VTKMeshGenerator::writeNodes( CellBlockManager & cellBlockManager ) const
@@ -973,6 +1018,9 @@ real64 VTKMeshGenerator::writeNodes( CellBlockManager & cellBlockManager ) const
   SortedArray< localIndex > & allNodeSet = cellBlockManager.getNodeSets()[ "all" ];
   allNodeSet.insert( allNodes.begin(), allNodes.end() );
 
+  // Import remaining nodesets
+  importNodesets( *m_vtkMesh, cellBlockManager );
+
   constexpr real64 minReal = LvArray::NumericLimits< real64 >::min;
   constexpr real64 maxReal = LvArray::NumericLimits< real64 >::max;
   real64 xMin[3] = { maxReal, maxReal, maxReal };
@@ -993,12 +1041,7 @@ real64 VTKMeshGenerator::writeNodes( CellBlockManager & cellBlockManager ) const
 
 /**
  * @brief Build all the cell blocks.
- * @param[in] mesh the vtkUnstructuredGrid that is loaded
- * @param[in] regionsHex map from region index to the hexahedron indexes in this region
- * @param[in] regionsTetra map from region index to the tetra indexes in this region
- * @param[in] regionsWedges map from region index to the wedges indexes in this region
- * @param[in] regionsPyramids map from region index to the pyramids indexes in this region
- * @param[out] cellBlockManager The instance that stores the cell blocks.
+ * @param[in] cellBlockManager The instance that stores the cell blocks.
  */
 void VTKMeshGenerator::writeCells( CellBlockManager & cellBlockManager ) const
 {

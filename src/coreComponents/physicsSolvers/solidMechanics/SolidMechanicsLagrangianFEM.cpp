@@ -401,10 +401,8 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
           real64 N[numNodesPerElem];
           for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
           {
-            real64 elemMass = 0;
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
-              elemMass += rho[k][q] * detJ[k][q];
               FE_TYPE::calcN( q, N );
 
               for( localIndex a=0; a< numNodesPerElem; ++a )
@@ -562,12 +560,10 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodes.incrementalDisplacement();
     arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
 
-    std::map< string, string_array > fieldNames;
-    fieldNames["node"].emplace_back( keys::Velocity );
-    fieldNames["node"].emplace_back( keys::Acceleration );
-
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addFields( FieldLocation::Node, { keys::Velocity, keys::Acceleration } );
     m_iComm.resize( domain.getNeighbors().size() );
-    CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, domain.getNeighbors(), m_iComm, true );
+    CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSync, mesh, domain.getNeighbors(), m_iComm, true );
 
     fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, "nodeManager", keys::Acceleration );
 
@@ -624,7 +620,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, "nodeManager", keys::Velocity );
 
     parallelDeviceEvents packEvents;
-    CommunicationTools::getInstance().asyncPack( fieldNames, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
+    CommunicationTools::getInstance().asyncPack( fieldsToBeSync, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
 
     waitAllDeviceEvents( packEvents );
 
@@ -645,6 +641,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
 
   } );
+
   return dt;
 }
 
@@ -918,7 +915,7 @@ void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
 {
   GEOSX_MARK_FUNCTION;
   dofManager.addField( keys::TotalDisplacement,
-                       DofManager::Location::Node,
+                       FieldLocation::Node,
                        3,
                        m_meshTargets );
 
@@ -1162,7 +1159,7 @@ SolidMechanicsLagrangianFEM::
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    std::cout << GEOSX_FMT( "( RSolid ) = ( {:4.2e} ) ; ", totalResidualNorm );
+    std::cout << GEOSX_FMT( "( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), totalResidualNorm );
   }
 
   return totalResidualNorm;
@@ -1180,37 +1177,27 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( localSolution,
                                keys::TotalDisplacement,
                                keys::IncrementalDisplacement,
-                               -scalingFactor );
+                               scalingFactor );
 
   dofManager.addVectorToField( localSolution,
                                keys::TotalDisplacement,
                                keys::TotalDisplacement,
-                               -scalingFactor );
-
-  std::map< string, string_array > fieldNames;
-  fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
-  fieldNames["node"].emplace_back( keys::TotalDisplacement );
+                               scalingFactor );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
 
   {
+    FieldIdentifiers fieldsToBeSync;
 
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    fieldsToBeSync.addFields( FieldLocation::Node, { keys::IncrementalDisplacement, keys::TotalDisplacement } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );
   } );
-}
-
-void SolidMechanicsLagrangianFEM::solveLinearSystem( DofManager const & dofManager,
-                                                     ParallelMatrix & matrix,
-                                                     ParallelVector & rhs,
-                                                     ParallelVector & solution )
-{
-  solution.zero();
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )

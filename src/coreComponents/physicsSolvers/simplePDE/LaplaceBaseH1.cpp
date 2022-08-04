@@ -123,7 +123,7 @@ void LaplaceBaseH1::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domai
                                DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName,
-                       DofManager::Location::Node,
+                       FieldLocation::Node,
                        1,
                        m_meshTargets );
 
@@ -142,14 +142,20 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
                                m_fieldName,
                                scalingFactor );
 
-  // Synchronize ghost nodes
-  std::map< string, string_array > fieldNames;
-  fieldNames["node"].emplace_back( m_fieldName );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                              domain.getNeighbors(),
-                                                              true );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
+
+  {
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
+  } );
 }
 
 void LaplaceBaseH1::updateState( DomainPartition & domain )
@@ -212,21 +218,6 @@ void LaplaceBaseH1::
                                                                        localRhs );
     } );
   } );
-}
-
-/*
-   SOLVE SYSTEM
-   This method is simply initiating the solution and right-hand side
-   and pass it to the base class solver.
- */
-void LaplaceBaseH1::solveLinearSystem( DofManager const & dofManager,
-                                       ParallelMatrix & matrix,
-                                       ParallelVector & rhs,
-                                       ParallelVector & solution )
-{
-  rhs.scale( -1.0 ); // TODO decide if we want this here
-  solution.zero();
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void LaplaceBaseH1::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )

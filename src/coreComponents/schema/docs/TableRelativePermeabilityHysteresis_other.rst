@@ -18,6 +18,7 @@ phaseMaxHistoricalVolFraction    real64_array2d                                 
 phaseMinHistoricalVolFraction    real64_array2d                                                                                           Phase min historical phase volume fraction                                      
 phaseOrder                       integer_array                                                                                            (no description available)                                                      
 phaseRelPerm                     real64_array3d                                                                                           Phase relative permeability                                                     
+phaseRelPerm_n                   real64_array3d                                                                                           Phase relative permeability at previous time                                    
 phaseTypes                       integer_array                                                                                            (no description available)                                                      
 ================================ ======================================================================================================== =============================================================================== 
 

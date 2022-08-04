@@ -105,12 +105,6 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  solveLinearSystem( DofManager const & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override;
-
-  virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
@@ -241,8 +235,6 @@ public:
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
 
-    static constexpr char const * isThermalString()  { return "isThermal"; }
-
     static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
 
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
@@ -250,8 +242,6 @@ public:
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
 
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
-
-    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
 
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
@@ -272,12 +262,6 @@ public:
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
    */
   void computeHydrostaticEquilibrium();
-
-  /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param domain the domain containing the mesh and fields
-   */
-  void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const;
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -377,9 +361,6 @@ protected:
 
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
-
-  /// flag to determine whether or not this is a thermal simulation
-  integer m_isThermal;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;

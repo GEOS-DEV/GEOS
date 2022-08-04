@@ -108,6 +108,19 @@ public:
                        real64 ( &dWeight_dVar )[1][2] ) const;
 
   /**
+   * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
+   * Used in ReactiveCompositionalMultiphaseOBL solver for thermal transmissibility computation:
+   * here, conductivity is a part of operator and connot be used directly as a coefficient
+   * @param[in] iconn connection index
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   */
+  GEOSX_HOST_DEVICE
+  void computeWeights( localIndex iconn,
+                       real64 ( &weight )[1][2],
+                       real64 ( &dWeight_dVar )[1][2] ) const;
+
+  /**
    * @brief Compute weigths and derivatives w.r.t to one variable.
    * @param[in] iconn connection index
    * @param[in] coefficient view accessor to the coefficient used to compute the weights
@@ -235,6 +248,24 @@ inline void FaceElementToCellStencilWrapper::
   weight[0][1] = -halfWeight;
 
   dWeight_dVar[0][0] = 0.0 * dCoeff_dVar[er0][esr0][ei0][0][0];
+  dWeight_dVar[0][1] = 0.0;
+}
+
+GEOSX_HOST_DEVICE
+inline void
+FaceElementToCellStencilWrapper
+  ::computeWeights( localIndex iconn,
+                    real64 ( & weight )[1][2],
+                    real64 ( & dWeight_dVar )[1][2] ) const
+{
+  real64 halfWeight = m_weights[iconn][0];
+
+  halfWeight *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], m_faceNormal[iconn] ) * m_transMultiplier[iconn];
+
+  weight[0][0] = halfWeight;
+  weight[0][1] = -halfWeight;
+
+  dWeight_dVar[0][0] = 0.0;
   dWeight_dVar[0][1] = 0.0;
 }
 

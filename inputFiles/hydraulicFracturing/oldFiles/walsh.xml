@@ -68,7 +68,7 @@
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       discretization="FE1"
       couplingTypeOption="FIM"
@@ -186,19 +186,6 @@
     <FrictionlessContact name="fractureContact"
       penaltyStiffness="1.0e0"
       apertureTableName="aperTable" />
-
-
-    <NullModel
-      name="nullSolid"/>
-
-    <PressurePorosity
-      name="fracturePorosity"
-      defaultReferencePorosity="1.00"
-      referencePressure="0.0"
-      compressibility="0.0"/>
-
-    <ParallelPlatesPermeability
-      name="fracturePerm"/>
   </Constitutive>
 
   <Outputs>
