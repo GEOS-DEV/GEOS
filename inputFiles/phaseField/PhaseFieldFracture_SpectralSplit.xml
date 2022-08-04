@@ -50,7 +50,7 @@
   <Mesh>
     <VTKMesh
       name="Mode2Notched"
-      file="Mode2CrackMesh/geo.vtu"/>
+      file="notchedMesh.vtk"/>
   </Mesh>
 
   <Geometry>

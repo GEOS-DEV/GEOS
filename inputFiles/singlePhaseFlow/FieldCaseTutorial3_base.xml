@@ -130,14 +130,14 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
+      objectPath="ElementRegions/Reservoir/2_tetrahedra"
       fieldName="pressure"
       scale="1e7"
       />
 
     <FieldSpecification
       name="sourceTerm"
-      objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
+      objectPath="ElementRegions/Reservoir/2_tetrahedra"
       fieldName="pressure"
       scale="15e7"
       setNames="{ source }"
@@ -145,7 +145,7 @@
 
     <FieldSpecification
       name="sinkTerm"
-      objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
+      objectPath="ElementRegions/Reservoir/2_tetrahedra"
       fieldName="pressure"
       scale="5e7"
       setNames="{ sink }"/>
