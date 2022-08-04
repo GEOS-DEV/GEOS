@@ -3,7 +3,7 @@
 <Problem>
 
   <Included>
-    <File name="./Laplace_base.xml"/>
+    <File name="./TeamLaplace_base.xml"/>
   </Included>
 
   <Mesh>
