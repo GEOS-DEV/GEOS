@@ -58,7 +58,7 @@ geosx_totalenergies_cluster_build: &geosx_totalenergies_cluster_build
   after_success:
     # The temporary variable used at multiple locations.
   - TMP_DIR=/tmp
-  - # The variable `CONTAINER_NAME` is duplicated during the azure/travis migration.
+  - # The variable `CONTAINER_NAME` is duplicated during the azure/travis migration. Consider modifying with care.
   - CONTAINER_NAME=geosx_build
     # Extracting both GEOSX and its TPL from the stopped container...
   - GEOSX_EXPORT_DIR=GEOSX-and-TPL-${TRAVIS_COMMIT:0:7}
