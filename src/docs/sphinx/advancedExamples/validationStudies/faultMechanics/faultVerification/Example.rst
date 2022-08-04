@@ -33,7 +33,7 @@ A mesh file and a python script for post-processing the simulation results are a
 
 .. code-block:: console
 
-  inputFiles/poromechanics/faultMesh.msh
+  inputFiles/poromechanics/faultMesh.vtu
 
 .. code-block:: console
 
