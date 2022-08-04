@@ -624,7 +624,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
         {
           real64 const damageAtNode = nodalDamage[elemNodes( k, a )]; 
 
-          if ( damageAtNode >= 1.01 )
+          if ( damageAtNode >= 1.0 )
           {
             localIndex const dof = dofIndex[elemNodes( k, a )]; 
 
@@ -635,7 +635,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
                                                         dofManager.rankOffset(), 
                                                         localMatrix,
                                                         rhsContribution, 
-                                                        1.01, 
+                                                        1.0, 
                                                         damageAtNode ); 
 
             globalIndex const localRow = dof - dofManager.rankOffset(); 
