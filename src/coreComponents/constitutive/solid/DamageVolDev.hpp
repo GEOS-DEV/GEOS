@@ -34,20 +34,22 @@ class DamageVolDevUpdates : public DamageUpdates< UPDATE_BASE >
 {
 public:
   template< typename ... PARAMS >
-  DamageVolDevUpdates( arrayView2d< real64 > const & inputDamage,
+  DamageVolDevUpdates( arrayView2d< real64 > const & inputNewDamage,
+                       arrayView2d< real64 > const & inputOldDamage,
+                       arrayView3d< real64 > const & inputDamageGrad, 
                        arrayView2d< real64 > const & inputStrainEnergyDensity,
-                       arrayView2d< real64 > const & inputExtDrivingForce, 
+                       arrayView2d< real64 > const & inputExtDrivingForce,
                        real64 const & inputLengthScale,
                        real64 const & inputCriticalFractureEnergy,
                        real64 const & inputcriticalStrainEnergy,
-                       int    const & inputExtDrivingForceSwitch, 
-                       real64 const & inputTensileStrength, 
+                       int const & inputExtDrivingForceSwitch,
+                       real64 const & inputTensileStrength,
                        real64 const & inputCompressStrength,
                        real64 const & inputDeltaCoefficient,
                        PARAMS && ... baseParams ):
-    DamageUpdates< UPDATE_BASE >( inputDamage, inputStrainEnergyDensity, inputExtDrivingForce, inputLengthScale,
-                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputExtDrivingForceSwitch, 
-                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient, 
+    DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputStrainEnergyDensity, inputExtDrivingForce, inputLengthScale,
+                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputExtDrivingForceSwitch,
+                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
@@ -60,18 +62,20 @@ public:
   using DamageUpdates< UPDATE_BASE >::getDegradationDerivative;
   using DamageUpdates< UPDATE_BASE >::getDegradationSecondDerivative;
   using DamageUpdates< UPDATE_BASE >::getEnergyThreshold;
-  using DamageUpdates< UPDATE_BASE >::getExtDrivingForce; 
+  using DamageUpdates< UPDATE_BASE >::getExtDrivingForce;
 
   using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
-  using DamageUpdates< UPDATE_BASE >::m_extDrivingForce; 
+  using DamageUpdates< UPDATE_BASE >::m_extDrivingForce;
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
-  using DamageUpdates< UPDATE_BASE >::m_damage;
+  using DamageUpdates< UPDATE_BASE >::m_newDamage;
+  using DamageUpdates< UPDATE_BASE >::m_oldDamage;
+  using DamageUpdates< UPDATE_BASE >::m_damageGrad; 
   using DamageUpdates< UPDATE_BASE >::m_extDrivingForceSwitch;
   using DamageUpdates< UPDATE_BASE >::m_tensileStrength;
-  using DamageUpdates< UPDATE_BASE >::m_compressStrength; 
-  using DamageUpdates< UPDATE_BASE >::m_deltaCoefficient; 
+  using DamageUpdates< UPDATE_BASE >::m_compressStrength;
+  using DamageUpdates< UPDATE_BASE >::m_deltaCoefficient;
   using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
 
 
@@ -161,9 +165,11 @@ public:
 
   using KernelWrapper = DamageVolDevUpdates< typename BASE::KernelWrapper >;
 
-  using Damage< BASE >::m_damage;
+  using Damage< BASE >::m_newDamage;
+  using Damage< BASE >::m_oldDamage;
+  using Damage< BASE >::m_damageGrad; 
   using Damage< BASE >::m_strainEnergyDensity;
-  using Damage< BASE >::m_extDrivingForce; 
+  using Damage< BASE >::m_extDrivingForce;
   using Damage< BASE >::m_criticalFractureEnergy;
   using Damage< BASE >::m_lengthScale;
   using Damage< BASE >::m_criticalStrainEnergy;
@@ -182,14 +188,16 @@ public:
 
   KernelWrapper createKernelUpdates() const
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
+                                                                       m_oldDamage.toView(),
+                                                                       m_damageGrad.toView(), 
                                                                        m_strainEnergyDensity.toView(),
-                                                                       m_extDrivingForce.toView(), 
+                                                                       m_extDrivingForce.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
-                                                                       m_criticalStrainEnergy, 
-                                                                       m_extDrivingForceSwitch=="True"? 1 : 0, 
-                                                                       m_tensileStrength, 
+                                                                       m_criticalStrainEnergy,
+                                                                       m_extDrivingForceSwitch=="True"? 1 : 0,
+                                                                       m_tensileStrength,
                                                                        m_compressStrength,
                                                                        m_deltaCoefficient );
   }

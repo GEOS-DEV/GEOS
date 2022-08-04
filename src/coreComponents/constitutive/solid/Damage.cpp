@@ -18,7 +18,6 @@
  */
 
 #include "Damage.hpp"
-#include "ElasticIsotropic.hpp"
 
 namespace geosx
 {
@@ -30,21 +29,33 @@ namespace constitutive
 template< typename BASE >
 Damage< BASE >::Damage( string const & name, Group * const parent ):
   BASE( name, parent ),
-  m_damage(),
+  m_newDamage(),
+  m_oldDamage(), 
+  m_damageGrad(),
   m_strainEnergyDensity(),
-  m_extDrivingForce(), 
+  m_extDrivingForce(),
   m_lengthScale(),
   m_criticalFractureEnergy(),
   m_criticalStrainEnergy(),
-  m_extDrivingForceSwitch(), 
-  m_tensileStrength(), 
+  m_extDrivingForceSwitch(),
+  m_tensileStrength(),
   m_compressStrength(),
   m_deltaCoefficient()
 {
-  this->registerWrapper( viewKeyStruct::damageString(), &m_damage ).
+  this->registerWrapper( viewKeyStruct::newDamageString(), &m_newDamage ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Material Damage Variable" );
+    setDescription( "Material New Damage Variable" );
+
+  this->registerWrapper( viewKeyStruct::oldDamageString(), &m_oldDamage ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Material Old Damage Variable" );
+
+  this->registerWrapper( viewKeyStruct::damageGradString(), &m_damageGrad ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Material Damage Gradient" );
 
   this->registerWrapper( viewKeyStruct::strainEnergyDensityString(), &m_strainEnergyDensity ).
     setApplyDefaultValue( 0.0 ).
@@ -104,10 +115,32 @@ template< typename BASE >
 void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_damage.resize( 0, numConstitutivePointsPerParentIndex );
+  m_newDamage.resize( 0, numConstitutivePointsPerParentIndex );
+  m_oldDamage.resize( 0, numConstitutivePointsPerParentIndex ); 
+  m_damageGrad.resize( 0, numConstitutivePointsPerParentIndex, 3 ); 
   m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
-  m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex ); 
+  m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex );
   BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+}
+
+template< typename BASE >
+void Damage< BASE >::saveConvergedState() const
+{
+  SolidBase::saveConvergedState(); // TODO: not ideal, as we have separate loops for base and derived data
+
+  localIndex const numE = SolidBase::numElem();
+  localIndex const numQ = SolidBase::numQuad();
+
+  arrayView2d< real64 const > newDamage = m_newDamage;
+  arrayView2d< real64 > oldDamage = m_oldDamage;
+
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < numQ; ++q )
+    {
+      oldDamage( k, q ) = newDamage( k, q );
+    }
+  } );
 }
 
 typedef Damage< ElasticIsotropic > DamageElasticIsotropic;

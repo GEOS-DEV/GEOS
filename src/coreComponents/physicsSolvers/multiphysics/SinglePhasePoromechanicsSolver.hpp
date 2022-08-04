@@ -117,6 +117,7 @@ public:
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
+    constexpr static char const * damageFlagString() { return "damageFlag"; }
   };
 
 protected:
@@ -129,6 +130,8 @@ protected:
 
   string m_solidSolverName;
   string m_flowSolverName;
+
+  integer m_damageFlag; 
 
   // pointer to the flow sub-solver
   SinglePhaseBase * m_flowSolver;

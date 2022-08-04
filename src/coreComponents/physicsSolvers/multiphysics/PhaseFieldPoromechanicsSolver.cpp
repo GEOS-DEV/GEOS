@@ -13,11 +13,11 @@
  */
 
 /**
- * @file PhaseFieldFractureSolver.cpp
+ * @file PhaseFieldPoromechanicsSolver.cpp
  *
  */
 
-#include "PhaseFieldFractureSolver.hpp"
+#include "PhaseFieldPoromechanicsSolver.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
@@ -27,6 +27,7 @@
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
 
 namespace geosx
 {
@@ -34,23 +35,23 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
-                                                    Group * const parent ):
+PhaseFieldPoromechanicsSolver::PhaseFieldPoromechanicsSolver( const string & name,
+                                                              Group * const parent ):
   SolverBase( name, parent ),
-  m_solidSolverName(),
+  m_poromechanicsSolverName(),
   m_damageSolverName(),
   m_couplingTypeOption( CouplingTypeOption::FixedStress )
 
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
+  registerWrapper( viewKeyStruct::poromechanicsSolverNameString(), &m_poromechanicsSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription(
-    "Name of the solid mechanics solver to use in the PhaseFieldFracture solver" );
+    "Name of the poromechanics solver to use in the PhaseFieldPoromechanics solver" );
 
   registerWrapper( viewKeyStruct::damageSolverNameString(), &m_damageSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription(
-    "Name of the damage mechanics solver to use in the PhaseFieldFracture solver" );
+    "Name of the damage mechanics solver to use in the PhaseFieldPoromechanics solver" );
 
   registerWrapper( viewKeyStruct::couplingTypeOptionString(), &m_couplingTypeOption ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -62,7 +63,7 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
 
 }
 
-void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
+void PhaseFieldPoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
 {
   forMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & meshLevel,
@@ -81,9 +82,9 @@ void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void PhaseFieldFractureSolver::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                  real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                                  DomainPartition & domain )
+void PhaseFieldPoromechanicsSolver::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                       DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -107,39 +108,39 @@ void PhaseFieldFractureSolver::implicitStepSetup( real64 const & GEOSX_UNUSED_PA
   } );
 }
 
-void PhaseFieldFractureSolver::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void PhaseFieldPoromechanicsSolver::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                          DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
-void PhaseFieldFractureSolver::postProcessInput()
+void PhaseFieldPoromechanicsSolver::postProcessInput()
 {
   if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
   {
     // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it
     // will never converge.
-    SolidMechanicsLagrangianFEM &
-    solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-    integer & minNewtonIterSolid = solidSolver.getNonlinearSolverParameters().m_minIterNewton;
+    SinglePhasePoromechanicsSolver &
+    poromechanicsSolver = this->getParent().getGroup< SinglePhasePoromechanicsSolver >( m_poromechanicsSolverName );
+    integer & minNewtonIterPoro = poromechanicsSolver.getNonlinearSolverParameters().m_minIterNewton;
 
     PhaseFieldDamageFEM &
     damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
-    integer & minNewtonIterFluid = damageSolver.getNonlinearSolverParameters().m_minIterNewton;
+    integer & minNewtonIterDamage = damageSolver.getNonlinearSolverParameters().m_minIterNewton;
 
-    minNewtonIterSolid = 0;
-    minNewtonIterFluid = 0;
+    minNewtonIterPoro = 0;
+    minNewtonIterDamage = 0;
   }
 }
 
-void PhaseFieldFractureSolver::initializePostInitialConditionsPreSubGroups()
+void PhaseFieldPoromechanicsSolver::initializePostInitialConditionsPreSubGroups()
 {}
 
-PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
+PhaseFieldPoromechanicsSolver::~PhaseFieldPoromechanicsSolver()
 {
   // TODO Auto-generated destructor stub
 }
 
-void PhaseFieldFractureSolver::resetStateToBeginningOfStep( DomainPartition & domain )
+void PhaseFieldPoromechanicsSolver::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
@@ -163,10 +164,10 @@ void PhaseFieldFractureSolver::resetStateToBeginningOfStep( DomainPartition & do
   } );
 }
 
-real64 PhaseFieldFractureSolver::solverStep( real64 const & time_n,
-                                             real64 const & dt,
-                                             int const cycleNumber,
-                                             DomainPartition & domain )
+real64 PhaseFieldPoromechanicsSolver::solverStep( real64 const & time_n,
+                                                  real64 const & dt,
+                                                  int const cycleNumber,
+                                                  DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
@@ -181,17 +182,17 @@ real64 PhaseFieldFractureSolver::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
-real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    integer const cycleNumber,
-                                                    DomainPartition & domain )
+real64 PhaseFieldPoromechanicsSolver::splitOperatorStep( real64 const & time_n,
+                                                         real64 const & dt,
+                                                         integer const cycleNumber,
+                                                         DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
 
-  SolidMechanicsLagrangianFEM &
-  solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  SinglePhasePoromechanicsSolver &
+  poromechanicsSolver = this->getParent().getGroup< SinglePhasePoromechanicsSolver >( m_poromechanicsSolverName );
 
   PhaseFieldDamageFEM &
   damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
@@ -203,15 +204,15 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
                             damageSolver.getSystemSolution(),
                             true );
 
-  solidSolver.setupSystem( domain,
-                           solidSolver.getDofManager(),
-                           solidSolver.getLocalMatrix(),
-                           solidSolver.getSystemRhs(),
-                           solidSolver.getSystemSolution() );
+  poromechanicsSolver.setupSystem( domain,
+                                   poromechanicsSolver.getDofManager(),
+                                   poromechanicsSolver.getLocalMatrix(),
+                                   poromechanicsSolver.getSystemRhs(),
+                                   poromechanicsSolver.getSystemSolution() );
 
   damageSolver.implicitStepSetup( time_n, dt, domain );
 
-  solidSolver.implicitStepSetup( time_n, dt, domain );
+  poromechanicsSolver.implicitStepSetup( time_n, dt, domain );
 
   this->implicitStepSetup( time_n, dt, domain );
 
@@ -225,16 +226,16 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
     {
       // reset the states of all slave solvers if any of them has been reset
       damageSolver.resetStateToBeginningOfStep( domain );
-      solidSolver.resetStateToBeginningOfStep( domain );
+      poromechanicsSolver.resetStateToBeginningOfStep( domain );
       resetStateToBeginningOfStep( domain );
     }
 
-    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", MechanicsSolver: " );
+    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", PoromechanicsSolver: " );
 
-    dtReturnTemporary = solidSolver.nonlinearImplicitStep( time_n,
-                                                           dtReturn,
-                                                           cycleNumber,
-                                                           domain );
+    dtReturnTemporary = poromechanicsSolver.nonlinearImplicitStep( time_n,
+                                                                   dtReturn,
+                                                                   cycleNumber,
+                                                                   domain );
 
     if( dtReturnTemporary < dtReturn )
     {
@@ -243,7 +244,7 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
       continue;
     }
 
-    if( solidSolver.getNonlinearSolverParameters().m_numNewtonIterations == 0 && iter > 0 )
+    if( poromechanicsSolver.getNonlinearSolverParameters().m_numNewtonIterations == 0 && iter > 0 )
     {
       GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter << " iterations! *****\n" );
       isConverged = true;
@@ -263,7 +264,7 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
                                                             cycleNumber,
                                                             domain );
 
-    mapDamageToQuadrature( domain );
+    mapDamageAndGradientToQuadrature( domain );
 
     //std::cout << "Here: " << dtReturnTemporary << std::endl;
 
@@ -284,16 +285,16 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
     ++iter;
   }
 
-  GEOSX_ERROR_IF( !isConverged, "PhaseFieldFractureSolver::SplitOperatorStep() did not converge" );
+  GEOSX_ERROR_IF( !isConverged, "PhaseFieldPoromechanicsSolver::SplitOperatorStep() did not converge" );
 
   damageSolver.implicitStepComplete( time_n, dt, domain );
-  solidSolver.implicitStepComplete( time_n, dt, domain );
+  poromechanicsSolver.implicitStepComplete( time_n, dt, domain );
   this->implicitStepComplete( time_n, dt, domain );
 
   return dtReturn;
 }
 
-void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
+void PhaseFieldPoromechanicsSolver::mapDamageAndGradientToQuadrature( DomainPartition & domain )
 {
 
   GEOSX_MARK_FUNCTION;
@@ -302,6 +303,8 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
                                                 arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
+
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodes = nodeManager.referencePosition(); 
 
     PhaseFieldDamageFEM const &
     damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
@@ -318,7 +321,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
     ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
     constitutiveRelations = elemManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
     // begin region loop
-    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [this, nodalDamage]
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [this, xNodes, nodalDamage]
                                                                 ( localIndex const,
                                                                 CellElementSubRegion & elementSubRegion )
     {
@@ -326,41 +329,64 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
       constitutive::SolidBase &
       solidModel = elementSubRegion.getConstitutiveModel< constitutive::SolidBase >( solidModelName );
 
-      ConstitutivePassThru< DamageBase >::execute( solidModel, [this, &elementSubRegion, nodalDamage]( auto & damageModel )
+      ConstitutivePassThru< DamageBase >::execute( solidModel, [this, &elementSubRegion, xNodes, nodalDamage]( auto & damageModel )
       {
         using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
         typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
 
         arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_newDamage;
+        arrayView3d< real64 > const damageGradOnMaterial = constitutiveUpdate.m_damageGrad; 
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
+
+        auto const & elemsToNodes = elementSubRegion.nodeList().toViewConst();
 
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_discretizationName );
 
-        finiteElement::dispatch3D( fe, [nodalDamage, &elementSubRegion, damageFieldOnMaterial, elemNodes]( auto & finiteElement )
+        finiteElement::dispatch3D( fe, [xNodes, nodalDamage, &elementSubRegion, damageFieldOnMaterial, damageGradOnMaterial, elemNodes, elemsToNodes]( auto & finiteElement )
         {
-          using FE_TYPE = TYPEOFREF( finiteElement );
-          constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
-          constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
-
-          forAll< serialPolicy >( elementSubRegion.size(), [nodalDamage, damageFieldOnMaterial, elemNodes] ( localIndex const k )
+          forAll< serialPolicy >( elementSubRegion.size(), [xNodes, nodalDamage, damageFieldOnMaterial, damageGradOnMaterial, elemNodes, elemsToNodes] ( localIndex const k )
           {
+            using FE_TYPE = TYPEOFREF( finiteElement );
+            constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+            constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+            
+            real64 xLocal[ numNodesPerElement ][ 3 ]; 
+            real64 nodalDamageLocal[ numNodesPerElement ]; 
+            
+            for( localIndex a = 0; a < numNodesPerElement; ++a )
+            {
+              localIndex const localNodeIndex = elemsToNodes( k, a );
+
+              for( int dim=0; dim < 3; ++dim )
+              {
+                xLocal[a][dim] = xNodes[ localNodeIndex ][dim]; 
+              }
+
+              nodalDamageLocal[ a ] = nodalDamage[ localNodeIndex ]; 
+            }
+            
             for( localIndex q = 0; q < n_q_points; ++q )
             {
               real64 N[ numNodesPerElement ];
               FE_TYPE::calcN( q, N );
 
-              damageFieldOnMaterial( k, q ) = 0;
-              for( localIndex a = 0; a < numNodesPerElement; ++a )
+              real64 dNdX[ numNodesPerElement ][ 3 ]; 
+
+              real64 const detJ = FE_TYPE::calcGradN( q, xLocal, dNdX ); 
+
+              GEOSX_UNUSED_VAR( detJ ); 
+
+              real64 qDamage = 0.0;
+              real64 qDamageGrad[3] = {0, 0, 0};
+              FE_TYPE::valueAndGradient( N, dNdX, nodalDamageLocal, qDamage, qDamageGrad );
+
+              damageFieldOnMaterial( k, q ) = qDamage; 
+
+              for( int dim=0; dim < 3; ++dim )
               {
-                damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemNodes( k, a )];
-                //solution is probably not going to work because the solution of the coupled solver
-                //has both damage and displacements. Using the damageResult field from the Damage solver
-                //is probably better
-                //            std::cout<<"q, N, Dnode = "<<q<<", "<<feDiscretization->m_finiteElement->value(a, q)<<",
-                // "<<nodalDamage[elemNodes(k, a)]<<std::endl;
+                damageGradOnMaterial[k][q][dim] = qDamageGrad[dim]; 
               }
-              //          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
             }
           } );
         } );
@@ -370,6 +396,6 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldFractureSolver, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldPoromechanicsSolver, string const &, Group * const )
 
 } /* namespace geosx */

@@ -231,7 +231,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                  localMatrix,
                                                  localRhs,
                                                  m_fieldName,
-                                                 m_localDissipationOption=="Linear" ? 1 : 2);
+                                                 m_localDissipationOption=="Linear" ? 1 : 2 );
 
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy<>,
@@ -453,10 +453,10 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
   GEOSX_MARK_FUNCTION;
   applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 
-  // Apply the crack irreversibility constraint 
-#if 1 // TODO: set a flag to check whether to call the irreversibility function 
+  // Apply the crack irreversibility constraint
+#if 1 // TODO: set a flag to check whether to call the irreversibility function
   applyIrreversibilityConstraint( dofManager, domain, localMatrix, localRhs );
-#endif  
+#endif
 
   if( getLogLevel() == 2 )
   {
@@ -617,7 +617,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION; 
+  GEOSX_MARK_FUNCTION;
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
@@ -635,43 +635,43 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
     // begin region loop
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]
                                                                 ( localIndex const,
-                                                                  CellElementSubRegion & elementSubRegion ) 
+                                                                CellElementSubRegion & elementSubRegion )
     {
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList(); 
-        
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
+
       localIndex const numNodesPerElement = elementSubRegion.numNodesPerElement();
 
-      forAll< serialPolicy >( elementSubRegion.size(), [&] ( localIndex const k ) 
-      { 
+      forAll< serialPolicy >( elementSubRegion.size(), [&] ( localIndex const k )
+      {
         for( localIndex a = 0; a < numNodesPerElement; ++a )
         {
-          real64 const damageAtNode = nodalDamage[elemNodes( k, a )]; 
+          real64 const damageAtNode = nodalDamage[elemNodes( k, a )];
 
-          if ( damageAtNode >= 1.01 )
+          if( damageAtNode >= 1.01 )
           {
-            localIndex const dof = dofIndex[elemNodes( k, a )]; 
+            localIndex const dof = dofIndex[elemNodes( k, a )];
 
-            // Specify the contribution to rhs 
-            real64 rhsContribution; 
+            // Specify the contribution to rhs
+            real64 rhsContribution;
 
-            FieldSpecificationEqual::SpecifyFieldValue( dof, 
-                                                        dofManager.rankOffset(), 
+            FieldSpecificationEqual::SpecifyFieldValue( dof,
+                                                        dofManager.rankOffset(),
                                                         localMatrix,
-                                                        rhsContribution, 
-                                                        1.01, 
-                                                        damageAtNode ); 
+                                                        rhsContribution,
+                                                        1.01,
+                                                        damageAtNode );
 
-            globalIndex const localRow = dof - dofManager.rankOffset(); 
+            globalIndex const localRow = dof - dofManager.rankOffset();
 
             if( localRow >= 0 && localRow < localRhs.size() )
             {
-              localRhs[ localRow ] = rhsContribution; 
+              localRhs[ localRow ] = rhsContribution;
             }
           }
         }
-      } ); 
-    } ); 
-  } ); 
+      } );
+    } );
+  } );
 }
 
 
