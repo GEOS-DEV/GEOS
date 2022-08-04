@@ -1084,7 +1084,7 @@ AssemblerKernelHelper::
     GEOSX_ASSERT_GT( localMatrix.numRows(), eqnLocalRowIndex );
 
     // residual
-    atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnLocalRowIndex], flux );
+    RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnLocalRowIndex], flux );
 
     // jacobian -- derivatives wrt elem-centered terms
     localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnLocalRowIndex,

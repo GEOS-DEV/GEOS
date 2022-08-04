@@ -341,8 +341,8 @@ struct AccumulationKernel
              arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFrac,
              arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > const & dPhaseCompFrac,
              arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac_n,
-             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseDens_n,
-             arraySlice2d< real64 const, compflow::USD_PHASE_COMP - 1 > const & phaseCompFrac_n,
+             arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseDens_n,
+             arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFrac_n,
              real64 ( &localAccum )[NC],
              real64 ( &localAccumJacobian )[NC][NC + 1] );
 
@@ -362,8 +362,8 @@ struct AccumulationKernel
           arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & wellElemPhaseCompFrac,
           arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dWellElemPhaseCompFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFrac_n,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDens_n,
-          arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & wellElemPhaseCompFrac_n,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & wellElemPhaseDens_n,
+          arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & wellElemPhaseCompFrac_n,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
@@ -651,8 +651,8 @@ struct ResidualNormKernel
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView1d< real64 const > wellElemVolume,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDens_n,
-          arrayView1d< real64 const > const & wellElemTotalDens_n,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & wellElemPhaseDens_n,
+          arrayView2d< real64 const, multifluid::USD_FLUID > const & wellElemTotalDens_n,
           real64 const & timeAtEndOfStep,
           real64 const dt,
           real64 * localResidualNorm )
@@ -710,15 +710,15 @@ struct ResidualNormKernel
           {
             if( isProducer ) // only PHASEVOLRATE is supported for now
             {
-              normalizer = dt * absTargetPhaseRate * wellElemPhaseDens_n[iwelem][targetPhaseIndex];
+              normalizer = dt * absTargetPhaseRate * wellElemPhaseDens_n[iwelem][0][targetPhaseIndex];
             }
             else // Type::INJECTOR, only TOTALVOLRATE is supported for now
             {
-              normalizer = dt * absTargetTotalRate * wellElemTotalDens_n[iwelem];
+              normalizer = dt * absTargetTotalRate * wellElemTotalDens_n[iwelem][0];
             }
 
             // to make sure that everything still works well if the rate is zero, we add this check
-            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] * wellElemTotalDens_n[iwelem] );
+            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] * wellElemTotalDens_n[iwelem][0] );
           }
           // Step 3: compute a normalizer for the volume balance equations
 

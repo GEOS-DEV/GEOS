@@ -7,7 +7,7 @@
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       couplingTypeOption="FIM"
       logLevel="2"
