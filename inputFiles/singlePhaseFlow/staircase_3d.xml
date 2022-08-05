@@ -132,6 +132,7 @@
 
     <FieldSpecification
       name="sourceTerm"
+      logLevel="1"	
       objectPath="faceManager"
       fieldName="pressure"
       scale="5e6"
