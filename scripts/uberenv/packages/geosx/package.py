@@ -68,6 +68,7 @@ class Geosx(CMakePackage, CudaPackage):
     variant('hypre', default=True, description='Build HYPRE support.')
     variant('hypre-cuda', default=False, description='Build HYPRE with CUDA support.')
     variant('petsc', default=True, description='Build PETSc support.')
+    variant('scotch', default=True, description='Build Scotch support.')
     variant('lai',
             default='trilinos',
             description='Linear algebra interface.',
@@ -122,7 +123,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('pugixml@1.8: +shared')
 
-    depends_on('fmt@8.0: +cxxstd=14 +pic')
+    depends_on('fmt@8.0: cxxstd=14 +pic')
 
     #
     # Math
@@ -132,6 +133,8 @@ class Geosx(CMakePackage, CudaPackage):
     # depends_on('essl ~ilp64 threads=openmp +lapack +cuda', when='+essl')
 
     depends_on('parmetis@4.0.3: +shared +int64')
+
+    depends_on('scotch@6.0.9: +mpi +int64', when='+scotch')
 
     depends_on('superlu-dist +int64 +openmp +shared', when='~petsc')
     depends_on('superlu-dist@6.3.0 +int64 +openmp +shared', when='+petsc')
@@ -399,12 +402,19 @@ class Geosx(CMakePackage, CudaPackage):
                 cfg.write(cmake_cache_list('BLAS_LIBRARIES', spec['blas'].libs))
                 cfg.write(cmake_cache_list('LAPACK_LIBRARIES', spec['lapack'].libs))
 
-            math_tpls = (('metis', 'METIS', True), ('parmetis', 'PARMETIS', True), ('superlu-dist', 'SUPERLU_DIST',
-                                                                                    True),
-                         ('suite-sparse', 'SUITESPARSE', '+suite-sparse'
-                          in spec), ('trilinos', 'TRILINOS', '+trilinos'
-                                     in spec), ('hypre', 'HYPRE', '+hypre' in spec
-                                                or '+hypre-cuda' in spec), ('petsc', 'PETSC', '+petsc' in spec))
+            # yapf: disable
+            math_tpls = (
+              ('metis', 'METIS', True),
+              ('parmetis', 'PARMETIS', True),
+              ('scotch', 'SCOTCH', '+scotch' in spec),
+              ('superlu-dist', 'SUPERLU_DIST', True),
+              ('suite-sparse', 'SUITESPARSE', '+suite-sparse' in spec),
+              ('trilinos', 'TRILINOS', '+trilinos' in spec),
+              ('hypre', 'HYPRE', '+hypre' in spec or '+hypre-cuda' in spec),
+              ('petsc', 'PETSC', '+petsc' in spec)
+            )
+            # yapf: enable
+
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Math TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
@@ -444,7 +454,7 @@ class Geosx(CMakePackage, CudaPackage):
             else:
                 cfg.write(cmake_cache_option('ENABLE_DOCS', False))
                 cfg.write(cmake_cache_option('ENABLE_DOXYGEN', False))
-                cfg.write(cmake_cache_option('ENABLE_SPHYNX', False))
+                cfg.write(cmake_cache_option('ENABLE_SPHINX', False))
 
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Development tools\n')
