@@ -81,7 +81,7 @@ public:
   /**
    * @brief Performs re-initialization of the datasets accumulated in the PVD writer.
    */
-  virtual void reinit();
+  virtual void reinit() override;
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct : OutputBase::viewKeysStruct
