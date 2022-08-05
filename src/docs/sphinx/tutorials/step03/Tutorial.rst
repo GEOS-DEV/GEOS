@@ -300,7 +300,7 @@ The simulation can be launched with:
 
 .. code-block:: console
 
-  geosx -i FieldCaseTutorial1.xml
+  geosx -i FieldCaseTutorial3_smoke.xml
 
 One can notice the correct load of the field function among the starting output messages
 
