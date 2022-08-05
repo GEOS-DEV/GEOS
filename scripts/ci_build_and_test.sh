@@ -13,7 +13,7 @@ git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_
 # We extract the location of the GEOSX_TPL from the container...
 GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /bin/bash -c 'echo ${GEOSX_TPL_DIR}')
 # ... so we can install GEOSX alongside. This is assumed for bundling the binaries, so consider modifying with care.
-GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-INSTALL
+GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-$([ $TRAVIS_COMMIT ] && echo ${TRAVIS_COMMIT:0:7} || echo ${BUILD_SOURCEVERSION:0:7})
 # We need to get the build directory, which is different between Travis and Azure Pipelines.
 BUILD_DIR=${TRAVIS_BUILD_DIR:-$BUILD_SOURCESDIRECTORY}
 # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
@@ -22,6 +22,7 @@ BUILD_DIR_MOUNT_POINT=/tmp/GEOSX
 # We need to keep track of the building container (hence the `CONTAINER_NAME`)
 # so we can extract the data from it later (if needed). Another solution would have been to use a mount point,
 # but that would not have solved the problem for the TPLs (we would require extra action to copy them to the mount point).
+# Warning, `CONTAINER_NAME` is duplicated during the azure/travis migration. Consider modifying with care.
 CONTAINER_NAME=geosx_build
 # Now we can build GEOSX.
 while sleep 5m; do echo "... still building ..."; done & 
