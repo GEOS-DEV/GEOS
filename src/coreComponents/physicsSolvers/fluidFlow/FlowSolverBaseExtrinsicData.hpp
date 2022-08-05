@@ -80,6 +80,14 @@ EXTRINSIC_MESH_DATA_TRAIT( temperature,
                            WRITE_AND_READ,
                            "Temperature" );
 
+EXTRINSIC_MESH_DATA_TRAIT( faceTemperature,
+                           "faceTemperature",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Face temperature" );
+
 EXTRINSIC_MESH_DATA_TRAIT( temperature_n,
                            "temperature_n",
                            array1d< real64 >,
