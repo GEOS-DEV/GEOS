@@ -84,11 +84,11 @@ initializePreSubGroups()
 {
   if( catalogName() == SinglePhaseCatalogNames< SinglePhaseBase >::name() )
   {
-    if( dynamicCast< SinglePhaseFVM< SinglePhaseBase > * >( this->getReservoirSolver() ) )
+    if( dynamicCast< SinglePhaseFVM< SinglePhaseBase > * >( this->reservoirSolver() ) )
     {
       m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
     }
-    else if( dynamicCast< SinglePhaseHybridFVM * >( this->getReservoirSolver() ) )
+    else if( dynamicCast< SinglePhaseHybridFVM * >( this->reservoirSolver() ) )
     {
       m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM;
     }
@@ -118,10 +118,10 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 
     // Populate off-diagonal sparsity between well and reservoir
 
-    string const resDofKey  = dofManager.getKey( Base::getWellSolver()->resElementDofName() );
-    string const wellDofKey = dofManager.getKey( Base::getWellSolver()->wellElementDofName() );
+    string const resDofKey  = dofManager.getKey( Base::wellSolver()->resElementDofName() );
+    string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
 
-    integer const wellNDOF = Base::getWellSolver()->numDofPerWellElement();
+    integer const wellNDOF = Base::wellSolver()->numDofPerWellElement();
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resDofNumber =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
@@ -212,7 +212,7 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const resDofKey = dofManager.getKey( Base::getWellSolver()->resElementDofName() );
+    string const resDofKey = dofManager.getKey( Base::wellSolver()->resElementDofName() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const resDofNumberAccessor =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
     ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber =
@@ -226,7 +226,7 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
       PerforationData const * const perforationData = subRegion.getPerforationData();
 
       // get the degrees of freedom
-      string const wellDofKey = dofManager.getKey( Base::getWellSolver()->wellElementDofName() );
+      string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
       arrayView1d< globalIndex const > const wellElemDofNumber =
         subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
@@ -295,7 +295,7 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                                               &dofColIndices[0],
                                                                               &localPerfJacobian[0][0] + 2 * i,
                                                                               2 );
-            atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
+            RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
           }
         }
       } );
