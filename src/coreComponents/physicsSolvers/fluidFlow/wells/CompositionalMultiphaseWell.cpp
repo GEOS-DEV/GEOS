@@ -176,10 +176,8 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< extrinsicMeshData::well::phaseVolumeFraction >( getName() ).
         setDimLabels( 1, fluid.phaseNames() ).
         reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction_dPressure >( getName() ).
-        reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction_dGlobalCompDensity >( getName() ).
-        reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
+      subRegion.registerExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction >( getName() ).
+        reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents + 2 ); // dP, dT, dC
 
       subRegion.registerExtrinsicData< extrinsicMeshData::well::totalMassDensity >( getName() );
       subRegion.registerExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dPressure >( getName() );
@@ -1010,10 +1008,8 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
       // get the properties on the well element
       arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFrac =
         subRegion.getExtrinsicData< extrinsicMeshData::well::phaseVolumeFraction >();
-      arrayView2d< real64 const, compflow::USD_PHASE > const & dWellElemPhaseVolFrac_dPres =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction_dPressure >();
-      arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dWellElemPhaseVolFrac_dComp =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction_dGlobalCompDensity >();
+      arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dWellElemPhaseVolFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction >();
 
       arrayView3d< real64 const, compflow::USD_COMP_DC > const & dWellElemCompFrac_dCompDens =
         subRegion.getExtrinsicData< extrinsicMeshData::well::dGlobalCompFraction_dGlobalCompDensity >();
@@ -1041,8 +1037,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
                                                      wellElemGhostRank,
                                                      wellElemVolume,
                                                      wellElemPhaseVolFrac,
-                                                     dWellElemPhaseVolFrac_dPres,
-                                                     dWellElemPhaseVolFrac_dComp,
+                                                     dWellElemPhaseVolFrac,
                                                      dWellElemCompFrac_dCompDens,
                                                      wellElemPhaseDens,
                                                      dWellElemPhaseDens,
@@ -1086,10 +1081,8 @@ void CompositionalMultiphaseWell::assembleVolumeBalanceTerms( DomainPartition co
       // get the properties on the well element
       arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFrac =
         subRegion.getExtrinsicData< extrinsicMeshData::well::phaseVolumeFraction >();
-      arrayView2d< real64 const, compflow::USD_PHASE > const & dWellElemPhaseVolFrac_dPres =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction_dPressure >();
-      arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dWellElemPhaseVolFrac_dComp =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction_dGlobalCompDensity >();
+      arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dWellElemPhaseVolFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction >();
 
 
       arrayView1d< real64 const > const & wellElemVolume =
@@ -1103,8 +1096,7 @@ void CompositionalMultiphaseWell::assembleVolumeBalanceTerms( DomainPartition co
                                                       wellElemDofNumber,
                                                       wellElemGhostRank,
                                                       wellElemPhaseVolFrac,
-                                                      dWellElemPhaseVolFrac_dPres,
-                                                      dWellElemPhaseVolFrac_dComp,
+                                                      dWellElemPhaseVolFrac,
                                                       wellElemVolume,
                                                       localMatrix,
                                                       localRhs );
@@ -1371,8 +1363,7 @@ void CompositionalMultiphaseWell::computePerforationRates( DomainPartition & dom
                                                     disableReservoirToWellFlow,
                                                     resCompFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
                                                     resCompFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
-                                                    resCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure{} ),
-                                                    resCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity{} ),
+                                                    resCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction{} ),
                                                     resCompFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
                                                     resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
                                                     resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity{} ),
