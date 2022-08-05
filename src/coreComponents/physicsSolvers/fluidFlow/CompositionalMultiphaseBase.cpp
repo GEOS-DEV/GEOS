@@ -208,27 +208,14 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< phaseVolumeFraction >( getName() ).
         setDimLabels( 1, fluid.phaseNames() ).
         reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< dPhaseVolumeFraction_dPressure >( getName() ).
-        reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< dPhaseVolumeFraction_dGlobalCompDensity >( getName() ).
-        reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
+      subRegion.registerExtrinsicData< dPhaseVolumeFraction >( getName() ).
+        reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents + 2 ); // dP, dT, dC
 
       subRegion.registerExtrinsicData< phaseMobility >( getName() ).
         setDimLabels( 1, fluid.phaseNames() ).
         reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< dPhaseMobility_dPressure >( getName() ).
-        reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerExtrinsicData< dPhaseMobility_dGlobalCompDensity >( getName() ).
-        reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
-
-      if( m_isThermal )
-      {
-        subRegion.registerExtrinsicData< dPhaseVolumeFraction_dTemperature >( getName() ).
-          reference().resizeDimension< 1 >( m_numPhases );
-
-        subRegion.registerExtrinsicData< dPhaseMobility_dTemperature >( getName() ).
-          reference().resizeDimension< 1 >( m_numPhases );
-      }
+      subRegion.registerExtrinsicData< dPhaseMobility >( getName() ).
+        reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents + 2 ); // dP, dT, dC
 
       if( m_computeCFLNumbers )
       {
@@ -249,7 +236,15 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
     FaceManager & faceManager = mesh.getFaceManager();
     {
+      // We make the assumption that component names are uniform across the fluid models used in the simulation
+      MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
+
+      // TODO: add conditional registration later, this is only needed when there is a face-based Dirichlet BC
       faceManager.registerExtrinsicData< facePressure >( getName() );
+      faceManager.registerExtrinsicData< faceTemperature >( getName() );
+      faceManager.registerExtrinsicData< faceGlobalCompFraction >( getName() ).
+        setDimLabels( 1, fluid0.componentNames() ).
+        reference().resizeDimension< 1 >( m_numComponents );
     }
 
   } );
@@ -1217,13 +1212,14 @@ void CompositionalMultiphaseBase::applyBoundaryConditions( real64 const time_n,
   applyAquiferBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 }
 
-namespace internal
+namespace
 {
-string const bcLogMessage = string( "CompositionalMultiphaseBase {}: at time {}s, " )
-                            + string( "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. " )
-                            + string( "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). " )
-                            + string( "\nThe total number of target elements (including ghost elements) is {}. " )
-                            + string( "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set." );
+char const bcLogMessage[] =
+  "CompositionalMultiphaseBase {}: at time {}s, "
+  "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. "
+  "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). "
+  "\nThe total number of target elements (including ghost elements) is {}. "
+  "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.";
 }
 
 void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
@@ -1285,7 +1281,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
                                      getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
@@ -1365,156 +1361,156 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
   } );
 }
 
-namespace
-{
-
-bool validateDirichletBC( DomainPartition & domain,
-                          integer const isThermal,
-                          integer const numComp,
-                          real64 const time )
+bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
+                                                       real64 const time ) const
 {
   constexpr integer MAX_NC = MultiFluidBase::MAX_NUM_COMPONENTS;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  // maps to check consistent application of BC
-  map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcStatusMap;
-  map< string, map< string, set< string > > > bcTempStatusMap;
   bool bcConsistent = true;
 
-  // 1. Check pressure Dirichlet BCs
-  fsManager.apply( time,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                   "ElementRegions",
-                   extrinsicMeshData::flow::pressure::key(),
-                   [&]( FieldSpecificationBase const &,
-                        string const & setName,
-                        SortedArrayView< localIndex const > const &,
-                        Group & subRegion,
-                        string const & )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & )
   {
-    // Check whether pressure has already been applied to this set
-    string const & subRegionName = subRegion.getName();
-    string const & regionName = subRegion.getParent().getParent().getName();
+    // maps to check consistent application of BC
+    // maps: regionName -> subRegionName -> setName (-> numComps)
+    map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcPresCompStatusMap; // check that pressure/comp are
+                                                                                              // present/consistent
+    map< string, map< string, set< string > > > bcTempStatusMap; // check that temperature is present/consistent
 
-    auto & subRegionSetMap = bcStatusMap[regionName][subRegionName];
-    if( subRegionSetMap.count( setName ) > 0 )
-    {
-      bcConsistent = false;
-      GEOSX_WARNING( GEOSX_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
-    }
-    subRegionSetMap[setName].setNumComp( numComp );
-  } );
-
-  // 2. Check temperature Dirichlet BCs
-  if( isThermal )
-  {
+    // 1. Check pressure Dirichlet BCs
     fsManager.apply( time,
-                     domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                     mesh,
                      "ElementRegions",
-                     extrinsicMeshData::flow::temperature::key(),
+                     extrinsicMeshData::flow::pressure::key(),
                      [&]( FieldSpecificationBase const &,
                           string const & setName,
                           SortedArrayView< localIndex const > const &,
                           Group & subRegion,
                           string const & )
     {
+      // Check whether pressure has already been applied to this set
       string const & subRegionName = subRegion.getName();
       string const & regionName = subRegion.getParent().getParent().getName();
 
-      // 2.1 Check whether temperature has already been applied to this set
-      auto & tempSubRegionSetMap = bcTempStatusMap[regionName][subRegionName];
-      if( tempSubRegionSetMap.count( setName ) > 0 )
+      auto & subRegionSetMap = bcPresCompStatusMap[regionName][subRegionName];
+      if( subRegionSetMap.count( setName ) > 0 )
       {
         bcConsistent = false;
         GEOSX_WARNING( GEOSX_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
       }
-      tempSubRegionSetMap.insert( setName );
+      subRegionSetMap[setName].setNumComp( m_numComponents );
+    } );
 
-      // 2.2 Check that there is pressure bc applied to this set
-      auto & presSubRegionSetMap = bcStatusMap[regionName][subRegionName];
-      if( presSubRegionSetMap.count( setName ) == 0 )
+    // 2. Check temperature Dirichlet BCs
+    if( m_isThermal )
+    {
+      fsManager.apply( time,
+                       mesh,
+                       "ElementRegions",
+                       extrinsicMeshData::flow::temperature::key(),
+                       [&]( FieldSpecificationBase const &,
+                            string const & setName,
+                            SortedArrayView< localIndex const > const &,
+                            Group & subRegion,
+                            string const & )
+      {
+        string const & subRegionName = subRegion.getName();
+        string const & regionName = subRegion.getParent().getParent().getName();
+
+        // 2.1 Check whether temperature has already been applied to this set
+        auto & tempSubRegionSetMap = bcTempStatusMap[regionName][subRegionName];
+        if( tempSubRegionSetMap.count( setName ) > 0 )
+        {
+          bcConsistent = false;
+          GEOSX_WARNING( GEOSX_FMT( "Conflicting temperature boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
+        }
+        tempSubRegionSetMap.insert( setName );
+
+        // 2.2 Check that there is pressure bc applied to this set
+        auto & presSubRegionSetMap = bcPresCompStatusMap[regionName][subRegionName];
+        if( presSubRegionSetMap.count( setName ) == 0 )
+        {
+          bcConsistent = false;
+          GEOSX_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
+        }
+
+        // no need to set the number of components here, it was done while checking pressure
+      } );
+    }
+
+    // 3. Check composition BC (global component fraction)
+    fsManager.apply( time,
+                     mesh,
+                     "ElementRegions",
+                     extrinsicMeshData::flow::globalCompFraction::key(),
+                     [&] ( FieldSpecificationBase const & fs,
+                           string const & setName,
+                           SortedArrayView< localIndex const > const &,
+                           Group & subRegion,
+                           string const & )
+    {
+      // 3.1 Check pressure, temperature, and record composition bc application
+      string const & subRegionName = subRegion.getName();
+      string const & regionName = subRegion.getParent().getParent().getName();
+      integer const comp = fs.getComponent();
+
+      auto & subRegionSetMap = bcPresCompStatusMap[regionName][subRegionName];
+      if( subRegionSetMap.count( setName ) == 0 )
       {
         bcConsistent = false;
         GEOSX_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
       }
-
-      // no need to set the number of components here, it was done while checking pressure
-    } );
-  }
-
-  // 3. Check composition BC (global component fraction)
-  fsManager.apply( time,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                   "ElementRegions",
-                   extrinsicMeshData::flow::globalCompFraction::key(),
-                   [&] ( FieldSpecificationBase const & fs,
-                         string const & setName,
-                         SortedArrayView< localIndex const > const &,
-                         Group & subRegion,
-                         string const & )
-  {
-    // 3.1 Check pressure, temperature, and record composition bc application
-    string const & subRegionName = subRegion.getName();
-    string const & regionName = subRegion.getParent().getParent().getName();
-    integer const comp = fs.getComponent();
-
-    auto & subRegionSetMap = bcStatusMap[regionName][subRegionName];
-    if( subRegionSetMap.count( setName ) == 0 )
-    {
-      bcConsistent = false;
-      GEOSX_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
-    }
-    if( isThermal )
-    {
-      auto & tempSubRegionSetMap = bcTempStatusMap[regionName][subRegionName];
-      if( tempSubRegionSetMap.count( setName ) == 0 )
+      if( m_isThermal )
+      {
+        auto & tempSubRegionSetMap = bcTempStatusMap[regionName][subRegionName];
+        if( tempSubRegionSetMap.count( setName ) == 0 )
+        {
+          bcConsistent = false;
+          GEOSX_WARNING( GEOSX_FMT( "Temperature boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
+        }
+      }
+      if( comp < 0 || comp >= m_numComponents )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Temperature boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
+        GEOSX_WARNING( GEOSX_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
+        return; // can't check next part with invalid component id
       }
-    }
-    if( comp < 0 || comp >= numComp )
-    {
-      bcConsistent = false;
-      GEOSX_WARNING( GEOSX_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
-      return; // can't check next part with invalid component id
-    }
 
-    ComponentMask< MAX_NC > & compMask = subRegionSetMap[setName];
-    if( compMask[comp] )
-    {
-      bcConsistent = false;
-      GEOSX_WARNING( GEOSX_FMT( "Conflicting composition[{}] boundary conditions on set {}/{}/{}", comp, regionName, subRegionName, setName ) );
-    }
-    compMask.set( comp );
-  } );
-
-  // 3.2 Check consistency between composition BC applied to sets
-  for( auto const & regionEntry : bcStatusMap )
-  {
-    for( auto const & subRegionEntry : regionEntry.second )
-    {
-      for( auto const & setEntry : subRegionEntry.second )
+      ComponentMask< MAX_NC > & compMask = subRegionSetMap[setName];
+      if( compMask[comp] )
       {
-        ComponentMask< MAX_NC > const & compMask = setEntry.second;
-        for( integer ic = 0; ic < numComp; ++ic )
+        bcConsistent = false;
+        GEOSX_WARNING( GEOSX_FMT( "Conflicting composition[{}] boundary conditions on set {}/{}/{}", comp, regionName, subRegionName, setName ) );
+      }
+      compMask.set( comp );
+    } );
+
+    // 3.2 Check consistency between composition BC applied to sets
+    for( auto const & regionEntry : bcPresCompStatusMap )
+    {
+      for( auto const & subRegionEntry : regionEntry.second )
+      {
+        for( auto const & setEntry : subRegionEntry.second )
         {
-          if( !compMask[ic] )
+          ComponentMask< MAX_NC > const & compMask = setEntry.second;
+          for( integer ic = 0; ic < m_numComponents; ++ic )
           {
-            bcConsistent = false;
-            GEOSX_WARNING( GEOSX_FMT( "Boundary condition not applied to composition[{}] on set {}/{}/{}",
-                                      ic, regionEntry.first, subRegionEntry.first, setEntry.first ) );
+            if( !compMask[ic] )
+            {
+              bcConsistent = false;
+              GEOSX_WARNING( GEOSX_FMT( "Boundary condition not applied to composition[{}] on set {}/{}/{}",
+                                        ic, regionEntry.first, subRegionEntry.first, setEntry.first ) );
+            }
           }
         }
       }
     }
-  }
+  } );
 
   return bcConsistent;
 }
-
-}
-
 
 void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
                                                     real64 const dt,
@@ -1528,177 +1524,182 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
   // Only validate BC at the beginning of Newton loop
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
-    bool const bcConsistent = validateDirichletBC( domain, m_isThermal, m_numComponents, time + dt );
+    bool const bcConsistent = validateDirichletBC( domain, time + dt );
     GEOSX_ERROR_IF( !bcConsistent, GEOSX_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  // 1. Apply pressure Dirichlet BCs, store in a separate field
-  fsManager.apply( time + dt,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                   "ElementRegions",
-                   extrinsicMeshData::flow::pressure::key(),
-                   [&]( FieldSpecificationBase const & fs,
-                        string const & setName,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group & subRegion,
-                        string const & )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & )
   {
-    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-    {
-      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
-                                   getName(), time+dt, FieldSpecificationBase::catalogName(),
-                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
-    }
 
-    fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
-                                                                           time + dt,
-                                                                           subRegion,
-                                                                           extrinsicMeshData::flow::bcPressure::key() );
-  } );
-
-  // 2. Apply temperature Dirichlet BCs, store in a separate field
-  if( m_isThermal )
-  {
+    // 1. Apply pressure Dirichlet BCs, store in a separate field
     fsManager.apply( time + dt,
-                     domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                     mesh,
                      "ElementRegions",
-                     extrinsicMeshData::flow::temperature::key(),
+                     extrinsicMeshData::flow::pressure::key(),
                      [&]( FieldSpecificationBase const & fs,
-                          string const &,
+                          string const & setName,
                           SortedArrayView< localIndex const > const & targetSet,
                           Group & subRegion,
                           string const & )
     {
+      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+                                     getName(), time+dt, FieldSpecificationBase::catalogName(),
+                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+      }
+
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                              time + dt,
                                                                              subRegion,
-                                                                             extrinsicMeshData::flow::bcTemperature::key() );
-    } );
-  }
-
-  // 3. Apply composition BC (global component fraction) and store them for constitutive call
-  fsManager.apply( time + dt,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                   "ElementRegions",
-                   extrinsicMeshData::flow::globalCompFraction::key(),
-                   [&] ( FieldSpecificationBase const & fs,
-                         string const &,
-                         SortedArrayView< localIndex const > const & targetSet,
-                         Group & subRegion,
-                         string const & )
-  {
-    fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
-                                                                           time + dt,
-                                                                           subRegion,
-                                                                           extrinsicMeshData::flow::globalCompFraction::key() );
-  } );
-
-  globalIndex const rankOffset = dofManager.rankOffset();
-  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-
-  // 4. Call constitutive update, back-calculate target global component densities and apply to the system
-  fsManager.apply( time + dt,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                   "ElementRegions",
-                   extrinsicMeshData::flow::pressure::key(),
-                   [&] ( FieldSpecificationBase const &,
-                         string const &,
-                         SortedArrayView< localIndex const > const & targetSet,
-                         Group & subRegion,
-                         string const & )
-  {
-    string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-    MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-
-    // in the isothermal case, we use the reservoir temperature to enforce the boundary condition
-    string const temperatureKey = m_isThermal ? extrinsicMeshData::flow::bcTemperature::key() : extrinsicMeshData::flow::temperature::key();
-
-    arrayView1d< real64 const > const bcPres =
-      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcPressure::key() );
-    arrayView1d< real64 const > const bcTemp =
-      subRegion.getReference< array1d< real64 > >( temperatureKey );
-    arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::globalCompFraction::key() );
-
-    constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-    {
-      using FluidType = TYPEOFREF( castedFluid );
-      using ExecPolicy = typename FluidType::exec_policy;
-      typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-      thermalCompositionalMultiphaseBaseKernels::
-        FluidUpdateKernel::
-        launch< ExecPolicy >( targetSet,
-                              fluidWrapper,
-                              bcPres,
-                              bcTemp,
-                              compFrac );
+                                                                             extrinsicMeshData::flow::bcPressure::key() );
     } );
 
-    arrayView1d< integer const > const ghostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-    arrayView1d< globalIndex const > const dofNumber =
-      subRegion.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< real64 const > const pres =
-      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-    arrayView1d< real64 const > const temp =
-      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
-    arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::globalCompDensity::key() );
-    arrayView2d< real64 const, multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
-
-    integer const numComp = m_numComponents;
-    integer const isThermal = m_isThermal;
-    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    // 2. Apply temperature Dirichlet BCs, store in a separate field
+    if( m_isThermal )
     {
-      localIndex const ei = targetSet[a];
-      if( ghostRank[ei] >= 0 )
+      fsManager.apply( time + dt,
+                       mesh,
+                       "ElementRegions",
+                       extrinsicMeshData::flow::temperature::key(),
+                       [&]( FieldSpecificationBase const & fs,
+                            string const &,
+                            SortedArrayView< localIndex const > const & targetSet,
+                            Group & subRegion,
+                            string const & )
       {
-        return;
-      }
+        fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
+                                                                               time + dt,
+                                                                               subRegion,
+                                                                               extrinsicMeshData::flow::bcTemperature::key() );
+      } );
+    }
 
-      globalIndex const dofIndex = dofNumber[ei];
-      localIndex const localRow = dofIndex - rankOffset;
-      real64 rhsValue;
+    // 3. Apply composition BC (global component fraction) and store them for constitutive call
+    fsManager.apply( time + dt,
+                     mesh,
+                     "ElementRegions",
+                     extrinsicMeshData::flow::globalCompFraction::key(),
+                     [&] ( FieldSpecificationBase const & fs,
+                           string const &,
+                           SortedArrayView< localIndex const > const & targetSet,
+                           Group & subRegion,
+                           string const & )
+    {
+      fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
+                                                                             time + dt,
+                                                                             subRegion,
+                                                                             extrinsicMeshData::flow::globalCompFraction::key() );
+    } );
 
-      // 4.1. Apply pressure value to the matrix/rhs
-      FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
-                                                  rankOffset,
-                                                  localMatrix,
-                                                  rhsValue,
-                                                  bcPres[ei],
-                                                  pres[ei] );
-      localRhs[localRow] = rhsValue;
+    globalIndex const rankOffset = dofManager.rankOffset();
+    string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-      // 4.2. Apply temperature value to the matrix/rhs
-      if( isThermal )
+    // 4. Call constitutive update, back-calculate target global component densities and apply to the system
+    fsManager.apply( time + dt,
+                     mesh,
+                     "ElementRegions",
+                     extrinsicMeshData::flow::pressure::key(),
+                     [&] ( FieldSpecificationBase const &,
+                           string const &,
+                           SortedArrayView< localIndex const > const & targetSet,
+                           Group & subRegion,
+                           string const & )
+    {
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+
+      // in the isothermal case, we use the reservoir temperature to enforce the boundary condition
+      string const temperatureKey = m_isThermal ? extrinsicMeshData::flow::bcTemperature::key() : extrinsicMeshData::flow::temperature::key();
+
+      arrayView1d< real64 const > const bcPres =
+        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcPressure::key() );
+      arrayView1d< real64 const > const bcTemp =
+        subRegion.getReference< array1d< real64 > >( temperatureKey );
+      arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::globalCompFraction::key() );
+
+      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
-        FieldSpecificationEqual::SpecifyFieldValue( dofIndex + numComp + 1,
+        using FluidType = TYPEOFREF( castedFluid );
+        using ExecPolicy = typename FluidType::exec_policy;
+        typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+
+        thermalCompositionalMultiphaseBaseKernels::
+          FluidUpdateKernel::
+          launch< ExecPolicy >( targetSet,
+                                fluidWrapper,
+                                bcPres,
+                                bcTemp,
+                                compFrac );
+      } );
+
+      arrayView1d< integer const > const ghostRank =
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< globalIndex const > const dofNumber =
+        subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< real64 const > const pres =
+        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+      arrayView1d< real64 const > const temp =
+        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
+      arrayView2d< real64 const, compflow::USD_COMP > const compDens =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::globalCompDensity::key() );
+      arrayView2d< real64 const, multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
+
+      integer const numComp = m_numComponents;
+      integer const isThermal = m_isThermal;
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+      {
+        localIndex const ei = targetSet[a];
+        if( ghostRank[ei] >= 0 )
+        {
+          return;
+        }
+
+        globalIndex const dofIndex = dofNumber[ei];
+        localIndex const localRow = dofIndex - rankOffset;
+        real64 rhsValue;
+
+        // 4.1. Apply pressure value to the matrix/rhs
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
                                                     rankOffset,
                                                     localMatrix,
                                                     rhsValue,
-                                                    bcTemp[ei],
-                                                    temp[ei] );
-        localRhs[localRow + numComp + 1] = rhsValue;
-      }
+                                                    bcPres[ei],
+                                                    pres[ei] );
+        localRhs[localRow] = rhsValue;
 
-      // 4.3. For each component, apply target global density value
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
-                                                    rankOffset,
-                                                    localMatrix,
-                                                    rhsValue,
-                                                    totalDens[ei][0] * compFrac[ei][ic],
-                                                    compDens[ei][ic] );
-        localRhs[localRow + ic + 1] = rhsValue;
-      }
+        // 4.2. Apply temperature value to the matrix/rhs
+        if( isThermal )
+        {
+          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + numComp + 1,
+                                                      rankOffset,
+                                                      localMatrix,
+                                                      rhsValue,
+                                                      bcTemp[ei],
+                                                      temp[ei] );
+          localRhs[localRow + numComp + 1] = rhsValue;
+        }
+
+        // 4.3. For each component, apply target global density value
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
+                                                      rankOffset,
+                                                      localMatrix,
+                                                      rhsValue,
+                                                      totalDens[ei][0] * compFrac[ei][ic],
+                                                      compDens[ei][ic] );
+          localRhs[localRow + ic + 1] = rhsValue;
+        }
+      } );
     } );
   } );
-
 }
 
 void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domain )
