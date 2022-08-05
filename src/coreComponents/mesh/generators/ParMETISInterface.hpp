@@ -28,19 +28,37 @@ namespace parmetis
 {
 
 /**
- * @brief Partition a mesh according to its dual graph.
- * @param elemToNodes the input mesh represented by its elem-node graph
+ * @brief Convert a element-node mesh map into a dual (element-element) graph
+ * @param elemToNodes the input mesh represented by its elem-node map
+ * @param elemDist the parallel distribution of elements: element index offset on each rank
  * @param comm the MPI communicator of processes to partition over
  * @param minCommonNodes minimum number of shared nodes to create an graph edge
+ * @return a graph with an edge for every pair of elements that share at least @p minCommonNodes nodes;
+ *         target element indices are global with respect to offsets in @p elemDist.
+ * @note elemDist must be a comm-wide exclusive scan of elemToNodes.size();
+ *       the user may compute it once and reuse in a subsequent call to partition().
+ */
+ArrayOfArrays< int64_t, int64_t >
+meshToDual( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
+            arrayView1d< int64_t const > const & elemDist,
+            MPI_Comm comm,
+            int const minCommonNodes );
+
+/**
+ * @brief Partition a mesh according to its dual graph.
+ * @param graph the input graph (edges of locally owned nodes)
+ * @param vertDist the parallel distribution of vertices: vertex index offset on each rank
+ * @param numParts target number of partitions
+ * @param comm the MPI communicator of processes to partition over
  * @param numRefinements number of partition refinement iterations
  * @return an array of target partitions for each element in local mesh
- * @note the number of partitions will be equal to the size of @p comm.
  */
 array1d< int64_t >
-partMeshKway( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
-              MPI_Comm comm,
-              int minCommonNodes,
-              int numRefinements );
+partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
+           arrayView1d< int64_t const > const & vertDist,
+           int64_t const numParts,
+           MPI_Comm comm,
+           int const numRefinements );
 
 } // namespace parmetis
 } // namespace geosx
