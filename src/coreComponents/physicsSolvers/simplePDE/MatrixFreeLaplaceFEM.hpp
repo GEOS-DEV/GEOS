@@ -26,23 +26,23 @@ namespace geosx
 // are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
 
 //START_SPHINX_INCLUDE_BEGINCLASS
-class ExplicitLaplaceFEM : public LaplaceBaseH1
+class MatrixFreeLaplaceFEM : public LaplaceBaseH1
 {
 public:
   /// The default nullary constructor is disabled to avoid compiler auto-generation:
-  ExplicitLaplaceFEM() = delete;
+  MatrixFreeLaplaceFEM() = delete;
 
   /// The constructor needs a user-defined "name" and a parent Group (to place this instance in the
   /// tree structure of classes)
-  ExplicitLaplaceFEM( const string & name,
+  MatrixFreeLaplaceFEM( const string & name,
                       Group * const parent );
 
   /// Destructor
-  virtual ~ExplicitLaplaceFEM() override;
+  virtual ~MatrixFreeLaplaceFEM() override;
 
   /// "CatalogName()" return the string used as XML tag in the input file.  It ties the XML tag with
   /// this C++ classes. This is important.
-  static string catalogName() { return "ExplicitLaplaceFEM"; }
+  static string catalogName() { return "MatrixFreeLaplaceFEM"; }
 
   virtual
   real64 solverStep( real64 const & time_n,

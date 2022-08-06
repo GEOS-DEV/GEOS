@@ -3,7 +3,7 @@
 <Problem>
 
   <Solvers>
-    <ExplicitLaplaceFEM
+    <MatrixFreeLaplaceFEM
       name="laplace"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
@@ -11,7 +11,7 @@
       targetRegions="{ Domain }">
       <LinearSolverParameters
         directParallel="0"/>
-    </ExplicitLaplaceFEM>
+    </MatrixFreeLaplaceFEM>
   </Solvers>
 
   <Events

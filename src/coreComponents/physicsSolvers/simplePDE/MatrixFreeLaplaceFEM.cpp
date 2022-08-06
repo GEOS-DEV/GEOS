@@ -13,11 +13,11 @@
  */
 
 /**
- * @file ExplicitLaplaceFEM.cpp
+ * @file MatrixFreeLaplaceFEM.cpp
  */
 
 // Source includes
-#include "ExplicitLaplaceFEM.hpp"
+#include "MatrixFreeLaplaceFEM.hpp"
 #include "LaplaceFEMKernels.hpp"
 #include "TeamLaplaceFEMKernels.hpp"
 
@@ -63,10 +63,10 @@ using namespace dataRepository;
 
 
 /* CONSTRUCTOR
-   First, let us inspect the constructor of a "ExplicitLaplaceFEM" object.
+   First, let us inspect the constructor of a "MatrixFreeLaplaceFEM" object.
    This constructor does three important things:
-   1 - It constructs an instance of the ExplicitLaplaceFEM class (here: using the SolverBase constructor and passing through the arguments).
-   2 - It sets some default values for the ExplicitLaplaceFEM-specific private variables (here: m_fieldName and m_timeIntegrationOption).
+   1 - It constructs an instance of the MatrixFreeLaplaceFEM class (here: using the SolverBase constructor and passing through the arguments).
+   2 - It sets some default values for the MatrixFreeLaplaceFEM-specific private variables (here: m_fieldName and m_timeIntegrationOption).
    3 - It creates and activates a "registerWrapper" for each private variable.
    This is where the private variables are declared either as REQUIRED or OPTIONAL.
    An error is thrown if a REQUIRED variable is not specified in the XML file,
@@ -75,18 +75,18 @@ using namespace dataRepository;
  */
 
 //START_SPHINX_INCLUDE_CONSTRUCTOR
-ExplicitLaplaceFEM::ExplicitLaplaceFEM( const string & name,
+MatrixFreeLaplaceFEM::MatrixFreeLaplaceFEM( const string & name,
                         Group * const parent ):
   LaplaceBaseH1( name, parent )
 {}
 //END_SPHINX_INCLUDE_CONSTRUCTOR
 
-ExplicitLaplaceFEM::~ExplicitLaplaceFEM()
+MatrixFreeLaplaceFEM::~MatrixFreeLaplaceFEM()
 {
   // TODO Auto-generated destructor stub
 }
 
-real64 ExplicitLaplaceFEM::solverStep( real64 const & time_n,
+real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
                                        real64 const & dt,
                                        const int cycleNumber,
                                        DomainPartition & domain )
@@ -100,7 +100,7 @@ real64 ExplicitLaplaceFEM::solverStep( real64 const & time_n,
   return this->explicitStep( time_n, dt, cycleNumber, domain );
 }
 
-real64 ExplicitLaplaceFEM::explicitStep( real64 const & time_n,
+real64 MatrixFreeLaplaceFEM::explicitStep( real64 const & time_n,
                                          real64 const & dt,
                                          const int GEOSX_UNUSED_PARAM( cycleNumber ),
                                          DomainPartition & domain )
@@ -131,6 +131,6 @@ real64 ExplicitLaplaceFEM::explicitStep( real64 const & time_n,
 }
 
 //START_SPHINX_INCLUDE_REGISTER
-REGISTER_CATALOG_ENTRY( SolverBase, ExplicitLaplaceFEM, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, MatrixFreeLaplaceFEM, string const &, Group * const )
 //END_SPHINX_INCLUDE_REGISTER
 } /* namespace geosx */

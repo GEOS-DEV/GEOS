@@ -264,7 +264,7 @@ public:
     // RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
     // RAJA::ReduceMax< RAJA::seq_reduce, real64 > maxResidual( 0 );
 #if defined(RAJA_ENABLE_CUDA)
-    // RAJA::ReduceMax< RAJA::cuda_reduce, real64 > maxResidual( 0 );
+    RAJA::ReduceMax< RAJA::cuda_reduce, real64 > maxResidual( 0 );
 #else
     RAJA::ReduceMax< RAJA::seq_reduce, real64 > maxResidual( 0 );
 #endif
@@ -292,7 +292,7 @@ public:
         loop<thread_z>( ctx, RangeSegment( 0, batch_size ), [&]( const int thread_index_z )
         {
           const localIndex element_index = block_index * batch_size + thread_index_z;
-          if ( element_index >= (localIndex)numElems ) { return; }
+          if ( element_index >= numElems ) { return; }
 
           kernelComponent.setup( stack, element_index );
           loop<thread_y>( ctx, RangeSegment( 0, num_quads_1d ), [&] ( localIndex quad_y )
