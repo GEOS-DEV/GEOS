@@ -305,6 +305,10 @@ public:
 
 protected:
 
+  virtual void postProcessInput() override;
+
+  virtual void initializePreSubGroups() override;
+
   /**
    * @brief Utility function that checks the consistency of the constitutive models
    * @param[in] domain the domain partition
@@ -313,17 +317,29 @@ protected:
    */
   void validateConstitutiveModels( DomainPartition const & domain ) const;
 
-  virtual void postProcessInput() override;
-
-  virtual void initializePreSubGroups() override;
-
-
   /**
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
    * @param[in] cm reference to the global constitutive model manager
    */
   void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
+  /**
+   * @brief Utility function that encapsulates the call to FieldSpecificationBase::applyFieldValue in BC application
+   * @param[in] time_n the time at the beginning of the step
+   * @param[in] dt the time step
+   * @param[in] mesh the mesh level object
+   * @param[in] logMessage the log message issued by the solver if the bc is called
+   * @param[in] targetManagerName the name of the manager ("ElementRegions" or "faceManager")
+   * @param[in] extrinsicFieldKey the key of the field specified in the xml file
+   * @param[in] extrinsicBoundaryFieldKey the key of the boundary field
+   */
+  void applyFieldValue( real64 const & time_n,
+                        real64 const & dt,
+                        MeshLevel & mesh,
+                        char const logMessage[],
+                        string const targetManagerName,
+                        string const extrinsicFieldKey,
+                        string const extrinsicBoundaryFieldKey ) const;
 
   /// flag to specify whether the sparsity pattern needs to be rebuilt
   bool m_systemSetupDone;
@@ -367,7 +383,6 @@ private:
    */
   bool validateDirichletBC( DomainPartition & domain,
                             real64 const time ) const;
-
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
