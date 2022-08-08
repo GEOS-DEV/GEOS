@@ -1090,19 +1090,6 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
   } );
 }
 
-void ReactiveCompositionalMultiphaseOBL::solveLinearSystem( DofManager const & dofManager,
-                                                            ParallelMatrix & matrix,
-                                                            ParallelVector & rhs,
-                                                            ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-
-  rhs.scale( -1.0 );
-  solution.zero();
-
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
-}
-
 // to be changed into enforceOBLLimits - to chop all primary variables to be within OBL discretization space
 void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariablesToOBLLimits( DomainPartition & domain )
 {

@@ -105,12 +105,6 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  solveLinearSystem( DofManager const & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override;
-
-  virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
@@ -254,12 +248,6 @@ public:
   void computeHydrostaticEquilibrium();
 
   /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param domain the domain containing the mesh and fields
-   */
-  void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const;
-
-  /**
    * @brief Function to perform the Application of Dirichlet type BC's
    * @param time current time
    * @param dt time step
@@ -371,6 +359,16 @@ protected:
   string m_referenceFluidModelName;
 
 private:
+
+  /**
+   * @brief Utility function to validate the consistency of Dirichlet BC input
+   * @param[in] domain the domain partition
+   * @param[in] time the time at the end of the time step (time_n + dt)
+   */
+  bool validateDirichletBC( DomainPartition & domain,
+                            real64 const time ) const;
+
+
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };

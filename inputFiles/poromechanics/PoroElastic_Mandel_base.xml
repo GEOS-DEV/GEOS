@@ -7,7 +7,7 @@
     <SinglePhasePoromechanics
       name="poroSolve"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">

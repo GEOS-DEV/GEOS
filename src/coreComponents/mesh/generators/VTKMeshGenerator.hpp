@@ -49,6 +49,15 @@ class VTKMeshGenerator : public ExternalMeshGeneratorBase
 public:
 
   /**
+   * @brief Choice of advanced mesh partitioner
+   */
+  enum class PartitionMethod : integer
+  {
+    parmetis, ///< Use ParMETIS library
+    ptscotch, ///< Use PTScotch library
+  };
+
+  /**
    * @brief Main constructor for MeshGenerator base class.
    * @param[in] name of the VTKMeshGenerator object
    * @param[in] parent the parent Group pointer for the MeshGenerator object
@@ -116,6 +125,8 @@ private:
 
   real64 writeNodes( CellBlockManager & cellBlockManager ) const;
 
+  void importNodesets( vtkUnstructuredGrid & mesh, CellBlockManager & cellBlockManager ) const;
+
   void writeCells( CellBlockManager & cellBlockManager ) const;
 
   void writeSurfaces( CellBlockManager & cellBlockManager ) const;
@@ -132,7 +143,9 @@ private:
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
+    constexpr static char const * partitionMethodString() { return "partitionMethod"; }
   };
   /// @endcond
 
@@ -145,12 +158,23 @@ private:
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;
 
+  /// Names of VTK nodesets to import
+  string_array m_nodesetNames;
+
   /// Number of graph partitioning refinement iterations
   integer m_partitionRefinement = 0;
+
+  /// Method (library) used to partition the mesh
+  PartitionMethod m_partitionMethod = PartitionMethod::parmetis;
 
   /// Lists of VTK cell ids, organized by element type, then by region
   CellMapType m_cellMap;
 };
+
+/// Strings for VTKMeshGenerator::PartitionMethod enumeration
+ENUM_STRINGS( VTKMeshGenerator::PartitionMethod,
+              "parmetis",
+              "ptscotch" );
 
 } // namespace geosx
 

@@ -27,6 +27,9 @@
 #include "mesh/generators/CellBlockManager.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/ParMETISInterface.hpp"
+#ifdef GEOSX_USE_SCOTCH
+#include "mesh/generators/PTScotchInterface.hpp"
+#endif
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 #include <vtkArrayDispatch.h>
@@ -67,12 +70,20 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setApplyDefaultValue( "attribute" ).
     setDescription( "Name of the VTK cell attribute to use as region marker" );
 
+  registerWrapper( viewKeyStruct::nodesetNamesString(), &m_nodesetNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of the VTK nodesets to import" );
+
   registerWrapper( viewKeyStruct::partitionRefinementString(), &m_partitionRefinement ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Number of partitioning refinement iterations (defaults to 1, recommended value)."
                     "A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). "
                     "Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns." );
+
+  registerWrapper( viewKeyStruct::partitionMethodString(), &m_partitionMethod ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Method (library) used to partition the mesh" );
 }
 
 namespace vtk
@@ -242,15 +253,50 @@ splitMeshByPartition( vtkUnstructuredGrid & mesh,
 
 vtkSmartPointer< vtkUnstructuredGrid >
 redistributeByCellGraph( vtkUnstructuredGrid & mesh,
+                         VTKMeshGenerator::PartitionMethod const method,
                          MPI_Comm const comm,
                          int const numRefinements )
 {
   GEOSX_MARK_FUNCTION;
 
+  int64_t const numElems = mesh.GetNumberOfCells();
+  int64_t const numProcs = MpiWrapper::commSize( comm );
+
+  // Compute `elemdist` parameter (element range owned by each rank)
+  array1d< int64_t > const elemDist( numProcs + 1 );
+  {
+    array1d< int64_t > elemCounts;
+    MpiWrapper::allGather( numElems, elemCounts, comm );
+    std::partial_sum( elemCounts.begin(), elemCounts.end(), elemDist.begin() + 1 );
+  }
+
   // Use int64_t here to match ParMETIS' idx_t
   ArrayOfArrays< int64_t, int64_t > const elemToNodes = buildElemToNodes< int64_t >( mesh );
-  int64_t const numProcs = MpiWrapper::commSize( comm );
-  array1d< int64_t > const newParts = parmetis::partMeshKway( elemToNodes.toViewConst(), comm, 3, numRefinements );
+  ArrayOfArrays< int64_t, int64_t > const graph = parmetis::meshToDual( elemToNodes.toViewConst(), elemDist, comm, 3 );
+
+  array1d< int64_t > const newParts = [&]()
+  {
+    switch( method )
+    {
+      case VTKMeshGenerator::PartitionMethod::parmetis:
+      {
+        return parmetis::partition( graph.toViewConst(), elemDist, numProcs, comm, numRefinements );
+      }
+      case VTKMeshGenerator::PartitionMethod::ptscotch:
+      {
+#ifdef GEOSX_USE_SCOTCH
+        GEOSX_WARNING_IF( numRefinements > 0, "Partition refinement is not supported by 'ptscotch' partitioning method" );
+        return ptscotch::partition( graph.toViewConst(), numProcs, comm );
+#else
+        GEOSX_THROW( "GEOSX must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method" );
+#endif
+      }
+      default:
+      {
+        GEOSX_THROW( "Unknown partition method", InputError );
+      }
+    }
+  }();
   vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numProcs, newParts.toViewConst() );
   return vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
 }
@@ -307,6 +353,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
 vtkSmartPointer< vtkUnstructuredGrid >
 redistributeMesh( vtkUnstructuredGrid & loadedMesh,
                   MPI_Comm const comm,
+                  VTKMeshGenerator::PartitionMethod const method,
                   int const partitionRefinement )
 {
   GEOSX_MARK_FUNCTION;
@@ -329,7 +376,7 @@ redistributeMesh( vtkUnstructuredGrid & loadedMesh,
   // Redistribute the mesh again using higher-quality graph partitioner
   if( partitionRefinement > 0 )
   {
-    mesh = redistributeByCellGraph( *mesh, comm, partitionRefinement - 1 );
+    mesh = redistributeByCellGraph( *mesh, method, comm, partitionRefinement - 1 );
   }
 
   return mesh;
@@ -950,6 +997,32 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
                                                        false );
 }
 
+void VTKMeshGenerator::importNodesets( vtkUnstructuredGrid & mesh, CellBlockManager & cellBlockManager ) const
+{
+  auto & nodeSets = cellBlockManager.getNodeSets();
+  localIndex const numPoints = LvArray::integerConversion< localIndex >( m_vtkMesh->GetNumberOfPoints() );
+
+  for( int i=0; i < m_nodesetNames.size(); ++i )
+  {
+    GEOSX_LOG_LEVEL_RANK_0( 2, "    " + m_nodesetNames[i] );
+
+    vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( m_nodesetNames[i].c_str() );
+    GEOSX_THROW_IF( curArray == nullptr,
+                    GEOSX_FMT( "Target nodeset '{}' not found in mesh", m_nodesetNames[i] ),
+                    InputError );
+    vtkTypeInt64Array const & nodesetMask = *vtkTypeInt64Array::FastDownCast( curArray );
+
+    SortedArray< localIndex > & targetNodeset = nodeSets[ m_nodesetNames[i] ];
+    for( localIndex j=0; j < numPoints; ++j )
+    {
+      if( nodesetMask.GetValue( j ) == 1 )
+      {
+        targetNodeset.insert( j );
+      }
+    }
+  }
+}
+
 real64 VTKMeshGenerator::writeNodes( CellBlockManager & cellBlockManager ) const
 {
   localIndex const numPts = LvArray::integerConversion< localIndex >( m_vtkMesh->GetNumberOfPoints() );
@@ -987,6 +1060,9 @@ real64 VTKMeshGenerator::writeNodes( CellBlockManager & cellBlockManager ) const
   std::iota( allNodes.begin(), allNodes.end(), 0 );
   SortedArray< localIndex > & allNodeSet = cellBlockManager.getNodeSets()[ "all" ];
   allNodeSet.insert( allNodes.begin(), allNodes.end() );
+
+  // Import remaining nodesets
+  importNodesets( *m_vtkMesh, cellBlockManager );
 
   constexpr real64 minReal = LvArray::NumericLimits< real64 >::min;
   constexpr real64 maxReal = LvArray::NumericLimits< real64 >::max;
@@ -1090,7 +1166,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
     GEOSX_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
     vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = vtk::loadMesh( m_filePath );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
-    m_vtkMesh = vtk::redistributeMesh( *loadedMesh, comm, m_partitionRefinement );
+    m_vtkMesh = vtk::redistributeMesh( *loadedMesh, comm, m_partitionMethod, m_partitionRefinement );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
     std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
     std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
