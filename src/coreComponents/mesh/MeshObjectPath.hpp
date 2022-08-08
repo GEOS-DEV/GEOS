@@ -115,6 +115,12 @@ private:
 namespace geosx
 {
 
+ENUM_STRINGS( MeshObjectPath::ObjectTypes,
+              MeshLevel::groupStructKeys::nodeManagerString(),
+              MeshLevel::groupStructKeys::edgeManagerString(),
+              MeshLevel::groupStructKeys::faceManagerString(),
+              MeshLevel::groupStructKeys::elemManagerString(),
+              "invalid" );
 
 template< typename OBJECT_TYPE >
 MeshObjectPath::ObjectTypes MeshObjectPath::checkObjectTypeConsistency() const
@@ -227,40 +233,43 @@ void MeshObjectPath::forObjectsInPath( MeshLevel & meshLevel,
     auto const levelIter = bodyIter->second.find( levelName );
     if( levelIter != bodyIter->second.end() )
     {
-      if( m_objectType == ObjectTypes::nodes )
+      if( OBJECT_TYPE::catalogName() == EnumStrings< ObjectTypes >::toString( m_objectType ) )
       {
-        func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getNodeManager() ) );
-      }
-      else if( m_objectType == ObjectTypes::edges )
-      {
-        func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getEdgeManager()) );
-      }
-      else if( m_objectType == ObjectTypes::faces )
-      {
-        func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getFaceManager()) );
-      }
-      else if( m_objectType == ObjectTypes::elems )
-      {
-        ElementRegionManager & elemRegionMan = meshLevel.getElemManager();
-        for( auto & elemRegionPair : levelIter->second )
+        if( m_objectType == ObjectTypes::nodes )
         {
-          ElementRegionBase & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
-          if( std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value )
+          func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getNodeManager() ) );
+        }
+        else if( m_objectType == ObjectTypes::edges )
+        {
+          func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getEdgeManager()) );
+        }
+        else if( m_objectType == ObjectTypes::faces )
+        {
+          func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getFaceManager()) );
+        }
+        else if( m_objectType == ObjectTypes::elems )
+        {
+          ElementRegionManager & elemRegionMan = meshLevel.getElemManager();
+          for( auto & elemRegionPair : levelIter->second )
           {
-            func( dynamic_cast< OBJECT_TYPE & >(elemRegion) );
-          }
-          else
-          {
-            for( auto & elemSubRegionName : elemRegionPair.second )
+            ElementRegionBase & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
+            if( std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value )
             {
-              ElementSubRegionBase & subRegion = elemRegion.getSubRegion( elemSubRegionName );
-              if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value )
+              func( dynamic_cast< OBJECT_TYPE & >(elemRegion) );
+            }
+            else
+            {
+              for( auto & elemSubRegionName : elemRegionPair.second )
               {
-                func( dynamic_cast< OBJECT_TYPE & >(subRegion) );
-              }
-              else
-              {
-                GEOSX_ERROR( "You shouldn't be here" );
+                ElementSubRegionBase & subRegion = elemRegion.getSubRegion( elemSubRegionName );
+                if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value )
+                {
+                  func( dynamic_cast< OBJECT_TYPE & >(subRegion) );
+                }
+                else
+                {
+                  GEOSX_ERROR( "You shouldn't be here" );
+                }
               }
             }
           }
@@ -271,12 +280,6 @@ void MeshObjectPath::forObjectsInPath( MeshLevel & meshLevel,
 }
 
 
-ENUM_STRINGS( MeshObjectPath::ObjectTypes,
-              MeshLevel::groupStructKeys::nodeManagerString(),
-              MeshLevel::groupStructKeys::edgeManagerString(),
-              MeshLevel::groupStructKeys::faceManagerString(),
-              MeshLevel::groupStructKeys::elemManagerString(),
-              "invalid" );
 
 } /* namespace geosx */
 

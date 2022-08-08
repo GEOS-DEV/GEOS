@@ -229,62 +229,89 @@ public:
               string const & fieldName,
               LAMBDA && lambda ) const
   {
-    GEOSX_MARK_FUNCTION;
-
-    string const meshBodyName = mesh.getParent().getParent().getName();
-    string const meshLevelName = mesh.getName();
-
-    // loop over all FieldSpecificationBase objects
-    this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
-    {
-
-      MeshObjectPath const & meshObjectPaths = fs.getMeshObjectPaths();
-      meshObjectPaths.forObjectsInPath( mesh, 
-                                        [&] ( ObjectManagerBase & object ) 
-      {
-        if( object.getCatalogName() == fieldPath )
-      });
-
+  GEOSX_MARK_FUNCTION;
+  // loop over all FieldSpecificationBase objects
+  this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
+  {
       int const isInitialCondition = fs.initialCondition();
 
-      if( ( isInitialCondition && fieldPath.empty() ) ||
-          ( !isInitialCondition && fs.getObjectPath().find( fieldPath ) != string::npos ) )
+    if( ( isInitialCondition && fieldPath.empty() ) ||
+        ( !isInitialCondition && fs.getObjectPath().find( fieldPath ) != string::npos ) )
+    {
+      string_array const targetPath = stringutilities::tokenize( fs.getObjectPath(), "/" );
+      localIndex const targetPathLength = LvArray::integerConversion< localIndex >( targetPath.size());
+      string const targetName = fs.getFieldName();
+
+      if( ( isInitialCondition && fieldName=="" ) ||
+          ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && targetName==fieldName ) )
       {
-        string_array const targetPath = stringutilities::tokenize( fs.getObjectPath(), "/" );
-        localIndex const targetPathLength = LvArray::integerConversion< localIndex >( targetPath.size());
-        string const targetName = fs.getFieldName();
-
-        if( ( isInitialCondition && fieldName=="" ) ||
-            ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && targetName==fieldName ) )
+        dataRepository::Group * targetGroup = &mesh;
+        for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
         {
-          dataRepository::Group * targetGroup = &mesh;
-          for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
+          dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
+          if( elemRegionSubGroup != nullptr )
           {
-            dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
-            if( elemRegionSubGroup != nullptr )
-            {
-              targetGroup = elemRegionSubGroup;
-            }
-
-            dataRepository::Group * const elemSubRegionSubGroup = targetGroup->getGroupPointer( ElementRegionBase::viewKeyStruct::elementSubRegions() );
-            if( elemSubRegionSubGroup != nullptr )
-            {
-              targetGroup = elemSubRegionSubGroup;
-            }
-
-            if( targetPath[pathLevel] == ElementRegionManager::groupKeyStruct::elementRegionsGroup() ||
-                targetPath[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions() )
-            {
-              continue;
-            }
-
-            targetGroup = &targetGroup->getGroup( targetPath[pathLevel] );
+            targetGroup = elemRegionSubGroup;
           }
-          applyOnTargetRecursive( *targetGroup, fs, targetName, lambda );
+
+          dataRepository::Group * const elemSubRegionSubGroup = targetGroup->getGroupPointer( ElementRegionBase::viewKeyStruct::elementSubRegions() );
+          if( elemSubRegionSubGroup != nullptr )
+          {
+            targetGroup = elemSubRegionSubGroup;
+          }
+
+          if( targetPath[pathLevel] == ElementRegionManager::groupKeyStruct::elementRegionsGroup() ||
+              targetPath[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions() )
+          {
+            continue;
+          }
+
+          targetGroup = &targetGroup->getGroup( targetPath[pathLevel] );
+        }
+        applyOnTargetRecursive( *targetGroup, fs, targetName, lambda );
+      }
+    }
+  } );
+}
+
+template< typename BCTYPE = FieldSpecificationBase, 
+          typename OBJECT_TYPE,
+          typename LAMBDA >
+void apply( real64 const time,
+            MeshLevel & mesh,
+            string const & fieldName,
+            LAMBDA && lambda ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  string const meshBodyName = mesh.getParent().getParent().getName();
+  string const meshLevelName = mesh.getName();
+
+  // loop over all FieldSpecificationBase objects
+  this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
+  {
+  
+    MeshObjectPath const & meshObjectPaths = fs.getMeshObjectPaths();
+    meshObjectPaths.forObjectsInPath<OBJECT_TYPE>( mesh, 
+                                                   [&] ( OBJECT_TYPE & object ) 
+    {
+
+      if( object.hasWrapper( fieldName ) )
+      {
+        dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
+        string_array setNames = fs.getSetNames();
+        for( auto & setName : setNames )
+        {
+          if( setGroup.hasWrapper( setName ) )
+          {
+            SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
+            lambda( fs, setName, targetSet, object, fieldName );
+          }
         }
       }
-    } );
-  }
+    });
+  } );
+}
 
 private:
 
