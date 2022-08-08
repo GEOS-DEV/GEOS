@@ -38,7 +38,7 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::dNdXString(), &m_dNdX ).setSizedFromParent( 1 ).reference().resizeDimension< 3 >( 3 );
 
-  registerWrapper( viewKeyStruct::cellTypeString(), &m_cellType ).setSizedFromParent( 1 ).reference();
+  registerWrapper( viewKeyStruct::cellTypeString(), &m_cellType ).setPlotLevel( PlotLevel::LEVEL_0 ).setSizedFromParent( 1 ).reference();
 
   registerWrapper( viewKeyStruct::detJString(), &m_detJ ).setSizedFromParent( 1 ).reference();
 

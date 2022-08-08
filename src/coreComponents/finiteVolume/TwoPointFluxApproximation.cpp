@@ -125,13 +125,16 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
     // Filter out boundary faces
     if( elemList[kf][0] < 0 || elemList[kf][1] < 0 || isZero( transMultiplier[kf] ) )
     {
-      if( elemRegionList[kf][0] >= 0 && elemSubRegionList[kf][0] >= 0 && elemList[kf][0] >= 0 )
+      if( isZero( transMultiplier[kf] ) ) // detect a fault
       {
-        cellType[elemRegionList[kf][0]][elemSubRegionList[kf][0]][elemList[kf][0]] = 1;
-      }
-      if( elemRegionList[kf][1] >= 0 && elemSubRegionList[kf][1] >= 0 && elemList[kf][1] >= 0 )
-      {
-        cellType[elemRegionList[kf][1]][elemSubRegionList[kf][1]][elemList[kf][1]] = 1;
+        if( elemRegionList[kf][0] >= 0 && elemSubRegionList[kf][0] >= 0 && elemList[kf][0] >= 0 )
+        {
+          cellType[elemRegionList[kf][0]][elemSubRegionList[kf][0]][elemList[kf][0]] = 1;
+        }
+        if( elemRegionList[kf][1] >= 0 && elemSubRegionList[kf][1] >= 0 && elemList[kf][1] >= 0 )
+        {
+          cellType[elemRegionList[kf][1]][elemSubRegionList[kf][1]][elemList[kf][1]] = 1;
+        }
       }
       return;
     }
@@ -237,31 +240,6 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   } );
 
   graphFile.close();
-
-  std::ofstream cellTypeFile;
-  cellTypeFile.open ( "cellType_"+ std::to_string( myRank ) +".txt" );
-
-  elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & region )
-  {
-    region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
-    {
-
-      arrayView1d< integer const > const & subRegionCellType = subRegion.getReference< array1d< integer > >( CellElementSubRegion::viewKeyStruct::cellTypeString() );
-      arrayView1d< integer const > const & subRegionGhostRank = subRegion.getReference< array1d< integer > >( CellElementSubRegion::viewKeyStruct::ghostRankString() );
-      arrayView2d< real64 const > const & subRegionElementCenter = subRegion.getReference< array2d< real64 > >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
-
-      forAll< serialPolicy >( subRegion.size(), [&]( localIndex const ei )
-      {
-        if( subRegionGhostRank[ei] < 0 )
-        {
-          cellTypeFile << subRegion.localToGlobalMap()[ei] << " " << subRegionCellType[ei] << " "
-                       << subRegionElementCenter[ei][0] << " " << subRegionElementCenter[ei][1] << " " << subRegionElementCenter[ei][2] << std::endl;
-        }
-      } );
-    } );
-  } );
-
-  cellTypeFile.close();
 }
 
 void TwoPointFluxApproximation::registerFractureStencil( Group & stencilGroup ) const
@@ -921,7 +899,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
-  ElementRegionManager const & elemManager = mesh.getElemManager();
+  ElementRegionManager & elemManager = mesh.getElemManager();
 
   BoundaryStencil & stencil = getStencil< BoundaryStencil >( mesh, setName );
 
@@ -1047,10 +1025,13 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FaceManager const & faceManager = mesh.getFaceManager();
-  ElementRegionManager const & elemManager = mesh.getElemManager();
+  ElementRegionManager & elemManager = mesh.getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > const cellType =
+    elemManager.constructViewAccessor< array1d< integer >, arrayView1d< integer > >( CellElementSubRegion::viewKeyStruct::cellTypeString() );
 
   arrayView1d< real64 const > const & faceArea              = faceManager.faceArea();
   arrayView2d< localIndex const > const & elemRegionList    = faceManager.elementRegionList();
@@ -1189,6 +1170,8 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
         {
           continue;
         }
+
+        cellType[er][esr][ei] = 2;
 
         stencilRegionIndices[BoundaryStencil::Order::ELEM] = er;
         stencilSubRegionIndices[BoundaryStencil::Order::ELEM] = esr;
