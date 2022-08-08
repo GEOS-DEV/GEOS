@@ -57,6 +57,9 @@ public:
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
+    
+    static constexpr char const * geometryLinearDASString() { return "geometryLinearDAS"; }
+    static constexpr char const * flagDASString() { return "flagDAS"; }
 
 
   };
@@ -67,6 +70,13 @@ public:
   void reinit() override final;
 
 protected:
+
+  virtual void postProcessInput() override;
+
+  /**
+   * @brief Initialize DAS fiber geometry
+   */
+  virtual void initializeDAS();
 
   /**
    * @brief Apply free surface condition to the face defined in the geometry box of the xml
@@ -146,6 +156,12 @@ protected:
 
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
+
+  /// Geometry parameters for a linear DAS fiber
+  array2d< real64 > m_geometryLinearDAS;
+
+  /// Flag to indicate if DAS type of data will be modeled
+  int m_flagDAS;
 
 };
 

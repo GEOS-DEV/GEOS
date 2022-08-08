@@ -301,6 +301,10 @@
 					<xsd:selector xpath="CompositionalMultiphaseWell" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversElasticSEMUniqueName">
+					<xsd:selector xpath="ElasticSEM" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversEmbeddedSurfaceGeneratorUniqueName">
 					<xsd:selector xpath="EmbeddedSurfaceGenerator" />
 					<xsd:field xpath="@name" />
@@ -1644,6 +1648,7 @@ the relative residual norm satisfies:
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
+			<xsd:element name="ElasticSEM" type="ElasticSEMType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
@@ -1873,6 +1878,36 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:pattern value=".*[\[\]`$].*|producer|injector" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="ElasticSEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--dtSeismoTrace => Time step for output pressure at receivers-->
+		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
+		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
+		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
+		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
+		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
+		<xsd:attribute name="rickerOrder" type="integer" default="2" />
+		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
+		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeSourceFrequency => Central frequency for the time source-->
+		<xsd:attribute name="timeSourceFrequency" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />

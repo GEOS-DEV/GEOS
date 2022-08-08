@@ -21,7 +21,6 @@
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 
-
 namespace geosx
 {
 
@@ -52,7 +51,7 @@ struct PrecomputeSourceAndReceiverKernel
                        real64 const (&coords)[3] )
   {
     //Loop over the element faces
-    localIndex prevSign = 1;
+    //localIndex prevSign = 1;
     real64 tmpVector[3]{};
     for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
     {
@@ -78,11 +77,16 @@ struct PrecomputeSourceAndReceiverKernel
       localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >( faceNormalOnFace, faceCenterOnFace ));
 
       // all dot products should be non-negative (we enforce outward normals)
-      if( prevSign * s < 0 )
+      /// WARNING: the previous implementation (commented below) leads to a severe bug. It is replaced with what follows
+      /* if( prevSign * s < 0 )
       {
         return false;
       }
-      prevSign = s;
+      prevSign = s; */
+      if( s < 0 )
+      {
+        return false;
+      }
 
     }
     return true;
@@ -123,6 +127,7 @@ struct PrecomputeSourceAndReceiverKernel
       }
     }
   }
+
 
   GEOSX_HOST_DEVICE
   static real64
@@ -261,12 +266,12 @@ struct PrecomputeSourceAndReceiverKernel
           {
             real64 coordsOnRefElem[3]{};
 
-
             computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                              elemsToNodes[k],
                                                              X,
                                                              coordsOnRefElem );
             sourceIsLocal[isrc] = 1;
+
 
             //Compute source coefficients: this generate a P-wave and an "unwanted" S-wave. It is classical in the case of the elastic wave
             // equation at order 2, the S-wave can be attenuated by refining the mesh or get to high order
@@ -329,14 +334,13 @@ struct PrecomputeSourceAndReceiverKernel
                                  faceCenter,
                                  elemsToFaces[k],
                                  coords );
-
+          
           if( receiverFound && elemGhostRank[k] < 0 )
           {
             computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                              elemsToNodes[k],
                                                              X,
                                                              coordsOnRefElem );
-
             receiverIsLocal[ircv] = 1;
 
             real64 Ntest[8];

@@ -76,6 +76,16 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Count for output pressure at receivers" );
 
+  registerWrapper( viewKeyStruct::geometryLinearDASString(), &m_geometryLinearDAS ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setDescription( "Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)" );
+
+  registerWrapper( viewKeyStruct::flagDASString(), &m_flagDAS ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to indicate if DAS type of data will be modeled" );
+
 }
 
 WaveSolverBase::~WaveSolverBase()
@@ -92,6 +102,63 @@ void WaveSolverBase::reinit()
 void WaveSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
+}
+
+void WaveSolverBase::postProcessInput()
+{
+  SolverBase::postProcessInput();
+  if (m_geometryLinearDAS.size( 1 ) > 0)
+  {
+    m_flagDAS=1;
+  }
+
+  if (m_flagDAS>0)
+  {
+    GEOSX_ERROR_IF( m_geometryLinearDAS.size( 1 ) != 3,
+                  "Invalid number of geometry parameters for the linear DAS fiber. 3 are required: dip, azimuth, gauge length" );
+
+    GEOSX_ERROR_IF( m_geometryLinearDAS.size( 0 ) != m_receiverCoordinates.size( 0 ),
+                  "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
+
+  
+    /// initialize DAS geometry
+    WaveSolverBase::initializeDAS();
+
+  }
+}
+
+void WaveSolverBase::initializeDAS()
+{
+  /// double the number of receivers and modify their coordinates
+  /// so to have 2 receivers on each side of a DAS channel
+  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
+  m_receiverCoordinates.resize( 2*numReceiversGlobal, 3 );
+
+  arrayView2d< real64 > const receiverCoordinates = m_receiverCoordinates.toView();
+  arrayView2d< real64 const > const geometryLinearDAS = m_geometryLinearDAS.toViewConst();
+
+  for (localIndex ircv=0; ircv<numReceiversGlobal; ++ircv)
+  {
+    /// xyz of receivers on the far end of a DAS channel
+    receiverCoordinates[numReceiversGlobal+ircv][0] = receiverCoordinates[ircv][0] 
+      + cos(geometryLinearDAS[ircv][0])*cos(geometryLinearDAS[ircv][1])*geometryLinearDAS[ircv][2]/2.0;
+    receiverCoordinates[numReceiversGlobal+ircv][1] = receiverCoordinates[ircv][1] 
+      + cos(geometryLinearDAS[ircv][0])*sin(geometryLinearDAS[ircv][1])*geometryLinearDAS[ircv][2]/2.0;
+    receiverCoordinates[numReceiversGlobal+ircv][2] = receiverCoordinates[ircv][2] 
+      + sin(geometryLinearDAS[ircv][0])*geometryLinearDAS[ircv][2]/2.0;
+
+    /// xyz of receivers on the near end of a DAS channel
+    receiverCoordinates[ircv][0] = receiverCoordinates[ircv][0] 
+      - cos(geometryLinearDAS[ircv][0])*cos(geometryLinearDAS[ircv][1])*geometryLinearDAS[ircv][2]/2.0;
+    receiverCoordinates[ircv][1] = receiverCoordinates[ircv][1] 
+      - cos(geometryLinearDAS[ircv][0])*sin(geometryLinearDAS[ircv][1])*geometryLinearDAS[ircv][2]/2.0;
+    receiverCoordinates[ircv][2] = receiverCoordinates[ircv][2] 
+      - sin(geometryLinearDAS[ircv][0])*geometryLinearDAS[ircv][2]/2.0;
+
+    printf("xyz near = %f %f %f\n",receiverCoordinates[ircv][0],receiverCoordinates[ircv][1],receiverCoordinates[ircv][2]);
+    printf("xyz far = %f %f %f\n",receiverCoordinates[numReceiversGlobal+ircv][0],receiverCoordinates[numReceiversGlobal+ircv][1],receiverCoordinates[numReceiversGlobal+ircv][2]);
+  }
+
 }
 
 

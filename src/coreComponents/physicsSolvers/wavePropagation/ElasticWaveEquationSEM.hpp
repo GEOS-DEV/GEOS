@@ -163,6 +163,11 @@ private:
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
   /**
+   * @brief Compute DAS data from the appropriate receiver pairs
+   */
+  void computeDAS();
+
+  /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
    * @param time the time to apply the BC
    * @param domain the partition domain

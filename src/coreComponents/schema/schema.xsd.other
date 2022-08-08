@@ -448,6 +448,7 @@
 			<xsd:element name="CompositionalMultiphaseHybridFVM" type="CompositionalMultiphaseHybridFVMType" />
 			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
+			<xsd:element name="ElasticSEM" type="ElasticSEMType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
@@ -543,6 +544,36 @@
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;string, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="WellControlsType" />
+	<xsd:complexType name="ElasticSEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--displacementxNp1AtReceivers => Displacement value at each receiver for each timestep (x-component)-->
+		<xsd:attribute name="displacementxNp1AtReceivers" type="real64_array2d" />
+		<!--displacementyNp1AtReceivers => Displacement value at each receiver for each timestep (y-component)-->
+		<xsd:attribute name="displacementyNp1AtReceivers" type="real64_array2d" />
+		<!--displacementzNp1AtReceivers => Displacement value at each receiver for each timestep (z-component)-->
+		<xsd:attribute name="displacementzNp1AtReceivers" type="real64_array2d" />
+		<!--indexSeismoTrace => Count for output pressure at receivers-->
+		<xsd:attribute name="indexSeismoTrace" type="integer" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;string, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
+		<xsd:attribute name="receiverIsLocal" type="integer_array" />
+		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
+		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
+		<!--sourceConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<xsd:attribute name="sourceConstants" type="real64_array2d" />
+		<!--sourceIsLocal => Flag that indicates whether the source is local to this MPI rank-->
+		<xsd:attribute name="sourceIsLocal" type="integer_array" />
+		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
+		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
+		<!--sourceValue => Source Value of the sources-->
+		<xsd:attribute name="sourceValue" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
