@@ -306,7 +306,7 @@ EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar2PML,
                            array2d< real64 >,
                            0,
                            NOPLOT,
-                           WRITE_AND_READ,
+                           NO_WRITE,
                            "PML vectorial auxiliary variable 2." );
 
 EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar3PML,
@@ -314,7 +314,7 @@ EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar3PML,
                            array1d< real64 >,
                            0,
                            NOPLOT,
-                           WRITE_AND_READ,
+                           NO_WRITE,
                            "PML scalar auxiliary variable 3." );
 
 EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar4PML,

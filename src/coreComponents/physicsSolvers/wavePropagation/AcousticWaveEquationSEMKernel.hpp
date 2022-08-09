@@ -20,7 +20,6 @@
 #define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "WaveSolverBase.hpp"
 
 
 namespace geosx
@@ -473,7 +472,6 @@ struct PMLKernel
    * @param[in] cMin PML wave speed, left-front-top
    * @param[in] cMax PML wave speed, right-back-bottom
    * @param[in] r desired reflectivity of the PML
-   * @param[in] flagPML switch to flip between PML formulations
    * @param[out] grad_n array holding the gradients at time n
    * @param[out] divV_n array holding the divergence at time n
    */
@@ -493,7 +491,6 @@ struct PMLKernel
           real64 const (&cMin)[3],
           real64 const (&cMax)[3],
           real64 const r,
-          int const flagPML,
           arrayView2d< real64 > const grad_n,
           arrayView1d< real64 > const divV_n )
   {
@@ -539,28 +536,6 @@ struct PMLKernel
         }
       }
 
-      if( flagPML>1 )
-      {
-        for( localIndex i=0; i<numNodesPerElem; ++i )
-        {
-          /// compute the PML damping profile
-          PMLKernelHelper::computeDampingProfilePML(
-            xLocal[i],
-            xMin,
-            xMax,
-            dMin,
-            dMax,
-            cMin,
-            cMax,
-            r,
-            sigma );
-          for( int j=0; j<3; ++j )
-          {
-            auxV[j][i] *= sigma[j];
-          }
-        }
-      }
-
       /// local arrays to store shape functions gradients
       real64 gradN[ numNodesPerElem ][ 3 ];
       using GRADIENT_TYPE = TYPEOFREF( gradN );
@@ -582,47 +557,35 @@ struct PMLKernel
           m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, auxV[j], auxVGrad[j] );
         }
 
-        if( flagPML==1 )
-        {
-          /// compute the PML damping profile
-          PMLKernelHelper::computeDampingProfilePML(
-            xLocal[i],
-            xMin,
-            xMax,
-            dMin,
-            dMax,
-            cMin,
-            cMax,
-            r,
-            sigma );
+        /// compute the PML damping profile
+        PMLKernelHelper::computeDampingProfilePML(
+          xLocal[i],
+          xMin,
+          xMax,
+          dMin,
+          dMax,
+          cMin,
+          cMax,
+          r,
+          sigma );
 
-          /// compute B.pressureGrad - C.auxUGrad where B and C are functions of the damping profile
-          real64 localIncrementArray[3];
-          localIncrementArray[0] = (sigma[0]-sigma[1]-sigma[2])*pressureGrad[0] - (sigma[1]*sigma[2])*auxUGrad[0];
-          localIncrementArray[1] = (sigma[1]-sigma[0]-sigma[2])*pressureGrad[1] - (sigma[0]*sigma[2])*auxUGrad[1];
-          localIncrementArray[2] = (sigma[2]-sigma[0]-sigma[1])*pressureGrad[2] - (sigma[0]*sigma[1])*auxUGrad[2];
-          for( int j=0; j<3; ++j )
-          {
-            RAJA::atomicAdd< ATOMIC_POLICY >( &grad_n[elemToNodesViewConst[k][i]][j], localIncrementArray[j]/numNodesPerElem );
-          }
-          /// compute beta.pressure + gamma.u - c^2 * divV where beta and gamma are functions of the damping profile
-          real64 const beta = sigma[0]*sigma[1]+sigma[0]*sigma[2]+sigma[1]*sigma[2];
-          real64 const gamma = sigma[0]*sigma[1]*sigma[2];
-          real64 const localIncrement = beta*p_n[elemToNodesViewConst[k][i]]
-                                        + gamma*u_n[elemToNodesViewConst[k][i]]
-                                        - c*c*( auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2] );
-
-          RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem );
-        }
-        else
+        /// compute B.pressureGrad - C.auxUGrad where B and C are functions of the damping profile
+        real64 localIncrementArray[3];
+        localIncrementArray[0] = (sigma[0]-sigma[1]-sigma[2])*pressureGrad[0] - (sigma[1]*sigma[2])*auxUGrad[0];
+        localIncrementArray[1] = (sigma[1]-sigma[0]-sigma[2])*pressureGrad[1] - (sigma[0]*sigma[2])*auxUGrad[1];
+        localIncrementArray[2] = (sigma[2]-sigma[0]-sigma[1])*pressureGrad[2] - (sigma[0]*sigma[1])*auxUGrad[2];
+        for( int j=0; j<3; ++j )
         {
-          for( int j=0; j<3; ++j )
-          {
-            RAJA::atomicAdd< ATOMIC_POLICY >( &grad_n[elemToNodesViewConst[k][i]][j], pressureGrad[j]/numNodesPerElem );
-          }
-          real64 const localIncrement = -c*c*(auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2]);
-          RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &grad_n[elemToNodesViewConst[k][i]][j], localIncrementArray[j]/numNodesPerElem );
         }
+        /// compute beta.pressure + gamma.u - c^2 * divV where beta and gamma are functions of the damping profile
+        real64 const beta = sigma[0]*sigma[1]+sigma[0]*sigma[2]+sigma[1]*sigma[2];
+        real64 const gamma = sigma[0]*sigma[1]*sigma[2];
+        real64 const localIncrement = beta*p_n[elemToNodesViewConst[k][i]]
+                                      + gamma*u_n[elemToNodesViewConst[k][i]]
+                                      - c*c*( auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2] );
+
+        RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem );
       }
     } );
   }

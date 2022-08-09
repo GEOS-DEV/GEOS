@@ -77,7 +77,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Count for output pressure at receivers" );
 
-  registerWrapper( viewKeyStruct::flagPMLString(), &m_flagPML ).
+  registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to apply PML" );
@@ -105,12 +105,18 @@ void WaveSolverBase::postProcessInput()
   SolverBase::postProcessInput();
 
   /// set flag PML to one if a PML field is specified in the xml
-  /// if flagPML>1, a different and approximate PML implementation will be applied
+  /// if counter>1, an error will be thrown as one single PML field is allowed
+  integer counter = 0;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & )
   {
-    m_flagPML=1;
+    counter += 1;
   } );
+  GEOSX_THROW_IF( counter > 1,
+                  "One single PML field specification is allowed",
+                  InputError );
+  
+  m_usePML = counter;
 }
 
 

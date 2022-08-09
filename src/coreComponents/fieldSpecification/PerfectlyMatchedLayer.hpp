@@ -128,11 +128,24 @@ public:
 
   };
 
+  /**
+   * @brief Safeguard for the minimum allowed PML thickness
+   */
+  static constexpr real64 minThickness = 0.001;
+
+  /**
+   * @brief Smallest possible values for xMin, below which they are computed internally
+   */
+  static constexpr real64 smallestXMin = -999999.0;
+
+  /**
+   * @brief Largest possible values for xMax, below which they are computed internally
+   */
+  static constexpr real64 largestXMax = 999999.0;
+
 protected:
 
   virtual void postProcessInput() override final;
-
-  virtual void initializePreSubGroups() override final;
 
 private:
 

@@ -61,7 +61,7 @@ public:
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
 
 
-    static constexpr char const * flagPMLString() { return "flagPML"; }
+    static constexpr char const * usePMLString() { return "usePML"; }
 
   };
 
@@ -191,7 +191,7 @@ protected:
   R1Tensor m_waveSpeedMaxXYZPML;
 
   /// Flag to apply PML
-  int m_flagPML;
+  integer m_usePML;
 
 };
 

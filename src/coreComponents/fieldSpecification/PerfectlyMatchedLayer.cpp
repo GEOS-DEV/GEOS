@@ -28,12 +28,16 @@ PerfectlyMatchedLayer::PerfectlyMatchedLayer( string const & name, Group * const
 {
   registerWrapper( viewKeyStruct::xMinString(), &m_xMin ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( { -999999.9, -999999.9, -999999.9 } ).
+    setApplyDefaultValue( { -LvArray::NumericLimits< real64 >::max, 
+                            -LvArray::NumericLimits< real64 >::max, 
+                            -LvArray::NumericLimits< real64 >::max } ).
     setDescription( "Minimum (x,y,z) coordinates of the inner PML boundaries" );
 
   registerWrapper( viewKeyStruct::xMaxString(), &m_xMax ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( { 999999.9, 999999.9, 999999.9 } ).
+    setApplyDefaultValue( { LvArray::NumericLimits< real64 >::max, 
+                            LvArray::NumericLimits< real64 >::max, 
+                            LvArray::NumericLimits< real64 >::max } ).
     setDescription( "Maximum (x,y,z) coordinates of the inner PML boundaries" );
 
   registerWrapper( viewKeyStruct::reflectivityString(), &m_reflectivity ).
@@ -86,12 +90,12 @@ void PerfectlyMatchedLayer::postProcessInput()
                                    << " must satisfy 0 < reflectivity <= 1",
                   InputError );
 
-  GEOSX_LOG_RANK_0_IF( (m_xMin[0]<-999999 || m_xMin[1]<-999999 || m_xMin[2]<-999999),
+  GEOSX_LOG_RANK_0_IF( (m_xMin[0]<smallestXMin || m_xMin[1]<smallestXMin || m_xMin[2]<smallestXMin),
                        getCatalogName() << " " << getName() << " "
                                         << viewKeyStruct::xMinString()
                                         << " will be computed internally" );
 
-  GEOSX_LOG_RANK_0_IF( (m_xMax[0]>999999 || m_xMax[1]>999999 || m_xMax[2]>999999),
+  GEOSX_LOG_RANK_0_IF( (m_xMax[0]>largestXMax || m_xMax[1]>largestXMax || m_xMax[2]>largestXMax),
                        getCatalogName() << " " << getName() << " "
                                         << viewKeyStruct::xMaxString()
                                         << " will be computed internally" );
@@ -117,10 +121,6 @@ void PerfectlyMatchedLayer::postProcessInput()
                                         << " will be computed internally" );
 }
 
-void PerfectlyMatchedLayer::initializePreSubGroups()
-{
-  /// do nothing
-}
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, PerfectlyMatchedLayer, string const &, Group * const )
 
