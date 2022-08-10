@@ -129,11 +129,11 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
       {
         if( elemRegionList[kf][0] >= 0 && elemSubRegionList[kf][0] >= 0 && elemList[kf][0] >= 0 )
         {
-          cellType[elemRegionList[kf][0]][elemSubRegionList[kf][0]][elemList[kf][0]] = 1;
+          cellType[elemRegionList[kf][0]][elemSubRegionList[kf][0]][elemList[kf][0]] = 2;
         }
         if( elemRegionList[kf][1] >= 0 && elemSubRegionList[kf][1] >= 0 && elemList[kf][1] >= 0 )
         {
-          cellType[elemRegionList[kf][1]][elemSubRegionList[kf][1]][elemList[kf][1]] = 1;
+          cellType[elemRegionList[kf][1]][elemSubRegionList[kf][1]][elemList[kf][1]] = 2;
         }
       }
       return;
@@ -235,7 +235,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
         ( ( elemGhostRank[er1][esr1][ei1] < 0 ) && ( myRank < elemGhostRank[er0][esr0][ei0] ) ) )
     {
       graphFile << iconn << " " << subRegion0.localToGlobalMap()[ei0] << " " << subRegion1.localToGlobalMap()[ei1] << std::endl;
-      graphFile << iconn << " " << subRegion0.localToGlobalMap()[ei1] << " " << subRegion1.localToGlobalMap()[ei0] << std::endl;
+      graphFile << iconn << " " << subRegion1.localToGlobalMap()[ei1] << " " << subRegion0.localToGlobalMap()[ei0] << std::endl;
     }
   } );
 
@@ -1171,7 +1171,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
           continue;
         }
 
-        cellType[er][esr][ei] = 2;
+        cellType[er][esr][ei] = 3;
 
         stencilRegionIndices[BoundaryStencil::Order::ELEM] = er;
         stencilSubRegionIndices[BoundaryStencil::Order::ELEM] = esr;

@@ -873,40 +873,15 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
         localIndex const esr = resElementSubRegion[iperf];
         localIndex const ei = resElementIndex[iperf];
 
-        cellType[er][esr][ei] = 3;
+        cellType[er][esr][ei] = 1;
 
         ElementRegionBase const & region = elemManager.getRegion( er );
         CellElementSubRegion const & subRegionWell = region.getSubRegion< CellElementSubRegion, localIndex >( esr );
 
-        wellFile << subRegionWell.localToGlobalMap()[ei] << " 3" << std::endl;
+        wellFile << subRegionWell.localToGlobalMap()[ei] << " 1" << std::endl;
       } );
 
       wellFile.close();
-
-      std::ofstream cellTypeFile;
-      cellTypeFile.open ( "cellType_"+ std::to_string( myRank ) +".txt" );
-
-      elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & region )
-      {
-        region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & thisSubRegion )
-        {
-
-          arrayView1d< integer const > const & subRegionCellType = thisSubRegion.getReference< array1d< integer > >( CellElementSubRegion::viewKeyStruct::cellTypeString() );
-          arrayView1d< integer const > const & subRegionGhostRank = thisSubRegion.getReference< array1d< integer > >( CellElementSubRegion::viewKeyStruct::ghostRankString() );
-          arrayView2d< real64 const > const & subRegionElementCenter = thisSubRegion.getReference< array2d< real64 > >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
-
-          forAll< serialPolicy >( thisSubRegion.size(), [&]( localIndex const ei )
-          {
-            if( subRegionGhostRank[ei] < 0 )
-            {
-              cellTypeFile << thisSubRegion.localToGlobalMap()[ei] << " " << subRegionCellType[ei] << " "
-                           << subRegionElementCenter[ei][0] << " " << subRegionElementCenter[ei][1] << " " << subRegionElementCenter[ei][2] << std::endl;
-            }
-          } );
-        } );
-      } );
-
-      cellTypeFile.close();
 
       // 1) Loop over all perforations to compute an average mixture density and component fraction
       // 2) Initialize the reference pressure

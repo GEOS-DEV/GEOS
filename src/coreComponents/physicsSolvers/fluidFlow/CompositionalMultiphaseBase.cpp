@@ -1349,6 +1349,9 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank =
         subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< integer > const cellType =
+        subRegion.getReference< array1d< integer > >( CellElementSubRegion::viewKeyStruct::cellTypeString() );
+      
 
       // Step 3.1: get the values of the source boundary condition that need to be added to the rhs
       // We don't use FieldSpecificationBase::applyConditionToSystem here because we want to account for the row permutation used in the
@@ -1390,6 +1393,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                            numFluidComponents,
                                                            dofNumber,
                                                            rhsContributionArrayView,
+							   cellType,
                                                            localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
       {
         // we need to filter out ghosts here, because targetSet may contain them
@@ -1398,6 +1402,8 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
         {
           return;
         }
+
+	cellType[ei] = 1;
 
         // for all "fluid components", we add the value to the total mass balance equation
         globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
@@ -1414,6 +1420,43 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       } );
     } );
   } );
+}
+
+void CompositionalMultiphaseBase::cleanup( real64 const GEOSX_UNUSED_PARAM( time_n ),
+					   integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+					   integer const GEOSX_UNUSED_PARAM( eventCounter ),
+					   real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+					   DomainPartition & domain )
+{
+  integer const myRank = MpiWrapper::commRank();
+  
+  std::ofstream cellTypeFile;
+  cellTypeFile.open ( "cellType_"+ std::to_string( myRank ) +".txt" );
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< integer const > const & subRegionCellType = subRegion.getReference< array1d< integer > >( CellElementSubRegion::viewKeyStruct::cellTypeString() );
+      arrayView1d< integer const > const & subRegionGhostRank = subRegion.getReference< array1d< integer > >( CellElementSubRegion::viewKeyStruct::ghostRankString() );
+      arrayView2d< real64 const > const & subRegionElementCenter = subRegion.getReference< array2d< real64 > >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
+
+      forAll< serialPolicy >( subRegion.size(), [&]( localIndex const ei )
+      {
+	if( subRegionGhostRank[ei] < 0 )
+        {
+	  cellTypeFile << subRegion.localToGlobalMap()[ei] << " " << subRegionCellType[ei] << " "
+		       << subRegionElementCenter[ei][0] << " " << subRegionElementCenter[ei][1] << " " << subRegionElementCenter[ei][2] << std::endl;
+	}
+      } );
+    } );
+  } );
+
+  cellTypeFile.close();  
 }
 
 namespace

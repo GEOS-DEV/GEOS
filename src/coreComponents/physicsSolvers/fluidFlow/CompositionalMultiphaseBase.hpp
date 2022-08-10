@@ -319,6 +319,12 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  virtual void cleanup( real64 const time_n,
+			integer const cycleNumber,
+			integer const eventCounter,
+			real64 const eventProgress,
+			DomainPartition & domain ) override;
+  
 protected:
 
   /**
