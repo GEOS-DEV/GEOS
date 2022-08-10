@@ -32,12 +32,12 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   BASE( name, parent ),
   m_damage(),
   m_strainEnergyDensity(),
-  m_extDrivingForce(), 
+  m_extDrivingForce(),
   m_lengthScale(),
   m_criticalFractureEnergy(),
   m_criticalStrainEnergy(),
-  m_extDrivingForceSwitch(), 
-  m_tensileStrength(), 
+  m_extDrivingForceSwitch(),
+  m_tensileStrength(),
   m_compressStrength(),
   m_deltaCoefficient()
 {
@@ -106,7 +106,7 @@ void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
 {
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
-  m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex ); 
+  m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex );
   BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
