@@ -84,6 +84,11 @@ private:
     /// maximum region pressure
     real64 maxPressure;
 
+    /// minimum region delta pressure
+    real64 minDeltaPressure;
+    /// maximum region delta pressure
+    real64 maxDeltaPressure;
+
     /// total region pore volume
     real64 totalPoreVolume;
     /// total region uncompacted pore volume

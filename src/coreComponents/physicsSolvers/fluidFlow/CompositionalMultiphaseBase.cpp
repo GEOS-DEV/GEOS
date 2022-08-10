@@ -174,6 +174,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerExtrinsicData< pressure >( getName() );
       subRegion.registerExtrinsicData< initialPressure >( getName() );
+      subRegion.registerExtrinsicData< deltaPressure >( getName() ); // for reporting/stats purposes
       subRegion.registerExtrinsicData< pressure_n >( getName() );
 
       subRegion.registerExtrinsicData< bcPressure >( getName() ); // needed for the application of boundary conditions
@@ -1055,9 +1056,15 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARA
     {
       arrayView1d< real64 const > const & pres =
         subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      arrayView1d< real64 const > const & initPres =
+        subRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >();
+      arrayView1d< real64 > const & deltaPres =
+        subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
       arrayView1d< real64 > const & pres_n =
         subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
       pres_n.setValues< parallelDevicePolicy<> >( pres );
+      isothermalCompositionalMultiphaseBaseKernels::StatisticsKernel::
+        saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
 
       arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
         subRegion.template getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();

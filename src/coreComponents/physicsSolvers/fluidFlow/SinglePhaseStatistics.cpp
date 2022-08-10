@@ -92,8 +92,11 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
 
     regionStatistics.averagePressure = 0.0;
-    regionStatistics.maxPressure = 0.0;
+    regionStatistics.maxPressure = -LvArray::NumericLimits< real64 >::max;
     regionStatistics.minPressure = LvArray::NumericLimits< real64 >::max;
+
+    regionStatistics.maxDeltaPressure = -LvArray::NumericLimits< real64 >::max;
+    regionStatistics.minDeltaPressure = LvArray::NumericLimits< real64 >::max;
 
     regionStatistics.totalPoreVolume = 0.0;
     regionStatistics.totalUncompactedPoreVolume = 0.0;
@@ -107,6 +110,7 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
     arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+    arrayView1d< real64 const > const deltaPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
     string const & solidName = subRegion.getReference< string >( SinglePhaseBase::viewKeyStruct::solidNamesString() );
     Group const & constitutiveModels = subRegion.getGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
@@ -117,6 +121,8 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;
     real64 subRegionMaxPres = 0.0;
+    real64 subRegionMinDeltaPres = 0.0;
+    real64 subRegionMaxDeltaPres = 0.0;
     real64 subRegionTotalUncompactedPoreVol = 0.0;
     real64 subRegionTotalPoreVol = 0.0;
 
@@ -125,11 +131,14 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
                                         elemGhostRank,
                                         volume,
                                         pres,
+                                        deltaPres,
                                         refPorosity,
                                         porosity,
                                         subRegionMinPres,
                                         subRegionAvgPresNumerator,
                                         subRegionMaxPres,
+                                        subRegionMinDeltaPres,
+                                        subRegionMaxDeltaPres,
                                         subRegionTotalUncompactedPoreVol,
                                         subRegionTotalPoreVol );
 
@@ -146,6 +155,16 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
       regionStatistics.maxPressure = subRegionMaxPres;
     }
 
+    if( subRegionMinDeltaPres < regionStatistics.minDeltaPressure )
+    {
+      regionStatistics.minDeltaPressure = subRegionMinDeltaPres;
+    }
+    if( subRegionMaxDeltaPres > regionStatistics.maxDeltaPressure )
+    {
+      regionStatistics.maxDeltaPressure = subRegionMaxDeltaPres;
+    }
+
+
     regionStatistics.totalUncompactedPoreVolume += subRegionTotalUncompactedPoreVol;
     regionStatistics.totalPoreVolume += subRegionTotalPoreVol;
   } );
@@ -158,6 +177,8 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
 
     regionStatistics.minPressure = MpiWrapper::min( regionStatistics.minPressure );
     regionStatistics.maxPressure = MpiWrapper::max( regionStatistics.maxPressure );
+    regionStatistics.minDeltaPressure = MpiWrapper::min( regionStatistics.minDeltaPressure );
+    regionStatistics.maxDeltaPressure = MpiWrapper::max( regionStatistics.maxDeltaPressure );
     regionStatistics.totalUncompactedPoreVolume = MpiWrapper::sum( regionStatistics.totalUncompactedPoreVolume );
     regionStatistics.totalPoreVolume = MpiWrapper::sum( regionStatistics.totalPoreVolume );
     regionStatistics.averagePressure = MpiWrapper::sum( regionStatistics.averagePressure );
@@ -166,6 +187,9 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Pressure (min, average, max): "
                                          << regionStatistics.minPressure << ", " << regionStatistics.averagePressure << ", " << regionStatistics.maxPressure << " Pa" );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                         << ": Delta pressure (min, max): "
+                                         << regionStatistics.minDeltaPressure << ", " << regionStatistics.maxDeltaPressure << " Pa" );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Total dynamic pore volume: " << regionStatistics.totalPoreVolume << " rm^3" );
 

@@ -88,6 +88,11 @@ private:
     /// maximum region pressure
     real64 maxPressure;
 
+    /// minimum region delta pressure
+    real64 minDeltaPressure;
+    /// maximum region delta pressure
+    real64 maxDeltaPressure;
+
     /// average region temperature
     real64 averageTemperature;
     /// minimum region temperature

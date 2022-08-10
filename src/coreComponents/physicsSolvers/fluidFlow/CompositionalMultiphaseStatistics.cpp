@@ -167,6 +167,9 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     regionStatistics.maxPressure = 0.0;
     regionStatistics.minPressure = LvArray::NumericLimits< real64 >::max;
 
+    regionStatistics.maxDeltaPressure = -LvArray::NumericLimits< real64 >::max;
+    regionStatistics.minDeltaPressure = LvArray::NumericLimits< real64 >::max;
+
     regionStatistics.averageTemperature = 0.0;
     regionStatistics.maxTemperature = 0.0;
     regionStatistics.minTemperature = LvArray::NumericLimits< real64 >::max;
@@ -187,6 +190,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
     arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+    arrayView1d< real64 > const deltaPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
     arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
       subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
@@ -206,6 +210,8 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;
     real64 subRegionMaxPres = 0.0;
+    real64 subRegionMinDeltaPres = 0.0;
+    real64 subRegionMaxDeltaPres = 0.0;
     real64 subRegionAvgTempNumerator = 0.0;
     real64 subRegionMinTemp = 0.0;
     real64 subRegionMaxTemp = 0.0;
@@ -222,6 +228,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
                                         elemGhostRank,
                                         volume,
                                         pres,
+                                        deltaPres,
                                         temp,
                                         refPorosity,
                                         porosity,
@@ -231,6 +238,8 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
                                         subRegionMinPres,
                                         subRegionAvgPresNumerator,
                                         subRegionMaxPres,
+                                        subRegionMinDeltaPres,
+                                        subRegionMaxDeltaPres,
                                         subRegionMinTemp,
                                         subRegionAvgTempNumerator,
                                         subRegionMaxTemp,
@@ -250,6 +259,15 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     if( subRegionMaxPres > regionStatistics.maxPressure )
     {
       regionStatistics.maxPressure = subRegionMaxPres;
+    }
+
+    if( subRegionMinDeltaPres < regionStatistics.minDeltaPressure )
+    {
+      regionStatistics.minDeltaPressure = subRegionMinDeltaPres;
+    }
+    if( subRegionMaxDeltaPres > regionStatistics.maxDeltaPressure )
+    {
+      regionStatistics.maxDeltaPressure = subRegionMaxDeltaPres;
     }
 
     regionStatistics.averageTemperature += subRegionAvgTempNumerator;
@@ -283,6 +301,8 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
 
     regionStatistics.minPressure = MpiWrapper::min( regionStatistics.minPressure );
     regionStatistics.maxPressure = MpiWrapper::max( regionStatistics.maxPressure );
+    regionStatistics.minDeltaPressure = MpiWrapper::min( regionStatistics.minDeltaPressure );
+    regionStatistics.maxDeltaPressure = MpiWrapper::max( regionStatistics.maxDeltaPressure );
     regionStatistics.minTemperature = MpiWrapper::min( regionStatistics.minTemperature );
     regionStatistics.maxTemperature = MpiWrapper::max( regionStatistics.maxTemperature );
     regionStatistics.totalUncompactedPoreVolume = MpiWrapper::sum( regionStatistics.totalUncompactedPoreVolume );
@@ -308,6 +328,9 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Pressure (min, average, max): "
                                          << regionStatistics.minPressure << ", " << regionStatistics.averagePressure << ", " << regionStatistics.maxPressure << " Pa" );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                         << ": Delta pressure (min, max): "
+                                         << regionStatistics.minDeltaPressure << ", " << regionStatistics.maxDeltaPressure << " Pa" );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Temperature (min, average, max): "
                                          << regionStatistics.minTemperature << ", " << regionStatistics.averageTemperature << ", " << regionStatistics.maxTemperature << " K" );
