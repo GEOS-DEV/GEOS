@@ -31,6 +31,7 @@ option( ENABLE_FORTRAN "Enables Fortran support" OFF )
 
 option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
+option( ENABLE_SCOTCH "Enables SCOTCH" ON )
 
 option( ENABLE_VTK "Enables VTK" ON )
 
