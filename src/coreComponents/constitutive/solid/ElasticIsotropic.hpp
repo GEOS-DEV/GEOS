@@ -102,12 +102,14 @@ public:
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
+                                             real64 const & timeIncrement,
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   real64 ( &stiffness )[6][6] ) const override;
@@ -266,10 +268,12 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                             localIndex const q,
+                                                            real64 const & timeIncrement,
                                                             real64 const ( &strainIncrement )[6],
                                                             real64 ( & stress )[6] ) const
 {
-  smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress  = incrementalStress
+  GEOSX_UNUSED_VAR( timeIncrement );
+  smallStrainNoStateUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress ); // stress  = incrementalStress
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
   saveStress( k, q, stress );                                           // m_newStress = stress
 }
@@ -279,11 +283,13 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
+                                                 real64 const & timeIncrement,
                                                  real64 const ( &strainIncrement )[6],
                                                  real64 ( & stress )[6],
                                                  real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  GEOSX_UNUSED_VAR( timeIncrement );
+  smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   getElasticStiffness( k, q, stiffness );
 }
 
@@ -292,11 +298,13 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
+                                                 real64 const & timeIncrement,
                                                  real64 const ( &strainIncrement )[6],
                                                  real64 ( & stress )[6],
                                                  DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  GEOSX_UNUSED_VAR( timeIncrement );
+  smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   stiffness.m_bulkModulus = m_bulkModulus[k];
   stiffness.m_shearModulus = m_shearModulus[k];
 }

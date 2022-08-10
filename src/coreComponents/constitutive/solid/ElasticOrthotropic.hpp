@@ -124,12 +124,14 @@ public:
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
+                                             real64 const & timeIncrement,
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   real64 ( &stiffness )[6][6] ) const override final;
@@ -137,6 +139,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
@@ -269,10 +272,12 @@ GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void ElasticOrthotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                               localIndex const q,
+                                                              real64 const & timeIncrement,
                                                               real64 const ( &strainIncrement )[6],
                                                               real64 ( & stress )[6] ) const
 {
-  smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress =  incrementalStress
+  GEOSX_UNUSED_VAR( timeIncrement );
+  smallStrainNoStateUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress ); // stress =  incrementalStress
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
   saveStress( k, q, stress );                                           // m_newStress = stress
 }
@@ -282,11 +287,13 @@ GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
                                                    localIndex const q,
+                                                   real64 const & timeIncrement,
                                                    real64 const ( &strainIncrement )[6],
                                                    real64 ( & stress )[6],
                                                    real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  GEOSX_UNUSED_VAR( timeIncrement );
+  smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   getElasticStiffness( k, q, stiffness );
 }
 
@@ -295,11 +302,13 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
                                                    localIndex const q,
+                                                   real64 const & timeIncrement,
                                                    real64 const ( &strainIncrement )[6],
                                                    real64 ( & stress )[6],
                                                    DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  GEOSX_UNUSED_VAR( timeIncrement );
+  smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   stiffness.m_c11 = m_c11[k];
   stiffness.m_c12 = m_c12[k];
   stiffness.m_c13 = m_c13[k];
@@ -316,6 +325,7 @@ GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void ElasticOrthotropicUpdates::hypoUpdate( localIndex const k,
                                             localIndex const q,
+                                            real64 const & timeIncrement,
                                             real64 const ( &Ddt )[6],
                                             real64 const ( &Rot )[3][3],
                                             real64 ( & stress )[6],
@@ -323,6 +333,7 @@ void ElasticOrthotropicUpdates::hypoUpdate( localIndex const k,
 {
   GEOSX_UNUSED_VAR( k );
   GEOSX_UNUSED_VAR( q );
+  GEOSX_UNUSED_VAR( timeIncrement );
   GEOSX_UNUSED_VAR( Ddt );
   GEOSX_UNUSED_VAR( Rot );
   GEOSX_UNUSED_VAR( stress );

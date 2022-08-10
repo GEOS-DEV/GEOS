@@ -95,6 +95,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   real64 ( &stiffness )[6][6] ) const override final;
@@ -102,6 +103,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
@@ -138,13 +140,14 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
+                                              real64 const & timeIncrement,
                                               real64 const ( &strainIncrement )[6],
                                               real64 ( & stress )[6],
                                               real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-
-  ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+  GEOSX_UNUSED_VAR( timeIncrement );
+  ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
   if( m_disableInelasticity )
   {
@@ -152,7 +155,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
   }
 
   // decompose into mean (P) and von Mises (Q) stress invariants
-
+  
   real64 trialP;
   real64 trialQ;
   real64 deviator[6];
@@ -295,11 +298,12 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
+                                              real64 const & timeIncrement,
                                               real64 const ( &strainIncrement )[6],
                                               real64 ( & stress )[6],
                                               DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
+  smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
 }
 
 

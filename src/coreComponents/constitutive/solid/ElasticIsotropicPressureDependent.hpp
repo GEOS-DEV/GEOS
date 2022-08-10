@@ -89,6 +89,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const &  timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   real64 ( &stiffness )[6][6] ) const override;
@@ -96,6 +97,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const;
@@ -218,13 +220,14 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex const k,
                                                                   localIndex const q,
+                                                                  real64 const & timeIncrement,
                                                                   real64 const ( &strainIncrement )[6],
                                                                   real64 ( & stress )[6],
                                                                   real64 ( & stiffness )[6][6] ) const
 {
   //smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
   // Rename variables for easier implementation
-
+  GEOSX_UNUSED_VAR( timeIncrement );
   real64 const mu     = m_shearModulus[k];
   real64 const p0     = m_refPressure;
   real64 const eps_v0 = m_refStrainVol;
@@ -300,13 +303,14 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex const k,
                                                                   localIndex const q,
+                                                                  real64 const & timeIncrement,
                                                                   real64 const ( &strainIncrement )[6],
                                                                   real64 ( & stress )[6],
                                                                   DiscretizationOps & stiffness ) const
 {
   //smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
   // Rename variables for easier implementation
-
+  GEOSX_UNUSED_VAR( timeIncrement );
   real64 const mu     = m_shearModulus[k];
   real64 const p0     = m_refPressure;
   real64 const eps_v0 = m_refStrainVol;

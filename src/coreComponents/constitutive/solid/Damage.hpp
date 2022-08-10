@@ -126,11 +126,12 @@ public:
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( & stress )[6],
                                   DiscretizationOps & stiffness ) const override
   {
-    UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+    UPDATE_BASE::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
     if( m_disableInelasticity )
     {

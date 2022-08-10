@@ -59,6 +59,7 @@ public:
                                      real64 const & initialFluidPressure,
                                      real64 const & fluidPressure_n,
                                      real64 const & fluidPressure,
+                                     real64 const & timeIncrement,
                                      real64 const ( &strainIncrement )[6],
                                      real64 const & gravityAcceleration,
                                      real64 const ( &gravityVector )[3],
@@ -77,11 +78,13 @@ public:
                                      real64 & dFluidMassContent_dVolStrainIncrement,
                                      DiscretizationOps & stiffness ) const
   {
+    GEOSX_UNUSED_VAR( timeIncrement );
     // Compute total stress increment and its derivative
     computeTotalStress( k,
                         q,
                         initialFluidPressure,
                         fluidPressure,
+                        timeIncrement,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure,
@@ -142,6 +145,7 @@ public:
                                     real64 const & initialFluidPressure,
                                     real64 const & fluidPressure_n,
                                     real64 const & fluidPressure,
+                                    real64 const & timeIncrement,
                                     real64 const ( &strainIncrement )[6],
                                     real64 const & gravityAcceleration,
                                     real64 const ( &gravityVector )[3],
@@ -179,6 +183,7 @@ public:
                         q,
                         initialFluidPressure,
                         fluidPressure,
+                        timeIncrement,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure,
@@ -467,6 +472,7 @@ private:
                            localIndex const q,
                            real64 const & initialFluidPressure,
                            real64 const & fluidPressure,
+                           real64 const & timeIncrement,
                            real64 const ( &strainIncrement )[6],
                            real64 ( & totalStress )[6],
                            real64 ( & dTotalStress_dPressure )[6],
@@ -475,6 +481,7 @@ private:
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
                                      q,
+                                     timeIncrement,
                                      strainIncrement,
                                      totalStress, // first effective stress increment accumulated
                                      stiffness );

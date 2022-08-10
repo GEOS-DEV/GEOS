@@ -144,6 +144,7 @@ public:
    *
    * @param[in] k Element index.
    * @param[in] q Quadrature point index.
+   * @param[in] timeIncrement time increment for rate-dependent models.
    * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
    * @param[out] stress New stress value (Cauchy stress)
    * @param[out] stiffness New tangent stiffness value
@@ -151,12 +152,14 @@ public:
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( & stress )[6],
                                   real64 ( & stiffness )[6][6] ) const
   {
     GEOSX_UNUSED_VAR( k );
     GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( timeIncrement );
     GEOSX_UNUSED_VAR( strainIncrement );
     GEOSX_UNUSED_VAR( stress );
     GEOSX_UNUSED_VAR( stiffness );
@@ -219,12 +222,13 @@ public:
   GEOSX_HOST_DEVICE
   virtual void hypoUpdate( localIndex const k,
                            localIndex const q,
+                           real64 const & timeIncrement,
                            real64 const ( &Ddt )[6],
                            real64 const ( &Rot )[3][3],
                            real64 ( & stress )[6],
                            real64 ( & stiffness )[6][6] ) const
   {
-    smallStrainUpdate( k, q, Ddt, stress, stiffness );
+    smallStrainUpdate( k, q, timeIncrement, Ddt, stress, stiffness );
 
     real64 temp[6] = { 0 };
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
@@ -290,17 +294,20 @@ public:
    *
    * @param[in] k Element index.
    * @param[in] q Quadrature point index.
+   * @param[in] timeIncrement time increment for rate-dependent models.
    * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
    * @param[out] stress New stress value (Cauchy stress)
    */
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
+                                             real64 const & timeIncrement,
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( & stress )[6] ) const
   {
     GEOSX_UNUSED_VAR( k );
     GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( timeIncrement );
     GEOSX_UNUSED_VAR( strainIncrement );
     GEOSX_UNUSED_VAR( stress );
     GEOSX_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model" );
@@ -340,11 +347,12 @@ public:
   GEOSX_HOST_DEVICE
   virtual void hypoUpdate_StressOnly( localIndex const k,
                                       localIndex const q,
+                                      real64 const & timeIncrement,
                                       real64 const ( &Ddt )[6],
                                       real64 const ( &Rot )[3][3],
                                       real64 ( & stress )[6] ) const
   {
-    smallStrainUpdate_StressOnly( k, q, Ddt, stress );
+    smallStrainUpdate_StressOnly( k, q, timeIncrement, Ddt, stress );
 
     real64 temp[6] = { 0 };
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
@@ -480,6 +488,7 @@ public:
   GEOSX_HOST_DEVICE
   void computeSmallStrainFiniteDifferenceStiffness( localIndex k,
                                                     localIndex q,
+                                                    real64 const & timeIncrement,
                                                     real64 const ( &strainIncrement )[6],
                                                     real64 ( & stiffnessFD )[6][6] ) const
   {
@@ -497,7 +506,7 @@ public:
 
     real64 eps = 1e-4*norm;     // finite difference perturbation
 
-    smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+    smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
     for( localIndex i=0; i<6; ++i )
     {
@@ -508,7 +517,7 @@ public:
         strainIncrementFD[i-1] -= eps;
       }
 
-      smallStrainUpdate( k, q, strainIncrementFD, stressFD, stiffnessFD );
+      smallStrainUpdate( k, q, timeIncrement, strainIncrementFD, stressFD, stiffnessFD );
 
       for( localIndex j=0; j<6; ++j )
       {
@@ -536,6 +545,7 @@ public:
   GEOSX_HOST_DEVICE
   bool checkSmallStrainStiffness( localIndex k,
                                   localIndex q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   bool print = false ) const
   {
@@ -543,8 +553,8 @@ public:
     real64 stiffnessFD[6][6];   // finite difference approximation
     real64 stress[6];           // original stress
 
-    smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
-    computeSmallStrainFiniteDifferenceStiffness( k, q, strainIncrement, stiffnessFD );
+    smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+    computeSmallStrainFiniteDifferenceStiffness( k, q, timeIncrement, strainIncrement, stiffnessFD );
 
     // compute relative error between two versions
 
