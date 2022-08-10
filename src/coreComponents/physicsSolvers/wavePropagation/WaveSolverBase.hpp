@@ -60,8 +60,8 @@ public:
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
 
-
     static constexpr char const * usePMLString() { return "usePML"; }
+    static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
   };
 
@@ -173,25 +173,28 @@ protected:
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
 
-  /// Mininum (x,y,z) coordinates of inner PML boundaries
-  R1Tensor m_xMinPML;
-
-  /// Maximum (x,y,z) coordinates of inner PML boundaries
-  R1Tensor m_xMaxPML;
-
-  /// Desired reflectivity of the PML region, used to compute the damping profile
-  real64 m_reflectivityPML;
-
-  /// Thickness of the PML region, used to compute the damping profile
-  R1Tensor m_thicknessMinXYZPML;
-  R1Tensor m_thicknessMaxXYZPML;
-
-  /// Wave speed in the PML region, used to compute the damping profile
-  R1Tensor m_waveSpeedMinXYZPML;
-  R1Tensor m_waveSpeedMaxXYZPML;
-
   /// Flag to apply PML
   integer m_usePML;
+
+  struct parametersPML
+  {
+    /// Mininum (x,y,z) coordinates of inner PML boundaries
+    R1Tensor xMinPML;
+
+    /// Maximum (x,y,z) coordinates of inner PML boundaries
+    R1Tensor xMaxPML;
+
+    /// Desired reflectivity of the PML region, used to compute the damping profile
+    real64 reflectivityPML;
+
+    /// Thickness of the PML region, used to compute the damping profile
+    R1Tensor thicknessMinXYZPML;
+    R1Tensor thicknessMaxXYZPML;
+
+    /// Wave speed in the PML region, used to compute the damping profile
+    R1Tensor waveSpeedMinXYZPML;
+    R1Tensor waveSpeedMaxXYZPML;
+  };
 
 };
 

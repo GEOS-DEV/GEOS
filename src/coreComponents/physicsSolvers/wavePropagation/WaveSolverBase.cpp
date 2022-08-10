@@ -115,7 +115,7 @@ void WaveSolverBase::postProcessInput()
   GEOSX_THROW_IF( counter > 1,
                   "One single PML field specification is allowed",
                   InputError );
-  
+
   m_usePML = counter;
 }
 

@@ -529,6 +529,14 @@ void AcousticWaveEquationSEM::initializePML()
 {
   GEOSX_MARK_FUNCTION;
 
+  registerWrapper< parametersPML >( viewKeyStruct::parametersPMLString() ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Parameters needed to compute damping in the PML region" );
+
+  parametersPML & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
+
   /// Get the default thicknesses and wave speeds in the PML regions from the PerfectlyMatchedLayer
   /// field specification parameters (from the xml)
   real64 minThicknessPML=0;
@@ -537,18 +545,17 @@ void AcousticWaveEquationSEM::initializePML()
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & fs )
   {
-    m_xMinPML=fs.getMin();
-    m_xMaxPML=fs.getMax();
-    m_thicknessMinXYZPML=fs.getThicknessMinXYZ();
-    m_thicknessMaxXYZPML=fs.getThicknessMaxXYZ();
-    m_reflectivityPML = fs.getReflectivity();
-    m_waveSpeedMinXYZPML=fs.getWaveSpeedMinXYZ();
-    m_waveSpeedMaxXYZPML=fs.getWaveSpeedMaxXYZ();
+    param.xMinPML=fs.getMin();
+    param.xMaxPML=fs.getMax();
+    param.thicknessMinXYZPML=fs.getThicknessMinXYZ();
+    param.thicknessMaxXYZPML=fs.getThicknessMaxXYZ();
+    param.reflectivityPML = fs.getReflectivity();
+    param.waveSpeedMinXYZPML=fs.getWaveSpeedMinXYZ();
+    param.waveSpeedMaxXYZPML=fs.getWaveSpeedMaxXYZ();
     minThicknessPML=fs.minThickness;
     smallestXMinPML=fs.smallestXMin;
     largestXMaxPML=fs.largestXMax;
   } );
-
 
   /// Now compute the PML parameters above internally
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -662,14 +669,14 @@ void AcousticWaveEquationSEM::initializePML()
     /// from the xml, replace them with the above
     for( integer i=0; i<3; ++i )
     {
-      if( m_xMinPML[i]<smallestXMinPML )
-        m_xMinPML[i] = xInteriorMin[i];
-      if( m_xMaxPML[i]>largestXMaxPML )
-        m_xMaxPML[i] = xInteriorMax[i];
-      if( m_thicknessMinXYZPML[i]<0 )
-        m_thicknessMinXYZPML[i] = xInteriorMin[i]-xGlobalMin[i];
-      if( m_thicknessMaxXYZPML[i]<0 )
-        m_thicknessMaxXYZPML[i] = xGlobalMax[i]-xInteriorMax[i];
+      if( param.xMinPML[i]<smallestXMinPML )
+        param.xMinPML[i] = xInteriorMin[i];
+      if( param.xMaxPML[i]>largestXMaxPML )
+        param.xMaxPML[i] = xInteriorMax[i];
+      if( param.thicknessMinXYZPML[i]<0 )
+        param.thicknessMinXYZPML[i] = xInteriorMin[i]-xGlobalMin[i];
+      if( param.thicknessMaxXYZPML[i]<0 )
+        param.thicknessMaxXYZPML[i] = xGlobalMax[i]-xInteriorMax[i];
     }
 
     /// Compute the average wave speeds in the PML regions internally
@@ -692,8 +699,8 @@ void AcousticWaveEquationSEM::initializePML()
       finiteElement::FiniteElementBase const &
       fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
-      real64 const xMin[3]{m_xMinPML[0], m_xMinPML[1], m_xMinPML[2]};
-      real64 const xMax[3]{m_xMaxPML[0], m_xMaxPML[1], m_xMaxPML[2]};
+      real64 const xMin[3]{param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
+      real64 const xMax[3]{param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
 
       finiteElement::dispatch3D( fe,
                                  [&]
@@ -734,24 +741,24 @@ void AcousticWaveEquationSEM::initializePML()
     /// replace them with the above
     for( integer i=0; i<3; ++i )
     {
-      if( m_waveSpeedMinXYZPML[i]<0 )
-        m_waveSpeedMinXYZPML[i] = cMin[i];
-      if( m_waveSpeedMaxXYZPML[i]<0 )
-        m_waveSpeedMaxXYZPML[i] = cMax[i];
+      if( param.waveSpeedMinXYZPML[i]<0 )
+        param.waveSpeedMinXYZPML[i] = cMin[i];
+      if( param.waveSpeedMaxXYZPML[i]<0 )
+        param.waveSpeedMaxXYZPML[i] = cMax[i];
     }
 
     /// add safeguards when PML thickness is negative or too small
     for( integer i=0; i<3; ++i )
     {
-      if( m_thicknessMinXYZPML[i]<=minThicknessPML )
+      if( param.thicknessMinXYZPML[i]<=minThicknessPML )
       {
-        m_thicknessMinXYZPML[i]=LvArray::NumericLimits< real64 >::max;
-        m_waveSpeedMinXYZPML[i]=0;
+        param.thicknessMinXYZPML[i]=LvArray::NumericLimits< real64 >::max;
+        param.waveSpeedMinXYZPML[i]=0;
       }
-      if( m_thicknessMaxXYZPML[i]<=minThicknessPML )
+      if( param.thicknessMaxXYZPML[i]<=minThicknessPML )
       {
-        m_thicknessMaxXYZPML[i]=LvArray::NumericLimits< real64 >::max;
-        m_waveSpeedMaxXYZPML[i]=0;
+        param.thicknessMaxXYZPML[i]=LvArray::NumericLimits< real64 >::max;
+        param.waveSpeedMaxXYZPML[i]=0;
       }
     }
 
@@ -760,14 +767,14 @@ void AcousticWaveEquationSEM::initializePML()
     indicatorPML.zero();
 
     GEOSX_LOG_LEVEL_RANK_0( 1,
-      "PML parameters are: \n"
-      << "\t inner boundaries xMin = { "<<m_xMinPML[0]<<", "<<m_xMinPML[1]<<", "<<m_xMinPML[2]<<" }\n"
-      << "\t inner boundaries xMax = { "<<m_xMaxPML[0]<<", "<<m_xMaxPML[1]<<", "<<m_xMaxPML[2]<<" }\n"
-      << "\t left, front, top max PML thicknesses  = { "<<m_thicknessMinXYZPML[0]<<", "<<m_thicknessMinXYZPML[1]<<", "<<m_thicknessMinXYZPML[2]<<" }\n"
-      << "\t right, back, bottom max PML thicknesses  = { "<<m_thicknessMaxXYZPML[0]<<", "<<m_thicknessMaxXYZPML[1]<<", "<<m_thicknessMaxXYZPML[2]<<" }\n"
-      << "\t left, front, top average wave speed  = { "<<m_waveSpeedMinXYZPML[0]<<", "<<m_waveSpeedMinXYZPML[1]<<", "<<m_waveSpeedMinXYZPML[2]<<" }\n"
-      << "\t right, back, bottom average wave speed  = { "<<m_waveSpeedMaxXYZPML[0]<<", "<<m_waveSpeedMaxXYZPML[1]<<", "<<m_waveSpeedMaxXYZPML[2]<<" }\n"
-      << "\t theoretical reflectivity = "<< m_waveSpeedMaxXYZPML );
+                            "PML parameters are: \n"
+                            << "\t inner boundaries xMin = "<<param.xMinPML<<"\n"
+                            << "\t inner boundaries xMax = "<<param.xMaxPML<<"\n"
+                            << "\t left, front, top max PML thicknesses  = "<<param.thicknessMinXYZPML<<"\n"
+                            << "\t right, back, bottom max PML thicknesses  = "<<param.thicknessMaxXYZPML<<"\n"
+                            << "\t left, front, top average wave speed  = "<<param.waveSpeedMinXYZPML<<"\n"
+                            << "\t right, back, bottom average wave speed  = "<<param.waveSpeedMaxXYZPML<<"\n"
+                            << "\t theoretical reflectivity = "<< param.reflectivityPML );
 
   } );
 }
@@ -779,6 +786,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
   GEOSX_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  parametersPML const & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
 
   /// Loop over the different mesh bodies; for wave propagation, there is only one mesh body
   /// which is the whole mesh
@@ -833,14 +841,14 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
       real64 cMax[3];
       for( integer i=0; i<3; ++i )
       {
-        xMin[i] = m_xMinPML[i];
-        xMax[i] = m_xMaxPML[i];
-        dMin[i] = m_thicknessMinXYZPML[i];
-        dMax[i] = m_thicknessMaxXYZPML[i];
-        cMin[i] = m_waveSpeedMinXYZPML[i];
-        cMax[i] = m_waveSpeedMaxXYZPML[i];
+        xMin[i] = param.xMinPML[i];
+        xMax[i] = param.xMaxPML[i];
+        dMin[i] = param.thicknessMinXYZPML[i];
+        dMax[i] = param.thicknessMaxXYZPML[i];
+        cMin[i] = param.waveSpeedMinXYZPML[i];
+        cMax[i] = param.waveSpeedMaxXYZPML[i];
       }
-      real64 const r = m_reflectivityPML;
+      real64 const r = param.reflectivityPML;
 
       /// Get the type of the elements in the subregion
       finiteElement::dispatch3D( fe,
@@ -945,22 +953,22 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
         }
       } );
     }
-
     else
     {
-      arrayView2d< real64 > const  v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
-      arrayView2d< real64 > const  grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
-      arrayView1d< real64 > const  divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
-      arrayView1d< real64 > const  u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
+      parametersPML const & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
+      arrayView2d< real64 > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
+      arrayView2d< real64 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+      arrayView1d< real64 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+      arrayView1d< real64 > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
-      real64 const xMin[ 3 ] = {m_xMinPML[0], m_xMinPML[1], m_xMinPML[2]};
-      real64 const xMax[ 3 ] = {m_xMaxPML[0], m_xMaxPML[1], m_xMaxPML[2]};
-      real64 const dMin[ 3 ] = {m_thicknessMinXYZPML[0], m_thicknessMinXYZPML[1], m_thicknessMinXYZPML[2]};
-      real64 const dMax[ 3 ] = {m_thicknessMaxXYZPML[0], m_thicknessMaxXYZPML[1], m_thicknessMaxXYZPML[2]};
-      real64 const cMin[ 3 ] = {m_waveSpeedMinXYZPML[0], m_waveSpeedMinXYZPML[1], m_waveSpeedMinXYZPML[2]};
-      real64 const cMax[ 3 ] = {m_waveSpeedMaxXYZPML[0], m_waveSpeedMaxXYZPML[1], m_waveSpeedMaxXYZPML[2]};
-      real64 const r = m_reflectivityPML;
+      real64 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
+      real64 const xMax[ 3 ] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
+      real64 const dMin[ 3 ] = {param.thicknessMinXYZPML[0], param.thicknessMinXYZPML[1], param.thicknessMinXYZPML[2]};
+      real64 const dMax[ 3 ] = {param.thicknessMaxXYZPML[0], param.thicknessMaxXYZPML[1], param.thicknessMaxXYZPML[2]};
+      real64 const cMin[ 3 ] = {param.waveSpeedMinXYZPML[0], param.waveSpeedMinXYZPML[1], param.waveSpeedMinXYZPML[2]};
+      real64 const cMax[ 3 ] = {param.waveSpeedMaxXYZPML[0], param.waveSpeedMaxXYZPML[1], param.waveSpeedMaxXYZPML[2]};
+      real64 const r = param.reflectivityPML;
 
       /// apply the main function to update some of the PML auxiliary variables
       /// Compute (divV) and (B.pressureGrad - C.auxUGrad) vectors for the PML region
@@ -1038,10 +1046,10 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       rhs[a] = 0.0;
     } );
 
-    if ( usePML )
+    if( usePML )
     {
-      arrayView2d< real64 > const  grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
-      arrayView1d< real64 > const  divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+      arrayView2d< real64 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+      arrayView1d< real64 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
       grad_n.zero();
       divV_n.zero();
     }
