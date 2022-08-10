@@ -102,13 +102,13 @@ class Geosx(CMakePackage, CudaPackage):
     # #
     # # Performance portability
     # #
-    depends_on('raja@0.12.1+openmp~examples~exercises')
+    depends_on('raja@2022.03.0+openmp~examples~exercises')
 
-    depends_on('umpire@4.1.2~c+openmp~examples')
+    depends_on('umpire@2022.03.0~c+openmp~examples')
 
-    depends_on('chai@2.2.2+raja+openmp~benchmarks~examples')
+    depends_on('chai@2022.03.0+raja+openmp~benchmarks~examples')
 
-    depends_on('camp@0.1.0')
+    depends_on('camp@2022.03.0')
 
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
@@ -149,7 +149,7 @@ class Geosx(CMakePackage, CudaPackage):
     #depends_on('superlu-dist+int64+openmp', when='~petsc')
     depends_on('superlu-dist+int64+openmp')
 
-    depends_on('scotch@6.0.9: +mpi +int64', when='+scotch')
+    depends_on('scotch@6.0.9 +mpi +int64', when='+scotch')
 
     depends_on('suite-sparse+openmp')
 
@@ -165,8 +165,8 @@ class Geosx(CMakePackage, CudaPackage):
             depends_on('hypre+cuda cuda_arch={0}'.format(sm_),
                        when='cuda_arch={0}'.format(sm_))
  
-    depends_on('petsc@3.13.0~hdf5~hypre+int64+ptscotch', when='+petsc')
-    depends_on('scotch@6.0.9', when='+petsc')
+    depends_on('petsc@3.13.0~hdf5~hypre+int64', when='+petsc')
+    depends_on('petsc+ptscotch', when='+petsc+scotch')
 
 # COMMENT OUT START
     # #
@@ -393,7 +393,7 @@ class Geosx(CMakePackage, CudaPackage):
             io_tpls = (('hdf5', 'HDF5', True), ('conduit', 'CONDUIT', True), ('silo', 'SILO', True),
                        ('adiak', 'ADIAK', '+caliper'
                         in spec), ('caliper', 'CALIPER', '+caliper'
-                                   in spec), ('pugixml', 'PUGIXML', True), ('vtk', 'VTK', '+vtk' in spec)('fmt', 'FMT', True))
+                                   in spec), ('pugixml', 'PUGIXML', True), ('vtk', 'VTK', '+vtk' in spec), ('fmt', 'FMT', True))
 
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# IO TPLs\n')
