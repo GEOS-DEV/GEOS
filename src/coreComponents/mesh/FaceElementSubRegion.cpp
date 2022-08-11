@@ -77,6 +77,43 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_numNodesPerElement = 8;
 }
 
+//ArrayOfArrays< localIndex > convert__( array2d< localIndex > const & vv )
+//{
+//  ArrayOfArrays< localIndex > res;
+//
+//  for( localIndex i = 0; i < vv.size(0); ++i ){
+//    auto const & vvv = vv[i];
+//    res.appendArray( vvv.begin(), vvv.end() );
+//  }
+//
+//  return res;
+//}
+
+//array1d< localIndex > convert( std::vector< localIndex > const & v )
+//{
+//  array1d< localIndex > res;
+//  for( auto const & val: v )
+//  {
+//    res.emplace_back( val );
+//  }
+//
+//  return res;
+//}
+
+//ArrayOfArrays< localIndex > convert__( std::vector< std::vector< localIndex > > const & vv )
+//{
+//  ArrayOfArrays< localIndex > res;
+//
+//  for( std::size_t i = 0; i < vv.size(); ++i )
+//  {
+//    auto const & vvv = vv[i];
+//    res.appendArray( vvv.begin(), vvv.end() );
+//  }
+//
+//  return res;
+//}
+
+
 void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
 {
   resize( faceBlock.num2dElements() );

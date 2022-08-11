@@ -21,6 +21,7 @@
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
+#include "mesh/generators/FaceBlock.hpp"
 
 namespace geosx
 {
