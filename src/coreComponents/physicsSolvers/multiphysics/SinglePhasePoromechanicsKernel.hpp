@@ -271,6 +271,7 @@ public:
     constexpr FunctionSpace pressureTestSpace = pressureTrialSpace;
 
     real64 strainIncrement[6]{};
+    real64 timeIncrement;
     real64 totalStress[6]{};
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness; // Could this be called dTotalStress_dStrainIncrement?
     real64 dTotalStress_dPressure[6]{};
@@ -297,6 +298,7 @@ public:
                                                        m_initialFluidPressure[k],
                                                        m_fluidPressure_n[k],
                                                        m_fluidPressure[k],
+                                                       timeIncrement,
                                                        strainIncrement,
                                                        m_gravityAcceleration,
                                                        m_gravityVector,

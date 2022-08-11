@@ -310,7 +310,7 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
 
       for(; k < maxIter; ++k )
       {
-        updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
+        updates.smallStrainUpdate( ei, 0, timeIncrement, strainIncrement, stress, stiffness );
 
         resid[0] = scale * (stress[0]-table( n, SIG0 ));
         resid[1] = scale * (stress[1]-table( n, SIG1 ));

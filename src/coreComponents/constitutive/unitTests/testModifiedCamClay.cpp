@@ -121,6 +121,7 @@ void testModifiedCamClayDriver()
 
   StrainData data;
   data.strainIncrement[0] = -1e-4;
+  real64 timeIncrement =0;
 
   // set initial stress
 
@@ -139,7 +140,7 @@ void testModifiedCamClayDriver()
     {
       real64 stressLocal[6] = {0};
       real64 stiffnessLocal[6][6] = {{0}};
-      cmw.smallStrainUpdate( k, 0, data.strainIncrement, stressLocal, stiffnessLocal );
+      cmw.smallStrainUpdate( k, 0, timeIncrement,  data.strainIncrement, stressLocal, stiffnessLocal );
       //    std::cout<< stressLocal[0] <<std::endl;
     } );
     cm.saveConvergedState();
@@ -162,9 +163,9 @@ void testModifiedCamClayDriver()
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
 
-  cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement, true );
+  cmw.checkSmallStrainStiffness( 0, 0, timeIncrement, data.strainIncrement, true );
 
-  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement ) );
+  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, timeIncrement, data.strainIncrement ) );
 }
 
 

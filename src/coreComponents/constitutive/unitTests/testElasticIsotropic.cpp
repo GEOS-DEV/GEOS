@@ -95,15 +95,16 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
   real64 const strain = 0.1;
   real64 Ddt[ 6 ] = { 0 };
   real64 Rot[ 3 ][ 3 ] = { { 0 } };
-
+  real64 timeIncrement = 0;
   real64 pointStress[6];
   {
     Ddt[ 0 ] = strain;
     Rot[ 0 ][ 0 ] = 1;
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
+    timeIncrement =0;
 
-    cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
+    cmw.hypoUpdate_StressOnly( 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (2.0/3.0*strain)*2*G + strain*K );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
@@ -121,8 +122,9 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 0 ][ 0 ] = 1;
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
+    timeIncrement = 0;
 
-    cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
+    cmw.hypoUpdate_StressOnly( 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (2.0/3.0*strain)*2*G + strain*K );
@@ -140,8 +142,9 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 0 ][ 0 ] = 1;
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
+    timeIncrement =0;
 
-    cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
+    cmw.hypoUpdate_StressOnly( 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
@@ -159,8 +162,9 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 0 ][ 0 ] = 1;
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
+    timeIncrement = 0;
 
-    cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
+    cmw.hypoUpdate_StressOnly( 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
@@ -178,8 +182,9 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 0 ][ 0 ] = 1;
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
+    timeIncrement = 0;
 
-    cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
+    cmw.hypoUpdate_StressOnly( 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
@@ -197,8 +202,9 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 0 ][ 0 ] = 1;
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
+    
 
-    cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
+    cmw.hypoUpdate_StressOnly( 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );

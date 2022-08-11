@@ -203,11 +203,12 @@ public:
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
     /// Macro to substitute in the shape function derivatives.
     real64 strain[6] = {0};
+    real64 timeIncrement;
     FE_TYPE::symmetricGradient( dNdX, stack.varLocal, strain );
 
     real64 stressLocal[ 6 ] = {0};
 #if UPDATE_STRESS == 2
-    m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
+    m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, timeIncrement, strain, stressLocal );
 #else
     m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
 #endif
@@ -232,11 +233,12 @@ public:
     real64 const detJ = FE_TYPE::inverseJacobianTransformation( q, stack.xLocal, invJ );
 
     real64 strain[6] = {0};
+    real64 timeIncrement;
     FE_TYPE::symmetricGradient( q, invJ, stack.varLocal, strain );
 
     real64 stressLocal[ 6 ] = {0};
 #if UPDATE_STRESS == 2
-    m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
+    m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, timeIncrement, strain, stressLocal );
 #else
     m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
 #endif

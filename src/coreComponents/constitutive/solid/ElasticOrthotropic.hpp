@@ -149,6 +149,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual void hypoUpdate( localIndex const k,
                            localIndex const q,
+                           real64 const & timeIncrement,
                            real64 const ( &Ddt )[6],
                            real64 const ( &Rot )[3][3],
                            real64 ( &stress )[6],
@@ -277,7 +278,7 @@ void ElasticOrthotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k
                                                               real64 ( & stress )[6] ) const
 {
   GEOSX_UNUSED_VAR( timeIncrement );
-  smallStrainNoStateUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress ); // stress =  incrementalStress
+  smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress =  incrementalStress
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
   saveStress( k, q, stress );                                           // m_newStress = stress
 }

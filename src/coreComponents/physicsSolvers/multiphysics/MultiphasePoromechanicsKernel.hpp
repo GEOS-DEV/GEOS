@@ -288,6 +288,7 @@ public:
     localIndex const NP = m_numPhases;
 
     real64 strainIncrement[6]{};
+    real64 timeIncrement;
     real64 totalStress[6]{};
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
     real64 dTotalStress_dPressure[6]{};
@@ -321,6 +322,7 @@ public:
                                                       m_initialFluidPressure[k],
                                                       m_fluidPressure_n[k],
                                                       m_fluidPressure[k],
+                                                      timeIncrement,
                                                       strainIncrement,
                                                       m_gravityAcceleration,
                                                       m_gravityVector,

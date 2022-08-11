@@ -185,10 +185,11 @@ public:
 
     real64 Rot[ 3 ][ 3 ];
     real64 Dadt[ 6 ];
+    real64 timeIncrement;
     HughesWinget( Rot, Dadt, Ldt );
 
     real64 stress[ 6 ] = { };
-    m_constitutiveUpdate.hypoUpdate_StressOnly( k, q, Dadt, Rot, stress );
+    m_constitutiveUpdate.hypoUpdate_StressOnly( k, q, timeIncrement, Dadt, Rot, stress );
 
     real64 P[ 3 ][ 3 ];
     LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );

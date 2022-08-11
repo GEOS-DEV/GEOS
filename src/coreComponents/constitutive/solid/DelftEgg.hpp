@@ -231,7 +231,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
   // elastic predictor (assume strainIncrement is all elastic)
 
-  ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+  ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
   if( m_disableInelasticity )
   {

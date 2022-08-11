@@ -108,6 +108,7 @@ void testDruckerPragerDriver()
 
   StrainData data;
   data.strainIncrement[0] = -1e-4;
+  real64 timeIncrement = 0;
 
   for( localIndex loadstep=0; loadstep < 50; ++loadstep )
   {
@@ -115,7 +116,7 @@ void testDruckerPragerDriver()
     {
       real64 stress[6] = {0};
       real64 stiffness[6][6] = {{0}};
-      cmw.smallStrainUpdate( k, 0, data.strainIncrement, stress, stiffness );
+      cmw.smallStrainUpdate( k, 0, timeIncrement, data.strainIncrement, stress, stiffness );
     } );
     cm.saveConvergedState();
   }
@@ -142,7 +143,7 @@ void testDruckerPragerDriver()
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
 
-  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement ) );
+  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, timeIncrement, data.strainIncrement ) );
 }
 
 
@@ -223,6 +224,7 @@ void testDruckerPragerExtendedDriver()
   DruckerPragerExtended::KernelWrapper cmw = cm.createKernelUpdates();
 
   StrainData data;
+  real64 timeIncrement = 0;
   data.strainIncrement[0] = -1e-3;
   real64 invariantP, invariantQ;
   real64 deviator[6] = {0};
@@ -234,7 +236,7 @@ void testDruckerPragerExtendedDriver()
     {
       real64 stress[6] = {0};
       real64 stiffness[6][6] = {{0}};
-      cmw.smallStrainUpdate( k, 0, data.strainIncrement, stress, stiffness );
+      cmw.smallStrainUpdate( k, 0, timeIncrement, data.strainIncrement, stress, stiffness );
     } );
 
     cm.saveConvergedState();
@@ -264,7 +266,7 @@ void testDruckerPragerExtendedDriver()
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
 
-  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement ) );
+  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, timeIncrement, data.strainIncrement ) );
 }
 
 #ifdef USE_CUDA

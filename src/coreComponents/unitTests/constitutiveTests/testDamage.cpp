@@ -77,17 +77,18 @@ TEST( DamageTests, testDamageSpectral )
   DamageSpectral< ElasticIsotropic >::KernelWrapper cmw = cm.createKernelUpdates();
 
   real64 strainIncrement[6] = {1e-4, 0, 0, 0, 0, 0};
+  real64 timeIncrement =0;
   real64 stress[6];
   real64 stiffness[6][6];
 
   for( localIndex loadstep=0; loadstep < 50; ++loadstep )
   {
-    cmw.smallStrainUpdate( 0, 0, strainIncrement, stress, stiffness );
+    cmw.smallStrainUpdate( 0, 0, timeIncrement, strainIncrement, stress, stiffness );
     cm.saveConvergedState();
   }
 
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
   //cmw.checkSmallStrainStiffness( 0, 0, strainIncrement, true );
-  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, strainIncrement ) );
+  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, timeIncrement, strainIncrement ) );
 }
