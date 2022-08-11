@@ -533,6 +533,13 @@ Element: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
 
 
+.. _XML_MultiphasePoromechanicsReservoir:
+
+Element: MultiphasePoromechanicsReservoir
+=========================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsReservoir.rst
+
+
 .. _XML_MultivariableTableFunction:
 
 Element: MultivariableTableFunction
@@ -818,6 +825,13 @@ Element: SinglePhasePoromechanics
 Element: SinglePhasePoromechanicsEmbeddedFractures
 ==================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures.rst
+
+
+.. _XML_SinglePhasePoromechanicsReservoir:
+
+Element: SinglePhasePoromechanicsReservoir
+==========================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsReservoir.rst
 
 
 .. _XML_SinglePhaseProppantFVM:
@@ -1615,6 +1629,13 @@ Datastructure: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
 
 
+.. _DATASTRUCTURE_MultiphasePoromechanicsReservoir:
+
+Datastructure: MultiphasePoromechanicsReservoir
+===============================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsReservoir_other.rst
+
+
 .. _DATASTRUCTURE_MultivariableTableFunction:
 
 Datastructure: MultivariableTableFunction
@@ -1900,6 +1921,13 @@ Datastructure: SinglePhasePoromechanics
 Datastructure: SinglePhasePoromechanicsEmbeddedFractures
 ========================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsReservoir:
+
+Datastructure: SinglePhasePoromechanicsReservoir
+================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsReservoir_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseProppantFVM:

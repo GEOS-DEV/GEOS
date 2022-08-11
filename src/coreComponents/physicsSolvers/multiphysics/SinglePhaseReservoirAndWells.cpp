@@ -26,6 +26,7 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
 
 namespace geosx
 {
@@ -44,16 +45,15 @@ template< typename SINGLEPHASE_RESERVOIR_SOLVER > class
 template<> class SinglePhaseCatalogNames< SinglePhaseBase >
 {
 public:
+  // TODO: find a way to use the catalog name here
   static string name() { return "SinglePhaseReservoir"; }
 };
-/*
-   // Class specialization for a RESERVOIR_SOLVER set to SinglePhasePoromechanics
-   template<> class SinglePhaseCatalogNames< SinglePhasePoromechanics >
-   {
-   public:
-   static string name() { return "SinglePhasePoromechanicsReservoir"; }
-   };
- */
+// Class specialization for a RESERVOIR_SOLVER set to SinglePhasePoromechanics
+template<> class SinglePhaseCatalogNames< SinglePhasePoromechanicsSolver >
+{
+public:
+  static string name() { return SinglePhasePoromechanicsSolver::catalogName()+"Reservoir"; }
+};
 }
 
 // provide a definition for catalogName()
@@ -82,8 +82,16 @@ void
 SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
-  if( catalogName() == SinglePhaseCatalogNames< SinglePhaseBase >::name() )
+
+  // if the reservoir solver is a coupled solver itself
+  if( auto const * const ptr = dynamicCast< SinglePhasePoromechanicsSolver const * >( this->reservoirSolver() ) )
   {
+    Base::wellSolver()->setFlowSolverName( ptr->flowSolver()->getName() );
+    // TODO: add an MGR recipe here
+  }
+  else // the reservoir solver is a flow solver
+  {
+    Base::wellSolver()->setFlowSolverName( Base::m_names[toUnderlying( Base::SolverType::Reservoir )] );
     if( dynamicCast< SinglePhaseFVM< SinglePhaseBase > * >( this->reservoirSolver() ) )
     {
       m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
@@ -92,10 +100,6 @@ initializePreSubGroups()
     {
       m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM;
     }
-  }
-  else
-  {
-    GEOSX_ERROR( "This option is not available yet" );
   }
 }
 
@@ -307,9 +311,9 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
 namespace
 {
 typedef SinglePhaseReservoirAndWells< SinglePhaseBase > SinglePhaseFlowAndWells;
-//typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanics > SinglePhasePoromechanicsAndWells;
+typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanicsSolver > SinglePhasePoromechanicsAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlowAndWells, string const &, Group * const )
-//REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsAndWells, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsAndWells, string const &, Group * const )
 }
 
 } /* namespace geosx */

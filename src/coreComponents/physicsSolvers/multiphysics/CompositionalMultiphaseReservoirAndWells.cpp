@@ -29,6 +29,7 @@
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/multiphysics/MultiphasePoromechanicsSolver.hpp"
 
 namespace geosx
 {
@@ -47,16 +48,15 @@ template< typename COMPOSITIONAL_RESERVOIR_SOLVER > class
 template<> class CompositionalCatalogNames< CompositionalMultiphaseBase >
 {
 public:
+  // TODO: find a way to use the catalog name here
   static string name() { return "CompositionalMultiphaseReservoir"; }
 };
-/*
-   // Class specialization for a RESERVOIR_SOLVER set to MultiphasePoromechanics
-   template<> class CompositionalCatalogNames< MultiphasePoromechanics >
-   {
-   public:
-   static string name() { return "CompositionalMultiphasePoromechanicsReservoir"; }
-   };
- */
+// Class specialization for a RESERVOIR_SOLVER set to MultiphasePoromechanics
+template<> class CompositionalCatalogNames< MultiphasePoromechanicsSolver >
+{
+public:
+  static string name() { return MultiphasePoromechanicsSolver::catalogName()+"Reservoir"; }
+};
 
 }
 
@@ -85,26 +85,21 @@ CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
 void
 CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
-postProcessInput()
-{
-  Base::postProcessInput();
-
-  integer const & useMassFlow = Base::reservoirSolver()->template getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
-  integer const & useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
-  GEOSX_THROW_IF( useMassFlow != useMassWell,
-                  GEOSX_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
-                             this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
-                             Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
-                  InputError );
-}
-
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
-void
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
-  if( catalogName() == CompositionalCatalogNames< CompositionalMultiphaseBase >::name() )
+  integer useMassFlow = 0;
+
+  // if the reservoir solver is a coupled solver itself
+  if( auto const * const ptr = dynamicCast< MultiphasePoromechanicsSolver const * >( this->reservoirSolver() ) )
   {
+    useMassFlow = ptr->flowSolver()->template getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
+    Base::wellSolver()->setFlowSolverName( ptr->flowSolver()->getName() );
+    // TODO: add an MGR recipe here
+  }
+  else // the reservoir solver is a flow solver
+  {
+    useMassFlow = Base::reservoirSolver()->template getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
+    Base::wellSolver()->setFlowSolverName( Base::m_names[toUnderlying( Base::SolverType::Reservoir )] );
     if( dynamicCast< CompositionalMultiphaseFVM * >( this->reservoirSolver() ) )
     {
       m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
@@ -114,10 +109,13 @@ initializePreSubGroups()
       m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
     }
   }
-  else
-  {
-    GEOSX_ERROR( "This option is not available yet" );
-  }
+
+  integer const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
+  GEOSX_THROW_IF( useMassFlow != useMassWell,
+                  GEOSX_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                             this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
+                             Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
+                  InputError );
 }
 
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
@@ -398,9 +396,9 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
 namespace
 {
 typedef CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > CompositionalMultiphaseFlowAndWells;
-//typedef CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics > CompositionalMultiphasePoromechanicsAndWells;
+typedef CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver > CompositionalMultiphasePoromechanicsAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFlowAndWells, string const &, Group * const )
-//REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphasePoromechanicsAndWells, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphasePoromechanicsAndWells, string const &, Group * const )
 }
 
 } /* namespace geosx */
