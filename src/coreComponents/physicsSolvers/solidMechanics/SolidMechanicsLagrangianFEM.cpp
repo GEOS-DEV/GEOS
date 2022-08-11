@@ -665,7 +665,7 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                                                 arrayView1d< string const > const & )
   {
 
-#if 0
+#if 1
     fsManager.apply( time,
                      mesh,
                      "nodeManager",

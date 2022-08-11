@@ -291,13 +291,14 @@ public:
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
 
-      if( time >= fs.getStartTime() && time < fs.getEndTime() )
+      if( time >= fs.getStartTime() && 
+          time < fs.getEndTime() && 
+          fieldName == fs.getFieldName() )
       {
         MeshObjectPath const & meshObjectPaths = fs.getMeshObjectPaths();
         meshObjectPaths.forObjectsInPath< OBJECT_TYPE >( mesh,
                                                         [&] ( OBJECT_TYPE & object )
         {
-
           if( object.hasWrapper( fieldName ) )
           {
             dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
