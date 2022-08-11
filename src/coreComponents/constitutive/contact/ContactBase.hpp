@@ -71,9 +71,10 @@ public:
    * @return The hydraulic aperture that is always > 0
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual real64 computeHydraulicAperture( real64 const aperture,
-                                           real64 & dHydraulicAperture_dAperture ) const;
+  real64 computeHydraulicAperture( real64 const aperture, real64 & dHydraulicAperture_dAperture ) const
+  {
+    return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
+  }
 
 
   /**
@@ -119,7 +120,11 @@ public:
   GEOSX_FORCE_INLINE
   virtual void addPressureToTraction( real64 const & pressure,
                                       arraySlice1d< real64 >const & tractionVector,
-                                      real64 & dTraction_dPressure ) const;
+                                      real64 & dTraction_dPressure ) const
+  {
+    tractionVector[0] -= pressure;
+    dTraction_dPressure = -1.0;
+  }
 
   /**
    * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
@@ -243,25 +248,6 @@ protected:
   /// Pointer to the function that limits the model aperture to a physically admissible value.
   TableFunction const * m_apertureTable;
 };
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
-                                                     real64 & dHydraulicAperture_dAperture ) const
-{
-  return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void ContactBaseUpdates::addPressureToTraction( real64 const & pressure,
-                                                arraySlice1d< real64 > const & tractionVector,
-                                                real64 & dTraction_dPressure ) const
-{
-  tractionVector[0] -= pressure;
-  dTraction_dPressure = -1.0;
-}
-
 
 } /* namespace constitutive */
 

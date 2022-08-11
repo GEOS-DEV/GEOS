@@ -86,12 +86,12 @@
             parallelThreads="48"/>
       <Restart name="sidreRestart"/> -->
 
-      <!-- ChomboIO name="chomboCoupling"
+      <ChomboIO name="chomboCoupling"
        beginCycle="1"
        outputPath="geosxToChombo.hdf5"
        waitForInput="1"
        inputPath="chomboToGeosx.hdf5"
-       useChomboPressures="1" /-->
+       useChomboPressures="1" />
   </Outputs>
 
   <NumericalMethods>

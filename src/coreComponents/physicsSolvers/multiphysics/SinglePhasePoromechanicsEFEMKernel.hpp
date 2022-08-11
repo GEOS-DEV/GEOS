@@ -639,8 +639,7 @@ struct StateUpdateKernel
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
       real64 dHydraulicAperture_dAperture = 0;
-      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k],
-                                                                      dHydraulicAperture_dAperture );
+      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k], dHydraulicAperture_dAperture );
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 

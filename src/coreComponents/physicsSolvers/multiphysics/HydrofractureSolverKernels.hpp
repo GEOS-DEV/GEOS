@@ -20,6 +20,9 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVERKERNELS_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVERKERNELS_HPP_
 
+#define DUM(X) printf( "%s: %p", STRINGIZE(X), (void*)X )
+
+
 #include "HydrofractureSolverKernels.hpp"
 
 namespace geosx
@@ -205,7 +208,19 @@ struct FluidMassResidualDerivativeAssemblyKernel
           CRSMatrixView< real64 const, localIndex const > const dFluxResidual_dAperture,
           CRSMatrixView< real64, globalIndex const > const & localMatrix )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex ei )
+    forAll< POLICY >( size, [=/* size,
+                              rankOffset,
+                              contactWrapper,
+                              elemsToFaces,
+                              faceToNodeMap,
+                              faceNormal,
+                              area,
+                              aperture,
+                              presDofNumber,
+                              dispDofNumber,
+                              dens,
+                              dFluxResidual_dAperture,
+                              localMatrix*/ ] GEOSX_HOST_DEVICE ( localIndex ei )
     {
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[ei][0] );
 
@@ -216,7 +231,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
       globalIndex const rowNumber = presDofNumber[ei] - rankOffset;
       globalIndex nodeDOF[8 * 3];
       stackArray1d< real64, 24 > dRdU( 2 * numNodesPerFace * 3 );
-
+//
       computeAccumulationDerivative( contactWrapper,
                                      numNodesPerFace,
                                      elemsToFaces[ei],
@@ -236,7 +251,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                                                           dRdU.data(),
                                                                           2 * numNodesPerFace * 3 );
       }
-
+//
       localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( ei );
       arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
       arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( ei );
