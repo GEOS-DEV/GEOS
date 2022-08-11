@@ -1020,6 +1020,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="objectPath" type="string" default="" />
 		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
+		<!--scaleSet => (no description available)-->
+		<xsd:attribute name="scaleSet" type="real64_array" default="{0}" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
 		<!--tractionType => Type of traction boundary condition. Options are:
