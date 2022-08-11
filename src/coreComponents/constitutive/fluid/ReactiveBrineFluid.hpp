@@ -27,6 +27,9 @@
 #include "constitutive/fluid/PVTFunctions/NoOpPVTFunction.hpp"
 #include "constitutive/fluid/PVTFunctions/WaterDensity.hpp"
 #include "constitutive/fluid/PVTFunctions/PhillipsBrineViscosity.hpp"
+#include "PVTFunctions/PureWaterProperties.hpp"
+
+
 
 #include <memory>
 
@@ -344,7 +347,12 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
            m_totalDensity( k, q ) );
   
   
+  // NOTE: for now, I am hardcoding 1 so that we don not need to provide the molecular weight of each species but we consider pure water. 
+  
+  real64 const totalMolecularWeight = PVTProps::PureWaterProperties::MOLECULAR_WEIGHT;
+
   convertMoleFractionToMolarity( m_totalDensity(k, q).value,
+                                 totalMolecularWeight,
                                  composition,
                                  m_primarySpeciesTotalConcentration[k] );
 

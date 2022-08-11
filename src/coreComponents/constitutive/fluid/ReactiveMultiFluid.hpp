@@ -141,6 +141,7 @@ public:
   protected:
 
     void convertMoleFractionToMolarity( real64 const totalDensity,
+                                        real64 const totalMolecularWeight,
                                         arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition,
                                         arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration ) const;
 
@@ -220,17 +221,11 @@ GEOSX_HOST_DEVICE
 inline void
 ReactiveMultiFluid::KernelWrapper::
   convertMoleFractionToMolarity( real64 const totalDensity,
+                                 real64 const totalMolecularWeight, 
                                  arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition,
                                  arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration ) const
 {
-  // 1. Convert from mole fraction to molarity ( mol/L )
-  real64 totalMolecularWeight = 0.0;
-  // NOTE: for now, I am hardcoding 1 so that we don not need to provide the molecular weight of each species but we consider pure water. 
-  for( int i=0; i < 1; i++ ) 
-  {
-    totalMolecularWeight += composition[i] * m_componentMolarWeight[i];
-  }
-
+  // 1. Convert from mole fraction to molarity ( mol/L )  
   real64 const conversionFactor = totalDensity / totalMolecularWeight * 1e-3;  //conversion to L instead of cubic meters
   for( int i=0; i < m_numPrimarySpecies; i++ )
   {
