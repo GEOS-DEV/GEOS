@@ -68,7 +68,7 @@
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"
-	amgSmootherType="l1jacobi"
+        amgSmootherType="l1jacobi"
         krylovTol="1.0e-10"/>
     </SinglePhaseFVM>
   </Solvers>
