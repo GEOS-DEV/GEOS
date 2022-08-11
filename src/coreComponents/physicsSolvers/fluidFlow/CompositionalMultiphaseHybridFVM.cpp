@@ -401,8 +401,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                          mimFaceGravCoef,
                                          transMultiplier,
                                          compFlowAccessors.get( extrinsicMeshData::flow::phaseMobility{} ),
-                                         compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dPressure{} ),
-                                         compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity{} ),
+                                         compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility{} ),
                                          compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
                                          multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
                                          multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity{} ),
@@ -756,10 +755,9 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
 
   // compute global residual norm
   real64 const residual = std::sqrt( MpiWrapper::sum( localResidualNorm ) );
-
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ;", residual );
+    GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residual );
   }
 
   return residual;
