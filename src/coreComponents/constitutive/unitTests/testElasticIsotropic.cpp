@@ -202,7 +202,7 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 0 ][ 0 ] = 1;
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
-    
+
 
     cmw.hypoUpdate_StressOnly( 0, 0, timeIncrement, Ddt, Rot, pointStress );
 

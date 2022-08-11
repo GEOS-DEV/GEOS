@@ -155,7 +155,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
   }
 
   // decompose into mean (P) and von Mises (Q) stress invariants
-  
+
   real64 trialP;
   real64 trialQ;
   real64 deviator[6];
