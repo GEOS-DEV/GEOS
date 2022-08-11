@@ -61,6 +61,9 @@ public:
   }
 
 
+  // template< typename OBJECT_TYPE >
+  // static bool objectTypeMatch();
+
   template< typename OBJECT_TYPE = ObjectManagerBase,
             typename FUNC >
   void forObjectsInPath( dataRepository::Group & meshBodies,
@@ -87,9 +90,67 @@ public:
   {
     return fillPathTokens( path, meshBodies );
   }
+
+  // template< typename OBJECT_TYPE = ObjectManagerBase,
+  //           typename FUNC >
+  // void testForObjectsInPath( string const bodyName,
+  //                            MeshLevel & level,
+  //                            FUNC && func ) const
+  // {
+  //   forObjectsInPath<OBJECT_TYPE,FUNC>( bodyName, level, std::forward<FUNC>(func) );
+  // }
+
 #endif
 
 private:
+
+  template< typename OBJECT_TYPE,
+            typename FUNC >
+  void forObjectsInPath( std::pair< string const, std::map< string, std::vector< string > > > const & levelPair,
+                         MeshLevel & meshLevel,
+                         FUNC && func ) const
+  {
+    if( m_objectType == ObjectTypes::nodes )
+    {
+      func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getNodeManager() ) );
+    }
+    else if( m_objectType == ObjectTypes::edges )
+    {
+      func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getEdgeManager()) );
+    }
+    else if( m_objectType == ObjectTypes::faces )
+    {
+      func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getFaceManager()) );
+    }
+    else if( m_objectType == ObjectTypes::elems )
+    {
+      ElementRegionManager & elemRegionMan = meshLevel.getElemManager();
+      for( auto & elemRegionPair : levelPair.second )
+      {
+        ElementRegionBase & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
+        if( std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value )
+        {
+          func( dynamic_cast< OBJECT_TYPE & >(elemRegion) );
+        }
+        else
+        {
+          for( auto & elemSubRegionName : elemRegionPair.second )
+          {
+            ElementSubRegionBase & subRegion = elemRegion.getSubRegion( elemSubRegionName );
+            if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value )
+            {
+              func( dynamic_cast< OBJECT_TYPE & >(subRegion) );
+            }
+            else
+            {
+              GEOSX_ERROR( "You shouldn't be here" );
+            }
+          }
+        }
+      }
+    }
+  }
+
   template< typename OBJECT_TYPE >
   ObjectTypes checkObjectTypeConsistency() const;
 
@@ -176,48 +237,12 @@ void MeshObjectPath::forObjectsInPath( dataRepository::Group const & meshBodies,
     {
       MeshLevel const & meshLevel = meshBody.getMeshLevel( meshLevelPair.first );
 
-      if( m_objectType == ObjectTypes::nodes )
-      {
-        func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getNodeManager() ) );
-      }
-      else if( m_objectType == ObjectTypes::edges )
-      {
-        func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getEdgeManager()) );
-      }
-      else if( m_objectType == ObjectTypes::faces )
-      {
-        func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getFaceManager()) );
-      }
-      else if( m_objectType == ObjectTypes::elems )
-      {
-        ElementRegionManager const & elemRegionMan = meshLevel.getElemManager();
-        for( auto const & elemRegionPair : meshLevelPair.second )
-        {
-          ElementRegionBase const & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
-          if( std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value )
-          {
-            func( dynamic_cast< OBJECT_TYPE const & >(elemRegion) );
-          }
-          else
-          {
-            for( auto const & elemSubRegionName : elemRegionPair.second )
-            {
-              ElementSubRegionBase const & subRegion = elemRegion.getSubRegion( elemSubRegionName );
-              if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value )
-              {
-                func( dynamic_cast< OBJECT_TYPE const & >(subRegion) );
-              }
-              else
-              {
-                GEOSX_ERROR( "You shouldn't be here" );
-              }
-            }
-          }
-        }
-      }
+      forObjectsInPath< OBJECT_TYPE, FUNC >( meshLevelPair, meshLevel, std::forward< FUNC >( func ));
     }
   }
 }
+
+
 
 template< typename OBJECT_TYPE,
           typename FUNC >
@@ -233,47 +258,11 @@ void MeshObjectPath::forObjectsInPath( MeshLevel & meshLevel,
     auto const levelIter = bodyIter->second.find( levelName );
     if( levelIter != bodyIter->second.end() )
     {
-      if( OBJECT_TYPE::catalogName() == EnumStrings< ObjectTypes >::toString( m_objectType ) )
+      string const objectTypeName = stringutilities::toLower( OBJECT_TYPE::catalogName());
+      if( objectTypeName == stringutilities::toLower( EnumStrings< ObjectTypes >::toString( m_objectType ) ) ||
+          ( objectTypeName.find( "elem" )!=string::npos && m_objectType==ObjectTypes::elems ) )
       {
-        if( m_objectType == ObjectTypes::nodes )
-        {
-          func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getNodeManager() ) );
-        }
-        else if( m_objectType == ObjectTypes::edges )
-        {
-          func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getEdgeManager()) );
-        }
-        else if( m_objectType == ObjectTypes::faces )
-        {
-          func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getFaceManager()) );
-        }
-        else if( m_objectType == ObjectTypes::elems )
-        {
-          ElementRegionManager & elemRegionMan = meshLevel.getElemManager();
-          for( auto & elemRegionPair : levelIter->second )
-          {
-            ElementRegionBase & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
-            if( std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value )
-            {
-              func( dynamic_cast< OBJECT_TYPE & >(elemRegion) );
-            }
-            else
-            {
-              for( auto & elemSubRegionName : elemRegionPair.second )
-              {
-                ElementSubRegionBase & subRegion = elemRegion.getSubRegion( elemSubRegionName );
-                if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value )
-                {
-                  func( dynamic_cast< OBJECT_TYPE & >(subRegion) );
-                }
-                else
-                {
-                  GEOSX_ERROR( "You shouldn't be here" );
-                }
-              }
-            }
-          }
-        }
+        forObjectsInPath< OBJECT_TYPE, FUNC >( *levelIter, meshLevel, std::forward< FUNC >( func ) );
       }
     }
   }

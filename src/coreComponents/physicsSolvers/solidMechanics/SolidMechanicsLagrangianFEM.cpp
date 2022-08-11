@@ -687,15 +687,15 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                                                                        localRhs );
     } );
 #else
-    fsManager.apply<FieldSpecificationBase,
-                    NodeManager>( time,
-                                  mesh,
-                                  keys::TotalDisplacement,
-                     [&]( FieldSpecificationBase const & bc,
-                          string const &,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & targetGroup,
-                          string const fieldName )
+    fsManager.apply< FieldSpecificationBase,
+                     NodeManager >( time,
+                                    mesh,
+                                    keys::TotalDisplacement,
+                                    [&]( FieldSpecificationBase const & bc,
+                                         string const &,
+                                         SortedArrayView< localIndex const > const & targetSet,
+                                         Group & targetGroup,
+                                         string const fieldName )
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                          parallelDevicePolicy< 32 > >( targetSet,

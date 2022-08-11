@@ -158,8 +158,6 @@ TEST( testMeshObjectPath, meshObjectPathConstuction )
 {
   TestMesh & testMesh = TestMesh::getTestMesh();
   Group const & meshBodies = testMesh.meshBodies();
-  MeshObjectPath::permutationMapType const & pathPermutations = testMesh.pathPermutations();
-
 
 
   std::map< string, MeshObjectPath::permutationMapType > pathsAndResults =
@@ -216,6 +214,16 @@ TEST( testMeshObjectPath, meshObjectPathConstuction )
       }
       }
     },
+    { "body0/level0/ElementRegions/region0/subreg0",
+      { { "body0",
+        { { "level0",
+          { { "region0", {"subreg0"} } }
+        }
+        }
+      }
+      }
+    },
+
     { "{body0 body1}/*/nodeManager",
       { { "body0",
         { { "level0", {} },
@@ -345,44 +353,113 @@ void checkRegionNames( std::vector< string > const & names )
   EXPECT_TRUE( names[12] == "region1" );
 }
 
+// TEST( testMeshObjectPath, forObjectsInPath )
+// {
+//   TestMesh & testMesh = TestMesh::getTestMesh();
+//   Group & meshBodies = testMesh.meshBodies();
+//   Group const & meshBodiesConst = meshBodies;
+//   string const path = "*/*/ElementRegions";
+//   MeshObjectPath meshObjectPath( path, meshBodiesConst );
+
+//   {
+//     std::vector< string > names;
+//     meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodiesConst,
+//                                                              [&]( ElementSubRegionBase const & elemSubRegionBase )
+//     {
+//       names.push_back( elemSubRegionBase.getName() );
+//     } );
+//     checkSubRegionNames( names );
+//   }
+
+//   {
+//     std::vector< string > names;
+//     meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodies,
+//                                                              [&]( ElementSubRegionBase & elemSubRegionBase )
+//     {
+//       names.push_back( elemSubRegionBase.getName() );
+//     } );
+//     checkSubRegionNames( names );
+//   }
+
+//   {
+//     std::vector< string > names;
+//     meshObjectPath.forObjectsInPath< CellElementRegion >( meshBodiesConst,
+//                                                           [&]( CellElementRegion const & elemRegionBase )
+//     {
+//       names.push_back( elemRegionBase.getName() );
+//     } );
+//     checkRegionNames( names );
+//   }
+// }
+
+template< typename OBJECT_TYPE, typename CHECK_FUNC >
+void testForObjectInPathsMeshLevel( Group & meshBodies,
+                                    string const path,
+                                    string const bodyName,
+                                    string const levelName,
+                                    CHECK_FUNC && checkFunc )
+{
+  MeshObjectPath meshObjectPath( path, meshBodies );
+  MeshBody & meshBody = meshBodies.getGroup< MeshBody >( bodyName );
+  MeshLevel & meshLevel = meshBody.getMeshLevel( levelName );
+  std::vector< string > names;
+
+  meshObjectPath.forObjectsInPath< OBJECT_TYPE >( meshLevel,
+                                                  [&]( OBJECT_TYPE const & object )
+  {
+    names.push_back( object.getName() );
+  } );
+
+  checkFunc( names );
+}
+
 TEST( testMeshObjectPath, forObjectsInPath )
 {
   TestMesh & testMesh = TestMesh::getTestMesh();
   Group & meshBodies = testMesh.meshBodies();
-  Group const & meshBodiesConst = meshBodies;
-  string const path = "*/*/ElementRegions";
-  MeshObjectPath meshObjectPath( path, meshBodiesConst );
 
+  testForObjectInPathsMeshLevel< CellElementSubRegion >( meshBodies,
+                                                         "*/*/ElementRegions",
+                                                         "body0",
+                                                         "level0",
+                                                         [&]( std::vector< string > const & names )
   {
-    std::vector< string > names;
-    meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodiesConst,
-                                                             [&]( ElementSubRegionBase const & elemSubRegionBase )
-    {
-      names.push_back( elemSubRegionBase.getName() );
-    } );
-    checkSubRegionNames( names );
-  }
+    EXPECT_TRUE( names[0] == "subreg0" );
+    EXPECT_TRUE( names[1] == "subreg1" );
+    EXPECT_TRUE( names[2] == "subreg0" );
+    EXPECT_TRUE( names[3] == "subreg1" );
+  } );
 
-  {
-    std::vector< string > names;
-    meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodies,
-                                                             [&]( ElementSubRegionBase & elemSubRegionBase )
-    {
-      names.push_back( elemSubRegionBase.getName() );
-    } );
-    checkSubRegionNames( names );
-  }
 
+  testForObjectInPathsMeshLevel< NodeManager >( meshBodies,
+                                                "*/*/nodeManager",
+                                                "body0",
+                                                "level0",
+                                                [&]( std::vector< string > const & names )
   {
-    std::vector< string > names;
-    meshObjectPath.forObjectsInPath< CellElementRegion >( meshBodiesConst,
-                                                          [&]( CellElementRegion const & elemRegionBase )
-    {
-      names.push_back( elemRegionBase.getName() );
-    } );
-    checkRegionNames( names );
-  }
+    EXPECT_TRUE( names[0] == "nodeManager" );
+  } );
+
+  testForObjectInPathsMeshLevel< EdgeManager >( meshBodies,
+                                                "*/*/edgeManager",
+                                                "body0",
+                                                "level0",
+                                                [&]( std::vector< string > const & names )
+  {
+    EXPECT_TRUE( names[0] == "edgeManager" );
+  } );
+
+  testForObjectInPathsMeshLevel< FaceManager >( meshBodies,
+                                                "*/*/faceManager",
+                                                "body0",
+                                                "level0",
+                                                [&]( std::vector< string > const & names )
+  {
+    EXPECT_TRUE( names[0] == "faceManager" );
+  } );
+
+
+
 }
-
 
 } /* namespace geosx */
