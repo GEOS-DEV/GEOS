@@ -36,16 +36,16 @@ template< typename PHASE > class
   ReactiveBrineCatalogNames {};
 
 template<> class
-  ReactiveBrineCatalogNames< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction > >
+  ReactiveBrineCatalogNames< PhaseModel< PVTProps::WaterDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction > >
 {
 public:
-  static string name() { return "ReactiveBrinePhillipsFluid"; }
+  static string name() { return "ReactiveBrine"; }
 };
 template<> class
-  ReactiveBrineCatalogNames< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy > >
+  ReactiveBrineCatalogNames< PhaseModel< PVTProps::WaterDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy > >
 {
 public:
-  static string name() { return "ReactiveBrinePhillipsThermalFluid"; }
+  static string name() { return "ReactiveBrineThermal"; }
 };
 
 } // end namespace
@@ -257,12 +257,12 @@ ReactiveBrineFluid< PHASE > ::KernelWrapper::
   {}
 
 // explicit instantiation of the model template; unfortunately we can't use the aliases for this
-template class ReactiveBrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction > >;
-template class ReactiveBrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy > >;
+template class ReactiveBrineFluid< PhaseModel< PVTProps::WaterDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction > >;
+template class ReactiveBrineFluid< PhaseModel< PVTProps::WaterDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy > >;
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveBrinePhillipsFluid, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveBrinePhillipsThermalFluid, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveBrine, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveBrineThermal, string const &, Group * const )
 
 } //namespace constitutive
 

@@ -18,6 +18,9 @@
 
 #include "ReactiveFluidDriver.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
+#include "PVTFunctions/PureWaterProperties.hpp"
+#include "functions/TableFunction.hpp"
+#include "functions/FunctionManager.hpp"
 
 namespace geosx
 {
@@ -202,8 +205,9 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
 
   GEOSX_ASSERT_EQ( numPrimarySpecies, m_feed.size() );
   array2d< real64, compflow::LAYOUT_COMP > primarySpeciesTotalConcentrationValues( 1, numPrimarySpecies );
+  array2d< real64, compflow::LAYOUT_COMP > compositionValues( 1, numPrimarySpecies );
 
-  for( localIndex i = 0; i < numPrimarySpecies; ++i )
+  for( int i = 0; i < numPrimarySpecies; ++i )
   {
     primarySpeciesTotalConcentrationValues[0][i] = m_feed[i];
   }
@@ -215,18 +219,34 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
     primarySpeciesTotalConcentrationValues[0][0] = hPlusConcentration + m_feed[1];
   }
 
-  arrayView2d< real64 const, compflow::USD_COMP > const primarySpeciesTotalConcentration = primarySpeciesTotalConcentrationValues;
+  TableFunction const * waterDensityTable = 
+  constitutive::PVTProps::PureWaterProperties::makeSaturationDensityTable( "helpTable", FunctionManager::getInstance() );
+  
+  TableFunction::KernelWrapper waterDensityTableWrapper  = waterDensityTable->createKernelWrapper();             
+
+  arrayView2d< real64, compflow::USD_COMP > const composition = compositionValues;
+  arrayView2d< real64, compflow::USD_COMP > const primarySpeciesTotalConcentration = primarySpeciesTotalConcentrationValues;
 
   // perform fluid update using table (P,T) and save resulting compositions, etc.
   // note: column indexing should be kept consistent with output file header below.
-
   integer numSteps = m_numSteps;
   using ExecPolicy = typename ReactiveMultiFluid::exec_policy;
   forAll< ExecPolicy >( 1, [=]  GEOSX_HOST_DEVICE ( localIndex const ei )
   {
     for( integer n = 0; n <= numSteps; ++n )
     {
-      kernelWrapper.update( ei, 0, table( n, PRES ), table( n, TEMP ), primarySpeciesTotalConcentration[0] );
+       // NOTE: I am just hardcoding the value of this conversion factor so that we can use feed in mol/L instead of 
+       // mole fractions. 
+       // convert molarity to molefraction
+      real64 const input[2] = {  table( n, PRES ), table( n, TEMP ) };
+      real64 const conversionFactor = 
+      constitutive::PVTProps::PureWaterProperties::MOLECULAR_WEIGHT / waterDensityTableWrapper.compute( input ) * 1e3;
+      for( int i = 0; i < numPrimarySpecies; ++i )
+      {
+       composition[0][i] = primarySpeciesTotalConcentration[0][i] * conversionFactor;
+      }
+
+      kernelWrapper.update( ei, 0, table( n, PRES ), table( n, TEMP ), composition[0] );
       for( integer p=0; p<numPrimarySpecies; ++p )
       {
         table( n, TEMP+1+p ) = primarySpeciesConcentration( ei, p );

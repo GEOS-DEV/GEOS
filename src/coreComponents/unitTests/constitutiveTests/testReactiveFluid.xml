@@ -54,11 +54,11 @@
   </Events>
 
   <Constitutive>
-    <ReactiveBrinePhillipsFluid
+    <ReactiveBrine
       name="reactiveFluid"
       phaseNames="{ water }"
-      componentNames="{ water }"
-      componentMolarWeight="{ 18e-3 }"
+      componentNames="{ water, co2 }"
+      componentMolarWeight="{ 18e-3, 44e-3 }"
       phasePVTParaFiles="{ testPVT_data/brinePVT.txt }"/>
   </Constitutive>
 

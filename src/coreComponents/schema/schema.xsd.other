@@ -938,8 +938,8 @@
 			<xsd:element name="ProppantPorosity" type="ProppantPorosityType" />
 			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="ProppantSolidProppantPermeability" type="ProppantSolidProppantPermeabilityType" />
-			<xsd:element name="ReactiveBrinePhillipsFluid" type="ReactiveBrinePhillipsFluidType" />
-			<xsd:element name="ReactiveBrinePhillipsThermalFluid" type="ReactiveBrinePhillipsThermalFluidType" />
+			<xsd:element name="ReactiveBrine" type="ReactiveBrineType" />
+			<xsd:element name="ReactiveBrineThermal" type="ReactiveBrineThermalType" />
 			<xsd:element name="SinglePhaseConstantThermalConductivity" type="SinglePhaseConstantThermalConductivityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
 			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
@@ -1791,7 +1791,7 @@
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantSolidProppantPermeabilityType" />
-	<xsd:complexType name="ReactiveBrinePhillipsFluidType">
+	<xsd:complexType name="ReactiveBrineType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
@@ -1847,7 +1847,7 @@
 		<!--useMass => (no description available)-->
 		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="ReactiveBrinePhillipsThermalFluidType">
+	<xsd:complexType name="ReactiveBrineThermalType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->

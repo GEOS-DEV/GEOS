@@ -757,18 +757,18 @@ Element: Python
 .. include:: ../../coreComponents/schema/docs/Python.rst
 
 
-.. _XML_ReactiveBrinePhillipsFluid:
+.. _XML_ReactiveBrine:
 
-Element: ReactiveBrinePhillipsFluid
-===================================
-.. include:: ../../coreComponents/schema/docs/ReactiveBrinePhillipsFluid.rst
+Element: ReactiveBrine
+======================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrine.rst
 
 
-.. _XML_ReactiveBrinePhillipsThermalFluid:
+.. _XML_ReactiveBrineThermal:
 
-Element: ReactiveBrinePhillipsThermalFluid
-==========================================
-.. include:: ../../coreComponents/schema/docs/ReactiveBrinePhillipsThermalFluid.rst
+Element: ReactiveBrineThermal
+=============================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrineThermal.rst
 
 
 .. _XML_ReactiveCompositionalMultiphaseOBL:
@@ -1860,18 +1860,18 @@ Datastructure: Python
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
 
 
-.. _DATASTRUCTURE_ReactiveBrinePhillipsFluid:
+.. _DATASTRUCTURE_ReactiveBrine:
 
-Datastructure: ReactiveBrinePhillipsFluid
-=========================================
-.. include:: ../../coreComponents/schema/docs/ReactiveBrinePhillipsFluid_other.rst
+Datastructure: ReactiveBrine
+============================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrine_other.rst
 
 
-.. _DATASTRUCTURE_ReactiveBrinePhillipsThermalFluid:
+.. _DATASTRUCTURE_ReactiveBrineThermal:
 
-Datastructure: ReactiveBrinePhillipsThermalFluid
-================================================
-.. include:: ../../coreComponents/schema/docs/ReactiveBrinePhillipsThermalFluid_other.rst
+Datastructure: ReactiveBrineThermal
+===================================
+.. include:: ../../coreComponents/schema/docs/ReactiveBrineThermal_other.rst
 
 
 .. _DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL:

@@ -33,16 +33,16 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( ReactiveMultiFluid const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ReactiveBrinePhillipsFluid,
-                               ReactiveBrinePhillipsThermalFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ReactiveBrine,
+                               ReactiveBrineThermal >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
 void constitutiveUpdatePassThru( ReactiveMultiFluid & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ReactiveBrinePhillipsFluid,
-                               ReactiveBrinePhillipsThermalFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ReactiveBrine,
+                               ReactiveBrineThermal >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

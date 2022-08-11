@@ -609,12 +609,12 @@
 					<xsd:selector xpath="ProppantSolidProppantPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="ConstitutiveReactiveBrinePhillipsFluidUniqueName">
-					<xsd:selector xpath="ReactiveBrinePhillipsFluid" />
+				<xsd:unique name="ConstitutiveReactiveBrineUniqueName">
+					<xsd:selector xpath="ReactiveBrine" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="ConstitutiveReactiveBrinePhillipsThermalFluidUniqueName">
-					<xsd:selector xpath="ReactiveBrinePhillipsThermalFluid" />
+				<xsd:unique name="ConstitutiveReactiveBrineThermalUniqueName">
+					<xsd:selector xpath="ReactiveBrineThermal" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="ConstitutiveSinglePhaseConstantThermalConductivityUniqueName">
@@ -2625,8 +2625,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="ProppantPorosity" type="ProppantPorosityType" />
 			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="ProppantSolidProppantPermeability" type="ProppantSolidProppantPermeabilityType" />
-			<xsd:element name="ReactiveBrinePhillipsFluid" type="ReactiveBrinePhillipsFluidType" />
-			<xsd:element name="ReactiveBrinePhillipsThermalFluid" type="ReactiveBrinePhillipsThermalFluidType" />
+			<xsd:element name="ReactiveBrine" type="ReactiveBrineType" />
+			<xsd:element name="ReactiveBrineThermal" type="ReactiveBrineThermalType" />
 			<xsd:element name="SinglePhaseConstantThermalConductivity" type="SinglePhaseConstantThermalConductivityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
 			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
@@ -3465,7 +3465,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="ReactiveBrinePhillipsFluidType">
+	<xsd:complexType name="ReactiveBrineType">
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
@@ -3477,7 +3477,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="ReactiveBrinePhillipsThermalFluidType">
+	<xsd:complexType name="ReactiveBrineThermalType">
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->

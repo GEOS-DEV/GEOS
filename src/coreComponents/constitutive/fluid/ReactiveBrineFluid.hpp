@@ -25,7 +25,7 @@
 #include "constitutive/fluid/PhaseModel.hpp"
 #include "constitutive/fluid/PVTFunctions/BrineEnthalpy.hpp"
 #include "constitutive/fluid/PVTFunctions/NoOpPVTFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/PhillipsBrineDensity.hpp"
+#include "constitutive/fluid/PVTFunctions/WaterDensity.hpp"
 #include "constitutive/fluid/PVTFunctions/PhillipsBrineViscosity.hpp"
 
 #include <memory>
@@ -169,10 +169,10 @@ private:
 };
 
 // these aliases are useful in constitutive dispatch
-using ReactiveBrinePhillipsFluid =
-  ReactiveBrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction > >;
-using ReactiveBrinePhillipsThermalFluid =
-  ReactiveBrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy > >;
+using ReactiveBrine =
+  ReactiveBrineFluid< PhaseModel< PVTProps::WaterDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction > >;
+using ReactiveBrineThermal =
+  ReactiveBrineFluid< PhaseModel< PVTProps::WaterDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy > >;
 
 template< typename PHASE >
 GEOSX_HOST_DEVICE
@@ -193,28 +193,29 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
   integer constexpr numComp = chemicalReactions::ReactionsBase::maxNumPrimarySpecies;
   integer constexpr numPhase = 1;
 
-  // 1. Convert input mass fractions to mole fractions and keep derivatives
-  stackArray1d< real64, numComp > compMoleFrac( numComp );
-
-  for( integer ic = 0; ic < numComp; ++ic )
+  // 1. We perform a sort of single phase flash
+  stackArray1d< real64, numComp > compMoleFrac( composition.size() );
+  phaseFraction[0] = 1.0; // it's a single phase system
+  for( integer ic = 0; ic < composition.size(); ++ic )
   {
     compMoleFrac[ic] = composition[ic];
+    phaseCompFraction[0][ic] = composition[ic];
   }
 
   // 2. Compute phase fractions and phase component fractions
   real64 const temperatureInCelsius = temperature - 273.15;
 
-  // 3. Compute phase densities and phase viscosities
+  // 3. Compute phase density and phase viscoisty
   m_phase.density.compute( pressure,
-                            temperatureInCelsius,
-                            phaseCompFraction[0].toSliceConst(),
-                            phaseDensity[0],
-                            m_useMass );
+                           temperatureInCelsius,
+                           phaseCompFraction[0].toSliceConst(),
+                           phaseDensity[0],
+                           m_useMass );
   m_phase.viscosity.compute( pressure,
-                              temperatureInCelsius,
-                              phaseCompFraction[0].toSliceConst(),
-                              phaseViscosity[0],
-                              m_useMass );
+                             temperatureInCelsius,
+                             phaseCompFraction[0].toSliceConst(),
+                             phaseViscosity[0],
+                             m_useMass );
 
   // for now, we have to compute the phase mass density here
   m_phase.density.compute( pressure,
@@ -265,22 +266,25 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
 {
   integer constexpr numComp = chemicalReactions::ReactionsBase::maxNumPrimarySpecies;
   integer constexpr numPhase = 1;
-
-  stackArray1d< real64, numComp > compMoleFrac( numComp );
-  for( integer ic = 0; ic < numComp; ++ic )
+  
+  // 1. We perform a sort of single phase flash
+  stackArray1d< real64, numComp > compMoleFrac( composition.size() );
+  
+  phaseFraction.value[0] = 1.0; // it's a single phase system
+  for( integer ic = 0; ic < composition.size(); ++ic )
   {
     compMoleFrac[ic] = composition[ic];
+    phaseCompFraction.value[0][ic] = composition[ic];
   }
 
-  // 2. Compute phase fractions and phase component fractions
   real64 const temperatureInCelsius = temperature - 273.15;
 
-  // 3. Compute phase densities and phase viscosities
+  // 2. Compute phase densities and phase viscosities
   m_phase.density.compute( pressure,
-                            temperatureInCelsius,
-                            phaseCompFraction.value[0].toSliceConst(), phaseCompFraction.derivs[0].toSliceConst(),
-                            phaseDensity.value[0], phaseDensity.derivs[0],
-                            m_useMass );
+                           temperatureInCelsius,
+                           phaseCompFraction.value[0].toSliceConst(), phaseCompFraction.derivs[0].toSliceConst(),
+                           phaseDensity.value[0], phaseDensity.derivs[0],
+                           m_useMass );
 
   m_phase.viscosity.compute( pressure,
                              temperatureInCelsius,
@@ -296,14 +300,14 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
                            phaseMassDensity.value[0], phaseMassDensity.derivs[0],
                            true );
 
-  // 4. Compute enthalpy and internal energy
+  // 3. Compute enthalpy and internal energy
   if( m_isThermal )
   {
     m_phase.enthalpy.compute( pressure,
-                               temperatureInCelsius,
-                               phaseCompFraction.value[0].toSliceConst(), phaseCompFraction.derivs[0].toSliceConst(),
-                               phaseEnthalpy.value[0], phaseEnthalpy.derivs[0],
-                               m_useMass );
+                              temperatureInCelsius,
+                              phaseCompFraction.value[0].toSliceConst(), phaseCompFraction.derivs[0].toSliceConst(),
+                              phaseEnthalpy.value[0], phaseEnthalpy.derivs[0],
+                              m_useMass );
 
     computeInternalEnergy( pressure,
                            phaseFraction,
@@ -313,7 +317,6 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
   }
 
   // 6. Compute total fluid mass/molar density and derivatives
-
   computeTotalDensity( phaseFraction,
                        phaseDensity,
                        totalDensity );
@@ -328,15 +331,6 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
           real64 const temperature,
           arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
-  
-  computeChemistry( pressure,
-                    temperature,
-                    composition,
-                    m_primarySpeciesConcentration[k],
-                    m_secondarySpeciesConcentration[k],
-                    m_primarySpeciesTotalConcentration[k],
-                    m_kineticReactionRates[k] );
-
   compute( pressure,
            temperature,
            composition,
@@ -348,6 +342,18 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
            m_phaseInternalEnergy( k, q ),
            m_phaseCompFraction( k, q ),
            m_totalDensity( k, q ) );
+  
+  
+  convertMoleFractionToMolarity( m_totalDensity(k, q).value,
+                                 composition,
+                                 m_primarySpeciesTotalConcentration[k] );
+
+  computeChemistry( pressure,
+                    temperature,
+                    m_primarySpeciesTotalConcentration[k],
+                    m_primarySpeciesConcentration[k],
+                    m_secondarySpeciesConcentration[k],
+                    m_kineticReactionRates[k] );         
 }
 
 

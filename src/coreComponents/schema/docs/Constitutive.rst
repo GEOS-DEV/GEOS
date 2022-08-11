@@ -53,8 +53,8 @@ ProppantPermeability                        node         :ref:`XML_ProppantPerme
 ProppantPorosity                            node         :ref:`XML_ProppantPorosity`                            
 ProppantSlurryFluid                         node         :ref:`XML_ProppantSlurryFluid`                         
 ProppantSolidProppantPermeability           node         :ref:`XML_ProppantSolidProppantPermeability`           
-ReactiveBrinePhillipsFluid                  node         :ref:`XML_ReactiveBrinePhillipsFluid`                  
-ReactiveBrinePhillipsThermalFluid           node         :ref:`XML_ReactiveBrinePhillipsThermalFluid`           
+ReactiveBrine                               node         :ref:`XML_ReactiveBrine`                               
+ReactiveBrineThermal                        node         :ref:`XML_ReactiveBrineThermal`                        
 SinglePhaseConstantThermalConductivity      node         :ref:`XML_SinglePhaseConstantThermalConductivity`      
 SlipDependentPermeability                   node         :ref:`XML_SlipDependentPermeability`                   
 SolidInternalEnergy                         node         :ref:`XML_SolidInternalEnergy`                         

@@ -74,10 +74,9 @@ public:
     GEOSX_HOST_DEVICE
     void computeChemistry( real64 const pressure,
                            real64 const temperature,
-                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const;
 
     /**
@@ -141,6 +140,10 @@ public:
     
   protected:
 
+    void convertMoleFractionToMolarity( real64 const totalDensity,
+                                        arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition,
+                                        arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration ) const;
+
     friend class ReactiveMultiFluid;
     /// Reaction related terms
     integer m_numPrimarySpecies;
@@ -194,27 +197,45 @@ inline void
 ReactiveMultiFluid::KernelWrapper::
   computeChemistry( real64 const pressure,
                     real64 const temperature,
-                    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const
 {
-  // I am assuming that the primary variable is the concentration of the primary species.
-  for( int i=0; i < m_numPrimarySpecies; i++ )
-  {
-    primarySpeciesTotalConcentration[i] = composition[i];
-  }
-
+  // 2. solve for equilibrium
   m_equilibriumReactions.updateConcentrations( temperature,
                                                primarySpeciesTotalConcentration,
                                                primarySpeciesConcentration,
                                                secondarySpeciesConcentration );
-
+  
+  // 3. compute kinetic reaction rates
   m_kineticReactions.computeReactionRates( temperature,
                                            primarySpeciesConcentration,
                                            secondarySpeciesConcentration,
                                            kineticReactionRates );
+}
+
+
+GEOSX_HOST_DEVICE
+inline void
+ReactiveMultiFluid::KernelWrapper::
+  convertMoleFractionToMolarity( real64 const totalDensity,
+                                 arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition,
+                                 arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration ) const
+{
+  // 1. Convert from mole fraction to molarity ( mol/L )
+  real64 totalMolecularWeight = 0.0;
+  // NOTE: for now, I am hardcoding 1 so that we don not need to provide the molecular weight of each species but we consider pure water. 
+  for( int i=0; i < 1; i++ ) 
+  {
+    totalMolecularWeight += composition[i] * m_componentMolarWeight[i];
+  }
+
+  real64 const conversionFactor = totalDensity / totalMolecularWeight * 1e-3;  //conversion to L instead of cubic meters
+  for( int i=0; i < m_numPrimarySpecies; i++ )
+  {
+    primarySpeciesTotalConcentration[i] = composition[i] * conversionFactor;
+  }
 }
 
 } // namespace constitutive
