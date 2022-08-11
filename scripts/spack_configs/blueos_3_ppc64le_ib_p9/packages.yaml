@@ -29,7 +29,7 @@ packages:
   cuda:
     buildable: False
     externals:
-    - spec: cuda@11.0.2
+    - spec: cuda@11.0.2 +allow-unsupported-compilers
       prefix: /usr/tce/packages/cuda/cuda-11.0.2
 
   # System level packages to not build

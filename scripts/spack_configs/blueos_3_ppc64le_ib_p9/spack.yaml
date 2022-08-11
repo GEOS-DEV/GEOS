@@ -16,7 +16,7 @@ spack:
   - ../../spack_packages
   view: false
   specs:
-  - geosx@develop%clang@10.0.1+cuda cuda_arch=70 ^cuda@10.1.243+allow-unsupported-compilers
+  - geosx@develop%clang@10.0.1+cuda cuda_arch=70 ^cuda@11.0.2+allow-unsupported-compilers
   bootstrap:
     trusted:
       github-actions-v0.1: false
