@@ -84,6 +84,23 @@ public:
   /// @brief Destructor
   virtual ~SurfaceElementSubRegion() override;
 
+  void calculateElementCenters( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+  {
+    arrayView2d< real64 > const & elementCenters = m_elementCenter;
+    localIndex nNodes = numNodesPerElement();
+
+    forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
+    {
+      LvArray::tensorOps::copy< 3 >( elementCenters[ k ], X[ m_toNodesRelation( k, 0 ) ] );
+      for( localIndex a = 1; a < nNodes; ++a )
+      {
+        LvArray::tensorOps::add< 3 >( elementCenters[ k ], X[ m_toNodesRelation( k, a ) ] );
+      }
+
+      LvArray::tensorOps::scale< 3 >( elementCenters[ k ], 1.0 / nNodes );
+    } );
+  }
+
   ///@}
 
   /**

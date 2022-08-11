@@ -97,11 +97,11 @@ TEST( FieldSpecification, Recursive )
 
     reg0.addCellBlockName( reg0Hex.getName() );
     reg0.addCellBlockName( reg0Tet.getName() );
-    reg0.generateMesh( cellBlockManager.getCellBlocks() );
+    reg0.generateMesh( cellBlockManager.getCellBlocks(), cellBlockManager );
 
     reg1.addCellBlockName( reg1Hex.getName() );
     reg1.addCellBlockName( reg1Tet.getName() );
-    reg1.generateMesh( cellBlockManager.getCellBlocks() );
+    reg1.generateMesh( cellBlockManager.getCellBlocks(), cellBlockManager );
 
     // The cell block manager should not be used anymore.
     domain.deregisterGroup( keys::cellManager );

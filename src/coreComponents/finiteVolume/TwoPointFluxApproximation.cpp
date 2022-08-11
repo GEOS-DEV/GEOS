@@ -129,6 +129,8 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
       return;
     }
 
+    // TODO? Filter on element/surface region to be consistent (no element to surface links)...
+
     // Filter out faces where neither cell is locally owned
     if( elemGhostRank[elemRegionList[kf][0]][elemSubRegionList[kf][0]][elemList[kf][0]] >= 0 &&
         elemGhostRank[elemRegionList[kf][1]][elemSubRegionList[kf][1]][elemList[kf][1]] >= 0 )
@@ -231,7 +233,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 
   SurfaceElementStencil & fractureStencil = getStencil< SurfaceElementStencil >( mesh, viewKeyStruct::fractureStencilString() );
   fractureStencil.setMeanPermCoefficient( m_meanPermCoefficient );
-  CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() );
+  CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() ); // cellStencil is empty!
   FaceElementToCellStencil & faceToCellStencil = getStencil< FaceElementToCellStencil >( mesh, viewKeyStruct::faceToCellStencilString() );
   fractureStencil.move( LvArray::MemorySpace::host );
   cellStencil.move( LvArray::MemorySpace::host );
@@ -240,7 +242,8 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
 
-  FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
+//  FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
+  FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "cbFrac" );
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion.faceList();
 
   arrayView1d< localIndex const > const & fractureConnectorsToEdges = fractureSubRegion.m_fractureConnectorsEdgesToEdges;
@@ -314,13 +317,13 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   allNewElems.insert( fractureSubRegion.m_newFaceElements.begin(),
                       fractureSubRegion.m_newFaceElements.end() );
   SortedArrayView< localIndex const > const
-  recalculateFractureConnectorEdges = fractureSubRegion.m_recalculateFractureConnectorEdges.toViewConst();
+  recalculateFractureConnectorEdges = fractureSubRegion.m_recalculateFractureConnectorEdges.toViewConst(); // What's that?
 
   // reserve memory for the connections of this fracture
   fractureStencil.reserve( fractureStencil.size() + recalculateFractureConnectorEdges.size() );
 
   // add new connectors/connections between face elements to the fracture stencil
-  forAll< serialPolicy >( recalculateFractureConnectorEdges.size(),
+  forAll< serialPolicy >( recalculateFractureConnectorEdges.size(), // TODO populate this container
                           [ &allNewElems,
                             recalculateFractureConnectorEdges,
                             fractureConnectorsToFaceElements,
@@ -599,8 +602,8 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
         real64 cellToFaceVec[ 3 ], faceNormalVector[ 3 ];
 
         // remove cell-to-cell connections from cell stencil and add in new connections
-        if( cellStencil.zero( faceMap[kfe][0] ) )
-        {
+//        if( cellStencil.zero( faceMap[kfe][0] ) ) // NOTE: this is there to shut off previously connected cells that are not connected anymore due to dynamic fracturing.
+        {                                                      // TODO: Populate faceToCellStencil in an other way...
           localIndex connectorIndex = faceToCellStencil.size();
 
           for( localIndex ke = 0; ke < numElems; ++ke )

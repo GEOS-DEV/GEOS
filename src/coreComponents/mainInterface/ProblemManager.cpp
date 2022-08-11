@@ -29,6 +29,7 @@
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "events/tasks/TasksManager.hpp"
 #include "events/EventManager.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -161,6 +162,8 @@ void ProblemManager::problemSetup()
   initialize();
 
   importFields();
+
+  saveMe(); // TODO move alongside the call to TPFA::computeCellStencil?
 }
 
 
@@ -519,6 +522,100 @@ void ProblemManager::postProcessInput()
 
 }
 
+void ProblemManager::saveMe()
+{
+  DomainPartition & domain = getDomainPartition();
+  Group & meshBodies = domain.getMeshBodies();
+
+  {
+    NumericalMethodsManager const & numericalMethodManager = getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.key() );
+
+    for( localIndex solverIndex = 0; solverIndex < m_physicsSolverManager->numSubGroups(); ++solverIndex )
+    {
+      SolverBase const * const solver = m_physicsSolverManager->getGroupPointer< SolverBase >( solverIndex );
+
+      if( solver != nullptr )
+      {
+        FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+
+        solver->forMeshTargets( meshBodies,
+                                [&]( string const & meshBodyName,
+                                     MeshLevel & meshLevel,
+                                     auto const & regionNames )
+                                {
+                                  NodeManager & nodeManager = meshLevel.getNodeManager();
+                                  ElementRegionManager & elemManager = meshLevel.getElemManager();
+                                  FaceManager const & faceManager = meshLevel.getFaceManager();
+//                                  EdgeManager const & edgeManager = meshLevel.getEdgeManager();
+                                  EdgeManager & edgeManager = meshLevel.getEdgeManager();
+//                                  std::vector< localIndex > edges{ 270, 275, 280, 285, 290, 295, 300, 305, 310 };
+                                  // FIXME fractureConnectorsToEdges should not be attached to edgeManager
+                                  array1d< localIndex > & fractureConnectorsToEdges = edgeManager.getReference< array1d< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorEdgesToEdgesString() );
+                                  fractureConnectorsToEdges.resize( 31 );
+                                  std::vector< localIndex > edges;
+                                  for( int i = 0; i < 10; ++i )
+                                  {
+                                    edges.push_back( 265 + i * 5 );
+                                    edges.push_back( 265 + i * 5 + 1 );
+                                    edges.push_back( 265 + i * 5 + 3 );
+                                  }
+                                  edges.push_back( 315 );
+                                  for( int i = 0; i < 31; ++i )
+                                  {
+                                    fractureConnectorsToEdges[i] = edges[i];
+                                  }
+
+                                  // FIXME fractureConnectorsToFaceElements should not be attached to edgeManager
+                                  ArrayOfArrays< localIndex > & fractureConnectorsToFaceElements =
+                                    edgeManager.getReference< ArrayOfArrays< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString() );
+                                  fractureConnectorsToFaceElements.resize( 31 );
+                                  for( int i = 0; i < 31; ++i )
+                                  {
+                                    if( i > 0 and ( i % 3 ) == 0 and i < 30 )
+                                    {
+                                      fractureConnectorsToFaceElements.resizeArray( i, 2 );
+                                      fractureConnectorsToFaceElements[i][0] = localIndex( i / 3 ) - 1;
+                                      fractureConnectorsToFaceElements[i][1] = localIndex( i / 3 );
+                                    }
+                                    else
+                                    {
+                                      fractureConnectorsToFaceElements.resizeArray( i, 1 );
+                                      fractureConnectorsToFaceElements[i][0] = localIndex( i / 3 );
+                                    }
+                                  }
+                                  fractureConnectorsToFaceElements[30][0] = 9;
+
+                                  for( int i = 0; i < 31; ++i )
+                                  {
+                                    edgeManager.m_recalculateFractureConnectorEdges.insert( i );
+                                  }
+//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 3 );
+//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 3 );
+//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 6 );
+//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 9 );
+//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 12 );
+//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 15 );
+//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 18 );
+//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 21 );
+//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 24 );
+//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 27 );
+
+                                  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+
+                                  for( localIndex a = 0; a < fvManager.numSubGroups(); ++a )
+                                  {
+                                    FluxApproximationBase const * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
+                                    if( fluxApprox != nullptr )
+                                    {
+                                      fluxApprox->addToFractureStencil( meshLevel, "Fracture", false );
+                                      edgeManager.m_recalculateFractureConnectorEdges.clear();
+                                    }
+                                  }
+                                } );
+      }
+    }
+  }
+}
 
 void ProblemManager::initializationOrder( string_array & order )
 {

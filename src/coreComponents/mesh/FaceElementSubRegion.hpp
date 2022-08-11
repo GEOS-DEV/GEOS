@@ -76,6 +76,7 @@ public:
                         dataRepository::Group * const parent );
 
   ///@}
+  void copyFromCellBlock( CellBlockABC const & cellBlock, CellBlockManagerABC const & cellBlockManager );
 
   /**
    * @name Geometry computation / Connectivity

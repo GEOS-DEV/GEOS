@@ -120,7 +120,7 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC & cellBlockManager 
 {
   this->forElementRegions< CellElementRegion, SurfaceElementRegion >( [&]( auto & elemRegion )
   {
-    elemRegion.generateMesh( cellBlockManager.getCellBlocks() );
+    elemRegion.generateMesh( cellBlockManager.getCellBlocks(), cellBlockManager );
   } );
 }
 
@@ -631,11 +631,11 @@ ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & ce
 
   Group::subGroupMap const & cellBlocks = cellBlockManager.getCellBlocks().getSubGroups();
 
-  forElementSubRegionsComplete< CellElementSubRegion >( [blockMap = blockMap.toView(),
+  forElementSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion >( [blockMap = blockMap.toView(),
                                                          &cellBlocks]( localIndex const er,
                                                                        localIndex const esr,
                                                                        ElementRegionBase const & region,
-                                                                       CellElementSubRegion const & subRegion )
+                                                                       auto const & subRegion )
   {
     localIndex const blockIndex = cellBlocks.getIndex( subRegion.getName() );
     GEOSX_ERROR_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,

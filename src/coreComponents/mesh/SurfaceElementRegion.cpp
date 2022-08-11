@@ -37,15 +37,17 @@ SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::defaultApertureString(), &m_defaultAperture ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The default aperture of newly formed surface elements." );
+
+  registerWrapper( "cellBlocks", &m_cellBlockNames ).setInputFlag( InputFlags::OPTIONAL );
 }
 
 SurfaceElementRegion::~SurfaceElementRegion()
 {}
 
 
-void SurfaceElementRegion::generateMesh( Group & cellBlocks )
+void SurfaceElementRegion::generateMesh( Group & cellBlocks, CellBlockManagerABC & cellBlockManager )
 {
-  GEOSX_UNUSED_VAR( cellBlocks );
+//  GEOSX_UNUSED_VAR( cellBlocks );
 
   Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
 
@@ -55,7 +57,18 @@ void SurfaceElementRegion::generateMesh( Group & cellBlocks )
   }
   else if( m_subRegionType == SurfaceSubRegionType::faceElement )
   {
-    elementSubRegions.registerGroup< FaceElementSubRegion >( "faceElementSubRegion" );
+//    elementSubRegions.registerGroup< FaceElementSubRegion >( "faceElementSubRegion" );
+//    for( localIndex i = 0; i < cellBlocks.numSubGroups(); ++i )
+    for( string const & cellBlockName : this->m_cellBlockNames )
+    {
+//      CellBlockABC * cellBlock = dynamicCast< CellBlockABC * >( cellBlocks.getSubGroups()[i] );
+//      if( cellBlock->getName() != "cbFrac" )
+//      { continue; }
+
+      FaceElementSubRegion & subRegion = elementSubRegions.registerGroup< FaceElementSubRegion >( cellBlockName ); // Better copy paste for the name
+      CellBlockABC & source = cellBlocks.getGroup< CellBlockABC >( subRegion.getName() );
+      subRegion.copyFromCellBlock( source, cellBlockManager );
+    }
   }
 }
 
