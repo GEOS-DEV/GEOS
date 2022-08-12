@@ -108,6 +108,9 @@ void DuvautLionsSolidUpdates::smallStrainUpdate( localIndex const k,
   {
     GEOSX_ERROR( " The Duvaut-Lions solid for "<<SOLID_TYPE::catalogName()<<" is not implemented." );
   }
+
+  m_solidUpdate.saveConvergedState();
+  
 }
 
 
