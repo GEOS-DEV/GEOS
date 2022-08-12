@@ -47,7 +47,7 @@ EXTRINSIC_MESH_DATA_TRAIT( primarySpeciesTotalConcentration,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "primarySpeciesTotalConcentration" );                           
+                           "primarySpeciesTotalConcentration" );
 
 EXTRINSIC_MESH_DATA_TRAIT( secondarySpeciesConcentration,
                            "secondarySpeciesConcentration",
@@ -63,7 +63,7 @@ EXTRINSIC_MESH_DATA_TRAIT( kineticReactionRates,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "kineticReactionRates" );                                 
+                           "kineticReactionRates" );
 }
 
 }

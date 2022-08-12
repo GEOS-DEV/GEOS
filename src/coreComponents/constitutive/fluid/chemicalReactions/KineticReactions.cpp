@@ -32,9 +32,9 @@ namespace chemicalReactions
 
 KineticReactions::KineticReactions( string const & name, integer const numPrimarySpecies, integer const numSecSpecies, integer const numKineticReactions ):
   ReactionsBase( name, numPrimarySpecies, numSecSpecies ),
-  m_numKineticReactions(numKineticReactions)
+  m_numKineticReactions( numKineticReactions )
 {
-  
+
   // Stochiometric Matrix for the kinetic reactions (in terms of primary species only)
   // First index: 0 = Ca(OH)2 dissolution, 1 = CaCO3 dissolution
   // Second index: 0 = H+, 1 = HCO3-, 2 = Ca+2, 3 = SO4-2, 4 = Cl-, 5 = Mg+2, 6 = Na+1
@@ -128,8 +128,8 @@ void KineticReactions::KernelWrapper::computeReactionRates( real64 const & tempe
 } // end namespace geosx
 
 /*
-  for( localIndex ir = 0; ir < NReaction; ++ir )
-  {
+   for( localIndex ir = 0; ir < NReaction; ++ir )
+   {
 
     for( localIndex ic = 0; ic < kineticReaction.stochs.size(); ++ic )
     {
@@ -145,11 +145,11 @@ void KineticReactions::KernelWrapper::computeReactionRates( real64 const & tempe
 
     }
 
-  }
+   }
 
 
-  for( localIndex ir = 0; ir < NReaction; ++ir )
-  {
+   for( localIndex ir = 0; ir < NReaction; ++ir )
+   {
 
     for( localIndex i = 0; i < (kineticReaction.stochs).size(); ++i )
     {
@@ -167,37 +167,37 @@ void KineticReactions::KernelWrapper::computeReactionRates( real64 const & tempe
 
     }
 
-  }
+   }
 
-}
-// arraySlice1d< real64 const > const & concentration,
-// arraySlice1d< real64 const > const & surfaceArea0,
-// arraySlice1d< real64 const > const & volumeFraction0,
-// arraySlice1d< real64 const > const & volumeFraction,
-// real64 const & porosity0,
-// real64 const & porosity,
-// arraySlice1d< real64 > const & kineticReactionRate )
-// {
-  // for( localIndex ir = 0; ir < kineticReactionArray.size(); ++ir )
-  // {
-  //   const KineticReaction & kineticReaction = kineticReactionArray[ir];
-  //   const array1d< localIndex > & basisSpeciesIndices = kineticReaction.basisSpeciesIndices;
-  //   // calculate saturation index
-  //   real64 SIndex = -kineticReaction.logK;
-  //   for( localIndex ic = 0; ic < kineticReaction.stochs.size(); ++ic )
-  //   {
-  //     SIndex += kineticReaction.stochs[ic] * concentration[basisSpeciesIndices[ic] ];     // Check that the input "concentration" is
-  //                                                                                         // actually ln(activity
-  // coefficient*concentration)
-  //   }
-  //   // surface area is assumed to scale with the volume fraction. Check whether this is the volume fraction of the mineral
-  //   // dissolving/precipitating. Not sure why porosity is included.
-  //   real64 S = surfaceArea0[ir] * pow( volumeFraction[ir] / volumeFraction0[ir], 2.0/3.0 ) * pow( porosity / porosity0, 2.0/3.0 );
-  //   // computing the rate at the correct temperature. Looks like EQ36 database has it at 298.15 K
-  //   real64 rateTemp = exp( -kineticReaction.E / RConst * (1.0 / (temperature + 273.15) - 1.0 / 298.15));
-  //   real64 SS = (pow( 10.0, SIndex ) - 1.0);
-  //   kineticReactionRate[ir] = S * kineticReaction.rateConst * rateTemp * SS;
-//}
+   }
+   // arraySlice1d< real64 const > const & concentration,
+   // arraySlice1d< real64 const > const & surfaceArea0,
+   // arraySlice1d< real64 const > const & volumeFraction0,
+   // arraySlice1d< real64 const > const & volumeFraction,
+   // real64 const & porosity0,
+   // real64 const & porosity,
+   // arraySlice1d< real64 > const & kineticReactionRate )
+   // {
+   // for( localIndex ir = 0; ir < kineticReactionArray.size(); ++ir )
+   // {
+   //   const KineticReaction & kineticReaction = kineticReactionArray[ir];
+   //   const array1d< localIndex > & basisSpeciesIndices = kineticReaction.basisSpeciesIndices;
+   //   // calculate saturation index
+   //   real64 SIndex = -kineticReaction.logK;
+   //   for( localIndex ic = 0; ic < kineticReaction.stochs.size(); ++ic )
+   //   {
+   //     SIndex += kineticReaction.stochs[ic] * concentration[basisSpeciesIndices[ic] ];     // Check that the input "concentration" is
+   //                                                                                         // actually ln(activity
+   // coefficient*concentration)
+   //   }
+   //   // surface area is assumed to scale with the volume fraction. Check whether this is the volume fraction of the mineral
+   //   // dissolving/precipitating. Not sure why porosity is included.
+   //   real64 S = surfaceArea0[ir] * pow( volumeFraction[ir] / volumeFraction0[ir], 2.0/3.0 ) * pow( porosity / porosity0, 2.0/3.0 );
+   //   // computing the rate at the correct temperature. Looks like EQ36 database has it at 298.15 K
+   //   real64 rateTemp = exp( -kineticReaction.E / RConst * (1.0 / (temperature + 273.15) - 1.0 / 298.15));
+   //   real64 SS = (pow( 10.0, SIndex ) - 1.0);
+   //   kineticReactionRate[ir] = S * kineticReaction.rateConst * rateTemp * SS;
+   //}
 
 
-*/
+ */

@@ -87,8 +87,8 @@ private:
                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                                             arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                                            arrayView2d<real64> const matrix,
-                                            arrayView1d<real64> const rhs ) const;
+                                            arrayView2d< real64 > const matrix,
+                                            arrayView1d< real64 > const rhs ) const;
 
     void computeSeondarySpeciesConcAndDerivative( real64 const temperature,
                                                   arraySlice1d< real64 const > const & log10PrimaryActCoeff,
@@ -107,13 +107,12 @@ private:
                                         arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc ) const;
 
     GEOSX_HOST_DEVICE
-    void updatePrimarySpeciesConcentrations( arrayView1d<real64 const> const solution,
+    void updatePrimarySpeciesConcentrations( arrayView1d< real64 const > const solution,
                                              arraySlice1d< real64 > const & primarySpeciesConcentration ) const;
 
     GEOSX_HOST_DEVICE
     void setInitialGuess( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration ) const;
-                                                                   
 
 
 

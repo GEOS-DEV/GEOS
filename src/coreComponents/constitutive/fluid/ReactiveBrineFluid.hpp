@@ -232,10 +232,10 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
   {
 
     m_phase.enthalpy.compute( pressure,
-                               temperatureInCelsius,
-                               phaseCompFraction[0].toSliceConst(),
-                               phaseEnthalpy[0],
-                               m_useMass );
+                              temperatureInCelsius,
+                              phaseCompFraction[0].toSliceConst(),
+                              phaseEnthalpy[0],
+                              m_useMass );
 
     computeInternalEnergy< numComp, numPhase >( pressure,
                                                 phaseFraction,
@@ -269,10 +269,10 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
 {
   integer constexpr numComp = chemicalReactions::ReactionsBase::maxNumPrimarySpecies;
   integer constexpr numPhase = 1;
-  
+
   // 1. We perform a sort of single phase flash
   stackArray1d< real64, numComp > compMoleFrac( composition.size() );
-  
+
   phaseFraction.value[0] = 1.0; // it's a single phase system
   for( integer ic = 0; ic < composition.size(); ++ic )
   {
@@ -345,13 +345,13 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
            m_phaseInternalEnergy( k, q ),
            m_phaseCompFraction( k, q ),
            m_totalDensity( k, q ) );
-  
-  
-  // NOTE: for now, I am hardcoding 1 so that we don not need to provide the molecular weight of each species but we consider pure water. 
-  
+
+
+  // NOTE: for now, I am hardcoding 1 so that we don not need to provide the molecular weight of each species but we consider pure water.
+
   real64 const totalMolecularWeight = PVTProps::PureWaterProperties::MOLECULAR_WEIGHT;
 
-  convertMoleFractionToMolarity( m_totalDensity(k, q).value,
+  convertMoleFractionToMolarity( m_totalDensity( k, q ).value,
                                  totalMolecularWeight,
                                  composition,
                                  m_primarySpeciesTotalConcentration[k] );
@@ -361,7 +361,7 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
                     m_primarySpeciesTotalConcentration[k],
                     m_primarySpeciesConcentration[k],
                     m_secondarySpeciesConcentration[k],
-                    m_kineticReactionRates[k] );         
+                    m_kineticReactionRates[k] );
 }
 
 

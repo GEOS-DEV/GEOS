@@ -578,7 +578,7 @@ private:
 
 private:
 
-  
+
 
   /**
    * @brief Called internally to set array dim labels.

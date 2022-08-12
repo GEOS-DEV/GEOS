@@ -116,7 +116,7 @@ void WaterDensityUpdate::compute( real64 const & pressure,
                                   real64 & value,
                                   bool useMass ) const
 {
-  GEOSX_UNUSED_VAR(phaseComposition, useMass);
+  GEOSX_UNUSED_VAR( phaseComposition, useMass );
 
   real64 const input[2] = { pressure, temperature };
   value = m_waterDensityTable.compute( input );
@@ -125,21 +125,21 @@ void WaterDensityUpdate::compute( real64 const & pressure,
 template< int USD1, int USD2, int USD3 >
 GEOSX_HOST_DEVICE
 void WaterDensityUpdate::compute( real64 const & pressure,
-                                          real64 const & temperature,
-                                          arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                          arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
-                                          real64 & value,
-                                          arraySlice1d< real64, USD3 > const & dValue,
-                                          bool useMass ) const
+                                  real64 const & temperature,
+                                  arraySlice1d< real64 const, USD1 > const & phaseComposition,
+                                  arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
+                                  real64 & value,
+                                  arraySlice1d< real64, USD3 > const & dValue,
+                                  bool useMass ) const
 {
-  GEOSX_UNUSED_VAR(phaseComposition, useMass);
+  GEOSX_UNUSED_VAR( phaseComposition, useMass );
 
   using Deriv = multifluid::DerivativeOffset;
 
   real64 const input[2] = { pressure, temperature };
   real64 densityDeriv[2]{};
   value = m_waterDensityTable.compute( input, densityDeriv );
- 
+
   dValue[Deriv::dP] = densityDeriv[0];
   dValue[Deriv::dT] = densityDeriv[1];
 }

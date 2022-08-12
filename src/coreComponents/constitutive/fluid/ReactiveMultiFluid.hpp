@@ -81,25 +81,25 @@ public:
 
     /**
      * @brief Construct a new Kernel Wrapper object
-     * 
-     * @param componentMolarWeight 
-     * @param useMass 
-     * @param isThermal 
-     * @param phaseFraction 
-     * @param phaseDensity 
-     * @param phaseMassDensity 
-     * @param phaseViscosity 
-     * @param phaseEnthalpy 
-     * @param phaseInternalEnergy 
-     * @param phaseCompFraction 
-     * @param totalDensity 
-     * @param numPrimarySpecies 
-     * @param equilibriumReactions 
-     * @param kineticReactions 
-     * @param primarySpeciesConcentration 
-     * @param secondarySpeciesConcentration 
-     * @param primarySpeciesTotalConcentration 
-     * @param kineticReactionRates 
+     *
+     * @param componentMolarWeight
+     * @param useMass
+     * @param isThermal
+     * @param phaseFraction
+     * @param phaseDensity
+     * @param phaseMassDensity
+     * @param phaseViscosity
+     * @param phaseEnthalpy
+     * @param phaseInternalEnergy
+     * @param phaseCompFraction
+     * @param totalDensity
+     * @param numPrimarySpecies
+     * @param equilibriumReactions
+     * @param kineticReactions
+     * @param primarySpeciesConcentration
+     * @param secondarySpeciesConcentration
+     * @param primarySpeciesTotalConcentration
+     * @param kineticReactionRates
      */
     KernelWrapper( arrayView1d< real64 const > componentMolarWeight,
                    bool const useMass,
@@ -119,26 +119,26 @@ public:
                    arrayView2d< real64 > const & secondarySpeciesConcentration,
                    arrayView2d< real64 > const & primarySpeciesTotalConcentration,
                    arrayView2d< real64 > const & kineticReactionRates ):
-    MultiFluidBase::KernelWrapper( std::move( componentMolarWeight ),
-                                   useMass,
-                                   std::move( phaseFraction ),
-                                   std::move( phaseDensity ),
-                                   std::move( phaseMassDensity ),
-                                   std::move( phaseViscosity ),
-                                   std::move( phaseEnthalpy ),
-                                   std::move( phaseInternalEnergy ),
-                                   std::move( phaseCompFraction ),
-                                   std::move( totalDensity )  ),
-    m_numPrimarySpecies( numPrimarySpecies ),
-    m_equilibriumReactions( equilibriumReactions.createKernelWrapper() ),
-    m_kineticReactions( kineticReactions.createKernelWrapper() ),
-    m_primarySpeciesConcentration( primarySpeciesConcentration ),
-    m_secondarySpeciesConcentration( secondarySpeciesConcentration ),
-    m_primarySpeciesTotalConcentration( primarySpeciesTotalConcentration ),
-    m_kineticReactionRates( kineticReactionRates )
+      MultiFluidBase::KernelWrapper( std::move( componentMolarWeight ),
+                                     useMass,
+                                     std::move( phaseFraction ),
+                                     std::move( phaseDensity ),
+                                     std::move( phaseMassDensity ),
+                                     std::move( phaseViscosity ),
+                                     std::move( phaseEnthalpy ),
+                                     std::move( phaseInternalEnergy ),
+                                     std::move( phaseCompFraction ),
+                                     std::move( totalDensity )  ),
+      m_numPrimarySpecies( numPrimarySpecies ),
+      m_equilibriumReactions( equilibriumReactions.createKernelWrapper() ),
+      m_kineticReactions( kineticReactions.createKernelWrapper() ),
+      m_primarySpeciesConcentration( primarySpeciesConcentration ),
+      m_secondarySpeciesConcentration( secondarySpeciesConcentration ),
+      m_primarySpeciesTotalConcentration( primarySpeciesTotalConcentration ),
+      m_kineticReactionRates( kineticReactionRates )
     {}
-    
-  protected:
+
+protected:
 
     void convertMoleFractionToMolarity( real64 const totalDensity,
                                         real64 const totalMolecularWeight,
@@ -208,7 +208,7 @@ ReactiveMultiFluid::KernelWrapper::
                                                primarySpeciesTotalConcentration,
                                                primarySpeciesConcentration,
                                                secondarySpeciesConcentration );
-  
+
   // 3. compute kinetic reaction rates
   m_kineticReactions.computeReactionRates( temperature,
                                            primarySpeciesConcentration,
@@ -221,11 +221,11 @@ GEOSX_HOST_DEVICE
 inline void
 ReactiveMultiFluid::KernelWrapper::
   convertMoleFractionToMolarity( real64 const totalDensity,
-                                 real64 const totalMolecularWeight, 
+                                 real64 const totalMolecularWeight,
                                  arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition,
                                  arraySlice1d< geosx::real64, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration ) const
 {
-  // 1. Convert from mole fraction to molarity ( mol/L )  
+  // 1. Convert from mole fraction to molarity ( mol/L )
   real64 const conversionFactor = totalDensity / totalMolecularWeight * 1e-3;  //conversion to L instead of cubic meters
   for( int i=0; i < m_numPrimarySpecies; i++ )
   {

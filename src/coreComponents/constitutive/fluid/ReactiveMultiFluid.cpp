@@ -35,8 +35,8 @@ ReactiveMultiFluid::
   m_numPrimarySpecies = 7;
   m_numSecondarySpecies = 11;
   m_numKineticReactions = 2;
-  
-  registerExtrinsicData( extrinsicMeshData::reactivefluid::primarySpeciesConcentration{}, &m_primarySpeciesConcentration);
+
+  registerExtrinsicData( extrinsicMeshData::reactivefluid::primarySpeciesConcentration{}, &m_primarySpeciesConcentration );
   registerExtrinsicData( extrinsicMeshData::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
   registerExtrinsicData( extrinsicMeshData::reactivefluid::primarySpeciesTotalConcentration{}, &m_primarySpeciesTotalConcentration );
   registerExtrinsicData( extrinsicMeshData::reactivefluid::kineticReactionRates{}, &m_kineticReactionRates );
@@ -71,8 +71,8 @@ void ReactiveMultiFluid::postProcessInput()
 }
 
 void ReactiveMultiFluid::resizeFields( localIndex const size, localIndex const numPts )
-{ 
-  MultiFluidBase::resizeFields(size, numPts);
+{
+  MultiFluidBase::resizeFields( size, numPts );
 
   integer const numPrimarySpecies = this->numPrimarySpecies();
   integer const numSecondarySpecies = this->numSecondarySpecies();

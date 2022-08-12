@@ -100,7 +100,7 @@ public:
                    real64 const DebyeHuckelB,
                    real64 const WATEQBDot ):
       m_numPrimarySpecies( numPrimarySpecies ),
-      m_numSecondarySpecies( numSecondarySpecies ),                   
+      m_numSecondarySpecies( numSecondarySpecies ),
       m_log10EqConst( log10EqConst ),
       m_stoichMatrix( stoichMatrix ),
       m_chargePrimary( chargePrimary ),

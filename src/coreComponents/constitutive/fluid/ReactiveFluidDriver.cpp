@@ -84,7 +84,7 @@ void ReactiveFluidDriver::postProcessInput()
 
   // resize data table to fit number of timesteps and concentrations
   // (numRows,numCols) = (numSteps+1,3+numPrimarySpecies + numSecSpecies + numKineticReactions)
-  // column order = time, pressure, temp, primarySpeciesConcentration, secondarySpeciesConcentration, reaction rates, 
+  // column order = time, pressure, temp, primarySpeciesConcentration, secondarySpeciesConcentration, reaction rates,
   m_table.resize( m_numSteps+1, m_numPrimarySpecies + m_numSecondarySpecies + m_numKineticReactions + 3 );
 
   // initialize functions
@@ -198,7 +198,7 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
 
   // create kernel wrapper
 
-   typename FLUID_TYPE::KernelWrapper kernelWrapper = fluid.createKernelWrapper();
+  typename FLUID_TYPE::KernelWrapper kernelWrapper = fluid.createKernelWrapper();
 
   // set composition to user specified feed
   // it is more convenient to provide input in molar, so perform molar to mass conversion here
@@ -214,15 +214,15 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
 
   real64 const hPlusConcentration = -2*m_feed[2]+2*m_feed[3]+m_feed[4]-2*m_feed[5]-m_feed[6];
 
-  if ( ( hPlusConcentration + m_feed[1] ) > 0 )
+  if( ( hPlusConcentration + m_feed[1] ) > 0 )
   {
     primarySpeciesTotalConcentrationValues[0][0] = hPlusConcentration + m_feed[1];
   }
 
-  TableFunction const * waterDensityTable = 
-  constitutive::PVTProps::PureWaterProperties::makeSaturationDensityTable( "helpTable", FunctionManager::getInstance() );
-  
-  TableFunction::KernelWrapper waterDensityTableWrapper  = waterDensityTable->createKernelWrapper();             
+  TableFunction const * waterDensityTable =
+    constitutive::PVTProps::PureWaterProperties::makeSaturationDensityTable( "helpTable", FunctionManager::getInstance() );
+
+  TableFunction::KernelWrapper waterDensityTableWrapper  = waterDensityTable->createKernelWrapper();
 
   arrayView2d< real64, compflow::USD_COMP > const composition = compositionValues;
   arrayView2d< real64, compflow::USD_COMP > const primarySpeciesTotalConcentration = primarySpeciesTotalConcentrationValues;
@@ -235,15 +235,15 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
   {
     for( integer n = 0; n <= numSteps; ++n )
     {
-       // NOTE: I am just hardcoding the value of this conversion factor so that we can use feed in mol/L instead of 
-       // mole fractions. 
-       // convert molarity to molefraction
+      // NOTE: I am just hardcoding the value of this conversion factor so that we can use feed in mol/L instead of
+      // mole fractions.
+      // convert molarity to molefraction
       real64 const input[2] = {  table( n, PRES ), table( n, TEMP ) };
-      real64 const conversionFactor = 
-      constitutive::PVTProps::PureWaterProperties::MOLECULAR_WEIGHT / waterDensityTableWrapper.compute( input ) * 1e3;
+      real64 const conversionFactor =
+        constitutive::PVTProps::PureWaterProperties::MOLECULAR_WEIGHT / waterDensityTableWrapper.compute( input ) * 1e3;
       for( int i = 0; i < numPrimarySpecies; ++i )
       {
-       composition[0][i] = primarySpeciesTotalConcentration[0][i] * conversionFactor;
+        composition[0][i] = primarySpeciesTotalConcentration[0][i] * conversionFactor;
       }
 
       kernelWrapper.update( ei, 0, table( n, PRES ), table( n, TEMP ), composition[0] );
@@ -255,9 +255,9 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
       {
         table( n, TEMP+1+numPrimarySpecies+s ) = secondarySpeciesConcentration( ei, s );
       }
-      for ( integer k=0; k<numKineticReactions; ++k)
+      for( integer k=0; k<numKineticReactions; ++k )
       {
-         table( n, TEMP+1+numPrimarySpecies+numSecondarySpecies+k ) = kineticReactionRates( ei, k );
+        table( n, TEMP+1+numPrimarySpecies+numSecondarySpecies+k ) = kineticReactionRates( ei, k );
       }
     }
   } );

@@ -73,15 +73,15 @@ public:
       m_numKineticReactions( numKineticReactions ),
       m_specificSurfaceArea( specificSurfaceArea )
     {}
-    
+
     /**
      * @brief Compute kinetic reaction rates.
-     * 
-     * @param temperature 
+     *
+     * @param temperature
      * @param primarySpeciesConcentration concentration of the primary species
-     * @param log10PrimaryActCoeff 
+     * @param log10PrimaryActCoeff
      * @param specificSurfaceArea the surface area available per unit volume
-     * @param reactionRates  
+     * @param reactionRates
      */
     GEOSX_HOST_DEVICE
     void computeReactionRates( real64 const & temperature,
@@ -108,9 +108,9 @@ private:
 private:
 
   array1d< real64 > m_reactionRateConstant;
-  
+
   integer m_numKineticReactions;
-  
+
   real64 m_specificSurfaceArea;
 };
 

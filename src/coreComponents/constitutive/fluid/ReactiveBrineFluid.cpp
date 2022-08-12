@@ -254,7 +254,7 @@ ReactiveBrineFluid< PHASE > ::KernelWrapper::
                                        kineticReactionRates ),
   m_isThermal( isThermal ),
   m_phase( phase.createKernelWrapper() )
-  {}
+{}
 
 // explicit instantiation of the model template; unfortunately we can't use the aliases for this
 template class ReactiveBrineFluid< PhaseModel< PVTProps::WaterDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction > >;

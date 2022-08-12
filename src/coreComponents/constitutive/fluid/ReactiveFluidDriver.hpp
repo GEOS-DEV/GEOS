@@ -96,7 +96,7 @@ private:
   integer m_numPhases;     ///< Number of fluid phases
 
   integer m_numPrimarySpecies; ///< Number of primary species (components)
-  integer m_numSecondarySpecies; ///< Number of secondary species 
+  integer m_numSecondarySpecies; ///< Number of secondary species
   integer m_numKineticReactions; ///< Number of kinetic reactions
 
 
