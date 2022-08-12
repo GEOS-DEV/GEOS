@@ -34,7 +34,7 @@ namespace constitutive
  * @tparam SOLID_TYPE type of solid model
  */
 template< typename SOLID_TYPE >
-class DuvautLionsSolidUpdates
+class DuvautLionsSolidUpdates: public SolidBaseUpdates
 {
 public:
   /**
@@ -44,10 +44,71 @@ public:
     m_solidUpdate( solidModel.createKernelUpdates() )
   {}
 
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  real64 const & timeIncrement,
+                                  real64 const ( &strainIncrement )[6],
+                                  real64 ( &stress )[6],
+                                  real64 ( &stiffness )[6][6] ) const override;
+
 protected:
   typename SOLID_TYPE::KernelWrapper const m_solidUpdate;
+  real64 m_relaxationTime; 
 };
 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void DuvautLionsSolidUpdates::smallStrainUpdate( localIndex const k,
+                                                 localIndex const q,
+                                                 real64 const & timeIncrement,
+                                                 real64 const ( &strainIncrement )[6],
+                                                 real64 ( & stress )[6],
+                                                 real64 ( & stiffness )[6][6] ) const
+{
+  real64 trialStress[6];   // Trial stress
+  real64 elasticStiffness[6][6];  //Elastic stiffness
+  real64 internalVariable;        //internal state variable
+  real64 trialInternalVariable
+  real64 timeRatio = timeIncrement / m_relaxationTime;
+
+  for( localIndex i=0; i<6; ++i )
+  {
+    trialStress[i] = stress[i];
+  }
+
+  //Get trial stress and elastic stiffness by disabling inelasticity
+  m_solidUpdate.m_disableInelasticity = true; 
+  m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, trialStress, elasticStiffness );
+
+  //enable inelasticity to get the rate-independent update
+  m_solidUpdate.m_disableInelasticity = false;
+  m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+
+  stress = (trialStress + timeRatio * stress) / (1 + timeRatio);
+
+  for ( localIndex i=0; i<6; ++i )
+  {
+    for ( localIndex j=0; j<6; ++j )
+    {
+      stiffness[i][j] = (elasticStiffness[i][j] + timeRatio * stiffness[i][j]) / (1+timeRatio);
+    }
+  }
+
+
+  //TO DO: add if statement to update the internal state variables depending on what SOLID_TYPE is.
+  if( SOLID_TYPE::catalogName() == 'DruckerPrager' )
+  {
+   internalVariable =  m_solidUpdate.m_oldCohesion;
+   trialInternalVariable = m_solidUpdate.m_newCohesion;
+   internalVariable = (internalVariable + timeRatio * trialInternalVariable) / (1 + timeRatio);
+   m_solidUpdate.m_newCohesion = internalVariable;
+
+  }else
+  {
+    GEOSX_ERROR( " The Duvaut-Lions solid for "<<SOLID_TYPE::catalogName()<<" is not implemented." );
+  }
+}
 
 
 /**
@@ -74,6 +135,8 @@ public:
   virtual ~DuvautLionsSolid() override;
 
   virtual void initializePreSubGroups() override;
+
+  virtual void saveConvergedState() const override;
 
   /**
    * @brief Create a instantiation of the DuvautLionsSolidUpdates class
