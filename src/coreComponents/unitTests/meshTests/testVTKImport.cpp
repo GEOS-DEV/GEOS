@@ -78,17 +78,27 @@ TEST( VTKImport, cube )
 
     // When run in parallel with two MPI ranks, the central hexahedra are on the splitting boundary.
     // The VTK default pattern is to assign the cell to one unique rank.
-    // It happens to be the first one in our case.
-    // This way, rank 0 (lower `x`) gets 18 hexaedra and 48 nodes,
-    // while rank 1 (greater `x`) gets 9 hexahedra and 32 nodes.
+    // For example, if it happens to be the first one:
+    // - rank 0 (lower `x`) gets 18 hexaedra and 48 nodes,
+    // - rank 1 (greater `x`) gets 9 hexahedra and 32 nodes.
 
     // This pattern could be influenced by settings the parameters of
     // vtkRedistributeDataSetFilter::SetBoundaryMode(...) to
     // ASSIGN_TO_ALL_INTERSECTING_REGIONS, ASSIGN_TO_ONE_REGION or SPLIT_BOUNDARY_CELLS.
-    localIndex const expectedNumNodes = expected( 64, { 48, 32 } );
-    ASSERT_EQ( cellBlockManager.numNodes(), expectedNumNodes );
-    ASSERT_EQ( cellBlockManager.numEdges(), expected( 144, { 104, 64 } ) );
-    ASSERT_EQ( cellBlockManager.numFaces(), expected( 108, { 75, 42 } ) );
+    localIndex const expectedNumNodesRank1 = expected( 64, { 48, 32 } );
+    localIndex const expectedNumNodesRank2 = expected( 64, { 32, 48 } );
+    bool rankswap = cellBlockManager.numNodes() == expectedNumNodesRank2;
+    localIndex const expectedNumNodes = rankswap ? expectedNumNodesRank2 : expectedNumNodesRank1; 
+    auto expectedSwap = [=] ( int seq, std::initializer_list<int> par ) 
+      {
+	std::vector<int> tmp( par );
+        if( rankswap ) return expected( seq, { tmp[1], tmp[0] } ); 
+        else return expected( seq, par ); 
+      };
+    
+    ASSERT_EQ( cellBlockManager.numNodes(), expectedNumNodes ); 
+    ASSERT_EQ( cellBlockManager.numEdges(), expectedSwap( 144, { 104, 64 } ) );
+    ASSERT_EQ( cellBlockManager.numFaces(), expectedSwap( 108, { 75, 42 } ) );
 
     // The information in the tables is not filled yet. We can check the consistency of the sizes.
     ASSERT_EQ( cellBlockManager.getNodeToFaces().size(), expectedNumNodes );
@@ -103,21 +113,21 @@ TEST( VTKImport, cube )
       // The "2" set are all the boundary nodes (64 - 8 inside nodes = 56),
       // minus an extra node that belongs to regions -1 and 9 only.
       SortedArray< localIndex > const & nodesRegion2 = cellBlockManager.getNodeSets().at( "2" );
-      ASSERT_EQ( nodesRegion2.size(), expected( 55, { 39, 27 } ) );
+      ASSERT_EQ( nodesRegion2.size(), expectedSwap( 55, { 39, 27 } ) );
 
       // Region "9" has only one quad, on the greater `x` direction.
       // This hex will belong to MPI rank 1.
       SortedArray< localIndex > const & nodesRegion9 = cellBlockManager.getNodeSets().at( "9" );
-      ASSERT_EQ( nodesRegion9.size(), expected( 4, { 0, 4 } ) );
+      ASSERT_EQ( nodesRegion9.size(), expectedSwap( 4, { 0, 4 } ) );
 
       // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
       // 1 elements type on 3 regions ("-1", "3", "9") = 3 sub-groups
       std::array< std::pair< string, int >, 3 > const expectedCellBlocks =
       {
         {
-          { "hexahedra", expected( 1, {  1, 0 } ) },
-          { "3_hexahedra", expected( 25, { 17, 8 } ) },
-          { "9_hexahedra", expected( 1, {  0, 1 } ) }
+          { "hexahedra", expectedSwap( 1, {  1, 0 } ) },
+          { "3_hexahedra", expectedSwap( 25, { 17, 8 } ) },
+          { "9_hexahedra", expectedSwap( 1, {  0, 1 } ) }
         }
       };
       ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), expectedCellBlocks.size() );
