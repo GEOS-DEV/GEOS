@@ -178,6 +178,16 @@ jobs:
     - ENABLE_HYPRE=ON
     - ENABLE_TRILINOS=OFF
   - stage: builds
+    name: Sherlock CPU 2 (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.0, openblas 0.3.10)
+    <<: *geosx_totalenergies_cluster_build
+    env:
+      - DOCKER_REPOSITORY=geosx/sherlock-gcc10.1.0-openmpi4.1.0-openblas0.3.10-zlib1.2.11
+      - CMAKE_BUILD_TYPE=Release
+      - HOST_CONFIG=host-configs/Stanford/sherlock-gcc10-ompi4.1-openblas0.3.10.cmake
+      - GCP_BUCKET=geosx/Sherlock-CPU
+      - ENABLE_HYPRE=ON
+      - ENABLE_TRILINOS=OFF
+  - stage: builds
     name: Mac_OSX
     <<: *geosx_osx_build
   - stage: builds
