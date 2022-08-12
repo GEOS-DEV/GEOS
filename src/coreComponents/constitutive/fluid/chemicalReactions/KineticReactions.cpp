@@ -119,8 +119,6 @@ void KineticReactions::KernelWrapper::computeReactionRates( real64 const & tempe
 
     reactionRates[iRxn] = m_specificSurfaceArea * (1.0 - pow( 10, saturationIndex ) ) * m_reactionRateConstant[iRxn];
   }
-
-  std::cout << "reactionRates: " << reactionRates << std::endl;
 }
 
 } // end namespace chemicalReactions

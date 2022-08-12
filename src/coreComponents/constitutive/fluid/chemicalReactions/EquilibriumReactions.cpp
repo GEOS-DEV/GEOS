@@ -111,10 +111,7 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
   array1d<real64> solution( m_numPrimarySpecies );
 
   setInitialGuess(primarySpeciesTotalConcentration, primarySpeciesConcentration);
-  std::cout<<"Initial guess " << primarySpeciesConcentration <<std::endl;
-  std::cout<<"Total concentration to solve for " << primarySpeciesTotalConcentration <<std::endl;
-
-
+ 
   bool converged = false;
   for( int iteration = 0; iteration < m_maxNumIterations; iteration++ )
   {
@@ -134,25 +131,8 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
     if( residualNorm < m_newtonTol && iteration >= 1 )
     {
       converged = true;
-      std::cout << "primary species concentration: " << primarySpeciesConcentration <<std::endl;   
       break;
     }
-
-    std::cout<<"iteration " << iteration <<std::endl;
-
-    std::cout<<"Matrix"<<std::endl;
-
-    for(int i =0; i<matrix.size(0); i++)
-    {
-      std::cout<< "row: " << i;
-      for(int j=0; j<matrix.size(1); j++)
-      {
-        std::cout<< "   "<< matrix(i, j);
-      }
-      std::cout << std::endl;
-    }
-
-    std::cout << "rhs: " << rhs <<std::endl;   
 
     #if defined(GEOSX_USE_CUDA)
     // for now we do this. We ll need a gpu solver for dense matrices.
@@ -196,12 +176,7 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
                                 log10PrimaryActCoeff,
                                 dLog10PrimaryActCoeff_dIonicStrength,
                                 log10SecActCoeff,
-                                dLog10SecActCoeff_dIonicStrength );
-  std::cout << "log10 of primary species activity coefficient: " << log10PrimaryActCoeff <<std::endl;   
-  std::cout << "log10 of secondary species activity coefficient: " << log10SecActCoeff <<std::endl;   
-  std::cout << "Derivative of log10 of primary species activity coefficient: " << dLog10PrimaryActCoeff_dIonicStrength <<std::endl;   
-  std::cout << "Derivative of log10 of secondary species activity coefficient: " << dLog10SecActCoeff_dIonicStrength <<std::endl;   
-
+                                dLog10SecActCoeff_dIonicStrength ); 
 
   computeSeondarySpeciesConcAndDerivative( temperature,
                                            log10PrimaryActCoeff,
@@ -211,8 +186,6 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
                                            primarySpeciesConcentration,
                                            secondarySpeciesConcentration,
                                            dLog10SecConc_dLog10PrimaryConc );
-  std::cout << "Secondary species concentration: " << secondarySpeciesConcentration <<std::endl;   
-  std::cout << "Derivative of Secondary species concentration: " << dLog10SecConc_dLog10PrimaryConc <<std::endl;   
 
   computeTotalConcAndDerivative( temperature,
                                  primarySpeciesConcentration,
@@ -220,8 +193,6 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
                                  dLog10SecConc_dLog10PrimaryConc,
                                  totalConcentration,
                                  dTotalConc_dLog10PrimaryConc );
-  std::cout << "Total concentration: " << totalConcentration <<std::endl;   
-  std::cout << "Derivative of total concentration: " << dTotalConc_dLog10PrimaryConc <<std::endl;   
 
   for( int i=0; i<m_numPrimarySpecies; i++ )
   {

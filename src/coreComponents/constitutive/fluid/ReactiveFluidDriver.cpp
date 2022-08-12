@@ -299,7 +299,7 @@ void ReactiveFluidDriver::compareWithBaseline()
   // discard file header
 
   string line;
-  for( integer row=0; row < 7; ++row )
+  for( integer row=0; row < 4; ++row )
   {
     getline( file, line );
   }
