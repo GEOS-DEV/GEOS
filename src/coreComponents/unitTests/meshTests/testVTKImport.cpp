@@ -88,15 +88,17 @@ TEST( VTKImport, cube )
     localIndex const expectedNumNodesRank1 = expected( 64, { 48, 32 } );
     localIndex const expectedNumNodesRank2 = expected( 64, { 32, 48 } );
     bool rankswap = cellBlockManager.numNodes() == expectedNumNodesRank2;
-    localIndex const expectedNumNodes = rankswap ? expectedNumNodesRank2 : expectedNumNodesRank1; 
-    auto expectedSwap = [=] ( int seq, std::initializer_list<int> par ) 
-      {
-	std::vector<int> tmp( par );
-        if( rankswap ) return expected( seq, { tmp[1], tmp[0] } ); 
-        else return expected( seq, par ); 
-      };
-    
-    ASSERT_EQ( cellBlockManager.numNodes(), expectedNumNodes ); 
+    localIndex const expectedNumNodes = rankswap ? expectedNumNodesRank2 : expectedNumNodesRank1;
+    auto expectedSwap = [=] ( int seq, std::initializer_list< int > par )
+    {
+      std::vector< int > tmp( par );
+      if( rankswap )
+        return expected( seq, { tmp[1], tmp[0] } );
+      else
+        return expected( seq, par );
+    };
+
+    ASSERT_EQ( cellBlockManager.numNodes(), expectedNumNodes );
     ASSERT_EQ( cellBlockManager.numEdges(), expectedSwap( 144, { 104, 64 } ) );
     ASSERT_EQ( cellBlockManager.numFaces(), expectedSwap( 108, { 75, 42 } ) );
 
