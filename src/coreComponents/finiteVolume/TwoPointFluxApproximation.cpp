@@ -105,11 +105,15 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
-  // make a list of region indices to be included
+  // We only include the cell regions, discarding face and well regions.
   SortedArray< localIndex > regionFilter;
-  for( string const & regionName : m_targetRegions.at( mesh.getParent().getParent().getName() ) )
+  for( string const & regionName: m_targetRegions.at( mesh.getParent().getParent().getName() ) )
   {
-    regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
+    ElementRegionBase const & region = elemManager.getRegion( regionName );
+    if( region.getType() == ElementRegionBase::Type::CELL )
+    {
+      regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
+    }
   }
 
   stencil.reserve( faceManager.size() );

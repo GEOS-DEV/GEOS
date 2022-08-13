@@ -29,6 +29,8 @@ SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const p
   ElementRegionBase( name, parent ),
   m_subRegionType( SurfaceSubRegionType::faceElement )
 {
+  m_type = Type::FACE;
+
   registerWrapper( viewKeyStruct::subRegionTypeString(), &m_subRegionType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_subRegionType ).

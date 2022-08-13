@@ -31,6 +31,8 @@ WellElementRegion::WellElementRegion( string const & name, Group * const parent 
   m_wellControlsName( "" ),
   m_wellGeneratorName( "" )
 {
+  m_type = Type::WELL;
+
   registerWrapper( viewKeyStruct::wellControlsString(), &m_wellControlsName );
   registerWrapper( viewKeyStruct::wellGeneratorString(), &m_wellGeneratorName );
 
