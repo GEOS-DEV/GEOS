@@ -4,7 +4,6 @@
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
-      logLevel="1"
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
       targetRegions="{ Channel }">
