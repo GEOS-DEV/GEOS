@@ -306,14 +306,14 @@ One can notice the correct load of the field function among the starting output 
 
 .. code-block:: console
 
-        Adding Mesh: PAMELAMesh, SyntheticMesh
+        Adding Mesh: VTKMesh, SyntheticMesh
+        Adding Event: PeriodicEvent, solverApplications
+        Adding Event: PeriodicEvent, outputs
         Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
         Adding Geometric Object: Box, all
         Adding Geometric Object: Box, source
         Adding Geometric Object: Box, sink
-        Adding Output: VTK, syntheticReservoirVizFile
-        Adding Event: PeriodicEvent, solverApplications
-        Adding Event: PeriodicEvent, outputs
+        Adding Output: VTK, reservoir_with_properties
            TableFunction: timeInj
            TableFunction: initialPressureFunc
            TableFunction: permxFunc
