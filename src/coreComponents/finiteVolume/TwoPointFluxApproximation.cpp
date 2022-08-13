@@ -239,11 +239,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion.faceList();
 
-  arrayView1d< localIndex const > const & fractureConnectorsToEdges =
-    edgeManager.getReference< array1d< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorEdgesToEdgesString() );
+  arrayView1d< localIndex const > const & fractureConnectorsToEdges = fractureSubRegion.m_fractureConnectorsEdgesToEdges;
 
-  ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements =
-    edgeManager.getReference< ArrayOfArrays< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString() );
+  ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements = fractureSubRegion.m_fractureConnectorEdgesToFaceElements.toViewConst();
 
   FixedToManyElementRelation const & faceElementsToCells = fractureSubRegion.getToCellRelation();
 
@@ -312,7 +310,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   allNewElems.insert( fractureSubRegion.m_newFaceElements.begin(),
                       fractureSubRegion.m_newFaceElements.end() );
   SortedArrayView< localIndex const > const
-  recalculateFractureConnectorEdges = edgeManager.m_recalculateFractureConnectorEdges.toViewConst();
+  recalculateFractureConnectorEdges = fractureSubRegion.m_recalculateFractureConnectorEdges.toViewConst();
 
   // reserve memory for the connections of this fracture
   fractureStencil.reserve( fractureStencil.size() + recalculateFractureConnectorEdges.size() );

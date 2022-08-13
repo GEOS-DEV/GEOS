@@ -196,6 +196,18 @@ public:
   /// List of the new face elements that have been generated
   SortedArray< localIndex > m_newFaceElements;
 
+  /// map from the edges to the fracture connectors index (edges that are fracture connectors)
+  SortedArray< localIndex > m_recalculateFractureConnectorEdges;
+
+  /// A map of edge local indices to the fracture connector local indices.
+  map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
+
+  /// A map of fracture connector local indices to edge local indices.
+  array1d< localIndex > m_fractureConnectorsEdgesToEdges;
+
+  /// A map of fracture connector local indices face element local indices.
+  ArrayOfArrays< localIndex > m_fractureConnectorEdgesToFaceElements;
+
   /**
    * @brief @return The array of shape function derivatives.
    */
