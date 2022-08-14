@@ -1010,6 +1010,144 @@ struct SolutionCheckKernel
 
 };
 
+/******************************** StatisticsKernel ********************************/
+
+struct StatisticsKernel
+{
+  template< typename POLICY >
+  static void
+  saveDeltaPressure( localIndex const size,
+                     arrayView1d< real64 const > const & pres,
+                     arrayView1d< real64 const > const & initPres,
+                     arrayView1d< real64 > const & deltaPres )
+  {
+    forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      deltaPres[ei] = pres[ei] - initPres[ei];
+    } );
+  }
+
+  template< typename POLICY >
+  static void
+  launch( localIndex const size,
+          integer const numComps,
+          integer const numPhases,
+          arrayView1d< integer const > const & elemGhostRank,
+          arrayView1d< real64 const > const & volume,
+          arrayView1d< real64 const > const & pres,
+          arrayView1d< real64 const > const & deltaPres,
+          arrayView1d< real64 const > const & temp,
+          arrayView1d< real64 const > const & refPorosity,
+          arrayView2d< real64 const > const & porosity,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDensity,
+          arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFraction,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
+          real64 & minPres,
+          real64 & avgPresNumerator,
+          real64 & maxPres,
+          real64 & minDeltaPres,
+          real64 & maxDeltaPres,
+          real64 & minTemp,
+          real64 & avgTempNumerator,
+          real64 & maxTemp,
+          real64 & totalUncompactedPoreVol,
+          arraySlice1d< real64 > const & phaseDynamicPoreVol,
+          arraySlice1d< real64 > const & phaseMass,
+          arraySlice2d< real64 > const & dissolvedComponentMass )
+  {
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPresNumerator( 0.0 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPres( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinDeltaPres( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxDeltaPres( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinTemp( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgTempNumerator( 0.0 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTemp( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalUncompactedPoreVol( 0.0 );
+
+    // For this arrays phaseDynamicPoreVol, phaseMass, dissolvedComponentMass,
+    // using an array of ReduceSum leads to a formal parameter overflow in CUDA.
+    // As a workaround, we use a slice with RAJA::atomicAdd instead
+
+    forAll< parallelDevicePolicy<> >( size, [numComps,
+                                             numPhases,
+                                             elemGhostRank,
+                                             volume,
+                                             refPorosity,
+                                             porosity,
+                                             pres,
+                                             deltaPres,
+                                             temp,
+                                             phaseDensity,
+                                             phaseVolFrac,
+                                             phaseCompFraction,
+                                             subRegionMinPres,
+                                             subRegionAvgPresNumerator,
+                                             subRegionMaxPres,
+                                             subRegionMinDeltaPres,
+                                             subRegionMaxDeltaPres,
+                                             subRegionMinTemp,
+                                             subRegionAvgTempNumerator,
+                                             subRegionMaxTemp,
+                                             subRegionTotalUncompactedPoreVol,
+                                             phaseDynamicPoreVol,
+                                             phaseMass,
+                                             dissolvedComponentMass] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( elemGhostRank[ei] >= 0 )
+      {
+        return;
+      }
+
+      // To match our "reference", we have to use reference porosity here, not the actual porosity when we compute averages
+      real64 const uncompactedPoreVol = volume[ei] * refPorosity[ei];
+      real64 const dynamicPoreVol = volume[ei] * porosity[ei][0];
+
+      subRegionMinPres.min( pres[ei] );
+      subRegionAvgPresNumerator += uncompactedPoreVol * pres[ei];
+      subRegionMaxPres.max( pres[ei] );
+
+      subRegionMaxDeltaPres.max( deltaPres[ei] );
+      subRegionMinDeltaPres.min( deltaPres[ei] );
+
+      subRegionMinTemp.min( temp[ei] );
+      subRegionAvgTempNumerator += uncompactedPoreVol * temp[ei];
+      subRegionMaxTemp.max( temp[ei] );
+      subRegionTotalUncompactedPoreVol += uncompactedPoreVol;
+      for( integer ip = 0; ip < numPhases; ++ip )
+      {
+        real64 const elemPhaseVolume = dynamicPoreVol * phaseVolFrac[ei][ip];
+        real64 const elemPhaseMass = phaseDensity[ei][0][ip] * elemPhaseVolume;
+        // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseDynamicPoreVol[ip], elemPhaseVolume );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseMass[ip], elemPhaseMass );
+        for( integer ic = 0; ic < numComps; ++ic )
+        {
+          // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &dissolvedComponentMass[ip][ic], phaseCompFraction[ei][0][ip][ic] * elemPhaseMass );
+        }
+      }
+
+    } );
+
+    minPres = subRegionMinPres.get();
+    avgPresNumerator = subRegionAvgPresNumerator.get();
+    maxPres = subRegionMaxPres.get();
+    minDeltaPres = subRegionMinDeltaPres.get();
+    maxDeltaPres = subRegionMaxDeltaPres.get();
+    minTemp = subRegionMinTemp.get();
+    avgTempNumerator = subRegionAvgTempNumerator.get();
+    maxTemp = subRegionMaxTemp.get();
+    totalUncompactedPoreVol = subRegionTotalUncompactedPoreVol.get();
+
+    // dummy loop to bring data back to the CPU
+    forAll< serialPolicy >( 1, [phaseDynamicPoreVol, phaseMass, dissolvedComponentMass] ( localIndex const )
+    {
+      GEOSX_UNUSED_VAR( phaseDynamicPoreVol, phaseMass, dissolvedComponentMass );
+    } );
+  }
+};
+
 /******************************** HydrostaticPressureKernel ********************************/
 
 struct HydrostaticPressureKernel

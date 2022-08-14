@@ -8,8 +8,7 @@
       discretization="fluidTPFA"
       targetRegions="{ Channel }"
       initialDt="1"
-      temperature="300"
-      computeCFLNumbers="1">
+      temperature="300">
       <NonlinearSolverParameters
         newtonTol="1.0e-9"
         newtonMaxIter="15"
@@ -54,6 +53,11 @@
       name="solverApplications"
       maxEventDt="4e6"
       target="/Solvers/compflow"/>
+
+    <PeriodicEvent
+      name="statistics"
+      timeFrequency="2e7"
+      target="/Tasks/compflowStatistics"/>
 
     <PeriodicEvent
       name="restarts"
@@ -175,6 +179,15 @@
       name="restartOutput"/>
   </Outputs>
 
+  <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      flowSolverName="compflow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+  </Tasks>
+  
   <Functions>
     <TableFunction
       name="drainageWaterRelativePermeabilityTable"
