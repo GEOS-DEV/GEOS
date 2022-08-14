@@ -493,8 +493,8 @@
 		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
 		<!--sourceConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
 		<xsd:attribute name="sourceConstants" type="real64_array2d" />
-		<!--sourceIsLocal => Flag that indicates whether the source is local to this MPI rank-->
-		<xsd:attribute name="sourceIsLocal" type="integer_array" />
+		<!--sourceIsAccessible => Flag that indicates whether the source is accessible to this MPI rank-->
+		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
 		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
 		<!--sourceValue => Source Value of the sources-->
