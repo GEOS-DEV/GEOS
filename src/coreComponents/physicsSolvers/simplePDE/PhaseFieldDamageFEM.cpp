@@ -553,29 +553,6 @@ PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
   return residual;
 }
 
-void PhaseFieldDamageFEM::solveLinearSystem( DofManager const & dofManager,
-                                             ParallelMatrix & matrix,
-                                             ParallelVector & rhs,
-                                             ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-  rhs.scale( -1.0 ); // TODO decide if we want this here
-  solution.zero();
-
-//  GEOSX_LOG_RANK_0( "Before PhaseFieldDamageFEM::SolveSystem" );
-//  std::cout << matrix<<std::endl;
-//  std::cout<< rhs << std::endl;
-
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
-
-  if( getLogLevel() == 2 )
-  {
-    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::SolveSystem" );
-    GEOSX_LOG_RANK_0( "\nSolution\n" );
-    std::cout << solution;
-  }
-}
-
 void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                     DofManager const & dofManager,
                                                     DomainPartition & domain,

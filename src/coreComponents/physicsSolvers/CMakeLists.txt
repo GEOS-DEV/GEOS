@@ -6,6 +6,7 @@ set( physicsSolvers_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
+     SolverStatistics.hpp
      contact/ContactSolverBase.hpp
      contact/ContactExtrinsicData.hpp
      contact/LagrangianContactSolver.hpp
@@ -101,6 +102,7 @@ set( physicsSolvers_sources
      NonlinearSolverParameters.cpp
      PhysicsSolverManager.cpp
      SolverBase.cpp
+     SolverStatistics.cpp     
      contact/ContactSolverBase.cpp
      contact/LagrangianContactSolver.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp

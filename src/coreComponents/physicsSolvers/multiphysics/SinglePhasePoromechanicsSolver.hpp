@@ -13,8 +13,7 @@
  */
 
 /**
- * @file PoroelasticSolver.hpp
- *
+ * @file SinglePhasePoromechanicsSolver.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_

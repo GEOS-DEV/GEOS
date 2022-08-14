@@ -213,7 +213,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
     residual = std::sqrt( flowResidual*flowResidual + energyResidual*energyResidual );
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ", flowResidual, energyResidual );
+      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ", FlowSolverBase::coupledSolverAttributePrefix(), flowResidual, energyResidual );
     }
   }
   else
@@ -223,7 +223,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
     residual = flowResidual;
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ; ", residual );
+      std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", FlowSolverBase::coupledSolverAttributePrefix(), residual );
     }
   }
 
@@ -539,12 +539,13 @@ SinglePhaseFVM< BASE >::applyBoundaryConditions( real64 const time_n,
   applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
 }
 
-namespace internal
+namespace
 {
-string const faceBcLogMessage = string( "SinglePhaseFVM {}: at time {}s, " )
-                                + string( "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. " )
-                                + string( "\nThe total number of target faces (including ghost faces) is {}. " )
-                                + string( "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set." );
+char const faceBcLogMessage[] =
+  "SinglePhaseFVM {}: at time {}s, "
+  "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. "
+  "\nThe total number of target faces (including ghost faces) is {}. "
+  "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
 }
 
 
@@ -595,6 +596,15 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                            string const & )
     {
       BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+
+      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
+                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+      }
+
       if( stencil.size() == 0 )
       {
         return;
@@ -614,7 +624,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       localIndex const er = stencil.getElementRegionIndices()( 0, 0 );
       localIndex const esr = stencil.getElementSubRegionIndices()( 0, 0 );
       ElementSubRegionBase & subRegion = mesh.getElemManager().getRegion( er ).getSubRegion( esr );
-      string & fluidName = subRegion.getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
+      string const & fluidName = subRegion.getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
       SingleFluidBase & fluidBase = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
 
       constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
