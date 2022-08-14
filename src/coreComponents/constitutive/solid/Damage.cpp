@@ -30,7 +30,7 @@ template< typename BASE >
 Damage< BASE >::Damage( string const & name, Group * const parent ):
   BASE( name, parent ),
   m_newDamage(),
-  m_oldDamage(), 
+  m_oldDamage(),
   m_damageGrad(),
   m_strainEnergyDensity(),
   m_extDrivingForce(),
@@ -116,8 +116,8 @@ void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
   m_newDamage.resize( 0, numConstitutivePointsPerParentIndex );
-  m_oldDamage.resize( 0, numConstitutivePointsPerParentIndex ); 
-  m_damageGrad.resize( 0, numConstitutivePointsPerParentIndex, 3 ); 
+  m_oldDamage.resize( 0, numConstitutivePointsPerParentIndex );
+  m_damageGrad.resize( 0, numConstitutivePointsPerParentIndex, 3 );
   m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
   m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex );
   BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );

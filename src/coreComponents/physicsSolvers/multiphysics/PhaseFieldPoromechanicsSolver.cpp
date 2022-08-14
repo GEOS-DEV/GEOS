@@ -304,7 +304,7 @@ void PhaseFieldPoromechanicsSolver::mapDamageAndGradientToQuadrature( DomainPart
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodes = nodeManager.referencePosition(); 
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodes = nodeManager.referencePosition();
 
     PhaseFieldDamageFEM const &
     damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
@@ -335,7 +335,7 @@ void PhaseFieldPoromechanicsSolver::mapDamageAndGradientToQuadrature( DomainPart
         typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
 
         arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_newDamage;
-        arrayView3d< real64 > const damageGradOnMaterial = constitutiveUpdate.m_damageGrad; 
+        arrayView3d< real64 > const damageGradOnMaterial = constitutiveUpdate.m_damageGrad;
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
 
         auto const & elemsToNodes = elementSubRegion.nodeList().toViewConst();
@@ -350,42 +350,42 @@ void PhaseFieldPoromechanicsSolver::mapDamageAndGradientToQuadrature( DomainPart
             using FE_TYPE = TYPEOFREF( finiteElement );
             constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
             constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
-            
-            real64 xLocal[ numNodesPerElement ][ 3 ]; 
-            real64 nodalDamageLocal[ numNodesPerElement ]; 
-            
+
+            real64 xLocal[ numNodesPerElement ][ 3 ];
+            real64 nodalDamageLocal[ numNodesPerElement ];
+
             for( localIndex a = 0; a < numNodesPerElement; ++a )
             {
               localIndex const localNodeIndex = elemsToNodes( k, a );
 
               for( int dim=0; dim < 3; ++dim )
               {
-                xLocal[a][dim] = xNodes[ localNodeIndex ][dim]; 
+                xLocal[a][dim] = xNodes[ localNodeIndex ][dim];
               }
 
-              nodalDamageLocal[ a ] = nodalDamage[ localNodeIndex ]; 
+              nodalDamageLocal[ a ] = nodalDamage[ localNodeIndex ];
             }
-            
+
             for( localIndex q = 0; q < n_q_points; ++q )
             {
               real64 N[ numNodesPerElement ];
               FE_TYPE::calcN( q, N );
 
-              real64 dNdX[ numNodesPerElement ][ 3 ]; 
+              real64 dNdX[ numNodesPerElement ][ 3 ];
 
-              real64 const detJ = FE_TYPE::calcGradN( q, xLocal, dNdX ); 
+              real64 const detJ = FE_TYPE::calcGradN( q, xLocal, dNdX );
 
-              GEOSX_UNUSED_VAR( detJ ); 
+              GEOSX_UNUSED_VAR( detJ );
 
               real64 qDamage = 0.0;
               real64 qDamageGrad[3] = {0, 0, 0};
               FE_TYPE::valueAndGradient( N, dNdX, nodalDamageLocal, qDamage, qDamageGrad );
 
-              damageFieldOnMaterial( k, q ) = qDamage; 
+              damageFieldOnMaterial( k, q ) = qDamage;
 
               for( int dim=0; dim < 3; ++dim )
               {
-                damageGradOnMaterial[k][q][dim] = qDamageGrad[dim]; 
+                damageGradOnMaterial[k][q][dim] = qDamageGrad[dim];
               }
             }
           } );

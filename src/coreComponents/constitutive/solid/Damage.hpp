@@ -70,8 +70,8 @@ class DamageUpdates : public UPDATE_BASE
 public:
   template< typename ... PARAMS >
   DamageUpdates( arrayView2d< real64 > const & inputNewDamage,
-                 arrayView2d< real64 > const & inputOldDamage, 
-                 arrayView3d< real64 > const & inputDamageGrad, 
+                 arrayView2d< real64 > const & inputOldDamage,
+                 arrayView3d< real64 > const & inputDamageGrad,
                  arrayView2d< real64 > const & inputStrainEnergyDensity,
                  arrayView2d< real64 > const & inputExtDrivingForce,
                  real64 const & inputLengthScale,
@@ -84,8 +84,8 @@ public:
                  PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
     m_newDamage( inputNewDamage ),
-    m_oldDamage( inputOldDamage ), 
-    m_damageGrad( inputDamageGrad ), 
+    m_oldDamage( inputOldDamage ),
+    m_damageGrad( inputDamageGrad ),
     m_strainEnergyDensity( inputStrainEnergyDensity ),
     m_extDrivingForce ( inputExtDrivingForce ),
     m_lengthScale( inputLengthScale ),
@@ -187,13 +187,13 @@ public:
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual void getDamageGrad( localIndex const k, 
+  virtual void getDamageGrad( localIndex const k,
                               localIndex const q,
-                              real64 ( & damageGrad )[3] ) const 
-  { 
+                              real64 ( & damageGrad )[3] ) const
+  {
     for( int dim=0; dim < 3; ++dim )
     {
-      damageGrad[dim] = m_damageGrad[k][q][dim]; 
+      damageGrad[dim] = m_damageGrad[k][q][dim];
     }
 
   }
@@ -320,8 +320,8 @@ public:
   }
 
   arrayView2d< real64 > const m_newDamage;
-  arrayView2d< real64 > const m_oldDamage; 
-  arrayView3d< real64 > const m_damageGrad; 
+  arrayView2d< real64 > const m_oldDamage;
+  arrayView3d< real64 > const m_damageGrad;
   arrayView2d< real64 > const m_strainEnergyDensity;
   arrayView2d< real64 > const m_extDrivingForce;
   real64 const m_lengthScale;
@@ -362,7 +362,7 @@ public:
   KernelWrapper createKernelUpdates() const
   {
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
-                                                                       m_oldDamage.toView(), 
+                                                                       m_oldDamage.toView(),
                                                                        m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
                                                                        m_extDrivingForce.toView(),
@@ -401,8 +401,8 @@ public:
 
 protected:
   array2d< real64 > m_newDamage;
-  array2d< real64 > m_oldDamage; 
-  array3d< real64 > m_damageGrad; 
+  array2d< real64 > m_oldDamage;
+  array3d< real64 > m_damageGrad;
   array2d< real64 > m_strainEnergyDensity;
   array2d< real64 > m_extDrivingForce;
   real64 m_lengthScale;

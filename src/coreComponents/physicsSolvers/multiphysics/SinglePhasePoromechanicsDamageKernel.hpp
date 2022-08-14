@@ -222,10 +222,10 @@ public:
     //   dFluidMassContent_dTime + divergence( fluidMassFlux ) = source  (fluid phase mass balance)
     //
     //   with currently the following dependencies on the strainIncrement tensor and pressure.
-    //   Damage dependency is ignored here since the damage variable is not fully coupled with the displacement or pressure. 
+    //   Damage dependency is ignored here since the damage variable is not fully coupled with the displacement or pressure.
     //
     //   totalStress      = totalStress( strainIncrement, pressure)
-    //   fractureFlowTerm = fractureFlowTerm( pressure ) 
+    //   fractureFlowTerm = fractureFlowTerm( pressure )
     //   bodyForce        = bodyForce( strainIncrement, pressure)
     //   fluidMassContent = fluidMassContent( strainIncrement, pressure)
     //   fluidMassFlux    = fludiMassFlux( pressure)
@@ -250,7 +250,7 @@ public:
     //   dRmom_dVolStrain = - \int_Omega symmetricGradient( \eta ) : dTotalStress_dVolStrain
     //                      + \int \eta \cdot dBodyForce_dVolStrain
     //   dRmom_dPressure  = - \int_Omega symmetricGradient( \eta ) : dTotalStress_dPressure
-    //                      + \int \eta \cdot dFractureFlowTerm_dPressure 
+    //                      + \int \eta \cdot dFractureFlowTerm_dPressure
     //                      + \int \eta \cdot dBodyForce_dPressure
     //   dRmas_dVolStrain = \int \chi dFluidMassContent_dVolStrain
     //   dRmas_dPressure  = \int \chi dFluidMassContent_dPressure
@@ -273,8 +273,8 @@ public:
     real64 bodyForce[3]{};
     real64 dBodyForce_dVolStrainIncrement[3]{};
     real64 dBodyForce_dPressure[3]{};
-    real64 fractureFlowTerm[3]{}; 
-    real64 dFractureFlowTerm_dPressure[3]{}; 
+    real64 fractureFlowTerm[3]{};
+    real64 dFractureFlowTerm_dPressure[3]{};
     real64 fluidMassContentIncrement;
     real64 dFluidMassContent_dPressure;
     real64 dFluidMassContent_dVolStrainIncrement;
@@ -308,8 +308,8 @@ public:
                                                        bodyForce,
                                                        dBodyForce_dVolStrainIncrement,
                                                        dBodyForce_dPressure,
-                                                       fractureFlowTerm, 
-                                                       dFractureFlowTerm_dPressure, 
+                                                       fractureFlowTerm,
+                                                       dFractureFlowTerm_dPressure,
                                                        fluidMassContentIncrement,
                                                        dFluidMassContent_dPressure,
                                                        dFluidMassContent_dVolStrainIncrement,
@@ -338,10 +338,10 @@ public:
     LinearFormUtilities::compute< displacementTestSpace,
                                   DifferentialOperator::Identity >
     (
-      stack.localResidualMomentum, 
-      N, 
-      fractureFlowTerm, 
-      detJxW ); 
+      stack.localResidualMomentum,
+      N,
+      fractureFlowTerm,
+      detJxW );
 
     // Compute local linear momentum balance residual derivatives with respect to displacement
     BilinearFormUtilities::compute< displacementTestSpace,
@@ -395,16 +395,16 @@ public:
         detJxW );
     }
 
-    BilinearFormUtilities::compute< displacementTestSpace, 
-                                    pressureTrialSpace, 
-                                    DifferentialOperator::Identity, 
-                                    DifferentialOperator::Identity  >
+    BilinearFormUtilities::compute< displacementTestSpace,
+                                    pressureTrialSpace,
+                                    DifferentialOperator::Identity,
+                                    DifferentialOperator::Identity >
     (
-      stack.dLocalResidualMomentum_dPressure, 
-      N, 
-      dFractureFlowTerm_dPressure, 
-      1.0, 
-      detJxW ); 
+      stack.dLocalResidualMomentum_dPressure,
+      N,
+      dFractureFlowTerm_dPressure,
+      1.0,
+      detJxW );
 
 
     // Compute local mass balance residual

@@ -36,7 +36,7 @@ public:
   template< typename ... PARAMS >
   DamageVolDevUpdates( arrayView2d< real64 > const & inputNewDamage,
                        arrayView2d< real64 > const & inputOldDamage,
-                       arrayView3d< real64 > const & inputDamageGrad, 
+                       arrayView3d< real64 > const & inputDamageGrad,
                        arrayView2d< real64 > const & inputStrainEnergyDensity,
                        arrayView2d< real64 > const & inputExtDrivingForce,
                        real64 const & inputLengthScale,
@@ -71,7 +71,7 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
   using DamageUpdates< UPDATE_BASE >::m_newDamage;
   using DamageUpdates< UPDATE_BASE >::m_oldDamage;
-  using DamageUpdates< UPDATE_BASE >::m_damageGrad; 
+  using DamageUpdates< UPDATE_BASE >::m_damageGrad;
   using DamageUpdates< UPDATE_BASE >::m_extDrivingForceSwitch;
   using DamageUpdates< UPDATE_BASE >::m_tensileStrength;
   using DamageUpdates< UPDATE_BASE >::m_compressStrength;
@@ -167,7 +167,7 @@ public:
 
   using Damage< BASE >::m_newDamage;
   using Damage< BASE >::m_oldDamage;
-  using Damage< BASE >::m_damageGrad; 
+  using Damage< BASE >::m_damageGrad;
   using Damage< BASE >::m_strainEnergyDensity;
   using Damage< BASE >::m_extDrivingForce;
   using Damage< BASE >::m_criticalFractureEnergy;
@@ -190,7 +190,7 @@ public:
   {
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
                                                                        m_oldDamage.toView(),
-                                                                       m_damageGrad.toView(), 
+                                                                       m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
                                                                        m_extDrivingForce.toView(),
                                                                        m_lengthScale,

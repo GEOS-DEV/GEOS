@@ -131,7 +131,7 @@ protected:
   string m_solidSolverName;
   string m_flowSolverName;
 
-  integer m_damageFlag; 
+  integer m_damageFlag;
 
   // pointer to the flow sub-solver
   SinglePhaseBase * m_flowSolver;

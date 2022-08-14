@@ -68,7 +68,7 @@ SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & n
   m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
   m_linearSolverParameters.get().dofsPerNode = 3;
 
-  registerWrapper( viewKeyStruct::damageFlagString(), &m_damageFlag ). 
+  registerWrapper( viewKeyStruct::damageFlagString(), &m_damageFlag ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The flag to indicate whether a damage solid model is used" );

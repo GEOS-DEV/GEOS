@@ -72,8 +72,8 @@ public:
                                      real64 ( & bodyForceIncrement )[3],
                                      real64 ( & dBodyForce_dVolStrainIncrement )[3],
                                      real64 ( & dBodyForce_dPressure )[3],
-                                     real64 ( & fractureFlowTerm )[3], 
-                                     real64 ( & dFractureFlowTerm_dPressure )[3], 
+                                     real64 ( & fractureFlowTerm )[3],
+                                     real64 ( & dFractureFlowTerm_dPressure )[3],
                                      real64 & fluidMassContentIncrement,
                                      real64 & dFluidMassContent_dPressure,
                                      real64 & dFluidMassContent_dVolStrainIncrement,
@@ -123,12 +123,12 @@ public:
                         dBodyForce_dPressure );
     }
 
-    // Compute fracture flow term and its derivative w.r.t pressure only  
-    computeFractureFlowTerm( k, 
-                             q, 
-                             fluidPressure, 
-                             fractureFlowTerm, 
-                             dFractureFlowTerm_dPressure ); 
+    // Compute fracture flow term and its derivative w.r.t pressure only
+    computeFractureFlowTerm( k,
+                             q,
+                             fluidPressure,
+                             fractureFlowTerm,
+                             dFractureFlowTerm_dPressure );
 
     // Compute fluid mass contents and  its derivatives
     fluidMassContentIncrement = porosity * fluidDensity - porosity_n * fluidDensity_n;
@@ -206,7 +206,7 @@ private:
     LvArray::tensorOps::scaledCopy< 3 >( dBodyForce_dPressure, gravityVector, dMixtureDens_dPressure );
   }
 
-  // Note: it is a tentative method to compute porosity, and is subject to further changes 
+  // Note: it is a tentative method to compute porosity, and is subject to further changes
   GEOSX_HOST_DEVICE
   void computePorosity( localIndex const k,
                         localIndex const q,
@@ -225,15 +225,15 @@ private:
                                                   dPorosity_dPressure,
                                                   dPorosity_dVolStrain );
 
-    real64 const damage = fmax( fmin( 1.0, m_solidUpdate.getDamage( k, q ) ), 0.0 ); 
-    real64 const damage_n = fmax( fmin( 1.0, m_solidUpdate.getOldDamage( k, q ) ), 0.0 ); 
+    real64 const damage = fmax( fmin( 1.0, m_solidUpdate.getDamage( k, q ) ), 0.0 );
+    real64 const damage_n = fmax( fmin( 1.0, m_solidUpdate.getOldDamage( k, q ) ), 0.0 );
 
     porosity = damage + ( 1 - damage ) * m_porosityUpdate.getPorosity( k, q );
     porosity_n = damage_n + ( 1 - damage_n ) * m_porosityUpdate.getPorosity_n( k, q );
     porosityInit = m_porosityUpdate.getInitialPorosity( k, q );
 
-    dPorosity_dVolStrain *= ( 1 - damage ); 
-    dPorosity_dPressure *= ( 1 - damage ); 
+    dPorosity_dVolStrain *= ( 1 - damage );
+    dPorosity_dPressure *= ( 1 - damage );
   }
 
   GEOSX_HOST_DEVICE
@@ -258,7 +258,7 @@ private:
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
     real64 const initialBiotCoefficient = biotCoefficient; // temporary
 
-    real64 const damagedBiotCoefficient = m_solidUpdate.pressureDamageFunction( k, q ) * biotCoefficient; 
+    real64 const damagedBiotCoefficient = m_solidUpdate.pressureDamageFunction( k, q ) * biotCoefficient;
 
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -damagedBiotCoefficient * fluidPressure + initialBiotCoefficient * initialFluidPressure );
 
@@ -277,18 +277,18 @@ private:
                                 real64 ( & fractureFlowTerm )[3],
                                 real64 ( & dFractureFlowTerm_dPressure )[3] ) const
   {
-    // Compute fracture flow term and its derivative w.r.t pressure 
-    real64 damageGrad[3]{}; 
-    real64 pressureDamageGrad[3]{}; 
+    // Compute fracture flow term and its derivative w.r.t pressure
+    real64 damageGrad[3]{};
+    real64 pressureDamageGrad[3]{};
 
-    m_solidUpdate.getDamageGrad( k, q, damageGrad ); 
+    m_solidUpdate.getDamageGrad( k, q, damageGrad );
 
-    real64 const damage = m_solidUpdate.getDamage( k, q ); 
+    real64 const damage = m_solidUpdate.getDamage( k, q );
 
     LvArray::tensorOps::scaledCopy< 3 >( pressureDamageGrad, damageGrad, damage );
     LvArray::tensorOps::scaledCopy< 3 >( fractureFlowTerm, pressureDamageGrad, fluidPressure );
 
-    LvArray::tensorOps::copy< 3 >( dFractureFlowTerm_dPressure, pressureDamageGrad ); 
+    LvArray::tensorOps::copy< 3 >( dFractureFlowTerm_dPressure, pressureDamageGrad );
   }
 
 };
