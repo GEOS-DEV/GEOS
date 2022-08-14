@@ -55,6 +55,11 @@ public:
    */
   void addData( real64 time, string const & filePath ) const;
 
+  /*!
+   * @brief Removes all the datasets accumulated
+   */
+  void reinitData() const;
+
 private:
 
   /// PVD XML file
