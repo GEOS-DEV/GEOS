@@ -216,20 +216,13 @@ public:
     // inputs
 
     static constexpr char const * inputTemperatureString() { return "temperature"; }
-
     static constexpr char const * useMassFlagString() { return "useMass"; }
-
-    static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
-
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
-
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
-
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
-
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
+
   };
 
   /**
@@ -295,6 +288,7 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
 
+
   /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
@@ -355,9 +349,6 @@ protected:
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
-
-  /// flag indicating whether CFL numbers will be computed or not
-  integer m_computeCFLNumbers;
 
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;

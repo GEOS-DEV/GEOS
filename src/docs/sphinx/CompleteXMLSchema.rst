@@ -169,6 +169,13 @@ Element: CompositionalMultiphaseReservoir
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir.rst
 
 
+.. _XML_CompositionalMultiphaseStatistics:
+
+Element: CompositionalMultiphaseStatistics
+==========================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseStatistics.rst
+
+
 .. _XML_CompositionalMultiphaseWell:
 
 Element: CompositionalMultiphaseWell
@@ -834,6 +841,13 @@ Element: SinglePhaseReservoir
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir.rst
 
 
+.. _XML_SinglePhaseStatistics:
+
+Element: SinglePhaseStatistics
+==============================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseStatistics.rst
+
+
 .. _XML_SinglePhaseWell:
 
 Element: SinglePhaseWell
@@ -874,6 +888,13 @@ Element: SolidMechanicsLagrangianSSLE
 Element: SolidMechanicsStateReset
 =================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsStateReset.rst
+
+
+.. _XML_SolidMechanicsStatistics:
+
+Element: SolidMechanicsStatistics
+=================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsStatistics.rst
 
 
 .. _XML_SolidMechanics_LagrangianFEM:
@@ -1221,6 +1242,13 @@ Datastructure: CompositionalMultiphaseHybridFVM
 Datastructure: CompositionalMultiphaseReservoir
 ===============================================
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseStatistics:
+
+Datastructure: CompositionalMultiphaseStatistics
+================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseStatistics_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseWell:
@@ -1916,6 +1944,13 @@ Datastructure: SinglePhaseReservoir
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir_other.rst
 
 
+.. _DATASTRUCTURE_SinglePhaseStatistics:
+
+Datastructure: SinglePhaseStatistics
+====================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseStatistics_other.rst
+
+
 .. _DATASTRUCTURE_SinglePhaseWell:
 
 Datastructure: SinglePhaseWell
@@ -1956,6 +1991,13 @@ Datastructure: SolidMechanicsLagrangianSSLE
 Datastructure: SolidMechanicsStateReset
 =======================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsStateReset_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanicsStatistics:
+
+Datastructure: SolidMechanicsStatistics
+=======================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsStatistics_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanics_LagrangianFEM:
