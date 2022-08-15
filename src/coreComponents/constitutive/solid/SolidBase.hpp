@@ -416,6 +416,22 @@ public:
   }
 
   /**
+   * @brief Perform a viscous (rate-dependent) state update
+   *
+   * @param beta time-dependent parameter
+   */
+  GEOSX_HOST_DEVICE
+  virtual void viscousStateUpdate( localIndex const k,
+                                   localIndex const q,
+                                   real64 beta ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( beta );
+    GEOSX_ERROR( "viscousStateUpdate() not implemented for this model" );
+  }
+
+  /**
    * @brief Return the strain energy density at a given material point
    *
    * @param k the element inex

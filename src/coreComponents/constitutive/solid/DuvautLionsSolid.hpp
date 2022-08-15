@@ -40,8 +40,10 @@ public:
   /**
    * @brief Constructor
    */
-  DuvautLionsSolidUpdates( SOLID_TYPE const & solidModel):
-    m_solidUpdate( solidModel.createKernelUpdates() )
+  DuvautLionsSolidUpdates( SOLID_TYPE const & solidModel,
+                           real64 const & relaxationTime):
+    m_solidUpdate( solidModel.createKernelUpdates() ),
+    m_relaxationTime( relaxationTime )
   {}
 
   GEOSX_HOST_DEVICE
@@ -66,11 +68,9 @@ void DuvautLionsSolidUpdates::smallStrainUpdate( localIndex const k,
                                                  real64 ( & stress )[6],
                                                  real64 ( & stiffness )[6][6] ) const
 {
-  real64 trialStress[6];   // Trial stress
+  real64 trialStress[6];   // Trial stress (elastic predictor)
   real64 elasticStiffness[6][6];  //Elastic stiffness
-  real64 internalVariable;        //internal state variable
-  real64 trialInternalVariable
-  real64 timeRatio = timeIncrement / m_relaxationTime;
+  real64 timeRatio = 1 / (1 + timeIncrement / m_relaxationTime);
 
   for( localIndex i=0; i<6; ++i )
   {
@@ -81,36 +81,23 @@ void DuvautLionsSolidUpdates::smallStrainUpdate( localIndex const k,
   m_solidUpdate.m_disableInelasticity = true; 
   m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, trialStress, elasticStiffness );
 
-  //enable inelasticity to get the rate-independent update
+  //Enable inelasticity to get the rate-independent update
   m_solidUpdate.m_disableInelasticity = false;
   m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
-  stress = (trialStress + timeRatio * stress) / (1 + timeRatio);
+  stress = timeRatio *  trialStress + (1-timeRatio) * stress ;
 
   for ( localIndex i=0; i<6; ++i )
   {
     for ( localIndex j=0; j<6; ++j )
     {
-      stiffness[i][j] = (elasticStiffness[i][j] + timeRatio * stiffness[i][j]) / (1+timeRatio);
+      stiffness[i][j] = timeRatio * elasticStiffness[i][j]  + (1 - timeRatio) * stiffness[i][j];
     }
   }
 
+  saveStress( k, q, stress );
+  viscousStateUpdate( k , q , timeRatio );
 
-  //TO DO: add if statement to update the internal state variables depending on what SOLID_TYPE is.
-  if( SOLID_TYPE::catalogName() == 'DruckerPrager' )
-  {
-   internalVariable =  m_solidUpdate.m_oldCohesion;
-   trialInternalVariable = m_solidUpdate.m_newCohesion;
-   internalVariable = (internalVariable + timeRatio * trialInternalVariable) / (1 + timeRatio);
-   m_solidUpdate.m_newCohesion = internalVariable;
-
-  }else
-  {
-    GEOSX_ERROR( " The Duvaut-Lions solid for "<<SOLID_TYPE::catalogName()<<" is not implemented." );
-  }
-
-  m_solidUpdate.saveConvergedState();
-  
 }
 
 

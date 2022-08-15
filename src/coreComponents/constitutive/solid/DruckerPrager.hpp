@@ -117,6 +117,15 @@ public:
     m_oldCohesion[k][q] = m_newCohesion[k][q];
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void viscousStateUpdate( localIndex const k,
+                                   localIndex const q,
+                                   real64 beta ) const override
+  {
+    m_newCohesion[k][q] = beta * m_oldCohesion[k][q] + (1 - beta) * m_newCohesion[k][q];
+  }
+
 private:
   /// A reference to the ArrayView holding the friction angle for each element.
   arrayView1d< real64 const > const m_friction;

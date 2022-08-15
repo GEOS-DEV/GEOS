@@ -138,6 +138,11 @@ public:
     return m_bulkModulus[k];
   }
 
+  GEOSX_HOST_DEVICE
+  virtual void viscousStateUpdate( localIndex const k,
+                                   localIndex const q,
+                                   real64 beta ) const override;
+
 
   // TODO: confirm hyper stress/strain measures before activatiing
 
@@ -308,6 +313,17 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
   smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   stiffness.m_bulkModulus = m_bulkModulus[k];
   stiffness.m_shearModulus = m_shearModulus[k];
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void ElasticIsotropicUpdates::viscousStateUpdate( localIndex const k,
+                                                  localIndex const q,
+                                                  real64 beta ) const
+{
+  GEOSX_UNUSED_VAR( k );
+  GEOSX_UNUSED_VAR( q );
+  GEOSX_UNUSED_VAR( beta );
 }
 
 
