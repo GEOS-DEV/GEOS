@@ -137,7 +137,8 @@ private:
           for( auto & elemSubRegionName : elemRegionPair.second )
           {
             ElementSubRegionBase & subRegion = elemRegion.getSubRegion( elemSubRegionName );
-            if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value )
+            if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value || 
+                std::is_same< dataRepository::Group, OBJECT_TYPE>::value )
             {
               func( dynamic_cast< OBJECT_TYPE & >(subRegion) );
             }
@@ -260,7 +261,8 @@ void MeshObjectPath::forObjectsInPath( MeshLevel & meshLevel,
     {
       string const objectTypeName = stringutilities::toLower( OBJECT_TYPE::catalogName());
       if( objectTypeName == stringutilities::toLower( EnumStrings< ObjectTypes >::toString( m_objectType ) ) ||
-          ( objectTypeName.find( "elem" )!=string::npos && m_objectType==ObjectTypes::elems ) )
+          ( objectTypeName.find( "elem" )!=string::npos && m_objectType==ObjectTypes::elems ) ||
+          ( objectTypeName == "group") )
       {
         forObjectsInPath< OBJECT_TYPE, FUNC >( *levelIter, meshLevel, std::forward< FUNC >( func ) );
       }

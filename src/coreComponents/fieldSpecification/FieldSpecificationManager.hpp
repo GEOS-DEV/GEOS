@@ -290,29 +290,11 @@ public:
     // loop over all FieldSpecificationBase objects
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
-
-      if( time >= fs.getStartTime() && 
-          time < fs.getEndTime() && 
-          fieldName == fs.getFieldName() )
+      int const isInitialCondition = fs.initialCondition();
+      if( ( isInitialCondition && fieldName=="") || 
+          ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && fieldName == fs.getFieldName() ) )
       {
-        MeshObjectPath const & meshObjectPaths = fs.getMeshObjectPaths();
-        meshObjectPaths.forObjectsInPath< OBJECT_TYPE >( mesh,
-                                                        [&] ( OBJECT_TYPE & object )
-        {
-          if( object.hasWrapper( fieldName ) )
-          {
-            dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
-            string_array setNames = fs.getSetNames();
-            for( auto & setName : setNames )
-            {
-              if( setGroup.hasWrapper( setName ) )
-              {
-                SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
-                lambda( fs, setName, targetSet, object, fieldName );
-              }
-            }
-          }
-        } );
+        fs.template apply<OBJECT_TYPE, LAMBDA >( mesh, std::forward<LAMBDA>(lambda) );
       }
     } );
   }

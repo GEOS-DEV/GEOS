@@ -137,6 +137,13 @@ public:
   ///@{
 
   /**
+   * @brief Return the name of Group.
+   * @return string that contains "Group"
+   */
+  static string catalogName()
+  { return "Group"; }
+
+  /**
    * @brief Type alias for catalog interface used by this class. See CatalogInterface.
    */
   using CatalogInterface = dataRepository::CatalogInterface< Group, string const &, Group * const >;

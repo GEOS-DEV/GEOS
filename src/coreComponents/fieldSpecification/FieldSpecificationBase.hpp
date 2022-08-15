@@ -109,6 +109,32 @@ public:
   FieldSpecificationBase & operator=( FieldSpecificationBase && ) = delete;
 
 
+  template< typename OBJECT_TYPE,
+            typename LAMBDA >
+  void apply( MeshLevel & mesh,
+              LAMBDA && lambda ) const
+  {
+    MeshObjectPath const & meshObjectPaths = this->getMeshObjectPaths();
+    meshObjectPaths.forObjectsInPath< OBJECT_TYPE >( mesh,
+                                                    [&] ( OBJECT_TYPE & object )
+    {
+      if( object.hasWrapper( getFieldName() ) )
+      {
+        dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
+        string_array setNames = this->getSetNames();
+        for( auto & setName : setNames )
+        {
+          if( setGroup.hasWrapper( setName ) )
+          {
+            SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
+            lambda( *this, setName, targetSet, object, getFieldName() );
+          }
+        }
+      }
+    } );
+
+  }
+
 
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
