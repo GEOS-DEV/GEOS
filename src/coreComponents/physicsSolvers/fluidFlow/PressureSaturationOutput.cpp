@@ -77,8 +77,11 @@ bool PressureSaturationOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n 
 
       std::ofstream pressureFile;
       std::ofstream saturationFile;
-      pressureFile.open ( "pressure_"+ std::to_string( myRank ) + "_" + std::to_string( cycleNumber ) + ".txt", std::ios_base::app );
-      saturationFile.open ( "saturation_"+ std::to_string( myRank ) + "_" + std::to_string( cycleNumber ) + ".txt", std::ios_base::app );
+      size_t n_zero = 4;
+      auto old_str = std::to_string( cycleNumber );
+      auto new_str = std::string(n_zero - std::min(n_zero, old_str.length()), '0') + old_str;
+      pressureFile.open ( "pressure_"+ std::to_string( myRank ) + "_" + new_str + ".txt", std::ios_base::app );
+      saturationFile.open ( "saturation_"+ std::to_string( myRank ) + "_" + new_str + ".txt", std::ios_base::app );
 
       arrayView1d< real64 const > const pressure =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
