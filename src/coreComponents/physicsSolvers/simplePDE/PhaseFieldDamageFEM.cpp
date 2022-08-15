@@ -55,7 +55,8 @@ using namespace constitutive;
 PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
-  m_fieldName( "primaryField" )
+  m_fieldName( "primaryField" ), 
+  m_fracturePressureTermFlag( 0 )
 {
 
   registerWrapper< string >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key() ).
@@ -69,6 +70,11 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
   registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Type of local dissipation function. Can be Linear or Quadratic" );
+
+  registerWrapper( viewKeyStruct::fracturePressureTermFlagString(), &m_fracturePressureTermFlag ).
+    setApplyDefaultValue( 0 ). 
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether to add the fracture pressure contribution" );
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
@@ -231,7 +237,8 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                  localMatrix,
                                                  localRhs,
                                                  m_fieldName,
-                                                 m_localDissipationOption=="Linear" ? 1 : 2 );
+                                                 m_localDissipationOption=="Linear" ? 1 : 2,
+                                                 m_fracturePressureTermFlag );
 
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy<>,

@@ -652,6 +652,13 @@ Element: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
 
 
+.. _XML_PhaseFieldPoromechanics:
+
+Element: PhaseFieldPoromechanics
+================================
+.. include:: ../../coreComponents/schema/docs/PhaseFieldPoromechanics.rst
+
+
 .. _XML_PorousDelftEgg:
 
 Element: PorousDelftEgg
@@ -1732,6 +1739,13 @@ Datastructure: PhaseFieldDamageFEM
 Datastructure: PhaseFieldFracture
 =================================
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
+
+
+.. _DATASTRUCTURE_PhaseFieldPoromechanics:
+
+Datastructure: PhaseFieldPoromechanics
+======================================
+.. include:: ../../coreComponents/schema/docs/PhaseFieldPoromechanics_other.rst
 
 
 .. _DATASTRUCTURE_PorousDelftEgg:

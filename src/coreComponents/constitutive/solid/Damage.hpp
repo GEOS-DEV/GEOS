@@ -73,6 +73,7 @@ public:
                  arrayView2d< real64 > const & inputOldDamage,
                  arrayView3d< real64 > const & inputDamageGrad,
                  arrayView2d< real64 > const & inputStrainEnergyDensity,
+                 arrayView2d< real64 > const & inputVolumetricStrain,
                  arrayView2d< real64 > const & inputExtDrivingForce,
                  real64 const & inputLengthScale,
                  real64 const & inputCriticalFractureEnergy,
@@ -81,12 +82,14 @@ public:
                  real64 const & inputTensileStrength,
                  real64 const & inputCompressStrength,
                  real64 const & inputDeltaCoefficient,
+                 arrayView1d< real64 > const & inputBiotCoefficient, 
                  PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
     m_newDamage( inputNewDamage ),
     m_oldDamage( inputOldDamage ),
     m_damageGrad( inputDamageGrad ),
     m_strainEnergyDensity( inputStrainEnergyDensity ),
+    m_volStrain( inputVolumetricStrain ),
     m_extDrivingForce ( inputExtDrivingForce ),
     m_lengthScale( inputLengthScale ),
     m_criticalFractureEnergy( inputCriticalFractureEnergy ),
@@ -94,7 +97,8 @@ public:
     m_extDrivingForceSwitch( inputExtDrivingForceSwitch ),
     m_tensileStrength( inputTensileStrength ),
     m_compressStrength( inputCompressStrength ),
-    m_deltaCoefficient( inputDeltaCoefficient )
+    m_deltaCoefficient( inputDeltaCoefficient ), 
+    m_biotCoefficient( inputBiotCoefficient )
   {}
 
   using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
@@ -198,6 +202,14 @@ public:
 
   }
 
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual void updateBiotCoefficient( localIndex const k, 
+                                   real64 const biotCoefficient ) const
+  {
+    m_biotCoefficient[k] = biotCoefficient; 
+  }
+
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -214,6 +226,15 @@ public:
 
     real64 factor = getDegradationValue( k, q );
 
+    // compute volumetric and deviatoric strain invariants
+    real64 strain[6] = {0};
+
+    UPDATE_BASE::getElasticStrain( k, q, strain );
+
+    real64 traceOfStrain = strain[0] + strain[1] + strain[2];
+
+    m_volStrain( k, q ) = traceOfStrain;
+
     if( m_extDrivingForceSwitch == 1 )
     {
       real64 stressP;
@@ -227,10 +248,6 @@ public:
 
       real64 const mu    = stiffness.m_shearModulus;
       real64 const kappa = stiffness.m_bulkModulus;
-
-      // compute volumetric and deviatoric strain invariants
-      real64 strain[6];
-      UPDATE_BASE::getElasticStrain( k, q, strain );
 
       // compute invariants of degraded stress
       real64 I1 = factor * stressP * 3.;
@@ -283,6 +300,14 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  virtual real64 getVolStrain( localIndex const k,
+                               localIndex const q ) const
+  {
+    return m_volStrain( k, q );
+  }
+
+
+  GEOSX_HOST_DEVICE
   real64 getRegularizationLength() const
   {
     return m_lengthScale;
@@ -312,6 +337,12 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  virtual real64 getBiotCoefficient( localIndex const k ) const
+  {
+    return m_biotCoefficient[k]; 
+  }
+
+  GEOSX_HOST_DEVICE
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
@@ -323,6 +354,7 @@ public:
   arrayView2d< real64 > const m_oldDamage;
   arrayView3d< real64 > const m_damageGrad;
   arrayView2d< real64 > const m_strainEnergyDensity;
+  arrayView2d< real64 > const m_volStrain;
   arrayView2d< real64 > const m_extDrivingForce;
   real64 const m_lengthScale;
   real64 const m_criticalFractureEnergy;
@@ -331,6 +363,8 @@ public:
   real64 const m_tensileStrength;
   real64 const m_compressStrength;
   real64 const m_deltaCoefficient;
+
+  arrayView1d< real64 > const m_biotCoefficient; 
 };
 
 
@@ -365,6 +399,7 @@ public:
                                                                        m_oldDamage.toView(),
                                                                        m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
+                                                                       m_volStrain.toView(),
                                                                        m_extDrivingForce.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
@@ -372,7 +407,8 @@ public:
                                                                        m_extDrivingForceSwitch=="True"? 1 : 0,
                                                                        m_tensileStrength,
                                                                        m_compressStrength,
-                                                                       m_deltaCoefficient );
+                                                                       m_deltaCoefficient,
+                                                                       m_biotCoefficient.toView() );
   }
 
   struct viewKeyStruct : public BASE::viewKeyStruct
@@ -381,6 +417,7 @@ public:
     static constexpr char const * oldDamageString() { return "old damage"; }
     static constexpr char const * damageGradString() { return "damageGrad"; }
     static constexpr char const * strainEnergyDensityString() { return "strainEnergyDensity"; }
+    static constexpr char const * volumetricStrainString() { return "volumetricStrain"; }
     static constexpr char const * extDrivingForceString() { return "extDrivingForce"; }
     /// string/key for regularization length
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
@@ -396,6 +433,8 @@ public:
     static constexpr char const * compressStrengthString() { return "compressiveStrength"; }
     /// string/key for a delta coefficient in computing the external driving force
     static constexpr char const * deltaCoefficientString() { return "deltaCoefficient"; }
+    /// string/key for the Biot coefficient 
+    static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
   };
 
 
@@ -404,6 +443,7 @@ protected:
   array2d< real64 > m_oldDamage;
   array3d< real64 > m_damageGrad;
   array2d< real64 > m_strainEnergyDensity;
+  array2d< real64 > m_volStrain;
   array2d< real64 > m_extDrivingForce;
   real64 m_lengthScale;
   real64 m_criticalFractureEnergy;
@@ -412,6 +452,7 @@ protected:
   real64 m_tensileStrength;
   real64 m_compressStrength;
   real64 m_deltaCoefficient;
+  array1d< real64 > m_biotCoefficient; 
 };
 
 }

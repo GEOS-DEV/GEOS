@@ -33,6 +33,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_oldDamage(),
   m_damageGrad(),
   m_strainEnergyDensity(),
+  m_volStrain(), 
   m_extDrivingForce(),
   m_lengthScale(),
   m_criticalFractureEnergy(),
@@ -40,7 +41,8 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_extDrivingForceSwitch(),
   m_tensileStrength(),
   m_compressStrength(),
-  m_deltaCoefficient()
+  m_deltaCoefficient(),
+  m_biotCoefficient()
 {
   this->registerWrapper( viewKeyStruct::newDamageString(), &m_newDamage ).
     setApplyDefaultValue( 0.0 ).
@@ -61,6 +63,11 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Strain Energy Density" );
+
+  this->registerWrapper( viewKeyStruct::volumetricStrainString(), &m_volStrain ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Volumetric strain" );
 
   this->registerWrapper( viewKeyStruct::extDrivingForceString(), &m_extDrivingForce ).
     setApplyDefaultValue( 0.0 ).
@@ -97,6 +104,11 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Coefficient in the calculation of the external driving force" );
+
+  this->registerWrapper( viewKeyStruct::biotCoefficientString(), &m_biotCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Biot coefficient" ); 
 }
 
 
@@ -119,6 +131,7 @@ void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
   m_oldDamage.resize( 0, numConstitutivePointsPerParentIndex );
   m_damageGrad.resize( 0, numConstitutivePointsPerParentIndex, 3 );
   m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
+  m_volStrain.resize( 0, numConstitutivePointsPerParentIndex ); 
   m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex );
   BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

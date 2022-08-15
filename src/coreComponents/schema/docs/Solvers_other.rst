@@ -16,6 +16,7 @@ LaplaceFEM                                node :ref:`DATASTRUCTURE_LaplaceFEM`
 MultiphasePoromechanics                   node :ref:`DATASTRUCTURE_MultiphasePoromechanics`                   
 PhaseFieldDamageFEM                       node :ref:`DATASTRUCTURE_PhaseFieldDamageFEM`                       
 PhaseFieldFracture                        node :ref:`DATASTRUCTURE_PhaseFieldFracture`                        
+PhaseFieldPoromechanics                   node :ref:`DATASTRUCTURE_PhaseFieldPoromechanics`                   
 ProppantTransport                         node :ref:`DATASTRUCTURE_ProppantTransport`                         
 ReactiveCompositionalMultiphaseOBL        node :ref:`DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL`        
 SinglePhaseFVM                            node :ref:`DATASTRUCTURE_SinglePhaseFVM`                            

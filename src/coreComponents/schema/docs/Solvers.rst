@@ -17,6 +17,7 @@ LaplaceFEM                                node                 :ref:`XML_Laplace
 MultiphasePoromechanics                   node                 :ref:`XML_MultiphasePoromechanics`                   
 PhaseFieldDamageFEM                       node                 :ref:`XML_PhaseFieldDamageFEM`                       
 PhaseFieldFracture                        node                 :ref:`XML_PhaseFieldFracture`                        
+PhaseFieldPoromechanics                   node                 :ref:`XML_PhaseFieldPoromechanics`                   
 ProppantTransport                         node                 :ref:`XML_ProppantTransport`                         
 ReactiveCompositionalMultiphaseOBL        node                 :ref:`XML_ReactiveCompositionalMultiphaseOBL`        
 SinglePhaseFVM                            node                 :ref:`XML_SinglePhaseFVM`                            

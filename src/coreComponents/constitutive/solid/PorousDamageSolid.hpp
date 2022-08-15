@@ -173,6 +173,11 @@ private:
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
     m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
+
+    // Update the Biot coefficient in the damage model 
+    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
+
+    m_solidUpdate.updateBiotCoefficient( k, biotCoefficient ); 
   }
 
   // Do we need to consider the damage on the solid density?
