@@ -1,10 +1,11 @@
 import argparse
 import os
-from lxml import etree as ElementTree
+from lxml import etree as ElementTree    # type: ignore[import]
 import re
+from typing import List, Any, TextIO
 
 
-def format_attribute(attribute_indent, ka, attribute_value):
+def format_attribute(attribute_indent: str, ka: str, attribute_value: str) -> str:
     """Format xml attribute strings
 
     Args:
@@ -27,7 +28,7 @@ def format_attribute(attribute_indent, ka, attribute_value):
 
     # Identify and split multi-line attributes
     if re.match(r"\s*{\s*({[-+.,0-9a-zA-Z\s]*},?\s*)*\s*}", attribute_value):
-        split_positions = [match.end() for match in re.finditer(r"}\s*,", attribute_value)]
+        split_positions: List[Any] = [match.end() for match in re.finditer(r"}\s*,", attribute_value)]
         newline_indent = '\n%s' % (' ' * (len(attribute_indent) + len(ka) + 4))
         new_values = []
         for a, b in zip([None] + split_positions, split_positions + [None]):
@@ -38,19 +39,19 @@ def format_attribute(attribute_indent, ka, attribute_value):
     return attribute_value
 
 
-def format_xml_level(output,
-                     node,
-                     level,
-                     indent=' ' * 2,
-                     block_separation_max_depth=2,
-                     modify_attribute_indent=False,
-                     sort_attributes=False,
-                     close_tag_newline=False,
-                     include_namespace=False):
+def format_xml_level(output: TextIO,
+                     node: ElementTree.Element,
+                     level: int,
+                     indent: str = ' ' * 2,
+                     block_separation_max_depth: int = 2,
+                     modify_attribute_indent: bool = False,
+                     sort_attributes: bool = False,
+                     close_tag_newline: bool = False,
+                     include_namespace: bool = False) -> None:
     """Iteratively format the xml file
 
     Args:
-        output (str): the output filename
+        output (file): the output text file handle
         node (lxml.etree.Element): the current xml element
         level (int): the xml depth
         indent (str): the xml indent style
@@ -126,23 +127,23 @@ def format_xml_level(output,
                 output.write('/>')
 
 
-def format_file(input_fname,
-                indent_size=2,
-                indent_style=0,
-                block_separation_max_depth=2,
-                alphebitize_attributes=False,
-                close_style=0,
-                namespace=0):
+def format_file(input_fname: str,
+                indent_size: int = 2,
+                indent_style: bool = False,
+                block_separation_max_depth: int = 2,
+                alphebitize_attributes: bool = False,
+                close_style: bool = False,
+                namespace: bool = False) -> None:
     """Script to format xml files
 
     Args:
         input_fname (str): Input file name
         indent_size (int): Indent size
-        indent_style (int): Style of indentation (0=fixed, 1=hanging)
+        indent_style (bool): Style of indentation (0=fixed, 1=hanging)
         block_separation_max_depth (int): Max depth to separate xml blocks
         alphebitize_attributes (bool): Alphebitize attributes
-        close_style (int): Style of close tag (0=same line, 1=new line)
-        namespace (int): Insert this namespace in the xml description
+        close_style (bool): Style of close tag (0=same line, 1=new line)
+        namespace (bool): Insert this namespace in the xml description
     """
     fname = os.path.expanduser(input_fname)
     try:
@@ -177,7 +178,7 @@ def format_file(input_fname,
         raise Exception('\nCheck input file!')
 
 
-def main():
+def main() -> None:
     """Script to format xml files
 
     Args:

@@ -2,18 +2,19 @@
 
 import re
 from geosx_xml_tools import regex_tools
+from typing import List, Any, Dict, Union
 
 
 class UnitManager():
     """This class is used to manage unit definitions."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the class by creating an instance of the dict regex handler, building units."""
-        self.units = {}
+        self.units: Dict[str, str] = {}
         self.unitMatcher = regex_tools.DictRegexHandler()
         self.buildUnits()
 
-    def __call__(self, unitStruct):
+    def __call__(self, unitStruct: List[Any]) -> str:
         """Evaluate the symbolic expression for matched strings.
 
         Args:
@@ -37,7 +38,7 @@ class UnitManager():
         str_value = re.sub(regex_tools.patterns['strip_trailing_b'], '', str_value)
         return str_value
 
-    def regexHandler(self, match):
+    def regexHandler(self, match: re.Match) -> str:
         """Split the matched string into a scale and unit definition.
 
         Args:
@@ -50,12 +51,15 @@ class UnitManager():
         # The second matches the string inside the unit definition (e.g. m/s**2)
         return self.__call__([match.group(1), match.group(2)])
 
-    def buildUnits(self):
+    def buildUnits(self) -> None:
         """Build the unit definitions."""
 
         # yapf: disable
         # Long, short names for SI prefixes
-        prefixes = {'giga':  {'value': 1e9,  'alt': 'G'},
+        unit_dict_type = Dict[str, Dict[str, Any]]
+
+        prefixes: unit_dict_type = {
+                    'giga':  {'value': 1e9,  'alt': 'G'},
                     'mega':  {'value': 1e6,  'alt': 'M'},
                     'kilo':  {'value': 1e3,  'alt': 'k'},
                     'hecto': {'value': 1e2,  'alt': 'H'},
@@ -65,11 +69,13 @@ class UnitManager():
                     'centi': {'value': 1e-2, 'alt': 'c'},
                     'milli': {'value': 1e-3, 'alt': 'm'},
                     'micro': {'value': 1e-6, 'alt': 'mu'},
-                    'nano':  {'value': 1e-9, 'alt': 'n'}}
+                    'nano':  {'value': 1e-9, 'alt': 'n'}
+                    }
 
         # Base units, and their abbreviations
         # Note: setting (usePrefix = True) instructs the manager to expand using SI prefixes
-        unit_defs = {'gram':   {'value': 1e-3,               'alt': ['g', 'grams'],         'usePrefix': True},
+        unit_defs: unit_dict_type = {
+                     'gram':   {'value': 1e-3,               'alt': ['g', 'grams'],         'usePrefix': True},
                      'meter':  {'value': 1.0,                'alt': ['m', 'meters'],        'usePrefix': True},
                      'second': {'value': 1.0,                'alt': ['s', 'seconds'],       'usePrefix': True},
                      'minute': {'value': 60.0,               'alt': ['min', 'minutes'],     'usePrefix': True},
@@ -79,10 +85,12 @@ class UnitManager():
                      'pascal': {'value': 1.0,                'alt': ['Pa'],                 'usePrefix': True},
                      'newton': {'value': 1.0,                'alt': ['N'],                  'usePrefix': True},
                      'joule':  {'value': 1.0,                'alt': ['J'],                  'usePrefix': True},
-                     'watt':   {'value': 1.0,                'alt': ['W'],                  'usePrefix': True}}
+                     'watt':   {'value': 1.0,                'alt': ['W'],                  'usePrefix': True}
+                     }
 
         # Imperial units, and their abbreviations
-        imp_defs = {'pound':      {'value': 0.453592,       'alt': ['lb', 'pounds', 'lbs'], 'usePrefix': True},
+        imp_defs: unit_dict_type = {
+                    'pound':      {'value': 0.453592,       'alt': ['lb', 'pounds', 'lbs'], 'usePrefix': True},
                     'poundforce': {'value': 0.453592*9.81,  'alt': ['lbf'],                 'usePrefix': True},
                     'stone':      {'value': 6.35029,        'alt': ['st'],                  'usePrefix': True},
                     'ton':        {'value': 907.185,        'alt': ['tons'],                'usePrefix': True},
@@ -94,15 +102,18 @@ class UnitManager():
                     'acre':       {'value': 4046.86,        'alt': ['acres'],               'usePrefix': True},
                     'gallon':     {'value': 0.00378541,     'alt': ['gal', 'gallons'],      'usePrefix': True},
                     'psi':        {'value': 6894.76,        'alt': [],                      'usePrefix': True},
-                    'psf':        {'value': 1853.184,       'alt': [],                      'usePrefix': True}}
+                    'psf':        {'value': 1853.184,       'alt': [],                      'usePrefix': True}
+                    }
 
         # Other commonly used units:
-        other_defs = {'dyne':       {'value': 1.0e-5,    'alt': ['dynes'],              'usePrefix': True},
+        other_defs: unit_dict_type = {
+                      'dyne':       {'value': 1.0e-5,    'alt': ['dynes'],              'usePrefix': True},
                       'bar':        {'value': 1.0e5,     'alt': ['bars'],               'usePrefix': True},
                       'atmosphere': {'value': 101325.0,  'alt': ['atm', 'atmospheres'], 'usePrefix': True},
                       'poise':      {'value': 0.1,       'alt': ['P'],                  'usePrefix': True},
                       'barrel':     {'value': 0.1589873, 'alt': ['bbl', 'barrels'],     'usePrefix': True},
-                      'horsepower': {'value': 745.7,     'alt': ['hp', 'horsepowers'],  'usePrefix': True}}
+                      'horsepower': {'value': 745.7,     'alt': ['hp', 'horsepowers'],  'usePrefix': True}
+                      }
         # yapf: enable
 
         # Combine the unit dicts

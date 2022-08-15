@@ -1,14 +1,17 @@
-from lxml import etree as ElementTree
+from lxml import etree as ElementTree    # type: ignore[import]
 import os
 from pathlib import Path
 import argparse
+from typing import Callable, Any, List, Union, Tuple, Iterable, Dict
+
+record_type = Dict[str, Dict[str, Any]]
 
 
-def parse_schema_element(root,
-                         node,
-                         xsd='{http://www.w3.org/2001/XMLSchema}',
-                         recursive_types=['PeriodicEvent', 'SoloEvent', 'HaltEvent'],
-                         folders=['src', 'examples']):
+def parse_schema_element(root: ElementTree.Element,
+                         node: ElementTree.Element,
+                         xsd: str = '{http://www.w3.org/2001/XMLSchema}',
+                         recursive_types: Iterable[str] = ['PeriodicEvent', 'SoloEvent', 'HaltEvent'],
+                         folders: Iterable[str] = ['src', 'examples']) -> record_type:
     """Parse the xml schema at the current level
 
     Args:
@@ -25,7 +28,7 @@ def parse_schema_element(root,
     element_type = node.get('type')
     element_name = node.get('name')
     element_def = root.find("%scomplexType[@name='%s']" % (xsd, element_type))
-    local_types = {'attributes': {}, 'children': {}}
+    local_types: record_type = {'attributes': {}, 'children': {}}
 
     # Parse attributes
     for attribute in element_def.findall('%sattribute' % (xsd)):
@@ -45,7 +48,7 @@ def parse_schema_element(root,
     return local_types
 
 
-def parse_schema(fname):
+def parse_schema(fname: str) -> record_type:
     """Parse the schema file into the xml attribute usage dict
 
     Args:
@@ -60,7 +63,7 @@ def parse_schema(fname):
     return {'Problem': parse_schema_element(xml_root, problem_node)}
 
 
-def collect_xml_attributes_level(local_types, node, folder):
+def collect_xml_attributes_level(local_types: record_type, node: ElementTree.Element, folder: str) -> None:
     """Collect xml attribute usage at the current level
 
     Args:
@@ -76,7 +79,7 @@ def collect_xml_attributes_level(local_types, node, folder):
             collect_xml_attributes_level(local_types['children'][child.tag], child, folder)
 
 
-def collect_xml_attributes(xml_types, fname, folder):
+def collect_xml_attributes(xml_types: record_type, fname: str, folder: str) -> None:
     """Collect xml attribute usage in a file
 
     Args:
@@ -91,7 +94,9 @@ def collect_xml_attributes(xml_types, fname, folder):
     collect_xml_attributes_level(xml_types['Problem'], xml_root, folder)
 
 
-def write_attribute_usage_xml_level(local_types, node, folders=['src', 'examples']):
+def write_attribute_usage_xml_level(local_types: record_type,
+                                    node: ElementTree.Element,
+                                    folders: Iterable[str] = ['src', 'examples']) -> None:
     """Write xml attribute usage file at a given level
 
     Args:
@@ -123,7 +128,7 @@ def write_attribute_usage_xml_level(local_types, node, folders=['src', 'examples
         write_attribute_usage_xml_level(local_types['children'][ka], child)
 
 
-def write_attribute_usage_xml(xml_types, fname):
+def write_attribute_usage_xml(xml_types: record_type, fname: str) -> None:
     """Write xml attribute usage file
 
     Args:
@@ -137,7 +142,7 @@ def write_attribute_usage_xml(xml_types, fname):
     xml_tree.write(fname, pretty_print=True)
 
 
-def process_xml_files(geosx_root, output_name):
+def process_xml_files(geosx_root: str, output_name: str) -> None:
     """Test for xml attribute usage
 
     Args:
@@ -162,7 +167,7 @@ def process_xml_files(geosx_root, output_name):
     write_attribute_usage_xml(xml_types, output_name)
 
 
-def main():
+def main() -> None:
     """Entry point for the xml attribute usage test script
 
     Args:

@@ -1,9 +1,13 @@
 """Tools for reading/writing GEOSX ascii tables"""
 
 import numpy as np
+from typing import Tuple, Iterable, Dict
 
 
-def write_GEOS_table(axes_values, properties, axes_names=['x', 'y', 'z', 't'], string_format='%1.5e'):
+def write_GEOS_table(axes_values: Iterable[np.ndarray],
+                     properties: Dict[str, np.ndarray],
+                     axes_names: Iterable[str] = ['x', 'y', 'z', 't'],
+                     string_format: str = '%1.5e') -> None:
     """Write an GEOS-compatible ascii table.
 
     Args:
@@ -20,8 +24,8 @@ def write_GEOS_table(axes_values, properties, axes_names=['x', 'y', 'z', 't'], s
             raise Exception("Shape of parameter %s is incompatible with given axes" % (k))
 
     # Write axes files
-    for ii in range(0, len(axes_values)):
-        np.savetxt('%s.geos' % (axes_names[ii]), axes_values[ii], fmt=string_format, delimiter=',')
+    for ka, x in zip(axes_names, axes_values):
+        np.savetxt('%s.geos' % (ka), x, fmt=string_format, delimiter=',')
 
     # Write property files
     for k in properties.keys():
@@ -29,7 +33,8 @@ def write_GEOS_table(axes_values, properties, axes_names=['x', 'y', 'z', 't'], s
         np.savetxt('%s.geos' % (k), tmp, fmt=string_format, delimiter=',')
 
 
-def read_GEOS_table(axes_files, property_files):
+def read_GEOS_table(axes_files: Iterable[str],
+                    property_files: Iterable[str]) -> Tuple[Iterable[np.ndarray], Dict[str, np.ndarray]]:
     """Read an GEOS-compatible ascii table.
 
     Args:
@@ -53,7 +58,7 @@ def read_GEOS_table(axes_files, property_files):
     return axes_values, properties
 
 
-def write_read_GEOS_table_example():
+def write_read_GEOS_table_example() -> None:
     """Table read / write example."""
 
     # Define table axes

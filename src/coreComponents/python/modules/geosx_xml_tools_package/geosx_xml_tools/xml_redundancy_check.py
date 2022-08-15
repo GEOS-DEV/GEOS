@@ -1,17 +1,21 @@
 from geosx_xml_tools.attribute_coverage import parse_schema
 from geosx_xml_tools.xml_formatter import format_file
-from lxml import etree as ElementTree
+from lxml import etree as ElementTree    # type: ignore[import]
 import os
 from pathlib import Path
 import argparse
+from typing import Iterable, Dict, Any
 
 
-def check_redundancy_level(local_schema, node, whitelist=['component']):
+def check_redundancy_level(local_schema: Dict[str, Any],
+                           node: ElementTree.Element,
+                           whitelist: Iterable[str] = ['component']) -> int:
     """Check xml redundancy at the current level
 
     Args:
         local_schema (dict): Schema definitions
         node (lxml.etree.Element): current xml node
+        whitelist (list): always match nodes containing these attributes
 
     Returns:
         int: Number of required attributes in the node and its children
@@ -40,7 +44,7 @@ def check_redundancy_level(local_schema, node, whitelist=['component']):
     return node_is_required
 
 
-def check_xml_redundancy(schema, fname):
+def check_xml_redundancy(schema: Dict[str, Any], fname: str) -> None:
     """Check redundancy in an xml file
 
     Args:
@@ -54,7 +58,7 @@ def check_xml_redundancy(schema, fname):
     format_file(fname)
 
 
-def process_xml_files(geosx_root):
+def process_xml_files(geosx_root: str) -> None:
     """Test for xml redundancy
 
     Args:
@@ -75,7 +79,7 @@ def process_xml_files(geosx_root):
             check_xml_redundancy(schema, str(f))
 
 
-def main():
+def main() -> None:
     """Entry point for the xml attribute usage test script
 
     Args:

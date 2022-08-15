@@ -1,7 +1,7 @@
 """Tools for managing regular expressions in geosx_xml_tools"""
 
 import re
-
+from typing import Union, Dict
 """
 Define regex patterns used throughout the module:
 
@@ -17,7 +17,7 @@ strip_trailing  | 3.0000, 5.150050             | Removes unnecessary float strin
 strip_trailing_b| 3.0000e0, 1.23e0             | Removes unnecessary float strings
 """
 
-patterns = {
+patterns: Dict[str, str] = {
     'parameters': r"\$:?([a-zA-Z_0-9]*)\$?",
     'units': r"([0-9]*?\.?[0-9]+(?:[eE][-+]?[0-9]*?)?)\ *?\[([-+.*/()a-zA-Z0-9]*)\]",
     'units_b': r"([a-zA-Z]*)",
@@ -31,7 +31,7 @@ patterns = {
 symbolic_format = '%1.6e'
 
 
-def SymbolicMathRegexHandler(match):
+def SymbolicMathRegexHandler(match: re.Match) -> str:
     """Evaluate symbolic expressions that are identified using the regex_tools.patterns['symbolic'].
 
     Args:
@@ -48,20 +48,20 @@ def SymbolicMathRegexHandler(match):
         str_value = re.sub(patterns['strip_trailing_b'], '', str_value)
         return str_value
     else:
-        return
+        return ''
 
 
 class DictRegexHandler():
     """This class is used to substitute matched values with those stored in a dict."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the handler with an empty target list.
         The key/value pairs of self.target indicate which values
         to look for and the values they will replace with.
         """
-        self.target = {}
+        self.target: Dict[str, str] = {}
 
-    def __call__(self, match):
+    def __call__(self, match: re.Match) -> str:
         """Replace the matching strings with their target.
 
         Args:
@@ -75,4 +75,4 @@ class DictRegexHandler():
             value = self.target[k]
             return str(value)
         else:
-            return
+            return ''

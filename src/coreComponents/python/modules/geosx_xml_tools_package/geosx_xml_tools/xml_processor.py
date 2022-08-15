@@ -1,18 +1,19 @@
 """Tools for processing xml files in GEOSX"""
 
-from lxml import etree as ElementTree
-from lxml.etree import XMLSyntaxError
+from lxml import etree as ElementTree    # type: ignore[import]
+from lxml.etree import XMLSyntaxError    # type: ignore[import]
 import re
 import os
 from geosx_xml_tools import regex_tools, unit_manager
 from geosx_xml_tools import xml_formatter
+from typing import Iterable, Tuple, List
 
 # Create an instance of the unit, parameter regex handlers
 unitManager = unit_manager.UnitManager()
 parameterHandler = regex_tools.DictRegexHandler()
 
 
-def merge_xml_nodes(existingNode, targetNode, level):
+def merge_xml_nodes(existingNode: ElementTree.Element, targetNode: ElementTree.Element, level: int) -> None:
     """Merge nodes in an included file into the current structure level by level.
 
     Args:
@@ -59,7 +60,7 @@ def merge_xml_nodes(existingNode, targetNode, level):
             existingNode.insert(-1, target)
 
 
-def merge_included_xml_files(root, fname, includeCount, maxInclude=100):
+def merge_included_xml_files(root: ElementTree.Element, fname: str, includeCount: int, maxInclude: int = 100) -> None:
     """Recursively merge included files into the current structure.
 
     Args:
@@ -104,7 +105,7 @@ def merge_included_xml_files(root, fname, includeCount, maxInclude=100):
     os.chdir(pwd)
 
 
-def apply_regex_to_node(node):
+def apply_regex_to_node(node: ElementTree.Element) -> None:
     """Apply regexes that handle parameters, units, and symbolic math to each
     xml attribute in the structure.
 
@@ -141,7 +142,7 @@ def apply_regex_to_node(node):
         apply_regex_to_node(subNode)
 
 
-def generate_random_name(prefix='', suffix='.xml'):
+def generate_random_name(prefix: str = '', suffix: str = '.xml') -> str:
     """If the target name is not specified, generate a random name for the compiled xml
 
     Args:
@@ -159,13 +160,13 @@ def generate_random_name(prefix='', suffix='.xml'):
     return '%s%s%s' % (prefix, md5(tmp.encode('utf-8')).hexdigest(), suffix)
 
 
-def process(inputFiles,
-            outputFile='',
-            schema='',
-            verbose=0,
-            parameter_override=[],
-            keep_parameters=True,
-            keep_includes=True):
+def process(inputFiles: Iterable[str],
+            outputFile: str = '',
+            schema: str = '',
+            verbose: int = 0,
+            parameter_override: List[Tuple[str, str]] = [],
+            keep_parameters: bool = True,
+            keep_includes: bool = True) -> str:
     """Process an xml file
 
     Args:
@@ -194,8 +195,8 @@ def process(inputFiles,
     os.chdir(single_path)
 
     # Handle single vs. multiple command line inputs
-    root = ''
-    tree = ''
+    root = ElementTree.Element()
+    tree = ElementTree.ElementTree()
     if (len(expanded_files) == 1):
         # Load single files directly
         try:
@@ -224,7 +225,7 @@ def process(inputFiles,
     includeCount = 0
     for includeNode in root.findall('Included'):
         for f in includeNode.findall('File'):
-            merge_included_xml_files(root, f.get('name'), includeCount)
+            merge_included_xml_files(root, f.get('name'), includeCount)    # type: ignore[attr-defined]
     os.chdir(pwd)
 
     # Build the parameter map
@@ -294,7 +295,7 @@ def process(inputFiles,
     return outputFile
 
 
-def validate_xml(fname, schema, verbose):
+def validate_xml(fname: str, schema: str, verbose: int) -> None:
     """Validate an xml file, and parse the warnings.
 
     Args:

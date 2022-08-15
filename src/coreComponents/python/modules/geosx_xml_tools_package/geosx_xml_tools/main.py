@@ -5,10 +5,10 @@ import argparse
 import os
 import time
 from geosx_xml_tools import xml_processor
-from typing import Callable, Any, List, Union, Tuple
+from typing import Callable, Any, Union, Tuple, Iterable
 
 
-def parse_arguments() -> Tuple[argparse.Namespace, List[str]]:
+def parse_arguments() -> Tuple[argparse.Namespace, Iterable[str]]:
     """Parse user arguments
 
     Args:
@@ -151,12 +151,12 @@ def preprocess_serial() -> None:
     print(compiled_name)
 
 
-def preprocess_parallel() -> List[str]:
+def preprocess_parallel() -> Iterable[str]:
     """
     MPI aware xml preprocesing
     """
     # Process the xml file
-    from mpi4py import MPI  # type: ignore[import]
+    from mpi4py import MPI    # type: ignore[import]
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
 
@@ -172,7 +172,7 @@ def preprocess_parallel() -> List[str]:
     return format_geosx_arguments(compiled_name, unknown_args)
 
 
-def format_geosx_arguments(compiled_name: str, unknown_args: List[str]) -> List[str]:
+def format_geosx_arguments(compiled_name: str, unknown_args: Iterable[str]) -> Iterable[str]:
     """Format GEOSX arguments
 
     Args:
