@@ -485,6 +485,10 @@
 					<xsd:selector xpath="DamageElasticIsotropic" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="ConstitutiveDamagePermeabilityUniqueName">
+					<xsd:selector xpath="DamagePermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="ConstitutiveDamageSpectralElasticIsotropicUniqueName">
 					<xsd:selector xpath="DamageSpectralElasticIsotropic" />
 					<xsd:field xpath="@name" />
@@ -2605,6 +2609,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
+			<xsd:element name="DamagePermeability" type="DamagePermeabilityType" />
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
 			<xsd:element name="DamageVolDevElasticIsotropic" type="DamageVolDevElasticIsotropicType" />
 			<xsd:element name="DeadOilFluid" type="DeadOilFluidType" />
@@ -2949,6 +2954,14 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
 		<!--tensileStrength => Tensile strength from the uniaxial tension test-->
 		<xsd:attribute name="tensileStrength" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="DamagePermeabilityType">
+		<!--bulkPermeability => Permeability of an undamaged bulk rock.-->
+		<xsd:attribute name="bulkPermeability" type="real64" use="required" />
+		<!--fracturePermeability => Permeability of a damaged rock.-->
+		<xsd:attribute name="fracturePermeability" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

@@ -33,7 +33,7 @@ namespace constitutive
 
 template< typename SOLID_TYPE >
 PorousDamageSolid< SOLID_TYPE >::PorousDamageSolid( string const & name, Group * const parent ):
-  CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >( name, parent )
+  CoupledSolid< SOLID_TYPE, BiotPorosity, DamagePermeability >( name, parent )
 {}
 
 template< typename SOLID_TYPE >

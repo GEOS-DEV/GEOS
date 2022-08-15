@@ -22,6 +22,7 @@ CompressibleSolidSlipDependentPermeability  node :ref:`DATASTRUCTURE_Compressibl
 ConstantPermeability                        node :ref:`DATASTRUCTURE_ConstantPermeability`                        
 Coulomb                                     node :ref:`DATASTRUCTURE_Coulomb`                                     
 DamageElasticIsotropic                      node :ref:`DATASTRUCTURE_DamageElasticIsotropic`                      
+DamagePermeability                          node :ref:`DATASTRUCTURE_DamagePermeability`                          
 DamageSpectralElasticIsotropic              node :ref:`DATASTRUCTURE_DamageSpectralElasticIsotropic`              
 DamageVolDevElasticIsotropic                node :ref:`DATASTRUCTURE_DamageVolDevElasticIsotropic`                
 DeadOilFluid                                node :ref:`DATASTRUCTURE_DeadOilFluid`                                

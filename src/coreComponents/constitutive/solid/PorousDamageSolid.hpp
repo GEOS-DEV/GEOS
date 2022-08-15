@@ -24,7 +24,7 @@
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
-#include "constitutive/permeability/ConstantPermeability.hpp"
+#include "constitutive/permeability/DamagePermeability.hpp"
 
 namespace geosx
 {
@@ -38,7 +38,7 @@ namespace constitutive
  * @tparam SOLID_TYPE type of the porosity model
  */
 template< typename SOLID_TYPE >
-class PorousDamageSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >
+class PorousDamageSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, DamagePermeability >
 {
 public:
 
@@ -49,8 +49,8 @@ public:
    */
   PorousDamageSolidUpdates( SOLID_TYPE const & solidModel,
                             BiotPorosity const & porosityModel,
-                            ConstantPermeability const & permModel ):
-    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel )
+                            DamagePermeability const & permModel ):
+    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, DamagePermeability >( solidModel, porosityModel, permModel )
   {}
 
   GEOSX_HOST_DEVICE
@@ -161,9 +161,9 @@ public:
 
 private:
 
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_solidUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_porosityUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_permUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, DamagePermeability >::m_solidUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, DamagePermeability >::m_porosityUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, DamagePermeability >::m_permUpdate;
 
 
   GEOSX_HOST_DEVICE
@@ -174,10 +174,19 @@ private:
 
     m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
 
-    // Update the Biot coefficient in the damage model 
+    // Update the Biot coefficient in the damage model
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
 
-    m_solidUpdate.updateBiotCoefficient( k, biotCoefficient ); 
+    m_solidUpdate.updateBiotCoefficient( k, biotCoefficient );
+  }
+
+  GEOSX_HOST_DEVICE
+  void updateMatrixPermeability( localIndex const k ) const
+  {
+    // We tentatively update the permeability using the damage on the first quadrature point
+    real64 const damage = fmax( fmin( 1.0, m_solidUpdate.getDamage( k, 0 ) ), 0.0 );
+
+    m_permUpdate.updateDamagePermeability( k, damage );
   }
 
   // Do we need to consider the damage on the solid density?
@@ -311,7 +320,7 @@ class PorousDamageSolidBase
  * @tparam SOLID_TYPE type of solid model
  */
 template< typename SOLID_TYPE >
-class PorousDamageSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >
+class PorousDamageSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity, DamagePermeability >
 {
 public:
 
@@ -362,9 +371,9 @@ public:
   }
 
 private:
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getSolidModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getPorosityModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getPermModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, DamagePermeability >::getSolidModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, DamagePermeability >::getPorosityModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, DamagePermeability >::getPermModel;
 };
 
 

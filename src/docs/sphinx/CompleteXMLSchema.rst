@@ -246,6 +246,13 @@ Element: DamageElasticIsotropic
 .. include:: ../../coreComponents/schema/docs/DamageElasticIsotropic.rst
 
 
+.. _XML_DamagePermeability:
+
+Element: DamagePermeability
+===========================
+.. include:: ../../coreComponents/schema/docs/DamagePermeability.rst
+
+
 .. _XML_DamageSpectralElasticIsotropic:
 
 Element: DamageSpectralElasticIsotropic
@@ -1312,6 +1319,13 @@ Datastructure: Cylinder
 Datastructure: DamageElasticIsotropic
 =====================================
 .. include:: ../../coreComponents/schema/docs/DamageElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_DamagePermeability:
+
+Datastructure: DamagePermeability
+=================================
+.. include:: ../../coreComponents/schema/docs/DamagePermeability_other.rst
 
 
 .. _DATASTRUCTURE_DamageSpectralElasticIsotropic:

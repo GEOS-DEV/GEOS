@@ -917,6 +917,7 @@
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
+			<xsd:element name="DamagePermeability" type="DamagePermeabilityType" />
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
 			<xsd:element name="DamageVolDevElasticIsotropic" type="DamageVolDevElasticIsotropicType" />
 			<xsd:element name="DeadOilFluid" type="DeadOilFluidType" />
@@ -1386,6 +1387,12 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--volumetricStrain => Volumetric strain-->
 		<xsd:attribute name="volumetricStrain" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="DamagePermeabilityType">
+		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
+		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
+		<!--permeability => Rock permeability-->
+		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageSpectralElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
