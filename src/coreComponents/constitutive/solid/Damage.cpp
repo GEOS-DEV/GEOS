@@ -33,7 +33,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_oldDamage(),
   m_damageGrad(),
   m_strainEnergyDensity(),
-  m_volStrain(), 
+  m_volStrain(),
   m_extDrivingForce(),
   m_lengthScale(),
   m_criticalFractureEnergy(),
@@ -108,7 +108,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::biotCoefficientString(), &m_biotCoefficient ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Biot coefficient" ); 
+    setDescription( "Biot coefficient" );
 }
 
 
@@ -131,7 +131,7 @@ void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
   m_oldDamage.resize( 0, numConstitutivePointsPerParentIndex );
   m_damageGrad.resize( 0, numConstitutivePointsPerParentIndex, 3 );
   m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
-  m_volStrain.resize( 0, numConstitutivePointsPerParentIndex ); 
+  m_volStrain.resize( 0, numConstitutivePointsPerParentIndex );
   m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex );
   BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

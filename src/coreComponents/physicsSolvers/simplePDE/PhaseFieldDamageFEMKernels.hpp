@@ -116,7 +116,7 @@ public:
     m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
     m_localDissipationOption( localDissipationOption ),
-    m_fracturePressureTermFlag( fracturePressureTermFlag ), 
+    m_fracturePressureTermFlag( fracturePressureTermFlag ),
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( "pressure" ) )
   {}
 
@@ -197,7 +197,7 @@ public:
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
     real64 const extDrivingForce = m_constitutiveUpdate.getExtDrivingForce( k, q );
     real64 const volStrain = m_constitutiveUpdate.getVolStrain( k, q );
-    real64 const biotCoeff = m_constitutiveUpdate.getBiotCoefficient( k ); 
+    real64 const biotCoeff = m_constitutiveUpdate.getBiotCoefficient( k );
 
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
@@ -236,7 +236,7 @@ public:
 
       if( m_fracturePressureTermFlag )
       {
-        stack.localResidual[ a ] -= detJ * 0.5 * ell/Gc * ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k ) * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a]; 
+        stack.localResidual[ a ] -= detJ * 0.5 * ell/Gc * ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k ) * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a];
       }
 
       for( localIndex b = 0; b < numNodesPerElem; ++b )
@@ -257,7 +257,8 @@ public:
 
         if( m_fracturePressureTermFlag )
         {
-          stack.localJacobian[ a ][ b ] -= detJ * 0.5 * ell/Gc * ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k ) * m_constitutiveUpdate.pressureDamageFunctionSecondDerivative( qp_damage ) * N[a] * N[b];
+          stack.localJacobian[ a ][ b ] -= detJ * 0.5 * ell/Gc * ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k ) * m_constitutiveUpdate.pressureDamageFunctionSecondDerivative( qp_damage ) *
+                                           N[a] * N[b];
         }
       }
     }
@@ -305,7 +306,7 @@ protected:
 
   int const m_localDissipationOption;
 
-  integer m_fracturePressureTermFlag; 
+  integer m_fracturePressureTermFlag;
 
   arrayView1d< real64 const > const m_fluidPressure;
 
@@ -317,7 +318,7 @@ using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDa
                                                                     CRSMatrixView< real64, globalIndex const > const,
                                                                     arrayView1d< real64 > const,
                                                                     string const,
-                                                                    int, 
+                                                                    int,
                                                                     integer >;
 
 } // namespace geosx

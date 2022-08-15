@@ -82,7 +82,7 @@ public:
                  real64 const & inputTensileStrength,
                  real64 const & inputCompressStrength,
                  real64 const & inputDeltaCoefficient,
-                 arrayView1d< real64 > const & inputBiotCoefficient, 
+                 arrayView1d< real64 > const & inputBiotCoefficient,
                  PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
     m_newDamage( inputNewDamage ),
@@ -97,7 +97,7 @@ public:
     m_extDrivingForceSwitch( inputExtDrivingForceSwitch ),
     m_tensileStrength( inputTensileStrength ),
     m_compressStrength( inputCompressStrength ),
-    m_deltaCoefficient( inputDeltaCoefficient ), 
+    m_deltaCoefficient( inputDeltaCoefficient ),
     m_biotCoefficient( inputBiotCoefficient )
   {}
 
@@ -204,10 +204,10 @@ public:
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual void updateBiotCoefficient( localIndex const k, 
-                                   real64 const biotCoefficient ) const
+  virtual void updateBiotCoefficient( localIndex const k,
+                                      real64 const biotCoefficient ) const
   {
-    m_biotCoefficient[k] = biotCoefficient; 
+    m_biotCoefficient[k] = biotCoefficient;
   }
 
   GEOSX_HOST_DEVICE
@@ -339,7 +339,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual real64 getBiotCoefficient( localIndex const k ) const
   {
-    return m_biotCoefficient[k]; 
+    return m_biotCoefficient[k];
   }
 
   GEOSX_HOST_DEVICE
@@ -364,7 +364,7 @@ public:
   real64 const m_compressStrength;
   real64 const m_deltaCoefficient;
 
-  arrayView1d< real64 > const m_biotCoefficient; 
+  arrayView1d< real64 > const m_biotCoefficient;
 };
 
 
@@ -433,7 +433,7 @@ public:
     static constexpr char const * compressStrengthString() { return "compressiveStrength"; }
     /// string/key for a delta coefficient in computing the external driving force
     static constexpr char const * deltaCoefficientString() { return "deltaCoefficient"; }
-    /// string/key for the Biot coefficient 
+    /// string/key for the Biot coefficient
     static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
   };
 
@@ -452,7 +452,7 @@ protected:
   real64 m_tensileStrength;
   real64 m_compressStrength;
   real64 m_deltaCoefficient;
-  array1d< real64 > m_biotCoefficient; 
+  array1d< real64 > m_biotCoefficient;
 };
 
 }

@@ -163,7 +163,7 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
-  integer m_fracturePressureTermFlag; 
+  integer m_fracturePressureTermFlag;
 
   array1d< real64 > m_coeff;
 

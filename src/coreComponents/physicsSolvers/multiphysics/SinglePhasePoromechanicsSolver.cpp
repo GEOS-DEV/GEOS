@@ -38,7 +38,7 @@ using namespace constitutive;
 
 SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & name,
                                                                 Group * const parent )
-  : Base( name, parent ), 
+  : Base( name, parent ),
   m_damageFlag()
 {
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;

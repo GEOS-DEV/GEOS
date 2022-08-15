@@ -32,7 +32,7 @@ class SinglePhasePoromechanicsSolver : public CoupledSolver< SolidMechanicsLagra
                                                              SinglePhaseBase >
 {
 public:
-  
+
   using Base = CoupledSolver< SolidMechanicsLagrangianFEM, SinglePhaseBase >;
   using Base::m_solvers;
   using Base::m_dofManager;
