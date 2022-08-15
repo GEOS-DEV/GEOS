@@ -97,19 +97,39 @@ public:
                         SUBREGION_TYPE const & elementSubRegion,
                         FE_TYPE const & finiteElementSpace,
                         CONSTITUTIVE_TYPE & inputConstitutiveType, // end of default args
+                        arrayView1d< real64 const > const inputSrc,
+                        arrayView1d< real64 > const inputDst ):
+    Base( elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType ),
+    m_X( nodeManager.referencePosition() ),
+    m_src( inputSrc ),
+    m_dst( inputDst )
+  {
+    GEOSX_UNUSED_VAR( edgeManager );
+    GEOSX_UNUSED_VAR( faceManager );
+    GEOSX_UNUSED_VAR( targetRegionIndex );
+  }
+
+  TeamLaplaceFEMKernel( NodeManager const & nodeManager,
+                        EdgeManager const & edgeManager,
+                        FaceManager const & faceManager,
+                        localIndex const targetRegionIndex,
+                        SUBREGION_TYPE const & elementSubRegion,
+                        FE_TYPE const & finiteElementSpace,
+                        CONSTITUTIVE_TYPE & inputConstitutiveType, // end of default args
                         arrayView1d< real64 > const inputRhs,
                         string const fieldName ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
     m_X( nodeManager.referencePosition() ),
-    m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_rhs( inputRhs )
+    m_src( nodeManager.template getReference< array1d< real64 > >( fieldName )),
+    m_dst( inputRhs )
   {
     GEOSX_UNUSED_VAR( edgeManager );
     GEOSX_UNUSED_VAR( faceManager );
     GEOSX_UNUSED_VAR( targetRegionIndex );
-    GEOSX_UNUSED_VAR( inputRhs );
   }
 
   //***************************************************************************
@@ -182,7 +202,7 @@ public:
                                            stack.mesh.getJacobians() );
 
     /// Computation of the Gradient of the solution field
-    readField( stack, stack.kernelComponent.m_primaryField, stack.element.getDofsIn() );
+    readField( stack, stack.kernelComponent.m_src, stack.element.getDofsIn() );
     interpolateGradientAtQuadraturePoints( stack,
                                            stack.element.basis.getValuesAtQuadPts(),
                                            stack.element.basis.getGradientValuesAtQuadPts(),
@@ -259,7 +279,7 @@ public:
                                 stack.element.basis.getGradientValuesAtQuadPts(),
                                 stack.element.getQuadValues(),
                                 stack.element.getDofsOut() );
-    writeAddField( stack, stack.element.getDofsOut(), stack.kernelComponent.m_rhs );
+    writeAddField( stack, stack.element.getDofsOut(), stack.kernelComponent.m_dst );
 
     constexpr localIndex num_dofs_1d = StackVariables::num_dofs_1d;
     real64 maxForce = 0;
@@ -281,17 +301,23 @@ public:
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
+  arrayView1d< real64 const > const m_src;
+  arrayView1d< real64 > const m_dst;
+
   /// The global primary field array.
-  arrayView1d< real64 const > const m_primaryField;
+  // arrayView1d< real64 const > const m_primaryField;
 
   /// The global residual vector.
-  arrayView1d< real64 > const m_rhs;
+  // arrayView1d< real64 > const m_rhs;
 };
 
 /// The factory used to construct a TeamLaplaceFEMKernel.
 using TeamLaplaceFEMKernelFactory = finiteElement::KernelFactory< TeamLaplaceFEMKernel,
                                                                   arrayView1d< real64 > const,
                                                                   string const >;
+using TeamLaplaceFEMKernelFactory2 = finiteElement::KernelFactory< TeamLaplaceFEMKernel,
+                                                                  arrayView1d< real64 const > const,
+                                                                  arrayView1d< real64 > const >;
 
 } // namesapce geosx
 

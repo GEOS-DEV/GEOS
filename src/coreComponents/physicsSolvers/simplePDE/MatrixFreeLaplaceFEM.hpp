@@ -15,7 +15,9 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_EXPLICIT_LAPLACE_FEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_EXPLICIT_LAPLACE_FEM_HPP_
 
+#include "dataRepository/ExecutableGroup.hpp"
 #include "physicsSolvers/simplePDE/LaplaceBaseH1.hpp"  // a base class shared by all Laplace solvers
+#include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
 
 namespace geosx
 {
@@ -24,6 +26,71 @@ namespace geosx
 // The base class is densely Doxygen-commented and worth a look if you have not done so already.
 // Most important system assembly steps, linear and non-linear resolutions, and time-stepping mechanisms
 // are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
+
+class MatrixFreeLaplaceFEMOperator : public LinearOperator< ParallelVector >
+{
+private:
+  dataRepository::Group & m_meshBodies;
+  map< string, array1d< string > > m_meshTargets;
+  DofManager & m_dofManager;
+
+public:
+  MatrixFreeLaplaceFEMOperator( DomainPartition & domain, DofManager & dofManager );
+  MatrixFreeLaplaceFEMOperator( dataRepository::Group & meshBodies, DofManager & dofManager );
+
+  virtual void apply( ParallelVector const & src, ParallelVector & dst ) const;
+
+  virtual globalIndex numGlobalRows() const;
+
+  virtual globalIndex numGlobalCols() const;
+
+  virtual localIndex numLocalRows() const;
+
+  virtual localIndex numLocalCols() const;
+
+  virtual MPI_Comm comm() const;
+};
+
+template < typename Vector >
+class LinearOperatorWithBC : public LinearOperator< Vector >
+{
+private:
+  LinearOperator< Vector > const & m_unconstrained_op;
+
+public:
+  LinearOperatorWithBC( LinearOperator< Vector > const & unconstrained_op, DomainPartition & domain );
+
+  virtual void apply( ParallelVector const & src, ParallelVector & dst ) const;
+
+  virtual globalIndex numGlobalRows() const;
+
+  virtual globalIndex numGlobalCols() const;
+
+  virtual localIndex numLocalRows() const;
+
+  virtual localIndex numLocalCols() const;
+
+  virtual MPI_Comm comm() const;
+};
+
+class MatrixFreePreconditionerIdentity : public PreconditionerIdentity< HypreInterface >
+{
+private:
+  DofManager & m_dofManager;
+
+public:
+  MatrixFreePreconditionerIdentity( DofManager & dofManager );
+
+  virtual globalIndex numGlobalRows() const;
+
+  virtual globalIndex numGlobalCols() const;
+
+  virtual localIndex numLocalRows() const;
+
+  virtual localIndex numLocalCols() const;
+
+  virtual MPI_Comm comm() const;
+};
 
 //START_SPHINX_INCLUDE_BEGINCLASS
 class MatrixFreeLaplaceFEM : public LaplaceBaseH1

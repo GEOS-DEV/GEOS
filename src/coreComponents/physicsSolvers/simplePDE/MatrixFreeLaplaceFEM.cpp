@@ -20,6 +20,10 @@
 #include "MatrixFreeLaplaceFEM.hpp"
 #include "LaplaceFEMKernels.hpp"
 #include "TeamLaplaceFEMKernels.hpp"
+#include "finiteElement/kernelInterface/KernelBase.hpp"
+#include "mesh/MeshBody.hpp"
+#include "linearAlgebra/solvers/CgSolver.hpp"
+#include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
 
 namespace geosx
 {
@@ -31,6 +35,98 @@ namespace keys
 }
 
 using namespace dataRepository;
+
+MatrixFreeLaplaceFEMOperator::MatrixFreeLaplaceFEMOperator( DomainPartition & domain, DofManager & dofManager )
+: m_meshBodies( domain.getMeshBodies() ), m_dofManager( dofManager )
+{ }
+
+MatrixFreeLaplaceFEMOperator::MatrixFreeLaplaceFEMOperator( dataRepository::Group & meshBodies, DofManager & dofManager )
+: m_meshBodies( meshBodies ), m_dofManager( dofManager )
+{ }
+
+void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVector & dst ) const
+{
+  dst.zero();
+  arrayView1d< real64 const > const localSrc = src.values();
+  arrayView1d< real64 > const localDst = dst.open();
+  for( auto const & target: m_meshTargets )
+  {
+    string const meshBodyName = target.first;
+    arrayView1d< string const > const & regionNames = target.second.toViewConst();
+    MeshBody & meshBody = m_meshBodies.getGroup< MeshBody >( meshBodyName );
+    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
+    {
+
+      TeamLaplaceFEMKernelFactory2 kernelFactory( localSrc, localDst );
+
+      string const dummyString = "dummy";
+      finiteElement::
+        regionBasedKernelApplication< team_launch_policy,
+                                      constitutive::NullModel,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              dummyString,
+                                                              dummyString,
+                                                              kernelFactory );
+
+    } );
+  }
+  dst.close();
+}
+
+globalIndex MatrixFreeLaplaceFEMOperator::numGlobalRows() const
+{
+  return m_dofManager.numGlobalDofs();
+}
+
+globalIndex MatrixFreeLaplaceFEMOperator::numGlobalCols() const
+{
+  return m_dofManager.numGlobalDofs();
+}
+
+localIndex MatrixFreeLaplaceFEMOperator::numLocalRows() const
+{
+  return m_dofManager.numLocalDofs();
+}
+
+localIndex MatrixFreeLaplaceFEMOperator::numLocalCols() const
+{
+  return m_dofManager.numLocalDofs();
+}
+
+MPI_Comm MatrixFreeLaplaceFEMOperator::comm() const
+{
+  return MPI_COMM_GEOSX;
+}
+
+MatrixFreePreconditionerIdentity::MatrixFreePreconditionerIdentity( DofManager & dofManager )
+: m_dofManager( dofManager )
+{ }
+
+globalIndex MatrixFreePreconditionerIdentity::numGlobalRows() const
+{
+  return m_dofManager.numGlobalDofs();
+}
+
+globalIndex MatrixFreePreconditionerIdentity::numGlobalCols() const
+{
+  return m_dofManager.numGlobalDofs();
+}
+
+localIndex MatrixFreePreconditionerIdentity::numLocalRows() const
+{
+  return m_dofManager.numLocalDofs();
+}
+
+localIndex MatrixFreePreconditionerIdentity::numLocalCols() const
+{
+  return m_dofManager.numLocalDofs();
+}
+
+MPI_Comm MatrixFreePreconditionerIdentity::comm() const
+{
+  return MPI_COMM_GEOSX;
+}
 
 /*----------------------------------------------------------------------------------
  * LaplaceFEM: Solving Laplace's partial differential equation with finite elements
@@ -87,17 +183,34 @@ MatrixFreeLaplaceFEM::~MatrixFreeLaplaceFEM()
 }
 
 real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
-                                       real64 const & dt,
-                                       const int cycleNumber,
-                                       DomainPartition & domain )
+                                         real64 const & dt,
+                                         const int cycleNumber,
+                                         DomainPartition & domain )
 {
   setupSystem( domain,
                m_dofManager,
                m_localMatrix,
                m_rhs,
-               m_solution );
+               m_solution,
+               false );
 
-  return this->explicitStep( time_n, dt, cycleNumber, domain );
+  MatrixFreeLaplaceFEMOperator unconstrained_laplace( domain, m_dofManager );
+  // LinearOperatorWithBC< ParallelVector > constrained_laplace( unconstrained_laplace, domain );
+  // m_rhs_with_bc = ApplyBC(m_rhs, bc_info);
+  LinearSolverParameters params;
+  params.krylov.relTolerance = 1e-8;
+  params.krylov.maxIterations = 500;
+  params.solverType = geosx::LinearSolverParameters::SolverType::cg;
+  params.isSymmetric = true;
+  MatrixFreePreconditionerIdentity identity( m_dofManager );
+  CgSolver< ParallelVector > solver( params, unconstrained_laplace, identity );
+  solver.solve( m_solution, m_rhs );
+  // CgSolver< ParallelVector > solver( params, constrained_laplace, identity );
+  // // TODO: time
+  // solver.solve( m_solution, m_rhs_with_bc );
+  //
+  return dt;
+  // return this->explicitStep( time_n, dt, cycleNumber, domain );
 }
 
 real64 MatrixFreeLaplaceFEM::explicitStep( real64 const & time_n,
@@ -127,7 +240,7 @@ real64 MatrixFreeLaplaceFEM::explicitStep( real64 const & time_n,
 
     m_rhs.close();
   } );
-  return 1; // TODO: is this what we want?
+  return dt;
 }
 
 //START_SPHINX_INCLUDE_REGISTER
