@@ -8,6 +8,18 @@ from geosx_xml_tools import xml_processor
 
 
 def parse_arguments():
+    """Parse user arguments
+
+    Args:
+        -i/--input (str): Input file name (multiple allowed)
+        -c/--compiled-name (str): Compiled xml file name
+        -s/--schema (str): Path to schema to use for validation
+        -v/--verbose (int): Verbosity of outputs
+        -p/--parameters (str): Parameter overrides (name and value, multiple allowed)
+
+    Returns:
+        list: The remaining unparsed argument strings
+    """
     # Parse the user arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input', type=str, action='append', help='Input file name (multiple allowed)')
@@ -28,6 +40,11 @@ def parse_arguments():
 
 
 def check_mpi_rank():
+    """Check the MPI rank
+
+    Returns:
+        int: MPI rank
+    """
     rank = 0
     mpi_rank_key_options = ['OMPI_COMM_WORLD_RANK', 'PMI_RANK']
     for k in mpi_rank_key_options:
@@ -37,10 +54,27 @@ def check_mpi_rank():
 
 
 def wait_for_file_write_rank_0(target_file_argument=0, max_wait_time=100, max_startup_delay=1):
+    """Constructor for a function decorator that waits for a target file to be written on rank 0
+
+    Args:
+        target_file_argument (int): Index of the filename argument in the decorated function
+        max_wait_time (float): Maximum amount of time to wait (seconds)
+        max_startup_delay (float): Maximum delay allowed for thread startup (seconds)
+
+    Returns:
+        Wrapped function
+    """
 
     def wait_for_file_write_rank_0_inner(writer):
+        """Intermediate constructor for the function decorator
+
+        Args:
+            writer (typing.Callable): A function that writes to a file
+        """
 
         def wait_for_file_write_rank_0_decorator(*args, **kwargs):
+            """Apply the writer on rank 0, and wait for completion on other ranks
+            """
             # Check the target file status
             rank = check_mpi_rank()
             fname = ''
@@ -133,7 +167,15 @@ def preprocess_parallel():
 
 
 def format_geosx_arguments(compiled_name, unknown_args):
-    # Return GEOSX arguments
+    """Format GEOSX arguments
+
+    Args:
+        compiled_name (str): Name of the compiled xml file
+        unknown_args (list): List of unprocessed arguments
+
+    Returns:
+        list: List of arguments to pass to GEOSX
+    """
     geosx_args = [sys.argv[0], '-i', compiled_name]
     if unknown_args:
         geosx_args.extend(unknown_args)

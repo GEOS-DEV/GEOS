@@ -8,13 +8,16 @@ import sys
 
 def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
     """
-    @brief Convert an abaqus mesh to gmsh 2 format, preserving nodeset information.
-    @details If the code encounters any issues with region/element indices,
-             the conversion will attempt to continue, with errors
-             indicated by -1 values in the output file.
-    @param input_mesh path of the input abaqus file
-    @param output_mesh path of the output gmsh file
-    @param logger an instance of logging.Logger
+    Convert an abaqus mesh to gmsh 2 format, preserving nodeset information.
+
+    If the code encounters any issues with region/element indices,
+    the conversion will attempt to continue, with errors
+    indicated by -1 values in the output file.
+
+    Args:
+        input_mesh (str): path of the input abaqus file
+        output_mesh (str): path of the output gmsh file
+        logger (logging.Logger): an instance of logging.Logger
     """
     # Initialize the logger if it is empty
     if not logger:
@@ -163,9 +166,12 @@ def convert_abaqus_to_vtu(input_mesh, output_mesh, logger=None):
 
 def main():
     """
-    @brief Entry point for the abaqus convertor console script
-    @arg input_mesh Input abaqus file name
-    @arg output_mesh Output gmsh or vtu file name
+    Entry point for the abaqus convertor console script
+
+    Args:
+        input (str): Input abaqus mesh file name
+        output (str): Output mesh file name
+        -v/--verbose (flag): Increase verbosity level
     """
 
     # Parse the user arguments

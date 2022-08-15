@@ -19,12 +19,17 @@ def isiterable(obj):
 
 def getHistorySeries(database, variable, setname, indices=None, components=None):
     """
-    @brief retrieve a list of (time, data, idx, comp) timeseries tuples, each tuple is a single time history data series suitable for plotting in addition to the specific set index and component for the time series
-    @param database an hdf5_wrapper database to retrieve time history data from
-    @param variable the name of the time history variable for which to retrieve time-series data
-    @param setname the name of the index set as specified in the geosx input xml for which to query time-series data
-    @param indices the indices in the named set to query for, if None, defaults to all
-    @param components the components in the flattened data types to retrieve, defaults to all
+    Retrieve a series of time history structures suitable for plotting in addition to the specific set index and component for the time series
+
+    Args:
+        database (hdf5_wrapper.hdf5_wrapper): database to retrieve time history data from
+        variable (str): the name of the time history variable for which to retrieve time-series data
+        setname (str): the name of the index set as specified in the geosx input xml for which to query time-series data
+        indices (int, list): the indices in the named set to query for, if None, defaults to all
+        components (int, list): the components in the flattened data types to retrieve, defaults to all
+    
+    Returns:
+        list: list of (time, data, idx, comp) timeseries tuples for each time history data component
     """
 
     set_regex = re.compile(variable + '(.*?)', re.IGNORECASE)

@@ -9,8 +9,12 @@ import argparse
 def check_redundancy_level(local_schema, node, whitelist=['component']):
     """Check xml redundancy at the current level
 
-    @arg local_schema dict containing schema definitions
-    @arg node current xml node
+    Args:
+        local_schema (dict): Schema definitions
+        node (lxml.etree.Element): current xml node
+
+    Returns:
+        int: Number of required attributes in the node and its children
     """
     node_is_required = 0
     for ka in node.attrib.keys():
@@ -39,8 +43,9 @@ def check_redundancy_level(local_schema, node, whitelist=['component']):
 def check_xml_redundancy(schema, fname):
     """Check redundancy in an xml file
 
-    @arg schema dict containing schema definitions
-    @arg fname name of the target file
+    Args:
+        schema (dict): Schema definitions
+        fname (str): Name of the target file
     """
     xml_tree = ElementTree.parse(fname)
     xml_root = xml_tree.getroot()
@@ -52,7 +57,8 @@ def check_xml_redundancy(schema, fname):
 def process_xml_files(geosx_root):
     """Test for xml redundancy
 
-    @arg geosx_root GEOSX root directory
+    Args:
+        geosx_root (str): GEOSX root directory
     """
 
     # Parse the schema
@@ -72,7 +78,8 @@ def process_xml_files(geosx_root):
 def main():
     """Entry point for the xml attribute usage test script
 
-    @arg -r/--root GEOSX root directory
+    Args:
+        -r/--root (str): GEOSX root directory
     """
 
     # Parse the user arguments

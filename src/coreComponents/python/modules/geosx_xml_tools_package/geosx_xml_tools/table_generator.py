@@ -6,10 +6,11 @@ import numpy as np
 def write_GEOS_table(axes_values, properties, axes_names=['x', 'y', 'z', 't'], string_format='%1.5e'):
     """Write an GEOS-compatible ascii table.
 
-    @param axes_values List of arrays containing the coordinates for each axis of the table.
-    @param properties Dict of arrays with dimensionality/size defined by the axes_values
-    @param axes_names Names for each axis (default = ['x', 'y', 'z', 't'])
-    @param string_format Format for output values (default = %1.5e)
+    Args:
+        axes_values (list): List of arrays containing the coordinates for each axis of the table.
+        properties (dict): Dict of arrays with dimensionality/size defined by the axes_values
+        axes_names (list): Names for each axis (default = ['x', 'y', 'z', 't'])
+        string_format (str): Format for output values (default = %1.5e)
     """
 
     # Check to make sure the axes/property files have the correct shape
@@ -31,9 +32,12 @@ def write_GEOS_table(axes_values, properties, axes_names=['x', 'y', 'z', 't'], s
 def read_GEOS_table(axes_files, property_files):
     """Read an GEOS-compatible ascii table.
 
-    @param axes_files List of the axes file names in order.
-    @param property_files List of property file names
-    @return List of axis definitions, dict of property values
+    Args:
+        axes_files (list): List of the axes file names in order.
+        property_files (list): List of property file names
+
+    Returns:
+        tuple: List of axis definitions, dict of property values
     """
     axes_values = []
     for f in axes_files:

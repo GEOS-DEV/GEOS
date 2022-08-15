@@ -5,6 +5,16 @@ import re
 
 
 def format_attribute(attribute_indent, ka, attribute_value):
+    """Format xml attribute strings
+
+    Args:
+        attribute_indent (str): Attribute indent string
+        ka (str): Attribute name
+        attribute_value (str): Attribute value
+
+    Returns:
+        str: Formatted attribute value
+    """
     # Make sure that a space follows commas
     attribute_value = re.sub(r",\s*", ", ", attribute_value)
 
@@ -39,15 +49,16 @@ def format_xml_level(output,
                      include_namespace=False):
     """Iteratively format the xml file
 
-    @param output the output filename
-    @param node the current xml element
-    @param level the xml depth
-    @param indent the xml indent style
-    @param block_separation_max_depth the maximum depth to separate adjacent elements
-    @param modify_attribute_indent option to have flexible attribute indentation
-    @param sort_attributes option to sort attributes alphabetically
-    @param close_tag_newline option to place close tag on a separate line
-    @param include_namespace option to include the xml namespace in the output
+    Args:
+        output (str): the output filename
+        node (lxml.etree.Element): the current xml element
+        level (int): the xml depth
+        indent (str): the xml indent style
+        block_separation_max_depth (int): the maximum depth to separate adjacent elements
+        modify_attribute_indent (bool): option to have flexible attribute indentation
+        sort_attributes (bool): option to sort attributes alphabetically
+        close_tag_newline (bool): option to place close tag on a separate line
+        include_namespace (bool): option to include the xml namespace in the output
     """
 
     # Handle comments
@@ -124,13 +135,14 @@ def format_file(input_fname,
                 namespace=0):
     """Script to format xml files
 
-    @arg input_fname Input file name
-    @arg indent_size Indent size
-    @arg indent_style Style of indentation (0=fixed, 1=hanging)
-    @arg block_separation_max_depth Max depth to separate xml blocks
-    @arg alphebitize_attributes Alphebitize attributes
-    @arg close_style Style of close tag (0=same line, 1=new line)
-    @arg namespace Insert this namespace in the xml description
+    Args:
+        input_fname (str): Input file name
+        indent_size (int): Indent size
+        indent_style (int): Style of indentation (0=fixed, 1=hanging)
+        block_separation_max_depth (int): Max depth to separate xml blocks
+        alphebitize_attributes (bool): Alphebitize attributes
+        close_style (int): Style of close tag (0=same line, 1=new line)
+        namespace (int): Insert this namespace in the xml description
     """
     fname = os.path.expanduser(input_fname)
     try:
@@ -168,7 +180,14 @@ def format_file(input_fname,
 def main():
     """Script to format xml files
 
-    @arg input Input file name
+    Args:
+        input (str): Input file name
+        -i/--indent (int): Indent size
+        -s/--style (int): Indent style
+        -d/--depth (int): Block separation depth
+        -a/--alphebitize (int): Alphebitize attributes
+        -c/--close (int): Close tag style
+        -n/--namespace (int): Include namespace
     """
 
     # Parse the user arguments

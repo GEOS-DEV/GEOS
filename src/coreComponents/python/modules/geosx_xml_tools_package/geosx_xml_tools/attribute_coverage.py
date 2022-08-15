@@ -11,11 +11,15 @@ def parse_schema_element(root,
                          folders=['src', 'examples']):
     """Parse the xml schema at the current level
 
-    @arg root the root schema node
-    @arg node current schema node
-    @arg xsd the file namespace
-    @arg recursive_types node tags that allow recursive nesting
-    @arg folders folders to sort xml attribute usage into
+    Args:
+        root (lxml.etree.Element): the root schema node
+        node (lxml.etree.Element): current schema node
+        xsd (str): the file namespace
+        recursive_types (list): node tags that allow recursive nesting
+        folders (list): folders to sort xml attribute usage into
+
+    Returns:
+        dict: Dictionary of attributes and children for the current node
     """
 
     element_type = node.get('type')
@@ -44,7 +48,11 @@ def parse_schema_element(root,
 def parse_schema(fname):
     """Parse the schema file into the xml attribute usage dict
 
-    @arg fname schema name
+    Args:
+        fname (str): schema name
+
+    Returns:
+        dict: Dictionary of attributes and children for the entire schema
     """
     xml_tree = ElementTree.parse(fname)
     xml_root = xml_tree.getroot()
@@ -55,9 +63,10 @@ def parse_schema(fname):
 def collect_xml_attributes_level(local_types, node, folder):
     """Collect xml attribute usage at the current level
 
-    @arg local_types dict containing attribute usage
-    @arg node current xml node
-    @arg folder the source folder for the current file
+    Args:
+        local_types (dict): dictionary containing attribute usage
+        node (lxml.etree.Element): current xml node
+        folder (str): the source folder for the current file
     """
     for ka in node.attrib.keys():
         local_types['attributes'][ka][folder].append(node.get(ka))
@@ -70,9 +79,10 @@ def collect_xml_attributes_level(local_types, node, folder):
 def collect_xml_attributes(xml_types, fname, folder):
     """Collect xml attribute usage in a file
 
-    @arg xml_types dict containing attribute usage
-    @arg fname name of the target file
-    @arg folder the source folder for the current file
+    Args:
+        xml_types (dict): dictionary containing attribute usage
+        fname (str): name of the target file
+        folder (str): the source folder for the current file
     """
     parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
     xml_tree = ElementTree.parse(fname, parser=parser)
@@ -84,8 +94,9 @@ def collect_xml_attributes(xml_types, fname, folder):
 def write_attribute_usage_xml_level(local_types, node, folders=['src', 'examples']):
     """Write xml attribute usage file at a given level
 
-    @arg local_types dict containing attribute usage at the current level
-    @arg node current xml node
+    Args:
+        local_types (dict): dict containing attribute usage at the current level
+        node (lxml.etree.Element): current xml node
     """
 
     # Write attributes
@@ -115,8 +126,9 @@ def write_attribute_usage_xml_level(local_types, node, folders=['src', 'examples
 def write_attribute_usage_xml(xml_types, fname):
     """Write xml attribute usage file
 
-    @arg xml_types dict containing attribute usage by xml type
-    @arg fname output file name
+    Args:
+        xml_types (dict): dictionary containing attribute usage by xml type
+        fname (str): output file name
     """
     xml_root = ElementTree.Element('Problem')
     xml_tree = ElementTree.ElementTree(xml_root)
@@ -128,8 +140,9 @@ def write_attribute_usage_xml(xml_types, fname):
 def process_xml_files(geosx_root, output_name):
     """Test for xml attribute usage
 
-    @arg geosx_root GEOSX root directory
-    @arg output_name output file name
+    Args:
+        geosx_root (str): GEOSX root directory
+        output_name (str): output file name
     """
 
     # Parse the schema
@@ -152,8 +165,9 @@ def process_xml_files(geosx_root, output_name):
 def main():
     """Entry point for the xml attribute usage test script
 
-    @arg -r/--root GEOSX root directory
-    @arg -o/--output output file name
+    Args:
+        -r/--root (str): GEOSX root directory
+        -o/--output (str): output file name
     """
 
     # Parse the user arguments

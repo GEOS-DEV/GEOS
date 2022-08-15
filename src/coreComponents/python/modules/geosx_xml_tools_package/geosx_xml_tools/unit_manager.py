@@ -16,7 +16,11 @@ class UnitManager():
     def __call__(self, unitStruct):
         """Evaluate the symbolic expression for matched strings.
 
-        @param unitStruct A list containing the variable scale and the unit definition.
+        Args:
+            unitStruct (list): A list containing the variable scale and the unit definition.
+
+        Returns:
+            str: The string with evaluated unit definitions
         """
 
         # Replace all instances of units in the string with their scale defined in self.units
@@ -36,7 +40,11 @@ class UnitManager():
     def regexHandler(self, match):
         """Split the matched string into a scale and unit definition.
 
-        @param match The matching string from the regex.
+        Args:
+            match (re.match): The matching string from the regex.
+
+        Returns:
+            str: The string with evaluated unit definitions
         """
         # The first matched group includes the scale of the value (e.g. 1.234)
         # The second matches the string inside the unit definition (e.g. m/s**2)

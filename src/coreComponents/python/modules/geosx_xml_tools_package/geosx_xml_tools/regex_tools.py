@@ -2,19 +2,21 @@
 
 import re
 
-# Define regex patterns used throughout the module:
-#
-# Pattern         |  Example targets             | Notes
-# ------------------------------------------------------------------------------------
-# parameters      | $Parameter, $Parameter$      | Matches entire parameter string
-# units           | 9.81[m**2/s],  1.0 [bbl/day] | Matches entire unit string
-# units_b         | m, bbl, day                  | Matches unit names
-# symbolic        | `1 + 2.34e5*2`               | Matches the entire symbolic string
-# sanitize        |                              | Removes any residual characters before
-#                 |                              |       evaluating symbolic expressions
-# strip_trailing  | 3.0000, 5.150050             | Removes unnecessary float strings
-# strip_trailing_b| 3.0000e0, 1.23e0             | Removes unnecessary float strings
-#
+"""
+Define regex patterns used throughout the module:
+
+Pattern         |  Example targets             | Notes
+------------------------------------------------------------------------------------
+parameters      | $Parameter, $Parameter$      | Matches entire parameter string
+units           | 9.81[m**2/s],  1.0 [bbl/day] | Matches entire unit string
+units_b         | m, bbl, day                  | Matches unit names
+symbolic        | `1 + 2.34e5*2`               | Matches the entire symbolic string
+sanitize        |                              | Removes any residual characters before
+                |                              | evaluating symbolic expressions
+strip_trailing  | 3.0000, 5.150050             | Removes unnecessary float strings
+strip_trailing_b| 3.0000e0, 1.23e0             | Removes unnecessary float strings
+"""
+
 patterns = {
     'parameters': r"\$:?([a-zA-Z_0-9]*)\$?",
     'units': r"([0-9]*?\.?[0-9]+(?:[eE][-+]?[0-9]*?)?)\ *?\[([-+.*/()a-zA-Z0-9]*)\]",
@@ -32,7 +34,8 @@ symbolic_format = '%1.6e'
 def SymbolicMathRegexHandler(match):
     """Evaluate symbolic expressions that are identified using the regex_tools.patterns['symbolic'].
 
-    @param match A matching string identified by the regex.
+    Args:
+        match (re.match): A matching string identified by the regex.
     """
     k = match.group(1)
     if k:
@@ -61,7 +64,8 @@ class DictRegexHandler():
     def __call__(self, match):
         """Replace the matching strings with their target.
 
-        @param match A matching string identified by the regex.
+        Args:
+            match (re.match): A matching string identified by the regex.
         """
 
         k = match.group(1)

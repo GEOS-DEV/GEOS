@@ -4,9 +4,11 @@ import hdf5_wrapper
 
 def print_database_iterative(database, level=0):
     """
-    @brief print the database targets iteratively by level
-    @param database the wrapper for the current database
-    @param level the depth within the database
+    Print the database targets iteratively by level
+
+    Args:
+        database (hdf5_wrapper.hdf5_wrapper) the wrapper for the current database
+        level (int): the depth within the database
     """
     # Note: you can also iterate over the hdf5_wrapper object directly
     for k in database.keys():
@@ -23,7 +25,7 @@ def print_database_iterative(database, level=0):
 
 def read_write_hdf5_database_example():
     """
-    @brief simple demonstration of hdf5_wrapper
+    Simple demonstration of hdf5_wrapper
     """
 
     # ------------------------
