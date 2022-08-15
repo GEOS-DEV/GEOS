@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<VTKFile type="PStructuredGrid" version="1.0" byte_order="LittleEndian" header_type="UInt64">
+  <PStructuredGrid WholeExtent="0 3 0 3 0 3" GhostLevel="0">
+    <PCellData>
+      <PDataArray type="Float64" Name="attribute"/>
+    </PCellData>
+    <PPoints>
+      <PDataArray type="Float64" Name="points" NumberOfComponents="3"/>
+    </PPoints>
+    <Piece Extent="0 2 0 2 0 3" Source="cube/cube_0.vts"/>
+    <Piece Extent="0 2 2 3 0 3" Source="cube/cube_1.vts"/>
+    <Piece Extent="2 3 0 2 0 3" Source="cube/cube_2.vts"/>
+    <Piece Extent="2 3 2 3 0 3" Source="cube/cube_3.vts"/>
+  </PStructuredGrid>
+</VTKFile>
