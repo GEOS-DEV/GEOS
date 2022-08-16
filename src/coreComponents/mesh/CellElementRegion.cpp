@@ -22,8 +22,6 @@ using namespace dataRepository;
 CellElementRegion::CellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  m_type = Type::CELL;
-
   registerWrapper( viewKeyStruct::sourceCellBlockNamesString(), &m_cellBlockNames ).
     setInputFlag( InputFlags::OPTIONAL );
 

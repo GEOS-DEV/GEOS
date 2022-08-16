@@ -68,22 +68,6 @@ public:
 
   ///@}
 
-  /// The actual region type
-  enum Type
-  {
-    CELL,
-    FACE,
-    WELL
-  };
-
-  /**
-   * @brief Returns the actual type of the region
-   * @return The enum
-   */
-  Type getType() const
-  {
-    return m_type;
-  }
 
   /**
    * @brief verify that the meshBody name specified exists in the meshBodies group.
@@ -318,11 +302,6 @@ public:
     /// @return String key for the element subregions
     static constexpr char const * elementSubRegions() { return "elementSubRegions"; }
   };
-
-protected:
-
-  /// The type of the region
-  Type m_type;
 
 private:
 
