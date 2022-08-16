@@ -109,7 +109,12 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   SortedArray< localIndex > regionFilter;
   for( string const & regionName : m_targetRegions.at( mesh.getParent().getParent().getName() ) )
   {
-    regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
+    ElementRegionBase const & region = elemManager.getRegion( regionName );
+    // Using the catalog name as a trick to select only cell element regions...
+    if( region.getCatalogName() == CellElementRegion::catalogName() )
+    {
+      regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
+    }
   }
 
   stencil.reserve( faceManager.size() );
