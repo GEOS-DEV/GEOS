@@ -105,12 +105,6 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  solveLinearSystem( DofManager const & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override;
-
-  virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
@@ -222,20 +216,13 @@ public:
     // inputs
 
     static constexpr char const * inputTemperatureString() { return "temperature"; }
-
     static constexpr char const * useMassFlagString() { return "useMass"; }
-
-    static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
-
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
-
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
-
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
-
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
+
   };
 
   /**
@@ -252,12 +239,6 @@ public:
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
    */
   void computeHydrostaticEquilibrium();
-
-  /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param domain the domain containing the mesh and fields
-   */
-  void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const;
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -307,6 +288,7 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
 
+
   /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
@@ -317,6 +299,10 @@ public:
 
 protected:
 
+  virtual void postProcessInput() override;
+
+  virtual void initializePreSubGroups() override;
+
   /**
    * @brief Utility function that checks the consistency of the constitutive models
    * @param[in] domain the domain partition
@@ -324,11 +310,6 @@ protected:
    * (fluid, relperm) is incompatible with the reference fluid model.
    */
   void validateConstitutiveModels( DomainPartition const & domain ) const;
-
-  virtual void postProcessInput() override;
-
-  virtual void initializePreSubGroups() override;
-
 
   /**
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
@@ -352,9 +333,6 @@ protected:
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 
-  /// flag indicating whether CFL numbers will be computed or not
-  integer m_computeCFLNumbers;
-
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
 
@@ -371,6 +349,15 @@ protected:
   string m_referenceFluidModelName;
 
 private:
+
+  /**
+   * @brief Utility function to validate the consistency of Dirichlet BC input
+   * @param[in] domain the domain partition
+   * @param[in] time the time at the end of the time step (time_n + dt)
+   */
+  bool validateDirichletBC( DomainPartition & domain,
+                            real64 const time ) const;
+
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };

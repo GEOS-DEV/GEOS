@@ -65,6 +65,9 @@
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #cmakedefine GEOSX_USE_PETSC
 
+/// Enables use of Scotch library (CMake option ENABLE_SCOTCH)
+#cmakedefine GEOSX_USE_SCOTCH
+
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #cmakedefine GEOSX_LA_INTERFACE @GEOSX_LA_INTERFACE@
 /// Macro defined when Trilinos interface is selected

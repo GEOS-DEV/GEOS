@@ -82,6 +82,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
     {
       subRegion.registerExtrinsicData< pressure_n >( getName() );
       subRegion.registerExtrinsicData< initialPressure >( getName() );
+      subRegion.registerExtrinsicData< deltaPressure >( getName() ); // for reporting/stats purposes
       subRegion.registerExtrinsicData< pressure >( getName() );
 
       subRegion.registerExtrinsicData< bcPressure >( getName() ); // needed for the application of boundary conditions
@@ -627,8 +628,12 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
                                                                                                                    auto & subRegion )
     {
       arrayView1d< real64 const > const & pres = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      arrayView1d< real64 const > const & initPres = subRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >();
+      arrayView1d< real64 > const & deltaPres = subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
       arrayView1d< real64 > const & pres_n = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
       pres_n.setValues< parallelDevicePolicy<> >( pres );
+      singlePhaseBaseKernels::StatisticsKernel::
+        saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
 
       if( m_isThermal )
       {
@@ -842,13 +847,14 @@ void SinglePhaseBase::applyBoundaryConditions( real64 time_n,
   applyAquiferBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
 }
 
-namespace internal
+namespace
 {
-string const bcLogMessage = string( "SinglePhaseBase {}: at time {}s, " )
-                            + string( "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. " )
-                            + string( "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). " )
-                            + string( "\nThe total number of target elements (including ghost elements) is {}. " )
-                            + string( "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set." );
+char const bcLogMessage[] =
+  "SinglePhaseBase {}: at time {}s, "
+  "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. "
+  "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). "
+  "\nThe total number of target elements (including ghost elements) is {}. "
+  "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.";
 }
 
 void SinglePhaseBase::applyDirichletBC( real64 const time_n,
@@ -881,7 +887,7 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
                                      getName(), time_n+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
@@ -1070,7 +1076,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
                                      getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
@@ -1155,19 +1161,6 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
       }
     } );
   } );
-}
-
-void SinglePhaseBase::solveLinearSystem( DofManager const & dofManager,
-                                         ParallelMatrix & matrix,
-                                         ParallelVector & rhs,
-                                         ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-
-  rhs.scale( -1.0 );
-  solution.zero();
-
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
