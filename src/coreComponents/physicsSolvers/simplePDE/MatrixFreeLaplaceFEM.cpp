@@ -197,13 +197,8 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
   MatrixFreeLaplaceFEMOperator unconstrained_laplace( domain, m_dofManager );
   // LinearOperatorWithBC< ParallelVector > constrained_laplace( unconstrained_laplace, domain );
   // m_rhs_with_bc = ApplyBC(m_rhs, bc_info);
-  LinearSolverParameters params;
-  params.krylov.relTolerance = 1e-8;
-  params.krylov.maxIterations = 500;
-  params.solverType = geosx::LinearSolverParameters::SolverType::cg;
-  params.isSymmetric = true;
   MatrixFreePreconditionerIdentity identity( m_dofManager );
-  CgSolver< ParallelVector > solver( params, unconstrained_laplace, identity );
+  CgSolver< ParallelVector > solver( m_linearSolverParameters.get(), unconstrained_laplace, identity );
   solver.solve( m_solution, m_rhs );
   // CgSolver< ParallelVector > solver( params, constrained_laplace, identity );
   // // TODO: time
