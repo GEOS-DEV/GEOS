@@ -198,7 +198,9 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
   // LinearOperatorWithBC< ParallelVector > constrained_laplace( unconstrained_laplace, domain );
   // m_rhs_with_bc = ApplyBC(m_rhs, bc_info);
   MatrixFreePreconditionerIdentity identity( m_dofManager );
-  CgSolver< ParallelVector > solver( m_linearSolverParameters.get(), unconstrained_laplace, identity );
+  auto & params = m_linearSolverParameters.get();
+  params.isSymmetric = true;
+  CgSolver< ParallelVector > solver( params, unconstrained_laplace, identity );
   solver.solve( m_solution, m_rhs );
   // CgSolver< ParallelVector > solver( params, constrained_laplace, identity );
   // // TODO: time
