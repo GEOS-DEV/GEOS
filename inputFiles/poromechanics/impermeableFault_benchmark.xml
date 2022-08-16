@@ -63,7 +63,7 @@
   <Mesh>
      <VTKMesh         
       name="FaultModel"      
-      file="faultMesh.vtk"
+      file="faultMesh.vtu"
       regionAttribute="CellEntityIds"/>
   </Mesh> 
 <!-- SPHINX_MESH_END -->
