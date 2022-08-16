@@ -32,6 +32,7 @@ struct QuadratureWeightsStackVariables
 {
   real64 ( * weights )[num_quads_1d];
 
+  GEOSX_HOST_DEVICE
   QuadratureWeightsStackVariables( LaunchContext & ctx )
   {
     // Initialize quadrature weights
@@ -42,6 +43,7 @@ struct QuadratureWeightsStackVariables
     s_weights[1] = 1.0;
   }
 
+  GEOSX_HOST_DEVICE
   real64 operator()( TensorIndex const & quad_index )
   {
     return (*weights)[ quad_index.x ] * (*weights)[ quad_index.y ] * (*weights)[ quad_index.z ];

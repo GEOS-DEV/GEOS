@@ -35,6 +35,7 @@ class LagrangeBasis<1> : public finiteElement::LagrangeBasis1 { };
 template < localIndex num_dofs_1d, localIndex num_quads_1d >
 struct BasisStackVariables
 {
+  GEOSX_HOST_DEVICE
   BasisStackVariables( LaunchContext & ctx )
   {
     using RAJA::RangeSegment;
@@ -76,10 +77,13 @@ struct BasisStackVariables
 
   // basis accessor
   real64 ( * basis )[num_dofs_1d][num_quads_1d];
+  GEOSX_HOST_DEVICE
   real64 const ( & getValuesAtQuadPts() const )[num_dofs_1d][num_quads_1d]
   {
     return *basis;
   }
+
+  GEOSX_HOST_DEVICE
   real64 ( & getValuesAtQuadPts() )[num_dofs_1d][num_quads_1d]
   {
     return *basis;
@@ -87,10 +91,13 @@ struct BasisStackVariables
 
   // basis gradient accessor
   real64 ( * basis_gradient )[num_dofs_1d][num_quads_1d];
+  GEOSX_HOST_DEVICE
   real64 const ( & getGradientValuesAtQuadPts() const )[num_dofs_1d][num_quads_1d]
   {
     return *basis_gradient;
   }
+
+  GEOSX_HOST_DEVICE
   real64 ( & getGradientValuesAtQuadPts() )[num_dofs_1d][num_quads_1d]
   {
     return *basis_gradient;

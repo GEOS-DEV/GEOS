@@ -31,6 +31,7 @@ struct SharedMemStackVariables
 {
   real64 (* shared_mem_buffers)[buffer_size];
 
+  GEOSX_HOST_DEVICE
   SharedMemStackVariables( LaunchContext & ctx )
   {
     GEOSX_STATIC_SHARED real64 shared_buffers[batch_size][num_buffers][buffer_size];
@@ -38,6 +39,7 @@ struct SharedMemStackVariables
     shared_mem_buffers = (real64(*)[buffer_size])shared_buffers[tidz];
   }
 
+  GEOSX_HOST_DEVICE
   real64 (& operator[]( localIndex i ))[buffer_size]
   {
     return shared_mem_buffers[i];

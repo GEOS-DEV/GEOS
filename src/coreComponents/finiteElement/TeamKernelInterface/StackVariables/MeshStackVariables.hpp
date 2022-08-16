@@ -32,6 +32,7 @@ struct MeshStackVariables
 {
   BasisStackVariables< num_dofs_mesh_1d, num_quads_1d > basis;
 
+  GEOSX_HOST_DEVICE
   MeshStackVariables( LaunchContext & ctx ) : basis( ctx )
   {
     localIndex const batch_index = GEOSX_THREAD_ID(z);
@@ -46,10 +47,14 @@ struct MeshStackVariables
 
   // Mesh nodes
   real64 ( * mesh_nodes )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim]; // Could be in registers
+
+  GEOSX_HOST_DEVICE
   real64 const ( & getNodes() const )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim]
   {
     return *mesh_nodes;
   }
+
+  GEOSX_HOST_DEVICE
   real64 ( & getNodes() )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim]
   {
     return *mesh_nodes;
@@ -57,10 +62,14 @@ struct MeshStackVariables
 
   // Mesh jacobians
   real64 ( * jacobians )[num_quads_1d][num_quads_1d][num_quads_1d][dim][dim]; // Can be in registers
+
+  GEOSX_HOST_DEVICE
   real64 ( & getJacobians() )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim][dim]
   {
     return *jacobians;
   }
+
+  GEOSX_HOST_DEVICE
   real64 const ( & getJacobians() const )[num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim][dim]
   {
     return *jacobians;

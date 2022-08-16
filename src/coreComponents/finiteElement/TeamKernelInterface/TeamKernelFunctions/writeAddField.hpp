@@ -35,6 +35,7 @@ namespace finiteElement
 template < typename StackVariables,
            typename Field,
            localIndex stride_x, localIndex stride_y, localIndex stride_z >
+GEOSX_HOST_DEVICE
 void writeAddField( StackVariables & stack,
                     real64 const (& local_field)[stride_x][stride_y][stride_z],
                     Field & field )
@@ -59,6 +60,7 @@ void writeAddField( StackVariables & stack,
 template < typename StackVariables,
            typename Field,
            localIndex stride_x, localIndex stride_y, localIndex stride_z, localIndex dim >
+GEOSX_HOST_DEVICE
 void writeAddField( StackVariables & stack,
                     real64 const (& local_field)[stride_x][stride_y][stride_z][dim], 
                     Field & field )

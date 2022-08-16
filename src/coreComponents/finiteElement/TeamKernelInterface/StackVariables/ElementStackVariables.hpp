@@ -31,6 +31,7 @@ struct ElementStackVariables
 {
   BasisStackVariables< num_dofs_1d, num_quads_1d > basis;
 
+  GEOSX_HOST_DEVICE
   ElementStackVariables( LaunchContext & ctx ) : basis( ctx )
   {
     localIndex const batch_index = GEOSX_THREAD_ID(z);
@@ -53,10 +54,14 @@ struct ElementStackVariables
 
   // Element input dofs of the primary field
   real64 ( * dofs_in )[num_dofs_1d][num_dofs_1d][num_dofs_1d]; // Could be in registers
+
+  GEOSX_HOST_DEVICE
   real64 const ( & getDofsIn() const )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
   {
     return *dofs_in;
   }
+
+  GEOSX_HOST_DEVICE
   real64 ( & getDofsIn() )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
   {
     return *dofs_in;
@@ -64,10 +69,14 @@ struct ElementStackVariables
 
   // Element primary field gradients at quadrature points
   real64 ( * q_gradient_values )[num_quads_1d][num_quads_1d][num_quads_1d][dim]; // Can be in registers
+
+  GEOSX_HOST_DEVICE
   real64 const ( & getGradientValues() const )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
   {
     return *q_gradient_values;
   }
+
+  GEOSX_HOST_DEVICE
   real64 ( & getGradientValues() )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
   {
     return *q_gradient_values;
@@ -75,10 +84,14 @@ struct ElementStackVariables
 
   // Element "geometric factors"
   real64 ( * Du )[num_quads_1d][num_quads_1d][num_quads_1d][dim]; // Could be in registers
+
+  GEOSX_HOST_DEVICE
   real64 const ( & getQuadValues() const )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
   {
     return *Du;
   }
+
+  GEOSX_HOST_DEVICE
   real64 ( & getQuadValues() )[num_quads_1d][num_quads_1d][num_quads_1d][dim]
   {
     return *Du;
@@ -86,10 +99,14 @@ struct ElementStackVariables
 
   // Element contribution to the residual
   real64 ( * dofs_out )[num_dofs_1d][num_dofs_1d][num_dofs_1d]; // Can be in registers
+
+  GEOSX_HOST_DEVICE
   real64 const ( & getDofsOut() const )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
   {
     return *dofs_out;
   }
+
+  GEOSX_HOST_DEVICE
   real64 ( & getDofsOut() )[num_dofs_1d][num_dofs_1d][num_dofs_1d]
   {
     return *dofs_out;
