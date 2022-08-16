@@ -183,6 +183,7 @@ jobs:
     env:
       - DOCKER_REPOSITORY=geosx/sherlock-gcc10.1.0-openmpi4.1.0-openblas0.3.10-zlib1.2.11
       - CMAKE_BUILD_TYPE=Release
+      - BUILD_AND_TEST_ARGS=--disable-unit-tests
       - HOST_CONFIG=host-configs/Stanford/sherlock-gcc10-ompi4.1-openblas0.3.10.cmake
       - GCP_BUCKET=geosx/Sherlock-CPU
       - ENABLE_HYPRE=ON
