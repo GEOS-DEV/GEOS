@@ -278,7 +278,7 @@ public:
     constexpr localIndex num_quads_1d = KERNEL_TYPE::StackVariables::num_quads_1d;
 
     launch< POLICY >
-    ( GEOSX_RAJA_DEVICE, Resources( Teams( num_blocks ), Threads( num_quads_1d, num_quads_1d, batch_size ) ),
+    ( GEOSX_RAJA_DEVICE, Grid( Teams( num_blocks ), Threads( num_quads_1d, num_quads_1d, batch_size ) ),
     [=] GEOSX_HOST_DEVICE ( LaunchContext ctx )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent, ctx );
