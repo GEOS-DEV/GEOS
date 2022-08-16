@@ -40,21 +40,6 @@ using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
 using array3dLayoutComp_dC = array3d< real64, compflow::LAYOUT_COMP_DC >;
 using array3dLayoutPhaseComp = array3d< real64, compflow::LAYOUT_PHASE_COMP >;
 
-EXTRINSIC_MESH_DATA_TRAIT( temperature,
-                           "wellTemperature",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Temperature" );
-
-EXTRINSIC_MESH_DATA_TRAIT( temperature_n,
-                           "wellTemperature_n",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Temperature at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
                            "globalCompDensity",
@@ -112,21 +97,13 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseVolumeFraction,
                            WRITE_AND_READ,
                            "Phase volume fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseVolumeFraction_dPressure,
-                           "dPhaseVolumeFraction_dPressure",
-                           array2dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase volume fraction with respect to pressure" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseVolumeFraction_dGlobalCompDensity,
-                           "dPhaseVolumeFraction_dGlobalCompDensity",
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseVolumeFraction,
+                           "dPhaseVolumeFraction",
                            array3dLayoutPhase_dC,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Derivative of phase volume fraction with respect to global component density" );
+                           "Derivative of phase volume fraction with respect to pressure, temperature, and global component density" );
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseVolumeFraction_n,
                            "phaseVolumeFraction_n",
@@ -135,30 +112,6 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseVolumeFraction_n,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Phase volume fraction at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( phaseDensity_n,
-                           "phaseDensity_n",
-                           array2dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase density at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( totalDensity_n,
-                           "totalDensity_n",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Total density at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( phaseComponentFraction_n,
-                           "phaseComponentFraction_n",
-                           array3dLayoutPhaseComp,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase component fraction at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( totalMassDensity,
                            "totalMassDensity",

@@ -45,7 +45,7 @@ This mesh contains three continuous regions:
   .. image:: reservoir_transparent.png
      :width: 600px
 
-The mesh is defined using the GMSH file format (see :ref:`Meshes` for more information on
+The mesh is defined using the VTK file format (see :ref:`Meshes` for more information on
 the supported mesh file format). Each tetrahedron is associated to a unique tag.
 
 The XML file considered here follows the typical structure of the GEOSX input files:
@@ -95,7 +95,7 @@ numerical solver parameters such as the linear and nonlinear tolerances, the pre
 Mesh
 -------
 
-Here, we use the ``PAMELAMesh`` to load the mesh (see :ref:`ImportingExternalMesh`).
+Here, we use the ``VTKMesh`` to load the mesh (see :ref:`ImportingExternalMesh`).
 The syntax to import external meshes is simple : in the XML file,
 the mesh ``file`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified ``name`` label for the mesh object.
 
@@ -184,11 +184,11 @@ There are two methods to achieve this regional solve.
                 <ElementRegions>
                   <CellElementRegion
                     name="Reservoir"
-                    cellBlocks="{Reservoir_TETRA}"
+                    cellBlocks="{2_tetrahedra}"
                     materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
                 </ElementRegions>
 
-- The second solution is to define all the ``CellElementRegions`` as they are in the GMSH file, but defining the solvers only on the reservoir layer. In this case, the **ElementRegions** tag is :
+- The second solution is to define all the ``CellElementRegions`` as they are in the VTK file, but defining the solvers only on the reservoir layer. In this case, the **ElementRegions** tag is :
 
         .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
                 :language: xml
@@ -300,20 +300,20 @@ The simulation can be launched with:
 
 .. code-block:: console
 
-  geosx -i FieldCaseTutorial1.xml
+  geosx -i FieldCaseTutorial3_smoke.xml
 
 One can notice the correct load of the field function among the starting output messages
 
 .. code-block:: console
 
-        Adding Mesh: PAMELAMesh, SyntheticMesh
+        Adding Mesh: VTKMesh, SyntheticMesh
+        Adding Event: PeriodicEvent, solverApplications
+        Adding Event: PeriodicEvent, outputs
         Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
         Adding Geometric Object: Box, all
         Adding Geometric Object: Box, source
         Adding Geometric Object: Box, sink
-        Adding Output: VTK, syntheticReservoirVizFile
-        Adding Event: PeriodicEvent, solverApplications
-        Adding Event: PeriodicEvent, outputs
+        Adding Output: VTK, reservoir_with_properties
            TableFunction: timeInj
            TableFunction: initialPressureFunc
            TableFunction: permxFunc
