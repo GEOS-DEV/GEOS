@@ -19,6 +19,7 @@ packages:
       - spec: spectrum-mpi@10.3.1.03rtm0 %clang@11.0.1
         prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-ibm-11.0.1/
 
+  # Essl not currently working with spack
   # Lock down blas, lapack implementation
   # essl:
   #   buildable: False
