@@ -25,6 +25,7 @@
 #include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.hpp"
 
 #include <gtest/gtest.h>
+#include <iostream>
 
 using namespace geosx;
 using namespace geosx::dataRepository;
@@ -208,6 +209,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   {
     if( i > 0 )
     {
+      std::cout << "pReceivers["<<i<<"][8] = "<<pReceivers[i][8]<<std::endl;
       ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
     }
     double avg = 0;
