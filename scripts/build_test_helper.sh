@@ -67,8 +67,9 @@ if [[ "$*" == *--test-documentation* ]]; then
 fi
 
 # "Make" target check (builds geosx executable target only if true)
+# Use one process to prevent out-of-memory error
 if [[ "$*" == *--build-exe-only* ]]; then
-  or_die make -j $(nproc) geosx VERBOSE=1
+  or_die make -j 1 geosx VERBOSE=1
 else
   or_die make -j $(nproc) VERBOSE=1
   or_die make install VERBOSE=1
