@@ -147,6 +147,7 @@ private:
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
+    constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
   };
   /// @endcond
 
@@ -164,6 +165,9 @@ private:
 
   /// Number of graph partitioning refinement iterations
   integer m_partitionRefinement = 0;
+
+  /// Whether global id arrays should be used, if available 
+  integer m_useGlobalIds = 0;
 
   /// Method (library) used to partition the mesh
   PartitionMethod m_partitionMethod = PartitionMethod::parmetis;
