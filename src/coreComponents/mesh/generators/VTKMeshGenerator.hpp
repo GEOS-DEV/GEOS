@@ -166,7 +166,7 @@ private:
   /// Number of graph partitioning refinement iterations
   integer m_partitionRefinement = 0;
 
-  /// Whether global id arrays should be used, if available 
+  /// Whether global id arrays should be used, if available
   integer m_useGlobalIds = 0;
 
   /// Method (library) used to partition the mesh

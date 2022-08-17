@@ -99,7 +99,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "If set to 1, mesh loading will use the GlobalId attribute for vertices and meshes, if available."
-		    "This can avoid unnecessary calculations. GlobalId arrays must be flagged as GLOBAL_IDS in the input mesh." );
+                    "This can avoid unnecessary calculations. GlobalId arrays must be flagged as GLOBAL_IDS in the input mesh." );
 }
 
 namespace vtk
@@ -412,15 +412,15 @@ redistributeMesh( vtkDataSet & loadedMesh,
                   MPI_Comm const comm,
                   VTKMeshGenerator::PartitionMethod const method,
                   int const partitionRefinement,
-	          int const useGlobalIds )
+                  int const useGlobalIds )
 {
   GEOSX_MARK_FUNCTION;
 
   // Generate global IDs for vertices and cells, if needed
   vtkSmartPointer< vtkDataSet > mesh;
-  if( useGlobalIds != 1 
-      || loadedMesh.GetPointData()->GetGlobalIds() == nullptr 
-      || loadedMesh.GetCellData()->GetGlobalIds() == nullptr ) 
+  if( useGlobalIds != 1
+      || loadedMesh.GetPointData()->GetGlobalIds() == nullptr
+      || loadedMesh.GetCellData()->GetGlobalIds() == nullptr )
   {
     vtkNew< vtkGenerateGlobalIds > generator;
     generator->SetInputDataObject( &loadedMesh );
@@ -429,9 +429,9 @@ redistributeMesh( vtkDataSet & loadedMesh,
   }
   else
   {
-   mesh.TakeReference( &loadedMesh ); 
-	 std::cout << "using global Ids... wish me luck" << std::endl;
-  } 
+    mesh.TakeReference( &loadedMesh );
+    std::cout << "using global Ids... wish me luck" << std::endl;
+  }
 
 
   // Determine if redistribution is required
