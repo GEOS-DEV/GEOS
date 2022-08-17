@@ -82,6 +82,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
     {
       subRegion.registerExtrinsicData< pressure_n >( getName() );
       subRegion.registerExtrinsicData< initialPressure >( getName() );
+      subRegion.registerExtrinsicData< deltaPressure >( getName() ); // for reporting/stats purposes
       subRegion.registerExtrinsicData< pressure >( getName() );
 
       subRegion.registerExtrinsicData< bcPressure >( getName() ); // needed for the application of boundary conditions
@@ -626,8 +627,12 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
                                                                                                                    auto & subRegion )
     {
       arrayView1d< real64 const > const & pres = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      arrayView1d< real64 const > const & initPres = subRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >();
+      arrayView1d< real64 > const & deltaPres = subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
       arrayView1d< real64 > const & pres_n = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
       pres_n.setValues< parallelDevicePolicy<> >( pres );
+      singlePhaseBaseKernels::StatisticsKernel::
+        saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
 
       if( m_isThermal )
       {

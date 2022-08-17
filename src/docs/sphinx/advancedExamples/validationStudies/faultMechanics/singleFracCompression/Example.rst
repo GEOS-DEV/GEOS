@@ -25,7 +25,7 @@ Everything required is contained within two GEOSX input files and one mesh file 
 
 .. code-block:: console
 
-  inputFiles/lagrangianContactMechanics/crackInPlane_benchmark.msh
+  inputFiles/lagrangianContactMechanics/crackInPlane_benchmark.vtu
 
 
 ------------------------------------------------------------------
@@ -76,7 +76,7 @@ The following figure shows the mesh used in this problem.
 
 Here, we load the mesh with ``PAMELAMesh`` (see :ref:`ImportingExternalMesh`).
 The syntax to import external meshes is simple: in the XML file,
-the mesh file ``crackInPlane_benchmark.msh`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified label (here ``CubeHex``) is given to the mesh object. This unstructured mesh contains quadrilaterals elements and interface elements. Refinement is performed to conform with the fracture geometry specified in the ``Geometry`` section.
+the mesh file ``crackInPlane_benchmark.vtu`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified label (here ``CubeHex``) is given to the mesh object. This unstructured mesh contains quadrilaterals elements and interface elements. Refinement is performed to conform with the fracture geometry specified in the ``Geometry`` section.
 
 
 .. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_benchmark.xml
