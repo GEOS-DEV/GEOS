@@ -103,12 +103,11 @@ public:
   template< typename POLICY=parallelHostPolicy >
   void applyFieldValue( real64 const time,
                         MeshLevel & mesh,
-                        string const & fieldPath,
                         string const & fieldName ) const
   {
     GEOSX_MARK_FUNCTION;
 
-    applyFieldValue< POLICY >( time, mesh, fieldPath, fieldName,
+    applyFieldValue< POLICY >( time, mesh, fieldName,
                                [&]( FieldSpecificationBase const &,
                                     SortedArrayView< localIndex const > const & ){} );
   }
@@ -145,7 +144,6 @@ public:
   template< typename POLICY=parallelHostPolicy, typename LAMBDA=void >
   void applyFieldValue( real64 const time,
                         MeshLevel & mesh,
-                        string const & fieldPath,
                         string const & fieldName,
                         LAMBDA && lambda ) const;
 
@@ -186,7 +184,6 @@ public:
   template< typename POLICY=parallelHostPolicy, typename PRELAMBDA=void, typename POSTLAMBDA=void >
   void applyFieldValue( real64 const time,
                         MeshLevel & mesh,
-                        string const & fieldPath,
                         string const & fieldName,
                         PRELAMBDA && preLambda,
                         POSTLAMBDA && postLambda ) const;
@@ -201,6 +198,8 @@ public:
 
   /**
    * @brief This function is the main driver for the field applications
+   * @tparam OBJECT_TYPE the type of object that the application targets
+   * @tparam BCTYPE the type of boundary condition object that is being applied
    * @tparam LAMBDA The type of the lambda function
    * @param time The time at which the field will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
@@ -222,60 +221,8 @@ public:
    * values of fieldPath,fieldName, against each FieldSpecificationBase object contained in the
    * FieldSpecificationManager and decides on whether or not to call the user defined lambda.
    */
-  template< typename BCTYPE = FieldSpecificationBase, typename LAMBDA >
-  void apply( real64 const time,
-              MeshLevel & mesh,
-              string const & fieldPath,
-              string const & fieldName,
-              LAMBDA && lambda ) const
-  {
-    GEOSX_MARK_FUNCTION;
-    // loop over all FieldSpecificationBase objects
-    this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
-    {
-      int const isInitialCondition = fs.initialCondition();
-
-      if( ( isInitialCondition && fieldPath.empty() ) ||
-          ( !isInitialCondition && fs.getObjectPath().find( fieldPath ) != string::npos ) )
-      {
-        string_array const targetPath = stringutilities::tokenize( fs.getObjectPath(), "/" );
-        localIndex const targetPathLength = LvArray::integerConversion< localIndex >( targetPath.size());
-        string const targetName = fs.getFieldName();
-
-        if( ( isInitialCondition && fieldName=="" ) ||
-            ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && targetName==fieldName ) )
-        {
-          dataRepository::Group * targetGroup = &mesh;
-          for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
-          {
-            dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
-            if( elemRegionSubGroup != nullptr )
-            {
-              targetGroup = elemRegionSubGroup;
-            }
-
-            dataRepository::Group * const elemSubRegionSubGroup = targetGroup->getGroupPointer( ElementRegionBase::viewKeyStruct::elementSubRegions() );
-            if( elemSubRegionSubGroup != nullptr )
-            {
-              targetGroup = elemSubRegionSubGroup;
-            }
-
-            if( targetPath[pathLevel] == ElementRegionManager::groupKeyStruct::elementRegionsGroup() ||
-                targetPath[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions() )
-            {
-              continue;
-            }
-
-            targetGroup = &targetGroup->getGroup( targetPath[pathLevel] );
-          }
-          applyOnTargetRecursive( *targetGroup, fs, targetName, lambda );
-        }
-      }
-    } );
-  }
-
-  template< typename BCTYPE = FieldSpecificationBase,
-            typename OBJECT_TYPE,
+  template< typename OBJECT_TYPE=dataRepository::Group,
+            typename BCTYPE = FieldSpecificationBase,
             typename LAMBDA >
   void apply( real64 const time,
               MeshLevel & mesh,
@@ -291,52 +238,15 @@ public:
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
       int const isInitialCondition = fs.initialCondition();
-      if( ( isInitialCondition && fieldName=="") || 
+      if( ( isInitialCondition && fieldName=="") ||
           ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && fieldName == fs.getFieldName() ) )
       {
-        fs.template apply<OBJECT_TYPE, LAMBDA >( mesh, std::forward<LAMBDA>(lambda) );
+        fs.template apply< OBJECT_TYPE, BCTYPE, LAMBDA >( mesh, std::forward< LAMBDA >( lambda ) );
       }
     } );
   }
 
 private:
-
-  template< typename BCTYPE, typename LAMBDA >
-  void applyOnTargetRecursive( Group & target,
-                               BCTYPE const & fs,
-                               string const & targetName,
-                               LAMBDA && lambda
-                               ) const
-  {
-    if( ( target.getParent().getName() == ElementRegionBase::viewKeyStruct::elementSubRegions()
-          || target.getName() == "nodeManager"
-          || target.getName() == "faceManager"
-          || target.getName() == "edgeManager" ) // TODO these 3 strings are harcoded because for the moment, there are
-                                                 // inconsistencies with the name of the Managers...
-        && target.getName() != ObjectManagerBase::groupKeyStruct::setsString()
-        && target.getName() != ObjectManagerBase::groupKeyStruct::neighborDataString() )
-    {
-      dataRepository::Group const & setGroup = target.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
-      string_array setNames = fs.getSetNames();
-      for( auto & setName : setNames )
-      {
-        if( setGroup.hasWrapper( setName ) )
-        {
-          SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
-          lambda( fs, setName, targetSet, target, targetName );
-        }
-      }
-    }
-    else
-    {
-      target.forSubGroups( [&]( Group & subTarget )
-      {
-        applyOnTargetRecursive( subTarget, fs, targetName, lambda );
-      } );
-    }
-  }
-
-
   static FieldSpecificationManager * m_instance;
 
 };
@@ -346,13 +256,12 @@ void
 FieldSpecificationManager::
   applyFieldValue( real64 const time,
                    MeshLevel & mesh,
-                   string const & fieldPath,
                    string const & fieldName,
                    LAMBDA && lambda ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  apply( time, mesh, fieldPath, fieldName,
+  apply( time, mesh, fieldName,
          [&]( FieldSpecificationBase const & fs,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,
@@ -369,14 +278,13 @@ void
 FieldSpecificationManager::
   applyFieldValue( real64 const time,
                    MeshLevel & mesh,
-                   string const & fieldPath,
                    string const & fieldName,
                    PRELAMBDA && preLambda,
                    POSTLAMBDA && postLambda ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  apply( time, mesh, fieldPath, fieldName,
+  apply( time, mesh, fieldName,
          [&]( FieldSpecificationBase const & fs,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,

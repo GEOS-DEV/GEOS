@@ -110,15 +110,16 @@ public:
 
 
   template< typename OBJECT_TYPE,
+            typename BC_TYPE = FieldSpecificationBase,
             typename LAMBDA >
   void apply( MeshLevel & mesh,
               LAMBDA && lambda ) const
   {
     MeshObjectPath const & meshObjectPaths = this->getMeshObjectPaths();
     meshObjectPaths.forObjectsInPath< OBJECT_TYPE >( mesh,
-                                                    [&] ( OBJECT_TYPE & object )
+                                                     [&] ( OBJECT_TYPE & object )
     {
-      if( object.hasWrapper( getFieldName() ) )
+//      if( object.hasWrapper( getFieldName() ) )
       {
         dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
         string_array setNames = this->getSetNames();
@@ -127,12 +128,11 @@ public:
           if( setGroup.hasWrapper( setName ) )
           {
             SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
-            lambda( *this, setName, targetSet, object, getFieldName() );
+            lambda( dynamic_cast< BC_TYPE const & >(*this), setName, targetSet, object, getFieldName() );
           }
         }
       }
     } );
-
   }
 
 

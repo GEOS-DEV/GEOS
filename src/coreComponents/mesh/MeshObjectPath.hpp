@@ -80,9 +80,9 @@ public:
 
 #if defined(MESH_OBJECT_PATH_PRIVATE_FUNCTION_UNIT_TESTING)
   template< typename OBJECT_TYPE >
-  void testCheckObjectTypeConsistency()
+  bool testCheckObjectTypeConsistency()
   {
-    checkObjectTypeConsistency< OBJECT_TYPE >();
+    return checkObjectTypeConsistency< OBJECT_TYPE >();
   }
 
   std::vector< string > testFillPathTokens( string const & path,
@@ -137,8 +137,8 @@ private:
           for( auto & elemSubRegionName : elemRegionPair.second )
           {
             ElementSubRegionBase & subRegion = elemRegion.getSubRegion( elemSubRegionName );
-            if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value || 
-                std::is_same< dataRepository::Group, OBJECT_TYPE>::value )
+            if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value ||
+                std::is_same< dataRepository::Group, OBJECT_TYPE >::value )
             {
               func( dynamic_cast< OBJECT_TYPE & >(subRegion) );
             }
@@ -153,7 +153,7 @@ private:
   }
 
   template< typename OBJECT_TYPE >
-  ObjectTypes checkObjectTypeConsistency() const;
+  bool checkObjectTypeConsistency() const;
 
   void printPermutations() const;
 
@@ -185,7 +185,7 @@ ENUM_STRINGS( MeshObjectPath::ObjectTypes,
               "invalid" );
 
 template< typename OBJECT_TYPE >
-MeshObjectPath::ObjectTypes MeshObjectPath::checkObjectTypeConsistency() const
+bool MeshObjectPath::checkObjectTypeConsistency() const
 {
   bool consistent = false;
   if( m_objectType == ObjectTypes::nodes )
@@ -205,13 +205,7 @@ MeshObjectPath::ObjectTypes MeshObjectPath::checkObjectTypeConsistency() const
     consistent = std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value ||
                  std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value;
   }
-
-  GEOSX_ERROR_IF( !consistent,
-                  GEOSX_FMT( "Inconsistent type specified. Type {} is not consistent with m_objectType of {}",
-                             OBJECT_TYPE::catalogName(),
-                             m_objectType ) );
-
-  return m_objectType;
+  return consistent;
 }
 
 template< typename OBJECT_TYPE,
@@ -259,10 +253,12 @@ void MeshObjectPath::forObjectsInPath( MeshLevel & meshLevel,
     auto const levelIter = bodyIter->second.find( levelName );
     if( levelIter != bodyIter->second.end() )
     {
-      string const objectTypeName = stringutilities::toLower( OBJECT_TYPE::catalogName());
-      if( objectTypeName == stringutilities::toLower( EnumStrings< ObjectTypes >::toString( m_objectType ) ) ||
-          ( objectTypeName.find( "elem" )!=string::npos && m_objectType==ObjectTypes::elems ) ||
-          ( objectTypeName == "group") )
+      // string const objectTypeName = stringutilities::toLower( OBJECT_TYPE::catalogName());
+      // if( objectTypeName == stringutilities::toLower( EnumStrings< ObjectTypes >::toString( m_objectType ) ) ||
+      //     ( objectTypeName.find( "elem" )!=string::npos && m_objectType==ObjectTypes::elems ) ||
+      //     ( objectTypeName == "group") )
+      if( checkObjectTypeConsistency< OBJECT_TYPE >() ||
+          std::is_same< OBJECT_TYPE, dataRepository::Group >::value )
       {
         forObjectsInPath< OBJECT_TYPE, FUNC >( *levelIter, meshLevel, std::forward< FUNC >( func ) );
       }

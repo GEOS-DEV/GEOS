@@ -460,15 +460,14 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
   } );
 
   // then start the actual table construction
-  fsManager.apply< EquilibriumInitialCondition >( 0.0,
-                                                  domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                  "ElementRegions",
-                                                  EquilibriumInitialCondition::catalogName(),
-                                                  [&] ( EquilibriumInitialCondition const & fs,
-                                                        string const &,
-                                                        SortedArrayView< localIndex const > const & targetSet,
-                                                        Group & subRegion,
-                                                        string const & )
+  fsManager.apply< ElementSubRegionBase, EquilibriumInitialCondition >( 0.0,
+                                                                        domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                                        EquilibriumInitialCondition::catalogName(),
+                                                                        [&] ( EquilibriumInitialCondition const & fs,
+                                                                              string const &,
+                                                                              SortedArrayView< localIndex const > const & targetSet,
+                                                                              Group & subRegion,
+                                                                              string const & )
   {
     // Step 3.1: retrieve the data necessary to construct the pressure table in this subregion
 
@@ -869,15 +868,14 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
                                                 arrayView1d< string const > const & )
   {
     // 1. Apply pressure Dirichlet BCs
-    fsManager.apply( time_n + dt,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::flow::pressure::key(),
-                     [&]( FieldSpecificationBase const & fs,
-                          string const & setName,
-                          SortedArrayView< localIndex const > const & lset,
-                          Group & subRegion,
-                          string const & )
+    fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                             mesh,
+                                             extrinsicMeshData::flow::pressure::key(),
+                                             [&]( FieldSpecificationBase const & fs,
+                                                  string const & setName,
+                                                  SortedArrayView< localIndex const > const & lset,
+                                                  Group & subRegion,
+                                                  string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
@@ -898,15 +896,14 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
     // 2. Apply temperature Dirichlet BCs
     if( m_isThermal )
     {
-      fsManager.apply( time_n + dt,
-                       mesh,
-                       "ElementRegions",
-                       extrinsicMeshData::flow::temperature::key(),
-                       [&]( FieldSpecificationBase const & fs,
-                            string const &,
-                            SortedArrayView< localIndex const > const & lset,
-                            Group & subRegion,
-                            string const & )
+      fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                               mesh,
+                                               extrinsicMeshData::flow::temperature::key(),
+                                               [&]( FieldSpecificationBase const & fs,
+                                                    string const &,
+                                                    SortedArrayView< localIndex const > const & lset,
+                                                    Group & subRegion,
+                                                    string const & )
       {
         // Specify the bc value of temperature
         fs.applyFieldValue< FieldSpecificationEqual,
@@ -920,15 +917,14 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
     globalIndex const rankOffset = dofManager.rankOffset();
 
     // 3. Apply the pressure bc to the system
-    fsManager.apply( time_n + dt,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::flow::pressure::key(),
-                     [&]( FieldSpecificationBase const & GEOSX_UNUSED_PARAM( fs ),
-                          string const &,
-                          SortedArrayView< localIndex const > const & lset,
-                          Group & subRegion,
-                          string const & )
+    fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                             mesh,
+                                             extrinsicMeshData::flow::pressure::key(),
+                                             [&]( FieldSpecificationBase const & GEOSX_UNUSED_PARAM( fs ),
+                                                  string const &,
+                                                  SortedArrayView< localIndex const > const & lset,
+                                                  Group & subRegion,
+                                                  string const & )
     {
       arrayView1d< real64 const > const bcPres =
         subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcPressure::key() );
@@ -966,15 +962,14 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
     // 3. Apply the temperature bc to the system
     if( m_isThermal )
     {
-      fsManager.apply( time_n + dt,
-                       mesh,
-                       "ElementRegions",
-                       extrinsicMeshData::flow::temperature::key(),
-                       [&]( FieldSpecificationBase const & GEOSX_UNUSED_PARAM( fs ),
-                            string const &,
-                            SortedArrayView< localIndex const > const & lset,
-                            Group & subRegion,
-                            string const & )
+      fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                               mesh,
+                                               extrinsicMeshData::flow::temperature::key(),
+                                               [&]( FieldSpecificationBase const & GEOSX_UNUSED_PARAM( fs ),
+                                                    string const &,
+                                                    SortedArrayView< localIndex const > const & lset,
+                                                    Group & subRegion,
+                                                    string const & )
       {
         arrayView1d< real64 const > const bcTemp =
           subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcTemperature::key() );
@@ -1058,15 +1053,14 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & )
   {
-    fsManager.apply( time_n + dt,
-                     mesh,
-                     "ElementRegions",
-                     FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                     [&]( FieldSpecificationBase const & fs,
-                          string const & setName,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & subRegion,
-                          string const & )
+    fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                             mesh,
+                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
+                                             [&]( FieldSpecificationBase const & fs,
+                                                  string const & setName,
+                                                  SortedArrayView< localIndex const > const & targetSet,
+                                                  Group & subRegion,
+                                                  string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {

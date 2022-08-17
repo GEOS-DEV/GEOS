@@ -71,17 +71,17 @@ void FieldSpecificationManager::applyInitialConditions( MeshLevel & mesh ) const
   {
     if( fs.initialCondition() )
     {
-      fs.apply<dataRepository::Group>( mesh, 
-                                       [&]( FieldSpecificationBase const & bc,
-                                            string const & ,
-                                            SortedArrayView< localIndex const > const & targetSet,
-                                            Group & targetGroup,
-                                            string const fieldName )
+      fs.apply< dataRepository::Group >( mesh,
+                                         [&]( FieldSpecificationBase const & bc,
+                                              string const &,
+                                              SortedArrayView< localIndex const > const & targetSet,
+                                              Group & targetGroup,
+                                              string const fieldName )
       {
         bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
       } );
     }
-  });
+  } );
 }
 
 } /* namespace geosx */
