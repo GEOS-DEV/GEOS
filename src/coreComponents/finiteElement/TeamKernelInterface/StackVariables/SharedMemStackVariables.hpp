@@ -35,8 +35,10 @@ struct SharedMemStackVariables
   SharedMemStackVariables( LaunchContext & ctx )
   {
     GEOSX_STATIC_SHARED real64 shared_buffers[batch_size][num_buffers][buffer_size];
-    localIndex const tidz = GEOSX_THREAD_ID(z);
-    shared_mem_buffers = (real64(*)[buffer_size])shared_buffers[tidz];
+
+    loop<thread_z> (ctx, RAJA::RangeSegment(0, batch_size), [&] (localIndex batch_index) {
+      shared_mem_buffers = (real64(*)[buffer_size])shared_buffers[batch_index];
+    } );
   }
 
   GEOSX_HOST_DEVICE

@@ -196,7 +196,6 @@ using thread_y = LoopPolicy<RAJA::loop_exec, RAJA::cuda_thread_y_loop>;
 using thread_x = LoopPolicy<RAJA::loop_exec, RAJA::cuda_thread_x_loop>;
 #define GEOSX_SHARED RAJA_TEAM_SHARED
 #define GEOSX_STATIC_SHARED RAJA_TEAM_SHARED
-#define GEOSX_THREAD_ID(k) threadIdx.k
 #elif defined(RAJA_ENABLE_HIP)
 #define GEOSX_RAJA_DEVICE RAJA::expt::ExecPlace::DEVICE
 using team_launch_policy = LaunchPolicy<seq_launch_t, hip_launch_t<true>>;
@@ -206,7 +205,6 @@ using thread_y = LoopPolicy<RAJA::loop_exec, RAJA::hip_thread_y_loop>;
 using thread_x = LoopPolicy<RAJA::loop_exec, RAJA::hip_thread_x_loop>;
 #define GEOSX_SHARED RAJA_TEAM_SHARED
 #define GEOSX_STATIC_SHARED RAJA_TEAM_SHARED
-#define GEOSX_THREAD_ID(k) hipThreadIdx_ ##k
 #else
 #define GEOSX_RAJA_DEVICE RAJA::expt::ExecPlace::HOST
 using team_launch_policy = LaunchPolicy<seq_launch_t>;
@@ -216,21 +214,7 @@ using thread_y = LoopPolicy<RAJA::loop_exec>;
 using thread_x = LoopPolicy<RAJA::loop_exec>;
 #define GEOSX_SHARED
 #define GEOSX_STATIC_SHARED static
-#define GEOSX_THREAD_ID(k) 0
 #endif
-
-// #define GEOSX_FOREACH_THREAD(i,k,n) RAJA::expt::loop<team_##k> (ctx, RAJA::RangeSegment(0, n), [&] (int i)
-// Hack to avoid having to use the LaunchContext
-#ifdef __CUDA_ARCH__
-#define GEOSX_FOREACH_THREAD(i,k,N) for(int i=threadIdx.k; i<N; i+=blockDim.k)
-#elif defined(__HIP_DEVICE_COMPILE__)
-#define GEOSX_FOREACH_THREAD(i,k,N) for(int i=hipThreadIdx_ ##k; i<N; i+=hipBlockDim_ ##k)
-#else
-#define GEOSX_FOREACH_THREAD(i,k,N) for(int i=0; i<N; i++)
-#endif
-
-//TODO
-#define GEOSX_SYNC_THREAD
 
 } // namespace geosx
 

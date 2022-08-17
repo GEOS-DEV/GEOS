@@ -35,14 +35,15 @@ struct MeshStackVariables
   GEOSX_HOST_DEVICE
   MeshStackVariables( LaunchContext & ctx ) : basis( ctx )
   {
-    localIndex const batch_index = GEOSX_THREAD_ID(z);
     // Mesh nodes
     GEOSX_STATIC_SHARED real64 s_mesh_nodes[batch_size][num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim];
-    mesh_nodes = &s_mesh_nodes[batch_index];
-
     // Mesh jacobians
     GEOSX_STATIC_SHARED real64 s_jacobians[batch_size][num_dofs_mesh_1d][num_dofs_mesh_1d][num_dofs_mesh_1d][dim][dim];
-    jacobians = &s_jacobians[batch_index];
+
+    loop<thread_z> (ctx, RAJA::RangeSegment(0, batch_size), [&] (localIndex batch_index) {
+      mesh_nodes = &s_mesh_nodes[batch_index];
+      jacobians = &s_jacobians[batch_index];
+    } );
   }
 
   // Mesh nodes

@@ -34,22 +34,21 @@ struct ElementStackVariables
   GEOSX_HOST_DEVICE
   ElementStackVariables( LaunchContext & ctx ) : basis( ctx )
   {
-    localIndex const batch_index = GEOSX_THREAD_ID(z);
     // Element input dofs of the primary field
     GEOSX_STATIC_SHARED real64 s_dofs_in[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d];
-    dofs_in = &s_dofs_in[batch_index];
-
     // Element primary field gradients at quadrature points
     GEOSX_STATIC_SHARED real64 s_q_gradient_values[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d][dim];
-    q_gradient_values = &s_q_gradient_values[batch_index];
-
     // Element "geometric factors"
     GEOSX_STATIC_SHARED real64 s_Du[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d][dim];
-    Du = &s_Du[batch_index];
-
     // Element contribution to the residual
     GEOSX_STATIC_SHARED real64 s_dofs_out[batch_size][num_dofs_1d][num_dofs_1d][num_dofs_1d];
-    dofs_out = &s_dofs_out[batch_index];
+
+    loop<thread_z> (ctx, RAJA::RangeSegment(0, batch_size), [&] (localIndex batch_index) {
+      dofs_in = &s_dofs_in[batch_index];
+      q_gradient_values = &s_q_gradient_values[batch_index];
+      Du = &s_Du[batch_index];
+      dofs_out = &s_dofs_out[batch_index];
+    } );
   }
 
   // Element input dofs of the primary field
