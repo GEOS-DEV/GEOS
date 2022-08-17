@@ -124,6 +124,12 @@ public:
     static constexpr char const * dNdXString() { return "dNdX"; }
     /// @return String key for the derivative of the jacobian.
     static constexpr char const * detJString() { return "detJ"; }
+    /// @return String key to the map of edge local indices to the fracture connector local indices.
+    static constexpr char const * edgesTofractureConnectorsEdgesString() { return "edgesToFractureConnectors"; }
+    /// @return String key to the map of fracture connector local indices to edge local indices.
+    static constexpr char const * fractureConnectorEdgesToEdgesString() { return "fractureConnectorsToEdges"; }
+    /// @return String key to the map of fracture connector local indices face element local indices.
+    static constexpr char const * fractureConnectorsEdgesToFaceElementsIndexString() { return "fractureConnectorsToElementIndex"; }
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
     /// Separation coefficient string.
