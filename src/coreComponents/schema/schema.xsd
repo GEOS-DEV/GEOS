@@ -565,6 +565,18 @@
 					<xsd:selector xpath="PermeabilityBase" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="ConstitutivePorousDamageElasticIsotropicUniqueName">
+					<xsd:selector xpath="PorousDamageElasticIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="ConstitutivePorousDamageSpectralElasticIsotropicUniqueName">
+					<xsd:selector xpath="PorousDamageSpectralElasticIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="ConstitutivePorousDamageVolDevElasticIsotropicUniqueName">
+					<xsd:selector xpath="PorousDamageVolDevElasticIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="ConstitutivePorousDelftEggUniqueName">
 					<xsd:selector xpath="PorousDelftEgg" />
 					<xsd:field xpath="@name" />
@@ -2629,6 +2641,9 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PermeabilityBase" type="PermeabilityBaseType" />
+			<xsd:element name="PorousDamageElasticIsotropic" type="PorousDamageElasticIsotropicType" />
+			<xsd:element name="PorousDamageSpectralElasticIsotropic" type="PorousDamageSpectralElasticIsotropicType" />
+			<xsd:element name="PorousDamageVolDevElasticIsotropic" type="PorousDamageVolDevElasticIsotropicType" />
 			<xsd:element name="PorousDelftEgg" type="PorousDelftEggType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
 			<xsd:element name="PorousElasticIsotropic" type="PorousElasticIsotropicType" />
@@ -3364,6 +3379,42 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="PermeabilityBaseType">
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousDamageElasticIsotropicType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousDamageSpectralElasticIsotropicType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousDamageVolDevElasticIsotropicType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

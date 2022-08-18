@@ -140,6 +140,8 @@ public:
 //                                           q,
 //                                           pressure,
 //                                           volStrain );
+
+    updateMatrixPermeability( k ); 
   }
 
   /**
@@ -173,11 +175,12 @@ private:
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
     m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
-
+    
     // Update the Biot coefficient in the damage model
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
 
     m_solidUpdate.updateBiotCoefficient( k, biotCoefficient );
+
   }
 
   GEOSX_HOST_DEVICE
@@ -259,7 +262,7 @@ private:
                            real64 ( & totalStress )[6],
                            real64 ( & dTotalStress_dPressure )[6],
                            DiscretizationOps & stiffness ) const
-  {
+  { 
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
                                      q,
@@ -341,7 +344,7 @@ public:
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "Porous" ) + SOLID_TYPE::m_catalogNameString; }
+  static string catalogName() { return string( "Porous" ) + SOLID_TYPE::catalogName(); }
 
   /**
    * @brief Get catalog name

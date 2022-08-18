@@ -937,6 +937,9 @@
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PermeabilityBase" type="PermeabilityBaseType" />
+			<xsd:element name="PorousDamageElasticIsotropic" type="PorousDamageElasticIsotropicType" />
+			<xsd:element name="PorousDamageSpectralElasticIsotropic" type="PorousDamageSpectralElasticIsotropicType" />
+			<xsd:element name="PorousDamageVolDevElasticIsotropic" type="PorousDamageVolDevElasticIsotropicType" />
 			<xsd:element name="PorousDelftEgg" type="PorousDelftEggType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
 			<xsd:element name="PorousElasticIsotropic" type="PorousElasticIsotropicType" />
@@ -1728,6 +1731,9 @@
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousDamageElasticIsotropicType" />
+	<xsd:complexType name="PorousDamageSpectralElasticIsotropicType" />
+	<xsd:complexType name="PorousDamageVolDevElasticIsotropicType" />
 	<xsd:complexType name="PorousDelftEggType" />
 	<xsd:complexType name="PorousDruckerPragerType" />
 	<xsd:complexType name="PorousElasticIsotropicType" />

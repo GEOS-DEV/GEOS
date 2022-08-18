@@ -42,6 +42,9 @@ NullModel                                   node :ref:`DATASTRUCTURE_NullModel`
 ParallelPlatesPermeability                  node :ref:`DATASTRUCTURE_ParallelPlatesPermeability`                  
 ParticleFluid                               node :ref:`DATASTRUCTURE_ParticleFluid`                               
 PermeabilityBase                            node :ref:`DATASTRUCTURE_PermeabilityBase`                            
+PorousDamageElasticIsotropic                node :ref:`DATASTRUCTURE_PorousDamageElasticIsotropic`                
+PorousDamageSpectralElasticIsotropic        node :ref:`DATASTRUCTURE_PorousDamageSpectralElasticIsotropic`        
+PorousDamageVolDevElasticIsotropic          node :ref:`DATASTRUCTURE_PorousDamageVolDevElasticIsotropic`          
 PorousDelftEgg                              node :ref:`DATASTRUCTURE_PorousDelftEgg`                              
 PorousDruckerPrager                         node :ref:`DATASTRUCTURE_PorousDruckerPrager`                         
 PorousElasticIsotropic                      node :ref:`DATASTRUCTURE_PorousElasticIsotropic`                      
