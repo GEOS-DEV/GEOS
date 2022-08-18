@@ -494,8 +494,7 @@ private:
                                  FaceManager const & faceManager );
 
 
-  real64 calculateRuptureRate( SurfaceElementRegion & faceElementRegion,
-                               EdgeManager const & edgeManager );
+  real64 calculateRuptureRate( SurfaceElementRegion & faceElementRegion );
 
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
