@@ -58,7 +58,7 @@ set(LAPACK_LIBRARIES "/share/software/user/open/openblas/0.3.10/lib/libopenblas.
 #set(PYTHON_DIR "/share/software/user/open/python/3.6.1" CACHE PATH "")
 #set(Python3_EXECUTABLE "/share/software/user/open/python/3.6.1/bin/python3" CACHE PATH "")
 
+set(GEOSX_TPL_DIR "$ENV{GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
+include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
 
-#set(GEOSX_TPL_DIR /home/groups/tchelepi/geosx/thirdPartyLibs/install-${CONFIG_NAME}-release CACHE PATH "")
-#include(/home/groups/tchelepi/geosx/GEOSX/host-configs/tpls.cmake)
 
