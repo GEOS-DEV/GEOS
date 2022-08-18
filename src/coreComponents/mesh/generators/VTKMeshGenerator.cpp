@@ -407,7 +407,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
  * @param[in] comm the MPI communicator
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
- * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used 
+ * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
  */
 vtkSmartPointer< vtkDataSet >
 redistributeMesh( vtkDataSet & loadedMesh,
