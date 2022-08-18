@@ -46,6 +46,7 @@ public:
   using Base = isothermalCompositionalMultiphaseBaseKernels::PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE >;
   using Base::m_dPhaseDens;
   using Base::m_dPhaseFrac;
+  using Base::m_dPhaseVolFrac;
 
   /**
    * @brief Constructor
@@ -54,8 +55,7 @@ public:
    */
   PhaseVolumeFractionKernel( ObjectManagerBase & subRegion,
                              MultiFluidBase const & fluid )
-    : Base( subRegion, fluid ),
-    m_dPhaseVolFrac_dTemp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >() )
+    : Base( subRegion, fluid )
   {}
 
   /**
@@ -70,8 +70,7 @@ public:
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseDens = m_dPhaseDens[ei][0];
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseFrac = m_dPhaseFrac[ei][0];
 
-    arraySlice1d< real64, compflow::USD_PHASE - 1 > const dPhaseVolFrac_dTemp = m_dPhaseVolFrac_dTemp[ei];
-    LvArray::forValuesInSlice( dPhaseVolFrac_dTemp, []( real64 & val ){ val = 0.0; } );
+    arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
     // Call the base compute the compute the phase volume fraction
     Base::compute( ei, [&] ( localIndex const ip,
@@ -81,17 +80,10 @@ public:
     {
       // when this lambda is called, we are in the phase loop
       // for each phase ip, compute the derivative of phase volume fraction wrt temperature
-      dPhaseVolFrac_dTemp[ip] = (dPhaseFrac[ip][Deriv::dT] - phaseVolFrac * dPhaseDens[ip][Deriv::dT]) * phaseDensInv;
-      dPhaseVolFrac_dTemp[ip] *= totalDensity;
+      dPhaseVolFrac[ip][Deriv::dT] = (dPhaseFrac[ip][Deriv::dT] - phaseVolFrac * dPhaseDens[ip][Deriv::dT]) * phaseDensInv;
+      dPhaseVolFrac[ip][Deriv::dT] *= totalDensity;
     } );
   }
-
-protected:
-
-  // outputs
-
-  /// Views on thermal derivatives of phase volume fractions
-  arrayView2d< real64, compflow::USD_PHASE > m_dPhaseVolFrac_dTemp;
 
 };
 
@@ -164,13 +156,12 @@ public:
   using Base::m_elemGhostRank;
   using Base::m_volume;
   using Base::m_porosity_n;
-  using Base::m_porosityNew;
+  using Base::m_porosity;
   using Base::m_dPoro_dPres;
   using Base::m_dCompFrac_dCompDens;
   using Base::m_phaseVolFrac_n;
   using Base::m_phaseVolFrac;
-  using Base::m_dPhaseVolFrac_dPres;
-  using Base::m_dPhaseVolFrac_dCompDens;
+  using Base::m_dPhaseVolFrac;
   using Base::m_phaseDens_n;
   using Base::m_phaseDens;
   using Base::m_dPhaseDens;
@@ -200,7 +191,6 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
-    m_dPhaseVolFrac_dTemp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >() ),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() ),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy() ),
     m_dPhaseInternalEnergy( fluid.dPhaseInternalEnergy() ),
@@ -218,7 +208,7 @@ public:
       : Base::StackVariables()
     {}
 
-    using Base::StackVariables::poreVolumeNew;
+    using Base::StackVariables::poreVolume;
     using Base::StackVariables::poreVolume_n;
     using Base::StackVariables::dPoreVolume_dPres;
     using Base::StackVariables::localRow;
@@ -229,7 +219,7 @@ public:
     // Solid energy
 
     /// Solid energy at time n+1
-    real64 solidEnergyNew = 0.0;
+    real64 solidEnergy = 0.0;
 
     /// Solid energy at the previous converged time step
     real64 solidEnergy_n = 0.0;
@@ -254,15 +244,15 @@ public:
     Base::setup( ei, stack );
 
     // initialize the solid volume
-    real64 const solidVolumeNew = m_volume[ei] * ( 1.0 - m_porosityNew[ei][0] );
+    real64 const solidVolume = m_volume[ei] * ( 1.0 - m_porosity[ei][0] );
     real64 const solidVolume_n = m_volume[ei] * ( 1.0 - m_porosity_n[ei][0] );
     real64 const dSolidVolume_dPres = -m_volume[ei] * m_dPoro_dPres[ei][0];
 
     // initialize the solid internal energy
-    stack.solidEnergyNew = solidVolumeNew * m_rockInternalEnergy[ei][0];
+    stack.solidEnergy = solidVolume * m_rockInternalEnergy[ei][0];
     stack.solidEnergy_n = solidVolume_n * m_rockInternalEnergy_n[ei][0];
     stack.dSolidEnergy_dPres = dSolidVolume_dPres * m_rockInternalEnergy[ei][0];
-    stack.dSolidEnergy_dTemp = solidVolumeNew * m_dRockInternalEnergy_dTemp[ei][0];
+    stack.dSolidEnergy_dTemp = solidVolume * m_dRockInternalEnergy_dTemp[ei][0];
   }
 
   /**
@@ -278,7 +268,7 @@ public:
     using Deriv = multifluid::DerivativeOffset;
 
     Base::computeAccumulation( ei, stack, [&] ( integer const ip,
-                                                real64 const & phaseAmountNew,
+                                                real64 const & phaseAmount,
                                                 real64 const & phaseAmount_n,
                                                 real64 const & dPhaseAmount_dP,
                                                 real64 const (&dPhaseAmount_dC)[numComp] )
@@ -293,7 +283,7 @@ public:
       // construct the slices
       arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
-      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dTemp = m_dPhaseVolFrac_dTemp[ei];
+      arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dPhaseVolFrac[ei];
       arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens = m_phaseDens[ei][0];
       arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens = m_dPhaseDens[ei][0];
       arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac = m_phaseCompFrac[ei][0];
@@ -304,25 +294,25 @@ public:
 
       // Step 1: assemble the derivatives of the component mass balance equations with respect to temperature
 
-      real64 const dPhaseAmount_dT = stack.poreVolumeNew
-                                     * (dPhaseVolFrac_dTemp[ip] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
+      real64 const dPhaseAmount_dT = stack.poreVolume
+                                     * (dPhaseVolFrac[ip][Deriv::dT] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
       for( integer ic = 0; ic < numComp; ++ic )
       {
         stack.localJacobian[ic][numDof-1] += dPhaseAmount_dT * phaseCompFrac[ip][ic]
-                                             + phaseAmountNew * dPhaseCompFrac[ip][ic][Deriv::dT];
+                                             + phaseAmount * dPhaseCompFrac[ip][ic][Deriv::dT];
       }
 
       // Step 2: assemble the phase-dependent part of the accumulation term of the energy equation
 
-      real64 const phaseEnergyNew = phaseAmountNew * phaseInternalEnergy[ip];
+      real64 const phaseEnergy = phaseAmount * phaseInternalEnergy[ip];
       real64 const phaseEnergy_n = phaseAmount_n * phaseInternalEnergy_n[ip];
       real64 const dPhaseEnergy_dP = dPhaseAmount_dP * phaseInternalEnergy[ip]
-                                     + phaseAmountNew * dPhaseInternalEnergy[ip][Deriv::dP];
+                                     + phaseAmount * dPhaseInternalEnergy[ip][Deriv::dP];
       real64 const dPhaseEnergy_dT = dPhaseAmount_dT * phaseInternalEnergy[ip]
-                                     + phaseAmountNew * dPhaseInternalEnergy[ip][Deriv::dT];
+                                     + phaseAmount * dPhaseInternalEnergy[ip][Deriv::dT];
 
       // local accumulation
-      stack.localResidual[numEqn-1] += phaseEnergyNew - phaseEnergy_n;
+      stack.localResidual[numEqn-1] += phaseEnergy - phaseEnergy_n;
 
       // derivatives w.r.t. pressure and temperature
       stack.localJacobian[numEqn-1][0]        += dPhaseEnergy_dP;
@@ -333,14 +323,14 @@ public:
       for( integer jc = 0; jc < numComp; ++jc )
       {
         stack.localJacobian[numEqn-1][jc + 1] += phaseInternalEnergy[ip] * dPhaseAmount_dC[jc]
-                                                 + dPhaseInternalEnergy_dC[jc] * phaseAmountNew;
+                                                 + dPhaseInternalEnergy_dC[jc] * phaseAmount;
       }
     } );
 
     // Step 3: assemble the solid part of the accumulation term
 
     // local accumulation and derivatives w.r.t. pressure and temperature
-    stack.localResidual[numEqn-1] += stack.solidEnergyNew - stack.solidEnergy_n;
+    stack.localResidual[numEqn-1] += stack.solidEnergy - stack.solidEnergy_n;
     stack.localJacobian[numEqn-1][0] += stack.dSolidEnergy_dPres;
     stack.localJacobian[numEqn-1][numDof-1] += stack.dSolidEnergy_dTemp;
 
@@ -356,15 +346,17 @@ public:
   void computeVolumeBalance( localIndex const ei,
                              StackVariables & stack ) const
   {
+    using Deriv = multifluid::DerivativeOffset;
+
     Base::computeVolumeBalance( ei, stack, [&] ( real64 const & oneMinusPhaseVolFraction )
     {
       GEOSX_UNUSED_VAR( oneMinusPhaseVolFraction );
 
-      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dTemp = m_dPhaseVolFrac_dTemp[ei];
+      arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
       for( integer ip = 0; ip < m_numPhases; ++ip )
       {
-        stack.localJacobian[numEqn-2][numDof-1] -= dPhaseVolFrac_dTemp[ip];
+        stack.localJacobian[numEqn-2][numDof-1] -= dPhaseVolFrac[ip][Deriv::dT];
       }
     } );
   }
@@ -385,9 +377,6 @@ public:
   }
 
 protected:
-
-  /// Views on derivatives wrt to temperature for phase volume fraction
-  arrayView2d< real64 const, compflow::USD_PHASE > m_dPhaseVolFrac_dTemp;
 
   /// Views on phase internal energy
   arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseInternalEnergy_n;

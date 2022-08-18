@@ -42,10 +42,10 @@ namespace mgr
  * Ingredients
  *
  * 2-level MGR reduction strategy
- * 1st level: eliminate the cell-centered reservoir pressure
- * 2nd level: eliminate the face-centered reservoir pressure (Lagrange multiplier)
- * The coarse grid is the well vars
- * The coarse grid solved with a direct solver
+ * 1st level: eliminate the well block
+ * 2nd level: eliminate the cell-centered reservoir pressure
+ * The coarse grid is the face-centered reservoir pressure (Lagrange multiplier) system
+ * The coarse grid solved with BoomerAMG
  */
 class SinglePhaseReservoirHybridFVM : public MGRStrategyBase< 2 >
 {
@@ -57,28 +57,27 @@ public:
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( 4 ) )
   {
     // Level 0: eliminate the cell-centered pressure
+    m_labels[0].push_back( 0 );
     m_labels[0].push_back( 1 );
-    m_labels[0].push_back( 2 );
-    m_labels[0].push_back( 3 );
     // Level 1: eliminate the face-centered pressure
-    m_labels[1].push_back( 2 );
-    m_labels[1].push_back( 3 );
+    m_labels[1].push_back( 1 );
 
     setupLabels();
 
     // Level 0
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
-    m_levelInterpType[0]       = MGRInterpolationType::jacobi;
+    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
+    m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::nonGalerkin;
+    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
 
     // Level 1
-    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::amgVCycle;
+    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel;
     m_levelInterpType[1]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
 
-    m_numGlobalSmoothSweeps = 0;
+    m_levelSmoothIters[0] = 0;
+    m_levelSmoothIters[1] = 0;
   }
 
   /**
@@ -100,15 +99,32 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalSmoothIters( precond.ptr, m_numGlobalSmoothSweeps ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-14 ));
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 15 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothType( precond.ptr, m_levelSmoothType ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelSmoothIters ) );
 
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRDirectSolverCreate( &mgrData.coarseSolver.ptr ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::jacobi ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
 
-    mgrData.coarseSolver.setup = HYPRE_MGRDirectSolverSetup;
-    mgrData.coarseSolver.solve = HYPRE_MGRDirectSolverSolve;
-    mgrData.coarseSolver.destroy = HYPRE_MGRDirectSolverDestroy;
+#ifdef GEOSX_USE_HYPRE_CUDA
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) ); // l1-Jacobi
+#endif
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
+#ifdef GEOSX_USE_HYPRE_CUDA
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.coarseSolver.ptr, toUnderlying( AMGCoarseningType::PMIS ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.coarseSolver.ptr, 2 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.coarseSolver.ptr, 1.0 ) );
+#else
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.coarseSolver.ptr, 1 ) );
+#endif
+
+    mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
+    mgrData.coarseSolver.solve = HYPRE_BoomerAMGSolve;
+    mgrData.coarseSolver.destroy = HYPRE_BoomerAMGDestroy;
   }
 };
 

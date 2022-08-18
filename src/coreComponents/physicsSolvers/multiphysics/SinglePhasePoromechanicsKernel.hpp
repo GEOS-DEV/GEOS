@@ -116,7 +116,7 @@ public:
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
-    m_fluidDensity_n( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::density_n >() ),
+    m_fluidDensity_n( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density_n() ),
     m_initialFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).initialDensity() ),
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
@@ -302,7 +302,7 @@ public:
                                                        m_gravityVector,
                                                        m_solidDensity( k, q ),
                                                        m_initialFluidDensity( k, q ),
-                                                       m_fluidDensity_n( k ),
+                                                       m_fluidDensity_n( k, q ),
                                                        m_fluidDensity( k, q ),
                                                        m_dFluidDensity_dPressure( k, q ),
                                                        totalStress,
@@ -493,7 +493,7 @@ protected:
   /// The rank global densities
   arrayView2d< real64 const > const m_solidDensity;
   arrayView2d< real64 const > const m_fluidDensity;
-  arrayView1d< real64 const > const m_fluidDensity_n;
+  arrayView2d< real64 const > const m_fluidDensity_n;
   arrayView2d< real64 const > const m_initialFluidDensity;
   arrayView2d< real64 const > const m_dFluidDensity_dPressure;
 

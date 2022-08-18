@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./Laplace_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh"
+      file="hybridHexPrismMesh.vtk"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ 0_hexahedra, 1_pentagonalPrisms, 2_hexagonalPrisms }"
+      materialList="{ nullModel }"/>
+  </ElementRegions>
+  
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"
+        useVirtualElements="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+</Problem>
+

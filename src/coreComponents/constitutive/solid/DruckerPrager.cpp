@@ -155,6 +155,7 @@ void DruckerPrager::saveConvergedState() const
   } );
 }
 
+
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPrager, std::string const &, Group * const )
 }
 } /* namespace geosx */

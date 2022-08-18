@@ -122,6 +122,7 @@ void computeSinglePhaseFlux( localIndex const ( &seri )[2],
     dFlux_dP[ke] = mobility * ( transmissibility[ke] - dDensMean_dP[ke] * sumWeightGrav )
                    + dMobility_dP[ke] * potDif + dFlux_dTrans * dTrans_dPres[ke];
   }
+
 }
 
 /******************************** AquiferBCKernel ********************************/

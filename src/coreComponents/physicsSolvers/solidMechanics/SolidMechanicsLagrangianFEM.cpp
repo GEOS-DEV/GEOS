@@ -401,10 +401,8 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
           real64 N[numNodesPerElem];
           for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
           {
-            real64 elemMass = 0;
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
-              elemMass += rho[k][q] * detJ[k][q];
               FE_TYPE::calcN( q, N );
 
               for( localIndex a=0; a< numNodesPerElem; ++a )
@@ -643,6 +641,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
 
   } );
+
   return dt;
 }
 
@@ -1160,7 +1159,7 @@ SolidMechanicsLagrangianFEM::
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    std::cout << GEOSX_FMT( "( RSolid ) = ( {:4.2e} ) ; ", totalResidualNorm );
+    std::cout << GEOSX_FMT( "( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), totalResidualNorm );
   }
 
   return totalResidualNorm;
@@ -1178,12 +1177,12 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( localSolution,
                                keys::TotalDisplacement,
                                keys::IncrementalDisplacement,
-                               -scalingFactor );
+                               scalingFactor );
 
   dofManager.addVectorToField( localSolution,
                                keys::TotalDisplacement,
                                keys::TotalDisplacement,
-                               -scalingFactor );
+                               scalingFactor );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
@@ -1199,15 +1198,6 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                                          domain.getNeighbors(),
                                                          true );
   } );
-}
-
-void SolidMechanicsLagrangianFEM::solveLinearSystem( DofManager const & dofManager,
-                                                     ParallelMatrix & matrix,
-                                                     ParallelVector & rhs,
-                                                     ParallelVector & solution )
-{
-  solution.zero();
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )
