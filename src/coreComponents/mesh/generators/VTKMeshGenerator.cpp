@@ -97,9 +97,11 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
 
   registerWrapper( viewKeyStruct::useGlobalIdsString(), &m_useGlobalIds ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1 ).
-    setDescription( "If set to 1, mesh loading will use the GlobalId attribute for vertices and meshes, if available."
-                    "This can avoid unnecessary calculations. GlobalId arrays must be flagged as GLOBAL_IDS in the input mesh." );
+    setApplyDefaultValue( 0 ).
+    setDescription( "Controls the use of global IDs in the input file for cells and points."
+                    " If set to 0 (default value), the GlobalId arrays in the input mesh are used if available, and generated otherwise."
+                    " If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated."
+                    " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
 }
 
 namespace vtk
@@ -418,24 +420,29 @@ redistributeMesh( vtkDataSet & loadedMesh,
 
   // Generate global IDs for vertices and cells, if needed
   vtkSmartPointer< vtkDataSet > mesh;
-  if( useGlobalIds != 1
-      || loadedMesh.GetPointData()->GetGlobalIds() == nullptr
-      || loadedMesh.GetCellData()->GetGlobalIds() == nullptr )
+  bool globalIdsAvailable = loadedMesh.GetPointData()->GetGlobalIds() != nullptr
+                            && loadedMesh.GetCellData()->GetGlobalIds() != nullptr;
+  if( useGlobalIds > 0 && !globalIdsAvailable )
   {
+    GEOSX_ERROR( "Global IDs strictly required (useGlobalId > 0) but unavailable. Set useGlobalIds to 0 to build them automatically." );
+  }
+  else if( useGlobalIds >= 0 && globalIdsAvailable )
+  {
+    mesh.TakeReference( &loadedMesh );
+    GEOSX_LOG( "Using global Ids defined in VTK mesh" );
+  }
+  else
+  {
+    GEOSX_LOG( "Generating global Ids from VTK mesh" );
     vtkNew< vtkGenerateGlobalIds > generator;
     generator->SetInputDataObject( &loadedMesh );
     generator->Update();
     mesh = vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
   }
-  else
-  {
-    mesh.TakeReference( &loadedMesh );
-    std::cout << "using global Ids... wish me luck" << std::endl;
-  }
 
 
   // Determine if redistribution is required
-  vtkIdType const minCellsOnAnyRank = MpiWrapper::min( loadedMesh.GetNumberOfCells(), comm );
+  vtkIdType const minCellsOnAnyRank = MpiWrapper::min( mesh->GetNumberOfCells(), comm );
   if( minCellsOnAnyRank == 0 )
   {
     // Redistribute the mesh over all ranks using simple octree partitions

@@ -1322,10 +1322,10 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
 		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
 		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
+		<!--useGlobalIds => Controls the use of global IDs in the input file for cells and points. If set to 0 (default value), the GlobalId arrays in the input mesh are used if available, and generated otherwise. If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated. If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available-->
+		<xsd:attribute name="useGlobalIds" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
-		<!--useGlobalIds => If set to 1, mesh loading will use the GlobalId attribute for vertices and meshes, if available. This can avod unnecessary calculations. GlobalId arrays must be flagged as GLOBAL_IDS in the input mesh.--> 
-		<xsd:attribute name="useGlobalIds" type="integer" defaault="1" />
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_VTKMeshGenerator_PartitionMethod">
 		<xsd:restriction base="xsd:string">
