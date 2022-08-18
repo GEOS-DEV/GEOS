@@ -3,6 +3,11 @@
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 
+# GEOSX_EDIT_START
+# This is an older, modified version of the spack recipe (Commit date: 3/8/22, Spack PR: #29256):
+# https://github.com/spack/spack/blob/b2a02861bbbe8c989d24b8c7fbd202e31abc6bd0/var/spack/repos/builtin/packages/trilinos/package.py
+# GEOSX_EDIT_END
+
 import os
 import sys
 
