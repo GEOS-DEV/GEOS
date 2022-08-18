@@ -1376,10 +1376,10 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--extDrivingForce => External Driving Force-->
 		<xsd:attribute name="extDrivingForce" type="real64_array2d" />
-		<!--new damage => Material New Damage Variable-->
-		<xsd:attribute name="new damage" type="real64_array2d" />
-		<!--old damage => Material Old Damage Variable-->
-		<xsd:attribute name="old damage" type="real64_array2d" />
+		<!--newDamage => Material New Damage Variable-->
+		<xsd:attribute name="newDamage" type="real64_array2d" />
+		<!--oldDamage => Material Old Damage Variable-->
+		<xsd:attribute name="oldDamage" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--shearModulus => Elastic Shear Modulus Field-->
@@ -1406,10 +1406,10 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--extDrivingForce => External Driving Force-->
 		<xsd:attribute name="extDrivingForce" type="real64_array2d" />
-		<!--new damage => Material New Damage Variable-->
-		<xsd:attribute name="new damage" type="real64_array2d" />
-		<!--old damage => Material Old Damage Variable-->
-		<xsd:attribute name="old damage" type="real64_array2d" />
+		<!--newDamage => Material New Damage Variable-->
+		<xsd:attribute name="newDamage" type="real64_array2d" />
+		<!--oldDamage => Material Old Damage Variable-->
+		<xsd:attribute name="oldDamage" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--shearModulus => Elastic Shear Modulus Field-->
@@ -1430,10 +1430,10 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--extDrivingForce => External Driving Force-->
 		<xsd:attribute name="extDrivingForce" type="real64_array2d" />
-		<!--new damage => Material New Damage Variable-->
-		<xsd:attribute name="new damage" type="real64_array2d" />
-		<!--old damage => Material Old Damage Variable-->
-		<xsd:attribute name="old damage" type="real64_array2d" />
+		<!--newDamage => Material New Damage Variable-->
+		<xsd:attribute name="newDamage" type="real64_array2d" />
+		<!--oldDamage => Material Old Damage Variable-->
+		<xsd:attribute name="oldDamage" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--shearModulus => Elastic Shear Modulus Field-->

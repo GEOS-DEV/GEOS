@@ -413,8 +413,8 @@ public:
 
   struct viewKeyStruct : public BASE::viewKeyStruct
   {
-    static constexpr char const * newDamageString() { return "new damage"; }
-    static constexpr char const * oldDamageString() { return "old damage"; }
+    static constexpr char const * newDamageString() { return "newDamage"; }
+    static constexpr char const * oldDamageString() { return "oldDamage"; }
     static constexpr char const * damageGradString() { return "damageGrad"; }
     static constexpr char const * strainEnergyDensityString() { return "strainEnergyDensity"; }
     static constexpr char const * volumetricStrainString() { return "volumetricStrain"; }

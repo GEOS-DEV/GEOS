@@ -7,8 +7,8 @@ bulkModulus         real64_array   Elastic Bulk Modulus Field
 damageGrad          real64_array3d Material Damage Gradient     
 density             real64_array2d Material Density             
 extDrivingForce     real64_array2d External Driving Force       
-new damage          real64_array2d Material New Damage Variable 
-old damage          real64_array2d Material Old Damage Variable 
+newDamage           real64_array2d Material New Damage Variable 
+oldDamage           real64_array2d Material Old Damage Variable 
 oldStress           real64_array3d Previous Material Stress     
 shearModulus        real64_array   Elastic Shear Modulus Field  
 strainEnergyDensity real64_array2d Strain Energy Density        
