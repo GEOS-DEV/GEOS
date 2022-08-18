@@ -545,12 +545,14 @@ void ProblemManager::saveMe()
                                 {
                                   NodeManager & nodeManager = meshLevel.getNodeManager();
                                   ElementRegionManager & elemManager = meshLevel.getElemManager();
-                                  FaceManager const & faceManager = meshLevel.getFaceManager();
+                                  SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( "Fracture" );
+                                  FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "cbFrac" );
+//                                  FaceManager const & faceManager = meshLevel.getFaceManager();
 //                                  EdgeManager const & edgeManager = meshLevel.getEdgeManager();
-                                  EdgeManager & edgeManager = meshLevel.getEdgeManager();
+//                                  EdgeManager & edgeManager = meshLevel.getEdgeManager();
 //                                  std::vector< localIndex > edges{ 270, 275, 280, 285, 290, 295, 300, 305, 310 };
                                   // FIXME fractureConnectorsToEdges should not be attached to edgeManager
-                                  array1d< localIndex > & fractureConnectorsToEdges = edgeManager.getReference< array1d< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorEdgesToEdgesString() );
+                                  array1d< localIndex > & fractureConnectorsToEdges = fractureSubRegion.m_fractureConnectorsEdgesToEdges;
                                   fractureConnectorsToEdges.resize( 31 );
                                   std::vector< localIndex > edges;
                                   for( int i = 0; i < 10; ++i )
@@ -566,8 +568,7 @@ void ProblemManager::saveMe()
                                   }
 
                                   // FIXME fractureConnectorsToFaceElements should not be attached to edgeManager
-                                  ArrayOfArrays< localIndex > & fractureConnectorsToFaceElements =
-                                    edgeManager.getReference< ArrayOfArrays< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString() );
+                                  ArrayOfArrays< localIndex > & fractureConnectorsToFaceElements = fractureSubRegion.m_fractureConnectorEdgesToFaceElements;
                                   fractureConnectorsToFaceElements.resize( 31 );
                                   for( int i = 0; i < 31; ++i )
                                   {
@@ -587,7 +588,7 @@ void ProblemManager::saveMe()
 
                                   for( int i = 0; i < 31; ++i )
                                   {
-                                    edgeManager.m_recalculateFractureConnectorEdges.insert( i );
+                                    fractureSubRegion.m_recalculateFractureConnectorEdges.insert( i );
                                   }
 //                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 3 );
 //                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 3 );
@@ -608,7 +609,7 @@ void ProblemManager::saveMe()
                                     if( fluxApprox != nullptr )
                                     {
                                       fluxApprox->addToFractureStencil( meshLevel, "Fracture", false );
-                                      edgeManager.m_recalculateFractureConnectorEdges.clear();
+                                      fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
                                     }
                                   }
                                 } );
