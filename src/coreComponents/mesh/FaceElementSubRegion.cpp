@@ -48,6 +48,21 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "Map to the faces attached to each FaceElement." ).
     reference().resize( 0, 2 );
 
+  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString(), &m_edgesToFractureConnectorsEdges ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "A map of edge local indices to the fracture connector local indices." ).
+    setSizedFromParent( 0 );
+
+  registerWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString(), &m_fractureConnectorsEdgesToEdges ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "A map of fracture connector local indices to edge local indices." ).
+    setSizedFromParent( 0 );
+
+  registerWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString(), &m_fractureConnectorEdgesToFaceElements ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "A map of fracture connector local indices face element local indices" ).
+    setSizedFromParent( 0 );
+
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   registerWrapper( viewKeyStruct::separationCoeffString(), &m_separationCoefficient ).
     setApplyDefaultValue( 0.0 ).
