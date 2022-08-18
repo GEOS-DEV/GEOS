@@ -12,15 +12,7 @@ import os
 from os import environ as env
 from os.path import join as pjoin
 
-# ./scripts/uberenv/uberenv.py --spec="%clang +mkl ^chai ^caliper+papi"
-
-# ./scripts/uberenv/uberenv.py --spec="%clang +mkl ^raja build_type=Release ^umpire build_type=Release ^chai build_type=Release ^adiak build_type=Release ^caliper+papi build_type=Release ^pugixml build_type=Release ^parmetis build_type=Release ^superlu-dist build_type=Release ^trilinos build_type=Release"
-
-# ./scripts/uberenv/uberenv.py --spec="%clang +essl +cuda ~petsc cuda_arch=70 ^raja build_type=Release cuda_arch=70 ^umpire build_type=Release cuda_arch=70 ^chai build_type=Release cuda_arch=70 ^adiak build_type=Release ^caliper~papi build_type=Release ^pugixml build_type=Release ^parmetis build_type=Release ^superlu-dist build_type=Release ^trilinos build_type=Release"
-
-# PETSC doesn't compile on Lassen
-# ./scripts/uberenv/uberenv.py --spec="%gcc +essl ~petsc +cuda cuda_arch=70 ^cuda@10.1.243 ^raja cuda_arch=70 ^umpire cuda_arch=70 ^chai cuda_arch=70 ^caliper~papi"
-
+# WARNING: +petsc and +pygeosx variants are yet to be tested
 
 def cmake_cache_entry(name, value, comment=""):
     """Generate a string for a cmake cache variable"""
@@ -63,10 +55,6 @@ class Geosx(CMakePackage, CudaPackage):
     variant('shared', default=True, description='Build Shared Libs.')
     variant('caliper', default=True, description='Build Caliper support.')
     variant('vtk', default=True, description='Build VTK support.')
-        #These shouldn't be here; defined in packages.yaml,not here
-    # depends_on('intel-mkl', when='+mkl')
-    # variant('mkl', default=False, description='Use the Intel MKL library.')
-    # variant('essl', default=False, description='Use the IBM ESSL library.')
     variant('trilinos', default=True, description='Build Trilinos support.')
     variant('hypre', default=True, description='Build HYPRE support.')
     variant('petsc', default=False, description='Build PETSc support.')
@@ -76,21 +64,21 @@ class Geosx(CMakePackage, CudaPackage):
             description='Linear algebra interface.',
             values=('trilinos', 'hypre', 'petsc'),
             multi=False)
-    # variant('pygeosx', default=False, description='Build the GEOSX python interface.')
+    variant('pygeosx', default=False, description='Build the GEOSX python interface.')
 
     # SPHINX_END_VARIANTS
 
     # variant('tests', default=True, description='Build tests')
     # variant('benchmarks', default=False, description='Build benchmarks')
     # variant('examples', default=False, description='Build examples')
-    variant('docs', default=False, description='Build docs')
+    # variant('docs', default=False, description='Build docs')
     # variant('addr2line', default=True,
     #         description='Build support for addr2line.')
 
     # SPHINX_BEGIN_DEPENDS
 
     depends_on('cmake@3.8:', type='build')
-    depends_on('cmake@3.9:', when='+cuda', type='build')
+    depends_on('cmake@3.14:', when='+cuda', type='build')
 
     #
     # Virtual packages
@@ -141,12 +129,8 @@ class Geosx(CMakePackage, CudaPackage):
     # #
     # # Math
     # #
-
-    # depends_on('essl~ilp64+cuda threads=openmp', when='+essl')
-
     depends_on('parmetis@4.0.3+int64')
 
-    #depends_on('superlu-dist+int64+openmp', when='~petsc')
     depends_on('superlu-dist+int64+openmp')
 
     depends_on('scotch@6.0.9 +mpi +int64', when='+scotch')
@@ -172,11 +156,11 @@ class Geosx(CMakePackage, CudaPackage):
     # #
     # # Python
     # #
-    # depends_on('python+shared +pic', when='+pygeosx')
-    # depends_on('py-numpy@1.19:+blas+lapack', when='+pygeosx')
-    # depends_on('py-scipy@1.5.2:', when='+pygeosx')
-    # depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
-    # depends_on('py-pip', when='+pygeosx')
+    depends_on('python+shared +pic', when='+pygeosx')
+    depends_on('py-numpy@1.19:+blas+lapack', when='+pygeosx')
+    depends_on('py-scipy@1.5.2:', when='+pygeosx')
+    depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
+    depends_on('py-pip', when='+pygeosx')
 
     # #
     # # Dev tools
@@ -194,12 +178,6 @@ class Geosx(CMakePackage, CudaPackage):
     # #
     # # Conflicts
     # #
-
-    # This should not be here
-    # conflicts('+mkl +essl', msg='Cannot use both MKL and ESSL.')
-    # conflicts('+essl ~cuda', msg='Cannot use ESSL without CUDA.')
-    # COMMENT OUT END
-
     conflicts('~trilinos lai=trilinos', msg='To use Trilinos as the Linear Algebra Interface you must build it.')
     conflicts('~hypre lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
     conflicts('~petsc lai=petsc', msg='To use PETSc as the Linear Algebra Interface you must build it.')
