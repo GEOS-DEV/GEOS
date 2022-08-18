@@ -239,13 +239,6 @@ public:
    */
   void chopNegativeDensities( DomainPartition & domain );
 
-  /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param mesh reference to the mesh
-   */
-  void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const override;
-
-
   arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct

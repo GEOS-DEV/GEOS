@@ -33,7 +33,6 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
   m_densityModelType( ExponentApproximationType::Linear ),
   m_viscosityModelType( ExponentApproximationType::Linear )
 {
-
   registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default value for density." );
@@ -76,6 +75,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
     setApplyDefaultValue( m_viscosityModelType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Type of viscosity model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
+
 }
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;

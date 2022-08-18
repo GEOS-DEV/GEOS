@@ -258,34 +258,31 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
     std::set< string > input;
     std::copy( wrapperNames.begin(), wrapperNames.end(), std::inserter( input, input.end() ) );
 
-    std::set< string > const exclusion = getPackingExclusionList();
+    std::set< string > const & exclusion = m_packingExclusionList;
     std::set< string > const available = mapKeys< std::set >( wrappers() );
 
-    // Only taking the wrappers that are requested and available.
-    std::set< string > tmp0;
-    std::set_intersection( input.cbegin(), input.cend(), available.cbegin(), available.cend(), std::inserter( tmp0, tmp0.end() ) );
-
     // Checking that all the requested wrappers are available.
-    std::set< string > tmp1;
-    std::set_difference( input.cbegin(), input.cend(), available.cbegin(), available.cend(), std::inserter( tmp1, tmp1.end() ) );
-    if( !tmp1.empty() )
+    std::set< string > reqNotAvail;
+    std::set_difference( input.cbegin(), input.cend(), available.cbegin(), available.cend(), std::inserter( reqNotAvail, reqNotAvail.end() ) );
+    if( !reqNotAvail.empty() )
     {
-      GEOSX_ERROR( "Wrappers \"" << stringutilities::join( tmp1, ", " ) << "\" were requested from \"" << getName() << "\" but are not available." );
+      GEOSX_ERROR( "Wrapper(s) \"" << stringutilities::join( reqNotAvail, ", " ) << "\" was (were) requested from \"" << getName() << "\" but is (are) not available." );
     }
+    // From now on all the requested wrappers are guarantied to be available.
 
-    // Not taking the wrappers that are excluded.
-    std::set< string > tmp2;
-    std::set_difference( tmp0.cbegin(), tmp0.cend(), exclusion.cbegin(), exclusion.cend(), std::inserter( tmp2, tmp2.end() ) );
+    // Discarding the wrappers that are excluded.
+    std::set< string > reqNotExcl;
+    std::set_difference( input.cbegin(), input.cend(), exclusion.cbegin(), exclusion.cend(), std::inserter( reqNotExcl, reqNotExcl.end() ) );
 
     // Now we build the final list.
     // No packing by index is allowed if the registered wrapper does not share the size of the owning group.
     // Hence, the sufficient (but not necessary...) condition on `wrapper.sizedFromParent()`.
-    std::vector< string > tmp3;
+    std::vector< string > reqNotExclAndSized;
     auto predicate = [this]( string const & wrapperName ) -> bool
     {
       return bool( this->getWrapperBase( wrapperName ).sizedFromParent() );
     };
-    std::copy_if( tmp2.cbegin(), tmp2.cend(), std::back_inserter( tmp3 ), predicate );
+    std::copy_if( reqNotExcl.cbegin(), reqNotExcl.cend(), std::back_inserter( reqNotExclAndSized ), predicate );
 
     // Extracting the wrappers
     std::vector< WrapperBase const * > wrappers;
@@ -293,7 +290,7 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
     {
       return &this->getWrapperBase( wrapperName );
     };
-    std::transform( tmp3.cbegin(), tmp3.cend(), std::back_inserter( wrappers ), transformer );
+    std::transform( reqNotExclAndSized.cbegin(), reqNotExclAndSized.cend(), std::back_inserter( wrappers ), transformer );
 
     // Additional refactoring should be done by using `Group::packImpl` that duplicates the following pack code.
     packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( "Wrappers" ) );
@@ -717,12 +714,6 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
 
 
   return unpackedSize;
-}
-
-
-std::set< string > ObjectManagerBase::getPackingExclusionList() const
-{
-  return m_packingExclusionList;
 }
 
 
