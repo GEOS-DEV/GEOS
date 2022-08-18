@@ -38,6 +38,9 @@ class WellSolverBase : public SolverBase
 {
 public:
 
+  /// String used to form the solverName used to register single-physics solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "well"; }
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
@@ -152,6 +155,14 @@ public:
                                      real64 const & GEOSX_UNUSED_PARAM( dt ),
                                      DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
 
+  virtual void applyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                        real64 const GEOSX_UNUSED_PARAM( dt ),
+                                        DomainPartition & GEOSX_UNUSED_PARAM( domain ),
+                                        DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                        CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
+                                        arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) ) override {}
+
+
   /**@}*/
 
   /**
@@ -239,12 +250,6 @@ public:
    * @param domain the domain containing the mesh and fields
    */
   virtual void computePerforationRates( DomainPartition & domain ) = 0;
-
-  /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param mesh reference to the mesh
-   */
-  virtual void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const = 0;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {

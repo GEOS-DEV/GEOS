@@ -173,6 +173,7 @@ void DruckerPragerExtended::saveConvergedState() const
   } );
 }
 
+
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPragerExtended, string const &, Group * const )
 }
 } /* namespace geosx */

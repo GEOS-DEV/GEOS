@@ -575,7 +575,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
 
     // Determine weighted value
     real64 cornerValue = m_values[tableIndex];
-    real64 dCornerValue_dInput[maxDimensions];
+    real64 dCornerValue_dInput[maxDimensions]{};
     for( integer dim = 0; dim < numDimensions; ++dim )
     {
       dCornerValue_dInput[dim] = cornerValue;

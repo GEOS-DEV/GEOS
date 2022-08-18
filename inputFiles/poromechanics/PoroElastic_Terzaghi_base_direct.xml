@@ -5,7 +5,7 @@
     <SinglePhasePoromechanics
       name="PoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
-      fluidSolverName="SinglePhaseFlowSolver"
+      flowSolverName="SinglePhaseFlowSolver"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">

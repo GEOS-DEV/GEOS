@@ -59,42 +59,41 @@ from os.path import join as pjoin
 # python gen_spack_env_script.py [spack_pkg_1 spack_pkg_2 ...]
 #
 
-def sexe(cmd,ret_output=False,echo = True):
+
+def sexe(cmd, ret_output=False, echo=True):
     """ Helper for executing shell commands. """
     if echo:
         print("[exe: {}]".format(cmd))
     if ret_output:
-        p = subprocess.Popen(cmd,
-                             shell=True,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         res = p.communicate()[0]
         res = res.decode('utf8')
-        return p.returncode,res
+        return p.returncode, res
     else:
-        return subprocess.call(cmd,shell=True)
+        return subprocess.call(cmd, shell=True)
 
 
 def spack_exe(spath=None):
     if spath is None:
-        to_try = [pjoin("uberenv_libs","spack"), "spack"]
+        to_try = [pjoin("uberenv_libs", "spack"), "spack"]
         for p in to_try:
             abs_p = os.path.abspath(p)
             print("[looking for spack directory at: {}]".format(abs_p))
             if os.path.isdir(abs_p):
                 print("[FOUND spack directory at: {}]".format(abs_p))
-                return os.path.abspath(pjoin(abs_p,"bin","spack"))
+                return os.path.abspath(pjoin(abs_p, "bin", "spack"))
         print("[ERROR: failed to find spack directory!]")
         sys.exit(-1)
     else:
-        spack_exe = os.path.abspath(spath,"bin","spack")
+        spack_exe = os.path.abspath(spath, "bin", "spack")
         if not os.path.isfile(spack_exec):
             print("[ERROR: failed to find spack directory at spath={}]").format(spath)
             sys.exit(-1)
         return spack_exe
 
+
 def find_pkg(pkg_name):
-    r,rout = sexe(spack_exe() + " find -p " + pkg_name,ret_output = True)
+    r, rout = sexe(spack_exe() + " find -p " + pkg_name, ret_output=True)
     print(rout)
     for l in rout.split("\n"):
         print(l)
@@ -106,16 +105,19 @@ def find_pkg(pkg_name):
     print("[ERROR: failed to find package named '{}']".format(pkg_name))
     sys.exit(-1)
 
+
 def path_cmd(pkg):
-    return('export PATH={}:$PATH\n'.format((pjoin(pkg["path"],"bin"))))
+    return ('export PATH={}:$PATH\n'.format((pjoin(pkg["path"], "bin"))))
+
 
 def write_env_script(pkgs):
-    ofile = open("s_env.sh","w")
+    ofile = open("s_env.sh", "w")
     for p in pkgs:
-        print("[found {} at {}]".format(p["name"],p["path"]))
+        print("[found {} at {}]".format(p["name"], p["path"]))
         ofile.write("# {}\n".format(p["name"]))
         ofile.write(path_cmd(p))
     print("[created {}]".format(os.path.abspath("s_env.sh")))
+
 
 def main():
     pkgs = [find_pkg(pkg) for pkg in sys.argv[1:]]
@@ -123,6 +125,7 @@ def main():
         write_env_script(pkgs)
     else:
         print("usage: python gen_spack_env_script.py spack_pkg_1 spack_pkg_2 ...")
+
 
 if __name__ == "__main__":
     main()

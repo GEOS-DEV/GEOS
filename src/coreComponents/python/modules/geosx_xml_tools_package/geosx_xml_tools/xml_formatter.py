@@ -31,7 +31,7 @@ def format_attribute(attribute_indent, ka, attribute_value):
 def format_xml_level(output,
                      node,
                      level,
-                     indent=' '*2,
+                     indent=' ' * 2,
                      block_separation_max_depth=2,
                      modify_attribute_indent=False,
                      sort_attributes=False,
@@ -39,30 +39,30 @@ def format_xml_level(output,
                      include_namespace=False):
     """Iteratively format the xml file
 
-     @param output the output filename
-     @param node the current xml element
-     @param level the xml depth
-     @param indent the xml indent style
-     @param block_separation_max_depth the maximum depth to separate adjacent elements
-     @param modify_attribute_indent option to have flexible attribute indentation
-     @param sort_attributes option to sort attributes alphabetically
-     @param close_tag_newline option to place close tag on a separate line
-     @param include_namespace option to include the xml namespace in the output
+    @param output the output filename
+    @param node the current xml element
+    @param level the xml depth
+    @param indent the xml indent style
+    @param block_separation_max_depth the maximum depth to separate adjacent elements
+    @param modify_attribute_indent option to have flexible attribute indentation
+    @param sort_attributes option to sort attributes alphabetically
+    @param close_tag_newline option to place close tag on a separate line
+    @param include_namespace option to include the xml namespace in the output
     """
 
     # Handle comments
     if node.tag is ElementTree.Comment:
-        output.write('\n%s<!--%s-->' % (indent*level, node.text))
+        output.write('\n%s<!--%s-->' % (indent * level, node.text))
 
     else:
         # Write opening line
-        opening_line = '\n%s<%s' % (indent*level, node.tag)
+        opening_line = '\n%s<%s' % (indent * level, node.tag)
         output.write(opening_line)
 
         # Write attributes
         if (len(node.attrib) > 0):
             # Choose indentation
-            attribute_indent = '%s' % (indent*(level+1))
+            attribute_indent = '%s' % (indent * (level + 1))
             if modify_attribute_indent:
                 attribute_indent = ' ' * (len(opening_line))
 
@@ -99,22 +99,18 @@ def format_xml_level(output,
             output.write('>')
             Nc = len(node)
             for ii, child in zip(range(Nc), node):
-                format_xml_level(output, child, level+1, indent,
-                                 block_separation_max_depth,
-                                 modify_attribute_indent,
-                                 sort_attributes,
-                                 close_tag_newline,
-                                 include_namespace)
+                format_xml_level(output, child, level + 1, indent, block_separation_max_depth, modify_attribute_indent,
+                                 sort_attributes, close_tag_newline, include_namespace)
 
                 # Add space between blocks
-                if ((level < block_separation_max_depth) & (ii < Nc-1) & (child.tag is not ElementTree.Comment)):
+                if ((level < block_separation_max_depth) & (ii < Nc - 1) & (child.tag is not ElementTree.Comment)):
                     output.write('\n')
 
             # Write the end tag
-            output.write('\n%s</%s>' % (indent*level, node.tag))
+            output.write('\n%s</%s>' % (indent * level, node.tag))
         else:
             if close_tag_newline:
-                output.write('\n%s/>' % (indent*level))
+                output.write('\n%s/>' % (indent * level))
             else:
                 output.write('/>')
 
@@ -152,7 +148,7 @@ def format_file(input_fname,
             format_xml_level(f,
                              root,
                              0,
-                             indent=' '*indent_size,
+                             indent=' ' * indent_size,
                              block_separation_max_depth=block_separation_max_depth,
                              modify_attribute_indent=indent_style,
                              sort_attributes=alphebitize_attributes,

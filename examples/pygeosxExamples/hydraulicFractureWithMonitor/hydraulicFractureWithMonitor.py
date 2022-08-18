@@ -1,9 +1,9 @@
 
 # PYGEOSX_SETUP
-import sys
 from mpi4py import MPI
 import pygeosx
-from pygeosx_tools import wrapper, xml
+from pygeosx_tools import wrapper
+from geosx_xml_tools.main import preprocess_parallel
 import matplotlib.pyplot as plt
 # PYGEOSX_SETUP_END
 
@@ -18,8 +18,8 @@ def run_problem(plot_frequency=1):
     rank = comm.Get_rank()
 
     # Initialize the code and set initial conditions
-    xml.apply_xml_preprocessor()
-    problem = pygeosx.initialize(rank, sys.argv)
+    args = preprocess_parallel()
+    problem = pygeosx.initialize(rank, args)
     pygeosx.apply_initial_conditions()
     # PYGEOSX_INITIALIZATION_END
 

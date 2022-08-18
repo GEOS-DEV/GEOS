@@ -57,7 +57,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ South_HEX, North_HEX }"
+      cellBlocks="{ 0_hexahedra, 1_hexahedra }"
       materialList="{ rock }"/>
 
     <SurfaceElementRegion

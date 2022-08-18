@@ -243,6 +243,30 @@ public:
     GEOSX_HOST_DEVICE
     integer numPhases() const { return LvArray::integerConversion< integer >( m_phaseFraction.value.size( 2 ) ); }
 
+    GEOSX_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseFraction() const
+    { return m_phaseFraction.value; }
+
+    GEOSX_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseDensity() const
+    { return m_phaseDensity.value; }
+
+    GEOSX_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseMassDensity() const
+    { return m_phaseMassDensity.value; }
+
+    GEOSX_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseViscosity() const
+    { return m_phaseViscosity.value; }
+
+    GEOSX_HOST_DEVICE arrayView4d< real64 const, multifluid::USD_PHASE_COMP > phaseCompFraction() const
+    { return m_phaseCompFraction.value; }
+
+    GEOSX_HOST_DEVICE arrayView2d< real64 const, multifluid::USD_FLUID > totalDensity() const
+    { return m_totalDensity.value; }
+
+    GEOSX_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseEnthalpy() const
+    { return m_phaseEnthalpy.value; }
+
+    GEOSX_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseInternalEnergy() const
+    { return m_phaseInternalEnergy.value; }
+
 protected:
 
     /**

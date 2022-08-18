@@ -55,6 +55,7 @@ public:
    * @param[in] newstress                   The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldstress                   The ArrayView holding the old stress data from the previous converged state for each quadrature
    * point.
+   * @param[in] disableInelasticity         Flag to disable plastic response/
    */
   ModifiedCamClayUpdates( real64 const & refPressure,
                           real64 const & refStrainVol,
@@ -65,8 +66,9 @@ public:
                           arrayView2d< real64 > const & oldPreConsolidationPressure,
                           arrayView1d< real64 const > const & shearModulus,
                           arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                          arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
-    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, recompressionIndex, shearModulus, newStress, oldStress ),
+                          arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                          bool const & disableInelasticity ):
+    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, recompressionIndex, shearModulus, newStress, oldStress, disableInelasticity ),
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
     m_newPreConsolidationPressure( newPreConsolidationPressure ),
@@ -210,9 +212,17 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 
   real64 pc    = oldPc;
   real64 bulkModulus  = -p0/Cr;
+
   // elastic predictor (assume strainIncrement is all elastic)
 
   ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+
+  if( m_disableInelasticity )
+  {
+    return;
+  }
+
+  // check yield function F <= 0
 
   real64 trialP;
   real64 trialQ;
@@ -225,8 +235,6 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
                                      trialQ,
                                      deviator );
 
-  // check yield function F <= 0
-
   real64 yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse;
   evaluateYield( trialP, trialQ, pc, M, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse );
 
@@ -235,7 +243,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
     return;
   }
 
-// else, plasticity (trial stress point lies outside yield surface)
+  // else, plasticity (trial stress point lies outside yield surface)
 
   eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
   eps_s_trial = trialQ/3.0/mu;
@@ -396,8 +404,8 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
                          + c5 * deviator[i] * deviator[j];
     }
   }
-  // remember history variables before returning
 
+  // remember history variables before returning
   m_newPreConsolidationPressure[k][q] = pc;
 
   // save new stress and return
@@ -506,7 +514,8 @@ public:
                                    m_oldPreConsolidationPressure,
                                    m_shearModulus,
                                    m_newStress,
-                                   m_oldStress );
+                                   m_oldStress,
+                                   m_disableInelasticity );
   }
 
   /**
@@ -529,7 +538,8 @@ public:
                           m_oldPreConsolidationPressure,
                           m_shearModulus,
                           m_newStress,
-                          m_oldStress );
+                          m_oldStress,
+                          m_disableInelasticity );
   }
 
 

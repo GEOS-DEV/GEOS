@@ -49,7 +49,7 @@ Build steps
   .. code-block:: console
 
      cd <buildpath>
-     make -j
+     make -j $(nproc)
 
 You may also run the CMake configure step manually instead of relying on ``config-build.py``.
 A full build typically takes between 10 and 30 minutes, depending on chosen compilers, options and number of cores.

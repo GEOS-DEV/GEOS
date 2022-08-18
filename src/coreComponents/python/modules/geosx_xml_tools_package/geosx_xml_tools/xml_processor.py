@@ -7,7 +7,6 @@ import os
 from geosx_xml_tools import regex_tools, unit_manager
 from geosx_xml_tools import xml_formatter
 
-
 # Create an instance of the unit, parameter regex handlers
 unitManager = unit_manager.UnitManager()
 parameterHandler = regex_tools.DictRegexHandler()
@@ -116,25 +115,19 @@ def apply_regex_to_node(node):
         # Parameter format:  $Parameter or $:Parameter
         ii = 0
         while ('$' in value):
-            value = re.sub(regex_tools.patterns['parameters'],
-                           parameterHandler,
-                           value)
+            value = re.sub(regex_tools.patterns['parameters'], parameterHandler, value)
             ii += 1
             if (ii > 100):
                 raise Exception('Reached maximum parameter expands (Node=%s, value=%s)' % (node.tag, value))
 
         # Unit format:       9.81[m**2/s] or 1.0 [bbl/day]
         if ('[' in value):
-            value = re.sub(regex_tools.patterns['units'],
-                           unitManager.regexHandler,
-                           value)
+            value = re.sub(regex_tools.patterns['units'], unitManager.regexHandler, value)
 
         # Symbolic format:   `1 + 2.34e5*2 * ...`
         ii = 0
         while ('`' in value):
-            value = re.sub(regex_tools.patterns['symbolic'],
-                           regex_tools.SymbolicMathRegexHandler,
-                           value)
+            value = re.sub(regex_tools.patterns['symbolic'], regex_tools.SymbolicMathRegexHandler, value)
             ii += 1
             if (ii > 100):
                 raise Exception('Reached maximum symbolic expands (Node=%s, value=%s)' % (node.tag, value))
@@ -159,7 +152,13 @@ def generate_random_name(prefix='', suffix='.xml'):
     return '%s%s%s' % (prefix, md5(tmp.encode('utf-8')).hexdigest(), suffix)
 
 
-def process(inputFiles, outputFile='', schema='', verbose=0, parameter_override=[], keep_parameters=True, keep_includes=True):
+def process(inputFiles,
+            outputFile='',
+            schema='',
+            verbose=0,
+            parameter_override=[],
+            keep_parameters=True,
+            keep_includes=True):
     """Process an xml file
 
     @param inputFiles Input file names.
@@ -268,7 +267,9 @@ def process(inputFiles, outputFile='', schema='', verbose=0, parameter_override=
     with open(outputFile, 'r') as ofile:
         for line in ofile:
             if any([sc in line for sc in ['$', '[', ']', '`']]):
-                raise Exception('Found un-matched special characters in the pre-processed input file on line:\n%s\n Check your input xml for errors!' % (line))
+                raise Exception(
+                    'Found un-matched special characters in the pre-processed input file on line:\n%s\n Check your input xml for errors!'
+                    % (line))
 
     # Apply formatting to the file
     xml_formatter.format_file(outputFile)
@@ -298,9 +299,9 @@ def validate_xml(fname, schema, verbose):
     except ElementTree.DocumentInvalid as err:
         print(err)
         print('\nWarning: input XML contains potentially invalid input parameters:')
-        print('-'*20+'\n')
+        print('-' * 20 + '\n')
         print(sfile.error_log)
-        print('\n'+'-'*20)
+        print('\n' + '-' * 20)
         print('(Total schema warnings: %i)\n' % (len(sfile.error_log)))
 
     if verbose:

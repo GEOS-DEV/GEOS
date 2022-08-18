@@ -50,8 +50,9 @@ public:
    * @param[in] c44 The 44 component of the Voigt stiffness tensor.
    * @param[in] c55 The 55 component of the Voigt stiffness tensor.
    * @param[in] c66 The 66 component of the Voigt stiffness tensor.
-   * @param[in] stress The ArrayView holding the stress data for each quadrature
-   *                   point.
+   * @param[in] newStress The ArrayView holding the new stress data for each point.
+   * @param[in] oldStress The ArrayView holding the old stress data for each point.
+   * @param[in] disableInelasticity Flag to disable plastic response for inelastic models.
    */
   ElasticOrthotropicUpdates( arrayView1d< real64 const > const & c11,
                              arrayView1d< real64 const > const & c12,
@@ -63,8 +64,9 @@ public:
                              arrayView1d< real64 const > const & c55,
                              arrayView1d< real64 const > const & c66,
                              arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                             arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
-    SolidBaseUpdates( newStress, oldStress ),
+                             arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                             bool const & disableInelasticity ):
+    SolidBaseUpdates( newStress, oldStress, disableInelasticity ),
     m_c11( c11 ),
     m_c12( c12 ),
     m_c13( c13 ),
@@ -705,7 +707,8 @@ public:
                                       m_c55,
                                       m_c66,
                                       m_newStress,
-                                      m_oldStress );
+                                      m_oldStress,
+                                      m_disableInelasticity );
   }
 
   /**
@@ -730,7 +733,8 @@ public:
                           m_c55,
                           m_c66,
                           m_newStress,
-                          m_oldStress );
+                          m_oldStress,
+                          m_disableInelasticity );
   }
 
 protected:
