@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2022 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -87,9 +87,9 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('blas')
     depends_on('lapack')
 
-    # #
-    # # Performance portability
-    # #
+    #
+    # Performance portability
+    #
     depends_on('raja@2022.03.0+openmp~examples~exercises')
 
     depends_on('umpire@2022.03.0~c+openmp~examples')
@@ -109,9 +109,9 @@ class Geosx(CMakePackage, CudaPackage):
             depends_on('camp+cuda cuda_arch={0}'.format(sm_),
                        when='cuda_arch={0}'.format(sm_))
 
-    # #
-    # # IO
-    # #
+    #
+    # IO
+    #
     depends_on('hdf5@1.12.1')
     depends_on('silo@4.11~fortran')
 
@@ -126,9 +126,9 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('fmt@8.0.1 cxxstd=14')
     depends_on('vtk@9.1.0', when='+vtk')
 
-    # #
-    # # Math
-    # #
+    #
+    # Math
+    #
     depends_on('parmetis@4.0.3+int64')
 
     depends_on('superlu-dist+int64+openmp')
@@ -152,32 +152,31 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('petsc@3.13.0~hdf5~hypre+int64', when='+petsc')
     depends_on('petsc+ptscotch', when='+petsc+scotch')
 
-# COMMENT OUT START
-    # #
-    # # Python
-    # #
+    #
+    # Python
+    #
     depends_on('python+shared +pic', when='+pygeosx')
     depends_on('py-numpy@1.19:+blas+lapack', when='+pygeosx')
     depends_on('py-scipy@1.5.2:', when='+pygeosx')
     depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
     depends_on('py-pip', when='+pygeosx')
 
-    # #
-    # # Dev tools
-    # #
+    #
+    # Dev tools
+    #
     depends_on('uncrustify@0.70geosx')
 
-    # #
-    # # Documentation
-    # #
+    #
+    # Documentation
+    #
     # depends_on('doxygen@1.8.20', when='+docs', type='build')
     # depends_on('py-sphinx@1.6.3:', when='+docs', type='build')
 
-    # # SPHINX_END_DEPENDS
+    # SPHINX_END_DEPENDS
 
-    # #
-    # # Conflicts
-    # #
+    #
+    # Conflicts
+    #
     conflicts('~trilinos lai=trilinos', msg='To use Trilinos as the Linear Algebra Interface you must build it.')
     conflicts('~hypre lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
     conflicts('~petsc lai=petsc', msg='To use PETSc as the Linear Algebra Interface you must build it.')
