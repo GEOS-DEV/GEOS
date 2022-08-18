@@ -595,6 +595,44 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
   }
 
   /**
+   * @brief Function to apply a Dirichlet like boundary condition to a single dof in a system of
+   *        equations.
+   * @param[in] dof The degree of freedom that is to be set.
+   * @param[in] dofRankOffset offset of dof indices on current rank
+   * @param[in] diagonal the "diagonal" of the linear operator.
+   * @param[out] rhs The rhs contribution resulting from the application of the BC.
+   * @param[in] bcValue The target value of the Boundary Condition
+   * @param[in] fieldValue The current value of the variable to be set.
+   *
+   * This function sets \p rhs to the negative product of the scaled value
+   * of the diagonal and the difference between \p bcValue and \p fieldValue.
+   *
+   * @note This function assumes the user is doing a Newton-type nonlinear solve and will
+   * negate the rhs vector upon assembly. Thus, it sets the value to negative of the desired
+   * update for the field. For a linear problem, this may lead to unexpected results.
+   */
+  GEOSX_HOST_DEVICE
+  static inline void
+  SpecifyFieldValue( globalIndex const dof,
+                     globalIndex const dofRankOffset,
+                     arrayView1d< real64 const > const & diagonal,
+                     real64 & rhs,
+                     real64 const bcValue,
+                     real64 const fieldValue )
+  {
+    globalIndex const localRow = dof - dofRankOffset;
+    if( localRow >= 0 && localRow < diagonal.size() )
+    {
+      real64 const diag = diagonal[localRow];
+      rhs = -diag * (bcValue - fieldValue);
+    }
+    else
+    {
+      rhs = 0.0;
+    }
+  }
+
+  /**
    * @brief Function to add some values of a vector.
    * @tparam POLICY the execution policy to use when setting values
    * @param rhs the target right-hand side vector

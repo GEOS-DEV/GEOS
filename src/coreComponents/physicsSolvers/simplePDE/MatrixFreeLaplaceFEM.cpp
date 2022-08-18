@@ -195,25 +195,28 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
                false );
 
   MatrixFreeLaplaceFEMOperator unconstrained_laplace( domain, m_dofManager );
-  // LinearOperatorWithBC< ParallelVector > constrained_laplace( unconstrained_laplace, domain );
-  // m_rhs_with_bc = ApplyBC(m_rhs, bc_info);
+  LinearOperatorWithBC< ParallelVector > constrained_laplace( *this,
+                                                              unconstrained_laplace,
+                                                              domain,
+                                                              m_dofManager,
+                                                              m_fieldName,
+                                                              time_n+dt,
+                                                              LinearOperatorWithBC< ParallelVector >::
+                                                                DiagPolicy::
+                                                                  DiagonalOne );
+  constrained_laplace.computeConstrainedRHS( m_rhs );
   MatrixFreePreconditionerIdentity identity( m_dofManager );
   auto & params = m_linearSolverParameters.get();
   params.isSymmetric = true;
-  CgSolver< ParallelVector > solver( params, unconstrained_laplace, identity );
+  CgSolver< ParallelVector > solver( params, constrained_laplace, identity );
   solver.solve( m_solution, m_rhs );
-  // CgSolver< ParallelVector > solver( params, constrained_laplace, identity );
-  // // TODO: time
-  // solver.solve( m_solution, m_rhs_with_bc );
-  //
   return dt;
-  // return this->explicitStep( time_n, dt, cycleNumber, domain );
 }
 
 real64 MatrixFreeLaplaceFEM::explicitStep( real64 const & time_n,
-                                         real64 const & dt,
-                                         const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                         DomainPartition & domain )
+                                           real64 const & dt,
+                                           const int GEOSX_UNUSED_PARAM( cycleNumber ),
+                                           DomainPartition & domain )
 {
   m_rhs.zero();
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
