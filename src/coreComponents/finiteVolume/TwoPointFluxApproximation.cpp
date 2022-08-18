@@ -1013,14 +1013,15 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
   array1d< real64 > localSumFaceAreas( aquiferNameToAquiferId.size() );
   arrayView1d< real64 > const localSumFaceAreasView = localSumFaceAreas.toView();
 
-  fsManager.apply< FaceManager, AquiferBoundaryCondition >( 0.0,
-                                                            domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                            AquiferBoundaryCondition::catalogName(),
-                                                            [&] ( AquiferBoundaryCondition const & bc,
-                                                                  string const &,
-                                                                  SortedArrayView< localIndex const > const & targetSet,
-                                                                  Group const &,
-                                                                  string const & )
+  fsManager.apply< FaceManager,
+                   AquiferBoundaryCondition >( 0.0,
+                                               domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                               AquiferBoundaryCondition::catalogName(),
+                                               [&] ( AquiferBoundaryCondition const & bc,
+                                                     string const &,
+                                                     SortedArrayView< localIndex const > const & targetSet,
+                                                     FaceManager const &,
+                                                     string const & )
   {
     RAJA::ReduceSum< parallelHostReduce, real64 > targetSetSumFaceAreas( 0.0 );
     forAll< parallelHostPolicy >( targetSet.size(), [=] ( localIndex const i )
@@ -1072,14 +1073,15 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
 
   // Step 3: compute the face area fraction for each connection, and insert into boundary stencil
 
-  fsManager.apply< FaceManager, AquiferBoundaryCondition >( 0.0,
-                                                            domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                            AquiferBoundaryCondition::catalogName(),
-                                                            [&] ( AquiferBoundaryCondition const & bc,
-                                                                  string const & setName,
-                                                                  SortedArrayView< localIndex const > const & targetSet,
-                                                                  Group const &,
-                                                                  string const & )
+  fsManager.apply< FaceManager,
+                   AquiferBoundaryCondition >( 0.0,
+                                               domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                               AquiferBoundaryCondition::catalogName(),
+                                               [&] ( AquiferBoundaryCondition const & bc,
+                                                     string const & setName,
+                                                     SortedArrayView< localIndex const > const & targetSet,
+                                                     FaceManager const &,
+                                                     string const & )
   {
     BoundaryStencil & stencil = getStencil< BoundaryStencil >( mesh, setName );
 

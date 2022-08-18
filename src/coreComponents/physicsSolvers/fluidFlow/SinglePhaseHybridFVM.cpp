@@ -132,7 +132,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
                                     [&] ( FieldSpecificationBase const & bc,
                                           string const &,
                                           SortedArrayView< localIndex const > const &,
-                                          Group &,
+                                          FaceManager &,
                                           string const & )
     {
       GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<

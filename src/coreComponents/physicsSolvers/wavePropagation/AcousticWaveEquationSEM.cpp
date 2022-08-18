@@ -469,7 +469,7 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
                                   [&]( FieldSpecificationBase const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
-                                       Group &,
+                                       FaceManager &,
                                        string const & )
   {
     string const & functionName = bc.getFunctionName();

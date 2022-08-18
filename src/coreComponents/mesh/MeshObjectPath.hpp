@@ -28,42 +28,81 @@ namespace geosx
 class MeshBody;
 class MeshLevel;
 
+/**
+ * @brief Class to hold the path to a collection of mesh objects
+ *
+ */
 class MeshObjectPath
 {
 public:
 
+  /**
+   * @brief The container type that holds the path information
+   * The first key is the name of a MeshBody
+   * The second key is the name of a MeshLevel
+   * The third key is the name of an ElementRegion
+   * The third value is a vector of subregion names
+   */
   using permutationMapType = std::map< string, std::map< string, std::map< string, std::vector< string > > > >;
 
+  /**
+   * @brief Contains enums for the types of objects
+   */
   enum class ObjectTypes : int
   {
-    nodes,
-    edges,
-    faces,
-    elems,
-    invalid
+    nodes,  ///< a NodeManager
+    edges,  ///< an EdgeManager
+    faces,  ///< a FaceManager
+    elems,  ///< a ElementManager
+    invalid ///< an invalide object
   };
 
-
+  /**
+   * @brief Construct a new Mesh Object Path object
+   *
+   * @param path The path string
+   * @param meshBodies  The Group that contains all MeshBody objects
+   */
   MeshObjectPath( string const path,
                   dataRepository::Group const & meshBodies );
 
+  /**
+   * @brief Processes the path string into the permutation container
+   *
+   * @param path The path string
+   * @param meshBodies  The Group that contains all MeshBody objects
+   */
   void processPath( string const path,
                     dataRepository::Group const & meshBodies );
 
+  /**
+   * @brief Get the Object Type object
+   * @return ObjectTypes const&
+   */
   ObjectTypes const & getObjectType() const
   {
     return m_objectType;
   }
 
+  /**
+   * @brief Get the m_pathPermutations object
+   *
+   * @return permutationMapType const&
+   */
   permutationMapType const & pathPermutations() const
   {
     return m_pathPermutations;
   }
 
 
-  // template< typename OBJECT_TYPE >
-  // static bool objectTypeMatch();
-
+  /**
+   * @brief Loop over objects in the path
+   *
+   * @tparam OBJECT_TYPE
+   * @tparam FUNC
+   * @param meshBodies
+   * @param func
+   */
   template< typename OBJECT_TYPE = ObjectManagerBase,
             typename FUNC >
   void forObjectsInPath( dataRepository::Group & meshBodies,
@@ -165,7 +204,10 @@ private:
 
 
 
+  /// The type ObjectType for this path
   ObjectTypes const m_objectType;
+
+  /// The path container
   permutationMapType m_pathPermutations;
 
 };

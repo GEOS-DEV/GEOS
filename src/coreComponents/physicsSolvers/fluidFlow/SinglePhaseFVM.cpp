@@ -591,7 +591,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                     [&] ( FieldSpecificationBase const & fs,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const & targetSet,
-                                          Group & targetGroup,
+                                          FaceManager & targetGroup,
                                           string const & )
     {
       BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
@@ -700,14 +700,15 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
     typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
     typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
 
-    fsManager.apply< FaceManager, AquiferBoundaryCondition >( time + dt,
-                                                              mesh,
-                                                              AquiferBoundaryCondition::catalogName(),
-                                                              [&] ( AquiferBoundaryCondition const & bc,
-                                                                    string const & setName,
-                                                                    SortedArrayView< localIndex const > const &,
-                                                                    Group &,
-                                                                    string const & )
+    fsManager.apply< FaceManager,
+                     AquiferBoundaryCondition >( time + dt,
+                                                 mesh,
+                                                 AquiferBoundaryCondition::catalogName(),
+                                                 [&] ( AquiferBoundaryCondition const & bc,
+                                                       string const & setName,
+                                                       SortedArrayView< localIndex const > const &,
+                                                       FaceManager &,
+                                                       string const & )
     {
       BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
       if( stencil.size() == 0 )

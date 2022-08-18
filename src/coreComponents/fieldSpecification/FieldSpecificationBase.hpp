@@ -108,7 +108,16 @@ public:
   /// deleted move assignement
   FieldSpecificationBase & operator=( FieldSpecificationBase && ) = delete;
 
-
+  /**
+   * @brief Apply this field specification to the discretization
+   *
+   * @tparam OBJECT_TYPE The type of discretization/mesh object that the
+   *   specification is being applied to.
+   * @tparam BC_TYPE The type of BC being applied
+   * @tparam LAMBDA
+   * @param mesh The MeshLevel that the specification is applied to
+   * @param lambda The being executed
+   */
   template< typename OBJECT_TYPE,
             typename BC_TYPE = FieldSpecificationBase,
             typename LAMBDA >
@@ -525,9 +534,18 @@ public:
     m_setNames.emplace_back( setName );
   }
 
-
+  /**
+   * @brief Set the Mesh Object Path object
+   *
+   * @param meshBodies The group containing all the MeshBody objects
+   */
   void setMeshObjectPath( Group const & meshBodies );
 
+  /**
+   * @brief Get the Mesh Object Paths object
+   *
+   * @return reference to const m_meshObjectPaths
+   */
   MeshObjectPath const & getMeshObjectPaths() const
   {
     return *(m_meshObjectPaths.get());

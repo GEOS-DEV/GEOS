@@ -392,7 +392,7 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
                                              [&]( FieldSpecificationBase const & fs,
                                                   string const &,
                                                   SortedArrayView< localIndex const > const & targetSet,
-                                                  Group & subRegion,
+                                                  ElementSubRegionBase & subRegion,
                                                   string const & )
     {
       arrayView1d< integer const > const ghostRank =
@@ -464,7 +464,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
                                                             [&] ( AquiferBoundaryCondition const & bc,
                                                                   string const & setName,
                                                                   SortedArrayView< localIndex const > const &,
-                                                                  Group &,
+                                                                  FaceManager &,
                                                                   string const & )
   {
     BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );

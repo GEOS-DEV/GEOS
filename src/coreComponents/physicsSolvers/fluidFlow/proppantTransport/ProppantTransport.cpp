@@ -692,7 +692,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                                              [&]( FieldSpecificationBase const & fs,
                                                   string const &,
                                                   SortedArrayView< localIndex const > const & lset,
-                                                  Group & subRegion,
+                                                  ElementSubRegionBase & subRegion,
                                                   string const & )
     {
       arrayView1d< globalIndex const > const
@@ -723,7 +723,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                                                [&]( FieldSpecificationBase const &,
                                                     string const & setName,
                                                     SortedArrayView< localIndex const > const &,
-                                                    Group & subRegion,
+                                                    ElementSubRegionBase & subRegion,
                                                     string const & )
       {
 
@@ -740,7 +740,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                                                [&] ( FieldSpecificationBase const & fs,
                                                      string const & setName,
                                                      SortedArrayView< localIndex const > const & targetSet,
-                                                     Group & subRegion,
+                                                     ElementSubRegionBase & subRegion,
                                                      string const & )
       {
 
@@ -781,7 +781,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                                                [&] ( FieldSpecificationBase const &,
                                                      string const &,
                                                      SortedArrayView< localIndex const > const & targetSet,
-                                                     Group & subRegion,
+                                                     ElementSubRegionBase & subRegion,
                                                      string const & )
       {
         arrayView1d< integer const > const ghostRank =

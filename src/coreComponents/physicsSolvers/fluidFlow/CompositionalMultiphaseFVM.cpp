@@ -521,7 +521,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
                                     [&]( FieldSpecificationBase const &,
                                          string const & setName,
                                          SortedArrayView< localIndex const > const &,
-                                         Group &,
+                                         FaceManager &,
                                          string const & )
     {
       // 2.1 Check whether temperature has already been applied to this set
@@ -549,7 +549,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
                                     [&] ( FieldSpecificationBase const & fs,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const &,
-                                          Group &,
+                                          FaceManager &,
                                           string const & )
     {
       // 3.1 Check pressure, temperature, and record composition bc application
@@ -804,7 +804,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                  [&] ( AquiferBoundaryCondition const & bc,
                                                        string const & setName,
                                                        SortedArrayView< localIndex const > const &,
-                                                       Group & subRegion,
+                                                       FaceManager & faceManager,
                                                        string const & )
     {
       BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
@@ -813,7 +813,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
         GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
                                      getName(), time+dt, AquiferBoundaryCondition::catalogName(),
-                                     bc.getName(), setName, subRegion.getName(), numTargetFaces ) );
+                                     bc.getName(), setName, faceManager.getName(), numTargetFaces ) );
       }
 
       if( stencil.size() == 0 )

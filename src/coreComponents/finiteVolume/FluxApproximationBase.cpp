@@ -105,21 +105,22 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
                                       [&] ( FieldSpecificationBase const &,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const &,
-                                            Group const &,
+                                            FaceManager const &,
                                             string const & )
       {
         registerBoundaryStencil( stencilGroup, setName );
       } );
 
       // For each aquifer boundary condition, create a boundary stencil
-      fsManager.apply< FaceManager, AquiferBoundaryCondition >( 0.0,
-                                                                mesh,
-                                                                AquiferBoundaryCondition::catalogName(),
-                                                                [&] ( AquiferBoundaryCondition const &,
-                                                                      string const & setName,
-                                                                      SortedArrayView< localIndex const > const &,
-                                                                      Group const &,
-                                                                      string const & )
+      fsManager.apply< FaceManager,
+                       AquiferBoundaryCondition >( 0.0,
+                                                   mesh,
+                                                   AquiferBoundaryCondition::catalogName(),
+                                                   [&] ( AquiferBoundaryCondition const &,
+                                                         string const & setName,
+                                                         SortedArrayView< localIndex const > const &,
+                                                         FaceManager const &,
+                                                         string const & )
       {
         registerAquiferStencil( stencilGroup, setName );
       } );
@@ -134,7 +135,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
                                       [&] ( FieldSpecificationBase const &,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const & faceSet,
-                                            Group const &,
+                                            FaceManager const &,
                                             string const & )
       {
         computeBoundaryStencil( mesh, setName, faceSet );

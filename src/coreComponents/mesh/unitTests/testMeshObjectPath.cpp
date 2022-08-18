@@ -116,10 +116,10 @@ TEST( testMeshObjectPath, checkObjectTypeConsistency )
   {
     string const path = "nodeManager";
     MeshObjectPath meshObjectPath( path, meshBodies );
-    meshObjectPath.testCheckObjectTypeConsistency< NodeManager >();
-    EXPECT_DEATH_IF_SUPPORTED( meshObjectPath.testCheckObjectTypeConsistency< EdgeManager >(); , ".*" );
-    EXPECT_DEATH_IF_SUPPORTED( meshObjectPath.testCheckObjectTypeConsistency< FaceManager >(); , ".*" );
-    EXPECT_DEATH_IF_SUPPORTED( meshObjectPath.testCheckObjectTypeConsistency< ElementRegionManager >(); , ".*" );
+    EXPECT_TRUE( meshObjectPath.testCheckObjectTypeConsistency< NodeManager >() );
+    EXPECT_FALSE( meshObjectPath.testCheckObjectTypeConsistency< EdgeManager >() );
+    EXPECT_FALSE( meshObjectPath.testCheckObjectTypeConsistency< FaceManager >() );
+    EXPECT_FALSE( meshObjectPath.testCheckObjectTypeConsistency< ElementRegionManager >() );
   }
 }
 

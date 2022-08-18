@@ -823,7 +823,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
                                              [&] ( FieldSpecificationBase const & fs,
                                                    string const & setName,
                                                    SortedArrayView< localIndex const > const &,
-                                                   Group & subRegion,
+                                                   ElementSubRegionBase & subRegion,
                                                    string const & )
     {
       // 2.0. Check pressure and record composition bc application
@@ -862,7 +862,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
                                                [&]( FieldSpecificationBase const &,
                                                     string const & setName,
                                                     SortedArrayView< localIndex const > const &,
-                                                    Group & subRegion,
+                                                    ElementSubRegionBase & subRegion,
                                                     string const & )
       {
         // 1.0. Check whether pressure has already been applied to this set
@@ -941,7 +941,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
                                              [&]( FieldSpecificationBase const & fs,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const & targetSet,
-                                                  Group & subRegion,
+                                                  ElementSubRegionBase & subRegion,
                                                   string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
@@ -965,7 +965,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
                                              [&] ( FieldSpecificationBase const & fs,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
-                                                   Group & subRegion,
+                                                   ElementSubRegionBase & subRegion,
                                                    string const & )
     {
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
@@ -981,7 +981,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
                                              [&]( FieldSpecificationBase const & fs,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const & targetSet,
-                                                  Group & subRegion,
+                                                  ElementSubRegionBase & subRegion,
                                                   string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
@@ -1009,7 +1009,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
                                              [&] ( FieldSpecificationBase const &,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
-                                                   Group & subRegion,
+                                                   ElementSubRegionBase & subRegion,
                                                    string const & )
     {
       arrayView1d< real64 const > const bcPres =

@@ -669,7 +669,7 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                                     [&]( FieldSpecificationBase const & bc,
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
-                                         Group & targetGroup,
+                                         NodeManager & targetGroup,
                                          string const fieldName )
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
@@ -1044,7 +1044,7 @@ SolidMechanicsLagrangianFEM::
                                     [&]( FieldSpecificationBase const & bc,
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
-                                         Group & targetGroup,
+                                         NodeManager & targetGroup,
                                          string const & GEOSX_UNUSED_PARAM( fieldName ) )
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationAdd,

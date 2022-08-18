@@ -1264,7 +1264,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                              [&]( FieldSpecificationBase const & fs,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const & targetSet,
-                                                  Group & subRegion,
+                                                  ElementSubRegionBase & subRegion,
                                                   string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
@@ -1375,7 +1375,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
                                              [&]( FieldSpecificationBase const &,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const &,
-                                                  Group & subRegion,
+                                                  ElementSubRegionBase & subRegion,
                                                   string const & )
     {
       // Check whether pressure has already been applied to this set
@@ -1400,7 +1400,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
                                                [&]( FieldSpecificationBase const &,
                                                     string const & setName,
                                                     SortedArrayView< localIndex const > const &,
-                                                    Group & subRegion,
+                                                    ElementSubRegionBase & subRegion,
                                                     string const & )
       {
         string const & subRegionName = subRegion.getName();
@@ -1528,7 +1528,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
                                              [&]( FieldSpecificationBase const & fs,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const & targetSet,
-                                                  Group & subRegion,
+                                                  ElementSubRegionBase & subRegion,
                                                   string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
