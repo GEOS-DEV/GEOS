@@ -35,12 +35,12 @@ namespace constitutive
  * @tparam VISC_EAT type of viscosity exponent approximation
  */
 template< ExponentApproximationType DENS_EAT, ExponentApproximationType VISC_EAT >
-class CompressibleSinglePhaseUpdate final : public SingleFluidBaseUpdate
+class CompressibleSinglePhaseUpdate : public SingleFluidBaseUpdate
 {
 public:
 
-  using DensRelationType = ExponentialRelation< real64, DENS_EAT >;
-  using ViscRelationType = ExponentialRelation< real64, VISC_EAT >;
+  using DensRelationType  = ExponentialRelation< real64, DENS_EAT >;
+  using ViscRelationType  = ExponentialRelation< real64, VISC_EAT >;
 
   CompressibleSinglePhaseUpdate( DensRelationType const & densRelation,
                                  ViscRelationType const & viscRelation,
@@ -92,6 +92,28 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
+  virtual void compute( real64 const pressure,
+                        real64 const GEOSX_UNUSED_PARAM( temperature ),
+                        real64 & density,
+                        real64 & dDensity_dPressure,
+                        real64 & GEOSX_UNUSED_PARAM( dDensity_dTemperature ),
+                        real64 & viscosity,
+                        real64 & dViscosity_dPressure,
+                        real64 & GEOSX_UNUSED_PARAM( dViscosity_dTemperature ),
+                        real64 & GEOSX_UNUSED_PARAM( internalEnergy ),
+                        real64 & GEOSX_UNUSED_PARAM( dInternalEnergy_dPressure ),
+                        real64 & GEOSX_UNUSED_PARAM( dInternalEnergy_dTemperature ),
+                        real64 & GEOSX_UNUSED_PARAM( enthalpy ),
+                        real64 & GEOSX_UNUSED_PARAM( dEnthalpy_dPressure ),
+                        real64 & GEOSX_UNUSED_PARAM( dEnthalpy_dTemperature ) ) const override
+  {
+    m_densRelation.compute( pressure, density, dDensity_dPressure );
+    m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
+  }
+
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure ) const override
@@ -103,10 +125,28 @@ public:
              m_dVisc_dPres[k][q] );
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void update( localIndex const k,
+                       localIndex const q,
+                       real64 const pressure,
+                       real64 const GEOSX_UNUSED_PARAM( temperature ) ) const override
+  {
+    compute( pressure,
+             m_density[k][q],
+             m_dDens_dPres[k][q],
+             m_viscosity[k][q],
+             m_dVisc_dPres[k][q] );
+  }
+
 private:
 
+  /// Relationship between the fluid density and pressure
   DensRelationType m_densRelation;
+
+  /// Relationship between the fluid viscosity and pressure
   ViscRelationType m_viscRelation;
+
 };
 
 class CompressibleSinglePhaseFluid : public SingleFluidBase
@@ -153,8 +193,6 @@ protected:
 
   virtual void postProcessInput() override;
 
-private:
-
   /// default density value
   real64 m_defaultDensity;
 
@@ -176,11 +214,12 @@ private:
   /// reference viscosity parameter
   real64 m_referenceViscosity;
 
-  /// type of density model (linear, quadratic, exponential)
+  /// type of density model in terms of pressure
   ExponentApproximationType m_densityModelType;
 
-  /// type of viscosity model (linear, quadratic, exponential)
+  /// type of viscosity model
   ExponentApproximationType m_viscosityModelType;
+
 };
 
 } /* namespace constitutive */

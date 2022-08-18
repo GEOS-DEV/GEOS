@@ -86,6 +86,7 @@ public:
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
+    static constexpr char const * minTimeString() { return "minTime"; }
     static constexpr char const * maxTimeString() { return "maxTime"; }
     static constexpr char const * maxCycleString() { return "maxCycle"; }
 
@@ -97,6 +98,7 @@ public:
     dataRepository::ViewKey time = { "time" };
     dataRepository::ViewKey dt = { "dt" };
     dataRepository::ViewKey cycle = { "cycle" };
+    dataRepository::ViewKey minTime = { "minTime" };
     dataRepository::ViewKey maxTime = { "maxTime" };
     dataRepository::ViewKey maxCycle = { "maxCycle" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
@@ -111,6 +113,10 @@ public:
   static CatalogInterface::CatalogType & getCatalog();
 
 private:
+
+  /// Min time for a simulation
+  real64 m_minTime;
+
   /// Max time for a simulation
   real64 m_maxTime;
 

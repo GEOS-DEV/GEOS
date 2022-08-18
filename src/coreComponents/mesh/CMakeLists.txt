@@ -24,6 +24,7 @@ set( mesh_headers
      ObjectManagerBase.hpp
      Perforation.hpp
      PerforationData.hpp
+     PerforationExtrinsicData.hpp	     
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
@@ -94,6 +95,7 @@ set( mesh_sources
      generators/InternalWellboreGenerator.cpp
      generators/MeshGeneratorBase.cpp
      generators/ParMETISInterface.cpp
+     generators/PTScotchInterface.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp
      mpiCommunications/MPI_iCommData.cpp
@@ -131,6 +133,12 @@ if( ENABLE_VTK )
     if( ENABLE_MPI )
       set( dependencyList ${dependencyList} VTK::IOParallelXML VTK::ParallelMPI )
     endif()
+endif()
+
+if( ENABLE_SCOTCH )
+    set( mesh_headers ${mesh_headers} generators/PTScotchInterface.hpp )
+    set( mesh_sources ${mesh_sources} generators/PTScotchInterface.cpp )
+    set( dependencyList ${dependencyList} ptscotch )
 endif()
 
 blt_add_library( NAME       mesh
