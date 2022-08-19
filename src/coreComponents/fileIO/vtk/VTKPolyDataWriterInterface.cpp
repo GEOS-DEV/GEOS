@@ -1063,6 +1063,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
 
   string const stepSubFolder = joinPath( m_outputName, getCycleSubFolder( cycle ) );
   string const vtmName = stepSubFolder + ".vtm";
+  VTKVTMWriter vtmWriter( joinPath( m_outputDir, vtmName ) );
   int const rank = MpiWrapper::commRank();
   if( rank == 0 )
   {
@@ -1098,7 +1099,6 @@ void VTKPolyDataWriterInterface::write( real64 const time,
     writeParticleRegions( time, cycle, particleManager );
     if( rank == 0 )
     {
-      VTKVTMWriter vtmWriter( joinPath( m_outputDir, vtmName ) );
       writeVtmFile( cycle, meshBodyName, elemManager, particleManager, vtmWriter );
     }
   }
