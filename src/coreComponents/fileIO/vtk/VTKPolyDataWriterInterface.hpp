@@ -253,7 +253,7 @@ private:
                      string const & meshBodyName,
                      ElementRegionManager const & elemManager,
                      ParticleManager const & particleManager,
-                     VTKVTMWriter const & vtmWriter );
+                     VTKVTMWriter const & vtmWriter ) const;
   /**
    * @brief Write all the fields associated to the nodes of \p nodeManager if their plotlevel is <= m_plotLevel
    * @param[in] pointData a VTK object containing all the fields associated with the nodes
@@ -276,7 +276,7 @@ private:
   //Cameron Crook
   template< class SUBREGION >
   void writeParticleFields( ParticleRegionBase const & region,
-                            vtkCellData & cellData ) const;
+                            vtkCellData * cellData ) const;
 
   /**
    * @brief Writes an unstructured grid
