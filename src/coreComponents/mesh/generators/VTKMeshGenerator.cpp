@@ -403,20 +403,6 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
 }
 
 /**
- * @brief Checks if the given array if Ids is valid or not  
- * @param[in] array the array to be checked 
- * @param[in] size the expected dimension of the array 
- */
-bool checkIdArray( const vtkDataArray * const array, 
-		   const int size )
-{
-  return array != nullptr
-	 && array->GetDataType() == VTK_ID_TYPE
-	 && array->GetNumberOfComponents() == 1
-	 && array->GetNumberOfTuples() == size; 
-}
-
-/**
  * @brief Generate global point/cell IDs and redistribute the mesh among MPI ranks.
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
  * @param[in] comm the MPI communicator
@@ -445,11 +431,11 @@ redistributeMesh( vtkDataSet & loadedMesh,
     mesh = &loadedMesh;
     vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
     vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
-    GEOSX_ERROR_IF( !checkIdArray( globalCellId, mesh->GetNumberOfPoints() ), 
-	            "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" ); 
-    GEOSX_ERROR_IF( !checkIdArray( globalPointId, mesh->GetNumberOfCells() ), 
-	            "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" ); 
-    
+    GEOSX_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != mesh->GetNumberOfCells(),
+                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+    GEOSX_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != mesh->GetNumberOfPoints(),
+                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+
     GEOSX_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
   }
   else
