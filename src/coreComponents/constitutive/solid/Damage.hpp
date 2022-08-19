@@ -124,7 +124,10 @@ public:
   {
     real64 pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
 
-    return (1 - pf)*(1 - pf);
+    // Set a lower bound tolerance for the degradation
+    real64 eps = 1e-4;
+
+    return ((1 - eps)*(1 - pf)*(1 - pf) + eps);
   }
 
 

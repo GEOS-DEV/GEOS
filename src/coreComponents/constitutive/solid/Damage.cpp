@@ -133,7 +133,7 @@ void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
   m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
   m_volStrain.resize( 0, numConstitutivePointsPerParentIndex );
   m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex );
-  m_biotCoefficient.resize( parent.size() ); 
+  m_biotCoefficient.resize( parent.size() );
   BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
