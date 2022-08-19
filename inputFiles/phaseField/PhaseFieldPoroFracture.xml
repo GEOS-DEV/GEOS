@@ -24,7 +24,7 @@
       damageFlag="1">
       <NonlinearSolverParameters
         newtonMaxIter="100"
-        newtonTol="1.0e-4"/>
+        newtonTol="1.0e-6"/>
       <LinearSolverParameters
         solverType="direct"
         directParallel="0"
@@ -36,7 +36,7 @@
       discretization="FE1"
       timeIntegrationOption="SteadyState"
       fieldName="Damage"
-      localDissipation="Linear"
+      localDissipation="Quadratic"
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
@@ -61,19 +61,15 @@
   </Solvers>
 
   <Mesh>
-    <InternalWellbore
+    <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      radius="{ 13, 100.0 }"
-      theta="{ 0, 180 }"
-      zCoords="{ 0, 200 }"
-      nr="{ 100 }"
-      nt="{ 100 }"
-      nz="{ 4 }"
-      trajectory="{ { 0.0, 0.0, -1.0 },
-                    { 0.0, 0.0, 1.0 } }"
-      autoSpaceRadialElems="{ 1 }"
-      useCartesianOuterBoundary="0"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 10 }"
+      zCoords="{ 0, 0.1 }"
+      nx="{ 200 }"
+      ny="{ 200 }"
+      nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -126,133 +122,118 @@
     <DamageElasticIsotropic
       name="rockSolid"
       defaultDensity="2700"
-      defaultBulkModulus="4.4144e3"
-      defaultShearModulus="4.3363e3"
-      lengthScale="1.0"
-      criticalFractureEnergy="9.1e-2"
+      defaultBulkModulus="5e10"
+      defaultShearModulus="2.308e10"
+      lengthScale="1e-1"
+      criticalFractureEnergy="5e2"
       criticalStrainEnergy="0"
-      extDrivingForceSwitch="True"
-      tensileStrength="27.0"
-      compressiveStrength="77.0"
-      deltaCoefficient="0.0"/>
+      extDrivingForceSwitch="False"/>
 
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="1.0e21"
-      defaultReferencePorosity="0.375"/>
+      grainBulkModulus="1.0e28"
+      defaultReferencePorosity="0.05"/>
 
     <DamagePermeability
       name="rockPerm"
-      bulkPermeability="1.0e-12"
-      fracturePermeability="1.0e-9"/>
+      bulkPermeability="1.0e-15"
+      fracturePermeability="1.0e-5"/>
 
     <CompressibleSinglePhaseFluid
       name="water"
-      defaultDensity="1e-9"
-      defaultViscosity="1.0e-9"
+      defaultDensity="1000"
+      defaultViscosity="1.0e-3"
       referencePressure="0.000"
-      referenceDensity="1e-9"
-      compressibility="4.4e-4"
+      referenceDensity="1000"
+      compressibility="4.4e-10"
       referenceViscosity="1.0e-9"
       viscosibility="0.0"/>
   </Constitutive>
 
-  <FieldSpecifications>
-    <FieldSpecification 
-      name="Sh"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="rockSolid_stress"
-      component="0"
-      scale="-11.0"/>
-
-    <FieldSpecification 
-      name="SH"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="rockSolid_stress"
-      component="1"
-      scale="-14.0"/>
-
-    <FieldSpecification 
-      name="Sv"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="rockSolid_stress"
-      component="2"
-      scale="-17.0"/>
-    
+  <FieldSpecifications>    
     <FieldSpecification 
       name="initialPressure"
       initialCondition="1"
       setNames="{all}"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="pressure"
+      scale="0.0"/>
+
+    <FieldSpecification 
+      name="initialDamage"
+      setNames="{ fracture }"
+      objectPath="nodeManager"
+      fieldName="Damage"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="fixedY"
+      fieldName="TotalDisplacement"
+      component="1"
+      objectPath="nodeManager"
       scale="0.0"
-    />
+      setNames="{ ypos, yneg }"/>
+
+    <FieldSpecification
+      name="fixedX"
+      fieldName="TotalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ xpos, xneg }"/>
+
+    <FieldSpecification
+      name="fixedZ"
+      fieldName="TotalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ zpos, zneg }"/> 
 
     <FieldSpecification 
-      name="xconstraint"    
-      objectPath="nodeManager" 
-      fieldName="TotalDisplacement" 
-      component="0" 
-      scale="0.0" 
-      setNames="{xneg, xpos}"/>
-
-    <FieldSpecification 
-      name="yconstraint"    
-      objectPath="nodeManager" 
-      fieldName="TotalDisplacement" 
-      component="1" 
-      scale="0.0" 
-      setNames="{tneg, tpos, ypos}"/>
-
-    <FieldSpecification 
-      name="zconstraint" 
-      objectPath="nodeManager" 
-      fieldName="TotalDisplacement" 
-      component="2" 
-      scale="0.0" 
-      setNames="{zneg, zpos}"
-    />  
-
-    <Traction 
-      name="InnerMechanicalLoad"
-      setNames="{ rneg }"
-      objectPath="faceManager"
-      scale="-2"
-      tractionType="normal"
-      functionName="timeFunction"     
-    />
-
-    <FieldSpecification 
-      name="InnerFluidLoad"
-      setNames="{ rneg }"
+      name="outerPressure"
+      setNames="{ xpos, xneg, ypos, yneg }"
       objectPath="faceManager"
       fieldName="pressure"
-      scale="2"
-      functionName="timeFunction"   
+      scale="0.0" 
     />
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/Region1/cb1"
+      scale="-0.01"
+      component="0"
+      setNames="{ source }"
+      functionName="timeFunction"/>
   </FieldSpecifications>
 
   <Functions>
     <TableFunction
       name="timeFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0, 1 }"
-      values="{ 0.0, 40.0 }"/>
+      coordinates="{ 0, 0.02, 1 }"
+      values="{ 0.0, 0.0, 1.0 }"/>
   </Functions>
 
   <Outputs>
     <VTK
       name="WellboreVTKOutput"
-      plotFileRoot="wellborePoroNucleation_debug"/>
+      plotFileRoot="phaseFieldPoro_debug"/>
 
     <Restart
       name="restartOutput"/>
   </Outputs>
+
+  <Geometry>
+    <Box
+      name="fracture"
+      xMin="{ 4.599, 4.975, -0.001 }"
+      xMax="{ 5.401, 5.025,  0.101 }"/>
+
+    <Box
+      name="source"
+      xMin="{ 4.899, 4.899, -0.001 }"
+      xMax="{ 5.101, 5.101,  0.101 }"/>
+  </Geometry>
 
 </Problem>
