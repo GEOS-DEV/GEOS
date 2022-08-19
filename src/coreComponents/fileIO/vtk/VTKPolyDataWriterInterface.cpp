@@ -144,13 +144,14 @@ getVtkPoints( NodeManager const & nodeManager,
 vtkSmartPointer< vtkPoints >
 getVtkPoints( ParticleRegion const & particleRegion )
 {
-  vtkSmartPointer< vtkPoints > points = vtkPoints::New();
-  points->SetNumberOfPoints( 8*particleRegion.size() );
+  localIndex const numCorners = 8*particleRegion.size(); // Each particle has 8 corners, for now
+  auto points = vtkSmartPointer< vtkPoints >::New();
+  points->SetNumberOfPoints( numCorners );
   array2d< real64 > const coord = particleRegion.getParticleCorners();
-  for( localIndex v = 0; v < 8*particleRegion.size(); v++ )
+  forAll< parallelHostPolicy >( numCorners, [=, pts = points.GetPointer()]( localIndex const k )
   {
-    points->SetPoint( v, coord[v][0], coord[v][1], coord[v][2] );
-  }
+    pts->SetPoint( k, coord[k][0], coord[k][1], coord[k][2] );
+  } );
   return points;
 }
 
@@ -796,7 +797,7 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
 //In Progress: Cameron Crook (crook5)
 template< class SUBREGION >
 void VTKPolyDataWriterInterface::writeParticleFields( ParticleRegionBase const & region,
-                                                     vtkCellData & cellData ) const
+                                                     vtkCellData * cellData ) const
 {
   std::unordered_set< string > materialFields;
   conduit::Node fakeRoot;
@@ -812,10 +813,10 @@ void VTKPolyDataWriterInterface::writeParticleFields( ParticleRegionBase const &
     {
       material.forWrappers( [&]( WrapperBase const & wrapper )
       {
-        if( wrapper.getPlotLevel() <= m_plotLevel )
+        string const fieldName = constitutive::ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
+        if( outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(), m_plotLevel, fieldName, m_fieldNames, m_onlyPlotSpecifiedFieldNames ) )
         {
-          string const fieldName = constitutive::ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
-          subReg.registerWrapper( wrapper.averageOverSecondDim( fieldName, subReg ) ); //TO DO (crook5): get rid of averaging and report individual values
+          subReg.registerWrapper( wrapper.averageOverSecondDim( fieldName, subReg ) );
           materialFields.insert( fieldName );
         }
       } );
@@ -835,7 +836,7 @@ void VTKPolyDataWriterInterface::writeParticleFields( ParticleRegionBase const &
   {
     for( auto const & wrapperIter : subRegion.wrappers() )
     {
-      if( wrapperIter.second->getPlotLevel() <= m_plotLevel && materialFields.count( wrapperIter.first ) == 0 )
+      if( isFieldPlotEnabled( *wrapperIter.second ) && materialFields.count( wrapperIter.first ) == 0 )
       {
         regularFields.insert( wrapperIter.first );
       }
@@ -940,14 +941,16 @@ void VTKPolyDataWriterInterface::writeParticleRegions( real64 const time,
 {
   particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion const & region )
   {
-    vtkSmartPointer< vtkUnstructuredGrid > const ug = vtkUnstructuredGrid::New();
-    auto VTKPoints = getVtkPoints( region );
-    ug->SetPoints( VTKPoints );
     auto VTKCells = getVtkCells( region );
+    auto VTKPoints = getVtkPoints( region );
+
+    auto const ug = vtkSmartPointer< vtkUnstructuredGrid >::New();
+    ug->SetPoints( VTKPoints );
     ug->SetCells( VTKCells.first.data(), VTKCells.second );
-    writeTimestamp( *ug, time );
-    writeParticleFields< ParticleSubRegion >( region, *ug->GetCellData() );
-    writeUnstructuredGrid( cycle, region.getName(), *ug );
+
+    writeTimestamp( ug.GetPointer(), time );
+    writeParticleFields< ParticleSubRegion >( region, ug->GetCellData() );
+    writeUnstructuredGrid( cycle, region.getName(), ug.GetPointer() );
   } );
 }
 
@@ -1060,14 +1063,11 @@ void VTKPolyDataWriterInterface::write( real64 const time,
 
   string const stepSubFolder = joinPath( m_outputName, getCycleSubFolder( cycle ) );
   string const vtmName = stepSubFolder + ".vtm";
-  VTKVTMWriter vtmWriter( joinPath( m_outputDir, vtmName ) );
   int const rank = MpiWrapper::commRank();
   if( rank == 0 )
   {
-    if( m_previousCycle == -1 )
-    {
-      makeDirsForPath( joinPath( m_outputDir, m_outputName ) );
-    }
+    makeDirsForPath( joinPath( m_outputDir, m_outputName ) );
+
     makeDirectory( joinPath( m_outputDir, stepSubFolder ) );
   }
   MpiWrapper::barrier( MPI_COMM_GEOSX );
@@ -1082,12 +1082,23 @@ void VTKPolyDataWriterInterface::write( real64 const time,
     ParticleManager const & particleManager = meshBody.getMeshLevel( 0 ).getParticleManager();
     NodeManager const & nodeManager = meshBody.getMeshLevel( 0 ).getNodeManager();
     EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshBody.getMeshLevel( 0 ).getEmbSurfNodeManager();
+
+    if( m_requireFieldRegistrationCheck && !m_fieldNames.empty() )
+    {
+      outputUtilities::checkFieldRegistration( elemManager,
+                                               nodeManager,
+                                               m_fieldNames,
+                                               "VTKOutput" );
+      m_requireFieldRegistrationCheck = false;
+    }
+
     writeCellElementRegions( time, cycle, elemManager, nodeManager );
     writeWellElementRegions( time, cycle, elemManager, nodeManager );
     writeSurfaceElementRegions( time, cycle, elemManager, nodeManager, embSurfNodeManager );
     writeParticleRegions( time, cycle, particleManager );
-    if(rank == 0 )
+    if( rank == 0 )
     {
+      VTKVTMWriter vtmWriter( joinPath( m_outputDir, vtmName ) );
       writeVtmFile( cycle, meshBodyName, elemManager, particleManager, vtmWriter );
     }
   }
@@ -1101,60 +1112,19 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   m_previousCycle = cycle;
 }
 
-/* This is the version of this function from 'develop'
-void VTKPolyDataWriterInterface::write( real64 const time,
-                                        integer const cycle,
-                                        DomainPartition const & domain )
+void VTKPolyDataWriterInterface::clearData()
 {
-  // This guard prevents crashes observed on MacOS due to a floating point exception
-  // triggered inside VTK by a progress indicator
-#if defined(__APPLE__) && defined(__MACH__)
-  LvArray::system::FloatingPointExceptionGuard guard;
-#endif
-
-  string const stepSubFolder = joinPath( m_outputName, getCycleSubFolder( cycle ) );
-  int const rank = MpiWrapper::commRank();
-  if( rank == 0 )
-  {
-    makeDirsForPath( joinPath( m_outputDir, m_outputName ) );
-
-    makeDirectory( joinPath( m_outputDir, stepSubFolder ) );
-  }
-  MpiWrapper::barrier( MPI_COMM_GEOSX );
-
-  ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-  NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
-  EmbeddedSurfaceNodeManager const & embSurfNodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getEmbSurfNodeManager();
-
-  if( m_requireFieldRegistrationCheck && !m_fieldNames.empty() )
-  {
-    outputUtilities::checkFieldRegistration( elemManager,
-                                             nodeManager,
-                                             m_fieldNames,
-                                             "VTKOutput" );
-    m_requireFieldRegistrationCheck = false;
-  }
-
-  writeCellElementRegions( time, cycle, elemManager, nodeManager );
-  writeWellElementRegions( time, cycle, elemManager, nodeManager );
-  writeSurfaceElementRegions( time, cycle, elemManager, nodeManager, embSurfNodeManager );
-
-  if( rank == 0 )
-  {
-    string const vtmName = stepSubFolder + ".vtm";
-    VTKVTMWriter vtmWriter( joinPath( m_outputDir, vtmName ) );
-    writeVtmFile( cycle, elemManager, vtmWriter );
-
-    if( cycle != m_previousCycle )
-    {
-      m_pvd.addData( time, vtmName );
-      m_pvd.save();
-    }
-  }
-
-  m_previousCycle = cycle;
+  m_pvd.reinitData();
 }
-*/
+
+bool VTKPolyDataWriterInterface::isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const
+{
+  return outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(),
+                                              m_plotLevel,
+                                              wrapper.getName(),
+                                              m_fieldNames,
+                                              m_onlyPlotSpecifiedFieldNames );
+}
 
 } // namespace vtk
 } // namespace geosx
