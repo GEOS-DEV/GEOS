@@ -31,12 +31,12 @@ class MatrixFreeLaplaceFEMOperator : public LinearOperator< ParallelVector >
 {
 private:
   dataRepository::Group & m_meshBodies;
-  map< string, array1d< string > > m_meshTargets;
+  map< string, array1d< string > > & m_meshTargets;
   DofManager & m_dofManager;
 
 public:
-  MatrixFreeLaplaceFEMOperator( DomainPartition & domain, DofManager & dofManager );
-  MatrixFreeLaplaceFEMOperator( dataRepository::Group & meshBodies, DofManager & dofManager );
+  MatrixFreeLaplaceFEMOperator( DomainPartition & domain, map< string, array1d< string > > & meshTargets, DofManager & dofManager );
+  MatrixFreeLaplaceFEMOperator( dataRepository::Group & meshBodies, map< string, array1d< string > > & meshTargets, DofManager & dofManager );
 
   virtual void apply( ParallelVector const & src, ParallelVector & dst ) const;
 
@@ -67,7 +67,7 @@ public:
                         DomainPartition & domain,
                         DofManager const & dofManager,
                         string fieldName,
-                        real64 const time = 0.0,
+                        real64 const time,
                         DiagPolicy diagPolicy = DiagPolicy::DiagonalOne ):
     m_unconstrained_op( unconstrained_op ),
     m_domain( domain ),
@@ -95,7 +95,7 @@ public:
         // TODO: compute diagonal
         break;
     }
-    // TODO: compute m_constrainedDofIndices
+    // compute m_constrainedDofIndices and m_rhsContributions
     FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
     globalIndex totalSize = 0;
     solver.forMeshTargets( m_domain.getMeshBodies(), [&]( string const &,
@@ -148,13 +148,14 @@ public:
                                                                       targetGroup,
                                                                       dofMap,
                                                                       m_dofManager.rankOffset(),
-                                                                      m_diagonal,
+                                                                      m_diagonal.toViewConst(),
                                                                       dof,
                                                                       rhsContribution,
                                                                       field );
 
-        m_constrainedDofIndices.insert( m_constrainedDofIndices.size(),
-                                        dofArray.begin(), dofArray.end() );
+        dofArray.move( LvArray::MemorySpace::host, false );
+        rhsContribution.move( LvArray::MemorySpace::host, false );
+        m_constrainedDofIndices.insert( m_constrainedDofIndices.size(), dofArray.begin(), dofArray.end() );
         m_rhsContributions.insert( m_rhsContributions.size(), rhsContribution.begin(), rhsContribution.end() );
       } );
     } );

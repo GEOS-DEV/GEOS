@@ -36,12 +36,12 @@ namespace keys
 
 using namespace dataRepository;
 
-MatrixFreeLaplaceFEMOperator::MatrixFreeLaplaceFEMOperator( DomainPartition & domain, DofManager & dofManager )
-: m_meshBodies( domain.getMeshBodies() ), m_dofManager( dofManager )
+MatrixFreeLaplaceFEMOperator::MatrixFreeLaplaceFEMOperator( DomainPartition & domain, map< string, array1d< string > > & meshTargets, DofManager & dofManager )
+: m_meshBodies( domain.getMeshBodies() ), m_meshTargets( meshTargets ), m_dofManager( dofManager )
 { }
 
-MatrixFreeLaplaceFEMOperator::MatrixFreeLaplaceFEMOperator( dataRepository::Group & meshBodies, DofManager & dofManager )
-: m_meshBodies( meshBodies ), m_dofManager( dofManager )
+MatrixFreeLaplaceFEMOperator::MatrixFreeLaplaceFEMOperator( dataRepository::Group & meshBodies, map< string, array1d< string > > & meshTargets, DofManager & dofManager )
+: m_meshBodies( meshBodies ), m_meshTargets( meshTargets ), m_dofManager( dofManager )
 { }
 
 void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVector & dst ) const
