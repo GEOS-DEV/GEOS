@@ -194,7 +194,7 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
                m_solution,
                false );
 
-  MatrixFreeLaplaceFEMOperator unconstrained_laplace( domain, m_dofManager );
+  MatrixFreeLaplaceFEMOperator unconstrained_laplace( domain, m_meshTargets, m_dofManager );
   LinearOperatorWithBC< ParallelVector > constrained_laplace( *this,
                                                               unconstrained_laplace,
                                                               domain,
