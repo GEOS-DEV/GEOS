@@ -77,16 +77,10 @@ public:
 
   /**
    * @brief Function to apply a value directly to a field variable.
-   * @tparam LAMBDA The type of the lambda function
+   * @tparam POLICY the policy for kernels launched inside this function.
    * @param time The time at which the value will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
    * @param mesh The MeshLevel object.
-   * @param fieldPath The path to the object that contains the variable described in fieldName. This
-   *                  path need not be the complete path, but rather the check that is performed is
-   *                  that the fieldPath specified is contained in the string that specifies the
-   *                  path from the actual field specification. In other words, the fieldPath variable
-   *                  can be a substring of the path specified, and that will be
-   *                  sufficient to proceed with the application of the.
    * @param fieldName The name of the field/variable that the value will be applied to.
    *                  It may not be necessary that this name is in the data repository, as the user
    *                  supplied lambda may apply whatever it condition it would like. However, this
@@ -115,16 +109,11 @@ public:
   /**
    * @brief Function to apply a value directly to a field variable and applies a lambda
    *        for any post operations that are needed.
+   * @tparam POLICY The execution policy for kernels launched in this function.
    * @tparam LAMBDA The type of the lambda function
    * @param time The time at which the field will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
    * @param mesh The MeshLevel object.
-   * @param fieldPath The path to the object that contains the variable described in fieldName. This
-   *                  path need not be the complete path, but rather the check that is performed is
-   *                  that the fieldPath specified is contained in the string that specifies the
-   *                  path from the actual field specification. In other words, the fieldPath variable
-   *                  can be a substring of the path specified , and that will be
-   *                  sufficient to proceed with the application of the value.
    * @param fieldName The name of the field/variable that the value will be applied to.
    *                  It may not be necessary that this name is in the data repository, as the user
    *                  supplied lambda may apply whatever it condition it would like. However, this
@@ -150,17 +139,12 @@ public:
   /**
    * @brief Function to apply a value directly to a field variable and applies a lambda
    *        for any post operations that are needed.
+   * @tparam POLICY The execution policy for kernels launched in this function.
    * @tparam PRELAMBDA The type of the lambda function to be called before the applyFieldValue
    * @tparam POSTLAMBDA The type of the lambda function to be called after the applyFieldValue
    * @param time The time at which the field will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
    * @param mesh The MeshLevel objectt.
-   * @param fieldPath The path to the object that contains the variable described in fieldName. This
-   *                  path need not be the complete path, but rather the check that is performed is
-   *                  that the fieldPath specified is contained in the string that specifies the
-   *                  path from the actual field specification. In other words, the fieldPath variable
-   *                  can be a substring of the path specified , and that will be
-   *                  sufficient to proceed with the application of the value.
    * @param fieldName The name of the field/variable that the value will be applied to.
    *                  It may not be necessary that this name is in the data repository, as the user
    *                  supplied lambda may apply whatever it condition it would like. However, this
@@ -204,12 +188,6 @@ public:
    * @param time The time at which the field will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
    * @param mesh The MeshLevel object.
-   * @param fieldPath The path to the object that contains the variable described in fieldName. This
-   *                  path need not be the complete path, but rather the check that is performed is
-   *                  that the fieldPath specified is contained in the string that specifies the
-   *                  path from the actual field specification. In other words, the fieldPath variable
-   *                  can be a substring of the path specified, and that will be
-   *                  sufficient to proceed with the application of the value to the field.
    * @param fieldName The name of the field/variable that the value will be applied to.
    *                  It may not be necessary that this name is in the data repository, as the user
    *                  supplied lambda may apply whatever it condition it would like. However, this

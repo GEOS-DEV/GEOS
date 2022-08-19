@@ -96,24 +96,46 @@ public:
 
 
   /**
-   * @brief Loop over objects in the path
+   * @brief LLoop over objects in the path and execute a callback function.
    *
-   * @tparam OBJECT_TYPE
-   * @tparam FUNC
-   * @param meshBodies
-   * @param func
+   * @tparam OBJECT_TYPE The type of object to loop over
+   * @tparam FUNC The type of function that is executed on the OBJECT_TYPE. Takes a
+   *  single OBJECT_TYPE as an argument.
+   *  func( dynamic_cast< OBJECT_TYPE & >(object) );
+   * @param meshBodies Group that contains the MeshBody objects.
+   * @param func The function that is executed on the OBJECT_TYPE
    */
-  template< typename OBJECT_TYPE = ObjectManagerBase,
+  template< typename OBJECT_TYPE = dataRepository::Group,
             typename FUNC >
   void forObjectsInPath( dataRepository::Group & meshBodies,
                          FUNC && func ) const;
 
-  template< typename OBJECT_TYPE = ObjectManagerBase,
+  /**
+   * @brief Loop over objects in the path and execute a callback function.
+   *
+   * @tparam OBJECT_TYPE The type of object to loop over
+   * @tparam FUNC The type of function that is executed on the OBJECT_TYPE. Takes a
+   *  single OBJECT_TYPE as an argument.
+   *  func( dynamic_cast< OBJECT_TYPE & >(object) );
+   * @param meshBodies Group that contains the MeshBody objects.
+   * @param func The function that is executed on the OBJECT_TYPE
+   */
+  template< typename OBJECT_TYPE = dataRepository::Group,
             typename FUNC >
   void forObjectsInPath( dataRepository::Group const & meshBodies,
                          FUNC && func ) const;
 
-  template< typename OBJECT_TYPE = ObjectManagerBase,
+  /**
+   * @brief Loop over objects in the path and execute a callback function.
+   *
+   * @tparam OBJECT_TYPE The type of object to loop over
+   * @tparam FUNC The type of function that is executed on the OBJECT_TYPE. Takes a
+   *  single OBJECT_TYPE as an argument.
+   *  func( dynamic_cast< OBJECT_TYPE & >(object) );
+   * @param level The MeshLevel that contains OBJECT_TYPE to be executed on.
+   * @param func The function that is executed on the OBJECT_TYPE
+   */
+  template< typename OBJECT_TYPE = dataRepository::Group,
             typename FUNC >
   void forObjectsInPath( MeshLevel & level, FUNC && func ) const;
 
@@ -219,6 +241,9 @@ private:
 namespace geosx
 {
 
+/**
+ * @brief Create conversion functions for ObjectTypes
+ */
 ENUM_STRINGS( MeshObjectPath::ObjectTypes,
               MeshLevel::groupStructKeys::nodeManagerString(),
               MeshLevel::groupStructKeys::edgeManagerString(),
