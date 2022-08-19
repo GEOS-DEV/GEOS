@@ -411,9 +411,9 @@ bool checkIdArray( const vtkDataArray * const array,
 		   const int size )
 {
   return array != nullptr
-	 && array.GetDataType() == VTK_ID_TYPE_
-	 && array.GetNumberOfComponents() == 1
-	 && array.GetNumberOfTuples() == size; 
+	 && array->GetDataType() == VTK_ID_TYPE
+	 && array->GetNumberOfComponents() == 1
+	 && array->GetNumberOfTuples() == size; 
 }
 
 /**
@@ -443,8 +443,8 @@ redistributeMesh( vtkDataSet & loadedMesh,
   else if( useGlobalIds >= 0 && globalIdsAvailable )
   {
     mesh = &loadedMesh;
-    vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh.GetCellData()->GetGlobalIds() );
-    vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( mesh.GetPointData()->GetGlobalIds() );
+    vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
+    vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
     GEOSX_ERROR_IF( !checkIdArray( globalCellId, mesh->GetNumberOfPoints() ), 
 	            "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" ); 
     GEOSX_ERROR_IF( !checkIdArray( globalPointId, mesh->GetNumberOfCells() ), 
