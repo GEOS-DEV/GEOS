@@ -141,7 +141,7 @@ public:
 //                                           pressure,
 //                                           volStrain );
 
-    updateMatrixPermeability( k ); 
+    updateMatrixPermeability( k );
   }
 
   /**
@@ -175,7 +175,7 @@ private:
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
     m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
-    
+
     // Update the Biot coefficient in the damage model
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
 
@@ -262,7 +262,7 @@ private:
                            real64 ( & totalStress )[6],
                            real64 ( & dTotalStress_dPressure )[6],
                            DiscretizationOps & stiffness ) const
-  { 
+  {
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
                                      q,
@@ -301,8 +301,9 @@ private:
     m_solidUpdate.getDamageGrad( k, q, damageGrad );
 
     real64 const damage = m_solidUpdate.getDamage( k, q );
+    real64 const pressureDamageDeriv = m_solidUpdate.pressureDamageFunctionDerivative( damage ); 
 
-    LvArray::tensorOps::scaledCopy< 3 >( pressureDamageGrad, damageGrad, damage );
+    LvArray::tensorOps::scaledCopy< 3 >( pressureDamageGrad, damageGrad, pressureDamageDeriv );
     LvArray::tensorOps::scaledCopy< 3 >( fractureFlowTerm, pressureDamageGrad, fluidPressure );
 
     LvArray::tensorOps::copy< 3 >( dFractureFlowTerm_dPressure, pressureDamageGrad );
