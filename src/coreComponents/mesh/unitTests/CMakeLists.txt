@@ -8,6 +8,10 @@ set( mesh_tests
 
 set( dependencyList gtest mesh )
 
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 #
 # Add gtest C++ based tests
 #
