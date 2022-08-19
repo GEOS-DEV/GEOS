@@ -1,8 +1,12 @@
 import os
 import numpy as np
+from typing import Dict, Iterable, List, Tuple
 
 
-def save_tables(axes, properties, table_root='./tables', axes_names=[]):
+def save_tables(axes: Iterable[np.ndarray],
+                properties: Dict[str, np.ndarray],
+                table_root: str = './tables',
+                axes_names: List[str] = []) -> None:
     """
     Saves a set of tables in GEOSX format
     
@@ -53,7 +57,10 @@ def save_tables(axes, properties, table_root='./tables', axes_names=[]):
         np.savetxt('%s/%s.csv' % (table_root, k), np.reshape(p, (-1), order='F'), fmt='%1.5e', delimiter=',')
 
 
-def load_tables(axes_names, property_names, table_root='./tables', extension='csv'):
+def load_tables(axes_names: Iterable[str],
+                property_names: Iterable[str],
+                table_root: str = './tables',
+                extension: str = 'csv') -> Tuple[Iterable[np.ndarray], Dict[str, np.ndarray]]:
     """
     Load a set of tables in GEOSX format
 

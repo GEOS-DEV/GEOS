@@ -1,12 +1,12 @@
-import meshio
-from meshio._mesh import CellBlock
+import meshio  # type: ignore[import]
+from meshio._mesh import CellBlock  # type: ignore[import]
 import numpy as np
 import argparse
 import logging
 import sys
 
 
-def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
+def convert_abaqus_to_gmsh(input_mesh: str, output_mesh: str, logger: logging.Logger = None) -> int:
     """
     Convert an abaqus mesh to gmsh 2 format, preserving nodeset information.
 
@@ -18,6 +18,9 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
         input_mesh (str): path of the input abaqus file
         output_mesh (str): path of the output gmsh file
         logger (logging.Logger): an instance of logging.Logger
+
+    Returns:
+        int: Number of potential warnings encountered during conversion
     """
     # Initialize the logger if it is empty
     if not logger:
@@ -126,15 +129,20 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
     return (n_warnings > 0)
 
 
-def convert_abaqus_to_vtu(input_mesh, output_mesh, logger=None):
+def convert_abaqus_to_vtu(input_mesh: str, output_mesh: str, logger: logging.Logger = None) -> int:
     """
-    @brief Convert an abaqus mesh to vtu format, preserving nodeset information.
-    @details If the code encounters any issues with region/element indices,
-             the conversion will attempt to continue, with errors
-             indicated by -1 values in the output file.
-    @param input_mesh path of the input abaqus file
-    @param output_mesh path of the output vtu file
-    @param logger an instance of logging.Logger
+    Convert an abaqus mesh to vtu format, preserving nodeset information.
+    
+    If the code encounters any issues with region/element indices, the conversion will 
+    attempt to continue, with errors indicated by -1 values in the output file.
+    
+    Args:
+        input_mesh (str): path of the input abaqus file
+        output_mesh (str): path of the output vtu file
+        logger (logging.Logger): a logger instance
+
+    Returns:
+        int: Number of potential warnings encountered during conversion
     """
     # Initialize the logger if it is empty
     if not logger:
@@ -164,7 +172,7 @@ def convert_abaqus_to_vtu(input_mesh, output_mesh, logger=None):
     return (n_warnings > 0)
 
 
-def main():
+def main() -> None:
     """
     Entry point for the abaqus convertor console script
 
