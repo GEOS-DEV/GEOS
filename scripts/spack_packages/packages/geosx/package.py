@@ -12,7 +12,9 @@ import os
 from os import environ as env
 from os.path import join as pjoin
 
-# WARNING: +petsc and +pygeosx variants are yet to be tested
+# Tested specs are located at scripts/spack_configs/<$SYS_TYPE>/spack.yaml (e.g. %clang@10.0.1)
+
+# WARNING: +petsc and +pygeosx variants are yet to be tested.
 
 def cmake_cache_entry(name, value, comment=""):
     """Generate a string for a cmake cache variable"""

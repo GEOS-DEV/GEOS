@@ -11,7 +11,7 @@ Building the dependencies can be as simple as running
 
     ./scripts/uberenv/uberenv.py
 
-This will create a directory ``uberenv_libs`` in the current working directory, clone Spack into ``uberenv_libs/spack`` and install the dependencies into ``uberenv_libs/system_dependent_path``. It will then spit out a host-config file in the current directory which you can use to build GEOS. While the above command **should** work on every system, it should never be used. Invoked as such, Spack will ignore any system libraries you have installed and will go down a rabbit hole building dependencies. Furthermore this does not allow you to choose the compiler to build. Both of these are easily solved by creating a directory with a ``packages.yaml`` and a ``compilers.yaml``.
+This will create a directory ``uberenv_libs`` (or a directory name you specify by adding ``--prefix directory-name``) in the current working directory, clone Spack into ``uberenv_libs/spack`` and install the dependencies into ``uberenv_libs/system_dependent_path``. It will then spit out a host-config file in the current directory which you can use to build GEOS. While the above command **should** work on every system, it **should never be used**. Invoked as such, Spack will ignore any system libraries you have installed and will go down a rabbit hole building dependencies. Furthermore this does not allow you to choose the compiler to build. Both of these are easily solved by creating a directory with a ``packages.yaml`` and a ``compilers.yaml``.
 
 To prevent this from happening you'll need to create a directory with a ``packages.yaml`` file and a ``compilers.yaml`` file. You can find working examples for commonly used systems in `scripts/uberenv/spack_configs <https://github.com/GEOS-DEV/GEOS/tree/develop/scripts/uberenv/spack_configs>`_. It is worth noting that each LC system type has two such directories, for example there is a ``toss_3_x85_54_ib`` and ``toss_3_x85_54_ib_python`` directory. This is because when building ``pygeosx`` Python needs to be built from scratch, and as such cannot be listed in ``packages.yaml``. However, when not building ``pygeosx`` other dependencies depend on python, but an existing system version works just fine, so it can be put in ``packages.yaml`` to prevent Spack from building it.
 
@@ -26,6 +26,9 @@ Once you have these files setup you can run Uberenv again and instruct it to use
 
 Build Configuration
 -------------------
+
+.. warning::
+	The spack build system is undergoing updates. The ``pygeosx`` and ``petsc`` variants are still a work in progress.
 
 The GEOS Spack package has a lot of options for controlling which dependencies you would like to build and how you'd like them built. The GEOS Spack package file is at ```scripts/uberenv/packages/geosx/package.py <https://github.com/GEOS-DEV/GEOS/tree/develop/scripts/uberenv/packages/geosx/package.py>`_.`` The variants for the package are as follows
 
@@ -48,6 +51,31 @@ Using the Spack spec syntax you can inturn specify variants for each of the depe
 Adding a Dependency (Advanced)
 ------------------------------
 
-Adding a dependency to GEOS is straight forward if the dependency already builds with Spack. If that is the case then all you need to do is add a ``depends_on('cool-new-library')`` to the GEOS ``package.py`` file. If however the dependency doesn't have a Spack package, you will have to add one by creating a ``cool-new-library/package.yaml`` file in the ``scripts/uberenv/packages`` directory and adding the logic to build it there.
+Adding a dependency to GEOS is straight forward if the dependency already builds with Spack. If that is the case then all you need to do is add a ``depends_on('cool-new-library')`` to the GEOS ``package.py`` file. If however the dependency doesn't have a Spack package, you will have to add one by creating a ``cool-new-library/package.yaml`` file in the ``scripts/spack_packages/packages`` directory and adding the logic to build it there.
 
-Oftentimes (unfortunately), even when a package already exists, it might not work out of the box for your system. In this case copy over the existing ``package.py`` file from the Spack repository into ``scripts/uberenv/packages/cool-new-library/package.py``, as if you were adding a new package, and perform your modifications there. Once you have the package working, copy the package back into the Spack repository (running Uberenv should do this for you) and commit+push your changes to Spack.
+Oftentimes (unfortunately), even when a package already exists, it might not work out of the box for your system. In this case copy over the existing ``package.py`` file from the Spack repository into ``scripts/spack_packages/packages/cool-new-library/package.py``, as if you were adding a new package, and perform your modifications there. Once you have the package working, copy the package back into the Spack repository (running Uberenv should do this for you) and commit+push your changes to Spack.
+
+Spack Environments (Experimental)
+=================================
+
+GEOSX also offers ``spack.yaml`` configuration files to build dependencies using `Spack Environments<https://spack-tutorial.readthedocs.io/en/latest/tutorial_environments.html>`_. Building with spack environments involves pulling the spack repository and using the versioned spack commit found in ``.uberenv_config.json`` at the root of the GEOSX directory. An example workflow to build dependencies with spack environments would look something like this:
+
+.. code-block:: console
+
+    // Clone spack (at GEOSX root directory)
+    git clone https://github.com/spack/spack.git
+
+    // Checkout GEOSX's spack version
+    cd spack && git checkout <GEOSX's spack commit hash>
+
+    // Load spack environment
+    cd spack && ./spack/share/spack/setup-env.sh
+
+    // Directory containing spack.yaml configuration file
+    spack env activate scripts/spack_configs/blueos_3_ppc64le_ib_p9/
+
+    // Install geosx dependencies
+    spack install
+>>>>>>> 1a86c66b4 (Adjust paths for spack.yaml; add blurb in sphinx; remove spack modules warning)
+
+Uberenv is currently preferred over spack environments, as spack environments will pollute the working directory with ``__pycache__`` files, spack variables to the user's environment, and other miscellaneous spack generated build files.

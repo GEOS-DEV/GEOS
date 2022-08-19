@@ -5,15 +5,16 @@ spack:
   include:
   
   # System-specific config files
-  - compilers.yaml
-  - packages.yaml
+  - ../../../scripts/spack_configs/blueos_3_ppc64le_ib_p9/compilers.yaml
+  - ../../../scripts/spack_configs/blueos_3_ppc64le_ib_p9/packages.yaml
 
+  
   # General configurations
-  - ../config.yaml
+  - ../../../scripts/spack_configs/config.yaml
 
   # geosx specific package recipes to use over spack builtin
   repos:
-  - ../../spack_packages
+  - ../../../scripts/spack_packages
   view: false
   specs:
   - geosx@develop%clang@10.0.1+cuda cuda_arch=70 ^cuda@11.0.2+allow-unsupported-compilers

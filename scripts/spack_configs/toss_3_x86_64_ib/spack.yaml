@@ -5,17 +5,16 @@ spack:
   include:
   
   # System-specific config files
-  - compilers.yaml
-  - packages.yaml
+  - ../../../scripts/spack_configs/toss_3_x86_64_ib/compilers.yaml
+  - ../../../scripts/spack_configs/toss_3_x86_64_ib/packages.yaml
 
 
-  
   # General configurations
-  - ../config.yaml
+  - ../../../scripts/spack_configs/config.yaml
 
   # geosx specific package recipes to use over spack builtin
   repos:
-  - ../../spack_packages
+  - ../../../scripts/spack_packages
   view: false
   specs:
   - geosx@develop%clang@10.0.1
