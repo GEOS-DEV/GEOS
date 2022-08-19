@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <!-- SPHINX_ELEMENTREGIONS -->
   <ElementRegions>
     <CellElementRegion
       name="Domain"
@@ -13,24 +12,22 @@
       defaultAperture="0.02e-3"
       materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
-  <!-- SPHINX_ELEMENTREGIONS_END -->
 
-  <!-- SPHINX_MATERIAL -->
   <Constitutive>
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="1.0e-6"
+      defaultViscosity="1.0e-3"
       referencePressure="0.0"
-      compressibility="5e-13"
-      referenceViscosity="1.0e-6"
+      compressibility="4.58e-10"
+      referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
-      defaultBulkModulus="20.0e9"
-      defaultShearModulus="12.0e9"/>
+      defaultBulkModulus="25.0e9"
+      defaultShearModulus="15.0e9"/>
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
@@ -55,9 +52,7 @@
       penaltyStiffness="1.0e0"
       apertureTableName="apertureTable"/>
   </Constitutive>
-  <!-- SPHINX_MATERIAL_END -->
   
-  <!-- SPHINX_NUMERICAL -->
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
@@ -67,13 +62,10 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        />
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
-  <!-- SPHINX_NUMERICAL_END -->
 
-  <!-- SPHINX_BC -->
   <FieldSpecifications>
     <FieldSpecification
       name="waterDensity"
@@ -126,10 +118,9 @@
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
-      scale="-6.625"
+      scale="-3.3"
       setNames="{ source }"/>
   </FieldSpecifications>
-  <!-- SPHINX_BC_END -->
 
   <Functions>
     <TableFunction
@@ -138,22 +129,11 @@
       values="{ 0.002e-3, 0.02e-3 }"/>
   </Functions>
 
-  <!-- SPHINX_OUTPUT -->    
   <Outputs>
-    <Silo
-      name="siloOutput"
-      plotFileRoot="pennyShaped_zeroViscosity"
-      plotLevel="3"
-      parallelThreads="48"/>
-
     <VTK
       name="vtkOutput"
-      plotFileRoot="pennyShaped_zeroViscosity"
+      plotFileRoot="dfit_pennyShaped"
       plotLevel="3"
-      parallelThreads="48"/>  
-
-    <Restart
-      name="restartOutput"/>
+      parallelThreads="16"/>
   </Outputs>
-  <!-- SPHINX_OUTPUT_END -->
 </Problem>

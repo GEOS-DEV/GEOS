@@ -20,10 +20,10 @@
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="1.0e-6"
+      defaultViscosity="0.001"
       referencePressure="0.0"
-      compressibility="5e-13"
-      referenceViscosity="1.0e-6"
+      compressibility="5e-12"
+      referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
     <ElasticIsotropic
@@ -56,7 +56,7 @@
       apertureTableName="apertureTable"/>
   </Constitutive>
   <!-- SPHINX_MATERIAL_END -->
-  
+
   <!-- SPHINX_NUMERICAL -->
   <NumericalMethods>
     <FiniteElements>
@@ -68,13 +68,14 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
+        meanPermCoefficient="0.8"
         />
     </FiniteVolume>
   </NumericalMethods>
   <!-- SPHINX_NUMERICAL_END -->
 
   <!-- SPHINX_BC -->
-  <FieldSpecifications>
+  <FieldSpecifications>   
     <FieldSpecification
       name="waterDensity"
       initialCondition="1"
@@ -98,7 +99,7 @@
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
-
+  
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
@@ -122,38 +123,29 @@
       component="0"
       scale="0.0"
       setNames="{ xneg, xpos }"/>
-
+   
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
       scale="-6.625"
       setNames="{ source }"/>
   </FieldSpecifications>
-  <!-- SPHINX_BC_END -->
 
   <Functions>
     <TableFunction
       name="apertureTable"
-      coordinates="{ -1.0e-3, 0.0 }"
-      values="{ 0.002e-3, 0.02e-3 }"/>
+      coordinates="{ -0.01, -1.0e-3, 0.0 }"
+      values="{ 0.005e-3, 0.01e-3, 0.02e-3 }"/>
   </Functions>
 
-  <!-- SPHINX_OUTPUT -->    
   <Outputs>
     <Silo
       name="siloOutput"
-      plotFileRoot="pennyShaped_zeroViscosity"
+      plotFileRoot="dfit_pkn"
       plotLevel="3"
       parallelThreads="48"/>
-
-    <VTK
-      name="vtkOutput"
-      plotFileRoot="pennyShaped_zeroViscosity"
-      plotLevel="3"
-      parallelThreads="48"/>  
 
     <Restart
       name="restartOutput"/>
   </Outputs>
-  <!-- SPHINX_OUTPUT_END -->
 </Problem>
