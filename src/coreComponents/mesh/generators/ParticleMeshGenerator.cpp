@@ -94,7 +94,6 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   GEOSX_LOG_RANK_0( "MPM particle file path: " << m_particleFilePath );
   GEOSX_LOG_RANK_0( "MPM header file path: " << m_headerFilePath );
 
-  int numParticles = 0;
   int numMaterials, numParticleTypes;
   map < std::string, std::vector<std::vector<double>> > particleData;
   map <std::string, int> particleTypeMap;
@@ -136,7 +135,6 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     std::string particleType; // Particle type
     int np; // Number of particles of that type
     iss2 >> particleType >> np;
-    numParticles += np;
     particleTypeMap[particleType] = np;
     particleTypes[i] = particleType;
   }
@@ -286,7 +284,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   } // loop over particle blocks
 
   // Resize particle regions
-  int numParticles2 = 0;
+  int numParticles = 0;
   particleManager.forParticleRegions< ParticleRegion >( [&]( auto & particleRegion )
   {
     string_array particleBlockNames = particleRegion.getParticleBlockNames();
@@ -296,12 +294,12 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     {
       size += sizeMap[particleBlockNames[i]];
     }
-    numParticles2 += size;
+    numParticles += size;
     particleRegion.resize(size);
     GEOSX_LOG_RANK("Particle region " << particleRegion.getName() << " contains " << size << " particles on this rank.");
   } );
 
-  particleManager.resize(numParticles2); // All this does is change m_size for the particleManager, gives a convenient way to get the total number of particles
+  particleManager.resize(numParticles); // All this does is change m_size for the particleManager, gives a convenient way to get the total number of particles
   GEOSX_LOG_RANK( "Total number of particles on this rank: " << particleManager.size() );
 }
 
