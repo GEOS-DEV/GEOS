@@ -33,10 +33,11 @@ private:
   dataRepository::Group & m_meshBodies;
   map< string, array1d< string > > & m_meshTargets;
   DofManager & m_dofManager;
+  string const & m_finiteElementName;
 
 public:
-  MatrixFreeLaplaceFEMOperator( DomainPartition & domain, map< string, array1d< string > > & meshTargets, DofManager & dofManager );
-  MatrixFreeLaplaceFEMOperator( dataRepository::Group & meshBodies, map< string, array1d< string > > & meshTargets, DofManager & dofManager );
+  MatrixFreeLaplaceFEMOperator( DomainPartition & domain, map< string, array1d< string > > & meshTargets, DofManager & dofManager, string const & finiteElementName );
+  MatrixFreeLaplaceFEMOperator( dataRepository::Group & meshBodies, map< string, array1d< string > > & meshTargets, DofManager & dofManager, string const & finiteElementName );
 
   virtual void apply( ParallelVector const & src, ParallelVector & dst ) const;
 

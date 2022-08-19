@@ -36,12 +36,26 @@ namespace keys
 
 using namespace dataRepository;
 
-MatrixFreeLaplaceFEMOperator::MatrixFreeLaplaceFEMOperator( DomainPartition & domain, map< string, array1d< string > > & meshTargets, DofManager & dofManager )
-: m_meshBodies( domain.getMeshBodies() ), m_meshTargets( meshTargets ), m_dofManager( dofManager )
+MatrixFreeLaplaceFEMOperator::
+  MatrixFreeLaplaceFEMOperator( DomainPartition & domain,
+                                map< string, array1d< string > > & meshTargets,
+                                DofManager & dofManager,
+                                string const & finiteElementName ):
+    m_meshBodies( domain.getMeshBodies() ),
+    m_meshTargets( meshTargets ),
+    m_dofManager( dofManager ),
+    m_finiteElementName( finiteElementName )
 { }
 
-MatrixFreeLaplaceFEMOperator::MatrixFreeLaplaceFEMOperator( dataRepository::Group & meshBodies, map< string, array1d< string > > & meshTargets, DofManager & dofManager )
-: m_meshBodies( meshBodies ), m_meshTargets( meshTargets ), m_dofManager( dofManager )
+MatrixFreeLaplaceFEMOperator::
+  MatrixFreeLaplaceFEMOperator( dataRepository::Group & meshBodies,
+                                map< string, array1d< string > > & meshTargets,
+                                DofManager & dofManager,
+                                string const & finiteElementName ):
+    m_meshBodies( meshBodies ),
+    m_meshTargets( meshTargets ),
+    m_dofManager( dofManager ),
+    m_finiteElementName( finiteElementName )
 { }
 
 void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVector & dst ) const
@@ -65,7 +79,7 @@ void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVe
                                       constitutive::NullModel,
                                       CellElementSubRegion >( mesh,
                                                               regionNames,
-                                                              dummyString,
+                                                              m_finiteElementName,
                                                               dummyString,
                                                               kernelFactory );
 
@@ -194,7 +208,7 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
                m_solution,
                false );
 
-  MatrixFreeLaplaceFEMOperator unconstrained_laplace( domain, m_meshTargets, m_dofManager );
+  MatrixFreeLaplaceFEMOperator unconstrained_laplace( domain, m_meshTargets, m_dofManager, this->getDiscretizationName() );
   LinearOperatorWithBC< ParallelVector > constrained_laplace( *this,
                                                               unconstrained_laplace,
                                                               domain,
