@@ -7,6 +7,7 @@
     <!-- <File name="./class09_pb3_hystRelperm_base.xml"/> -->
     <!-- <File name="./class09_pb3_drainageOnly_base.xml"/> -->
 
+	<!-- SPHINX_MESH -->
   <Mesh>
    <VTKMesh
      name="mesh"
@@ -42,6 +43,7 @@
 	distanceFromHead="5"/> 
     </InternalWell>
   </Mesh>
+	<!-- SPHINX_MESH_END -->
  
   <!-- max time 50 y -->
   <Events
