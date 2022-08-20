@@ -40,27 +40,6 @@ TEST( testStringUtilities, tokenize )
     std::vector< string > tokens0 = stringutilities::tokenize< std::vector< string > >( key, "/", true );
     std::vector< string > tokens1 = stringutilities::tokenize< std::vector< string > >( key, "/", false );
 
-    for( auto const & value : values0 )
-    {
-      std::cout<<value<<",";
-    }
-    std::cout<<std::endl;
-    for( auto const & value : tokens0 )
-    {
-      std::cout<<value<<",";
-    }
-    std::cout<<std::endl;
-
-    for( auto const & value : values1 )
-    {
-      std::cout<<value<<",";
-    }
-    std::cout<<std::endl;
-    for( auto const & value : tokens1 )
-    {
-      std::cout<<value<<",";
-    }
-    std::cout<<std::endl;
 
     EXPECT_TRUE( tokens0==values0 );
     EXPECT_TRUE( tokens1==values1 );
