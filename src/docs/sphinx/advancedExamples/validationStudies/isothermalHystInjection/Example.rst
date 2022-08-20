@@ -253,103 +253,40 @@ Inspecting results
 
 We request VTK-format output files and use Paraview to visualize the results under the **Outputs** block.
 
-The following figure shows the distribution of CO2 saturation and pressure along the slice defined by x = 0 at t = 200 days.  
+The following figure shows the distribution of CO2 saturation thresholded above a significant value (here 0.001).
+The displayed cells are colored with respect to the co2 mass they contain. If the relative permeability for the gas phase
+drops below 10e-7, the cell is change into black
 
-.. _isothermalLeakyWell_CO2saturation:
-.. figure:: co2_saturation.png
+.. _pb3_drainOnly_CO2saturation:
+.. figure:: classp3_anim2.gif
    :align: center
-   :width: 500
+   :width: 1000
    :figclass: align-center
 
-   CO2 saturation after 200 days
+   Plume of CO2 saturation for significant value where immobile co2 is colored in black.
 
-.. _isothermalLeakyWell_pressure:
-.. figure:: pressure.png
-   :align: center
-   :width: 500
-   :figclass: align-center
+We observe the importance of hysteresis modeling in co2 plume migration. Indeed, during the migration phase, the cells in
+the tail of the plume are reverting from drainage to imbibition and remaining co2 is trapped. This results in a lot slower migration
+and expansion of the plume.
 
-   Pressure after 200 days
-   
 To validate the GEOSX results, we consider the metrics used in
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__.
+The reporting values are the dissolved and gaseous co2 with respect to time using only drainage relative permeability
+and hysteretical relative permeabilities.
 
 
-
-First, we consider the arrival time of the CO2 plume at the leaky well.
-As in `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__,
-we use the leakage rate threshold of 0.005% to detect the arrival time.
-Although the arrival time is highly dependent on the degree of spatial refinement in the
-vicinity of the wells (not documented in 
-`(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__),
-the next table shows that the GEOSX arrival time at the leaky well (9.6 days) is in agreement with the values published in  
-`(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__.
-
-+------------------+---------------------+
-| Code             | Arrival             |
-|                  | time [day]          |
-+==================+=====================+
-| GEOSX            |     9.6             | 
-+------------------+---------------------+
-| COORES           |     8               | 
-+------------------+---------------------+
-| DuMux            |     6               | 
-+------------------+---------------------+
-| ECLIPSE          |     8               | 
-+------------------+---------------------+
-| FEHM             |     4               | 
-+------------------+---------------------+
-| IPARS-CO2        |     10              | 
-+------------------+---------------------+
-| MUFTE            |     8               | 
-+------------------+---------------------+
-| RockFlow         |     19              | 
-+------------------+---------------------+
-| ELSA             |     14              | 
-+------------------+---------------------+
-| TOUGH2/ECO2N     |     4               | 
-+------------------+---------------------+
-| TOUGH2/ECO2N (2) |     10              | 
-+------------------+---------------------+
-| TOUGH2 (3)       |     9               | 
-+------------------+---------------------+
-| VESA             |     7               | 
-+------------------+---------------------+
-
-.. note::
-   The time-stepping strategy used by the codes considered in `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__, as well as the meshes that have been used, are not documented in the benchmark description. Therefore, even on this simple test case, we cannot expect to obtain an exact match with the published results. 
-
-
-Next, we measure the CO2 leakage rate through the leaky well, defined by the authors as the CO2 mass
-flow at midway between top and bottom aquifers divided by the injection rate (8.87 kg/s), in percent.
-The GEOSX leakage rate is shown in the figure below:
-
-.. _isothermalLeakyWell_GEOSXLeakageRate:
-.. plot:: docs/sphinx/advancedExamples/validationStudies/isothermalLeakyWell/isothermalLeakyWellFigure.py
-
-
-The leakage rates computed by the codes considered in
-`(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__
-are shown in the figure below.
-	
-.. _isothermalLeakyWell_referenceLeakageRate:
-.. figure:: referenceLeakageRates.png
+.. _pb3_dissolvedMobile:
+.. figure:: pb3_curves.png
    :align: center
-   :width: 500
+   :width: 1000
    :figclass: align-center
 
-   Leakage rates [%] obtained with the simulators considered in `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__.
+   CO2 dissolved, gaseous and total mass with respect to time for (left) drainage only and (right) hysteresis relative permeabilities
 
-The comparison between the previous two figures shows that GEOSX can successfully reproduce the trend
-in leakage rate observed in the published benchmark results.
-To further validate the GEOSX results, we reproduce below Table 8 of
-`(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__
-to compare the maximum leakage rate, the time at which this maximum leakage rate is attained, and the
-leakage rate at 1000 days.
+We can see that at the end of the injection period the mass of co2 in the gaseous phase stop increasing and start
+decreasing under dissolution.
 
-
-This table confirms the agreement between GEOSX and the results of `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__.
-A particularly good match is obtained with Eclipse, FEHM, and TOUGH2/ECO2N (2).
+These curves confirm the agreement between GEOSX and the results of `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__.
 
 ------------------------------------------------------------------
 To go further
@@ -359,7 +296,10 @@ To go further
 
 For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 
-
+..
+    todo : change for face bc cdt
+           script for curves
+           use statistics to get timehistory
 
 
 

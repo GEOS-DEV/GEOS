@@ -4,6 +4,7 @@
 
   <!-- SPHINX_FIELD_CASE_Co2_SOLVER -->
   <Solvers>
+      <!-- SPHINX_SOLVER_MPWELL -->
     <CompositionalMultiphaseReservoir
       name="coupledFlowAndWells"
       flowSolverName="compositionalMultiphaseFlow"
@@ -17,6 +18,7 @@
       <LinearSolverParameters
         directParallel="0"/>
     </CompositionalMultiphaseReservoir>
+      <!-- SPHINX_SOLVER_MPWELL_END -->
 
     <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
