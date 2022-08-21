@@ -1,5 +1,5 @@
 variables:
-  GEOSX_TPL_TAG: 191-760
+  GEOSX_TPL_TAG: 194-777
 
 # only build non-draft, merge target PR's to develop
 trigger: none
