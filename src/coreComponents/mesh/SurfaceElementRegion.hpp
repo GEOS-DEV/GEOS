@@ -103,7 +103,6 @@ public:
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.
    * @param time_np1 rupture time
-   * @param edgeManager pointer to the EdgeManager object.
    * @param faceManager pointer to the FaceManager object.
    * @param originalFaceToEdges face-to-edge map before the rupture.
    * @param subRegionName the name of the FaceElementSubRegion to insert the new entries.
@@ -111,7 +110,6 @@ public:
    * @return the local index of the new FaceElement entry.
    */
   localIndex addToFractureMesh( real64 const time_np1,
-                                EdgeManager * const edgeManager,
                                 FaceManager const * const faceManager,
                                 ArrayOfArraysView< localIndex const > const & originalFaceToEdges,
                                 string const & subRegionName,
