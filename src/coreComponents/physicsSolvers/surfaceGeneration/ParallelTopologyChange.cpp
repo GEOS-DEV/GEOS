@@ -599,7 +599,6 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
                            MeshLevel * const mesh,
                            ModifiedObjectLists & receivedObjects )
 {
-  int unpackedSize = 0;
 
   NodeManager & nodeManager = mesh->getNodeManager();
   EdgeManager & edgeManager = mesh->getEdgeManager();
@@ -648,33 +647,33 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
   // if we move to device + async unoacking, poll these events for completion or pass out
   parallelDeviceEvents events;
 
-  unpackedSize += nodeManager.unpackGlobalMaps( receiveBufferPtr, newGhostNodes, 0 );
-  unpackedSize += edgeManager.unpackGlobalMaps( receiveBufferPtr, newGhostEdges, 0 );
-  unpackedSize += faceManager.unpackGlobalMaps( receiveBufferPtr, newGhostFaces, 0 );
-  unpackedSize += elemManager.unpackGlobalMaps( receiveBufferPtr, newGhostElems );
+  nodeManager.unpackGlobalMaps( receiveBufferPtr, newGhostNodes, 0 );
+  edgeManager.unpackGlobalMaps( receiveBufferPtr, newGhostEdges, 0 );
+  faceManager.unpackGlobalMaps( receiveBufferPtr, newGhostFaces, 0 );
+  elemManager.unpackGlobalMaps( receiveBufferPtr, newGhostElems );
 
-  unpackedSize += nodeManager.unpackUpDownMaps( receiveBufferPtr, newGhostNodes, true, true );
-  unpackedSize += edgeManager.unpackUpDownMaps( receiveBufferPtr, newGhostEdges, true, true );
-  unpackedSize += faceManager.unpackUpDownMaps( receiveBufferPtr, newGhostFaces, true, true );
-  unpackedSize += elemManager.unpackUpDownMaps( receiveBufferPtr, newGhostElems, true );
+  nodeManager.unpackUpDownMaps( receiveBufferPtr, newGhostNodes, true, true );
+  edgeManager.unpackUpDownMaps( receiveBufferPtr, newGhostEdges, true, true );
+  faceManager.unpackUpDownMaps( receiveBufferPtr, newGhostFaces, true, true );
+  elemManager.unpackUpDownMaps( receiveBufferPtr, newGhostElems, true );
 
-  unpackedSize += nodeManager.unpackParentChildMaps( receiveBufferPtr, newGhostNodes );
-  unpackedSize += edgeManager.unpackParentChildMaps( receiveBufferPtr, newGhostEdges );
-  unpackedSize += faceManager.unpackParentChildMaps( receiveBufferPtr, newGhostFaces );
+  nodeManager.unpackParentChildMaps( receiveBufferPtr, newGhostNodes );
+  edgeManager.unpackParentChildMaps( receiveBufferPtr, newGhostEdges );
+  faceManager.unpackParentChildMaps( receiveBufferPtr, newGhostFaces );
 
-  unpackedSize += nodeManager.unpack( receiveBufferPtr, newGhostNodes, 0, false, events );
-  unpackedSize += edgeManager.unpack( receiveBufferPtr, newGhostEdges, 0, false, events );
-  unpackedSize += faceManager.unpack( receiveBufferPtr, newGhostFaces, 0, false, events );
-  unpackedSize += elemManager.unpack( receiveBufferPtr, newGhostElems );
+  nodeManager.unpack( receiveBufferPtr, newGhostNodes, 0, false, events );
+  edgeManager.unpack( receiveBufferPtr, newGhostEdges, 0, false, events );
+  faceManager.unpack( receiveBufferPtr, newGhostFaces, 0, false, events );
+  elemManager.unpack( receiveBufferPtr, newGhostElems );
 
-  unpackedSize += nodeManager.unpackUpDownMaps( receiveBufferPtr, modGhostNodes, false, true );
-  unpackedSize += edgeManager.unpackUpDownMaps( receiveBufferPtr, modGhostEdges, false, true );
-  unpackedSize += faceManager.unpackUpDownMaps( receiveBufferPtr, modGhostFaces, false, true );
-  unpackedSize += elemManager.unpackUpDownMaps( receiveBufferPtr, modGhostElems, true );
+  nodeManager.unpackUpDownMaps( receiveBufferPtr, modGhostNodes, false, true );
+  edgeManager.unpackUpDownMaps( receiveBufferPtr, modGhostEdges, false, true );
+  faceManager.unpackUpDownMaps( receiveBufferPtr, modGhostFaces, false, true );
+  elemManager.unpackUpDownMaps( receiveBufferPtr, modGhostElems, true );
 
-  unpackedSize += nodeManager.unpackParentChildMaps( receiveBufferPtr, modGhostNodes );
-  unpackedSize += edgeManager.unpackParentChildMaps( receiveBufferPtr, modGhostEdges );
-  unpackedSize += faceManager.unpackParentChildMaps( receiveBufferPtr, modGhostFaces );
+  nodeManager.unpackParentChildMaps( receiveBufferPtr, modGhostNodes );
+  edgeManager.unpackParentChildMaps( receiveBufferPtr, modGhostEdges );
+  faceManager.unpackParentChildMaps( receiveBufferPtr, modGhostFaces );
 
   waitAllDeviceEvents( events );
 
@@ -735,12 +734,11 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
 }
 
 void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements,
-                                  FaceElementSubRegion const & faceElemSubRegion,
-                                  EdgeManager & edgeManager )
+                                  FaceElementSubRegion & faceElemSubRegion )
 {
-  ArrayOfArrays< localIndex > & connectorToElem = edgeManager.m_fractureConnectorEdgesToFaceElements;
-  map< localIndex, localIndex > & edgesToConnectorEdges = edgeManager.m_edgesToFractureConnectorsEdges;
-  array1d< localIndex > & connectorEdgesToEdges = edgeManager.m_fractureConnectorsEdgesToEdges;
+  ArrayOfArrays< localIndex > & connectorToElem = faceElemSubRegion.m_fractureConnectorEdgesToFaceElements;
+  map< localIndex, localIndex > & edgesToConnectorEdges = faceElemSubRegion.m_edgesToFractureConnectorsEdges;
+  array1d< localIndex > & connectorEdgesToEdges = faceElemSubRegion.m_fractureConnectorsEdgesToEdges;
 
   ArrayOfArraysView< localIndex const > const facesToEdges = faceElemSubRegion.edgeList().toViewConst();
 
@@ -773,7 +771,7 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
       {
         connectorToElem.resizeArray( connectorIndex, numExistingCells+1 );
         connectorToElem[connectorIndex][ numExistingCells ] = kfe;
-        edgeManager.m_recalculateFractureConnectorEdges.insert( connectorIndex );
+        faceElemSubRegion.m_recalculateFractureConnectorEdges.insert( connectorIndex );
       }
     }
   }
@@ -969,9 +967,9 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
   elemManager.forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex const er,
                                                                          localIndex const esr,
                                                                          ElementRegionBase const &,
-                                                                         FaceElementSubRegion const & subRegion )
+                                                                         FaceElementSubRegion & subRegion )
   {
-    updateConnectorsToFaceElems( receivedObjects.newElements.at( {er, esr} ), subRegion, edgeManager );
+    updateConnectorsToFaceElems( receivedObjects.newElements.at( {er, esr} ), subRegion );
   } );
 
 

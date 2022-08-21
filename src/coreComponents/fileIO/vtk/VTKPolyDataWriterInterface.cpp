@@ -888,10 +888,8 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   int const rank = MpiWrapper::commRank();
   if( rank == 0 )
   {
-    if( m_previousCycle == -1 )
-    {
-      makeDirsForPath( joinPath( m_outputDir, m_outputName ) );
-    }
+    makeDirsForPath( joinPath( m_outputDir, m_outputName ) );
+
     makeDirectory( joinPath( m_outputDir, stepSubFolder ) );
   }
   MpiWrapper::barrier( MPI_COMM_GEOSX );
@@ -927,6 +925,11 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   }
 
   m_previousCycle = cycle;
+}
+
+void VTKPolyDataWriterInterface::clearData()
+{
+  m_pvd.reinitData();
 }
 
 bool VTKPolyDataWriterInterface::isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const

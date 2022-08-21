@@ -8,6 +8,7 @@ set( physicsSolvers_headers
      SolverBase.hpp
      SolverBaseKernels.hpp	
      SolverStatistics.hpp
+     FieldStatisticsBase.hpp
      contact/ContactSolverBase.hpp
      contact/ContactExtrinsicData.hpp
      contact/LagrangianContactSolver.hpp
@@ -18,6 +19,7 @@ set( physicsSolvers_headers
      contact/SolidMechanicsEmbeddedFractures.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp
+     fluidFlow/CompositionalMultiphaseStatistics.hpp     
      fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp     
      fluidFlow/CompositionalMultiphaseFVM.hpp
@@ -39,6 +41,7 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseBase.hpp
      fluidFlow/SinglePhaseBaseExtrinsicData.hpp
      fluidFlow/SinglePhaseBaseKernels.hpp
+     fluidFlow/SinglePhaseStatistics.hpp
      fluidFlow/SinglePhaseFVM.hpp
      fluidFlow/SinglePhaseFVMKernels.hpp
      fluidFlow/SinglePhaseHybridFVM.hpp
@@ -85,6 +88,7 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
      solidMechanics/SolidMechanicsStateReset.hpp
+     solidMechanics/SolidMechanicsStatistics.hpp	     
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
      surfaceGeneration/ParallelTopologyChange.hpp
@@ -107,7 +111,8 @@ set( physicsSolvers_sources
      contact/LagrangianContactSolver.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
-     fluidFlow/CompositionalMultiphaseFVM.cpp          
+     fluidFlow/CompositionalMultiphaseFVM.cpp
+     fluidFlow/CompositionalMultiphaseStatistics.cpp          
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.cpp
      fluidFlow/CompositionalMultiphaseHybridFVM.cpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
@@ -116,6 +121,7 @@ set( physicsSolvers_sources
      fluidFlow/proppantTransport/ProppantTransport.cpp
      fluidFlow/proppantTransport/ProppantTransportKernels.cpp
      fluidFlow/SinglePhaseBase.cpp
+     fluidFlow/SinglePhaseStatistics.cpp
      fluidFlow/SinglePhaseFVM.cpp
      fluidFlow/SinglePhaseHybridFVM.cpp
      fluidFlow/SinglePhaseProppantBase.cpp
@@ -141,6 +147,7 @@ set( physicsSolvers_sources
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      solidMechanics/SolidMechanicsStateReset.cpp
+     solidMechanics/SolidMechanicsStatistics.cpp	          
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.cpp
      surfaceGeneration/ParallelTopologyChange.cpp

@@ -107,12 +107,6 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 {
   GEOSX_MARK_FUNCTION;
 
-  if( m_computeCFLNumbers )
-  {
-    GEOSX_LOG_RANK_0( catalogName() << " " << getName()
-                                    << ": the computation of CFL numbers in not supported by CompositionalMultiphaseHybridFVM yet" );
-  }
-
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -401,8 +395,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                          mimFaceGravCoef,
                                          transMultiplier,
                                          compFlowAccessors.get( extrinsicMeshData::flow::phaseMobility{} ),
-                                         compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dPressure{} ),
-                                         compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity{} ),
+                                         compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility{} ),
                                          compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
                                          multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
                                          multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity{} ),

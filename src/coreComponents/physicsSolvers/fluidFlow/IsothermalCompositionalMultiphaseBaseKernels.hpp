@@ -272,8 +272,7 @@ public:
                              MultiFluidBase const & fluid )
     : Base(),
     m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
-    m_dPhaseVolFrac_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
+    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
     m_compDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >() ),
     m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseFrac( fluid.phaseFraction() ),
@@ -302,8 +301,7 @@ public:
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseFrac = m_phaseFrac[ei][0];
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseFrac = m_dPhaseFrac[ei][0];
     arraySlice1d< real64, compflow::USD_PHASE - 1 > const phaseVolFrac = m_phaseVolFrac[ei];
-    arraySlice1d< real64, compflow::USD_PHASE - 1 > const dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
-    arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac_dComp = m_dPhaseVolFrac_dComp[ei];
+    arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
     real64 work[numComp]{};
 
@@ -323,10 +321,9 @@ public:
       if( !phaseExists )
       {
         phaseVolFrac[ip] = 0.;
-        dPhaseVolFrac_dPres[ip] = 0.;
-        for( integer jc = 0; jc < numComp; ++jc )
+        for( integer jc = 0; jc < numComp+2; ++jc )
         {
-          dPhaseVolFrac_dComp[ip][jc] = 0.;
+          dPhaseVolFrac[ip][jc] = 0.;
         }
         continue;
       }
@@ -337,17 +334,17 @@ public:
       // compute saturation and derivatives except multiplying by the total density
       phaseVolFrac[ip] = phaseFrac[ip] * phaseDensInv;
 
-      dPhaseVolFrac_dPres[ip] =
+      dPhaseVolFrac[ip][Deriv::dP] =
         (dPhaseFrac[ip][Deriv::dP] - phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP]) * phaseDensInv;
 
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseVolFrac_dComp[ip][jc] =
+        dPhaseVolFrac[ip][Deriv::dC+jc] =
           (dPhaseFrac[ip][Deriv::dC+jc] - phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dC+jc]) * phaseDensInv;
       }
 
       // apply chain rule to convert derivatives from global component fractions to densities
-      applyChainRuleInPlace( numComp, dCompFrac_dCompDens, dPhaseVolFrac_dComp[ip], work );
+      applyChainRuleInPlace( numComp, dCompFrac_dCompDens, dPhaseVolFrac[ip], work, Deriv::dC );
 
       // call the lambda in the phase loop to allow the reuse of the phaseVolFrac and totalDensity
       // possible use: assemble the derivatives wrt temperature
@@ -356,12 +353,12 @@ public:
       // now finalize the computation by multiplying by total density
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseVolFrac_dComp[ip][jc] *= totalDensity;
-        dPhaseVolFrac_dComp[ip][jc] += phaseVolFrac[ip] * dTotalDens_dCompDens;
+        dPhaseVolFrac[ip][Deriv::dC+jc] *= totalDensity;
+        dPhaseVolFrac[ip][Deriv::dC+jc] += phaseVolFrac[ip] * dTotalDens_dCompDens;
       }
 
       phaseVolFrac[ip] *= totalDensity;
-      dPhaseVolFrac_dPres[ip] *= totalDensity;
+      dPhaseVolFrac[ip][Deriv::dP] *= totalDensity;
     }
   }
 
@@ -371,8 +368,7 @@ protected:
 
   /// Views on phase volume fractions
   arrayView2d< real64, compflow::USD_PHASE > m_phaseVolFrac;
-  arrayView2d< real64, compflow::USD_PHASE > m_dPhaseVolFrac_dPres;
-  arrayView3d< real64, compflow::USD_PHASE_DC > m_dPhaseVolFrac_dComp;
+  arrayView3d< real64, compflow::USD_PHASE_DC > m_dPhaseVolFrac;
 
   // inputs
 
@@ -558,8 +554,7 @@ public:
     m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseVolFrac_n( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction_n >() ),
     m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
-    m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
-    m_dPhaseVolFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
+    m_dPhaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction >() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens( fluid.dPhaseDensity() ),
@@ -657,8 +652,7 @@ public:
 
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac_n = m_phaseVolFrac_n[ei];
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
-    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens = m_dPhaseVolFrac_dCompDens[ei];
+    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens_n = m_phaseDens_n[ei][0];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens = m_phaseDens[ei][0];
@@ -679,7 +673,7 @@ public:
       real64 const phaseAmount_n = stack.poreVolume_n * phaseVolFrac_n[ip] * phaseDens_n[ip];
 
       real64 const dPhaseAmount_dP = stack.dPoreVolume_dPres * phaseVolFrac[ip] * phaseDens[ip]
-                                     + stack.poreVolume * ( dPhaseVolFrac_dPres[ip] * phaseDens[ip]
+                                     + stack.poreVolume * ( dPhaseVolFrac[ip][Deriv::dP] * phaseDens[ip]
                                                             + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] );
 
       // assemble density dependence
@@ -687,7 +681,7 @@ public:
       for( integer jc = 0; jc < numComp; ++jc )
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
-                              + phaseDens[ip] * dPhaseVolFrac_dCompDens[ip][jc];
+                              + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC+jc];
         dPhaseAmount_dC[jc] *= stack.poreVolume;
       }
 
@@ -738,9 +732,10 @@ public:
                              StackVariables & stack,
                              FUNC && phaseVolFractionSumKernelOp = NoOpFunc{} ) const
   {
+    using Deriv = multifluid::DerivativeOffset;
+
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
-    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens = m_dPhaseVolFrac_dCompDens[ei];
+    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
     real64 oneMinusPhaseVolFracSum = 1.0;
 
@@ -748,11 +743,11 @@ public:
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
       oneMinusPhaseVolFracSum -= phaseVolFrac[ip];
-      stack.localJacobian[numComp][0] -= dPhaseVolFrac_dPres[ip];
+      stack.localJacobian[numComp][0] -= dPhaseVolFrac[ip][Deriv::dP];
 
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        stack.localJacobian[numComp][jc+1] -= dPhaseVolFrac_dCompDens[ip][jc];
+        stack.localJacobian[numComp][jc+1] -= dPhaseVolFrac[ip][Deriv::dC+jc];
       }
     }
 
@@ -857,8 +852,7 @@ protected:
   /// Views on the phase volume fractions
   arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseVolFrac_n;
   arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseVolFrac;
-  arrayView2d< real64 const, compflow::USD_PHASE > const m_dPhaseVolFrac_dPres;
-  arrayView3d< real64 const, compflow::USD_PHASE_DC > const m_dPhaseVolFrac_dCompDens;
+  arrayView3d< real64 const, compflow::USD_PHASE_DC > const m_dPhaseVolFrac;
 
   /// Views on the phase densities
   arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseDens_n;
@@ -1129,6 +1123,144 @@ struct SolutionCheckKernel
     return check.get();
   }
 
+};
+
+/******************************** StatisticsKernel ********************************/
+
+struct StatisticsKernel
+{
+  template< typename POLICY >
+  static void
+  saveDeltaPressure( localIndex const size,
+                     arrayView1d< real64 const > const & pres,
+                     arrayView1d< real64 const > const & initPres,
+                     arrayView1d< real64 > const & deltaPres )
+  {
+    forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      deltaPres[ei] = pres[ei] - initPres[ei];
+    } );
+  }
+
+  template< typename POLICY >
+  static void
+  launch( localIndex const size,
+          integer const numComps,
+          integer const numPhases,
+          arrayView1d< integer const > const & elemGhostRank,
+          arrayView1d< real64 const > const & volume,
+          arrayView1d< real64 const > const & pres,
+          arrayView1d< real64 const > const & deltaPres,
+          arrayView1d< real64 const > const & temp,
+          arrayView1d< real64 const > const & refPorosity,
+          arrayView2d< real64 const > const & porosity,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDensity,
+          arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFraction,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
+          real64 & minPres,
+          real64 & avgPresNumerator,
+          real64 & maxPres,
+          real64 & minDeltaPres,
+          real64 & maxDeltaPres,
+          real64 & minTemp,
+          real64 & avgTempNumerator,
+          real64 & maxTemp,
+          real64 & totalUncompactedPoreVol,
+          arraySlice1d< real64 > const & phaseDynamicPoreVol,
+          arraySlice1d< real64 > const & phaseMass,
+          arraySlice2d< real64 > const & dissolvedComponentMass )
+  {
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPresNumerator( 0.0 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPres( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinDeltaPres( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxDeltaPres( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinTemp( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgTempNumerator( 0.0 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTemp( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalUncompactedPoreVol( 0.0 );
+
+    // For this arrays phaseDynamicPoreVol, phaseMass, dissolvedComponentMass,
+    // using an array of ReduceSum leads to a formal parameter overflow in CUDA.
+    // As a workaround, we use a slice with RAJA::atomicAdd instead
+
+    forAll< parallelDevicePolicy<> >( size, [numComps,
+                                             numPhases,
+                                             elemGhostRank,
+                                             volume,
+                                             refPorosity,
+                                             porosity,
+                                             pres,
+                                             deltaPres,
+                                             temp,
+                                             phaseDensity,
+                                             phaseVolFrac,
+                                             phaseCompFraction,
+                                             subRegionMinPres,
+                                             subRegionAvgPresNumerator,
+                                             subRegionMaxPres,
+                                             subRegionMinDeltaPres,
+                                             subRegionMaxDeltaPres,
+                                             subRegionMinTemp,
+                                             subRegionAvgTempNumerator,
+                                             subRegionMaxTemp,
+                                             subRegionTotalUncompactedPoreVol,
+                                             phaseDynamicPoreVol,
+                                             phaseMass,
+                                             dissolvedComponentMass] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( elemGhostRank[ei] >= 0 )
+      {
+        return;
+      }
+
+      // To match our "reference", we have to use reference porosity here, not the actual porosity when we compute averages
+      real64 const uncompactedPoreVol = volume[ei] * refPorosity[ei];
+      real64 const dynamicPoreVol = volume[ei] * porosity[ei][0];
+
+      subRegionMinPres.min( pres[ei] );
+      subRegionAvgPresNumerator += uncompactedPoreVol * pres[ei];
+      subRegionMaxPres.max( pres[ei] );
+
+      subRegionMaxDeltaPres.max( deltaPres[ei] );
+      subRegionMinDeltaPres.min( deltaPres[ei] );
+
+      subRegionMinTemp.min( temp[ei] );
+      subRegionAvgTempNumerator += uncompactedPoreVol * temp[ei];
+      subRegionMaxTemp.max( temp[ei] );
+      subRegionTotalUncompactedPoreVol += uncompactedPoreVol;
+      for( integer ip = 0; ip < numPhases; ++ip )
+      {
+        real64 const elemPhaseVolume = dynamicPoreVol * phaseVolFrac[ei][ip];
+        real64 const elemPhaseMass = phaseDensity[ei][0][ip] * elemPhaseVolume;
+        // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseDynamicPoreVol[ip], elemPhaseVolume );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseMass[ip], elemPhaseMass );
+        for( integer ic = 0; ic < numComps; ++ic )
+        {
+          // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &dissolvedComponentMass[ip][ic], phaseCompFraction[ei][0][ip][ic] * elemPhaseMass );
+        }
+      }
+
+    } );
+
+    minPres = subRegionMinPres.get();
+    avgPresNumerator = subRegionAvgPresNumerator.get();
+    maxPres = subRegionMaxPres.get();
+    minDeltaPres = subRegionMinDeltaPres.get();
+    maxDeltaPres = subRegionMaxDeltaPres.get();
+    minTemp = subRegionMinTemp.get();
+    avgTempNumerator = subRegionAvgTempNumerator.get();
+    maxTemp = subRegionMaxTemp.get();
+    totalUncompactedPoreVol = subRegionTotalUncompactedPoreVol.get();
+
+    // dummy loop to bring data back to the CPU
+    forAll< serialPolicy >( 1, [phaseDynamicPoreVol, phaseMass, dissolvedComponentMass] ( localIndex const )
+    {
+      GEOSX_UNUSED_VAR( phaseDynamicPoreVol, phaseMass, dissolvedComponentMass );
+    } );
+  }
 };
 
 /******************************** HydrostaticPressureKernel ********************************/

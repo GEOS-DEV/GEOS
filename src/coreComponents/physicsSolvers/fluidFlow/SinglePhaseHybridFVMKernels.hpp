@@ -306,7 +306,7 @@ struct AssemblerKernelHelper
       }
 
       // residual
-      atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnLocalRowIndex], flux );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnLocalRowIndex], flux );
 
       // jacobian -- derivative wrt local cell centered pressure term
       localMatrix.addToRow< parallelDeviceAtomic >( eqnLocalRowIndex, &dofColIndexElemPres, &dFlux_dp, 1 );
