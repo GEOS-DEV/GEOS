@@ -83,6 +83,15 @@
       target="/Solvers/MultiphasePoroelasticitySolver"/>
 
     <PeriodicEvent
+      name="LinearElasticityStatistics"
+      timeFrequency="1e5"
+      target="/Tasks/LinearElasticityStatistics"/>
+    <PeriodicEvent
+      name="TwoPhaseFlowStatistics"
+      timeFrequency="1e5"
+      target="/Tasks/TwoPhaseFlowStatistics"/>
+
+    <PeriodicEvent
       name="restarts"
       timeFrequency="3e5"
       target="/Outputs/restartOutput"/>
@@ -277,6 +286,19 @@
       setNames="{ zneg }"/>
   </FieldSpecifications>
 
+  <Tasks>
+    <SolidMechanicsStatistics
+      name="LinearElasticityStatistics"
+      solidSolverName="LinearElasticitySolver"
+      logLevel="1"/>
+    <CompositionalMultiphaseStatistics
+      name="TwoPhaseFlowStatistics"
+      flowSolverName="TwoPhaseFlowSolver"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+  </Tasks>
+  
   <Outputs>
 
     <!-- We add deltaPressure just to trigger the warning since this field is not registered -->
