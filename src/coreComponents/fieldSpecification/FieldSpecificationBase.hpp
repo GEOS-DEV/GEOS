@@ -128,8 +128,8 @@ public:
     meshObjectPaths.forObjectsInPath< OBJECT_TYPE >( mesh,
                                                      [&] ( OBJECT_TYPE & object )
     {
-// Cannot have this check due to applications like the traction BC which specify a field name that doesn't exist. 
-//      if( object.hasWrapper( getFieldName() ) ) 
+// Cannot have this check due to applications like the traction BC which specify a field name that doesn't exist.
+//      if( object.hasWrapper( getFieldName() ) )
       {
         dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
         string_array setNames = this->getSetNames();

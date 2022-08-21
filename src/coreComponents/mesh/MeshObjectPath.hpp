@@ -152,75 +152,56 @@ public:
     return fillPathTokens( path, meshBodies );
   }
 
-  // template< typename OBJECT_TYPE = ObjectManagerBase,
-  //           typename FUNC >
-  // void testForObjectsInPath( string const bodyName,
-  //                            MeshLevel & level,
-  //                            FUNC && func ) const
-  // {
-  //   forObjectsInPath<OBJECT_TYPE,FUNC>( bodyName, level, std::forward<FUNC>(func) );
-  // }
-
 #endif
 
 private:
 
+  /**
+   * @brief Loop over objects in the path and execute a callback function.
+   * @tparam OBJECT_TYPE The type of object to loop over
+   * @tparam FUNC The type of function that is executed on the OBJECT_TYPE. Takes a
+   *  single OBJECT_TYPE as an argument.
+   *  func( dynamic_cast< OBJECT_TYPE & >(object) );
+   * @param levelPair an entry for a given level extracted from m_pathPermutations.
+   * @param level The MeshLevel that contains OBJECT_TYPE to be executed on.
+   * @param func The function that is executed on the OBJECT_TYPE
+   */
   template< typename OBJECT_TYPE,
             typename FUNC >
   void forObjectsInPath( std::pair< string const, std::map< string, std::vector< string > > > const & levelPair,
                          MeshLevel & meshLevel,
-                         FUNC && func ) const
-  {
-    if( m_objectType == ObjectTypes::nodes )
-    {
-      func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getNodeManager() ) );
-    }
-    else if( m_objectType == ObjectTypes::edges )
-    {
-      func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getEdgeManager()) );
-    }
-    else if( m_objectType == ObjectTypes::faces )
-    {
-      func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getFaceManager()) );
-    }
-    else if( m_objectType == ObjectTypes::elems )
-    {
-      ElementRegionManager & elemRegionMan = meshLevel.getElemManager();
-      for( auto & elemRegionPair : levelPair.second )
-      {
-        ElementRegionBase & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
-        if( std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value )
-        {
-          func( dynamic_cast< OBJECT_TYPE & >(elemRegion) );
-        }
-        else
-        {
-          for( auto & elemSubRegionName : elemRegionPair.second )
-          {
-            ElementSubRegionBase & subRegion = elemRegion.getSubRegion( elemSubRegionName );
-            if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value ||
-                std::is_same< dataRepository::Group, OBJECT_TYPE >::value )
-            {
-              func( dynamic_cast< OBJECT_TYPE & >(subRegion) );
-            }
-            else
-            {
-              GEOSX_ERROR( "You shouldn't be here" );
-            }
-          }
-        }
-      }
-    }
-  }
+                         FUNC && func ) const;
 
+  /**
+   * @brief A logical check for whether or not the m_objecType is consistent
+   *  with a specific OBJECT_TYPE
+   * @tparam OBJECT_TYPE The type to check m_objectType against.
+   * @return true If OBJECT_TYPE is the same type of a base of the type implied by m_objectType.
+   * @return false If OBJECT_TYPE is NOT the same type of a base of the type implied by m_objectType.
+   */
   template< typename OBJECT_TYPE >
   bool checkObjectTypeConsistency() const;
 
+  /**
+   * @brief prints the contents of m_pathPermutations for debugging
+   */
   void printPermutations() const;
 
+  /**
+   * @brief Create a tokenized version of the path
+   * @param path The input path
+   * @param meshBodies The Group that contains the MeshBody objects on the domain
+   * @return std::vector< string >  A tokenized representation of the path.
+   */
   std::vector< string > fillPathTokens( string const & path,
                                         dataRepository::Group const & meshBodies ) const;
 
+  /**
+   * @brief Convert the tokenized path into a collection of permutations and fill
+   *  m_pathPermutations.
+   * @param pathTokens The tokenized path
+   * @param meshBodies The Group that contains the MeshBody objects on the domain
+   */
   void processPathTokens( std::vector< string > const & pathTokens,
                           dataRepository::Group const & meshBodies );
 
@@ -273,6 +254,54 @@ bool MeshObjectPath::checkObjectTypeConsistency() const
                  std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value;
   }
   return consistent;
+}
+
+template< typename OBJECT_TYPE,
+          typename FUNC >
+void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string, std::vector< string > > > const & levelPair,
+                                       MeshLevel & meshLevel,
+                                       FUNC && func ) const
+{
+  if( m_objectType == ObjectTypes::nodes )
+  {
+    func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getNodeManager() ) );
+  }
+  else if( m_objectType == ObjectTypes::edges )
+  {
+    func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getEdgeManager()) );
+  }
+  else if( m_objectType == ObjectTypes::faces )
+  {
+    func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getFaceManager()) );
+  }
+  else if( m_objectType == ObjectTypes::elems )
+  {
+    ElementRegionManager & elemRegionMan = meshLevel.getElemManager();
+    for( auto & elemRegionPair : levelPair.second )
+    {
+      ElementRegionBase & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
+      if( std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value )
+      {
+        func( dynamic_cast< OBJECT_TYPE & >(elemRegion) );
+      }
+      else
+      {
+        for( auto & elemSubRegionName : elemRegionPair.second )
+        {
+          ElementSubRegionBase & subRegion = elemRegion.getSubRegion( elemSubRegionName );
+          if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value ||
+              std::is_same< dataRepository::Group, OBJECT_TYPE >::value )
+          {
+            func( dynamic_cast< OBJECT_TYPE & >(subRegion) );
+          }
+          else
+          {
+            GEOSX_ERROR( "You shouldn't be here" );
+          }
+        }
+      }
+    }
+  }
 }
 
 template< typename OBJECT_TYPE,

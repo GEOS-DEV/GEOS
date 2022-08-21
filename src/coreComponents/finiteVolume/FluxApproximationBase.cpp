@@ -99,7 +99,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
       Group & stencilGroup = stencilParentGroup.registerGroup( getName() );
       // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
       // TODO: Apply() should take a MeshLevel directly
-      fsManager.apply< FaceManager >( 0.0,
+      fsManager.apply< FaceManager >( 0.0, // time = 0
                                       mesh,
                                       m_fieldName,
                                       [&] ( FieldSpecificationBase const &,
@@ -113,7 +113,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 
       // For each aquifer boundary condition, create a boundary stencil
       fsManager.apply< FaceManager,
-                       AquiferBoundaryCondition >( 0.0,
+                       AquiferBoundaryCondition >( 0.0, // time = 0
                                                    mesh,
                                                    AquiferBoundaryCondition::catalogName(),
                                                    [&] ( AquiferBoundaryCondition const &,
