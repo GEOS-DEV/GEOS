@@ -20,7 +20,9 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_DUVAUTLIONSSOLID_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_DUVAUTLIONSSOLID_HPP_
 
-#include "SolidBase.hpp"
+#include "constitutive/solid/SolidBase.hpp"
+#include "ElasticIsotropic.hpp"
+#include "DruckerPrager.hpp"
 
 namespace geosx
 {
@@ -34,39 +36,29 @@ namespace constitutive
  * @tparam SOLID_TYPE type of solid model
  */
 template< typename SOLID_TYPE >
-class DuvautLionsSolidUpdates: public SolidBaseUpdates
+class DuvautLionsSolidUpdates : public SolidBaseUpdates
 {
 public:
   /**
    * @brief Constructor
    */
   DuvautLionsSolidUpdates( SOLID_TYPE const & solidModel,
-                           real64 const & relaxationTime):
+                           real64 const & relaxationTime,
+                           arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                           arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                           const bool & disableInelasticity ):
+    SolidBaseUpdates( newStress, oldStress, disableInelasticity ),                       
     m_solidUpdate( solidModel.createKernelUpdates() ),
     m_relaxationTime( relaxationTime )
   {}
 
-  GEOSX_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
+GEOSX_HOST_DEVICE
+virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override;
-
-protected:
-  typename SOLID_TYPE::KernelWrapper const m_solidUpdate;
-  real64 m_relaxationTime; 
-};
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void DuvautLionsSolidUpdates::smallStrainUpdate( localIndex const k,
-                                                 localIndex const q,
-                                                 real64 const & timeIncrement,
-                                                 real64 const ( &strainIncrement )[6],
-                                                 real64 ( & stress )[6],
-                                                 real64 ( & stiffness )[6][6] ) const
+                                  real64 ( &stiffness )[6][6] ) const override
 {
   real64 trialStress[6];   // Trial stress (elastic predictor)
   real64 elasticStiffness[6][6];  //Elastic stiffness
@@ -78,27 +70,74 @@ void DuvautLionsSolidUpdates::smallStrainUpdate( localIndex const k,
   }
 
   //Get trial stress and elastic stiffness by disabling inelasticity
-  m_solidUpdate.m_disableInelasticity = true; 
+  m_solidUpdate.m_disableInelasticity = true;
   m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, trialStress, elasticStiffness );
 
   //Enable inelasticity to get the rate-independent update
   m_solidUpdate.m_disableInelasticity = false;
   m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
-  stress = timeRatio *  trialStress + (1-timeRatio) * stress ;
 
-  for ( localIndex i=0; i<6; ++i )
+  for( localIndex i=0; i<6; ++i )
   {
-    for ( localIndex j=0; j<6; ++j )
+    stress[i] = timeRatio *  trialStress[i] + (1-timeRatio) * stress[i];
+    for( localIndex j=0; j<6; ++j )
     {
       stiffness[i][j] = timeRatio * elasticStiffness[i][j]  + (1 - timeRatio) * stiffness[i][j];
     }
   }
 
   saveStress( k, q, stress );
-  viscousStateUpdate( k , q , timeRatio );
+  viscousStateUpdate( k, q, timeRatio );
+  return;
+}                                 
 
-}
+protected:
+  typename SOLID_TYPE::KernelWrapper m_solidUpdate;
+  real64 const m_relaxationTime;
+};
+
+// GEOSX_HOST_DEVICE
+// GEOSX_FORCE_INLINE
+// void DuvautLionsSolidUpdates::smallStrainUpdate( localIndex const k,
+//                                                  localIndex const q,
+//                                                  real64 const & timeIncrement,
+//                                                  real64 const ( &strainIncrement )[6],
+//                                                  real64 ( & stress )[6],
+//                                                  real64 ( & stiffness )[6][6] ) const
+// {
+//   real64 trialStress[6];   // Trial stress (elastic predictor)
+//   real64 elasticStiffness[6][6];  //Elastic stiffness
+//   real64 timeRatio = 1 / (1 + timeIncrement / m_relaxationTime);
+
+//   for( localIndex i=0; i<6; ++i )
+//   {
+//     trialStress[i] = stress[i];
+//   }
+
+//   //Get trial stress and elastic stiffness by disabling inelasticity
+//   m_solidUpdate.m_disableInelasticity = true;
+//   m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, trialStress, elasticStiffness );
+
+//   //Enable inelasticity to get the rate-independent update
+//   m_solidUpdate.m_disableInelasticity = false;
+//   m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+
+//   stress = timeRatio *  trialStress + (1-timeRatio) * stress;
+
+//   for( localIndex i=0; i<6; ++i )
+//   {
+//     for( localIndex j=0; j<6; ++j )
+//     {
+//       stiffness[i][j] = timeRatio * elasticStiffness[i][j]  + (1 - timeRatio) * stiffness[i][j];
+//     }
+//   }
+
+//   saveStress( k, q, stress );
+//   viscousStateUpdate( k, q, timeRatio );
+//   return;
+
+// }
 
 
 /**
@@ -108,25 +147,39 @@ void DuvautLionsSolidUpdates::smallStrainUpdate( localIndex const k,
  * @tparam SOLID_TYPE type of solid model
  */
 //START_SPHINX_INCLUDE_00
-template< typename SOLID_TYPE>
+template< typename SOLID_TYPE >
 class DuvautLionsSolid : public SolidBase
 //END_SPHINX_INCLUDE_00
 {
 public:
 
+/// Alias for DuvautLionsSolidUpdates
+using KernelWrapper = DuvautLionsSolidUpdates< SOLID_TYPE >;
   /**
    * @brief Constructor
    * @param name Object name
    * @param parent Object's parent group
    */
- DuvautLionsSolid( string const & name, dataRepository::Group * const parent );
+  DuvautLionsSolid( string const & name, dataRepository::Group * const parent );
 
   /// Destructor
   virtual ~DuvautLionsSolid() override;
 
-  virtual void initializePreSubGroups() override;
+  /**
+   * @brief Catalog name
+   * @return Static catalog string
+   */
+  static string catalogName() { return string( "Visco" ) + SOLID_TYPE::m_catalogNameString; }
 
-  virtual void saveConvergedState() const override;
+  /**
+   * @brief Get catalog name
+   * @return Catalog name string
+   */
+  virtual string getCatalogName() const override { return catalogName(); }
+
+
+
+  virtual void initializePreSubGroups() override;
 
   /**
    * @brief Create a instantiation of the DuvautLionsSolidUpdates class
@@ -136,38 +189,70 @@ public:
   DuvautLionsSolidUpdates< SOLID_TYPE > createKernelUpdates() const
   {
 
-    return DuvautLionsSolidUpdates< SOLID_TYPE >( getSolidModel());
+    return DuvautLionsSolidUpdates< SOLID_TYPE >( getSolidModel(),
+                                                  m_relaxationTime,
+                                                  m_newStress,
+                                                  m_oldStress,
+                                                  m_disableInelasticity );
   }
+
+  virtual void saveConvergedState() const override;
+
+  /**
+   * Keys for data specified in this class.
+   */
+  struct viewKeyStruct : public SolidBase::viewKeyStruct
+  {
+    /// string/key for solid model name
+    static constexpr char const * solidModelNameString() { return "solidModelName"; }
+    /// string/key for relaxation time
+    static constexpr char const * relaxationTimeString() { return "relaxationTime"; }
+  };
+
+  // KernelWrapper createKernelUpdates() const
+  // {
+  //   return KernelWrapper( getSolidModel() );
+  // }
 
   //START_SPHINX_INCLUDE_01
 protected:
+
+  /// the name of the solid model
+  string m_solidModelName;
+
+  real64 const m_relaxationTime;
+  
   SOLID_TYPE const & getSolidModel() const
   { return this->getParent().template getGroup< SOLID_TYPE >( m_solidModelName ); }
   //END_SPHINX_INCLUDE_01
 
 };
 
+// template< typename SOLID_TYPE >
+// DuvautLionsSolid< SOLID_TYPE >::DuvautLionsSolid( string const & name, Group * const parent ):
+//   SolidBase( name, parent )
+// {}
 
-template< typename SOLID_TYPE>
-DuvautLionsSolid< SOLID_TYPE >::DuvautLionsSolid( string const & name, Group * const parent ):
-  SolidBase( name, parent )
-{}
+// template< typename SOLID_TYPE >
+// DuvautLionsSolid< SOLID_TYPE >::~DuvautLionsSolid() = default;
 
-template< typename SOLID_TYPE >
-DuvautLionsSolid< SOLID_TYPE >::~DuvautLionsSolid() = default;
-
-
-template< typename SOLID_TYPE >
-void DuvautLionsSolid< SOLID_TYPE >::initializePreSubGroups()
+virtual std::vector< string > getSubRelationNames() const override final
 {
-  if( SOLID_TYPE::catalogName() != getSolidModel().getCatalogName() )
-  {
-    GEOSX_ERROR( " The coupled solid "<<this->getName()<<
-                 " expects a solid model of type "<<SOLID_TYPE::catalogName()<<
-                 " but the specified solid model \""<<this->m_solidModelName<<
-                 "\" is of type" << getSolidModel().getCatalogName() );
-  }
+  std::vector< string > subRelationNames = { m_solidModelName };
+  return subRelationNames;
 }
+
+// template< typename SOLID_TYPE >
+// void DuvautLionsSolid< SOLID_TYPE >::initializePreSubGroups()
+// {
+//   if( SOLID_TYPE::catalogName() != getSolidModel().getCatalogName() )
+//   {
+//     GEOSX_ERROR( " The coupled solid "<<this->getName()<<
+//                  " expects a solid model of type "<<SOLID_TYPE::catalogName()<<
+//                  " but the specified solid model \""<<this->m_solidModelName<<
+//                  "\" is of type" << getSolidModel().getCatalogName() );
+//   }
+// }
 
 }
 } /* namespace geosx */

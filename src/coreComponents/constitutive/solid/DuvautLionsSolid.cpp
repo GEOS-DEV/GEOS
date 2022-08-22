@@ -41,7 +41,7 @@ DuvautLionsSolid< SOLID_TYPE >::DuvautLionsSolid( string const & name, Group * c
   m_solidUpdate(),
   m_relaxationTime()
 {
-    registerWrapper( viewKeyStruct::solidModelNameString(), &m_solidModelName ).
+  registerWrapper( viewKeyStruct::solidModelNameString(), &m_solidModelName ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "Name of the solid model." );
 

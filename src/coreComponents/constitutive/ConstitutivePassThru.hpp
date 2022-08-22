@@ -28,6 +28,7 @@
 #include "solid/DruckerPragerExtended.hpp"
 #include "solid/ModifiedCamClay.hpp"
 #include "solid/DelftEgg.hpp"
+#include "solid/DuvautLionsSolid.hpp"
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
@@ -81,6 +82,7 @@ struct ConstitutivePassThru< SolidBase >
     ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
                                  DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic >,
+                                 DuvautLionsSolid< ElasticIsotropic >,
                                  DruckerPragerExtended,
                                  ModifiedCamClay,
                                  DelftEgg,
