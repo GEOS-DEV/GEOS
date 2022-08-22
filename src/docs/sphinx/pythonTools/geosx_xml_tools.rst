@@ -1,4 +1,6 @@
 
+.. _XMLToolsPackage:
+
 GEOSX XML Tools
 --------------------------
 
@@ -7,11 +9,10 @@ See :ref:`PythonToolsSetup` for details on setup instructions, and :ref:`Advance
 The available console scripts for this package and its API are described below.
 
 
-preprocess_xml
+convert_abaqus
 ^^^^^^^^^^^^^^
 
-Compile an xml file with advanced features into a single file that can be read by GEOSX.
-Note: this script will be automatically applied if you use `geosx_preprocessed` instead of `geosx` when calling the code.
+Convert an abaqus format mesh file to gmsh or vtk format.
 
 .. argparse::
    :module: geosx_xml_tools.main

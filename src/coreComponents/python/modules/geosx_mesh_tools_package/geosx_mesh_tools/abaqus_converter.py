@@ -1,9 +1,7 @@
 import meshio  # type: ignore[import]
 from meshio._mesh import CellBlock  # type: ignore[import]
 import numpy as np
-import argparse
 import logging
-import sys
 
 
 def convert_abaqus_to_gmsh(input_mesh: str, output_mesh: str, logger: logging.Logger = None) -> int:
@@ -171,35 +169,3 @@ def convert_abaqus_to_vtu(input_mesh: str, output_mesh: str, logger: logging.Log
 
     return (n_warnings > 0)
 
-
-def main() -> None:
-    """
-    Entry point for the abaqus convertor console script
-
-    Args:
-        input (str): Input abaqus mesh file name
-        output (str): Output mesh file name
-        -v/--verbose (flag): Increase verbosity level
-    """
-
-    # Parse the user arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('input', type=str, help='Input abaqus mesh file name')
-    parser.add_argument('output', type=str, help='Output gmsh mesh file name')
-    parser.add_argument('-v', '--verbose', help='Increase verbosity level', action="store_true")
-    args = parser.parse_args()
-
-    # Set up a logger
-    logging.basicConfig(level=logging.WARNING)
-    logger = logging.getLogger(__name__)
-    if args.verbose:
-        logger.setLevel(logging.INFO)
-
-    # Call the converter
-    err = 0
-    if ('.msh' in args.output):
-        err = convert_abaqus_to_gmsh(args.input, args.output, logger)
-    else:
-        err = convert_abaqus_to_vtu(args.input, args.output, logger)
-    if err:
-        sys.exit('Warnings detected: check the output file for potential errors!')
