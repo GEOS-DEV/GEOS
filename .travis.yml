@@ -40,6 +40,9 @@ geosx_osx_build: &geosx_osx_build
     -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake
     -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe" -DENABLE_VTK:BOOL=OFF
   - cd build-darwin-clang-debug
+  - df -h
+  - make -j $(nproc) geosx VERBOSE=1
+  - df -h
   - make -j $(nproc) VERBOSE=1
   - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
 
