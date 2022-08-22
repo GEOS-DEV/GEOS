@@ -178,21 +178,8 @@ Advanced XML Features
 =================================
 
 The `geosx_xml_tools` python package adds a set of advanced features to the GEOSX xml format: units, parameters, and symbolic expressions.
+See :ref:`Python Tools Setup` for details on setup instructions, and :ref:`GEOSX XML Tools` for package API details.
 
-
-Setup
----------------------------------
-
-The package can be installed in the GEOSX build directory via the following command:
-
-.. code-block:: bash
-
-    make geosx_xml_tools
-
-During the installation step, multiple scripts will be created in the `bin` directory alongside `geosx`: `preprocess_xml`, `format_xml`, and `geosx_preprocessed`.
-The build process will attempt to install the required packages within the distribution specified by `PYTHON_POST_EXECUTABLE`, `Python3_EXECUTABLE` (used by pygeosx), or the verion of python used to configure GEOSX.
-If the user does not have write access for the target python distribution, the installation will attempt to create a new virtual python environment (which requires the virtualenv package).
-The `geosx_xml_tools` package depends on `lxml`, so if it is not present within the parent environment, the install script will attempt to fetch it from the internet using pip.
 
 Usage
 ---------------------------------
@@ -216,8 +203,8 @@ There are three ways to apply the preprocessor:
 
 .. code-block:: bash
 
-    # The -o argument is used to manually specify the compiled name
-    preprocess_xml -i input.xml -o input.xml.processed
+    # The -c argument is used to manually specify the compiled name
+    preprocess_xml -i input.xml -c input.xml.processed
     geosx -i input.xml.processed
 
     # Otherwise, a random name will be chosen by the tool

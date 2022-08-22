@@ -79,6 +79,18 @@ def process_xml_files(geosx_root: str) -> None:
             check_xml_redundancy(schema, str(f))
 
 
+def build_xml_redundancy_input_parser() -> argparse.ArgumentParser:
+    """Build xml redundancy input parser
+
+    Returns:
+        argparse.ArgumentParser: parser instance
+    """
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-r', '--root', type=str, help='GEOSX root', default='')
+    return parser
+
+
 def main() -> None:
     """Entry point for the xml attribute usage test script
 
@@ -87,8 +99,7 @@ def main() -> None:
     """
 
     # Parse the user arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--root', type=str, help='GEOSX root', default='')
+    parser = build_xml_redundancy_input_parser()
     args = parser.parse_args()
 
     # Parse the xml files

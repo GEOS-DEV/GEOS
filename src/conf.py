@@ -108,6 +108,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.inheritance_diagram',
+    'sphinxarg.ext',
     'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.napoleon',
     'sphinxcontrib.plantuml',

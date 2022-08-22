@@ -178,6 +178,24 @@ def format_file(input_fname: str,
         raise Exception('\nCheck input file!')
 
 
+def build_xml_formatter_input_parser() -> argparse.ArgumentParser:
+    """Build the argument parser
+
+    Returns:
+        argparse.ArgumentParser: the parser instance
+    """
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('input', type=str, help='Input file name')
+    parser.add_argument('-i', '--indent', type=int, help='Indent size', default=2)
+    parser.add_argument('-s', '--style', type=int, help='Indent style', default=0)
+    parser.add_argument('-d', '--depth', type=int, help='Block separation depth', default=2)
+    parser.add_argument('-a', '--alphebitize', type=int, help='Alphebetize attributes', default=0)
+    parser.add_argument('-c', '--close', type=int, help='Close tag style', default=0)
+    parser.add_argument('-n', '--namespace', type=int, help='Include namespace', default=0)
+    return parser
+
+
 def main() -> None:
     """Script to format xml files
 
@@ -190,18 +208,8 @@ def main() -> None:
         -c/--close (int): Close tag style
         -n/--namespace (int): Include namespace
     """
-
-    # Parse the user arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('input', type=str, help='Input file name')
-    parser.add_argument('-i', '--indent', type=int, help='Indent size', default=2)
-    parser.add_argument('-s', '--style', type=int, help='Indent style', default=0)
-    parser.add_argument('-d', '--depth', type=int, help='Block separation depth', default=2)
-    parser.add_argument('-a', '--alphebitize', type=int, help='Alphebetize attributes', default=0)
-    parser.add_argument('-c', '--close', type=int, help='Close tag style', default=0)
-    parser.add_argument('-n', '--namespace', type=int, help='Include namespace', default=0)
+    parser = build_xml_formatter_input_parser()
     args = parser.parse_args()
-
     format_file(args.input,
                 indent_size=args.indent,
                 indent_style=args.style,

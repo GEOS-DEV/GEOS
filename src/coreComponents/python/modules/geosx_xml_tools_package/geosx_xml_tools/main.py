@@ -8,18 +8,11 @@ from geosx_xml_tools import xml_processor
 from typing import Callable, Any, Union, Tuple, Iterable
 
 
-def parse_arguments() -> Tuple[argparse.Namespace, Iterable[str]]:
-    """Parse user arguments
-
-    Args:
-        -i/--input (str): Input file name (multiple allowed)
-        -c/--compiled-name (str): Compiled xml file name
-        -s/--schema (str): Path to schema to use for validation
-        -v/--verbose (int): Verbosity of outputs
-        -p/--parameters (str): Parameter overrides (name and value, multiple allowed)
+def build_preprocessor_input_parser() -> argparse.ArgumentParser:
+    """Build the argument parser
 
     Returns:
-        list: The remaining unparsed argument strings
+        argparse.ArgumentParser: The parser
     """
     # Parse the user arguments
     parser = argparse.ArgumentParser()
@@ -37,6 +30,24 @@ def parse_arguments() -> Tuple[argparse.Namespace, Iterable[str]]:
                         action='append',
                         help='Parameter overrides (name value, multiple allowed)',
                         default=[])
+
+    return parser
+
+
+def parse_arguments() -> Tuple[argparse.Namespace, Iterable[str]]:
+    """Parse user arguments
+
+    Args:
+        -i/--input (str): Input file name (multiple allowed)
+        -c/--compiled-name (str): Compiled xml file name
+        -s/--schema (str): Path to schema to use for validation
+        -v/--verbose (int): Verbosity of outputs
+        -p/--parameters (str): Parameter overrides (name and value, multiple allowed)
+
+    Returns:
+        list: The remaining unparsed argument strings
+    """
+    parser = build_preprocessor_input_parser()
     return parser.parse_known_args()
 
 
