@@ -30,25 +30,25 @@ using namespace dataRepository;
 MeshLevel::MeshLevel( string const & name,
                       Group * const parent ):
   Group( name, parent ),
-  m_nodeManager( groupStructKeys::nodeManagerString, this ),
-  m_edgeManager( groupStructKeys::edgeManagerString, this ),
-  m_faceManager( groupStructKeys::faceManagerString, this ),
-  m_elementManager( groupStructKeys::elemManagerString, this ),
+  m_nodeManager( groupStructKeys::nodeManagerString(), this ),
+  m_edgeManager( groupStructKeys::edgeManagerString(), this ),
+  m_faceManager( groupStructKeys::faceManagerString(), this ),
+  m_elementManager( groupStructKeys::elemManagerString(), this ),
   m_embSurfNodeManager( groupStructKeys::embSurfNodeManagerString, this ),
   m_embSurfEdgeManager( groupStructKeys::embSurfEdgeManagerString, this )
 
 {
 
-  registerGroup( groupStructKeys::nodeManagerString, &m_nodeManager );
+  registerGroup( groupStructKeys::nodeManagerString(), &m_nodeManager );
 
-  registerGroup( groupStructKeys::edgeManagerString, &m_edgeManager );
+  registerGroup( groupStructKeys::edgeManagerString(), &m_edgeManager );
 
 
-  registerGroup< FaceManager >( groupStructKeys::faceManagerString, &m_faceManager );
+  registerGroup< FaceManager >( groupStructKeys::faceManagerString(), &m_faceManager );
   m_faceManager.nodeList().setRelatedObject( m_nodeManager );
 
 
-  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString, &m_elementManager );
+  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString(), &m_elementManager );
 
   registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, &m_embSurfEdgeManager );
 

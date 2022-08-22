@@ -463,15 +463,14 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
   freeSurfaceFaceIndicator.zero();
   freeSurfaceNodeIndicator.zero();
 
-  fsManager.apply( time,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                   "faceManager",
-                   string( "FreeSurface" ),
-                   [&]( FieldSpecificationBase const & bc,
-                        string const &,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group &,
-                        string const & )
+  fsManager.apply< FaceManager >( time,
+                                  domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                  string( "FreeSurface" ),
+                                  [&]( FieldSpecificationBase const & bc,
+                                       string const &,
+                                       SortedArrayView< localIndex const > const & targetSet,
+                                       FaceManager &,
+                                       string const & )
   {
     string const & functionName = bc.getFunctionName();
 

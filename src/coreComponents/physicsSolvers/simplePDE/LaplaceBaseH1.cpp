@@ -197,15 +197,14 @@ void LaplaceBaseH1::
                                                arrayView1d< string const > const & )
   {
 
-    fsManager.apply( time,
-                     mesh,
-                     "nodeManager",
-                     m_fieldName,
-                     [&]( FieldSpecificationBase const & bc,
-                          string const &,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & targetGroup,
-                          string const & GEOSX_UNUSED_PARAM( fieldName ) )
+    fsManager.apply< NodeManager >( time,
+                                    mesh,
+                                    m_fieldName,
+                                    [&]( FieldSpecificationBase const & bc,
+                                         string const &,
+                                         SortedArrayView< localIndex const > const & targetSet,
+                                         NodeManager & targetGroup,
+                                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                          parallelDevicePolicy< 32 > >( targetSet,

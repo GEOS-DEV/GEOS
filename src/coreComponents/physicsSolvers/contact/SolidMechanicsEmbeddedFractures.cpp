@@ -526,15 +526,14 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
                                                arrayView1d< string const > const & )
   {
 
-    fsManager.apply( time_n+ dt,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::contact::traction::key(),
-                     [&] ( FieldSpecificationBase const & fs,
-                           string const &,
-                           SortedArrayView< localIndex const > const & targetSet,
-                           Group & subRegion,
-                           string const & )
+    fsManager.apply< ElementSubRegionBase >( time_n+ dt,
+                                             mesh,
+                                             extrinsicMeshData::contact::traction::key(),
+                                             [&] ( FieldSpecificationBase const & fs,
+                                                   string const &,
+                                                   SortedArrayView< localIndex const > const & targetSet,
+                                                   ElementSubRegionBase & subRegion,
+                                                   string const & )
     {
       fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
                                                                          time_n+dt,
