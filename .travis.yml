@@ -39,14 +39,7 @@ geosx_osx_build: &geosx_osx_build
   - python ${TRAVIS_BUILD_DIR}/scripts/config-build.py
     -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -bt Release
     -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe" -DENABLE_VTK:BOOL=OFF
-  - cd build-darwin-clang-release
-  - df -h
-  - make -j $(nproc) geosx VERBOSE=1
-  - df -h
-  - make -j 1 testReservoirSinglePhaseMSWells testReactiveCompositionalMultiphaseOBL VERBOSE=1
-  - df -h
   - make -j $(nproc) VERBOSE=1
-  - df -h
   - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
 
 geosx_totalenergies_cluster_build: &geosx_totalenergies_cluster_build

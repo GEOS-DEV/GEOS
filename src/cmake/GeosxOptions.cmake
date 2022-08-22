@@ -75,7 +75,7 @@ endif()
 
 ### BUILD & BLT SETUP ###
 
-option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" ON )
+option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF )
 
 option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
 
