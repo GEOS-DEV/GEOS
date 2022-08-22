@@ -51,6 +51,13 @@ public:
   MeshLevel & createMeshLevel( localIndex const newLevel );
 
   /**
+   * @brief Create a new mesh level.
+   * @param[in] name The name of the new MeshLevel.
+   * @return A reference to the new MeshLevel.
+   */
+  MeshLevel & createMeshLevel( string const & name );
+
+  /**
    * @brief Get the meshLevels group
    * @return reference to the meshLevels group.
    */

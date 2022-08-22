@@ -105,7 +105,7 @@ template<>
 struct testMeshHelper< FieldLocation::Node >
 {
   static constexpr auto managerKey()
-  { return MeshLevel::groupStructKeys::nodeManagerString; }
+  { return MeshLevel::groupStructKeys::nodeManagerString(); }
 
   static constexpr auto elemMapKey()
   { return ElementSubRegionBase::viewKeyStruct::nodeListString(); }
@@ -117,7 +117,7 @@ template<>
 struct testMeshHelper< FieldLocation::Face >
 {
   static constexpr auto managerKey()
-  { return MeshLevel::groupStructKeys::faceManagerString; }
+  { return MeshLevel::groupStructKeys::faceManagerString(); }
 
   static constexpr auto elemMapKey()
   { return ElementSubRegionBase::viewKeyStruct::faceListString(); }
