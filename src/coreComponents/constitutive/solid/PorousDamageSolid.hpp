@@ -186,10 +186,18 @@ private:
   GEOSX_HOST_DEVICE
   void updateMatrixPermeability( localIndex const k ) const
   {
-    // We tentatively update the permeability using the damage on the first quadrature point
-    real64 const damage = fmax( fmin( 1.0, m_solidUpdate.getDamage( k, 0 ) ), 0.0 );
+    integer const quadSize = m_solidUpdate.m_newDamage[k].size(); 
 
-    m_permUpdate.updateDamagePermeability( k, damage );
+    real64 damageAvg = 0.0; 
+
+    for( localIndex i=0; i<quadSize; ++i )
+    {
+      damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 ); 
+    }
+
+    damageAvg = damageAvg/quadSize; 
+
+    m_permUpdate.updateDamagePermeability( k, damageAvg );
   }
 
   // Do we need to consider the damage on the solid density?
