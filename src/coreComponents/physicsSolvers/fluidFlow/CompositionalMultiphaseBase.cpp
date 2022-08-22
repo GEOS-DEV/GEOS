@@ -801,14 +801,14 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       regionFilter.insert( regionName );
     }
 
-    fsManager.apply< EquilibriumInitialCondition >( 0.0,
+    fsManager.apply< ElementSubRegionBase,
+                     EquilibriumInitialCondition >( 0.0,
                                                     mesh,
-                                                    "ElementRegions",
                                                     EquilibriumInitialCondition::catalogName(),
                                                     [&] ( EquilibriumInitialCondition const & fs,
                                                           string const &,
                                                           SortedArrayView< localIndex const > const & targetSet,
-                                                          Group & subRegion,
+                                                          ElementSubRegionBase & subRegion,
                                                           string const & )
     {
       // Step 3.1: retrieve the data necessary to construct the pressure table in this subregion
@@ -1258,15 +1258,14 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & )
   {
-    fsManager.apply( time + dt,
-                     mesh,
-                     "ElementRegions",
-                     FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                     [&]( FieldSpecificationBase const & fs,
-                          string const & setName,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & subRegion,
-                          string const & )
+    fsManager.apply< ElementSubRegionBase >( time + dt,
+                                             mesh,
+                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
+                                             [&]( FieldSpecificationBase const & fs,
+                                                  string const & setName,
+                                                  SortedArrayView< localIndex const > const & targetSet,
+                                                  ElementSubRegionBase & subRegion,
+                                                  string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
@@ -1370,15 +1369,14 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
     map< string, map< string, set< string > > > bcTempStatusMap; // check that temperature is present/consistent
 
     // 1. Check pressure Dirichlet BCs
-    fsManager.apply( time,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::flow::pressure::key(),
-                     [&]( FieldSpecificationBase const &,
-                          string const & setName,
-                          SortedArrayView< localIndex const > const &,
-                          Group & subRegion,
-                          string const & )
+    fsManager.apply< ElementSubRegionBase >( time,
+                                             mesh,
+                                             extrinsicMeshData::flow::pressure::key(),
+                                             [&]( FieldSpecificationBase const &,
+                                                  string const & setName,
+                                                  SortedArrayView< localIndex const > const &,
+                                                  ElementSubRegionBase & subRegion,
+                                                  string const & )
     {
       // Check whether pressure has already been applied to this set
       string const & subRegionName = subRegion.getName();
@@ -1396,15 +1394,14 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
     // 2. Check temperature Dirichlet BCs
     if( m_isThermal )
     {
-      fsManager.apply( time,
-                       mesh,
-                       "ElementRegions",
-                       extrinsicMeshData::flow::temperature::key(),
-                       [&]( FieldSpecificationBase const &,
-                            string const & setName,
-                            SortedArrayView< localIndex const > const &,
-                            Group & subRegion,
-                            string const & )
+      fsManager.apply< ElementSubRegionBase >( time,
+                                               mesh,
+                                               extrinsicMeshData::flow::temperature::key(),
+                                               [&]( FieldSpecificationBase const &,
+                                                    string const & setName,
+                                                    SortedArrayView< localIndex const > const &,
+                                                    ElementSubRegionBase & subRegion,
+                                                    string const & )
       {
         string const & subRegionName = subRegion.getName();
         string const & regionName = subRegion.getParent().getParent().getName();
@@ -1431,15 +1428,14 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
     }
 
     // 3. Check composition BC (global component fraction)
-    fsManager.apply( time,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::flow::globalCompFraction::key(),
-                     [&] ( FieldSpecificationBase const & fs,
-                           string const & setName,
-                           SortedArrayView< localIndex const > const &,
-                           Group & subRegion,
-                           string const & )
+    fsManager.apply< ElementSubRegionBase >( time,
+                                             mesh,
+                                             extrinsicMeshData::flow::globalCompFraction::key(),
+                                             [&] ( FieldSpecificationBase const & fs,
+                                                   string const & setName,
+                                                   SortedArrayView< localIndex const > const &,
+                                                   ElementSubRegionBase & subRegion,
+                                                   string const & )
     {
       // 3.1 Check pressure, temperature, and record composition bc application
       string const & subRegionName = subRegion.getName();
@@ -1526,15 +1522,14 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
   {
 
     // 1. Apply pressure Dirichlet BCs, store in a separate field
-    fsManager.apply( time + dt,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::flow::pressure::key(),
-                     [&]( FieldSpecificationBase const & fs,
-                          string const & setName,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & subRegion,
-                          string const & )
+    fsManager.apply< ElementSubRegionBase >( time + dt,
+                                             mesh,
+                                             extrinsicMeshData::flow::pressure::key(),
+                                             [&]( FieldSpecificationBase const & fs,
+                                                  string const & setName,
+                                                  SortedArrayView< localIndex const > const & targetSet,
+                                                  ElementSubRegionBase & subRegion,
+                                                  string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
@@ -1553,15 +1548,14 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
     // 2. Apply temperature Dirichlet BCs, store in a separate field
     if( m_isThermal )
     {
-      fsManager.apply( time + dt,
-                       mesh,
-                       "ElementRegions",
-                       extrinsicMeshData::flow::temperature::key(),
-                       [&]( FieldSpecificationBase const & fs,
-                            string const &,
-                            SortedArrayView< localIndex const > const & targetSet,
-                            Group & subRegion,
-                            string const & )
+      fsManager.apply< ElementSubRegionBase >( time + dt,
+                                               mesh,
+                                               extrinsicMeshData::flow::temperature::key(),
+                                               [&]( FieldSpecificationBase const & fs,
+                                                    string const &,
+                                                    SortedArrayView< localIndex const > const & targetSet,
+                                                    ElementSubRegionBase & subRegion,
+                                                    string const & )
       {
         fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                                time + dt,
@@ -1571,15 +1565,14 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
     }
 
     // 3. Apply composition BC (global component fraction) and store them for constitutive call
-    fsManager.apply( time + dt,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::flow::globalCompFraction::key(),
-                     [&] ( FieldSpecificationBase const & fs,
-                           string const &,
-                           SortedArrayView< localIndex const > const & targetSet,
-                           Group & subRegion,
-                           string const & )
+    fsManager.apply< ElementSubRegionBase >( time + dt,
+                                             mesh,
+                                             extrinsicMeshData::flow::globalCompFraction::key(),
+                                             [&] ( FieldSpecificationBase const & fs,
+                                                   string const &,
+                                                   SortedArrayView< localIndex const > const & targetSet,
+                                                   ElementSubRegionBase & subRegion,
+                                                   string const & )
     {
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                              time + dt,
@@ -1591,15 +1584,14 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
     string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
     // 4. Call constitutive update, back-calculate target global component densities and apply to the system
-    fsManager.apply( time + dt,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::flow::pressure::key(),
-                     [&] ( FieldSpecificationBase const &,
-                           string const &,
-                           SortedArrayView< localIndex const > const & targetSet,
-                           Group & subRegion,
-                           string const & )
+    fsManager.apply< ElementSubRegionBase >( time + dt,
+                                             mesh,
+                                             extrinsicMeshData::flow::pressure::key(),
+                                             [&] ( FieldSpecificationBase const &,
+                                                   string const &,
+                                                   SortedArrayView< localIndex const > const & targetSet,
+                                                   ElementSubRegionBase & subRegion,
+                                                   string const & )
     {
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
