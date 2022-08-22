@@ -402,12 +402,12 @@ struct VelocityComputation
    launch( localIndex const size,
            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
            arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-           arrayView1d < real64 const > const  p_np1,
-           arrayView1d < real64 const > const density,
+           arrayView1d< real64 const > const  p_np1,
+           arrayView1d< real64 const > const density,
            real64 const dt,
-           arrayView2d < real64 > const velocity_x,
-           arrayView2d < real64 > const velocity_y,
-           arrayView2d < real64 > const velocity_z)
+           arrayView2d< real64 > const velocity_x,
+           arrayView2d< real64 > const velocity_y,
+           arrayView2d< real64 > const velocity_z)
     {
       forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
       {
@@ -499,13 +499,13 @@ struct PressureComputation
    launch( localIndex const size,
            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
            arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-           arrayView2d < real64 const > const velocity_x,
-           arrayView2d < real64 const > const velocity_y,
-           arrayView2d < real64 const > const velocity_z,
-           arrayView1d< const real64 > const mass,
-           arrayView1d< const real64 > const rhs,
-           arrayView1d< const real64 > const mediumVelocity,
-           arrayView1d< const real64 > const density,
+           arrayView2d< real64 const > const velocity_x,
+           arrayView2d< real64 const > const velocity_y,
+           arrayView2d< real64 const > const velocity_z,
+           arrayView1d< real64 const > const mass,
+           arrayView1d< real64 const > const rhs,
+           arrayView1d< real64 const > const mediumVelocity,
+           arrayView1d< real64 const > const density,
            arrayView2d< real64 const > const sourceConstants,
            arrayView1d< localIndex const > const sourceIsLocal,
            arrayView1d< localIndex const > const sourceElem,
