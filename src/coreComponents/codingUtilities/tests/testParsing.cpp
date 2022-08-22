@@ -121,6 +121,7 @@ protected:
     std::string const fname = GEOSX_FMT( "testParsing_{}_input", typeid(T).name() );
     std::ofstream os( fname );
     os << input;
+    os.close();
 
     std::vector< T > vec;
     geosx::parseFile( fname, vec, issep );
@@ -134,6 +135,7 @@ protected:
     std::string const fname = GEOSX_FMT( "testParsing_{}_input_invalid", typeid(T).name() );
     std::ofstream os( fname );
     os << input;
+    os.close();
 
     std::vector< T > vec;
     auto const issep_invalid = []( char const c ){ return c == '|'; };
