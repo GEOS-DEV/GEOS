@@ -24,11 +24,10 @@
       damageFlag="1">
       <NonlinearSolverParameters
         newtonMaxIter="100"
-        newtonTol="1.0e-6"/>
+        newtonTol="1.0e-4"/>
       <LinearSolverParameters
         solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhasePoromechanics>
 
     <PhaseFieldDamageFEM
@@ -43,7 +42,8 @@
         newtonMaxIter="200"
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        solverType="gmres"
+        preconditionerType="amg"/>
     </PhaseFieldDamageFEM>
 
     <SolidMechanicsLagrangianSSLE
@@ -67,8 +67,8 @@
       xCoords="{ 0, 10 }"
       yCoords="{ 0, 10 }"
       zCoords="{ 0, 0.1 }"
-      nx="{ 200 }"
-      ny="{ 200 }"
+      nx="{ 201 }"
+      ny="{ 201 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -122,12 +122,15 @@
     <DamageElasticIsotropic
       name="rockSolid"
       defaultDensity="2700"
-      defaultBulkModulus="5e10"
-      defaultShearModulus="2.308e10"
-      lengthScale="1e-1"
-      criticalFractureEnergy="5e2"
+      defaultBulkModulus="4.4144e9"
+      defaultShearModulus="4.3363e9"
+      lengthScale="0.1"
+      criticalFractureEnergy="91"
       criticalStrainEnergy="0"
-      extDrivingForceSwitch="False"/>
+      extDrivingForceSwitch="True"
+      tensileStrength="27e6"
+      compressiveStrength="77e6"
+      deltaCoefficient="0.0"/>
 
     <BiotPorosity
       name="rockPorosity"
@@ -137,12 +140,12 @@
     <DamagePermeability
       name="rockPerm"
       bulkPermeability="1.0e-15"
-      fracturePermeability="1.0e-5"/>
+      fracturePermeability="1.0e-10"/>
 
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="1.0e-3"
+      defaultViscosity="1.0e-9"
       referencePressure="0.000"
       referenceDensity="1000"
       compressibility="4.4e-10"
@@ -201,7 +204,7 @@
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Region1/cb1"
-      scale="-0.01"
+      scale="-50.0"
       component="0"
       setNames="{ source }"
       functionName="timeFunction"/>
@@ -218,7 +221,7 @@
   <Outputs>
     <VTK
       name="WellboreVTKOutput"
-      plotFileRoot="phaseFieldPoro_debug"/>
+      plotFileRoot="phaseFieldPoro_nucleation_debug"/>
 
     <Restart
       name="restartOutput"/>
@@ -232,8 +235,8 @@
 
     <Box
       name="source"
-      xMin="{ 4.899, 4.899, -0.001 }"
-      xMax="{ 5.101, 5.101,  0.101 }"/>
+      xMin="{ 4.799, 4.799, -0.001 }"
+      xMax="{ 5.201, 5.201,  0.101 }"/>
   </Geometry>
 
 </Problem>
