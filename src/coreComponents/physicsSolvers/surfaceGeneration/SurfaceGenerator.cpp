@@ -475,20 +475,12 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addToFractureStencil( meshLevel, this->m_fractureRegionName, true );
-        // ------------
-        // BEGIN ANDREA
-        // ------------
-        FaceElementSubRegion & subRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
-        subRegion.m_recalculateFractureConnectorEdges.clear();
-        subRegion.m_newFaceElements.clear();
-        // ------------
-        // END ANDREA
-        // ------------
       }
     }
 
-    edgeManager.m_recalculateFractureConnectorEdges.clear();
-    fractureRegion.getSubRegion< FaceElementSubRegion >( 0 ).m_newFaceElements.clear();
+    FaceElementSubRegion & subRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
+    subRegion.m_recalculateFractureConnectorEdges.clear();
+    subRegion.m_newFaceElements.clear();
 
     // Create set "all" on the faceElementSubregion
     FaceElementSubRegion & fractureSubRegion  = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
