@@ -4,6 +4,7 @@
 
 set( testSources
      testGeosxTraits.cpp
+     testParsing.cpp
      )
 
 set( dependencyList gtest codingUtilities )

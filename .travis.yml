@@ -42,7 +42,7 @@ geosx_osx_build: &geosx_osx_build
     -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe" -DENABLE_VTK:BOOL=OFF
   - cd build-darwin-clang-debug
   - make -j $(nproc) VERBOSE=1
-  # - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
+  - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
 
 geosx_totalenergies_cluster_build: &geosx_totalenergies_cluster_build
   script: scripts/ci_build_and_test.sh
