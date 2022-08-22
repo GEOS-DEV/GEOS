@@ -43,7 +43,10 @@ geosx_osx_build: &geosx_osx_build
   - df -h
   - make -j $(nproc) geosx VERBOSE=1
   - df -h
+  - make -j 1 testReservoirSinglePhaseMSWells testReactiveCompositionalMultiphaseOBL VERBOSE=1
+  - df -h
   - make -j $(nproc) VERBOSE=1
+  - df -h
   - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
 
 geosx_totalenergies_cluster_build: &geosx_totalenergies_cluster_build
