@@ -191,60 +191,41 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
     {
       NodeManager & nodes = meshLevel.getNodeManager();
 
-      nodes.registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the total displacements on the nodes." ).
-        reference().resizeDimension< 1 >( 3 );
-
-      nodes.registerWrapper< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( keys::IncrementalDisplacement ).
-        setPlotLevel( PlotLevel::LEVEL_3 ).
-        setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the incremental displacements for the current time step on the nodes." ).
-        reference().resizeDimension< 1 >( 3 );
-
-      nodes.registerWrapper< array2d< real64, nodes::VELOCITY_PERM > >( keys::Velocity ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the current velocity on the nodes." ).
-        reference().resizeDimension< 1 >( 3 );
-
-      nodes.registerWrapper< array2d< real64, nodes::ACCELERATION_PERM > >( keys::Acceleration ).
-        setPlotLevel( PlotLevel::LEVEL_1 ).
-        setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
-                        "to hold the summation of nodal forces resulting from the governing equations." ).
-        reference().resizeDimension< 1 >( 3 );
-
-      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::forceExternalString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
-                        " conditions as well as coupling forces such as hydraulic forces." ).
-        reference().resizeDimension< 1 >( 3 );
-
-      nodes.registerWrapper< array1d< real64 > >( keys::Mass ).
+      nodes.registerWrapper< array2d< real64 > >( keys::Mass ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName()).
         setDescription( "An array that holds the mass on the nodes." );
-
-      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::vTildeString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the velocity predictors on the nodes." ).
-        reference().resizeDimension< 1 >( 3 );
-
-      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::uhatTildeString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the incremental displacement predictors on the nodes." ).
-        reference().resizeDimension< 1 >( 3 );
-
-      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::contactForceString() ).
+      
+      nodes.registerWrapper< array3d< real64 > >( keys::Velocity ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the contact force." ).
-        reference().resizeDimension< 1 >( 3 );
+        setDescription( "An array that holds the current velocity on the nodes." );
+
+      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::momentumString() ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the current momentum on the nodes." );
+
+      nodes.registerWrapper< array3d< real64 > >( keys::Acceleration ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the current acceleration on the nodes." );
+
+      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::forceExternalString() ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
+                        " conditions as well as coupling forces such as hydraulic forces." );
+
+      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::forceInternalString() ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the internal forces on the nodes." );
+
+      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::forceContactString() ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the contact force." );
 
       Group & nodeSets = nodes.sets();
       nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::sendOrReceiveNodesString() ).
@@ -398,17 +379,21 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
-void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X,
-                                   ParticleManager & particleManager,
-                                   SpatialPartition & partition)
+void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
+                                    ParticleManager & particleManager,
+                                    SpatialPartition & partition )
 {
+  // Get grid quantites
+  int numNodes = nodeManager.size();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridReferencePosition = nodeManager.referencePosition();
+  
   // Get global domain extent
-  for(int i=0; i<g_X.size()/3; i++)
+  for(int g=0; g<numNodes; g++)
   {
-    for(int j=0; j<3; j++)
+    for(int i=0; i<3; i++)
     {
-      m_xLocalMin[j] = std::min(m_xLocalMin[j],g_X[i][j]);
-      m_xLocalMax[j] = std::max(m_xLocalMax[j],g_X[i][j]);
+      m_xLocalMin[i] = std::min(m_xLocalMin[i],gridReferencePosition[g][i]);
+      m_xLocalMax[i] = std::max(m_xLocalMax[i],gridReferencePosition[g][i]);
     }
   }
   for(int i=0; i<3; i++)
@@ -421,14 +406,14 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
   }
 
   // Get element size
-  for(int i=0; i<g_X.size()/3; i++)
+  for(int g=0; g<numNodes; g++)
   {
-    for(int j=0; j<3; j++)
+    for(int i=0; i<3; i++)
     {
-      real64 test = g_X[i][j] - m_xLocalMin[j]; // By definition, this should always be positive. Furthermore, the g_X should only be those on the local partition
+      real64 test = gridReferencePosition[g][i] - m_xLocalMin[i]; // By definition, this should always be positive. Furthermore, the gridReferencePosition should only be those on the local partition
       if(test > 0.0) // We're looking for the smallest nonzero distance from the "min" node. TODO: Could be vulnerable to a finite precision bug.
       {
-        m_hx[j] = std::fmin(test, m_hx[j]);
+        m_hEl[i] = std::fmin(test, m_hEl[i]);
       }
     }
   }
@@ -436,7 +421,7 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
   // Get number of elements in each direction
   for(int i=0; i<3; i++)
   {
-    m_nEl[i] = std::round(m_domainL[i]/m_hx[i]);
+    m_nEl[i] = std::round(m_domainL[i]/m_hEl[i]);
   }
 
   // Create element map
@@ -449,15 +434,15 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
       m_ijkMap[i][j].resize( m_nEl[2] + 1 );
     }
   }
-  for( int ii = 0 ; ii < g_X.size()/3 ; ii++ )
+  for( int g = 0 ; g < numNodes ; g++ )
   {
-    int i = std::round( ( g_X[ii][0] - m_xLocalMin[0] ) / m_hx[0] ) ;
-    int j = std::round( ( g_X[ii][1] - m_xLocalMin[1] ) / m_hx[1] ) ;
-    int k = std::round( ( g_X[ii][2] - m_xLocalMin[2] ) / m_hx[2] ) ;
-    m_ijkMap[i][j][k] = ii;
+    int i = std::round( ( gridReferencePosition[g][0] - m_xLocalMin[0] ) / m_hEl[0] ) ;
+    int j = std::round( ( gridReferencePosition[g][1] - m_xLocalMin[1] ) / m_hEl[1] ) ;
+    int k = std::round( ( gridReferencePosition[g][2] - m_xLocalMin[2] ) / m_hEl[2] ) ;
+    m_ijkMap[i][j][k] = g;
   }
 
-  // Set particle masses based on their volume and density. Set stress to zero. Set deformation gradient to identity;
+  // Set particle masses based on their volume and density. Set deformation gradient to identity;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
@@ -468,9 +453,9 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getParticleDeformationGradient();
 
     // mass
-    for(int i=0; i<subRegion.size(); i++)
+    for(int p=0; p<subRegion.size(); p++)
     {
-      particleMass[i] = particleDensity[i][0]*particleVolume[i]; // TODO: This should probably be done in ParticleMeshGenerator...
+      particleMass[p] = particleDensity[p][0] * particleVolume[p]; // TODO: This should probably be done in ParticleMeshGenerator...
     }
 
     // deformation gradient - TODO: there's probably a LvArray function that makes this a one-liner - I don't think the ParticleSubRegionBase constructor can easily initialize this to identity
@@ -480,14 +465,7 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
       {
         for(int j=0; j<3; j++)
         {
-          if(i==j)
-          {
-            particleDeformationGradient[p][i][j] = 1.0;
-          }
-          else
-          {
-            particleDeformationGradient[p][i][j] = 0.0;
-          }
+          particleDeformationGradient[p][i][j] = i==j ? 1.0 : 0.0;
         }
       }
     }
@@ -520,26 +498,68 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   MeshLevel & mesh = grid.getMeshLevel(0);
   NodeManager & nodeManager = mesh.getNodeManager();
 
-
-  // Get nodal fields
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > & g_X = nodeManager.referencePosition();
-  arrayView2d< real64, nodes::VELOCITY_USD > & g_V = nodeManager.velocity(); // Velocity, initially overloaded to be momentum
-  arrayView2d< real64, nodes::ACCELERATION_USD > & g_A = nodeManager.acceleration(); // Acceleration, initially overloaded to be internal force
-  arrayView1d< real64 > & g_M = nodeManager.getReference< array1d< real64 > >( keys::Mass );
-
-
-  // Zero out nodal fields
-  g_V.zero();
-  g_A.zero();
-  g_M.zero();
-
-
   // At time step zero, perform initialization calculations
   if(cycleNumber == 0)
   {
-    initialize(g_X, particleManager, partition);
+    initialize(nodeManager, particleManager, partition);
   }
 
+  // Get nodal fields
+  int numNodes = nodeManager.size();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > & gridReferencePosition = nodeManager.referencePosition();
+  array2d< real64 > & gridMass = nodeManager.getReference< array2d< real64 > >( keys::Mass );
+  array3d< real64 > & gridVelocity = nodeManager.getReference< array3d< real64 > >( keys::Velocity );
+  array3d< real64 > & gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::momentumString() );
+  array3d< real64 > & gridAcceleration = nodeManager.getReference< array3d< real64 > >( keys::Acceleration );
+  array3d< real64 > & gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceInternalString() );
+  array3d< real64 > & gridExternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceExternalString() );
+  array3d< real64 > & gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceContactString() );
+
+  // Get number of contact groups
+  int maxLocalGroupNumber = 0; // Maximum contact group number on this partition.
+  int maxGlobalGroupNumber; // Maximum contact group number on global domain.
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
+    int subregionMaxGroupNumber = *( std::max_element( particleGroup.begin(), particleGroup.end() ) );
+    if( subregionMaxGroupNumber > maxLocalGroupNumber)
+    {
+      maxLocalGroupNumber = subregionMaxGroupNumber;
+    }
+  } );  
+  MPI_Allreduce( &maxLocalGroupNumber,
+                 &maxGlobalGroupNumber,
+                 1,
+                 MPI_INT,
+                 MPI_MAX,
+                 MPI_COMM_WORLD );
+
+  // Number of contact groups
+  m_numContactGroups = maxGlobalGroupNumber + 1;
+
+  // Specified number of damage flags.
+  m_numContactFlags = m_damageFieldPartitioning ? 2 : 1;
+
+  // Total number of velocity fields:
+  m_numVelocityFields = m_numContactGroups * m_numContactFlags;
+
+  // Resize grid field arrays
+  gridMass.resize( m_numVelocityFields, numNodes );
+  gridVelocity.resize( m_numVelocityFields, numNodes, 3 );
+  gridMomentum.resize( m_numVelocityFields, numNodes, 3 );
+  gridAcceleration.resize( m_numVelocityFields, numNodes, 3 );
+  gridInternalForce.resize( m_numVelocityFields, numNodes, 3 );
+  gridExternalForce.resize( m_numVelocityFields, numNodes, 3 );
+  gridContactForce.resize( m_numVelocityFields, numNodes, 3 );
+
+  // Zero out grid fields
+  gridMass.zero();
+  gridVelocity.zero();
+  gridMomentum.zero();
+  gridAcceleration.zero();
+  gridInternalForce.zero();
+  gridExternalForce.zero();
+  gridContactForce.zero();
 
   // Particle to grid interpolation
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -548,11 +568,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
     arrayView1d< real64 > const particleMass = subRegion.getParticleMass();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+    arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
 
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
     arrayView3d< real64, solid::STRESS_USD > const particleStress = constitutiveRelation.getStress();
-    if(cycleNumber ==0)
+    if( cycleNumber == 0 )
     {
       particleStress.zero(); // Zero out particle stress on first time step TODO I thought the constitutive constructor handled this
     }
@@ -562,8 +583,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       auto const & p_x = particleCenter[p]; // auto = LvArray::ArraySlice<double, 1, 0, int>
       auto const & p_v = particleVelocity[p]; // auto = LvArray::ArraySlice<double, 1, 0, int>
       real64 const & p_m = particleMass[p];
-      real64 const & p_Vol = particleVolume[p];
+      real64 const & p_vol = particleVolume[p];
       auto const & p_stress = particleStress[p][0];
+      int const & p_group = particleGroup[p];
 
       // Get interpolation kernel
       std::vector<int> nodeIDs; // nodes that the particle maps to
@@ -573,25 +595,26 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       subRegion.getAllWeights( p,
                                p_x,
                                m_xLocalMin,
-                               m_hx,
+                               m_hEl,
                                m_ijkMap,
-                               g_X,
+                               gridReferencePosition,
                                nodeIDs,       // output
                                weights,       // output
                                gradWeights ); // output
 
-      // Update grid values
-      for(size_t i=0; i<nodeIDs.size(); i++)
+      // Map to grid
+      for(size_t g=0; g<nodeIDs.size(); g++)
       {
-        int g = nodeIDs[i];
-        g_M[g] += p_m*weights[i];
-        for(int j=0; j<3; j++)
+        int mappedNode = nodeIDs[g];
+        int fieldIndex = p_group;
+        gridMass[fieldIndex][mappedNode] += p_m*weights[g];
+        for(int i=0; i<3; i++)
         {
-          g_V[g][j] += p_m*p_v[j]*weights[i];
+          gridMomentum[fieldIndex][mappedNode][i] += p_m*p_v[i]*weights[g];
           for(int k=0; k<3; k++)
           {
-            int voigt = m_voigtMap[k][j];
-            g_A[g][j] -= p_stress[voigt]*gradWeights[k][i]*p_Vol;
+            int voigt = m_voigtMap[k][i];
+            gridInternalForce[fieldIndex][mappedNode][i] -= p_stress[voigt]*gradWeights[k][g]*p_vol;
           }
         }
       }
@@ -603,12 +626,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   // Grid MPI operations
 
   // (1) Initialize
-  FieldIdentifiers fieldsToBeSync;
-  fieldsToBeSync.addFields( FieldLocation::Node, { keys::Mass, keys::Velocity, keys::Acceleration } );
-//  std::map< string, string_array > fieldNames;
-//  fieldNames["node"].emplace_back( keys::Mass );
-//  fieldNames["node"].emplace_back( keys::Velocity );
-//  fieldNames["node"].emplace_back( keys::Acceleration );
+  FieldIdentifiers fieldsToBeSynced;
+  fieldsToBeSynced.addFields( FieldLocation::Node, { keys::Mass, viewKeyStruct::momentumString(), viewKeyStruct::forceInternalString() } );
   std::vector< NeighborCommunicator > & neighbors = domain.getNeighbors();
   m_iComm.resize( neighbors.size() );
 
@@ -624,9 +643,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   }
 
   // (3) Additive sync
-  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSync, mesh, neighbors, m_iComm, true );
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced, mesh, neighbors, m_iComm, true );
   parallelDeviceEvents packEvents;
-  CommunicationTools::getInstance().asyncPack( fieldsToBeSync, mesh, neighbors, m_iComm, true, packEvents );
+  CommunicationTools::getInstance().asyncPack( fieldsToBeSynced, mesh, neighbors, m_iComm, true, packEvents );
   waitAllDeviceEvents( packEvents );
   CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, true, packEvents );
   parallelDeviceEvents unpackEvents;
@@ -644,9 +663,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   }
 
   // (5) Perform sync
-  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSync, mesh, neighbors, m_iComm, true );
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced, mesh, neighbors, m_iComm, true );
   parallelDeviceEvents packEvents2;
-  CommunicationTools::getInstance().asyncPack( fieldsToBeSync, mesh, neighbors, m_iComm, true, packEvents2 );
+  CommunicationTools::getInstance().asyncPack( fieldsToBeSynced, mesh, neighbors, m_iComm, true, packEvents2 );
   waitAllDeviceEvents( packEvents2 );
   CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, true, packEvents2 );
   parallelDeviceEvents unpackEvents2;
@@ -654,35 +673,39 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
 
   // Grid update
-  for(int i=0; i<nodeManager.size(); i++)
+  for(int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++)
   {
-    if(g_M[i] > 1.0e-12) // small mass threshold
+    for(int g=0; g<numNodes; g++)
     {
-      for(int j=0; j<3; j++)
+      if(gridMass[fieldIndex][g] > 1.0e-12) // small mass threshold
       {
-        g_A[i][j] /= g_M[i]; // g_A holds the nodal forces before this update, divide by mass to obtain acceleration
-        g_V[i][j] /= g_M[i]; // g_V holds the nodal momenta before this update, divide by mass to obtain velocity
-        g_V[i][j] += g_A[i][j]*dt;
+        for(int i=0; i<3; i++)
+        {
+          real64 totalForce = gridInternalForce[fieldIndex][g][i] + gridExternalForce[fieldIndex][g][i];
+          gridAcceleration[fieldIndex][g][i] = totalForce/gridMass[fieldIndex][g];
+          gridVelocity[fieldIndex][g][i] = gridMomentum[fieldIndex][g][i]/gridMass[fieldIndex][g];
+          gridVelocity[fieldIndex][g][i] += gridAcceleration[fieldIndex][g][i]*dt;
+        }
+  //      // hard-coded rotation about z-axis passing thru mesh center
+  //      double xRel = gridReferencePosition[i][0] - 0.5*(m_xGlobalMax[0] - m_xGlobalMin[0]);
+  //      double yRel = gridReferencePosition[i][1] - 0.5*(m_xGlobalMax[1] - m_xGlobalMin[1]);
+  //      double theta = atan2(yRel,xRel);
+  //      double r = hypot(xRel,yRel);
+  //      gridVelocity[i][0] = -r*sin(theta)*50.0;
+  //      gridVelocity[i][1] = r*cos(theta)*50.0;
+  //      gridVelocity[i][2] = 0.0;
+  //      // hard-coded shear
+  //      gridVelocity[i][0] = 50.0*(gridReferencePosition[i][1] - 0.5*(m_xGlobalMax[1] - m_xGlobalMin[1]));
+  //      gridVelocity[i][1] = 25.0*(gridReferencePosition[i][0] - 0.5*(m_xGlobalMax[0] - m_xGlobalMin[0]));
+  //      gridVelocity[i][2] = 0.0;
       }
-//      // hard-coded rotation about z-axis passing thru mesh center
-//      double xRel = g_X[i][0] - 0.5*(m_xGlobalMax[0] - m_xGlobalMin[0]);
-//      double yRel = g_X[i][1] - 0.5*(m_xGlobalMax[1] - m_xGlobalMin[1]);
-//      double theta = atan2(yRel,xRel);
-//      double r = hypot(xRel,yRel);
-//      g_V[i][0] = -r*sin(theta)*50.0;
-//      g_V[i][1] = r*cos(theta)*50.0;
-//      g_V[i][2] = 0.0;
-//      // hard-coded shear
-//      g_V[i][0] = 50.0*(g_X[i][1] - 0.5*(m_xGlobalMax[1] - m_xGlobalMin[1]));
-//      g_V[i][1] = 25.0*(g_X[i][0] - 0.5*(m_xGlobalMax[0] - m_xGlobalMin[0]));
-//      g_V[i][2] = 0.0;
-    }
-    else
-    {
-      for(int j=0; j<3; j++)
+      else
       {
-        g_A[i][j] = 0.0;
-        g_V[i][j] = 0.0;
+        for(int i=0; i<3; i++)
+        {
+          gridAcceleration[fieldIndex][g][i] = 0.0;
+          gridVelocity[fieldIndex][g][i] = 0.0;
+        }
       }
     }
   }
@@ -695,8 +718,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
     arrayView1d< real64 > const particleMass = subRegion.getParticleMass();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
-    arrayView1d< real64 > const particleVolume0 = subRegion.getParticleVolume0();
+    arrayView1d< real64 > const particleInitialVolume = subRegion.getParticleInitialVolume();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getParticleDeformationGradient();
+    arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
 
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ElasticIsotropic & constitutiveRelation = getConstitutiveModel< ElasticIsotropic >( subRegion, solidMaterialName ); // again, limiting to elastic isotropic for now
@@ -711,11 +735,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       auto const & p_x = particleCenter[p];
       auto const & p_v = particleVelocity[p];
       real64 & p_m = particleMass[p];
-      real64 & p_Vol = particleVolume[p];
-      real64 const & p_Vol0 = particleVolume0[p];
+      real64 & p_vol = particleVolume[p];
+      real64 const & p_vol0 = particleInitialVolume[p];
       real64 & p_rho = particleDensity[p][0];
       auto const & p_F = particleDeformationGradient[p]; // auto = LvArray::ArraySlice<double, 2, 1, int>
       auto const & p_stress = particleStress[p][0];
+      int const & p_group = particleGroup[p];
       real64 p_L[3][3] = { {0} }; // Velocity gradient
       real64 p_FOld[3][3] = { {0} }; // Old particle F
       real64 EG[3][3] = { {0} }; // Green-Lagrange Strain
@@ -732,7 +757,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
         }
       }
 
-      // Get interpolation kernel
+      // Get interpolation kernel  - TODO: Seems dumb to have to do this twice
       std::vector<int> nodeIDs; // nodes that the particle maps to
       std::vector<real64> weights; // shape function value for each node
       std::vector< std::vector<real64> > gradWeights; // shape function gradient value for each node; 1st index = direction, 2nd index = node
@@ -740,24 +765,25 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       subRegion.getAllWeights( p,
                                p_x,
                                m_xLocalMin,
-                               m_hx,
+                               m_hEl,
                                m_ijkMap,
-                               g_X,
+                               gridReferencePosition,
                                nodeIDs,       // output
                                weights,       // output
                                gradWeights ); // output
 
       // Particle-to-grid map
-      for(size_t i=0; i<nodeIDs.size(); i++)
+      for(size_t g=0; g<nodeIDs.size(); g++)
       {
-        int g = nodeIDs[i];
-        for(int j=0; j<3; j++)
+        int mappedNode = nodeIDs[g];
+        int fieldIndex = p_group;
+        for(int i=0; i<3; i++)
         {
-          p_x[j] += g_V[g][j]*dt*weights[i];
-          p_v[j] += g_A[g][j]*dt*weights[i]; // FLIP
-          for(int k=0; k<3; k++)
+          p_x[i] += gridVelocity[fieldIndex][mappedNode][i]*dt*weights[g];
+          p_v[i] += gridAcceleration[fieldIndex][mappedNode][i]*dt*weights[g]; // FLIP
+          for(int j=0; j<3; j++)
           {
-            p_L[j][k] += g_V[g][j]*gradWeights[k][i];
+            p_L[i][j] += gridVelocity[fieldIndex][mappedNode][i]*gradWeights[j][g];
           }
         }
       }
@@ -786,8 +812,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
       // Get det(F), update volume and r-vectors
       detF = -p_F[0][2]*p_F[1][1]*p_F[2][0] + p_F[0][1]*p_F[1][2]*p_F[2][0] + p_F[0][2]*p_F[1][0]*p_F[2][1] - p_F[0][0]*p_F[1][2]*p_F[2][1] - p_F[0][1]*p_F[1][0]*p_F[2][2] + p_F[0][0]*p_F[1][1]*p_F[2][2];
-      p_Vol = p_Vol0*detF;
-      p_rho = p_m/p_Vol;
+      p_vol = p_vol0*detF;
+      p_rho = p_m/p_vol;
       subRegion.updateRVectors(p, p_F);
 
       // Particle constitutive update - Elastic Isotropic model doesn't have a hyperelastic update yet (waiting on strain and stress measure confirmation?) so we implement our own - St. Venant-Kirchhoff
@@ -854,7 +880,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
   // Calculate stable time step
   real64 wavespeed = 0.0;
-  real64 length = std::fmin(m_hx[0],std::fmin(m_hx[1],m_hx[2]));
+  real64 length = std::fmin(m_hEl[0],std::fmin(m_hEl[1],m_hEl[2]));
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {

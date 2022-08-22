@@ -24,19 +24,20 @@ namespace geosx
 
 using namespace dataRepository;
 
-ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const parent ): // @suppress("Class members should be properly initialized")
+ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_constitutiveModels( groupKeyStruct::constitutiveModelsString(), this ),
   m_particleGhostRank(),
   m_particleID(),
+  m_particleGroup(),
   m_particleCenter(),
   m_particleVelocity(),
   m_particleVolume(),
-  m_particleVolume0(),
+  m_particleInitialVolume(),
   m_particleMass(),
   m_particleDeformationGradient(),
   m_particleRVectors(),
-  m_particleRVectors0()
+  m_particleInitialRVectors()
 {
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
@@ -45,6 +46,9 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleIDString(), &m_particleID ).
+    setPlotLevel( PlotLevel::LEVEL_1 );
+
+  registerWrapper( viewKeyStruct::particleGroupString(), &m_particleGroup ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleCenterString(), &m_particleCenter ).
@@ -58,7 +62,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   registerWrapper( viewKeyStruct::particleVolumeString(), &m_particleVolume ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
-  registerWrapper( viewKeyStruct::particleVolume0String(), &m_particleVolume0 ).
+  registerWrapper( viewKeyStruct::particleInitialVolumeString(), &m_particleInitialVolume ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleMassString(), &m_particleMass ).
@@ -68,7 +72,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     setPlotLevel( PlotLevel::NOPLOT ).
     reference().resizeDimension< 1, 2 >( 3, 3 );
 
-  registerWrapper( viewKeyStruct::particleRVectors0String(), &m_particleRVectors0 ).
+  registerWrapper( viewKeyStruct::particleInitialRVectorsString(), &m_particleInitialRVectors ).
     setPlotLevel( PlotLevel::NOPLOT ).
     reference().resizeDimension< 1, 2 >( 3, 3 );
 
@@ -133,7 +137,7 @@ void ParticleSubRegionBase::erase(localIndex pp)
   m_particleGhostRank.erase(pp); // TODO: Can we automatically loop over all registered wrappers and erase that way?
   m_particleID.erase(pp);
   m_particleVolume.erase(pp);
-  m_particleVolume0.erase(pp);
+  m_particleInitialVolume.erase(pp);
   m_particleMass.erase(pp);
 
   // Vector fields:
@@ -143,7 +147,7 @@ void ParticleSubRegionBase::erase(localIndex pp)
   // Matrix fields:
   this->eraseTensor( m_particleDeformationGradient, pp );
   this->eraseTensor( m_particleRVectors, pp );
-  this->eraseTensor( m_particleRVectors0, pp );
+  this->eraseTensor( m_particleInitialRVectors, pp );
 
   // Decrement the size of this subregion
   this->resize(newSize);

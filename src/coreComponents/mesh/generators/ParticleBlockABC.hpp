@@ -58,15 +58,15 @@ public:
 
   virtual array1d< int > getParticleID() const = 0;
 
+  virtual array1d< int > getParticleGroup() const = 0;
+
   virtual array2d< real64 > getParticleCenter() const = 0;
 
   virtual array2d< real64 > getParticleVelocity() const = 0;
 
-  virtual array1d< real64 > getParticleVolume() const = 0;
+  virtual array1d< real64 > getParticleInitialVolume() const = 0;
 
-  virtual array3d< real64 > getParticleRVectors() const = 0;
-
-  virtual array3d< real64 > getParticleRVectors0() const = 0;
+  virtual array3d< real64 > getParticleInitialRVectors() const = 0;
 
   virtual bool hasRVectors() const = 0;
 

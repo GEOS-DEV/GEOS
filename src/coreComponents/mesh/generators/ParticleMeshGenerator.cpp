@@ -115,7 +115,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   GEOSX_LOG_RANK_0("Number of particle materials: " << numMaterials);
   GEOSX_LOG_RANK_0("Number of particle types: " << numParticleTypes);
 
-  // Read in material key
+  // Read in the material key
   for(int i=0; i<numMaterials; i++)
   {
     std::getline(headerFile, line);
@@ -127,7 +127,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     GEOSX_LOG_RANK_0("Material name/ID: " + key + "/" << value);
   }
 
-  // Read in particle type key
+  // Read in the particle type key
   for(int i=0; i<numParticleTypes; i++)
   {
     std::getline(headerFile, line);
@@ -145,7 +145,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     for(int j=0; j<particleTypeMap[particleTypes[i]]; j++)
     {
       std::getline(particleFile, line);
-      std::vector<double> lineData;
+      std::vector<double> lineData; // TODO: Not great because we cast all input as doubles, but it all gets re-cast later so maybe it's fine.
       std::istringstream lineStream(line);
 
       double value;
@@ -154,8 +154,8 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       while(lineStream >> value)
       {
         lineData.push_back(value);
-        if(column>=1 && column<4) // 0th column is global ID. Columns 1, 2 and 3 are the particle position - check for partition membership
-        { // TODO: This is super obfuscated and hard-to-read right now, make it better
+        if(1<=column && column<4) // 0th column is global ID. Columns 1, 2 and 3 are the particle position components - check for partition membership
+        { // TODO: This is super obfuscated and hard to read, make it better
           inPartition = inPartition && partition.isCoordInPartition(value, column-1);
           if(!inPartition) // if the current particle is outside this partition, we can ignore the rest of its data and go to the next line
           {
@@ -171,7 +171,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     }
   }
 
-  // Get map from particle blocks to particle regions (more specifically the regions' associated materials)
+  // Construct the map from particle blocks to particle regions (more specifically, the regions' associated materials)
   map < std::string, int > blockMaterialMap;
   particleManager.forParticleRegions< ParticleRegion >( [&]( auto & particleRegion )
   {
@@ -184,7 +184,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   } );
 
   // Distribute particle information to particle blocks
-  map < std::string, std::vector<int> > indexMap; // This will keep track of the indices of particleData associated with each particle block. It's built in the loop that checks for which particles belong to a block.
+  map < std::string, std::vector<int> > indexMap; // This will keep track of the indices of particleData associated with each particle block. It's populated in the loop that checks for which particles belong to a block.
   map < std::string, int > sizeMap; // This keeps track of the size of each particle block so we can resize the ParticleRegions later
   for( auto & particleBlockName : m_blockNames )
   {
@@ -193,24 +193,25 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
 
     int numThisType = particleData[particleType].size(); // I hope this returns zero when particleType isn't in the map...
     int materialID;
-    int np = 0; // Number of particles in this particle block
+    int npInBlock = 0; // Number of particles in this particle block
     for(localIndex i=0; i<numThisType; i++) // Find out which particles belong to the current particle block
     {
       materialID = particleData[particleType][i][7]; // The particle file is configured such that the 8th column has the material ID
       if(materialID == blockMaterialMap[particleBlock.getName()])
       {
-        np++;
+        npInBlock++;
         indexMap[particleBlockName].push_back(i);
       }
     }
-    sizeMap[particleBlock.getName()] = np;
-    particleBlock.resize(np);
+    sizeMap[particleBlock.getName()] = npInBlock;
+    particleBlock.resize(npInBlock);
 
-    array1d< int > particleID(np);
-    array2d< real64 > particleCenter(np,3);
-    array2d< real64 > particleVelocity(np,3);
-    array1d< real64 > particleVolume(np);
-    array3d< real64 > particleRVectors(np,3,3);
+    array1d< int > particleID(npInBlock);
+    array2d< real64 > particleCenter(npInBlock,3);
+    array2d< real64 > particleVelocity(npInBlock,3);
+    array1d< int > particleGroup(npInBlock);
+    array1d< real64 > particleVolume(npInBlock);
+    array3d< real64 > particleRVectors(npInBlock,3,3); // TODO: Flatten the r-vector array into a 1x9 for each particle
 
     // Assign particle data to the appropriate block.
     std::vector<int> & indices = indexMap[particleBlockName];
@@ -230,10 +231,13 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       particleVelocity[index][1] = particleData[particleType][i][5];
       particleVelocity[index][2] = particleData[particleType][i][6];
 
+      // Group
+      particleGroup[index] = particleData[particleType][i][8];
+
       // Volume and R-Vectors
       if(particleType == "SinglePoint")
       {
-        particleVolume[index] = particleData[particleType][i][8];
+        particleVolume[index] = particleData[particleType][i][9];
         double a = std::pow(particleVolume[index],1.0/3.0);
         particleRVectors[index][0][0] = a;
         particleRVectors[index][0][1] = 0.0;
@@ -248,15 +252,15 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       else if(particleType == "CPDI")
       {
         double x1, y1, z1, x2, y2, z2, x3, y3, z3;
-        x1 = particleData[particleType][i][8];
-        y1 = particleData[particleType][i][9];
-        z1 = particleData[particleType][i][10];
-        x2 = particleData[particleType][i][11];
-        y2 = particleData[particleType][i][12];
-        z2 = particleData[particleType][i][13];
-        x3 = particleData[particleType][i][14];
-        y3 = particleData[particleType][i][15];
-        z3 = particleData[particleType][i][16];
+        x1 = particleData[particleType][i][9];
+        y1 = particleData[particleType][i][10];
+        z1 = particleData[particleType][i][11];
+        x2 = particleData[particleType][i][12];
+        y2 = particleData[particleType][i][13];
+        z2 = particleData[particleType][i][14];
+        x3 = particleData[particleType][i][15];
+        y3 = particleData[particleType][i][16];
+        z3 = particleData[particleType][i][17];
         particleRVectors[index][0][0] = x1;
         particleRVectors[index][0][1] = y1;
         particleRVectors[index][0][2] = z1;
@@ -279,8 +283,9 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleBlock.setParticleID(particleID);
     particleBlock.setParticleCenter(particleCenter);
     particleBlock.setParticleVelocity(particleVelocity);
-    particleBlock.setParticleVolume(particleVolume);
-    particleBlock.setParticleRVectors(particleRVectors);
+    particleBlock.setParticleGroup(particleGroup);
+    particleBlock.setParticleInitialVolume(particleVolume);
+    particleBlock.setParticleInitialRVectors(particleRVectors);
   } // loop over particle blocks
 
   // Resize particle regions
