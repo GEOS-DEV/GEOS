@@ -6,9 +6,8 @@ from typing import Union, Dict, Any, Iterable, Optional, Tuple
 
 # Note: I would like to replace Any here with str, float, int, np.ndarray, etc.
 #       However, this heterogeneous pattern causes issues with mypy indexing
-hdf5_key_types = Union[str, int]
 hdf5_get_types = Union['hdf5_wrapper', Any]
-nested_dict_type = Dict[hdf5_key_types, Any]
+nested_dict_type = Dict[str, Any]
 hdf5_set_types = Union['hdf5_wrapper', nested_dict_type, Any]
 
 
@@ -41,7 +40,7 @@ class hdf5_wrapper():
         if fname:
             self.target = h5py.File(fname, self.mode)
 
-    def __getitem__(self, k: hdf5_key_types) -> hdf5_get_types:
+    def __getitem__(self, k: str) -> hdf5_get_types:
         """
         Get a target from the database
 
@@ -80,7 +79,7 @@ class hdf5_wrapper():
         else:
             return tmp
 
-    def __setitem__(self, k: hdf5_key_types, value: hdf5_set_types):
+    def __setitem__(self, k: str, value: hdf5_set_types):
         """
         Write an object to the database if write-mode is enabled
 
@@ -111,7 +110,7 @@ class hdf5_wrapper():
                 'Cannot write to an hdf5 opened in read-only mode!  This can be changed by overriding the default mode argument for the wrapper.'
             )
 
-    def link(self, k: hdf5_key_types, target: str) -> None:
+    def link(self, k: str, target: str) -> None:
         """
         Link an external hdf5 file to this location in the database
 
@@ -121,7 +120,7 @@ class hdf5_wrapper():
         """
         self.target[k] = h5py.ExternalLink(target, '/')
 
-    def keys(self) -> Iterable[hdf5_key_types]:
+    def keys(self) -> Iterable[str]:
         """
         Get a list of groups and arrays located at the current level
 
@@ -139,7 +138,7 @@ class hdf5_wrapper():
         """
         return [self[k] for k in self.keys()]
 
-    def items(self) -> Iterable[Tuple[hdf5_key_types, hdf5_get_types]]:
+    def items(self) -> Iterable[Tuple[str, hdf5_get_types]]:
         return zip(self.keys(), self.values())
 
     def __enter__(self):
