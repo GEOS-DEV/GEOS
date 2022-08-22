@@ -8,6 +8,7 @@ spack:
   - ../../../scripts/spack_configs/blueos_3_ppc64le_ib_p9/compilers.yaml
   - ../../../scripts/spack_configs/blueos_3_ppc64le_ib_p9/packages.yaml
 
+
   
   # General configurations
   - ../../../scripts/spack_configs/config.yaml
