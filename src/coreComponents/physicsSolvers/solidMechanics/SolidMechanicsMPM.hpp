@@ -153,8 +153,6 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    static constexpr char const * vTildeString() { return "velocityTilde"; }
-    static constexpr char const * uhatTildeString() { return "uhatTilde"; }
     static constexpr char const * cflFactorString() { return "cflFactor"; }
     static constexpr char const * newmarkGammaString() { return "newmarkGamma"; }
     static constexpr char const * newmarkBetaString() { return "newmarkBeta"; }
@@ -166,9 +164,11 @@ public:
     static constexpr char const * strainTheoryString() { return "strainTheory"; }
     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
     static constexpr char const * forceExternalString() { return "externalForce"; }
+    static constexpr char const * forceInternalString() { return "internalForce"; }
+    static constexpr char const * momentumString() { return "momentum"; }
     static constexpr char const * contactRelationNameString() { return "contactRelationName"; }
     static constexpr char const * noContactRelationNameString() { return "NOCONTACT"; }
-    static constexpr char const * contactForceString() { return "contactForce"; }
+    static constexpr char const * forceContactString() { return "contactForce"; }
     static constexpr char const * maxForceString() { return "maxForce"; }
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
@@ -178,8 +178,6 @@ public:
     static constexpr char const * targetNodesString() { return "targetNodes";}
 
 
-    dataRepository::ViewKey vTilde = { vTildeString() };
-    dataRepository::ViewKey uhatTilde = { uhatTildeString() };
     dataRepository::ViewKey newmarkGamma = { newmarkGammaString() };
     dataRepository::ViewKey newmarkBeta = { newmarkBetaString() };
     dataRepository::ViewKey massDamping = { massDampingString() };
@@ -211,7 +209,7 @@ public:
     return m_rigidBodyModes;
   }
 
-  void initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X,
+  void initialize(NodeManager & nodeManager,
                   ParticleManager & particleManager,
                   SpatialPartition & partition);
 
@@ -233,8 +231,10 @@ protected:
   integer m_strainTheory = 0;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
+  int m_numContactGroups, m_numContactFlags, m_numVelocityFields;
+  bool m_damageFieldPartitioning = false;
 
-  std::array<real64, 3> m_hx = {DBL_MAX,DBL_MAX,DBL_MAX};         // Grid spacing in x-y-z
+  std::array<real64, 3> m_hEl = {DBL_MAX,DBL_MAX,DBL_MAX};        // Grid spacing in x-y-z
   std::array<real64, 3> m_xLocalMin = {DBL_MAX,DBL_MAX,DBL_MAX};  // Minimum local grid coordinate including ghost nodes
   std::array<real64, 3> m_xLocalMax = {DBL_MIN,DBL_MIN,DBL_MIN};  // Maximum local grid coordinate including ghost nodes
   std::array<real64, 3> m_xLocalMinNoGhost = {0.0,0.0,0.0};       // Minimum local grid coordinate EXCLUDING ghost nodes

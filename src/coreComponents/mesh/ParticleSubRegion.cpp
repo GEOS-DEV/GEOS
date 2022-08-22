@@ -50,13 +50,14 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   m_particleGhostRank.resize(particleBlock.size());
   m_particleType = particleBlock.getParticleType();
   m_particleID = particleBlock.getParticleID();
+  m_particleGroup = particleBlock.getParticleGroup();
   m_particleCenter = particleBlock.getParticleCenter();
   m_particleVelocity = particleBlock.getParticleVelocity();
-  m_particleVolume = particleBlock.getParticleVolume();
-  m_particleVolume0 = particleBlock.getParticleVolume();
+  m_particleInitialVolume = particleBlock.getParticleInitialVolume();
+  m_particleVolume = m_particleInitialVolume;
   //m_particleDeformationGradient.resize(particleBlock.size(),3,3); // handled by ParticleSubRegionBase constructor?
-  m_particleRVectors = particleBlock.getParticleRVectors();
-  m_particleRVectors0 = particleBlock.getParticleRVectors();
+  m_particleInitialRVectors = particleBlock.getParticleInitialRVectors();
+  m_particleRVectors = m_particleInitialRVectors;
   //m_particleMass.resize(particleBlock.size()); // handled by ParticleSubRegionBase constructor?
   m_hasRVectors = particleBlock.hasRVectors();
 
@@ -87,9 +88,9 @@ void ParticleSubRegion::updateRVectors(int const p,
   {
     for(int i=0; i<3; i++)
     {
-      for(int j=0; j<3; j++) // This seems wrong to me, but I checked it against a grid-imposed rigid body rotation velocity field and everything looked good...
+      for(int j=0; j<3; j++)
       {
-        m_particleRVectors[p][i][j] = p_F[j][0]*m_particleRVectors0[p][i][0] + p_F[j][1]*m_particleRVectors0[p][i][1] + p_F[j][2]*m_particleRVectors0[p][i][2];
+        m_particleRVectors[p][i][j] = p_F[j][0]*m_particleInitialRVectors[p][i][0] + p_F[j][1]*m_particleInitialRVectors[p][i][1] + p_F[j][2]*m_particleInitialRVectors[p][i][2];
       }
     }
   }

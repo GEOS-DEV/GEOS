@@ -92,6 +92,19 @@ public:
   arrayView1d< int > getParticleID()
   { return m_particleID; }
 
+    /**
+   * @brief Get the contact group of each particle in this subregion.
+   * @return an arrayView1d of const particle contact groups
+   */
+  arrayView1d< int const > getParticleGroup() const
+  { return m_particleGroup; }
+
+  /**
+   * @copydoc getParticleGroup() const
+   */
+  arrayView1d< int > getParticleGroup()
+  { return m_particleGroup; }
+
   /**
    * @brief Get the ghost rank of each particle in this subregion.
    * @return an arrayView1d of const particle ghost ranks
@@ -154,14 +167,14 @@ public:
    * @brief Get the initial volume of each particle in this subregion.
    * @return an arrayView1d of const initial particle volumes
    */
-  arrayView1d< real64 const > getParticleVolume0() const
-  { return m_particleVolume0; }
+  arrayView1d< real64 const > getParticleInitialVolume() const
+  { return m_particleInitialVolume; }
 
   /**
-   * @copydoc getParticleVolume() const
+   * @copydoc getParticleInitialVolume() const
    */
-  arrayView1d< real64 > getParticleVolume0()
-  { return m_particleVolume0; }
+  arrayView1d< real64 > getParticleInitialVolume()
+  { return m_particleInitialVolume; }
 
   /**
    * @brief Get the mass of each particle in this subregion.
@@ -197,7 +210,7 @@ public:
   { return m_particleRVectors; }
 
   /**
-   * @copydoc getParticleDeformationGradient() const
+   * @copydoc getParticleRVectors() const
    */
   arrayView3d< real64 > getParticleRVectors()
   { return m_particleRVectors; }
@@ -258,24 +271,36 @@ public:
   {
     /// @return String key for the member level field for the particle global ID.
     static constexpr char const * particleIDString() { return "particleID"; }
+
+    /// @return String key for the member level field for the particle contact group.
+    static constexpr char const * particleGroupString() { return "particleGroup"; }
+
     /// @return String key for the member level field for the particle ghost rank.
     static constexpr char const * particleGhostRankString() { return "particleGhostRank"; }
+
     /// @return String key for the member level field for the particle center.
     static constexpr char const * particleCenterString() { return "particleCenter"; }
+
     /// @return String key for the member level field for the particle velocity.
     static constexpr char const * particleVelocityString() { return "particleVelocity"; }
+
     /// @return String key for the member level field for the current particle volume.
     static constexpr char const * particleVolumeString() { return "particleVolume"; }
+
     /// @return String key for the member level field for the initial particle volume.
-    static constexpr char const * particleVolume0String() { return "particleVolume0"; }
+    static constexpr char const * particleInitialVolumeString() { return "particleInitialVolume"; }
+
     /// @return String key for the member level field for the particle volume.
     static constexpr char const * particleMassString() { return "particleMass"; }
+
     /// @return String key for the member level field for the particle volume.
     static constexpr char const * particleDeformationGradientString() { return "particleDeformationGradient"; }
+
     /// @return String key for the member level field for the particle volume.
     static constexpr char const * particleRVectorsString() { return "particleRVectors"; }
+
     /// @return String key for the member level field for the particle volume.
-    static constexpr char const * particleRVectors0String() { return "particleRVectors0"; }
+    static constexpr char const * particleInitialRVectorsString() { return "particleInitialRVectors"; }
   };
 
   /**
@@ -316,6 +341,9 @@ protected:
   /// Member level field for the particle global ID.
   array1d< int > m_particleID;
 
+    /// Member level field for the particle contact group.
+  array1d< int > m_particleGroup;
+
   /// Member level field for the particle center.
   array2d< real64 > m_particleCenter;
 
@@ -326,7 +354,7 @@ protected:
   array1d< real64 > m_particleVolume;
 
   /// Member level field for the initial particle volume.
-  array1d< real64 > m_particleVolume0;
+  array1d< real64 > m_particleInitialVolume;
 
   /// Member level field for the particle mass.
   array1d< real64 > m_particleMass;
@@ -341,7 +369,7 @@ protected:
   array3d< real64 > m_particleRVectors;
 
   /// initial half-R-vectors (center to face)
-  array3d< real64 > m_particleRVectors0;
+  array3d< real64 > m_particleInitialRVectors;
 
 };
 
