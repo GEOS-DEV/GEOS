@@ -1447,13 +1447,6 @@ Datastructure: ExtendedDruckerPrager
 .. include:: ../../coreComponents/schema/docs/ExtendedDruckerPrager_other.rst
 
 
-.. _DATASTRUCTURE_FaceManager:
-
-Datastructure: FaceManager
-==========================
-.. include:: ../../coreComponents/schema/docs/FaceManager_other.rst
-
-
 .. _DATASTRUCTURE_FieldSpecification:
 
 Datastructure: FieldSpecification
@@ -2257,6 +2250,13 @@ Datastructure: embeddedSurfacesEdgeManager
 Datastructure: embeddedSurfacesNodeManager
 ==========================================
 .. include:: ../../coreComponents/schema/docs/embeddedSurfacesNodeManager_other.rst
+
+
+.. _DATASTRUCTURE_faceManager:
+
+Datastructure: faceManager
+==========================
+.. include:: ../../coreComponents/schema/docs/faceManager_other.rst
 
 
 .. _DATASTRUCTURE_lassen:
