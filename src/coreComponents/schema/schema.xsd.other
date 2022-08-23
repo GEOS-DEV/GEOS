@@ -1986,7 +1986,7 @@
 			<xsd:element name="edgeManager" type="edgeManagerType" />
 			<xsd:element name="embeddedSurfacesEdgeManager" type="embeddedSurfacesEdgeManagerType" />
 			<xsd:element name="embeddedSurfacesNodeManager" type="embeddedSurfacesNodeManagerType" />
-			<xsd:element name="FaceManager" type="FaceManagerType" />
+			<xsd:element name="faceManager" type="faceManagerType" />
 			<xsd:element name="nodeManager" type="nodeManagerType" />
 		</xsd:choice>
 		<!--meshLevel => (no description available)-->
@@ -2088,7 +2088,7 @@
 		<!--referencePosition => (no description available)-->
 		<xsd:attribute name="referencePosition" type="real64_array2d" />
 	</xsd:complexType>
-	<xsd:complexType name="FaceManagerType">
+	<xsd:complexType name="faceManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />

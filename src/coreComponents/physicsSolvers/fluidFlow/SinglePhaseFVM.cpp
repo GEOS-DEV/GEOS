@@ -584,15 +584,14 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
     elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
     // Take BCs defined for "pressure" field and apply values to "facePressure"
-    fsManager.apply( time_n + dt,
-                     mesh,
-                     "faceManager",
-                     extrinsicMeshData::flow::pressure::key(),
-                     [&] ( FieldSpecificationBase const & fs,
-                           string const & setName,
-                           SortedArrayView< localIndex const > const & targetSet,
-                           Group & targetGroup,
-                           string const & )
+    fsManager.apply< FaceManager >( time_n + dt,
+                                    mesh,
+                                    extrinsicMeshData::flow::pressure::key(),
+                                    [&] ( FieldSpecificationBase const & fs,
+                                          string const & setName,
+                                          SortedArrayView< localIndex const > const & targetSet,
+                                          FaceManager & targetGroup,
+                                          string const & )
     {
       BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
 
@@ -806,14 +805,14 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
     typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
     typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
 
-    fsManager.apply< AquiferBoundaryCondition >( time + dt,
+    fsManager.apply< FaceManager,
+                     AquiferBoundaryCondition >( time + dt,
                                                  mesh,
-                                                 "faceManager",
                                                  AquiferBoundaryCondition::catalogName(),
                                                  [&] ( AquiferBoundaryCondition const & bc,
                                                        string const & setName,
                                                        SortedArrayView< localIndex const > const &,
-                                                       Group &,
+                                                       FaceManager &,
                                                        string const & )
     {
       BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
