@@ -2016,14 +2016,8 @@
 		</xsd:choice>
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--edgesToFractureConnectors => A map of edge local indices to the fracture connector local indices.-->
-		<xsd:attribute name="edgesToFractureConnectors" type="geosx_mapBase&lt;int, int, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--faceList => (no description available)-->
 		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
-		<!--fractureConnectorsToEdges => A map of fracture connector local indices to edge local indices.-->
-		<xsd:attribute name="fractureConnectorsToEdges" type="integer_array" />
-		<!--fractureConnectorsToElementIndex => A map of fracture connector local indices face element local indices-->
-		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -2042,14 +2036,8 @@
 		</xsd:choice>
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--edgesToFractureConnectors => A map of edge local indices to the fracture connector local indices.-->
-		<xsd:attribute name="edgesToFractureConnectors" type="geosx_mapBase&lt;int, int, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--faceList => (no description available)-->
 		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
-		<!--fractureConnectorsToEdges => A map of fracture connector local indices to edge local indices.-->
-		<xsd:attribute name="fractureConnectorsToEdges" type="integer_array" />
-		<!--fractureConnectorsToElementIndex => A map of fracture connector local indices face element local indices-->
-		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->

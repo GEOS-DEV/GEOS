@@ -39,7 +39,6 @@
       discretization="fluidTPFA"
       targetRegions="{ channel, barrier  }"
       temperature="300"
-      computeCFLNumbers="1"
       useMass="1"/>
 
     <CompositionalMultiphaseWell
