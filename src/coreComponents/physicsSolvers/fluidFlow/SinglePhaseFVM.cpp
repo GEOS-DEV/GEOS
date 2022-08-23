@@ -704,15 +704,14 @@ real64 SinglePhaseFVM< SinglePhaseBase >::computeFluxFaceDirichlet( real64 const
     elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
     // Take BCs defined for "pressure" field and apply values to "facePressure"
-    fsManager.apply( time_n + dt,
-                     mesh,
-                     "faceManager",
-                     extrinsicMeshData::flow::pressure::key(),
-                     [&] ( FieldSpecificationBase const & fs,
-                           string const & setName,
-                           SortedArrayView< localIndex const > const & targetSet,
-                           Group & targetGroup,
-                           string const & )
+    fsManager.apply< FaceManager >( time_n + dt,
+                                    mesh,
+                                    extrinsicMeshData::flow::pressure::key(),
+                                    [&] ( FieldSpecificationBase const & fs,
+                                          string const & setName,
+                                          SortedArrayView< localIndex const > const & targetSet,
+                                          FaceManager & targetGroup,
+                                          string const & )
     {
       BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
       if( stencil.size() == 0 )
