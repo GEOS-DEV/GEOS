@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import stats  # type: ignore[import]
+from scipy import stats    # type: ignore[import]
 from typing import Dict, Iterable, List, Tuple, Callable, Union
 
 

@@ -1,5 +1,5 @@
-import meshio  # type: ignore[import]
-from meshio._mesh import CellBlock  # type: ignore[import]
+import meshio    # type: ignore[import]
+from meshio._mesh import CellBlock    # type: ignore[import]
 import numpy as np
 import logging
 
@@ -168,4 +168,3 @@ def convert_abaqus_to_vtu(input_mesh: str, output_mesh: str, logger: logging.Log
     logger.info('Done!')
 
     return (n_warnings > 0)
-

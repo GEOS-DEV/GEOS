@@ -1,4 +1,3 @@
-
 import argparse
 import logging
 import sys
@@ -50,4 +49,3 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-

@@ -13,12 +13,14 @@ def random_string(N):
 
 def build_test_dict(depth=0, max_depth=3):
     r = [np.random.randint(2, 20) for x in range(5)]
-    test = {'int': np.random.randint(-1000000, 1000000),
-            'float': np.random.random(),
-            '1d_array': np.random.randn(r[0]),
-            '3d_array': np.random.randn(r[1], r[2], r[3]),
-            'string': random_string(10),
-            'string_array': np.array([random_string(x + 10) for x in range(r[4])])}
+    test = {
+        'int': np.random.randint(-1000000, 1000000),
+        'float': np.random.random(),
+        '1d_array': np.random.randn(r[0]),
+        '3d_array': np.random.randn(r[1], r[2], r[3]),
+        'string': random_string(10),
+        'string_array': np.array([random_string(x + 10) for x in range(r[4])])
+    }
     if (depth < max_depth):
         test['child_a'] = build_test_dict(depth + 1, max_depth)
         test['child_b'] = build_test_dict(depth + 1, max_depth)
@@ -50,7 +52,8 @@ class TestHDF5Wrapper(unittest.TestCase):
 
             vx, vy = x[k], y[k]
             tx, ty = type(vx), type(vy)
-            if ((tx != ty) and not (isinstance(vx, (dict, hdf5_wrapper.hdf5_wrapper)) and isinstance(vy, (dict, hdf5_wrapper.hdf5_wrapper)))):
+            if ((tx != ty) and not (isinstance(vx, (dict, hdf5_wrapper.hdf5_wrapper))
+                                    and isinstance(vy, (dict, hdf5_wrapper.hdf5_wrapper)))):
                 self.assertTrue(np.issubdtype(tx, ty))
 
             if isinstance(vx, (dict, hdf5_wrapper.hdf5_wrapper)):

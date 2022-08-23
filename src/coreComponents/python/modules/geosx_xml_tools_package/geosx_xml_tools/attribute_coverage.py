@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any, Iterable, Dict
 from geosx_xml_tools import command_line_parsers
 
-
 record_type = Dict[str, Dict[str, Any]]
 
 
