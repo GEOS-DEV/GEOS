@@ -387,7 +387,7 @@ void HyprePreconditioner::setup( Matrix const & mat )
       {
         m_precond->destroy( m_precond->ptr );
       }
-      hypre_SLUDistSetup( &m_precond->ptr, precondMat.unwrapped(), 0 );
+      //hypre_SLUDistSetup( &m_precond->ptr, precondMat.unwrapped(), 0 );
     }
   }
 }

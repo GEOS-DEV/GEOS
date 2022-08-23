@@ -21,14 +21,14 @@ elseif( ENABLE_ESSL )
     set( BLAS_LIBRARIES "${ESSL_LIBRARIES}" CACHE STRING "" FORCE )
     set( LAPACK_LIBRARIES "${ESSL_LIBRARIES}" CACHE STRING "" FORCE )
 
-elseif( ENABLE_ROCM )
+# elseif( ENABLE_ROCM )
 #    find_package( rocblas REQUIRED )
 #    find_package( rocsolver REQUIRED )
-
-    message( STATUS "rocBLAS / rocSOLVER (lapack equiv) found" )
-
-#    set( BLAS_LIBRARIES "${ROCBLAS_LIBRARIES}" CACHE STRING "" FORCE )
-#    set( LAPACK_LIBRARIES "${ROCSOLVER_LIBRARIES}" CACHE STRING "" FORCE )
+#    find_package( rocsparse REQUIRED )
+#    find_package( rocrand REQUIRED )
+#    message( STATUS "rocBLAS / rocSOLVER (lapack equiv) found" )
+#    set( BLAS_LIBRARIES ${ROCBLAS_LIBRARIES} CACHE STRING "" FORCE )
+#    set( LAPACK_LIBRARIES ${ROCSPARSE_LIBRARIES} ${ROCSOLVER_LIBRARIES} CACHE STRING "" FORCE )
 endif()
 
 
@@ -68,7 +68,7 @@ message( STATUS "BLAS_LIBRARIES = ${BLAS_LIBRARIES}" )
 #     if ( NOT EXISTS ${lib} )
 #         message( ERROR "LAPACK library '${lib}' does not exist!" )
 #     endif()
-    
+
 #     if ( NOT lib MATCHES "\.a$" )
 #         get_filename_component( dirname ${lib} DIRECTORY )
 #         list( APPEND LAPACK_SHARED_LIBRARY_DIRS ${dirname} )

@@ -469,6 +469,12 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
 
     if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
         set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY} )
+    elseif( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
+        find_package( rocblas REQUIRED )
+        find_package( rocsolver REQUIRED )
+        find_package( rocsparse REQUIRED )
+        find_package( rocrand REQUIRED )
+        set( EXTRA_DEPS roc::rocblas roc::rocsparse roc::rocsolver roc::rocrand )
     endif()
 
     find_and_register(NAME hypre

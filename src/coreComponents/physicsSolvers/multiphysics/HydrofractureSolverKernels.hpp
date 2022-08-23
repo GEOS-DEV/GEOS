@@ -208,19 +208,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
           CRSMatrixView< real64 const, localIndex const > const dFluxResidual_dAperture,
           CRSMatrixView< real64, globalIndex const > const & localMatrix )
   {
-    forAll< POLICY >( size, [=/* size,
-                              rankOffset,
-                              contactWrapper,
-                              elemsToFaces,
-                              faceToNodeMap,
-                              faceNormal,
-                              area,
-                              aperture,
-                              presDofNumber,
-                              dispDofNumber,
-                              dens,
-                              dFluxResidual_dAperture,
-                              localMatrix*/ ] GEOSX_HOST_DEVICE ( localIndex ei )
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex ei )
     {
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[ei][0] );
 
