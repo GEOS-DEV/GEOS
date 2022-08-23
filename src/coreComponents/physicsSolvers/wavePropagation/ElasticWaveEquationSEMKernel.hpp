@@ -79,10 +79,10 @@ struct PrecomputeSourceAndReceiverKernel
       // all dot products should be non-negative (we enforce outward normals)
       /// WARNING: the previous implementation (commented below) leads to a severe bug. It is replaced with what follows
       /* if( prevSign * s < 0 )
-      {
-        return false;
-      }
-      prevSign = s; */
+         {
+         return false;
+         }
+         prevSign = s; */
       if( s < 0 )
       {
         return false;
@@ -262,7 +262,7 @@ struct PrecomputeSourceAndReceiverKernel
                                  elemsToFaces[k],
                                  coords );
 
-          if( sourceFound && elemGhostRank[k] < 0 )
+          if( sourceFound )
           {
             real64 coordsOnRefElem[3]{};
 
@@ -334,7 +334,7 @@ struct PrecomputeSourceAndReceiverKernel
                                  faceCenter,
                                  elemsToFaces[k],
                                  coords );
-          
+
           if( receiverFound && elemGhostRank[k] < 0 )
           {
             computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
@@ -480,9 +480,9 @@ struct MassAndDampingMatrixKernel
               real64 const alphaz = density[k] * (velocityVs[k]*(faceNormal[iface][0]*faceNormal[iface][0]) + velocityVs[k]*(faceNormal[iface][1]*faceNormal[iface][1]) +
                                                   velocityVp[k]*(faceNormal[iface][2]*faceNormal[iface][2]) );
 
-              dampingx[numNodeGl] += alphax*detJ*ds*N[a];
-              dampingy[numNodeGl] += alphay*detJ*ds*N[a];
-              dampingz[numNodeGl] += alphaz*detJ*ds*N[a];
+              RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[numNodeGl], alphax*detJ*ds*N[a] );
+              RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[numNodeGl], alphay*detJ*ds*N[a] );
+              RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[numNodeGl], alphaz*detJ*ds*N[a] );
 
             }
           }

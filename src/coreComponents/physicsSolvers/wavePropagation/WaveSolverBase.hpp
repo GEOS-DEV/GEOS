@@ -57,9 +57,9 @@ public:
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
-    
+
     static constexpr char const * geometryLinearDASString() { return "geometryLinearDAS"; }
-    static constexpr char const * flagDASString() { return "flagDAS"; }
+    static constexpr char const * useDASString() { return "useDAS"; }
 
 
   };
@@ -74,7 +74,7 @@ protected:
   virtual void postProcessInput() override;
 
   /**
-   * @brief Initialize DAS fiber geometry
+   * @brief Initialize DAS fiber geometry. This will duplicate the number of point receivers to be modeled
    */
   virtual void initializeDAS();
 
@@ -157,11 +157,11 @@ protected:
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
 
-  /// Geometry parameters for a linear DAS fiber
+  /// Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)
   array2d< real64 > m_geometryLinearDAS;
 
   /// Flag to indicate if DAS type of data will be modeled
-  int m_flagDAS;
+  integer m_useDAS;
 
 };
 

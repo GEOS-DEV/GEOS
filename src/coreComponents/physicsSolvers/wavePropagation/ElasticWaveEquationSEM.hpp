@@ -123,7 +123,11 @@ public:
                                        arrayView1d< real64 const > const var_n,
                                        arrayView2d< real64 > varAtReceivers );
 
-
+  /**
+   * @brief Compute DAS data from the appropriate receiver pairs
+   */
+  void computeDAS();
+  
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
    */
@@ -161,11 +165,6 @@ private:
    * @param regionNames the names of the region you loop on
    */
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
-
-  /**
-   * @brief Compute DAS data from the appropriate receiver pairs
-   */
-  void computeDAS();
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
