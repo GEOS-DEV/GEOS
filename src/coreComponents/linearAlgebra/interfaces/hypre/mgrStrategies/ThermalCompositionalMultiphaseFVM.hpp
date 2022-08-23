@@ -132,7 +132,11 @@ public:
     mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
     mgrData.coarseSolver.solve = HYPRE_BoomerAMGSolve;
     mgrData.coarseSolver.destroy = HYPRE_BoomerAMGDestroy;
+
+    iluSmoother = iluSmoother;
   }
+protected:
+  bool iluSmoother;
 };
 
 } // namespace mgr
