@@ -195,7 +195,7 @@ def process(inputFiles: Iterable[str],
     os.chdir(single_path)
 
     # Handle single vs. multiple command line inputs
-    root = ElementTree.Element()
+    root = ElementTree.Element("Problem")
     tree = ElementTree.ElementTree()
     if (len(expanded_files) == 1):
         # Load single files directly

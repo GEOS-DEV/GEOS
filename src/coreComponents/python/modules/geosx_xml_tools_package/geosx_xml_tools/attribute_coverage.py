@@ -1,8 +1,9 @@
 from lxml import etree as ElementTree    # type: ignore[import]
 import os
 from pathlib import Path
-import argparse
 from typing import Any, Iterable, Dict
+from geosx_xml_tools import command_line_parsers
+
 
 record_type = Dict[str, Dict[str, Any]]
 
@@ -167,19 +168,6 @@ def process_xml_files(geosx_root: str, output_name: str) -> None:
     write_attribute_usage_xml(xml_types, output_name)
 
 
-def build_attribute_coverage_input_parser() -> argparse.ArgumentParser:
-    """Build attribute coverage redundancy input parser
-
-    Returns:
-        argparse.ArgumentParser: parser instance
-    """
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--root', type=str, help='GEOSX root', default='')
-    parser.add_argument('-o', '--output', type=str, help='Output file name', default='attribute_test.xml')
-    return parser
-
-
 def main() -> None:
     """Entry point for the xml attribute usage test script
 
@@ -189,7 +177,7 @@ def main() -> None:
     """
 
     # Parse the user arguments
-    parser = build_attribute_coverage_input_parser()
+    parser = command_line_parsers.build_attribute_coverage_input_parser()
     args = parser.parse_args()
 
     # Parse the xml files

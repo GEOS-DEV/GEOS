@@ -4,51 +4,8 @@ import sys
 import argparse
 import os
 import time
-from geosx_xml_tools import xml_processor
+from geosx_xml_tools import xml_processor, command_line_parsers
 from typing import Callable, Any, Union, Tuple, Iterable
-
-
-def build_preprocessor_input_parser() -> argparse.ArgumentParser:
-    """Build the argument parser
-
-    Returns:
-        argparse.ArgumentParser: The parser
-    """
-    # Parse the user arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', type=str, action='append', help='Input file name (multiple allowed)')
-    parser.add_argument('-c',
-                        '--compiled-name',
-                        type=str,
-                        help='Compiled xml file name (otherwise, it is randomly genrated)',
-                        default='')
-    parser.add_argument('-s', '--schema', type=str, help='GEOSX schema to use for validation', default='')
-    parser.add_argument('-v', '--verbose', type=int, help='Verbosity of outputs', default=0)
-    parser.add_argument('-p',
-                        '--parameters',
-                        nargs='+',
-                        action='append',
-                        help='Parameter overrides (name value, multiple allowed)',
-                        default=[])
-
-    return parser
-
-
-def parse_arguments() -> Tuple[argparse.Namespace, Iterable[str]]:
-    """Parse user arguments
-
-    Args:
-        -i/--input (str): Input file name (multiple allowed)
-        -c/--compiled-name (str): Compiled xml file name
-        -s/--schema (str): Path to schema to use for validation
-        -v/--verbose (int): Verbosity of outputs
-        -p/--parameters (str): Parameter overrides (name and value, multiple allowed)
-
-    Returns:
-        list: The remaining unparsed argument strings
-    """
-    parser = build_preprocessor_input_parser()
-    return parser.parse_known_args()
 
 
 def check_mpi_rank() -> int:
@@ -134,7 +91,7 @@ def preprocess_serial() -> None:
     Entry point for the geosx_xml_tools console script
     """
     # Process the xml file
-    args, unknown_args = parse_arguments()
+    args, unknown_args = command_line_parsers.parse_xml_preprocessor_arguments()
 
     # Attempt to only process the file on rank 0
     # Note: The rank here is determined by inspecting the system environment variables
@@ -171,7 +128,7 @@ def preprocess_parallel() -> Iterable[str]:
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
 
-    args, unknown_args = parse_arguments()
+    args, unknown_args = command_line_parsers.parse_xml_preprocessor_arguments()
     compiled_name = ''
     if (rank == 0):
         compiled_name = xml_processor.process(args.input,

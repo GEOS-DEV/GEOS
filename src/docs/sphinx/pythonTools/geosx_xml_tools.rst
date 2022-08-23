@@ -15,7 +15,7 @@ convert_abaqus
 Convert an abaqus format mesh file to gmsh or vtk format.
 
 .. argparse::
-   :module: geosx_xml_tools.main
+   :module: geosx_xml_tools.command_line_parsers
    :func: build_preprocessor_input_parser
    :prog: preprocess_xml
 
@@ -26,7 +26,7 @@ format_xml
 Formats an xml file.
 
 .. argparse::
-   :module: geosx_xml_tools.xml_formatter
+   :module: geosx_xml_tools.command_line_parsers
    :func: build_xml_formatter_input_parser
    :prog: format_xml
 
@@ -37,7 +37,7 @@ check_xml_attribute_coverage
 Checks xml attribute coverage for files in the GEOSX repository.
 
 .. argparse::
-   :module: geosx_xml_tools.attribute_coverage
+   :module: geosx_xml_tools.command_line_parsers
    :func: build_attribute_coverage_input_parser
    :prog: check_xml_attribute_coverage
 
@@ -48,7 +48,7 @@ check_xml_redundancy
 Checks for redundant attribute definitions in an xml file, such as those that duplicate the default value.
 
 .. argparse::
-   :module: geosx_xml_tools.xml_redundancy_check
+   :module: geosx_xml_tools.command_line_parsers
    :func: build_xml_redundancy_input_parser
    :prog: check_xml_redundancy
 
