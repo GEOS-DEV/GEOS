@@ -525,7 +525,7 @@ if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
 
     # This conditional is due to the lack of mixedInt support on hypre GPU.
     # This can be removed when support is added into hypre.
-    if( ENABLE_HYPRE_DEVIC E != "CUDA" )
+    if( NOT ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
         set(ENABLE_TRILINOS ON CACHE BOOL "")
     endif()
     set(thirdPartyLibs ${thirdPartyLibs} trilinos)

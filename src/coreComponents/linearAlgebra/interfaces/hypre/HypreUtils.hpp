@@ -35,6 +35,7 @@
 #else
 /// Host-device marker for custom hypre kernels
 #define GEOSX_HYPRE_DEVICE
+#define GEOSX_HYPRE_HOST_DEVICE
 #endif
 
 namespace geosx

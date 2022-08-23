@@ -41,7 +41,6 @@
       <LinearSolverParameters
         solverType="gmres"
         krylovAdaptiveTol="1"
-        preconditionerType="mgr"
         logLevel="1" />
 <!--
       <LinearSolverParameters

@@ -975,11 +975,11 @@ localIndex HypreMatrix::rowLength( globalIndex const globalRowIndex ) const
   HYPRE_Int ia_diag_h[2];
   HYPRE_Int ia_offd_h[2];
 
-#if GEOSX_USE_HYPRE_DEVICE == GEOSX_HYPRE_USE_CUDA
+#if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA
   // Don't know if this is faster or slower than launching a kernel. We should deprecate this function in any case.
   cudaMemcpy( ia_diag_h, ia_diag + localRow, 2 * sizeof( HYPRE_Int ), cudaMemcpyDeviceToHost );
   cudaMemcpy( ia_offd_h, ia_offd + localRow, 2 * sizeof( HYPRE_Int ), cudaMemcpyDeviceToHost );
-#elif GEOSX_USE_HYPRE_DEVICE == GEOSX_HYPRE_USE_HIP
+#elif GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
   // Don't know if this is faster or slower than launching a kernel. We should deprecate this function in any case.
   hipMemcpy( ia_diag_h, ia_diag + localRow, 2 * sizeof( HYPRE_Int ), hipMemcpyDeviceToHost );
   hipMemcpy( ia_offd_h, ia_offd + localRow, 2 * sizeof( HYPRE_Int ), hipMemcpyDeviceToHost );

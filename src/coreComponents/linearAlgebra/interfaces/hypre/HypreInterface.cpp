@@ -26,7 +26,7 @@
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 
 #include "HYPRE_utilities.h"
-#if GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_HIP
+#if GEOSX_HYPRE_USE_DEVICE == GEOSX_USE_HYPRE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOSX_USE_HYPRE_HIP
 #include "_hypre_utilities.h"
 #include "_hypre_utilities.hpp"
 #endif
@@ -37,7 +37,7 @@ namespace geosx
 void HypreInterface::initialize()
 {
   HYPRE_Init();
-#if GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_HIP
+#if GEOSX_HYPRE_USE_DEVICE == GEOSX_USE_HYPRE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOSX_USE_HYPRE_HIP
   hypre_HandleDefaultExecPolicy( hypre_handle() ) = HYPRE_EXEC_DEVICE;
   hypre_HandleSpgemmUseVendor( hypre_handle() ) = 0;
 #endif
