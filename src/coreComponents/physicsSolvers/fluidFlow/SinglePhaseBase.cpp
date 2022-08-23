@@ -849,12 +849,86 @@ void SinglePhaseBase::applyBoundaryConditions( real64 time_n,
 
 namespace
 {
+
 char const bcLogMessage[] =
   "SinglePhaseBase {}: at time {}s, "
   "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. "
   "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). "
   "\nThe total number of target elements (including ghost elements) is {}. "
   "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.";
+
+void applyAndSpecifyFieldValue( real64 const & time_n,
+                                real64 const & dt,
+                                MeshLevel & mesh,
+                                globalIndex const rankOffset,
+                                string const dofKey,
+                                bool const isFirstNonlinearIteration,
+                                string const solverName,
+                                integer const idof,
+                                string const extrinsicFieldKey,
+                                string const extrinsicBoundaryFieldKey,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs )
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                           mesh,
+                                           extrinsicFieldKey,
+                                           [&]( FieldSpecificationBase const & fs,
+                                                string const & setName,
+                                                SortedArrayView< localIndex const > const & lset,
+                                                ElementSubRegionBase & subRegion,
+                                                string const & )
+  {
+    if( fs.getLogLevel() >= 1 && isFirstNonlinearIteration )
+    {
+      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+                                   solverName, time_n+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+    }
+
+    // Specify the bc value of the field
+    fs.applyFieldValue< FieldSpecificationEqual,
+                        parallelDevicePolicy<> >( lset,
+                                                  time_n + dt,
+                                                  subRegion,
+                                                  extrinsicBoundaryFieldKey );
+
+    arrayView1d< integer const > const ghostRank =
+      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+    arrayView1d< globalIndex const > const dofNumber =
+      subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< real64 const > const bcField =
+      subRegion.getReference< array1d< real64 > >( extrinsicBoundaryFieldKey );
+    arrayView1d< real64 const > const field =
+      subRegion.getReference< array1d< real64 > >( extrinsicFieldKey );
+
+    forAll< parallelDevicePolicy<> >( lset.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      localIndex const ei = lset[a];
+      if( ghostRank[ei] >= 0 )
+      {
+        return;
+      }
+
+      globalIndex const dofIndex = dofNumber[ei];
+      localIndex const localRow = dofIndex - rankOffset;
+      real64 rhsValue;
+
+      // Apply field value to the matrix/rhs
+      FieldSpecificationEqual::SpecifyFieldValue( dofIndex + idof,
+                                                  rankOffset,
+                                                  localMatrix,
+                                                  rhsValue,
+                                                  bcField[ei],
+                                                  field[ei] );
+      localRhs[localRow + idof] = rhsValue;
+    } );
+  } );
+}
+
 }
 
 void SinglePhaseBase::applyDirichletBC( real64 const time_n,
@@ -866,149 +940,22 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  globalIndex const rankOffset = dofManager.rankOffset();
+  bool const isFirstNonlinearIteration = ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    // 1. Apply pressure Dirichlet BCs
-    fsManager.apply< ElementSubRegionBase >( time_n + dt,
-                                             mesh,
-                                             extrinsicMeshData::flow::pressure::key(),
-                                             [&]( FieldSpecificationBase const & fs,
-                                                  string const & setName,
-                                                  SortedArrayView< localIndex const > const & lset,
-                                                  ElementSubRegionBase & subRegion,
-                                                  string const & )
-    {
-      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-      {
-        globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
-                                     getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
-      }
-
-      // Specify the bc value of pressure
-      fs.applyFieldValue< FieldSpecificationEqual,
-                          parallelDevicePolicy<> >( lset,
-                                                    time_n + dt,
-                                                    subRegion,
-                                                    extrinsicMeshData::flow::bcPressure::key() );
-    } );
-
-    // 2. Apply temperature Dirichlet BCs
+    applyAndSpecifyFieldValue( time_n, dt, mesh, rankOffset, dofKey, isFirstNonlinearIteration, getName(),
+                               0, extrinsicMeshData::flow::pressure::key(), extrinsicMeshData::flow::bcPressure::key(),
+                               localMatrix, localRhs );
     if( m_isThermal )
     {
-      fsManager.apply< ElementSubRegionBase >( time_n + dt,
-                                               mesh,
-                                               extrinsicMeshData::flow::temperature::key(),
-                                               [&]( FieldSpecificationBase const & fs,
-                                                    string const &,
-                                                    SortedArrayView< localIndex const > const & lset,
-                                                    ElementSubRegionBase & subRegion,
-                                                    string const & )
-      {
-        // Specify the bc value of temperature
-        fs.applyFieldValue< FieldSpecificationEqual,
-                            parallelDevicePolicy<> >( lset,
-                                                      time_n + dt,
-                                                      subRegion,
-                                                      extrinsicMeshData::flow::bcTemperature::key() );
-      } );
-    }
-
-    globalIndex const rankOffset = dofManager.rankOffset();
-
-    // 3. Apply the pressure bc to the system
-    fsManager.apply< ElementSubRegionBase >( time_n + dt,
-                                             mesh,
-                                             extrinsicMeshData::flow::pressure::key(),
-                                             [&]( FieldSpecificationBase const & GEOSX_UNUSED_PARAM( fs ),
-                                                  string const &,
-                                                  SortedArrayView< localIndex const > const & lset,
-                                                  ElementSubRegionBase & subRegion,
-                                                  string const & )
-    {
-      arrayView1d< real64 const > const bcPres =
-        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcPressure::key() );
-
-      arrayView1d< integer const > const ghostRank =
-        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-      arrayView1d< globalIndex const > const dofNumber =
-        subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< real64 const > const pres =
-        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-
-      forAll< parallelDevicePolicy<> >( lset.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
-      {
-        localIndex const ei = lset[a];
-        if( ghostRank[ei] >= 0 )
-        {
-          return;
-        }
-
-        globalIndex const dofIndex = dofNumber[ei];
-        localIndex const localRow = dofIndex - rankOffset;
-        real64 rhsValue;
-
-        // Apply pressure value to the matrix/rhs
-        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
-                                                    rankOffset,
-                                                    localMatrix,
-                                                    rhsValue,
-                                                    bcPres[ei],
-                                                    pres[ei] );
-        localRhs[localRow] = rhsValue;
-      } );
-    } );
-
-    // 3. Apply the temperature bc to the system
-    if( m_isThermal )
-    {
-      fsManager.apply< ElementSubRegionBase >( time_n + dt,
-                                               mesh,
-                                               extrinsicMeshData::flow::temperature::key(),
-                                               [&]( FieldSpecificationBase const & GEOSX_UNUSED_PARAM( fs ),
-                                                    string const &,
-                                                    SortedArrayView< localIndex const > const & lset,
-                                                    ElementSubRegionBase & subRegion,
-                                                    string const & )
-      {
-        arrayView1d< real64 const > const bcTemp =
-          subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcTemperature::key() );
-
-        arrayView1d< integer const > const ghostRank =
-          subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-        arrayView1d< globalIndex const > const dofNumber =
-          subRegion.getReference< array1d< globalIndex > >( dofKey );
-        arrayView1d< real64 const > const temp =
-          subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
-
-        forAll< parallelDevicePolicy<> >( lset.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
-        {
-          localIndex const ei = lset[a];
-          if( ghostRank[ei] >= 0 )
-          {
-            return;
-          }
-
-          globalIndex const dofIndex = dofNumber[ei];
-          localIndex const localRow = dofIndex - rankOffset;
-          real64 rhsValue;
-
-          // Apply temperature value to the matrix/rhs
-          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + 1,
-                                                      rankOffset,
-                                                      localMatrix,
-                                                      rhsValue,
-                                                      bcTemp[ei],
-                                                      temp[ei] );
-          localRhs[localRow + 1] = rhsValue;
-        } );
-      } );
+      applyAndSpecifyFieldValue( time_n, dt, mesh, rankOffset, dofKey, isFirstNonlinearIteration, getName(),
+                                 1, extrinsicMeshData::flow::temperature::key(), extrinsicMeshData::flow::bcTemperature::key(),
+                                 localMatrix, localRhs );
     }
   } );
 }
