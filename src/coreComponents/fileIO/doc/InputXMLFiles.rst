@@ -119,6 +119,26 @@ In the right-hand side of the new window, add the xmllint configuration:
 
 
 
+VS Code
+------------------------------
+
+We recommend using the `XML <https://marketplace.visualstudio.com/items?itemName=redhat.vscode-xml>`_ for validating xml files.
+After installing this extension, you can associate GEOSX format xml files by adding the following entry to the user settings file (replacing `systemId` with the correct path to the schema file):
+
+
+ .. code-block:: python
+
+    {
+        "xml.fileAssociations": [
+
+            {
+                "pattern": "**.xml",
+                "systemId": "/path/to/GEOSX/src/coreComponents/schema/schema.xsd"
+            }
+        ]
+    }
+
+
 Eclipse
 ------------------------------
 
