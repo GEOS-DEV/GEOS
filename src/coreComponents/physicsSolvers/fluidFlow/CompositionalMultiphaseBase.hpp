@@ -23,6 +23,7 @@
 #include "constitutive/fluid/layouts.hpp"
 #include "constitutive/relativePermeability/layouts.hpp"
 #include "constitutive/capillaryPressure/layouts.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 namespace geosx
@@ -317,6 +318,23 @@ protected:
    */
   void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
+  /**
+   * @brief Utility function that encapsulates the call to FieldSpecificationBase::applyFieldValue in BC application
+   * @param[in] time_n the time at the beginning of the step
+   * @param[in] dt the time step
+   * @param[in] mesh the mesh level object
+   * @param[in] logMessage the log message issued by the solver if the bc is called
+   * @param[in] targetManagerName the name of the manager ("ElementRegions" or "faceManager")
+   * @param[in] extrinsicFieldKey the key of the field specified in the xml file
+   * @param[in] extrinsicBoundaryFieldKey the key of the boundary field
+   */
+  template< typename OBJECT_TYPE >
+  void applyFieldValue( real64 const & time_n,
+                        real64 const & dt,
+                        MeshLevel & mesh,
+                        char const logMessage[],
+                        string const extrinsicFieldKey,
+                        string const extrinsicBoundaryFieldKey ) const;
 
   /// flag to specify whether the sparsity pattern needs to be rebuilt
   bool m_systemSetupDone;
@@ -361,6 +379,43 @@ private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
+
+template< typename OBJECT_TYPE >
+void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
+                                                   real64 const & dt,
+                                                   MeshLevel & mesh,
+                                                   char const logMessage[],
+                                                   string const extrinsicFieldKey,
+                                                   string const extrinsicBoundaryFieldKey ) const
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  fsManager.apply< OBJECT_TYPE >( time_n + dt,
+                                  mesh,
+                                  extrinsicFieldKey,
+                                  [&]( FieldSpecificationBase const & fs,
+                                       string const & setName,
+                                       SortedArrayView< localIndex const > const & lset,
+                                       OBJECT_TYPE & targetGroup,
+                                       string const & )
+  {
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( logMessage,
+                                   getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
+    }
+
+    // Specify the bc value of the field
+    fs.applyFieldValue< FieldSpecificationEqual,
+                        parallelDevicePolicy<> >( lset,
+                                                  time_n + dt,
+                                                  targetGroup,
+                                                  extrinsicBoundaryFieldKey );
+  } );
+}
+
 
 } // namespace geosx
 

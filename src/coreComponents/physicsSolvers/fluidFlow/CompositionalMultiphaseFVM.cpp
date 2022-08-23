@@ -538,8 +538,6 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
         bcConsistent = false;
         GEOSX_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}", setName ) );
       }
-
-      // no need to set the number of components here, it was done while checking pressure
     } );
 
     // 3. Check composition BC (global component fraction)
@@ -563,7 +561,8 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
       if( bcTempStatusMap.count( setName ) == 0 )
       {
         bcConsistent = false;
-        GEOSX_WARNING( GEOSX_FMT( "Temperature boundary condition not prescribed on set {}. Note that for face boundary conditions, you must provide a temperature", setName ) );
+        GEOSX_WARNING( GEOSX_FMT( "Temperature boundary condition not prescribed on set {}. \n"
+                                  "Note that for face boundary conditions, you must provide a temperature", setName ) );
       }
       if( comp < 0 || comp >= m_numComponents )
       {
@@ -603,9 +602,10 @@ namespace
 {
 char const faceBcLogMessage[] =
   "CompositionalMultiphaseFVM {}: at time {}s, "
-  "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'.\n"
-  "The total number of target faces (including ghost faces) is {}.\n"
-  "Note that if this number is equal to zero, the boundary condition will not be applied on this face set.";
+  "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. "
+  "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). "
+  "\nThe total number of target faces (including ghost faces) is {}."
+  "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
 }
 
 void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
@@ -638,77 +638,26 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
     FaceManager const & faceManager = mesh.getFaceManager();
 
     // Take BCs defined for "pressure" field and apply values to "facePressure"
-    fsManager.apply< FaceManager >( time_n + dt,
-                                    mesh,
-                                    extrinsicMeshData::flow::pressure::key(),
-                                    [&] ( FieldSpecificationBase const & fs,
-                                          string const &,
-                                          SortedArrayView< localIndex const > const & targetSet,
-                                          FaceManager & targetGroup,
-                                          string const & )
-    {
-      fs.applyFieldValue< FieldSpecificationEqual,
-                          parallelDevicePolicy<> >( targetSet,
-                                                    time_n + dt,
-                                                    targetGroup,
-                                                    extrinsicMeshData::flow::facePressure::key() );
-    } );
-
+    applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
+                                    extrinsicMeshData::flow::pressure::key(), extrinsicMeshData::flow::facePressure::key() );
     // Take BCs defined for "globalCompFraction" field and apply values to "faceGlobalCompFraction"
-    fsManager.apply< FaceManager >( time_n + dt,
-                                    mesh,
-                                    extrinsicMeshData::flow::globalCompFraction::key(),
-                                    [&] ( FieldSpecificationBase const & fs,
-                                          string const &,
-                                          SortedArrayView< localIndex const > const & targetSet,
-                                          FaceManager & targetGroup,
-                                          string const & )
-    {
-      // first, evaluate BC to get component fraction values
-      fs.applyFieldValue< FieldSpecificationEqual,
-                          parallelDevicePolicy<> >( targetSet,
-                                                    time_n + dt,
-                                                    targetGroup,
-                                                    extrinsicMeshData::flow::faceGlobalCompFraction::key() );
-    } );
+    applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
+                                    extrinsicMeshData::flow::globalCompFraction::key(), extrinsicMeshData::flow::faceGlobalCompFraction::key() );
+    // Take BCs defined for "temperature" field and apply values to "faceTemperature"
+    applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
+                                    extrinsicMeshData::flow::temperature::key(), extrinsicMeshData::flow::faceTemperature::key() );
 
-    // If the solver is thermal, take BCs defined for "temperature" field and apply values to "faceTemperature"
-    fsManager.apply< FaceManager >( time_n + dt,
-                                    mesh,
-                                    extrinsicMeshData::flow::temperature::key(),
-                                    [&] ( FieldSpecificationBase const & fs,
-                                          string const &,
-                                          SortedArrayView< localIndex const > const & targetSet,
-                                          FaceManager & targetGroup,
-                                          string const & )
-    {
-      // first, evaluate BC to get component fraction values
-      fs.applyFieldValue< FieldSpecificationEqual,
-                          parallelDevicePolicy<> >( targetSet,
-                                                    time_n + dt,
-                                                    targetGroup,
-                                                    extrinsicMeshData::flow::faceTemperature::key() );
-    } );
-
+    // Then launch the face Dirichlet kernel
     fsManager.apply< FaceManager >( time_n + dt,
                                     mesh,
                                     extrinsicMeshData::flow::pressure::key(), // we have required that pressure is always present
-                                    [&] ( FieldSpecificationBase const & fs,
+                                    [&] ( FieldSpecificationBase const &,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const &,
-                                          FaceManager & targetGroup,
+                                          FaceManager &,
                                           string const & )
     {
       BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
-
-      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-      {
-        globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
-                                     getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
-      }
-
       if( stencil.size() == 0 )
       {
         return;
@@ -813,7 +762,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
         GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
                                      getName(), time+dt, AquiferBoundaryCondition::catalogName(),
-                                     bc.getName(), setName, faceManager.getName(), numTargetFaces ) );
+                                     bc.getName(), setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
       }
 
       if( stencil.size() == 0 )
