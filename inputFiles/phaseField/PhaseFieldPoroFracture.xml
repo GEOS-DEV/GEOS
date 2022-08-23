@@ -24,7 +24,7 @@
       damageFlag="1">
       <NonlinearSolverParameters
         newtonMaxIter="100"
-        newtonTol="1.0e-4"/>
+        newtonTol="1.0e-12"/>
       <LinearSolverParameters
         solverType="direct"
         directParallel="0"/>
@@ -40,7 +40,7 @@
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="200"
-        newtonTol="1.0e-6"/>
+        newtonTol="1.0e-12"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"/>
@@ -64,11 +64,11 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 10 }"
-      yCoords="{ 0, 10 }"
+      xCoords="{ 0, 100 }"
+      yCoords="{ 0, 100 }"
       zCoords="{ 0, 0.1 }"
-      nx="{ 201 }"
-      ny="{ 201 }"
+      nx="{ 251 }"
+      ny="{ 251 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -121,34 +121,34 @@
 
     <DamageElasticIsotropic
       name="rockSolid"
-      defaultDensity="2700"
-      defaultBulkModulus="4.4144e9"
-      defaultShearModulus="4.3363e9"
-      lengthScale="0.1"
-      criticalFractureEnergy="91"
+      defaultDensity="2.7e-9"
+      defaultBulkModulus="4.4144e3"
+      defaultShearModulus="4.3363e3"
+      lengthScale="1"
+      criticalFractureEnergy="9.1e-2"
       criticalStrainEnergy="0"
       extDrivingForceSwitch="True"
-      tensileStrength="27e6"
-      compressiveStrength="77e6"
+      tensileStrength="27.0"
+      compressiveStrength="77.0"
       deltaCoefficient="0.0"/>
 
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="1.0e28"
+      grainBulkModulus="1.0e22"
       defaultReferencePorosity="0.05"/>
 
     <DamagePermeability
       name="rockPerm"
-      bulkPermeability="1.0e-15"
-      fracturePermeability="1.0e-10"/>
+      bulkPermeability="1.0e-9"
+      fracturePermeability="1.0e-4"/>
 
     <CompressibleSinglePhaseFluid
       name="water"
-      defaultDensity="1000"
+      defaultDensity="1e-9"
       defaultViscosity="1.0e-9"
       referencePressure="0.000"
-      referenceDensity="1000"
-      compressibility="4.4e-10"
+      referenceDensity="1e-9"
+      compressibility="4.4e-4"
       referenceViscosity="1.0e-9"
       viscosibility="0.0"/>
   </Constitutive>
@@ -204,7 +204,7 @@
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Region1/cb1"
-      scale="-50.0"
+      scale="-8e-9"
       component="0"
       setNames="{ source }"
       functionName="timeFunction"/>
@@ -230,13 +230,13 @@
   <Geometry>
     <Box
       name="fracture"
-      xMin="{ 4.599, 4.975, -0.001 }"
-      xMax="{ 5.401, 5.025,  0.101 }"/>
+      xMin="{ 45.999, 49.80, -0.001 }"
+      xMax="{ 54.001, 50.20,  0.101 }"/>
 
     <Box
       name="source"
-      xMin="{ 4.799, 4.799, -0.001 }"
-      xMax="{ 5.201, 5.201,  0.101 }"/>
+      xMin="{ 47.999, 47.999, -0.001 }"
+      xMax="{ 52.001, 52.001,  0.101 }"/>
   </Geometry>
 
 </Problem>
