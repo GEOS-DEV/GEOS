@@ -118,6 +118,25 @@ public:
   }
 
   /**
+   * @brief Set the flag to decide whether we only plot the fields specified by fieldNames, or if we also plot fields based on plotLevel
+   * @param[in] onlyPlotSpecifiedFieldNames the flag
+   */
+  void setOnlyPlotSpecifiedFieldNamesFlag( integer const onlyPlotSpecifiedFieldNames )
+  {
+    m_onlyPlotSpecifiedFieldNames = onlyPlotSpecifiedFieldNames;
+  }
+
+  /**
+   * @brief Set the names of the fields to output
+   * @param[in] fieldNames the fields to output
+   */
+  void setFieldNames( arrayView1d< string const > const & fieldNames )
+  {
+    m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
+  }
+
+
+  /**
    * @brief Main method of this class. Write all the files for one time step.
    * @details This method writes a .pvd file (if a previous one was created from a precedent time step,
    * it is overwritten). The .pvd file contains relative path to every .vtm files (one vtm file per time step).
@@ -152,7 +171,21 @@ public:
    */
   void write( real64 time, integer cycle, DomainPartition const & domain );
 
+  /**
+   * @brief Clears the datasets accumulated in the pvd writer
+   *
+   */
+  void clearData();
+
+
 private:
+
+  /**
+   * @brief Check if plotting is enabled for this field
+   * @param[in] wrapper the wrapper
+   * @return true if this wrapper should be plot, false otherwise
+   */
+  bool isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const;
 
   /**
    * @brief Writes the files for all the CellElementRegions.
@@ -250,6 +283,15 @@ private:
 
   /// Maximum plot level to be written.
   dataRepository::PlotLevel m_plotLevel;
+
+  /// Flag to decide whether we only plot the fields specified by fieldNames, or if we also plot fields based on plotLevel
+  integer m_onlyPlotSpecifiedFieldNames;
+
+  /// Flag to decide whether we check that the specified fieldNames are actually registered
+  bool m_requireFieldRegistrationCheck;
+
+  /// Names of the fields to output
+  std::set< string > m_fieldNames;
 
   /// The previousCycle
   integer m_previousCycle;
