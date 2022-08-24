@@ -59,7 +59,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxForce( 0.0 ),
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
-  m_iComm( CommunicationTools::getInstance().getCommID() )
+  m_iComm( CommunicationTools::getInstance().getCommID() ), 
+  m_internalBCsFlag(false) 
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -1078,6 +1079,11 @@ SolidMechanicsLagrangianFEM::
   }
 
   applyDisplacementBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
+
+  #if 1
+    applyInternalDisplacementBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
+  #endif
+
 }
 
 real64
@@ -1184,6 +1190,25 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                keys::TotalDisplacement,
                                keys::TotalDisplacement,
                                -scalingFactor );
+
+  //Add print of total displacement for debugging purposes
+  NodeManager const & nodeManager = domain.getMeshBody( 1 ).getMeshLevel( 0 ).getNodeManager();   
+  arrayView2d< real64 const > const totDisp = nodeManager.totalDisplacement();
+  localIndex const numDofs = localSolution.size();
+  if( getLogLevel() == 2 )
+  {
+    for (localIndex i=0; i<numDofs; i++)
+    {
+        std::cout<<"dof number: "<<i<<std::endl;
+        localIndex a = i/3;
+        localIndex b = i - 3*a;
+        if (a<72)
+        {
+          std::cout<<"disp value: "<<totDisp(a,b)<<std::endl;
+        }
+    }
+  }
+  //     
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
@@ -1358,6 +1383,94 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
   GEOSX_UNUSED_VAR( domain, dofManager, localSolution );
 
   return 1.0;
+}
+
+void SolidMechanicsLagrangianFEM::setInternalBoundaryConditions( array1d< localIndex > const & fixedNodes, 
+                                                                 array2d< real64 > const & fixedValues )
+{
+  localIndex count = 0;
+  m_fixedDisplacementNodes.resize( fixedNodes.size() );
+  m_fixedDisplacementValues.resize( fixedNodes.size(), 3 );
+  for( localIndex c : fixedNodes)
+  {
+    m_fixedDisplacementNodes( count ) = c;
+    m_fixedDisplacementValues( count, 0 ) = fixedValues( count, 0 );
+    m_fixedDisplacementValues( count, 1 ) = fixedValues( count, 1 );
+    m_fixedDisplacementValues( count, 2 ) = fixedValues( count, 2 );
+    ++count;
+  }
+  m_internalBCsFlag = true;
+
+} 
+
+void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 const time,
+                                                                       DofManager const & dofManager,
+                                                                       DomainPartition & domain, 
+                                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                       arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_MARK_FUNCTION;
+  if (m_internalBCsFlag == false) 
+  {
+    return;
+  }
+  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "Before SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    std::cout << localMatrix.toViewConst();
+  }
+
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    const NodeManager & nodeManager = mesh.getNodeManager();
+    arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofKey );
+    arrayView2d< real64 const > const nodalDisplacements = nodeManager.getReference< array2d< real64 > >( keys::TotalDisplacement );
+    
+    localIndex count = 0;
+    for( localIndex c : m_fixedDisplacementNodes)
+    {
+      for (localIndex i = 0; i < 3; i++)
+      {
+        localIndex const dof = dofIndex[c]+i; 
+        if( getLogLevel() == 2 )
+        {
+          std::cout<<"constrained dof: "<<dof<<std::endl;
+        }
+        real64 const dispToBeApplied = m_fixedDisplacementValues( count, i );
+        if( getLogLevel() == 2 )
+        {  
+          std::cout<<"constrained disp: "<<dispToBeApplied<<std::endl;
+        }
+        real64 const dispCurrentDof = nodalDisplacements( count, i );
+        real64 rhsContribution; 
+        FieldSpecificationEqual::SpecifyFieldValue( dof, 
+                                                    dofManager.rankOffset(), 
+                                                    localMatrix,
+                                                    rhsContribution, 
+                                                    dispToBeApplied, 
+                                                    dispCurrentDof ); 
+                                                    
+        globalIndex const localRow = dof - dofManager.rankOffset(); 
+        if( localRow >=0 && localRow < localRhs.size() )
+        {
+          localRhs[ localRow ] = rhsContribution; 
+        }      
+      }
+      ++count;                                       
+    }
+
+  } );
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    std::cout << localMatrix.toViewConst();
+  }
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )

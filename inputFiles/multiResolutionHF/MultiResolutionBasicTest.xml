@@ -13,7 +13,7 @@
       <NonlinearSolverParameters
         newtonMaxIter="10"/>
       <LinearSolverParameters
-        logLevel="2"/>
+        logLevel="1"/>
     </MultiResolutionHF>
 
     <SolidMechanicsEmbeddedFractures
@@ -25,7 +25,7 @@
       contactRelationName="fractureContact"
       logLevel="1"> 
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-0"
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
@@ -39,8 +39,11 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{base/base_cer}"
-      />
+      targetRegions="{base/base_cer}">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-0"/>
+    </SolidMechanicsLagrangianSSLE>
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
@@ -73,7 +76,7 @@
       >
       <NonlinearSolverParameters
         newtonMaxIter="50"
-        newtonTol="1.0e-12"/>
+        newtonTol="1.0e-0"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
@@ -87,7 +90,7 @@
       targetRegions="{patch/patch_cer}">
       <NonlinearSolverParameters
         newtonMaxIter="50"
-        newtonTol="1.0e-12"/>
+        newtonTol="1.0e-8"/>
       <LinearSolverParameters
         directParallel="0"/>
     </PhaseFieldDamageFEM>
@@ -129,8 +132,8 @@
   <Events
       maxTime="2.0">
     <SoloEvent
-	name="preFracture"
-	target="/Solvers/SurfaceGenerator"/>
+      name="preFracture"
+      target="/Solvers/SurfaceGenerator"/>
     
     <PeriodicEvent
       name="solverApplications"
@@ -182,7 +185,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <DamageSpectralElasticIsotropic
+    <DamageElasticIsotropic
       name="shale"
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"
@@ -192,9 +195,9 @@
       criticalStrainEnergy="1.0"/>
 
     <FrictionlessContact
-	name="fractureContact"
-	penaltyStiffness="0.0e8"
-	apertureTableName="apertureTable"/> 
+      name="fractureContact"
+      penaltyStiffness="0.0e8"
+      apertureTableName="apertureTable"/> 
   </Constitutive>
 
   <FieldSpecifications>
@@ -234,14 +237,14 @@
 
   <Functions>
     <TableFunction
-	name="apertureTable"
-	coordinates="{ -1.0e-3, 0.0 }"
-	values="{ 0.002e-3, 0.02e-3 }"/>
+        name="apertureTable"
+        coordinates="{ -1.0e-3, 0.0 }"
+        values="{ 0.002e-3, 0.02e-3 }"/>
     <TableFunction
         name="f_b"
         inputVarNames="{ time }"
         coordinates="{ 0, 501 }"
-        values="{ -1, 500 }"/>
+        values="{ 0, 501 }"/>
   </Functions>
 
   <Tasks>
@@ -253,11 +256,11 @@
 
   <Outputs>
     <Silo
-	name="MRBasicTest_SiloOutput"/>
+	    name="MRBasicTest_SiloOutput"/>
 
     <VTK
       name="MRBasicTest_VTKOutput"
-      plotFileRoot="plot"/>
+      plotFileRoot="plot_files"/>
 
     <Restart
       name="restartOutput"/>

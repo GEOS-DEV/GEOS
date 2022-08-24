@@ -716,7 +716,9 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
 void VTKPolyDataWriterInterface::writeCellElementRegions( real64 const time,
                                                           integer const cycle,
                                                           ElementRegionManager const & elemManager,
-                                                          NodeManager const & nodeManager ) const
+                                                          NodeManager const & nodeManager,
+                                                          string meshLevelName,
+                                                          string meshBodyName ) const
 {
   elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & region )
   {
@@ -730,7 +732,8 @@ void VTKPolyDataWriterInterface::writeCellElementRegions( real64 const time,
     writeTimestamp( *ug, time );
     writeElementFields< CellElementSubRegion >( region, *ug->GetCellData() );
     writeNodeFields( nodeManager, VTKCells.nodes, *ug->GetPointData() );
-    writeUnstructuredGrid( cycle, region.getName(), *ug );
+    string name = meshBodyName + "/" + meshLevelName +  "/" + region.getName();
+    writeUnstructuredGrid( cycle, name, *ug );
   } );
 }
 
@@ -756,7 +759,9 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
                                                              integer const cycle,
                                                              ElementRegionManager const & elemManager,
                                                              NodeManager const & nodeManager,
-                                                             EmbeddedSurfaceNodeManager const & embSurfNodeManager ) const
+                                                             EmbeddedSurfaceNodeManager const & embSurfNodeManager,
+                                                             string meshLevelName,
+                                                             string meshBodyName ) const 
 {
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
   {
@@ -794,7 +799,8 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
       writeElementFields< FaceElementSubRegion >( region, *ug->GetCellData() );
     }
     writeTimestamp( *ug, time );
-    writeUnstructuredGrid( cycle, region.getName(), *ug );
+    string name = meshBodyName + "/" + meshLevelName +  "/" + region.getName();
+    writeUnstructuredGrid( cycle, name, *ug );
   } );
 }
 
@@ -803,62 +809,73 @@ static string getCycleSubFolder( integer const cycle )
   return GEOSX_FMT( "{:06d}", cycle );
 }
 
-static string getRegionFileName( integer const rank, string const & regionName )
+static string getRankFileName( integer const rank )
 {
   int const width = static_cast< int >( std::log10( MpiWrapper::commSize() ) ) + 1;
-  return GEOSX_FMT( "{:>0{}}_{}.vtu", rank, width, regionName );
+  return GEOSX_FMT("rank_{:>0{}}.vtu", rank, width );
 }
 
 void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
-                                               ElementRegionManager const & elemManager,
-                                               VTKVTMWriter const & vtmWriter ) const
+                                               DomainPartition const & domain,
+                                               VTKVTMWriter const & vtmWriter ) const                                               
 {
   GEOSX_ASSERT_EQ_MSG( MpiWrapper::commRank(), 0, "Must only be called on rank 0" );
 
-  int const mpiSize = MpiWrapper::commSize();
-  auto addRegion = [&]( ElementRegionBase const & region )
+  
+  //loop over mesh bodies - use domain to get element regions
+  domain.forMeshBodies( [&]( MeshBody const & meshBody )
   {
-    if( !vtmWriter.hasBlock( region.getCatalogName() ) )
-    {
-      vtmWriter.addBlock( region.getCatalogName() );
-    }
-    vtmWriter.addSubBlock( region.getCatalogName(), region.getName() );
-    for( int i = 0; i < mpiSize; i++ )
-    {
-      string const dataSetFile = joinPath( getCycleSubFolder( cycle ), getRegionFileName( i, region.getName() ) );
-      vtmWriter.addDataToSubBlock( region.getCatalogName(), region.getName(), dataSetFile, i );
-    }
-  };
+     meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
+     { 
+        ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
-  // Output each of the region types
-  if( ( m_outputRegionType == VTKRegionTypes::CELL ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
-  {
-    elemManager.forElementRegions< CellElementRegion >( addRegion );
-  }
+        int const mpiSize = MpiWrapper::commSize();
+        auto addRegion = [&]( ElementRegionBase const & region )
+        {
+          if( !vtmWriter.hasBlock( region.getCatalogName() ) )
+          {
+            vtmWriter.addBlock( region.getCatalogName() );
+          }
+          vtmWriter.addSubBlock( region.getCatalogName(), region.getName() );
+          for( int i = 0; i < mpiSize; i++ )
+          {
+            string const dataSetFile = joinPath( getCycleSubFolder( cycle ), meshBody.getName(), meshLevel.getName(), region.getName(), getRankFileName( i ) );
+            vtmWriter.addDataToSubBlock( region.getCatalogName(), region.getName(), dataSetFile, i );
+          }
+        };
 
-  if( ( m_outputRegionType == VTKRegionTypes::WELL ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
-  {
-    elemManager.forElementRegions< WellElementRegion >( addRegion );
-  }
+        // Output each of the region types
+        if( ( m_outputRegionType == VTKRegionTypes::CELL ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
+        {
+          elemManager.forElementRegions< CellElementRegion >( addRegion );
+        }
 
-  if( ( m_outputRegionType == VTKRegionTypes::SURFACE ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
-  {
-    elemManager.forElementRegions< SurfaceElementRegion >( addRegion );
-  }
+        if( ( m_outputRegionType == VTKRegionTypes::WELL ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
+        {
+          elemManager.forElementRegions< WellElementRegion >( addRegion );
+        }
 
+        if( ( m_outputRegionType == VTKRegionTypes::SURFACE ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
+        {
+          elemManager.forElementRegions< SurfaceElementRegion >( addRegion );
+        }
+      });
+  });    //end loop
   vtmWriter.save();
 }
 
 void VTKPolyDataWriterInterface::writeUnstructuredGrid( integer const cycle,
-                                                        string const & name,
-                                                        vtkUnstructuredGrid & ug ) const
+                                                         string const & name,
+                                                         vtkUnstructuredGrid & ug ) const                                                  
 {
   vtkSmartPointer< vtkXMLUnstructuredGridWriter > const vtuWriter = vtkXMLUnstructuredGridWriter::New();
   vtuWriter->SetInputData( &ug );
+  makeDirsForPath( joinPath( m_outputDir, m_outputName, getCycleSubFolder( cycle ), name ) );
   string const vtuFilePath = joinPath( m_outputDir,
                                        m_outputName,
                                        getCycleSubFolder( cycle ),
-                                       getRegionFileName( MpiWrapper::commRank(), name ) );
+                                       name,
+                                       getRankFileName( MpiWrapper::commRank() ) );                                       
   vtuWriter->SetFileName( vtuFilePath.c_str() );
   if( m_outputMode == VTKOutputMode::BINARY )
   {
@@ -892,19 +909,26 @@ void VTKPolyDataWriterInterface::write( real64 const time,
     makeDirectory( joinPath( m_outputDir, stepSubFolder ) );
   }
   MpiWrapper::barrier( MPI_COMM_GEOSX );
-
-  ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-  NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
-  EmbeddedSurfaceNodeManager const & embSurfNodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getEmbSurfNodeManager();
-  writeCellElementRegions( time, cycle, elemManager, nodeManager );
-  writeWellElementRegions( time, cycle, elemManager, nodeManager );
-  writeSurfaceElementRegions( time, cycle, elemManager, nodeManager, embSurfNodeManager );
-
+  //loop over all mesh levels and mesh bodies
+  domain.forMeshBodies( [&]( MeshBody const & meshBody )
+  {
+    meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
+    {          
+      ElementRegionManager const & elemManager = meshLevel.getElemManager();
+      NodeManager const & nodeManager = meshLevel.getNodeManager();
+      EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
+      string const meshLevelName = meshLevel.getName();
+      string const meshBodyName = meshBody.getName();
+      writeCellElementRegions( time, cycle, elemManager, nodeManager, meshLevelName, meshBodyName );
+      writeWellElementRegions( time, cycle, elemManager, nodeManager );
+      writeSurfaceElementRegions( time, cycle, elemManager, nodeManager, embSurfNodeManager, meshLevelName, meshBodyName );
+      } );
+  });
   if( rank == 0 )
   {
     string const vtmName = stepSubFolder + ".vtm";
     VTKVTMWriter vtmWriter( joinPath( m_outputDir, vtmName ) );
-    writeVtmFile( cycle, elemManager, vtmWriter );
+    writeVtmFile( cycle, domain, vtmWriter );
 
     if( cycle != m_previousCycle )
     {
@@ -912,7 +936,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
       m_pvd.save();
     }
   }
-
+ 
   m_previousCycle = cycle;
 }
 

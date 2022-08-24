@@ -181,14 +181,16 @@ real64 PhaseFieldFractureSolver::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
-real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    integer const cycleNumber,
-                                                    DomainPartition & domain )
+void PhaseFieldFractureSolver::setupSystem( DomainPartition & domain,
+                                            DofManager & GEOSX_UNUSED_PARAM(dofManager),
+                                            CRSMatrix< real64, globalIndex > & GEOSX_UNUSED_PARAM(localMatrix),
+                                            ParallelVector & GEOSX_UNUSED_PARAM(rhs),
+                                            ParallelVector & GEOSX_UNUSED_PARAM(solution),
+                                            bool const GEOSX_UNUSED_PARAM(setSparsity) )
 {
   GEOSX_MARK_FUNCTION;
-  real64 dtReturn = dt;
-  real64 dtReturnTemporary;
+
+  //SolverBase::setupSystem(domain, dofManager, localMatrix, rhs, solution, setSparsity);
 
   SolidMechanicsLagrangianFEM &
   solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
@@ -208,6 +210,36 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
                            solidSolver.getLocalMatrix(),
                            solidSolver.getSystemRhs(),
                            solidSolver.getSystemSolution() );
+}
+
+
+real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
+                                                    real64 const & dt,
+                                                    integer const cycleNumber,
+                                                    DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+  real64 dtReturn = dt;
+  real64 dtReturnTemporary;
+
+  SolidMechanicsLagrangianFEM &
+  solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+
+  PhaseFieldDamageFEM &
+  damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
+
+  // damageSolver.setupSystem( domain,
+  //                           damageSolver.getDofManager(),
+  //                           damageSolver.getLocalMatrix(),
+  //                           damageSolver.getSystemRhs(),
+  //                           damageSolver.getSystemSolution(),
+  //                           true );
+
+  // solidSolver.setupSystem( domain,
+  //                          solidSolver.getDofManager(),
+  //                          solidSolver.getLocalMatrix(),
+  //                          solidSolver.getSystemRhs(),
+  //                          solidSolver.getSystemSolution() );
 
   damageSolver.implicitStepSetup( time_n, dt, domain );
 

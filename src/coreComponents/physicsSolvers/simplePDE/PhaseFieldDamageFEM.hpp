@@ -122,6 +122,13 @@ public:
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs );
 
+  void setInitialCrackDamageBCs( DomainPartition & domain, 
+                                 DofManager const & dofManager, 
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs );
+
+  void setInitialCrackNodes( arrayView1d< localIndex > const & fracturedNodes );                                                              
+
   enum class timeIntegrationOption
   {
     SteadyState,
@@ -164,6 +171,7 @@ private:
   string m_localDissipationOption;
 
   array1d< real64 > m_coeff;
+  array1d< localIndex > m_initialCrack;
 
   PhaseFieldDamageFEM();
 };

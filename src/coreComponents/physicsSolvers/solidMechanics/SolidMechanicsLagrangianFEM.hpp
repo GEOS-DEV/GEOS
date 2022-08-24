@@ -278,6 +278,15 @@ public:
     return m_rigidBodyModes;
   }
 
+  void applyInternalDisplacementBCImplicit( real64 const time,
+                                            DofManager const & dofManager,
+                                            DomainPartition & domain, 
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs );
+  
+  void setInternalBoundaryConditions( array1d< localIndex > const & fixedNodes, array2d< real64 > const & fixedValues );                                                              
+
+
 protected:
   virtual void postProcessInput() override final;
 
@@ -296,6 +305,10 @@ protected:
   integer m_strainTheory;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
+  array1d< localIndex > m_fixedDisplacementNodes;
+  array2d< real64 > m_fixedDisplacementValues;
+  bool m_internalBCsFlag;
+
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;

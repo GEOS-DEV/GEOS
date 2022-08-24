@@ -63,10 +63,21 @@ public:
               int const cycleNumber,
               DomainPartition & domain ) override;
 
+  void setupSystem( DomainPartition & domain,
+                    DofManager & dofManager,
+                    CRSMatrix< real64, globalIndex > & localMatrix,
+                    ParallelVector & rhs,
+                    ParallelVector & solution,
+                    bool const setSparsity ) override;            
+
   real64 splitOperatorStep( real64 const & time_n,
                             real64 const & dt,
                             integer const cycleNumber,
                             DomainPartition & domain );
+
+  string getDamageSolverName(){return m_damageSolverName;} 
+
+  string getSolidSolverName(){return m_solidSolverName;}                          
 
   void mapDamageToQuadrature( DomainPartition & domain );
 

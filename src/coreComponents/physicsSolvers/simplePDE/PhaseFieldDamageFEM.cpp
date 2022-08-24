@@ -454,6 +454,10 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
   GEOSX_MARK_FUNCTION;
   applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 
+#if 1
+  setInitialCrackDamageBCs( domain, dofManager, localMatrix, localRhs );
+#endif
+
   if( getLogLevel() == 2 )
   {
     GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
@@ -605,6 +609,66 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
 
     fsManager.applyFieldValue< serialPolicy >( time, mesh, "ElementRegions", viewKeyStruct::coeffNameString() );
   } );
+}
+
+void PhaseFieldDamageFEM::setInitialCrackNodes( arrayView1d< localIndex > const & fracturedNodes )
+{
+  localIndex count = 0;
+  m_initialCrack.resize( fracturedNodes.size() );
+  for( localIndex c : fracturedNodes)
+  {
+    m_initialCrack( count ) = c;
+    ++count;
+  }
+
+} 
+
+void PhaseFieldDamageFEM::setInitialCrackDamageBCs( DomainPartition & domain, 
+                                                    DofManager const & dofManager, 
+                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix, 
+                                                    arrayView1d< real64 > const & localRhs )
+{
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "Before PhaseFieldDamageFEM::setInitialCrackDamageBCs" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    std::cout << localMatrix.toViewConst();
+  }
+
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    const NodeManager & nodeManager = mesh.getNodeManager();
+    arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( "Damage" ) );
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( "Damage" );
+
+    for( localIndex c : m_initialCrack)
+    {
+      localIndex const dof = dofIndex[c]; 
+      real64 const damageAtNode = nodalDamage[c];
+      real64 rhsContribution; 
+      FieldSpecificationEqual::SpecifyFieldValue( dof, 
+                                                  dofManager.rankOffset(), 
+                                                  localMatrix,
+                                                  rhsContribution, 
+                                                  1.0, 
+                                                  damageAtNode ); 
+
+      globalIndex const localRow = dof - dofManager.rankOffset(); 
+      if( localRow >=0 && localRow < localRhs.size() )
+      {
+        localRhs[ localRow ] = rhsContribution; 
+      }                                                   
+    }
+
+  } );
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::setInitialCrackDamageBCs" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    std::cout << localMatrix.toViewConst();
+  }
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,
