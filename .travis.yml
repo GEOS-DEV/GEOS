@@ -38,9 +38,9 @@ geosx_osx_build: &geosx_osx_build
   - git submodule update --init src/coreComponents/mesh/PAMELA
   - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
   - python ${TRAVIS_BUILD_DIR}/scripts/config-build.py
-    -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake
+    -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -bt Release
     -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe" -DENABLE_VTK:BOOL=OFF
-  - cd build-darwin-clang-debug
+  - cd build-darwin-clang-release
   - make -j $(nproc) VERBOSE=1
   - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
 

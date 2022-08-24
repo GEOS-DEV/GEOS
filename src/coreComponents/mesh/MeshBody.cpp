@@ -36,6 +36,12 @@ MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel )
   return m_meshLevels.registerGroup< MeshLevel >( intToMeshLevelString( newLevel ) );
 }
 
+MeshLevel & MeshBody::createMeshLevel( string const & name )
+{
+  return m_meshLevels.registerGroup< MeshLevel >( name );
+}
+
+
 void MeshBody::setGlobalLengthScale( real64 scale )
 {
   m_globalLengthScale = scale;
