@@ -107,10 +107,14 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
-  for( string const & regionName : m_targetRegions.at( mesh.getParent().getParent().getName() ) )
+  arrayView1d< string const > const targetRegions = m_targetRegions.at( mesh.getParent().getParent().getName() );
+  elemManager.forElementRegionsComplete< CellElementRegion >( targetRegions,
+                                                              [&]( localIndex,
+                                                                   localIndex const ei,
+                                                                   CellElementRegion const & )
   {
-    regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
-  }
+    regionFilter.insert( ei );
+  } );
 
   stencil.reserve( faceManager.size() );
 
@@ -239,11 +243,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion.faceList();
 
-  arrayView1d< localIndex const > const & fractureConnectorsToEdges =
-    edgeManager.getReference< array1d< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorEdgesToEdgesString() );
+  arrayView1d< localIndex const > const & fractureConnectorsToEdges = fractureSubRegion.m_fractureConnectorsEdgesToEdges;
 
-  ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements =
-    edgeManager.getReference< ArrayOfArrays< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString() );
+  ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements = fractureSubRegion.m_fractureConnectorEdgesToFaceElements.toViewConst();
 
   FixedToManyElementRelation const & faceElementsToCells = fractureSubRegion.getToCellRelation();
 
@@ -312,7 +314,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   allNewElems.insert( fractureSubRegion.m_newFaceElements.begin(),
                       fractureSubRegion.m_newFaceElements.end() );
   SortedArrayView< localIndex const > const
-  recalculateFractureConnectorEdges = edgeManager.m_recalculateFractureConnectorEdges.toViewConst();
+  recalculateFractureConnectorEdges = fractureSubRegion.m_recalculateFractureConnectorEdges.toViewConst();
 
   // reserve memory for the connections of this fracture
   fractureStencil.reserve( fractureStencil.size() + recalculateFractureConnectorEdges.size() );
@@ -1009,14 +1011,14 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
   array1d< real64 > localSumFaceAreas( aquiferNameToAquiferId.size() );
   arrayView1d< real64 > const localSumFaceAreasView = localSumFaceAreas.toView();
 
-  fsManager.apply< AquiferBoundaryCondition >( 0.0,
+  fsManager.apply< FaceManager,
+                   AquiferBoundaryCondition >( 0.0,
                                                domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                               "faceManager",
                                                AquiferBoundaryCondition::catalogName(),
                                                [&] ( AquiferBoundaryCondition const & bc,
                                                      string const &,
                                                      SortedArrayView< localIndex const > const & targetSet,
-                                                     Group const &,
+                                                     FaceManager const &,
                                                      string const & )
   {
     RAJA::ReduceSum< parallelHostReduce, real64 > targetSetSumFaceAreas( 0.0 );
@@ -1069,14 +1071,14 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
 
   // Step 3: compute the face area fraction for each connection, and insert into boundary stencil
 
-  fsManager.apply< AquiferBoundaryCondition >( 0.0,
+  fsManager.apply< FaceManager,
+                   AquiferBoundaryCondition >( 0.0,
                                                domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                               "faceManager",
                                                AquiferBoundaryCondition::catalogName(),
                                                [&] ( AquiferBoundaryCondition const & bc,
                                                      string const & setName,
                                                      SortedArrayView< localIndex const > const & targetSet,
-                                                     Group const &,
+                                                     FaceManager const &,
                                                      string const & )
   {
     BoundaryStencil & stencil = getStencil< BoundaryStencil >( mesh, setName );

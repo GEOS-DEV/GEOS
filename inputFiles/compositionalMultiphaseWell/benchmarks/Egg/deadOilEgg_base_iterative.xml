@@ -226,7 +226,7 @@
   <ElementRegions>
     <CellElementRegion
       name="reservoir"
-      cellBlocks="{ DEFAULT_HEX }"
+      cellBlocks="{ hexahedra }"
       materialList="{ fluid, rock, relperm }"/>
 
     <WellElementRegion
@@ -323,7 +323,7 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/DEFAULT_HEX"
+      objectPath="ElementRegions/reservoir/hexahedra"
       fieldName="pressure"
       scale="4e7"/>
 
@@ -331,7 +331,7 @@
       name="initialComposition_oil"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/DEFAULT_HEX"
+      objectPath="ElementRegions/reservoir/hexahedra"
       fieldName="globalCompFraction"
       component="0"
       scale="0.9"/>
@@ -340,7 +340,7 @@
       name="initialComposition_water"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/DEFAULT_HEX"
+      objectPath="ElementRegions/reservoir/hexahedra"
       fieldName="globalCompFraction"
       component="1"
       scale="0.1"/>

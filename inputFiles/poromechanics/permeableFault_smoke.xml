@@ -1,0 +1,92 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+     <File name="faultPoroelastic_base.xml"/>
+  </Included>
+
+  <Solvers gravityVector="{0.0, 0.0, 0.0}">
+    <SinglePhasePoromechanics 
+      name="poromechanicsSolver" 
+      solidSolverName="mechanicsSolver"
+      flowSolverName="singlePhaseFlowSolver"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }">
+      <LinearSolverParameters 
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"
+      />
+      <NonlinearSolverParameters
+        newtonMaxIter = "40"
+      />
+    </SinglePhasePoromechanics>
+
+    <SolidMechanics_LagrangianFEM 
+      name="mechanicsSolver" 
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonTol = "1.0e-5"
+        newtonMaxIter = "15"/>      
+    </SolidMechanics_LagrangianFEM>
+
+    <SinglePhaseFVM 
+      name="singlePhaseFlowSolver"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain }"> 
+      <NonlinearSolverParameters
+        newtonTol = "1.0e-6"
+        newtonMaxIter = "8"
+      />       
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <Mesh>
+     <VTKMesh         
+      name="FaultModel"      
+      file="faultMesh_smoke.vtk"
+      regionAttribute="CellEntityIds"/>
+  </Mesh> 
+
+  <FieldSpecifications>
+    <FieldSpecification 
+      name="injection"
+      initialCondition="0"
+      setNames="{all}"
+      objectPath="ElementRegions/Domain/97_hexahedra"
+      fieldName="pressure"      
+      scale="55.0e6"/>
+
+    <FieldSpecification 
+      name="injection2"
+      initialCondition="0"
+      setNames="{all}"
+      objectPath="ElementRegions/Domain/96_hexahedra"
+      fieldName="pressure"      
+      scale="55.0e6"/>	  
+  </FieldSpecifications>
+
+  <Events maxTime="2.0">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="2.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="10"
+      target="/Solvers/poromechanicsSolver"/>	
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"  />   
+  </Events>
+
+</Problem>

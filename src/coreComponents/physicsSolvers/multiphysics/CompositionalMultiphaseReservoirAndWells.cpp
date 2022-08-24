@@ -89,12 +89,12 @@ postProcessInput()
 {
   Base::postProcessInput();
 
-  integer const & useMassFlow = Base::getReservoirSolver()->template getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
-  integer const & useMassWell = Base::getWellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
+  integer const & useMassFlow = Base::reservoirSolver()->template getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
+  integer const & useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
   GEOSX_THROW_IF( useMassFlow != useMassWell,
                   GEOSX_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
                              this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
-                             Base::getReservoirSolver()->getName(), Base::getWellSolver()->getName() ),
+                             Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
                   InputError );
 }
 
@@ -105,11 +105,11 @@ initializePreSubGroups()
 {
   if( catalogName() == CompositionalCatalogNames< CompositionalMultiphaseBase >::name() )
   {
-    if( dynamicCast< CompositionalMultiphaseFVM * >( this->getReservoirSolver() ) )
+    if( dynamicCast< CompositionalMultiphaseFVM * >( this->reservoirSolver() ) )
     {
       m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
     }
-    else if( dynamicCast< CompositionalMultiphaseHybridFVM * >( this->getReservoirSolver() ) )
+    else if( dynamicCast< CompositionalMultiphaseHybridFVM * >( this->reservoirSolver() ) )
     {
       m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
     }
@@ -139,14 +139,14 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 
     // Populate off-diagonal sparsity between well and reservoir
 
-    integer const resNDOF = Base::getWellSolver()->numDofPerResElement();
-    integer const wellNDOF = Base::getWellSolver()->numDofPerWellElement();
+    integer const resNDOF = Base::wellSolver()->numDofPerResElement();
+    integer const wellNDOF = Base::wellSolver()->numDofPerWellElement();
 
     integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
     integer constexpr maxNumDof  = maxNumComp + 1;
 
-    string const wellDofKey = dofManager.getKey( Base::getWellSolver()->wellElementDofName() );
-    string const resDofKey  = dofManager.getKey( Base::getWellSolver()->resElementDofName() );
+    string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
+    string const resDofKey  = dofManager.getKey( Base::wellSolver()->resElementDofName() );
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resDofNumber =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
@@ -252,10 +252,10 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
     integer constexpr MAX_NUM_COMP = MultiFluidBase::MAX_NUM_COMPONENTS;
     integer constexpr MAX_NUM_DOF = MAX_NUM_COMP + 1;
 
-    integer const numComps = Base::getWellSolver()->numFluidComponents();
-    integer const resNumDofs = Base::getWellSolver()->numDofPerResElement();
+    integer const numComps = Base::wellSolver()->numFluidComponents();
+    integer const resNumDofs = Base::wellSolver()->numDofPerResElement();
 
-    string const resDofKey = dofManager.getKey( Base::getWellSolver()->resElementDofName() );
+    string const resDofKey = dofManager.getKey( Base::wellSolver()->resElementDofName() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const resDofNumberAccessor =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
     ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber =
@@ -268,7 +268,7 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
       // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
       // therefore, we do not want to compute perforation rates and we simply assume they are zero
-      WellControls const & wellControls = Base::getWellSolver()->getWellControls( subRegion );
+      WellControls const & wellControls = Base::wellSolver()->getWellControls( subRegion );
       bool const detectCrossflow =
         ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
         getLogLevel() >= 1; // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
@@ -276,7 +276,7 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
       PerforationData const * const perforationData = subRegion.getPerforationData();
 
       // get the degrees of freedom
-      string const wellDofKey = dofManager.getKey( Base::getWellSolver()->wellElementDofName() );
+      string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
       arrayView1d< globalIndex const > const & wellElemDofNumber =
         subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
@@ -374,7 +374,7 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                                               dofColIndices.data(),
                                                                               localPerfJacobian[i].dataIfContiguous(),
                                                                               2 * resNumDofs );
-            atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
+            RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
           }
         }
       } );
