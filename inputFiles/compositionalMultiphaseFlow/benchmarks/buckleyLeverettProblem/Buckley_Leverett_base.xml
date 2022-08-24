@@ -1,0 +1,172 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <!-- SPHINX_SOLVER -->
+  <Solvers>
+    <CompositionalMultiphaseFVM
+      name="compflow"
+      logLevel="0"
+      discretization="fluidTPFA"
+      temperature="300"
+      initialDt="0.001"
+      useMass="1"
+      targetRegions="{ region }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="50"
+        maxTimeStepCuts="2"
+        lineSearchMaxCuts="2"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"  
+        logLevel="0"/>
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+  <!-- SPHINX_SOLVER_END -->
+ 
+  <!-- SPHINX_NUMERICAL -->
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+  <!-- SPHINX_NUMERICAL_END -->
+
+  <!-- SPHINX_ELEMENTREGIONS -->
+  <ElementRegions>
+    <CellElementRegion
+      name="region"
+      cellBlocks="{ cellBlock }"
+      materialList="{ fluid, rock, relperm }"/>
+  </ElementRegions>
+  <!-- SPHINX_ELEMENTREGIONS_END -->
+
+  <!-- SPHINX_MATERIAL -->
+  <Constitutive>
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      referencePressure="1e7"
+      compressibility="1.0e-15"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 9.0e-13, 9.0e-13, 9.0e-13}"/>   
+
+    <BrooksCoreyRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water }"
+      phaseMinVolumeFraction="{ 0.0, 0.0 }"
+      phaseRelPermExponent="{ 3.5, 3.5 }"
+      phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
+    
+    <DeadOilFluid
+      name="fluid"
+      phaseNames="{ gas, water }"
+      surfaceDensities="{ 280.0, 992.0 }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      tableFiles="{ Buckley_Leverett_table/pvdg.txt, Buckley_Leverett_table/pvtw.txt }"/>
+  </Constitutive>
+  <!-- SPHINX_MATERIAL_END -->
+
+  <!-- SPHINX_BC --> 
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="1e7"/>
+
+    <FieldSpecification
+      name="initialComposition_gas"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.001"/>
+
+    <FieldSpecification
+      name="initialComposition_water"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.999"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions"
+      scale="-0.00007"
+      component="0"
+      setNames="{ source }"/>
+
+    <FieldSpecification
+      name="sinkTermPressure"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="1e7"
+      setNames="{ sink }"/>
+
+    <FieldSpecification
+      name="sinkTermTemperature"
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="300"
+      setNames="{ sink }"/>
+
+    <FieldSpecification
+      name="sinkTermComposition_gas"
+      setNames="{ sink }"
+      objectPath="faceManager"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.001"/>
+
+    <FieldSpecification
+      name="sinkTermComposition_water"
+      setNames="{ sink }"
+      objectPath="faceManager"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.999"/>    
+  </FieldSpecifications>
+  <!-- SPHINX_BC_END -->
+
+  <!-- SPHINX_OUTPUT -->  
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/phaseVolumeFractionCollection}"
+      filename="saturationHistory" />
+
+    <Restart
+      name="restartOutput"/> 
+  </Outputs>
+  <!-- SPHINX_OUTPUT_END -->
+
+  <!-- SPHINX_TASKS --> 
+  <Tasks>
+    <PackCollection
+      name="phaseVolumeFractionCollection"
+      objectPath="ElementRegions/region/cellBlock"
+      fieldName="phaseVolumeFraction"/>
+  </Tasks>
+  <!-- SPHINX_TASKS_END -->   
+</Problem>
