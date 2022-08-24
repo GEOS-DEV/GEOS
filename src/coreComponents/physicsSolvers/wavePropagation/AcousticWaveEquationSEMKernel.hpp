@@ -265,8 +265,6 @@ struct PrecomputeSourceAndReceiverKernel
                                                              coordsOnRefElem );
           if( sourceFound )
           {
-            std::cout << "elem " << k << std::endl;
-
             sourceIsAccessible[isrc] = 1;
             real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
