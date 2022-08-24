@@ -709,6 +709,13 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
       rhsz[a] = 0.0;
     } );
 
+    for( real64 timeSeismo;
+    (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace;
+           m_indexSeismoTrace++ )
+    {
+        /// do nothing 
+    }
+
   } );
   return dt;
 
@@ -744,11 +751,13 @@ void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
                                                      arrayView1d< real64 const > const var_n,
                                                      arrayView2d< real64 > varAtReceivers )
 {
+  localIndex indexSeismoTrace = m_indexSeismoTrace;
+
   for( real64 timeSeismo;
        (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace;
-       m_indexSeismoTrace++ )
+       indexSeismoTrace++ )
   {
-    computeSeismoTrace( time_n, dt, timeSeismo, m_indexSeismoTrace, var_np1, var_n, varAtReceivers );
+    computeSeismoTrace( time_n, dt, timeSeismo, indexSeismoTrace, var_np1, var_n, varAtReceivers );
   }
 }
 

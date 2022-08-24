@@ -52,7 +52,6 @@ struct PrecomputeSourceAndReceiverKernel
                        real64 const (&coords)[3] )
   {
     //Loop over the element faces
-    localIndex prevSign = 1;
     real64 tmpVector[3]{};
     for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
     {
@@ -78,11 +77,10 @@ struct PrecomputeSourceAndReceiverKernel
       localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >( faceNormalOnFace, faceCenterOnFace ));
 
       // all dot products should be non-negative (we enforce outward normals)
-      if( prevSign * s < 0 )
+      if( s < 0 )
       {
         return false;
       }
-      prevSign = s;
 
     }
     return true;
@@ -476,9 +474,9 @@ struct MassAndDampingMatrixKernel
               real64 const alphaz = density[k] * (velocityVs[k]*(faceNormal[iface][0]*faceNormal[iface][0]) + velocityVs[k]*(faceNormal[iface][1]*faceNormal[iface][1]) +
                                                   velocityVp[k]*(faceNormal[iface][2]*faceNormal[iface][2]) );
 
-              dampingx[numNodeGl] += alphax*detJ*ds*N[a];
-              dampingy[numNodeGl] += alphay*detJ*ds*N[a];
-              dampingz[numNodeGl] += alphaz*detJ*ds*N[a];
+              RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[numNodeGl], alphax*detJ*ds*N[a] );
+              RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[numNodeGl], alphay*detJ*ds*N[a] );
+              RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[numNodeGl], alphaz*detJ*ds*N[a] );
 
             }
           }
