@@ -25,6 +25,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 
@@ -236,6 +237,7 @@ public:
     static constexpr char const * maxForceString() { return "maxForce"; }
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
+    static constexpr char const * effectiveStressString() { return "effectiveStress"; }
 
     static constexpr char const * sendOrReceiveNodesString() { return "sendOrReceiveNodes";}
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
@@ -293,6 +295,7 @@ protected:
   integer m_strainTheory;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
+  integer m_effectiveStressFlag; 
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
@@ -334,13 +337,26 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    KERNEL_WRAPPER kernelWrapper( dofNumber,
-                                  dofManager.rankOffset(),
-                                  localMatrix,
-                                  localRhs,
-                                  gravityVectorData,
-                                  std::forward< PARAMS >( params )... );
-
+    if( m_effectiveStressFlag )
+    {
+      KERNEL_WRAPPER kernelWrapper( dofNumber,
+                                    dofManager.rankOffset(),
+                                    localMatrix,
+                                    localRhs,
+                                    gravityVectorData,
+                                    FlowSolverBase::viewKeyStruct::fluidNamesString(), 
+                                    std::forward< PARAMS >( params )... );
+    }
+    else
+    {
+      KERNEL_WRAPPER kernelWrapper( dofNumber,
+                                    dofManager.rankOffset(),
+                                    localMatrix,
+                                    localRhs,
+                                    gravityVectorData,
+                                    std::forward< PARAMS >( params )... );
+    }
+  
     m_maxForce = finiteElement::
                    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                                  CONSTITUTIVE_BASE,
