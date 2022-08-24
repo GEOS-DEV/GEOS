@@ -72,7 +72,10 @@ public:
     static constexpr char const * solverTypeString() { return "solverType"; }
     /// Preconditioner type key
     static constexpr char const * preconditionerTypeString() { return "preconditionerType"; }
+    /// Use thermal preconditioner strategy in MGR
     static constexpr char const * MGRUseThermalStrategy() { return "useThermalStrategy"; }
+    /// Use iluk smoother in MGR
+    static constexpr char const * MGRUseIlukSmoother() { return "useIlukSmoother"; }
     /// stop if error key
     static constexpr char const * stopIfErrorString() { return "stopIfError"; }
 

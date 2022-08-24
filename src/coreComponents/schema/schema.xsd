@@ -1429,6 +1429,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="solverType" type="geosx_LinearSolverParameters_SolverType" default="direct" />
 		<!--stopIfError => Whether to stop the simulation if the linear solver reports an error-->
 		<xsd:attribute name="stopIfError" type="integer" default="1" />
+		<!--useIlukSmoother => Use ILU(K) as a global smoother in MGR-->
+		<xsd:attribute name="useIlukSmoother" type="integer" default="0" />
+		<!--useThermalStrategy => Use thermal strategy for MGR, or regular CPR-like-->
+		<xsd:attribute name="useThermalStrategy" type="integer" default="1" />
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_AMG_CoarseType">
 		<xsd:restriction base="xsd:string">

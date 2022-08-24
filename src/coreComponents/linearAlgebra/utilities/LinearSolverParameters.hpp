@@ -232,8 +232,8 @@ struct LinearSolverParameters
     integer separateComponents = false;            ///< Apply a separate displacement component (SDC) filter before AMG construction
     string displacementFieldName;                  ///< Displacement field name need for SDC filter
   
-    integer iluSmoother = false;
     integer useThermalStrategy = true;
+    integer useIlukSmoother = false;
   }
   mgr;                                             ///< Multigrid reduction (MGR) parameters
 
