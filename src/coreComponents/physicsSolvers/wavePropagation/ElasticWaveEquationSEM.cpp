@@ -710,10 +710,10 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
     } );
 
     for( real64 timeSeismo;
-    (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace;
-           m_indexSeismoTrace++ )
+         (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace;
+         m_indexSeismoTrace++ )
     {
-        /// do nothing 
+      /// do nothing
     }
 
   } );
