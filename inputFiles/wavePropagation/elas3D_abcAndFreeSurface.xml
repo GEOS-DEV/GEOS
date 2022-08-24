@@ -170,7 +170,7 @@
     <FieldSpecification
       name="cellVelocityVp"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="mediumVelocityVp"
       scale="150"
       setNames="{ all }"/>
@@ -178,7 +178,7 @@
     <FieldSpecification
       name="cellVelocityVs"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="mediumVelocityVs"
       scale="106"
       setNames="{ all }"/>
@@ -186,7 +186,7 @@
     <FieldSpecification
       name="cellDensity"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="mediumDensity"
       scale="1"
       setNames="{ all }"/>

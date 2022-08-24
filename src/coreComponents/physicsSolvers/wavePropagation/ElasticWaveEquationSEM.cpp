@@ -539,7 +539,6 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
 
   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                   "faceManager",
                    string( "FreeSurface" ),
                    [&]( FieldSpecificationBase const & bc,
                         string const &,
