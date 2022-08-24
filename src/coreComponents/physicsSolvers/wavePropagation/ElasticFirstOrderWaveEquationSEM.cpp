@@ -528,7 +528,6 @@ void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, Do
 
   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                   "faceManager",
                    string( "FreeSurface" ),
                    [&]( FieldSpecificationBase const & bc,
                         string const &,
