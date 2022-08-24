@@ -194,8 +194,8 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
                                      assembleFunction );
 
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                       MeshLevel & mesh,
-                                                       arrayView1d< string const > const & )
+                                                                       MeshLevel & mesh,
+                                                                       arrayView1d< string const > const & )
   {
 
     FaceManager & faceManager = mesh.getFaceManager();

@@ -80,8 +80,8 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
   }
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                              MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                                              MeshLevel & mesh,
+                                                              arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -131,8 +131,8 @@ bool CompositionalMultiphaseStatistics::execute( real64 const GEOSX_UNUSED_PARAM
                                                  DomainPartition & domain )
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                          MeshLevel & mesh,
-                                                          arrayView1d< string const > const & regionNames )
+                                                                          MeshLevel & mesh,
+                                                                          arrayView1d< string const > const & regionNames )
   {
     if( m_computeRegionStatistics )
     {
@@ -355,8 +355,8 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
 
   // Step 1: reset the arrays involved in the computation of CFL numbers
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                         MeshLevel & mesh,
-                                                         arrayView1d< string const > const & regionNames )
+                                                                         MeshLevel & mesh,
+                                                                         arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -425,8 +425,8 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
   real64 localMaxCompCFLNumber = 0.0;
 
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                         MeshLevel & mesh,
-                                                         arrayView1d< string const > const & regionNames )
+                                                                         MeshLevel & mesh,
+                                                                         arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,

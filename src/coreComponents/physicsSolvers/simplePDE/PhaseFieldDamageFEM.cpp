@@ -79,8 +79,8 @@ PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
 void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodes = mesh.getNodeManager();
 
@@ -214,8 +214,8 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
 {
   GEOSX_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -424,8 +424,8 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
 
   // Syncronize ghost nodes
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );
@@ -491,8 +491,8 @@ PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
   RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
   {
     const NodeManager & nodeManager = mesh.getNodeManager();
     const arrayView1d< const integer > & ghostRank = nodeManager.ghostRank();
@@ -557,8 +557,8 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
   {
     fsManager.template apply< NodeManager >( time,
                                              mesh,

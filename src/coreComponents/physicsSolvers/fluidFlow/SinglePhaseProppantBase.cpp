@@ -76,8 +76,8 @@ void SinglePhaseProppantBase::validateConstitutiveModels( DomainPartition & doma
 {
   // Validate fluid models in regions
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )

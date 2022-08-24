@@ -684,9 +684,9 @@ ProblemManager::getFiniteElementDiscretizations() const
     if( discretization != nullptr )
     {
       solver.forDiscretizationOnMeshTargets( meshBodies,
-                             [&]( string const & meshBodyName,
-                                  MeshLevel const &,
-                                  auto const & regionNames )
+                                             [&]( string const & meshBodyName,
+                                                  MeshLevel const &,
+                                                  auto const & regionNames )
       {
         std::pair< string, Group const * const > key = std::make_pair( meshBodyName, discretization );
         meshDiscretizations.insert( { key, regionNames } );

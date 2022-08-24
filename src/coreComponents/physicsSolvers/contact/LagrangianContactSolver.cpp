@@ -76,8 +76,8 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
   using namespace extrinsicMeshData::contact;
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&] ( localIndex const,
@@ -164,8 +164,8 @@ void LagrangianContactSolver::initializePreSubGroups()
     fluxApprox.setCoeffName( "penaltyStiffness" );
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
-                                                  MeshLevel &,
-                                                  arrayView1d< string const > const & regionNames )
+                                                                  MeshLevel &,
+                                                                  arrayView1d< string const > const & regionNames )
     {
       array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
       std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
@@ -219,8 +219,8 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
   m_solidSolver->implicitStepComplete( time_n, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
@@ -272,8 +272,8 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
   GEOSX_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -420,8 +420,8 @@ void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & dom
   m_solidSolver->resetStateToBeginningOfStep( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -453,8 +453,8 @@ void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & dom
 void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
@@ -516,10 +516,10 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
   m_solidSolver->setupDofs( domain, dofManager );
 
   // restrict coupling to fracture regions only
-  map< std::pair<string,string>, array1d< string > > meshTargets;
+  map< std::pair< string, string >, array1d< string > > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
-                                                MeshLevel const & meshLevel,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel const & meshLevel,
+                                                                arrayView1d< string const > const & regionNames )
   {
     array1d< string > regions;
     ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
@@ -529,7 +529,7 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
     {
       regions.emplace_back( region.getName() );
     } );
-    meshTargets[std::make_pair(meshBodyName,meshLevel.getName())] = std::move( regions );
+    meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
   } );
 
   dofManager.addField( extrinsicMeshData::contact::traction::key(),
@@ -579,8 +579,8 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
   real64 contactR2 = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     arrayView1d< globalIndex const > const & dispDofNumber =
@@ -759,8 +759,8 @@ void LagrangianContactSolver::computeRotationMatrices( DomainPartition & domain 
 {
   GEOSX_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -869,8 +869,8 @@ void LagrangianContactSolver::
   GEOSX_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
 
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -1006,8 +1006,8 @@ void LagrangianContactSolver::
 {
   GEOSX_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -1254,8 +1254,8 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
   GEOSX_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
   {
 
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -1687,8 +1687,8 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
   // oldFractureStateString and oldDispJumpString used locally only
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     FieldIdentifiers fieldsToBeSync;
 
@@ -1716,8 +1716,8 @@ bool LagrangianContactSolver::resetConfigurationToDefault( DomainPartition & dom
   using namespace extrinsicMeshData::contact;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -1749,8 +1749,8 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
   bool hasConfigurationConverged = true;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -1855,8 +1855,8 @@ bool LagrangianContactSolver::isFractureAllInStickCondition( DomainPartition con
 {
   globalIndex numStick, numSlip, numOpen;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
   {
     computeFractureStateStatistics( mesh, numStick, numSlip, numOpen );
   } );

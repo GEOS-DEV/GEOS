@@ -34,30 +34,30 @@ struct PrecomputeSourceAndReceiverKernel
 
   /**
    * @brief Check if the sourtc epoint is inside an element or not
-  */
+   */
 
   GEOSX_HOST_DEVICE
   static bool
-  locateSourceElement(real64 const numFacesPerElem,
-                      real64 const (&elemCenter)[3],
-                      arrayView2d< real64 const > const faceNormal,
-                      arrayView2d< real64 const > const faceCenter,
-                      arraySlice1d< localIndex const > const elemsToFaces,
-                      real64 const (&coords)[3])
+  locateSourceElement( real64 const numFacesPerElem,
+                       real64 const (&elemCenter)[3],
+                       arrayView2d< real64 const > const faceNormal,
+                       arrayView2d< real64 const > const faceCenter,
+                       arraySlice1d< localIndex const > const elemsToFaces,
+                       real64 const (&coords)[3] )
   {
     //Loop over the element faces
     localIndex prevSign = 0;
     real64 tmpVector[3]{};
     for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
     {
-      
+
       localIndex const iface = elemsToFaces[kfe];
-      real64  faceCenterOnFace[3] = {faceCenter[iface][0],
-                                     faceCenter[iface][1], 
-                                     faceCenter[iface][2]};
-      real64  faceNormalOnFace[3] = {faceNormal[iface][0],
-                                     faceNormal[iface][1],
-                                     faceNormal[iface][2]};
+      real64 faceCenterOnFace[3] = {faceCenter[iface][0],
+                                    faceCenter[iface][1],
+                                    faceCenter[iface][2]};
+      real64 faceNormalOnFace[3] = {faceNormal[iface][0],
+                                    faceNormal[iface][1],
+                                    faceNormal[iface][2]};
 
       //Test to make sure if the normal is outwardly directed
       LvArray::tensorOps::copy< 3 >( tmpVector, faceCenterOnFace );
@@ -66,11 +66,11 @@ struct PrecomputeSourceAndReceiverKernel
       {
         LvArray::tensorOps::scale< 3 >( faceNormalOnFace, -1 );
       }
- 
+
       // compute the vector face center to query point
-      LvArray::tensorOps::subtract<3>(faceCenterOnFace, coords);
-      localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >(faceNormalOnFace, faceCenterOnFace));
-      
+      LvArray::tensorOps::subtract< 3 >( faceCenterOnFace, coords );
+      localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >( faceNormalOnFace, faceCenterOnFace ));
+
       // all dot products should be non-negative (we enforce outward normals)
       if( prevSign * s < 0 )
       {
@@ -123,7 +123,7 @@ struct PrecomputeSourceAndReceiverKernel
                            coords );
     if( SourceInELem )
     {
-      
+
       real64 xLocal[FE_TYPE::numNodes][3]{};
       for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
       {
@@ -240,7 +240,7 @@ struct PrecomputeSourceAndReceiverKernel
       real64 const center[3] = { elemCenter[k][0],
                                  elemCenter[k][1],
                                  elemCenter[k][2] };
-                                 
+
       // Step 1: locate the sources, and precompute the source term
 
       /// loop over all the source that haven't been found yet
@@ -300,7 +300,7 @@ struct PrecomputeSourceAndReceiverKernel
 
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
-              computeCoordinatesOnReferenceElement< FE_TYPE >( numFacesPerElem,
+            computeCoordinatesOnReferenceElement< FE_TYPE >( numFacesPerElem,
                                                              coords,
                                                              center,
                                                              faceNormal,
@@ -409,7 +409,7 @@ struct MassAndDampingMatrixKernel
       for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
       {
         localIndex const iface = elemsToFaces[k][kfe];
-        
+
         // face on the domain boundary and not on free surface
         if( facesDomainBoundaryIndicator[iface] == 1 && freeSurfaceFaceIndicator[iface] != 1 )
         {
@@ -432,7 +432,7 @@ struct MassAndDampingMatrixKernel
                 for( localIndex j = 0; j < 3; ++j )
                 {
                   tmp += invJ[j][i] * faceNormal[iface][j];
-                  
+
                 }
                 ds += tmp * tmp;
               }

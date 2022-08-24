@@ -335,14 +335,14 @@ void DofManager::addField( string const & fieldName,
 void DofManager::addField( string const & fieldName,
                            FieldLocation const location,
                            integer const components,
-                           map< std::pair<string,string>, array1d< string > > const & regions )
+                           map< std::pair< string, string >, array1d< string > > const & regions )
 {
   // Convert input into internal format
   std::vector< Regions > support;
   for( auto const & p : regions )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first.first );
-    MeshLevel const & mesh = meshBody.getMeshLevel(p.first.second).getShallowParent();
+    MeshLevel const & mesh = meshBody.getMeshLevel( p.first.second ).getShallowParent();
     std::vector< string > regionNames( p.second.begin(), p.second.end() );
     support.push_back( { meshBody.getName(), mesh.getName(), std::move( regionNames ) } );
   }
@@ -501,7 +501,7 @@ void DofManager::addCoupling( string const & fieldName,
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               DofManager::Connector connectivity,
-                              map< std::pair<string,string>, array1d< string > > const & regions,
+                              map< std::pair< string, string >, array1d< string > > const & regions,
                               bool symmetric )
 {
   // Convert input into internal format
@@ -509,7 +509,7 @@ void DofManager::addCoupling( string const & rowFieldName,
   for( auto const & p : regions )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first.first );
-    MeshLevel const & mesh = meshBody.getMeshLevel(p.first.second).getShallowParent();
+    MeshLevel const & mesh = meshBody.getMeshLevel( p.first.second ).getShallowParent();
     std::vector< string > regionNames( p.second.begin(), p.second.end() );
     support.push_back( { meshBody.getName(), mesh.getName(), std::move( regionNames ) } );
   }

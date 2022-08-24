@@ -101,7 +101,7 @@ void SolverBase::initialize_postMeshGeneration()
 {
   ExecutableGroup::initialize_postMeshGeneration();
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  generateMeshTargetsFromTargetRegions(domain.getMeshBodies());
+  generateMeshTargetsFromTargetRegions( domain.getMeshBodies());
 }
 
 void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies )
@@ -115,10 +115,10 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
     {
       GEOSX_ERROR_IF( meshBodies.numSubGroups() != 1,
                       "No MeshBody information is specified in SolverBase::meshTargets, but there are multiple MeshBody objects" );
-      MeshBody const & meshBody = meshBodies.getGroup<MeshBody>( 0 );
+      MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( 0 );
       string const meshBodyName = meshBody.getName();
 
-      Group const & meshLevels = meshBody.getMeshLevels();
+//      Group const & meshLevels = meshBody.getMeshLevels();
 
       string const meshLevelName = m_discretizationName;
 //      GEOSX_ERROR_IF( !meshLevels.hasGroup<MeshLevel>(meshLevelName),
@@ -126,7 +126,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
 
 
       string const regionName = target;
-      auto const key = std::make_pair(meshBodyName,meshLevelName);
+      auto const key = std::make_pair( meshBodyName, meshLevelName );
       m_meshTargets[key].emplace_back( regionName );
     }
     else if( targetTokens.size()==2 )
@@ -135,9 +135,9 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
       GEOSX_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
                       "MeshBody ("<<meshBodyName<<") is specified in targetRegions, but does not exist." );
 
-      MeshBody const & meshBody = meshBodies.getGroup<MeshBody>( meshBodyName );
+//      MeshBody const & meshBody = meshBodies.getGroup<MeshBody>( meshBodyName );
 
-      Group const & meshLevels = meshBody.getMeshLevels();
+//      Group const & meshLevels = meshBody.getMeshLevels();
 
       string const meshLevelName = m_discretizationName;
 //      GEOSX_ERROR_IF( !meshLevels.hasGroup<MeshLevel>(meshLevelName),
@@ -146,12 +146,12 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
       string const regionName = targetTokens[1];
 
 
-      auto const key = std::make_pair(meshBodyName,meshLevelName);
+      auto const key = std::make_pair( meshBodyName, meshLevelName );
       m_meshTargets[key].emplace_back( regionName );
     }
     else
     {
-      GEOSX_ERROR("Invalid specification of targetRegions");
+      GEOSX_ERROR( "Invalid specification of targetRegions" );
     }
   }
 }
@@ -162,8 +162,8 @@ void SolverBase::registerDataOnMesh( Group & meshBodies )
   ExecutableGroup::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,

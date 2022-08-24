@@ -63,8 +63,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::registerDataOnMesh( dataRe
   using namespace extrinsicMeshData::contact;
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&] ( localIndex const,
@@ -92,10 +92,10 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
                           SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
 
-  map< std::pair<string,string>, array1d< string > > meshTargets;
+  map< std::pair< string, string >, array1d< string > > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
-                                                MeshLevel const & meshLevel,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel const & meshLevel,
+                                                                arrayView1d< string const > const & regionNames )
   {
     array1d< string > regions;
     ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
@@ -105,7 +105,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
     {
       regions.emplace_back( region.getName() );
     } );
-    meshTargets[std::make_pair(meshBodyName,meshLevel.getName())] = std::move( regions );
+    meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
   } );
 
   dofManager.addCoupling( SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
@@ -179,8 +179,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( Do
 
   // 2. Add the number of nonzeros induced by coupling jump - matrix pressure
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
 
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -283,8 +283,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingSparsityPattern
   m_fracturesSolver->addCouplingSparsityPattern( domain, dofManager, pattern );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -395,8 +395,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
   //updateState( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
 
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -580,8 +580,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
   m_fracturesSolver->updateState( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 

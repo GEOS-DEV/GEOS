@@ -65,8 +65,8 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
 void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & meshLevel,
-                                    arrayView1d< string const > const & )
+                                                    MeshLevel & meshLevel,
+                                                    arrayView1d< string const > const & )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
 
@@ -87,8 +87,8 @@ void PhaseFieldFractureSolver::implicitStepSetup( real64 const & GEOSX_UNUSED_PA
 {
   GEOSX_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -142,8 +142,8 @@ PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
 void PhaseFieldFractureSolver::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -298,8 +298,8 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
   GEOSX_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 

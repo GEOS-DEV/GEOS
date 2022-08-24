@@ -69,14 +69,14 @@ void FluxApproximationBase::initializePreSubGroups()
     {
       if( !(mesh.isShallowCopy() ) )
       {
-      // Group structure: mesh1/finiteVolumeStencils/myTPFA
+        // Group structure: mesh1/finiteVolumeStencils/myTPFA
 
-      Group & stencilParentGroup = mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
-      Group & stencilGroup = stencilParentGroup.registerGroup( getName() );
+        Group & stencilParentGroup = mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
+        Group & stencilGroup = stencilParentGroup.registerGroup( getName() );
 
-      registerCellStencil( stencilGroup );
+        registerCellStencil( stencilGroup );
 
-      registerFractureStencil( stencilGroup );
+        registerFractureStencil( stencilGroup );
       }
     } );
   } );
@@ -112,56 +112,56 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
       if( !(mesh.isShallowCopy() ) )
       {
         std::cout<<"FluxApproximationBase::initializePostInitialConditionsPreSubGroups(): "<<mesh.getName()<<std::endl;
-      // Group structure: mesh1/finiteVolumeStencils/myTPFA
+        // Group structure: mesh1/finiteVolumeStencils/myTPFA
 
-      Group & stencilParentGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
-      Group & stencilGroup = stencilParentGroup.getGroup( getName() );
-      // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
-      // TODO: Apply() should take a MeshLevel directly
-      fsManager.apply< FaceManager >( 0.0, // time = 0
-                                      mesh,
-                                      m_fieldName,
-                                      [&] ( FieldSpecificationBase const &,
-                                            string const & setName,
-                                            SortedArrayView< localIndex const > const &,
-                                            FaceManager const &,
-                                            string const & )
-      {
-        registerBoundaryStencil( stencilGroup, setName );
-      } );
+        Group & stencilParentGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
+        Group & stencilGroup = stencilParentGroup.getGroup( getName() );
+        // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
+        // TODO: Apply() should take a MeshLevel directly
+        fsManager.apply< FaceManager >( 0.0, // time = 0
+                                        mesh,
+                                        m_fieldName,
+                                        [&] ( FieldSpecificationBase const &,
+                                              string const & setName,
+                                              SortedArrayView< localIndex const > const &,
+                                              FaceManager const &,
+                                              string const & )
+        {
+          registerBoundaryStencil( stencilGroup, setName );
+        } );
 
-      // For each aquifer boundary condition, create a boundary stencil
-      fsManager.apply< FaceManager,
-                       AquiferBoundaryCondition >( 0.0, // time = 0
-                                                   mesh,
-                                                   AquiferBoundaryCondition::catalogName(),
-                                                   [&] ( AquiferBoundaryCondition const &,
-                                                         string const & setName,
-                                                         SortedArrayView< localIndex const > const &,
-                                                         FaceManager const &,
-                                                         string const & )
-      {
-        registerAquiferStencil( stencilGroup, setName );
-      } );
+        // For each aquifer boundary condition, create a boundary stencil
+        fsManager.apply< FaceManager,
+                         AquiferBoundaryCondition >( 0.0, // time = 0
+                                                     mesh,
+                                                     AquiferBoundaryCondition::catalogName(),
+                                                     [&] ( AquiferBoundaryCondition const &,
+                                                           string const & setName,
+                                                           SortedArrayView< localIndex const > const &,
+                                                           FaceManager const &,
+                                                           string const & )
+        {
+          registerAquiferStencil( stencilGroup, setName );
+        } );
 
-      // Compute the main cell-based stencil
-      computeCellStencil( mesh );
+        // Compute the main cell-based stencil
+        computeCellStencil( mesh );
 
-      // For each face-based boundary condition on target field, compute the boundary stencil weights
-      fsManager.apply< FaceManager >( 0.0,
-                                      mesh,
-                                      m_fieldName,
-                                      [&] ( FieldSpecificationBase const &,
-                                            string const & setName,
-                                            SortedArrayView< localIndex const > const & faceSet,
-                                            FaceManager const &,
-                                            string const & )
-      {
-        computeBoundaryStencil( mesh, setName, faceSet );
-      } );
+        // For each face-based boundary condition on target field, compute the boundary stencil weights
+        fsManager.apply< FaceManager >( 0.0,
+                                        mesh,
+                                        m_fieldName,
+                                        [&] ( FieldSpecificationBase const &,
+                                              string const & setName,
+                                              SortedArrayView< localIndex const > const & faceSet,
+                                              FaceManager const &,
+                                              string const & )
+        {
+          computeBoundaryStencil( mesh, setName, faceSet );
+        } );
 
-      // Compute the aquifer stencil weights
-      computeAquiferStencil( domain, mesh );
+        // Compute the aquifer stencil weights
+        computeAquiferStencil( domain, mesh );
       }
     } );
   } );

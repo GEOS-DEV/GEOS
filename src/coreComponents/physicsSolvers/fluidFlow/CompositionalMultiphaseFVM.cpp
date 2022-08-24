@@ -94,8 +94,8 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
   GEOSX_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel const & mesh,
-                                               arrayView1d< string const > const & )
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & )
   {
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -156,8 +156,8 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel const & mesh,
-                                               arrayView1d< string const > const & regionNames )
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -273,8 +273,8 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
   real64 scalingFactor = 1.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel const & mesh,
-                                               arrayView1d< string const > const & regionNames )
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -343,8 +343,8 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
   localIndex localCheck = 1;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel const & mesh,
-                                               arrayView1d< string const > const & regionNames )
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -416,8 +416,8 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     std::vector< string > fields{ extrinsicMeshData::flow::pressure::key(), extrinsicMeshData::flow::globalCompDensity::key() };
     if( m_isThermal )
@@ -486,8 +486,8 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
   bool bcConsistent = true;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
   {
 
     // maps to check consistent application of BC
@@ -631,8 +631,8 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -729,8 +729,8 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
   {
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

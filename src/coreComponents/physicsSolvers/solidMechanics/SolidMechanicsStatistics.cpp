@@ -46,8 +46,8 @@ void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
   }
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                              MeshLevel & mesh,
-                                              arrayView1d< string const > const & )
+                                                              MeshLevel & mesh,
+                                                              arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     nodeManager.registerWrapper< NodeStatistics >( viewKeyStruct::nodeStatisticsString() ).
@@ -68,8 +68,8 @@ bool SolidMechanicsStatistics::execute( real64 const GEOSX_UNUSED_PARAM( time_n 
                                         DomainPartition & domain )
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                          MeshLevel & mesh,
-                                                          arrayView1d< string const > const & )
+                                                                          MeshLevel & mesh,
+                                                                          arrayView1d< string const > const & )
   {
     computeNodeStatistics( mesh );
   } );

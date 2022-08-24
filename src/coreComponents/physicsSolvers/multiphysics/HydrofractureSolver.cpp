@@ -71,8 +71,8 @@ void HydrofractureSolver::registerDataOnMesh( dataRepository::Group & meshBodies
   CoupledSolver::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -119,8 +119,8 @@ void HydrofractureSolver::initializePreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
@@ -355,8 +355,8 @@ void HydrofractureSolver::setupCoupling( DomainPartition const & domain,
 
 
   // restrict coupling to fracture regions only (as done originally in setupSystem)
-  map< std::pair<string,string>, array1d< string > > dispMeshTargets;
-  map< std::pair<string,string>, array1d< string > > presMeshTargets;
+  map< std::pair< string, string >, array1d< string > > dispMeshTargets;
+  map< std::pair< string, string >, array1d< string > > presMeshTargets;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const & meshBodyName,
@@ -372,8 +372,8 @@ void HydrofractureSolver::setupCoupling( DomainPartition const & domain,
       regions.emplace_back( region.getName() );
     } );
 
-    dispMeshTargets[std::make_pair(meshBodyName,solidDiscretizationName)] = std::move( regions );
-    presMeshTargets[std::make_pair(meshBodyName,flowDiscretizationName)] = std::move( regions );
+    dispMeshTargets[std::make_pair( meshBodyName, solidDiscretizationName )] = std::move( regions );
+    presMeshTargets[std::make_pair( meshBodyName, flowDiscretizationName )] = std::move( regions );
   } );
 
   dofManager.addCoupling( keys::TotalDisplacement,
@@ -725,8 +725,8 @@ HydrofractureSolver::
   dFluxResidual_dAperture = getDerivativeFluxResidual_dAperture().toViewConst();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -812,8 +812,8 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
   {
     localIndex numRows = 0;
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                  MeshLevel & mesh,
-                                                  arrayView1d< string const > const & regionNames )
+                                                                  MeshLevel & mesh,
+                                                                  arrayView1d< string const > const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             FaceElementSubRegion const & elementSubRegion )
@@ -845,8 +845,8 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( flowSolver()->getDiscretizationName() );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
   {
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {

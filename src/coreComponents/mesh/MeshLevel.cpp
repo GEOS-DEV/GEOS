@@ -124,7 +124,7 @@ MeshLevel::MeshLevel( string const & name,
   ArrayOfArraysView< localIndex const > const & facesToEdges = m_faceManager->edgeList().toViewConst();
   localIndex const estimatedNumNodesPerFace = pow( order+1, 2 );
   faceToNodeMapNew.resize( faceToNodeMapNew.size(), estimatedNumNodesPerFace );
-  
+
 
   // add the number of non-edge face nodes
   localIndex numInternalFaceNodes = 0;
@@ -242,7 +242,7 @@ MeshLevel::MeshLevel( string const & name,
       //     elemCenterNew[elem][a] = elemCenterOld[elem][a];
       //   }
       // }
-    
+
 //      elemsToNodesNew.resize( elemsToNodesSource.size(0), numNodesPerElem );
 
       // Fill a temporary table which knowing the global number of a degree of freedom and a face, gives you the local number of this degree
@@ -405,7 +405,7 @@ MeshLevel::MeshLevel( string const & name,
         }
       }
 
-    
+
 
       //Fill a temporary array which contains the Gauss-Lobatto points depending on the order
       array1d< real64 > GaussLobattoPts( 4 );
@@ -470,7 +470,7 @@ MeshLevel::MeshLevel( string const & name,
               refPosNew( nodeIndex, 0 ) = x[i];
               refPosNew( nodeIndex, 1 ) = y[j];
               refPosNew( nodeIndex, 2 ) = z[k];
-              
+
             }
 
           }

@@ -221,8 +221,8 @@ SurfaceGenerator::~SurfaceGenerator()
 void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -291,8 +291,8 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );//this->getGroupByPath<DomainPartition>("/Problem/domain");
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & meshLevel,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & meshLevel,
+                                                                arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
@@ -333,8 +333,8 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
   } );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & meshLevel,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & meshLevel,
+                                                                arrayView1d< string const > const & )
   {
     FaceManager & faceManager = meshLevel.getFaceManager();
     ElementRegionManager & elementManager = meshLevel.getElemManager();
@@ -404,8 +404,8 @@ void SurfaceGenerator::postRestartInitialization()
 
   // repopulate the fracture stencil
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & meshLevel,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & meshLevel,
+                                                                arrayView1d< string const > const & )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
@@ -443,8 +443,8 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
   int rval = 0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & meshLevel,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & meshLevel,
+                                                                arrayView1d< string const > const & )
   {
     SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
 
@@ -462,8 +462,8 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & meshLevel,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & meshLevel,
+                                                                arrayView1d< string const > const & )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
@@ -2845,8 +2845,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
 
   nodeManager.totalDisplacement().move( LvArray::MemorySpace::host, false );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel const &,
-                                               arrayView1d< string const > const & regionNames )
+                                                               MeshLevel const &,
+                                                               arrayView1d< string const > const & regionNames )
   {
     elementManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                  [&]( localIndex const,

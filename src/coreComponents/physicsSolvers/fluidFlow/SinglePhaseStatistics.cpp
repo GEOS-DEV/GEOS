@@ -48,8 +48,8 @@ void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
   }
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                              MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                                              MeshLevel & mesh,
+                                                              arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -71,8 +71,8 @@ bool SinglePhaseStatistics::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                      DomainPartition & domain )
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                          MeshLevel & mesh,
-                                                          arrayView1d< string const > const & regionNames )
+                                                                          MeshLevel & mesh,
+                                                                          arrayView1d< string const > const & regionNames )
   {
     computeRegionStatistics( mesh, regionNames );
   } );
