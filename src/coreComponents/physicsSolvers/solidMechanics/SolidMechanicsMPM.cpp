@@ -521,7 +521,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
-    int subregionMaxGroupNumber = *( std::max_element( particleGroup.begin(), particleGroup.end() ) );
+    int subregionMaxGroupNumber = 0;
+    for(int p=0; p<subRegion.size(); p++)
+    {
+      if(particleGroup[p] > subregionMaxGroupNumber)
+      {
+        subregionMaxGroupNumber = particleGroup[p];
+      }
+    }
     if( subregionMaxGroupNumber > maxLocalGroupNumber)
     {
       maxLocalGroupNumber = subregionMaxGroupNumber;
@@ -544,13 +551,28 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   m_numVelocityFields = m_numContactGroups * m_numContactFlags;
 
   // Resize grid field arrays
-  gridMass.resize( m_numVelocityFields, numNodes );
-  gridVelocity.resize( m_numVelocityFields, numNodes, 3 );
-  gridMomentum.resize( m_numVelocityFields, numNodes, 3 );
-  gridAcceleration.resize( m_numVelocityFields, numNodes, 3 );
-  gridInternalForce.resize( m_numVelocityFields, numNodes, 3 );
-  gridExternalForce.resize( m_numVelocityFields, numNodes, 3 );
-  gridContactForce.resize( m_numVelocityFields, numNodes, 3 );
+  gridMass.resize( numNodes, m_numVelocityFields );
+  gridVelocity.resize( numNodes, m_numVelocityFields, 3 );
+  gridMomentum.resize( numNodes, m_numVelocityFields, 3 );
+  gridAcceleration.resize( numNodes, m_numVelocityFields, 3 );
+  gridInternalForce.resize( numNodes, m_numVelocityFields, 3 );
+  gridExternalForce.resize( numNodes, m_numVelocityFields, 3 );
+  gridContactForce.resize( numNodes, m_numVelocityFields, 3 );
+
+  // Set grid multi-field labels on first cycle to avoid a VTK output bug
+  if( cycleNumber == 0 )
+  {
+    std::vector< std::string > keys = { keys::Velocity, viewKeyStruct::momentumString(),keys::Acceleration, viewKeyStruct::forceInternalString(), viewKeyStruct::forceExternalString(), viewKeyStruct::forceContactString() };
+    std::vector< std::string > labels1(m_numVelocityFields);
+    std::generate( labels1.begin(), labels1.end(), [i=0]() mutable { return std::to_string( i++ ); } );
+    string const labels2[] = { "0", "1", "2" };
+    for( size_t gridField=0; gridField<keys.size(); gridField++)
+    {
+      WrapperBase & wrapper = nodeManager.getWrapper< array3d< real64 > >( keys[gridField] );
+      wrapper.setDimLabels( 1, labels1 );
+      wrapper.setDimLabels( 2, labels2 );
+    }
+  }
 
   // Zero out grid fields
   gridMass.zero();
@@ -607,14 +629,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       {
         int mappedNode = nodeIDs[g];
         int fieldIndex = p_group;
-        gridMass[fieldIndex][mappedNode] += p_m*weights[g];
+        gridMass[mappedNode][fieldIndex] += p_m*weights[g];
         for(int i=0; i<3; i++)
         {
-          gridMomentum[fieldIndex][mappedNode][i] += p_m*p_v[i]*weights[g];
+          gridMomentum[mappedNode][fieldIndex][i] += p_m*p_v[i]*weights[g];
           for(int k=0; k<3; k++)
           {
             int voigt = m_voigtMap[k][i];
-            gridInternalForce[fieldIndex][mappedNode][i] -= p_stress[voigt]*gradWeights[k][g]*p_vol;
+            gridInternalForce[mappedNode][fieldIndex][i] -= p_stress[voigt]*gradWeights[k][g]*p_vol;
           }
         }
       }
@@ -677,14 +699,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   {
     for(int g=0; g<numNodes; g++)
     {
-      if(gridMass[fieldIndex][g] > 1.0e-12) // small mass threshold
+      if(gridMass[g][fieldIndex] > 1.0e-12) // small mass threshold
       {
         for(int i=0; i<3; i++)
         {
-          real64 totalForce = gridInternalForce[fieldIndex][g][i] + gridExternalForce[fieldIndex][g][i];
-          gridAcceleration[fieldIndex][g][i] = totalForce/gridMass[fieldIndex][g];
-          gridVelocity[fieldIndex][g][i] = gridMomentum[fieldIndex][g][i]/gridMass[fieldIndex][g];
-          gridVelocity[fieldIndex][g][i] += gridAcceleration[fieldIndex][g][i]*dt;
+          real64 totalForce = gridInternalForce[g][fieldIndex][i] + gridExternalForce[g][fieldIndex][i];
+          gridAcceleration[g][fieldIndex][i] = totalForce/gridMass[g][fieldIndex];
+          gridVelocity[g][fieldIndex][i] = gridMomentum[g][fieldIndex][i]/gridMass[g][fieldIndex];
+          gridVelocity[g][fieldIndex][i] += gridAcceleration[g][fieldIndex][i]*dt;
         }
   //      // hard-coded rotation about z-axis passing thru mesh center
   //      double xRel = gridReferencePosition[i][0] - 0.5*(m_xGlobalMax[0] - m_xGlobalMin[0]);
@@ -703,12 +725,22 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       {
         for(int i=0; i<3; i++)
         {
-          gridAcceleration[fieldIndex][g][i] = 0.0;
-          gridVelocity[fieldIndex][g][i] = 0.0;
+          gridAcceleration[g][fieldIndex][i] = 0.0;
+          gridVelocity[g][fieldIndex][i] = 0.0;
         }
       }
     }
   }
+
+//  for(int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++)
+//  {
+//    std::cout << "Field " << fieldIndex << ":" << std::endl;
+//    for(int g=0; g<numNodes; g++)
+//    {
+//      std::cout << g << "/" << gridVelocity[g][fieldIndex] << "\t";
+//    }
+//    std::cout << std::endl;
+//  }
 
 
   // Grid to particle interpolation
@@ -779,11 +811,11 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
         int fieldIndex = p_group;
         for(int i=0; i<3; i++)
         {
-          p_x[i] += gridVelocity[fieldIndex][mappedNode][i]*dt*weights[g];
-          p_v[i] += gridAcceleration[fieldIndex][mappedNode][i]*dt*weights[g]; // FLIP
+          p_x[i] += gridVelocity[mappedNode][fieldIndex][i]*dt*weights[g];
+          p_v[i] += gridAcceleration[mappedNode][fieldIndex][i]*dt*weights[g]; // FLIP
           for(int j=0; j<3; j++)
           {
-            p_L[i][j] += gridVelocity[fieldIndex][mappedNode][i]*gradWeights[j][g];
+            p_L[i][j] += gridVelocity[mappedNode][fieldIndex][i]*gradWeights[j][g];
           }
         }
       }
