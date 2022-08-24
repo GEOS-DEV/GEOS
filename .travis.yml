@@ -1,5 +1,8 @@
 language: minimal
 
+vm:
+  size: x-large
+
 env:
   global:
   - GEOSX_TPL_TAG=194-777
