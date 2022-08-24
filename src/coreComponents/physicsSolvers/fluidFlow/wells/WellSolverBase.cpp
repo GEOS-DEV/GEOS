@@ -19,7 +19,7 @@
 #include "WellSolverBase.hpp"
 
 #include "mesh/DomainPartition.hpp"
-#include "mesh/PerforationData.hpp"
+#include "mesh/PerforationExtrinsicData.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
@@ -251,7 +251,7 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
         subRegion.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
 
       arrayView2d< real64 const > const perfLocation =
-        perforationData.getReference< array2d< real64 > >( PerforationData::viewKeyStruct::locationString() );
+        perforationData.getExtrinsicData< extrinsicMeshData::perforation::location >();
 
       arrayView1d< real64 > const perfGravCoef =
         perforationData.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();

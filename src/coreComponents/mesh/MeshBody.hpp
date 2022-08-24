@@ -83,7 +83,6 @@ public:
    * @return reference to the meshLevels group.
    */
   Group & getMeshLevels() { return m_meshLevels; }
-
   /**
    * @copydoc getMeshLevels()
    */

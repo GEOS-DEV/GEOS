@@ -116,7 +116,7 @@
     <FieldSpecification
       name="cellVelocity"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="mediumVelocity"
       scale="150"
       setNames="{ all }"/>

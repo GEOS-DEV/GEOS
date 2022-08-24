@@ -401,10 +401,8 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
           real64 N[numNodesPerElem];
           for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
           {
-            real64 elemMass = 0;
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
-              elemMass += rho[k][q] * detJ[k][q];
               FE_TYPE::calcN( q, N );
 
               for( localIndex a=0; a< numNodesPerElem; ++a )
@@ -567,18 +565,18 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     m_iComm.resize( domain.getNeighbors().size() );
     CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSync, mesh, domain.getNeighbors(), m_iComm, true );
 
-    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, "nodeManager", keys::Acceleration );
+    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, keys::Acceleration );
 
     //3: v^{n+1/2} = v^{n} + a^{n} dt/2
     solidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt / 2 );
 
-    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, "nodeManager", keys::Velocity );
+    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, keys::Velocity );
 
     //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
     solidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
 
     fsManager.applyFieldValue( time_n + dt,
-                               mesh, "nodeManager",
+                               mesh,
                                NodeManager::viewKeyStruct::totalDisplacementString(),
                                [&]( FieldSpecificationBase const & bc,
                                     SortedArrayView< localIndex const > const & targetSet )
@@ -619,7 +617,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     // apply this over a set
     solidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
 
-    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, "nodeManager", keys::Velocity );
+    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, keys::Velocity );
 
     parallelDeviceEvents packEvents;
     CommunicationTools::getInstance().asyncPack( fieldsToBeSync, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
@@ -636,13 +634,14 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
     // apply this over a set
     solidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
-    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, "nodeManager", keys::Velocity );
+    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, keys::Velocity );
 
     // this includes  a device sync after launching all the unpacking kernels
     parallelDeviceEvents unpackEvents;
     CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
 
   } );
+
   return dt;
 }
 
@@ -664,16 +663,14 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                                                 arrayView1d< string const > const & )
   {
 
-
-    fsManager.apply( time,
-                     mesh,
-                     "nodeManager",
-                     keys::TotalDisplacement,
-                     [&]( FieldSpecificationBase const & bc,
-                          string const &,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & targetGroup,
-                          string const fieldName )
+    fsManager.apply< NodeManager >( time,
+                                    mesh,
+                                    keys::TotalDisplacement,
+                                    [&]( FieldSpecificationBase const & bc,
+                                         string const &,
+                                         SortedArrayView< localIndex const > const & targetSet,
+                                         NodeManager & targetGroup,
+                                         string const fieldName )
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                          parallelDevicePolicy< 32 > >( targetSet,
@@ -685,7 +682,6 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                                                                        localMatrix,
                                                                        localRhs );
     } );
-
   } );
 }
 
@@ -709,15 +705,15 @@ void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
     arrayView1d< globalIndex const > const blockLocalDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
     globalIndex const dofRankOffset = dofManager.rankOffset();
 
-    fsManager.apply< TractionBoundaryCondition >( time,
-                                                  mesh,
-                                                  "faceManager",
-                                                  TractionBoundaryCondition::catalogName(),
-                                                  [&]( TractionBoundaryCondition const & bc,
-                                                       string const &,
-                                                       SortedArrayView< localIndex const > const & targetSet,
-                                                       Group &,
-                                                       string const & )
+    fsManager.template apply< FaceManager,
+                              TractionBoundaryCondition >( time,
+                                                           mesh,
+                                                           TractionBoundaryCondition::catalogName(),
+                                                           [&]( TractionBoundaryCondition const & bc,
+                                                                string const &,
+                                                                SortedArrayView< localIndex const > const & targetSet,
+                                                                Group &,
+                                                                string const & )
     {
       bc.launch( time,
                  blockLocalDofNumber,
@@ -1040,15 +1036,14 @@ SolidMechanicsLagrangianFEM::
   {
     string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
-    fsManager.apply( time_n + dt,
-                     mesh,
-                     "nodeManager",
-                     keys::Force,
-                     [&]( FieldSpecificationBase const & bc,
-                          string const &,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & targetGroup,
-                          string const & GEOSX_UNUSED_PARAM( fieldName ) )
+    fsManager.apply< NodeManager >( time_n + dt,
+                                    mesh,
+                                    keys::Force,
+                                    [&]( FieldSpecificationBase const & bc,
+                                         string const &,
+                                         SortedArrayView< localIndex const > const & targetSet,
+                                         NodeManager & targetGroup,
+                                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationAdd,
                                          parallelDevicePolicy< 32 > >( targetSet,
@@ -1071,7 +1066,7 @@ SolidMechanicsLagrangianFEM::
 
   if( faceManager.hasWrapper( "ChomboPressure" ) )
   {
-    fsManager.applyFieldValue( time_n, domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ), "faceManager", "ChomboPressure" );
+    fsManager.applyFieldValue( time_n, domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ), "ChomboPressure" );
     applyChomboPressure( dofManager, domain, localRhs );
   }
 
@@ -1157,7 +1152,7 @@ SolidMechanicsLagrangianFEM::
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    std::cout << GEOSX_FMT( "( RSolid ) = ( {:4.2e} ) ; ", totalResidualNorm );
+    std::cout << GEOSX_FMT( "( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), totalResidualNorm );
   }
 
   return totalResidualNorm;
@@ -1175,12 +1170,12 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( localSolution,
                                keys::TotalDisplacement,
                                keys::IncrementalDisplacement,
-                               -scalingFactor );
+                               scalingFactor );
 
   dofManager.addVectorToField( localSolution,
                                keys::TotalDisplacement,
                                keys::TotalDisplacement,
-                               -scalingFactor );
+                               scalingFactor );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
@@ -1196,15 +1191,6 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                                          domain.getNeighbors(),
                                                          true );
   } );
-}
-
-void SolidMechanicsLagrangianFEM::solveLinearSystem( DofManager const & dofManager,
-                                                     ParallelMatrix & matrix,
-                                                     ParallelVector & rhs,
-                                                     ParallelVector & solution )
-{
-  solution.zero();
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )

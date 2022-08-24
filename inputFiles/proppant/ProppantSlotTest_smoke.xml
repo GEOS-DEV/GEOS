@@ -21,7 +21,7 @@
 <!-- SPHINX_PROPPANT_MESH_END -->
 
   <Events
-    maxTime="1">
+    maxTime="0.1">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -39,7 +39,7 @@
       
     <PeriodicEvent
       name="restarts"
-      timeFrequency="1.0"
+      timeFrequency="0.1"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>  
   </Events>
@@ -72,7 +72,6 @@
       name="FlowProppantTransport"
       proppantSolverName="ProppantTransport"
       flowSolverName="SinglePhaseFVM"
-      discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       logLevel="1"/>
 <!-- SPHINX_PROPPANT_COUPLEDSOLVER_END -->

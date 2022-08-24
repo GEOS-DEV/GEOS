@@ -30,9 +30,9 @@ using namespace dataRepository;
 MeshLevel::MeshLevel( string const & name,
                       Group * const parent ):
   Group( name, parent ),
-  m_nodeManager( new NodeManager( groupStructKeys::nodeManagerString, this ) ),
-  m_edgeManager( new EdgeManager( groupStructKeys::edgeManagerString, this ) ),
-  m_faceManager( new FaceManager( groupStructKeys::faceManagerString, this ) ),
+  m_nodeManager( new NodeManager( groupStructKeys::nodeManagerString(), this ) ),
+  m_edgeManager( new EdgeManager( groupStructKeys::edgeManagerString(), this ) ),
+  m_faceManager( new FaceManager( groupStructKeys::faceManagerString(), this ) ),
   m_elementManager( new ElementRegionManager( groupStructKeys::elemManagerString(), this ) ),
   m_embSurfNodeManager( new EmbeddedSurfaceNodeManager( groupStructKeys::embSurfNodeManagerString, this ) ),
   m_embSurfEdgeManager( new EdgeManager( groupStructKeys::embSurfEdgeManagerString, this ) ),
@@ -40,12 +40,12 @@ MeshLevel::MeshLevel( string const & name,
   m_shallowParent( nullptr )
 {
 
-  registerGroup( groupStructKeys::nodeManagerString, m_nodeManager );
+  registerGroup( groupStructKeys::nodeManagerString(), m_nodeManager );
 
-  registerGroup( groupStructKeys::edgeManagerString, m_edgeManager );
+  registerGroup( groupStructKeys::edgeManagerString(), m_edgeManager );
 
 
-  registerGroup< FaceManager >( groupStructKeys::faceManagerString, m_faceManager );
+  registerGroup< FaceManager >( groupStructKeys::faceManagerString(), m_faceManager );
   m_faceManager->nodeList().setRelatedObject( *m_nodeManager );
 
 
@@ -74,12 +74,12 @@ MeshLevel::MeshLevel( string const & name,
 {
   this->setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerGroup( groupStructKeys::nodeManagerString, m_nodeManager );
+  registerGroup( groupStructKeys::nodeManagerString(), m_nodeManager );
 
-  registerGroup( groupStructKeys::edgeManagerString, m_edgeManager );
+  registerGroup( groupStructKeys::edgeManagerString(), m_edgeManager );
 
 
-  registerGroup< FaceManager >( groupStructKeys::faceManagerString, m_faceManager );
+  registerGroup< FaceManager >( groupStructKeys::faceManagerString(), m_faceManager );
   m_faceManager->nodeList().setRelatedObject( *m_nodeManager );
 
 

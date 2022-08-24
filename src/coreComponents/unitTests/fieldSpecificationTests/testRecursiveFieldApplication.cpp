@@ -41,13 +41,13 @@ void RegisterAndApplyField( DomainPartition & domain,
   FieldSpecificationBase & fieldSpec = fieldSpecificationManager.registerGroup< FieldSpecificationBase >( fieldName );
   fieldSpec.setFieldName( fieldName );
   fieldSpec.setObjectPath( objectPath );
+  fieldSpec.setMeshObjectPath( domain.getMeshBodies() );
   fieldSpec.setScale( value );
   fieldSpec.initialCondition( true );
   fieldSpec.addSetName( "all" );
 
   fieldSpecificationManager.apply( 0.,
                                    domain.getMeshBody( 0 ).getBaseDiscretization(),
-                                   "",
                                    "",
                                    [&] ( FieldSpecificationBase const & bc,
                                          string const &,
@@ -160,8 +160,8 @@ TEST( FieldSpecification, Recursive )
 
   RegisterAndApplyField( domain, "field0", "ElementRegions", 1. );
   RegisterAndApplyField( domain, "field1", "ElementRegions/reg0", 2. );
-  RegisterAndApplyField( domain, "field2", "ElementRegions/reg0/elementSubRegions/reg0hex", 3. );
-  RegisterAndApplyField( domain, "field3", "ElementRegions/reg1/elementSubRegions/reg1tet", 4. );
+  RegisterAndApplyField( domain, "field2", "ElementRegions/reg0/reg0hex", 3. );
+  RegisterAndApplyField( domain, "field3", "ElementRegions/reg1/reg1tet", 4. );
 
   /// Check if the values are well set
 

@@ -24,15 +24,17 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+#include "common/Logger.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/TypeDispatch.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/contact/ContactBase.hpp"
 #include "constitutive/NullModel.hpp"
+#include "fileIO/Outputs/OutputUtilities.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "common/MpiWrapper.hpp"
 
 #include <iostream>
 
@@ -261,6 +263,7 @@ SiloFile::SiloFile():
   m_writeCellElementMesh( 1 ),
   m_writeFaceElementMesh( 1 ),
   m_plotLevel( dataRepository::PlotLevel::LEVEL_1 ),
+  m_requireFieldRegistrationCheck( true ),
   m_ghostFlags( true )
 {
   DBSetAllowEmptyObjects( 1 );
@@ -878,7 +881,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
       {
         auto const & wrapper = wrapperIter.second;
 
-        if( wrapper->getPlotLevel() < m_plotLevel )
+        if( isFieldPlotEnabled( *wrapper ) )
         {
           std::type_info const & typeID = wrapper->getTypeId();
 
@@ -1233,7 +1236,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
     {
       WrapperBase const & wrapper = *wrapperIter.second;
 
-      if( wrapper.getPlotLevel() < m_plotLevel )
+      if( isFieldPlotEnabled( wrapper ) )
       {
         // the field name is the key to the map
         string const & fieldName = wrapper.getName();
@@ -1627,9 +1630,17 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
   coords[1] = ycoords.data();
   coords[2] = zcoords.data();
 
-
-
   ElementRegionManager const & elementManager = meshLevel.getElemManager();
+
+  if( m_requireFieldRegistrationCheck && !m_fieldNames.empty() )
+  {
+    outputUtilities::checkFieldRegistration( elementManager,
+                                             nodeManager,
+                                             m_fieldNames,
+                                             "SiloOutput" );
+    m_requireFieldRegistrationCheck = false;
+  }
+
   elementManager.forElementRegions( [&]( ElementRegionBase const & elemRegion )
   {
     string const & regionName = elemRegion.getName();
@@ -3169,6 +3180,15 @@ int SiloFile::getMeshType( string const & meshName ) const
     DBSetDir( m_dbFilePtr, pwd );
   }
   return meshType;
+}
+
+bool SiloFile::isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const
+{
+  return outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(),
+                                              m_plotLevel,
+                                              wrapper.getName(),
+                                              m_fieldNames,
+                                              m_onlyPlotSpecifiedFieldNames );
 }
 
 }

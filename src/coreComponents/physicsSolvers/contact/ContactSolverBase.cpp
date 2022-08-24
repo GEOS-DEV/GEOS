@@ -235,8 +235,6 @@ real64 ContactSolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   return dt;
 }
 
-
-
 void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

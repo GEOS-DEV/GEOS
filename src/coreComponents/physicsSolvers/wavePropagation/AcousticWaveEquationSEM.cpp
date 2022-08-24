@@ -49,10 +49,10 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds" );
 
-  registerWrapper( viewKeyStruct::sourceIsLocalString(), &m_sourceIsLocal ).
+  registerWrapper( viewKeyStruct::sourceIsAccessibleString(), &m_sourceIsAccessible ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
-    setDescription( "Flag that indicates whether the source is local to this MPI rank" );
+    setDescription( "Flag that indicates whether the source is accessible to this MPI rank" );
 
   registerWrapper( viewKeyStruct::receiverNodeIdsString(), &m_receiverNodeIds ).
     setInputFlag( InputFlags::FALSE ).
@@ -133,7 +133,7 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
-  m_sourceIsLocal.resize( numSourcesGlobal );
+  //m_sourceIsLocal.resize( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
@@ -220,7 +220,7 @@ void AcousticWaveEquationSEM::postProcessInput()
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
-  m_sourceIsLocal.resize( numSourcesGlobal );
+  m_sourceIsAccessible.resize( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
@@ -250,10 +250,10 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
   arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
-  arrayView1d< localIndex > const sourceIsLocal = m_sourceIsLocal.toView();
+  arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
   sourceNodeIds.setValues< EXEC_POLICY >( -1 );
   sourceConstants.setValues< EXEC_POLICY >( -1 );
-  sourceIsLocal.zero();
+  sourceIsAccessible.zero();
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
@@ -326,7 +326,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         faceNormal,
         faceCenter,
         sourceCoordinates,
-        sourceIsLocal,
+        sourceIsAccessible,
         sourceNodeIds,
         sourceConstants,
         receiverCoordinates,
@@ -347,17 +347,18 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
-  arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
+  arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real64 const > const sourceValue   = m_sourceValue.toViewConst();
 
   GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
   {
-    if( sourceIsLocal[isrc] == 1 )
+    if( sourceIsAccessible[isrc] == 1 )
     {
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
-        rhs[sourceNodeIds[isrc][inode]] = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
+        real64 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
+        RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
       }
     }
   } );
@@ -462,7 +463,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     // mass matrix to be computed in this function
     arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-
+    mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
     arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
     damping.zero();
@@ -534,15 +535,14 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
   freeSurfaceFaceIndicator.zero();
   freeSurfaceNodeIndicator.zero();
 
-  fsManager.apply( time,
-                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                   "faceManager",
-                   string( "FreeSurface" ),
-                   [&]( FieldSpecificationBase const & bc,
-                        string const &,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group &,
-                        string const & )
+  fsManager.apply< FaceManager >( time,
+                                  domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
+                                  string( "FreeSurface" ),
+                                  [&]( FieldSpecificationBase const & bc,
+                                       string const &,
+                                       SortedArrayView< localIndex const > const & targetSet,
+                                       FaceManager &,
+                                       string const & )
   {
     string const & functionName = bc.getFunctionName();
 
@@ -669,13 +669,21 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     } );
 
   } );
+
   return dt;
 }
 
-void AcousticWaveEquationSEM::cleanup( real64 const time_n, integer const, integer const, real64 const, DomainPartition & domain )
+void AcousticWaveEquationSEM::cleanup( real64 const time_n,
+                                       integer const cycleNumber,
+                                       integer const eventCounter,
+                                       real64 const eventProgress,
+                                       DomainPartition & domain )
 {
+  // call the base class cleanup (for reporting purposes)
+  SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+
   // compute the remaining seismic traces, if needed
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
