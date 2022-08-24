@@ -116,6 +116,9 @@ void NodeManager::setIsExternal( FaceManager const & faceManager )
   // get the "isExternal" field from for *this, and set it to zero
   m_isExternal.zero();
 
+<<<<<<< HEAD
+  SortedArray< localIndex > & externalSet = externalSet();
+=======
   // get externalSet reference to insert external faces
   SortedArray< localIndex > & externalSet = this->externalSet();
 
@@ -124,6 +127,7 @@ void NodeManager::setIsExternal( FaceManager const & faceManager )
 
   //get normals to all faces
   const arrayView2d< real64 const > normalOfAllFaces = faceManager.faceNormal();
+>>>>>>> 242e43bbb4f9ff871f7bfe36f70c8d5bfbc07042
 
   // loop through all faces
   for( localIndex kf=0; kf<faceManager.size(); ++kf )
@@ -136,10 +140,14 @@ void NodeManager::setIsExternal( FaceManager const & faceManager )
       for( localIndex a = 0; a < numNodes; ++a )
       {
         m_isExternal[ faceToNodes( kf, a ) ] = 1;
+<<<<<<< HEAD
+        externalSet.insert( faceToNodes( kf, a ) ); 
+=======
         if ( normalOfAllFaces( kf, 2 ) == 0.0 )
         {
           externalSet.insert( faceToNodes( kf, a ) );
         }
+>>>>>>> 242e43bbb4f9ff871f7bfe36f70c8d5bfbc07042
       }
     }
   }
