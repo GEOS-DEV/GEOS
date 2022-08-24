@@ -126,15 +126,14 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
                            std::runtime_error );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-    fsManager.apply( 0.0,
-                     mesh,
-                     "faceManager",
-                     extrinsicMeshData::flow::pressure::key(),
-                     [&] ( FieldSpecificationBase const & bc,
-                           string const &,
-                           SortedArrayView< localIndex const > const &,
-                           Group &,
-                           string const & )
+    fsManager.apply< FaceManager >( 0.0,
+                                    mesh,
+                                    extrinsicMeshData::flow::pressure::key(),
+                                    [&] ( FieldSpecificationBase const & bc,
+                                          string const &,
+                                          SortedArrayView< localIndex const > const &,
+                                          FaceManager &,
+                                          string const & )
     {
       GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
                         "A face Dirichlet boundary condition named " << bc.getName() << " was requested in the XML file. \n"
@@ -501,6 +500,11 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
   real64 const residualNorm = ( elemResidualNorm > faceResidualNorm )
                             ? elemResidualNorm
                             : faceResidualNorm;
+
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  {
+    GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+  }
 
   return residualNorm;
 }
