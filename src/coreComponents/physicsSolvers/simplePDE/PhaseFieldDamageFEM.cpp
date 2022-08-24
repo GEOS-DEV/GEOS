@@ -195,7 +195,7 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM(
 {
   GEOSX_MARK_FUNCTION;
   dofManager.addField( m_fieldName,
-                       DofManager::Location::Node,
+                       FieldLocation::Node,
                        1,
                        m_meshTargets );
 
@@ -423,14 +423,14 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( localSolution, m_fieldName, m_fieldName, scalingFactor );
 
   // Syncronize ghost nodes
-  std::map< string, string_array > fieldNames;
-  fieldNames["node"].emplace_back( m_fieldName );
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          false );
@@ -548,29 +548,6 @@ PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
   return residual;
 }
 
-void PhaseFieldDamageFEM::solveLinearSystem( DofManager const & dofManager,
-                                             ParallelMatrix & matrix,
-                                             ParallelVector & rhs,
-                                             ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-  rhs.scale( -1.0 ); // TODO decide if we want this here
-  solution.zero();
-
-//  GEOSX_LOG_RANK_0( "Before PhaseFieldDamageFEM::SolveSystem" );
-//  std::cout << matrix<<std::endl;
-//  std::cout<< rhs << std::endl;
-
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
-
-  if( getLogLevel() == 2 )
-  {
-    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::SolveSystem" );
-    GEOSX_LOG_RANK_0( "\nSolution\n" );
-    std::cout << solution;
-  }
-}
-
 void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                     DofManager const & dofManager,
                                                     DomainPartition & domain,
@@ -583,14 +560,14 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & )
   {
-    fsManager.apply( time,
-                     mesh,
-                     "nodeManager",
-                     m_fieldName,
-                     [&]( FieldSpecificationBase const & bc, string const &,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & targetGroup,
-                          string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
+    fsManager.template apply< NodeManager >( time,
+                                             mesh,
+                                             m_fieldName,
+                                             [&]( FieldSpecificationBase const & bc,
+                                                  string const &,
+                                                  SortedArrayView< localIndex const > const & targetSet,
+                                                  NodeManager & targetGroup,
+                                                  string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                          parallelDevicePolicy< 32 > >( targetSet,
@@ -603,7 +580,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                                        localRhs );
     } );
 
-    fsManager.applyFieldValue< serialPolicy >( time, mesh, "ElementRegions", viewKeyStruct::coeffNameString() );
+    fsManager.applyFieldValue< serialPolicy >( time, mesh, viewKeyStruct::coeffNameString() );
   } );
 }
 

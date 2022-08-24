@@ -19,7 +19,7 @@
 #include "WellSolverBase.hpp"
 
 #include "mesh/DomainPartition.hpp"
-#include "mesh/PerforationData.hpp"
+#include "mesh/PerforationExtrinsicData.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
@@ -131,7 +131,7 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
   } );
 
   dofManager.addField( wellElementDofName(),
-                       DofManager::Location::Elem,
+                       FieldLocation::Elem,
                        numDofPerWellElement(),
                        meshTargets );
 
@@ -153,17 +153,6 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
   {
     initializeWells( domain );
   }
-
-  // set deltas to zero and recompute dependent quantities
-  resetStateToBeginningOfStep( domain );
-
-  // backup fields used in time derivative approximation
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
-  {
-    backupFields( mesh, regionNames );
-  } );
 }
 
 void WellSolverBase::assembleSystem( real64 const time,
@@ -184,6 +173,9 @@ void WellSolverBase::assembleSystem( real64 const time,
 
   // then assemble the pressure relations between well elements
   assemblePressureRelations( domain, dofManager, localMatrix, localRhs );
+
+  // then compute the perforation rates (later assembled by the coupled solver)
+  computePerforationRates( domain );
 }
 
 void WellSolverBase::updateState( DomainPartition & domain )
@@ -196,11 +188,9 @@ void WellSolverBase::updateState( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
     {
-      updateSubRegionState( mesh, subRegion );
+      updateSubRegionState( subRegion );
     } );
   } );
-
-
 }
 
 void WellSolverBase::initializePreSubGroups()
@@ -252,7 +242,7 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
         subRegion.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
 
       arrayView2d< real64 const > const perfLocation =
-        perforationData.getReference< array2d< real64 > >( PerforationData::viewKeyStruct::locationString() );
+        perforationData.getExtrinsicData< extrinsicMeshData::perforation::location >();
 
       arrayView1d< real64 > const perfGravCoef =
         perforationData.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();

@@ -45,10 +45,6 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
                                                                   Group * const parent ):
   ContactSolverBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the fracture region." );
-
   registerWrapper( viewKeyStruct::useStaticCondensationString(), &m_useStaticCondensation ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
@@ -201,7 +197,7 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
     } );
 
     dofManager.addField( extrinsicMeshData::contact::dispJump::key(),
-                         DofManager::Location::Elem,
+                         FieldLocation::Elem,
                          3,
                          meshTargets );
 
@@ -530,15 +526,14 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
                                                arrayView1d< string const > const & )
   {
 
-    fsManager.apply( time_n+ dt,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::contact::traction::key(),
-                     [&] ( FieldSpecificationBase const & fs,
-                           string const &,
-                           SortedArrayView< localIndex const > const & targetSet,
-                           Group & subRegion,
-                           string const & )
+    fsManager.apply< ElementSubRegionBase >( time_n+ dt,
+                                             mesh,
+                                             extrinsicMeshData::contact::traction::key(),
+                                             [&] ( FieldSpecificationBase const & fs,
+                                                   string const &,
+                                                   SortedArrayView< localIndex const > const & targetSet,
+                                                   ElementSubRegionBase & subRegion,
+                                                   string const & )
     {
       fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
                                                                          time_n+dt,
@@ -655,24 +650,26 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 
   if( !m_useStaticCondensation )
   {
-    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(), extrinsicMeshData::contact::deltaDispJump::key(), -scalingFactor );
+    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(), extrinsicMeshData::contact::deltaDispJump::key(), scalingFactor );
 
-    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(), extrinsicMeshData::contact::dispJump::key(), -scalingFactor );
+    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(), extrinsicMeshData::contact::dispJump::key(), scalingFactor );
   }
   else
   {
     updateJump( dofManager, domain );
   }
 
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    std::map< string, string_array > fieldNames;
-    fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::dispJump::key() ) );
-    fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::deltaDispJump::key()) );
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    FieldIdentifiers fieldsToBeSync;
+
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::dispJump::key(),
+                                       extrinsicMeshData::contact::deltaDispJump::key() },
+                                     { getFractureRegionName() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );
@@ -768,7 +765,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )
 {
   bool hasConfigurationConverged = true;
-
+  
   using namespace extrinsicMeshData::contact;
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,

@@ -18,6 +18,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
+#include "mesh/generators/PrismUtilities.hpp"
 
 namespace geosx
 {
@@ -85,7 +86,7 @@ static localIndex getFaceNodesHex( localIndex const faceNum,
   return 4;
 }
 
-static localIndex getFaceNodesPrism( localIndex const faceNum,
+static localIndex getFaceNodesWedge( localIndex const faceNum,
                                      arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const & elemNodes,
                                      Span< localIndex > const faceNodes )
 {
@@ -136,7 +137,7 @@ static localIndex getFaceNodesPrism( localIndex const faceNum,
     }
     default:
     {
-      GEOSX_ERROR( "Invalid local face index for element of type Prism: " << faceNum );
+      GEOSX_ERROR( "Invalid local face index for element of type Wedge: " << faceNum );
       return 0;
     }
   }
@@ -252,9 +253,9 @@ localIndex getFaceNodes( ElementType const elementType,
     {
       return getFaceNodesHex( faceNumber, elementToNodes[elemIdx], faceNodes );
     }
-    case ElementType::Prism:
+    case ElementType::Wedge:
     {
-      return getFaceNodesPrism( faceNumber, elementToNodes[elemIdx], faceNodes );
+      return getFaceNodesWedge( faceNumber, elementToNodes[elemIdx], faceNodes );
     }
     case ElementType::Tetrahedron:
     {
@@ -263,6 +264,14 @@ localIndex getFaceNodes( ElementType const elementType,
     case ElementType::Pyramid:
     {
       return getFaceNodesPyramid( faceNumber, elementToNodes[elemIdx], faceNodes );
+    }
+    case ElementType::Prism5:
+    {
+      return getFaceNodesPrism< 5 >( faceNumber, elementToNodes[elemIdx], faceNodes );
+    }
+    case ElementType::Prism6:
+    {
+      return getFaceNodesPrism< 6 >( faceNumber, elementToNodes[elemIdx], faceNodes );
     }
     default:
     {

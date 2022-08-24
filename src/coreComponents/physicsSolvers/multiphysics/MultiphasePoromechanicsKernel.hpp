@@ -133,11 +133,11 @@ public:
         elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelName );
 
       m_fluidPhaseDensity = fluid.phaseDensity();
-      m_fluidPhaseDensityOld = fluid.phaseDensityOld();
+      m_fluidPhaseDensity_n = fluid.phaseDensity_n();
       m_dFluidPhaseDensity = fluid.dPhaseDensity();
 
       m_fluidPhaseCompFrac = fluid.phaseCompFraction();
-      m_fluidPhaseCompFracOld = fluid.phaseCompFractionOld();
+      m_fluidPhaseCompFrac_n = fluid.phaseCompFraction_n();
       m_dFluidPhaseCompFrac = fluid.dPhaseCompFraction();
 
       m_fluidPhaseMassDensity = fluid.phaseMassDensity();
@@ -151,14 +151,13 @@ public:
       using namespace extrinsicMeshData::flow;
 
       m_initialFluidPressure = elementSubRegion.template getExtrinsicData< initialPressure >();
-      m_fluidPressureOld = elementSubRegion.template getExtrinsicData< pressure >();
-      m_deltaFluidPressure = elementSubRegion.template getExtrinsicData< deltaPressure >();
+      m_fluidPressure_n = elementSubRegion.template getExtrinsicData< pressure_n >();
+      m_fluidPressure = elementSubRegion.template getExtrinsicData< pressure >();
 
-      m_fluidPhaseSaturationOld = elementSubRegion.template getExtrinsicData< phaseVolumeFractionOld >();
+      m_fluidPhaseSaturation_n = elementSubRegion.template getExtrinsicData< phaseVolumeFraction_n >();
 
       m_fluidPhaseSaturation = elementSubRegion.template getExtrinsicData< phaseVolumeFraction >();
-      m_dFluidPhaseSaturation_dPressure = elementSubRegion.template getExtrinsicData< dPhaseVolumeFraction_dPressure >();
-      m_dFluidPhaseSaturation_dGlobalCompDensity = elementSubRegion.template getExtrinsicData< dPhaseVolumeFraction_dGlobalCompDensity >();
+      m_dFluidPhaseSaturation = elementSubRegion.template getExtrinsicData< dPhaseVolumeFraction >();
 
       m_dGlobalCompFraction_dGlobalCompDensity =
         elementSubRegion.template getExtrinsicData< dGlobalCompFraction_dGlobalCompDensity >();
@@ -320,25 +319,24 @@ public:
                                                       NP,
                                                       NC,
                                                       m_initialFluidPressure[k],
-                                                      m_fluidPressureOld[k],
-                                                      m_deltaFluidPressure[k],
+                                                      m_fluidPressure_n[k],
+                                                      m_fluidPressure[k],
                                                       strainIncrement,
                                                       m_gravityAcceleration,
                                                       m_gravityVector,
                                                       m_solidDensity( k, q ),
                                                       m_initialFluidTotalMassDensity( k, q ),
                                                       m_fluidPhaseDensity[k][q],
-                                                      m_fluidPhaseDensityOld[k][q],
+                                                      m_fluidPhaseDensity_n[k][q],
                                                       m_dFluidPhaseDensity[k][q],
                                                       m_fluidPhaseCompFrac[k][q],
-                                                      m_fluidPhaseCompFracOld[k][q],
+                                                      m_fluidPhaseCompFrac_n[k][q],
                                                       m_dFluidPhaseCompFrac[k][q],
                                                       m_fluidPhaseMassDensity[k][q],
                                                       m_dFluidPhaseMassDensity[k][q],
                                                       m_fluidPhaseSaturation[k],
-                                                      m_fluidPhaseSaturationOld[k],
-                                                      m_dFluidPhaseSaturation_dPressure[k],
-                                                      m_dFluidPhaseSaturation_dGlobalCompDensity[k],
+                                                      m_fluidPhaseSaturation_n[k],
+                                                      m_dFluidPhaseSaturation[k],
                                                       m_dGlobalCompFraction_dGlobalCompDensity[k],
                                                       totalStress,
                                                       dTotalStress_dPressure,
@@ -629,11 +627,11 @@ protected:
   arrayView2d< real64 const > m_solidDensity;
 
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseDensity;
-  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseDensityOld;
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseDensity_n;
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseDensity;
 
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_fluidPhaseCompFrac;
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_fluidPhaseCompFracOld;
+  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_fluidPhaseCompFrac_n;
   arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > m_dFluidPhaseCompFrac;
 
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseMassDensity;
@@ -642,9 +640,8 @@ protected:
   arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > m_initialFluidTotalMassDensity;
 
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturation;
-  arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturationOld;
-  arrayView2d< real64 const, compflow::USD_PHASE > m_dFluidPhaseSaturation_dPressure;
-  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dFluidPhaseSaturation_dGlobalCompDensity;
+  arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturation_n;
+  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dFluidPhaseSaturation;
 
   arrayView3d< real64 const, compflow::USD_COMP_DC > m_dGlobalCompFraction_dGlobalCompDensity;
 
@@ -654,11 +651,9 @@ protected:
   /// The rank-global initial fluid pressure array.
   arrayView1d< real64 const > m_initialFluidPressure;
 
-  /// The rank-global fluid pressure array.
-  arrayView1d< real64 const > m_fluidPressureOld;
-
-  /// The rank-global delta-fluid pressure array.
-  arrayView1d< real64 const > m_deltaFluidPressure;
+  /// The rank-global fluid pressure arrays.
+  arrayView1d< real64 const > m_fluidPressure_n;
+  arrayView1d< real64 const > m_fluidPressure;
 
   /// Number of components
   localIndex const m_numComponents;

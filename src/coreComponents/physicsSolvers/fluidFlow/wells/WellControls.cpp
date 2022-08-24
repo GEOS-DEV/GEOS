@@ -30,7 +30,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_type( Type::PRODUCER ),
   m_refElevation( 0.0 ),
   m_refGravCoef( 0.0 ),
-  m_currentControl( Control::BHP ),
+  m_inputControl( Control::UNINITIALIZED ),
+  m_currentControl( Control::UNINITIALIZED ),
   m_targetBHP( 0.0 ),
   m_targetTotalRate( 0.0 ),
   m_targetPhaseRate( 0.0 ),
@@ -38,6 +39,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_surfacePres( 0.0 ),
   m_surfaceTemp( 0.0 ),
   m_isCrossflowEnabled( 1 ),
+  m_initialPressureCoefficient( 0.1 ),
   m_targetTotalRateTable( nullptr ),
   m_targetPhaseRateTable( nullptr ),
   m_targetBHPTable( nullptr )
@@ -48,9 +50,14 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Well type. Valid options:\n* " + EnumStrings< Type >::concat( "\n* " ) );
 
-  registerWrapper( viewKeyStruct::controlString(), &m_currentControl ).
+  registerWrapper( viewKeyStruct::inputControlString(), &m_inputControl ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Well control. Valid options:\n* " + EnumStrings< Control >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::currentControlString(), &m_currentControl ).
+    setDefaultValue( Control::UNINITIALIZED ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Current well control" );
 
   registerWrapper( viewKeyStruct::targetBHPString(), &m_targetBHP ).
     setDefaultValue( 0.0 ).
@@ -110,6 +117,13 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDescription( "Flag to enable crossflow. Currently only supported for injectors: \n"
                     " - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. \n"
                     " - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations." );
+
+  registerWrapper( viewKeyStruct::initialPressureCoefficientString(), &m_initialPressureCoefficient ).
+    setDefaultValue( 0.1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Tuning coefficient for the initial well pressure of rate-controlled wells: \n"
+                    " - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) \n"
+                    " - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) " );
 
   registerWrapper( viewKeyStruct::targetBHPTableNameString(), &m_targetBHPTableName ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -171,6 +185,18 @@ TableFunction * createWellTable( string const & tableName,
 
 void WellControls::postProcessInput()
 {
+  // 0) Assign the value of the current well control
+  // When the simulation starts from a restart file, we don't want to use the inputControl,
+  // because the control may have switched in the simulation that generated the restart
+  GEOSX_THROW_IF( m_inputControl == Control::UNINITIALIZED,
+                  "WellControls '" << getName() << "': Input well control cannot be uninitialized",
+                  InputError );
+
+  if( m_currentControl == Control::UNINITIALIZED )
+  {
+    m_currentControl = m_inputControl;
+  }
+
   // 1.a) check target BHP
   GEOSX_THROW_IF( m_targetBHP < 0,
                   "WellControls '" << getName() << "': Target bottom-hole pressure is negative",
@@ -255,7 +281,13 @@ void WellControls::postProcessInput()
                   "WellControls '" << getName() << "': The option '" << viewKeyStruct::enableCrossflowString() << "' cannot be set to '0' for producers",
                   InputError );
 
-  // 8) Create time-dependent BHP table
+  // 8) Make sure that the initial pressure coefficient is positive
+  GEOSX_THROW_IF( m_initialPressureCoefficient < 0,
+                  "WellControls '" << getName() << "': The tuning coefficient " << viewKeyStruct::initialPressureCoefficientString() << " is negative",
+                  InputError );
+
+
+  // 9) Create time-dependent BHP table
   if( m_targetBHPTableName.empty() )
   {
     m_targetBHPTableName = getName()+"_ConstantBHP_table";
@@ -272,7 +304,7 @@ void WellControls::postProcessInput()
                     InputError );
   }
 
-  // 9) Create time-dependent total rate table
+  // 10) Create time-dependent total rate table
   if( m_targetTotalRateTableName.empty() )
   {
     m_targetTotalRateTableName = getName()+"_ConstantTotalRate_table";
@@ -289,7 +321,7 @@ void WellControls::postProcessInput()
                     InputError );
   }
 
-  // 10) Create time-dependent phase rate table
+  // 11) Create time-dependent phase rate table
   if( m_targetPhaseRateTableName.empty() )
   {
     m_targetPhaseRateTableName = getName()+"_ConstantPhaseRate_table";

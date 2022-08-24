@@ -48,6 +48,13 @@ public:
   virtual void postProcessInput() override;
 
   /**
+   * @brief Set the plotFileRoot name for the output
+   *
+   * @param root The string name
+   */
+  void setPlotFileRoot( string const & root );
+
+  /**
    * @brief Writes out a set of vtk files.
    * @copydoc EventBase::execute()
    */
@@ -71,6 +78,11 @@ public:
     execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
   }
 
+  /**
+   * @brief Performs re-initialization of the datasets accumulated in the PVD writer.
+   */
+  virtual void reinit() override;
+
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct : OutputBase::viewKeysStruct
   {
@@ -79,14 +91,30 @@ public:
     static constexpr auto plotLevel = "plotLevel";
     static constexpr auto binaryString = "format";
     static constexpr auto outputRegionTypeString = "outputRegionType";
+    static constexpr auto onlyPlotSpecifiedFieldNames = "onlyPlotSpecifiedFieldNames";
+    static constexpr auto fieldNames = "fieldNames";
   } vtkOutputViewKeys;
   /// @endcond
+
+  /**
+   * @brief Return PyVTKOutput type.
+   * @return Return PyVTKOutput type.
+   */
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const override;
+#endif
 
 private:
 
   string m_plotFileRoot;
   integer m_writeFaceMesh;
   integer m_plotLevel;
+
+  /// flag to decide whether we only plot the specified field names
+  integer m_onlyPlotSpecifiedFieldNames;
+
+  /// array of names of the fields to output
+  array1d< string > m_fieldNames;
 
   /// VTK output mode
   vtk::VTKOutputMode m_writeBinaryData = vtk::VTKOutputMode::BINARY;

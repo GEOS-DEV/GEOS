@@ -115,12 +115,6 @@ public:
   localIndex unpackSets( buffer_unit_type const * & buffer );
 
   /**
-   * @brief Gets the wrapper names that should not be packed.
-   * @return The set of names.
-   */
-  std::set< string > getPackingExclusionList() const;
-
-  /**
    * @brief Registers wrappers that will be excluded from packing.
    * @param wrapperNames The wrapper names.
    */
@@ -590,6 +584,24 @@ public:
              setRestartFlags( MESH_DATA_TRAIT::restartFlag ).
              setDescription( MESH_DATA_TRAIT::description ).
              setRegisteringObjects( nameOfRegisteringObject );
+  }
+
+  /**
+   * @brief Helper function to register extrinsic data
+   * @tparam TRAIT the type of extrinsic data
+   * @param[in] extrinsicDataTrait the extrinsic data struct corresponding to the object being registered
+   * @param[in] newObject a pointer to the object that is being registered
+   * @return A reference to the newly registered/created Wrapper
+   */
+  template< typename TRAIT >
+  dataRepository::Wrapper< typename TRAIT::type > & registerExtrinsicData( TRAIT const & extrinsicDataTrait,
+                                                                           typename TRAIT::type * newObject )
+  {
+    return registerWrapper( extrinsicDataTrait.key(), newObject ).
+             setApplyDefaultValue( extrinsicDataTrait.defaultValue() ).
+             setPlotLevel( TRAIT::plotLevel ).
+             setRestartFlags( TRAIT::restartFlag ).
+             setDescription( TRAIT::description );
   }
 
   /**

@@ -40,13 +40,29 @@ EXTRINSIC_MESH_DATA_TRAIT( pressure,
                            WRITE_AND_READ,
                            "Pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaPressure,
-                           "deltaPressure",
+EXTRINSIC_MESH_DATA_TRAIT( pressure_n,
+                           "pressure_n",
                            array1d< real64 >,
                            0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Accumulated pressure updates" );
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Pressure at the previous converged time step" );
+
+EXTRINSIC_MESH_DATA_TRAIT( temperature,
+                           "wellTemperature",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Temperature" );
+
+EXTRINSIC_MESH_DATA_TRAIT( temperature_n,
+                           "wellTemperature_n",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Temperature at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( gravityCoefficient,
                            "gravityCoefficient",

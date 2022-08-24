@@ -36,7 +36,7 @@ using namespace geosx::dataRepository;
 template< class V >
 void TestMeshImport( string const & meshFilePath, V const & validate )
 {
-  string const meshNode = "<Mesh ><VTKMesh name=\"mesh\" file=\"" + meshFilePath + "\" /></Mesh>";
+  string const meshNode = GEOSX_FMT( R"(<Mesh><VTKMesh name="mesh" file="{}" partitionRefinement="0"/></Mesh>)", meshFilePath );
   xmlWrapper::xmlDocument xmlDocument;
   xmlDocument.load_buffer( meshNode.c_str(), meshNode.size() );
   xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );
@@ -78,17 +78,29 @@ TEST( VTKImport, cube )
 
     // When run in parallel with two MPI ranks, the central hexahedra are on the splitting boundary.
     // The VTK default pattern is to assign the cell to one unique rank.
-    // It happens to be the first one in our case.
-    // This way, rank 0 (lower `x`) gets 18 hexaedra and 48 nodes,
-    // while rank 1 (greater `x`) gets 9 hexahedra and 32 nodes.
+    // For example, if it happens to be the first one:
+    // - rank 0 (lower `x`) gets 18 hexaedra and 48 nodes,
+    // - rank 1 (greater `x`) gets 9 hexahedra and 32 nodes.
 
     // This pattern could be influenced by settings the parameters of
     // vtkRedistributeDataSetFilter::SetBoundaryMode(...) to
     // ASSIGN_TO_ALL_INTERSECTING_REGIONS, ASSIGN_TO_ONE_REGION or SPLIT_BOUNDARY_CELLS.
-    localIndex const expectedNumNodes = expected( 64, { 48, 32 } );
+    localIndex const expectedNumNodesRank1 = expected( 64, { 48, 32 } );
+    localIndex const expectedNumNodesRank2 = expected( 64, { 32, 48 } );
+    bool rankswap = cellBlockManager.numNodes() == expectedNumNodesRank2;
+    localIndex const expectedNumNodes = rankswap ? expectedNumNodesRank2 : expectedNumNodesRank1;
+    auto expectedSwap = [=] ( int seq, std::initializer_list< int > par )
+    {
+      std::vector< int > tmp( par );
+      if( rankswap )
+        return expected( seq, { tmp[1], tmp[0] } );
+      else
+        return expected( seq, par );
+    };
+
     ASSERT_EQ( cellBlockManager.numNodes(), expectedNumNodes );
-    ASSERT_EQ( cellBlockManager.numEdges(), expected( 144, { 104, 64 } ) );
-    ASSERT_EQ( cellBlockManager.numFaces(), expected( 108, { 75, 42 } ) );
+    ASSERT_EQ( cellBlockManager.numEdges(), expectedSwap( 144, { 104, 64 } ) );
+    ASSERT_EQ( cellBlockManager.numFaces(), expectedSwap( 108, { 75, 42 } ) );
 
     // The information in the tables is not filled yet. We can check the consistency of the sizes.
     ASSERT_EQ( cellBlockManager.getNodeToFaces().size(), expectedNumNodes );
@@ -98,53 +110,61 @@ TEST( VTKImport, cube )
     SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" );
     ASSERT_EQ( allNodes.size(), expectedNumNodes );
 
-    // The "2" set are all the boundary nodes (64 - 8 inside nodes = 56),
-    // minus an extra node that belongs to regions -1 and 9 only.
-    SortedArray< localIndex > const & nodesRegion2 = cellBlockManager.getNodeSets().at( "2" );
-    ASSERT_EQ( nodesRegion2.size(), expected( 55, { 39, 27 } ) );
-
-    // Region "9" has only one quad, on the greater `x` direction.
-    // This hex will belong to MPI rank 1.
-    SortedArray< localIndex > const & nodesRegion9 = cellBlockManager.getNodeSets().at( "9" );
-    ASSERT_EQ( nodesRegion9.size(), expected( 4, { 0, 4 } ) );
-
-    // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
-    // 1 elements type on 3 regions ("-1", "3", "9") = 3 sub-groups
-    std::array< std::pair< string, int >, 3 > const expectedCellBlocks =
+    if( cellBlockManager.getNodeSets().size()>1 )
     {
+      // The "2" set are all the boundary nodes (64 - 8 inside nodes = 56),
+      // minus an extra node that belongs to regions -1 and 9 only.
+      SortedArray< localIndex > const & nodesRegion2 = cellBlockManager.getNodeSets().at( "2" );
+      ASSERT_EQ( nodesRegion2.size(), expectedSwap( 55, { 39, 27 } ) );
+
+      // Region "9" has only one quad, on the greater `x` direction.
+      // This hex will belong to MPI rank 1.
+      SortedArray< localIndex > const & nodesRegion9 = cellBlockManager.getNodeSets().at( "9" );
+      ASSERT_EQ( nodesRegion9.size(), expectedSwap( 4, { 0, 4 } ) );
+
+      // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
+      // 1 elements type on 3 regions ("-1", "3", "9") = 3 sub-groups
+      std::array< std::pair< string, int >, 3 > const expectedCellBlocks =
       {
-        { "hexahedra", expected( 1, {  1, 0 } ) },
-        { "3_hexahedra", expected( 25, { 17, 8 } ) },
-        { "9_hexahedra", expected( 1, {  0, 1 } ) }
+        {
+          { "hexahedra", expectedSwap( 1, {  1, 0 } ) },
+          { "3_hexahedra", expectedSwap( 25, { 17, 8 } ) },
+          { "9_hexahedra", expectedSwap( 1, {  0, 1 } ) }
+        }
+      };
+      ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), expectedCellBlocks.size() );
+
+      for( const auto & nameAndSize : expectedCellBlocks )
+      {
+        ASSERT_TRUE( cellBlockManager.getCellBlocks().hasGroup< CellBlockABC >( nameAndSize.first ) );
+
+        CellBlockABC const * h = &cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( nameAndSize.first ); //here pb
+        localIndex const expectedSize = nameAndSize.second;
+
+        // 8 nodes, 12 edges and 6 faces per hex.
+        ASSERT_EQ( h->getElemToNodes().size( 1 ), 8 );
+        ASSERT_EQ( h->getElemToEdges().size( 1 ), 12 );
+        ASSERT_EQ( h->getElemToFaces().size( 1 ), 6 );
+
+        ASSERT_EQ( h->size(), expectedSize );
+        ASSERT_EQ( h->getElemToNodes().size( 0 ), expectedSize );
+        ASSERT_EQ( h->getElemToEdges().size( 0 ), expectedSize );
+        ASSERT_EQ( h->getElemToFaces().size( 0 ), expectedSize );
       }
-    };
-    ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), expectedCellBlocks.size() );
-
-    for( const auto & nameAndSize : expectedCellBlocks )
-    {
-      ASSERT_TRUE( cellBlockManager.getCellBlocks().hasGroup< CellBlockABC >( nameAndSize.first ) );
-      CellBlockABC const * h = &cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( nameAndSize.first );
-      localIndex const expectedSize = nameAndSize.second;
-
-      // 8 nodes, 12 edges and 6 faces per hex.
-      ASSERT_EQ( h->getElemToNodes().size( 1 ), 8 );
-      ASSERT_EQ( h->getElemToEdges().size( 1 ), 12 );
-      ASSERT_EQ( h->getElemToFaces().size( 1 ), 6 );
-
-      ASSERT_EQ( h->size(), expectedSize );
-      ASSERT_EQ( h->getElemToNodes().size( 0 ), expectedSize );
-      ASSERT_EQ( h->getElemToEdges().size( 0 ), expectedSize );
-      ASSERT_EQ( h->getElemToFaces().size( 0 ), expectedSize );
     }
   };
 
   string const cubeVTK = testMeshDir + "/cube.vtk";
   string const cubeVTU = testMeshDir + "/cube.vtu";
-//  string const cubePVTU = testMeshDir + "/cube.pvtu";
+  // string const cubePVTU = testMeshDir + "/cube.pvtu";
+  string const cubeVTS = testMeshDir + "/cube.vts";
+  string const cubePVTS = testMeshDir + "/cube.pvts";
 
   TestMeshImport( cubeVTK, validate );
   TestMeshImport( cubeVTU, validate );
-//  TestMeshImport( cubePVTU, validate );
+  // TestMeshImport( cubePVTU, validate );
+  TestMeshImport( cubeVTS, validate );
+  TestMeshImport( cubePVTS, validate );
 }
 
 TEST( VTKImport, medley )
@@ -158,29 +178,33 @@ TEST( VTKImport, medley )
     // - Element 1 is an hexahedron, in region 1.
     // - Element 2 is a wedge, in region 2.
     // - Element 3 is a tetrahedron, in region 3.
+    // - Element 4 is a pentagonal prism, in region 4.
+    // - Element 5 is an hexagonal prism, in region 5.
     // All the elements belong to a region. Therefore, there is no "-1" region.
-    // It contains 12 nodes, 24 edges, 17 faces.
+    // It contains 26 nodes, 49 edges, 30 faces.
 
-    ASSERT_EQ( cellBlockManager.numNodes(), 12 );
-    ASSERT_EQ( cellBlockManager.numEdges(), 24 );
-    ASSERT_EQ( cellBlockManager.numFaces(), 17 );
+    ASSERT_EQ( cellBlockManager.numNodes(), 26 );
+    ASSERT_EQ( cellBlockManager.numEdges(), 49 );
+    ASSERT_EQ( cellBlockManager.numFaces(), 30 );
 
     SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" );
-    ASSERT_EQ( allNodes.size(), 12 );
+    ASSERT_EQ( allNodes.size(), 26 );
 
-    // 4 elements types x 4 regions = 16 sub-groups
-    ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), 16 );
+    // 6 elements types x 6 regions = 36 sub-groups
+    ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), 36 );
 
     // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
     CellBlockABC const & zone0 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "0_pyramids" );
     CellBlockABC const & zone1 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "1_hexahedra" );
     CellBlockABC const & zone2 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "2_wedges" );
     CellBlockABC const & zone3 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "3_tetrahedra" );
+    CellBlockABC const & zone4 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "4_pentagonalPrisms" );
+    CellBlockABC const & zone5 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "5_hexagonalPrisms" );
 
-    std::vector< string > const elementNames{ "pyramids", "hexahedra", "wedges", "tetrahedra" };
-    for( std::size_t prefix: { 0, 1, 2, 3 } )
+    std::vector< string > const elementNames{ "pyramids", "hexahedra", "wedges", "tetrahedra", "pentagonalPrisms", "hexagonalPrisms" };
+    for( std::size_t prefix: { 0, 1, 2, 3, 4, 5 } )
     {
-      for( std::size_t i = 0; i < 4; ++i )
+      for( std::size_t i = 0; i < 6; ++i )
       {
         string const name = std::to_string( prefix ) + "_" + elementNames[i];
         CellBlockABC const & zone = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( name );
@@ -235,7 +259,41 @@ TEST( VTKImport, medley )
     EXPECT_EQ( elementToNodes( 0, 2 ), 10 );
     EXPECT_EQ( elementToNodes( 0, 3 ), 11 );
 
-    for( auto const & z: { &zone0, &zone1, &zone2, &zone3 } )
+    // Pentagonal prism
+    elementToNodes = zone4.getElemToNodes();
+    ASSERT_EQ( elementToNodes.size( 1 ), 10 );
+    ASSERT_EQ( zone4.getElemToEdges().size( 1 ), 15 );
+    ASSERT_EQ( zone4.getElemToFaces().size( 1 ), 7 );
+    EXPECT_EQ( elementToNodes( 0, 0 ), 2 );
+    EXPECT_EQ( elementToNodes( 0, 1 ), 12 );
+    EXPECT_EQ( elementToNodes( 0, 2 ), 13 );
+    EXPECT_EQ( elementToNodes( 0, 3 ), 14 );
+    EXPECT_EQ( elementToNodes( 0, 4 ), 3 );
+    EXPECT_EQ( elementToNodes( 0, 5 ), 6 );
+    EXPECT_EQ( elementToNodes( 0, 6 ), 15 );
+    EXPECT_EQ( elementToNodes( 0, 7 ), 16 );
+    EXPECT_EQ( elementToNodes( 0, 8 ), 17 );
+    EXPECT_EQ( elementToNodes( 0, 9 ), 7 );
+
+    // Hexagonal prism
+    elementToNodes = zone5.getElemToNodes();
+    ASSERT_EQ( elementToNodes.size( 1 ), 12 );
+    ASSERT_EQ( zone5.getElemToEdges().size( 1 ), 18 );
+    ASSERT_EQ( zone5.getElemToFaces().size( 1 ), 8 );
+    EXPECT_EQ( elementToNodes( 0, 0 ), 1 );
+    EXPECT_EQ( elementToNodes( 0, 1 ), 4 );
+    EXPECT_EQ( elementToNodes( 0, 2 ), 18 );
+    EXPECT_EQ( elementToNodes( 0, 3 ), 19 );
+    EXPECT_EQ( elementToNodes( 0, 4 ), 20 );
+    EXPECT_EQ( elementToNodes( 0, 5 ), 21 );
+    EXPECT_EQ( elementToNodes( 0, 6 ), 5 );
+    EXPECT_EQ( elementToNodes( 0, 7 ), 8 );
+    EXPECT_EQ( elementToNodes( 0, 8 ), 22 );
+    EXPECT_EQ( elementToNodes( 0, 9 ), 23 );
+    EXPECT_EQ( elementToNodes( 0, 10 ), 24 );
+    EXPECT_EQ( elementToNodes( 0, 11 ), 25 );
+
+    for( auto const & z: { &zone0, &zone1, &zone2, &zone3, &zone4, &zone5 } )
     {
       ASSERT_EQ( z->size(), 1 );
       ASSERT_EQ( z->getElemToNodes().size( 0 ), 1 );

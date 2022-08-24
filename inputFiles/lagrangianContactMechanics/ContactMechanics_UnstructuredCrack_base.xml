@@ -9,7 +9,8 @@
       stabilizationName="TPFAstabilization"
       logLevel="1"
       targetRegions="{ Region, Fracture }"
-      contactRelationName="fractureMaterial">
+      contactRelationName="fractureMaterial"
+      fractureRegionName="Fracture">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         logLevel="2"
@@ -56,7 +57,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ South_HEX, North_HEX }"
+      cellBlocks="{ 0_hexahedra, 1_hexahedra }"
       materialList="{ rock }"/>
 
     <SurfaceElementRegion

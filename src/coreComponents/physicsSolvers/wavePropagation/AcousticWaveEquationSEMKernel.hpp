@@ -140,7 +140,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] facesToNodes map from faces to nodes
    * @param[in] elemCenter coordinates of the element centers
    * @param[in] sourceCoordinates coordinates of the source terms
-   * @param[out] sourceIsLocal flag indicating whether the source is local or not
+   * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
    * @param[out] sourceNodeConstants constant part of the source terms
    * @param[in] receiverCoordinates coordinates of the receiver terms
@@ -153,12 +153,13 @@ struct PrecomputeSourceAndReceiverKernel
   launch( localIndex const size,
           localIndex const numNodesPerElem,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const & facesToNodes,
           arrayView2d< real64 const > const & elemCenter,
           arrayView2d< real64 const > const sourceCoordinates,
-          arrayView1d< localIndex > const sourceIsLocal,
+          arrayView1d< localIndex > const sourceIsAccessible,
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
           arrayView2d< real64 const > const receiverCoordinates,
@@ -182,7 +183,7 @@ struct PrecomputeSourceAndReceiverKernel
       /// loop over all the source that haven't been found yet
       for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
       {
-        if( sourceIsLocal[isrc] == 0 )
+        if( sourceIsAccessible[isrc] == 0 )
         {
           real64 const coords[3] = { sourceCoordinates[isrc][0],
                                      sourceCoordinates[isrc][1],
@@ -199,7 +200,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                              coordsOnRefElem );
           if( sourceFound )
           {
-            sourceIsLocal[isrc] = 1;
+            sourceIsAccessible[isrc] = 1;
             real64 Ntest[8];
             finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
@@ -239,13 +240,13 @@ struct PrecomputeSourceAndReceiverKernel
                                                              facesToNodes,
                                                              X,
                                                              coordsOnRefElem );
-          if( receiverFound )
+
+          if( receiverFound && elemGhostRank[k] < 0 )
           {
             receiverIsLocal[ircv] = 1;
 
             real64 Ntest[8];
             finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
-
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
               receiverNodeIds[ircv][a] = elemsToNodes[k][a];

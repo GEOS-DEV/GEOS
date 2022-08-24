@@ -31,6 +31,7 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp" // needed to register pressure(_n)
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/contact/ContactExtrinsicData.hpp"
@@ -108,9 +109,13 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
 
       // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
       // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
-      subRegion.registerWrapper< real64_array >( "pressure" ).
+      subRegion.registerExtrinsicData< extrinsicMeshData::flow::pressure >( getName() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( this->getName());
+      subRegion.registerExtrinsicData< extrinsicMeshData::flow::pressure_n >( getName() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName());
+
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -237,9 +242,11 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
     } );
 
     // Need a synchronization of deltaTraction as will be used in AssembleStabilization
-    std::map< string, string_array > fieldNames;
-    fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::deltaTraction::key() ) );
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::deltaTraction::key() },
+                                     { getFractureRegionName() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );
@@ -526,7 +533,7 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
   } );
 
   dofManager.addField( extrinsicMeshData::contact::traction::key(),
-                       DofManager::Location::Elem,
+                       FieldLocation::Elem,
                        3,
                        meshTargets );
   dofManager.addCoupling( extrinsicMeshData::contact::traction::key(),
@@ -1666,15 +1673,9 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
 
   m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
 
-  dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::deltaTraction::key(), -scalingFactor );
-  dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::traction::key(), -scalingFactor );
+  dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::deltaTraction::key(), scalingFactor );
+  dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::traction::key(), scalingFactor );
 
-
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::traction::key() ) );
-  fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::deltaTraction::key() ) );
-  // This is used locally only, synchronized just for output reasons
-  fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::dispJump::key() ) );
   // fractureStateString is synchronized in UpdateFractureState
   // oldFractureStateString and oldDispJumpString used locally only
 
@@ -1682,7 +1683,14 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    FieldIdentifiers fieldsToBeSync;
+
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::traction::key(),
+                                       extrinsicMeshData::contact::deltaTraction::key(),
+                                       extrinsicMeshData::contact::dispJump::key() },
+                                     { getFractureRegionName() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );

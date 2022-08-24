@@ -28,6 +28,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "common/FieldSpecificationOps.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "mesh/MeshObjectPath.hpp"
 #include "functions/FunctionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -107,6 +108,42 @@ public:
   /// deleted move assignement
   FieldSpecificationBase & operator=( FieldSpecificationBase && ) = delete;
 
+  /**
+   * @brief Apply this field specification to the discretization
+   *
+   * @tparam OBJECT_TYPE The type of discretization/mesh object that the
+   *   specification is being applied to.
+   * @tparam BC_TYPE The type of BC being applied
+   * @tparam LAMBDA
+   * @param mesh The MeshLevel that the specification is applied to
+   * @param lambda The being executed
+   */
+  template< typename OBJECT_TYPE,
+            typename BC_TYPE = FieldSpecificationBase,
+            typename LAMBDA >
+  void apply( MeshLevel & mesh,
+              LAMBDA && lambda ) const
+  {
+    MeshObjectPath const & meshObjectPaths = this->getMeshObjectPaths();
+    meshObjectPaths.forObjectsInPath< OBJECT_TYPE >( mesh,
+                                                     [&] ( OBJECT_TYPE & object )
+    {
+// Cannot have this check due to applications like the traction BC which specify a field name that doesn't exist.
+//      if( object.hasWrapper( getFieldName() ) )
+      {
+        dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
+        string_array setNames = this->getSetNames();
+        for( auto & setName : setNames )
+        {
+          if( setGroup.hasWrapper( setName ) )
+          {
+            SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
+            lambda( dynamic_cast< BC_TYPE const & >(*this), setName, targetSet, object, getFieldName() );
+          }
+        }
+      }
+    } );
+  }
 
 
   /**
@@ -498,12 +535,26 @@ public:
     m_setNames.emplace_back( setName );
   }
 
+  /**
+   * @brief Set the Mesh Object Path object
+   *
+   * @param meshBodies The group containing all the MeshBody objects
+   */
+  void setMeshObjectPath( Group const & meshBodies );
+
+  /**
+   * @brief Get the Mesh Object Paths object
+   *
+   * @return reference to const m_meshObjectPaths
+   */
+  MeshObjectPath const & getMeshObjectPaths() const
+  {
+    return *(m_meshObjectPaths.get());
+  }
+
 
 protected:
-  virtual void postProcessInput() override;
 
-  /// The flag used to decide if the BC value is normalized by the size of the set on which it is applied
-  bool m_normalizeBySetSize;
 
 private:
 
@@ -513,6 +564,8 @@ private:
 
   /// the path to the object which contains the fields that the boundary condition is applied to
   string m_objectPath;
+
+  std::unique_ptr< MeshObjectPath > m_meshObjectPaths;
 
   /// the name of the field the boundary condition is applied to or a key string to use for
   /// determining whether or not to apply the boundary condition.
@@ -737,37 +790,12 @@ FieldSpecificationBase::
   string const & functionName = getReference< string >( viewKeyStruct::functionNameString() );
   FunctionManager & functionManager = FunctionManager::getInstance();
 
-  // Step 1: we have to compute the global set size (the global number of elements on which the boundary condition is applied)
-  // Note that this global set size is only needed by the SourceFlux boundary condition
-  // We cannot precompute this number in the boundary condition classes the face elements are created after initialisation
-
-  real64 sizeScalingFactor = 1.0;
-  if( m_normalizeBySetSize )
-  {
-    arrayView1d< integer const > const ghostRank =
-      dataGroup.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-
-    RAJA::ReduceSum< ReducePolicy< POLICY >, localIndex > localSetSize( 0 );
-    forAll< POLICY >( targetSet.size(),
-                      [targetSet, ghostRank, localSetSize] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      localIndex const ei = targetSet[k];
-      if( ghostRank[ei] < 0 )
-      {
-        localSetSize += 1;
-      }
-    } );
-
-    globalIndex const globalSetSize = MpiWrapper::sum( LvArray::integerConversion< globalIndex >( localSetSize.get() ), MPI_COMM_GEOSX );
-    sizeScalingFactor = ( globalSetSize > 0 ) ? ( 1.0 / globalSetSize ) : 1.0;
-  }
-
-  // Step 2: compute the value of the rhs terms, and collect the dof numbers
+  // Compute the value of the rhs terms, and collect the dof numbers
   // The rhs terms will be assembled in applyBoundaryConditionToSystem (or in the solver for CompositionalMultiphaseBase)
 
   if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
   {
-    real64 value = m_scale * dt * sizeScalingFactor;
+    real64 value = m_scale * dt;
     if( !functionName.empty() )
     {
       FunctionBase const & function = functionManager.getGroup< FunctionBase >( functionName );
@@ -794,7 +822,7 @@ FieldSpecificationBase::
     real64_array resultsArray( targetSet.size() );
     function.evaluate( dataGroup, time, targetSet, resultsArray );
     arrayView1d< real64 const > const & results = resultsArray.toViewConst();
-    real64 const value = m_scale * dt * sizeScalingFactor;
+    real64 const value = m_scale * dt;
 
     forAll< POLICY >( targetSet.size(),
                       [targetSet, dof, dofMap, dofRankOffset, component, matrix, rhsContribution, results, value, lambda] GEOSX_HOST_DEVICE (

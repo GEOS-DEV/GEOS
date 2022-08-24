@@ -12,12 +12,9 @@ how instantiations of each class relate to each other in the data hierarchy rath
 type relates to each other in an inheritance diagram.
 
 .. _diagMeshDevFig:
-.. figure:: /coreComponents/mesh/docs/MeshObjectInstantiationHierarchy.png
-    :align: center
-    :figclass: align-center
-    :name: MeshObjectInstantiationHierarchy
+.. uml:: /coreComponents/mesh/docs/MeshObjectInstantiationHierarchy.plantuml
+   :caption: Object instances describing the mesh domain. Cardinalities and relationships are indicated.
 
-    Object Instantiation Hierarchy for the Mesh Objects.
 
 To illustrate the mesh hierarchy, we propose to present it along with a model with two
 regions (Top and Bottom) (:numref:`modelMeshDevFig`).

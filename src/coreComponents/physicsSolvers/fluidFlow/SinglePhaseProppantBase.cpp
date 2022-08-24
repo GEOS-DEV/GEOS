@@ -72,7 +72,7 @@ void SinglePhaseProppantBase::setConstitutiveNames( ElementSubRegionBase & subRe
   GEOSX_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 }
 
-void SinglePhaseProppantBase::validateFluidModels( DomainPartition & domain ) const
+void SinglePhaseProppantBase::validateConstitutiveModels( DomainPartition & domain ) const
 {
   // Validate fluid models in regions
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -109,14 +109,8 @@ void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup ) 
   arrayView1d< real64 const > const pres =
     dataGroup.getExtrinsicData< extrinsicMeshData::flow::pressure >();
 
-  arrayView1d< real64 const > const dPres =
-    dataGroup.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
-
   arrayView1d< real64 const > const proppantConcentration =
     dataGroup.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration >();
-
-  arrayView1d< real64 const > const dProppantConcentration =
-    dataGroup.getExtrinsicData< extrinsicMeshData::proppant::deltaProppantConcentration >();
 
   arrayView2d< real64 const > const componentConcentration =
     dataGroup.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >();
@@ -135,9 +129,7 @@ void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup ) 
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
     singlePhaseProppantBaseKernels::FluidUpdateKernel::launch( fluidWrapper,
                                                                pres,
-                                                               dPres,
                                                                proppantConcentration,
-                                                               dProppantConcentration,
                                                                componentConcentration,
                                                                cellBasedFlux,
                                                                isProppantBoundaryElement );
