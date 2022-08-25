@@ -77,16 +77,22 @@ else()
   set( CSL_TYPE STATIC )
 endif()
 
-if( GEOSX_BUILD_OBJ_LIBS )
-  message( "Using cmake  Object Libraries" )
+if( NOT GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
+  message( "Using static geosx_core library, object coreComponents" )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
                     DEPENDS_ON  mainInterface physicsSolvers
-                    OBJECT ${GEOSX_BUILD_OBJ_LIBS}
-                    SHARED ${GEOSX_BUILD_SHARED_BOOL}
                   )
-elseif( GEOSX_BUILD_SHARED_LIBS )
+elseif( GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
+  message( "Using shared geosx_core library, object coreComponents" )
+  blt_add_library ( NAME geosx_core
+                    SOURCES dummy.cpp
+                    DEPENDS_ON  mainInterface physicsSolvers
+                    SHARED TRUE
+                  )
+elseif( GEOSX_BUILD_SHARED_LIBS NOT GEOSX_BUILD_OBJ_LIBS )
   message( "Using blt blt_combine_static_libraries" )
+  message( "Using shared geosx_core library, static coreComponents" )
   blt_combine_static_libraries( NAME          geosx_core
                                 SOURCE_LIBS   ${coreLibs}
                                 LIB_TYPE      ${CSL_TYPE}
