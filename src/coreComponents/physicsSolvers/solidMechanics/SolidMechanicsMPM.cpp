@@ -164,7 +164,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
   forMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                     MeshLevel & meshLevel,
-                                    arrayView1d<string const> const & regionNames )
+                                    arrayView1d<string const> const & GEOSX_UNUSED_PARAM( regionNames ) )
   {
     MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
     if( meshBody.hasParticles() ) // Particle field registration? TODO: What goes here?
@@ -211,7 +211,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName()).
         setDescription( "An array that holds the contact force." );
 
-      Group & nodeSets = nodes.sets(); // Do we need to register BC nodes on this?
+      // Group & nodeSets = nodes.sets(); // Do we need to register BC nodes on this?
     }
   } );
 }
