@@ -78,47 +78,7 @@ public:
 
   void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) override;
   
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
-    static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
-    static constexpr char const * sourceIsLocalString() { return "sourceIsLocal"; }
-
-    static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
-    static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
-    static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
-    
-    static constexpr char const * displacementxNp1AtReceiversString() { return "displacementxNp1AtReceivers"; }
-    static constexpr char const * displacementyNp1AtReceiversString() { return "displacementyNp1AtReceivers"; }
-    static constexpr char const * displacementzNp1AtReceiversString() { return "displacementzNp1AtReceivers"; }
-
-  } waveEquationViewKeys;
-
-
-protected:
-
-  virtual void postProcessInput() override final;
-
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
-
-private:
-
-    /**
-   * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
-   * corresponding elements nodes.
-   * @param mesh mesh of the computational domain
-   * @param regionNames name of the region you are currently on
-   */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
-
   /**
-   * @brief Apply free surface condition to the face define in the geometry box from the xml
-   * @param time the time to apply the BC
-   * @param domain the partition domain
-   */
-  virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
-
-    /**
    * TODO: move implementation into WaveSolverBase
    * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
    * last two timesteps.
@@ -158,6 +118,47 @@ private:
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
    */
   virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain ) override;
+
+
+  struct viewKeyStruct : SolverBase::viewKeyStruct
+  {
+    static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
+    static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
+    static constexpr char const * sourceIsLocalString() { return "sourceIsLocal"; }
+
+    static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
+    static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
+    static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
+    
+    static constexpr char const * displacementxNp1AtReceiversString() { return "displacementxNp1AtReceivers"; }
+    static constexpr char const * displacementyNp1AtReceiversString() { return "displacementyNp1AtReceivers"; }
+    static constexpr char const * displacementzNp1AtReceiversString() { return "displacementzNp1AtReceivers"; }
+
+  } waveEquationViewKeys;
+
+
+protected:
+
+  virtual void postProcessInput() override final;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
+
+private:
+
+    /**
+   * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
+   * corresponding elements nodes.
+   * @param mesh mesh of the computational domain
+   * @param regionNames name of the region you are currently on
+   */
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+
+  /**
+   * @brief Apply free surface condition to the face define in the geometry box from the xml
+   * @param time the time to apply the BC
+   * @param domain the partition domain
+   */
+  virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
 
 
   /// save the sismo trace in file
@@ -336,6 +337,22 @@ EXTRINSIC_MESH_DATA_TRAIT( MediumDensity,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Medium density of the cell" );
+
+EXTRINSIC_MESH_DATA_TRAIT( Lambda,
+                           "lambda",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "First Lame parameter: lambda" );
+
+EXTRINSIC_MESH_DATA_TRAIT( Mu,
+                           "mu",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Second Lame parameter: mu" );
 
 EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceFaceIndicator,
                            "freeSurfaceFaceIndicator",

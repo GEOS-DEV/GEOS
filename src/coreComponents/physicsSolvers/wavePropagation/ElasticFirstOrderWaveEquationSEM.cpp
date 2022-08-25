@@ -141,6 +141,8 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocityVp >( this->getName() );
       subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocityVs >( this->getName() );
       subRegion.registerExtrinsicData< extrinsicMeshData::MediumDensity >( this->getName() );
+      subRegion.registerExtrinsicData< extrinsicMeshData::Lambda >( this->getName() );
+      subRegion.registerExtrinsicData< extrinsicMeshData::Mu >( this->getName() );
 
       subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensorxx >(this->getName());
       subRegion.registerExtrinsicData< extrinsicMeshData::Stresstensoryy >(this->getName());
@@ -595,22 +597,22 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
                                                arrayView1d< string const > const & regionNames )
 
   {
-    
+
     NodeManager & nodeManager = mesh.getNodeManager();
- 
+  
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+
     arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-    arrayView1d< real64 const > const dampingx = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorx >();
-    arrayView1d< real64 const > const dampingy = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectory >();
-    arrayView1d< real64 const > const dampingz = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorz >();
+    // arrayView1d< real64 const > const dampingx = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorx >();
+    // arrayView1d< real64 const > const dampingy = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectory >();
+    // arrayView1d< real64 const > const dampingz = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVectorz >();
 
     arrayView1d< real64 > const ux_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_np1 >();
     arrayView1d< real64 > const uy_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_np1 >();
     arrayView1d< real64 > const uz_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_np1 >();
 
     /// get array of indicators: 1 if node on free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
-
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+    //arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
 
     //arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
 
@@ -619,9 +621,14 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
 
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+
       arrayView1d< real64 const > const velocityVp = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVp >();
       arrayView1d< real64 const > const velocityVs = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVs >();
       arrayView1d< real64 const > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity >();
+
+      arrayView1d< real64 > const lambda = elementSubRegion.getExtrinsicData< extrinsicMeshData::Lambda >();
+      arrayView1d< real64 > const mu = elementSubRegion.getExtrinsicData< extrinsicMeshData::Mu >();
 
       arrayView2d< real64 > const stressxx = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensorxx >();
       arrayView2d< real64 > const stressyy = elementSubRegion.getExtrinsicData< extrinsicMeshData::Stresstensoryy >();
@@ -632,38 +639,94 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
 
       //addSourceToRightHandSide( cycleNumber, rhs );
 
-      auto kernelFactory = elasticFirstOrderWaveEquationSEMKernels::ExplicitElasticDisplacementSEMFactory( dt );
+      finiteElement::FiniteElementBase const &
+      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+      finiteElement::dispatch3D( fe,
+                                 [&]
+                                      ( auto const finiteElement )
+      {
+        using FE_TYPE = TYPEOFREF( finiteElement );
+
+        elasticFirstOrderWaveEquationSEMKernels::
+          StressComputation< FE_TYPE > kernel( finiteElement );
+        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
+        (elementSubRegion.size(),
+         X,
+         elemsToNodes,
+         ux_np1,
+         uy_np1,
+         uz_np1,
+         density,
+         velocityVp,
+         velocityVs,
+         lambda,
+         mu,
+         sourceConstants,
+         sourceIsLocal,
+         sourceElem,
+         sourceValue,
+         dt,
+         cycleNumber,
+         stressxx,
+         stressyy,
+         stresszz,
+         stressxy,
+         stressxz,
+         stressyz);
+
+         elasticFirstOrderWaveEquationSEMKernels::
+           VelocityComputation< FE_TYPE > kernel2( finiteElement );
+         kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
+         (elementSubRegion.size(),
+          X,
+          elemsToNodes,
+          stressxx,
+          stressyy,
+          stresszz,
+          stressxy,
+          stressxz,
+          stressyz,
+          mass,
+          dt,
+          ux_np1,
+          uy_np1,
+          uz_np1);
+        
+
+      } );
+
+      // auto kernelFactory = elasticFirstOrderWaveEquationSEMKernels::ExplicitElasticDisplacementSEMFactory( dt );
   
-      finiteElement::
-      regionBasedKernelApplication< EXEC_POLICY,
-                                    constitutive::NullModel,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            getDiscretizationName(),
-                                                            "",
-                                                            kernelFactory );
+      // finiteElement::
+      // regionBasedKernelApplication< EXEC_POLICY,
+      //                               constitutive::NullModel,
+      //                               CellElementSubRegion >( mesh,
+      //                                                       regionNames,
+      //                                                       getDiscretizationName(),
+      //                                                       "",
+      //                                                       kernelFactory );
 
-      auto kernelFactory2 = elasticFirstOrderWaveEquationSEMKernels::ExplicitElasticStressSEMFactory(stressxx,
-                                                                                           stressyy,
-                                                                                           stresszz,
-                                                                                           stressxy,
-                                                                                           stressxz,
-                                                                                           stressyz,
-                                                                                           sourceElem,
-                                                                                           sourceIsLocal,
-                                                                                           sourceConstants,
-                                                                                           sourceValue,
-                                                                                           dt,
-                                                                                           cycleNumber );
+      // auto kernelFactory2 = elasticFirstOrderWaveEquationSEMKernels::ExplicitElasticStressSEMFactory(stressxx,
+      //                                                                                      stressyy,
+      //                                                                                      stresszz,
+      //                                                                                      stressxy,
+      //                                                                                      stressxz,
+      //                                                                                      stressyz,
+      //                                                                                      sourceElem,
+      //                                                                                      sourceIsLocal,
+      //                                                                                      sourceConstants,
+      //                                                                                      sourceValue,
+      //                                                                                      dt,
+      //                                                                                      cycleNumber );
 
-      finiteElement::
-      regionBasedKernelApplication< EXEC_POLICY,
-                                    constitutive::NullModel,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            getDiscretizationName(),
-                                                            "",
-                                                            kernelFactory2 );                                         
+      // finiteElement::
+      // regionBasedKernelApplication< EXEC_POLICY,
+      //                               constitutive::NullModel,
+      //                               CellElementSubRegion >( mesh,
+      //                                                       regionNames,
+      //                                                       getDiscretizationName(),
+      //                                                       "",
+      //                                                       kernelFactory2 );                                         
                       
       } );
 
