@@ -570,6 +570,10 @@ struct PMLKernel
           sigma );
 
         /// compute B.pressureGrad - C.auxUGrad where B and C are functions of the damping profile
+        /// WARNING: the division by 'numNodesPerElem' below is needed because the average of 
+        /// gradient and divergence at the nodes are sought. It is the number of cells contributing
+        /// to each node that is needed. In this case, it is equal to 'numNodesPerElem'. For high-order
+        /// SEM, this approach won't work and the average needs to be computed differently (maybe using counters).
         real64 localIncrementArray[3];
         localIncrementArray[0] = (sigma[0]-sigma[1]-sigma[2])*pressureGrad[0] - (sigma[1]*sigma[2])*auxUGrad[0];
         localIncrementArray[1] = (sigma[1]-sigma[0]-sigma[2])*pressureGrad[1] - (sigma[0]*sigma[2])*auxUGrad[1];
