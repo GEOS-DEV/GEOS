@@ -19,6 +19,8 @@ geosx_osx_build: &geosx_osx_build
   os: osx
   osx_image: xcode13.2
   install:
+  - echo "running nproc"; nproc
+  - echo "running free -m"; free -m
   - TPL_METADATA_URL=https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${GEOSX_TPL_TAG}.tar
   - TPL_BULK_URL=${TPL_METADATA_URL}?alt=media
     # Extracting the GEOSX_TPL installation directory
