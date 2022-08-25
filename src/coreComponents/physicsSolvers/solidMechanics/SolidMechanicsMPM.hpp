@@ -178,7 +178,7 @@ protected:
   MPI_iCommData m_iComm;
 
   int m_numContactGroups, m_numContactFlags, m_numVelocityFields;
-  bool m_damageFieldPartitioning = false;
+  bool m_damageFieldPartitioning;
 
   std::array<real64, 3> m_hEl;                // Grid spacing in x-y-z
   std::array<real64, 3> m_xLocalMin;          // Minimum local grid coordinate including ghost nodes

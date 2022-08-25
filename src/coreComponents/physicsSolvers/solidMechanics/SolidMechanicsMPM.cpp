@@ -468,7 +468,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   gridContactForce.resize( numNodes, m_numVelocityFields, 3 );
 
   // Set grid multi-field labels to avoid a VTK output bug
-  // TODO: Only doing this on the 1st cycle breaks restarts, can we do better? Why aren't labels part of the restart metadata?
+  // TODO: Only doing this on the 1st cycle breaks restarts, can we do better? Why aren't labels part of the restart data?
   std::vector< std::string > keys = { keys::Velocity, viewKeyStruct::momentumString(),keys::Acceleration, viewKeyStruct::forceInternalString(), viewKeyStruct::forceExternalString(), viewKeyStruct::forceContactString() };
   std::vector< std::string > labels1(m_numVelocityFields);
   std::generate( labels1.begin(), labels1.end(), [i=0]() mutable { return std::to_string( i++ ); } );
@@ -501,10 +501,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
     arrayView3d< real64, solid::STRESS_USD > const particleStress = constitutiveRelation.getStress();
-    if( cycleNumber == 0 )
-    {
-      particleStress.zero(); // Zero out particle stress on first time step TODO I thought the constitutive constructor handled this
-    }
 
     for(int p=0; p<subRegion.size(); p++)
     {
@@ -555,7 +551,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
   // (1) Initialize
   FieldIdentifiers fieldsToBeSynced;
-  fieldsToBeSynced.addFields( FieldLocation::Node, { keys::Mass, viewKeyStruct::momentumString(), viewKeyStruct::forceInternalString() } );
+  fieldsToBeSynced.addFields( FieldLocation::Node, { keys::Mass, viewKeyStruct::momentumString(), viewKeyStruct::forceInternalString(), viewKeyStruct::forceExternalString() } );
   std::vector< NeighborCommunicator > & neighbors = domain.getNeighbors();
   m_iComm.resize( neighbors.size() );
 
@@ -600,7 +596,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, m_iComm, true, unpackEvents2 );
 
 
-  // Grid update
+  // Determine updated trial velocities before contact enforcement
   for(int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++)
   {
     for(int g=0; g<numNodes; g++)
@@ -614,18 +610,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
           gridVelocity[g][fieldIndex][i] = gridMomentum[g][fieldIndex][i]/gridMass[g][fieldIndex];
           gridVelocity[g][fieldIndex][i] += gridAcceleration[g][fieldIndex][i]*dt;
         }
-  //      // hard-coded rotation about z-axis passing thru mesh center
-  //      double xRel = gridReferencePosition[i][0] - 0.5*(m_xGlobalMax[0] - m_xGlobalMin[0]);
-  //      double yRel = gridReferencePosition[i][1] - 0.5*(m_xGlobalMax[1] - m_xGlobalMin[1]);
-  //      double theta = atan2(yRel,xRel);
-  //      double r = hypot(xRel,yRel);
-  //      gridVelocity[i][0] = -r*sin(theta)*50.0;
-  //      gridVelocity[i][1] = r*cos(theta)*50.0;
-  //      gridVelocity[i][2] = 0.0;
-  //      // hard-coded shear
-  //      gridVelocity[i][0] = 50.0*(gridReferencePosition[i][1] - 0.5*(m_xGlobalMax[1] - m_xGlobalMin[1]));
-  //      gridVelocity[i][1] = 25.0*(gridReferencePosition[i][0] - 0.5*(m_xGlobalMax[0] - m_xGlobalMin[0]));
-  //      gridVelocity[i][2] = 0.0;
       }
       else
       {
@@ -637,17 +621,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       }
     }
   }
-
-//  for(int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++)
-//  {
-//    std::cout << "Field " << fieldIndex << ":" << std::endl;
-//    for(int g=0; g<numNodes; g++)
-//    {
-//      std::cout << g << "/" << gridVelocity[g][fieldIndex] << "\t";
-//    }
-//    std::cout << std::endl;
-//  }
-
 
   // Grid to particle interpolation
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -760,15 +733,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       {
        for(int j=0; j<3; j++)
        {
-         if(i == j)
-         {
-           EG[i][j] = (p_F[0][i]*p_F[0][j] + p_F[1][i]*p_F[1][j] + p_F[2][i]*p_F[2][j]) - 1.0;
-         }
-         else
-         {
-           EG[i][j] = p_F[0][i]*p_F[0][j] + p_F[1][i]*p_F[1][j] + p_F[2][i]*p_F[2][j];
-         }
-         EG[i][j] *= 0.5;
+         EG[i][j] = 0.5*( (p_F[0][i]*p_F[0][j] + p_F[1][i]*p_F[1][j] + p_F[2][i]*p_F[2][j]) - ( i==j ? 1.0 : 0.0 ) );
        }
       }
 
