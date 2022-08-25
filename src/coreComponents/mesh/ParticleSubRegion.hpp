@@ -93,7 +93,7 @@ public:
                      LvArray::ArraySlice<double, 1, 0, int> const & p_x,
                      std::array<real64, 3> const & xMin,
                      std::array<real64, 3> const & hx,
-                     std::vector<std::vector<std::vector<int>>> const & ijkMap,
+                     array3d< int > const & ijkMap,
                      arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X,
                      std::vector<int> & nodeIDs,
                      std::vector<real64> & weights,

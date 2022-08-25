@@ -54,84 +54,68 @@ using namespace constitutive;
 SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
                                       Group * const parent ):
   SolverBase( name, parent ),
-  m_newmarkGamma( 0.5 ),
-  m_newmarkBeta( 0.25 ),
-  m_massDamping( 0.0 ),
-  m_stiffnessDamping( 0.0 ),
   m_timeIntegrationOption( TimeIntegrationOption::ExplicitDynamic ),
-  m_useVelocityEstimateForQS( 0 ),
-  m_maxForce( 0.0 ),
-  m_maxNumResolves( 10 ),
-  m_strainTheory( 0 ),
-//  m_elemsAttachedToSendOrReceiveNodes(),
-//  m_elemsNotAttachedToSendOrReceiveNodes(),
-//  m_sendOrReceiveNodes(),
-//  m_nonSendOrReceiveNodes(),
-//  m_targetNodes(),
-  m_iComm( CommunicationTools::getInstance().getCommID() )
+  m_iComm( CommunicationTools::getInstance().getCommID() ),
+  m_numContactGroups(),
+  m_numContactFlags(),
+  m_numVelocityFields(),
+  m_damageFieldPartitioning( false ),
+  m_hEl{DBL_MAX, DBL_MAX, DBL_MAX},
+  m_xLocalMin{DBL_MAX, DBL_MAX, DBL_MAX},
+  m_xLocalMax{DBL_MIN, DBL_MIN, DBL_MIN},
+  m_xLocalMinNoGhost{0.0, 0.0, 0.0},
+  m_xLocalMaxNoGhost{0.0, 0.0, 0.0},
+  m_xGlobalMin{0.0, 0.0, 0.0},
+  m_xGlobalMax{0.0, 0.0, 0.0},
+  m_domainLengths{0.0, 0.0, 0.0},
+  m_nEl{0, 0, 0},
+  m_ijkMap(),
+  m_voigtMap{ {0, 5, 4}, {5, 1, 3}, {4, 3, 2} }
 {
-//  m_sendOrReceiveNodes.setName( "SolidMechanicsMPM::m_sendOrReceiveNodes" );
-//  m_nonSendOrReceiveNodes.setName( "SolidMechanicsMPM::m_nonSendOrReceiveNodes" );
-//  m_targetNodes.setName( "SolidMechanicsMPM::m_targetNodes" );
-
-  registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
-    setApplyDefaultValue( 0.5 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Value of :math:`\\gamma` in the Newmark Method for Implicit Dynamic time integration option" );
-
-  registerWrapper( viewKeyStruct::newmarkBetaString(), &m_newmarkBeta ).
-    setApplyDefaultValue( 0.25 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Value of :math:`\\beta` in the Newmark Method for Implicit Dynamic time integration option. "
-                    "This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing." );
-
-  registerWrapper( viewKeyStruct::massDampingString(), &m_massDamping ).
-    setApplyDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Value of mass based damping coefficient. " );
-
-  registerWrapper( viewKeyStruct::stiffnessDampingString(), &m_stiffnessDamping ).
-    setApplyDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Value of stiffness based damping coefficient. " );
-
   registerWrapper( viewKeyStruct::timeIntegrationOptionString(), &m_timeIntegrationOption ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_timeIntegrationOption ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
-  registerWrapper( viewKeyStruct::useVelocityEstimateForQSString(), &m_useVelocityEstimateForQS ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to indicate the use of the incremental displacement from the previous step as an "
-                    "initial estimate for the incremental displacement of the current step." );
-
-  registerWrapper( viewKeyStruct::maxNumResolvesString(), &m_maxNumResolves ).
-    setApplyDefaultValue( 10 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Value to indicate how many resolves may be executed after some other event is executed. "
-                    "For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. "
-                    "However if a new surface is generated, then the mechanics solve must be executed again due to the "
-                    "change in topology." );
-
-  registerWrapper( viewKeyStruct::strainTheoryString(), &m_strainTheory ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Indicates whether or not to use "
-                    "`Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or "
-                    "`Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:\n"
-                    " 0 - Infinitesimal Strain \n"
-                    " 1 - Finite Strain" );
-
-  registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
-    setApplyDefaultValue( viewKeyStruct::noContactRelationNameString() ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
-
-  registerWrapper( viewKeyStruct::maxForceString(), &m_maxForce ).
+  registerWrapper( "hEl", &m_hEl ).
     setInputFlag( InputFlags::FALSE ).
-    setDescription( "The maximum force contribution in the problem domain." );
+    setDescription( "Element dimensions" );
 
+  registerWrapper( "xLocalMin", &m_xLocalMin ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Local minimum grid extent including ghosts" );
+
+  registerWrapper( "xLocalMax", &m_xLocalMax ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Local maximum grid extent including ghosts" );
+
+  registerWrapper( "xLocalMinNoGhost", &m_xLocalMinNoGhost ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Local minimum grid extent excluding ghosts" );
+
+  registerWrapper( "xLocalMaxNoGhost", &m_xLocalMaxNoGhost ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Local maximum grid extent excluding ghosts" );
+
+  registerWrapper( "xGlobalMin", &m_xGlobalMin ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Global minimum grid extent including ghosts" );
+
+  registerWrapper( "xGlobalMax", &m_xGlobalMax ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Global maximum grid extent including ghosts" );
+
+  registerWrapper( "domainLengths", &m_domainLengths ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Lengths of each side of the computational domain" );
+
+  registerWrapper( "nEl", &m_nEl ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Number of elements in each spatial dimension" );
+
+  registerWrapper( "ijkMap", &m_ijkMap ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Map from cell-spaced coordinates to cell ID" );
 }
 
 void SolidMechanicsMPM::postProcessInput()
@@ -227,33 +211,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName()).
         setDescription( "An array that holds the contact force." );
 
-      Group & nodeSets = nodes.sets();
-      nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::sendOrReceiveNodesString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE );
-
-      nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::nonSendOrReceiveNodesString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE );
-
-      nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::targetNodesString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE );
-
-      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
-      elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-                                                                         [&]( localIndex const,
-                                                                              CellElementSubRegion & subRegion )
-      {
-        subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRestartFlags( RestartFlags::NO_WRITE );
-
-        subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRestartFlags( RestartFlags::NO_WRITE );
-
-      } );
+      Group & nodeSets = nodes.sets(); // Do we need to register BC nodes on this?
     }
   } );
 }
@@ -292,48 +250,6 @@ void SolidMechanicsMPM::initializePreSubGroups()
   GEOSX_UNUSED_VAR( feDiscretization );
 }
 
-
-
-//template< typename ... PARAMS >
-//real64 SolidMechanicsMPM::explicitKernelDispatch( MeshLevel & mesh,
-//                                                  arrayView1d< string const > const & targetRegions,
-//                                                  string const & finiteElementName,
-//                                                  real64 const dt,
-//                                                  std::string const & elementListName )
-//{
-//  GEOSX_MARK_FUNCTION;
-//  real64 rval = 0;
-//  if( m_strainTheory==0 )
-//  {
-//    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
-//    rval = finiteElement::
-//             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-//                                           constitutive::SolidBase,
-//                                           CellElementSubRegion >( mesh,
-//                                                                   targetRegions,
-//                                                                   finiteElementName,
-//                                                                   viewKeyStruct::solidMaterialNamesString(),
-//                                                                   kernelFactory );
-//  }
-//  else if( m_strainTheory==1 )
-//  {
-//    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainFactory( dt, elementListName );
-//    rval = finiteElement::
-//             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-//                                           constitutive::SolidBase,
-//                                           CellElementSubRegion >( mesh,
-//                                                                   targetRegions,
-//                                                                   finiteElementName,
-//                                                                   viewKeyStruct::solidMaterialNamesString(),
-//                                                                   kernelFactory );
-//  }
-//  else
-//  {
-//    GEOSX_ERROR( "Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
-//  }
-//
-//  return rval;
-//}
 
 bool SolidMechanicsMPM::execute( real64 const time_n,
                                  real64 const dt,
@@ -402,7 +318,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     m_xLocalMaxNoGhost[i] = partition.getLocalMax()[i];
     m_xGlobalMin[i] = partition.getGlobalMin()[i];
     m_xGlobalMax[i] = partition.getGlobalMax()[i];
-    m_domainL[i] = m_xLocalMax[i] - m_xLocalMin[i];
+    m_domainLengths[i] = m_xLocalMax[i] - m_xLocalMin[i];
   }
 
   // Get element size
@@ -421,19 +337,11 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   // Get number of elements in each direction
   for(int i=0; i<3; i++)
   {
-    m_nEl[i] = std::round(m_domainL[i]/m_hEl[i]);
+    m_nEl[i] = std::round(m_domainLengths[i]/m_hEl[i]);
   }
 
   // Create element map
-  m_ijkMap.resize( m_nEl[0] + 1 );
-  for( int i = 0 ; i <= m_nEl[0] ; i++ )
-  {
-    m_ijkMap[i].resize( m_nEl[1] + 1 );
-    for( int j = 0 ; j <= m_nEl[1] ; j++ )
-    {
-      m_ijkMap[i][j].resize( m_nEl[2] + 1 );
-    }
-  }
+  m_ijkMap.resize( m_nEl[0] + 1, m_nEl[1] + 1, m_nEl[2] + 1 );
   for( int g = 0 ; g < numNodes ; g++ )
   {
     int i = std::round( ( gridReferencePosition[g][0] - m_xLocalMin[0] ) / m_hEl[0] ) ;
@@ -559,19 +467,17 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   gridExternalForce.resize( numNodes, m_numVelocityFields, 3 );
   gridContactForce.resize( numNodes, m_numVelocityFields, 3 );
 
-  // Set grid multi-field labels on first cycle to avoid a VTK output bug
-  if( cycleNumber == 0 )
+  // Set grid multi-field labels to avoid a VTK output bug
+  // TODO: Only doing this on the 1st cycle breaks restarts, can we do better? Why aren't labels part of the restart metadata?
+  std::vector< std::string > keys = { keys::Velocity, viewKeyStruct::momentumString(),keys::Acceleration, viewKeyStruct::forceInternalString(), viewKeyStruct::forceExternalString(), viewKeyStruct::forceContactString() };
+  std::vector< std::string > labels1(m_numVelocityFields);
+  std::generate( labels1.begin(), labels1.end(), [i=0]() mutable { return std::to_string( i++ ); } );
+  string const labels2[] = { "0", "1", "2" };
+  for( size_t gridField=0; gridField<keys.size(); gridField++)
   {
-    std::vector< std::string > keys = { keys::Velocity, viewKeyStruct::momentumString(),keys::Acceleration, viewKeyStruct::forceInternalString(), viewKeyStruct::forceExternalString(), viewKeyStruct::forceContactString() };
-    std::vector< std::string > labels1(m_numVelocityFields);
-    std::generate( labels1.begin(), labels1.end(), [i=0]() mutable { return std::to_string( i++ ); } );
-    string const labels2[] = { "0", "1", "2" };
-    for( size_t gridField=0; gridField<keys.size(); gridField++)
-    {
-      WrapperBase & wrapper = nodeManager.getWrapper< array3d< real64 > >( keys[gridField] );
-      wrapper.setDimLabels( 1, labels1 );
-      wrapper.setDimLabels( 2, labels2 );
-    }
+    WrapperBase & wrapper = nodeManager.getWrapper< array3d< real64 > >( keys[gridField] );
+    wrapper.setDimLabels( 1, labels1 );
+    wrapper.setDimLabels( 2, labels2 );
   }
 
   // Zero out grid fields
