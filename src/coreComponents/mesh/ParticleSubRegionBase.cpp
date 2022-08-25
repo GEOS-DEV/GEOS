@@ -27,6 +27,7 @@ using namespace dataRepository;
 ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_constitutiveModels( groupKeyStruct::constitutiveModelsString(), this ),
+  m_hasRVectors(),
   m_particleGhostRank(),
   m_particleID(),
   m_particleGroup(),
@@ -36,6 +37,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   m_particleInitialVolume(),
   m_particleMass(),
   m_particleDeformationGradient(),
+  m_particleType(),
   m_particleRVectors(),
   m_particleInitialRVectors()
 {
