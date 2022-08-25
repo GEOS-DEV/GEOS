@@ -2,9 +2,10 @@
 
 <Problem>
   <Included>
-    <File name="./Buckley_Leverett_base.xml"/>
+    <File name="./buckleyLeverett_base.xml"/>
   </Included>
 
+  <!-- SPHINX_MESH -->
   <Mesh>
     <InternalMesh
       name="mesh"
@@ -17,6 +18,7 @@
       nz="{ 1 }"
       cellBlockNames="{ cellBlock }"/>
   </Mesh>
+  <!-- SPHINX_MESH_END -->
 
   <Geometry>
     <Box
@@ -31,18 +33,29 @@
   </Geometry>
 
   <Events
-    maxTime="1.0">
+    maxTime="70.1">
     
     <PeriodicEvent
-      name="restarts"
-      timeFrequency="0.4"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"
-    />
+      name="outputs"
+      timeFrequency="70"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="10"
+      targetExactTimestep="1"
+      target="/Outputs/timeHistoryOutput" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="10"
+      targetExactTimestep="1"
+      target="/Tasks/phaseVolumeFractionCollection" />
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="0.1"
+      maxEventDt="0.01"
       target="/Solvers/compflow"/>    
   </Events>
 </Problem>

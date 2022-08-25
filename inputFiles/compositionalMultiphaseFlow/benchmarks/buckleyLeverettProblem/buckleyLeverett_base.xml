@@ -75,7 +75,7 @@
       phaseNames="{ gas, water }"
       surfaceDensities="{ 280.0, 992.0 }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      tableFiles="{ Buckley_Leverett_table/pvdg.txt, Buckley_Leverett_table/pvtw.txt }"/>
+      tableFiles="{ buckleyLeverett_table/pvdg.txt, buckleyLeverett_table/pvtw.txt }"/>
   </Constitutive>
   <!-- SPHINX_MATERIAL_END -->
 
