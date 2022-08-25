@@ -641,6 +641,10 @@
 					<xsd:selector xpath="VanGenuchtenCapillaryPressure" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="ConstitutiveViscoElasticIsotropicUniqueName">
+					<xsd:selector xpath="ViscoElasticIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="Included" type="IncludedType" maxOccurs="1">
@@ -2601,6 +2605,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="ThermalCompressibleSinglePhaseFluid" type="ThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
+			<xsd:element name="ViscoElasticIsotropic" type="ViscoElasticIsotropicType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
@@ -3600,6 +3605,16 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ViscoElasticIsotropicType">
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--relaxationTime => Relaxation time-->
+		<xsd:attribute name="relaxationTime" type="real64" use="required" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

@@ -19,12 +19,12 @@
 
 #include "DuvautLionsSolid.hpp"
 #include "ElasticIsotropic.hpp"
-#include "ElasticTransverseIsotropic.hpp"
-#include "ElasticOrthotropic.hpp"
-#include "DelftEgg.hpp"
+//#include "ElasticTransverseIsotropic.hpp"
+//#include "ElasticOrthotropic.hpp"
+//#include "DelftEgg.hpp"
 #include "DruckerPrager.hpp"
-#include "DruckerPragerExtended.hpp"
-#include "ModifiedCamClay.hpp"
+//#include "DruckerPragerExtended.hpp"
+//#include "ModifiedCamClay.hpp"
 
 namespace geosx
 {
@@ -38,7 +38,7 @@ template< typename SOLID_TYPE >
 DuvautLionsSolid< SOLID_TYPE >::DuvautLionsSolid( string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_solidModelName(),
-  m_solidUpdate(),
+  //m_solidUpdate(),
   m_relaxationTime()
 {
   registerWrapper( viewKeyStruct::solidModelNameString(), &m_solidModelName ).
@@ -46,12 +46,14 @@ DuvautLionsSolid< SOLID_TYPE >::DuvautLionsSolid( string const & name, Group * c
     setDescription( "Name of the solid model." );
 
   registerWrapper( viewKeyStruct::relaxationTimeString(), &m_relaxationTime ).
-    setApplyDefaultValue( -1 ).
+    setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "Relaxation time" );
 }
 
 template< typename SOLID_TYPE >
 DuvautLionsSolid< SOLID_TYPE >::~DuvautLionsSolid() = default;
+
+
 
 // Register all DuvautLionsSolid model types. Uncomment the ones listed as needed. 
 typedef DuvautLionsSolid< ElasticIsotropic > ViscoElasticIsotropic;

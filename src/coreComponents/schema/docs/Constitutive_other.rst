@@ -62,6 +62,7 @@ TableRelativePermeabilityHysteresis         node :ref:`DATASTRUCTURE_TableRelati
 ThermalCompressibleSinglePhaseFluid         node :ref:`DATASTRUCTURE_ThermalCompressibleSinglePhaseFluid`         
 VanGenuchtenBakerRelativePermeability       node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability`       
 VanGenuchtenCapillaryPressure               node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure`               
+ViscoElasticIsotropic                       node :ref:`DATASTRUCTURE_ViscoElasticIsotropic`                       
 =========================================== ==== ================================================================ 
 
 

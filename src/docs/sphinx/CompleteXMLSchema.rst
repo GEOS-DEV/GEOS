@@ -1030,6 +1030,13 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
+.. _XML_ViscoElasticIsotropic:
+
+Element: ViscoElasticIsotropic
+==============================
+.. include:: ../../coreComponents/schema/docs/ViscoElasticIsotropic.rst
+
+
 .. _XML_WellControls:
 
 Element: WellControls
@@ -2117,6 +2124,13 @@ Datastructure: VanGenuchtenBakerRelativePermeability
 Datastructure: VanGenuchtenCapillaryPressure
 ============================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
+
+
+.. _DATASTRUCTURE_ViscoElasticIsotropic:
+
+Datastructure: ViscoElasticIsotropic
+====================================
+.. include:: ../../coreComponents/schema/docs/ViscoElasticIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_WellControls:

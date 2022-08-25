@@ -23,6 +23,9 @@
 #include "constitutive/solid/SolidBase.hpp"
 #include "ElasticIsotropic.hpp"
 #include "DruckerPrager.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "LvArray/src/tensorOps.hpp"
+
 
 namespace geosx
 {
@@ -43,7 +46,7 @@ public:
    * @brief Constructor
    */
   DuvautLionsSolidUpdates( SOLID_TYPE const & solidModel,
-                           real64 const & relaxationTime,
+                           real64 const & relaxationTime,      
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
                            arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                            const bool & disableInelasticity ):
@@ -52,8 +55,39 @@ public:
     m_relaxationTime( relaxationTime )
   {}
 
+  /// Deleted default constructor
+  DuvautLionsSolidUpdates() = delete;
+
+  /// Default copy constructor
+  DuvautLionsSolidUpdates( DuvautLionsSolidUpdates const & ) = default;
+
+  /// Default move constructor
+  DuvautLionsSolidUpdates( DuvautLionsSolidUpdates && ) = default;
+
+  /// Deleted copy assignment operator
+  DuvautLionsSolidUpdates & operator=( DuvautLionsSolidUpdates const & ) = delete;
+
+  /// Deleted move assignment operator
+  DuvautLionsSolidUpdates & operator=( DuvautLionsSolidUpdates && ) =  delete;
+
+  /// Use the uncompressed version of the stiffness bilinear form
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
+
+//TODO: modify implementation of smallStrainUpdate to use optimized stiffness -
+// this implementation uses full stiffness tensor
 GEOSX_HOST_DEVICE
-virtual void smallStrainUpdate( localIndex const k,
+void smallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  real64 const & timeIncrement,
+                                  real64 const ( &strainIncrement )[6],
+                                  real64 ( &stress )[6],
+                                  DiscretizationOps & stiffness ) const
+{
+  smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
+}
+
+GEOSX_HOST_DEVICE
+void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
@@ -70,11 +104,11 @@ virtual void smallStrainUpdate( localIndex const k,
   }
 
   //Get trial stress and elastic stiffness by disabling inelasticity
-  m_solidUpdate.m_disableInelasticity = true;
+ // m_solidUpdate.m_disableInelasticity = true;
   m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, trialStress, elasticStiffness );
 
   //Enable inelasticity to get the rate-independent update
-  m_solidUpdate.m_disableInelasticity = false;
+  //m_solidUpdate.m_disableInelasticity = false;
   m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
 
@@ -90,54 +124,15 @@ virtual void smallStrainUpdate( localIndex const k,
   saveStress( k, q, stress );
   viscousStateUpdate( k, q, timeRatio );
   return;
-}                                 
+}     
+                            
 
 protected:
   typename SOLID_TYPE::KernelWrapper m_solidUpdate;
   real64 const m_relaxationTime;
 };
 
-// GEOSX_HOST_DEVICE
-// GEOSX_FORCE_INLINE
-// void DuvautLionsSolidUpdates::smallStrainUpdate( localIndex const k,
-//                                                  localIndex const q,
-//                                                  real64 const & timeIncrement,
-//                                                  real64 const ( &strainIncrement )[6],
-//                                                  real64 ( & stress )[6],
-//                                                  real64 ( & stiffness )[6][6] ) const
-// {
-//   real64 trialStress[6];   // Trial stress (elastic predictor)
-//   real64 elasticStiffness[6][6];  //Elastic stiffness
-//   real64 timeRatio = 1 / (1 + timeIncrement / m_relaxationTime);
 
-//   for( localIndex i=0; i<6; ++i )
-//   {
-//     trialStress[i] = stress[i];
-//   }
-
-//   //Get trial stress and elastic stiffness by disabling inelasticity
-//   m_solidUpdate.m_disableInelasticity = true;
-//   m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, trialStress, elasticStiffness );
-
-//   //Enable inelasticity to get the rate-independent update
-//   m_solidUpdate.m_disableInelasticity = false;
-//   m_solidUpdate.smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
-
-//   stress = timeRatio *  trialStress + (1-timeRatio) * stress;
-
-//   for( localIndex i=0; i<6; ++i )
-//   {
-//     for( localIndex j=0; j<6; ++j )
-//     {
-//       stiffness[i][j] = timeRatio * elasticStiffness[i][j]  + (1 - timeRatio) * stiffness[i][j];
-//     }
-//   }
-
-//   saveStress( k, q, stress );
-//   viscousStateUpdate( k, q, timeRatio );
-//   return;
-
-// }
 
 
 /**
@@ -177,9 +172,11 @@ using KernelWrapper = DuvautLionsSolidUpdates< SOLID_TYPE >;
    */
   virtual string getCatalogName() const override { return catalogName(); }
 
+  //virtual void initializePreSubGroups() override;
 
+  real64 relaxationTime() const { return m_relaxationTime; }
 
-  virtual void initializePreSubGroups() override;
+  string solidModelName() { return m_solidModelName; }
 
   /**
    * @brief Create a instantiation of the DuvautLionsSolidUpdates class
@@ -188,7 +185,6 @@ using KernelWrapper = DuvautLionsSolidUpdates< SOLID_TYPE >;
    */
   DuvautLionsSolidUpdates< SOLID_TYPE > createKernelUpdates() const
   {
-
     return DuvautLionsSolidUpdates< SOLID_TYPE >( getSolidModel(),
                                                   m_relaxationTime,
                                                   m_newStress,
@@ -196,7 +192,7 @@ using KernelWrapper = DuvautLionsSolidUpdates< SOLID_TYPE >;
                                                   m_disableInelasticity );
   }
 
-  virtual void saveConvergedState() const override;
+  //virtual void saveConvergedState() const override;
 
   /**
    * Keys for data specified in this class.
@@ -209,10 +205,20 @@ using KernelWrapper = DuvautLionsSolidUpdates< SOLID_TYPE >;
     static constexpr char const * relaxationTimeString() { return "relaxationTime"; }
   };
 
+  std::vector< string > getSubRelationNames() const override final
+  {
+   std::vector< string > subRelationNames = { m_solidModelName };
+   return subRelationNames;
+  }
   // KernelWrapper createKernelUpdates() const
   // {
-  //   return KernelWrapper( getSolidModel() );
-  // }
+  //   return DuvautLionsSolidUpdates< SOLID_TYPE >( getSolidModel(),
+  //                         m_relaxationTime,
+  //                         m_newStress,
+  //                         m_oldStress,
+  //                         m_disableInelasticity );
+  //  }
+  
 
   //START_SPHINX_INCLUDE_01
 protected:
@@ -220,7 +226,7 @@ protected:
   /// the name of the solid model
   string m_solidModelName;
 
-  real64 const m_relaxationTime;
+  real64 m_relaxationTime;
   
   SOLID_TYPE const & getSolidModel() const
   { return this->getParent().template getGroup< SOLID_TYPE >( m_solidModelName ); }
@@ -236,11 +242,7 @@ protected:
 // template< typename SOLID_TYPE >
 // DuvautLionsSolid< SOLID_TYPE >::~DuvautLionsSolid() = default;
 
-virtual std::vector< string > getSubRelationNames() const override final
-{
-  std::vector< string > subRelationNames = { m_solidModelName };
-  return subRelationNames;
-}
+
 
 // template< typename SOLID_TYPE >
 // void DuvautLionsSolid< SOLID_TYPE >::initializePreSubGroups()
