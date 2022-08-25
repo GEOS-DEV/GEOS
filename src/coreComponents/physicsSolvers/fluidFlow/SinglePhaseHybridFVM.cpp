@@ -126,15 +126,14 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
                            std::runtime_error );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-    fsManager.apply( 0.0,
-                     mesh,
-                     "faceManager",
-                     extrinsicMeshData::flow::pressure::key(),
-                     [&] ( FieldSpecificationBase const & bc,
-                           string const &,
-                           SortedArrayView< localIndex const > const &,
-                           Group &,
-                           string const & )
+    fsManager.apply< FaceManager >( 0.0,
+                                    mesh,
+                                    extrinsicMeshData::flow::pressure::key(),
+                                    [&] ( FieldSpecificationBase const & bc,
+                                          string const &,
+                                          SortedArrayView< localIndex const > const &,
+                                          FaceManager &,
+                                          string const & )
     {
       GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
                         "A face Dirichlet boundary condition named " << bc.getName() << " was requested in the XML file. \n"
@@ -183,13 +182,13 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
   // setup the connectivity of elem fields
   // we need Connectivity::Face because of the two-point upwinding
   // in AssembleOneSidedMassFluxes
-  dofManager.addField( extrinsicMeshData::flow::pressure::key(),
+  dofManager.addField( viewKeyStruct::elemDofFieldString(),
                        FieldLocation::Elem,
                        1,
                        m_meshTargets );
 
-  dofManager.addCoupling( extrinsicMeshData::flow::pressure::key(),
-                          extrinsicMeshData::flow::pressure::key(),
+  dofManager.addCoupling( viewKeyStruct::elemDofFieldString(),
+                          viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Face );
 
   // setup the connectivity of face fields
@@ -204,7 +203,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
 
   // setup coupling between pressure and face pressure
   dofManager.addCoupling( extrinsicMeshData::flow::facePressure::key(),
-                          extrinsicMeshData::flow::pressure::key(),
+                          viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
 }
 
@@ -242,7 +241,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
     arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
 
     // get the element dof numbers for the assembly
-    string const & elemDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+    string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
       mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
     elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
@@ -407,7 +406,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
 
   // get a view into local residual vector
 
-  string const elemDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+  string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   string const faceDofKey = dofManager.getKey( extrinsicMeshData::flow::facePressure::key() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -502,6 +501,11 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
                             ? elemResidualNorm
                             : faceResidualNorm;
 
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  {
+    GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+  }
+
   return residualNorm;
 }
 
@@ -513,7 +517,7 @@ bool SinglePhaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
 {
   localIndex localCheck = 1;
 
-  string const elemDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
+  string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   string const faceDofKey = dofManager.getKey( extrinsicMeshData::flow::facePressure::key() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -588,7 +592,7 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
   // 1. apply the cell-centered update
 
   dofManager.addVectorToField( localSolution,
-                               extrinsicMeshData::flow::pressure::key(),
+                               viewKeyStruct::elemDofFieldString(),
                                extrinsicMeshData::flow::pressure::key(),
                                scalingFactor );
 

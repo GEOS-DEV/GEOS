@@ -16,7 +16,7 @@ class UnitManager():
     def __call__(self, unitStruct):
         """Evaluate the symbolic expression for matched strings.
 
-           @param unitStruct A list containing the variable scale and the unit definition.
+        @param unitStruct A list containing the variable scale and the unit definition.
         """
 
         # Replace all instances of units in the string with their scale defined in self.units
@@ -26,7 +26,7 @@ class UnitManager():
         # Note: the only allowed alpha characters are e and E.  This could be relaxed to allow
         #       functions such as sin, cos, etc.
         symbolicUnits_sanitized = re.sub(regex_tools.patterns['sanitize'], '', symbolicUnits).strip()
-        value = float(unitStruct[0])*eval(symbolicUnits_sanitized, {'__builtins__': None})
+        value = float(unitStruct[0]) * eval(symbolicUnits_sanitized, {'__builtins__': None})
 
         # Format the string, removing any trailing zeros, decimals, extraneous exponential formats
         str_value = re.sub(regex_tools.patterns['strip_trailing'], '', regex_tools.symbolic_format % (value))
@@ -36,7 +36,7 @@ class UnitManager():
     def regexHandler(self, match):
         """Split the matched string into a scale and unit definition.
 
-           @param match The matching string from the regex.
+        @param match The matching string from the regex.
         """
         # The first matched group includes the scale of the value (e.g. 1.234)
         # The second matches the string inside the unit definition (e.g. m/s**2)
@@ -45,6 +45,7 @@ class UnitManager():
     def buildUnits(self):
         """Build the unit definitions."""
 
+        # yapf: disable
         # Long, short names for SI prefixes
         prefixes = {'giga':  {'value': 1e9,  'alt': 'G'},
                     'mega':  {'value': 1e6,  'alt': 'M'},
@@ -94,6 +95,7 @@ class UnitManager():
                       'poise':      {'value': 0.1,       'alt': ['P'],                  'usePrefix': True},
                       'barrel':     {'value': 0.1589873, 'alt': ['bbl', 'barrels'],     'usePrefix': True},
                       'horsepower': {'value': 745.7,     'alt': ['hp', 'horsepowers'],  'usePrefix': True}}
+        # yapf: enable
 
         # Combine the unit dicts
         unit_defs.update(imp_defs)
@@ -115,7 +117,7 @@ class UnitManager():
         for u in unit_defs.keys():
             if (unit_defs[u]['usePrefix']):
                 for p in prefixes.keys():
-                    self.units[p+u] = prefixes[p]['value']*unit_defs[u]['value']
+                    self.units[p + u] = prefixes[p]['value'] * unit_defs[u]['value']
             else:
                 self.units[u] = unit_defs[u]['value']
 

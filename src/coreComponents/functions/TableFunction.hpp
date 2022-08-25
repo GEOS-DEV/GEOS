@@ -304,13 +304,11 @@ private:
 
   /**
    * @brief Parse a table file.
-   * @tparam T The type for table or axis values.
    * @param[in] target The place to store values.
    * @param[in] filename The name of the file to read.
    * @param[in] delimiter The delimiter used for file entries.
    */
-  template< typename T >
-  void parseFile( string const & filename, array1d< T > & target );
+  void readFile( string const & filename, array1d< real64 > & target );
 
   /// Coordinates for 1D table
   array1d< real64 > m_tableCoordinates1D;
@@ -575,7 +573,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
 
     // Determine weighted value
     real64 cornerValue = m_values[tableIndex];
-    real64 dCornerValue_dInput[maxDimensions];
+    real64 dCornerValue_dInput[maxDimensions]{};
     for( integer dim = 0; dim < numDimensions; ++dim )
     {
       dCornerValue_dInput[dim] = cornerValue;
