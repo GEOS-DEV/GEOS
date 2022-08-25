@@ -332,13 +332,11 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
 
 }
 
-void ElasticWaveEquationSEM::computeDAS ()
+void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real64 > const xCompRcv,
+                                          arrayView2d< real64 > const yCompRcv,
+                                          arrayView2d< real64 > const zCompRcv )
 {
 
-  /// Pairs of receivers are assumed to be modeled ( see WaveSolverBase::initializeDAS() )
-  arrayView2d< real64 > const uxReceivers   = m_displacementxNp1AtReceivers.toView();
-  arrayView2d< real64 > const uyReceivers   = m_displacementyNp1AtReceivers.toView();
-  arrayView2d< real64 > const uzReceivers   = m_displacementzNp1AtReceivers.toView();
   arrayView2d< real64 const > const geometryLinearDAS = m_geometryLinearDAS.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
@@ -348,20 +346,20 @@ void ElasticWaveEquationSEM::computeDAS ()
   if( m_nsamplesSeismoTrace > 0 )
   {
     /// synchronize receivers across MPI ranks
-    MpiWrapper::allReduce( uxReceivers.data(),
-                           uxReceivers.data(),
+    MpiWrapper::allReduce( xCompRcv.data(),
+                           xCompRcv.data(),
                            2*numReceiversGlobal*m_nsamplesSeismoTrace,
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                            MPI_COMM_GEOSX );
 
-    MpiWrapper::allReduce( uyReceivers.data(),
-                           uyReceivers.data(),
+    MpiWrapper::allReduce( yCompRcv.data(),
+                           yCompRcv.data(),
                            2*numReceiversGlobal*m_nsamplesSeismoTrace,
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                            MPI_COMM_GEOSX );
 
-    MpiWrapper::allReduce( uzReceivers.data(),
-                           uzReceivers.data(),
+    MpiWrapper::allReduce( zCompRcv.data(),
+                           zCompRcv.data(),
                            2*numReceiversGlobal*m_nsamplesSeismoTrace,
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                            MPI_COMM_GEOSX );
@@ -379,15 +377,15 @@ void ElasticWaveEquationSEM::computeDAS ()
         /// set the y and z component to zero to avoid any confusion
         for( localIndex iSample = 0; iSample<nsamplesSeismoTrace; ++iSample )
         {
-          uxReceivers[iSample][ircv] =
-            cd*ca*(uxReceivers[iSample][numReceiversGlobal+ircv]-uxReceivers[iSample][ircv])
-            + cd*sa*(uyReceivers[iSample][numReceiversGlobal+ircv] - uyReceivers[iSample][ircv])
-            + sd*(uzReceivers[iSample][numReceiversGlobal+ircv] - uzReceivers[iSample][ircv]);
+          xCompRcv[iSample][ircv] =
+            cd*ca*(xCompRcv[iSample][numReceiversGlobal+ircv]-xCompRcv[iSample][ircv])
+            + cd*sa*(yCompRcv[iSample][numReceiversGlobal+ircv] - yCompRcv[iSample][ircv])
+            + sd*(zCompRcv[iSample][numReceiversGlobal+ircv] - zCompRcv[iSample][ircv]);
 
-          uxReceivers[iSample][ircv] /= geometryLinearDAS[ircv][2];
+          xCompRcv[iSample][ircv] /= geometryLinearDAS[ircv][2];
 
-          uyReceivers[iSample][ircv] = 0;
-          uzReceivers[iSample][ircv] = 0;
+          yCompRcv[iSample][ircv] = 0;
+          zCompRcv[iSample][ircv] = 0;
         }
       }
     } );
@@ -403,7 +401,7 @@ void ElasticWaveEquationSEM::computeDAS ()
         std::ofstream f( GEOSX_FMT( "dasTraceReceiver{:03}.txt", ircv ), std::ios::app );
         for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
         {
-          f<< iSample << " " << uxReceivers[iSample][ircv] << std::endl;
+          f<< iSample << " " << xCompRcv[iSample][ircv] << std::endl;
         }
         f.close();
       }
@@ -846,9 +844,10 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n, integer const, intege
     computeAllSeismoTraces( time_n, 0, uz_np1, uz_n, uzReceivers );
 
     /// compute DAS data if requested
+    /// Pairs of receivers are assumed to be modeled ( see WaveSolverBase::initializeDAS() )
     if( m_useDAS>0 )
     {
-      ElasticWaveEquationSEM::computeDAS();
+      ElasticWaveEquationSEM::computeDAS( uxReceivers, uyReceivers, uzReceivers );
     }
   } );
 }

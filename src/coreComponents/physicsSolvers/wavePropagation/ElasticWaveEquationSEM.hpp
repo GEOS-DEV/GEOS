@@ -124,9 +124,15 @@ public:
                                        arrayView2d< real64 > varAtReceivers );
 
   /**
-   * @brief Compute DAS data from the appropriate receiver pairs
+   * TODO: move implementation into WaveSolverBase once 'm_receiverIsLocal' is also moved
+   * @brief Compute DAS data from the appropriate three-components receiver pairs
+   * @param xCompRcv the array holding the x-component of pairs of receivers
+   * @param yCompRcv the array holding the y-component of pairs of receivers
+   * @param zCompRcv the array holding the z-component of pairs of receivers
    */
-  void computeDAS();
+  void computeDAS( arrayView2d< real64 > const xCompRcv,
+                   arrayView2d< real64 > const yCompRcv,
+                   arrayView2d< real64 > const zCompRcv );
   
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
