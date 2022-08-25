@@ -12,11 +12,7 @@
       frictionCoefficient="0.04"
       criticalShieldsNumber="0.0"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      proppantNames="{ sand }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
@@ -38,10 +34,7 @@
       name="SinglePhaseFVM"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
@@ -55,7 +48,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Fracture }"
-      solidMaterialNames="{ granite }"
+      
       rockToughness="1e6"/>
   </Solvers>
 
@@ -94,9 +87,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -119,8 +110,8 @@
       referencePressure="1e5"
       compressibility="0e-10"
       referenceProppantDensity="2550.0"
-      defaultDensity="{ 800.0 }"
-      defaultViscosity="{ 0.1 }"
+      defaultComponentDensity="{ 800.0 }"
+      defaultComponentViscosity="{ 0.1 }"
       defaultCompressibility="{ 0.0 }"/>
 
     <ParticleFluid

@@ -23,20 +23,12 @@
       logLevel="1"
       discretization="fluidHM"
       targetRegions="{ region }"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      relPermNames="{ relperm }"
-      permeabilityNames="{ rockPerm }"
-      computeCFLNumbers="1"
       temperature="297.15"
       useMass="1"/>
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }"
-      fluidNames="{ fluid }"
-      relPermNames="{ relperm }"
-      wellTemperature="297.15"
       maxRelativePressureChange="0.1"
       maxCompFractionChange="0.1"
       useMass="1">
@@ -55,6 +47,7 @@
         referenceElevation="9"
         targetBHP="2e+7"
         targetTotalRate="5e-2"
+        injectionTemperature="297.15"
         injectionStream="{ 0.000, 0.000, 1. }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
@@ -127,6 +120,11 @@
       name="solverApplications"
       maxEventDt="315360"      
       target="/Solvers/reservoirSystem"/>
+
+    <PeriodicEvent
+      name="statistics"
+      timeFrequency="3153600"
+      target="/Tasks/compositionalMultiphaseFlowStatistics"/>
     
     <PeriodicEvent
       name="timeHistoryCollection"
@@ -140,8 +138,7 @@
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="fluidHM"
-        innerProductType="TPFA"
-        coefficientName="permeability"/>
+        innerProductType="TPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -229,7 +226,14 @@
       scale="0.00001"/>
   </FieldSpecifications>
 
-  <Tasks>
+   <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="compositionalMultiphaseFlowStatistics"
+      flowSolverName="compositionalMultiphaseFlow"
+      logLevel="1"
+      computeCFLNumbers="0"
+      computeRegionStatistics="1"/>
+    
     <PackCollection
       name="wellRateCollection"
       objectPath="ElementRegions/wellRegion1/wellRegion1uniqueSubRegion"

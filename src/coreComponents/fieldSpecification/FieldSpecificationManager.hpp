@@ -77,16 +77,10 @@ public:
 
   /**
    * @brief Function to apply a value directly to a field variable.
-   * @tparam LAMBDA The type of the lambda function
+   * @tparam POLICY the policy for kernels launched inside this function.
    * @param time The time at which the value will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
-   * @param domain The DomainPartition object.
-   * @param fieldPath The path to the object that contains the variable described in fieldName. This
-   *                  path need not be the complete path, but rather the check that is performed is
-   *                  that the fieldPath specified is contained in the string that specifies the
-   *                  path from the actual field specification. In other words, the fieldPath variable
-   *                  can be a substring of the path specified, and that will be
-   *                  sufficient to proceed with the application of the.
+   * @param mesh The MeshLevel object.
    * @param fieldName The name of the field/variable that the value will be applied to.
    *                  It may not be necessary that this name is in the data repository, as the user
    *                  supplied lambda may apply whatever it condition it would like. However, this
@@ -102,13 +96,12 @@ public:
    */
   template< typename POLICY=parallelHostPolicy >
   void applyFieldValue( real64 const time,
-                        DomainPartition & domain,
-                        string const & fieldPath,
+                        MeshLevel & mesh,
                         string const & fieldName ) const
   {
     GEOSX_MARK_FUNCTION;
 
-    applyFieldValue< POLICY >( time, domain, fieldPath, fieldName,
+    applyFieldValue< POLICY >( time, mesh, fieldName,
                                [&]( FieldSpecificationBase const &,
                                     SortedArrayView< localIndex const > const & ){} );
   }
@@ -116,16 +109,11 @@ public:
   /**
    * @brief Function to apply a value directly to a field variable and applies a lambda
    *        for any post operations that are needed.
+   * @tparam POLICY The execution policy for kernels launched in this function.
    * @tparam LAMBDA The type of the lambda function
    * @param time The time at which the field will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
-   * @param domain The DomainPartition object.
-   * @param fieldPath The path to the object that contains the variable described in fieldName. This
-   *                  path need not be the complete path, but rather the check that is performed is
-   *                  that the fieldPath specified is contained in the string that specifies the
-   *                  path from the actual field specification. In other words, the fieldPath variable
-   *                  can be a substring of the path specified , and that will be
-   *                  sufficient to proceed with the application of the value.
+   * @param mesh The MeshLevel object.
    * @param fieldName The name of the field/variable that the value will be applied to.
    *                  It may not be necessary that this name is in the data repository, as the user
    *                  supplied lambda may apply whatever it condition it would like. However, this
@@ -144,25 +132,19 @@ public:
    */
   template< typename POLICY=parallelHostPolicy, typename LAMBDA=void >
   void applyFieldValue( real64 const time,
-                        DomainPartition & domain,
-                        string const & fieldPath,
+                        MeshLevel & mesh,
                         string const & fieldName,
                         LAMBDA && lambda ) const;
 
   /**
    * @brief Function to apply a value directly to a field variable and applies a lambda
    *        for any post operations that are needed.
+   * @tparam POLICY The execution policy for kernels launched in this function.
    * @tparam PRELAMBDA The type of the lambda function to be called before the applyFieldValue
    * @tparam POSTLAMBDA The type of the lambda function to be called after the applyFieldValue
    * @param time The time at which the field will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
-   * @param domain The DomainPartition object.
-   * @param fieldPath The path to the object that contains the variable described in fieldName. This
-   *                  path need not be the complete path, but rather the check that is performed is
-   *                  that the fieldPath specified is contained in the string that specifies the
-   *                  path from the actual field specification. In other words, the fieldPath variable
-   *                  can be a substring of the path specified , and that will be
-   *                  sufficient to proceed with the application of the value.
+   * @param mesh The MeshLevel objectt.
    * @param fieldName The name of the field/variable that the value will be applied to.
    *                  It may not be necessary that this name is in the data repository, as the user
    *                  supplied lambda may apply whatever it condition it would like. However, this
@@ -185,8 +167,7 @@ public:
    */
   template< typename POLICY=parallelHostPolicy, typename PRELAMBDA=void, typename POSTLAMBDA=void >
   void applyFieldValue( real64 const time,
-                        DomainPartition & domain,
-                        string const & fieldPath,
+                        MeshLevel & mesh,
                         string const & fieldName,
                         PRELAMBDA && preLambda,
                         POSTLAMBDA && postLambda ) const;
@@ -194,23 +175,19 @@ public:
 
   /**
    * @brief function to apply initial conditions
-   * @param domain the DomainPartition object
+   * @param mesh the MeshLevel object
    */
-  void applyInitialConditions( DomainPartition & domain ) const;
+  void applyInitialConditions( MeshLevel & mesh ) const;
 
 
   /**
    * @brief This function is the main driver for the field applications
+   * @tparam OBJECT_TYPE the type of object that the application targets
+   * @tparam BCTYPE the type of boundary condition object that is being applied
    * @tparam LAMBDA The type of the lambda function
    * @param time The time at which the field will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
-   * @param domain The DomainPartition object.
-   * @param fieldPath The path to the object that contains the variable described in fieldName. This
-   *                  path need not be the complete path, but rather the check that is performed is
-   *                  that the fieldPath specified is contained in the string that specifies the
-   *                  path from the actual field specification. In other words, the fieldPath variable
-   *                  can be a substring of the path specified, and that will be
-   *                  sufficient to proceed with the application of the value to the field.
+   * @param mesh The MeshLevel object.
    * @param fieldName The name of the field/variable that the value will be applied to.
    *                  It may not be necessary that this name is in the data repository, as the user
    *                  supplied lambda may apply whatever it condition it would like. However, this
@@ -222,97 +199,32 @@ public:
    * values of fieldPath,fieldName, against each FieldSpecificationBase object contained in the
    * FieldSpecificationManager and decides on whether or not to call the user defined lambda.
    */
-  template< typename BCTYPE = FieldSpecificationBase, typename LAMBDA >
+  template< typename OBJECT_TYPE=dataRepository::Group,
+            typename BCTYPE = FieldSpecificationBase,
+            typename LAMBDA >
   void apply( real64 const time,
-              DomainPartition & domain,
-              string const & fieldPath,
+              MeshLevel & mesh,
               string const & fieldName,
               LAMBDA && lambda ) const
   {
     GEOSX_MARK_FUNCTION;
+
+    string const meshBodyName = mesh.getParent().getParent().getName();
+    string const meshLevelName = mesh.getName();
+
     // loop over all FieldSpecificationBase objects
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
       int const isInitialCondition = fs.initialCondition();
-
-      if( ( isInitialCondition && fieldPath.empty() ) ||
-          ( !isInitialCondition && fs.getObjectPath().find( fieldPath ) != string::npos ) )
+      if( ( isInitialCondition && fieldName=="") ||
+          ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && fieldName == fs.getFieldName() ) )
       {
-        string_array const targetPath = stringutilities::tokenize( fs.getObjectPath(), "/" );
-        localIndex const targetPathLength = LvArray::integerConversion< localIndex >( targetPath.size());
-        string const targetName = fs.getFieldName();
-
-        if( ( isInitialCondition && fieldName=="" ) ||
-            ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && targetName==fieldName ) )
-        {
-          dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-          for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
-          {
-            dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
-            if( elemRegionSubGroup != nullptr )
-            {
-              targetGroup = elemRegionSubGroup;
-            }
-
-            dataRepository::Group * const elemSubRegionSubGroup = targetGroup->getGroupPointer( ElementRegionBase::viewKeyStruct::elementSubRegions() );
-            if( elemSubRegionSubGroup != nullptr )
-            {
-              targetGroup = elemSubRegionSubGroup;
-            }
-
-            if( targetPath[pathLevel] == ElementRegionManager::groupKeyStruct::elementRegionsGroup() ||
-                targetPath[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions() )
-            {
-              continue;
-            }
-
-            targetGroup = &targetGroup->getGroup( targetPath[pathLevel] );
-          }
-          applyOnTargetRecursive( *targetGroup, fs, targetName, lambda );
-        }
+        fs.template apply< OBJECT_TYPE, BCTYPE, LAMBDA >( mesh, std::forward< LAMBDA >( lambda ) );
       }
     } );
   }
 
 private:
-
-  template< typename BCTYPE, typename LAMBDA >
-  void applyOnTargetRecursive( Group & target,
-                               BCTYPE const & fs,
-                               string const & targetName,
-                               LAMBDA && lambda
-                               ) const
-  {
-    if( ( target.getParent().getName() == ElementRegionBase::viewKeyStruct::elementSubRegions()
-          || target.getName() == "nodeManager"
-          || target.getName() == "FaceManager"
-          || target.getName() == "edgeManager" ) // TODO these 3 strings are harcoded because for the moment, there are
-                                                 // inconsistencies with the name of the Managers...
-        && target.getName() != ObjectManagerBase::groupKeyStruct::setsString()
-        && target.getName() != ObjectManagerBase::groupKeyStruct::neighborDataString() )
-    {
-      dataRepository::Group const & setGroup = target.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
-      string_array setNames = fs.getSetNames();
-      for( auto & setName : setNames )
-      {
-        if( setGroup.hasWrapper( setName ) )
-        {
-          SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
-          lambda( fs, setName, targetSet, target, targetName );
-        }
-      }
-    }
-    else
-    {
-      target.forSubGroups( [&]( Group & subTarget )
-      {
-        applyOnTargetRecursive( subTarget, fs, targetName, lambda );
-      } );
-    }
-  }
-
-
   static FieldSpecificationManager * m_instance;
 
 };
@@ -321,14 +233,13 @@ template< typename POLICY, typename LAMBDA >
 void
 FieldSpecificationManager::
   applyFieldValue( real64 const time,
-                   DomainPartition & domain,
-                   string const & fieldPath,
+                   MeshLevel & mesh,
                    string const & fieldName,
                    LAMBDA && lambda ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  apply( time, domain, fieldPath, fieldName,
+  apply( time, mesh, fieldName,
          [&]( FieldSpecificationBase const & fs,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,
@@ -344,15 +255,14 @@ template< typename POLICY, typename PRELAMBDA, typename POSTLAMBDA >
 void
 FieldSpecificationManager::
   applyFieldValue( real64 const time,
-                   DomainPartition & domain,
-                   string const & fieldPath,
+                   MeshLevel & mesh,
                    string const & fieldName,
                    PRELAMBDA && preLambda,
                    POSTLAMBDA && postLambda ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  apply( time, domain, fieldPath, fieldName,
+  apply( time, mesh, fieldName,
          [&]( FieldSpecificationBase const & fs,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,

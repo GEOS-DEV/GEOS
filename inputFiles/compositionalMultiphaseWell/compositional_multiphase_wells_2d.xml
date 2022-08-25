@@ -21,20 +21,13 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Region1 }"
-      fluidNames="{ fluid1 }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="297.15"/>
 
     <!-- SPHINX_COMP_WELL_SOLVER -->
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       logLevel="1"
-      targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }"
-      fluidNames="{ fluid1 }"
-      relPermNames="{ relperm }"
-      wellTemperature="297.15">
+      targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }">
       <WellControls
         name="wellControls1"
         type="producer"
@@ -58,6 +51,7 @@
         referenceElevation="0.5"
         targetBHP="4e7"
         targetTotalRate="5e-7"
+        injectionTemperature="297.15"
         injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
     </CompositionalMultiphaseWell>
 
@@ -164,9 +158,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        />
     </FiniteVolume>
   </NumericalMethods>
 

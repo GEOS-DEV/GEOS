@@ -13,25 +13,19 @@
       targetRegions="{ reservoir, wellRegion }">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
-        lineSearchAction="Attempt"
+        lineSearchAction="None"
         maxTimeStepCuts="10"
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="fgmres"
         preconditionerType="mgr"
-        krylovTol="1e-4"
-        krylovAdaptiveTol="1"
-        krylovWeakestTol="1e-2"/>
+        krylovTol="1e-5"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
       targetRegions="{ reservoir }"
       discretization="fluidTPFA"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="368.15"
       maxCompFractionChange="0.2"
       logLevel="1"
@@ -40,19 +34,22 @@
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion }"
-      fluidNames="{ fluid }"
-      relPermNames="{ relperm }"
-      wellTemperature="368.15"
+      maxCompFractionChange="0.2"
       logLevel="1"
       useMass="1">
       <WellControls
         name="wellControls"
         type="injector"
         control="totalVolRate"
-        referenceElevation="7500"
-        targetBHP="1e8"
-        targetTotalRate="5e-2"
-        injectionStream="{ 0.995, 0.005 }"/>
+        enableCrossflow="0"
+        referenceElevation="6650"
+        useSurfaceConditions="1"            
+        surfacePressure="101325"  
+        surfaceTemperature="288.71" 
+        targetBHP="5e7"
+        targetTotalRate="1.5"
+        injectionTemperature="368.15"
+        injectionStream="{ 1, 0 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
   <!-- SPHINX_FIELD_CASE_Co2_SOLVER_END -->  
@@ -74,18 +71,14 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        targetRegions="{ reservoir }"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
   <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL_END -->
 
   <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
   <Constitutive>
-    <CO2BrineFluid
+    <CO2BrinePhillipsFluid
       name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
@@ -231,4 +224,3 @@
   </Functions>
   
 </Problem>
-

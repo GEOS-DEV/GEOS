@@ -47,7 +47,6 @@ public:
    */
   MeshLevel( string const & name,
              Group * const parent );
-  virtual ~MeshLevel() override;
 
   /**
    * @brief Collects the nodes, edges, faces, and elements that are adjacent to a given list of nodes.
@@ -80,20 +79,20 @@ public:
     dataRepository::GroupKey vertexManager  = { "vertexManager" };
     dataRepository::GroupKey cellManager    = { "cellManager" };
 
-    static constexpr auto nodeManagerString = "nodeManager";
-    static constexpr auto edgeManagerString = "edgeManager";
-    static constexpr auto faceManagerString = "faceManager";
+    static constexpr char const * nodeManagerString() { return "nodeManager"; }
+    static constexpr char const * edgeManagerString() { return "edgeManager"; }
+    static constexpr char const * faceManagerString() { return "faceManager"; }
 
     // This key is defined in problem manager:
-    static constexpr auto elemManagerString = "ElementRegions";
+    static constexpr char const * elemManagerString() { return "ElementRegions"; }
 
     static constexpr auto embSurfNodeManagerString = "embeddedSurfacesNodeManager";
     static constexpr auto embSurfEdgeManagerString = "embeddedSurfacesEdgeManager";
 
-    dataRepository::GroupKey nodeManager = {nodeManagerString};
-    dataRepository::GroupKey edgeManager = {edgeManagerString};
-    dataRepository::GroupKey faceManager = {faceManagerString};
-    dataRepository::GroupKey elemManager = {elemManagerString};
+    dataRepository::GroupKey nodeManager = {nodeManagerString()};
+    dataRepository::GroupKey edgeManager = {edgeManagerString()};
+    dataRepository::GroupKey faceManager = {faceManagerString()};
+    dataRepository::GroupKey elemManager = {elemManagerString()};
     dataRepository::GroupKey embSurfNodeManager = {embSurfNodeManagerString};
     dataRepository::GroupKey embSurfEdgeManager = {embSurfEdgeManagerString};
   } groupKeys;

@@ -19,20 +19,30 @@
 #include "HypreMGR.hpp"
 
 #include "linearAlgebra/common/common.hpp"
-
+/**
+<<<<<<< HEAD
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseThermoPoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp"
+=======
+>>>>>>> develop
+*/
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseFVM.hpp"
-#include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseHybridFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirHybridFVM.hpp"
-#include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/Hydrofracture.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp"
 
 #include "LvArray/src/output.hpp"
 
@@ -68,24 +78,29 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
 //  using namespace hypre::mgr;
   switch( params.mgr.strategy )
   {
-    case LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM:
+    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM:
     {
-      setStrategy< SinglePhaseReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      setStrategy< CompositionalMultiphaseFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
-    case LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM:
+    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM:
     {
-      setStrategy< SinglePhaseHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      setStrategy< CompositionalMultiphaseHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
-    case LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM:
+    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM:
     {
-      setStrategy< SinglePhaseReservoirHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      setStrategy< CompositionalMultiphaseReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
-    case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics:
+    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM:
     {
-      setStrategy< SinglePhasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      setStrategy< CompositionalMultiphaseReservoirHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM:
+    {
+      setStrategy< ThermalCompositionalMultiphaseFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::singlePhaseThermoPoromechanics:
@@ -98,31 +113,6 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       setStrategy< HybridSinglePhasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
-    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM:
-    {
-      setStrategy< CompositionalMultiphaseFVM >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
-    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM:
-    {
-      setStrategy< CompositionalMultiphaseReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
-    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM:
-    {
-      setStrategy< CompositionalMultiphaseHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
-    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM:
-    {
-      setStrategy< CompositionalMultiphaseReservoirHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
-    case LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics:
-    {
-      setStrategy< MultiphasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
     case LinearSolverParameters::MGR::StrategyType::hydrofracture:
     {
       setStrategy< Hydrofracture >( params.mgr, numComponentsPerField, precond, mgrData );
@@ -131,6 +121,31 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     case LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics:
     {
       setStrategy< LagrangianContactMechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics:
+    {
+      setStrategy< MultiphasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM:
+    {
+      setStrategy< SinglePhaseHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics:
+    {
+      setStrategy< SinglePhasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM:
+    {
+      setStrategy< SinglePhaseReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM:
+    {
+      setStrategy< SinglePhaseReservoirHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     default:
@@ -157,16 +172,21 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.mechSolver.ptr, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.mechSolver.ptr, 1.0 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.mechSolver.ptr, 0.6 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.mechSolver.ptr, 0.8 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.mechSolver.ptr, 0 ) );
 #ifdef GEOSX_USE_HYPRE_CUDA
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.mechSolver.ptr, 8 ) ); // PMIS
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.mechSolver.ptr, 18 ) ); // l1-Jacobi
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.mechSolver.ptr, hypre::getAMGCoarseningType( "PMIS" ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.mechSolver.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.mechSolver.ptr, 2 ) );
 #else
+    // Note: commenting out the line below, and uncommenting what follows seems to consistently deteriorate
+    // the behavior of the linear solver (number of iterations and wall-clock time). This requires further investigation.
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.mechSolver.ptr, 1 ) );
+    // GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.mechSolver.ptr, hypre::getAMGRelaxationType(
+    // LinearSolverParameters::AMG::SmootherType::l1sgs ) ) );
+    // GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.mechSolver.ptr, 1 ) );
+    // GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxWt( mgrData.mechSolver.ptr, 0.8 ) );
 #endif
-    //GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( mgrData.mechSolver.ptr, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.mechSolver.ptr, 3 ) );
 
     mgrData.mechSolver.setup = HYPRE_BoomerAMGSetup;

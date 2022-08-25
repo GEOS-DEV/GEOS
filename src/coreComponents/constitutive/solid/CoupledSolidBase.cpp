@@ -21,11 +21,13 @@
 #include "ElasticIsotropic.hpp"
 #include "ElasticTransverseIsotropic.hpp"
 #include "ElasticOrthotropic.hpp"
+#include "DelftEgg.hpp"
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
 #include "Damage.hpp"
 #include "DamageSpectral.hpp"
 #include "DamageVolDev.hpp"
+#include "ModifiedCamClay.hpp"
 
 namespace geosx
 {
@@ -39,7 +41,8 @@ CoupledSolidBase::CoupledSolidBase( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent ),
   m_solidModelName(),
   m_porosityModelName(),
-  m_permeabilityModelName()
+  m_permeabilityModelName(),
+  m_solidInternalEnergyModelName()
 {
   registerWrapper( viewKeyStruct::solidModelNameString(), &m_solidModelName ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
@@ -52,6 +55,10 @@ CoupledSolidBase::CoupledSolidBase( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::permeabilityModelNameString(), &m_permeabilityModelName ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "Name of the permeability model." );
+
+  registerWrapper( viewKeyStruct::solidInternalEnergyModelNameString(), &m_solidInternalEnergyModelName ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Name of the solid internal energy model." );
 }
 
 CoupledSolidBase::~CoupledSolidBase() = default;

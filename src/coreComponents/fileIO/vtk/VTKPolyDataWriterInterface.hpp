@@ -20,6 +20,7 @@
 #include "dataRepository/Wrapper.hpp"
 #include "fileIO/vtk/VTKPVDWriter.hpp"
 #include "fileIO/vtk/VTKVTMWriter.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 class vtkUnstructuredGrid;
 class vtkPointData;
@@ -42,6 +43,26 @@ enum struct VTKOutputMode
   BINARY,
   ASCII
 };
+
+enum struct VTKRegionTypes
+{
+  CELL,
+  WELL,
+  SURFACE,
+  ALL
+};
+
+/// Declare strings associated with output enumeration values.
+ENUM_STRINGS( VTKOutputMode,
+              "binary",
+              "ascii" );
+
+/// Declare strings associated with region type enumeration values.
+ENUM_STRINGS( VTKRegionTypes,
+              "cell",
+              "well",
+              "surface",
+              "all" );
 
 /**
  * @brief Encapsulate output methods for vtk
@@ -76,6 +97,15 @@ public:
   }
 
   /**
+   * @brief Set the output region type
+   * @param[in] regionType output region type to be set
+   */
+  void setOutputRegionType( VTKRegionTypes regionType )
+  {
+    m_outputRegionType = regionType;
+  }
+
+  /**
    * @brief Set the output directory name
    * @param[in] outputDir global output directory location
    * @param[in] outputName name of the VTK output subdirectory and corresponding PVD file
@@ -86,6 +116,25 @@ public:
     m_outputName = std::move( outputName );
     m_pvd.setFileName( joinPath( m_outputDir, m_outputName ) + ".pvd" );
   }
+
+  /**
+   * @brief Set the flag to decide whether we only plot the fields specified by fieldNames, or if we also plot fields based on plotLevel
+   * @param[in] onlyPlotSpecifiedFieldNames the flag
+   */
+  void setOnlyPlotSpecifiedFieldNamesFlag( integer const onlyPlotSpecifiedFieldNames )
+  {
+    m_onlyPlotSpecifiedFieldNames = onlyPlotSpecifiedFieldNames;
+  }
+
+  /**
+   * @brief Set the names of the fields to output
+   * @param[in] fieldNames the fields to output
+   */
+  void setFieldNames( arrayView1d< string const > const & fieldNames )
+  {
+    m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
+  }
+
 
   /**
    * @brief Main method of this class. Write all the files for one time step.
@@ -122,24 +171,32 @@ public:
    */
   void write( real64 time, integer cycle, DomainPartition const & domain );
 
+  /**
+   * @brief Clears the datasets accumulated in the pvd writer
+   *
+   */
+  void clearData();
+
+
 private:
 
   /**
-   * @brief Given a time-step \p time, returns the relative path
-   * to the subfolder containing the files concerning this time-step
-   * @param[in] time the time-step
-   * @return the relative path to the folder of the time step
+   * @brief Check if plotting is enabled for this field
+   * @param[in] wrapper the wrapper
+   * @return true if this wrapper should be plot, false otherwise
    */
-  string getTimeStepSubFolder( real64 time ) const;
+  bool isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const;
 
   /**
    * @brief Writes the files for all the CellElementRegions.
    * @details There will be one file written per CellElementRegion and per rank.
    * @param[in] time the time-step
+   * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the CellElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
   void writeCellElementRegions( real64 time,
+                                integer const cycle,
                                 ElementRegionManager const & elemManager,
                                 NodeManager const & nodeManager ) const;
 
@@ -147,10 +204,12 @@ private:
    * @brief Writes the files containing the well representation
    * @details There will be one file written per WellElementRegion and per rank
    * @param[in] time the time-step
+   * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the WellElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
   void writeWellElementRegions( real64 time,
+                                integer const cycle,
                                 ElementRegionManager const & elemManager,
                                 NodeManager const & nodeManager ) const;
 
@@ -158,21 +217,35 @@ private:
    * @brief Writes the files containing the faces elements
    * @details There will be one file written per FaceElementRegion and per rank
    * @param[in] time the time-step
+   * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the FaceElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
   void writeSurfaceElementRegions( real64 time,
+                                   integer const cycle,
                                    ElementRegionManager const & elemManager,
                                    NodeManager const & nodeManager,
                                    EmbeddedSurfaceNodeManager const & embSurfNodeManager ) const;
 
   /**
+   * @brief Writes a VTM file for the time-step \p time.
+   * @details a VTM file is a VTK Multiblock file. It contains relative path to different files organized in blocks.
+   * @param[in] cycle the current cycle number
+   * @param[in] elemManager the ElementRegionManager containing all the regions to be output and referred to in the VTM file
+   * @param[in] vtmWriter a writer specialized for the VTM file format
+   */
+  void writeVtmFile( integer const cycle,
+                     ElementRegionManager const & elemManager,
+                     VTKVTMWriter const & vtmWriter ) const;
+  /**
    * @brief Write all the fields associated to the nodes of \p nodeManager if their plotlevel is <= m_plotLevel
    * @param[in] pointData a VTK object containing all the fields associated with the nodes
+   * @param[in] nodeIndices list of local node indices to write
    * @param[in] nodeManager the NodeManager associated with the domain being written
    */
   void writeNodeFields( NodeManager const & nodeManager,
-                        vtkPointData & pointData ) const;
+                        arrayView1d< localIndex const > const & nodeIndices,
+                        vtkPointData * pointData ) const;
 
   /**
    * @brief Writes all the fields associated to the elements of \p er if their plotlevel is <= m_plotLevel
@@ -181,7 +254,7 @@ private:
    */
   template< class SUBREGION >
   void writeElementFields( ElementRegionBase const & subRegion,
-                           vtkCellData & cellData ) const;
+                           vtkCellData * cellData ) const;
 
   /**
    * @brief Writes an unstructured grid
@@ -189,12 +262,12 @@ private:
    * it contains the cells connectivities and the vertices coordinates as long as the
    * data fields associated with it
    * @param[in] ug a VTK SmartPointer to the VTK unstructured grid.
-   * @param[in] time the current time-step
+   * @param[in] cycle the current cycle number
    * @param[in] name the name of the ElementRegionBase to be written
    */
-  void writeUnstructuredGrid( real64 time,
+  void writeUnstructuredGrid( integer const cycle,
                               string const & name,
-                              vtkUnstructuredGrid & ug ) const;
+                              vtkUnstructuredGrid * ug ) const;
 
 private:
 
@@ -211,11 +284,23 @@ private:
   /// Maximum plot level to be written.
   dataRepository::PlotLevel m_plotLevel;
 
+  /// Flag to decide whether we only plot the fields specified by fieldNames, or if we also plot fields based on plotLevel
+  integer m_onlyPlotSpecifiedFieldNames;
+
+  /// Flag to decide whether we check that the specified fieldNames are actually registered
+  bool m_requireFieldRegistrationCheck;
+
+  /// Names of the fields to output
+  std::set< string > m_fieldNames;
+
   /// The previousCycle
   integer m_previousCycle;
 
   /// Output mode, could be ASCII or BINARAY
   VTKOutputMode m_outputMode;
+
+  /// Region output type, could be CELL, WELL, SURFACE, or ALL
+  VTKRegionTypes m_outputRegionType;
 };
 
 } // namespace vtk

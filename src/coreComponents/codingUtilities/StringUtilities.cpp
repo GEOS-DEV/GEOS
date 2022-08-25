@@ -18,6 +18,8 @@
 
 #include "StringUtilities.hpp"
 
+#include <algorithm>
+
 namespace geosx
 {
 namespace stringutilities
@@ -27,7 +29,8 @@ string toLower( string const & input )
 {
   string output;
   output.resize( input.size() );
-  auto const toLowerCase = []( unsigned char c ) { return std::tolower( c ); };
+  auto const toLowerCase = []( unsigned char c )
+  { return std::tolower( c ); };
   std::transform( input.cbegin(), input.cend(), output.begin(), toLowerCase );
   return output;
 }
@@ -35,58 +38,40 @@ string toLower( string const & input )
 /**
  * String tokenizing function
  **/
-string_array tokenize( const string & str, const string & delimiters )
+template< typename RETURN_TYPE >
+RETURN_TYPE tokenize( string const & str,
+                      string const & delimiters,
+                      bool const treatConsecutiveDelimAsOne )
 {
-  string_array tokens;
-
-  if( str.length() == 0 )
+  if( str.empty() )
   {
-    tokens.emplace_back( str );
+    return {};
   }
-  else
+
+  RETURN_TYPE tokens;
+  size_t lastPos = 0;
+  size_t newPos;
+  while( ( newPos = str.find_first_of( delimiters, lastPos ) ) != string::npos )
   {
-
-    bool usesNonWhitespaceDelimiters = false;
-    string::size_type i =0;
-    while( delimiters[i] && !usesNonWhitespaceDelimiters )
-    {
-      usesNonWhitespaceDelimiters |= !isspace( int(delimiters[i]) );
-      ++i;
-    }
-
-    if( usesNonWhitespaceDelimiters )
-    {
-      // do not skip multiple adjacent delimiters - indicates empty strings
-      size_t lastPos = 0;
-
-      size_t newPos = lastPos;
-      while( (newPos=str.find_first_of( delimiters, lastPos )) != string::npos )
-      {
-        tokens.emplace_back( str.substr( lastPos, newPos-lastPos ));
-        lastPos = newPos + 1;
-      }
-      tokens.emplace_back( str.substr( lastPos, str.length()-lastPos ));
-    }
-    else
-    {
-      // whitespace delimiters
-      // skip multiple adjacent delimiters
-      size_t lastPos = str.find_first_not_of( delimiters, 0 );
-      lastPos = (lastPos == string::npos) ? 0 : lastPos;
-
-      size_t newPos = lastPos;
-      while( (newPos=str.find_first_of( delimiters, lastPos )) != string::npos )
-      {
-        tokens.emplace_back( str.substr( lastPos, newPos-lastPos ));
-        lastPos = str.find_first_not_of( delimiters, newPos );
-      }
-      if( lastPos!= string::npos )
-        tokens.emplace_back( str.substr( lastPos, str.length()-lastPos ));
-
-    }
+    tokens.emplace_back( str.substr( lastPos, newPos - lastPos ) );
+    lastPos = !treatConsecutiveDelimAsOne ? newPos + 1 : str.find_first_not_of( delimiters, newPos );
   }
+  if( lastPos != string::npos )
+  {
+    tokens.emplace_back( str.substr( lastPos ) );
+  }
+
   return tokens;
 }
+
+template string_array tokenize< string_array >( string const & str,
+                                                string const & delimiters,
+                                                bool const treatConsecutiveDelimAsOne );
+
+template std::vector< string > tokenize< std::vector< string > >( string const & str,
+                                                                  string const & delimiters,
+                                                                  bool const treatConsecutiveDelimAsOne );
+
 
 string trim( string const & str,
              string const & charsToRemove )

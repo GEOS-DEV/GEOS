@@ -23,4 +23,28 @@
       cellBlockNames="{ cb1 }"/>
   </Mesh>
   <!-- SPHINX_WellboreMeshEnd -->
+
+  <!-- SPHINX_Gravity -->
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <!-- SPHINX_GravityEnd -->
+    <!-- SPHINX_SolidMechanicsSolver -->
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      logLevel="0"
+      targetRegions="{ Omega }"
+      >
+      <!-- SPHINX_SolidMechanicsSolverEnd -->
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+  </Solvers>
+
 </Problem>

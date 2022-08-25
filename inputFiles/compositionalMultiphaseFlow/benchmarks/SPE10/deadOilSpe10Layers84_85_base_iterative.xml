@@ -9,16 +9,11 @@
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      relPermNames="{ relperm }"
-      permeabilityNames="{ rockPerm }"
       targetRegions="{ reservoir }"      
       temperature="300"
       useMass="1"
       initialDt="1e3"
-      maxCompFractionChange="0.1"
-      computeCFLNumbers="1">
+      maxCompFractionChange="0.1">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="40"
@@ -33,25 +28,24 @@
   </Solvers>
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS_END -->  
 
-  <!-- TODO: increase max time once linear solver is fixed -->
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->
   <Events
-    maxTime="5e7">
+    maxTime="2e6">
 
    <PeriodicEvent
       name="outputs"
-      timeFrequency="4e7"
+      timeFrequency="5e5"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
     
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="1e6"  
+      maxEventDt="5e5"
       target="/Solvers/compflow"/>
-
+    
     <PeriodicEvent
       name="restarts"
-      timeFrequency="2.5e7"
+      timeFrequency="1e6"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
     
@@ -63,11 +57,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        targetRegions="{ reservoir }"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS_END -->

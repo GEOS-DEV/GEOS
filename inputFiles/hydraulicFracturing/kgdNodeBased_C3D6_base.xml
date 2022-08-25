@@ -11,9 +11,8 @@
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
@@ -32,21 +31,17 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      solidMaterialNames="{ rock }"
       contactRelationName="fractureContact"/>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"/>
+      targetRegions="{ Fracture }"/>
 
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"
+      
       rockToughness="0.707e7"
       nodeBasedSIF="1"
       mpiCommOrder="1"/>

@@ -1,7 +1,7 @@
-#include "fileIO/Outputs/TimeHistoryOutput.hpp"
-#include "fileIO/timeHistory/TimeHistHDF.hpp"
-#include "dataRepository/BufferOpsDevice.hpp"
+#include "fileIO/timeHistory/HDFHistoryIO.hpp"
+#include "fileIO/timeHistory/HDFFile.hpp"
 #include "mainInterface/initialization.hpp"
+#include "dataRepository/BufferOpsDevice.hpp"
 
 #include <gtest/gtest.h>
 
@@ -21,7 +21,7 @@ TEST( testHDFIO, SingleValueHistory )
   HistoryMetadata spec( "Time History", 1, std::type_index( typeid(real64)));
 
   real64 time = 0.0;
-  HDFHistIO io( filename, spec );
+  HDFHistoryIO io( filename, spec );
   io.init( true );
   for( localIndex tidx = 0; tidx < 100; ++tidx )
   {
@@ -45,8 +45,8 @@ TEST( testHDFIO, ArrayHistory )
       value = count++;
     } );
 
-    HistoryMetadata spec = getHistoryMetadata( "Array1d History", arr.toViewConst( ) );
-    HDFHistIO io( filename, spec );
+    HistoryMetadata spec = getHistoryMetadata( "Array1d History", arr.toViewConst( ), 1 );
+    HDFHistoryIO io( filename, spec );
     io.init( true );
 
     buffer_unit_type * buffer = io.getBufferHead( );
@@ -68,8 +68,8 @@ TEST( testHDFIO, ArrayHistory )
       value = count++;
     } );
 
-    HistoryMetadata spec = getHistoryMetadata( "Array2d History", arr.toViewConst( ) );
-    HDFHistIO io( filename, spec );
+    HistoryMetadata spec = getHistoryMetadata( "Array2d History", arr.toViewConst( ), 4 );
+    HDFHistoryIO io( filename, spec );
     io.init( true );
 
     buffer_unit_type * buffer = io.getBufferHead( );
@@ -101,8 +101,8 @@ TEST( testHDFIO, IdxArrayHistory )
       value = rand() % 1024;
     } );
 
-    HistoryMetadata spec = getHistoryMetadata( "Array1d Idx History", arr.toViewConst( ), idx.size( ));
-    HDFHistIO io( filename, spec );
+    HistoryMetadata spec = getHistoryMetadata( "Array1d Idx History", arr.toViewConst( ), 4, idx.size( ));
+    HDFHistoryIO io( filename, spec );
     io.init( true );
 
     buffer_unit_type * buffer = io.getBufferHead( );

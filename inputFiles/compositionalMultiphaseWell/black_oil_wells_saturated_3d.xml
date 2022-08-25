@@ -15,7 +15,7 @@
         newtonTol="1e-8"  
         newtonMaxIter="20"/>
        <LinearSolverParameters 
-	 directParallel="0"/> 
+         directParallel="0"/> 
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM
@@ -23,12 +23,6 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ region }"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      relPermNames="{ relperm }"
-      capPressureNames="{ cappres }" 
-      permeabilityNames="{ rockPerm }"
-      computeCFLNumbers="1"      
       temperature="297.15"
       useMass="1"/>
 
@@ -36,9 +30,6 @@
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }"
-      fluidNames="{ fluid }"
-      relPermNames="{ relperm }"
-      wellTemperature="297.15"
       maxRelativePressureChange="0.1"
       maxCompFractionChange="0.1"
       useMass="1">
@@ -57,6 +48,7 @@
         referenceElevation="9"
         targetBHP="2e+7"
         targetTotalRate="5e-2"
+        injectionTemperature="297.15"
         injectionStream="{ 0.000, 0.000, 1. }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
@@ -129,6 +121,11 @@
       name="solverApplications"
       maxEventDt="315360"      
       target="/Solvers/reservoirSystem"/>
+
+    <PeriodicEvent
+      name="statistics"
+      timeFrequency="3153600"
+      target="/Tasks/compositionalMultiphaseFlowStatistics"/>
     
     <PeriodicEvent
       name="timeHistoryCollection"
@@ -141,9 +138,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -279,6 +274,13 @@
   </Functions>
     
   <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="compositionalMultiphaseFlowStatistics"
+      flowSolverName="compositionalMultiphaseFlow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+    
     <PackCollection
       name="wellRateCollection"
       objectPath="ElementRegions/wellRegion1/wellRegion1uniqueSubRegion"

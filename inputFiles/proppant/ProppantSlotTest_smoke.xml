@@ -21,7 +21,7 @@
 <!-- SPHINX_PROPPANT_MESH_END -->
 
   <Events
-    maxTime="1">
+    maxTime="0.1">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -36,6 +36,70 @@
     <PeriodicEvent
       name="outputs"
       target="/Outputs/siloOutput"/>
+      
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>  
   </Events>
+
+  <Solvers>
+<!-- SPHINX_PROPPANT_PROPPANTSOLVER -->
+    <ProppantTransport
+      name="ProppantTransport"
+      logLevel="1"
+      updateProppantPacking="1"
+      proppantDiameter="4.5e-4"
+      frictionCoefficient="0.04"
+      criticalShieldsNumber="0.0"
+      maxProppantConcentration="0.62"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"
+        lineSearchAction="None"
+        maxTimeStepCuts="5"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+    </ProppantTransport>
+<!-- SPHINX_PROPPANT_PROPPANTSOLVER_END -->
+
+<!-- SPHINX_PROPPANT_COUPLEDSOLVER -->
+    <FlowProppantTransport
+      name="FlowProppantTransport"
+      proppantSolverName="ProppantTransport"
+      flowSolverName="SinglePhaseFVM"
+      targetRegions="{ Fracture }"
+      logLevel="1"/>
+<!-- SPHINX_PROPPANT_COUPLEDSOLVER_END -->
+
+
+<!-- SPHINX_PROPPANT_FLOWSOLVER -->
+    <SinglePhaseProppantFVM
+      name="SinglePhaseFVM"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"
+        lineSearchAction="None"
+        newtonMinIter="0"/>
+      <LinearSolverParameters
+        solverType="direct"	 
+        directParallel="0"/>
+    </SinglePhaseProppantFVM>
+<!-- SPHINX_PROPPANT_FLOWSOLVER_END -->
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Fracture }"
+      
+      rockToughness="1e6"
+      mpiCommOrder="1"/>
+  </Solvers>
  
 </Problem>

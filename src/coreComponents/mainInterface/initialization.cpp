@@ -98,7 +98,8 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     PROBLEMNAME,
     OUTPUTDIR,
     TIMERS,
-    SUPPRESS_MOVE_LOGGING,
+    TRACE_DATA_MIGRATION,
+    PAUSE_FOR,
   };
 
   const option::Descriptor usage[] =
@@ -113,10 +114,11 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { SCHEMA, 0, "s", "schema", Arg::nonEmpty, "\t-s, --schema, \t Name of the output schema" },
     { NONBLOCKING_MPI, 0, "b", "use-nonblocking", Arg::None, "\t-b, --use-nonblocking, \t Use non-blocking MPI communication" },
     { PROBLEMNAME, 0, "n", "name", Arg::nonEmpty, "\t-n, --name, \t Name of the problem, used for output" },
-    { SUPPRESS_PINNED, 0, "s", "suppress-pinned", Arg::None, "\t-s, --suppress-pinned \t Suppress usage of pinned memory for MPI communication buffers" },
+    { SUPPRESS_PINNED, 0, "s", "suppress-pinned", Arg::None, "\t-s, --suppress-pinned, \t Suppress usage of pinned memory for MPI communication buffers" },
     { OUTPUTDIR, 0, "o", "output", Arg::nonEmpty, "\t-o, --output, \t Directory to put the output files" },
-    { TIMERS, 0, "t", "timers", Arg::nonEmpty, "\t-t, --timers, \t String specifying the type of timer output." },
-    { SUPPRESS_MOVE_LOGGING, 0, "", "suppress-move-logging", Arg::None, "\t--suppress-move-logging \t Suppress logging of host-device data migration" },
+    { TIMERS, 0, "t", "timers", Arg::nonEmpty, "\t-t, --timers, \t String specifying the type of timer output" },
+    { TRACE_DATA_MIGRATION, 0, "", "trace-data-migration", Arg::None, "\t--trace-data-migration, \t Trace host-device data migration" },
+    { PAUSE_FOR, 0, "", "pause-for", Arg::numeric, "\t--pause-for, \t Pause geosx for a given number of seconds before starting execution" },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
   };
 
@@ -213,9 +215,17 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
         commandLineOptions->timerOutput = opt.arg;
       }
       break;
-      case SUPPRESS_MOVE_LOGGING:
+      case TRACE_DATA_MIGRATION:
       {
-        commandLineOptions->suppressMoveLogging = true;
+        commandLineOptions->traceDataMigration = true;
+      }
+      break;
+      case PAUSE_FOR:
+      {
+        // we should store this in commandLineOptions and sleep in main
+        integer const duration = std::stoi( opt.arg );
+        GEOSX_LOG_RANK_0( "Paused for " << duration << " s" );
+        std::this_thread::sleep_for( std::chrono::seconds( duration ) );
       }
       break;
     }

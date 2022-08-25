@@ -30,25 +30,25 @@ using namespace dataRepository;
 MeshLevel::MeshLevel( string const & name,
                       Group * const parent ):
   Group( name, parent ),
-  m_nodeManager( groupStructKeys::nodeManagerString, this ),
-  m_edgeManager( groupStructKeys::edgeManagerString, this ),
-  m_faceManager( groupStructKeys::faceManagerString, this ),
-  m_elementManager( groupStructKeys::elemManagerString, this ),
+  m_nodeManager( groupStructKeys::nodeManagerString(), this ),
+  m_edgeManager( groupStructKeys::edgeManagerString(), this ),
+  m_faceManager( groupStructKeys::faceManagerString(), this ),
+  m_elementManager( groupStructKeys::elemManagerString(), this ),
   m_embSurfNodeManager( groupStructKeys::embSurfNodeManagerString, this ),
   m_embSurfEdgeManager( groupStructKeys::embSurfEdgeManagerString, this )
 
 {
 
-  registerGroup( groupStructKeys::nodeManagerString, &m_nodeManager );
+  registerGroup( groupStructKeys::nodeManagerString(), &m_nodeManager );
 
-  registerGroup( groupStructKeys::edgeManagerString, &m_edgeManager );
+  registerGroup( groupStructKeys::edgeManagerString(), &m_edgeManager );
 
 
-  registerGroup< FaceManager >( groupStructKeys::faceManagerString, &m_faceManager );
+  registerGroup< FaceManager >( groupStructKeys::faceManagerString(), &m_faceManager );
   m_faceManager.nodeList().setRelatedObject( m_nodeManager );
 
 
-  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString, &m_elementManager );
+  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString(), &m_elementManager );
 
   registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, &m_embSurfEdgeManager );
 
@@ -56,9 +56,6 @@ MeshLevel::MeshLevel( string const & name,
 
   registerWrapper< integer >( viewKeys.meshLevel );
 }
-
-MeshLevel::~MeshLevel()
-{}
 
 void MeshLevel::initializePostInitialConditionsPostSubGroups()
 {
@@ -68,7 +65,6 @@ void MeshLevel::initializePostInitialConditionsPostSubGroups()
   } );
 }
 
-
 void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
                                         localIndex_array & nodeAdjacencyList,
                                         localIndex_array & edgeAdjacencyList,
@@ -76,19 +72,16 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
                                         ElementRegionManager::ElementViewAccessor< ReferenceWrapper< localIndex_array > > & elementAdjacencyList,
                                         integer const depth )
 {
-  NodeManager & nodeManager = getNodeManager();
+  NodeManager const & nodeManager = getNodeManager();
 
   ArrayOfArraysView< localIndex const > const & nodeToElementRegionList = nodeManager.elementRegionList().toViewConst();
-
   ArrayOfArraysView< localIndex const > const & nodeToElementSubRegionList = nodeManager.elementSubRegionList().toViewConst();
-
   ArrayOfArraysView< localIndex const > const & nodeToElementList = nodeManager.elementList().toViewConst();
 
-
-  FaceManager & faceManager = this->getFaceManager();
+  FaceManager const & faceManager = this->getFaceManager();
   ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager.edgeList().toViewConst();
 
-  ElementRegionManager & elemManager = this->getElemManager();
+  ElementRegionManager const & elemManager = this->getElemManager();
 
   std::set< localIndex > nodeAdjacencySet;
   std::set< localIndex > edgeAdjacencySet;
@@ -136,11 +129,11 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
           {
             faceAdjacencySet.insert( elemsToFaces[elementIndex][a] );
 
-            localIndex const faceID = elemsToFaces[elementIndex][a];
-            localIndex const numEdges = faceToEdges.sizeOfArray( faceID );
+            localIndex const faceIndex = elemsToFaces[elementIndex][a];
+            localIndex const numEdges = faceToEdges.sizeOfArray( faceIndex );
             for( localIndex b=0; b<numEdges; ++b )
             {
-              edgeAdjacencySet.insert( faceToEdges( faceID, b ));
+              edgeAdjacencySet.insert( faceToEdges( faceIndex, b ));
             }
 
           }

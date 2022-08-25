@@ -38,12 +38,18 @@ Build steps
   * ``--hostconfig`` or ``-hc`` is a path to host-config file.
   * all unrecognized options are passed to CMake.
 
+  If ``--buildpath`` is not used, build directory is automatically named ``build-<config-filename-without-extension>-<buildtype>``.
+  It is possible to keep automatic naming and change the build root directory with ``--buildrootdir``.
+  In that case, build path will be set to ``<buildrootdir>/<config-filename-without-extension>-<buildtype>``.
+  Both ``--buildpath`` and ``--buildrootdir`` are incompatible and cannot be used in the same time.
+  Same pattern is applicable to install path, with ``--installpath`` and ``--installrootdir`` options.
+
 - Run the build:
 
   .. code-block:: console
 
      cd <buildpath>
-     make -j
+     make -j $(nproc)
 
 You may also run the CMake configure step manually instead of relying on ``config-build.py``.
 A full build typically takes between 10 and 30 minutes, depending on chosen compilers, options and number of cores.

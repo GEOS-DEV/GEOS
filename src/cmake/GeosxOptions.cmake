@@ -31,6 +31,7 @@ option( ENABLE_FORTRAN "Enables Fortran support" OFF )
 
 option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
+option( ENABLE_SCOTCH "Enables SCOTCH" ON )
 
 option( ENABLE_VTK "Enables VTK" ON )
 
@@ -74,7 +75,7 @@ endif()
 
 ### BUILD & BLT SETUP ###
 
-option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" ON )
+option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF )
 
 option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
 
@@ -108,7 +109,7 @@ message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}" )
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                  GNU   "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
-                                 CLANG "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
+                                 CLANG "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wno-cast-align -Wcast-qual"
                                )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
@@ -126,6 +127,15 @@ if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}" )
 endif()
 
+#set(CMAKE_CUDA_STANDARD 14 CACHE STRING "" FORCE)
+#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELEASE 
+#                                 DEFAULT "-O3 -DNDEBUG -Xcompiler -DNDEBUG -Xcompiler -O3" )
+#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELWITHDEBINFO 
+#                                 DEFAULT "-lineinfo ${CMAKE_CUDA_FLAGS_RELEASE}" )
+#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_DEBUG 
+#                                 DEFAULT "-G -O0 -Xcompiler -O0" )
+
+
 if( CMAKE_HOST_APPLE )
 #    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
 #    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "")
@@ -139,9 +149,9 @@ endif()
 
 if( ENABLE_HYPRE AND ENABLE_HYPRE_CUDA )
     set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
-    set( GEOSX_GLOBALINDEX_TYPE "int" CACHE STRING "" )
+    set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
 else()
-    set( GEOSX_LOCALINDEX_TYPE "std::ptrdiff_t" CACHE STRING "" )
+    set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
     set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
 endif()
 

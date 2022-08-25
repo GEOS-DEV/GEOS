@@ -121,11 +121,6 @@ public:
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
-  implicitStepComplete( real64 const & time,
-                        real64 const & dt,
-                        DomainPartition & domain ) override;
-
-  virtual void
   assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
@@ -133,7 +128,7 @@ public:
                      arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void
-  updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const override;
+  updatePhaseMobility( ObjectManagerBase & dataGroup ) const override;
 
   virtual void
   applyAquiferBC( real64 const time,
@@ -157,13 +152,6 @@ public:
     // inputs
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
 
-    // primary face-based field
-    static constexpr char const * deltaFacePressureString() { return "deltaFacePressure"; }
-
-    // auxiliary data for the buoyancy term
-    // TODO: change the name
-    static constexpr char const * mimGravityCoefString() { return "mimGravityCoefficient"; }
-
   };
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
@@ -173,7 +161,7 @@ public:
 protected:
 
   /// precompute the minGravityCoefficient for the buoyancy term
-  void precomputeData( MeshLevel & mesh ) override;
+  void precomputeData( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
 private:
 

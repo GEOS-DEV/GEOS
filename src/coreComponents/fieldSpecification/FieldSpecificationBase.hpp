@@ -28,6 +28,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "common/FieldSpecificationOps.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "mesh/MeshObjectPath.hpp"
 #include "functions/FunctionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -107,6 +108,42 @@ public:
   /// deleted move assignement
   FieldSpecificationBase & operator=( FieldSpecificationBase && ) = delete;
 
+  /**
+   * @brief Apply this field specification to the discretization
+   *
+   * @tparam OBJECT_TYPE The type of discretization/mesh object that the
+   *   specification is being applied to.
+   * @tparam BC_TYPE The type of BC being applied
+   * @tparam LAMBDA
+   * @param mesh The MeshLevel that the specification is applied to
+   * @param lambda The being executed
+   */
+  template< typename OBJECT_TYPE,
+            typename BC_TYPE = FieldSpecificationBase,
+            typename LAMBDA >
+  void apply( MeshLevel & mesh,
+              LAMBDA && lambda ) const
+  {
+    MeshObjectPath const & meshObjectPaths = this->getMeshObjectPaths();
+    meshObjectPaths.forObjectsInPath< OBJECT_TYPE >( mesh,
+                                                     [&] ( OBJECT_TYPE & object )
+    {
+// Cannot have this check due to applications like the traction BC which specify a field name that doesn't exist.
+//      if( object.hasWrapper( getFieldName() ) )
+      {
+        dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
+        string_array setNames = this->getSetNames();
+        for( auto & setName : setNames )
+        {
+          if( setGroup.hasWrapper( setName ) )
+          {
+            SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
+            lambda( dynamic_cast< BC_TYPE const & >(*this), setName, targetSet, object, getFieldName() );
+          }
+        }
+      }
+    } );
+  }
 
 
   /**
@@ -268,6 +305,49 @@ public:
                                   CRSMatrixView< real64, globalIndex const > const & matrix,
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const;
+
+  /**
+   * @brief Compute the contributions that will be added/enforced to the right-hand side, and collect the corresponding dof numbers
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
+   *                  Either \ref OpEqual or \ref OpAdd.
+   * @tparam POLICY Execution policy to use when iterating over target set.
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] targetSet The set of indices which the boundary condition will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the boundary condition.
+   * @param[in] dt time step size which is applied as a factor to bc values
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
+   * @param[in] dofMap The map from the local index of the primary field to the global degree of
+   *                   freedom number.
+   * @param[in] dofRankOffset Offset of dof indices on current rank.
+   * @param[inout] matrix Local part of the system matrix.
+   * @param[inout] dof array storing the degrees of freedom of the rhsContribution, to know where in the rhs they will be added/enforced
+   * @param[inout] rhsContribution array storing the values that will be added/enforced to the right-hand side
+   * @param[in] lambda A lambda function which defines how the value that is passed into the functions
+   *                   provided by the FIELD_OP templated type.
+   *
+   * Note that this function only computes the rhs contributions, but does not apply them to the right-hand side.
+   * The application of these rhs contributions is done in applyBoundaryConditionToSystem.
+   *
+   * Why did we have to extract the computation of the rhs contributions from applyBoundaryConditionToSystem?
+   * Because applyBoundaryConditionToSystem is not very well suited to apply the rhsContributions to the equation layout used in the
+   * compositional solvers.
+   * Therefore, the compositional solvers do not call applyBoundaryConditionToSystem, but instead call computeRhsContribution directly, and
+   * apply these rhs contributions "manually" according to the equation layout used in the solver
+   */
+  template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+  void
+  computeRhsContribution( SortedArrayView< localIndex const > const & targetSet,
+                          real64 const time,
+                          real64 const dt,
+                          dataRepository::Group const & dataGroup,
+                          arrayView1d< globalIndex const > const & dofMap,
+                          globalIndex const dofRankOffset,
+                          CRSMatrixView< real64, globalIndex const > const & matrix,
+                          arrayView1d< globalIndex > const & dof,
+                          arrayView1d< real64 > const & rhsContribution,
+                          LAMBDA && lambda ) const;
+
 
   /**
    * @brief Function to zero matrix rows to apply boundary conditions
@@ -455,12 +535,26 @@ public:
     m_setNames.emplace_back( setName );
   }
 
+  /**
+   * @brief Set the Mesh Object Path object
+   *
+   * @param meshBodies The group containing all the MeshBody objects
+   */
+  void setMeshObjectPath( Group const & meshBodies );
+
+  /**
+   * @brief Get the Mesh Object Paths object
+   *
+   * @return reference to const m_meshObjectPaths
+   */
+  MeshObjectPath const & getMeshObjectPaths() const
+  {
+    return *(m_meshObjectPaths.get());
+  }
+
 
 protected:
-  virtual void postProcessInput() override;
 
-  /// The flag used to decide if the BC value is normalized by the size of the set on which it is applied
-  bool m_normalizeBySetSize;
 
 private:
 
@@ -471,12 +565,12 @@ private:
   /// the path to the object which contains the fields that the boundary condition is applied to
   string m_objectPath;
 
+  std::unique_ptr< MeshObjectPath > m_meshObjectPaths;
+
   /// the name of the field the boundary condition is applied to or a key string to use for
   /// determining whether or not to apply the boundary condition.
   string m_fieldName;
 
-
-//  string m_dataType;
 
   /// The component the boundary condition acts on. Not used if field is a scalar.
   int m_component;
@@ -658,29 +752,50 @@ FieldSpecificationBase::
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const
 {
-  integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
-  string const & functionName = getReference< string >( viewKeyStruct::functionNameString() );
-  FunctionManager & functionManager = FunctionManager::getInstance();
-
   array1d< globalIndex > dofArray( targetSet.size() );
   arrayView1d< globalIndex > const & dof = dofArray.toView();
 
   array1d< real64 > rhsContributionArray( targetSet.size() );
   arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView();
 
-  real64 sizeScalingFactor = 1.0;
-  if( m_normalizeBySetSize )
-  {
-    // note: this assumes that the ghost elements have been filtered out
-    // recompute the set size here to make sure that topology changes are accounted for
-    globalIndex const globalSetSize = MpiWrapper::sum( LvArray::integerConversion< globalIndex >( targetSet.size() ), MPI_COMM_GEOSX );
-    sizeScalingFactor = ( globalSetSize > 0 ) ? ( 1.0 / globalSetSize ) : 1.0;
-  }
+  computeRhsContribution< FIELD_OP, POLICY, LAMBDA >( targetSet,
+                                                      time,
+                                                      dt,
+                                                      dataGroup,
+                                                      dofMap,
+                                                      dofRankOffset,
+                                                      matrix,
+                                                      dof,
+                                                      rhsContribution,
+                                                      std::forward< LAMBDA >( lambda ) );
 
+  FIELD_OP::template prescribeRhsValues< POLICY >( rhs, dof, dofRankOffset, rhsContribution );
+}
+
+template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+void
+FieldSpecificationBase::
+  computeRhsContribution( SortedArrayView< localIndex const > const & targetSet,
+                          real64 const time,
+                          real64 const dt,
+                          dataRepository::Group const & dataGroup,
+                          arrayView1d< globalIndex const > const & dofMap,
+                          globalIndex const dofRankOffset,
+                          CRSMatrixView< real64, globalIndex const > const & matrix,
+                          arrayView1d< globalIndex > const & dof,
+                          arrayView1d< real64 > const & rhsContribution,
+                          LAMBDA && lambda ) const
+{
+  integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
+  string const & functionName = getReference< string >( viewKeyStruct::functionNameString() );
+  FunctionManager & functionManager = FunctionManager::getInstance();
+
+  // Compute the value of the rhs terms, and collect the dof numbers
+  // The rhs terms will be assembled in applyBoundaryConditionToSystem (or in the solver for CompositionalMultiphaseBase)
 
   if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
   {
-    real64 value = m_scale * dt * sizeScalingFactor;
+    real64 value = m_scale * dt;
     if( !functionName.empty() )
     {
       FunctionBase const & function = functionManager.getGroup< FunctionBase >( functionName );
@@ -707,7 +822,7 @@ FieldSpecificationBase::
     real64_array resultsArray( targetSet.size() );
     function.evaluate( dataGroup, time, targetSet, resultsArray );
     arrayView1d< real64 const > const & results = resultsArray.toViewConst();
-    real64 const value = m_scale * dt * sizeScalingFactor;
+    real64 const value = m_scale * dt;
 
     forAll< POLICY >( targetSet.size(),
                       [targetSet, dof, dofMap, dofRankOffset, component, matrix, rhsContribution, results, value, lambda] GEOSX_HOST_DEVICE (
@@ -723,9 +838,8 @@ FieldSpecificationBase::
                                    lambda( a ) );
     } );
   }
-
-  FIELD_OP::template prescribeRhsValues< POLICY >( rhs, dof, dofRankOffset, rhsContribution );
 }
+
 
 template< typename POLICY >
 void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView< localIndex const > const & targetSet,

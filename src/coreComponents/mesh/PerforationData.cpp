@@ -20,7 +20,7 @@
 
 #include "common/MpiWrapper.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
+#include "mesh/PerforationExtrinsicData.hpp"
 #include "utilities/ComputationalGeometry.hpp"
 
 namespace geosx
@@ -34,12 +34,13 @@ PerforationData::PerforationData( string const & name, Group * const parent )
   m_location( 0, 3 )
 {
   registerWrapper( viewKeyStruct::numPerforationsGlobalString(), &m_numPerforationsGlobal );
-  registerWrapper( viewKeyStruct::reservoirElementRegionString(), &m_toMeshElements.m_toElementRegion );
-  registerWrapper( viewKeyStruct::reservoirElementSubregionString(), &m_toMeshElements.m_toElementSubRegion );
-  registerWrapper( viewKeyStruct::reservoirElementIndexString(), &m_toMeshElements.m_toElementIndex );
-  registerWrapper( viewKeyStruct::wellElementIndexString(), &m_wellElementIndex );
-  registerWrapper( viewKeyStruct::locationString(), &m_location );
-  registerWrapper( viewKeyStruct::wellTransmissibilityString(), &m_wellTransmissibility );
+
+  registerExtrinsicData( extrinsicMeshData::perforation::reservoirElementRegion{}, &m_toMeshElements.m_toElementRegion );
+  registerExtrinsicData( extrinsicMeshData::perforation::reservoirElementSubRegion{}, &m_toMeshElements.m_toElementSubRegion );
+  registerExtrinsicData( extrinsicMeshData::perforation::reservoirElementIndex{}, &m_toMeshElements.m_toElementIndex );
+  registerExtrinsicData( extrinsicMeshData::perforation::wellElementIndex{}, &m_wellElementIndex );
+  registerExtrinsicData( extrinsicMeshData::perforation::location{}, &m_location );
+  registerExtrinsicData( extrinsicMeshData::perforation::wellTransmissibility{}, &m_wellTransmissibility );
 }
 
 PerforationData::~PerforationData()
@@ -224,7 +225,7 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
   ElementRegionManager const & elemManager = mesh.getElemManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
   CellElementRegion const & region = elemManager.getRegion< CellElementRegion >( er );
-  CellBlock const & subRegion = region.getSubRegion< CellElementSubRegion >( esr );
+  CellElementSubRegion const & subRegion = region.getSubRegion< CellElementSubRegion >( esr );
 
   // compute the bounding box of the element
   real64 boxDims[ 3 ];

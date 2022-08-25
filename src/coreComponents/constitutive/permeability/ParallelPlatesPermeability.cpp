@@ -18,6 +18,8 @@
 
 #include "ParallelPlatesPermeability.hpp"
 
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+
 namespace geosx
 {
 
@@ -30,7 +32,7 @@ namespace constitutive
 ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Group * const parent ):
   PermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::dPerm_dApertureString(), &m_dPerm_dAperture );
+  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
 }
 
 std::unique_ptr< ConstitutiveBase >
@@ -44,7 +46,7 @@ void ParallelPlatesPermeability::allocateConstitutiveData( dataRepository::Group
                                                            localIndex const numConstitutivePointsPerParentIndex )
 {
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dAperture.resize( 0, 1, 3 );
+  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
 
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

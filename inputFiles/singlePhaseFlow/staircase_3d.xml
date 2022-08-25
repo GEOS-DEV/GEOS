@@ -6,9 +6,6 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ channelPerm }"
       targetRegions="{ Channel }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -54,13 +51,18 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="5000.0"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
       forceDt="5e3"
       target="/Solvers/SinglePhaseFlow"/>
 
+    <PeriodicEvent
+      name="statistics"
+      timeFrequency="5000.0"
+      target="/Tasks/SinglePhaseFlowStatistics"/>
+    
     <PeriodicEvent
       name="restarts"
       timeFrequency="5e4"
@@ -83,10 +85,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        targetRegions="{ Channel }"
-        coefficientName="permeability"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -99,7 +98,7 @@
       compressibility="5e-10"
       viscosibility="0.0"/>
 
-    <CompressibleSolidConstantPermeability
+    <CompressibleSolidCarmanKozenyPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
@@ -114,9 +113,11 @@
       referencePressure="0.0"
       compressibility="1.0e-9"/>
 
-    <ConstantPermeability
+    <CarmanKozenyPermeability
       name="channelPerm"
-      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+      particleDiameter="5e-6"
+      sphericity="0.9"/>
+
   </Constitutive>
 
   <FieldSpecifications>
@@ -130,6 +131,7 @@
 
     <FieldSpecification
       name="sourceTerm"
+      logLevel="1"	
       objectPath="faceManager"
       fieldName="pressure"
       scale="5e6"
@@ -155,12 +157,20 @@
       aquiferInnerRadius="2000"
       aquiferAngle="20"
       setNames="{ aquifer }"/>
-      
+
   </FieldSpecifications>
 
+  <Tasks>
+    <SinglePhaseStatistics
+      name="SinglePhaseFlowStatistics"
+      flowSolverName="SinglePhaseFlow"
+      logLevel="1"/>
+  </Tasks>
+  
   <Outputs>
     <VTK
-      name="siloOutput"/>
+      name="vtkOutput"
+      plotFileRoot="staircase_3d"/>
 
     <Restart
       name="restartOutput"/>

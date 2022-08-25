@@ -3,10 +3,11 @@
 #
 
 set( gtest_geosx_tests
-     testModifiedCamClay.cpp
      testDamageUtilities.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
+     testModifiedCamClay.cpp
+     testParticleFluidEnums.cpp
      testPropertyConversions.cpp
    )
 
@@ -32,5 +33,3 @@ foreach(test ${gtest_geosx_tests})
                 )
 
 endforeach()
-
-

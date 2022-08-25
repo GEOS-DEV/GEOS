@@ -25,7 +25,7 @@
 namespace geosx
 {
 
-namespace HydrofractureSolverKernels
+namespace hydrofractureSolverKernels
 {
 
 struct DeformationUpdateKernel
@@ -43,7 +43,7 @@ struct DeformationUpdateKernel
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
           arrayView1d< real64 > const & aperture,
-          arrayView1d< real64 > const & effectiveAperture
+          arrayView1d< real64 > const & hydraulicAperture
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
           ,
           arrayView1d< real64 const > const & apertureAtFailure,
@@ -68,9 +68,9 @@ struct DeformationUpdateKernel
       // TODO this needs a proper contact based strategy for aperture
       aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
 
-      real64 dEffectiveAperture_dAperture = 0;
-      effectiveAperture[kfe] = contactWrapper.computeEffectiveAperture( aperture[kfe],
-                                                                        dEffectiveAperture_dAperture );
+      real64 dHydraulicAperture_dAperture = 0;
+      hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe],
+                                                                        dHydraulicAperture_dAperture );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
       real64 const s = aperture[kfe] / apertureAtFailure[kfe];
@@ -88,7 +88,7 @@ struct DeformationUpdateKernel
         }
       }
 #endif
-      deltaVolume[kfe] = effectiveAperture[kfe] * area[kfe] - volume[kfe];
+      deltaVolume[kfe] = hydraulicAperture[kfe] * area[kfe] - volume[kfe];
     } );
   }
 };
@@ -121,10 +121,10 @@ struct FluidMassResidualDerivativeAssemblyKernel
           nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kf], a )] + i;
           real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
-          real64 dEffectiveAperture_dAperture = 0;
-          real64 const effectiveAperture = contactWrapper.computeEffectiveAperture( aperture, dEffectiveAperture_dAperture );
-          GEOSX_UNUSED_VAR( effectiveAperture );
-          real64 const dAper_dU = dEffectiveAperture_dAperture * dGap_dU;
+          real64 dHydraulicAperture_dAperture = 0;
+          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dAperture );
+          GEOSX_UNUSED_VAR( hydraulicAperture );
+          real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
 
           dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dens * area * dAper_dU;
         }
@@ -162,10 +162,10 @@ struct FluidMassResidualDerivativeAssemblyKernel
           nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
           real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
-          real64 dEffectiveAperture_dAperture = 0.0;
-          real64 const effectiveAperture = contactWrapper.computeEffectiveAperture( aperture[ei2], dEffectiveAperture_dAperture );
-          GEOSX_UNUSED_VAR( effectiveAperture );
-          real64 const dAper_dU = dEffectiveAperture_dAperture * dGap_dU;
+          real64 dHydraulicAperture_dAperture = 0.0;
+          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[ei2], dHydraulicAperture_dAperture );
+          GEOSX_UNUSED_VAR( hydraulicAperture );
+          real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
 
           dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
         }
@@ -252,7 +252,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
   }
 };
 
-} /* namespace HydrofractureSolverKernels */
+} /* namespace hydrofractureSolverKernels */
 
 } /* namespace geosx */
 

@@ -199,17 +199,17 @@ void HypreSolver::setup( HypreMatrix const & mat )
   m_computeAuuTime = m_precond.computeAuuTime();
 
   m_solver = std::make_unique< HypreSolverWrapper >();
-  createHypreKrylovSolver( m_params, mat.getComm(), *m_solver );
+  createHypreKrylovSolver( m_params, mat.comm(), *m_solver );
 
   // Set the preconditioner
   GEOSX_LAI_CHECK_ERROR( m_solver->setPrecond( m_solver->ptr,
                                                m_precond.unwrapped().solve,
-                                               hypre::HYPRE_DummySetup,
+                                               hypre::dummySetup,
                                                m_precond.unwrapped().ptr ) );
 
   // Setup the solver (need a dummy vector for rhs/sol to avoid hypre segfaulting in setup)
   HypreVector dummy;
-  dummy.createWithLocalSize( mat.numLocalRows(), mat.getComm() );
+  dummy.create( mat.numLocalRows(), mat.comm() );
   GEOSX_LAI_CHECK_ERROR( m_solver->setup( m_solver->ptr,
                                           mat.unwrapped(),
                                           dummy.unwrapped(),
@@ -222,7 +222,9 @@ int HypreSolver::doSolve( HypreVector const & rhs,
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
-  return m_solver->solve( m_solver->ptr, matrix().unwrapped(), rhs.unwrapped(), sol.unwrapped() );
+  HYPRE_Int const result = m_solver->solve( m_solver->ptr, matrix().unwrapped(), rhs.unwrapped(), sol.unwrapped() );
+  sol.touch();
+  return result;
 }
 
 void HypreSolver::apply( HypreVector const & rhs,

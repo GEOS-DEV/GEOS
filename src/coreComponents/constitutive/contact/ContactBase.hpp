@@ -20,6 +20,9 @@
 #define GEOSX_CONSTITUTIVE_CONTACT_CONTACTBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
+#include "functions/TableFunction.hpp"
+#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
+
 
 namespace geosx
 {
@@ -35,6 +38,16 @@ namespace constitutive
 class ContactBaseUpdates
 {
 public:
+
+  ContactBaseUpdates( real64 const & penaltyStiffness,
+                      real64 const & shearStiffness,
+                      real64 const & displacementJumpThreshold,
+                      TableFunction const & apertureTable )
+    : m_penaltyStiffness( penaltyStiffness ),
+    m_shearStiffness( shearStiffness ),
+    m_displacementJumpThreshold( displacementJumpThreshold ),
+    m_apertureTable( apertureTable.createKernelWrapper() )
+  {}
 
   /// Default copy constructor
   ContactBaseUpdates( ContactBaseUpdates const & ) = default;
@@ -54,28 +67,45 @@ public:
   /**
    * @brief Evaluate the effective aperture, and its derivative wrt aperture
    * @param[in] aperture the model aperture/gap
-   * @param[out] dEffectiveAperture_dAperture the derivative of the effective aperture wrt aperture
-   * @return An effective physical aperture that is always > 0
+   * @param[out] dHydraulicAperture_dAperture the derivative of the effective aperture wrt aperture
+   * @return The hydraulic aperture that is always > 0
    */
   GEOSX_HOST_DEVICE
   inline
-  virtual real64 computeEffectiveAperture( real64 const aperture,
-                                           real64 & dEffectiveAperture_dAperture ) const
-  { GEOSX_UNUSED_VAR( aperture, dEffectiveAperture_dAperture ); return 0.0; }
+  virtual real64 computeHydraulicAperture( real64 const aperture,
+                                           real64 & dHydraulicAperture_dAperture ) const;
 
 
   /**
    * @brief Evaluate the traction vector and its derivatives wrt to pressure and jump
    * @param[in] dispJump the displacement jump
-   * @param[in] tractionVector the traction vector
+   * @param[in] fractureState the fracture state
+   * @param[out] tractionVector the traction vector
    * @param[out] dTractionVector_dJump the derivative of the traction vector wrt displacement jump
    */
   GEOSX_HOST_DEVICE
   inline
-  virtual void computeTraction( arraySlice1d< real64 const > const & dispJump,
+  virtual void computeTraction( localIndex const k,
+                                arraySlice1d< real64 const > const & oldDispJump,
+                                arraySlice1d< real64 const > const & dispJump,
+                                integer const & fractureState,
                                 arraySlice1d< real64 > const & tractionVector,
                                 arraySlice2d< real64 > const & dTractionVector_dJump ) const
-  { GEOSX_UNUSED_VAR( dispJump, tractionVector, dTractionVector_dJump ); }
+  {GEOSX_UNUSED_VAR( k, oldDispJump, dispJump, tractionVector, dTractionVector_dJump, fractureState );}
+
+  /**
+   * @brief Evaluate the traction vector and its derivatives wrt to pressure and jump
+   * @param[in] dispJump the displacement jump
+   * @param[in] tractionVector the traction vector
+   * @param[out] fractureState the fracture state
+   */
+  GEOSX_HOST_DEVICE
+  inline
+  virtual void updateFractureState( localIndex const k,
+                                    arraySlice1d< real64 const > const & dispJump,
+                                    arraySlice1d< real64 const > const & tractionVector,
+                                    integer & fractureState ) const
+  { GEOSX_UNUSED_VAR( k, dispJump, tractionVector, fractureState ); }
 
   /**
    * @brief Update the traction with the pressure term
@@ -88,10 +118,8 @@ public:
   GEOSX_HOST_DEVICE
   inline
   virtual void addPressureToTraction( real64 const & pressure,
-                                      bool const isOpen,
                                       arraySlice1d< real64 >const & tractionVector,
-                                      real64 & dTraction_dPressure ) const
-  { GEOSX_UNUSED_VAR( pressure, isOpen, tractionVector, dTraction_dPressure ); }
+                                      real64 & dTraction_dPressure ) const;
 
   /**
    * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
@@ -103,8 +131,21 @@ public:
   inline
   virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
                                                      real64 & dLimitTangentialTractionNorm_dTraction ) const
-  { GEOSX_UNUSED_VAR( normalTraction, dLimitTangentialTractionNorm_dTraction ); return 0.0; }
+  { GEOSX_UNUSED_VAR( normalTraction, dLimitTangentialTractionNorm_dTraction ); return 0; };
 
+protected:
+
+  /// The penalty stiffness
+  real64 m_penaltyStiffness;
+
+  /// The shear stiffness
+  real64 m_shearStiffness;
+
+  /// A threshold valued to determine whether a fracture is open or not.
+  real64 m_displacementJumpThreshold;
+
+  /// The aperture table function wrapper
+  TableFunction::KernelWrapper m_apertureTable;
 };
 
 
@@ -132,11 +173,24 @@ public:
    */
   virtual ~ContactBase() override;
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   /**
    * @brief accessor for penalty stiffness
    * @return the stiffness
    */
   real64 stiffness() const { return m_penaltyStiffness; }
+
+
+  /// Type of kernel wrapper for in-kernel update
+  using KernelWrapper = ContactBaseUpdates;
+
+  /**
+   * @brief Create an update kernel wrapper.
+   * @return the wrapper
+   */
+  KernelWrapper createKernelWrapper() const;
 
   /**
    * @struct Structure to hold scoped key names
@@ -145,14 +199,67 @@ public:
   {
     /// string/key for penalty stiffness
     static constexpr char const * penaltyStiffnessString() { return "penaltyStiffness"; }
+
+    /// string/key for shear stiffness
+    static constexpr char const * shearStiffnessString() { return "shearStiffness"; }
+
+    /// string/key for the displacement jump threshold value
+    static constexpr char const * displacementJumpThresholdString() { return "displacementJumpThreshold"; }
+
+    /// string/key for aperture tolerance
+    static constexpr char const * apertureToleranceString() { return "apertureTolerance"; }
+
+    /// string/key for aperture table name
+    static constexpr char const * apertureTableNameString() { return "apertureTableName"; }
   };
 
 protected:
+  virtual void postProcessInput() override;
+
+  virtual void initializePreSubGroups() override;
+
+  /**
+   * @brief Validate the values provided in the aperture table
+   * @param[in] apertureTable the effective aperture vs aperture table
+   */
+  void validateApertureTable( TableFunction const & apertureTable ) const;
+
 
   /// The value of penalty to penetration
   real64 m_penaltyStiffness;
 
+  /// The value of the shear stiffness
+  real64 m_shearStiffness;
+
+  /// The aperture tolerance to avoid floating point errors in expressions involving aperture
+  real64 m_apertureTolerance;
+
+  /// The name of the aperture table, if any
+  string m_apertureTableName;
+
+  /// A threshold valued to determine whether a fracture is open or not.
+  real64 m_displacementJumpThreshold;
+
+  /// Pointer to the function that limits the model aperture to a physically admissible value.
+  TableFunction const * m_apertureTable;
 };
+
+GEOSX_HOST_DEVICE
+real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
+                                                     real64 & dHydraulicAperture_dAperture ) const
+{
+  return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
+}
+
+GEOSX_HOST_DEVICE
+void ContactBaseUpdates::addPressureToTraction( real64 const & pressure,
+                                                arraySlice1d< real64 > const & tractionVector,
+                                                real64 & dTraction_dPressure ) const
+{
+  tractionVector[0] -= pressure;
+  dTraction_dPressure = -1.0;
+}
+
 
 } /* namespace constitutive */
 

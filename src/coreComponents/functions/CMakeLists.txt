@@ -14,6 +14,7 @@ set( functions_sources
      FunctionBase.cpp
      FunctionManager.cpp
      TableFunction.cpp
+     MultivariableTableFunction.cpp
    )
 
 if( ENABLE_MATHPRESSO )
@@ -26,7 +27,7 @@ if( ENABLE_MATHPRESSO )
 endif()
 
 
-set( dependencyList dataRepository )
+set( dependencyList codingUtilities dataRepository )
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )

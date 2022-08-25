@@ -9,13 +9,14 @@
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
       logLevel="1"
-      activeSetMaxIter="10"
       targetRegions="{ Region, Fracture }"
-      contactRelationName="fractureMaterial">
+      contactRelationName="fractureMaterial"
+      fractureRegionName="Fracture">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         logLevel="2"
         newtonMaxIter="10"
+        maxNumConfigurationAttempts="10"
         lineSearchAction="Require"
         lineSearchMaxCuts="2"
         maxTimeStepCuts="2"/>
@@ -30,8 +31,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{ Region, Fracture }"
-      solidMaterialNames="{ rock }">
+      targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="5"/>
@@ -45,7 +45,7 @@
       logLevel="0"
       fractureRegion="Fracture"
       targetRegions="{ Region }"
-      solidMaterialNames="{ rock }"
+      
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>
@@ -60,16 +60,14 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="TPFAstabilization"
-        fieldName="traction"
-        coefficientName="custom"/>
+        name="TPFAstabilization"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ South_HEX, North_HEX }"
+      cellBlocks="{ 0_hexahedra, 1_hexahedra }"
       materialList="{ rock }"/>
 
     <SurfaceElementRegion
@@ -89,9 +87,18 @@
     <Coulomb
       name="fractureMaterial"
       cohesion="0.0"
-      frictionAngle="0.523598776"/>
+      frictionCoefficient="0.577350269"
+      apertureTableName="apertureTable"/>
   </Constitutive>
 <!-- SPHINX_MATERIAL_END -->
+
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.002e-3, 0.02e-3 }"/>      
+  </Functions>
 
 <!-- SPHINX_BC -->
   <FieldSpecifications>
@@ -156,7 +163,7 @@
     <PackCollection
       name="displacementJumpCollection"
       objectPath="ElementRegions/Fracture/faceElementSubRegion"
-      fieldName="localJump"/>   
+      fieldName="displacementJump"/>   
     </Tasks>
 <!-- SPHINX_TASKS_END -->
 
@@ -164,7 +171,7 @@
     <VTK
       name="vtkOutput"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <TimeHistory
       name="timeHistoryOutput"
@@ -174,6 +181,9 @@
     <TimeHistory
       name="timeHistoryOutput1"
       sources="{/Tasks/displacementJumpCollection}"
-      filename="displacementJump_history" />     
+      filename="displacementJump_history" /> 
+      
+    <Restart
+      name="restartOutput"/>      
     </Outputs>
 </Problem>

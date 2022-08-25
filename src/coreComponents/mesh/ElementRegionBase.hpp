@@ -68,10 +68,35 @@ public:
 
   ///@}
 
+
+  /**
+   * @brief verify that the meshBody name specified exists in the meshBodies group.
+   * If there is only one meshBody it returns the name of the only existing mesh body.
+   *
+   * @param[in] meshBodies the meshBodies group.
+   * @param[in] meshBodyBlockName name of the meshbody to be verified
+   * @return the name of the only mesh body present if there is only one
+   * OR the name specified by @p  meshBodyName if the meshBody is found.
+   */
+  static string verifyMeshBodyName( Group const & meshBodies,
+                                    string const & meshBodyBlockName );
+
   /**
    * @name Generation of the mesh region
    */
   ///@{
+
+
+  /**
+   * @brief Create a Element Sub Region object
+   *
+   * @tparam SUBREGION_TYPE The type of subregion to create
+   * @param name  The name of the subregion
+   * @return reference to the newly created subregion
+   */
+  template< typename SUBREGION_TYPE >
+  SUBREGION_TYPE & createElementSubRegion( string const & name );
+
 
   /**
    * @brief Generate mesh.
@@ -91,14 +116,6 @@ public:
   ///@{
 
   /**
-   * @copydoc getSubRegions() const
-   */
-  subGroupMap & getSubRegions()
-  {
-    return getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups();
-  }
-
-  /**
    * @brief Get a collection of the subregions.
    * @return a collection of the subregions
    */
@@ -106,7 +123,6 @@ public:
   {
     return getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups();
   }
-
 
   /**
    * @brief Get a reference to a subregion.
@@ -131,12 +147,26 @@ public:
   }
 
   /**
+   * @brief Check to see if this region has a subregion
+   * @tparam T The type of the subregion
+   * @param name The name to check
+   * @return true if the subregion exists
+   * @return false if the subregion does not exist
+   */
+  template< typename T=ElementSubRegionBase >
+  bool hasSubRegion( string const & name ) const
+  {
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).hasGroup< T >( name );
+  }
+
+
+  /**
    * @brief Get the number of subregions in the region.
    * @return the number of subregions  in the region
    */
   localIndex numSubRegions() const
   {
-    return this->getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups().size();
+    return this->getSubRegions().size();
   }
 
   /**
@@ -152,9 +182,9 @@ public:
   localIndex getNumberOfElements() const
   {
     localIndex numElem = 0;
-    this->forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & cellBlock ) -> void
+    this->forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & group ) -> void
     {
-      numElem += cellBlock.size();
+      numElem += group.size();
     } );
     return numElem;
   }
@@ -293,6 +323,8 @@ public:
   {
     /// @return String key for the material list
     static constexpr char const * materialListString() { return "materialList"; }
+    /// @return String key for the material list
+    static constexpr char const * meshBodyString() { return "meshBody"; }
     /// @return String key for the element subregions
     static constexpr char const * elementSubRegions() { return "elementSubRegions"; }
   };
@@ -304,8 +336,8 @@ private:
   /// List of materials for the element region
   string_array m_materialList;
 
-  /// Name of the numerical method
-  string m_numericalMethod;
+  /// Name of the mesh body that contains this region
+  string m_meshBody;
 
 };
 
@@ -334,6 +366,14 @@ string_array ElementRegionBase::getConstitutiveNames() const
   }
   return rval;
 }
+
+
+template< typename SUBREGION_TYPE >
+SUBREGION_TYPE & ElementRegionBase::createElementSubRegion( string const & name )
+{
+  return getGroup( viewKeyStruct::elementSubRegions() ).registerGroup< SUBREGION_TYPE >( name );
+}
+
 
 }
 

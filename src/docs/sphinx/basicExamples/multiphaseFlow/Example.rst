@@ -37,8 +37,7 @@ The XML file considered here follows the typical structure of the GEOSX input fi
  #. :ref:`ElementRegions <ElementRegions_tag_dead_oil_bottom_layers_spe10>`
  #. :ref:`Constitutive <Constitutive_tag_dead_oil_bottom_layers_spe10>`
  #. :ref:`FieldSpecifications <FieldSpecifications_tag_dead_oil_bottom_layers_spe10>`
- #. :ref:`Outputs <Outputs_tag_dead_oil_bottom_layers_spe10>`
- #. :ref:`Tasks <Tasks_tag_dead_oil_bottom_layers_spe10>`    
+ #. :ref:`Outputs <Outputs_tag_dead_oil_bottom_layers_spe10>`   
 
 .. _Solver_tag_dead_oil_bottom_layers_spe10:
 
@@ -128,7 +127,7 @@ The periodic event named ``solverApplications`` triggers the application of the 
 This event must point to the solver by name.
 In this example, the name of the solver is ``compflow`` and was defined in the **Solvers** block.
 The time step is initialized using the ``initialDt`` attribute of the flow solver.
-Then, if the solver converges in more than a certain number of nonlinear iterations (by default, 40% of the
+Then, if the solver converges in less than a certain number of nonlinear iterations (by default, 40% of the
 maximum number of nonlinear iterations), the time step will be increased until it reaches the maximum
 time step size specified with ``maxEventDt``. 
 If the time step fails, the time step will be cut. The parameters defining the time stepping strategy

@@ -7,10 +7,7 @@
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ rock, fractureFilling }"
-      permeabilityNames="{ rockPerm, fracturePerm }">
+      targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
@@ -21,7 +18,7 @@
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
       logLevel="1"
-      solidMaterialNames="{ rock }"
+      
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       mpiCommOrder="1"/>
@@ -86,8 +83,6 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
         usePEDFM="1"/>
     </FiniteVolume>
   </NumericalMethods>
@@ -202,7 +197,7 @@
       name="vtkOutput"
       plotFileRoot="impermFractureAndMatrixFlow"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <Restart
       name="sidreRestart"/>

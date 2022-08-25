@@ -82,11 +82,6 @@ public:
   /**@{*/
 
   virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override;
-
-  virtual void
   setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
@@ -119,9 +114,9 @@ public:
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
-  implicitStepComplete( real64 const & time,
-                        real64 const & dt,
-                        DomainPartition & domain ) override;
+  implicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain ) override;
 
   virtual void
   assembleFluxTerms( real64 const time_n,

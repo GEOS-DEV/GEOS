@@ -8,9 +8,9 @@
 
 <!-- SPHINX_MESH -->
   <Mesh>
-    <PAMELAMeshGenerator
+    <VTKMesh
       name="CubeHex"
-      file="crackInPlane_benchmark.msh"/>
+      file="crackInPlane_benchmark.vtu"/>
   </Mesh>
 
   <Geometry>

@@ -20,19 +20,12 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Region1 }"
-      fluidNames="{ fluid1 }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="297.15"/>
 
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }"
-      fluidNames="{ fluid1 }"
-      relPermNames="{ relperm }"
-      wellTemperature="297.15"
       maxRelativePressureChange="0.1"
       maxCompFractionChange="0.1">
       <WellControls
@@ -43,7 +36,7 @@
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="297.15"
-        targetBHP="4e6"
+        targetBHPTableName="BHPTable"
         targetPhaseRate="1e-3"
         targetPhaseName="oil"/>
       <WellControls
@@ -67,6 +60,7 @@
         surfaceTemperature="297.15"
         targetBHP="4.5e7"
         targetTotalRate="1e-5"
+        injectionTemperature="297.15"   
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
@@ -171,9 +165,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        />
     </FiniteVolume>
   </NumericalMethods>
 
@@ -270,6 +262,14 @@
   </FieldSpecifications>
 
   <Functions>
+
+    <TableFunction
+      name="BHPTable"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 10e10 }"
+      values="{ 4e6, 4e6 }" 
+      interpolation="lower"/>
+    
     <TableFunction
       name="waterRelPermTable"
       coordinateFiles="{ satw.txt }"

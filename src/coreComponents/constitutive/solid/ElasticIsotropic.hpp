@@ -46,12 +46,14 @@ public:
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] newStress    The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress    The ArrayView holding the old stress data for each quadrature point.
+   * @param[in] disableInelasticity Flag to disable plasticity for inelastic models
    */
   ElasticIsotropicUpdates( arrayView1d< real64 const > const & bulkModulus,
                            arrayView1d< real64 const > const & shearModulus,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                           arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
-    SolidBaseUpdates( newStress, oldStress ),
+                           arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                           const bool & disableInelasticity ):
+    SolidBaseUpdates( newStress, oldStress, disableInelasticity ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus )
   {}
@@ -169,7 +171,7 @@ void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
 {
   GEOSX_UNUSED_VAR( q );
   real64 const G = m_shearModulus[k];
-  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], G );
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], G );
 
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
@@ -197,8 +199,8 @@ void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
                                                 localIndex const q,
                                                 real64 ( & elasticStrain)[6] ) const
 {
-  real64 const E = conversions::BulkModAndShearMod::toYoungMod( m_bulkModulus[k], m_shearModulus[k] );
-  real64 const nu = conversions::BulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const E = conversions::bulkModAndShearMod::toYoungMod( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const nu = conversions::bulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
 
   elasticStrain[0] = (    m_newStress[k][q][0] - nu*m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
   elasticStrain[1] = (-nu*m_newStress[k][q][0] +    m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
@@ -220,7 +222,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex co
   GEOSX_UNUSED_VAR( q );
 
   real64 const twoG   = 2 * m_shearModulus[k];
-  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] );
   real64 const vol    = lambda * ( totalStrain[0] + totalStrain[1] + totalStrain[2] );
 
   stress[0] = vol + twoG * totalStrain[0];
@@ -461,14 +463,16 @@ public:
       return ElasticIsotropicUpdates( m_bulkModulus,
                                       m_shearModulus,
                                       m_newStress,
-                                      m_oldStress );
+                                      m_oldStress,
+                                      m_disableInelasticity );
     }
     else // for "no state" updates, pass empty views to avoid transfer of stress data to device
     {
       return ElasticIsotropicUpdates( m_bulkModulus,
                                       m_shearModulus,
                                       arrayView3d< real64, solid::STRESS_USD >(),
-                                      arrayView3d< real64, solid::STRESS_USD >() );
+                                      arrayView3d< real64, solid::STRESS_USD >(),
+                                      m_disableInelasticity );
     }
   }
 
@@ -487,7 +491,8 @@ public:
                           m_bulkModulus,
                           m_shearModulus,
                           m_newStress,
-                          m_oldStress );
+                          m_oldStress,
+                          m_disableInelasticity );
   }
 
 protected:

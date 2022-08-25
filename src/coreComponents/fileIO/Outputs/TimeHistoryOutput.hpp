@@ -20,9 +20,9 @@
 #define GEOSX_FILEIO_OUTPUTS_HISTORYOUTPUT_HPP_
 
 #include "OutputBase.hpp"
-#include "fileIO/timeHistory/TimeHistoryCollection.hpp"
-#include "fileIO/timeHistory/HistoryIO.hpp"
-#include "fileIO/timeHistory/TimeHistHDF.hpp"
+#include "fileIO/timeHistory/HistoryCollection.hpp"
+#include "fileIO/timeHistory/BufferedHistoryIO.hpp"
+#include "fileIO/timeHistory/HDFHistoryIO.hpp"
 
 #include "LvArray/src/Array.hpp" // just for collector
 
@@ -57,7 +57,18 @@ public:
    *   file and data spaces/sets and output any set index metatata for the time history.
    * @note There are operations in this function that are collective on the GEOSX comm.
    */
-  virtual void initializePostSubGroups() override;
+  virtual void initializePostInitialConditionsPostSubGroups() override;
+
+  /**
+   * @brief Performs re-initialization of certain variable depending on the solver being used.
+   */
+  virtual void reinit() override;
+
+  /**
+   * @brief Set the output filename (This is usefull for pygeosx user)
+   * @param root The string name of the output file
+   */
+  void setFileName( string const & root );
 
   /**
    * @brief Writes out a time history file.
@@ -94,6 +105,14 @@ public:
   } timeHistoryOutputViewKeys;
   /// @endcond
 
+  /**
+   * @brief Return PyHistoryOutput type.
+   * @return Return PyHistoryOutput type.
+   */
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const override;
+#endif
+
 private:
 
   /**
@@ -101,7 +120,7 @@ private:
    * @param group The ProblemManager cast to a Group
    * @param collector The HistoryCollector to intialize
    */
-  void initCollectorParallel( DomainPartition & domain, HistoryCollection & collector );
+  void initCollectorParallel( DomainPartition const & domain, HistoryCollection & collector );
 
   /// The paths of the collectors to collect history from.
   string_array m_collectorPaths;

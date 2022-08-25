@@ -68,9 +68,8 @@
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ fractureFilling }"
       discretization="FE1"
       couplingTypeOption="FIM"
       logLevel="1"
@@ -97,8 +96,6 @@
       logLevel="0"
       discretization="FE1"
       targetRegions="{Region2, void, Fracture}"
-      solidMaterialNames="{rock}"
-      contactRelationName="fractureContact"
       >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="5"/>
@@ -115,9 +112,6 @@
       logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
-      fluidNames="{water}"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"
       inputFluxEstimate="1.0"
       >
       <NonlinearSolverParameters newtonTol="1.0e-5"
@@ -136,7 +130,6 @@
       fractureRegion="Fracture"
       targetRegions="{Region2, void}"
       nodeBasedSIF="1"
-      solidMaterialNames="{rock}"
       rockToughness="3.0e6"
       >
     </SurfaceGenerator>
@@ -190,22 +183,9 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
     
-    <Contact name="fractureContact"
+    <FrictionlessContact name="fractureContact"
       penaltyStiffness="1.0e0"
       apertureTableName="aperTable" />
-
-
-    <NullModel
-      name="nullSolid"/>
-
-    <PressurePorosity
-      name="fracturePorosity"
-      defaultReferencePorosity="1.00"
-      referencePressure="0.0"
-      compressibility="0.0"/>
-
-    <ParallelPlatesPermeability
-      name="fracturePerm"/>
   </Constitutive>
 
   <Outputs>
@@ -264,9 +244,7 @@
     </FiniteElements>
 
     <FiniteVolume>
-      <TwoPointFluxApproximation name="singlePhaseTPFA"
-                                 fieldName="pressure"
-                                 coefficientName="permeability"/>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

@@ -1,4 +1,8 @@
+scipy
 matplotlib
 numpy
 h5py
 mpmath
+docutils<0.18
+# using plantuml for diagrams
+sphinxcontrib-plantuml

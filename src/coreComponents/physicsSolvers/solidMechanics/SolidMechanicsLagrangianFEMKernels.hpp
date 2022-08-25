@@ -28,7 +28,7 @@
 namespace geosx
 {
 
-namespace SolidMechanicsLagrangianFEMKernels
+namespace solidMechanicsLagrangianFEMKernels
 {
 
 inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const & acceleration,
@@ -116,6 +116,6 @@ struct ExplicitKernel
 };
 
 
-} // namespace SolidMechanicsLagrangianFEMKernels
+} // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx

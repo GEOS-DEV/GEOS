@@ -6,7 +6,7 @@
   </Included>
 
   <Mesh>
-    <PAMELAMeshGenerator
+    <PAMELAMesh
         name="CubeTetra"
         file="cube_10x10x10_tet_2_regions.msh"/>
   </Mesh>

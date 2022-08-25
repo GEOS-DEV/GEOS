@@ -20,8 +20,6 @@
 #define GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_TPFAINNERPRODUCT_HPP_
 
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
-#include "finiteVolume/mimeticInnerProducts/MimeticInnerProductHelpers.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
 
 namespace geosx
 {
@@ -99,7 +97,7 @@ TPFAInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_
         real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
         // 1) compute the face geometry data: center, normal, vector from cell center to face center
         real64 const faceArea =
-          computationalGeometry::Centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
+          computationalGeometry::centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
                                                      nodePosition,
                                                      faceCenter,
                                                      faceNormal,

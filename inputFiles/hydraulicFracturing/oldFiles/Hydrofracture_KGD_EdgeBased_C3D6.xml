@@ -6,9 +6,8 @@
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       discretization="FE1"
       targetRegions="{ Fracture }"
@@ -26,7 +25,6 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Region2, Fracture }"
-      solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
@@ -37,21 +35,12 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-5"
-        newtonMaxIter="10"/>
-      <LinearSolverParameters
-        krylovTol="1.0e-12"/>
-    </SinglePhaseFVM>
+      targetRegions="{ Fracture }"/>
 
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Region2 }"
-      solidMaterialNames="{ rock }"
+      
       rockToughness="1e7"/>
   </Solvers>
 
@@ -133,9 +122,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -185,7 +172,7 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="0.0e8"
       apertureTableName="apertureTable"/>

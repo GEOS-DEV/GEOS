@@ -18,6 +18,8 @@
 
 #include "SingleFluidBase.hpp"
 
+#include "SingleFluidExtrinsicData.hpp"
+
 namespace geosx
 {
 
@@ -29,28 +31,57 @@ namespace constitutive
 SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Default value for density." );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::density{}, &m_density );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dDensity_dPressure{}, &m_dDensity_dPressure );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dDensity_dTemperature{}, &m_dDensity_dTemperature );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::initialDensity{}, &m_initialDensity );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::density_n{}, &m_density_n );
 
-  registerWrapper( viewKeyStruct::defaultViscosityString(), &m_defaultViscosity ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Default value for viscosity." );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::viscosity{}, &m_viscosity );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dViscosity_dPressure{}, &m_dViscosity_dPressure );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dViscosity_dTemperature{}, &m_dViscosity_dTemperature );
 
-  registerWrapper( viewKeyStruct::densityString(), &m_density ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dDens_dPresString(), &m_dDensity_dPressure );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::internalEnergy{}, &m_internalEnergy );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::internalEnergy_n{}, &m_internalEnergy_n );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dInternalEnergy_dPressure{}, &m_dInternalEnergy_dPressure );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dInternalEnergy_dTemperature{}, &m_dInternalEnergy_dTemperature );
 
-  registerWrapper( viewKeyStruct::viscosityString(), &m_viscosity ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dVisc_dPresString(), &m_dViscosity_dPressure );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::enthalpy{}, &m_enthalpy );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dEnthalpy_dPressure{}, &m_dEnthalpy_dPressure );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dEnthalpy_dTemperature{}, &m_dEnthalpy_dTemperature );
+
 }
 
 void SingleFluidBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
-  getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).setApplyDefaultValue( m_defaultDensity );
-  getWrapper< array2d< real64 > >( viewKeyStruct::viscosityString() ).setApplyDefaultValue( m_defaultViscosity );
+
+  // for fracture elements, set the default value
+  getExtrinsicData< extrinsicMeshData::singlefluid::density_n >().
+    setDefaultValue( defaultDensity() );
 }
 
+void SingleFluidBase::initializeState() const
+{
+  arrayView2d< real64 > initialDensity = m_initialDensity;
+  arrayView2d< real64 > density_n      = m_density_n;
+  initialDensity.setValues< parallelDevicePolicy<> >( m_density.toViewConst() );
+  density_n.setValues< parallelDevicePolicy<> >( m_density.toViewConst() );
+
+  arrayView2d< real64 > internalEnergy_n = m_internalEnergy_n;
+  internalEnergy_n.setValues< parallelDevicePolicy<> >( m_internalEnergy.toViewConst() );
+}
+
+void SingleFluidBase::saveConvergedState() const
+{
+  arrayView2d< real64 > density_n = m_density_n;
+  density_n.setValues< parallelDevicePolicy<> >( m_density.toViewConst() );
+
+  arrayView2d< real64 > internalEnergy_n = m_internalEnergy_n;
+  internalEnergy_n.setValues< parallelDevicePolicy<> >( m_internalEnergy.toViewConst() );
+}
+
+//START_SPHINX_INCLUDE_00
 void SingleFluidBase::allocateConstitutiveData( Group & parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
@@ -60,10 +91,24 @@ void SingleFluidBase::allocateConstitutiveData( Group & parent,
 
   m_density.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_dDensity_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_dDensity_dTemperature.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_initialDensity.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_density_n.resize( parent.size(), numConstitutivePointsPerParentIndex );
 
   m_viscosity.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_dViscosity_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_dViscosity_dTemperature.resize( parent.size(), numConstitutivePointsPerParentIndex );
+
+  m_internalEnergy.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_internalEnergy_n.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_dInternalEnergy_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_dInternalEnergy_dTemperature.resize( parent.size(), numConstitutivePointsPerParentIndex );
+
+  m_enthalpy.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_dEnthalpy_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_dEnthalpy_dTemperature.resize( parent.size(), numConstitutivePointsPerParentIndex );
 }
+//END_SPHINX_INCLUDE_00
 
 } //namespace constitutive
 

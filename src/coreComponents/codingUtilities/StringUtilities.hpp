@@ -38,15 +38,15 @@ string toLower( string const & input );
 
 /**
  * @brief Join strings or other printable objects with a delimiter.
- * @tparam S    type of delimiter, usually char, char const * or string
  * @tparam IT   type of iterator into the range of objects to join
- * @param delim delimiter used to glue together strings
+ * @tparam S    type of delimiter, usually char, char const * or string
  * @param first iterator to start of the range
  * @param last  iterator past-the-end of the range
- * @return a new string containing input strings concatenated with a delimiter
+ * @param delim delimiter used to glue together strings
+ * @return a string containing input values concatenated with a delimiter
  */
 template< typename IT, typename S = char >
-string join( IT first, IT last, S const & delim = S())
+string join( IT first, IT last, S const & delim = S() )
 {
   if( first == last )
   {
@@ -97,20 +97,10 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
 }
 
 /// Subdivide string by delimiters
-string_array tokenize( string const & str, string const & delimiters );
-
-/**
- * @brief Retuns a string containing a padded value
- * @param[in] value to be padded
- * @param[in] size size of the padding
- */
-template< typename T >
-string padValue( T value, int size )
-{
-  std::stringstream paddedStringStream;
-  paddedStringStream << std::setfill( '0' ) << std::setw( size ) << value;
-  return paddedStringStream.str();
-}
+template< typename RETURN_TYPE = string_array >
+RETURN_TYPE tokenize( string const & str,
+                      string const & delimiters,
+                      bool const treatConsecutiveDelimAsOne = true );
 
 /**
  * @brief Trim the string

@@ -19,44 +19,63 @@
 #ifndef GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP_
 #define GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP_
 
-#include "gtest/gtest.h"
-
 #include "common/DataTypes.hpp"
 
-#ifndef GTEST_SKIP
-#define GTEST_SKIP() return
-#endif
+#include "common/MpiWrapper.hpp"
 
-#define SKIP_TEST_IF( COND, REASON ) \
-  do \
-  { \
-    if( COND ) \
-    { \
-      GEOSX_WARNING( "This test is currently known to fail when " #COND " because:\n" REASON "\n" \
-                                                                                             "Therefore, we skip it entirely for this run (may show as PASSED or SKIPPED)" ); \
-      GTEST_SKIP(); \
-    } \
-  } while(0)
+#include <gtest/gtest.h>
+
+#define SKIP_TEST_IF( COND, REASON )  \
+  do                                  \
+  {                                   \
+    if( COND )                        \
+    {                                 \
+      GTEST_SKIP_( ": " REASON );     \
+    }                                 \
+  } while( false )
 
 #define SKIP_TEST_IN_SERIAL( REASON ) \
-  do \
-  { \
-    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
-    SKIP_TEST_IF( mpiSize == 1, REASON ); \
-  } while(0)
+  SKIP_TEST_IF( geosx::MpiWrapper::commSize() == 1, REASON )
 
 #define SKIP_TEST_IN_PARALLEL( REASON ) \
-  do \
-  { \
-    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
-    SKIP_TEST_IF( mpiSize > 1, REASON ); \
-  } while(0)
+  SKIP_TEST_IF( geosx::MpiWrapper::commSize() != 1, REASON )
 
 namespace geosx
 {
 
 namespace testing
 {
+
+/**
+ * @brief Returns the expected value depending on the MPI context.
+ * @tparam T Type of the expected value.
+ * @param[in] expectedSerial Expected value for serial case.
+ * @param[in] expectedParallel Expected values for parallel MPI cases, for the current MPI rank.
+ *        The length of the list should match the size of the MPI communicator @p comm.
+ *        The @p i^th element of the list will be chosen for MPI rank @p i.
+ * @param[in] comm The MPI_Comm communicator that the function will act on.
+ * @return The expected value.
+ *
+ * @note This function is meant to be used to run the same test in serial or parallel environments.
+ */
+template< typename T >
+T expected( T expectedSerial,
+            std::initializer_list< T > expectedParallel,
+            MPI_Comm const & comm = MPI_COMM_GEOSX )
+{
+  int const mpiSize = MpiWrapper::commSize( comm );
+  if( mpiSize == 1 )
+  {
+    return expectedSerial;
+  }
+  else
+  {
+    GEOSX_ASSERT( expectedParallel.size() == std::size_t( mpiSize ) );
+    std::vector< T > tmp( expectedParallel );
+    return tmp[MpiWrapper::commRank( comm )];
+  }
+}
+
 
 constexpr real64 DEFAULT_ABS_TOL = 1E-12;
 constexpr real64 DEFAULT_REL_TOL = std::numeric_limits< real64 >::epsilon();
@@ -71,7 +90,9 @@ constexpr real64 DEFAULT_REL_TOL = std::numeric_limits< real64 >::epsilon();
     return ::testing::AssertionFailure() << std::scientific << std::setprecision( 5 )
                                          << " relative error: " << delta / value
                                          << " (" << v1 << " vs " << v2 << "),"
-                                         << " exceeds " << relTol << std::endl;
+                                         << " exceeds " << relTol <<". "
+                                         << " absolute error: " << delta << " exeeds "
+                                         << absTol <<std::endl;
   }
   return ::testing::AssertionSuccess();
 }
@@ -160,12 +181,12 @@ void compareMatrices( MATRIX const & matrix1,
   // check the accuracy across local rows
   for( globalIndex i = matrix1.ilower(); i < matrix1.iupper(); ++i )
   {
-    indices1.resize( matrix1.globalRowLength( i ) );
-    values1.resize( matrix1.globalRowLength( i ) );
+    indices1.resize( matrix1.rowLength( i ) );
+    values1.resize( matrix1.rowLength( i ) );
     matrix1.getRowCopy( i, indices1, values1 );
 
-    indices2.resize( matrix2.globalRowLength( i ) );
-    values2.resize( matrix2.globalRowLength( i ) );
+    indices2.resize( matrix2.rowLength( i ) );
+    values2.resize( matrix2.rowLength( i ) );
     matrix2.getRowCopy( i, indices2, values2 );
 
     compareMatrixRow( i, relTol, absTol,

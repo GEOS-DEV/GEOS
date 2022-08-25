@@ -78,15 +78,9 @@ public:
 
 protected:
 
-  /// @copydoc geosx::dataRepository::Group::registerDataOnMesh
-  virtual void registerDataOnMesh( Group & meshBodies ) override;
-
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
 private:
-
-  /// name of the coefficient field
-  string m_coeffName;
 
   /// type of of inner product used in the hybrid FVM solver
   string m_innerProductType;

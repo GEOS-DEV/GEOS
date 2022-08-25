@@ -11,8 +11,6 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
         meanPermCoefficient="0.8"/>
     </FiniteVolume>
   </NumericalMethods>
@@ -26,7 +24,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-4"
-      materialList="{ water, rock, fractureFilling }"/>
+      materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -63,7 +61,7 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="0.0e8"
       apertureTableName="apertureTable"/>

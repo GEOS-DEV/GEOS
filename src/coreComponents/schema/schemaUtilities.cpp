@@ -169,6 +169,21 @@ void SchemaConstruction( Group & group,
         for( string subName : subGroupNames )
         {
           Group & subGroup = group.getGroup( subName );
+          InputFlags subSchemaType = subGroup.getInputFlags();
+
+          if( ( documentationType == 0 ) & (( subSchemaType == InputFlags::REQUIRED_NONUNIQUE ) || ( subSchemaType == InputFlags::OPTIONAL_NONUNIQUE )))
+          {
+            // Enforce uniqueness of element names
+            // Note: this must be done at the parent element level
+            xmlWrapper::xmlNode uniqueNameNode = targetIncludeNode.append_child( "xsd:unique" );
+            string uniqueNameNodeStr = targetName + subName + "UniqueName";
+            uniqueNameNode.append_attribute( "name" ) = uniqueNameNodeStr.c_str();
+            xmlWrapper::xmlNode uniqueNameSelector = uniqueNameNode.append_child( "xsd:selector" );
+            uniqueNameSelector.append_attribute( "xpath" ) = subName.c_str();
+            xmlWrapper::xmlNode uniqueNameField = uniqueNameNode.append_child( "xsd:field" );
+            uniqueNameField.append_attribute( "xpath" ) = "@name";
+          }
+
           SchemaConstruction( subGroup, schemaRoot, targetChoiceNode, documentationType );
         }
       }
@@ -227,7 +242,10 @@ void SchemaConstruction( Group & group,
             attributeNode.append_attribute( "name" ) = attributeName.c_str();
 
             string const wrappedTypeName = rtTypes::typeNames( wrapper.getTypeId() );
-            string const xmlSafeName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
+            string const sanitizedName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
+
+            // Note: Some type names involving strings can vary on compiler and be ugly.  Convert these to "string"
+            string const xmlSafeName = std::regex_replace( sanitizedName, std::regex( "std_(__cxx11_basic_)?string(<\\s*char,\\s*std_char_traits<char>,\\s*std_allocator<char>\\s*>)?" ), "string" );
             GEOSX_LOG_VAR( wrappedTypeName );
             GEOSX_LOG_VAR( xmlSafeName );
             attributeNode.append_attribute( "type" ) = xmlSafeName.c_str();

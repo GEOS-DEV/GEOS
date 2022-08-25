@@ -40,28 +40,29 @@
 
   <Events
     maxTime="0.2">
+
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.0025"
+      forceDt="0.001"
       target="/Solvers/acousticSolver"/>
 
     <!-- generate an output that can be read from VTK -->
     <PeriodicEvent
       name="vtk"
-      timeFrequency="0.025"
+      timeFrequency="0.1"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
 
     <!-- two events to output pressure in an hdf5 file -->
     <PeriodicEvent
       name="timeHistoryCollection"
-      timeFrequency="0.0025"
+      timeFrequency="0.005"
       target="/Tasks/pressureCollection"/>
 
     <PeriodicEvent
       name="timeHistoryOutput"
-      timeFrequency="0.025"
+      timeFrequency="0.05"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
 
@@ -70,6 +71,7 @@
       name="restarts"
       timeFrequency="0.1"
       target="/Outputs/restartOutput"/>
+    
   </Events>
 
   <NumericalMethods>
@@ -103,7 +105,7 @@
       scale="0.0"/>
 
     <FieldSpecification
-      name="initialPressure"
+      name="initialPressure_nm1"
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
@@ -114,7 +116,7 @@
     <FieldSpecification
       name="cellVelocity"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="mediumVelocity"
       scale="150"
       setNames="{ all }"/>

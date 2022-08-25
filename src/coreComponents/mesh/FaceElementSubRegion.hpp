@@ -48,16 +48,16 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string catalogName()
+  static string catalogName()
   { return "FaceElementSubRegion"; }
 
   /**
    * @brief Get catalog name.
    * @return the catalog name
    */
-  virtual const string getCatalogName() const override
+  virtual string getCatalogName() const override
   {
-    return FaceElementSubRegion::catalogName();
+    return catalogName();
   }
 
   ///@}
@@ -75,10 +75,6 @@ public:
   FaceElementSubRegion( string const & name,
                         dataRepository::Group * const parent );
 
-
-  /// @brief Destructor
-  virtual ~FaceElementSubRegion() override;
-
   ///@}
 
   /**
@@ -90,11 +86,11 @@ public:
                                                     FaceManager const & faceManager ) override;
   /**
    * @brief Function to compute the geometric quantities of a specific face element.
-   * @param index index of the face element
+   * @param k index of the face element
    * @param faceArea surface area of the face
    */
-  void CalculateElementGeometricQuantities( localIndex const index,
-                                            arrayView1d< real64 const > const & faceArea );
+  void calculateSingleElementGeometricQuantities( localIndex const k,
+                                                  arrayView1d< real64 const > const & faceArea );
 
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
@@ -107,8 +103,6 @@ public:
                                        bool const overwriteDownMaps ) override;
 
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) override;
-
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
   ///@}
 
@@ -130,6 +124,12 @@ public:
     static constexpr char const * dNdXString() { return "dNdX"; }
     /// @return String key for the derivative of the jacobian.
     static constexpr char const * detJString() { return "detJ"; }
+    /// @return String key to the map of edge local indices to the fracture connector local indices.
+    static constexpr char const * edgesTofractureConnectorsEdgesString() { return "edgesToFractureConnectors"; }
+    /// @return String key to the map of fracture connector local indices to edge local indices.
+    static constexpr char const * fractureConnectorEdgesToEdgesString() { return "fractureConnectorsToEdges"; }
+    /// @return String key to the map of fracture connector local indices face element local indices.
+    static constexpr char const * fractureConnectorsEdgesToFaceElementsIndexString() { return "fractureConnectorsToElementIndex"; }
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
     /// Separation coefficient string.
@@ -202,6 +202,18 @@ public:
   /// List of the new face elements that have been generated
   SortedArray< localIndex > m_newFaceElements;
 
+  /// map from the edges to the fracture connectors index (edges that are fracture connectors)
+  SortedArray< localIndex > m_recalculateFractureConnectorEdges;
+
+  /// A map of edge local indices to the fracture connector local indices.
+  map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
+
+  /// A map of fracture connector local indices to edge local indices.
+  array1d< localIndex > m_fractureConnectorsEdgesToEdges;
+
+  /// A map of fracture connector local indices face element local indices.
+  ArrayOfArrays< localIndex > m_fractureConnectorEdgesToFaceElements;
+
   /**
    * @brief @return The array of shape function derivatives.
    */
@@ -235,9 +247,9 @@ private:
    * @param packList the packList used in the bufferOps::Pack function
    * @return the pack size
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
   /// The array of shape function derivaties.
   array4d< real64 > m_dNdX;

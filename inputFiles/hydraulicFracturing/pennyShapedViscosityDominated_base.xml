@@ -1,69 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, -0.0 }">
-    <Hydrofracture
-      name="hydrofracture"
-      solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
-      surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ fractureFilling }"
-      couplingTypeOption="FIM"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ Domain }"
-      contactRelationName="fractureContact"
-      maxNumResolves="1"
-      initialDt="0.1">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-4"
-        newtonMaxIter="50"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"
-        logLevel="1"
-        krylovAdaptiveTol="1"/>
-    </Hydrofracture>
-
-    <SolidMechanicsLagrangianSSLE
-      name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
-      discretization="FE1"
-      targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"
-      contactRelationName="fractureContact">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-10"/>
-    </SolidMechanicsLagrangianSSLE>
-
-    <SinglePhaseFVM
-      name="SinglePhaseFlow"
-      discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ fracPerm }"
-      inputFluxEstimate="1.0">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-5"
-        newtonMaxIter="10"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-12"/>
-    </SinglePhaseFVM>
-
-    <SurfaceGenerator
-      name="SurfaceGen"
-      targetRegions="{ Domain }"
-      nodeBasedSIF="1"
-      solidMaterialNames="{ rock }"
-      rockToughness="0.3e6"/>
-  </Solvers>
-
+  <!-- SPHINX_ELEMENTREGIONS -->
   <ElementRegions>
     <CellElementRegion
       name="Domain"
@@ -73,9 +11,11 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fractureFilling }"/>
+      materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
+  <!-- SPHINX_ELEMENTREGIONS_END -->
 
+  <!-- SPHINX_MATERIAL -->
   <Constitutive>
     <CompressibleSinglePhaseFluid
       name="water"
@@ -110,13 +50,14 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="1.0e0"
       apertureTableName="apertureTable"/>
-
   </Constitutive>
+  <!-- SPHINX_MATERIAL_END -->
 
+  <!-- SPHINX_NUMERICAL -->
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
@@ -127,14 +68,14 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ fracPerm }"/>
+        meanPermCoefficient="0.8"
+        />
     </FiniteVolume>
   </NumericalMethods>
+  <!-- SPHINX_NUMERICAL_END -->
 
+  <!-- SPHINX_BC -->
   <FieldSpecifications>
-
     <FieldSpecification
       name="waterDensity"
       initialCondition="1"
@@ -189,14 +130,16 @@
       scale="-6.625"
       setNames="{ source }"/>
   </FieldSpecifications>
+  <!-- SPHINX_BC_END -->
 
   <Functions>
     <TableFunction
       name="apertureTable"
       coordinates="{ -0.01, -1.0e-3, 0.0 }"
-      values="{ 0.005, 0.01e-3, 0.02e-3 }"/>
+      values="{ 0.005e-3, 0.01e-3, 0.02e-3 }"/>
   </Functions>
-      
+
+  <!-- SPHINX_OUTPUT -->          
   <Outputs>
     <Silo
       name="siloOutput"
@@ -205,6 +148,7 @@
       parallelThreads="48"/>
 
     <Restart
-      name="sidreRestart"/>
+      name="restartOutput"/>
   </Outputs>
+  <!-- SPHINX_OUTPUT_END -->
 </Problem>

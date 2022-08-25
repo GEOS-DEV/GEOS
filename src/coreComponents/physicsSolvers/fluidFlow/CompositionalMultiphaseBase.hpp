@@ -23,6 +23,7 @@
 #include "constitutive/fluid/layouts.hpp"
 #include "constitutive/relativePermeability/layouts.hpp"
 #include "constitutive/capillaryPressure/layouts.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 namespace geosx
@@ -105,12 +106,6 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  solveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
-
-  virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
@@ -122,56 +117,68 @@ public:
    * @brief Recompute component fractions from primary variables (component densities)
    * @param dataGroup the group storing the required fields
    */
-  void updateComponentFraction( Group & dataGroup ) const;
+  void updateComponentFraction( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param dataGroup the group storing the required fields
    */
-  void updatePhaseVolumeFraction( Group & dataGroup, localIndex const targetIndex ) const;
+  void updatePhaseVolumeFraction( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
+  void updateFluidModel( ObjectManagerBase & dataGroup ) const;
 
   /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param castedRelPerm the group storing the required fields
+   * @brief Update all relevant relperm models using current values of phase volume fraction
+   * @param dataGroup the group storing the required fields
    */
-  void updateRelPermModel( Group & castedRelPerm, localIndex const targetIndex ) const;
+  void updateRelPermModel( ObjectManagerBase & dataGroup ) const;
 
   /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param castedCapPres the group storing the required fields
+   * @brief Update all relevant capillary pressure models using current values of phase volume fraction
+   * @param dataGroup the group storing the required fields
    */
-  void updateCapPressureModel( Group & castedCapPres, localIndex const targetIndex ) const;
+  void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
+
+  /**
+   * @brief Update all relevant solid internal energy models using current values of temperature
+   * @param dataGroup the group storing the required fields
+   */
+  void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
-   * @param domain the domain containing the mesh and fields
+   * @param dataGroup the group storing the required field
    */
-  virtual void updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const = 0;
+  virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
-  void updateFluidState( Group & dataGroup, localIndex const targetIndex ) const;
+  void updateFluidState( ObjectManagerBase & dataGroup ) const;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
   /**
-   * @brief Get the number of fluid components (species)
+   * @brief Getter for the number of fluid components (species)
    * @return the number of components
    */
-  localIndex numFluidComponents() const { return m_numComponents; }
+  integer numFluidComponents() const { return m_numComponents; }
 
   /**
-   * @brief Get the number of fluid phases
+   * @brief Getter for the number of fluid phases
    * @return the number of phases
    */
-  localIndex numFluidPhases() const { return m_numPhases; }
+  integer numFluidPhases() const { return m_numPhases; }
 
   /**
-   * @brief assembles the accumulation terms for all cells
+   * @brief Getter for the name of the reference fluid model name
+   * @return the name of the reference fluid
+   */
+  string referenceFluidModelName() const { return m_referenceFluidModelName; }
+
+  /**
+   * @brief assembles the accumulation and volume balance terms for all cells
    * @param time_n previous time value
    * @param dt time step
    * @param domain the physical domain object
@@ -179,10 +186,10 @@ public:
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
    */
-  void assembleAccumulationTerms( DomainPartition & domain,
-                                  DofManager const & dofManager,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs ) const;
+  void assembleAccumulationAndVolumeBalanceTerms( DomainPartition & domain,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs ) const;
 
   /**
    * @brief assembles the flux terms for all cells
@@ -200,98 +207,23 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const = 0;
 
-  /**
-   * @brief assembles the volume balance terms for all cells
-   * @param time_n previous time value
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  void assembleVolumeBalanceTerms( DomainPartition const & domain,
-                                   DofManager const & dofManager,
-                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                   arrayView1d< real64 > const & localRhs ) const;
 
   /**@}*/
-
-  arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
-
-  arrayView1d< string const > capPresModelNames() const { return m_capPressureModelNames; }
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
     static constexpr char const * elemDofFieldString() { return "compositionalVariables"; }
 
     // inputs
-    static constexpr char const * temperatureString() { return "temperature"; }
 
+    static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * useMassFlagString() { return "useMass"; }
-
-    static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
-
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
-
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-
+    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
-
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
 
-    static constexpr char const * facePressureString() { return "facePressure"; }
-
-    static constexpr char const * bcPressureString() { return "bcPressure"; }
-
-    static constexpr char const * globalCompDensityString() { return "globalCompDensity"; }
-
-    static constexpr char const * deltaGlobalCompDensityString() { return "deltaGlobalCompDensity"; }
-
-    // intermediate values for constitutive model input
-    static constexpr char const * globalCompFractionString() { return "globalCompFraction"; }
-
-    static constexpr char const * dGlobalCompFraction_dGlobalCompDensityString() { return "dGlobalCompFraction_dGlobalCompDensity"; }
-
-    // intermediate values for saturations
-    static constexpr char const * phaseVolumeFractionString() { return "phaseVolumeFraction"; }
-
-    static constexpr char const * dPhaseVolumeFraction_dPressureString() { return "dPhaseVolumeFraction_dPressure"; }
-
-    static constexpr char const * dPhaseVolumeFraction_dGlobalCompDensityString() { return "dPhaseVolumeFraction_dGlobalCompDensity"; }
-
-    // intermediate values for mobilities
-    static constexpr char const * phaseMobilityString() { return "phaseMobility"; }
-
-    static constexpr char const * dPhaseMobility_dPressureString() { return "dPhaseMobility_dPressure"; }
-
-    static constexpr char const * dPhaseMobility_dGlobalCompDensityString() { return "dPhaseMobility_dGlobalCompDensity"; }
-
-    // intermediate values for CFL number computation and actual cell CFL numbers
-    static constexpr char const * phaseOutfluxString() { return "phaseOutflux"; }
-
-    static constexpr char const * componentOutfluxString() { return "componentOutflux"; }
-
-    static constexpr char const * phaseCFLNumberString() { return "phaseCFLNumber"; }
-
-    static constexpr char const * componentCFLNumberString() { return "componentCFLNumber"; }
-
-    // these are used to store last converged time step values
-    static constexpr char const * phaseVolumeFractionOldString() { return "phaseVolumeFractionOld"; }
-
-    static constexpr char const * phaseDensityOldString() { return "phaseDensityOld"; }
-
-    static constexpr char const * totalDensityOldString() { return "totalDensityOld"; }
-
-    static constexpr char const * phaseComponentFractionOldString() { return "phaseComponentFractionOld"; }
-
-    static constexpr char const * phaseMobilityOldString() { return "phaseMobilityOld"; }
-
-    // these are allocated on faces for BC application until we can get constitutive models on faces
-    static constexpr char const * phaseViscosityString() { return "phaseViscosity"; }
-
-    static constexpr char const * phaseRelativePermeabilityString() { return "phaseRelativePermeability"; }
-
-    static constexpr char const * phaseCapillaryPressureString() { return "phaseCapillaryPressure"; }
   };
 
   /**
@@ -302,13 +234,12 @@ public:
    * from prescribed intermediate values (i.e. global densities from global fractions)
    * and any applicable hydrostatic equilibration of the domain
    */
-  void initializeFluidState( MeshLevel & mesh ) const;
+  void initializeFluidState( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
 
   /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param domain the domain containing the mesh and fields
+   * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
    */
-  void backupFields( MeshLevel & mesh ) const;
+  void computeHydrostaticEquilibrium();
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -358,6 +289,7 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
 
+
   /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
@@ -373,16 +305,12 @@ protected:
   virtual void initializePreSubGroups() override;
 
   /**
-   * @brief Checks constitutive models for consistency
-   * @param[in] cm reference to the global constitutive model manager
+   * @brief Utility function that checks the consistency of the constitutive models
+   * @param[in] domain the domain partition
+   * This function will produce an error if one of the constitutive models
+   * (fluid, relperm) is incompatible with the reference fluid model.
    */
-  void validateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const;
-
-  /**
-   * @brief Checks aquifer boundary condition for consistency
-   * @param[in] cm reference to the global constitutive model manager
-   */
-  void validateAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
+  void validateConstitutiveModels( DomainPartition const & domain ) const;
 
   /**
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
@@ -391,9 +319,25 @@ protected:
   void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
   /**
-   * @brief Setup stored views into domain data for the current step
+   * @brief Utility function that encapsulates the call to FieldSpecificationBase::applyFieldValue in BC application
+   * @param[in] time_n the time at the beginning of the step
+   * @param[in] dt the time step
+   * @param[in] mesh the mesh level object
+   * @param[in] logMessage the log message issued by the solver if the bc is called
+   * @param[in] targetManagerName the name of the manager ("ElementRegions" or "faceManager")
+   * @param[in] extrinsicFieldKey the key of the field specified in the xml file
+   * @param[in] extrinsicBoundaryFieldKey the key of the boundary field
    */
-  void resetViews( MeshLevel & mesh ) override;
+  template< typename OBJECT_TYPE >
+  void applyFieldValue( real64 const & time_n,
+                        real64 const & dt,
+                        MeshLevel & mesh,
+                        char const logMessage[],
+                        string const extrinsicFieldKey,
+                        string const extrinsicBoundaryFieldKey ) const;
+
+  /// flag to specify whether the sparsity pattern needs to be rebuilt
+  bool m_systemSetupDone;
 
   /// the max number of fluid phases
   integer m_numPhases;
@@ -401,23 +345,14 @@ protected:
   /// the number of fluid components
   integer m_numComponents;
 
-  /// the (uniform) temperature
-  real64 m_temperature;
+  /// the input temperature
+  real64 m_inputTemperature;
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 
-  /// flag indicating whether CFL numbers will be computed or not
-  integer m_computeCFLNumbers;
-
-  /// name of the rel perm constitutive model
-  array1d< string > m_relPermModelNames;
-
   /// flag to determine whether or not to apply capillary pressure
-  integer m_capPressureFlag;
-
-  /// name of the cap pressure constitutive model
-  array1d< string > m_capPressureModelNames;
+  integer m_hasCapPressure;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
@@ -428,39 +363,59 @@ protected:
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dCompFrac_dCompDens;
+  /// name of the fluid constitutive model used as a reference for component/phase description
+  string m_referenceFluidModelName;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseVolFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_dPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dPhaseVolFrac_dCompDens;
+private:
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseMob;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_dPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dPhaseMob_dCompDens;
+  /**
+   * @brief Utility function to validate the consistency of Dirichlet BC input
+   * @param[in] domain the domain partition
+   * @param[in] time the time at the end of the time step (time_n + dt)
+   */
+  bool validateDirichletBC( DomainPartition & domain,
+                            real64 const time ) const;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > > m_phaseRelPerm;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_phaseVisc;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_phaseDens;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_dPhaseDens_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > m_dPhaseDens_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_phaseMassDens;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_dPhaseMassDens_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > m_dPhaseMassDens_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > m_phaseCompFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > m_dPhaseCompFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > m_dPhaseCompFrac_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > m_phaseCapPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > m_dPhaseCapPressure_dPhaseVolFrac;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_totalDensOld;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseMobOld;
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
+
+template< typename OBJECT_TYPE >
+void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
+                                                   real64 const & dt,
+                                                   MeshLevel & mesh,
+                                                   char const logMessage[],
+                                                   string const extrinsicFieldKey,
+                                                   string const extrinsicBoundaryFieldKey ) const
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  fsManager.apply< OBJECT_TYPE >( time_n + dt,
+                                  mesh,
+                                  extrinsicFieldKey,
+                                  [&]( FieldSpecificationBase const & fs,
+                                       string const & setName,
+                                       SortedArrayView< localIndex const > const & lset,
+                                       OBJECT_TYPE & targetGroup,
+                                       string const & )
+  {
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( logMessage,
+                                   getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
+    }
+
+    // Specify the bc value of the field
+    fs.applyFieldValue< FieldSpecificationEqual,
+                        parallelDevicePolicy<> >( lset,
+                                                  time_n + dt,
+                                                  targetGroup,
+                                                  extrinsicBoundaryFieldKey );
+  } );
+}
+
 
 } // namespace geosx
 

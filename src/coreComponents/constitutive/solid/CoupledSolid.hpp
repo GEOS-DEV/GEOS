@@ -74,12 +74,18 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  real64 getInitialPorosity( localIndex const k,
+                             localIndex const q ) const
+  {
+    return m_porosityUpdate.getInitialPorosity( k, q );
+  }
+
+  GEOSX_HOST_DEVICE
   virtual void updateStateFromPressure( localIndex const k,
                                         localIndex const q,
-                                        real64 const & pressure,
-                                        real64 const & deltaPressure ) const
+                                        real64 const & pressure ) const
   {
-    GEOSX_UNUSED_VAR( k, q, pressure, deltaPressure );
+    GEOSX_UNUSED_VAR( k, q, pressure );
   }
 
 protected:
@@ -100,10 +106,12 @@ protected:
  * @tparam PORO_TYPE type of porosity model
  * @tparam PERM_TYPE type of permeability model
  */
+//START_SPHINX_INCLUDE_00
 template< typename SOLID_TYPE,
           typename PORO_TYPE,
           typename PERM_TYPE >
 class CoupledSolid : public CoupledSolidBase
+//END_SPHINX_INCLUDE_00
 {
 public:
 
@@ -132,8 +140,8 @@ public:
                                                                     getPermModel() );
   }
 
+  //START_SPHINX_INCLUDE_01
 protected:
-
   SOLID_TYPE const & getSolidModel() const
   { return this->getParent().template getGroup< SOLID_TYPE >( m_solidModelName ); }
 
@@ -142,7 +150,7 @@ protected:
 
   PERM_TYPE const & getPermModel() const
   { return this->getParent().template getGroup< PERM_TYPE >( m_permeabilityModelName ); }
-
+  //END_SPHINX_INCLUDE_01
 
 };
 

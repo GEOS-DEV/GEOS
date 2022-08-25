@@ -27,17 +27,16 @@
 namespace geosx
 {
 
-namespace ProppantTransportKernels
+namespace proppantTransportKernels
 {
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 AccumulationKernel::
   compute( localIndex const numComps,
-           real64 const proppantConcOld,
+           real64 const proppantConc_n,
            real64 const proppantConcNew,
-           arraySlice1d< real64 const > const & componentDensOld,
+           arraySlice1d< real64 const > const & componentDens_n,
            arraySlice1d< real64 const > const & componentDensNew,
            arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dCompDens_dPres ),
            arraySlice2d< real64 const > const & dCompDens_dCompConc,
@@ -49,7 +48,7 @@ AccumulationKernel::
 {
 
   // proppant mass conservation
-  localAccum[0] = (proppantConcNew - proppantConcOld) * volume - proppantLiftVolume;
+  localAccum[0] = (proppantConcNew - proppantConc_n) * volume - proppantLiftVolume;
 
   for( localIndex c1 = 0; c1 < numComps; ++c1 )
   {
@@ -65,8 +64,8 @@ AccumulationKernel::
   for( localIndex c1 = 0; c1 < numComps; ++c1 )
   {
 
-    localAccum[c1+1] = ( componentDensNew[c1] * (1.0 - proppantConcNew) - componentDensOld[c1] * (1.0 - proppantConcOld) ) * volume
-                       + (componentDensNew[c1] - componentDensOld[c1]) * packPoreVolume;
+    localAccum[c1+1] = ( componentDensNew[c1] * (1.0 - proppantConcNew) - componentDens_n[c1] * (1.0 - proppantConc_n) ) * volume
+                       + (componentDensNew[c1] - componentDens_n[c1]) * packPoreVolume;
 
     for( localIndex c2 = 0; c2 < numComps; ++c2 )
     {
@@ -86,9 +85,9 @@ AccumulationKernel::
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
+          arrayView1d< real64 const > const & proppantConc_n,
           arrayView1d< real64 const > const & proppantConc,
-          arrayView1d< real64 const > const & dProppantConc,
-          arrayView2d< real64 const > const & componentDensOld,
+          arrayView2d< real64 const > const & componentDens_n,
           arrayView3d< real64 const > const & componentDens,
           arrayView3d< real64 const > const & dCompDens_dPres,
           arrayView4d< real64 const > const & dCompDens_dCompConc,
@@ -104,7 +103,7 @@ AccumulationKernel::
   {
     if( elemGhostRank[ei] < 0 )
     {
-      localIndex constexpr MAX_NC = ProppantTransport::MAX_NUM_COMPONENTS;
+      localIndex constexpr MAX_NC = constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
       stackArray1d< globalIndex, MAX_NC > localAccumDOF( nDofs );
       stackArray1d< real64, MAX_NC > localAccum( nDofs );
       stackArray2d< real64, MAX_NC * MAX_NC > localAccumJacobian( nDofs, nDofs );
@@ -121,9 +120,9 @@ AccumulationKernel::
       real64 const proppantLiftVolume = proppantLiftFlux[ei] * dt;
 
       compute( numComps,
+               proppantConc_n[ei],
                proppantConc[ei],
-               proppantConc[ei] + dProppantConc[ei],
-               componentDensOld[ei],
+               componentDens_n[ei],
                componentDens[ei][0],
                dCompDens_dPres[ei][0],
                dCompDens_dCompConc[ei][0],
@@ -157,16 +156,13 @@ AccumulationKernel::
 
 template< localIndex MAX_NUM_FLUX_ELEMS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 FluxKernel::
   computeJunction( localIndex const numElems,
                    localIndex const numDofPerCell,
                    arraySlice1d< localIndex const > const & stencilElementIndices,
                    arrayView1d< real64 const > const & pres,
-                   arrayView1d< real64 const > const & dPres,
                    arrayView1d< real64 const > const & proppantConc,
-                   arrayView1d< real64 const > const & dProppantConc,
                    arrayView3d< real64 const > const & componentDens,
                    arrayView3d< real64 const > const & dComponentDens_dPres,
                    arrayView4d< real64 const > const & dComponentDens_dComponentConc,
@@ -201,7 +197,7 @@ FluxKernel::
 
   constexpr real64 TINY = 1e-10;
 
-  constexpr localIndex MAX_NUM_COMPONENTS = ProppantTransport::MAX_NUM_COMPONENTS;
+  constexpr localIndex MAX_NUM_COMPONENTS = constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
 
   localIndex const numComps = numDofPerCell - 1;
 
@@ -256,7 +252,7 @@ FluxKernel::
     dEdgeVisc_dP[i] = geometricWeight[i] * dVisc_dPres[ei][0];
     dEdgeVisc_dProppantC[i] = geometricWeight[i] * dVisc_dProppantConc[ei][0];
 
-    proppantC[i] = proppantConc[ei] + dProppantConc[ei];
+    proppantC[i] = proppantConc[ei];
 
     mixDens[i] = dens[ei][0];
     fluidDens[i] = fluidDensity[ei][0];
@@ -285,7 +281,7 @@ FluxKernel::
     real64 const gravD    = gravDepth[ei];
     real64 const gravTerm = edgeDensity * gravD;
 
-    Pe += transmissibility[i] * (pres[ei] + dPres[ei] - gravTerm);
+    Pe += transmissibility[i] * (pres[ei] - gravTerm);
     transmissibilitySum += transmissibility[i];
     dPe_dP[i] += transmissibility[i];
 
@@ -321,7 +317,7 @@ FluxKernel::
     real64 const gravD    = gravDepth[ei];
     real64 const gravTerm = edgeDensity * gravD;
 
-    real64 const fluxTerm = Pe - (pres[ei] + dPres[ei] - gravTerm);
+    real64 const fluxTerm = Pe - (pres[ei] - gravTerm);
 
     edgeToFaceFlux[i] = transmissibility[i] * fluxTerm / edgeViscosity;
     dEdgeToFaceFlux_dP[i][i] += -transmissibility[i] / edgeViscosity;
@@ -744,9 +740,7 @@ void FluxKernel::
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
-          ElementViewConst< arrayView1d< real64 const > > const & dPres,
           ElementViewConst< arrayView1d< real64 const > > const & proppantConc,
-          ElementViewConst< arrayView1d< real64 const > > const & dProppantConc,
           ElementViewConst< arrayView3d< real64 const > > const & componentDens,
           ElementViewConst< arrayView3d< real64 const > > const & dComponentDens_dPres,
           ElementViewConst< arrayView4d< real64 const > > const & dComponentDens_dComponentConc,
@@ -775,15 +769,15 @@ void FluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-  constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
-  constexpr localIndex MAX_STENCIL_SIZE = SurfaceElementStencilWrapper::MAX_STENCIL_SIZE;
+  constexpr localIndex maxNumFluxElems = SurfaceElementStencilWrapper::maxNumPointsInFlux;
+  constexpr localIndex maxStencilSize = SurfaceElementStencilWrapper::maxStencilSize;
 
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  constexpr localIndex DOF1 = MAX_NUM_FLUX_ELEMS * constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
-  constexpr localIndex DOF2 = MAX_STENCIL_SIZE * constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
+  constexpr localIndex DOF1 = maxNumFluxElems * constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
+  constexpr localIndex DOF2 = maxStencilSize * constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
@@ -804,9 +798,9 @@ void FluxKernel::
       localIndex const esr = sesri[iconn][0];
 
       // compute transmissibility
-      real64 transmissibility[MAX_NUM_FLUX_ELEMS]{};
-      real64 apertureWeight[MAX_NUM_FLUX_ELEMS]{};
-      real64 geometricWeight[MAX_NUM_FLUX_ELEMS]{};
+      real64 transmissibility[maxNumFluxElems]{};
+      real64 apertureWeight[maxNumFluxElems]{};
+      real64 geometricWeight[maxNumFluxElems]{};
       stencilWrapper.computeWeights( iconn,
                                      permeability,
                                      permeabilityMultiplier,
@@ -820,9 +814,7 @@ void FluxKernel::
                        numDofPerCell,
                        sei[iconn],
                        pres[er][esr],
-                       dPres[er][esr],
                        proppantConc[er][esr],
-                       dProppantConc[er][esr],
                        componentDens[er][esr],
                        dComponentDens_dPres[er][esr],
                        dComponentDens_dComponentConc[er][esr],
@@ -886,7 +878,6 @@ void FluxKernel::
 
 template< localIndex MAX_NUM_FLUX_ELEMS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 FluxKernel::
   computeCellBasedFlux( localIndex const numElems,
@@ -964,7 +955,7 @@ void FluxKernel::
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
+  constexpr localIndex maxNumFluxElems = SurfaceElementStencilWrapper::maxNumPointsInFlux;
 
   ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencilWrapper.getCellCenterToEdgeCenters();
 
@@ -976,9 +967,9 @@ void FluxKernel::
     localIndex const esr = sesri[iconn][0];
 
     // compute transmissibility
-    real64 transmissibility[MAX_NUM_FLUX_ELEMS]{};
-    real64 apertureWeight[MAX_NUM_FLUX_ELEMS]{};
-    real64 geometricWeight[MAX_NUM_FLUX_ELEMS]{};
+    real64 transmissibility[maxNumFluxElems]{};
+    real64 apertureWeight[maxNumFluxElems]{};
+    real64 geometricWeight[maxNumFluxElems]{};
     stencilWrapper.computeWeights( iconn,
                                    permeability,
                                    permeabilityMultiplier,
@@ -1004,7 +995,6 @@ void FluxKernel::
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 ProppantPackVolumeKernel::
   computeProppantPackVolume( localIndex const numElems,
@@ -1210,7 +1200,6 @@ void ProppantPackVolumeKernel::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 ProppantPackVolumeKernel::
   updateProppantPackVolume( localIndex const numElems,
@@ -1320,6 +1309,6 @@ void ProppantPackVolumeKernel::
   } );
 }
 
-} // namespace ProppantTransportKernels
+} // namespace proppantTransportKernels
 
 } // namespace geosx

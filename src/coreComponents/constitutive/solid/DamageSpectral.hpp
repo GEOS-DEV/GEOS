@@ -66,6 +66,7 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
   using DamageUpdates< UPDATE_BASE >::m_damage;
+  using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
 
   using UPDATE_BASE::m_bulkModulus;  // TODO: model below strongly assumes iso elasticity, templating not so useful
   using UPDATE_BASE::m_shearModulus;
@@ -126,6 +127,11 @@ public:
 
     UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );  // elastic trial update
 
+    if( m_disableInelasticity )
+    {
+      return;
+    }
+
     // get undamaged elastic strain
 
     real64 strain[6];
@@ -138,7 +144,7 @@ public:
     real64 traceOfStrain = strain[0] + strain[1] + strain[2];
 
     real64 mu = m_shearModulus[k];
-    real64 lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
+    real64 lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
     real64 damageFactor = getDegradationValue( k, q );
 
     // get eigenvalues and eigenvectors

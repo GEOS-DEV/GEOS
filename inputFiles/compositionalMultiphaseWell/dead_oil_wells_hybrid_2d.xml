@@ -1,8 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, -9.81 }">
+  <Solvers>
     <CompositionalMultiphaseReservoir
       name="reservoirSystem"
       flowSolverName="compositionalMultiphaseFlow"
@@ -20,19 +19,12 @@
       logLevel="1"
       discretization="fluidHM"
       targetRegions="{ Region1 }"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="297.15"/>
 
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }"
-      fluidNames="{ fluid }"
-      relPermNames="{ relperm }"
-      wellTemperature="297.15"
       maxRelativePressureChange="0.1"
       maxCompFractionChange="0.1">
       <WellControls
@@ -67,6 +59,7 @@
         surfaceTemperature="297.15"
         targetBHP="4.5e7"
         targetTotalRate="1e-5"
+        injectionTemperature="297.15"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
@@ -171,8 +164,7 @@
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="fluidHM"
-        innerProductType="beiraoDaVeigaLipnikovManzini"
-        coefficientName="permeability"/>
+        innerProductType="beiraoDaVeigaLipnikovManzini"/>
     </FiniteVolume>
   </NumericalMethods>
 

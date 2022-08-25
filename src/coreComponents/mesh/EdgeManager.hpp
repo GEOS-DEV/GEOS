@@ -19,8 +19,9 @@
 #ifndef GEOSX_MESH_EDGEMANAGER_HPP_
 #define GEOSX_MESH_EDGEMANAGER_HPP_
 
-#include "InterObjectRelation.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
+#include "InterObjectRelation.hpp"
 #include "ToElementRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -29,8 +30,6 @@ namespace geosx
 {
 class FaceManager;
 class NodeManager;
-class CellBlockManager;
-
 
 /**
  * @class EdgeManager
@@ -57,7 +56,7 @@ public:
   /**
    * @return the string representing the edge manager name in the catalog
    */
-  static const string catalogName()
+  static string catalogName()
   { return "EdgeManager"; }
 
 
@@ -65,17 +64,19 @@ public:
    * @brief Getter used to access the edge manager catalog name.
    * @return the edge manager catalog name
    */
-  virtual const string getCatalogName() const override
-  { return EdgeManager::catalogName(); }
+  virtual string getCatalogName() const override
+  { return catalogName(); }
 
   ///@}
 
   /**
    * @brief Oversize the Face mapping by this amount for each edge (hardcoded)
    * @return extra space for each edge of the EdgetoFace map
+   *
+   * @note Value forwarding is due to refactoring.
    */
-  static localIndex faceMapExtraSpacePerEdge()
-  { return 4; }
+  static constexpr localIndex faceMapOverallocation()
+  { return CellBlockManagerABC::faceMapExtraSpacePerEdge(); }
 
   /**
    * @name Constructors/destructors
@@ -90,11 +91,6 @@ public:
   EdgeManager( string const & name,
                Group * const parent );
 
-  /**
-   * @brief default destructor
-   */
-  ~EdgeManager() override;
-
   ///@}
 
   /**
@@ -107,9 +103,9 @@ public:
 
   /**
    * @brief Set the node of the domain boundary object.
-   * @param[in] referenceObject the reference of the face manager.
+   * @param[in] faceIndex The reference of the face manager.
    */
-  void setDomainBoundaryObjects( FaceManager const & referenceObject );
+  void setDomainBoundaryObjects( FaceManager const & faceIndex );
 
   /**
    * @brief Set external edges.
@@ -119,11 +115,27 @@ public:
   void setIsExternal( FaceManager const & faceManager );
 
   /**
-   * @brief Build faces-to-edges and nodes-to-edges relation maps.
-   * @param[in] nodeManager manager of all nodes in the DomainPartition
-   * @param[in] faceManager manager of all faces in the DomainPartition
+   * @brief Build sets from the node sets
+   * @param[in] nodeManager The node manager that will provide the node sets.
    */
-  void buildEdges( NodeManager & nodeManager, FaceManager & faceManager );
+  void buildSets( NodeManager const & nodeManager );
+
+  /**
+   * @brief Copies the edges to (nodes|faces) mappings from @p cellBlockManager.
+   * @param[in] cellBlockManager Provides the mappings.
+   */
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager );
+
+  /**
+   * @brief Link the current manager to other managers.
+   * @param[in] nodeManager The node manager instance.
+   * @param[in] faceManager The face manager instance.
+   *
+   * @note the @p EdgeManager do not hold any information related to the regions nor to the elements.
+   * This is why the element region manager is not provided.
+   */
+  void setupRelatedObjectsInRelations( NodeManager const & nodeManager,
+                                       FaceManager const & faceManager );
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.
@@ -200,34 +212,12 @@ public:
                          ArrayOfArraysView< localIndex const > const & facesToEdges );
 
   /**
-   * @brief Build the mapping edge-to-nodes relation from the mapping global to local nodes.
-   * @param[in] indices array of index of the global to local nodes
-   * @param[in] nodeGlobalToLocal map of the global to local nodes
-   * @param[in] faceGlobalToLocal GEOX UNUSED PARAMETER
+   * @brief Check if edge \p edgeIndex contains node \p nodeIndex
+   * @param[in] edgeIndex local index of the edge
+   * @param[in] nodeIndex local index of the node
+   * @return boolean : true if the node \p nodeIndex is part of the edge \p edgeIndex; false otherwise
    */
-  void connectivityFromGlobalToLocal( const SortedArray< localIndex > & indices,
-                                      const map< globalIndex, localIndex > & nodeGlobalToLocal,
-                                      const map< globalIndex, localIndex > & faceGlobalToLocal );
-
-  /**
-   * @brief Split an edge (separate its two extremity nodes)
-   * @param[in] indexToSplit Index of the edge to split
-   * @param[in] parentNodeIndex index of the parent node
-   * @param[in] childNodeIndex index of the child node
-   * @param[in] nodesToEdges array of nodes-to-edges list
-   */
-  void splitEdge( const localIndex indexToSplit,
-                  const localIndex parentNodeIndex,
-                  const localIndex childNodeIndex[2],
-                  array1d< SortedArray< localIndex > > & nodesToEdges );
-
-  /**
-   * @brief Check if edge \p edgeID contains node \p nodeID
-   * @param[in] edgeID local index of the edge
-   * @param[in] nodeID local index of the node
-   * @return boolean : true if the node \p nodeID is part of the edge \p edgeID; false otherwise
-   */
-  bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
+  bool hasNode( const localIndex edgeIndex, const localIndex nodeIndex ) const;
 
   /**
    * @brief Calculate the center of an edge given its index.
@@ -270,9 +260,6 @@ public:
     static constexpr char const * elementRegionListString() { return "elemRegionList"; }
     static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
     static constexpr char const * elementListString() { return "elemList"; }
-    static constexpr char const * edgesTofractureConnectorsEdgesString() { return "edgesToFractureConnectors"; }
-    static constexpr char const * fractureConnectorEdgesToEdgesString() { return "fractureConnectorsToEdges"; }
-    static constexpr char const * fractureConnectorsEdgesToFaceElementsIndexString() { return "fractureConnectorsToElementIndex"; }
 
     dataRepository::ViewKey nodesList             = { nodeListString() };
     dataRepository::ViewKey faceList              = { faceListString() };
@@ -285,12 +272,6 @@ public:
   viewKeys;
 
   ///}@
-
-  /**
-   * @brief Return the  maximum number of edges per node.
-   * @return Maximum allowable number of edges connected to one node (hardcoded for now)
-   */
-  constexpr int maxEdgesPerNode() const { return 200; }
 
   /**
    * @name Getters for stored value.
@@ -341,21 +322,6 @@ public:
 
   ///@}
 
-  // TODO These should be in their own subset of edges when we add that capability.
-
-  /// map from the edges to the fracture connectors index (edges that are fracture connectors)
-  SortedArray< localIndex > m_recalculateFractureConnectorEdges;
-
-  /// todo
-  map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
-
-  /// todo
-  array1d< localIndex > m_fractureConnectorsEdgesToEdges;
-
-  /// todo
-  ArrayOfArrays< localIndex > m_fractureConnectorEdgesToFaceElements;
-
-
 private:
 
   /// Map for the edges-to-nodes relation
@@ -372,15 +338,15 @@ private:
 
   /**
    * @brief function to pack the upward and downward pointing maps.
-   * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
-   *                packed and the function returns the size of the packing that would have occurred if set to TRUE.
+   * @tparam DO_PACKING template argument to determine whether or not to pack the buffer. If false, the buffer is not
+   *                    packed and the function returns the size of the packing that would have occurred if set to TRUE.
    * @param buffer the buffer to pack data into
    * @param packList the indices of nodes that should be packed.
    * @return size of data packed in terms of number of chars
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
 };
 

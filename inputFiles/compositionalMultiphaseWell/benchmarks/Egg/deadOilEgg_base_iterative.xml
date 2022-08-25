@@ -30,10 +30,6 @@
       name="compositionalMultiphaseFlow"
       targetRegions="{ reservoir }"
       discretization="fluidTPFA"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="297.15"
       maxCompFractionChange="0.3"
       logLevel="1"
@@ -42,9 +38,6 @@
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3, wellRegion4, wellRegion5, wellRegion6, wellRegion7, wellRegion8, wellRegion9, wellRegion10, wellRegion11, wellRegion12 }"
-      fluidNames="{ fluid }"
-      relPermNames="{ relperm }"
-      wellTemperature="297.15"
       maxCompFractionChange="0.5"
       logLevel="1"
       useMass="1">
@@ -90,6 +83,7 @@
         referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
+        injectionTemperature="297.15"           
         injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls6"
@@ -98,6 +92,7 @@
         referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
+        injectionTemperature="297.15"           
         injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls7"
@@ -106,6 +101,7 @@
         referenceElevation="40"
         targetBHP="9e7"
         targetTotalRate="8e-3"
+        injectionTemperature="297.15"           
         injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls8"
@@ -114,6 +110,7 @@
         referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
+        injectionTemperature="297.15"           
         injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls9"
@@ -122,6 +119,7 @@
         referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
+        injectionTemperature="297.15"   
         injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls10"
@@ -130,6 +128,7 @@
         referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
+        injectionTemperature="297.15"           
         injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls11"
@@ -138,6 +137,7 @@
         referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
+        injectionTemperature="297.15"           
         injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls12"
@@ -146,6 +146,7 @@
         referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
+        injectionTemperature="297.15"           
         injectionStream="{ 0.0, 1.0 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
@@ -216,9 +217,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -227,7 +226,7 @@
   <ElementRegions>
     <CellElementRegion
       name="reservoir"
-      cellBlocks="{ DEFAULT_HEX }"
+      cellBlocks="{ hexahedra }"
       materialList="{ fluid, rock, relperm }"/>
 
     <WellElementRegion
@@ -324,7 +323,7 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/DEFAULT_HEX"
+      objectPath="ElementRegions/reservoir/hexahedra"
       fieldName="pressure"
       scale="4e7"/>
 
@@ -332,7 +331,7 @@
       name="initialComposition_oil"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/DEFAULT_HEX"
+      objectPath="ElementRegions/reservoir/hexahedra"
       fieldName="globalCompFraction"
       component="0"
       scale="0.9"/>
@@ -341,7 +340,7 @@
       name="initialComposition_water"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/DEFAULT_HEX"
+      objectPath="ElementRegions/reservoir/hexahedra"
       fieldName="globalCompFraction"
       component="1"
       scale="0.1"/>
