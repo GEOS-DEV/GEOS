@@ -117,7 +117,7 @@ static PyObject * cleanup( PySolver * self, PyObject *args )
 static PyMethodDef PySolver_methods[] = {
   { "execute", (PyCFunction) execute, METH_VARARGS, "solver Step" },
   { "reinit", (PyCFunction) reinit, METH_NOARGS, "re-initialize certain variable depending on the solver being used"},
-  { "cleanup", (PyCFunction) cleanup, METH_VARARGS, "Compute last sismos"},
+  { "cleanup", (PyCFunction) cleanup, METH_VARARGS, "Call cleanup step"},
   { nullptr, nullptr, 0, nullptr }      /* Sentinel */
 };
 
