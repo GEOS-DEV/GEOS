@@ -46,6 +46,8 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
 
+#include "DumpToJson.hpp"
+
 // System includes
 #include <vector>
 #include <regex>
@@ -546,60 +548,7 @@ void ProblemManager::saveMe()
                                   NodeManager & nodeManager = meshLevel.getNodeManager();
                                   ElementRegionManager & elemManager = meshLevel.getElemManager();
                                   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( "Fracture" );
-                                  FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "cbFrac" );
-//                                  FaceManager const & faceManager = meshLevel.getFaceManager();
-//                                  EdgeManager const & edgeManager = meshLevel.getEdgeManager();
-//                                  EdgeManager & edgeManager = meshLevel.getEdgeManager();
-//                                  std::vector< localIndex > edges{ 270, 275, 280, 285, 290, 295, 300, 305, 310 };
-                                  // FIXME fractureConnectorsToEdges should not be attached to edgeManager
-                                  array1d< localIndex > & fractureConnectorsToEdges = fractureSubRegion.m_fractureConnectorsEdgesToEdges;
-                                  fractureConnectorsToEdges.resize( 31 );
-                                  std::vector< localIndex > edges;
-                                  for( int i = 0; i < 10; ++i )
-                                  {
-                                    edges.push_back( 265 + i * 5 );
-                                    edges.push_back( 265 + i * 5 + 1 );
-                                    edges.push_back( 265 + i * 5 + 3 );
-                                  }
-                                  edges.push_back( 315 );
-                                  for( int i = 0; i < 31; ++i )
-                                  {
-                                    fractureConnectorsToEdges[i] = edges[i];
-                                  }
-
-                                  // FIXME fractureConnectorsToFaceElements should not be attached to edgeManager
-                                  ArrayOfArrays< localIndex > & fractureConnectorsToFaceElements = fractureSubRegion.m_fractureConnectorEdgesToFaceElements;
-                                  fractureConnectorsToFaceElements.resize( 31 );
-                                  for( int i = 0; i < 31; ++i )
-                                  {
-                                    if( i > 0 and ( i % 3 ) == 0 and i < 30 )
-                                    {
-                                      fractureConnectorsToFaceElements.resizeArray( i, 2 );
-                                      fractureConnectorsToFaceElements[i][0] = localIndex( i / 3 ) - 1;
-                                      fractureConnectorsToFaceElements[i][1] = localIndex( i / 3 );
-                                    }
-                                    else
-                                    {
-                                      fractureConnectorsToFaceElements.resizeArray( i, 1 );
-                                      fractureConnectorsToFaceElements[i][0] = localIndex( i / 3 );
-                                    }
-                                  }
-                                  fractureConnectorsToFaceElements[30][0] = 9;
-
-                                  for( int i = 0; i < 31; ++i )
-                                  {
-                                    fractureSubRegion.m_recalculateFractureConnectorEdges.insert( i );
-                                  }
-//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 3 );
-//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 3 );
-//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 6 );
-//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 9 );
-//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 12 );
-//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 15 );
-//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 18 );
-//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 21 );
-//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 24 );
-//                                  edgeManager.m_recalculateFractureConnectorEdges.insert( 27 );
+                                  FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "fbFrac" );
 
                                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
@@ -662,6 +611,8 @@ void ProblemManager::generateMesh()
   {
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
     CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+    json j( cellBlockManager );
+    std::cout << j << std::endl;
     Group & meshLevels = meshBody.getMeshLevels();
     for( localIndex b = 0; b < meshLevels.numSubGroups(); ++b )
     {

@@ -100,9 +100,9 @@ public:
 
   /**
    * @brief Generate mesh.
-   * @param cellBlocks cell blocks where the mesh is generated
+   * @param blocks Cell or face blocks from where the mesh is generated.
    */
-  virtual void generateMesh( Group & cellBlocks, CellBlockManagerABC & cellBlockManager ) = 0;
+  virtual void generateMesh( Group & blocks ) = 0;
 
   ///@}
 

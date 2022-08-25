@@ -91,7 +91,7 @@ public:
     m_cellBlockNames.emplace_back( cellBlockName );
   }
 
-  virtual void generateMesh( Group & cellBlocks, CellBlockManagerABC & cellBlockManager ) override;
+  virtual void generateMesh( Group & cellBlocks ) override;
 
   ///@}
 

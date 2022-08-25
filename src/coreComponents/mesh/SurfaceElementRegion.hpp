@@ -98,7 +98,7 @@ public:
    */
   ///@{
 
-  virtual void generateMesh( Group &, CellBlockManagerABC & ) override;
+  virtual void generateMesh( Group & faceBlocks ) override;
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.
@@ -166,7 +166,7 @@ private:
 
   real64 m_defaultAperture;
 
-  string_array m_cellBlockNames;
+  string_array m_faceBlockNames; // TODO One name only, not an array!
 };
 
 /// Declare strings associated with enumeration values.

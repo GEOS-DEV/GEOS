@@ -21,6 +21,7 @@
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
+#include "mesh/generators/FaceBlock.hpp"
 
 namespace geosx
 {
@@ -144,6 +145,8 @@ public:
 
   Group & getCellBlocks() override;
 
+  Group & getFaceBlocks() override;
+
   /**
    * @brief Registers and returns a cell block of name @p name.
    * @param name The name of the created cell block.
@@ -167,7 +170,12 @@ private:
   struct viewKeyStruct
   {
     /// Cell blocks key
-    static constexpr char const * cellBlocks() { return "cellBlocks"; }
+    static constexpr char const * cellBlocks()
+    { return "cellBlocks"; }
+
+    /// Face blocks key
+    static constexpr char const * faceBlocks()
+    { return "faceBlocks"; }
   };
 
   /**
@@ -206,11 +214,11 @@ private:
   ArrayOfArrays< localIndex > m_nodeToEdges;
   ArrayOfArrays< localIndex > m_edgeToFaces;
   array2d< localIndex > m_edgeToNodes;
-  ArrayOfArrays< localIndex >  m_faceToNodes;
+  ArrayOfArrays< localIndex > m_faceToNodes;
   ArrayOfArrays< localIndex > m_faceToEdges;
   ToCellRelation< array2d< localIndex > > m_faceToCells;
 
-  array1d< globalIndex >  m_nodeLocalToGlobal;
+  array1d< globalIndex > m_nodeLocalToGlobal;
 
   std::map< string, SortedArray< localIndex > > m_nodeSets;
 

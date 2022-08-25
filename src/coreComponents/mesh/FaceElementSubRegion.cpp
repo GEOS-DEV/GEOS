@@ -77,7 +77,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_numNodesPerElement = 8;
 }
 
-ArrayOfArrays< localIndex > convert( array2d< localIndex > const & vv )
+ArrayOfArrays< localIndex > convert__( array2d< localIndex > const & vv )
 {
   ArrayOfArrays< localIndex > res;
 
@@ -100,7 +100,7 @@ ArrayOfArrays< localIndex > convert( array2d< localIndex > const & vv )
 //  return res;
 //}
 
-ArrayOfArrays< localIndex > convert( std::vector< std::vector< localIndex > > const & vv )
+ArrayOfArrays< localIndex > convert__( std::vector< std::vector< localIndex > > const & vv )
 {
   ArrayOfArrays< localIndex > res;
 
@@ -113,78 +113,37 @@ ArrayOfArrays< localIndex > convert( std::vector< std::vector< localIndex > > co
   return res;
 }
 
-
-void FaceElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock, CellBlockManagerABC const & cellBlockManager )
+void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
 {
   // TODO
+  this->resize( faceBlock.num2dElements() );
 
-  this->resize( cellBlock.numElements() );
-
-  this->m_toNodesRelation.base() = convert( cellBlock.getElemToNodes() ); // Inconsistent with the dimensions of the line below: it's 10x8
-//  this->m_toEdgesRelation.base() = convert( cellBlock.getElemToFaces() ); // Warning, not the proper dimension, it should be 10x4! Ou plutôt il faut cbm.getFaceToEdges() ?
-//  std::vector< std::vector< localIndex > > tmp;
+  this->m_toNodesRelation.base() = faceBlock.get2dElemToNodes(); // Inconsistent with the dimensions of the line below: it's 10x8
   auto & toEdges = this->m_toEdgesRelation.base();
-  toEdges.resize( cellBlock.numElements(), 4 );
-//  auto const & e2f = cellBlock.getElemToFaces();
-  auto const & f2ed= cellBlockManager.getFaceToEdges();
-  std::vector< localIndex > const leftCommonFaces{ 205, 209, 213, 217, 221, 225, 229, 233, 237, 241 };
-  std::vector< localIndex > const rightCommonFaces{ 246, 250, 254, 258, 262, 266, 270, 274, 278, 282 };
-  for( std::size_t i = 0; i < 10; ++i )
-  {
-    toEdges.resizeArray( i, 4 );
-    for( std::size_t j = 0; j < 4; ++j )
-    {
-      toEdges[i][j] = f2ed[leftCommonFaces[i]][j];
-    }
-  }
-//  for( std::size_t i = 0; i < 10; ++i )
-//  {
-//    localIndex const f = e2f[i][0];
-//    auto const & edges = f2ed[f];
-//    std::vector< localIndex > tmp2;
-//    for( auto const & val: edges )
-//    {
-//      tmp2.push_back( val );
-//    }
-//    tmp.push_back( tmp2 );
-//  }
-//  this->m_toEdgesRelation.base() = convert( tmp );
-  // TODO manipulate `faceBlock.getFaceToElements();` to feed `this->m_surfaceElementsToCells`.
-  // Use `transformCellBlockToRegionMap` instead of the wrong code below.
-//  ToCellRelation< array2d< localIndex > > const & f2e = cellBlock.getElemToFaces();
-//  this->m_surfaceElementsToCells.m_toElementIndex = f2e.toCellIndex;
-//  this->m_surfaceElementsToCells.m_toElementSubRegion = f2e.toBlockIndex;
-//  this->m_surfaceElementsToCells.m_toElementRegion.setValues<serialPolicy>(0);
+  toEdges = faceBlock.get2dElemToEdges();
 
-  auto & e = this->m_surfaceElementsToCells.m_toElementIndex ;
-  auto & esr= this->m_surfaceElementsToCells.m_toElementSubRegion;
-  auto & er= this->m_surfaceElementsToCells.m_toElementRegion;
-//  this->m_surfaceElementsToCells.m_toElementRegion.setValues<serialPolicy>(0);
-  for( localIndex i = 0; i < 10; ++i )
+  auto elem2dToElems = faceBlock.get2dElemToElems();
+  this->m_surfaceElementsToCells.m_toElementIndex = elem2dToElems.toCellIndex;
+  this->m_surfaceElementsToCells.m_toElementSubRegion = elem2dToElems.toBlockIndex;
+  this->m_surfaceElementsToCells.m_toElementRegion.setValues< serialPolicy >( 0 ); // TODO bad!
+
+  this->m_toFacesRelation.base() = faceBlock.get2dElemToFaces();
+
+  this->m_fractureConnectorsEdgesToEdges = faceBlock.get2dFaceToEdge();
+  this->m_fractureConnectorEdgesToFaceElements = faceBlock.get2dFaceTo2dElems();
+
+  for( int i = 0; i < faceBlock.num2dFaces(); ++i )
   {
-    e[i][0] = 40 + i ;
-    e[i][1] = 50 + i ;
-    esr[i][0] = 0 ;
-    esr[i][1] = 0 ;
-    er[i][0] = 0 ;
-    er[i][1] = 0 ;
+    this->m_recalculateFractureConnectorEdges.insert( i );
   }
 
-  for( localIndex i = 0; i < 10; ++i )
+  for( localIndex i = 0; i < faceBlock.num2dElements(); ++i )
   {
-//    this->m_toFacesRelation.base()[i][0] = 205 + 4 * i;
-//    this->m_toFacesRelation.base()[i][1] = 246 + 4 * i;
-    this->m_toFacesRelation.base()[i][0] = leftCommonFaces[i];
-    this->m_toFacesRelation.base()[i][1] = rightCommonFaces[i];
-  }
-  for( localIndex i = 0; i < 10; ++i )
-  {
-    this->m_newFaceElements.insert(i);
+    this->m_newFaceElements.insert( i );
   }
 
   // TODO what about the external fields?
 }
-
 
 void FaceElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mesh )
 {

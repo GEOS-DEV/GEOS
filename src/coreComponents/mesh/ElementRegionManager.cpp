@@ -118,9 +118,13 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 void ElementRegionManager::generateMesh( CellBlockManagerABC & cellBlockManager )
 {
-  this->forElementRegions< CellElementRegion, SurfaceElementRegion >( [&]( auto & elemRegion )
+  this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
   {
-    elemRegion.generateMesh( cellBlockManager.getCellBlocks(), cellBlockManager );
+    elemRegion.generateMesh( cellBlockManager.getCellBlocks() );
+  } );
+  this->forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion & elemRegion )
+  {
+    elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
   } );
 }
 
@@ -631,11 +635,11 @@ ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & ce
 
   Group::subGroupMap const & cellBlocks = cellBlockManager.getCellBlocks().getSubGroups();
 
-  forElementSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion >( [blockMap = blockMap.toView(),
+  forElementSubRegionsComplete< CellElementSubRegion >( [blockMap = blockMap.toView(),
                                                          &cellBlocks]( localIndex const er,
                                                                        localIndex const esr,
                                                                        ElementRegionBase const & region,
-                                                                       auto const & subRegion )
+                                                                       CellElementSubRegion const & subRegion )
   {
     localIndex const blockIndex = cellBlocks.getIndex( subRegion.getName() );
     GEOSX_ERROR_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,

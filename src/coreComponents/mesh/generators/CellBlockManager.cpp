@@ -28,6 +28,7 @@ CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
   m_nodesPositions( 0, 3 )
 {
   this->registerGroup< Group >( viewKeyStruct::cellBlocks() );
+  this->registerGroup< Group >( viewKeyStruct::faceBlocks() );
 }
 
 void CellBlockManager::resize( integer_array const & numElements,
@@ -589,6 +590,8 @@ void CellBlockManager::buildMaps()
   buildNodeToEdges();
 
   fillElementToEdgesOfCellBlocks( m_faceToEdges.toViewConst(), this->getCellBlocks() );
+
+  this->getFaceBlocks().registerGroup< FaceBlock >( "fbFrac" );
 }
 
 ArrayOfArrays< localIndex > CellBlockManager::getFaceToNodes() const
@@ -616,6 +619,11 @@ const Group & CellBlockManager::getCellBlocks() const
 Group & CellBlockManager::getCellBlocks()
 {
   return this->getGroup( viewKeyStruct::cellBlocks() );
+}
+
+Group & CellBlockManager::getFaceBlocks()
+{
+  return this->getGroup( viewKeyStruct::faceBlocks() );
 }
 
 localIndex CellBlockManager::numNodes() const

@@ -243,7 +243,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
 
 //  FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
-  FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "cbFrac" );
+  FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "fbFrac" );
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion.faceList();
 
   arrayView1d< localIndex const > const & fractureConnectorsToEdges = fractureSubRegion.m_fractureConnectorsEdgesToEdges;
@@ -624,7 +624,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
             LvArray::tensorOps::copy< 3 >( faceNormalVector, faceNormal[faceIndex] );
 
             LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter[faceIndex] );
-            LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[er][esr][ei] );
+            LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[er][esr][ei] ); // Here, er = -1 and it crashes.
 
             real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 

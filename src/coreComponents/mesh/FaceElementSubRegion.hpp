@@ -20,6 +20,7 @@
 #define GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
 
 #include "SurfaceElementSubRegion.hpp"
+#include "mesh/generators/FaceBlockABC.hpp"
 
 namespace geosx
 {
@@ -76,7 +77,7 @@ public:
                         dataRepository::Group * const parent );
 
   ///@}
-  void copyFromCellBlock( CellBlockABC const & cellBlock, CellBlockManagerABC const & cellBlockManager );
+  void copyFromCellBlock( FaceBlockABC const & faceBlock );
 
   /**
    * @name Geometry computation / Connectivity

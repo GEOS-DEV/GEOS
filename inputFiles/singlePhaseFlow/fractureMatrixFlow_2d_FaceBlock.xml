@@ -19,20 +19,20 @@
   </Solvers>
 
   <Mesh>
-<!--    <VTKMesh-->
-<!--            name="mesh1"-->
-<!--            file="frac.vtk"/>-->
+    <VTKMesh
+      name="mesh1"
+      file="frac-hex.vtk"/>
 
-        <InternalMesh
-          name="mesh1"
-          elementTypes="{ C3D8 }"
-          xCoords="{ -5, 0, 0.00001,  5 }"
-          yCoords="{ 0, 10 }"
-          zCoords="{ 0, 1 }"
-          nx="{ 5, 1, 5 }"
-          ny="{ 10 }"
-          nz="{ 1 }"
-          cellBlockNames="{ cb1, cbFrac, cb1 }"/>
+<!--        <InternalMesh-->
+<!--          name="mesh1"-->
+<!--          elementTypes="{ C3D8 }"-->
+<!--          xCoords="{ -5, 0, 0.00001,  5 }"-->
+<!--          yCoords="{ 0, 10 }"-->
+<!--          zCoords="{ 0, 1 }"-->
+<!--          nx="{ 5, 1, 5 }"-->
+<!--          ny="{ 10 }"-->
+<!--          nz="{ 1 }"-->
+<!--          cellBlockNames="{ cb1, cbFrac, cb1 }"/>-->
   </Mesh>
 
   <Geometry>
@@ -99,14 +99,14 @@
   <ElementRegions>
     <CellElementRegion
             name="Region2"
-            cellBlocks="{ cb1 }"
+            cellBlocks="{ hexahedra }"
             materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
             name="Fracture"
             defaultAperture="1.0e-5"
             subRegionType="faceElement"
-            cellBlocks="{ cbFrac }"
+            faceBlocks="{ fbFrac }"
             materialList="{ water, fractureFilling }"/>
   </ElementRegions>
 
@@ -167,7 +167,7 @@
             name="Porosity"
             initialCondition="1"
             setNames="{ all }"
-            objectPath="ElementRegions/Region2/cb1"
+            objectPath="ElementRegions/Region2/hexahedra"
             fieldName="rockPorosity_referencePorosity"
             scale="0.01"/>
 
@@ -183,7 +183,7 @@
             name="initialPressure"
             initialCondition="1"
             setNames="{ all }"
-            objectPath="ElementRegions/Region2/cb1"
+            objectPath="ElementRegions/Region2/hexahedra"
             fieldName="pressure"
             scale="0.0"/>
 

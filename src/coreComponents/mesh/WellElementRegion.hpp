@@ -121,7 +121,7 @@ public:
   /**
    * @brief Not implemented, this task is performed in GenerateWell.
    */
-  virtual void generateMesh( Group &, CellBlockManagerABC & ) override {}
+  virtual void generateMesh( Group & ) override {}
 
   /**
    * @brief Build the local well elements and perforations from global well geometry.

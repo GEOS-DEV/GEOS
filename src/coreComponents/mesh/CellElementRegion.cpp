@@ -32,9 +32,8 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
 CellElementRegion::~CellElementRegion()
 {}
 
-void CellElementRegion::generateMesh( Group & cellBlocks, CellBlockManagerABC & cellBlockManager )
+void CellElementRegion::generateMesh( Group & cellBlocks )
 {
-  GEOSX_UNUSED_PARAM(cellBlockManager)
   Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
 
   for( string const & cellBlockName : this->m_cellBlockNames )
