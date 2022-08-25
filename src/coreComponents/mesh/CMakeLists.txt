@@ -20,10 +20,12 @@ set( mesh_headers
      MeshForLoopInterface.hpp
      MeshLevel.hpp
      MeshManager.hpp
+     MeshObjectPath.hpp
      NodeManager.hpp
      ObjectManagerBase.hpp
      Perforation.hpp
      PerforationData.hpp
+     PerforationExtrinsicData.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
@@ -76,6 +78,7 @@ set( mesh_sources
      MeshBody.cpp
      MeshLevel.cpp
      MeshManager.cpp
+     MeshObjectPath.cpp
      NodeManager.cpp
      ObjectManagerBase.cpp
      Perforation.cpp
@@ -129,6 +132,12 @@ if( ENABLE_VTK )
     endif()
 endif()
 
+if( ENABLE_SCOTCH )
+    set( mesh_headers ${mesh_headers} generators/PTScotchInterface.hpp )
+    set( mesh_sources ${mesh_sources} generators/PTScotchInterface.cpp )
+    set( dependencyList ${dependencyList} ptscotch )
+endif()
+
 blt_add_library( NAME       mesh
                  SOURCES    ${mesh_sources}
                  HEADERS    ${mesh_headers}
@@ -137,6 +146,8 @@ blt_add_library( NAME       mesh
                )
 
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+add_subdirectory( unitTests )
 
 geosx_add_code_checks( PREFIX mesh
                        EXCLUDES PAMELA )

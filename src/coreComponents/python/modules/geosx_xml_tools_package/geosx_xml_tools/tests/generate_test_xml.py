@@ -9,7 +9,7 @@ def generate_test_xml_files(root_dir):
     """Build example input/output xml files, which can be used to test the parser.
      These are derived from a GEOSX integrated test xml.
 
-     @param root_dir The folder to write the example xml files.
+    @param root_dir The folder to write the example xml files.
     """
 
     # Build segments of an xml file that can be compiled to form a test
@@ -340,35 +340,35 @@ def generate_test_xml_files(root_dir):
     # Write the files, and apply pretty_print to targets for easy matches
     # No advanced features case
     with open('%s/no_advanced_features_input.xml' % (root_dir), 'w') as f:
-        f.write(xml_header+xml_base_a+xml_base_b+field_string_base+xml_footer)
+        f.write(xml_header + xml_base_a + xml_base_b + field_string_base + xml_footer)
     with open('%s/no_advanced_features_target.xml' % (root_dir), 'w') as f:
-        f.write(xml_header+xml_base_a+xml_base_b+field_string_base+xml_footer)
+        f.write(xml_header + xml_base_a + xml_base_b + field_string_base + xml_footer)
     xml_formatter.format_file('%s/no_advanced_features_target.xml' % (root_dir))
 
     # Parameters case
     with open('%s/parameters_input.xml' % (root_dir), 'w') as f:
-        f.write(xml_header+xml_parameters+xml_base_a+xml_base_b+field_string_with_parameters+xml_footer)
+        f.write(xml_header + xml_parameters + xml_base_a + xml_base_b + field_string_with_parameters + xml_footer)
     with open('%s/parameters_target.xml' % (root_dir), 'w') as f:
-        f.write(xml_header+xml_base_a+xml_base_b+field_string_base+xml_footer)
+        f.write(xml_header + xml_base_a + xml_base_b + field_string_base + xml_footer)
     xml_formatter.format_file('%s/parameters_target.xml' % (root_dir))
 
     # Symbolic + parameters case
     with open('%s/symbolic_parameters_input.xml' % (root_dir), 'w') as f:
-        f.write(xml_header+xml_parameters+xml_base_a+xml_base_b+field_string_with_symbolic+xml_footer)
+        f.write(xml_header + xml_parameters + xml_base_a + xml_base_b + field_string_with_symbolic + xml_footer)
     with open('%s/symbolic_parameters_target.xml' % (root_dir), 'w') as f:
-        f.write(xml_header+xml_base_a+xml_base_b+field_string_alt+xml_footer)
+        f.write(xml_header + xml_base_a + xml_base_b + field_string_alt + xml_footer)
     xml_formatter.format_file('%s/symbolic_parameters_target.xml' % (root_dir))
 
     # Included case
     os.makedirs('%s/included' % (root_dir), exist_ok=True)
     with open('%s/included_input.xml' % (root_dir), 'w') as f:
-        f.write(xml_header+xml_includes+xml_footer)
+        f.write(xml_header + xml_includes + xml_footer)
     with open('%s/included/included_a.xml' % (root_dir), 'w') as f:
-        f.write(xml_header+xml_base_a+xml_footer)
+        f.write(xml_header + xml_base_a + xml_footer)
     with open('%s/included/included_b.xml' % (root_dir), 'w') as f:
-        f.write(xml_header+xml_base_b+xml_footer)
+        f.write(xml_header + xml_base_b + xml_footer)
     with open('%s/included/included_c.xml' % (root_dir), 'w') as f:
-        f.write(xml_header+field_string_base+xml_footer)
+        f.write(xml_header + field_string_base + xml_footer)
     with open('%s/included_target.xml' % (root_dir), 'w') as f:
-        f.write(xml_header+xml_base_a+xml_base_b+field_string_base+xml_footer)
+        f.write(xml_header + xml_base_a + xml_base_b + field_string_base + xml_footer)
     xml_formatter.format_file('%s/included_target.xml' % (root_dir))

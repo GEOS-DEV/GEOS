@@ -136,16 +136,15 @@ blt_add_executable( NAME geosx
                                ${externalComponentsLinkList} )
 
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
-if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
-    set_target_properties( geosx PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
+if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA"  )
+  set_target_properties( geosx PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
 endif()
 
 # Removing all transitive link dependencies from geosx_core target to circumvent
 # the BLT behavior which imposes all dependencies to be public
 #set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "")
-target_include_directories( geosx PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>
-                                         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/coreComponents>
-                                         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>)
+
+target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 # To change the runtime path during installation
 set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
@@ -163,22 +162,24 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
                      COMMAND geosx -s ${SCHEMA_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx
-                     COMMENT "Generating XML schema" )
+                     COMMENT "Generating XML schema"
+                     )
 
   add_custom_target( geosx_update_rst_tables
                      ALL
                      COMMAND python ${SCRIPT_DIR}/SchemaToRSTDocumentation.py ${SCHEMA_DIR} >update_rst_tables.log 2>&1 || (cat update_rst_tables.log && exit 1)
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_generate_schema
-                     COMMENT "Generating schema-dependent RST files" )
+                     COMMENT "Generating schema-dependent RST files"
+                     )
 
   add_custom_target( geosx_validate_all_xml_files
                      ALL
                      COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples ${CMAKE_SOURCE_DIR}/../inputFiles
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_update_rst_tables
-                     COMMENT "Validating all XML files in the repository against the schema" )
-
+                     COMMENT "Validating all XML files in the repository against the schema"
+                     )
 endif()
 
 if( ENABLE_PYGEOSX )

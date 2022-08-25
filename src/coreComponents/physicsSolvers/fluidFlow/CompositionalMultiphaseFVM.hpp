@@ -84,6 +84,14 @@ public:
   setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
+  virtual void
+  applyBoundaryConditions( real64 const time_n,
+                           real64 const dt,
+                           DomainPartition & domain,
+                           DofManager const & dofManager,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs ) override;
+
   virtual real64
   calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
@@ -106,12 +114,6 @@ public:
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
-  virtual void
-  implicitStepComplete( real64 const & time,
-                        real64 const & dt,
-                        DomainPartition & domain ) override;
-
-
   /**@}*/
 
   virtual void
@@ -120,7 +122,6 @@ public:
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const override;
-
 
   virtual void
   updatePhaseMobility( ObjectManagerBase & dataGroup ) const override;
@@ -133,6 +134,10 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
 
+protected:
+
+  virtual void
+  initializePreSubGroups() override;
 
   /**
    * @brief Compute the largest CFL number in the domain
@@ -142,10 +147,31 @@ public:
   void
   computeCFLNumbers( real64 const & dt, DomainPartition & domain );
 
-
-  virtual void initializePreSubGroups() override;
-
 private:
+
+  /**
+   * @brief Utility function to validate the consistency of face Dirichlet BC input
+   * @param[in] domain the domain partition
+   * @param[in] time the time at the end of the time step (time_n + dt)
+   */
+  bool validateFaceDirichletBC( DomainPartition & domain,
+                                real64 const time ) const;
+
+  /**
+   * @brief Function to perform the application of Dirichlet BCs on faces
+   * @param time_n current time
+   * @param dt time step
+   * @param faceSet degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  void applyFaceDirichletBC( real64 const time_n,
+                             real64 const dt,
+                             DofManager const & faceSet,
+                             DomainPartition & domain,
+                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                             arrayView1d< real64 > const & localRhs );
 
   // no data needed here, see CompositionalMultiphaseBase
 

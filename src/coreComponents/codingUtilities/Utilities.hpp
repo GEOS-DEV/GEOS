@@ -230,6 +230,14 @@ void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func, std::inde
   using expander = int[];
   (void) expander { 0, ( (void)func( std::get< Is >( tuple ), std::integral_constant< size_t, Is >{} ), 0 )... };
 }
+
+template< class F, class ... Ts, std::size_t ... Is >
+void forEachArgInTuple( std::tuple< Ts ... > & tuple, F && func, std::index_sequence< Is ... > )
+{
+  using expander = int[];
+  (void) expander { 0, ( (void)func( std::get< Is >( tuple ), std::integral_constant< size_t, Is >{} ), 0 )... };
+}
+
 }
 
 /**
@@ -249,13 +257,29 @@ void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func )
 }
 
 /**
+ * @brief Visit every element in a tuple applying a function.
+ * @tparam F type of function
+ * @tparam Ts types of tuple elements
+ * @param tuple the target tuple
+ * @param func the function to apply
+ *
+ * The function will be called with a reference to the tuple element and
+ * a compile-time (std::integral_constant) index of the tuple element.
+ */
+template< class F, class ... Ts >
+void forEachArgInTuple( std::tuple< Ts ... > & tuple, F && func )
+{
+  internal::forEachArgInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
+}
+
+/**
  * @brief Utility function to convert the value of an enumerator to its underlying type (integer).
  * @tparam ENUMERATION the type of the enumeration
  * @param[in] value the value of the enumerator
  * @return the integer conversion of @p value
  */
 template< typename ENUMERATION >
-std::underlying_type_t< ENUMERATION > toUnderlying( ENUMERATION const value )
+constexpr std::underlying_type_t< ENUMERATION > toUnderlying( ENUMERATION const value )
 {
   return static_cast< std::underlying_type_t< ENUMERATION > >( value );
 }

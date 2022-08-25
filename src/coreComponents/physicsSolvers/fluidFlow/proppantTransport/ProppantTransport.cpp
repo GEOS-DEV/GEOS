@@ -686,15 +686,14 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
   {
     //  Apply Dirichlet BC for proppant concentration
 
-    fsManager.apply( time_n + dt,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::proppant::proppantConcentration::key(),
-                     [&]( FieldSpecificationBase const & fs,
-                          string const &,
-                          SortedArrayView< localIndex const > const & lset,
-                          Group & subRegion,
-                          string const & )
+    fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                             mesh,
+                                             extrinsicMeshData::proppant::proppantConcentration::key(),
+                                             [&]( FieldSpecificationBase const & fs,
+                                                  string const &,
+                                                  SortedArrayView< localIndex const > const & lset,
+                                                  ElementSubRegionBase & subRegion,
+                                                  string const & )
     {
       arrayView1d< globalIndex const > const
       dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
@@ -718,15 +717,14 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
     {
       map< string, map< string, array1d< bool > > > bcStatusMap; // map to check consistent application of BC
 
-      fsManager.apply( time_n + dt,
-                       mesh,
-                       "ElementRegions",
-                       extrinsicMeshData::proppant::proppantConcentration::key(),
-                       [&]( FieldSpecificationBase const &,
-                            string const & setName,
-                            SortedArrayView< localIndex const > const &,
-                            Group & subRegion,
-                            string const & )
+      fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                               mesh,
+                                               extrinsicMeshData::proppant::proppantConcentration::key(),
+                                               [&]( FieldSpecificationBase const &,
+                                                    string const & setName,
+                                                    SortedArrayView< localIndex const > const &,
+                                                    ElementSubRegionBase & subRegion,
+                                                    string const & )
       {
 
         string const & subRegionName = subRegion.getName();
@@ -736,15 +734,14 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
 
       } );
 
-      fsManager.apply( time_n + dt,
-                       mesh,
-                       "ElementRegions",
-                       extrinsicMeshData::proppant::componentConcentration::key(),
-                       [&] ( FieldSpecificationBase const & fs,
-                             string const & setName,
-                             SortedArrayView< localIndex const > const & targetSet,
-                             Group & subRegion,
-                             string const & )
+      fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                               mesh,
+                                               extrinsicMeshData::proppant::componentConcentration::key(),
+                                               [&] ( FieldSpecificationBase const & fs,
+                                                     string const & setName,
+                                                     SortedArrayView< localIndex const > const & targetSet,
+                                                     ElementSubRegionBase & subRegion,
+                                                     string const & )
       {
 
         string const & subRegionName = subRegion.getName();
@@ -778,15 +775,14 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
 
       GEOSX_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
 
-      fsManager.apply( time_n + dt,
-                       mesh,
-                       "ElementRegions",
-                       extrinsicMeshData::proppant::proppantConcentration::key(),
-                       [&] ( FieldSpecificationBase const &,
-                             string const &,
-                             SortedArrayView< localIndex const > const & targetSet,
-                             Group & subRegion,
-                             string const & )
+      fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                               mesh,
+                                               extrinsicMeshData::proppant::proppantConcentration::key(),
+                                               [&] ( FieldSpecificationBase const &,
+                                                     string const &,
+                                                     SortedArrayView< localIndex const > const & targetSet,
+                                                     ElementSubRegionBase & subRegion,
+                                                     string const & )
       {
         arrayView1d< integer const > const ghostRank =
           subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
@@ -916,19 +912,6 @@ void ProppantTransport::applySystemSolution( DofManager const & dofManager,
 
   } );
 
-}
-
-void ProppantTransport::solveLinearSystem( DofManager const & dofManager,
-                                           ParallelMatrix & matrix,
-                                           ParallelVector & rhs,
-                                           ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-
-  rhs.scale( -1.0 );
-  solution.zero();
-
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void ProppantTransport::resetStateToBeginningOfStep( DomainPartition & domain )

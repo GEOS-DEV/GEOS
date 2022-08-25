@@ -114,14 +114,9 @@ endif()
 if(DEFINED CONDUIT_DIR)
     message(STATUS "CONDUIT_DIR = ${CONDUIT_DIR}")
 
-    set( Conduit_FIND_QUIETLY FALSE )
     find_package(Conduit REQUIRED
                  PATHS ${CONDUIT_DIR}/lib/cmake
                  NO_DEFAULT_PATH)
-
-    if(NOT TARGET conduit)
-        add_library(conduit ALIAS conduit::conduit)
-    endif()
 
     set(CONDUIT_TARGETS conduit conduit_relay conduit_blueprint)
     foreach(targetName ${CONDUIT_TARGETS} )
@@ -135,13 +130,13 @@ if(DEFINED CONDUIT_DIR)
     endforeach()
 
     # Conduit uses our HDF5 and we need to propagate the above fix.
-    #get_target_property(CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES conduit_relay INTERFACE_INCLUDE_DIRECTORIES)
-    #list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES /usr/include)
-    #set_target_properties(conduit_relay PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES})
+    # get_target_property(CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES conduit_relay INTERFACE_INCLUDE_DIRECTORIES)
+    # list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES /usr/include)
+    # set_target_properties(conduit_relay PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES})
 
-    #get_target_property(CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES conduit_relay INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
-    #list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES /usr/include)
-    #set_target_properties(conduit_relay PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES})
+    # get_target_property(CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES conduit_relay INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
+    # list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES /usr/include)
+    # set_target_properties(conduit_relay PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES})
 
     set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit)
 else()
@@ -234,7 +229,6 @@ endif()
 ################################
 if(DEFINED RAJA_DIR)
     message(STATUS "RAJA_DIR = ${RAJA_DIR}")
-
     find_package(RAJA REQUIRED
                  PATHS ${RAJA_DIR}
                  NO_DEFAULT_PATH)
@@ -414,6 +408,36 @@ else()
 endif()
 
 ################################
+# SCOTCH
+################################
+if(DEFINED SCOTCH_DIR)
+    message(STATUS "SCOTCH_DIR = ${SCOTCH_DIR}")
+
+    find_and_register(NAME scotch
+                      INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
+                      LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
+                      HEADER scotch.h
+                      LIBRARIES scotch scotcherr )
+
+    find_and_register(NAME ptscotch
+                      INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
+                      LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
+                      DEPENDS scotch
+                      HEADER ptscotch.h
+                      LIBRARIES ptscotch ptscotcherr )
+
+    set(ENABLE_SCOTCH ON CACHE BOOL "")
+    set(thirdPartyLibs ${thirdPartyLibs} scotch ptscotch)
+else()
+    if(ENABLE_SCOTCH)
+        message(WARNING "ENABLE_SCOTCH is ON but SCOTCH_DIR isn't defined.")
+    endif()
+
+    set(ENABLE_SCOTCH OFF CACHE BOOL "" FORCE)
+    message(STATUS "Not using SCOTCH.")
+endif()
+
+################################
 # SUPERLU_DIST
 ################################
 if(DEFINED SUPERLU_DIST_DIR)
@@ -467,15 +491,16 @@ endif()
 if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
+    set( HYPRE_DEPENDS blas lapack superlu_dist )
     if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
-        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY} )
+        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} )
     elseif( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
         find_package( rocblas REQUIRED )
         find_package( rocsolver REQUIRED )
         find_package( rocsparse REQUIRED )
         find_package( rocrand REQUIRED )
-        set( EXTRA_DEPS roc::rocblas roc::rocsparse roc::rocsolver roc::rocrand )
-    endif()
+        set( HYPRE_DEPENDS ${HYPRE_DEPENDS} roc::rocblas roc::rocsparse roc::rocsolver roc::rocrand )
+    endif( )
 
     find_and_register(NAME hypre
                       INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
@@ -483,7 +508,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
                       HEADER HYPRE.h
                       LIBRARIES HYPRE
                       EXTRA_LIBRARIES ${EXTRA_LIBS}
-                      DEPENDS blas lapack superlu_dist ${EXTRA_DEPS} )
+                      DEPENDS ${HYPRE_DEPENDS})
 
     file(READ ${HYPRE_DIR}/include/HYPRE_config.h hypre_config)
     string(REGEX MATCH "HYPRE_RELEASE_VERSION \"([0-9]*).([0-9]*).([0-9]*)\"" hypre_version ${hypre_config} )

@@ -13,6 +13,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           CUDA
                           PARMETIS
                           PETSC
+                          SCOTCH
                           PVTPackage
                           PYGEOSX
                           RAJA

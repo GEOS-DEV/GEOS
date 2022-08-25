@@ -159,8 +159,7 @@ public:
                                     arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const & dFluidPhaseMassDensity,
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseSaturation,
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseSaturation_n,
-                                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dFluidPhaseSaturation_dPressure,
-                                    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dFluidPhaseSaturation_dGlobalCompDensity,
+                                    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dFluidPhaseSaturation,
                                     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dGlobalCompFraction_dGlobalCompDensity,
                                     real64 ( & totalStress )[6],
                                     real64 ( & dTotalStress_dPressure )[6],
@@ -211,13 +210,13 @@ public:
     {
       // Compute mixture density
       real64 fluidTotalMassDensity = fluidPhaseSaturation( 0 ) * fluidPhaseMassDensity( 0 );
-      real64 dFluidTotalMassDensity_dPressure = dFluidPhaseSaturation_dPressure( 0 ) * fluidPhaseMassDensity( 0 )
+      real64 dFluidTotalMassDensity_dPressure = dFluidPhaseSaturation( 0, Deriv::dP ) * fluidPhaseMassDensity( 0 )
                                                 + fluidPhaseSaturation( 0 ) * dFluidPhaseDensity( 0, Deriv::dP );
       for( integer i = 1; i < NP; ++i )
       {
         fluidTotalMassDensity = fluidTotalMassDensity + fluidPhaseSaturation( i ) * fluidPhaseMassDensity( i );
         dFluidTotalMassDensity_dPressure = dFluidTotalMassDensity_dPressure
-                                           + dFluidPhaseSaturation_dPressure( i ) * fluidPhaseMassDensity( i )
+                                           + dFluidPhaseSaturation( i, Deriv::dP ) * fluidPhaseMassDensity( i )
                                            + fluidPhaseSaturation( i ) * dFluidPhaseDensity( i, Deriv::dP );
       }
       real64 dFluidTotalMassDensity_dComponents[NUM_MAX_COMPONENTS]{};
@@ -232,7 +231,7 @@ public:
         for( integer jc = 0; jc < NC; ++jc )
         {
           dFluidTotalMassDensity_dComponents[jc] = dFluidTotalMassDensity_dComponents[jc]
-                                                   + dFluidPhaseSaturation_dGlobalCompDensity( ip, jc ) * fluidPhaseMassDensity( ip )
+                                                   + dFluidPhaseSaturation( ip, Deriv::dC+jc ) * fluidPhaseMassDensity( ip )
                                                    + fluidPhaseSaturation( ip ) * dFluidPhaseMassDensity_dC[jc];
         }
       }
@@ -271,7 +270,7 @@ public:
       real64 const phaseAmount_n = porosity_n * fluidPhaseSaturation_n( ip ) * fluidPhaseDensity_n( ip );
 
       real64 const dPhaseAmount_dP = dPorosity_dPressure * fluidPhaseSaturation( ip ) * fluidPhaseDensity( ip )
-                                     + porosity * ( dFluidPhaseSaturation_dPressure( ip ) * fluidPhaseDensity( ip )
+                                     + porosity * ( dFluidPhaseSaturation( ip, Deriv::dP ) * fluidPhaseDensity( ip )
                                                     + fluidPhaseSaturation( ip ) * dFluidPhaseDensity( ip, Deriv::dP ) );
 
       // assemble density dependence
@@ -284,7 +283,7 @@ public:
       for( integer jc = 0; jc < NC; ++jc )
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * fluidPhaseSaturation( ip )
-                              + fluidPhaseDensity( ip ) * dFluidPhaseSaturation_dGlobalCompDensity( ip, jc );
+                              + fluidPhaseDensity( ip ) * dFluidPhaseSaturation( ip, Deriv::dC+jc );
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * porosity;
       }
 
@@ -328,13 +327,13 @@ public:
     {
       poreVolumeConstraint = poreVolumeConstraint - fluidPhaseSaturation( ip );
       dPoreVolumeConstraint_dPressure = dPoreVolumeConstraint_dPressure
-                                        - dFluidPhaseSaturation_dPressure( ip ) * porosity
+                                        - dFluidPhaseSaturation( ip, Deriv::dP ) * porosity
                                         - dPorosity_dPressure * fluidPhaseSaturation( ip );
 
       for( integer jc = 0; jc < NC; ++jc )
       {
         dPoreVolumeConstraint_dComponents[0][jc] = dPoreVolumeConstraint_dComponents[0][jc]
-                                                   - dFluidPhaseSaturation_dGlobalCompDensity( ip, jc )  * porosity;
+                                                   - dFluidPhaseSaturation( ip, Deriv::dC+jc )  * porosity;
       }
     }
     poreVolumeConstraint = poreVolumeConstraint * porosity;
