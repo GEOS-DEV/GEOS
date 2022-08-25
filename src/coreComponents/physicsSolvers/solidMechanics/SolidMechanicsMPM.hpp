@@ -61,7 +61,7 @@ public:
    * @param parent the parent group of the solver
    */
   SolidMechanicsMPM( const string & name,
-                               Group * const parent );
+                     Group * const parent );
 
 
   SolidMechanicsMPM( SolidMechanicsMPM const & ) = delete;
@@ -154,60 +154,16 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * cflFactorString() { return "cflFactor"; }
-    static constexpr char const * newmarkGammaString() { return "newmarkGamma"; }
-    static constexpr char const * newmarkBetaString() { return "newmarkBeta"; }
-    static constexpr char const * massDampingString() { return "massDamping"; }
-    static constexpr char const * stiffnessDampingString() { return "stiffnessDamping"; }
-    static constexpr char const * useVelocityEstimateForQSString() { return "useVelocityForQS"; }
     static constexpr char const * timeIntegrationOptionString() { return "timeIntegrationOption"; }
-    static constexpr char const * maxNumResolvesString() { return "maxNumResolves"; }
-    static constexpr char const * strainTheoryString() { return "strainTheory"; }
     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
     static constexpr char const * forceExternalString() { return "externalForce"; }
     static constexpr char const * forceInternalString() { return "internalForce"; }
     static constexpr char const * momentumString() { return "momentum"; }
-    static constexpr char const * contactRelationNameString() { return "contactRelationName"; }
-    static constexpr char const * noContactRelationNameString() { return "NOCONTACT"; }
     static constexpr char const * forceContactString() { return "contactForce"; }
-    static constexpr char const * maxForceString() { return "maxForce"; }
-    static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
-    static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
-
-    static constexpr char const * sendOrReceiveNodesString() { return "sendOrReceiveNodes";}
-    static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
-    static constexpr char const * targetNodesString() { return "targetNodes";}
 
 
-    dataRepository::ViewKey newmarkGamma = { newmarkGammaString() };
-    dataRepository::ViewKey newmarkBeta = { newmarkBetaString() };
-    dataRepository::ViewKey massDamping = { massDampingString() };
-    dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString() };
-    dataRepository::ViewKey useVelocityEstimateForQS = { useVelocityEstimateForQSString() };
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
-
-
-  SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
-  {
-    return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() );
-  }
-
-  SortedArray< localIndex > & getElemsNotAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
-  {
-    return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() );
-  }
-
-  real64 & getMaxForce() { return m_maxForce; }
-
-  arrayView1d< ParallelVector > const & getRigidBodyModes() const
-  {
-    return m_rigidBodyModes;
-  }
-
-  array1d< ParallelVector > & getRigidBodyModes()
-  {
-    return m_rigidBodyModes;
-  }
 
   void initialize(NodeManager & nodeManager,
                   ParticleManager & particleManager,
@@ -218,39 +174,24 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const override;
 
-//  virtual void initializePostInitialConditionsPreSubGroups() override final;
-
-  real64 m_newmarkGamma;
-  real64 m_newmarkBeta;
-  real64 m_massDamping;
-  real64 m_stiffnessDamping;
   TimeIntegrationOption m_timeIntegrationOption;
-  integer m_useVelocityEstimateForQS;
-  real64 m_maxForce = 0.0;
-  integer m_maxNumResolves;
-  integer m_strainTheory = 0;
-  string m_contactRelationName;
   MPI_iCommData m_iComm;
+
   int m_numContactGroups, m_numContactFlags, m_numVelocityFields;
   bool m_damageFieldPartitioning = false;
 
-  std::array<real64, 3> m_hEl = {DBL_MAX,DBL_MAX,DBL_MAX};        // Grid spacing in x-y-z
-  std::array<real64, 3> m_xLocalMin = {DBL_MAX,DBL_MAX,DBL_MAX};  // Minimum local grid coordinate including ghost nodes
-  std::array<real64, 3> m_xLocalMax = {DBL_MIN,DBL_MIN,DBL_MIN};  // Maximum local grid coordinate including ghost nodes
-  std::array<real64, 3> m_xLocalMinNoGhost = {0.0,0.0,0.0};       // Minimum local grid coordinate EXCLUDING ghost nodes
-  std::array<real64, 3> m_xLocalMaxNoGhost = {0.0,0.0,0.0};       // Maximum local grid coordinate EXCLUDING ghost nodes
-  std::array<real64, 3> m_xGlobalMin = {0.0,0.0,0.0};             // Minimum global grid coordinate
-  std::array<real64, 3> m_xGlobalMax = {0.0,0.0,0.0};             // Maximum global grid coordinate
-  std::array<real64, 3> m_domainL = {0.0,0.0,0.0};                // Length of each edge of grid
-  std::array<int, 3> m_nEl = {0,0,0};                             // Number of elements in each grid direction
-  std::vector<std::vector<std::vector<int>>> m_ijkMap;            // Map from cell-spaced coordinates to cell ID
+  std::array<real64, 3> m_hEl;                // Grid spacing in x-y-z
+  std::array<real64, 3> m_xLocalMin;          // Minimum local grid coordinate including ghost nodes
+  std::array<real64, 3> m_xLocalMax;          // Maximum local grid coordinate including ghost nodes
+  std::array<real64, 3> m_xLocalMinNoGhost;   // Minimum local grid coordinate EXCLUDING ghost nodes
+  std::array<real64, 3> m_xLocalMaxNoGhost;   // Maximum local grid coordinate EXCLUDING ghost nodes
+  std::array<real64, 3> m_xGlobalMin;         // Minimum global grid coordinate
+  std::array<real64, 3> m_xGlobalMax;         // Maximum global grid coordinate
+  std::array<real64, 3> m_domainLengths;            // Length of each edge of grid
+  std::array<int, 3> m_nEl;                                // Number of elements in each grid direction
+  array3d< int > m_ijkMap;     // Map from cell-spaced coordinates to cell ID
 
-  int m_voigtMap[3][3] = { {0, 5, 4},
-                           {5, 1, 3},
-                           {4, 3, 2} };
-
-  /// Rigid body modes
-  array1d< ParallelVector > m_rigidBodyModes;
+  int m_voigtMap[3][3];
 
 private:
   virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const override;
