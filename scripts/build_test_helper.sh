@@ -1,6 +1,12 @@
 #!/bin/bash
 env
 
+echo "running nproc"
+nproc
+
+echo "running free -m"
+free -m
+
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
 function or_die () {
