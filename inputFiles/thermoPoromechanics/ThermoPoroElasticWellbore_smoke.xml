@@ -13,9 +13,9 @@
     radius="{ 0.1, 5.0 }"
     theta="{ 0, 180 }"
     zCoords="{ -1, 1 }"
-    nr="{ 40 }"
-    nt="{ 80 }"
-    nz="{ 2 }"
+    nr="{ 4 }"
+    nt="{ 4 }"
+    nz="{ 1 }"
     trajectory="{ { 0.0, 0.0, -1.0 },
                   { 0.0, 0.0,  1.0 } }"
     autoSpaceRadialElems="{ 1 }"
@@ -25,20 +25,25 @@
 <!-- SPHINX_WELLBORE_MESH_END -->
 
 <!-- SPHINX_WELLBORE_EXECUTION -->
-<Events maxTime="497639.940531">
+<Events maxTime="80">
 
 <PeriodicEvent 
   name="outputs"
-  timeFrequency="4976.39940531"
+  timeFrequency="80"
   targetExactTimestep="1"
   target="/Outputs/vtkOutput"
 />
 
+<PeriodicEvent
+  name="restarts"
+  timeFrequency="20.0"
+  targetExactTimestep="0"
+  target="/Outputs/restartOutput"
+/>
+
 <PeriodicEvent 
   name="solverApplication0"
-  beginTime="0"
-  endTime="497639.940531"   
-  forceDt="497.639940531"
+  forceDt="10"
   target="/Solvers/PoromechanicsSolver"
 />
 </Events>

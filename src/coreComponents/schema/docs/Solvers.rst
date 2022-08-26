@@ -25,6 +25,7 @@ SinglePhasePoromechanics                  node                 :ref:`XML_SingleP
 SinglePhasePoromechanicsEmbeddedFractures node                 :ref:`XML_SinglePhasePoromechanicsEmbeddedFractures` 
 SinglePhaseProppantFVM                    node                 :ref:`XML_SinglePhaseProppantFVM`                    
 SinglePhaseReservoir                      node                 :ref:`XML_SinglePhaseReservoir`                      
+SinglePhaseThermoPoromechanics            node                 :ref:`XML_SinglePhaseThermoPoromechanics`            
 SinglePhaseWell                           node                 :ref:`XML_SinglePhaseWell`                           
 SolidMechanicsEmbeddedFractures           node                 :ref:`XML_SolidMechanicsEmbeddedFractures`           
 SolidMechanicsLagrangianSSLE              node                 :ref:`XML_SolidMechanicsLagrangianSSLE`              

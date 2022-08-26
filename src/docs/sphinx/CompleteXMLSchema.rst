@@ -841,18 +841,18 @@ Element: SinglePhaseReservoir
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir.rst
 
 
-.. _XML_SinglePhaseThermoPoromechanics:
-
-Element: SinglePhaseThermoPoromechanics
-=================================
-.. include:: ../../coreComponents/schema/docs/SinglePhaseThermoPoromechanics.rst
-
-
 .. _XML_SinglePhaseStatistics:
 
 Element: SinglePhaseStatistics
 ==============================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseStatistics.rst
+
+
+.. _XML_SinglePhaseThermoPoromechanics:
+
+Element: SinglePhaseThermoPoromechanics
+=======================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseThermoPoromechanics.rst
 
 
 .. _XML_SinglePhaseWell:
@@ -1944,18 +1944,18 @@ Datastructure: SinglePhaseReservoir
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir_other.rst
 
 
-.. _DATASTRUCTURE_SinglePhaseThermoPoromechanics:
-
-Datastructure: SinglePhaseThermoPoromechanics
-=======================================
-.. include:: ../../coreComponents/schema/docs/SinglePhaseThermoPoromechanics_other.rst
-
-
 .. _DATASTRUCTURE_SinglePhaseStatistics:
 
 Datastructure: SinglePhaseStatistics
 ====================================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseStatistics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseThermoPoromechanics:
+
+Datastructure: SinglePhaseThermoPoromechanics
+=============================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseThermoPoromechanics_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseWell:

@@ -577,6 +577,4 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
 
 } // namespace geosx
 
-} /* namespace geosx */
-
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
