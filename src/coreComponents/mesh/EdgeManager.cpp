@@ -33,32 +33,13 @@ using namespace dataRepository;
 
 EdgeManager::EdgeManager( string const & name,
                           Group * const parent ):
-  ObjectManagerBase( name, parent ),
-  m_edgesToFractureConnectorsEdges(),
-  m_fractureConnectorsEdgesToEdges(),
-  m_fractureConnectorEdgesToFaceElements()
+  ObjectManagerBase( name, parent )
 {
   registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
   registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation ).
     setSizedFromParent( 0 );
 
   m_toNodesRelation.resize( 0, 2 );
-
-  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString(), &m_edgesToFractureConnectorsEdges ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "A map of edge local indices to the fracture connector local indices." ).
-    setSizedFromParent( 0 );
-
-  registerWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString(), &m_fractureConnectorsEdgesToEdges ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "A map of fracture connector local indices to edge local indices." ).
-    setSizedFromParent( 0 );
-
-  registerWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString(),
-                   &m_fractureConnectorEdgesToFaceElements ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "A map of fracture connector local indices face element local indices" ).
-    setSizedFromParent( 0 );
 
   excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
                                 viewKeyStruct::faceListString(),

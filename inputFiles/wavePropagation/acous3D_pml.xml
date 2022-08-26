@@ -94,6 +94,12 @@
       name="timeHistoryOutput"
       cycleFrequency="10"
       target="/Outputs/timeHistoryOutput"/>
+
+    <!-- restart event -->
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.05"
+      target="/Outputs/restartOutput"/>
     
   </Events>
 
@@ -206,6 +212,9 @@
       sources="{ /Tasks/pressureCollection }"
       filename="pressure_history"/>
 
+    <Restart
+      name="restartOutput"/>
+    
   </Outputs>
 
 </Problem>

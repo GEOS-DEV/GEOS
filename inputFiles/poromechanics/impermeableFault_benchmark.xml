@@ -10,7 +10,7 @@
     <SinglePhasePoromechanics 
       name="poromechanicsSolver" 
       solidSolverName="mechanicsSolver"
-      fluidSolverName="singlePhaseFlowSolver"
+      flowSolverName="singlePhaseFlowSolver"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
@@ -63,7 +63,7 @@
   <Mesh>
      <VTKMesh         
       name="FaultModel"      
-      file="faultMesh.vtk"
+      file="faultMesh.vtu"
       regionAttribute="CellEntityIds"/>
   </Mesh> 
 <!-- SPHINX_MESH_END -->

@@ -45,9 +45,10 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
 #endif
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
-                               CO2BrinePhillipsThermalFluid /*, // if I uncomment the two models at the same time, the compiler segfaults on
-                                                               Lassen!
-                                                               CO2BrineEzrokhiThermalFluid*/>::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               CO2BrinePhillipsThermalFluid
+//                               ,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
+// units for all the options"
+                               >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
@@ -61,9 +62,10 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
 #endif
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
-                               CO2BrinePhillipsThermalFluid /*, // if I uncomment the two models at the same time, the compiler segfaults on
-                                                               Lassen!
-                                                               CO2BrineEzrokhiThermalFluid*/>::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               CO2BrinePhillipsThermalFluid
+//                               ,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
+// units for all the options"
+                               >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

@@ -140,7 +140,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] facesToNodes map from faces to nodes
    * @param[in] elemCenter coordinates of the element centers
    * @param[in] sourceCoordinates coordinates of the source terms
-   * @param[out] sourceIsLocal flag indicating whether the source is local or not
+   * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
    * @param[out] sourceNodeConstants constant part of the source terms
    * @param[in] receiverCoordinates coordinates of the receiver terms
@@ -159,7 +159,7 @@ struct PrecomputeSourceAndReceiverKernel
           ArrayOfArraysView< localIndex const > const & facesToNodes,
           arrayView2d< real64 const > const & elemCenter,
           arrayView2d< real64 const > const sourceCoordinates,
-          arrayView1d< localIndex > const sourceIsLocal,
+          arrayView1d< localIndex > const sourceIsAccessible,
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
           arrayView2d< real64 const > const receiverCoordinates,
@@ -183,7 +183,7 @@ struct PrecomputeSourceAndReceiverKernel
       /// loop over all the source that haven't been found yet
       for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
       {
-        if( sourceIsLocal[isrc] == 0 )
+        if( sourceIsAccessible[isrc] == 0 )
         {
           real64 const coords[3] = { sourceCoordinates[isrc][0],
                                      sourceCoordinates[isrc][1],
@@ -198,9 +198,9 @@ struct PrecomputeSourceAndReceiverKernel
                                                              facesToNodes,
                                                              X,
                                                              coordsOnRefElem );
-          if( sourceFound && elemGhostRank[k] < 0 )
+          if( sourceFound )
           {
-            sourceIsLocal[isrc] = 1;
+            sourceIsAccessible[isrc] = 1;
             real64 Ntest[8];
             finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
@@ -570,7 +570,7 @@ struct PMLKernel
           sigma );
 
         /// compute B.pressureGrad - C.auxUGrad where B and C are functions of the damping profile
-        /// WARNING: the division by 'numNodesPerElem' below is needed because the average of 
+        /// WARNING: the division by 'numNodesPerElem' below is needed because the average of
         /// gradient and divergence at the nodes are sought. It is the number of cells contributing
         /// to each node that is needed. In this case, it is equal to 'numNodesPerElem'. For high-order
         /// SEM, this approach won't work and the average needs to be computed differently (maybe using counters).
