@@ -116,7 +116,7 @@ def main():
     pvdgFilePath = "../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_table/pvdg.txt"
     pvtwFilePath = "../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_table/pvtw.txt"
     xmlFile1Path = "../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_base.xml"
-    xmlFile2Path = "../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/Buckley_Leverett_benchmark.xml"
+    xmlFile2Path = "../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_benchmark.xml"
 
     # Read simulation parameters from XML file
     xMin, xMax, yMin, yMax, zMin, zMax = getDomainMaxMinCoords(xmlFile2Path)

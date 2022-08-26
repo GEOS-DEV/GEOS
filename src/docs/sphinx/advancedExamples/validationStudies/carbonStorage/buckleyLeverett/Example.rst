@@ -2,14 +2,14 @@
 
 
 #################################################################################
- Verification of CO:sub:`2` Core Flood Experiment with Buckley-Leverett Solution
+ Verification of CO2 Core Flood Experiment with Buckley-Leverett Solution
 #################################################################################
 
 
 **Context**
 
-In this example, we simulate a CO:sub:`2` core flood experiment, which characterizes immiscible transport of two phase
-flow (CO:sub:`2` and water) through porous media `(Ekechukwu et al., 2022) <https://arxiv.org/pdf/2203.05021.pdf>`__. This problem is solved using the multiphase flow solver in GEOSX to obtain the temporal evolution of saturation profiles along flow direction, which are verified against the Buckley-Leverett analytical solution `(Arabzai and Honma, 2013)  <http://bulletin.soe.u-tokai.ac.jp/english_vol38/20_25.pdf>`__.
+In this example, we simulate a CO2 core flood experiment, which characterizes immiscible transport of two phase
+flow (CO2 and water) through porous media `(Ekechukwu et al., 2022) <https://arxiv.org/pdf/2203.05021.pdf>`__. This problem is solved using the multiphase flow solver in GEOSX to obtain the temporal evolution of saturation profiles along flow direction, which are verified against the Buckley-Leverett analytical solution `(Arabzai and Honma, 2013)  <http://bulletin.soe.u-tokai.ac.jp/english_vol38/20_25.pdf>`__.
 
 
 **Input file**
@@ -39,7 +39,7 @@ Table files and a python script for post-processing the simulation results are a
 Description of the case
 ------------------------------------------------------------------
 
-We model the immiscible displacement of brine by CO:sub:`2` in a quasi one-dimensional domain to mimic the CO:sub:`2` core flood experiment, as shown below. The entire domain is assumed to be horizontal, homogeneous, isotropic and isothermal. Prior to injection, the domain is fully saturated with brine. To resemble the analytical example, super critical CO:sub:`2` is injected on the inlet and a constant flow rate is imposed. To meet the requirements of immiscible transport in one-dimensional domain, valuable assumptions include linear and horizontal flow, incompressible and immiscible phases, negligible capillary pressure and gravitational force, and the absence of poromechanical effect. Upon injection, saturation front of the injected phase (super critical CO:sub:`2`) forms a sharp leading edge and advances with time. 
+We model the immiscible displacement of brine by CO2 in a quasi one-dimensional domain to mimic the CO2 core flood experiment, as shown below. The entire domain is assumed to be horizontal, homogeneous, isotropic and isothermal. Prior to injection, the domain is fully saturated with brine. To resemble the analytical example, super critical CO2 is injected on the inlet and a constant flow rate is imposed. To meet the requirements of immiscible transport in one-dimensional domain, valuable assumptions include linear and horizontal flow, incompressible and immiscible phases, negligible capillary pressure and gravitational force, and the absence of poromechanical effect. Upon injection, saturation front of the injected phase (super critical CO2) forms a sharp leading edge and advances with time. 
 
 
 .. _problemSketchBuckleyLeverett:
@@ -81,7 +81,7 @@ where :math:`\mu_g` and :math:`\mu_w` represent the viscosity of gas and water p
 The position of a particular saturation is given as a function of injection time :math:`t` and the value of the derivative :math:`\frac{df_g}{dS_g}` at that saturation:
 
 .. math::
-   x_{S_g} = \frac {Q_T t } { A \phi} {(\frac{df_g}{dS_g})_{S_g}}
+   x_{S_g} = \frac {Q_T t } { A \phi} {(\frac{df_g}{dS_g})}
 
 where :math:`Q_T` is the total flow rate, :math:`A` is the area of the cross-section in the core sample, :math:`\phi` is the rock porosity. In addition, the abrupt saturation front is determined based on the tangent point on the fractional flow curve. 
 
@@ -99,7 +99,7 @@ The structured mesh contains 1000 x 1 x 1 eight-node brick elements in the x, y,
 Such eight-node hexahedral elements are defined as ``C3D8`` elementTypes, and their collection forms a mesh
 with one group of cell blocks named here ``cellBlock``. The width of the domain should be large enough to ensure the formation of one-dimension flow.
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/Buckley_Leverett_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -179,7 +179,7 @@ In this example, the domain is initially saturated with brine with a uniform pre
 The ``component`` attribute of the **FieldSpecification** XML block must use the order in which the ``phaseNames`` have been defined in the **DeadOilFluid** XML block. 
 In other words, ``component=0`` is used to initialize the gas global component fraction and ``component=1`` is used to initialize the water global component fraction, because we previously set ``phaseNames="{gas, water}"`` in the **DeadOilFluid** XML block. 
 
-A mass injection rate ``SourceFlux`` (``scale="-0.00007"``) of pure CO:sub:`2` (``component="0"``) is applied at the fluid inlet, which is named as ``source``. The value given for ``scale`` is :math:`Q_T \rho_g`. Pressure and compostion controls at the fluid outlet (named as ``sink``) should also be specified. The ``setNames="{ source }`` and ``setNames="{ sink }"`` are defined using the **Box** XML tags of the **Geometry** section.
+A mass injection rate ``SourceFlux`` (``scale="-0.00007"``) of pure CO2 (``component="0"``) is applied at the fluid inlet, which is named as ``source``. The value given for ``scale`` is :math:`Q_T \rho_g`. Pressure and compostion controls at the fluid outlet (named as ``sink``) should also be specified. The ``setNames="{ source }`` and ``setNames="{ sink }"`` are defined using the **Box** XML tags of the **Geometry** section.
 
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
@@ -233,7 +233,7 @@ We request VTK-format output files and use Paraview to visualize the results.
 The following figure shows the distribution of phase saturations and pore pressure in the computational domain at :math:`t=70 s`.
 
 .. _problemBuckleyLeverettContour:
-.. figure:: contour.PNG
+.. figure:: contour.png
    :align: center
    :width: 500
    :figclass: align-center
@@ -243,12 +243,12 @@ The following figure shows the distribution of phase saturations and pore pressu
 Two following dimensionless terms are defined when comparing the numerical solution with the analytical solutions: 
 
 .. math::
-   t_{\star} = \frac {Q_T t } { A D_L \phi}
+   {t}^{\star} = \frac {Q_T t } { A D_L \phi}
 
 .. math::
    x_d = \frac { x_{S_g} } { D_L }
 
-The figure below compares the results from GEOSX (dashed curves) and the corresponding analytical solution (solid curves) for the change of gas saturation (:math:`S_g`) and water saturation (:math:`S_w`) along the flow direction. As shown, GEOSX reliably captures the immiscible transport of two phase flow (CO:sub:`2` and water) and matches well with the analytical solutions in the formation and progress of abrupt fronts in the saturation profiles. 
+The figure below compares the results from GEOSX (dashed curves) and the corresponding analytical solution (solid curves) for the change of gas saturation (:math:`S_g`) and water saturation (:math:`S_w`) along the flow direction. As shown, GEOSX reliably captures the immiscible transport of two phase flow (CO2 and water) and matches well with the analytical solutions in the formation and progress of abrupt fronts in the saturation profiles. 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/carbonStorage/buckleyLeverett/buckleyLeverettFigure.py
 
