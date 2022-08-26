@@ -106,7 +106,7 @@
             name="Fracture"
             defaultAperture="1.0e-5"
             subRegionType="faceElement"
-            faceBlocks="{ fbFrac }"
+            faceBlock="fbFrac"
             materialList="{ water, fractureFilling }"/>
   </ElementRegions>
 

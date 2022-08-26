@@ -157,8 +157,6 @@ void FaceElementSubRegion::calculateSingleElementGeometricQuantities( localIndex
 {
   m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
   m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
-//  m_elementArea[k] = 1.;
-//  m_elementVolume[k] = 1.e-5;
 }
 
 void FaceElementSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),

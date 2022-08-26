@@ -155,6 +155,9 @@ public:
 
     /// @return Rupture time string
     static constexpr char const * ruptureTimeString() { return "ruptureTime"; }
+
+    /// @return Face block string
+    static constexpr char const * faceBlockString() { return "faceBlock"; }
   };
 
 protected:
@@ -166,7 +169,11 @@ private:
 
   real64 m_defaultAperture;
 
-  string_array m_faceBlockNames; // TODO One name only, not an array!
+  /**
+   * @brief One @p SurfaceElementRegion being made of one single sub-region,
+   * we get the name of the @p FaceBlockABC to properly import the mesh data.
+   */
+  string m_faceBlockName;
 };
 
 /// Declare strings associated with enumeration values.

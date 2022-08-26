@@ -56,22 +56,22 @@ public:
   virtual localIndex num2dFaces() const = 0;
 
   /**
-   * @brief Get the 2d elements (geometrical surfaces in 3d) to nodes mapping.
+   * @brief Get the nodes of each 2d element (geometrical surfaces in 3d).
    * @return The mapping of first dimension @p num2dElements.
    * @note Element numbering is local to the FaceBlockABC. Node numbering is local to the rank.
    */
   virtual ArrayOfArrays< localIndex > get2dElemToNodes() const = 0;
 
   /**
-   * @brief Get the 2d elements (geometrical surfaces in 3d) to 2d faces (geometrical segments in 3d) mapping.
+   * @brief Get the 3d edges of each 2d elements (geometrical surfaces in 3d).
    * @return The mapping of first dimension @p num2dElements.
    * @note Element numbering is local to the FaceBlockABC. Edges numbering is local to the rank.
    */
   virtual ArrayOfArrays< localIndex > get2dElemToEdges() const = 0;
 
   /**
-   * @brief Get the 3d faces that touch the 2d element (geometrical surfaces in 3d) of the @p FaceBlockABC.
-   * @return A mapping of size num2dFaces * 2 (each 2d element matches two 3d faces).
+   * @brief Get the 3d faces (of the volumic mesh) that are aside each 2d element (geometrical surfaces in 3d) of the @p FaceBlockABC.
+   * @return A mapping of size @p num2dFaces * 2 (each 2d element matches two 3d faces).
    * @note Mesh is supposed to be conformal, so each 2d element touches two faces (or one on boundaries).
    * In case of one unique touching face, second missing value with we @p -1.
    * @note Element numbering is local to the FaceBlockABC. Faces numbering is local to the rank.
@@ -79,8 +79,8 @@ public:
   virtual array2d< localIndex > get2dElemToFaces() const = 0;
 
   /**
-   * @brief Get the 3d elements that touch the 2d element (geometrical surfaces in 3d) of the @p FaceBlockABC.
-   * @return The mapping of dimension [@p num2dElements; 2].
+   * @brief Get the 3d elements that are aside each 2d element (geometrical surfaces in 3d) of the @p FaceBlockABC.
+   * @return The mapping of dimension @p num2dElements * 2.
    * @note Mesh is supposed to be conformal, so each 2d element touches two 3d elements (or one on boundaries).
    * In case of one unique touching face, second missing value with we @p -1.
    * @note 2d element numbering is local to the FaceBlockABC. 3d element numbering is local to the CellBlockABC.
@@ -88,13 +88,13 @@ public:
   virtual ToCellRelation< array2d< localIndex > > get2dElemToElems() const = 0;
 
   /**
-   * @brief Get the edge placeholder of the 2d faces (geometrical surfaces in 3d).
+   * @brief Get the 3d edge of each 2d faces (geometrical edges in 3d).
    * @return The mapping of size @p num2dFaces.
    * @note 2d face numbering is local to the FaceBlockABC. 3d edge numbering is local to the rank.
    *
-   * The current @p FaceBlockABC hos its own 2d faces (which are segments in terms of 3d geometry).
-   * Those segments are edges of the 3d mesh.
-   * The current mapping informs which edge is the geometrical equivalent of the 2d face of the @p FaceBlockABC.
+   * The current @p FaceBlockABC has its own 2d faces (which are segments in terms of 3d geometry).
+   * Those segments are edges in the volumic mesh.
+   * The current mapping informs which edge (in the volumic mesh) is the geometrical equivalent of the 2d face of the @p FaceBlockABC.
    */
   virtual array1d< localIndex > get2dFaceToEdge() const = 0;
 
@@ -108,4 +108,4 @@ public:
 
 }
 
-#endif //GEOSX_FACEBLOCKABC_HPP
+#endif // include guard
