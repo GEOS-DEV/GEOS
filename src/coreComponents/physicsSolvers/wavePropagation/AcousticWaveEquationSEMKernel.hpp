@@ -166,7 +166,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView2d< localIndex > const receiverNodeIds,
           arrayView2d< real64 > const receiverConstants,
-          arrayView2d< real64 > const sourceValue,
+          arrayView2d< real32 > const sourceValue,
           real64 const dt,
           real64 const timeSourceFrequency,
           localIndex const rickerOrder )
@@ -299,9 +299,9 @@ struct MassAndDampingMatrixKernel
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
           arrayView2d< real64 const > const faceNormal,
-          arrayView1d< real64 const > const velocity,
-          arrayView1d< real64 > const mass,
-          arrayView1d< real64 > const damping )
+          arrayView1d< real32 const > const velocity,
+          arrayView1d< real32 > const mass,
+          arrayView1d< real32 > const damping )
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
@@ -329,7 +329,7 @@ struct MassAndDampingMatrixKernel
 
         for( localIndex a = 0; a < numNodesPerElem; ++a )
         {
-          real64 const localIncrement = invC2 * detJ * N[a];
+          real32 const localIncrement = invC2 * detJ * N[a];
           RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][a]], localIncrement );
         }
       }
@@ -367,7 +367,7 @@ struct MassAndDampingMatrixKernel
               }
               ds = sqrt( ds );
 
-              real64 const localIncrement = alpha * detJ * ds * N[a];
+              real32 const localIncrement = alpha * detJ * ds * N[a];
               RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[iface][a]], localIncrement );
             }
           }
@@ -526,8 +526,8 @@ public:
     {
       for( localIndex j=0; j<numNodesPerElem; ++j )
       {
-        real64 const Rh_ij = detJ * LvArray::tensorOps::AiBi< 3 >( gradN[ i ], gradN[ j ] );
-        real64 const localIncrement = Rh_ij*m_p_n[m_elemsToNodes[k][j]];
+        real32 const Rh_ij = detJ * LvArray::tensorOps::AiBi< 3 >( gradN[ i ], gradN[ j ] );
+        real32 const localIncrement = Rh_ij*m_p_n[m_elemsToNodes[k][j]];
 
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
       }
@@ -540,10 +540,10 @@ protected:
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
   /// The array containing the nodal pressure array.
-  arrayView1d< real64 const > const m_p_n;
+  arrayView1d< real32 const > const m_p_n;
 
   /// The array containing the product of the stiffness matrix and the nodal pressure.
-  arrayView1d< real64 > const m_stiffnessVector;
+  arrayView1d< real32 > const m_stiffnessVector;
 
   /// The time increment for this time integration step.
   real64 const m_dt;
