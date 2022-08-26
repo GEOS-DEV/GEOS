@@ -178,7 +178,7 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
       dataRepository::WrapperBase const & wrapper = group.getWrapperBase( varName );
       varSize[varIndex] = wrapper.numArrayComp();
 
-      using Types = types::ArrayTypes< types::TypeList<real64>, types::DimsUpTo< 2 > >;
+      using Types = types::ArrayTypes< types::TypeList< real64 >, types::DimsUpTo< 2 > >;
       types::dispatch( Types{}, wrapper.getTypeId(), true, [&]( auto array )
       {
         using ArrayType = decltype( array );

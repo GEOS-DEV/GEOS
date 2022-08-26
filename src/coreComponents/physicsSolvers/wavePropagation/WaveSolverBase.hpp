@@ -128,7 +128,6 @@ protected:
 
 
 
-
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
 
