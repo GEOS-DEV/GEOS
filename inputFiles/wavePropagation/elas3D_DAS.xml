@@ -1,0 +1,147 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <!-- define the solver -->
+    <!-- define the source coordinates -->
+    <!-- define the time source frequency -->
+    <!-- define the receiver coordinates -->
+    <!-- define the DAS channel geometry -->
+    <ElasticSEM
+      name="elasticSolver"
+      logLevel="1"
+      cflFactor="0.25"
+      discretization="FE1"
+      targetRegions="{ Region }"
+      sourceCoordinates="{ { 45, 45, 45 }}"
+      timeSourceFrequency="10.0"
+      rickerOrder="2"
+      outputSeismoTrace="1"
+      dtSeismoTrace="0.001"
+      receiverCoordinates="{ { 55, 55, 55 } }"
+      geometryLinearDAS="{ { 0.523599, 0.785398, 8 } }" />
+  </Solvers>
+
+  <!-- hexahedral mesh generated internally by GEOSX -->
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 20, 80, 100 }"
+      yCoords="{ 0, 20, 80, 100 }"
+      zCoords="{ 0, 20, 80, 100 }"
+      nx="{ 2, 6, 2}"
+      ny="{ 2, 6, 2}"
+      nz="{ 2, 6, 2}"
+      cellBlockNames="{ cb }"/>
+  </Mesh>
+
+  <Events
+    maxTime="0.1">
+    <!-- control the timestepping here with forceDt -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="0.001"
+      target="/Solvers/elasticSolver"/>
+    
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region"
+      cellBlocks="{ cb }"
+      materialList="{ nullModel }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <NullModel
+      name="nullModel"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+
+<!-- The initial displacement field -->
+  <FieldSpecification
+      name="initialdisplacementx"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="displacementx_n"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialdisplacementy"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="displacementy_n"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialdisplacementz"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="displacementz_n"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialdisplacementxnm1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="displacementx_nm1"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialdisplacementynm1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="displacementy_nm1"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialdisplacementznm1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="displacementz_nm1"
+      scale="0.0"/>
+
+<!-- The elastic model (Vp, Vs, density) -->   
+    <FieldSpecification
+      name="cellVelocityVp"
+      initialCondition="1"
+      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      fieldName="mediumVelocityVp"
+      scale="4000"
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="cellVelocityVs"
+      initialCondition="1"
+      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      fieldName="mediumVelocityVs"
+      scale="2000"
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="cellDensity"
+      initialCondition="1"
+      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      fieldName="mediumDensity"
+      scale="2000"
+      setNames="{ all }"/>
+
+  </FieldSpecifications>
+
+</Problem>
