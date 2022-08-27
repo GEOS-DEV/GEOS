@@ -77,72 +77,36 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_numNodesPerElement = 8;
 }
 
-ArrayOfArrays< localIndex > convert__( array2d< localIndex > const & vv )
-{
-  ArrayOfArrays< localIndex > res;
-
-  for( localIndex i = 0; i < vv.size(0); ++i ){
-    auto const & vvv = vv[i];
-    res.appendArray( vvv.begin(), vvv.end() );
-  }
-
-  return res;
-}
-
-//array1d< localIndex > convert( std::vector< localIndex > const & v )
-//{
-//  array1d< localIndex > res;
-//  for( auto const & val: v )
-//  {
-//    res.emplace_back( val );
-//  }
-//
-//  return res;
-//}
-
-ArrayOfArrays< localIndex > convert__( std::vector< std::vector< localIndex > > const & vv )
-{
-  ArrayOfArrays< localIndex > res;
-
-  for( std::size_t i = 0; i < vv.size(); ++i )
-  {
-    auto const & vvv = vv[i];
-    res.appendArray( vvv.begin(), vvv.end() );
-  }
-
-  return res;
-}
-
 void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
 {
-  // TODO
-  this->resize( faceBlock.num2dElements() );
+  resize( faceBlock.num2dElements() );
 
-  this->m_toNodesRelation.base() = faceBlock.get2dElemToNodes(); // Inconsistent with the dimensions of the line below: it's 10x8
-  auto & toEdges = this->m_toEdgesRelation.base();
-  toEdges = faceBlock.get2dElemToEdges();
+  m_toNodesRelation.base() = faceBlock.get2dElemToNodes();
+  m_toEdgesRelation.base() = faceBlock.get2dElemToEdges();
 
   auto elem2dToElems = faceBlock.get2dElemToElems();
-  this->m_surfaceElementsToCells.m_toElementIndex = elem2dToElems.toCellIndex;
-  this->m_surfaceElementsToCells.m_toElementSubRegion = elem2dToElems.toBlockIndex;
-  this->m_surfaceElementsToCells.m_toElementRegion.setValues< serialPolicy >( 0 ); // TODO bad!
+  m_surfaceElementsToCells.m_toElementIndex = elem2dToElems.toCellIndex;
+  m_surfaceElementsToCells.m_toElementSubRegion = elem2dToElems.toBlockIndex;
+  // TODO We are hard coding the values of the regions here.
+  //      This is work in progress and we'll correct this soon.
+  m_surfaceElementsToCells.m_toElementRegion.setValues< serialPolicy >( 0 );
 
-  this->m_toFacesRelation.base() = faceBlock.get2dElemToFaces();
+  m_toFacesRelation.base() = faceBlock.get2dElemToFaces();
 
-  this->m_fractureConnectorsEdgesToEdges = faceBlock.get2dFaceToEdge();
-  this->m_fractureConnectorEdgesToFaceElements = faceBlock.get2dFaceTo2dElems();
+  m_fractureConnectorsEdgesToEdges = faceBlock.get2dFaceToEdge();
+  m_fractureConnectorEdgesToFaceElements = faceBlock.get2dFaceTo2dElems();
 
   for( int i = 0; i < faceBlock.num2dFaces(); ++i )
   {
-    this->m_recalculateFractureConnectorEdges.insert( i );
+    m_recalculateFractureConnectorEdges.insert( i );
   }
 
   for( localIndex i = 0; i < faceBlock.num2dElements(); ++i )
   {
-    this->m_newFaceElements.insert( i );
+    m_newFaceElements.insert( i );
   }
 
-  // TODO what about the external fields?
+  // TODO We still need to be able to import fields on the FaceElementSubRegion.
 }
 
 void FaceElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mesh )

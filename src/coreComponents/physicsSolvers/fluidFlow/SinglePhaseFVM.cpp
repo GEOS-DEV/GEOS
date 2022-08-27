@@ -311,7 +311,7 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UN
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
 
-      if( m_isThermal ) // Here, FaceElementToCellStencil is empty. And there are connections in CellElementCellStencil that should not be (matrix to fracture are there and should not be)
+      if( m_isThermal )
       {
         thermalSinglePhaseFVMKernels::
           FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),

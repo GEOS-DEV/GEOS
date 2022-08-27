@@ -84,8 +84,6 @@ public:
    */
   void parseCommandLineInput();
 
-  void saveMe();
-
   /**
    * @brief Parses a restart file.
    * @param restartFileName The name of the restart file.

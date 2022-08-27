@@ -29,7 +29,6 @@
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "events/tasks/TasksManager.hpp"
 #include "events/EventManager.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -45,8 +44,6 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
-
-#include "DumpToJson.hpp"
 
 // System includes
 #include <vector>
@@ -164,8 +161,6 @@ void ProblemManager::problemSetup()
   initialize();
 
   importFields();
-
-  saveMe(); // TODO move alongside the call to TPFA::computeCellStencil?
 }
 
 
@@ -524,48 +519,6 @@ void ProblemManager::postProcessInput()
 
 }
 
-void ProblemManager::saveMe()
-{
-  DomainPartition & domain = getDomainPartition();
-  Group & meshBodies = domain.getMeshBodies();
-
-  {
-    NumericalMethodsManager const & numericalMethodManager = getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.key() );
-
-    for( localIndex solverIndex = 0; solverIndex < m_physicsSolverManager->numSubGroups(); ++solverIndex )
-    {
-      SolverBase const * const solver = m_physicsSolverManager->getGroupPointer< SolverBase >( solverIndex );
-
-      if( solver != nullptr )
-      {
-        FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-
-        solver->forMeshTargets( meshBodies,
-                                [&]( string const & meshBodyName,
-                                     MeshLevel & meshLevel,
-                                     auto const & regionNames )
-                                {
-                                  NodeManager & nodeManager = meshLevel.getNodeManager();
-                                  ElementRegionManager & elemManager = meshLevel.getElemManager();
-                                  SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( "Fracture" );
-                                  FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "fbFrac" );
-
-                                  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
-
-                                  for( localIndex a = 0; a < fvManager.numSubGroups(); ++a )
-                                  {
-                                    FluxApproximationBase const * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
-                                    if( fluxApprox != nullptr )
-                                    {
-                                      fluxApprox->addToFractureStencil( meshLevel, "Fracture", false );
-                                      fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
-                                    }
-                                  }
-                                } );
-      }
-    }
-  }
-}
 
 void ProblemManager::initializationOrder( string_array & order )
 {
@@ -611,8 +564,6 @@ void ProblemManager::generateMesh()
   {
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
     CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
-    json j( cellBlockManager );
-    std::cout << j << std::endl;
     Group & meshLevels = meshBody.getMeshLevels();
     for( localIndex b = 0; b < meshLevels.numSubGroups(); ++b )
     {

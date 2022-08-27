@@ -171,7 +171,8 @@ private:
 
   /**
    * @brief One @p SurfaceElementRegion being made of one single sub-region,
-   * we get the name of the @p FaceBlockABC to properly import the mesh data.
+   * we get the name of the corresponding @p FaceBlockABC
+   * that will contain the mesh data to be imported.
    */
   string m_faceBlockName;
 };

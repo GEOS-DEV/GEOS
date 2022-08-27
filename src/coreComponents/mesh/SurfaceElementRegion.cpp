@@ -38,7 +38,11 @@ SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const p
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The default aperture of newly formed surface elements." );
 
-  registerWrapper( viewKeyStruct::faceBlockString(), &m_faceBlockName ).setInputFlag( InputFlags::OPTIONAL );
+  // Default "faceElementSubRegion" is temporary during the refactoring of the fault and fracture import.
+  registerWrapper( viewKeyStruct::faceBlockString(), &m_faceBlockName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( "faceElementSubRegion" ).
+    setDescription( "The name of the face block in the mesh." );
 }
 
 SurfaceElementRegion::~SurfaceElementRegion()
@@ -55,9 +59,16 @@ void SurfaceElementRegion::generateMesh( Group & faceBlocks )
   }
   else if( m_subRegionType == SurfaceSubRegionType::faceElement )
   {
-    FaceElementSubRegion & subRegion = elementSubRegions.registerGroup< FaceElementSubRegion >( this->m_faceBlockName ); // Better copy paste for the name
-    FaceBlockABC const & source = faceBlocks.getGroup< FaceBlockABC >( subRegion.getName() );
-    subRegion.copyFromCellBlock( source );
+    FaceElementSubRegion & subRegion = elementSubRegions.registerGroup< FaceElementSubRegion >( m_faceBlockName );
+    if( faceBlocks.hasGroup( m_faceBlockName ) )
+    {
+      FaceBlockABC const & source = faceBlocks.getGroup< FaceBlockABC >( m_faceBlockName );
+      subRegion.copyFromCellBlock( source );
+    }
+    else
+    {
+      GEOSX_INFO( "No face block \"" << m_faceBlockName << "\" was found in the mesh. Empty surface region was created." );
+    }
   }
 }
 

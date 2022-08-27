@@ -590,8 +590,6 @@ void CellBlockManager::buildMaps()
   buildNodeToEdges();
 
   fillElementToEdgesOfCellBlocks( m_faceToEdges.toViewConst(), this->getCellBlocks() );
-
-  this->getFaceBlocks().registerGroup< FaceBlock >( "fbFrac" );
 }
 
 ArrayOfArrays< localIndex > CellBlockManager::getFaceToNodes() const

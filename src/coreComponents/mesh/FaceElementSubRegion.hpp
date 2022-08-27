@@ -77,6 +77,11 @@ public:
                         dataRepository::Group * const parent );
 
   ///@}
+
+  /**
+   * @brief Fill the @p FaceElementSubRegion by copying those of the source face block
+   * @param faceBlock the face block which properties (connectivity info) will be copied.
+   */
   void copyFromCellBlock( FaceBlockABC const & faceBlock );
 
   /**
