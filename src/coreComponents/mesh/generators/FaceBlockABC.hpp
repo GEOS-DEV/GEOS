@@ -37,6 +37,11 @@ namespace geosx
 class FaceBlockABC : public dataRepository::Group
 {
 public:
+  /**
+   * @brief Constructor
+   * @param name The name of this Group.
+   * @param parent The parent Group.
+   */
   FaceBlockABC( string const & name,
                 Group * const parent ):
     Group( name, parent )
