@@ -138,12 +138,7 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr char const * newPorosityString() { return "porosity"; }
-    static constexpr char const * oldPorosityString() { return "porosity_n"; }
-    static constexpr char const * dPorosity_dPressureString() { return "dPorosity_dPressure"; }
-    static constexpr char const * initialPorosityString() { return "initialPorosity"; }
-    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
-    static constexpr char const * defaultRefererencePorosityString() { return "defaultReferencePorosity"; }
+    static constexpr char const * defaultReferencePorosityString() { return "defaultReferencePorosity"; }
   } viewKeys;
 
   /**
@@ -197,6 +192,12 @@ public:
    * @return Accessor
    */
   arrayView2d< real64 const > const  dPorosity_dPressure() const { return m_dPorosity_dPressure; }
+
+  /**
+   * @brief Utility function to scale the reference porosity (for instance, by net-to-gross)
+   * @param[in] scalingFactors the vector of scaling factors for the reference porosity
+   */
+  void scaleReferencePorosity( arrayView1d< real64 const > scalingFactors ) const;
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;

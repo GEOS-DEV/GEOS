@@ -44,6 +44,20 @@ PermeabilityBase::deliverClone( string const & name,
   return ConstitutiveBase::deliverClone( name, parent );
 }
 
+void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > scalingFactors ) const
+{
+  localIndex const numElems = m_permeability.size( 0 );
+  for( localIndex ei = 0; ei < numElems; ++ei )
+  {
+    // NOTE: enforcing 1 quadrature point
+    for( localIndex q = 0; q < 1; ++q )
+    {
+      m_permeability[ei][q][0] *= scalingFactors[ei];
+      m_permeability[ei][q][1] *= scalingFactors[ei];
+    }
+  }
+}
+
 void PermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {

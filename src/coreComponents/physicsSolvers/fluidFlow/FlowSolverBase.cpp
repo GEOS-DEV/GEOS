@@ -111,6 +111,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
     {
       subRegion.registerExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >( getName() ).
         setApplyDefaultValue( 0.0 );
+      subRegion.registerExtrinsicData< extrinsicMeshData::flow::netToGross >( getName() );
     } );
 
     elemManager.forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,

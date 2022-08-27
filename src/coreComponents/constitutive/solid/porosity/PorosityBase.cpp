@@ -16,7 +16,8 @@
  * @file PorosityBase.cpp
  */
 
-#include "PorosityBase.hpp"
+#include "constitutive/solid/porosity/PorosityBase.hpp"
+#include "constitutive/solid/porosity/PorosityExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -36,26 +37,19 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
   m_referencePorosity(),
   m_defaultReferencePorosity()
 {
-  registerWrapper( viewKeyStruct::newPorosityString(), &m_newPorosity ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( 1.0 ); // will be overwritten but it's important for newly created faceElements.
-
-  registerWrapper( viewKeyStruct::oldPorosityString(), &m_porosity_n ).
-    setApplyDefaultValue( 1.0 ); // will be overwritten but it's important for newly created faceElements.
-
-  registerWrapper( viewKeyStruct::dPorosity_dPressureString(), &m_dPorosity_dPressure ).
-    setApplyDefaultValue( 0.0 ); // will be overwritten
-
-  registerWrapper( viewKeyStruct::initialPorosityString(), &m_initialPorosity ).
-    setApplyDefaultValue( 0.0 ); // will be overwritten
-
-  registerWrapper( viewKeyStruct::defaultRefererencePorosityString(), &m_defaultReferencePorosity ).
+  registerWrapper( viewKeyStruct::defaultReferencePorosityString(), &m_defaultReferencePorosity ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default value of the reference porosity" );
 
-  registerWrapper( viewKeyStruct::referencePorosityString(), &m_referencePorosity ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( 1.0 );
+  registerExtrinsicData( extrinsicMeshData::porosity::porosity{}, &m_newPorosity );
+
+  registerExtrinsicData( extrinsicMeshData::porosity::porosity_n{}, &m_porosity_n );
+
+  registerExtrinsicData( extrinsicMeshData::porosity::dPorosity_dPressure{}, &m_dPorosity_dPressure );
+
+  registerExtrinsicData( extrinsicMeshData::porosity::initialPorosity{}, &m_initialPorosity );
+
+  registerExtrinsicData( extrinsicMeshData::porosity::referencePorosity{}, &m_referencePorosity );
 }
 
 void PorosityBase::allocateConstitutiveData( dataRepository::Group & parent,
@@ -71,45 +65,36 @@ void PorosityBase::allocateConstitutiveData( dataRepository::Group & parent,
 
 void PorosityBase::postProcessInput()
 {
-  getWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() )
-    .setApplyDefaultValue( m_defaultReferencePorosity );
+  getExtrinsicData< extrinsicMeshData::porosity::referencePorosity >().
+    setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
-
-void PorosityBase::saveConvergedState() const
+void PorosityBase::scaleReferencePorosity( arrayView1d< real64 const > scalingFactors ) const
 {
   localIndex const numE = numElem();
-  localIndex const numQ = numQuad();
 
-  arrayView2d< real64 const > newPorosity = m_newPorosity;
-  arrayView2d< real64 >       porosity_n  = m_porosity_n;
+  arrayView1d< real64 > referencePorosity = m_referencePorosity;
 
   forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
-    for( localIndex q = 0; q < numQ; ++q )
-    {
-      porosity_n[k][q] = newPorosity[k][q];
-    }
+    referencePorosity[k] *= scalingFactors[k];
   } );
+}
+
+void PorosityBase::saveConvergedState() const
+{
+  arrayView2d< real64 const > const newPorosity = m_newPorosity;
+  arrayView2d< real64 > const porosity_n  = m_porosity_n;
+  porosity_n.setValues< parallelDevicePolicy<> >( newPorosity );
 }
 
 void PorosityBase::initializeState() const
 {
-  localIndex const numE = numElem();
-  localIndex const numQ = numQuad();
-
-  arrayView2d< real64 const > newPorosity     = m_newPorosity;
-  arrayView2d< real64 >       porosity_n      = m_porosity_n;
-  arrayView2d< real64 >       initialPorosity = m_initialPorosity;
-
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-  {
-    for( localIndex q = 0; q < numQ; ++q )
-    {
-      porosity_n[k][q]      = newPorosity[k][q];
-      initialPorosity[k][q] = newPorosity[k][q];
-    }
-  } );
+  arrayView2d< real64 const > const newPorosity = m_newPorosity;
+  arrayView2d< real64 > const porosity_n = m_porosity_n;
+  arrayView2d< real64 > const initialPorosity = m_initialPorosity;
+  porosity_n.setValues< parallelDevicePolicy<> >( newPorosity );
+  initialPorosity.setValues< parallelDevicePolicy<> >( newPorosity );
 }
 
 }
