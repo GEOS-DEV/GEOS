@@ -1030,6 +1030,13 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
+.. _XML_ViscoDruckerPrager:
+
+Element: ViscoDruckerPrager
+===========================
+.. include:: ../../coreComponents/schema/docs/ViscoDruckerPrager.rst
+
+
 .. _XML_ViscoElasticIsotropic:
 
 Element: ViscoElasticIsotropic
@@ -2124,6 +2131,13 @@ Datastructure: VanGenuchtenBakerRelativePermeability
 Datastructure: VanGenuchtenCapillaryPressure
 ============================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
+
+
+.. _DATASTRUCTURE_ViscoDruckerPrager:
+
+Datastructure: ViscoDruckerPrager
+=================================
+.. include:: ../../coreComponents/schema/docs/ViscoDruckerPrager_other.rst
 
 
 .. _DATASTRUCTURE_ViscoElasticIsotropic:
