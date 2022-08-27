@@ -157,11 +157,6 @@
       forceDt="1000"
       target="/Solvers/poroSolver"/>
 
-    <!--PeriodicEvent
-      name="solverApplications"
-      forceDt="1"
-      target="/Solvers/flowSolver"/-->  
-
     <PeriodicEvent
       name="outputs"
       cycleFrequency="1"

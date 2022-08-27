@@ -8,7 +8,7 @@
       targetRegions="{ Domain, Fracture }"
       initialDt="1e-3"
       fracturesSolverName="fractureMechSolver"
-      fluidSolverName="flowSolver"
+      flowSolverName="flowSolver"
       solidSolverName="matrixMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
