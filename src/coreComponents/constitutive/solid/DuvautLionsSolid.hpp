@@ -73,6 +73,9 @@ public:
   /// Use the uncompressed version of the stiffness bilinear form
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
 
+  /// Use base version of saveConvergedState
+  using SolidBaseUpdates::saveConvergedState;
+
 //TODO: modify implementation of smallStrainUpdate to use optimized stiffness -
 // this implementation uses full stiffness tensor
 GEOSX_HOST_DEVICE

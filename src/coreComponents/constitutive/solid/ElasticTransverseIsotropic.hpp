@@ -250,6 +250,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
                                                                       real64 const ( &strainIncrement )[6],
                                                                       real64 ( & stress )[6] ) const
 {
+  GEOSX_UNUSED_VAR( timeIncrement );
   smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress =  incrementalStress
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
   saveStress( k, q, stress );                                           // m_newStress = stress
