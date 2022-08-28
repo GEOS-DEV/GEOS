@@ -6,12 +6,9 @@
 set(CONFIG_NAME "pangea3-gcc8.4.1-ompi-4.1.2" CACHE PATH "") 
 
 # Set up the tpls
-if (NOT DEFINED ENV{GEOSX_TPL_DIR})
-  message(FATAL_ERROR "You must set GEOSX_TPL_DIR within your environement")
-else()
-  set(GEOSX_TPL_DIR $ENV{GEOSX_TPL_DIR})
-endif()
-
+if (NOT DEFINED GEOSX_TPL_DIR)
+  message(FATAL_ERROR "You must set GEOSX_TPL_DIR with -D GEOSX_TPL_DIR=")
+endif ()
 
 # C options
 set(CMAKE_C_COMPILER gcc CACHE PATH "")
