@@ -25,7 +25,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhasebase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
@@ -66,8 +66,8 @@ void ThermalSinglePhasePoromechanicsSolver::registerDataOnMesh( Group & GEOSX_UN
 {}
 
 void ThermalSinglePhasePoromechanicsSolver::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+                                                                  real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                                  DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
 void ThermalSinglePhasePoromechanicsSolver::postProcessInput()
@@ -97,7 +97,7 @@ ThermalSinglePhasePoromechanicsSolver::~ThermalSinglePhasePoromechanicsSolver()
   // TODO Auto-generated destructor stub
 }
 
-void ThermalSinglePhasePoromechanicsSolver::resetStateToBeginningOfStep( DomainPartition & domain )
+void ThermalSinglePhasePoromechanicsSolver::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
 real64 ThermalSinglePhasePoromechanicsSolver::solverStep( real64 const & time_n,
@@ -193,7 +193,7 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
       break;
     }
 
-    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", DamageSolver: " );
+    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", FlowSolver: " );
 
     dtReturnTemporary = fluidSolver.nonlinearImplicitStep( time_n,
                                                            dtReturn,

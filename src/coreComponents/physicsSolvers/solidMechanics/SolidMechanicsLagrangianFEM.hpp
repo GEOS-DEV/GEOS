@@ -337,34 +337,22 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    if( m_effectiveStressFlag )
-    {
-      KERNEL_WRAPPER kernelWrapper( dofNumber,
-                                    dofManager.rankOffset(),
-                                    localMatrix,
-                                    localRhs,
-                                    gravityVectorData,
-                                    FlowSolverBase::viewKeyStruct::fluidNamesString(), 
-                                    std::forward< PARAMS >( params )... );
-    }
-    else
-    {
-      KERNEL_WRAPPER kernelWrapper( dofNumber,
-                                    dofManager.rankOffset(),
-                                    localMatrix,
-                                    localRhs,
-                                    gravityVectorData,
-                                    std::forward< PARAMS >( params )... );
-    }
-  
+    KERNEL_WRAPPER kernelWrapper( dofNumber,
+                                  dofManager.rankOffset(),
+                                  localMatrix,
+                                  localRhs,
+                                  gravityVectorData,
+                                  std::forward< PARAMS >( params )... );
+
     m_maxForce = finiteElement::
-                   regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                                 CONSTITUTIVE_BASE,
-                                                 CellElementSubRegion >( mesh,
-                                                                         regionNames,
-                                                                         this->getDiscretizationName(),
-                                                                         viewKeyStruct::solidMaterialNamesString(),
-                                                                         kernelWrapper );
+                  regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                                CONSTITUTIVE_BASE,
+                                                CellElementSubRegion >( mesh,
+                                                                        regionNames,
+                                                                        this->getDiscretizationName(),
+                                                                        viewKeyStruct::solidMaterialNamesString(),
+                                                                        kernelWrapper );
+  
   } );
 
 

@@ -133,6 +133,47 @@ public:
 //                                           volStrain );
   }
 
+  GEOSX_HOST_DEVICE
+  void smallStrainUpdateThermalSinglePhase( localIndex const k,
+                                            localIndex const q,
+                                            real64 const & initialFluidPressure,
+                                            real64 const & fluidPressure_n,
+                                            real64 const & fluidPressure,
+                                            real64 const & initialTemperature, 
+                                            real64 const & temperature, 
+                                            real64 const ( &strainIncrement )[6],
+                                            real64 ( & totalStress )[6],
+                                            DiscretizationOps & stiffness ) const
+  {
+    // Compute total stress increment and its derivative
+    computeTotalStressThermal( k,
+                               q,
+                               initialFluidPressure,
+                               fluidPressure,
+                               initialTemperature, 
+                               temperature,
+                               strainIncrement,
+                               totalStress,
+                               stiffness );
+
+    // Compute porosity
+    real64 const deltaFluidPressure = fluidPressure - fluidPressure_n;
+    real64 porosity;
+    real64 porosity_n;
+    real64 porosityInit;
+    real64 dPorosity_dVolStrain; // No use. Just to input something 
+    real64 dPorosity_dPressure; // No use. Just to input something 
+    computePorosity( k,
+                     q,
+                     deltaFluidPressure,
+                     strainIncrement,
+                     porosity,
+                     porosity_n,
+                     porosityInit,
+                     dPorosity_dVolStrain,
+                     dPorosity_dPressure ); 
+  }
+
   template< int NUM_MAX_COMPONENTS >
   GEOSX_HOST_DEVICE
   void smallStrainUpdateMultiphase( localIndex const k,
@@ -494,6 +535,38 @@ private:
     dTotalStress_dPressure[5] = 0;
   }
 
+  GEOSX_HOST_DEVICE
+  void computeTotalStressThermal( localIndex const k,
+                                  localIndex const q,
+                                  real64 const & initialFluidPressure,
+                                  real64 const & fluidPressure,
+                                  real64 const & initialTemperature, 
+                                  real64 const & temperature, 
+                                  real64 const ( &strainIncrement )[6],
+                                  real64 ( & totalStress )[6],
+                                  DiscretizationOps & stiffness ) const
+  {
+    // Compute total stress increment and its derivative w.r.t. pressure
+    m_solidUpdate.smallStrainUpdate( k,
+                                     q,
+                                     strainIncrement,
+                                     totalStress, // first effective stress increment accumulated
+                                     stiffness );
+
+    updateBiotCoefficient( k );
+
+    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
+    real64 const initialBiotCoefficient = biotCoefficient; // temporary
+
+    // Add the contribution of the pore pressure into the total stress
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * fluidPressure + initialBiotCoefficient * initialFluidPressure );
+
+    // Add the contribution of the thermal expansion into the total stress
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k ); 
+    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -3 * thermalExpansionCoefficient * bulkModulus * ( temperature - initialTemperature ) );
+  }
 };
 
 /**
