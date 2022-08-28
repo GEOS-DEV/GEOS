@@ -91,6 +91,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerExtrinsicData< temperature >( getName() );
       subRegion.registerExtrinsicData< temperature_n >( getName() );
+      subRegion.registerExtrinsicData< initialTemperature >( getName() ); 
 
       subRegion.registerExtrinsicData< bcTemperature >( getName() ); // needed for the application of boundary conditions
 
@@ -400,6 +401,13 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
       arrayView1d< real64 > const presInit   = subRegion.getExtrinsicData< extrinsicMeshData::flow::initialPressure >();
       presInit.setValues< parallelDevicePolicy<> >( pres );
+
+      if( m_isThermal )
+      {
+        arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+        arrayView1d< real64 > const tempInit   = subRegion.getExtrinsicData< extrinsicMeshData::flow::initialTemperature >();
+        tempInit.setValues< parallelDevicePolicy<> >( temp );
+      }
     } );
   } );
 }

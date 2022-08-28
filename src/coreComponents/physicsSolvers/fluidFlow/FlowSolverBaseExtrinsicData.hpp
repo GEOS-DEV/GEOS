@@ -104,6 +104,14 @@ EXTRINSIC_MESH_DATA_TRAIT( temperature_n,
                            WRITE_AND_READ,
                            "Temperature at the previous converged time step" );
 
+EXTRINSIC_MESH_DATA_TRAIT( initialTemperature,
+                           "initialTemperature",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Initial temperature" );
+
 EXTRINSIC_MESH_DATA_TRAIT( deltaVolume,
                            "deltaVolume",
                            array1d< real64 >,

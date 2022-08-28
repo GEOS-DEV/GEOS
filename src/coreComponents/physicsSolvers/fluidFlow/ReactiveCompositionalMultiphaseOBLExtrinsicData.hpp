@@ -53,14 +53,6 @@ EXTRINSIC_MESH_DATA_TRAIT( bcGlobalCompFraction,
                            WRITE_AND_READ,
                            "Boundary condition global component fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( initialTemperature,
-                           "initialTemperature",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Initial temperature" );
-
 EXTRINSIC_MESH_DATA_TRAIT( referencePorosity,
                            "referencePorosity",
                            array1d< real64 >,
