@@ -3,6 +3,7 @@
 #
 set( codingUtilities_headers
      EnumStrings.hpp
+     Parsing.hpp
      SFINAE_Macros.hpp
      StringUtilities.hpp
      UnitTestUtilities.hpp
@@ -16,7 +17,7 @@ set( codingUtilities_headers
 set( codingUtilities_sources
      StringUtilities.cpp )
 
-set( dependencyList common )
+set( dependencyList common fast_float )
 
 if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )

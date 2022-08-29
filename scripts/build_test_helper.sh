@@ -1,6 +1,12 @@
 #!/bin/bash
 env
 
+echo "running nproc"
+nproc
+
+echo "running free -m"
+free -m
+
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
 function or_die () {
@@ -67,8 +73,9 @@ if [[ "$*" == *--test-documentation* ]]; then
 fi
 
 # "Make" target check (builds geosx executable target only if true)
+# Use one process to prevent out-of-memory error
 if [[ "$*" == *--build-exe-only* ]]; then
-  or_die make -j $(nproc) geosx VERBOSE=1
+  or_die make -j 1 geosx VERBOSE=1
 else
   or_die make -j $(nproc) VERBOSE=1
   or_die make install VERBOSE=1

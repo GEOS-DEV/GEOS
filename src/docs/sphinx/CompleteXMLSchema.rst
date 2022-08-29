@@ -582,6 +582,13 @@ Element: PAMELAMesh
 .. include:: ../../coreComponents/schema/docs/PAMELAMesh.rst
 
 
+.. _XML_PML:
+
+Element: PML
+============
+.. include:: ../../coreComponents/schema/docs/PML.rst
+
+
 .. _XML_PVTDriver:
 
 Element: PVTDriver
@@ -1433,13 +1440,6 @@ Datastructure: ExtendedDruckerPrager
 .. include:: ../../coreComponents/schema/docs/ExtendedDruckerPrager_other.rst
 
 
-.. _DATASTRUCTURE_FaceManager:
-
-Datastructure: FaceManager
-==========================
-.. include:: ../../coreComponents/schema/docs/FaceManager_other.rst
-
-
 .. _DATASTRUCTURE_FieldSpecification:
 
 Datastructure: FieldSpecification
@@ -1683,6 +1683,13 @@ Datastructure: Outputs
 Datastructure: PAMELAMesh
 =========================
 .. include:: ../../coreComponents/schema/docs/PAMELAMesh_other.rst
+
+
+.. _DATASTRUCTURE_PML:
+
+Datastructure: PML
+==================
+.. include:: ../../coreComponents/schema/docs/PML_other.rst
 
 
 .. _DATASTRUCTURE_PVTDriver:
@@ -2229,6 +2236,13 @@ Datastructure: embeddedSurfacesEdgeManager
 Datastructure: embeddedSurfacesNodeManager
 ==========================================
 .. include:: ../../coreComponents/schema/docs/embeddedSurfacesNodeManager_other.rst
+
+
+.. _DATASTRUCTURE_faceManager:
+
+Datastructure: faceManager
+==========================
+.. include:: ../../coreComponents/schema/docs/faceManager_other.rst
 
 
 .. _DATASTRUCTURE_lassen:
