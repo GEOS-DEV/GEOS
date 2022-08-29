@@ -22,6 +22,7 @@
 
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -57,7 +58,7 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Indices of the nodes (in the right order) for each receiver point" );
 
-  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants ).
+  registerWrapper( viewKeyStruct::receiverConstantsString(), &m_receiverConstants ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Constant part of the receiver for the nodes listed in m_receiverNodeIds" );
@@ -117,6 +118,18 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                        extrinsicMeshData::StiffnessVector,
                                        extrinsicMeshData::FreeSurfaceNodeIndicator >( this->getName() );
 
+    /// register  PML auxiliary variables only when a PML is specified in the xml
+    if( m_usePML )
+    {
+      nodeManager.registerExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML,
+                                         extrinsicMeshData::AuxiliaryVar2PML,
+                                         extrinsicMeshData::AuxiliaryVar3PML,
+                                         extrinsicMeshData::AuxiliaryVar4PML >( this->getName() );
+
+      nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >().resizeDimension< 1 >( 3 );
+      nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >().resizeDimension< 1 >( 3 );
+    }
+
     FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >( this->getName() );
 
@@ -132,6 +145,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 void AcousticWaveEquationSEM::postProcessInput()
 {
+
   WaveSolverBase::postProcessInput();
   GEOSX_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the sources",
@@ -344,10 +358,12 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
           // Note: this "manual" output to file is temporary
           //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
           // TODO: remove saveSeismo and replace with TimeHistory
+          std::ofstream f( GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
           for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
           {
-            this->saveSeismo( iSample, varAtReceivers[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+            f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
           }
+          f.close();
         }
       }
     } );
@@ -366,7 +382,12 @@ void AcousticWaveEquationSEM::saveSeismo( localIndex const iSeismo, real64 const
 
 void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
+
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
+  if( m_usePML )
+  {
+    AcousticWaveEquationSEM::initializePML();
+  }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -503,6 +524,365 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
 }
 
 
+void AcousticWaveEquationSEM::initializePML()
+{
+  GEOSX_MARK_FUNCTION;
+
+  registerWrapper< parametersPML >( viewKeyStruct::parametersPMLString() ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Parameters needed to compute damping in the PML region" );
+
+  parametersPML & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
+
+  /// Get the default thicknesses and wave speeds in the PML regions from the PerfectlyMatchedLayer
+  /// field specification parameters (from the xml)
+  real64 minThicknessPML=0;
+  real64 smallestXMinPML=0;
+  real64 largestXMaxPML=0;
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & fs )
+  {
+    param.xMinPML=fs.getMin();
+    param.xMaxPML=fs.getMax();
+    param.thicknessMinXYZPML=fs.getThicknessMinXYZ();
+    param.thicknessMaxXYZPML=fs.getThicknessMaxXYZ();
+    param.reflectivityPML = fs.getReflectivity();
+    param.waveSpeedMinXYZPML=fs.getWaveSpeedMinXYZ();
+    param.waveSpeedMaxXYZPML=fs.getWaveSpeedMaxXYZ();
+    minThicknessPML=fs.minThickness;
+    smallestXMinPML=fs.smallestXMin;
+    largestXMaxPML=fs.largestXMax;
+  } );
+
+  /// Now compute the PML parameters above internally
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
+  {
+
+    NodeManager & nodeManager = mesh.getNodeManager();
+    /// WARNING: the array below is one of the PML auxiliary variables
+    arrayView1d< real64 > const indicatorPML = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+    indicatorPML.zero();
+
+    real64 xInteriorMin[3]{};
+    real64 xInteriorMax[3]{};
+    real64 xGlobalMin[3]{};
+    real64 xGlobalMax[3]{};
+    real64 cMin[3]{};
+    real64 cMax[3]{};
+    integer counterMin[3]{};
+    integer counterMax[3]{};
+
+    /// Set a node-based flag in the PML regions
+    /// WARNING: the array used as a flag is one of the PML
+    /// auxiliary variables to save memory
+    fsManager.apply< ElementSubRegionBase,
+                     PerfectlyMatchedLayer >( 0.0,
+                                              mesh,
+                                              PerfectlyMatchedLayer::catalogName(),
+                                              [&]( PerfectlyMatchedLayer const &,
+                                                   string const &,
+                                                   SortedArrayView< localIndex const > const & targetSet,
+                                                   ElementSubRegionBase & subRegion,
+                                                   string const & )
+
+    {
+      CellElementSubRegion::NodeMapType const & elemToNodes =
+        subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
+      traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
+
+      forAll< EXEC_POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const l )
+      {
+        localIndex const k = targetSet[ l ];
+        localIndex const numNodesPerElem = elemToNodesViewConst[k].size();
+
+        for( localIndex i=0; i<numNodesPerElem; ++i )
+        {
+          indicatorPML[elemToNodesViewConst[k][i]]=1.0;
+        }
+      } );
+    } );
+
+
+    /// find the interior and global coordinates limits
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > xMinGlobal( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > yMinGlobal( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > zMinGlobal( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > xMaxGlobal( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > yMaxGlobal( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > zMaxGlobal( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > xMinInterior( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > yMinInterior( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > zMinInterior( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > xMaxInterior( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > yMaxInterior( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > zMaxInterior( -LvArray::NumericLimits< real64 >::max );
+
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      xMinGlobal.min( X[a][0] );
+      yMinGlobal.min( X[a][1] );
+      zMinGlobal.min( X[a][2] );
+      xMaxGlobal.max( X[a][0] );
+      yMaxGlobal.max( X[a][1] );
+      zMaxGlobal.max( X[a][2] );
+      if( !isZero( indicatorPML[a] - 1.0 ))
+      {
+        xMinInterior.min( X[a][0] );
+        yMinInterior.min( X[a][1] );
+        zMinInterior.min( X[a][2] );
+        xMaxInterior.max( X[a][0] );
+        yMaxInterior.max( X[a][1] );
+        zMaxInterior.max( X[a][2] );
+      }
+    } );
+
+    xGlobalMin[0] = xMinGlobal.get();
+    xGlobalMin[1] = yMinGlobal.get();
+    xGlobalMin[2] = zMinGlobal.get();
+    xGlobalMax[0] = xMaxGlobal.get();
+    xGlobalMax[1] = yMaxGlobal.get();
+    xGlobalMax[2] = zMaxGlobal.get();
+    xInteriorMin[0] = xMinInterior.get();
+    xInteriorMin[1] = yMinInterior.get();
+    xInteriorMin[2] = zMinInterior.get();
+    xInteriorMax[0] = xMaxInterior.get();
+    xInteriorMax[1] = yMaxInterior.get();
+    xInteriorMax[2] = zMaxInterior.get();
+
+    for( integer i=0; i<3; ++i )
+    {
+      xGlobalMin[i] = MpiWrapper::min( xGlobalMin[i] );
+      xGlobalMax[i] = MpiWrapper::max( xGlobalMax[i] );
+      xInteriorMin[i] = MpiWrapper::min( xInteriorMin[i] );
+      xInteriorMax[i] = MpiWrapper::max( xInteriorMax[i] );
+    }
+
+
+    /// if the coordinates limits and PML thicknesses are not provided
+    /// from the xml, replace them with the above
+    for( integer i=0; i<3; ++i )
+    {
+      if( param.xMinPML[i]<smallestXMinPML )
+        param.xMinPML[i] = xInteriorMin[i];
+      if( param.xMaxPML[i]>largestXMaxPML )
+        param.xMaxPML[i] = xInteriorMax[i];
+      if( param.thicknessMinXYZPML[i]<0 )
+        param.thicknessMinXYZPML[i] = xInteriorMin[i]-xGlobalMin[i];
+      if( param.thicknessMaxXYZPML[i]<0 )
+        param.thicknessMaxXYZPML[i] = xGlobalMax[i]-xInteriorMax[i];
+    }
+
+    /// Compute the average wave speeds in the PML regions internally
+    /// using the actual velocity field
+    fsManager.apply< ElementSubRegionBase,
+                     PerfectlyMatchedLayer >( 0.0,
+                                              mesh,
+                                              PerfectlyMatchedLayer::catalogName(),
+                                              [&]( PerfectlyMatchedLayer const &,
+                                                   string const &,
+                                                   SortedArrayView< localIndex const > const & targetSet,
+                                                   ElementSubRegionBase & subRegion,
+                                                   string const & )
+
+    {
+      CellElementSubRegion::NodeMapType const & elemToNodes =
+        subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
+      traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
+      arrayView1d< real64 const > const vel = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::MediumVelocity::key());
+      finiteElement::FiniteElementBase const &
+      fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+      real64 const xMin[3]{param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
+      real64 const xMax[3]{param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
+
+      finiteElement::dispatch3D( fe,
+                                 [&]
+                                   ( auto const finiteElement )
+      {
+        using FE_TYPE = TYPEOFREF( finiteElement );
+
+        acousticWaveEquationSEMKernels::
+          waveSpeedPMLKernel< FE_TYPE > kernel( finiteElement );
+        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
+          ( targetSet,
+          X,
+          elemToNodesViewConst,
+          vel,
+          xMin,
+          xMax,
+          cMin,
+          cMax,
+          counterMin,
+          counterMax );
+      } );
+    } );
+
+    for( integer i=0; i<3; ++i )
+    {
+      cMin[i] = MpiWrapper::sum( cMin[i] );
+      cMax[i] = MpiWrapper::sum( cMax[i] );
+      counterMin[i] = MpiWrapper::sum( counterMin[i] );
+      counterMax[i] = MpiWrapper::sum( counterMax[i] );
+    }
+    for( integer i=0; i<3; ++i )
+    {
+      cMin[i] /= std::max( 1, counterMin[i] );
+      cMax[i] /= std::max( 1, counterMax[i] );
+    }
+
+    /// if the PML wave speeds are not provided from the xml
+    /// replace them with the above
+    for( integer i=0; i<3; ++i )
+    {
+      if( param.waveSpeedMinXYZPML[i]<0 )
+        param.waveSpeedMinXYZPML[i] = cMin[i];
+      if( param.waveSpeedMaxXYZPML[i]<0 )
+        param.waveSpeedMaxXYZPML[i] = cMax[i];
+    }
+
+    /// add safeguards when PML thickness is negative or too small
+    for( integer i=0; i<3; ++i )
+    {
+      if( param.thicknessMinXYZPML[i]<=minThicknessPML )
+      {
+        param.thicknessMinXYZPML[i]=LvArray::NumericLimits< real64 >::max;
+        param.waveSpeedMinXYZPML[i]=0;
+      }
+      if( param.thicknessMaxXYZPML[i]<=minThicknessPML )
+      {
+        param.thicknessMaxXYZPML[i]=LvArray::NumericLimits< real64 >::max;
+        param.waveSpeedMaxXYZPML[i]=0;
+      }
+    }
+
+    /// WARNING: don't forget to reset the indicator to zero
+    /// so it can be used by the PML application
+    indicatorPML.zero();
+
+    GEOSX_LOG_LEVEL_RANK_0( 1,
+                            "PML parameters are: \n"
+                            << "\t inner boundaries xMin = "<<param.xMinPML<<"\n"
+                            << "\t inner boundaries xMax = "<<param.xMaxPML<<"\n"
+                            << "\t left, front, top max PML thicknesses  = "<<param.thicknessMinXYZPML<<"\n"
+                            << "\t right, back, bottom max PML thicknesses  = "<<param.thicknessMaxXYZPML<<"\n"
+                            << "\t left, front, top average wave speed  = "<<param.waveSpeedMinXYZPML<<"\n"
+                            << "\t right, back, bottom average wave speed  = "<<param.waveSpeedMaxXYZPML<<"\n"
+                            << "\t theoretical reflectivity = "<< param.reflectivityPML );
+
+  } );
+}
+
+
+
+void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  parametersPML const & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
+
+  /// Loop over the different mesh bodies; for wave propagation, there is only one mesh body
+  /// which is the whole mesh
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
+  {
+
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    /// Array views of the pressure p, PML auxiliary variables, and node coordinates
+    arrayView1d< real64 const > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+    arrayView2d< real64 const > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
+    arrayView2d< real64 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+    arrayView1d< real64 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+    arrayView1d< real64 const > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+
+    /// Select the subregions concerned by the PML (specified in the xml by the Field Specification)
+    /// 'targetSet' contains the indices of the elements in a given subregion
+    fsManager.apply< ElementSubRegionBase,
+                     PerfectlyMatchedLayer >( time,
+                                              mesh,
+                                              PerfectlyMatchedLayer::catalogName(),
+                                              [&]( PerfectlyMatchedLayer const &,
+                                                   string const &,
+                                                   SortedArrayView< localIndex const > const & targetSet,
+                                                   ElementSubRegionBase & subRegion,
+                                                   string const & )
+
+    {
+
+      /// Get the element to nodes mapping in the subregion
+      CellElementSubRegion::NodeMapType const & elemToNodes =
+        subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
+
+      /// Get a const ArrayView of the mapping above
+      traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
+
+      /// Array view of the wave speed
+      arrayView1d< real64 const > const vel = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::MediumVelocity::key());
+
+      /// Get the object needed to determine the type of the element in the subregion
+      finiteElement::FiniteElementBase const &
+      fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+      real64 xMin[3];
+      real64 xMax[3];
+      real64 dMin[3];
+      real64 dMax[3];
+      real64 cMin[3];
+      real64 cMax[3];
+      for( integer i=0; i<3; ++i )
+      {
+        xMin[i] = param.xMinPML[i];
+        xMax[i] = param.xMaxPML[i];
+        dMin[i] = param.thicknessMinXYZPML[i];
+        dMax[i] = param.thicknessMaxXYZPML[i];
+        cMin[i] = param.waveSpeedMinXYZPML[i];
+        cMax[i] = param.waveSpeedMaxXYZPML[i];
+      }
+      real64 const r = param.reflectivityPML;
+
+      /// Get the type of the elements in the subregion
+      finiteElement::dispatch3D( fe,
+                                 [&]
+                                   ( auto const finiteElement )
+      {
+        using FE_TYPE = TYPEOFREF( finiteElement );
+
+        /// apply the PML kernel
+        acousticWaveEquationSEMKernels::
+          PMLKernel< FE_TYPE > kernel( finiteElement );
+        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
+          ( targetSet,
+          X,
+          elemToNodesViewConst,
+          vel,
+          p_n,
+          v_n,
+          u_n,
+          xMin,
+          xMax,
+          dMin,
+          dMax,
+          cMin,
+          cMax,
+          r,
+          grad_n,
+          divV_n );
+      } );
+    } );
+  } );
+
+}
+
+
 
 real64 AcousticWaveEquationSEM::solverStep( real64 const & time_n,
                                             real64 const & dt,
@@ -520,8 +900,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                               DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-
-  GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
   GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
@@ -542,6 +920,8 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     arrayView1d< real64 > const stiffnessVector = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
     arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
 
+    bool const usePML = m_usePML;
+
     auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
     finiteElement::
@@ -558,22 +938,93 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     /// calculate your time integrators
     real64 const dt2 = dt*dt;
 
-    GEOSX_MARK_SCOPE ( updateP );
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    if( !usePML )
     {
-      if( freeSurfaceNodeIndicator[a] != 1 )
+      GEOSX_MARK_SCOPE ( updateP );
+      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
       {
-        p_np1[a] = p_n[a];
-        p_np1[a] *= 2.0*mass[a];
-        p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
-        p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
-        p_np1[a] /= mass[a]+0.5*dt*damping[a];
-      }
-    } );
+        if( freeSurfaceNodeIndicator[a] != 1 )
+        {
+          p_np1[a] = p_n[a];
+          p_np1[a] *= 2.0*mass[a];
+          p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
+          p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
+          p_np1[a] /= mass[a]+0.5*dt*damping[a];
+        }
+      } );
+    }
+    else
+    {
+      parametersPML const & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
+      arrayView2d< real64 > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
+      arrayView2d< real64 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+      arrayView1d< real64 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+      arrayView1d< real64 > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
+      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+
+      real64 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
+      real64 const xMax[ 3 ] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
+      real64 const dMin[ 3 ] = {param.thicknessMinXYZPML[0], param.thicknessMinXYZPML[1], param.thicknessMinXYZPML[2]};
+      real64 const dMax[ 3 ] = {param.thicknessMaxXYZPML[0], param.thicknessMaxXYZPML[1], param.thicknessMaxXYZPML[2]};
+      real64 const cMin[ 3 ] = {param.waveSpeedMinXYZPML[0], param.waveSpeedMinXYZPML[1], param.waveSpeedMinXYZPML[2]};
+      real64 const cMax[ 3 ] = {param.waveSpeedMaxXYZPML[0], param.waveSpeedMaxXYZPML[1], param.waveSpeedMaxXYZPML[2]};
+      real64 const r = param.reflectivityPML;
+
+      /// apply the main function to update some of the PML auxiliary variables
+      /// Compute (divV) and (B.pressureGrad - C.auxUGrad) vectors for the PML region
+      applyPML( time_n, domain );
+
+      GEOSX_MARK_SCOPE ( updatePWithPML );
+      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+      {
+        if( freeSurfaceNodeIndicator[a] != 1 )
+        {
+          real64 sigma[3];
+          real64 xLocal[ 3 ];
+
+          for( integer i=0; i<3; ++i )
+          {
+            xLocal[i] = X[a][i];
+          }
+
+          acousticWaveEquationSEMKernels::PMLKernelHelper::computeDampingProfilePML(
+            xLocal,
+            xMin,
+            xMax,
+            dMin,
+            dMax,
+            cMin,
+            cMax,
+            r,
+            sigma );
+
+          real64 const alpha = sigma[0] + sigma[1] + sigma[2];
+
+          p_np1[a] = dt2*( (rhs[a] - stiffnessVector[a])/mass[a] - divV_n[a])
+                     - (1 - 0.5*alpha*dt)*p_nm1[a]
+                     + 2*p_n[a];
+
+          p_np1[a] = p_np1[a] / (1 + 0.5*alpha*dt);
+
+          for( integer i=0; i<3; ++i )
+          {
+            v_n[a][i] = (1 - dt*sigma[i])*v_n[a][i] - dt*grad_n[a][i];
+          }
+          u_n[a] += dt*p_n[a];
+        }
+      } );
+    }
 
     /// synchronize pressure fields
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::Pressure_np1::key() } );
+
+    if( usePML )
+    {
+      fieldsToBeSync.addFields( FieldLocation::Node, {
+          extrinsicMeshData::AuxiliaryVar1PML::key(),
+          extrinsicMeshData::AuxiliaryVar4PML::key() } );
+    }
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
     syncFields.synchronizeFields( fieldsToBeSync,
@@ -581,11 +1032,11 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                   domain.getNeighbors(),
                                   true );
 
-    // compute the seismic traces since last step.
+    /// compute the seismic traces since last step.
     arrayView2d< real64 > const pReceivers   = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
 
-    // prepare next step
+    /// prepare next step
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       p_nm1[a] = p_n[a];
@@ -594,6 +1045,14 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       stiffnessVector[a] = 0.0;
       rhs[a] = 0.0;
     } );
+
+    if( usePML )
+    {
+      arrayView2d< real64 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+      arrayView1d< real64 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+      grad_n.zero();
+      divV_n.zero();
+    }
 
   } );
 
