@@ -37,7 +37,7 @@
     <SolidMechanicsLagrangianSSLE
       name="EFEMSolidMechSolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="1"
+      logLevel="0"
       discretization="FE1"
       targetRegions="{base/base_cer}">
       <NonlinearSolverParameters
@@ -70,7 +70,7 @@
     <SolidMechanicsLagrangianSSLE
       name="PFSolidMechSolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="1"
+      logLevel="2"
       discretization="FE1"
       targetRegions="{patch/patch_cer}"
       >
@@ -103,8 +103,8 @@
       xCoords="{ -1, 1 }"
       yCoords="{ -1, 1 }"
       zCoords="{ -1, 1 }"
-      nx="{ 5 }"
-      ny="{ 5 }"
+      nx="{ 3 }"
+      ny="{ 3 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
     <InternalMesh
@@ -113,8 +113,8 @@
       xCoords="{ -1, 1 }"
       yCoords="{ -1, 1 }"
       zCoords="{ -1, 1 }"
-      nx="{ 5 }"
-      ny="{ 5 }"
+      nx="{ 3 }"
+      ny="{ 3 }"
       nz="{ 1 }"
       cellBlockNames="{ cb2 }"/>
   </Mesh>
