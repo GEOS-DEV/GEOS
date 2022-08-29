@@ -183,14 +183,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
 
   ArrayOfArraysView< localIndex > const facesToNodes = nodeList().toView();
 
-  // I do not define the lambda function as taking an `auto const & subRegion` argument
-  // from `forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >`
-  // because of some `__host__ __device__` compilation error.
-  elemManager.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion const & subRegion )
-  {
-    subRegion.calculateElementCenters( X );
-  } );
-  elemManager.forElementSubRegions< FaceElementSubRegion >( [&] ( FaceElementSubRegion const & subRegion )
+  elemManager.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&] ( auto const & subRegion )
   {
     subRegion.calculateElementCenters( X );
   } );
