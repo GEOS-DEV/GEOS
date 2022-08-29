@@ -19,8 +19,6 @@ The xml input files for the test case are located at:
 .. code-block:: console
 
   inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_base.xml
-
-.. code-block:: console
   inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_benchmark.xml
 
 
