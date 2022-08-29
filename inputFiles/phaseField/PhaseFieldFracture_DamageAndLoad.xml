@@ -47,10 +47,6 @@
     </PhaseFieldDamageFEM>
   </Solvers>
 
-  <!-- <Mesh>
-    <PAMELAMesh name="MyMeshName"
-                file="/usr/workspace/macieira/GEOSX/debugTests/geo.msh"/>
-  </Mesh> -->
   <Mesh>
     <InternalMesh
       name="mesh1"

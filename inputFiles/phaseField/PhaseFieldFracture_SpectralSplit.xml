@@ -46,20 +46,32 @@
   </Solvers>
 
   <Mesh>
-    <PAMELAMesh
+    <VTKMesh
       name="Mode2Notched"
-      file="Mode2CrackMesh/geo.msh"/>
-
-    <!-- <InternalMesh name="mesh1" -->
-    <!--               elementTypes="{C3D8}" -->
-    <!--               xCoords="{0, 1}" -->
-    <!--               yCoords="{0, 1}" -->
-    <!--               zCoords="{0, 0.1}" -->
-    <!--               nx="{5}" -->
-    <!--               ny="{5}" -->
-    <!--               nz="{1}" -->
-    <!--               cellBlockNames="{all_HEX}"/> -->
+      file="notchedMesh.vtk"/>
   </Mesh>
+
+  <Geometry>
+    <Box
+      name="top"
+      xMin="{ -0.01,  0.99, -0.01 }"
+      xMax="{  1.01,  1.01,  0.11 }"/>
+
+    <Box
+      name="bottom"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{  1.01,  0.01,  0.11 }"/>
+
+    <Box
+      name="left"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{  0.01,  1.01,  0.11 }"/>
+
+    <Box
+      name="right"
+      xMin="{  0.99, -0.01, -0.01 }"
+      xMax="{  1.01, 1.01,  0.11 }"/>
+  </Geometry>
 
   <Events
     maxTime="30.0">
@@ -103,7 +115,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocks="{ all_HEX }"
+      cellBlocks="{ hexahedra }"
       materialList="{ shale }"/>
   </ElementRegions>
 

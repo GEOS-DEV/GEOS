@@ -333,7 +333,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   Group & benchmarks = this->registerGroup< Group >( "Benchmarks" );
   benchmarks.setInputFlags( InputFlags::OPTIONAL );
 
-  for( string const & machineName : {"quartz", "lassen"} )
+  for( string const machineName : {"quartz", "lassen"} )
   {
     Group & machine = benchmarks.registerGroup< Group >( machineName );
     machine.setInputFlags( InputFlags::OPTIONAL );
@@ -451,7 +451,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
     // }
 
     Group & meshBodies = domain.getMeshBodies();
-    xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::elemManagerString );
+    xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::elemManagerString() );
 
     for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
     {
@@ -821,6 +821,12 @@ DomainPartition const & ProblemManager::getDomainPartition() const
 
 void ProblemManager::applyInitialConditions()
 {
+
+  m_fieldSpecificationManager->forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase & fs )
+  {
+    fs.setMeshObjectPath( getDomainPartition().getMeshBodies() );
+  } );
+
   getDomainPartition().forMeshBodies( [&] ( MeshBody & meshBody )
   {
     meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )

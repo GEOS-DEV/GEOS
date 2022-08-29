@@ -27,7 +27,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/WellElementSubRegion.hpp"
-#include "mesh/PerforationData.hpp"
+#include "mesh/PerforationExtrinsicData.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
@@ -69,6 +69,9 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< extrinsicMeshData::well::pressure_n >( getName() );
       subRegion.registerExtrinsicData< extrinsicMeshData::well::pressure >( getName() ).
         setRestartFlags( RestartFlags::WRITE_AND_READ );
+
+      subRegion.registerExtrinsicData< extrinsicMeshData::well::temperature_n >( getName() );
+      subRegion.registerExtrinsicData< extrinsicMeshData::well::temperature >( getName() );
 
       subRegion.registerExtrinsicData< extrinsicMeshData::well::connectionRate_n >( getName() );
       subRegion.registerExtrinsicData< extrinsicMeshData::well::connectionRate >( getName() );
@@ -115,7 +118,7 @@ void SinglePhaseWell::initializePostSubGroups()
 
 string SinglePhaseWell::resElementDofName() const
 {
-  return extrinsicMeshData::flow::pressure::key();
+  return SinglePhaseBase::viewKeyStruct::elemDofFieldString();
 }
 
 void SinglePhaseWell::validateWellConstraints( WellElementSubRegion const & subRegion ) const
@@ -278,6 +281,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+  arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::well::temperature >();
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   SingleFluidBase & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
@@ -285,7 +289,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres );
+    thermalSinglePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
 }
 
@@ -334,11 +338,11 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const resElementRegion =
-        perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
+        perforationData.getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const resElementSubRegion =
-        perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
+        perforationData.getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const resElementIndex =
-        perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+        perforationData.getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       arrayView1d< real64 const > const & perfGravCoef =
         perforationData.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
@@ -500,14 +504,14 @@ void SinglePhaseWell::assemblePressureRelations( DomainPartition const & domain,
         if( wellControls.getControl() == WellControls::Control::BHP )
         {
           wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( timeAtEndOfStep ) );
-          GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
-                                                                << " from BHP constraint to rate constraint" );
+          GEOSX_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
+                                                         << " from BHP constraint to rate constraint" );
         }
         else
         {
           wellControls.switchToBHPControl( wellControls.getTargetBHP( timeAtEndOfStep ) );
-          GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
-                                                                << " from rate constraint to BHP constraint" );
+          GEOSX_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
+                                                         << " from rate constraint to BHP constraint" );
         }
       }
 
@@ -611,9 +615,9 @@ void SinglePhaseWell::computePerforationRates( DomainPartition & domain )
       arrayView1d< real64 const > const perfGravCoef =
         perforationData->getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
       arrayView1d< localIndex const > const perfWellElemIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellElementIndex >();
       arrayView1d< real64 const > const perfTransmissibility =
-        perforationData->getReference< array1d< real64 > >( PerforationData::viewKeyStruct::wellTransmissibilityString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::wellTransmissibility >();
 
       arrayView1d< real64 > const perfRate =
         perforationData->getExtrinsicData< extrinsicMeshData::well::perforationRate >();
@@ -622,12 +626,11 @@ void SinglePhaseWell::computePerforationRates( DomainPartition & domain )
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const resElementRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const resElementSubRegion =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const resElementIndex =
-        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
-
+        perforationData->getExtrinsicData< extrinsicMeshData::perforation::reservoirElementIndex >();
 
       PerforationKernel::launch( perforationData->size(),
                                  resSinglePhaseFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
@@ -701,8 +704,15 @@ SinglePhaseWell::calculateResidualNorm( DomainPartition const & domain,
 
     } );
   } );
+
   // compute global residual norm
-  return sqrt( MpiWrapper::sum( localResidualNorm, MPI_COMM_GEOSX ) );
+  real64 const residual = sqrt( MpiWrapper::sum( localResidualNorm, MPI_COMM_GEOSX ) );
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  {
+    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residual );
+  }
+
+  return residual;
 }
 
 bool SinglePhaseWell::checkSystemSolution( DomainPartition const & domain,

@@ -197,15 +197,14 @@ void LaplaceBaseH1::
                                                arrayView1d< string const > const & )
   {
 
-    fsManager.apply( time,
-                     mesh,
-                     "nodeManager",
-                     m_fieldName,
-                     [&]( FieldSpecificationBase const & bc,
-                          string const &,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & targetGroup,
-                          string const & GEOSX_UNUSED_PARAM( fieldName ) )
+    fsManager.apply< NodeManager >( time,
+                                    mesh,
+                                    m_fieldName,
+                                    [&]( FieldSpecificationBase const & bc,
+                                         string const &,
+                                         SortedArrayView< localIndex const > const & targetSet,
+                                         NodeManager & targetGroup,
+                                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                          parallelDevicePolicy< 32 > >( targetSet,
@@ -218,21 +217,6 @@ void LaplaceBaseH1::
                                                                        localRhs );
     } );
   } );
-}
-
-/*
-   SOLVE SYSTEM
-   This method is simply initiating the solution and right-hand side
-   and pass it to the base class solver.
- */
-void LaplaceBaseH1::solveLinearSystem( DofManager const & dofManager,
-                                       ParallelMatrix & matrix,
-                                       ParallelVector & rhs,
-                                       ParallelVector & solution )
-{
-  rhs.scale( -1.0 ); // TODO decide if we want this here
-  solution.zero();
-  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void LaplaceBaseH1::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )

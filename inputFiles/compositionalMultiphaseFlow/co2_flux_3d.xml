@@ -8,7 +8,6 @@
       discretization="fluidTPFA"
       temperature="368.15"
       useMass="1"
-      computeCFLNumbers="1"
       targetRegions="{ region }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
@@ -83,6 +82,11 @@
       name="solverApplications"
       forceDt="5e4"
       target="/Solvers/compflow"/>
+
+    <PeriodicEvent
+      name="statistics"
+      forceDt="1e5"
+      target="/Tasks/compflowStatistics"/>
 
     <PeriodicEvent
       name="outputs"
@@ -260,6 +264,17 @@
     
   </FieldSpecifications>
 
+  <Tasks>
+
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      flowSolverName="compflow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+    
+  </Tasks>
+  
   <Functions>
 
     <TableFunction
