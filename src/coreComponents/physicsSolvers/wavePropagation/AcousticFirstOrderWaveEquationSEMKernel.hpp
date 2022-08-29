@@ -503,6 +503,7 @@ struct PressureComputation
            arrayView2d< real64 const > const velocity_y,
            arrayView2d< real64 const > const velocity_z,
            arrayView1d< real64 const > const mass,
+           arrayView1d< real64 const > const damping,
            arrayView1d< real64 const > const rhs,
            arrayView1d< real64 const > const mediumVelocity,
            arrayView1d< real64 const > const density,
@@ -564,13 +565,19 @@ struct PressureComputation
           real64 diag=(auxx[i]+auyy[i]+auzz[i]);
           uelemx[i]+=dt*diag;
         }
+
+        //Damping multiplication
+        for (localIndex i = 0; i < numNodesPerElem; ++i)
+        {
+          p_np1[elemsToNodes[k][i]] *= (1.0-(dt/2.0)*(damping[elemsToNodes[k][i]]/mass[elemsToNodes[k][i]]))*(1.0+(dt/2.0)*(damping[elemsToNodes[k][i]]/mass[elemsToNodes[k][i]]));
+        }
     
         for (localIndex i = 0; i < numNodesPerElem; ++i)
         {
           real64 const localIncrement = uelemx[i]/mass[elemsToNodes[k][i]];
           RAJA::atomicAdd< ATOMIC_POLICY >(&p_np1[elemsToNodes[k][i]],localIncrement);
         }
-    
+
         //Source Injection
         for (localIndex isrc = 0; isrc < sourceConstants.size(0); ++isrc)
         {

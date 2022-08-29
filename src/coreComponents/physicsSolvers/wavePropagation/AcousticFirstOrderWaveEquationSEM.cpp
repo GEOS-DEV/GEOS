@@ -570,6 +570,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+    arrayView1d< real64 const > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
     //arrayView1d< real64 const > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
 
     // arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
@@ -632,6 +633,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
             velocity_y,
             velocity_z,
             mass,
+            damping,
             rhs,
             mediumVelocity,
             density,
