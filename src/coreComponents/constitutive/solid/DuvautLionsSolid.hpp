@@ -82,15 +82,15 @@ public:
     trialStress[i] = stress[i];
   }  
 
-    //Get trial stress and elastic stiffness by disabling inelasticity
- // m_solidUpdate.m_disableInelasticity = true;
-
-    UPDATE_BASE::smallStrainUpdate( k, q, timeIncrement, strainIncrement, trialStress, elasticStiffness );
-
     if( m_disableInelasticity )
     {
       return;
     }
+
+  //Get trial stress and elastic stiffness by disabling inelasticity
+  // m_solidUpdate.m_disableInelasticity = true;
+
+  UPDATE_BASE::smallStrainUpdate_ElasticOnly( k, q, timeIncrement, strainIncrement, trialStress, elasticStiffness );
 
   //Enable inelasticity to get the rate-independent update
   //m_solidUpdate.m_disableInelasticity = false;
@@ -110,6 +110,7 @@ public:
   UPDATE_BASE::viscousStateUpdate( k, q, timeRatio );
   return;
   }
+  
 //TODO: modify implementation of smallStrainUpdate to use optimized stiffness -
 // this implementation uses full stiffness tensor
 //  GEOSX_FORCE_INLINE

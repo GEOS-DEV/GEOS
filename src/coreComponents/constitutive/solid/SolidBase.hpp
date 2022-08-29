@@ -166,6 +166,23 @@ public:
     GEOSX_ERROR( "smallStrainUpdate() not implemented for this model" );
   }
 
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate_ElasticOnly( localIndex const k,
+                                  localIndex const q,
+                                  real64 const & timeIncrement,
+                                  real64 const ( &strainIncrement )[6],
+                                  real64 ( & stress )[6],
+                                  real64 ( & stiffness )[6][6] ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( timeIncrement );
+    GEOSX_UNUSED_VAR( strainIncrement );
+    GEOSX_UNUSED_VAR( stress );
+    GEOSX_UNUSED_VAR( stiffness );
+    GEOSX_ERROR( "smallStrainUpdate_ElasticOnly() not implemented for this model, or the model is already elastic." );
+  }
+
   /**
    * @brief Small strain, stateless update.
    *

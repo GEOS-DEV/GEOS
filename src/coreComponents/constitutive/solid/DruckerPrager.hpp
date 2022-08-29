@@ -108,6 +108,14 @@ public:
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const;
 
+    GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate_ElasticOnly( localIndex const k,
+                                  localIndex const q,
+                                  real64 const & timeIncrement,
+                                  real64 const ( &strainIncrement )[6],
+                                  real64 ( &stress )[6],
+                                  real64 ( &stiffness )[6][6] ) const override;
+
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   virtual void saveConvergedState( localIndex const k,
@@ -302,6 +310,20 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
   return;
 }
 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void DruckerPragerUpdates::smallStrainUpdate_ElasticOnly( localIndex const k,
+                                              localIndex const q,
+                                              real64 const & timeIncrement,
+                                              real64 const ( &strainIncrement )[6],
+                                              real64 ( & stress )[6],
+                                              real64 ( & stiffness )[6][6] ) const
+{
+  // elastic predictor (assume strainIncrement is all elastic)
+  GEOSX_UNUSED_VAR( timeIncrement );
+  ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+  return;
+}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
