@@ -175,6 +175,8 @@ void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real
       strainIncrement[1] = table( n, EPS1 )-table( n-1, EPS1 );
       strainIncrement[2] = table( n, EPS2 )-table( n-1, EPS2 );
 
+      timeIncrement = table( n, TIME )-table( n-1, TIME );
+
       updates.smallStrainUpdate( ei, 0, timeIncrement, strainIncrement, stress, stiffness );
       updates.saveConvergedState ( ei, 0 );
 
@@ -217,6 +219,8 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
       strainIncrement[0] = table( n, EPS0 )-table( n-1, EPS0 );
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
+
+      timeIncrement = table( n, TIME )-table( n-1, TIME );
 
       real64 norm, normZero = 1e30;
       integer k = 0;
@@ -303,6 +307,8 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
       strainIncrement[0] = 0;
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
+
+      timeIncrement = table( n, TIME )-table( n-1, TIME );
 
       real64 norm, normZero = 1e30, det;
       integer k = 0;
