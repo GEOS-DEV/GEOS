@@ -1064,8 +1064,8 @@ SolidMechanicsLagrangianFEM::
   } );
 
   applyTractionBC( time_n + dt, dofManager, domain, localRhs );
-
-  FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
+  
+  FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager(); //hard coded meshBody may need to be updated
 
   if( faceManager.hasWrapper( "ChomboPressure" ) )
   {
@@ -1075,7 +1075,7 @@ SolidMechanicsLagrangianFEM::
 
   applyDisplacementBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 
-  #if 0
+  #if 1
     applyInternalDisplacementBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
   #endif
 
@@ -1414,27 +1414,28 @@ void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 co
                                                 arrayView1d< string const > const & regionNames )
   {
     //const NodeManager & nodeManager = mesh.getNodeManager();
+    //THIS CALL TO GET NODE MANAGER IS NOT ROBUST
     NodeManager const & nodeManager = domain.getMeshBody( 1 ).getMeshLevel( 0 ).getNodeManager();
     arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofKey );
     arrayView2d< real64 const > const nodalDisplacements = nodeManager.getReference< array2d< real64 > >( keys::TotalDisplacement );
     
     localIndex count = 0;
-    for( localIndex c : m_fixedDisplacementNodes)
+    for( localIndex fixed_node : m_fixedDisplacementNodes)
     {
       for (localIndex i = 0; i < 3; i++)
       {
-        localIndex const dof = dofIndex[c]+i; 
-        if( getLogLevel() == 1 )
+        localIndex const dof = dofIndex[fixed_node]+i; 
+        if( getLogLevel() == 2 )
         {
           std::cout<<"constrained dof: "<<dof<<std::endl;
         }
         real64 const dispToBeApplied = m_fixedDisplacementValues( count, i );
-        if( getLogLevel() == 1 )
+        if( getLogLevel() == 2 )
         {  
           std::cout<<"constrained disp: "<<dispToBeApplied<<std::endl;
         }
-        real64 const dispCurrentDof = nodalDisplacements( count, i );
-        if( getLogLevel() == 1 )
+        real64 const dispCurrentDof = nodalDisplacements( fixed_node, i );
+        if( getLogLevel() == 2 )
         {  
           std::cout<<"current disp: "<<dispCurrentDof<<std::endl;
         }
@@ -1456,7 +1457,7 @@ void SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit( real64 co
     }
 
   } );
-  if( getLogLevel() == 1 )
+  if( getLogLevel() == 2 )
   {
     GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::applyInternalDisplacementBCImplicit" );
     GEOSX_LOG_RANK_0( "\nJacobian:\n" );

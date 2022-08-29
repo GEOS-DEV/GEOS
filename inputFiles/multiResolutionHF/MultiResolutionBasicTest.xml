@@ -70,7 +70,7 @@
     <SolidMechanicsLagrangianSSLE
       name="PFSolidMechSolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="2"
+      logLevel="1"
       discretization="FE1"
       targetRegions="{patch/patch_cer}"
       >
@@ -103,8 +103,8 @@
       xCoords="{ -1, 1 }"
       yCoords="{ -1, 1 }"
       zCoords="{ -1, 1 }"
-      nx="{ 3 }"
-      ny="{ 3 }"
+      nx="{ 15 }"
+      ny="{ 15 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
     <InternalMesh
@@ -113,8 +113,8 @@
       xCoords="{ -1, 1 }"
       yCoords="{ -1, 1 }"
       zCoords="{ -1, 1 }"
-      nx="{ 3 }"
-      ny="{ 3 }"
+      nx="{ 15 }"
+      ny="{ 15 }"
       nz="{ 1 }"
       cellBlockNames="{ cb2 }"/>
   </Mesh>
@@ -126,7 +126,7 @@
       origin="{-0.6, 0.0, 0.0 }"
       lengthVector="{1.0, 0.0, 0.0}"
       widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{0.8, 2}"/>
+      dimensions="{0.99, 2}"/>
   </Geometry>
   
   <Events
@@ -190,7 +190,7 @@
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="8.3333e9"
-      lengthScale="0.4"
+      lengthScale="0.2"
       criticalFractureEnergy="2.7"
       criticalStrainEnergy="1.0"/>
 
@@ -203,7 +203,7 @@
   <FieldSpecifications>
     <FieldSpecification
       name="ypos"
-      objectPath="nodeManager"
+      objectPath="base/Level0/nodeManager"
       fieldName="TotalDisplacement"
       component="1"
       scale="1.0e-7"
@@ -212,7 +212,7 @@
 
     <FieldSpecification
       name="yneg"
-      objectPath="nodeManager"
+      objectPath="base/Level0/nodeManager"
       fieldName="TotalDisplacement"
       component="1"
       scale="-1.0e-7"
@@ -221,14 +221,14 @@
 
     <FieldSpecification
       name="xconstraint"
-      objectPath="nodeManager"
+      objectPath="base/Level0/nodeManager"
       fieldName="TotalDisplacement"
       component="0"
       setNames="{ xpos }"/>
 
     <FieldSpecification
       name="zconstraint"
-      objectPath="nodeManager"
+      objectPath="base/Level0/nodeManager"
       fieldName="TotalDisplacement"
       component="2"
       setNames="{ all }"/>

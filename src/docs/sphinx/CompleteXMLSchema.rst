@@ -518,12 +518,6 @@ Element: ModifiedCamClay
 ========================
 .. include:: ../../coreComponents/schema/docs/ModifiedCamClay.rst
 
-.. _XML_MultiResolutionHF:
-
-Element: MultiResolutionHF
-==========================
-.. include:: ../../coreComponents/schema/docs/MultiResolutionHF.rst
-
 
 .. _XML_MultiPhaseConstantThermalConductivity:
 
@@ -536,7 +530,14 @@ Element: MultiPhaseConstantThermalConductivity
 
 Element: MultiPhaseVolumeWeightedThermalConductivity
 ====================================================
-.. include:: ../../coreComponents/schema/docs/MultiPhaseVolumeWeightedThermalConductivity.rst   
+.. include:: ../../coreComponents/schema/docs/MultiPhaseVolumeWeightedThermalConductivity.rst
+
+
+.. _XML_MultiResolutionHF:
+
+Element: MultiResolutionHF
+==========================
+.. include:: ../../coreComponents/schema/docs/MultiResolutionHF.rst
 
 
 .. _XML_MultiphasePoromechanics:
@@ -1619,6 +1620,27 @@ Datastructure: MeshBodies
 Datastructure: ModifiedCamClay
 ==============================
 .. include:: ../../coreComponents/schema/docs/ModifiedCamClay_other.rst
+
+
+.. _DATASTRUCTURE_MultiPhaseConstantThermalConductivity:
+
+Datastructure: MultiPhaseConstantThermalConductivity
+====================================================
+.. include:: ../../coreComponents/schema/docs/MultiPhaseConstantThermalConductivity_other.rst
+
+
+.. _DATASTRUCTURE_MultiPhaseVolumeWeightedThermalConductivity:
+
+Datastructure: MultiPhaseVolumeWeightedThermalConductivity
+==========================================================
+.. include:: ../../coreComponents/schema/docs/MultiPhaseVolumeWeightedThermalConductivity_other.rst
+
+
+.. _DATASTRUCTURE_MultiResolutionHF:
+
+Datastructure: MultiResolutionHF
+================================
+.. include:: ../../coreComponents/schema/docs/MultiResolutionHF_other.rst
 
 
 .. _DATASTRUCTURE_MultiphasePoromechanics:

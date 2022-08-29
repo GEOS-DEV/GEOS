@@ -224,11 +224,13 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( DofManager const & dofMa
       //get all nodes of fracturedElements(a)
       for( localIndex b=0; b < cellElementSubRegion.numNodesPerElement(); b++ )
       {
+        //if meshes arent identical, this should be nodeList(elem_mapped_to_patch(a),b) or check (2)
         localIndex c = cellElementSubRegion.nodeList( a, b );
         //append c = node b of element a
         if( !isMember( c, m_nodeFixDamage )) //avoid repetition
         {
           //USE REGISTERED ARRAY HERE
+          //(2) alternatively, we could use node_mapped_to_patch(cellElementSubRegion.nodeList(a,b))
           m_nodeFixDamage( count ) = cellElementSubRegion.nodeList( a, b );
           ++count;
         }
@@ -281,6 +283,8 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
       for( localIndex b=0; b<numBaseNodes; ++b )
       {
         //write displacements from the base domain to become a boundary condition in the patch domain
+        // a should be replaced by mapped(a) if meshes arent identical
+        // mapped(a) is the node in base that has the same physical coordinates of a in patch
         m_fixedDispList( count, 0 ) = baseDisp( a, 0 );
         m_fixedDispList( count, 1 ) = baseDisp( a, 1 );
         m_fixedDispList( count, 2 ) = baseDisp( a, 2 );
