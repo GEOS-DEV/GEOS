@@ -82,7 +82,8 @@ struct ConstitutivePassThru< SolidBase >
     ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
                                  DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic >,
-                                 DuvautLionsSolid< ElasticIsotropic >,
+                                 //DuvautLionsSolid< ElasticIsotropic >,
+                                 DuvautLionsSolid< DruckerPrager >,
                                  DruckerPragerExtended,
                                  ModifiedCamClay,
                                  DelftEgg,
@@ -131,6 +132,21 @@ struct ConstitutivePassThru< DamageBase >
     ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
                                  DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic > >::execute( constitutiveRelation,
+                                                                        std::forward< LAMBDA >( lambda ) );
+  }
+};
+  /**
+ * Specialization for the rate-dependent models.
+ */
+template<>
+struct ConstitutivePassThru< DuvautLionsBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation,
+                       LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< //DuvautLionsSolid< ElasticIsotropic >,
+                                 DuvautLionsSolid< DruckerPrager > >::execute( constitutiveRelation,
                                                                         std::forward< LAMBDA >( lambda ) );
   }
 };

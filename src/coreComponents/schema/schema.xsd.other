@@ -946,7 +946,6 @@
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 			<xsd:element name="ViscoDruckerPrager" type="ViscoDruckerPragerType" />
-			<xsd:element name="ViscoElasticIsotropic" type="ViscoElasticIsotropicType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
@@ -1940,18 +1939,6 @@
 		<xsd:attribute name="hardening" type="real64_array" />
 		<!--oldCohesion => Old cohesion state-->
 		<xsd:attribute name="oldCohesion" type="real64_array2d" />
-		<!--oldStress => Previous Material Stress-->
-		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--shearModulus => Elastic Shear Modulus Field-->
-		<xsd:attribute name="shearModulus" type="real64_array" />
-		<!--stress => Current Material Stress-->
-		<xsd:attribute name="stress" type="real64_array3d" />
-	</xsd:complexType>
-	<xsd:complexType name="ViscoElasticIsotropicType">
-		<!--bulkModulus => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="bulkModulus" type="real64_array" />
-		<!--density => Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--shearModulus => Elastic Shear Modulus Field-->

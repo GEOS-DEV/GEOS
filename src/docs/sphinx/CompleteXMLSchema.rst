@@ -1037,13 +1037,6 @@ Element: ViscoDruckerPrager
 .. include:: ../../coreComponents/schema/docs/ViscoDruckerPrager.rst
 
 
-.. _XML_ViscoElasticIsotropic:
-
-Element: ViscoElasticIsotropic
-==============================
-.. include:: ../../coreComponents/schema/docs/ViscoElasticIsotropic.rst
-
-
 .. _XML_WellControls:
 
 Element: WellControls
@@ -2138,13 +2131,6 @@ Datastructure: VanGenuchtenCapillaryPressure
 Datastructure: ViscoDruckerPrager
 =================================
 .. include:: ../../coreComponents/schema/docs/ViscoDruckerPrager_other.rst
-
-
-.. _DATASTRUCTURE_ViscoElasticIsotropic:
-
-Datastructure: ViscoElasticIsotropic
-====================================
-.. include:: ../../coreComponents/schema/docs/ViscoElasticIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_WellControls:

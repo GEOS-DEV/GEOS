@@ -63,7 +63,6 @@ ThermalCompressibleSinglePhaseFluid         node         :ref:`XML_ThermalCompre
 VanGenuchtenBakerRelativePermeability       node         :ref:`XML_VanGenuchtenBakerRelativePermeability`       
 VanGenuchtenCapillaryPressure               node         :ref:`XML_VanGenuchtenCapillaryPressure`               
 ViscoDruckerPrager                          node         :ref:`XML_ViscoDruckerPrager`                          
-ViscoElasticIsotropic                       node         :ref:`XML_ViscoElasticIsotropic`                       
 =========================================== ==== ======= ====================================================== 
 
 

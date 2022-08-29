@@ -26,6 +26,7 @@
 #include "ElasticIsotropic.hpp"
 #include "DruckerPrager.hpp"
 #include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsIsotropic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
@@ -54,7 +55,7 @@ public:
   {}
 
  // using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
+  using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps; // TODO: typo in anistropic (fix in DiscOps PR)
 
   using UPDATE_BASE::smallStrainUpdate;
   //using UPDATE_BASE::smallStrainUpdate_ElasticOnly;
@@ -64,19 +65,6 @@ public:
 
   using UPDATE_BASE::m_disableInelasticity;
 
-//TODO: modify implementation of smallStrainUpdate to use optimized stiffness -
-// this implementation uses full stiffness tensor
-//  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const & timeIncrement,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
-                                  DiscretizationOps & stiffness ) const 
-{
-  smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
-}
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -122,9 +110,22 @@ public:
   UPDATE_BASE::viscousStateUpdate( k, q, timeRatio );
   return;
   }
-
+//TODO: modify implementation of smallStrainUpdate to use optimized stiffness -
+// this implementation uses full stiffness tensor
+//  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  real64 const & timeIncrement,
+                                  real64 const ( &strainIncrement )[6],
+                                  real64 ( &stress )[6],
+                                  DiscretizationOps & stiffness ) const override final
+{
+  this->smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
+}
 
   real64 const m_relaxationTime;
+
 };
 
 

@@ -98,7 +98,7 @@ public:
                                   real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override final;
+                                  real64 ( &stiffness )[6][6] ) const override;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -106,7 +106,7 @@ public:
                                   real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
-                                  DiscretizationOps & stiffness ) const final;
+                                  DiscretizationOps & stiffness ) const;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -423,7 +423,7 @@ public:
    * @return An @p UPDATE_KERNEL object.
    */
   template< typename UPDATE_KERNEL, typename ... PARAMS >
-  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
+  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams ) const
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_friction,

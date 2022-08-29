@@ -63,7 +63,6 @@ ThermalCompressibleSinglePhaseFluid         node :ref:`DATASTRUCTURE_ThermalComp
 VanGenuchtenBakerRelativePermeability       node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability`       
 VanGenuchtenCapillaryPressure               node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure`               
 ViscoDruckerPrager                          node :ref:`DATASTRUCTURE_ViscoDruckerPrager`                          
-ViscoElasticIsotropic                       node :ref:`DATASTRUCTURE_ViscoElasticIsotropic`                       
 =========================================== ==== ================================================================ 
 
 
