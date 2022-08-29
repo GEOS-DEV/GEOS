@@ -22,6 +22,7 @@
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
@@ -76,6 +77,11 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Count for output pressure at receivers" );
 
+  registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to apply PML" );
+
 }
 
 WaveSolverBase::~WaveSolverBase()
@@ -92,6 +98,25 @@ void WaveSolverBase::reinit()
 void WaveSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
+}
+
+void WaveSolverBase::postProcessInput()
+{
+  SolverBase::postProcessInput();
+
+  /// set flag PML to one if a PML field is specified in the xml
+  /// if counter>1, an error will be thrown as one single PML field is allowed
+  integer counter = 0;
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & )
+  {
+    counter += 1;
+  } );
+  GEOSX_THROW_IF( counter > 1,
+                  "One single PML field specification is allowed",
+                  InputError );
+
+  m_usePML = counter;
 }
 
 
