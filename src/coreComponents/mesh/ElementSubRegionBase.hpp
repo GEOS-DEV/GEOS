@@ -250,13 +250,14 @@ protected:
   {
     arrayView2d< real64 > const & elementCenters = m_elementCenter;
     localIndex const nNodes = numNodesPerElement();
+    auto const e2n = toNodesRelation.toViewConst();
 
     forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
     {
-      LvArray::tensorOps::copy< 3 >( elementCenters[k], X[toNodesRelation( k, 0 )] );
+      LvArray::tensorOps::copy< 3 >( elementCenters[k], X[e2n( k, 0 )] );
       for( localIndex a = 1; a < nNodes; ++a )
       {
-        LvArray::tensorOps::add< 3 >( elementCenters[k], X[toNodesRelation( k, a )] );
+        LvArray::tensorOps::add< 3 >( elementCenters[k], X[e2n( k, a )] );
       }
 
       LvArray::tensorOps::scale< 3 >( elementCenters[k], 1.0 / nNodes );
