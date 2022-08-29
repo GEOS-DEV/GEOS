@@ -9,7 +9,7 @@
 **Context**
 
 In this example, we simulate a CO2 core flood experiment representing immiscible transport of two-phase
-flow (CO2 and water) through porous media `(Ekechukwu et al., 2022) <https://arxiv.org/pdf/2203.05021.pdf>`__. This problem is solved using the multiphase flow solver in GEOSX to obtain the temporal evolution of saturation along the flow direction, and verified against the Buckley-Leverett analytical solutions `(Arabzai and Honma, 2013)  <http://bulletin.soe.u-tokai.ac.jp/english_vol38/20_25.pdf>`__.
+flow (CO2 and water) through porous media `(Ekechukwu et al., 2022) <https://arxiv.org/pdf/2203.05021.pdf>`__. This problem is solved using the multiphase flow solver in GEOSX to obtain the temporal evolution of saturation along the flow direction, and verified against the Buckley-Leverett analytical solutions `(Buckley and Leverett, 1942;  <https://onepetro.org/TRANS/article/146/01/107/161720/Mechanism-of-Fluid-Displacement-in-Sands>`__ `Arabzai and Honma, 2013)  <http://bulletin.soe.u-tokai.ac.jp/english_vol38/20_25.pdf>`__.
 
 
 **Input file**
@@ -56,10 +56,10 @@ We set up and solve a multiphase flow model to obtain the spatial and temporal s
 A power-law Brooks-Corey relation is used here to describe gas :math:`k_{rg}` and water :math:`k_{rw}` relative permeabilities: 
 
 .. math::
-   k_{rg} = {k_{rg}}^{0} { {S_g}^{\star} }^{n_g}
+   k_{rg} = {k_{rg}}^{0} { \left( {S_g}^{\star} \right) }^{n_g}
 
 .. math::
-   k_{rw} = {k_{rw}}^{0} { {S_w}^{\star} }^{n_w}
+   k_{rw} = {k_{rw}}^{0} { \left( {S_w}^{\star} \right) }^{n_w}
 
 where :math:`{k_{rg}}^{0}` and :math:`{k_{rw}}^{0}` are the maximum relative permeability of gas and water phase respectively; :math:`n_g` and :math:`n_w` are the Corey exponents; dimensionless volume fraction (saturation) of gas phase :math:`{S_g}^{\star}` and water phase :math:`{S_w}^{\star}` are given as:
 
@@ -81,7 +81,7 @@ where :math:`\mu_g` and :math:`\mu_w` represent the viscosity of gas and water p
 The position of a particular saturation is given as a function of the injection time :math:`t` and the value of the derivative :math:`\frac{df_g}{dS_g}` at that saturation:
 
 .. math::
-   x_{S_g} = \frac {Q_T t } { A \phi} {(\frac{df_g}{dS_g})}
+   x_{S_g} = \frac {Q_T t } { A \phi} { \left( \frac{df_g}{dS_g} \right) }
 
 where :math:`Q_T` is the total flow rate, :math:`A` is the area of the cross-section in the core sample, :math:`\phi` is the rock porosity. In addition, the abrupt saturation front is determined based on the tangent point on the fractional flow curve. 
 
