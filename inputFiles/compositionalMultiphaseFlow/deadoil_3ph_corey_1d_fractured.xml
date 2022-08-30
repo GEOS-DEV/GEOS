@@ -108,7 +108,6 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      faceBlock="embeddedSurfaceSubRegion"
       defaultAperture="1.0e-4"
       materialList="{ fluid1, fractureFilling, relperm }"
       subRegionType="embeddedElement"/>
@@ -178,7 +177,7 @@
       name="initialFracturePressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="pressure"
       scale="5e6"/>
 
@@ -196,7 +195,7 @@
       name="initialCompositionFracture_oil"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="globalCompFraction"
       component="0"
       scale="0.6"/>
@@ -214,7 +213,7 @@
       name="initialCompositionFracture_gas"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="globalCompFraction"
       component="1"
       scale="0.399"/>
@@ -232,7 +231,7 @@
       name="initialCompositionFracture_water"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="globalCompFraction"
       component="2"
       scale="0.001"/>

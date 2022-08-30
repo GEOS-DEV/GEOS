@@ -54,7 +54,6 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      faceBlock="embeddedSurfaceSubRegion"
       subRegionType="embeddedElement"
       materialList="{ fractureContact }"
       defaultAperture="1e-3"/>
@@ -125,7 +124,7 @@
     <FieldSpecification
       name="Traction"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="traction"
       component="0"
       scale="-1.00e5"/>

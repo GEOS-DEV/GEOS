@@ -110,7 +110,6 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      faceBlock="embeddedSurfaceSubRegion"
       subRegionType="embeddedElement"
       materialList="{ water, fractureFilling, fractureContact }"
       defaultAperture="1e-3"/>
@@ -192,7 +191,7 @@
     <FieldSpecification
       name="initialPressureFracture"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="pressure"
       scale="1.0e5"/>
 

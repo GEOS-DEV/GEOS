@@ -276,7 +276,7 @@
       name="initialPressureFracture"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="pressure"
       scale="0.0"/>
 

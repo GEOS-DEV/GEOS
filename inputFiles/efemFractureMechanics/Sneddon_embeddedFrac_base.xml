@@ -125,10 +125,10 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
       
-      <FieldSpecification
+    <FieldSpecification
       name="Traction"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="traction"
       component="0"
       scale="-2.0e6"/>      
