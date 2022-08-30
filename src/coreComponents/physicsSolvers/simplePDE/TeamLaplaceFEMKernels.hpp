@@ -30,6 +30,7 @@
 #include "finiteElement/TeamKernelInterface/StackVariables/MeshStackVariables.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/ElementStackVariables.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/QuadratureWeightsStackVariables.hpp"
+#include "finiteElement/TeamKernelInterface/StackVariables/SharedStackVariables.hpp"
 #include "finiteElement/TeamKernelInterface/StackVariables/SharedMemStackVariables.hpp"
 
 #include "common/DataTypes.hpp"
@@ -318,6 +319,194 @@ using TeamLaplaceFEMKernelFactory = finiteElement::KernelFactory< TeamLaplaceFEM
 using TeamLaplaceFEMKernelFactory2 = finiteElement::KernelFactory< TeamLaplaceFEMKernel,
                                                                   arrayView1d< real64 const > const,
                                                                   arrayView1d< real64 > const >;
+
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+class TeamLaplaceFEMDiagonalKernel :
+  public finiteElement::TeamKernelBase< SUBREGION_TYPE,
+                                        CONSTITUTIVE_TYPE,
+                                        FE_TYPE,
+                                        1,
+                                        1 >
+{
+public:
+  /// An alias for the base class.
+  using Base = finiteElement::TeamKernelBase< SUBREGION_TYPE,
+                                              CONSTITUTIVE_TYPE,
+                                              FE_TYPE,
+                                              1,
+                                              1 >;
+
+  /**
+   * @brief Constructor
+   * @copydoc geosx::finiteElement::TeamKernelBase::TeamKernelBase
+   * @param fieldName The name of the primary field
+   *                  (i.e. Temperature, Pressure, etc.)
+   */
+  TeamLaplaceFEMDiagonalKernel( NodeManager const & nodeManager,
+                                EdgeManager const & edgeManager,
+                                FaceManager const & faceManager,
+                                localIndex const targetRegionIndex,
+                                SUBREGION_TYPE const & elementSubRegion,
+                                FE_TYPE const & finiteElementSpace,
+                                CONSTITUTIVE_TYPE & inputConstitutiveType, // end of default args
+                                arrayView1d< real64 > const inputDiag ):
+    Base( elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType ),
+    m_X( nodeManager.referencePosition() ),
+    m_diag( inputDiag )
+  {
+    GEOSX_UNUSED_VAR( edgeManager );
+    GEOSX_UNUSED_VAR( faceManager );
+    GEOSX_UNUSED_VAR( targetRegionIndex );
+  }
+
+  //***************************************************************************
+  /**
+   * @class StackVariables
+   * @copydoc geosx::finiteElement::TeamKernelBase::StackVariables
+   *
+   * Adds a stack array for the primary field.
+   */
+  struct StackVariables : public Base::StackVariables
+  {
+    static constexpr localIndex dim = 3;
+    static constexpr localIndex num_dofs_mesh_1d = 2; // TODO
+    static constexpr localIndex num_dofs_1d = 2; // TODO
+    using Base::StackVariables::num_quads_1d;
+    using Base::StackVariables::batch_size;
+  
+    /**
+     * @brief Constructor
+     */
+    GEOSX_HOST_DEVICE
+    StackVariables( TeamLaplaceFEMDiagonalKernel const & kernelComponent,
+                    LaunchContext & ctx ):
+      Base::StackVariables( ctx ),
+      kernelComponent( kernelComponent ),
+      mesh( ctx ),
+      element_basis( ctx ),
+      quad_values( ctx ),
+      diag( ctx ),
+      weights( ctx ),
+      shared_mem( ctx )
+    {}
+
+    TeamLaplaceFEMDiagonalKernel const & kernelComponent;
+
+    // TODO alias shared buffers / Generalize for non-tensor elements
+    MeshStackVariables< num_dofs_mesh_1d, num_quads_1d, dim, batch_size > mesh;
+    BasisStackVariables< num_dofs_1d, num_quads_1d > element_basis;
+    Shared2DStackVariables< num_quads_1d, dim, batch_size > quad_values;
+    SharedStackVariables< num_dofs_1d, batch_size > diag;
+    QuadratureWeightsStackVariables< num_quads_1d > weights;
+
+    /// Shared memory buffers, using buffers allows to avoid using too much shared memory.
+    static constexpr localIndex buffer_size = num_quads_1d * num_quads_1d * num_quads_1d * dim * dim;
+    static constexpr localIndex num_buffers = 2;
+    SharedMemStackVariables< buffer_size, num_buffers, batch_size > shared_mem;
+  };
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void kernelSetup( StackVariables & stack ) const
+  {
+  }
+
+  /**
+   * @brief Copy global values from primary field to a local stack array.
+   * @copydoc geosx::finiteElement::TeamKernelBase::setup
+   *
+   * For the TeamLaplaceFEMKernel implementation, global values from the
+   * primaryField, and degree of freedom numbers are placed into element local
+   * stack storage.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void setup( StackVariables & stack,
+              localIndex const element_index ) const
+  {
+    Base::setup( stack, element_index );
+    /// Computation of the Jacobians
+    readField( stack, stack.kernelComponent.m_X, stack.mesh.getNodes() );
+    interpolateGradientAtQuadraturePoints( stack,
+                                           stack.mesh.basis.getValuesAtQuadPts(),
+                                           stack.mesh.basis.getGradientValuesAtQuadPts(),
+                                           stack.mesh.getNodes(),
+                                           stack.mesh.getJacobians() );
+  }
+
+  /**
+   * @copydoc geosx::finiteElement::TeamKernelBase::quadraturePointKernel
+   */
+  template < typename QuadraturePointIndex >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void quadraturePointKernel( StackVariables & stack,
+                              QuadraturePointIndex const & quad_index ) const
+  {
+    /// QFunction for Laplace operator
+    constexpr int dim = StackVariables::dim;
+
+    // load q-local jacobian
+    real64 J[ dim ][ dim ];
+    qLocalLoad( quad_index, stack.mesh.getJacobians(), J );
+
+    // Compute D_q = w_q * det(J_q) * J_q^-1 * J_q^-T = w_q / det(J_q) * adj(J_q) * adj(J_q)^T
+    real64 const weight = stack.weights( quad_index );
+
+    real64 const detJ = determinant( J );
+
+    real64 AdjJ[ dim ][ dim ];
+    adjugate( J, AdjJ );
+
+    real64 D[ dim ][ dim ];
+    D[0][0] = weight / detJ * (AdjJ[0][0]*AdjJ[0][0] + AdjJ[0][1]*AdjJ[0][1] + AdjJ[0][2]*AdjJ[0][2]);
+    D[1][0] = weight / detJ * (AdjJ[0][0]*AdjJ[1][0] + AdjJ[0][1]*AdjJ[1][1] + AdjJ[0][2]*AdjJ[1][2]);
+    D[2][0] = weight / detJ * (AdjJ[0][0]*AdjJ[2][0] + AdjJ[0][1]*AdjJ[2][1] + AdjJ[0][2]*AdjJ[2][2]);
+    D[0][1] = D[1][0];
+    D[1][1] = weight / detJ * (AdjJ[1][0]*AdjJ[1][0] + AdjJ[1][1]*AdjJ[1][1] + AdjJ[1][2]*AdjJ[1][2]);
+    D[2][1] = weight / detJ * (AdjJ[1][0]*AdjJ[2][0] + AdjJ[1][1]*AdjJ[2][1] + AdjJ[1][2]*AdjJ[2][2]);
+    D[0][2] = D[2][0];
+    D[1][2] = D[2][1];
+    D[2][2] = weight / detJ * (AdjJ[2][0]*AdjJ[2][0] + AdjJ[2][1]*AdjJ[2][1] + AdjJ[2][2]*AdjJ[2][2]);
+
+    qLocalWrite( quad_index, D, stack.quad_values.getValues() );
+  }
+
+  /**
+   * @copydoc geosx::finiteElement::TeamKernelBase::complete
+   *
+   * Form element residual from the fully formed element Jacobian dotted with
+   * the primary field and map the element local Jacobian/Residual to the
+   * global matrix/vector.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  real64 complete( StackVariables & stack ) const
+  {
+    using RAJA::RangeSegment;
+
+    computeGradGradLocalDiagonal( stack,
+                                  stack.element_basis.getValuesAtQuadPts(),
+                                  stack.element_basis.getGradientValuesAtQuadPts(),
+                                  stack.quad_values.getValues(),
+                                  stack.diag.getValues() );
+    writeAddField( stack, stack.diag.getValues(), stack.kernelComponent.m_diag );
+
+    return 0.0;
+  }
+
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
+  arrayView1d< real64 > const m_diag;
+};
+
+using TeamLaplaceFEMDiagonalKernelFactory = finiteElement::KernelFactory< TeamLaplaceFEMDiagonalKernel,
+                                                                          arrayView1d< real64 > const >;
 
 } // namesapce geosx
 
