@@ -1,6 +1,6 @@
 set(CONFIG_NAME "sherlock-gcc10-ompi4.1.2-openblas0.3.10" CACHE PATH "")
 
-set(SOFTWARE_ROOT ${SOFTWARE_ROOT} CACHE PATH "")
+set(SOFTWARE_ROOT /share/software/user/open CACHE PATH "")
 set(GCC_ROOT "${SOFTWARE_ROOT}/gcc/10.1.0" CACHE PATH "")
 set(MPI_ROOT "${SOFTWARE_ROOT}/openmpi/4.1.2" CACHE PATH "")
 
