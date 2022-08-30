@@ -42,12 +42,6 @@ SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::defaultApertureString(), &m_defaultAperture ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The default aperture of newly formed surface elements." );
-
-  // Default "faceElementSubRegion" is temporary during the refactoring of the fault and fracture import.
-  registerWrapper( viewKeyStruct::faceBlockString(), &m_faceBlockName ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( "faceElementSubRegion" ).
-    setDescription( "The name of the face block in the mesh." );
 }
 
 SurfaceElementRegion::~SurfaceElementRegion()
