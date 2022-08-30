@@ -1,7 +1,8 @@
 set(CONFIG_NAME "sherlock-gcc10-ompi4.1.2-openblas0.3.10" CACHE PATH "")
 
-set(GCC_ROOT "/share/software/user/open/gcc/10.1.0" CACHE PATH "")
-set(MPI_ROOT "/share/software/user/open/openmpi/4.1.2" CACHE PATH "")
+set(SOFTWARE_ROOT ${SOFTWARE_ROOT} CACHE PATH "")
+set(GCC_ROOT "${SOFTWARE_ROOT}/gcc/10.1.0" CACHE PATH "")
+set(MPI_ROOT "${SOFTWARE_ROOT}/openmpi/4.1.2" CACHE PATH "")
 
 site_name(HOST_NAME)
 
@@ -23,17 +24,18 @@ set(MPIEXEC_NUMPROC_FLAG "-n" CACHE STRING "")
 set(ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC ON CACHE BOOL "")
 
 # CUDA options
-set(ENABLE_CUDA OFF)
+set(ENABLE_CUDA OFF CACHE PATH "" FORCE)
 
 # Blas/Lapack options
-set(BLAS_LIBRARIES "/share/software/user/open/openblas/0.3.10/lib/libopenblas.so" CACHE STRING "")
-set(LAPACK_LIBRARIES "/share/software/user/open/openblas/0.3.10/lib/libopenblas.so" CACHE STRING "")
+set(OPENBLAS_ROOT "${SOFTWARE_ROOT}/openblas/0.3.10" CACHE STRING "")
+set(BLAS_LIBRARIES "${OPENBLAS_ROOT}/lib/libopenblas.so" CACHE STRING "")
+set(LAPACK_LIBRARIES "${OPENBLAS_ROOT}/lib/libopenblas.so" CACHE STRING "")
 
 # Python options
 #set(ENABLE_PYLVARRAY ON CACHE BOOL "")
 #set(ENABLE_PYGEOSX ON CACHE BOOL "")
-#set(PYTHON_DIR "/share/software/user/open/python/3.6.1" CACHE PATH "")
-#set(Python3_EXECUTABLE "/share/software/user/open/python/3.6.1/bin/python3" CACHE PATH "")
+#set(PYTHON_DIR "${SOFTWARE_ROOT}/python/3.6.1" CACHE PATH "")
+#set(Python3_EXECUTABLE "${SOFTWARE_ROOT}/python/3.6.1/bin/python3" CACHE PATH "")
 
 set(ENABLE_VALGRIND OFF CACHE BOOL "")
 set(ENABLE_CALIPER ON CACHE BOOL "")
