@@ -183,7 +183,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
 
   ArrayOfArraysView< localIndex > const facesToNodes = nodeList().toView();
 
-  elemManager.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion const & subRegion )
+  elemManager.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&] ( auto const & subRegion )
   {
     subRegion.calculateElementCenters( X );
   } );

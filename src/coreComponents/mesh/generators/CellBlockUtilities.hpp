@@ -24,6 +24,17 @@ namespace geosx
 {
 
 /**
+ * @brief Container for maps from a mesh object (node, edge or face) to cells.
+ * @tparam T underlying map type
+ */
+template< typename T >
+struct ToCellRelation
+{
+  T toBlockIndex; ///< Map containing a list of cell block indices for each object
+  T toCellIndex;  ///< Map containing cell indices, same shape as above
+};
+
+/**
  * @brief Free function that generates face to edges, edge to faces and edge to nodes mappings.
  * @param[in] numNodes The number of nodes.
  * @param[in] faceToNodeMap Face to node mappings as an input.
