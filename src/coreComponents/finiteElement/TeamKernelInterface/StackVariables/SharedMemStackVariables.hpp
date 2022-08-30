@@ -26,6 +26,7 @@
 namespace geosx
 {
 
+// TODO: Rename in ShareMemBuffersStackVariables ?
 template < localIndex buffer_size, localIndex num_buffers, localIndex batch_size >
 struct SharedMemStackVariables
 {
