@@ -41,6 +41,8 @@ public:
 
   virtual void apply( ParallelVector const & src, ParallelVector & dst ) const;
 
+  void computeDiagonal( ParallelVector & diagonal ) const;
+
   virtual globalIndex numGlobalRows() const;
 
   virtual globalIndex numGlobalCols() const;

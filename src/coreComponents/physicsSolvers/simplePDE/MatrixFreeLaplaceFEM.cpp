@@ -88,6 +88,35 @@ void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVe
   dst.close();
 }
 
+void MatrixFreeLaplaceFEMOperator::computeDiagonal( ParallelVector & diagonal ) const
+{
+  diagonal.zero();
+  arrayView1d< real64 > const localDiag = diagonal.open();
+  for( auto const & target: m_meshTargets )
+  {
+    string const meshBodyName = target.first;
+    arrayView1d< string const > const & regionNames = target.second.toViewConst();
+    MeshBody & meshBody = m_meshBodies.getGroup< MeshBody >( meshBodyName );
+    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
+    {
+
+      TeamLaplaceFEMDiagonalKernelFactory kernelFactory( localDiag );
+
+      string const dummyString = "dummy";
+      finiteElement::
+        regionBasedKernelApplication< team_launch_policy,
+                                      constitutive::NullModel,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              m_finiteElementName,
+                                                              dummyString,
+                                                              kernelFactory );
+
+    } );
+  }
+  diagonal.close();
+}
+
 globalIndex MatrixFreeLaplaceFEMOperator::numGlobalRows() const
 {
   return m_dofManager.numGlobalDofs();
