@@ -49,6 +49,11 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Defines whether to use static condensation or not." );
+
+  this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
+    setInputFlag( dataRepository::InputFlags::FALSE );
+
+
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()

@@ -111,7 +111,6 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 
       if( !(mesh.isShallowCopy() ) )
       {
-        std::cout<<"FluxApproximationBase::initializePostInitialConditionsPreSubGroups(): "<<mesh.getName()<<std::endl;
         // Group structure: mesh1/finiteVolumeStencils/myTPFA
 
         Group & stencilParentGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() );

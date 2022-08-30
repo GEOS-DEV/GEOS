@@ -149,43 +149,43 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           }
         } );
 
-      GEOSX_ERROR_IF( !levelFound,
-                      GEOSX_FMT( "MeshLevel ({}) is specified, but not found.",
-                                 targetTokens[1] ) );
+        GEOSX_ERROR_IF( !levelFound,
+                        GEOSX_FMT( "MeshLevel ({}) is specified, but not found.",
+                                   targetTokens[1] ) );
+      }
     }
-  }
-  else if( !meshBody.getMeshLevels().hasGroup< MeshLevel >( targetTokens[1] ) )
-  {
-    GEOSX_LOG_RANK_0( "In TimeHistoryCollection.hpp, Mesh Level Discretization not specified, "
-                      "using baseDiscretizationString()." );
-
-    string const baseMeshLevelName = MeshBody::groupStructKeys::baseDiscretizationString();
-    ++targetTokenLength;
-    targetTokens.insert( 1, &baseMeshLevelName, (&baseMeshLevelName)+1 );
-  }
-
-  string meshLevelName = targetTokens[1];
-  MeshLevel const & meshLevel = meshBody.getMeshLevel( meshLevelName );
-  targetGroup = &meshLevel;
-
-
-  if( targetTokens[2]== MeshLevel::groupStructKeys::elemManagerString() )
-  {
-    ElementRegionManager const & elemRegionManager = meshLevel.getElemManager();
-    string const elemRegionName = targetTokens[3];
-    ElementRegionBase const & elemRegion = elemRegionManager.getRegion( elemRegionName );
-    string const elemSubRegionName = targetTokens[4];
-    ElementSubRegionBase const & elemSubRegion = elemRegion.getSubRegion( elemSubRegionName );
-    targetGroup = &elemSubRegion;
-  }
-  else
-  {
-    for( localIndex pathLevel = 2; pathLevel < targetTokenLength; ++pathLevel )
+    else if( !meshBody.getMeshLevels().hasGroup< MeshLevel >( targetTokens[1] ) )
     {
-      targetGroup = targetGroup->getGroupPointer( targetTokens[pathLevel] );
+      GEOSX_LOG_RANK_0( "In TimeHistoryCollection.hpp, Mesh Level Discretization not specified, "
+                        "using baseDiscretizationString()." );
+
+      string const baseMeshLevelName = MeshBody::groupStructKeys::baseDiscretizationString();
+      ++targetTokenLength;
+      targetTokens.insert( 1, &baseMeshLevelName, (&baseMeshLevelName)+1 );
     }
-  }
-  return targetGroup;
+
+    string meshLevelName = targetTokens[1];
+    MeshLevel const & meshLevel = meshBody.getMeshLevel( meshLevelName );
+    targetGroup = &meshLevel;
+
+
+    if( targetTokens[2]== MeshLevel::groupStructKeys::elemManagerString() )
+    {
+      ElementRegionManager const & elemRegionManager = meshLevel.getElemManager();
+      string const elemRegionName = targetTokens[3];
+      ElementRegionBase const & elemRegion = elemRegionManager.getRegion( elemRegionName );
+      string const elemSubRegionName = targetTokens[4];
+      ElementSubRegionBase const & elemSubRegion = elemRegion.getSubRegion( elemSubRegionName );
+      targetGroup = &elemSubRegion;
+    }
+    else
+    {
+      for( localIndex pathLevel = 2; pathLevel < targetTokenLength; ++pathLevel )
+      {
+        targetGroup = targetGroup->getGroupPointer( targetTokens[pathLevel] );
+      }
+    }
+    return targetGroup;
   }
 }
 

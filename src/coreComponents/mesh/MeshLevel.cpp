@@ -697,19 +697,5 @@ bool MeshLevel::isShallowCopyOf( MeshLevel const & comparisonLevel ) const
          isShallowCopy();
 }
 
-bool MeshLevel::areShallowSiblings( MeshLevel const & level0,
-                                    MeshLevel const & level1 )
-{
-  return ( level0.m_nodeManager        == level1.m_nodeManager ) &&
-         ( level0.m_edgeManager        == level1.m_edgeManager ) &&
-         ( level0.m_faceManager        == level1.m_faceManager ) &&
-         ( level0.m_elementManager     == level1.m_elementManager ) &&
-         ( level0.m_embSurfNodeManager == level1.m_embSurfNodeManager) &&
-         ( level0.m_embSurfEdgeManager == level1.m_embSurfEdgeManager ) &&
-         ( level0.m_isShallowCopy      && level1.m_isShallowCopy );
-
-}
-
-
 
 } /* namespace geosx */

@@ -529,6 +529,7 @@ void ProblemManager::generateMesh()
   map< std::pair< string, Group const * const >, arrayView1d< string const > const >
   discretizations = getFiniteElementDiscretizations();
 
+  // setup the base discretizations
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
@@ -542,13 +543,12 @@ void ProblemManager::generateMesh()
 
   } );
 
-
+  // setup the base discretizations associated with a numerical method
   for( auto const & discretizationPair: discretizations )
   {
     string const & meshBodyName = discretizationPair.first.first;
     MeshBody & meshBody = domain.getMeshBody( meshBodyName );
 
-    int order = 1;
     if( discretizationPair.first.second!=nullptr )
     {
       FiniteElementDiscretization const * const
@@ -556,7 +556,7 @@ void ProblemManager::generateMesh()
 
       if( feDiscretization != nullptr )
       {
-        order = feDiscretization->getOrder();
+        int const order = feDiscretization->getOrder();
         string const & discretizationName = feDiscretization->getName();
         arrayView1d< string const > const regionNames = discretizationPair.second;
         CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
@@ -565,7 +565,7 @@ void ProblemManager::generateMesh()
         {
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                                        discretizationName,
-                                                       feDiscretization->getOrder() );
+                                                       order );
 
           this->generateDiscretization( mesh,
                                         cellBlockManager,
@@ -680,8 +680,7 @@ ProblemManager::getFiniteElementDiscretizations() const
       discretization = fvDiscretizationManager.getGroupPointer( discretizationName );
     }
 
-
-    if( discretization != nullptr )
+    if( discretization!=nullptr )
     {
       solver.forDiscretizationOnMeshTargets( meshBodies,
                                              [&]( string const & meshBodyName,

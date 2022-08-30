@@ -230,10 +230,19 @@ public:
    */
   bool isShallowCopyOf( MeshLevel const & comparisonLevel ) const;
 
-  static bool areShallowSiblings( MeshLevel const & level0,
-                                  MeshLevel const & level1 );
 
+  /**
+   * @brief If this is a shallow clone of another MeshLevel, then return the source MeshLevel.
+   *
+   * @return MeshLevel const&
+   */
   MeshLevel const & getShallowParent() const;
+
+  /**
+   * @brief If this is a shallow clone of another MeshLevel, then return the source MeshLevel.
+   *
+   * @return MeshLevel const&
+   */
   MeshLevel & getShallowParent();
 
   ///@}

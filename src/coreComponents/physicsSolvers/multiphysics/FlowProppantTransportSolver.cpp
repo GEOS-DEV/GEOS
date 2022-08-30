@@ -32,10 +32,7 @@ using namespace constitutive;
 FlowProppantTransportSolver::FlowProppantTransportSolver( const string & name,
                                                           Group * const parent ):
   Base( name, parent )
-{
-  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-    setInputFlag( InputFlags::FALSE );
-}
+{}
 
 void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
                                                  real64 const & dt,
