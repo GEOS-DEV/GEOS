@@ -98,7 +98,7 @@ public:
    */
   ///@{
 
-  virtual void generateMesh( Group & ) override;
+  virtual void generateMesh( Group & faceBlocks ) override;
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.
@@ -155,6 +155,9 @@ public:
 
     /// @return Rupture time string
     static constexpr char const * ruptureTimeString() { return "ruptureTime"; }
+
+    /// @return Face block string
+    static constexpr char const * faceBlockString() { return "faceBlock"; }
   };
 
 protected:
@@ -166,6 +169,12 @@ private:
 
   real64 m_defaultAperture;
 
+  /**
+   * @brief One @p SurfaceElementRegion being made of one single sub-region,
+   * we get the name of the corresponding @p FaceBlockABC
+   * that will contain the mesh data to be imported.
+   */
+  string m_faceBlockName;
 };
 
 /// Declare strings associated with enumeration values.

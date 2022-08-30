@@ -100,13 +100,9 @@ public:
 
   /**
    * @brief Generate mesh.
-   * @param cellBlocks cell blocks where the mesh is generated
+   * @param blocks Cell or face blocks from where the mesh is extracted.
    */
-  virtual void generateMesh( Group & cellBlocks )
-  {
-    GEOSX_UNUSED_VAR( cellBlocks );
-    GEOSX_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called." );
-  }
+  virtual void generateMesh( Group & blocks ) = 0;
 
   ///@}
 

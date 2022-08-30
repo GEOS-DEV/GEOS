@@ -3711,6 +3711,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
 		<!--defaultAperture => The default aperture of newly formed surface elements.-->
 		<xsd:attribute name="defaultAperture" type="real64" use="required" />
+		<!--faceBlock => The name of the face block in the mesh.-->
+		<xsd:attribute name="faceBlock" type="string" default="faceElementSubRegion" />
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--meshBody => Mesh body that contains this region-->

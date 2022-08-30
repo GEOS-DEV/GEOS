@@ -37,16 +37,20 @@ SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::defaultApertureString(), &m_defaultAperture ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The default aperture of newly formed surface elements." );
+
+  // Default "faceElementSubRegion" is temporary during the refactoring of the fault and fracture import.
+  registerWrapper( viewKeyStruct::faceBlockString(), &m_faceBlockName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( "faceElementSubRegion" ).
+    setDescription( "The name of the face block in the mesh." );
 }
 
 SurfaceElementRegion::~SurfaceElementRegion()
 {}
 
 
-void SurfaceElementRegion::generateMesh( Group & cellBlocks )
+void SurfaceElementRegion::generateMesh( Group & faceBlocks )
 {
-  GEOSX_UNUSED_VAR( cellBlocks );
-
   Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
 
   if( m_subRegionType == SurfaceSubRegionType::embeddedElement )
@@ -55,7 +59,16 @@ void SurfaceElementRegion::generateMesh( Group & cellBlocks )
   }
   else if( m_subRegionType == SurfaceSubRegionType::faceElement )
   {
-    elementSubRegions.registerGroup< FaceElementSubRegion >( "faceElementSubRegion" );
+    FaceElementSubRegion & subRegion = elementSubRegions.registerGroup< FaceElementSubRegion >( m_faceBlockName );
+    if( faceBlocks.hasGroup( m_faceBlockName ) )
+    {
+      FaceBlockABC const & source = faceBlocks.getGroup< FaceBlockABC >( m_faceBlockName );
+      subRegion.copyFromCellBlock( source );
+    }
+    else
+    {
+      GEOSX_INFO( "No face block \"" << m_faceBlockName << "\" was found in the mesh. Empty surface region was created." );
+    }
   }
 }
 
