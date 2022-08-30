@@ -133,7 +133,7 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
     m_numComponents = fluid0.numFluidComponents();
   }
   m_numDofPerWellElement = m_numComponents + 2; // 1 pressure + NC compositions + 1 connectionRate
-  m_numDofPerResElement = m_numComponents + 1;
+  m_numDofPerResElement = m_numComponents + 1; // 1 pressure + NC compositions
 
   // loop over the wells
   forMeshTargets( meshBodies, [&] ( string const &,

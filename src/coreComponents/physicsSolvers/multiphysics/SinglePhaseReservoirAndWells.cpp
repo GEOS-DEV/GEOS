@@ -77,30 +77,54 @@ SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
 ~SinglePhaseReservoirAndWells()
 {}
 
+template<>
+SinglePhaseBase const *
+SinglePhaseReservoirAndWells< SinglePhaseBase >::
+flowSolver() const
+{
+  return this->reservoirSolver();
+}
+
+template<>
+SinglePhaseBase const *
+SinglePhaseReservoirAndWells< SinglePhasePoromechanicsSolver >::
+flowSolver() const
+{
+  return this->reservoirSolver()->flowSolver();
+}
+
+template<>
+void
+SinglePhaseReservoirAndWells< SinglePhaseBase >::
+setMGRStrategy()
+{
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM;
+  }
+  else
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
+  }
+}
+
+template<>
+void
+SinglePhaseReservoirAndWells< SinglePhasePoromechanicsSolver >::
+setMGRStrategy()
+{
+  // not implemented yet
+}
+
+
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >
 void
 SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
-
-  // if the reservoir solver is a coupled solver itself
-  if( auto const * const ptr = dynamicCast< SinglePhasePoromechanicsSolver const * >( this->reservoirSolver() ) )
-  {
-    Base::wellSolver()->setFlowSolverName( ptr->flowSolver()->getName() );
-    // TODO: add an MGR recipe here
-  }
-  else // the reservoir solver is a flow solver
-  {
-    Base::wellSolver()->setFlowSolverName( Base::m_names[toUnderlying( Base::SolverType::Reservoir )] );
-    if( dynamicCast< SinglePhaseFVM< SinglePhaseBase > * >( this->reservoirSolver() ) )
-    {
-      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
-    }
-    else if( dynamicCast< SinglePhaseHybridFVM * >( this->reservoirSolver() ) )
-    {
-      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM;
-    }
-  }
+  SinglePhaseBase const * const flowSolver = this->flowSolver();
+  Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
+  setMGRStrategy();
 }
 
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >

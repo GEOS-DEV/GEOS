@@ -82,35 +82,57 @@ CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
 ~CompositionalMultiphaseReservoirAndWells()
 {}
 
+template<>
+CompositionalMultiphaseBase const *
+CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::
+flowSolver() const
+{
+  return this->reservoirSolver();
+}
+
+template<>
+CompositionalMultiphaseBase const *
+CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver >::
+flowSolver() const
+{
+  return this->reservoirSolver()->flowSolver();
+}
+
+template<>
+void
+CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::
+setMGRStrategy()
+{
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM )
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
+  }
+  else
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
+  }
+}
+
+template<>
+void
+CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver >::
+setMGRStrategy()
+{
+  // Not implemented yet
+}
+
+
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
 void
 CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
-  integer useMassFlow = 0;
+  CompositionalMultiphaseBase const * const flowSolver = this->flowSolver();
+  Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
+  setMGRStrategy();
 
-  // if the reservoir solver is a coupled solver itself
-  if( auto const * const ptr = dynamicCast< MultiphasePoromechanicsSolver const * >( this->reservoirSolver() ) )
-  {
-    useMassFlow = ptr->flowSolver()->template getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
-    Base::wellSolver()->setFlowSolverName( ptr->flowSolver()->getName() );
-    // TODO: add an MGR recipe here
-  }
-  else // the reservoir solver is a flow solver
-  {
-    useMassFlow = Base::reservoirSolver()->template getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
-    Base::wellSolver()->setFlowSolverName( Base::m_names[toUnderlying( Base::SolverType::Reservoir )] );
-    if( dynamicCast< CompositionalMultiphaseFVM * >( this->reservoirSolver() ) )
-    {
-      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
-    }
-    else if( dynamicCast< CompositionalMultiphaseHybridFVM * >( this->reservoirSolver() ) )
-    {
-      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
-    }
-  }
-
-  integer const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
+  bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );;
+  bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
   GEOSX_THROW_IF( useMassFlow != useMassWell,
                   GEOSX_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
                              this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),

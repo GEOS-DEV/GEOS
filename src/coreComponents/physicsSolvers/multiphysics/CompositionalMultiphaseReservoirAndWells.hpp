@@ -72,6 +72,12 @@ protected:
 
   virtual void initializePreSubGroups() override;
 
+private:
+
+  CompositionalMultiphaseBase const * flowSolver() const;
+
+  void setMGRStrategy();
+
 };
 
 } /* namespace geosx */
