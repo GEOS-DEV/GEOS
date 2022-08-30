@@ -16,7 +16,9 @@
         newtonTol="1e-03"
         newtonMaxIter="10"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        directParallel="0"
+        solverType="direct"
+        preconditionerType="mgr"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures
@@ -112,34 +114,19 @@
       dimensions="{ 180, 200 }"/> 
     <BoundedPlane
       name="Fracture5"
-      normal="{ 1, -1, 1 }"
       origin="{ 220, 100, 0.5 }"
+      normal="{ 1, -1, 1 }"
       lengthVector="{ 0.3333, 0.6666, 0.3333 }"
       widthVector="{ -0.5, 0, 0.5 }"
       dimensions="{ 120, 200 }"/>
 
     <!-- <BoundedPlane
       name="Fracture6"
-      normal="{ 0, 1, 0 }"
-      origin="{ 300, 180, 1.5 }"
-      lengthVector="{ 1, 0, 0 }"
-      widthVector="{ 0, 0, 1 }"
-      dimensions="{ 140, 200 }"/> 
-    <BoundedPlane
-      name="Fracture7"
-      normal="{ -0.707, 0.707, 0 }"
-      origin="{ 350.0, 300, 0.5 }"
-      lengthVector="{ 0.707, 0.707, 0 }"
-      widthVector="{ 0, 0, 1 }"
-      dimensions="{ 70, 40 }"/> -->
-      
-    <!-- <BoundedPlane
-      name="Fracture4"
-      normal="{ 1, 0, 0 }"
-      origin="{ 100, 200, 1.5 }"
-      lengthVector="{ 0, 1, 0 }"
-      widthVector="{ 0, 0, 1 }"
-      dimensions="{ 200, 200 }"/>   -->
+      origin="{ 350, 195, 1.5 }"
+      normal="{ -0.5, 0, 0.5 }"
+      widthVector="{ 1, -1, 1 }"
+      lengthVector="{ 0.3333, 0.6666, 0.3333 }"
+      dimensions="{ 140, 200 }"/>  -->
   </Geometry>
 
   <Events
@@ -199,8 +186,8 @@
     <ElasticIsotropic
       name="rock"
       defaultDensity="1"
-      defaultBulkModulus="5555555555.5556"
-      defaultShearModulus="4166666666.6667"/>
+      defaultBulkModulus="25e9"
+      defaultShearModulus="15e9"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -266,7 +253,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="pressure"
-      scale="1.0e5"/>
+      scale="1.0e6"/>
 
     <FieldSpecification
       name="left"
@@ -291,20 +278,6 @@
       component="2"
       scale="0.0"
       setNames="{ bottom }"/>
-
-    <!-- <FieldSpecification
-      name="leftPressure"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="0.0"
-      setNames="{ xneg }"/>
-
-    <FieldSpecification
-      name="rightPressure"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="0.0"
-      setNames="{ xpos }"/> -->
   </FieldSpecifications>
 
   <Functions>
