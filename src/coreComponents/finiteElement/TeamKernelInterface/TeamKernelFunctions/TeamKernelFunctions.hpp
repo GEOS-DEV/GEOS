@@ -36,5 +36,7 @@
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/applyTestFunctions.hpp"
 /// Functions to apply gradient of test functions.
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/applyGradientTestFunctions.hpp"
+/// Functions to compute the diagonal of a "grad-grad" operator.
+#include "finiteElement/TeamKernelInterface/TeamKernelFunctions/gradGradDiagonal.hpp"
 
 #endif /* GEOSX_FINITEELEMENT_TEAMKERNELFUNCTION_HPP_ */
