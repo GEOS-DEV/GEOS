@@ -589,6 +589,13 @@ Element: PAMELAMesh
 .. include:: ../../coreComponents/schema/docs/PAMELAMesh.rst
 
 
+.. _XML_PML:
+
+Element: PML
+============
+.. include:: ../../coreComponents/schema/docs/PML.rst
+
+
 .. _XML_PVTDriver:
 
 Element: PVTDriver
@@ -1697,6 +1704,13 @@ Datastructure: Outputs
 Datastructure: PAMELAMesh
 =========================
 .. include:: ../../coreComponents/schema/docs/PAMELAMesh_other.rst
+
+
+.. _DATASTRUCTURE_PML:
+
+Datastructure: PML
+==================
+.. include:: ../../coreComponents/schema/docs/PML_other.rst
 
 
 .. _DATASTRUCTURE_PVTDriver:
