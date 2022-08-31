@@ -21,6 +21,7 @@
 
 #include "mesh/ElementType.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -281,6 +282,32 @@ protected:
 
   /// Type of element in this subregion.
   ElementType m_elementType;
+
+  /**
+   * @brief Compute the center of each element in the subregion.
+   * @tparam NODE_MAP Type of the element to node mapping.
+   * @param toNodesRelation Element to node mapping
+   * @param X Node positions.
+   */
+  template< class NODE_MAP >
+  void calculateElementCenters( NODE_MAP const & toNodesRelation,
+                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+  {
+    arrayView2d< real64 > const & elementCenters = m_elementCenter;
+    localIndex const nNodes = numNodesPerElement();
+    auto const e2n = toNodesRelation.toViewConst();
+
+    forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
+    {
+      LvArray::tensorOps::copy< 3 >( elementCenters[k], X[e2n( k, 0 )] );
+      for( localIndex a = 1; a < nNodes; ++a )
+      {
+        LvArray::tensorOps::add< 3 >( elementCenters[k], X[e2n( k, a )] );
+      }
+
+      LvArray::tensorOps::scale< 3 >( elementCenters[k], 1.0 / nNodes );
+    } );
+  }
 };
 
 } /* namespace geosx */

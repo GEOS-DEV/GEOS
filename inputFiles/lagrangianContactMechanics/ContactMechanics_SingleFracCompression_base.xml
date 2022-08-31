@@ -73,6 +73,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="faceElementSubRegion"
       defaultAperture="0.0"
       materialList="{ fractureMaterial, rock }"/>
   </ElementRegions>
