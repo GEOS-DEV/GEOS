@@ -168,7 +168,7 @@ public:
   /**
    * @copydoc getElementCenter() const
    */
-  arrayView2d< real64 > getElementCenter()
+  array2d< real64 > & getElementCenter()
   { return m_elementCenter; }
 
   /**

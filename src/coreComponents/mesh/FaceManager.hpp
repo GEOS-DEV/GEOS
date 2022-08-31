@@ -308,6 +308,15 @@ public:
   arrayView1d< real64 const > faceArea() const { return m_faceArea; }
 
   /**
+   * @brief Get a mutable accessor to a table containing all the face center.
+   * @details this table is mutable so it can be used to compute
+   * or modify the face centers in this FaceManager
+   * @return a reference to an arrayView containing all the face centers
+   */
+  arrayView2d< real64 > faceCenter() { return m_faceCenter.toView(); }
+
+
+  /**
    * @brief Get an immutable accessor to a table containing all the face centers.
    * @return an immutable table containing all the face centers
    */
@@ -319,7 +328,7 @@ public:
    * or modify the face normals in this FaceManager
    * @return a table containing all the face normals
    */
-  array2d< real64 > const & faceNormal() { return m_faceNormal; }
+  array2d< real64 > & faceNormal() { return m_faceNormal; }
 
   /**
    * @brief Get an immutable accessor to a table containing all the face normals.

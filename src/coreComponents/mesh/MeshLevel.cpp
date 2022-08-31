@@ -117,6 +117,8 @@ MeshLevel::MeshLevel( string const & name,
 
   m_faceManager->resize( source.m_faceManager->size() );
   m_faceManager->edgeList() = source.m_faceManager->edgeList();
+  m_faceManager->faceCenter() = source.m_faceManager->faceCenter();
+  m_faceManager->faceNormal() = source.m_faceManager->faceNormal();
 
   // Faces
 //  ArrayOfArraysView< localIndex const > const facesToNodesMapSource = m_faceManager->nodeList().toViewConst();
@@ -219,29 +221,20 @@ MeshLevel::MeshLevel( string const & name,
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
       array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
 
-      // array2d< localIndex > & elemToFacesNew = newSubRegion.faceList();
+      array2d< localIndex > & elemToFacesNew = newSubRegion.faceList();
+      elemToFacesNew = elemToFaces;
 
-
-
-      //Copy a new elemToFaces map from the old one
-      // for( localIndex elem = 0; elem < elemsToNodesNew.size( 0 ); ++elem )
-      // {
-      //   for( localIndex face = 0; face < 6; ++face )
-      //   {
-      //     elemToFacesNew[elem][face] = elemToFaces[elem][face];
-      //   }
-      // }
-
-      //Copy a new elemCenter map from the old one
-      // arrayView2d < real64  > const & elemCenterNew = newSubRegion.getElementCenter();
-      // arrayView2d < real64 const > const & elemCenterOld = sourceSubRegion.getElementCenter();
-      // for( localIndex elem = 0; elem < elemsToNodesNew.size( 0 ); ++elem )
-      // {
-      //   for( localIndex a = 0; a < 3; ++a )
-      //   {
-      //     elemCenterNew[elem][a] = elemCenterOld[elem][a];
-      //   }
-      // }
+      // Copy a new elemCenter map from the old one
+      array2d< real64 > & elemCenterNew = newSubRegion.getElementCenter();
+      arrayView2d< real64 const > const elemCenterOld = sourceSubRegion.getElementCenter();
+      elemCenterNew = elemCenterOld;
+      for( localIndex elem = 0; elem < elemsToNodesNew.size( 0 ); ++elem )
+      {
+        for( localIndex a = 0; a < 3; ++a )
+        {
+          elemCenterNew[elem][a] = elemCenterOld[elem][a];
+        }
+      }
 
 //      elemsToNodesNew.resize( elemsToNodesSource.size(0), numNodesPerElem );
 
