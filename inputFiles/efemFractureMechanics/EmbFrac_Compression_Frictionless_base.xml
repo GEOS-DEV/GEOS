@@ -52,6 +52,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="embeddedSurfaceSubRegion"
       subRegionType="embeddedElement"
       materialList="{ fractureContact }"
       defaultAperture="1e-3"/>
