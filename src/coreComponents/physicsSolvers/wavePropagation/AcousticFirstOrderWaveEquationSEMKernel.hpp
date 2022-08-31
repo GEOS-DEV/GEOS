@@ -521,7 +521,7 @@ struct PressureComputation
     //Pre-mult by the first factor for damping
     forAll< EXEC_POLICY >( size_node, [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-       p_np1[a] *= 1.0+((dt/2)*(damping[a]/mass[a]));
+       p_np1[a] *= 1.0-((dt/2)*(damping[a]/mass[a]));
     } );
 
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -603,7 +603,7 @@ struct PressureComputation
     //Pre-mult by the first factor for damping
     forAll< EXEC_POLICY >( size_node, [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-       p_np1[a] *= 1.0-((dt/2)*(damping[a]/mass[a]));
+       p_np1[a] *= 1.0+((dt/2)*(damping[a]/mass[a]));
     } );
   }
 
