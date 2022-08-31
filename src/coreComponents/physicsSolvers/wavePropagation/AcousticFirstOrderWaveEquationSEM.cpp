@@ -491,6 +491,10 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
   arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
 
+  
+  freeSurfaceFaceIndicator.zero();
+  freeSurfaceNodeIndicator.zero();
+
   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    string( "FreeSurface" ),
@@ -505,9 +509,6 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
       real64 const value = bc.getScale();
-
-      freeSurfaceFaceIndicator.zero();
-      freeSurfaceNodeIndicator.zero();
 
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {
