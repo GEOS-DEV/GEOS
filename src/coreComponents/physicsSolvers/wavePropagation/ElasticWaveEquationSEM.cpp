@@ -761,6 +761,16 @@ void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
   }
 }
 
+void ElasticWaveEquationSEM::initializePML()
+{
+  GEOSX_ERROR( "PML for the elastic wave propagator not yet implemented" );
+}
+
+void ElasticWaveEquationSEM::applyPML( real64 const, DomainPartition & )
+{
+  GEOSX_ERROR( "PML for the elastic wave propagator not yet implemented" );
+}
+
 REGISTER_CATALOG_ENTRY( SolverBase, ElasticWaveEquationSEM, string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

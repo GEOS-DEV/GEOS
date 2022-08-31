@@ -169,6 +169,19 @@ private:
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
 
+  /**
+   * @brief Initialize Perfectly Matched Layer (PML) information
+   */
+  virtual void initializePML() override;
+
+  /**
+   * @brief Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
+   * @param time the time to apply the BC
+   * @param domain the partition domain
+   */
+  virtual void applyPML( real64 const time, DomainPartition & domain ) override;
+
+
   /// save the sismo trace in file
   void saveSeismo( localIndex iseismo, real64 val, string const & filename ) override;
 
