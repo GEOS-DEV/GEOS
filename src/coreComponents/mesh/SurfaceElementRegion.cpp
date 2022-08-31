@@ -34,15 +34,14 @@ SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const p
     setApplyDefaultValue( m_subRegionType ).
     setDescription( "Type of surface element subregion. Valid options:\n* " + EnumStrings< SurfaceSubRegionType >::concat( "\n* " ) );
 
+  registerWrapper( viewKeyStruct::faceBlockString(), &m_faceBlockName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( "FractureSubRegion" ).
+    setDescription( "The name of the face block in the mesh, or the embedded surface." );
+
   registerWrapper( viewKeyStruct::defaultApertureString(), &m_defaultAperture ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The default aperture of newly formed surface elements." );
-
-  // Default "faceElementSubRegion" is temporary during the refactoring of the fault and fracture import.
-  registerWrapper( viewKeyStruct::faceBlockString(), &m_faceBlockName ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( "faceElementSubRegion" ).
-    setDescription( "The name of the face block in the mesh." );
 }
 
 SurfaceElementRegion::~SurfaceElementRegion()
@@ -55,7 +54,7 @@ void SurfaceElementRegion::generateMesh( Group & faceBlocks )
 
   if( m_subRegionType == SurfaceSubRegionType::embeddedElement )
   {
-    elementSubRegions.registerGroup< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
+    elementSubRegions.registerGroup< EmbeddedSurfaceSubRegion >( m_faceBlockName );
   }
   else if( m_subRegionType == SurfaceSubRegionType::faceElement )
   {
@@ -84,7 +83,6 @@ void SurfaceElementRegion::initializePreSubGroups()
 localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
                                                     FaceManager const * const faceManager,
                                                     ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
-                                                    string const & subRegionName,
                                                     localIndex const faceIndices[2] )
 {
   localIndex rval = -1;
@@ -95,17 +93,14 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   arrayView2d< localIndex const > const faceToElementSubRegion = faceManager->elementSubRegionList();
   arrayView2d< localIndex const > const faceToElementIndex = faceManager->elementList();
 
-  Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
-
-  FaceElementSubRegion & subRegion = elementSubRegions.getGroup< FaceElementSubRegion >( subRegionName );
+  FaceElementSubRegion & subRegion = this->getUniqueSubRegion< FaceElementSubRegion >();
   subRegion.resize( subRegion.size() + 1 );
   rval = subRegion.size() - 1;
 
 
   arrayView1d< real64 > const ruptureTime = subRegion.getExtrinsicData< extrinsicMeshData::RuptureTime >();
 
-  arrayView1d< real64 > const
-  creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
+  arrayView1d< real64 > const creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
 
   arrayView2d< real64 const > const faceCenter = faceManager->faceCenter();
   arrayView2d< real64 > const elemCenter = subRegion.getElementCenter();
