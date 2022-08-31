@@ -769,8 +769,9 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // the Newton loop to avoid crashes due to Newton divergence
     if( residualNorm > m_nonlinearSolverParameters.m_maxAllowedResidualNorm )
     {
+      string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString;
       GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
-                                            NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString,
+                                            maxAllowedResidualNormString,
                                             m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
       isNewtonConverged = false;
       break;
