@@ -77,17 +77,17 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1.0 ).
+    setApplyDefaultValue( 0.3 ).
     setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
   this->registerWrapper( viewKeyStruct::maxRelativePresChangeString(), &m_maxRelativePresChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1.0 ).
+    setApplyDefaultValue( 0.3 ).
     setDescription( "Maximum (relative) change in pressure between two Newton iterations" );
   this->registerWrapper( viewKeyStruct::maxRelativeTempChangeString(), &m_maxRelativeTempChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1.0 ).
+    setApplyDefaultValue( 0.3 ).
     setDescription( "Maximum (relative) change in temperature between two Newton iterations" );
 
   this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).

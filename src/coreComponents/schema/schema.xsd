@@ -1800,11 +1800,11 @@ the relative residual norm satisfies:
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
-		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
+		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.3" />
 		<!--maxRelativePressureChange => Maximum (relative) change in pressure between two Newton iterations-->
-		<xsd:attribute name="maxRelativePressureChange" type="real64" default="1" />
+		<xsd:attribute name="maxRelativePressureChange" type="real64" default="0.3" />
 		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature between two Newton iterations-->
-		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="1" />
+		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.3" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
@@ -1834,11 +1834,11 @@ the relative residual norm satisfies:
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
-		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
+		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.3" />
 		<!--maxRelativePressureChange => Maximum (relative) change in pressure between two Newton iterations-->
-		<xsd:attribute name="maxRelativePressureChange" type="real64" default="1" />
+		<xsd:attribute name="maxRelativePressureChange" type="real64" default="0.3" />
 		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature between two Newton iterations-->
-		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="1" />
+		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.3" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->

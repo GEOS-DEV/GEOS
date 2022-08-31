@@ -638,14 +638,16 @@ public:
 
 /**
  * @class SolutionCheckKernel
- * @brief Define the kernel for scaling the Newton update
+ * @brief Define the kernel for checking the updated solution
  */
 class SolutionCheckKernel : public isothermalCompositionalMultiphaseBaseKernels::SolutionCheckKernel
 {
 public:
 
   using Base = isothermalCompositionalMultiphaseBaseKernels::SolutionCheckKernel;
+  using Base::m_numComp;
   using Base::m_localSolution;
+  using Base::m_scalingFactor;
 
   static real64 constexpr minTemperature = 273.15;
 
@@ -686,10 +688,8 @@ public:
 
   /**
    * @brief Compute the local value of the solution check
-   * @tparam FUNC the type of the function that can be used to customize the kernel
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
-   * @param[in] kernelOp the function used to customize the kernel
    */
   GEOSX_HOST_DEVICE
   void computeSolutionCheck( localIndex const ei,
@@ -698,8 +698,8 @@ public:
     Base::computeSolutionCheck( ei, stack, [&] ()
     {
       // compute the change in temperature
-      real64 const temp = m_temperature[ei];
-      if( temp < minTemperature )
+      real64 const newTemp = m_temperature[ei] + m_scalingFactor * m_localSolution[stack.localRow + m_numComp + 1];
+      if( newTemp < minTemperature )
       {
         stack.localMinVal = 0;
       }
