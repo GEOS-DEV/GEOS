@@ -97,16 +97,17 @@ void ParticleSubRegion::updateRVectors(int const p,
 }
 
 void ParticleSubRegion::getAllWeights( int const p,
-                                       LvArray::ArraySlice<double, 1, 0, int> const & p_x,
-                                       std::array<real64, 3> const & xMin,
-                                       std::array<real64, 3> const & hx,
+                                       std::array< real64, 3 > const & xMin,
+                                       std::array< real64, 3 > const & hx,
                                        array3d< int > const & ijkMap,
                                        arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X,
-                                       std::vector<int> & nodeIDs,
-                                       std::vector<real64> & weights,
-                                       std::vector< std::vector<real64> > & gradWeights )
+                                       std::vector< int > & nodeIDs,
+                                       std::vector< real64 > & weights,
+                                       std::vector< std::vector< real64 > > & gradWeights )
 {
-  switch( m_particleType)
+  arraySlice1d< real64 > const & p_x = m_particleCenter[p];
+
+  switch( m_particleType )
   {
     case ParticleType::SinglePoint:
     {
@@ -115,7 +116,7 @@ void ParticleSubRegion::getAllWeights( int const p,
       cellID.resize(3);
       for(int i=0; i<3; i++)
       {
-        cellID[i] = std::floor((p_x[i] - xMin[i])/hx[i]);
+        cellID[i] = std::floor( (p_x[i] - xMin[i])/hx[i] );
       }
 
       // get node IDs
@@ -125,7 +126,7 @@ void ParticleSubRegion::getAllWeights( int const p,
         {
           for(int k=0; k<2; k++)
           {
-            nodeIDs.push_back(ijkMap[cellID[0]+i][cellID[1]+j][cellID[2]+k]);
+            nodeIDs.push_back( ijkMap[cellID[0]+i][cellID[1]+j][cellID[2]+k] );
           }
         }
       }

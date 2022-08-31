@@ -90,14 +90,13 @@ public:
                       LvArray::ArraySlice<double, 2, 1, int> const & p_F);
 
   void getAllWeights(int const p,
-                     LvArray::ArraySlice<double, 1, 0, int> const & p_x,
-                     std::array<real64, 3> const & xMin,
-                     std::array<real64, 3> const & hx,
+                     std::array< real64, 3 > const & xMin,
+                     std::array< real64, 3 > const & hx,
                      array3d< int > const & ijkMap,
                      arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X,
-                     std::vector<int> & nodeIDs,
-                     std::vector<real64> & weights,
-                     std::vector< std::vector<real64> > & gradWeights);
+                     std::vector< int > & nodeIDs,
+                     std::vector< real64 > & weights,
+                     std::vector< std::vector< real64 > > & gradWeights);
 
   /**
    * @name Miscellaneous
