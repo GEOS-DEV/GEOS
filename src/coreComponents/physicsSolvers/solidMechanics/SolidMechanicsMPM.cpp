@@ -50,16 +50,24 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
+namespace tOps = LvArray::tensorOps; // We call this A LOT, make an alias
+
+
 
 SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
                                       Group * const parent ):
   SolverBase( name, parent ),
   m_timeIntegrationOption( TimeIntegrationOption::ExplicitDynamic ),
   m_iComm( CommunicationTools::getInstance().getCommID() ),
+  m_smallMass( 1.0e-12 ),
   m_numContactGroups(),
   m_numContactFlags(),
   m_numVelocityFields(),
   m_damageFieldPartitioning( false ),
+  m_contactGapCorrection( 0 ),
+  m_frictionCoefficient( 0.0 ),
+  m_planeStrain( false ),
+  m_numDims( 3 ),
   m_hEl{DBL_MAX, DBL_MAX, DBL_MAX},
   m_xLocalMin{DBL_MAX, DBL_MAX, DBL_MAX},
   m_xLocalMax{DBL_MIN, DBL_MIN, DBL_MIN},
@@ -76,6 +84,43 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_timeIntegrationOption ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
+
+  registerWrapper( "numContactGroups", &m_numContactGroups ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Number of prescribed contact groups" );
+
+  registerWrapper( "numContactFlags", &m_numContactFlags ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Number of contact flags that can appear due to damage" );
+
+  registerWrapper( "numVelocityFields", &m_numVelocityFields ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Number of velocity fields" );
+
+  registerWrapper( "damageFieldPartitioning", &m_damageFieldPartitioning ).
+    setApplyDefaultValue( false ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag for using the gradient of the particle damage field to partition material into separate velocity fields" );
+
+  registerWrapper( "contactGapCorrection", &m_contactGapCorrection ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag for mitigating contact gaps" );
+
+  registerWrapper( "frictionCoefficient", &m_frictionCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Coefficient of friction, currently assumed to be the same everywhere" );
+
+  registerWrapper( "planeStrain", &m_planeStrain ).
+    setApplyDefaultValue( false ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag for performing plane strain calculations" );
+
+  registerWrapper( "numDims", &m_numDims ).
+    setApplyDefaultValue( 3 ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "The number of active spatial dimensions, 2 for plane strain, 3 otherwise" );
 
   registerWrapper( "hEl", &m_hEl ).
     setInputFlag( InputFlags::FALSE ).
@@ -122,12 +167,7 @@ void SolidMechanicsMPM::postProcessInput()
 {
   SolverBase::postProcessInput();
 
-//  checkModelNames( m_solidMaterialNames, viewKeyStruct::solidMaterialNamesString() );
-
-  LinearSolverParameters & linParams = m_linearSolverParameters.get();
-  linParams.isSymmetric = true;
-  linParams.dofsPerNode = 3;
-  linParams.amg.separateComponents = true;
+  m_numDims = m_planeStrain ? 2 : 3;
 }
 
 SolidMechanicsMPM::~SolidMechanicsMPM()
@@ -177,39 +217,61 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
       nodes.registerWrapper< array2d< real64 > >( keys::Mass ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName()).
+        setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the mass on the nodes." );
       
       nodes.registerWrapper< array3d< real64 > >( keys::Velocity ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName()).
+        setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the current velocity on the nodes." );
 
       nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::momentumString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName()).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the current momentum on the nodes." );
 
       nodes.registerWrapper< array3d< real64 > >( keys::Acceleration ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
-        setRegisteringObjects( this->getName()).
+        setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the current acceleration on the nodes." );
 
       nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::forceExternalString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName()).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
                         " conditions as well as coupling forces such as hydraulic forces." );
 
       nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::forceInternalString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName()).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the internal forces on the nodes." );
 
       nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::forceContactString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the contact force." );
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "An array that holds the contact force on the nodes." );
+
+      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::damageString() ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "An array that holds the result of mapping particle damage to the nodes." );
+
+      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::maxDamageString() ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "An array that holds the maximum damage of any particle mapping to a given node." );
+
+      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::surfaceNormalString() ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "An array that holds the contact surface normals on the nodes." );
+
+      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::materialPositionString() ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "An array that holds the result of mapping particle positions to the nodes." );
+
+
 
       // Group & nodeSets = nodes.sets(); // Do we need to register BC nodes on this?
     }
@@ -302,6 +364,18 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   // Get grid quantites
   int numNodes = nodeManager.size();
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridReferencePosition = nodeManager.referencePosition();
+  array2d< real64 > & gridMass = nodeManager.getReference< array2d< real64 > >( keys::Mass );
+  array2d< real64 > & gridDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::damageString() );
+  array2d< real64 > & gridMaxDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::maxDamageString() );
+  array3d< real64 > & gridVelocity = nodeManager.getReference< array3d< real64 > >( keys::Velocity );
+  array3d< real64 > & gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::momentumString() );
+  array3d< real64 > & gridAcceleration = nodeManager.getReference< array3d< real64 > >( keys::Acceleration );
+  array3d< real64 > & gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceInternalString() );
+  array3d< real64 > & gridExternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceExternalString() );
+  array3d< real64 > & gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceContactString() );
+  array3d< real64 > & gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::surfaceNormalString() );
+  array3d< real64 > & gridMaterialPosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() );
+
   
   // Get global domain extent
   for(int g=0; g<numNodes; g++)
@@ -380,6 +454,56 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   } );
 
+
+  // Resize grid arrays according to number of velocity fields
+
+  int maxLocalGroupNumber = 0; // Maximum contact group number on this partition.
+  int maxGlobalGroupNumber; // Maximum contact group number on global domain.
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
+    int subregionMaxGroupNumber = 0;
+    for(int p=0; p<subRegion.size(); p++)
+    {
+      if(particleGroup[p] > subregionMaxGroupNumber)
+      {
+        subregionMaxGroupNumber = particleGroup[p];
+      }
+    }
+    if( subregionMaxGroupNumber > maxLocalGroupNumber)
+    {
+      maxLocalGroupNumber = subregionMaxGroupNumber;
+    }
+  } );
+  MPI_Allreduce( &maxLocalGroupNumber,
+                 &maxGlobalGroupNumber,
+                 1,
+                 MPI_INT,
+                 MPI_MAX,
+                 MPI_COMM_WORLD );
+
+  // Number of contact groups
+  m_numContactGroups = maxGlobalGroupNumber + 1;
+
+  // Specified number of damage flags.
+  m_numContactFlags = m_damageFieldPartitioning ? 2 : 1;
+
+  // Total number of velocity fields:
+  m_numVelocityFields = m_numContactGroups * m_numContactFlags;
+
+  // Resize grid field arrays
+  gridMass.resize( numNodes, m_numVelocityFields );
+  gridDamage.resize( numNodes, m_numVelocityFields );
+  gridMaxDamage.resize( numNodes, m_numVelocityFields );
+  gridVelocity.resize( numNodes, m_numVelocityFields, 3 );
+  gridMomentum.resize( numNodes, m_numVelocityFields, 3 );
+  gridAcceleration.resize( numNodes, m_numVelocityFields, 3 );
+  gridInternalForce.resize( numNodes, m_numVelocityFields, 3 );
+  gridExternalForce.resize( numNodes, m_numVelocityFields, 3 );
+  gridContactForce.resize( numNodes, m_numVelocityFields, 3 );
+  gridSurfaceNormal.resize( numNodes, m_numVelocityFields, 3 );
+  gridMaterialPosition.resize( numNodes, m_numVelocityFields, 3 );
 }
 
 real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
@@ -406,70 +530,39 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   MeshLevel & mesh = grid.getMeshLevel(0);
   NodeManager & nodeManager = mesh.getNodeManager();
 
-  // At time step zero, perform initialization calculations
-  if(cycleNumber == 0)
-  {
-    initialize(nodeManager, particleManager, partition);
-  }
-
   // Get nodal fields
+  // TODO: If we decide to have all subroutines only take particleManager and nodeManager as inputs,
+  //       we won't need these at all as they'll all be defined locally in each subroutine.
   int numNodes = nodeManager.size();
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > & gridReferencePosition = nodeManager.referencePosition();
   array2d< real64 > & gridMass = nodeManager.getReference< array2d< real64 > >( keys::Mass );
+  array2d< real64 > & gridDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::damageString() );
+  array2d< real64 > & gridMaxDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::maxDamageString() );
   array3d< real64 > & gridVelocity = nodeManager.getReference< array3d< real64 > >( keys::Velocity );
   array3d< real64 > & gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::momentumString() );
   array3d< real64 > & gridAcceleration = nodeManager.getReference< array3d< real64 > >( keys::Acceleration );
   array3d< real64 > & gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceInternalString() );
   array3d< real64 > & gridExternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceExternalString() );
   array3d< real64 > & gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceContactString() );
+  array3d< real64 > & gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::surfaceNormalString() );
+  array3d< real64 > & gridMaterialPosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() );
 
-  // Get number of contact groups
-  int maxLocalGroupNumber = 0; // Maximum contact group number on this partition.
-  int maxGlobalGroupNumber; // Maximum contact group number on global domain.
-  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  // At time step zero, perform initialization calculations
+  if(cycleNumber == 0)
   {
-    arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
-    int subregionMaxGroupNumber = 0;
-    for(int p=0; p<subRegion.size(); p++)
-    {
-      if(particleGroup[p] > subregionMaxGroupNumber)
-      {
-        subregionMaxGroupNumber = particleGroup[p];
-      }
-    }
-    if( subregionMaxGroupNumber > maxLocalGroupNumber)
-    {
-      maxLocalGroupNumber = subregionMaxGroupNumber;
-    }
-  } );  
-  MPI_Allreduce( &maxLocalGroupNumber,
-                 &maxGlobalGroupNumber,
-                 1,
-                 MPI_INT,
-                 MPI_MAX,
-                 MPI_COMM_WORLD );
+    initialize(nodeManager, particleManager, partition);
+  }
 
-  // Number of contact groups
-  m_numContactGroups = maxGlobalGroupNumber + 1;
-
-  // Specified number of damage flags.
-  m_numContactFlags = m_damageFieldPartitioning ? 2 : 1;
-
-  // Total number of velocity fields:
-  m_numVelocityFields = m_numContactGroups * m_numContactFlags;
-
-  // Resize grid field arrays
-  gridMass.resize( numNodes, m_numVelocityFields );
-  gridVelocity.resize( numNodes, m_numVelocityFields, 3 );
-  gridMomentum.resize( numNodes, m_numVelocityFields, 3 );
-  gridAcceleration.resize( numNodes, m_numVelocityFields, 3 );
-  gridInternalForce.resize( numNodes, m_numVelocityFields, 3 );
-  gridExternalForce.resize( numNodes, m_numVelocityFields, 3 );
-  gridContactForce.resize( numNodes, m_numVelocityFields, 3 );
-
-  // Set grid multi-field labels to avoid a VTK output bug
+  // Set grid multi-field labels to avoid a VTK output bug, must be done every time step despite grid fields being registered
   // TODO: Only doing this on the 1st cycle breaks restarts, can we do better? Why aren't labels part of the restart data?
-  std::vector< std::string > keys = { keys::Velocity, viewKeyStruct::momentumString(),keys::Acceleration, viewKeyStruct::forceInternalString(), viewKeyStruct::forceExternalString(), viewKeyStruct::forceContactString() };
+  std::vector< std::string > keys = { keys::Velocity,
+                                      viewKeyStruct::momentumString(),
+                                      keys::Acceleration,
+                                      viewKeyStruct::forceInternalString(),
+                                      viewKeyStruct::forceExternalString(),
+                                      viewKeyStruct::forceContactString(),
+                                      viewKeyStruct::surfaceNormalString(),
+                                      viewKeyStruct::materialPositionString() };
   std::vector< std::string > labels1(m_numVelocityFields);
   std::generate( labels1.begin(), labels1.end(), [i=0]() mutable { return std::to_string( i++ ); } );
   string const labels2[] = { "0", "1", "2" };
@@ -480,14 +573,18 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     wrapper.setDimLabels( 2, labels2 );
   }
 
-  // Zero out grid fields
+  // Zero out grid scalar fields
   gridMass.zero();
+  gridDamage.zero();
+  gridMaxDamage.zero();
   gridVelocity.zero();
   gridMomentum.zero();
   gridAcceleration.zero();
   gridInternalForce.zero();
   gridExternalForce.zero();
   gridContactForce.zero();
+  gridSurfaceNormal.zero();
+  gridMaterialPosition.zero();
 
   // Particle to grid interpolation
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -517,7 +614,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       std::vector< std::vector<real64> > gradWeights; // shape function gradient value for each node; 1st index = direction, 2nd index = node
       gradWeights.resize(3);
       subRegion.getAllWeights( p,
-                               p_x,
                                m_xLocalMin,
                                m_hEl,
                                m_ijkMap,
@@ -531,14 +627,15 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       {
         int mappedNode = nodeIDs[g];
         int fieldIndex = p_group;
-        gridMass[mappedNode][fieldIndex] += p_m*weights[g];
+        gridMass[mappedNode][fieldIndex] += p_m * weights[g];
         for(int i=0; i<3; i++)
         {
-          gridMomentum[mappedNode][fieldIndex][i] += p_m*p_v[i]*weights[g];
+          gridMomentum[mappedNode][fieldIndex][i] += p_m * p_v[i] * weights[g];
+          gridMaterialPosition[mappedNode][fieldIndex][i] += p_m * ( p_x[i] - gridReferencePosition[mappedNode][i] ) * weights[g];
           for(int k=0; k<3; k++)
           {
             int voigt = m_voigtMap[k][i];
-            gridInternalForce[mappedNode][fieldIndex][i] -= p_stress[voigt]*gradWeights[k][g]*p_vol;
+            gridInternalForce[mappedNode][fieldIndex][i] -= p_stress[voigt] * gradWeights[k][g] * p_vol;
           }
         }
       }
@@ -546,77 +643,77 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     } // particle loop
   } ); // subregion loop
 
-
   // Grid MPI operations
+  std::vector< std::string > fieldNames = { keys::Mass,
+                                            viewKeyStruct::momentumString(),
+                                            viewKeyStruct::forceInternalString(),
+                                            viewKeyStruct::forceExternalString() };
+  syncGridFields( fieldNames, domain, nodeManager, mesh );
 
-  // (1) Initialize
-  FieldIdentifiers fieldsToBeSynced;
-  fieldsToBeSynced.addFields( FieldLocation::Node, { keys::Mass, viewKeyStruct::momentumString(), viewKeyStruct::forceInternalString(), viewKeyStruct::forceExternalString() } );
-  std::vector< NeighborCommunicator > & neighbors = domain.getNeighbors();
-  m_iComm.resize( neighbors.size() );
-
-  // (2) Swap send and receive indices so we can sum from ghost to master
-  for(size_t n=0; n<neighbors.size(); n++)
+  // Determine trial momenta and velocities based on acceleration due to internal
+  // and external forces, but before contact enforcement
+  for( int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++ )
   {
-    int const neighborRank = neighbors[n].neighborRank();
-    array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
-    array1d< localIndex > & nodeGhostsToSend = nodeManager.getNeighborData( neighborRank ).ghostsToSend();
-    array1d< localIndex > temp = nodeGhostsToSend;
-    nodeGhostsToSend = nodeGhostsToReceive;
-    nodeGhostsToReceive = temp;
-  }
-
-  // (3) Additive sync
-  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced, mesh, neighbors, m_iComm, true );
-  parallelDeviceEvents packEvents;
-  CommunicationTools::getInstance().asyncPack( fieldsToBeSynced, mesh, neighbors, m_iComm, true, packEvents );
-  waitAllDeviceEvents( packEvents );
-  CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, true, packEvents );
-  parallelDeviceEvents unpackEvents;
-  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, m_iComm, true, unpackEvents, MPI_SUM ); // needs an extra argument to indicate additive unpack
-
-  // (4) Swap send and receive indices back so we can sync from master to ghost
-  for(size_t n=0; n<neighbors.size(); n++)
-  {
-    int const neighborRank = neighbors[n].neighborRank();
-    array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
-    array1d< localIndex > & nodeGhostsToSend = nodeManager.getNeighborData( neighborRank ).ghostsToSend();
-    array1d< localIndex > temp = nodeGhostsToSend;
-    nodeGhostsToSend = nodeGhostsToReceive;
-    nodeGhostsToReceive = temp;
-  }
-
-  // (5) Perform sync
-  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced, mesh, neighbors, m_iComm, true );
-  parallelDeviceEvents packEvents2;
-  CommunicationTools::getInstance().asyncPack( fieldsToBeSynced, mesh, neighbors, m_iComm, true, packEvents2 );
-  waitAllDeviceEvents( packEvents2 );
-  CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, true, packEvents2 );
-  parallelDeviceEvents unpackEvents2;
-  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, m_iComm, true, unpackEvents2 );
-
-
-  // Determine updated trial velocities before contact enforcement
-  for(int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++)
-  {
-    for(int g=0; g<numNodes; g++)
+    for( int g=0; g<numNodes; g++ )
     {
-      if(gridMass[g][fieldIndex] > 1.0e-12) // small mass threshold
+      if( gridMass[g][fieldIndex] > m_smallMass ) // small mass threshold
       {
-        for(int i=0; i<3; i++)
+        for( int i=0; i<3; i++ )
         {
           real64 totalForce = gridInternalForce[g][fieldIndex][i] + gridExternalForce[g][fieldIndex][i];
-          gridAcceleration[g][fieldIndex][i] = totalForce/gridMass[g][fieldIndex];
-          gridVelocity[g][fieldIndex][i] = gridMomentum[g][fieldIndex][i]/gridMass[g][fieldIndex];
-          gridVelocity[g][fieldIndex][i] += gridAcceleration[g][fieldIndex][i]*dt;
+          gridAcceleration[g][fieldIndex][i] = totalForce / gridMass[g][fieldIndex];
+          gridMomentum[g][fieldIndex][i] += totalForce * dt;
+          gridVelocity[g][fieldIndex][i] = gridMomentum[g][fieldIndex][i] / gridMass[g][fieldIndex];
+          gridMaterialPosition[g][fieldIndex][i] /= gridMass[g][fieldIndex];
         }
       }
       else
       {
-        for(int i=0; i<3; i++)
+        for( int i=0; i<3; i++ )
         {
           gridAcceleration[g][fieldIndex][i] = 0.0;
           gridVelocity[g][fieldIndex][i] = 0.0;
+          gridMomentum[g][fieldIndex][i] = 0.0;
+          gridMaterialPosition[g][fieldIndex][i] = gridReferencePosition[g][i];
+        }
+      }
+    }
+  }
+
+  // Enforce contact if necessary
+  if( m_numVelocityFields > 1 )
+  {
+    // Compute grid surface normals
+    computeGridSurfaceNormals( particleManager, gridReferencePosition, gridSurfaceNormal );
+
+    // Sync surface normals
+    syncGridFields( { viewKeyStruct::surfaceNormalString() }, domain, nodeManager, mesh );
+
+    // Compute contact forces
+    computeContactForces( dt,
+                          gridMass,
+                          gridDamage,
+                          gridMaxDamage,
+                          gridVelocity,
+                          gridMomentum,
+                          gridSurfaceNormal,
+                          gridMaterialPosition,
+                          gridContactForce ); // output
+
+    // Update grid momenta and velocities based on contact forces
+    for( int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++ )
+    {
+      for( int g=0; g<numNodes; g++ )
+      {
+        if( gridMass[g][fieldIndex] > m_smallMass ) // small mass threshold
+        {
+          for( int i=0; i<3; i++ )
+          {
+            real64 contactForce = gridContactForce[g][fieldIndex][i];
+            gridAcceleration[g][fieldIndex][i] += contactForce / gridMass[g][fieldIndex];
+            gridMomentum[g][fieldIndex][i] += contactForce * dt;
+            gridVelocity[g][fieldIndex][i] = gridMomentum[g][fieldIndex][i] / gridMass[g][fieldIndex];
+          }
         }
       }
     }
@@ -674,7 +771,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       std::vector< std::vector<real64> > gradWeights; // shape function gradient value for each node; 1st index = direction, 2nd index = node
       gradWeights.resize(3);
       subRegion.getAllWeights( p,
-                               p_x,
                                m_xLocalMin,
                                m_hEl,
                                m_ijkMap,
@@ -800,6 +896,340 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
   real64 dtReturn = wavespeed > 1.0e-12 ? m_cflFactor*length/wavespeed : DBL_MAX; // This partitions's dt, make it huge if wavespeed=0.0 (this happens when there are no particles on this partition)
   return dtReturn;
+}
+
+void SolidMechanicsMPM::syncGridFields( std::vector< std::string > const & fieldNames,
+                                        DomainPartition & domain,
+                                        NodeManager & nodeManager,
+                                        MeshLevel & mesh )
+{
+  // (1) Initialize
+  FieldIdentifiers fieldsToBeSynced;
+  fieldsToBeSynced.addFields( FieldLocation::Node, fieldNames );
+  std::vector< NeighborCommunicator > & neighbors = domain.getNeighbors();
+  m_iComm.resize( neighbors.size() );
+
+  // (2) Swap send and receive indices so we can sum from ghost to master
+  for(size_t n=0; n<neighbors.size(); n++)
+  {
+    int const neighborRank = neighbors[n].neighborRank();
+    array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
+    array1d< localIndex > & nodeGhostsToSend = nodeManager.getNeighborData( neighborRank ).ghostsToSend();
+    array1d< localIndex > temp = nodeGhostsToSend;
+    nodeGhostsToSend = nodeGhostsToReceive;
+    nodeGhostsToReceive = temp;
+  }
+
+  // (3) Additive sync
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced, mesh, neighbors, m_iComm, true );
+  parallelDeviceEvents packEvents;
+  CommunicationTools::getInstance().asyncPack( fieldsToBeSynced, mesh, neighbors, m_iComm, true, packEvents );
+  waitAllDeviceEvents( packEvents );
+  CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, true, packEvents );
+  parallelDeviceEvents unpackEvents;
+  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, m_iComm, true, unpackEvents, MPI_SUM ); // needs an extra argument to indicate additive unpack
+
+  // (4) Swap send and receive indices back so we can sync from master to ghost
+  for(size_t n=0; n<neighbors.size(); n++)
+  {
+    int const neighborRank = neighbors[n].neighborRank();
+    array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
+    array1d< localIndex > & nodeGhostsToSend = nodeManager.getNeighborData( neighborRank ).ghostsToSend();
+    array1d< localIndex > temp = nodeGhostsToSend;
+    nodeGhostsToSend = nodeGhostsToReceive;
+    nodeGhostsToReceive = temp;
+  }
+
+  // (5) Perform sync
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced, mesh, neighbors, m_iComm, true );
+  parallelDeviceEvents packEvents2;
+  CommunicationTools::getInstance().asyncPack( fieldsToBeSynced, mesh, neighbors, m_iComm, true, packEvents2 );
+  waitAllDeviceEvents( packEvents2 );
+  CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, true, packEvents2 );
+  parallelDeviceEvents unpackEvents2;
+  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, m_iComm, true, unpackEvents2 );
+}
+
+void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleManager,
+                                                   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridReferencePosition,
+                                                   array3d< real64 > & gridSurfaceNormal )
+{
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+    arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
+
+    for(int p=0; p<subRegion.size(); p++)
+    {
+      // Get interpolation kernel
+      std::vector<int> nodeIDs; // nodes that the particle maps to
+      std::vector<real64> weights; // shape function value for each node
+      std::vector< std::vector<real64> > gradWeights; // shape function gradient value for each node; 1st index = direction, 2nd index = node
+      gradWeights.resize(3);
+      subRegion.getAllWeights( p,
+                               m_xLocalMin,
+                               m_hEl,
+                               m_ijkMap,
+                               gridReferencePosition,
+                               nodeIDs,       // output
+                               weights,       // output
+                               gradWeights ); // output
+
+      // Map to grid
+      for( size_t g=0; g<nodeIDs.size(); g++ )
+      {
+        int mappedNode = nodeIDs[g];
+        int fieldIndex = particleGroup[p];
+        for(int i=0; i<3; i++)
+        {
+          gridSurfaceNormal[mappedNode][fieldIndex][i] += gradWeights[i][g] * particleVolume[p];
+        }
+      }
+
+    } // particle loop
+  } ); // subregion loop
+}
+
+void SolidMechanicsMPM::computeContactForces( const real64 dt,
+                                              const array2d< real64 > & gridMass,
+                                              const array2d< real64 > & GEOSX_UNUSED_PARAM( gridDamage ),
+                                              const array2d< real64 > & GEOSX_UNUSED_PARAM( gridMaxDamage ),
+                                              const array3d< real64 > & gridVelocity,
+                                              const array3d< real64 > & gridMomentum,
+                                              const array3d< real64 > & gridSurfaceNormal,
+                                              const array3d< real64 > & gridMaterialPosition,
+                                              array3d< real64 > & gridContactForce )
+{
+  // Get number of nodes
+  int numNodes = gridMass.size(0);
+
+  // Initialize contact force to zero
+  gridContactForce.zero();
+
+  for( localIndex g=0 ; g<numNodes ; g++ )
+  {
+    // Loop over all possible field pairings and enforce contact on each pair.
+    // gridContactForce will be gradually updated due to a '+=' in computePairwiseNodalContactForce
+    for( localIndex A = 0 ; A < m_numVelocityFields - 1 ; A++ )
+    {
+      for( localIndex B = A + 1 ; B < m_numVelocityFields ; B++ )
+      {
+        // Make sure both fields in the pair are active
+        bool active = ( gridMass[g][A] > m_smallMass ) && ( tOps::l2NormSquared< 3 >( gridSurfaceNormal[g][A] ) > 1.0e-12 )
+                      and
+                      ( gridMass[g][B] > m_smallMass ) && ( tOps::l2NormSquared< 3 >( gridSurfaceNormal[g][B] ) > 1.0e-12 );
+
+        if( active )
+        {
+          // Evaluate the separability criterion for the contact pair.
+  //      int separable = evaluateSeparabilityCriterion( A,
+  //                                                     B,
+  //                                                     gridDamage[g][A],
+  //                                                     gridDamage[g][B],
+  //                                                     gridMaxDamage[A],
+  //                                                     gridMaxDamage[B] );
+          int separable = 1;
+
+          computePairwiseNodalContactForce( separable,
+                                            dt,
+                                            gridMass[g][A],
+                                            gridMass[g][B],
+                                            gridVelocity[g][A],
+                                            gridVelocity[g][B],
+                                            gridMomentum[g][A],
+                                            gridMomentum[g][B],
+                                            gridSurfaceNormal[g][A],
+                                            gridSurfaceNormal[g][B],
+                                            gridMaterialPosition[g][A],
+                                            gridMaterialPosition[g][B],
+                                            gridContactForce[g][A],
+                                            gridContactForce[g][B] );
+        }
+      }
+    }
+  }
+}
+
+void SolidMechanicsMPM::computePairwiseNodalContactForce( const int & separable,
+                                                          const real64 & dt,
+                                                          const real64 & mA,
+                                                          const real64 & mB,
+                                                          const arraySlice1d< real64 > vA,
+                                                          const arraySlice1d< real64 > GEOSX_UNUSED_PARAM( vB ),
+                                                          const arraySlice1d< real64 > qA,
+                                                          const arraySlice1d< real64 > qB,
+                                                          const arraySlice1d< real64 > nA,
+                                                          const arraySlice1d< real64 > nB,
+                                                          const arraySlice1d< real64 > xA, // Position of field A
+                                                          const arraySlice1d< real64 > xB, // Position of field B
+                                                          arraySlice1d< real64 > fA,
+                                                          arraySlice1d< real64 > fB )
+{
+  // Total mass for the contact pair.
+  real64 mAB = mA + mB;
+
+  // Outward normal of field A with respect to field B.
+
+  // Use the surface normal for whichever field has more mass.
+  // This should be good for corners against flat surfaces.
+
+  // nAB = mA > mB ? nA : -nB;
+  array1d< real64 > nAB(3);
+  if( mA > mB )
+  {
+    tOps::copy< 3 >( nAB, nA );
+  }
+  else
+  {
+    tOps::scaledCopy< 3 >( nAB, nB, -1.0 );
+  }
+  tOps::normalize< 3 >( nAB );
+
+  // gap = ( xB - xA ) * nAB - minCellLength;
+  real64 minCellLength = m_planeStrain ? std::min( m_hEl[0], m_hEl[1] ) : std::min( m_hEl[0], std::min( m_hEl[1], m_hEl[2] ) );
+  real64 gap = subtractDot( xB, xA, nAB ) - minCellLength;
+
+  // Total momentum for the contact pair.
+  array1d< real64 > qAB(3);
+  tOps::copy< 3 >( qAB, qA );
+  tOps::add< 3 >( qAB, qB );
+
+  // Center-of-mass velocity for the contact pair.
+  array1d< real64 > vAB(3);
+  tOps::scaledCopy< 3 >( vAB, qAB, 1.0/mAB );
+
+  // Compute s1AB and s2AB, to form an orthonormal basis.  This uses the method by E. Herbold, to ensure
+  // consistency between surfaces.
+  array1d< real64 > s1AB(3), s2AB(3); // Tangential vectors for the contact pair
+  computeOrthonormalBasis( nAB, s1AB, s2AB );
+
+  // Check for separability, and enforce either slip, or no-slip contact, accordingly
+  if( separable == 0 )
+  {
+    // Surfaces are bonded, treat as single velocity field by applying normal force to prevent
+    // interpenetration, and tangential force to prevent slip.
+    real64 fnor =  ( mA / dt ) * subtractDot( vAB, vA, nAB ),
+           ftan1 = ( mA / dt ) * subtractDot( vAB, vA, s1AB ),
+           ftan2 = ( mA / dt ) * subtractDot( vAB, vA, s2AB );
+
+    tOps::scaledCopy< 3 >( fA, nAB, fnor );
+    tOps::scaledAdd< 3 >( fA, s1AB, ftan1 );
+    tOps::scaledAdd< 3 >( fA, s2AB, ftan2 );
+    tOps::scaledCopy< 3 >( fB, fA, -1.0 );
+  }
+  else
+  {
+    // Surfaces are separable, for frictional contact, apply a normal force to
+    // prevent interpenetration, and tangential force to prevent slip unless f_tan > mu*f_nor
+
+    real64 contact = 0.0;
+    if( m_contactGapCorrection == 1 )
+    {
+      contact = ( subtractDot( vA, vAB, nAB ) > 0 ) && ( gap <= 0 ) ? 1. : 0.;
+    }
+    else if( m_contactGapCorrection == 2 )
+    {
+      if( subtractDot( vA, vAB, nAB ) > 0 )
+      {
+        if( gap <= 0.0 )
+        {
+          contact = 1.0;
+        }
+        else if( gap < minCellLength )
+        {
+          contact = 1.0 - gap/minCellLength;
+        }
+      }
+    }
+    else
+    {
+      contact = subtractDot( vA, vAB, nAB ) > 0 ? 1. : 0.;
+    }
+
+    // Determine forces for no normal interpenetration and tangential sticking
+    real64 fnor = contact * ( mA / dt ) * subtractDot( vAB, vA, nAB ),
+           ftan1 = ( mA / dt ) * subtractDot( vAB, vA, s1AB ),
+           ftan2 = ( mA / dt ) * subtractDot( vAB, vA, s2AB );
+
+    // Get direction of tangential contact force
+    array1d< real64 > sAB(3);
+    tOps::scaledCopy< 3 >( sAB, s1AB, ftan1 );
+    tOps::scaledAdd< 3 >( sAB, s2AB, ftan2 );
+    tOps::normalize< 3 >( sAB );
+
+    // Update fA and fB - tangential force is bounded by friction
+    tOps::scaledAdd< 3 >( fA, nAB, fnor );
+    tOps::scaledAdd< 3 >( fA, sAB, std::min( m_frictionCoefficient * std::abs( fnor ), sqrt( ftan1 * ftan1 + ftan2 * ftan2 ) ) );
+    tOps::scaledAdd< 3 >( fB, fA, -1.0 );
+  }
+}
+
+real64 SolidMechanicsMPM::subtractDot( const arraySlice1d< real64 > & u,
+                                       const arraySlice1d< real64 > & v,
+                                       const arraySlice1d< real64 > & n )
+{
+  // Calculates (u-v).n
+  // This is done so much in the contact subroutines that it's nice to have a separate function for it
+  array1d< real64 > u_minus_v(3);
+  tOps::copy< 3 >( u_minus_v, u );
+  tOps::subtract< 3 >( u_minus_v, v );
+  return tOps::AiBi< 3 >( u_minus_v, n );
+}
+
+void SolidMechanicsMPM::computeOrthonormalBasis( const array1d< real64 > & e1, // input "normal" unit vector.
+                                                 array1d< real64 > & e2,       // output "tangential" unit vector.
+                                                 array1d< real64 > & e3 )      // output "tangential" unit vector.
+{
+  // This routine takes in a normalized vector and gives two orthogonal vectors.
+  // It is rather arbitrary, in general, how this is done; however, this routine
+  // is written in a consistent way. This is important, for example, if you
+  // have a face on one processor and a ghost face on another processor and
+  // you try to define a basis that is EXACTLY the same for debugging purposes.
+  // This came up when trying to debug shear traction components and this
+  // routine helped a lot.
+
+  real64 e1x = e1[0], e1y = e1[1], e1z = e1[2],
+         e2x, e2y, e2z;
+
+  // find the maximum pair of values from the first vector.
+  real64 maxp1 = std::abs( e1x ) + std::abs( e1y ),
+         maxp2 = std::abs( e1y ) + std::abs( e1z ),
+         maxp3 = std::abs( e1x ) + std::abs( e1z );
+
+  // This part amounts to setting the smallest component of the input vector to 0.
+  // Then, the orthogonal vector is a simple operation in the 2D plane.
+  if( maxp1 > maxp2 && maxp1 > maxp3 )
+  {
+    e2x = e1y;
+    e2y = -e1x;
+    e2z = 0.0;
+  }
+  else if( maxp2 > maxp1 && maxp2 > maxp3 )
+  {
+    e2y = e1z;
+    e2z = -e1y;
+    e2x = 0.0;
+  }
+  else
+  {
+    e2z = e1x;
+    e2x = -e1z;
+    e2y = 0.0;
+  }
+
+  // Normalize the first base vector
+  real64 e2norm = sqrt( e2x * e2x + e2y * e2y + e2z * e2z );
+  e2[0] = e2x / e2norm;
+  e2[1] = e2y / e2norm;
+  e2[2] = e2z / e2norm;
+
+  // The second base vector is simply a cross product of the first two.  For
+  // safety sake, this may need to be normalized to combat issues of numerical
+  // precision.
+  e3[0] =  e1y * e2z - e1z * e2y;
+  e3[1] = -e1x * e2z + e1z * e2x;
+  e3[2] =  e1x * e2y - e1y * e2x;
+  tOps::normalize< 3 >( e3 );
 }
 
 void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const

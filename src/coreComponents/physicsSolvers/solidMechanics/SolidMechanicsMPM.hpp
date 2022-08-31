@@ -160,6 +160,10 @@ public:
     static constexpr char const * forceInternalString() { return "internalForce"; }
     static constexpr char const * momentumString() { return "momentum"; }
     static constexpr char const * forceContactString() { return "contactForce"; }
+    static constexpr char const * damageString() { return "damage"; }
+    static constexpr char const * maxDamageString() { return "maxDamage"; }
+    static constexpr char const * surfaceNormalString() { return "surfaceNormal"; }
+    static constexpr char const * materialPositionString() { return "materialPosition"; }
 
 
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
@@ -177,8 +181,15 @@ protected:
   TimeIntegrationOption m_timeIntegrationOption;
   MPI_iCommData m_iComm;
 
-  int m_numContactGroups, m_numContactFlags, m_numVelocityFields;
-  bool m_damageFieldPartitioning;
+  real64 m_smallMass;
+
+  int m_numContactGroups, m_numContactFlags, m_numVelocityFields; // TODO: I think we only need m_numVelocityFields
+  int m_damageFieldPartitioning;
+  int m_contactGapCorrection;
+  real64 m_frictionCoefficient;
+
+  int m_planeStrain;
+  int m_numDims;
 
   std::array<real64, 3> m_hEl;                // Grid spacing in x-y-z
   std::array<real64, 3> m_xLocalMin;          // Minimum local grid coordinate including ghost nodes
@@ -187,14 +198,56 @@ protected:
   std::array<real64, 3> m_xLocalMaxNoGhost;   // Maximum local grid coordinate EXCLUDING ghost nodes
   std::array<real64, 3> m_xGlobalMin;         // Minimum global grid coordinate
   std::array<real64, 3> m_xGlobalMax;         // Maximum global grid coordinate
-  std::array<real64, 3> m_domainLengths;            // Length of each edge of grid
-  std::array<int, 3> m_nEl;                                // Number of elements in each grid direction
-  array3d< int > m_ijkMap;     // Map from cell-spaced coordinates to cell ID
+  std::array<real64, 3> m_domainLengths;      // Length of each edge of grid
+  std::array<int, 3> m_nEl;                   // Number of elements in each grid direction
+  array3d< int > m_ijkMap;                    // Map from cell-spaced coordinates to cell ID
 
   int m_voigtMap[3][3];
 
 private:
   virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const override;
+
+  void syncGridFields( std::vector< std::string > const & fieldNames,
+                       DomainPartition & domain,
+                       NodeManager & nodeManager,
+                       MeshLevel & mesh );
+
+  void computeGridSurfaceNormals( ParticleManager & particleManager,
+                                  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridReferencePosition,
+                                  array3d< real64 > & gridSurfaceNormal );
+
+  void computeContactForces( const real64 dt,
+                             const array2d< real64 > & gridMass,
+                             const array2d< real64 > & GEOSX_UNUSED_PARAM( gridDamage ),
+                             const array2d< real64 > & GEOSX_UNUSED_PARAM( gridMaxDamage ),
+                             const array3d< real64 > & gridVelocity,
+                             const array3d< real64 > & gridMomentum,
+                             const array3d< real64 > & gridSurfaceNormal,
+                             const array3d< real64 > & gridMaterialPosition,
+                             array3d< real64 > & gridContactForce );
+
+  void computePairwiseNodalContactForce( const int & separable,
+                                         const real64 & dt,
+                                         const real64 & mA,
+                                         const real64 & mB,
+                                         const arraySlice1d< real64 > vA,
+                                         const arraySlice1d< real64 > GEOSX_UNUSED_PARAM( vB ),
+                                         const arraySlice1d< real64 > qA,
+                                         const arraySlice1d< real64 > qB,
+                                         const arraySlice1d< real64 > nA,
+                                         const arraySlice1d< real64 > nB,
+                                         const arraySlice1d< real64 > xA, // Position of field A
+                                         const arraySlice1d< real64 > xB, // Position of field B
+                                         arraySlice1d< real64 > fA,
+                                         arraySlice1d< real64 > fB );
+
+  real64 subtractDot( const arraySlice1d< real64 > & u,
+                      const arraySlice1d< real64 > & v,
+                      const arraySlice1d< real64 > & n );
+
+  void computeOrthonormalBasis( const array1d< real64 > & e1,  // input "normal" unit vector.
+                                array1d< real64 > & e2,        // output "tangential" unit vector.
+                                array1d< real64 > & e3 );      // output "tangential" unit vector.
 
 };
 
