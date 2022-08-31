@@ -627,6 +627,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
              PressureComputation< FE_TYPE > kernel2( finiteElement );
            kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
            (elementSubRegion.size(),
+            nodeManager.size(),
             X,
             elemsToNodes,
             velocity_x,

@@ -497,6 +497,7 @@ struct PressureComputation
    template< typename EXEC_POLICY, typename ATOMIC_POLICY >
    void 
    launch( localIndex const size,
+           localIndex const size_node,
            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
            arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
            arrayView2d< real64 const > const velocity_x,
@@ -516,6 +517,13 @@ struct PressureComputation
            arrayView1d < real64 > const  p_np1)
 
   {
+
+    //Pre-mult by the first factor for damping
+    forAll< EXEC_POLICY >( size_node, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+       p_np1[a] *= 1.0+((dt/2)*(damping[a]/mass[a]));
+    } );
+
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -566,12 +574,6 @@ struct PressureComputation
           uelemx[i]+=dt*diag;
         }
 
-        //Damping multiplication
-        for (localIndex i = 0; i < numNodesPerElem; ++i)
-        {
-          p_np1[elemsToNodes[k][i]] *= (1.0-(dt/2.0)*(damping[elemsToNodes[k][i]]/mass[elemsToNodes[k][i]]))*(1.0+(dt/2.0)*(damping[elemsToNodes[k][i]]/mass[elemsToNodes[k][i]]));
-        }
-    
         for (localIndex i = 0; i < numNodesPerElem; ++i)
         {
           real64 const localIncrement = uelemx[i]/mass[elemsToNodes[k][i]];
@@ -596,6 +598,12 @@ struct PressureComputation
 
       }
 
+    } );
+
+    //Pre-mult by the first factor for damping
+    forAll< EXEC_POLICY >( size_node, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+       p_np1[a] *= 1.0-((dt/2)*(damping[a]/mass[a]));
     } );
   }
 
