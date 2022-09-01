@@ -322,8 +322,8 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  real64 const a1 = (dt < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
-  real64 const a2 = 1.0 - a1;
+  real32 const a1 = (dt < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
+  real32 const a2 = 1.0 - a1;
 
   if( m_nsamplesSeismoTrace > 0 )
   {
@@ -497,7 +497,7 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
 
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
-      real32 const value = bc.getScale();
+      real64 const value = bc.getScale();
 
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {
@@ -565,7 +565,7 @@ void AcousticWaveEquationSEM::initializePML()
 
     NodeManager & nodeManager = mesh.getNodeManager();
     /// WARNING: the array below is one of the PML auxiliary variables
-    arrayView1d< real64 > const indicatorPML = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
+    arrayView1d< real32 > const indicatorPML = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
     indicatorPML.zero();
 
@@ -694,7 +694,7 @@ void AcousticWaveEquationSEM::initializePML()
       CellElementSubRegion::NodeMapType const & elemToNodes =
         subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
-      arrayView1d< real64 const > const vel = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::MediumVelocity::key());
+      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( extrinsicMeshData::MediumVelocity::key());
       finiteElement::FiniteElementBase const &
       fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -797,11 +797,11 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
     NodeManager & nodeManager = mesh.getNodeManager();
 
     /// Array views of the pressure p, PML auxiliary variables, and node coordinates
-    arrayView1d< real64 const > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-    arrayView2d< real64 const > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
-    arrayView2d< real64 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
-    arrayView1d< real64 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
-    arrayView1d< real64 const > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
+    arrayView1d< real32 const > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+    arrayView2d< real32 const > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
+    arrayView2d< real32 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+    arrayView1d< real32 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+    arrayView1d< real32 const > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     /// Select the subregions concerned by the PML (specified in the xml by the Field Specification)
@@ -826,7 +826,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
 
       /// Array view of the wave speed
-      arrayView1d< real64 const > const vel = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::MediumVelocity::key());
+      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( extrinsicMeshData::MediumVelocity::key());
 
       /// Get the object needed to determine the type of the element in the subregion
       finiteElement::FiniteElementBase const &
@@ -847,7 +847,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
         cMin[i] = param.waveSpeedMinXYZPML[i];
         cMax[i] = param.waveSpeedMaxXYZPML[i];
       }
-      real64 const r = param.reflectivityPML;
+      real32 const r = param.reflectivityPML;
 
       /// Get the type of the elements in the subregion
       finiteElement::dispatch3D( fe,
@@ -956,10 +956,10 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     else
     {
       parametersPML const & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
-      arrayView2d< real64 > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
-      arrayView2d< real64 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
-      arrayView1d< real64 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
-      arrayView1d< real64 > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
+      arrayView2d< real32 > const v_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar1PML >();
+      arrayView2d< real32 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+      arrayView1d< real32 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+      arrayView1d< real32 > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
       real64 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
@@ -968,7 +968,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       real64 const dMax[ 3 ] = {param.thicknessMaxXYZPML[0], param.thicknessMaxXYZPML[1], param.thicknessMaxXYZPML[2]};
       real64 const cMin[ 3 ] = {param.waveSpeedMinXYZPML[0], param.waveSpeedMinXYZPML[1], param.waveSpeedMinXYZPML[2]};
       real64 const cMax[ 3 ] = {param.waveSpeedMaxXYZPML[0], param.waveSpeedMaxXYZPML[1], param.waveSpeedMaxXYZPML[2]};
-      real64 const r = param.reflectivityPML;
+      real32 const r = param.reflectivityPML;
 
       /// apply the main function to update some of the PML auxiliary variables
       /// Compute (divV) and (B.pressureGrad - C.auxUGrad) vectors for the PML region
@@ -979,7 +979,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
-          real64 sigma[3];
+          real32 sigma[3];
           real64 xLocal[ 3 ];
 
           for( integer i=0; i<3; ++i )
@@ -998,7 +998,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
             r,
             sigma );
 
-          real64 const alpha = sigma[0] + sigma[1] + sigma[2];
+          real32 const alpha = sigma[0] + sigma[1] + sigma[2];
 
           p_np1[a] = dt2*( (rhs[a] - stiffnessVector[a])/mass[a] - divV_n[a])
                      - (1 - 0.5*alpha*dt)*p_nm1[a]
@@ -1049,8 +1049,8 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
     if( usePML )
     {
-      arrayView2d< real64 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
-      arrayView1d< real64 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
+      arrayView2d< real32 > const grad_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar2PML >();
+      arrayView1d< real32 > const divV_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar3PML >();
       grad_n.zero();
       divV_n.zero();
     }
