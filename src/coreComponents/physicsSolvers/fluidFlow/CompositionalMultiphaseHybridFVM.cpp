@@ -414,8 +414,11 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
 {
   GEOSX_MARK_FUNCTION;
 
+  bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
+  bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
+
   // check if we want to rescale the Newton update
-  if( m_maxCompFracChange >= 1.0 && m_maxRelativePresChange >= 1.0 )
+  if( skipCompFracDamping && skipPresDamping )
   {
     // no rescaling wanted, we just return 1.0;
     return 1.0;
@@ -443,10 +446,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
                                                      subRegion,
                                                      localSolution );
 
-      if( subRegionScalingFactor < scalingFactor )
-      {
-        scalingFactor = subRegionScalingFactor;
-      }
+      scalingFactor = std::min( scalingFactor, subRegionScalingFactor );
     } );
 
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -506,6 +506,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
                                                                                           ElementSubRegionBase const & subRegion )
     {
+      // check that pressure and component densities are non-negative
       integer const subRegionSolutionCheck =
         isothermalCompositionalMultiphaseBaseKernels::
           SolutionCheckKernelFactory::
@@ -530,6 +531,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
     arrayView1d< real64 const > const facePres =
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
 
+    // check that face pressure is non-negative
     integer const faceSolutionCheck =
       compositionalMultiphaseHybridFVMKernels::
         SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,

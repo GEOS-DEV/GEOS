@@ -548,17 +548,14 @@ public:
 
   /**
    * @brief Compute the local value of the scaling factor
-   * @tparam FUNC the type of the function that can be used to customize the kernel
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
-   * @param[in] kernelOp the function used to customize the kernel
    */
   GEOSX_HOST_DEVICE
   void computeScalingFactor( localIndex const ei,
                              StackVariables & stack ) const
   {
-    real64 constexpr eps =
-      isothermalCompositionalMultiphaseBaseKernels::minDensForDivision;
+    real64 constexpr eps = isothermalCompositionalMultiphaseBaseKernels::minDensForDivision;
 
     Base::computeScalingFactor( ei, stack, [&] ()
     {
@@ -620,12 +617,9 @@ public:
                    ElementSubRegionBase const & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
-    arrayView1d< real64 const > const pressure =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-    arrayView1d< real64 const > const temperature =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
-    arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+    arrayView1d< real64 const > const pressure = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+    arrayView1d< real64 const > const temperature = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
     ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxRelativeTempChange, maxCompFracChange,
                                            rankOffset, numComp, dofKey, subRegion, localSolution,
                                            pressure, temperature, compDens );

@@ -825,10 +825,8 @@ public:
                    ElementSubRegionBase const & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
-    arrayView1d< real64 const > const pressure =
-      subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-    arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
+    arrayView1d< real64 const > const pressure = subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
     isothermalCompositionalMultiphaseBaseKernels::
       SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor, rankOffset,
                                   numComp, dofKey, subRegion, localSolution, pressure, compDens );

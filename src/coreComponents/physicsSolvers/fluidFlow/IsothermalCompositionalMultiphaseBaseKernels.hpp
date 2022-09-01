@@ -958,14 +958,11 @@ public:
    */
   struct StackVariables
   {
-public:
-
     /// Index of the local row corresponding to this element
     localIndex localRow;
 
     /// The local value
     TYPE localMinVal;
-
   };
 
   /**

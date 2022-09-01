@@ -256,11 +256,12 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
 {
   GEOSX_MARK_FUNCTION;
 
+  bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
+  bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
+  bool const skipTempDamping = m_maxRelativeTempChange >= 1.0 || !m_isThermal;
 
   // check if we want to rescale the Newton update
-  if( m_maxCompFracChange >= 1.0 ||
-      m_maxRelativePresChange >= 1.0 ||
-      ( m_maxRelativeTempChange >= 1.0 || !m_isThermal ) )
+  if( skipCompFracDamping && skipPresDamping && skipTempDamping )
   {
     // no rescaling wanted, we just return 1.0;
     return 1.0;
@@ -299,10 +300,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
                                                      subRegion,
                                                      localSolution );
 
-      if( subRegionScalingFactor < scalingFactor )
-      {
-        scalingFactor = subRegionScalingFactor;
-      }
+      scalingFactor = std::min( scalingFactor, subRegionScalingFactor );
     } );
   } );
 
@@ -327,6 +325,8 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
+      // check that pressure and component densities are non-negative
+      // for thermal, check that temperature is above 273.15 K
       integer const subRegionSolutionCheck =
         m_isThermal
   ? thermalCompositionalMultiphaseBaseKernels::

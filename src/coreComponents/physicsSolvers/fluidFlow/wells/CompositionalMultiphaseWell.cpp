@@ -1180,8 +1180,11 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
 {
   GEOSX_MARK_FUNCTION;
 
+  bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
+  bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
+
   // check if we want to rescale the Newton update
-  if( m_maxCompFracChange >= 1.0 && m_maxRelativePresChange >= 1.0 )
+  if( skipCompFracDamping && skipPresDamping )
   {
     // no rescaling wanted, we just return 1.0;
     return 1.0;
@@ -1199,6 +1202,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
                                                                         [&]( localIndex const,
                                                                              ElementSubRegionBase const & subRegion )
     {
+      // check that pressure and component densities are non-negative
       real64 const subRegionScalingFactor =
         compositionalMultiphaseWellKernels::
           ScalingForSystemSolutionKernelFactory::
@@ -1209,10 +1213,8 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
                                                      wellDofKey,
                                                      subRegion,
                                                      localSolution );
-      if( subRegionScalingFactor < scalingFactor )
-      {
-        scalingFactor = subRegionScalingFactor;
-      }
+
+      scalingFactor = std::min( subRegionScalingFactor, scalingFactor );
     } );
 
   } );
