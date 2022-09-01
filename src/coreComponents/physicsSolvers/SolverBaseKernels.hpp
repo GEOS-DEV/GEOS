@@ -31,7 +31,6 @@ namespace solverBaseKernels
 /******************************** ResidualNormKernelBase ********************************/
 
 /**
- * @class ResidualNormKernelBase
  * @tparam NUM_NORM number of norms to compute (say, mass and energy)
  * @brief Define the base interface for the residual calculations
  */
@@ -64,14 +63,11 @@ public:
    */
   struct LinfStackVariables
   {
-public:
-
     /// Index of the local row in the residual vector
     localIndex localRow;
 
     /// Normalized residual value for the element/node/face
     real64 localValue[numNorm]{};
-
   };
 
   /**
@@ -80,11 +76,8 @@ public:
    */
   struct L2StackVariables : public LinfStackVariables
   {
-public:
-
     /// Normalizer value for the element/node/face
     real64 localNormalizer[numNorm]{};
-
   };
 
 
