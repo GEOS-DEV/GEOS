@@ -965,10 +965,10 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   cellBlockManager.buildMaps();
 
-  GEOSX_LOG_RANK_0( "Total number of nodes:" << ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) );
-  GEOSX_LOG_RANK_0( "Total number of elems:" << m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] );
-
-  GEOSX_LOG_RANK( "Total number of nodes:" << numNodes );
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: total number of nodes = {}", getName(),
+                               ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: total number of elems = {}", getName(),
+                               m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] ) );
 }
 
 void
