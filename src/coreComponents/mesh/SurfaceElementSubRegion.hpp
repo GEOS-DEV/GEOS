@@ -84,6 +84,15 @@ public:
   /// @brief Destructor
   virtual ~SurfaceElementSubRegion() override;
 
+  /**
+   * @brief Compute the center of each element in the subregion.
+   * @param[in] X an arrayView of (const) node positions
+   */
+  void calculateElementCenters( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+  {
+    ElementSubRegionBase::calculateElementCenters( m_toNodesRelation, X );
+  }
+
   ///@}
 
   /**
