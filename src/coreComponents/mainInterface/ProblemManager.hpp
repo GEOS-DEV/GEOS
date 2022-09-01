@@ -336,9 +336,9 @@ private:
 
 
   map< std::pair< string, Group const * const >, arrayView1d< string const > const >
-  getFiniteElementDiscretizations() const;
+  getDiscretizations() const;
 
-  void generateDiscretization( MeshLevel & meshLevel,
+  void generateMeshLevel( MeshLevel & meshLevel,
                                CellBlockManagerABC & cellBlockManager,
                                Group const * const discretization,
                                arrayView1d< string const > const & targetRegions );

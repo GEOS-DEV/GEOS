@@ -154,6 +154,8 @@ void ProblemManager::problemSetup()
 
   generateMesh();
 
+  initialize_postMeshGeneration();
+
   applyNumericalMethods();
 
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
@@ -526,34 +528,37 @@ void ProblemManager::generateMesh()
 
   meshManager.generateMeshes( domain );
 
+  // get all the discretizations from the numerical methods.
+  // map< pair< mesh body name, pointer to discretization>, array of region names >
   map< std::pair< string, Group const * const >, arrayView1d< string const > const >
-  discretizations = getFiniteElementDiscretizations();
+  discretizations = getDiscretizations();
 
-  // setup the base discretizations
+  // setup the base discretizations (hard code this for now)
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
 
     MeshLevel & baseMesh = meshBody.getBaseDiscretization();
     array1d< string > junk;
-    this->generateDiscretization( baseMesh, cellBlockManager, nullptr, junk.toViewConst() );
+    this->generateMeshLevel( baseMesh, cellBlockManager, nullptr, junk.toViewConst() );
 
     ElementRegionManager & elemManager = baseMesh.getElemManager();
     elemManager.generateWells( meshManager, baseMesh );
 
   } );
 
-  // setup the base discretizations associated with a numerical method
+  // setup the MeshLevel assocaited with the discretizations
   for( auto const & discretizationPair: discretizations )
   {
     string const & meshBodyName = discretizationPair.first.first;
     MeshBody & meshBody = domain.getMeshBody( meshBodyName );
 
-    if( discretizationPair.first.second!=nullptr )
+    if( discretizationPair.first.second!=nullptr ) // this check shouldn't be required
     {
       FiniteElementDiscretization const * const
       feDiscretization = dynamic_cast< FiniteElementDiscretization const * const >( discretizationPair.first.second );
 
+      // if the discretization is a finite element discretization
       if( feDiscretization != nullptr )
       {
         int const order = feDiscretization->getOrder();
@@ -561,28 +566,30 @@ void ProblemManager::generateMesh()
         arrayView1d< string const > const regionNames = discretizationPair.second;
         CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
 
+        // create a high order MeshLevel
         if( order > 1 )
         {
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                                        discretizationName,
                                                        order );
 
-          this->generateDiscretization( mesh,
+          this->generateMeshLevel( mesh,
                                         cellBlockManager,
                                         feDiscretization,
                                         regionNames );
         }
+        // Just create a shallow copy of the base discretization.
         else if( order==1 )
         {
           meshBody.createShallowMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                            discretizationName );
         }
       }
-      else
+      else // this is a finite volume discretization...i hope
       {
         Group const * const discretization = discretizationPair.first.second;
 
-        if( discretization != nullptr )
+        if( discretization != nullptr ) // ...it is FV if it isn't nullptr
         {
           string const & discretizationName = discretization->getName();
           meshBody.createShallowMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
@@ -639,6 +646,7 @@ void ProblemManager::applyNumericalMethods()
   ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
   Group & meshBodies = domain.getMeshBodies();
 
+  // this contains a key tuple< mesh body name, mesh level name, region name, subregion name> with a value of the number of quadrature points.
   map< std::tuple< string, string, string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshBodies );
 
   setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
@@ -647,7 +655,7 @@ void ProblemManager::applyNumericalMethods()
 
 
 map< std::pair< string, Group const * const >, arrayView1d< string const > const >
-ProblemManager::getFiniteElementDiscretizations() const
+ProblemManager::getDiscretizations() const
 {
 
   map< std::pair< string, Group const * const >, arrayView1d< string const > const > meshDiscretizations;
@@ -696,7 +704,7 @@ ProblemManager::getFiniteElementDiscretizations() const
   return meshDiscretizations;
 }
 
-void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
+void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
                                              CellBlockManagerABC & cellBlockManager,
                                              Group const * const discretization,
                                              arrayView1d< string const > const & )

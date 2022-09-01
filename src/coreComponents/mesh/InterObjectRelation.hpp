@@ -48,7 +48,12 @@ public:
     BASETYPE( std::forward< ARGS >( args )... )
   {}
 
-
+  /**
+   * @brief copy assignement operator
+   * 
+   * @param rhs the relation to copy
+   * @return InterObjectRelation< BASETYPE >& 
+   */
   InterObjectRelation< BASETYPE > & operator=( InterObjectRelation< BASETYPE > const & rhs )
   {
     base_type::operator=( rhs.base() );

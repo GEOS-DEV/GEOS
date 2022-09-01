@@ -67,6 +67,7 @@ void FluxApproximationBase::initializePreSubGroups()
   {
     meshBody.forMeshLevels( [&]( MeshLevel & mesh )
     {
+      // Proceed with regular procedure only if the MeshLevel is not a shallow copy
       if( !(mesh.isShallowCopy() ) )
       {
         // Group structure: mesh1/finiteVolumeStencils/myTPFA
@@ -78,14 +79,7 @@ void FluxApproximationBase::initializePreSubGroups()
 
         registerFractureStencil( stencilGroup );
       }
-    } );
-  } );
-
-  domain.forMeshBodies( [&]( MeshBody & meshBody )
-  {
-    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
-    {
-      if( mesh.isShallowCopy() )
+      else
       {
         Group & parentMesh = mesh.getShallowParent();
         Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
@@ -93,6 +87,19 @@ void FluxApproximationBase::initializePreSubGroups()
       }
     } );
   } );
+
+  // domain.forMeshBodies( [&]( MeshBody & meshBody )
+  // {
+  //   meshBody.forMeshLevels( [&]( MeshLevel & mesh )
+  //   {
+  //     if( mesh.isShallowCopy() )
+  //     {
+  //       Group & parentMesh = mesh.getShallowParent();
+  //       Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
+  //       mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );
+  //     }
+  //   } );
+  // } );
 
 }
 

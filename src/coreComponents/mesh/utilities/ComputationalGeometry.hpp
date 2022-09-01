@@ -225,7 +225,6 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
     LvArray::tensorOps::crossProduct( triangleNormal, v1, v2 );
     real64 const triangleArea = LvArray::tensorOps::l2Norm< 3 >( triangleNormal );
 
-
     LvArray::tensorOps::add< 3 >( normal, triangleNormal );
 
     area += triangleArea;

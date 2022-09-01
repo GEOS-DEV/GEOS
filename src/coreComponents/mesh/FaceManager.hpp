@@ -294,22 +294,22 @@ public:
   ///@{
 
   /**
-   * @brief Get a mutable accessor to a table containing all the face area.
-   * @details this table is mutable so it can be used to compute
+   * @brief Get a mutable accessor to an array containing all the face area.
+   * @details this array is mutable so it can be used to compute
    * or modify the face area in this FaceManager
-   * @return a table containing all the face area
+   * @return an array containing all the face area
    */
   array1d< real64 > & faceArea()       { return m_faceArea; }
 
   /**
-   * @brief Get an immutable accessor to a table containing all the face area.
-   * @return an immutable table containing all the face area
+   * @brief Get an immutable accessor to an array containing all the face area.
+   * @return an immutable array containing all the face area
    */
   arrayView1d< real64 const > faceArea() const { return m_faceArea; }
 
   /**
-   * @brief Get a mutable accessor to a table containing all the face center.
-   * @details this table is mutable so it can be used to compute
+   * @brief Get a mutable accessor to an array containing all the face center.
+   * @details this array is mutable so it can be used to compute
    * or modify the face centers in this FaceManager
    * @return a reference to an arrayView containing all the face centers
    */
@@ -317,22 +317,22 @@ public:
 
 
   /**
-   * @brief Get an immutable accessor to a table containing all the face centers.
-   * @return an immutable table containing all the face centers
+   * @brief Get an immutable accessor to an array containing all the face centers.
+   * @return an immutable array containing all the face centers
    */
   arrayView2d< real64 const > faceCenter() const { return m_faceCenter; }
 
   /**
-   * @brief Get a mutable accessor to a table containing all the face normals.
-   * @details this table is mutable so it can be used to compute
+   * @brief Get a mutable accessor to an array containing all the face normals.
+   * @details this array is mutable so it can be used to compute
    * or modify the face normals in this FaceManager
-   * @return a table containing all the face normals
+   * @return an array containing all the face normals
    */
   array2d< real64 > & faceNormal() { return m_faceNormal; }
 
   /**
-   * @brief Get an immutable accessor to a table containing all the face normals.
-   * @return an immutable table containing all the face normals
+   * @brief Get an immutable accessor to an array containing all the face normals.
+   * @return an immutable array containing all the face normals
    */
   arrayView2d< real64 const > faceNormal() const { return m_faceNormal; }
 
