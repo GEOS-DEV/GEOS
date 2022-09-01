@@ -796,15 +796,14 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
     integer const numCompWithEnergy = numComp + enableEnergyBalance;
 
     // 1. Check pressure Dirichlet BCs
-    fsManager.apply( time,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::flow::pressure::key(),
-                     [&]( FieldSpecificationBase const &,
-                          string const & setName,
-                          SortedArrayView< localIndex const > const &,
-                          Group & subRegion,
-                          string const & )
+    fsManager.apply< ElementSubRegionBase >( time,
+                                             mesh,
+                                             extrinsicMeshData::flow::pressure::key(),
+                                             [&]( FieldSpecificationBase const &,
+                                                  string const & setName,
+                                                  SortedArrayView< localIndex const > const &,
+                                                  ElementSubRegionBase & subRegion,
+                                                  string const & )
     {
       // 1.0. Check whether pressure has already been applied to this set
       string const & subRegionName = subRegion.getName();
@@ -820,15 +819,14 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
     } );
 
     // 2. Check composition BC (global component fraction)
-    fsManager.apply( time,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::flow::globalCompFraction::key(),
-                     [&] ( FieldSpecificationBase const & fs,
-                           string const & setName,
-                           SortedArrayView< localIndex const > const &,
-                           Group & subRegion,
-                           string const & )
+    fsManager.apply< ElementSubRegionBase >( time,
+                                             mesh,
+                                             extrinsicMeshData::flow::globalCompFraction::key(),
+                                             [&] ( FieldSpecificationBase const & fs,
+                                                   string const & setName,
+                                                   SortedArrayView< localIndex const > const &,
+                                                   ElementSubRegionBase & subRegion,
+                                                   string const & )
     {
       // 2.0. Check pressure and record composition bc application
       string const & subRegionName = subRegion.getName();
@@ -860,15 +858,14 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
     if( enableEnergyBalance )
     {
       // 3. Check temperature Dirichlet BCs
-      fsManager.apply( time,
-                       mesh,
-                       "ElementRegions",
-                       extrinsicMeshData::flow::temperature::key(),
-                       [&]( FieldSpecificationBase const &,
-                            string const & setName,
-                            SortedArrayView< localIndex const > const &,
-                            Group & subRegion,
-                            string const & )
+      fsManager.apply< ElementSubRegionBase >( time,
+                                               mesh,
+                                               extrinsicMeshData::flow::temperature::key(),
+                                               [&]( FieldSpecificationBase const &,
+                                                    string const & setName,
+                                                    SortedArrayView< localIndex const > const &,
+                                                    ElementSubRegionBase & subRegion,
+                                                    string const & )
       {
         // 1.0. Check whether pressure has already been applied to this set
         string const & subRegionName = subRegion.getName();
@@ -940,15 +937,14 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
   {
 
     // 1. Apply pressure Dirichlet BCs, store in a separate field
-    fsManager.apply( time + dt,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::flow::pressure::key(),
-                     [&]( FieldSpecificationBase const & fs,
-                          string const & setName,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & subRegion,
-                          string const & )
+    fsManager.apply< ElementSubRegionBase >( time + dt,
+                                             mesh,
+                                             extrinsicMeshData::flow::pressure::key(),
+                                             [&]( FieldSpecificationBase const & fs,
+                                                  string const & setName,
+                                                  SortedArrayView< localIndex const > const & targetSet,
+                                                  ElementSubRegionBase & subRegion,
+                                                  string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
@@ -965,15 +961,14 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
     } );
 
     // 2. Apply composition BC (global component fraction), store in a separate field
-    fsManager.apply( time + dt,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::flow::globalCompFraction::key(),
-                     [&] ( FieldSpecificationBase const & fs,
-                           string const &,
-                           SortedArrayView< localIndex const > const & targetSet,
-                           Group & subRegion,
-                           string const & )
+    fsManager.apply< ElementSubRegionBase >( time + dt,
+                                             mesh,
+                                             extrinsicMeshData::flow::globalCompFraction::key(),
+                                             [&] ( FieldSpecificationBase const & fs,
+                                                   string const &,
+                                                   SortedArrayView< localIndex const > const & targetSet,
+                                                   ElementSubRegionBase & subRegion,
+                                                   string const & )
     {
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                              time + dt,
@@ -982,15 +977,14 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
     } );
 
     // 3. Apply temperature Dirichlet BCs, store in a separate field
-    fsManager.apply( time + dt,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::flow::temperature::key(),
-                     [&]( FieldSpecificationBase const & fs,
-                          string const & setName,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & subRegion,
-                          string const & )
+    fsManager.apply< ElementSubRegionBase >( time + dt,
+                                             mesh,
+                                             extrinsicMeshData::flow::temperature::key(),
+                                             [&]( FieldSpecificationBase const & fs,
+                                                  string const & setName,
+                                                  SortedArrayView< localIndex const > const & targetSet,
+                                                  ElementSubRegionBase & subRegion,
+                                                  string const & )
     {
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
@@ -1011,15 +1005,14 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
 
 
     // 3. Apply to the system
-    fsManager.apply( time + dt,
-                     mesh,
-                     "ElementRegions",
-                     extrinsicMeshData::flow::pressure::key(),
-                     [&] ( FieldSpecificationBase const &,
-                           string const &,
-                           SortedArrayView< localIndex const > const & targetSet,
-                           Group & subRegion,
-                           string const & )
+    fsManager.apply< ElementSubRegionBase >( time + dt,
+                                             mesh,
+                                             extrinsicMeshData::flow::pressure::key(),
+                                             [&] ( FieldSpecificationBase const &,
+                                                   string const &,
+                                                   SortedArrayView< localIndex const > const & targetSet,
+                                                   ElementSubRegionBase & subRegion,
+                                                   string const & )
     {
       arrayView1d< real64 const > const bcPres =
         subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcPressure::key() );

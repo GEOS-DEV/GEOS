@@ -1279,10 +1279,9 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
     arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
 
     // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
-    SurfaceGenerator const &
-    surfaceGenerator = this->getParent().getGroup< SurfaceGenerator >( "SurfaceGen" );
+    SurfaceGenerator const & surfaceGenerator = this->getParent().getGroup< SurfaceGenerator >( "SurfaceGen" );
     SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator.getFractureRegionName() );
-    FaceElementSubRegion const & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
+    FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
     GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( extrinsicMeshData::contact::traction::key() ), "The fracture subregion must contain traction field." );
     arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
     GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );

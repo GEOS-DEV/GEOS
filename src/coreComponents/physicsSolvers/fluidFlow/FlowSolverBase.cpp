@@ -331,14 +331,14 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  fsManager.apply< EquilibriumInitialCondition >( 0.0,
+  fsManager.apply< ElementSubRegionBase,
+                   EquilibriumInitialCondition >( 0.0,
                                                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                  "ElementRegions",
                                                   EquilibriumInitialCondition::catalogName(),
                                                   [&] ( EquilibriumInitialCondition const & fs,
                                                         string const &,
                                                         SortedArrayView< localIndex const > const & targetSet,
-                                                        Group & subRegion,
+                                                        ElementSubRegionBase & subRegion,
                                                         string const & )
   {
     RAJA::ReduceMax< parallelDeviceReduce, real64 > targetSetMaxElevation( -1e99 );
@@ -384,15 +384,14 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & )
   {
-    fsManager.apply( time + dt,
-                     mesh,
-                     "ElementRegions",
-                     FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                     [&]( FieldSpecificationBase const & fs,
-                          string const &,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & subRegion,
-                          string const & )
+    fsManager.apply< ElementSubRegionBase >( time + dt,
+                                             mesh,
+                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
+                                             [&]( FieldSpecificationBase const & fs,
+                                                  string const &,
+                                                  SortedArrayView< localIndex const > const & targetSet,
+                                                  ElementSubRegionBase & subRegion,
+                                                  string const & )
     {
       arrayView1d< integer const > const ghostRank =
         subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
@@ -457,15 +456,14 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   array1d< real64 > globalSumFluxes( aquiferNameToAquiferId.size() );
   array1d< real64 > localSumFluxes( aquiferNameToAquiferId.size() );
 
-  fsManager.apply< AquiferBoundaryCondition >( time + dt,
-                                               mesh,
-                                               "faceManager",
-                                               AquiferBoundaryCondition::catalogName(),
-                                               [&] ( AquiferBoundaryCondition const & bc,
-                                                     string const & setName,
-                                                     SortedArrayView< localIndex const > const &,
-                                                     Group &,
-                                                     string const & )
+  fsManager.apply< FaceManager, AquiferBoundaryCondition >( time + dt,
+                                                            mesh,
+                                                            AquiferBoundaryCondition::catalogName(),
+                                                            [&] ( AquiferBoundaryCondition const & bc,
+                                                                  string const & setName,
+                                                                  SortedArrayView< localIndex const > const &,
+                                                                  FaceManager &,
+                                                                  string const & )
   {
     BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
     if( stencil.size() == 0 )

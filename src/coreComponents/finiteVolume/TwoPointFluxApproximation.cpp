@@ -240,7 +240,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
 
-  FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
+  FaceElementSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion.faceList();
 
   arrayView1d< localIndex const > const & fractureConnectorsToEdges = fractureSubRegion.m_fractureConnectorsEdgesToEdges;
@@ -664,7 +664,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( embeddedSurfaceRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
 
-  EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
+  EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< EmbeddedSurfaceSubRegion >();
 
   FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
 
@@ -739,8 +739,7 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( embeddedSurfaceRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
 
-  EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
-  // arrayView1d< real64 const > const & fractureElemArea   = fractureSubRegion.getElementArea();
+  EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< EmbeddedSurfaceSubRegion >();
   arrayView2d< real64 const > const fractureElemCenter = fractureSubRegion.getElementCenter();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
 
@@ -1011,14 +1010,14 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
   array1d< real64 > localSumFaceAreas( aquiferNameToAquiferId.size() );
   arrayView1d< real64 > const localSumFaceAreasView = localSumFaceAreas.toView();
 
-  fsManager.apply< AquiferBoundaryCondition >( 0.0,
+  fsManager.apply< FaceManager,
+                   AquiferBoundaryCondition >( 0.0,
                                                domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                               "faceManager",
                                                AquiferBoundaryCondition::catalogName(),
                                                [&] ( AquiferBoundaryCondition const & bc,
                                                      string const &,
                                                      SortedArrayView< localIndex const > const & targetSet,
-                                                     Group const &,
+                                                     FaceManager const &,
                                                      string const & )
   {
     RAJA::ReduceSum< parallelHostReduce, real64 > targetSetSumFaceAreas( 0.0 );
@@ -1071,14 +1070,14 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
 
   // Step 3: compute the face area fraction for each connection, and insert into boundary stencil
 
-  fsManager.apply< AquiferBoundaryCondition >( 0.0,
+  fsManager.apply< FaceManager,
+                   AquiferBoundaryCondition >( 0.0,
                                                domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                               "faceManager",
                                                AquiferBoundaryCondition::catalogName(),
                                                [&] ( AquiferBoundaryCondition const & bc,
                                                      string const & setName,
                                                      SortedArrayView< localIndex const > const & targetSet,
-                                                     Group const &,
+                                                     FaceManager const &,
                                                      string const & )
   {
     BoundaryStencil & stencil = getStencil< BoundaryStencil >( mesh, setName );
