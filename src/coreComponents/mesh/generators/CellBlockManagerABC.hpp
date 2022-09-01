@@ -15,23 +15,13 @@
 #ifndef GEOSX_CELLBLOCKMANAGERABC_HPP
 #define GEOSX_CELLBLOCKMANAGERABC_HPP
 
+#include "CellBlockUtilities.hpp"
 #include "dataRepository/Group.hpp"
 
 #include <map>
 
 namespace geosx
 {
-
-/**
- * @brief Container for maps from a mesh object (node, edge or face) to cells.
- * @tparam BASETYPE underlying map type
- */
-template< typename BASETYPE >
-struct ToCellRelation
-{
-  BASETYPE toBlockIndex; ///< Map containing a list of cell block indices for each object
-  BASETYPE toCellIndex;  ///< Map containing cell indices, same shape as above
-};
 
 /**
  * @brief Abstract base class for CellBlockManager.
@@ -94,12 +84,20 @@ public:
   { return 4; }
 
   /**
-   * @brief Returns a group containing the cell blocks as CellBlockABC instances
+   * @brief Returns a group containing the cell blocks as @p CellBlockABC instances.
    * @return Mutable reference to the cell blocks group.
    *
    * @note It should probably be better not to expose a non-const accessor here.
    */
   virtual Group & getCellBlocks() = 0;
+
+  /**
+   * @brief Returns a group containing the face blocks as @p FaceBlockABC instances.
+   * @return Mutable reference to the face blocks group.
+   *
+   * @note It should probably be better not to expose a non-const accessor here.
+   */
+  virtual Group & getFaceBlocks() = 0;
 
   /**
    * @brief Returns a group containing the cell blocks as CellBlockABC instances
