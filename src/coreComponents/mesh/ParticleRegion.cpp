@@ -45,7 +45,7 @@ void ParticleRegion::generateMesh( Group & particleBlocks )
     ParticleBlockABC & source = particleBlocks.getGroup< ParticleBlockABC >( subRegion.getName() );
     subRegion.copyFromParticleBlock( source );
     int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    subRegion.setParticleGhostRank( mpiRank, subRegion.size() );
+    subRegion.setParticleRank( mpiRank, subRegion.size() );
   }
 }
 

@@ -109,14 +109,14 @@ public:
    * @brief Get the ghost rank of each particle in this subregion.
    * @return an arrayView1d of const particle ghost ranks
    */
-  arrayView1d< int const > getParticleGhostRank() const
-  { return m_particleGhostRank; }
+  arrayView1d< int const > getParticleRank() const
+  { return m_particleRank; }
 
   /**
-   * @copydoc getParticleGhostRank() const
+   * @copydoc getParticleRank() const
    */
-  arrayView1d< int > getParticleGhostRank()
-  { return m_particleGhostRank; }
+  arrayView1d< int > getParticleRank()
+  { return m_particleRank; }
 
   /**
    * @brief Get the center of each particle in this subregion.
@@ -276,7 +276,7 @@ public:
     static constexpr char const * particleGroupString() { return "particleGroup"; }
 
     /// @return String key for the member level field for the particle ghost rank.
-    static constexpr char const * particleGhostRankString() { return "particleGhostRank"; }
+    static constexpr char const * particleRankString() { return "particleRank"; }
 
     /// @return String key for the member level field for the particle center.
     static constexpr char const * particleCenterString() { return "particleCenter"; }
@@ -336,7 +336,7 @@ protected:
   bool m_hasRVectors;
 
   /// Member level field for particle ghost ranks
-  array1d< int > m_particleGhostRank;
+  array1d< int > m_particleRank;
 
   /// Member level field for the particle global ID.
   array1d< int > m_particleID;

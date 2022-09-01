@@ -555,23 +555,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
   // Set grid multi-field labels to avoid a VTK output bug, must be done every time step despite grid fields being registered
   // TODO: Only doing this on the 1st cycle breaks restarts, can we do better? Why aren't labels part of the restart data?
-  std::vector< std::string > keys = { keys::Velocity,
-                                      viewKeyStruct::momentumString(),
-                                      keys::Acceleration,
-                                      viewKeyStruct::forceInternalString(),
-                                      viewKeyStruct::forceExternalString(),
-                                      viewKeyStruct::forceContactString(),
-                                      viewKeyStruct::surfaceNormalString(),
-                                      viewKeyStruct::materialPositionString() };
-  std::vector< std::string > labels1(m_numVelocityFields);
-  std::generate( labels1.begin(), labels1.end(), [i=0]() mutable { return std::to_string( i++ ); } );
-  string const labels2[] = { "0", "1", "2" };
-  for( size_t gridField=0; gridField<keys.size(); gridField++)
-  {
-    WrapperBase & wrapper = nodeManager.getWrapper< array3d< real64 > >( keys[gridField] );
-    wrapper.setDimLabels( 1, labels1 );
-    wrapper.setDimLabels( 2, labels2 );
-  }
+  setGridFieldLabels( nodeManager );
 
   // Zero out grid scalar fields
   gridMass.zero();
@@ -688,6 +672,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
     // Sync surface normals
     syncGridFields( { viewKeyStruct::surfaceNormalString() }, domain, nodeManager, mesh );
+
+    // Normalize grid surface normals
+    normalizeGridSurfaceNormals( gridMass, gridSurfaceNormal );
 
     // Compute contact forces
     computeContactForces( dt,
@@ -879,7 +866,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
   // Calculate stable time step
   real64 wavespeed = 0.0;
-  real64 length = std::fmin(m_hEl[0],std::fmin(m_hEl[1],m_hEl[2]));
+  real64 length = std::fmin( m_hEl[0], std::fmin( m_hEl[1], m_hEl[2] ) );
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -988,6 +975,33 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
 
     } // particle loop
   } ); // subregion loop
+}
+
+void SolidMechanicsMPM::normalizeGridSurfaceNormals( array2d< real64 > & gridMass,
+                                                     array3d< real64 > & gridSurfaceNormal )
+{
+  for( localIndex g=0 ; g<gridSurfaceNormal.size(0) ; g++ )
+  {
+    for( localIndex fieldIndex = 0 ; fieldIndex < m_numVelocityFields; fieldIndex++ )
+    {
+      if( gridMass[g][fieldIndex] > m_smallMass ) // small mass threshold
+      {
+        real64 norm = tOps::l2Norm< 3 >( gridSurfaceNormal[g][fieldIndex] );
+        if( norm > 1.0e-12 )
+        {
+          tOps::scale< 3 >( gridSurfaceNormal[g][fieldIndex], 1.0/norm );
+        }
+        else
+        {
+          tOps::fill< 3 >( gridSurfaceNormal[g][fieldIndex], 0.0 );
+        }
+      }
+      else
+      {
+        tOps::fill< 3 >( gridSurfaceNormal[g][fieldIndex], 0.0 );
+      }
+    }
+  }
 }
 
 void SolidMechanicsMPM::computeContactForces( const real64 dt,
@@ -1230,6 +1244,40 @@ void SolidMechanicsMPM::computeOrthonormalBasis( const array1d< real64 > & e1, /
   e3[1] = -e1x * e2z + e1z * e2x;
   e3[2] =  e1x * e2y - e1y * e2x;
   tOps::normalize< 3 >( e3 );
+}
+
+void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
+{
+  // Generate labels
+  std::vector< std::string > labels1(m_numVelocityFields);
+  std::generate( labels1.begin(), labels1.end(), [i=0]() mutable { return "velocityField" + std::to_string( i++ ); } );
+  string const labels2[] = { "X", "Y", "Z" };
+
+  // Apply labels to scalar multi-fields
+  std::vector< std::string > keys2d = { keys::Mass,
+                                        viewKeyStruct::damageString(),
+                                        viewKeyStruct::maxDamageString()};
+  for( size_t gridField=0; gridField<keys2d.size(); gridField++)
+  {
+    WrapperBase & wrapper = nodeManager.getWrapper< array2d< real64 > >( keys2d[gridField] );
+    wrapper.setDimLabels( 1, labels1 );
+  }
+
+  // Apply labels to vector multi-fields
+  std::vector< std::string > keys3d = { keys::Velocity,
+                                        viewKeyStruct::momentumString(),
+                                        keys::Acceleration,
+                                        viewKeyStruct::forceInternalString(),
+                                        viewKeyStruct::forceExternalString(),
+                                        viewKeyStruct::forceContactString(),
+                                        viewKeyStruct::surfaceNormalString(),
+                                        viewKeyStruct::materialPositionString() };
+  for( size_t gridField=0; gridField<keys3d.size(); gridField++)
+  {
+    WrapperBase & wrapper = nodeManager.getWrapper< array3d< real64 > >( keys3d[gridField] );
+    wrapper.setDimLabels( 1, labels1 );
+    wrapper.setDimLabels( 2, labels2 );
+  }
 }
 
 void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const

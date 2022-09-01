@@ -216,6 +216,9 @@ private:
                                   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridReferencePosition,
                                   array3d< real64 > & gridSurfaceNormal );
 
+  void normalizeGridSurfaceNormals( array2d< real64 > & gridMass,
+                                    array3d< real64 > & gridSurfaceNormal );
+
   void computeContactForces( const real64 dt,
                              const array2d< real64 > & gridMass,
                              const array2d< real64 > & GEOSX_UNUSED_PARAM( gridDamage ),
@@ -248,6 +251,8 @@ private:
   void computeOrthonormalBasis( const array1d< real64 > & e1,  // input "normal" unit vector.
                                 array1d< real64 > & e2,        // output "tangential" unit vector.
                                 array1d< real64 > & e3 );      // output "tangential" unit vector.
+
+  void setGridFieldLabels( NodeManager & nodeManager );
 
 };
 
