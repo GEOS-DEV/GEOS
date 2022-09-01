@@ -393,7 +393,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       } );
     } );
 
-    // Save initial pressure field (needed by the poromechanics solvers to compute the deltaPressure needed by the total stress)
+    // Save initial pressure field
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
     {
