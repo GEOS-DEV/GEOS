@@ -128,7 +128,7 @@ public:
 
   /**
    * @brief Utility function to scale the horizontal permeability (for instance, by net-to-gross)
-   * @param[in] scalingFactors the vector of scaling factors for the horizontal permeability
+   * @param[in] scalingFactors the vector of scaling factors (one value per cell) for the horizontal permeability
    */
   void scaleHorizontalPermeability( arrayView1d< real64 const > scalingFactors ) const;
 

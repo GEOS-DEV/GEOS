@@ -47,10 +47,10 @@ PermeabilityBase::deliverClone( string const & name,
 void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > scalingFactors ) const
 {
   localIndex const numElems = m_permeability.size( 0 );
+  integer const numQuad = 1; // NOTE: enforcing 1 quadrature point
   for( localIndex ei = 0; ei < numElems; ++ei )
   {
-    // NOTE: enforcing 1 quadrature point
-    for( localIndex q = 0; q < 1; ++q )
+    for( integer q = 0; q < numQuad; ++q )
     {
       m_permeability[ei][q][0] *= scalingFactors[ei];
       m_permeability[ei][q][1] *= scalingFactors[ei];

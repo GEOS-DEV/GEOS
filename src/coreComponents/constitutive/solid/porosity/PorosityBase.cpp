@@ -83,18 +83,13 @@ void PorosityBase::scaleReferencePorosity( arrayView1d< real64 const > scalingFa
 
 void PorosityBase::saveConvergedState() const
 {
-  arrayView2d< real64 const > const newPorosity = m_newPorosity;
-  arrayView2d< real64 > const porosity_n  = m_porosity_n;
-  porosity_n.setValues< parallelDevicePolicy<> >( newPorosity );
+  m_porosity_n.setValues< parallelDevicePolicy<> >( m_newPorosity.toViewConst() );
 }
 
 void PorosityBase::initializeState() const
 {
-  arrayView2d< real64 const > const newPorosity = m_newPorosity;
-  arrayView2d< real64 > const porosity_n = m_porosity_n;
-  arrayView2d< real64 > const initialPorosity = m_initialPorosity;
-  porosity_n.setValues< parallelDevicePolicy<> >( newPorosity );
-  initialPorosity.setValues< parallelDevicePolicy<> >( newPorosity );
+  m_porosity_n.setValues< parallelDevicePolicy<> >( m_newPorosity.toViewConst() );
+  m_initialPorosity.setValues< parallelDevicePolicy<> >( m_newPorosity.toViewConst() );
 }
 
 }
