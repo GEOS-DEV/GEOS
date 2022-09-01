@@ -290,7 +290,7 @@ namespace geosx
      * is complete, and each partition can evaluate its own isCoordinateInPartition() function.
      *
      * After this function, each particle should be in its correct partition, and the
-     * ghostRank of particles that were moved from the current partition will be correct,
+     * Rank of particles that were moved from the current partition will be correct,
      * but the master-ghost map in the neighbor list still needs to updated.  Particles that
      * were ghosts of an object that has been repartitioned will need to have their ghost
      * rank updated, and may need to be deleted/added elsewhere.
@@ -308,16 +308,16 @@ namespace geosx
     {
 
       // (1) Identify any particles that are master on the current partition, but whose center lies
-      // outside of the partition domain.  ghostRank() for particles is defined such that it always
-      // equals the rank of the owning process. Thus a particle is master iff ghostRank==partition.rank
+      // outside of the partition domain.  Rank() for particles is defined such that it always
+      // equals the rank of the owning process. Thus a particle is master iff Rank==partition.rank
       //
       // Temporarily set the ghost rank of any particle to be moved to "-1".  If the particle is
       // requested by another partition, its ghost rank will be updated.  Any particle that still
-      // has a ghostRank=-1 at the end of this function is lost and needs to be deleted.  This
+      // has a Rank=-1 at the end of this function is lost and needs to be deleted.  This
       // should only happen if it has left the global domain (hopefully at an outflow b.c.).
 
       arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
-      arrayView1d< int > const particleGhostRank = subRegion.getParticleGhostRank();
+      arrayView1d< int > const particleRank = subRegion.getParticleRank();
       array1d< R1Tensor > outOfDomainParticleCoordinates;
       std::vector< localIndex > outOfDomainParticleLocalIndices;
       unsigned int nn = m_neighbors.size();
@@ -332,11 +332,11 @@ namespace geosx
           p_x[i] = particleCenter[pp][i];
           inPartition = inPartition && isCoordInPartition( p_x[i], i);
         }
-        if( particleGhostRank[pp]==this->m_rank && !inPartition )
+        if( particleRank[pp]==this->m_rank && !inPartition )
         {
           outOfDomainParticleCoordinates.emplace_back(p_x);  // Store the coordinate of the out-of-domain particle
           outOfDomainParticleLocalIndices.push_back(pp);     // Store the local index "pp" for the current coordinate.
-          particleGhostRank[pp] = -1;                        // Temporarily set particleGhostRank of out-of-domain particle to -1 until it is requested by someone.
+          particleRank[pp] = -1;                             // Temporarily set particleRank of out-of-domain particle to -1 until it is requested by someone.
         }
       }
 
@@ -410,7 +410,7 @@ namespace geosx
 
             particleLocalIndicesRequestedFromNeighbors[n][k] = pp;
             // Set ghost rank of the particle equal to neighbor rank.
-            particleGhostRank[pp] = m_neighbors[n].neighborRank();
+            particleRank[pp] = m_neighbors[n].neighborRank();
           }
         }
 
@@ -459,20 +459,20 @@ namespace geosx
 
 
       // (7) Delete any out-of-domain particles that were not requested by a neighbor.  These particles
-      //     will still have ghostRank=-1. This should only happen if the particle has left the global domain.
+      //     will still have Rank=-1. This should only happen if the particle has left the global domain.
       //     which will hopefully only occur at outflow boundary conditions.  If it happens for a particle in
       //     the global domain, print a warning.
 
       arrayView2d< real64 > const particleCenterAfter = subRegion.getParticleCenter();
-      arrayView1d< int > const particleGhostRankAfter = subRegion.getParticleGhostRank();
+      arrayView1d< int > const particleRankAfter = subRegion.getParticleRank();
       for(int pp = subRegion.size()-1; pp>=0; pp--)
       {
-        if( particleGhostRankAfter[pp] == -1 )
+        if( particleRankAfter[pp] == -1 )
         {
           GEOSX_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[pp] );
           subRegion.erase(pp);
         }
-        else if( particleGhostRankAfter[pp] != m_rank )
+        else if( particleRankAfter[pp] != m_rank )
         {
           subRegion.erase(pp);
         }

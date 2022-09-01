@@ -28,7 +28,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   ObjectManagerBase( name, parent ),
   m_constitutiveModels( groupKeyStruct::constitutiveModelsString(), this ),
   m_hasRVectors(),
-  m_particleGhostRank(),
+  m_particleRank(),
   m_particleID(),
   m_particleGroup(),
   m_particleCenter(),
@@ -44,7 +44,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
 
-  registerWrapper( viewKeyStruct::particleGhostRankString(), &m_particleGhostRank ).
+  registerWrapper( viewKeyStruct::particleRankString(), &m_particleRank ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleIDString(), &m_particleID ).
@@ -136,7 +136,7 @@ void ParticleSubRegionBase::erase(localIndex pp)
   int newSize = this->size()-1;
 
   // Scalar fields:
-  m_particleGhostRank.erase(pp); // TODO: Can we automatically loop over all registered wrappers and erase that way?
+  m_particleRank.erase(pp); // TODO: Can we automatically loop over all registered wrappers and erase that way?
   m_particleID.erase(pp);
   m_particleVolume.erase(pp);
   m_particleInitialVolume.erase(pp);
