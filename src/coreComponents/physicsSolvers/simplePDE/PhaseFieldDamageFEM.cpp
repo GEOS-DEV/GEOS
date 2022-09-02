@@ -565,14 +565,14 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & )
   {
-    fsManager.apply( time,
-                     mesh,
-                     "nodeManager",
-                     m_fieldName,
-                     [&]( FieldSpecificationBase const & bc, string const &,
-                          SortedArrayView< localIndex const > const & targetSet,
-                          Group & targetGroup,
-                          string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
+    fsManager.template apply< NodeManager >( time,
+                                             mesh,
+                                             m_fieldName,
+                                             [&]( FieldSpecificationBase const & bc,
+                                                  string const &,
+                                                  SortedArrayView< localIndex const > const & targetSet,
+                                                  NodeManager & targetGroup,
+                                                  string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                          parallelDevicePolicy< 32 > >( targetSet,
@@ -585,7 +585,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                                        localRhs );
     } );
 
-    fsManager.applyFieldValue< serialPolicy >( time, mesh, "ElementRegions", viewKeyStruct::coeffNameString() );
+    fsManager.applyFieldValue< serialPolicy >( time, mesh, viewKeyStruct::coeffNameString() );
   } );
 }
 

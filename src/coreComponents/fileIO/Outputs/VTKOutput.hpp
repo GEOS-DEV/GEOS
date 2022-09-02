@@ -48,6 +48,13 @@ public:
   virtual void postProcessInput() override;
 
   /**
+   * @brief Set the plotFileRoot name for the output
+   *
+   * @param root The string name
+   */
+  void setPlotFileRoot( string const & root );
+
+  /**
    * @brief Writes out a set of vtk files.
    * @copydoc EventBase::execute()
    */
@@ -71,6 +78,11 @@ public:
     execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
   }
 
+  /**
+   * @brief Performs re-initialization of the datasets accumulated in the PVD writer.
+   */
+  virtual void reinit() override;
+
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct : OutputBase::viewKeysStruct
   {
@@ -83,6 +95,14 @@ public:
     static constexpr auto fieldNames = "fieldNames";
   } vtkOutputViewKeys;
   /// @endcond
+
+  /**
+   * @brief Return PyVTKOutput type.
+   * @return Return PyVTKOutput type.
+   */
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const override;
+#endif
 
 private:
 
