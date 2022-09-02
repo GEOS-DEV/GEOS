@@ -69,6 +69,11 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
   registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Type of local dissipation function. Can be Linear or Quadratic" );
+
+  registerWrapper( viewKeyStruct::damageUpperBoundString(), &m_damageUpperBound ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The upper bound of the damage" );
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
@@ -624,7 +629,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
         {
           real64 const damageAtNode = nodalDamage[elemNodes( k, a )];
 
-          if( damageAtNode >= 1.0 )
+          if( damageAtNode >= m_damageUpperBound )
           {
             localIndex const dof = dofIndex[elemNodes( k, a )];
 
