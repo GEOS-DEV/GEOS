@@ -36,7 +36,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_lengthScale(),
   m_criticalFractureEnergy(),
   m_criticalStrainEnergy(),
-  m_extDrivingForceSwitch(),
+  m_extDrivingForceFlag( 0 ),
   m_tensileStrength(),
   m_compressStrength(),
   m_deltaCoefficient()
@@ -68,9 +68,10 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Critical stress in a 1d tension test" );
 
-  this->registerWrapper( viewKeyStruct::extDrivingForceSwitchString(), &m_extDrivingForceSwitch ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Whether to have external driving force. Can be True or False" );
+  this->registerWrapper( viewKeyStruct::extDrivingForceFlagString(), &m_extDrivingForceFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Whether to have external driving force. Can be 0 or 1" );
 
   this->registerWrapper( viewKeyStruct::tensileStrengthString(), &m_tensileStrength ).
     setApplyDefaultValue( 0.0 ).
@@ -94,9 +95,9 @@ void Damage< BASE >::postProcessInput()
 {
   BASE::postProcessInput();
 
-  if( m_extDrivingForceSwitch != "True" and m_extDrivingForceSwitch != "False" )
+  if( m_extDrivingForceFlag != 0 and m_extDrivingForceFlag != 1 )
   {
-    GEOSX_ERROR( "invalid external driving force option - must be True or False" );
+    GEOSX_ERROR( "invalid external driving force flag option - must be 0 or 1" );
   }
 }
 

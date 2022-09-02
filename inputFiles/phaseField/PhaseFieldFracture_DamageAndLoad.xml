@@ -116,8 +116,7 @@
       defaultShearModulus="3.00e5"
       lengthScale="0.2"
       criticalFractureEnergy="2.7"
-      criticalStrainEnergy="0"
-      extDrivingForceSwitch="False"/>
+      criticalStrainEnergy="0"/>
   </Constitutive>
 
   <FieldSpecifications>

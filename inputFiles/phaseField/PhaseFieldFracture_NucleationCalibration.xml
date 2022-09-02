@@ -37,6 +37,7 @@
       fieldName="Damage"
       
       localDissipation="Linear"
+      damageUpperBound="1.0"
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
@@ -134,7 +135,7 @@
       lengthScale="1.0"
       criticalFractureEnergy="1e-2"
       criticalStrainEnergy="0"
-      extDrivingForceSwitch="True"
+      extDrivingForceFlag="1"
       tensileStrength="3.0"
       compressiveStrength="40.0"
       deltaCoefficient="4.0"/>

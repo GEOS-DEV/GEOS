@@ -74,7 +74,7 @@ public:
                  real64 const & inputLengthScale,
                  real64 const & inputCriticalFractureEnergy,
                  real64 const & inputcriticalStrainEnergy,
-                 integer const & inputExtDrivingForceSwitch,
+                 integer const & inputExtDrivingForceFlag,
                  real64 const & inputTensileStrength,
                  real64 const & inputCompressStrength,
                  real64 const & inputDeltaCoefficient,
@@ -86,7 +86,7 @@ public:
     m_lengthScale( inputLengthScale ),
     m_criticalFractureEnergy( inputCriticalFractureEnergy ),
     m_criticalStrainEnergy( inputcriticalStrainEnergy ),
-    m_extDrivingForceSwitch( inputExtDrivingForceSwitch ),
+    m_extDrivingForceFlag( inputExtDrivingForceFlag ),
     m_tensileStrength( inputTensileStrength ),
     m_compressStrength( inputCompressStrength ),
     m_deltaCoefficient( inputDeltaCoefficient )
@@ -164,7 +164,7 @@ public:
 
     real64 factor = getDegradationValue( k, q );
 
-    if( m_extDrivingForceSwitch == 1 )
+    if( m_extDrivingForceFlag )
     {
       real64 stressP;
       real64 stressQ;
@@ -177,10 +177,6 @@ public:
 
       real64 const mu    = stiffness.m_shearModulus;
       real64 const kappa = stiffness.m_bulkModulus;
-
-      // compute volumetric and deviatoric strain invariants
-      real64 strain[6];
-      UPDATE_BASE::getElasticStrain( k, q, strain );
 
       // compute invariants of degraded stress
       real64 I1 = factor * stressP * 3.;
@@ -251,7 +247,7 @@ public:
     #if LORENTZ
     return m_criticalStrainEnergy;
     #else
-    if( m_extDrivingForceSwitch == 1 )
+    if( m_extDrivingForceFlag )
       return 3*m_criticalFractureEnergy/(16 * m_lengthScale) + 0.5 * m_extDrivingForce( k, q );
     else
       return 3*m_criticalFractureEnergy/(16 * m_lengthScale);
@@ -267,7 +263,7 @@ public:
   real64 const m_lengthScale;
   real64 const m_criticalFractureEnergy;
   real64 const m_criticalStrainEnergy;
-  integer const m_extDrivingForceSwitch;
+  integer const m_extDrivingForceFlag;
   real64 const m_tensileStrength;
   real64 const m_compressStrength;
   real64 const m_deltaCoefficient;
@@ -306,7 +302,7 @@ public:
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
                                                                        m_criticalStrainEnergy,
-                                                                       m_extDrivingForceSwitch=="True"? 1 : 0,
+                                                                       m_extDrivingForceFlag,
                                                                        m_tensileStrength,
                                                                        m_compressStrength,
                                                                        m_deltaCoefficient );
@@ -324,7 +320,7 @@ public:
     /// string/key for sigma_c
     static constexpr char const * criticalStrainEnergyString() { return "criticalStrainEnergy"; }
     // string/key for c_e switch
-    static constexpr char const * extDrivingForceSwitchString() { return "extDrivingForceSwitch"; }
+    static constexpr char const * extDrivingForceFlagString() { return "extDrivingForceFlag"; }
     /// string/key for the uniaxial tensile strength
     static constexpr char const * tensileStrengthString() { return "tensileStrength"; }
     /// string/key for the uniaxial compressive strength
@@ -341,7 +337,7 @@ protected:
   real64 m_lengthScale;
   real64 m_criticalFractureEnergy;
   real64 m_criticalStrainEnergy;
-  string m_extDrivingForceSwitch;
+  integer m_extDrivingForceFlag;
   real64 m_tensileStrength;
   real64 m_compressStrength;
   real64 m_deltaCoefficient;
