@@ -1,62 +1,10 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
-    <PhaseFieldFracture
-      name="PhaseFieldSolve"
-      solidSolverName="SolidMechSolve"
-      damageSolverName="DamageSolve"
-      couplingTypeOption="FixedStress"
-      logLevel="2"
-      subcycling="0"
-      discretization="FE1"
-      targetRegions="{ Region1 }">
-    </PhaseFieldFracture>
 
-    <SolidMechanicsLagrangianSSLE
-      name="SolidMechSolve"
-      timeIntegrationOption="QuasiStatic"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ Region1 }"
-      >
-      <NonlinearSolverParameters
-        newtonMaxIter="200"
-        newtonTol="1.0e-6"/>
-      <LinearSolverParameters
-        logLevel="0"
-        solverType="gmres"
-        preconditionerType="amg"/>
-    </SolidMechanicsLagrangianSSLE>
-
-    <PhaseFieldDamageFEM
-      name="DamageSolve"
-      discretization="FE1"
-      timeIntegrationOption="SteadyState"
-      fieldName="Damage"
-      
-      localDissipation="Linear"
-      damageUpperBound="1.0"
-      logLevel="1"
-      targetRegions="{ Region1 }">
-      <NonlinearSolverParameters
-        newtonMaxIter="200"
-        newtonTol="1.0e-6"/>
-      <LinearSolverParameters
-        logLevel="0"
-        solverType="gmres"
-        preconditionerType="amg"/>
-    </PhaseFieldDamageFEM>
-
-    <SurfaceGenerator
-      name="SurfaceGen"
-      targetRegions="{ Region1 }"
-      nodeBasedSIF="1"
-      
-      rockToughness="0"
-      mpiCommOrder="1"/>
-  </Solvers>
+  <Included>
+    <File name="./PhaseFieldFracture_Nucleation_base.xml"/>
+  </Included>
 
   <Mesh>
     <InternalMesh
@@ -65,7 +13,7 @@
       xCoords="{ 0, 100 }"
       yCoords="{ -300, -2, 0, 2, 300 }"
       zCoords="{ 0, 1 }"
-      nx="{ 1000 }"
+      nx="{ 200 }"
       ny="{ 20, 20, 20, 20 }"
       nz="{ 2 }"
       yBias="{0.75, 0, 0, -0.75}"
@@ -74,21 +22,16 @@
 
   <Events
     maxTime="1.0">
-    <!-- <SoloEvent name="siloOutput0"
-               target="/Outputs/SiloOutput"/> -->
+
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
+
     <PeriodicEvent
       name="solverApplications"
       forceDt="0.02"
       target="/Solvers/PhaseFieldSolve"/>
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="vtkOutput"
       timeFrequency="0.02"
@@ -106,39 +49,19 @@
       target="/Outputs/restartOutput"/>
   </Events>
 
-  <NumericalMethods>
-    <FiniteElements>
-      <FiniteElementSpace
-        name="FE1"
-        order="1"/>
-    </FiniteElements>
-  </NumericalMethods>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="Region1"
-      cellBlocks="{ cb1 }"
-      materialList="{ cement }"/>
-
-    <SurfaceElementRegion
-      name="Fracture"
-      defaultAperture="0.0"
-      materialList="{ cement }"/>
-  </ElementRegions>
-
   <Constitutive>
     <DamageElasticIsotropic
-      name="cement"
+      name="rock"
       defaultDensity="2300"
       defaultBulkModulus="1.67e4"
       defaultShearModulus="1.25e4"
-      lengthScale="1.0"
-      criticalFractureEnergy="1e-2"
+      lengthScale="0.4"
+      criticalFractureEnergy="4e-3"
       criticalStrainEnergy="0"
       extDrivingForceFlag="1"
-      tensileStrength="3.0"
+      tensileStrength="5.0"
       compressiveStrength="40.0"
-      deltaCoefficient="4.0"/>
+      deltaCoefficient="0.0"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -146,7 +69,7 @@
       name="topTraction"
       objectPath="faceManager"
       tractionType="normal"
-      scale="3.0"
+      scale="1.16"
       functionName="timeFunction"
       setNames="{ ypos }"/>
 
@@ -154,7 +77,7 @@
       name="bottomTraction"
       objectPath="faceManager"
       tractionType="normal"
-      scale="3.0"
+      scale="1.16"
       functionName="timeFunction"
       setNames="{ yneg }"/>
 
@@ -213,7 +136,7 @@
 
     <VTK
       name="DamageNucleationCalibration_VTKOutput"
-      plotFileRoot="plot_damage_nucleation_calibration_cement_delta=4"/>
+      plotFileRoot="plot_damage_nucleation_calibration"/>
 
     <Restart
       name="restartOutput"/>

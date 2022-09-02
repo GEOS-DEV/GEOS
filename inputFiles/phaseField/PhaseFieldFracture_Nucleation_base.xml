@@ -27,7 +27,7 @@
       >
       <NonlinearSolverParameters
         newtonMaxIter="200"
-        newtonTol="1.0e-12"/>
+        newtonTol="1.0e-6"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
@@ -44,7 +44,7 @@
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="200"
-        newtonTol="1.0e-12"/>
+        newtonTol="1.0e-6"/>
       <LinearSolverParameters
         directParallel="0"/>
     </PhaseFieldDamageFEM>
@@ -78,15 +78,4 @@
       materialList="{ rock }"/>
   </ElementRegions>
 
-  <Outputs>
-    <Silo
-      name="DamageNucleation_SiloOutput"/>
-
-    <VTK
-      name="DamageNucleation_VTKOutput"
-      plotFileRoot="plot_damage_nucleation"/>
-
-    <Restart
-      name="restartOutput"/>
-  </Outputs>
 </Problem>
