@@ -38,7 +38,7 @@
       timeIntegrationOption="SteadyState"
       fieldName="Damage"
       
-      localDissipation="Linear"
+      localDissipation="Quadratic"
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
