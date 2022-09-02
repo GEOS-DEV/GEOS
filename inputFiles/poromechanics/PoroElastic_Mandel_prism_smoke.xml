@@ -3,11 +3,10 @@
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <!-- SPHINX_POROMECHANICSSOLVER -->
     <SinglePhasePoromechanics
       name="poroSolve"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
@@ -56,7 +55,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ 0_hexahedra, 1_pentagonalPrisms, 2_hexagonalPrisms }"
+      cellBlocks="{ hexahedra, pentagonalPrisms, hexagonalPrisms }"
       materialList="{ shale, water }"/>
   </ElementRegions>
 
@@ -224,59 +223,12 @@
       values="{ 6.31691864, 6.31770204, 6.31834881, 6.31952093, 6.32162575, 6.32534495, 6.33173922, 6.34226498, 6.35857272, 6.38222902, 6.41503816, 6.45995655, 6.52156122, 6.60644048, 6.72413111, 6.8887422, 7.12175231, 7.45621336, 7.9280595, 8.51003414, 9.03811794 }"/>
   </Functions>
 
-  <Tasks>
-    <PackCollection
-      name="pressureCollection_hexa"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/hexahedra"
-      fieldName="pressure"/>
-
-    <PackCollection
-      name="pressureCollection_pentaprism"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/pentagonalPrisms"
-      fieldName="pressure"/>
-
-    <PackCollection
-      name="pressureCollection_hexaprism"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/hexagonalPrisms"
-      fieldName="pressure"/>    
-
-    <PackCollection
-      name="displacementCollection"
-      objectPath="nodeManager"
-      fieldName="TotalDisplacement"/>
-  </Tasks>
-
-  <!-- SPHINX_TASKS_END -->
-  <!-- SPHINX_OUTPUT -->
   <Outputs>
     <VTK
       name="vtkOutput"/>
 
     <Restart
       name="restartOutput"/>
-
-    <TimeHistory
-      name="pressureHistoryOutput_hexa"
-      sources="{/Tasks/pressureCollection_hexa}"
-      filename="pressure_history"/>
-
-    <TimeHistory
-      name="pressureHistoryOutput_pentaprism"
-      sources="{/Tasks/pressureCollection_pentaprism}"
-      filename="pressure_history"/>
-
-    <TimeHistory
-      name="pressureHistoryOutput_hexaprism"
-      sources="{/Tasks/pressureCollection_hexaprism}"
-      filename="pressure_history"/>
-
-    <TimeHistory
-      name="displacementHistoryOutput"
-      sources="{ /Tasks/displacementCollection }"
-      filename="displacement_history"/>
   </Outputs>
 
   <Events
@@ -298,41 +250,5 @@
       endTime="10.0"
       forceDt="0.025"
       target="/Solvers/poroSolve"/>
-
-    <PeriodicEvent
-      name="pressureCollection_hexa"
-      target="/Tasks/pressureCollection_hexa"/>
-
-    <PeriodicEvent
-      name="pressureCollection_pentaprism"
-      target="/Tasks/pressureCollection_pentaprism"/>
-
-    <PeriodicEvent
-      name="pressureCollection_hexaprism"
-      target="/Tasks/pressureCollection_hexaprism"/>
-
-    <PeriodicEvent
-      name="pressureOutput_hexa"
-      targetExactTimestep="0"
-      target="/Outputs/pressureHistoryOutput_hexa"/>
-
-    <PeriodicEvent
-      name="pressureOutput_pentaprism"
-      targetExactTimestep="0"
-      target="/Outputs/pressureHistoryOutput_pentaprism"/>
-
-    <PeriodicEvent
-      name="pressureOutput_hexaprism"
-      targetExactTimestep="0"
-      target="/Outputs/pressureHistoryOutput_hexaprism"/>
-
-    <PeriodicEvent
-      name="displacementCollection"
-      target="/Tasks/displacementCollection"/>
-
-    <PeriodicEvent
-      name="displacementOutput"
-      targetExactTimestep="0"
-      target="/Outputs/displacementHistoryOutput"/>
   </Events>
 </Problem>
