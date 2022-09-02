@@ -1075,8 +1075,6 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="objectPath" type="string" default="" />
 		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--scaleSet => (no description available)-->
-		<xsd:attribute name="scaleSet" type="real64_array" default="{0}" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
 		<!--tractionType => Type of traction boundary condition. Options are:
@@ -2106,7 +2104,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--damageUpperBound => The upper bound of the damage-->
-		<xsd:attribute name="damageUpperBound" type="real64" default="1" />
+		<xsd:attribute name="damageUpperBound" type="real64" default="1.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fieldName => name of field variable-->
@@ -2983,6 +2981,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--degradationLowerLimit => The lower limit of the degradation function-->
+		<xsd:attribute name="degradationLowerLimit" type="real64" default="0" />
 		<!--deltaCoefficient => Coefficient in the calculation of the external driving force-->
 		<xsd:attribute name="deltaCoefficient" type="real64" default="0" />
 		<!--extDrivingForceFlag => Whether to have external driving force. Can be 0 or 1-->
@@ -3011,6 +3011,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--degradationLowerLimit => The lower limit of the degradation function-->
+		<xsd:attribute name="degradationLowerLimit" type="real64" default="0" />
 		<!--deltaCoefficient => Coefficient in the calculation of the external driving force-->
 		<xsd:attribute name="deltaCoefficient" type="real64" default="0" />
 		<!--extDrivingForceFlag => Whether to have external driving force. Can be 0 or 1-->
@@ -3039,6 +3041,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--degradationLowerLimit => The lower limit of the degradation function-->
+		<xsd:attribute name="degradationLowerLimit" type="real64" default="0" />
 		<!--deltaCoefficient => Coefficient in the calculation of the external driving force-->
 		<xsd:attribute name="deltaCoefficient" type="real64" default="0" />
 		<!--extDrivingForceFlag => Whether to have external driving force. Can be 0 or 1-->
