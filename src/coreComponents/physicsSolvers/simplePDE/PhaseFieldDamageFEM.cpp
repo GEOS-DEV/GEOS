@@ -640,7 +640,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
                                                         dofManager.rankOffset(),
                                                         localMatrix,
                                                         rhsContribution,
-                                                        1.0,
+                                                        m_damageUpperBound,
                                                         damageAtNode );
 
             globalIndex const localRow = dof - dofManager.rankOffset();
