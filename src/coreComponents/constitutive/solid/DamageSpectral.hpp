@@ -46,13 +46,14 @@ public:
                          real64 const & inputLengthScale,
                          real64 const & inputCriticalFractureEnergy,
                          real64 const & inputcriticalStrainEnergy,
+                         real64 const & inputDegradationLowerLimit,
                          int const & inputExtDrivingForceFlag,
                          real64 const & inputTensileStrength,
                          real64 const & inputCompressStrength,
                          real64 const & inputDeltaCoefficient,
                          PARAMS && ... baseParams ):
     DamageUpdates< UPDATE_BASE >( inputDamage, inputStrainEnergyDensity, inputExtDrivingForce, inputLengthScale,
-                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputExtDrivingForceFlag,
+                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
                                   inputTensileStrength, inputCompressStrength, inputDeltaCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
@@ -294,6 +295,7 @@ public:
   using Damage< BASE >::m_criticalFractureEnergy;
   using Damage< BASE >::m_lengthScale;
   using Damage< BASE >::m_criticalStrainEnergy;
+  using Damage< BASE >::m_degradationLowerLimit;
   using Damage< BASE >::m_extDrivingForceFlag;
   using Damage< BASE >::m_tensileStrength;
   using Damage< BASE >::m_compressStrength;
@@ -315,6 +317,7 @@ public:
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
                                                                        m_criticalStrainEnergy,
+                                                                       m_degradationLowerLimit,
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength,
                                                                        m_compressStrength,

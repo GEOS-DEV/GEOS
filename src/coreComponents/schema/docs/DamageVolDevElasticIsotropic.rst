@@ -11,6 +11,7 @@ defaultDensity         real64  required Default Material Density
 defaultPoissonRatio    real64  -1       Default Poisson's Ratio                                      
 defaultShearModulus    real64  -1       Default Shear Modulus Parameter                              
 defaultYoungModulus    real64  -1       Default Young's Modulus                                      
+degradationLowerLimit  real64  0        The lower limit of the degradation function                  
 deltaCoefficient       real64  0        Coefficient in the calculation of the external driving force 
 extDrivingForceFlag    integer 0        Whether to have external driving force. Can be 0 or 1        
 lengthScale            real64  required Length scale l in the phase-field equation                   

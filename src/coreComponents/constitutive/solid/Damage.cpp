@@ -36,6 +36,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_lengthScale(),
   m_criticalFractureEnergy(),
   m_criticalStrainEnergy(),
+  m_degradationLowerLimit( 0.0 ),
   m_extDrivingForceFlag( 0 ),
   m_tensileStrength(),
   m_compressStrength(),
@@ -67,6 +68,11 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::criticalStrainEnergyString(), &m_criticalStrainEnergy ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Critical stress in a 1d tension test" );
+
+  this->registerWrapper( viewKeyStruct::degradationLowerLimitString(), &m_degradationLowerLimit ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The lower limit of the degradation function" );
 
   this->registerWrapper( viewKeyStruct::extDrivingForceFlagString(), &m_extDrivingForceFlag ).
     setApplyDefaultValue( 0 ).

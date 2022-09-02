@@ -74,6 +74,7 @@ public:
                  real64 const & inputLengthScale,
                  real64 const & inputCriticalFractureEnergy,
                  real64 const & inputcriticalStrainEnergy,
+                 real64 const & inputDegradationLowerLimit,
                  integer const & inputExtDrivingForceFlag,
                  real64 const & inputTensileStrength,
                  real64 const & inputCompressStrength,
@@ -86,6 +87,7 @@ public:
     m_lengthScale( inputLengthScale ),
     m_criticalFractureEnergy( inputCriticalFractureEnergy ),
     m_criticalStrainEnergy( inputcriticalStrainEnergy ),
+    m_degradationLowerLimit( inputDegradationLowerLimit ),
     m_extDrivingForceFlag( inputExtDrivingForceFlag ),
     m_tensileStrength( inputTensileStrength ),
     m_compressStrength( inputCompressStrength ),
@@ -113,10 +115,19 @@ public:
   virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const
   {
-    real64 pf = fmax( fmin( 1.0, m_damage( k, q )), 0.0 );
+    real64 pf;
+
+    if( m_extDrivingForceFlag )
+    {
+      pf = fmax( fmin( 1.0, m_damage( k, q )), 0.0 );
+    }
+    else
+    {
+      pf = m_damage( k, q );
+    }
 
     // Set a lower bound tolerance for the degradation
-    real64 eps = 1e-4;
+    real64 const eps = m_degradationLowerLimit;
 
     return ((1 - eps)*(1 - pf)*(1 - pf) + eps);
   }
@@ -263,6 +274,7 @@ public:
   real64 const m_lengthScale;
   real64 const m_criticalFractureEnergy;
   real64 const m_criticalStrainEnergy;
+  real64 const m_degradationLowerLimit;
   integer const m_extDrivingForceFlag;
   real64 const m_tensileStrength;
   real64 const m_compressStrength;
@@ -302,6 +314,7 @@ public:
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
                                                                        m_criticalStrainEnergy,
+                                                                       m_degradationLowerLimit,
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength,
                                                                        m_compressStrength,
@@ -319,6 +332,8 @@ public:
     static constexpr char const * criticalFractureEnergyString() { return "criticalFractureEnergy"; }
     /// string/key for sigma_c
     static constexpr char const * criticalStrainEnergyString() { return "criticalStrainEnergy"; }
+    /// string/key for degradation lower limit
+    static constexpr char const * degradationLowerLimitString() { return "degradationLowerLimit"; }
     // string/key for c_e switch
     static constexpr char const * extDrivingForceFlagString() { return "extDrivingForceFlag"; }
     /// string/key for the uniaxial tensile strength
@@ -337,6 +352,7 @@ protected:
   real64 m_lengthScale;
   real64 m_criticalFractureEnergy;
   real64 m_criticalStrainEnergy;
+  real64 m_degradationLowerLimit;
   integer m_extDrivingForceFlag;
   real64 m_tensileStrength;
   real64 m_compressStrength;
