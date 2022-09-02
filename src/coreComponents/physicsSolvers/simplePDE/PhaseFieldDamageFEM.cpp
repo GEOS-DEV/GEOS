@@ -71,7 +71,7 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setDescription( "Type of local dissipation function. Can be Linear or Quadratic" );
 
   registerWrapper( viewKeyStruct::damageUpperBoundString(), &m_damageUpperBound ).
-    setApplyDefaultValue( 1.0 ).
+    setApplyDefaultValue( 1.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The upper bound of the damage" );
 }
