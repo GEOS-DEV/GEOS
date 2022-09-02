@@ -21,8 +21,6 @@
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "finiteElement/Kinematics.h"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -233,8 +231,6 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", MechanicsSolver: " );
 
-    applyDamageOnTractionBC( domain );
-
     dtReturnTemporary = solidSolver.nonlinearImplicitStep( time_n,
                                                            dtReturn,
                                                            cycleNumber,
@@ -369,67 +365,6 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
           } );
         } );
       } );
-    } );
-  } );
-
-}
-
-void PhaseFieldFractureSolver::applyDamageOnTractionBC( DomainPartition & domain )
-{
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-
-  GEOSX_MARK_FUNCTION;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
-  {
-    NodeManager const & nodeManager = mesh.getNodeManager();
-    FaceManager const & faceManager = mesh.getFaceManager();
-
-    PhaseFieldDamageFEM const &
-    damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
-
-    string const & damageFieldName = damageSolver.getFieldName();
-
-    // Get an array of nodal damage values
-    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
-
-    fsManager.forSubGroups< TractionBoundaryCondition >( [&] ( TractionBoundaryCondition & fs )
-    {
-      string_array const targetPath = stringutilities::tokenize( fs.getObjectPath(), "/" );
-
-      dataRepository::Group * targetGroup = &mesh;
-
-      dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
-
-      if( elemRegionSubGroup != nullptr )
-      {
-        targetGroup = elemRegionSubGroup;
-      }
-
-      dataRepository::Group * const elemSubRegionSubGroup = targetGroup->getGroupPointer( ElementRegionBase::viewKeyStruct::elementSubRegions() );
-      if( elemSubRegionSubGroup != nullptr )
-      {
-        targetGroup = elemSubRegionSubGroup;
-      }
-
-      targetGroup = &targetGroup->getGroup( targetPath[0] );
-
-      Group & target = *targetGroup;
-
-      dataRepository::Group const & setGroup = target.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
-      string_array setNames = fs.getSetNames();
-      for( auto & setName : setNames )
-      {
-        if( setGroup.hasWrapper( setName ) )
-        {
-          SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
-
-          fs.reinitScaleSet( faceManager,
-                             targetSet,
-                             nodalDamage );
-        }
-      }
     } );
   } );
 

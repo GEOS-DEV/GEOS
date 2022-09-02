@@ -81,16 +81,6 @@ public:
                arrayView1d< real64 > const & localRhs ) const;
 
   /**
-   * @brief Reinitialize the array of traction scale.
-   * @param faceManager Reference to the face manager (Tractions are applied on faces)
-   * @param targetSet The set of faces to apply the BC to.
-   * @param nodalScaleSet The array of nodal value for the traction scale.
-   */
-  void reinitScaleSet( FaceManager const & faceManager,
-                       SortedArrayView< localIndex const > const & targetSet,
-                       arrayView1d< real64 const > const nodalScaleSet );
-
-  /**
    * @brief View keys
    */
   struct viewKeyStruct : public FieldSpecificationBase::viewKeyStruct
@@ -103,9 +93,6 @@ public:
 
 //    /// @return The key for the function describing the components of stress.
 //    constexpr static char const * stressFunctionString() { return "stressFunctions"; }
-
-    /// @return The key for scaleSet
-    constexpr static char const * scaleSetString() { return "scaleSet"; }
 
   };
 
@@ -137,9 +124,6 @@ protected:
 //  bool m_useStressFunctions;
 //
 //  TableFunction const * m_stressFunctions[6];
-
-  /// Array of scale values
-  array1d< real64 > m_scaleSet;
 
 };
 
