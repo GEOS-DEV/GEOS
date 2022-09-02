@@ -1,61 +1,10 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
-    <PhaseFieldFracture
-      name="PhaseFieldSolve"
-      solidSolverName="SolidMechSolve"
-      damageSolverName="DamageSolve"
-      couplingTypeOption="FixedStress"
-      logLevel="2"
-      subcycling="0"
-      discretization="FE1"
-      targetRegions="{ Region1 }">
-      <NonlinearSolverParameters
-        newtonMaxIter="100"/>
-      <LinearSolverParameters
-        directParallel="0"/>
-    </PhaseFieldFracture>
 
-    <SolidMechanicsLagrangianSSLE
-      name="SolidMechSolve"
-      timeIntegrationOption="QuasiStatic"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ Region1 }"
-      >
-      <NonlinearSolverParameters
-        newtonMaxIter="200"
-        newtonTol="1.0e-12"/>
-      <LinearSolverParameters
-        directParallel="0"/>
-    </SolidMechanicsLagrangianSSLE>
-
-    <PhaseFieldDamageFEM
-      name="DamageSolve"
-      discretization="FE1"
-      timeIntegrationOption="SteadyState"
-      fieldName="Damage"
-      
-      localDissipation="Linear"
-      logLevel="1"
-      targetRegions="{ Region1 }">
-      <NonlinearSolverParameters
-        newtonMaxIter="200"
-        newtonTol="1.0e-12"/>
-      <LinearSolverParameters
-        directParallel="0"/>
-    </PhaseFieldDamageFEM>
-
-    <SurfaceGenerator
-      name="SurfaceGen"
-      targetRegions="{ Region1 }"
-      nodeBasedSIF="1"
-      
-      rockToughness="0"
-      mpiCommOrder="1"/>
-  </Solvers>
+  <Included>
+    <File name="./PhaseFieldFracture_Nucleation_base.xml"/>
+  </Included>
 
   <Mesh>
     <InternalMesh
@@ -105,36 +54,16 @@
       target="/Outputs/restartOutput"/>
   </Events>
 
-  <NumericalMethods>
-    <FiniteElements>
-      <FiniteElementSpace
-        name="FE1"
-        order="1"/>
-    </FiniteElements>
-  </NumericalMethods>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="Region1"
-      cellBlocks="{ cb1 }"
-      materialList="{ graphite }"/>
-
-    <SurfaceElementRegion
-      name="Fracture"
-      defaultAperture="0.0"
-      materialList="{ graphite }"/>
-  </ElementRegions>
-
   <Constitutive>
     <DamageElasticIsotropic
-      name="graphite"
+      name="rock"
       defaultDensity="2700"
       defaultBulkModulus="4.4144e3"
       defaultShearModulus="4.3363e3"
       lengthScale="0.2"
       criticalFractureEnergy="9.1e-2"
       criticalStrainEnergy="0"
-      extDrivingForceSwitch="True"
+      extDrivingForceFlag="1"
       tensileStrength="27.0"
       compressiveStrength="77.0"
       deltaCoefficient="3.22"/>
@@ -207,18 +136,6 @@
       coordinateFiles="{ surfing_bc_tables/xlin.geos, surfing_bc_tables/ylin.geos, surfing_bc_tables/zlin.geos, surfing_bc_tables/tlin.geos }"
       voxelFile="surfing_bc_tables/disp.geos"/>
   </Functions>
-
-  <Outputs>
-    <Silo
-      name="DamageNucleation_SiloOutput"/>
-
-    <VTK
-      name="DamageNucleation_VTKOutput"
-      plotFileRoot="plot_damage_edf_on"/>
-
-    <Restart
-      name="restartOutput"/>
-  </Outputs>
 
   <Geometry>
     <Box
