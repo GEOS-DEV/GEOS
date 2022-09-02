@@ -8,7 +8,7 @@
       targetRegions="{ Domain, Fracture }"
       initialDt="1e-3"
       fracturesSolverName="fractureMechSolver"
-      fluidSolverName="flowSolver"
+      flowSolverName="flowSolver"
       solidSolverName="matrixMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
@@ -68,6 +68,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="embeddedSurfaceSubRegion"
       subRegionType="embeddedElement"
       materialList="{ water, fractureFilling, fractureContact }"
       defaultAperture="1e-3"/>
@@ -159,7 +160,7 @@
       name="initialPressureFracture"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="pressure"
       scale="0.0"/>
 

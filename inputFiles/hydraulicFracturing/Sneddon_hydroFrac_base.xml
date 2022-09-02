@@ -7,7 +7,7 @@
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       couplingTypeOption="FIM"
       logLevel="1"
@@ -87,6 +87,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="faceElementSubRegion"
       defaultAperture="0.02e-3"
       materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>

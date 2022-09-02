@@ -30,6 +30,8 @@ namespace geosx
 class WaveSolverBase : public SolverBase
 {
 public:
+
+
   WaveSolverBase( const std::string & name,
                   Group * const parent );
 
@@ -58,6 +60,8 @@ public:
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
 
+    static constexpr char const * usePMLString() { return "usePML"; }
+    static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
   };
 
@@ -68,12 +72,27 @@ public:
 
 protected:
 
+  virtual void postProcessInput() override;
+
   /**
-   * @brief Apply free surface condition to the face define in the geometry box from the xml
+   * @brief Apply free surface condition to the face defined in the geometry box of the xml
    * @param time the time to apply the BC
    * @param domain the partition domain
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) = 0;
+
+  /**
+   * @brief Initialize Perfectly Matched Layer (PML) information
+   */
+  virtual void initializePML() = 0;
+
+  /**
+   * @brief Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
+   * @param time the time to apply the BC
+   * @param domain the partition domain
+   */
+  virtual void applyPML( real64 const time, DomainPartition & domain ) = 0;
+
 
   /**
    * @brief Compute the value of a Ricker (a Gaussian function)
@@ -86,7 +105,7 @@ protected:
   real64 evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order );
 
   /**
-   * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
+   * @brief Locate sources and receivers positions in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
    */
@@ -100,17 +119,33 @@ protected:
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) = 0;
 
   /**
-   * @brief Compute the pressure at each receiver coordinate in one time step
-   * @param iseismo index number of the seismo trace
-   * @param val_np1 the array to save the value at the receiver position
+   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
+   * last two timesteps.
+   * @param time_n the time corresponding to the field values pressure_n
+   * @param dt the simulation timestep
+   * @param timeSeismo the time at which the seismogram is computed
+   * @param iSeismo the index of the seismogram time in the seismogram array
+   * @param var_at_np1 the field values at time_n + dt
+   * @param var_at_n the field values at time_n
+   * @param var_at_receivers the array holding the trace values, where the output is written
    */
-  virtual void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n ) = 0;
+  virtual void computeSeismoTrace( real64 const time_n,
+                                   real64 const dt,
+                                   real64 const timeSeismo,
+                                   localIndex iSeismo,
+                                   arrayView1d< real64 const > const var_np1,
+                                   arrayView1d< real64 const > const var_n,
+                                   arrayView2d< real64 > varAtReceivers ) = 0;
 
   /**
-   * @brief Save the sismo trace in file
-   * @param iseismo index number of the seismo trace
+   * @brief Temporary debug function. Saves the sismo trace to a file.
+   * @param iSeismo index number of the seismo trace
+   * @param val value to be written in seismo
+   * @param filename name of the output file
    */
-  virtual void saveSeismo( localIndex const iseismo, real64 valPressure, string const & filename ) = 0;
+  virtual void saveSeismo( localIndex const iSeismo, real64 val, string const & filename ) = 0;
+
+
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
@@ -138,7 +173,28 @@ protected:
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
 
+  /// Flag to apply PML
+  integer m_usePML;
 
+  struct parametersPML
+  {
+    /// Mininum (x,y,z) coordinates of inner PML boundaries
+    R1Tensor xMinPML;
+
+    /// Maximum (x,y,z) coordinates of inner PML boundaries
+    R1Tensor xMaxPML;
+
+    /// Desired reflectivity of the PML region, used to compute the damping profile
+    real64 reflectivityPML;
+
+    /// Thickness of the PML region, used to compute the damping profile
+    R1Tensor thicknessMinXYZPML;
+    R1Tensor thicknessMaxXYZPML;
+
+    /// Wave speed in the PML region, used to compute the damping profile
+    R1Tensor waveSpeedMinXYZPML;
+    R1Tensor waveSpeedMaxXYZPML;
+  };
 
 };
 

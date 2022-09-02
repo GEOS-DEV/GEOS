@@ -8,7 +8,7 @@
       targetRegions="{ Domain, Fracture }"
       initialDt="1e-3"
       fracturesSolverName="fractureMechSolver"
-      fluidSolverName="flowSolver"
+      flowSolverName="flowSolver"
       solidSolverName="matrixMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
@@ -191,7 +191,7 @@
     <FieldSpecification
       name="initialPressureFracture"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="pressure"
       scale="1.0e5"/>
 

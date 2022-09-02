@@ -86,15 +86,23 @@ public:
    */
   ///@{
 
+
+  /**
+   * @brief Create a Element Sub Region object
+   *
+   * @tparam SUBREGION_TYPE The type of subregion to create
+   * @param name  The name of the subregion
+   * @return reference to the newly created subregion
+   */
+  template< typename SUBREGION_TYPE >
+  SUBREGION_TYPE & createElementSubRegion( string const & name );
+
+
   /**
    * @brief Generate mesh.
-   * @param cellBlocks cell blocks where the mesh is generated
+   * @param blocks Cell or face blocks from where the mesh is extracted.
    */
-  virtual void generateMesh( Group & cellBlocks )
-  {
-    GEOSX_UNUSED_VAR( cellBlocks );
-    GEOSX_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called." );
-  }
+  virtual void generateMesh( Group & blocks ) = 0;
 
   ///@}
 
@@ -133,6 +141,20 @@ public:
   {
     return this->getGroup( viewKeyStruct::elementSubRegions() ).getGroup< SUBREGIONTYPE >( key );
   }
+
+  /**
+   * @brief Check to see if this region has a subregion
+   * @tparam T The type of the subregion
+   * @param name The name to check
+   * @return true if the subregion exists
+   * @return false if the subregion does not exist
+   */
+  template< typename T=ElementSubRegionBase >
+  bool hasSubRegion( string const & name ) const
+  {
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).hasGroup< T >( name );
+  }
+
 
   /**
    * @brief Get the number of subregions in the region.
@@ -340,6 +362,14 @@ string_array ElementRegionBase::getConstitutiveNames() const
   }
   return rval;
 }
+
+
+template< typename SUBREGION_TYPE >
+SUBREGION_TYPE & ElementRegionBase::createElementSubRegion( string const & name )
+{
+  return getGroup( viewKeyStruct::elementSubRegions() ).registerGroup< SUBREGION_TYPE >( name );
+}
+
 
 }
 
