@@ -49,7 +49,7 @@
   <Mesh>
     <VTKMesh
       name="mesh"
-      file="mandel_prism.vtk"/>
+      file="mandel_hybridHexPrism.vtk"/>
   </Mesh>
 
   <ElementRegions>
