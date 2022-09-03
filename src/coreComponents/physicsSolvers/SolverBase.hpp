@@ -709,7 +709,7 @@ public:
   virtual PyTypeObject * getPythonType() const override;
 #endif
 
-  map< std::pair< string, string >, array1d< string > > const & getMeshTargets() const 
+  map< std::pair< string, string >, array1d< string > > const & getMeshTargets() const
   {
     return m_meshTargets;
   }
