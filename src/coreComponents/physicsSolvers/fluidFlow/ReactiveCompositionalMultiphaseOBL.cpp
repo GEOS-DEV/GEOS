@@ -137,7 +137,7 @@ void ReactiveCompositionalMultiphaseOBL::setupDofs( DomainPartition const & doma
   dofManager.addField( viewKeyStruct::elemDofFieldString(),
                        FieldLocation::Elem,
                        m_numDofPerCell,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

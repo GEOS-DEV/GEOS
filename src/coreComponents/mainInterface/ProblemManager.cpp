@@ -154,7 +154,7 @@ void ProblemManager::problemSetup()
 
   generateMesh();
 
-  initialize_postMeshGeneration();
+//  initialize_postMeshGeneration();
 
   applyNumericalMethods();
 
@@ -574,9 +574,9 @@ void ProblemManager::generateMesh()
                                                        order );
 
           this->generateMeshLevel( mesh,
-                                        cellBlockManager,
-                                        feDiscretization,
-                                        regionNames );
+                                   cellBlockManager,
+                                   feDiscretization,
+                                   regionNames );
         }
         // Just create a shallow copy of the base discretization.
         else if( order==1 )
@@ -646,7 +646,8 @@ void ProblemManager::applyNumericalMethods()
   ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
   Group & meshBodies = domain.getMeshBodies();
 
-  // this contains a key tuple< mesh body name, mesh level name, region name, subregion name> with a value of the number of quadrature points.
+  // this contains a key tuple< mesh body name, mesh level name, region name, subregion name> with a value of the number of quadrature
+  // points.
   map< std::tuple< string, string, string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshBodies );
 
   setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
@@ -705,9 +706,9 @@ ProblemManager::getDiscretizations() const
 }
 
 void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
-                                             CellBlockManagerABC & cellBlockManager,
-                                             Group const * const discretization,
-                                             arrayView1d< string const > const & )
+                                        CellBlockManagerABC & cellBlockManager,
+                                        Group const * const discretization,
+                                        arrayView1d< string const > const & )
 {
   if( discretization != nullptr )
   {

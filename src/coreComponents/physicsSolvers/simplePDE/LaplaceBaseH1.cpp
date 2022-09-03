@@ -125,7 +125,7 @@ void LaplaceBaseH1::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domai
   dofManager.addField( m_fieldName,
                        FieldLocation::Node,
                        1,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
@@ -146,7 +146,6 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
-
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );

@@ -709,6 +709,10 @@ public:
   virtual PyTypeObject * getPythonType() const override;
 #endif
 
+  map< std::pair< string, string >, array1d< string > > const & getMeshTargets() const 
+  {
+    return m_meshTargets;
+  }
 protected:
 
 
@@ -775,12 +779,13 @@ protected:
 
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
-  /// Map containing the array of target regions (value) for each MeshBody (key).
-  map< std::pair< string, string >, array1d< string > > m_meshTargets;
+
+private:
   /// List of names of regions the solver will be applied to
   array1d< string > m_targetRegionNames;
 
-private:
+  /// Map containing the array of target regions (value) for each MeshBody (key).
+  map< std::pair< string, string >, array1d< string > > m_meshTargets;
 
   /**
    * @brief This function sets constitutive name fields on an

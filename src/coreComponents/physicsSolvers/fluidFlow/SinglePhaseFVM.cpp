@@ -78,7 +78,7 @@ void SinglePhaseFVM< BASE >::setupDofs( DomainPartition const & domain,
   dofManager.addField( BASE::viewKeyStruct::elemDofFieldString(),
                        FieldLocation::Elem,
                        m_numDofPerCell,
-                       BASE::m_meshTargets );
+                       BASE::getMeshTargets() );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

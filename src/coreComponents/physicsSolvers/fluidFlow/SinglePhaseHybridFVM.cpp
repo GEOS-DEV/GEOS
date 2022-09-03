@@ -185,7 +185,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
   dofManager.addField( viewKeyStruct::elemDofFieldString(),
                        FieldLocation::Elem,
                        1,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( viewKeyStruct::elemDofFieldString(),
                           viewKeyStruct::elemDofFieldString(),
@@ -195,7 +195,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
   dofManager.addField( extrinsicMeshData::flow::facePressure::key(),
                        FieldLocation::Face,
                        1,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( extrinsicMeshData::flow::facePressure::key(),
                           extrinsicMeshData::flow::facePressure::key(),

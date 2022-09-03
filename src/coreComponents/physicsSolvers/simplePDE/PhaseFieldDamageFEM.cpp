@@ -197,7 +197,7 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM(
   dofManager.addField( m_fieldName,
                        FieldLocation::Node,
                        1,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,

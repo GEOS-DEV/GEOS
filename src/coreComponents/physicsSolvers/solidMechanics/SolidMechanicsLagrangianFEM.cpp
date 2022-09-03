@@ -913,7 +913,7 @@ void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
   dofManager.addField( keys::TotalDisplacement,
                        FieldLocation::Node,
                        3,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           keys::TotalDisplacement,

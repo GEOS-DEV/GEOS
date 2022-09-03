@@ -491,10 +491,17 @@ void ProppantTransport::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM(
 void ProppantTransport::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                    DofManager & dofManager ) const
 {
+
+  for( auto const & meshTarget : getMeshTargets() )
+  {
+    printf( "(%s,%s):", meshTarget.first.first.c_str(), meshTarget.first.second.c_str() );
+    std::cout<<meshTarget.second<<std::endl;
+  }
+
   dofManager.addField( extrinsicMeshData::proppant::proppantConcentration::key(),
                        FieldLocation::Elem,
                        m_numDofPerCell,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( extrinsicMeshData::proppant::proppantConcentration::key(),
                           extrinsicMeshData::proppant::proppantConcentration::key(),
@@ -951,40 +958,47 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
   R1Tensor downVector = gravityVector();
   LvArray::tensorOps::normalize< 3 >( downVector );
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
-  ElementRegionManager & elemManager = mesh.getElemManager();
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > const & cellBasedFluxAccessor =
-    elemManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( extrinsicMeshData::proppant::cellBasedFlux::key() );
-
-  typename FluxKernel::CellBasedFluxFlowAccessors flowAccessors( elemManager, getName() );
-  typename FluxKernel::CellBasedFluxSlurryFluidAccessors slurryFluidAccessors( elemManager, getName() );
-  typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, getName() );
-
-  fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto const & stencil )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
-    SurfaceElementStencilWrapper stencilWrapper = stencil.createKernelWrapper();
+    string const meshBodyName = mesh.getParent().getParent().getName();
+    string const meshLevelName = mesh.getName();
 
-    FluxKernel::launchCellBasedFluxCalculation( stencilWrapper,
-                                                downVector,
-                                                flowAccessors.get< extrinsicMeshData::flow::pressure >(),
-                                                flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
-                                                slurryFluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
-                                                slurryFluidAccessors.get< extrinsicMeshData::singlefluid::viscosity >(),
-                                                permAccessors.get< extrinsicMeshData::permeability::permeability >(),
-                                                permAccessors.get< extrinsicMeshData::permeability::permeabilityMultiplier >(),
-                                                flowAccessors.get< extrinsicMeshData::elementAperture >(),
-                                                cellBasedFluxAccessor.toNestedView() );
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > const & cellBasedFluxAccessor =
+      elemManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( extrinsicMeshData::proppant::cellBasedFlux::key() );
+
+    typename FluxKernel::CellBasedFluxFlowAccessors flowAccessors( elemManager, getName() );
+    typename FluxKernel::CellBasedFluxSlurryFluidAccessors slurryFluidAccessors( elemManager, getName() );
+    typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, getName() );
+
+    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto const & stencil )
+    {
+      SurfaceElementStencilWrapper stencilWrapper = stencil.createKernelWrapper();
+
+      FluxKernel::launchCellBasedFluxCalculation( stencilWrapper,
+                                                  downVector,
+                                                  flowAccessors.get< extrinsicMeshData::flow::pressure >(),
+                                                  flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
+                                                  slurryFluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
+                                                  slurryFluidAccessors.get< extrinsicMeshData::singlefluid::viscosity >(),
+                                                  permAccessors.get< extrinsicMeshData::permeability::permeability >(),
+                                                  permAccessors.get< extrinsicMeshData::permeability::permeabilityMultiplier >(),
+                                                  flowAccessors.get< extrinsicMeshData::elementAperture >(),
+                                                  cellBasedFluxAccessor.toNestedView() );
+    } );
+
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::proppant::cellBasedFlux::key() }, regionNames );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );
-
-  FieldIdentifiers fieldsToBeSync;
-  fieldsToBeSync.addElementFields( { extrinsicMeshData::proppant::cellBasedFlux::key() }, m_targetRegionNames );
-
-  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
 }
 
 void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARAM( time_n ),

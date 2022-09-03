@@ -339,9 +339,9 @@ private:
   getDiscretizations() const;
 
   void generateMeshLevel( MeshLevel & meshLevel,
-                               CellBlockManagerABC & cellBlockManager,
-                               Group const * const discretization,
-                               arrayView1d< string const > const & targetRegions );
+                          CellBlockManagerABC & cellBlockManager,
+                          Group const * const discretization,
+                          arrayView1d< string const > const & targetRegions );
 
   /**
    * @brief Allocate constitutive relations on each subregion with appropriate

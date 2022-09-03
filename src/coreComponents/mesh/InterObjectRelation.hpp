@@ -50,9 +50,9 @@ public:
 
   /**
    * @brief copy assignement operator
-   * 
+   *
    * @param rhs the relation to copy
-   * @return InterObjectRelation< BASETYPE >& 
+   * @return InterObjectRelation< BASETYPE >&
    */
   InterObjectRelation< BASETYPE > & operator=( InterObjectRelation< BASETYPE > const & rhs )
   {
