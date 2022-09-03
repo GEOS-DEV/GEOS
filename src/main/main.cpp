@@ -27,15 +27,6 @@ using namespace geosx;
 
 int main( int argc, char *argv[] )
 {
-
-  array1d<double> a;
-  arrayView1d<double const> aView = a;
-  arrayView1d<double const>::ViewTypeConst anotherView = a;
-double const const aScalar = 1.0;
-  std::cout<<LvArray::system::demangle(typeid(anotherView).name())<<std::endl;
-  std::cout<<aView<<anotherView<<std::endl;
-
-
   try
   {
     std::chrono::system_clock::time_point const startTime = std::chrono::system_clock::now();
