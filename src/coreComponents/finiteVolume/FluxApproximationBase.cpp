@@ -79,14 +79,7 @@ void FluxApproximationBase::initializePreSubGroups()
 
         registerFractureStencil( stencilGroup );
       }
-    } );
-  } );
-
-  domain.forMeshBodies( [&]( MeshBody & meshBody )
-  {
-    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
-    {
-      if( mesh.isShallowCopy() )
+      else
       {
         Group & parentMesh = mesh.getShallowParent();
         Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
@@ -94,20 +87,6 @@ void FluxApproximationBase::initializePreSubGroups()
       }
     } );
   } );
-
-  // domain.forMeshBodies( [&]( MeshBody & meshBody )
-  // {
-  //   meshBody.forMeshLevels( [&]( MeshLevel & mesh )
-  //   {
-  //     if( mesh.isShallowCopy() )
-  //     {
-  //       Group & parentMesh = mesh.getShallowParent();
-  //       Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
-  //       mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );
-  //     }
-  //   } );
-  // } );
-
 }
 
 void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()

@@ -141,7 +141,7 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
   m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverIsLocal.resize( numReceiversGlobal );
 
-  m_pressureNp1AtReceivers.resize( numReceiversGlobal );
+  m_pressureNp1AtReceivers.resizeDimension< 1 >( numReceiversGlobal );
 
 
 
