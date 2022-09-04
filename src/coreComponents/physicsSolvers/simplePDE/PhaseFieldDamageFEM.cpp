@@ -18,7 +18,7 @@
 
 #include "PhaseFieldDamageFEM.hpp"
 #include "PhaseFieldDamageFEMKernels.hpp"
-//#include "PhaseFieldPressureDamageKernels.hpp" to be added
+#include "PhaseFieldDamagePressureKernels.hpp" 
 #include <math.h>
 #include <vector>
 
@@ -232,7 +232,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
     if (m_pressureEffectsFlag == 1)
     {
       //use pressurized phase-field kernels
-      PhaseFieldPressureDamageKernelFactory kernelFactory( dofIndex,
+      PhaseFieldDamagePressureKernelFactory kernelFactory( dofIndex,
                                                            dofManager.rankOffset(),
                                                            localMatrix,
                                                            localRhs,

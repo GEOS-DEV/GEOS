@@ -201,6 +201,12 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
   PhaseFieldDamageFEM &
   damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
 
+  if (m_pressureEffects == 1) //this will add background pressure effects to solid and damage solvers - must be done before assemble routine
+  {
+    solidSolver.setPressureEffects();
+    damageSolver.setPressureEffects();
+  }
+
   damageSolver.setupSystem( domain,
                             damageSolver.getDofManager(),
                             damageSolver.getLocalMatrix(),
