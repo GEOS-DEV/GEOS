@@ -52,7 +52,7 @@ void TestMeshImport( string const & inputStringMesh,
   meshManager.generateMeshes( domain );
 
   MeshBody & meshBody = domain.getMeshBody( meshBodyName );
-  MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
+  MeshLevel & meshLevel = meshBody.getBaseDiscretization();
   NodeManager & nodeManager = meshLevel.getNodeManager();
   FaceManager const & faceManager = meshLevel.getFaceManager();
   ElementRegionManager & elemManager = meshLevel.getElemManager();

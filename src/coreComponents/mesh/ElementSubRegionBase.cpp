@@ -51,4 +51,14 @@ ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const p
 ElementSubRegionBase::~ElementSubRegionBase()
 {}
 
+void ElementSubRegionBase::resizePerElementValues( localIndex const newNumNodesPerElement,
+                                                   localIndex const newNumEdgesPerElement,
+                                                   localIndex const newNumFacesPerElement )
+{
+  m_numNodesPerElement = newNumNodesPerElement;
+  m_numEdgesPerElement = newNumEdgesPerElement;
+  m_numFacesPerElement = newNumFacesPerElement;
+}
+
+
 } /* namespace geosx */
