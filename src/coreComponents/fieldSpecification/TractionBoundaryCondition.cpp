@@ -28,7 +28,7 @@ using namespace dataRepository;
 TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group * parent ):
   FieldSpecificationBase( name, parent ),
   m_tractionType( TractionType::vector ),
-  m_inputStress{}
+  m_inputStress{}//,
 //  m_stressFunctionNames(),
 //  m_useStressFunctions(false),
 //  m_stressFunctions{nullptr}
