@@ -126,12 +126,14 @@ public:
 
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
+  #if 0
     static constexpr char const * coeffNameString() { return "coeffField"; }
+  #endif
     static constexpr char const * localDissipationOptionString() { return "localDissipation"; }
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-    dataRepository::ViewKey fieldVarName = { "fieldName" };
+    dataRepository::ViewKey fieldVarName = { "Damage" };
   } PhaseFieldDamageFEMViewKeys;
 
   inline ParallelVector const * getSolution() const
@@ -146,19 +148,27 @@ public:
 
   string const & getFieldName() const
   {
-    return m_fieldName;
+    return m_damageName;
+  }
+
+  void setPressureEffects() 
+  {
+    m_pressureEffectsFlag = 1;
   }
 
 protected:
   virtual void postProcessInput() override final;
 
 private:
-  string m_fieldName;
+  string m_damageName;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
+  integer m_pressureEffectsFlag; 
 
-  array1d< real64 > m_coeff;
+#if 0 //if this still pass the tests, we can get rid of this guy
+  array1d< real64 > m_coeff; //can probably get rid of this
+#endif
 
   PhaseFieldDamageFEM();
 };

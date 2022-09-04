@@ -70,6 +70,8 @@ public:
 
   void mapDamageToQuadrature( DomainPartition & domain );
 
+  void mapDamageAndGradientToQuadrature( DomainPartition & domain );
+
   enum class CouplingTypeOption : integer
   {
     FixedStress,
@@ -86,6 +88,7 @@ public:
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * damageSolverNameString() { return "damageSolverName"; }
     constexpr static char const * subcyclingOptionString() { return "subcycling"; }
+    constexpr static char const * pressureEffectsString() { return "pressureEffects"; }
   };
 
 protected:
@@ -99,6 +102,7 @@ private:
   string m_damageSolverName;
   CouplingTypeOption m_couplingTypeOption;
   integer m_subcyclingOption;
+  integer m_pressureEffects; //only use case is the MultiResolution solver
 
 };
 

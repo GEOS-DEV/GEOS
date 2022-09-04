@@ -275,6 +275,11 @@ public:
     return m_rigidBodyModes;
   }
 
+  void setPressureEffects()
+  {
+    m_pressureEffectsFlag = 1;
+  }
+
 protected:
   virtual void postProcessInput() override final;
 
@@ -291,6 +296,7 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
+  integer m_pressureEffectsFlag;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
 

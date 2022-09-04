@@ -60,6 +60,11 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "turn on subcycling on each load step" );
 
+  registerWrapper( viewKeyStruct::pressureEffectsString(), &m_pressureEffects ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue(0).
+    setDescription( "consider background pressure effects (matrix and fracture pressures)" );  
+
 }
 
 void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
@@ -263,8 +268,14 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
                                                             cycleNumber,
                                                             domain );
 
-    mapDamageToQuadrature( domain );
-
+    if( m_pressureEffects )
+    {
+      mapDamageAndGradientToQuadrature( domain );  
+    }
+    else
+    {
+      mapDamageToQuadrature( domain );
+    }
     //std::cout << "Here: " << dtReturnTemporary << std::endl;
 
     if( dtReturnTemporary < dtReturn )
@@ -361,6 +372,108 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
                 // "<<nodalDamage[elemNodes(k, a)]<<std::endl;
               }
               //          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
+            }
+          } );
+        } );
+      } );
+    } );
+  } );
+
+}
+
+void PhaseFieldPoromechanicsSolver::mapDamageAndGradientToQuadrature( DomainPartition & domain )
+{
+
+  GEOSX_MARK_FUNCTION;
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodes = nodeManager.referencePosition();
+
+    PhaseFieldDamageFEM const &
+    damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
+
+    string const & damageFieldName = damageSolver.getFieldName();
+
+    //should get reference to damage field here.
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+
+    ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
+    constitutiveRelations = elemManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
+    // begin region loop
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [this, xNodes, nodalDamage]
+                                                                ( localIndex const,
+                                                                CellElementSubRegion & elementSubRegion )
+    {
+      string const & solidModelName = elementSubRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
+      constitutive::SolidBase &
+      solidModel = elementSubRegion.getConstitutiveModel< constitutive::SolidBase >( solidModelName );
+
+      ConstitutivePassThru< DamageBase >::execute( solidModel, [this, &elementSubRegion, xNodes, nodalDamage]( auto & damageModel )
+      {
+        using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
+        typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
+
+        arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_newDamage;
+        arrayView3d< real64 > const damageGradOnMaterial = constitutiveUpdate.m_damageGrad;
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
+
+        auto const & elemsToNodes = elementSubRegion.nodeList().toViewConst();
+
+        finiteElement::FiniteElementBase const &
+        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_discretizationName );
+
+        finiteElement::dispatch3D( fe, [xNodes, nodalDamage, &elementSubRegion, damageFieldOnMaterial, damageGradOnMaterial, elemNodes, elemsToNodes]( auto & finiteElement )
+        {
+          forAll< serialPolicy >( elementSubRegion.size(), [xNodes, nodalDamage, damageFieldOnMaterial, damageGradOnMaterial, elemNodes, elemsToNodes] ( localIndex const k )
+          {
+            using FE_TYPE = TYPEOFREF( finiteElement );
+            constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+            constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+
+            real64 xLocal[ numNodesPerElement ][ 3 ];
+            real64 nodalDamageLocal[ numNodesPerElement ];
+
+            for( localIndex a = 0; a < numNodesPerElement; ++a )
+            {
+              localIndex const localNodeIndex = elemsToNodes( k, a );
+
+              for( int dim=0; dim < 3; ++dim )
+              {
+                xLocal[a][dim] = xNodes[ localNodeIndex ][dim];
+              }
+
+              nodalDamageLocal[ a ] = nodalDamage[ localNodeIndex ];
+            }
+
+            for( localIndex q = 0; q < n_q_points; ++q )
+            {
+              real64 N[ numNodesPerElement ];
+              FE_TYPE::calcN( q, N );
+
+              real64 dNdX[ numNodesPerElement ][ 3 ];
+
+              real64 const detJ = FE_TYPE::calcGradN( q, xLocal, dNdX );
+
+              GEOSX_UNUSED_VAR( detJ );
+
+              real64 qDamage = 0.0;
+              real64 qDamageGrad[3] = {0, 0, 0};
+              FE_TYPE::valueAndGradient( N, dNdX, nodalDamageLocal, qDamage, qDamageGrad );
+
+              damageFieldOnMaterial( k, q ) = qDamage;
+
+              for( int dim=0; dim < 3; ++dim )
+              {
+                damageGradOnMaterial[k][q][dim] = qDamageGrad[dim];
+              }
             }
           } );
         } );
