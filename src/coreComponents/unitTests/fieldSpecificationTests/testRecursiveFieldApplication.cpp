@@ -46,7 +46,9 @@ void RegisterAndApplyField( DomainPartition & domain,
   fieldSpec.initialCondition( true );
   fieldSpec.addSetName( "all" );
 
-  fieldSpecificationManager.apply( 0., domain.getMeshBody( 0 ).getMeshLevel( 0 ), "",
+  fieldSpecificationManager.apply( 0.,
+                                   domain.getMeshBody( 0 ).getBaseDiscretization(),
+                                   "",
                                    [&] ( FieldSpecificationBase const & bc,
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,

@@ -9,6 +9,7 @@
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
       logLevel="1"
+      discretization="FE1"
       targetRegions="{ Region, Fracture }"
       contactRelationName="fractureMaterial"
       fractureRegionName="Fracture">
@@ -43,9 +44,9 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
+      discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{ Region }"
-      
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>

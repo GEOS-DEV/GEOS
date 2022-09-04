@@ -73,6 +73,11 @@
         name="FE1"
         order="1"/>
     </FiniteElements>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE2"
+        order="3"/>
+    </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>

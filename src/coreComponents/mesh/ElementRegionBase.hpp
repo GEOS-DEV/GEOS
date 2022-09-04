@@ -112,13 +112,22 @@ public:
   ///@{
 
   /**
+   * @copydoc getSubRegions() const
+   */
+  Group & getSubRegions()
+  {
+    return getGroup( viewKeyStruct::elementSubRegions() );
+  }
+
+  /**
    * @brief Get a collection of the subregions.
    * @return a collection of the subregions
    */
-  subGroupMap const & getSubRegions() const
+  Group const & getSubRegions() const
   {
-    return getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups();
+    return getGroup( viewKeyStruct::elementSubRegions() );
   }
+
 
   /**
    * @brief Get a reference to a subregion.
@@ -162,7 +171,7 @@ public:
    */
   localIndex numSubRegions() const
   {
-    return this->getSubRegions().size();
+    return this->getSubRegions().numSubGroups();
   }
 
   /**

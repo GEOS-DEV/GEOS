@@ -51,6 +51,21 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
                                 viewKeyStruct::toEmbSurfString() } );
 }
 
+
+void CellElementSubRegion::resizePerElementValues( localIndex const newNumNodesPerElement,
+                                                   localIndex const newNumEdgesPerElement,
+                                                   localIndex const newNumFacesPerElement )
+{
+  ElementSubRegionBase::resizePerElementValues( newNumNodesPerElement,
+                                                newNumEdgesPerElement,
+                                                newNumFacesPerElement );
+
+  m_toNodesRelation.resize( size(), m_numNodesPerElement );
+  m_toEdgesRelation.resize( size(), m_numEdgesPerElement );
+  m_toFacesRelation.resize( size(), m_numFacesPerElement );
+}
+
+
 void CellElementSubRegion::copyFromCellBlock( CellBlockABC & cellBlock )
 {
   // Defines the (unique) element type of this cell element region,

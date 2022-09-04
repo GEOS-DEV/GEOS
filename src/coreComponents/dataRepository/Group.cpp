@@ -641,6 +641,11 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
   return *currentGroup;
 }
 
+localIndex Group::getSubGroupIndex( keyType const & key ) const
+{
+  return getSubGroups().getIndex( key );
+}
+
 #if defined(GEOSX_USE_PYGEOSX)
 PyTypeObject * Group::getPythonType() const
 { return geosx::python::getPyGroupType(); }

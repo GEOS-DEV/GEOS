@@ -31,8 +31,8 @@ class AcousticWaveEquationSEM : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
-  using ATOMIC_POLICY = parallelDeviceAtomic;
+  using EXEC_POLICY = serialPolicy;//parallelDevicePolicy< 32 >;
+  using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
 
   /**
@@ -185,6 +185,8 @@ private:
    * @param filename name of the output file
    */
   void saveSeismo( localIndex const iSeismo, real64 const val, string const & filename ) override;
+
+  localIndex getNumNodesPerElem();
 
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
