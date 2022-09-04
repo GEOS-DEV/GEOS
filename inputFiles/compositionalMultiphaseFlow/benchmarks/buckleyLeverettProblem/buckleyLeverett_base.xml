@@ -5,7 +5,7 @@
   <Solvers>
     <CompositionalMultiphaseFVM
       name="compflow"
-      logLevel="0"
+      logLevel="1"
       discretization="fluidTPFA"
       temperature="300"
       initialDt="0.001"
