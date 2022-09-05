@@ -18,7 +18,10 @@
 
 #include "InternalMeshGenerator.hpp"
 
+#include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/PartitionBase.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "mesh/MeshBody.hpp"
@@ -544,7 +547,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshBody & meshBody = domain.getMeshBody( this->getName() );
+  MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( this->getName() );
 
   // Make sure that the node manager fields are initialized
 
@@ -552,6 +555,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   auto & nodeSets = cellBlockManager.getNodeSets();
 
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+
+//  bool isRadialWithOneThetaPartition = false;
 
   // This should probably handled elsewhere:
   int aa = 0;
