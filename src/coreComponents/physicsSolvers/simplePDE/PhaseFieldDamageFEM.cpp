@@ -18,7 +18,7 @@
 
 #include "PhaseFieldDamageFEM.hpp"
 #include "PhaseFieldDamageFEMKernels.hpp"
-#include "PhaseFieldDamagePressureKernels.hpp" 
+#include "PhaseFieldDamagePressureFEMKernels.hpp" 
 #include <math.h>
 #include <vector>
 
@@ -203,7 +203,7 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM(
                        1,
                        getMeshTargets() );
 
-  dofManager.addCoupling( m_daamgeName,
+  dofManager.addCoupling( m_damageName,
                           m_damageName,
                           DofManager::Connector::Elem );
 
@@ -238,6 +238,15 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                            localRhs,
                                                            m_damageName,
                                                            m_localDissipationOption=="Linear" ? 1 : 2 );
+
+      finiteElement::
+        regionBasedKernelApplication< parallelDevicePolicy<>,
+                                      constitutive::DamageBase,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              this->getDiscretizationName(),
+                                                              viewKeyStruct::solidModelNamesString(),
+                                                              kernelFactory );                                                           
     }
     else //use standard phase-field kernels
     { 
@@ -247,16 +256,17 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                  localRhs,
                                                  m_damageName,
                                                  m_localDissipationOption=="Linear" ? 1 : 2 );
+
+      finiteElement::
+        regionBasedKernelApplication< parallelDevicePolicy<>,
+                                      constitutive::DamageBase,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              this->getDiscretizationName(),
+                                                              viewKeyStruct::solidModelNamesString(),
+                                                              kernelFactory );                                                    
     }
-    finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy<>,
-                                    constitutive::DamageBase,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            this->getDiscretizationName(),
-                                                            viewKeyStruct::solidModelNamesString(),
-                                                            kernelFactory );
-    
+   
 
   } );
 }
@@ -428,7 +438,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                                        localRhs );
     } );
 
-    fsManager.applyFieldValue< serialPolicy >( time, mesh, viewKeyStruct::coeffNameString() );
+    //fsManager.applyFieldValue< serialPolicy >( time, mesh, viewKeyStruct::coeffNameString() );
   } );
 }
 

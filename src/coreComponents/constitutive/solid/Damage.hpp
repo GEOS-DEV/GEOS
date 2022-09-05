@@ -57,7 +57,7 @@ namespace constitutive
 //       function.  The developer should be very cautious if accessing the stress
 //       directly through an arrayView, as it does not represent the true stress.
 //
-// NOTE: This model is designed to work with phase field implementation where m_damage
+// NOTE: This model is designed to work with phase field implementation where m_newDamage
 //       is updated externally to the material model routine.  A modified implementation
 //       would be required to use this directly within a SolidMechanics-only solver, to
 //       internally update the damage variable and consistently linearize the system.
@@ -67,14 +67,16 @@ class DamageUpdates : public UPDATE_BASE
 {
 public:
   template< typename ... PARAMS >
-  DamageUpdates( arrayView2d< real64 > const & inputDamage,
+  DamageUpdates( arrayView2d< real64 > const & inputNewDamage,
+                 arrayView3d< real64 > const & inputDamageGrad,
                  arrayView2d< real64 > const & inputStrainEnergyDensity,
                  real64 const & inputLengthScale,
                  real64 const & inputCriticalFractureEnergy,
                  real64 const & inputcriticalStrainEnergy,
                  PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
-    m_damage( inputDamage ),
+    m_newDamage( inputNewDamage ),
+    m_damageGrad( inputDamageGrad ),
     m_strainEnergyDensity( inputStrainEnergyDensity ),
     m_lengthScale( inputLengthScale ),
     m_criticalFractureEnergy( inputCriticalFractureEnergy ),
@@ -102,7 +104,7 @@ public:
   virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const
   {
-    return (1 - m_damage( k, q ))*(1 - m_damage( k, q ));
+    return (1 - m_newDamage( k, q ))*(1 - m_newDamage( k, q ));
   }
 
 
@@ -113,6 +115,31 @@ public:
     return -2*(1 - d);
   }
 
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual real64 pressureDamageFunction( localIndex const k,
+                                         localIndex const q ) const
+  {
+    real64 pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
+
+    return 0.5*(1 + std::cos( M_PI*pf ));
+  }
+
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual real64 pressureDamageFunctionDerivative( real64 const d ) const
+  {
+    return -0.5*M_PI*std::sin( M_PI*d );
+  }
+
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual real64 pressureDamageFunctionSecondDerivative( real64 const d ) const
+  {
+    return -0.5*M_PI*M_PI*std::cos( M_PI*d );
+  }  
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
@@ -120,6 +147,27 @@ public:
   {
     GEOSX_UNUSED_VAR( d );
     return 2.0;
+  }
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual real64 getDamage( localIndex const k,
+                            localIndex const q ) const
+  {
+    return m_newDamage( k, q );
+  }
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual void getDamageGrad( localIndex const k,
+                              localIndex const q,
+                              real64 ( & damageGrad )[3] ) const
+  {
+    for( int dim=0; dim < 3; ++dim )
+    {
+      damageGrad[dim] = m_damageGrad[k][q][dim];
+    }
+
   }
 
 
@@ -182,7 +230,8 @@ public:
     #endif
   }
 
-  arrayView2d< real64 > const m_damage;
+  arrayView2d< real64 > const m_newDamage;
+  arrayView3d< real64 > const m_damageGrad;
   arrayView2d< real64 > const m_strainEnergyDensity;
   real64 const m_lengthScale;
   real64 const m_criticalFractureEnergy;
@@ -216,7 +265,8 @@ public:
 
   KernelWrapper createKernelUpdates() const
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
+                                                                       m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
@@ -226,6 +276,7 @@ public:
   struct viewKeyStruct : public BASE::viewKeyStruct
   {
     static constexpr char const * damageString() { return "damage"; }
+    static constexpr char const * damageGradString() { return "damageGrad"; }
     static constexpr char const * strainEnergyDensityString() { return "strainEnergyDensity"; }
     /// string/key for regularization length
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
@@ -237,7 +288,8 @@ public:
 
 
 protected:
-  array2d< real64 > m_damage;
+  array2d< real64 > m_newDamage;
+  array3d< real64 > m_damageGrad;
   array2d< real64 > m_strainEnergyDensity;
   real64 m_lengthScale;
   real64 m_criticalFractureEnergy;

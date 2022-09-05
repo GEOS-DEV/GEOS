@@ -35,12 +35,13 @@ class DamageVolDevUpdates : public DamageUpdates< UPDATE_BASE >
 public:
   template< typename ... PARAMS >
   DamageVolDevUpdates( arrayView2d< real64 > const & inputDamage,
+                       arrayView3d< real64 > const & inputDamageGrad,
                        arrayView2d< real64 > const & inputStrainEnergyDensity,
                        real64 const & inputLengthScale,
                        real64 const & inputCriticalFractureEnergy,
                        real64 const & inputcriticalStrainEnergy,
                        PARAMS && ... baseParams ):
-    DamageUpdates< UPDATE_BASE >( inputDamage, inputStrainEnergyDensity, inputLengthScale,
+    DamageUpdates< UPDATE_BASE >( inputDamage, inputDamageGrad, inputStrainEnergyDensity, inputLengthScale,
                                   inputCriticalFractureEnergy, inputcriticalStrainEnergy,
                                   std::forward< PARAMS >( baseParams )... )
   {}
@@ -147,7 +148,8 @@ public:
 
   using KernelWrapper = DamageVolDevUpdates< typename BASE::KernelWrapper >;
 
-  using Damage< BASE >::m_damage;
+  using Damage< BASE >::m_newDamage;
+  using Damage< BASE >::m_damageGrad;
   using Damage< BASE >::m_strainEnergyDensity;
   using Damage< BASE >::m_criticalFractureEnergy;
   using Damage< BASE >::m_lengthScale;
@@ -163,7 +165,8 @@ public:
 
   KernelWrapper createKernelUpdates() const
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
+                                                                       m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,

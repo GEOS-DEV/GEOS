@@ -16,9 +16,11 @@
  * @file PhaseFieldDamagePressureKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
-#define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEPRESSUREKERNELS_HPP_
+#define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEPRESSUREKERNELS_HPP_
 
+#include "finiteElement/BilinearFormUtilities.hpp"
+#include "finiteElement/LinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
 namespace geosx
@@ -113,6 +115,7 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition()),
+    m_disp( nodeManager.totalDisplacement()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( damageName )),
     m_localDissipationOption( localDissipationOption ),
     m_pressureMatrix( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::matrixPressure >() ),
@@ -150,7 +153,10 @@ public:
 #endif
 
     /// C-array storage for the element local primary field variable.
-    real64 nodalDamageLocal[numNodesPerElem];
+    real64 nodalDamageLocal[ numNodesPerElem ];
+
+    /// Stack storage for the element displacement vector.
+    real64 dispLocal[ numNodesPerElem ][ 3 ];
   };
 
 
@@ -174,7 +180,11 @@ public:
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
       LvArray::tensorOps::copy< 3 >( stack.xLocal[ a ], m_X[ localNodeIndex ] );
 #endif
-
+      
+      for( localIndex i=0; i<3; ++i)
+      {
+        stack.dispLocal[a][i] = m_disp[ localNodeIndex ][ i ];
+      }
       stack.nodalDamageLocal[ a ] = m_nodalDamage[ localNodeIndex ];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
@@ -191,6 +201,11 @@ public:
                               StackVariables & stack ) const
   {
 
+    using namespace PDEUtilities;
+
+    constexpr FunctionSpace damageTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
+    constexpr FunctionSpace damageTestSpace = damageTrialSpace;
+
     real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
     real64 const ell = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
@@ -198,26 +213,30 @@ public:
     real64 const extDrivingForce = m_constitutiveUpdate.getExtDrivingForce( k, q );
     real64 const volStrain = m_constitutiveUpdate.getVolStrain( k, q );
     real64 const biotCoeff = m_constitutiveUpdate.getBiotCoefficient( k );
+    real64 c0 = 2;
 
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
     real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+    real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
     FE_TYPE::calcN( q, N );
 
     real64 qp_damage = 0.0;
     real64 qp_grad_damage[3] = {0, 0, 0};
+    real64 qp_disp[3] = {0, 0, 0};
     FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
+    FE_TYPE::value(N, stack.dispLocal, qp_disp);
 
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
     if( m_localDissipationOption == 1 )
     {
+      c0 = 8/3;
       D = fmax( threshold, strainEnergyDensity );
     }
     
     //REVIEW THESE BECAUSE OF THE D TERM
-    if( m_localDissipationOption == 1 )
+    if( m_localDissipationOption == 1 ) //AT1 KERNELS
     {
 
         // Compute local dissipation term AT1
@@ -228,8 +247,17 @@ public:
           N,
           (Gc/(c0*ell))*1,
           detJxW );
+
+        // Compute driving force term
+        LinearFormUtilities::compute< damageTestSpace,
+                                      DifferentialOperator::Identity >
+        (
+          stack.localResidual,
+          N,
+          m_constitutiveUpdate.getDegradationDerivative( qp_damage )*D,
+          detJxW );  
     }
-    else
+    else //AT2 KERNELS
     {
         // Compute local dissipation term AT2
         LinearFormUtilities::compute< damageTestSpace,
@@ -237,8 +265,18 @@ public:
         (
           stack.localResidual,
           N,
-          (Gc/(c0*ell))*2*damage,
+          (Gc/(c0*ell))*2*qp_damage,
           detJxW );
+
+
+        // Compute driving force term
+        LinearFormUtilities::compute< damageTestSpace,
+                                      DifferentialOperator::Identity >
+        (
+          stack.localResidual,
+          N,
+          m_constitutiveUpdate.getDegradationDerivative( qp_damage )*strainEnergyDensity,
+          detJxW );  
 
     }
 
@@ -248,17 +286,9 @@ public:
     (
         stack.localResidual,
         dNdX,
-        (2*Gc*ell/c0)*grad_d,
+        (2*Gc*ell/c0)*qp_grad_damage,
         detJxW );
 
-    // Compute driving force term
-    LinearFormUtilities::compute< damageTestSpace,
-                                  DifferentialOperator::Identity >
-    (
-        stack.localResidual,
-        N,
-        m_constitutiveUpdate.getDegradationDerivative( qp_damage )*extDrivingForce,
-        detJxW );
 
     // Compute matrix pressure contribution
     LinearFormUtilities::compute< damageTestSpace,
@@ -276,7 +306,7 @@ public:
     (
         stack.localResidual,
         dNdX,
-        m_pressureFracture[k]*disp,
+        m_pressureFracture[k]*qp_disp,
         detJxW );
 
     // Compute jacobian terms
@@ -284,9 +314,31 @@ public:
     if( m_localDissipationOption == 1 )
     {
         //no contribution to Jacobian
+        BilinearFormUtilities::compute< damageTestSpace,
+                                        damageTrialSpace,
+                                        DifferentialOperator::Identity,
+                                        DifferentialOperator::Identity >
+        (
+            stack.localJacobian,
+            N,
+            D*m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ), 
+            N,
+            detJxW );
+
     }
     else
     {
+
+        BilinearFormUtilities::compute< damageTestSpace,
+                                        damageTrialSpace,
+                                        DifferentialOperator::Identity,
+                                        DifferentialOperator::Identity >
+        (
+            stack.localJacobian,
+            N,
+            strainEnergyDensity*m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ), 
+            N,
+            detJxW );      
 
         BilinearFormUtilities::compute< damageTestSpace,
                                         damageTrialSpace,
@@ -311,79 +363,6 @@ public:
         dNdX,
         detJxW );
 
-    BilinearFormUtilities::compute< damageTestSpace,
-                                    damageTrialSpace,
-                                    DifferentialOperator::Identity,
-                                    DifferentialOperator::Identity >
-    (
-        stack.localJacobian,
-        N,
-        (2*Gc*ell/c0), 
-        N,
-        detJxW );    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
-    {
-      if( m_localDissipationOption == 1 )
-      {
-        stack.localResidual[ a ] += detJ * ( -3 * N[a] / 16
-                                             - 0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
-                                             - (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * N[a]
-                                             - 0.5 * ell * extDrivingForce/Gc * N[a] );
-      }
-      else
-      {
-        stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage
-                                             + (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
-                                                + N[a] * (ell*strainEnergyDensity/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) )
-                                             + ell * extDrivingForce/Gc * N[a] );
-
-      }
-
-      //add matrix pressure term
-      stack.localResidual[ a ] -= detJ * 0.5 * ell/Gc * ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k ) * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a];
-      
-      //add fracture pressure term
-      stack.localResidual[ a ] -= detJ * 0.5 * ell/Gc * ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k ) * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a];
-
-      for( localIndex b = 0; b < numNodesPerElem; ++b )
-      {
-        if( m_localDissipationOption == 1 )
-        {
-          stack.localJacobian[ a ][ b ] -= detJ *
-                                           ( 0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                             (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * N[a] * N[b] );
-
-        }
-        else
-        {
-          stack.localJacobian[ a ][ b ] -= detJ *
-                                           ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                             N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell * strainEnergyDensity/Gc ) );
-        }
-
-        if( m_fracturePressureTermFlag )
-        {
-          stack.localJacobian[ a ][ b ] -= detJ * 0.5 * ell/Gc * ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k ) * m_constitutiveUpdate.pressureDamageFunctionSecondDerivative( qp_damage ) *
-                                           N[a] * N[b];
-        }
-      }
-    }
   }
 
   /**
@@ -422,6 +401,8 @@ public:
 protected:
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
+
 
   /// The global primary field array.
   arrayView1d< real64 const > const m_nodalDamage;
@@ -438,11 +419,10 @@ using PhaseFieldDamagePressureKernelFactory = finiteElement::KernelFactory< Phas
                                                                             CRSMatrixView< real64, globalIndex const > const,
                                                                             arrayView1d< real64 > const,
                                                                             string const,
-                                                                            int,
                                                                             integer >;
 
 } // namespace geosx
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
-#endif // GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
+#endif // GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEPRESSUREKERNELS_HPP_

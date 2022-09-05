@@ -41,12 +41,13 @@ class DamageSpectralUpdates : public DamageUpdates< UPDATE_BASE >
 public:
   template< typename ... PARAMS >
   DamageSpectralUpdates( arrayView2d< real64 > const & inputDamage,
+                         arrayView3d< real64 > const & inputDamageGrad,
                          arrayView2d< real64 > const & inputStrainEnergyDensity,
                          real64 const & inputLengthScale,
                          real64 const & inputCriticalFractureEnergy,
                          real64 const & inputcriticalStrainEnergy,
                          PARAMS && ... baseParams ):
-    DamageUpdates< UPDATE_BASE >( inputDamage, inputStrainEnergyDensity, inputLengthScale,
+    DamageUpdates< UPDATE_BASE >( inputDamage, inputDamageGrad, inputStrainEnergyDensity, inputLengthScale,
                                   inputCriticalFractureEnergy, inputcriticalStrainEnergy,
                                   std::forward< PARAMS >( baseParams )... )
   {}
@@ -65,7 +66,7 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
-  using DamageUpdates< UPDATE_BASE >::m_damage;
+  using DamageUpdates< UPDATE_BASE >::m_newDamage;
   using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
 
   using UPDATE_BASE::m_bulkModulus;  // TODO: model below strongly assumes iso elasticity, templating not so useful
@@ -84,7 +85,7 @@ public:
     real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
     #endif
     real64 p = 1;
-    return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
+    return pow( 1 - m_newDamage( k, q ), 2 ) /( pow( 1 - m_newDamage( k, q ), 2 ) + m * m_newDamage( k, q ) * (1 + p*m_newDamage( k, q )) );
   }
 
 
@@ -271,7 +272,8 @@ public:
 
   using KernelWrapper = DamageSpectralUpdates< typename BASE::KernelWrapper >;
 
-  using Damage< BASE >::m_damage;
+  using Damage< BASE >::m_newDamage;
+  using Damage< BASE >::m_damageGrad;
   using Damage< BASE >::m_strainEnergyDensity;
   using Damage< BASE >::m_criticalFractureEnergy;
   using Damage< BASE >::m_lengthScale;
@@ -287,7 +289,8 @@ public:
 
   KernelWrapper createKernelUpdates() const
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
+                                                                       m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,

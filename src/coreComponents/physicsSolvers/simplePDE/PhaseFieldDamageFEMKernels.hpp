@@ -99,7 +99,7 @@ public:
                           globalIndex const rankOffset,
                           CRSMatrixView< real64, globalIndex const > const inputMatrix,
                           arrayView1d< real64 > const inputRhs,
-                          string const fieldName,
+                          string const damageName,
                           int const localDissipationOption ):
     Base( nodeManager,
           edgeManager,
@@ -113,7 +113,7 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition()),
-    m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
+    m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( damageName )),
     m_localDissipationOption( localDissipationOption )
   {}
 

@@ -348,7 +348,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
         using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
         typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
 
-        arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_damage;
+        arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_newDamage;
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
 
         finiteElement::FiniteElementBase const &
@@ -387,13 +387,13 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
 }
 
-void PhaseFieldPoromechanicsSolver::mapDamageAndGradientToQuadrature( DomainPartition & domain )
+void PhaseFieldFractureSolver::mapDamageAndGradientToQuadrature( DomainPartition & domain )
 {
 
   GEOSX_MARK_FUNCTION;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 

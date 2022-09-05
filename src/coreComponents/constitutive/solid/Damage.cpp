@@ -30,16 +30,22 @@ namespace constitutive
 template< typename BASE >
 Damage< BASE >::Damage( string const & name, Group * const parent ):
   BASE( name, parent ),
-  m_damage(),
+  m_newDamage(),
+  m_damageGrad(),
   m_strainEnergyDensity(),
   m_lengthScale(),
   m_criticalFractureEnergy(),
   m_criticalStrainEnergy()
 {
-  this->registerWrapper( viewKeyStruct::damageString(), &m_damage ).
+  this->registerWrapper( viewKeyStruct::damageString(), &m_newDamage ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Material Damage Variable" );
+
+  this->registerWrapper( viewKeyStruct::damageGradString(), &m_damageGrad ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Material Damage Gradient" );    
 
   this->registerWrapper( viewKeyStruct::strainEnergyDensityString(), &m_strainEnergyDensity ).
     setApplyDefaultValue( 0.0 ).
@@ -70,7 +76,8 @@ template< typename BASE >
 void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_damage.resize( 0, numConstitutivePointsPerParentIndex );
+  m_newDamage.resize( 0, numConstitutivePointsPerParentIndex );
+  m_damageGrad.resize( 0, numConstitutivePointsPerParentIndex, 3 );
   m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
   BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
