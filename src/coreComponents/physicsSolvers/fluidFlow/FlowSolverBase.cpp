@@ -78,10 +78,6 @@ FlowSolverBase::FlowSolverBase( string const & name,
   m_isThermal( 0 ),
   m_fluxEstimate()
 {
-  this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of discretization object to use for this solver." );
-
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -98,9 +94,9 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
-  forMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -220,9 +216,9 @@ void FlowSolverBase::initializePreSubGroups()
   {
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-    forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
-                                                  MeshLevel &,
-                                                  arrayView1d< string const > const & regionNames )
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                                  MeshLevel &,
+                                                                  arrayView1d< string const > const & regionNames )
     {
       array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
       std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
@@ -242,9 +238,9 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     precomputeData( mesh, regionNames );
   } );
@@ -336,7 +332,7 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
 
   fsManager.apply< ElementSubRegionBase,
                    EquilibriumInitialCondition >( 0.0,
-                                                  domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                  domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                                                   EquilibriumInitialCondition::catalogName(),
                                                   [&] ( EquilibriumInitialCondition const & fs,
                                                         string const &,
@@ -383,9 +379,9 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
   {
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
@@ -431,7 +427,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   GEOSX_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
