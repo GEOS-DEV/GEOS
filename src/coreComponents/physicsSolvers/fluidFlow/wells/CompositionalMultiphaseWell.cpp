@@ -1180,59 +1180,45 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
 {
   GEOSX_MARK_FUNCTION;
 
+  bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
+  bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
+
   // check if we want to rescale the Newton update
-  if( m_maxCompFracChange >= 1.0 && m_maxRelativePresChange >= 1.0 )
+  if( skipCompFracDamping && skipPresDamping )
   {
     // no rescaling wanted, we just return 1.0;
     return 1.0;
   }
+
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
   real64 scalingFactor = 1.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-
-    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   ElementSubRegionBase const & subRegion )
+    mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                        [&]( localIndex const,
+                                                                             ElementSubRegionBase const & subRegion )
     {
-      // get the degree of freedom numbers on well elements and ghosting info
-      string const wellDofKey = dofManager.getKey( wellElementDofName() );
-      arrayView1d< globalIndex const > const & wellElemDofNumber =
-        subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-      arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
-
-      // get a reference to the primary variables on well elements
-      arrayView1d< real64 const > const & wellElemPressure =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-      arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
-
-
+      // check that pressure and component densities are non-negative
       real64 const subRegionScalingFactor =
-        SolutionScalingKernel::launch< parallelDevicePolicy<> >( localSolution,
-                                                                 dofManager.rankOffset(),
-                                                                 numFluidComponents(),
-                                                                 wellElemDofNumber,
-                                                                 wellElemGhostRank,
-                                                                 wellElemPressure,
-                                                                 wellElemCompDens,
-                                                                 m_maxRelativePresChange,
-                                                                 m_maxCompFracChange );
+        compositionalMultiphaseWellKernels::
+          ScalingForSystemSolutionKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
+                                                     m_maxCompFracChange,
+                                                     dofManager.rankOffset(),
+                                                     m_numComponents,
+                                                     wellDofKey,
+                                                     subRegion,
+                                                     localSolution );
 
-
-      if( subRegionScalingFactor < scalingFactor )
-      {
-        scalingFactor = subRegionScalingFactor;
-      }
+      scalingFactor = std::min( subRegionScalingFactor, scalingFactor );
     } );
 
   } );
 
-  return LvArray::math::max( MpiWrapper::min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
+  return LvArray::math::max( MpiWrapper::min( scalingFactor ), m_minScalingFactor );
 }
 
 bool
@@ -1243,47 +1229,37 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
 {
   GEOSX_MARK_FUNCTION;
 
-  int localCheck = 1;
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
+  integer localCheck = 1;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-
-    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   WellElementSubRegion const & subRegion )
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                                        [&]( localIndex const,
+                                                                             WellElementSubRegion const & subRegion )
     {
-      // get the degree of freedom numbers on well elements and ghosting info
-      string const wellDofKey = dofManager.getKey( wellElementDofName() );
-      arrayView1d< globalIndex const > const & wellElemDofNumber =
-        subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-      arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
+      integer const subRegionSolutionCheck =
+        compositionalMultiphaseWellKernels::
+          SolutionCheckKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                     scalingFactor,
+                                                     dofManager.rankOffset(),
+                                                     m_numComponents,
+                                                     wellDofKey,
+                                                     subRegion,
+                                                     localSolution );
 
-      // get a reference to the primary variables on well elements
-      arrayView1d< real64 const > const & wellElemPressure =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-      arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
-
-      localIndex const subRegionSolutionCheck =
-        SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
-                                                               dofManager.rankOffset(),
-                                                               numFluidComponents(),
-                                                               wellElemDofNumber,
-                                                               wellElemGhostRank,
-                                                               wellElemPressure,
-                                                               wellElemCompDens,
-                                                               m_allowCompDensChopping,
-                                                               scalingFactor );
-
-      if( subRegionSolutionCheck == 0 )
+      if( !subRegionSolutionCheck )
       {
-        localCheck = 0;
+        GEOSX_LOG_LEVEL( 1, "Solution is invalid in well " << subRegion.getName()
+                                                           << " (either a negative pressure or a negative component density was found)." );
       }
+
+      localCheck = std::min( localCheck, subRegionSolutionCheck );
     } );
   } );
+
   return MpiWrapper::min( localCheck );
 }
 
