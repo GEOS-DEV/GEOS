@@ -149,9 +149,9 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  this->template forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                               MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                               MeshLevel const & mesh,
+                                                                               arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -263,9 +263,9 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
   using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
-  this->template forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                               MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                               MeshLevel const & mesh,
+                                                                               arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
