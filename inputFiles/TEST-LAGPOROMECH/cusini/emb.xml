@@ -49,6 +49,7 @@
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="2"
+      discretization="FE1"
       mpiCommOrder="1"/>
 
     <SinglePhaseFVM

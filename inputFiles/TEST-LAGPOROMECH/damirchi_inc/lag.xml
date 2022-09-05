@@ -11,7 +11,6 @@
       flowSolverName="SinglePhaseFlow"
       logLevel="1"
       initialDt="8.64e4"
-      discretization="FE1"
       targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-04"
@@ -44,6 +43,7 @@
       logLevel="1"
       targetRegions="{ Domain, Fracture }"
       fractureRegionName="Fracture"
+      discretization="FE1"
       contactRelationName="fractureMaterial"/>
 
     <SolidMechanicsLagrangianSSLE
@@ -60,6 +60,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       rockToughness="1.0e6"
+      discretization="FE1"
       mpiCommOrder="1"/>
 
     <SinglePhaseFVM
