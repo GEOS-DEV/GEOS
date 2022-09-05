@@ -133,7 +133,7 @@
   <Tasks>
     <PackCollection
       name="pressureCollection"
-      objectPath="nodeManager"
+      objectPath="/Problem/domain/MeshBodies/mesh/meshLevels/FE1/nodeManager"
       fieldName="pressure_np1"/>
   </Tasks>
 

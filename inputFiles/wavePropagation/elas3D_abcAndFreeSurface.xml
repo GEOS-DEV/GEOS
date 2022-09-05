@@ -206,15 +206,15 @@
   <Tasks>
     <PackCollection
       name="displacementxCollection"
-      objectPath="nodeManager"
+      objectPath="/Problem/domain/MeshBodies/mesh/meshLevels/FE1/nodeManager"
       fieldName="displacementx_np1"/>
     <PackCollection
       name="displacementyCollection"
-      objectPath="nodeManager"
+      objectPath="/Problem/domain/MeshBodies/mesh/meshLevels/FE1/nodeManager"
       fieldName="displacementy_np1"/>
     <PackCollection
       name="displacementzCollection"
-      objectPath="nodeManager"
+      objectPath="/Problem/domain/MeshBodies/mesh/meshLevels/FE1/nodeManager"
       fieldName="displacementz_np1"/>
   </Tasks>
 
