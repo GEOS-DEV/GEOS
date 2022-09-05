@@ -70,9 +70,13 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
-
   virtual void initializePreSubGroups() override;
+
+private:
+
+  CompositionalMultiphaseBase const * flowSolver() const;
+
+  void setMGRStrategy();
 
 };
 
