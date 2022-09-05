@@ -8,7 +8,6 @@
       solidSolverName="LinearElasticitySolver"
       flowSolverName="TwoPhaseFlowSolver"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
