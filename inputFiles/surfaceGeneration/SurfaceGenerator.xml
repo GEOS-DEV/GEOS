@@ -11,6 +11,7 @@
       >
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
+        maxAllowedResidualNorm="1e10"  
         newtonMaxIter="8"/>
       <LinearSolverParameters
         directParallel="0"/>
