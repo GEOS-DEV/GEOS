@@ -127,8 +127,8 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & )
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -430,8 +430,8 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   applyFreeSurfaceBC( time, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     precomputeSourceAndReceiverTerm( mesh, regionNames );
 
@@ -602,8 +602,8 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
   GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -725,8 +725,8 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n, integer const, intege
 {
   // compute the remaining seismic traces, if needed
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     arrayView1d< real64 const > const ux_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_n >();
