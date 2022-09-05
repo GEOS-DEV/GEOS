@@ -188,8 +188,21 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
     faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
     faceManager.computeGeometry( nodeManager );
 
-//    meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
-//    {} );
+    // implement ghosting for non-base discretization...probably use information from the base ghosting.
+    meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+    {
+      for( NeighborCommunicator const & neighbor : m_neighbors )
+      {
+        neighbor.addNeighborGroupToMesh( meshLevel );
+      }
+
+      NodeManager & nodeManager = meshLevel.getNodeManager();
+      FaceManager & faceManager = meshLevel.getFaceManager();
+      EdgeManager & edgeManager = meshLevel.getEdgeManager();
+
+      nodeManager.setMaxGlobalIndex();
+
+    } );
   } );
 }
 
