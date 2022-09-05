@@ -34,12 +34,12 @@
   </Mesh>
 
   <Events
-    maxTime="0.2">
+    maxTime="0.1">
 
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.003"
+      forceDt="0.001"
       target="/Solvers/elasticSolver"/>
 
     <!-- generate an output that can be read from VTK -->
@@ -52,32 +52,32 @@
     <!-- two events to output pressure in an hdf5 file -->
     <PeriodicEvent
       name="timeHistoryCollectionx"
-      timeFrequency="0.003"
+      timeFrequency="0.001"
       targetExactTimestep="1"
       target="/Tasks/displacementxCollection"/>
     <PeriodicEvent
       name="timeHistoryCollectiony"
-      timeFrequency="0.003"
+      timeFrequency="0.001"
       targetExactTimestep="1"
       target="/Tasks/displacementyCollection"/>
     <PeriodicEvent
       name="timeHistoryCollectionz"
-      timeFrequency="0.003"
+      timeFrequency="0.001"
       targetExactTimestep="1"
       target="/Tasks/displacementzCollection"/>
     <PeriodicEvent
       name="timeHistoryOutputx"
-      timeFrequency="0.03"
+      timeFrequency="0.01"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutputx"/>
     <PeriodicEvent
       name="timeHistoryOutputy"
-      timeFrequency="0.03"
+      timeFrequency="0.01"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutputy"/>
     <PeriodicEvent
       name="timeHistoryOutputz"
-      timeFrequency="0.03"
+      timeFrequency="0.01"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutputz"/>
 
