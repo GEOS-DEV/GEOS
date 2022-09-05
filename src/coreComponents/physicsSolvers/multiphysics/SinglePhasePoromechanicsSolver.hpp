@@ -14,60 +14,20 @@
 
 /**
  * @file SinglePhasePoromechanicsSolver.hpp
-<<<<<<< HEAD
- *
-=======
->>>>>>> develop
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_
-/**
-<<<<<<< HEAD
-#include "codingUtilities/EnumStrings.hpp"
-#include "common/DataLayouts.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/solid/PorousSolid.hpp"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "finiteElement/FiniteElementDispatch.hpp"
-#include "finiteElement/Kinematics.h"
-#include "linearAlgebra/solvers/BlockPreconditioner.hpp"
-#include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
-#include "mainInterface/ProblemManager.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/SolverBase.hpp"
-=======
-*/
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-//>>>>>>> develop
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
 {
-/**
-<<<<<<< HEAD
-class SolidMechanicsLagrangianFEM;
-=======
->>>>>>> develop
-*/
-class SinglePhaseBase;
-class SolidMechanicsLagrangianFEM;
 
 class SinglePhasePoromechanicsSolver : public CoupledSolver< SolidMechanicsLagrangianFEM,
                                                              SinglePhaseBase >
 {
 public:
-/**
-<<<<<<< HEAD
-  SinglePhasePoromechanicsSolver( string const & name,
-=======
-*/
-
   using Base = CoupledSolver< SolidMechanicsLagrangianFEM, SinglePhaseBase >;
   using Base::m_solvers;
   using Base::m_dofManager;
@@ -81,13 +41,15 @@ public:
     Flow = 1
   };
 
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "poromechanics"; }
+
   /**
    * @brief main constructor for SinglePhasePoromechanicsSolver objects
    * @param name the name of this instantiation of SinglePhasePoromechanicsSolver in the repository
    * @param parent the parent group of this instantiation of SinglePhasePoromechanicsSolver
    */
   SinglePhasePoromechanicsSolver( const string & name,
-//>>>>>>> develop
                                   Group * const parent );
 
   /// Destructor for the class
@@ -160,23 +122,8 @@ protected:
   };
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
-/**
-<<<<<<< HEAD
-  string m_solidSolverName;
 
-  string m_flowSolverName;
-
-  array1d< string > m_porousMaterialNames;
-
-  // pointer to the flow sub-solver
-  SinglePhaseBase * m_flowSolver;
-
-  // pointer to the solid mechanics sub-solver
-  SolidMechanicsLagrangianFEM * m_solidSolver;
-=======
-*/
   virtual void initializePreSubGroups() override;
-//>>>>>>> develop
 
 private:
 

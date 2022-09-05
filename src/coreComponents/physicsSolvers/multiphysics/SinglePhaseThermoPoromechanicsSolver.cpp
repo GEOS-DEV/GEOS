@@ -17,11 +17,6 @@
  */
 
 #include "SinglePhaseThermoPoromechanicsSolver.hpp"
-/**
-<<<<<<< HEAD
-#include "SinglePhasePoromechanicsKernel.hpp"
-=======
-*/
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
@@ -29,26 +24,16 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseThermoPoromechanicsKernel.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-//>>>>>>> develop
 
 namespace geosx
 {
 
 using namespace dataRepository;
 using namespace constitutive;
-/**
-<<<<<<< HEAD
-SinglePhaseThermoPoromechanicsSolver::SinglePhaseThermoPoromechanicsSolver( string const & name,
-                                                                Group * const parent ):
-  SolverBase( name, parent ),
-  m_solidSolverName(),
-  m_flowSolverName()
-=======
-*/
+
 SinglePhaseThermoPoromechanicsSolver::SinglePhaseThermoPoromechanicsSolver( const string & name,
                                                                 Group * const parent )
   : Base( name, parent )
-//>>>>>>> develop
 {
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -168,21 +153,6 @@ void SinglePhaseThermoPoromechanicsSolver::initializePostInitialConditionsPreSub
   }
 }
 
-/**
-<<<<<<< HEAD
-SinglePhaseThermoPoromechanicsSolver::~SinglePhaseThermoPoromechanicsSolver()
-{}
-
-void SinglePhaseThermoPoromechanicsSolver::resetStateToBeginningOfStep( DomainPartition & domain )
-{
-  m_flowSolver->resetStateToBeginningOfStep( domain );
-  m_solidSolver->resetStateToBeginningOfStep( domain );
-}
-
-=======
->>>>>>> develop
-*/
-
 void SinglePhaseThermoPoromechanicsSolver::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   Base::resetStateToBeginningOfStep( domain );
@@ -238,31 +208,11 @@ void SinglePhaseThermoPoromechanicsSolver::assembleSystem( real64 const time_n,
                                                      arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-/**
-<<<<<<< HEAD
-  MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
 
-  NodeManager const & nodeManager = mesh.getNodeManager();
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
 
-  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
-  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-
-  string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
-
-  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
-
-  thermoPoromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                pDofKey,
-                                                                dofManager.rankOffset(),
-                                                                localMatrix,
-                                                                localRhs,
-                                                                gravityVectorData,
-                                                                m_flowSolver->fluidModelNames() );
-=======
-*/
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
 
@@ -300,14 +250,7 @@ void SinglePhaseThermoPoromechanicsSolver::assembleSystem( real64 const time_n,
 
   } );
 
-/**
-<<<<<<< HEAD
-  // Contributions of the fluid flux term
-  m_flowSolver->assemblePoroelasticFluxTerms( time_n, dt,
-=======
-*/
   flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,
-//>>>>>>> develop
                                               domain,
                                               dofManager,
                                               localMatrix,
@@ -381,47 +324,6 @@ FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInst
     } );
   } );
 }
-
-/**
-<<<<<<< HEAD
-void SinglePhaseThermoPoromechanicsSolver::applyBoundaryConditions( real64 const time_n,
-                                                              real64 const dt,
-                                                              DomainPartition & domain,
-                                                              DofManager const & dofManager,
-                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                              arrayView1d< real64 > const & localRhs )
-{
-  m_solidSolver->applyBoundaryConditions( time_n, dt,
-                                          domain,
-                                          dofManager,
-                                          localMatrix,
-                                          localRhs );
-
-  m_flowSolver->applyBoundaryConditions( time_n, dt,
-                                         domain,
-                                         dofManager,
-                                         localMatrix,
-                                         localRhs );
-}
-
-real64 SinglePhaseThermoPoromechanicsSolver::calculateResidualNorm( DomainPartition const & domain,
-                                                              DofManager const & dofManager,
-                                                              arrayView1d< real64 const > const & localRhs )
-{
-  // compute norm of momentum balance residual equations
-  real64 const momementumResidualNorm = m_solidSolver->calculateResidualNorm( domain, dofManager, localRhs );
-
-  // compute norm of mass balance residual equations
-  real64 const massResidualNorm = m_flowSolver->calculateResidualNorm( domain, dofManager, localRhs );
-
-  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "( Rsolid, Rfluid ) = ( {:4.2e}, {:4.2e} )", momementumResidualNorm, massResidualNorm ) );
-
-  return sqrt( momementumResidualNorm * momementumResidualNorm + massResidualNorm * massResidualNorm );
-}
-
-=======
->>>>>>> develop
-*/
 
 void SinglePhaseThermoPoromechanicsSolver::createPreconditioner()
 {
@@ -522,24 +424,7 @@ void SinglePhaseThermoPoromechanicsSolver::updateState( DomainPartition & domain
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
-
-/**
-<<<<<<< HEAD
-void SinglePhaseThermoPoromechanicsSolver::applySystemSolution( DofManager const & dofManager,
-                                                          arrayView1d< real64 const > const & localSolution,
-                                                          real64 const scalingFactor,
-                                                          DomainPartition & domain )
-{
-  // update displacement field
-  m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
-
-  // update pressure field
-  m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
-}
-=======
-*/
     ElementRegionManager & elemManager = mesh.getElemManager();
-//>>>>>>> develop
 
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                               [&]( localIndex const,

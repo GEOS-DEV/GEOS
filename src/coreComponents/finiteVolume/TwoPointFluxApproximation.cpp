@@ -240,7 +240,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
 
-  FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
+  FaceElementSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion.faceList();
 
   arrayView1d< localIndex const > const & fractureConnectorsToEdges = fractureSubRegion.m_fractureConnectorsEdgesToEdges;
@@ -664,7 +664,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( embeddedSurfaceRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
 
-  EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
+  EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< EmbeddedSurfaceSubRegion >();
 
   FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
 
@@ -739,8 +739,7 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( embeddedSurfaceRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
 
-  EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
-  // arrayView1d< real64 const > const & fractureElemArea   = fractureSubRegion.getElementArea();
+  EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< EmbeddedSurfaceSubRegion >();
   arrayView2d< real64 const > const fractureElemCenter = fractureSubRegion.getElementCenter();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
 
@@ -1013,7 +1012,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
 
   fsManager.apply< FaceManager,
                    AquiferBoundaryCondition >( 0.0,
-                                               domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                               domain.getMeshBody( 0 ).getBaseDiscretization(),
                                                AquiferBoundaryCondition::catalogName(),
                                                [&] ( AquiferBoundaryCondition const & bc,
                                                      string const &,
@@ -1073,7 +1072,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
 
   fsManager.apply< FaceManager,
                    AquiferBoundaryCondition >( 0.0,
-                                               domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                               domain.getMeshBody( 0 ).getBaseDiscretization(),
                                                AquiferBoundaryCondition::catalogName(),
                                                [&] ( AquiferBoundaryCondition const & bc,
                                                      string const & setName,
