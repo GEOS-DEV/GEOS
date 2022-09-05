@@ -48,6 +48,7 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
   WellSolverBase( name, parent )
 {
   m_numDofPerWellElement = 2;
+  m_numDofPerResElement = 1;
 }
 
 void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )

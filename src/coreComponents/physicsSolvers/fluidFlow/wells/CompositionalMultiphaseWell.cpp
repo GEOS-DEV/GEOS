@@ -133,6 +133,7 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
     m_numComponents = fluid0.numFluidComponents();
   }
   m_numDofPerWellElement = m_numComponents + 2; // 1 pressure + NC compositions + 1 connectionRate
+  m_numDofPerResElement = m_numComponents + 1; // 1 pressure + NC compositions
 
   // loop over the wells
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -297,7 +298,6 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition co
   GEOSX_MARK_FUNCTION;
 
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
-
   CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
   string const referenceFluidName = flowSolver.referenceFluidModelName();
   MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );

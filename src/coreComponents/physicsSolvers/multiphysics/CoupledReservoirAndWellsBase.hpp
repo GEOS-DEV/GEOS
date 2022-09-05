@@ -178,14 +178,6 @@ public:
 protected:
 
   virtual void
-  postProcessInput() override
-  {
-    Base::postProcessInput();
-
-    wellSolver()->setFlowSolverName( m_names[toUnderlying( SolverType::Reservoir )] );
-  }
-
-  virtual void
   initializePostInitialConditionsPreSubGroups() override
   {
     Base::initializePostInitialConditionsPreSubGroups( );
