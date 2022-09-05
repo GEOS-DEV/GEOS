@@ -78,7 +78,7 @@ void SinglePhaseFVM< BASE >::setupDofs( DomainPartition const & domain,
   dofManager.addField( BASE::viewKeyStruct::elemDofFieldString(),
                        FieldLocation::Elem,
                        m_numDofPerCell,
-                       BASE::m_meshTargets );
+                       BASE::getMeshTargets() );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -120,9 +120,9 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
   string const dofKey = dofManager.getKey( BASE::viewKeyStruct::elemDofFieldString() );
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel const & mesh,
+                                                                      arrayView1d< string const > const & regionNames )
   {
     real64 localFlowResidualNorm[3] = { 0.0, 0.0, 0.0 };
     real64 localEnergyResidualNorm[3] = { 0.0, 0.0, 0.0 };
@@ -262,9 +262,9 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                  scalingFactor );
   }
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel & mesh,
+                                                                      arrayView1d< string const > const & regionNames )
   {
     std::vector< string > fields{ extrinsicMeshData::flow::pressure::key() };
 
@@ -297,9 +297,9 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UN
 
   string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
@@ -358,9 +358,9 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -416,9 +416,9 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
 
   string const & pressureDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & )
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel const & mesh,
+                                                                      arrayView1d< string const > const & )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -480,10 +480,12 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
 
   string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & )
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel const & mesh,
+                                                                      arrayView1d< string const > const & )
   {
+    std::cout<<mesh.getName()<<std::endl;
+
     ElementRegionManager const & elemManager = mesh.getElemManager();
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
     elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
@@ -566,9 +568,9 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 
   string const & dofKey = dofManager.getKey( BASE::viewKeyStruct::elemDofFieldString() );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel & mesh,
+                                                                      arrayView1d< string const > const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -686,9 +688,9 @@ real64 SinglePhaseFVM< SinglePhaseBase >::computeFluxFaceDirichlet( real64 const
 
   real64 totalFlux = 0.0;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel & mesh,
+                                                                      arrayView1d< string const > const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -792,9 +794,9 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
 
   string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =

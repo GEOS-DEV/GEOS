@@ -38,7 +38,7 @@
 #include "physicsSolvers/multiphysics/LagrangianContactFlowSolver.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
-#include "SinglePhasePoromechanicsKernel.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsKernel.hpp"
 #include "math/interpolation/Interpolation.hpp"
 
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -86,7 +86,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
   dofManager.addField( keys::TotalDisplacement,
                        FieldLocation::Node,
                        3,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           keys::TotalDisplacement,
@@ -95,10 +95,10 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
   // OR, considering also the coupling u-t can we simply call m_contactSolver->setupDofs( domain, dofManager ); ??
 
   // restrict coupling to fracture regions only
-  map< string, array1d< string > > meshTargets;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
-                                                MeshLevel const & meshLevel,
-                                                arrayView1d< string const > const & regionNames )
+  map< std::pair< string, string >, array1d< string > > meshTargets;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                                MeshLevel const & meshLevel,
+                                                                arrayView1d< string const > const & regionNames )
   {
     array1d< string > regions;
     ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
@@ -108,7 +108,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
     {
       regions.emplace_back( region.getName() );
     } );
-    meshTargets[meshBodyName] = std::move( regions );
+    meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
   } );
 
   dofManager.addField( extrinsicMeshData::contact::traction::key(),
@@ -195,9 +195,9 @@ void SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete( real
   m_contactSolver->implicitStepComplete( time_n, dt, domain );
   flowSolver()->implicitStepComplete( time_n, dt, domain );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -420,9 +420,9 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
   // TODO: synchronizeFractureState ? ripristinare seguente istruzione
   //m_contactSolver->synchronizeFractureState( domain );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
 
@@ -463,7 +463,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
                                     constitutive::PorousSolidBase,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,
-                                                            this->getDiscretizationName(),
+                                                            solidMechanicsSolver()->getDiscretizationName(),
                                                             viewKeyStruct::porousMaterialNamesString(),
                                                             kernelFactory );
 
@@ -585,7 +585,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::createPreconditioner( Doma
     {
       if( m_contactSolver->getSolidSolver()->getRigidBodyModes().empty() )
       {
-        MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+        MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
         LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
                                                    { keys::TotalDisplacement },
@@ -654,7 +654,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::createPreconditioner( Doma
     {
       if( m_contactSolver->getSolidSolver()->getRigidBodyModes().empty() )
       {
-        MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+        MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
         LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
                                                    { keys::TotalDisplacement },
@@ -766,9 +766,9 @@ void SinglePhasePoromechanicsLagrangianContactSolver::updateState( DomainPartiti
 
   m_contactSolver->updateState( domain );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,

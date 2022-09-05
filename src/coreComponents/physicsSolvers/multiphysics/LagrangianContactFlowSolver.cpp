@@ -248,9 +248,9 @@ void LagrangianContactFlowSolver::updateOpeningForFlow( DomainPartition & domain
 {
 //  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 //
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & GEOSX_UNUSED_PARAM( regionNames ) )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -718,10 +718,10 @@ void LagrangianContactFlowSolver::setupDofs( DomainPartition const & domain,
   //   fractureRegions.emplace_back( elementRegion.getName() );
   // } );
   //
-  map< string, array1d< string > > meshTargets;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
-                                                MeshLevel const & meshLevel,
-                                                arrayView1d< string const > const & regionNames )
+  map< std::pair< string, string >, array1d< string > > meshTargets;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                                MeshLevel const & meshLevel,
+                                                                arrayView1d< string const > const & regionNames )
   {
     array1d< string > regions;
     ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
@@ -731,7 +731,7 @@ void LagrangianContactFlowSolver::setupDofs( DomainPartition const & domain,
     {
       regions.emplace_back( region.getName() );
     } );
-    meshTargets[meshBodyName] = std::move( regions );
+    meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
   } );
 
   dofManager.addCoupling( keys::TotalDisplacement,
@@ -827,9 +827,9 @@ real64 LagrangianContactFlowSolver::calculateResidualNorm( DomainPartition const
   real64 contactR2 = 0.0;
   real64 pressureR2 = 0.0;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     string const & tracDofKey = dofManager.getKey( extrinsicMeshData::contact::traction::key() );
     string const & presDofKey = dofManager.getKey( m_pressureKey );
@@ -1016,7 +1016,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
     {
       if( m_contactSolver->getSolidSolver()->getRigidBodyModes().empty() )
       {
-        MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+        MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
         LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
                                                    { keys::TotalDisplacement },
@@ -1085,7 +1085,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
     {
       if( m_contactSolver->getSolidSolver()->getRigidBodyModes().empty() )
       {
-        MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+        MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
         LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
                                                    { keys::TotalDisplacement },
@@ -1122,9 +1122,9 @@ void LagrangianContactFlowSolver::
 //  std::cout << "in LagrangianContactFlowSolver::addTransmissibilityCouplingNNZ\n";
 
 //  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,   //meshBodyName
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & ) // regionNames
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &, //  meshBodyName,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & ) // regionNames
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -1185,9 +1185,9 @@ void LagrangianContactFlowSolver::
   GEOSX_MARK_FUNCTION;
 
 //  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & GEOSX_UNUSED_PARAM( regionNames ) )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -1272,9 +1272,9 @@ void LagrangianContactFlowSolver::
 {
   GEOSX_MARK_FUNCTION;
 //  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & GEOSX_UNUSED_PARAM( regionNames ) )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager & nodeManager = mesh.getNodeManager();
@@ -1372,9 +1372,9 @@ void LagrangianContactFlowSolver::
 {
   GEOSX_MARK_FUNCTION;
 //  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
 
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -1526,9 +1526,9 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
 
 //  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 //
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -1924,9 +1924,9 @@ void LagrangianContactFlowSolver::setUpDflux_dApertureMatrix( DomainPartition & 
 {
 //  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 //
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     std::unique_ptr< CRSMatrix< real64, localIndex > > &
     derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
