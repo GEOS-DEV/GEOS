@@ -23,7 +23,6 @@
       solidSolverName="linearElasticity"
       flowSolverName="singlePhaseFlow"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ channel, barrier }"/>
 
     <SolidMechanicsLagrangianSSLE
@@ -71,8 +70,8 @@
       xCoords="{ 0, 250, 500 }"
       yCoords="{ 0, 250, 500 }"
       zCoords="{ 0, 62.5, 125, 187.5, 250 }"
-      nx="{ 4, 4 }"
-      ny="{ 4, 4 }"
+      nx="{ 3, 3 }"
+      ny="{ 3, 3 }"
       nz="{ 2, 2, 2, 2 }"
       cellBlockNames="{ b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11, b12, b13, b14, b15 }"/>
 
@@ -121,6 +120,14 @@
       name="outputs"
       timeFrequency="1e6"
       target="/Outputs/vtkOutput"/>
+    <PeriodicEvent
+      name="linearElasticityStatistics"
+      timeFrequency="1e6"
+      target="/Tasks/linearElasticityStatistics"/>
+    <PeriodicEvent
+      name="singlePhaseFlowStatistics"
+      timeFrequency="1e6"
+      target="/Tasks/singlePhaseFlowStatistics"/>
     <PeriodicEvent
       name="solverApplications"
       maxEventDt="1e6"
@@ -240,6 +247,17 @@
       setNames="{ zneg }"/>
   </FieldSpecifications>
 
+  <Tasks>
+    <SolidMechanicsStatistics
+      name="linearElasticityStatistics"
+      solidSolverName="linearElasticity"
+      logLevel="1"/>
+    <SinglePhaseStatistics
+      name="singlePhaseFlowStatistics"
+      flowSolverName="singlePhaseFlow"
+      logLevel="1"/>
+  </Tasks>
+  
   <Outputs>
     <VTK
       name="vtkOutput"
