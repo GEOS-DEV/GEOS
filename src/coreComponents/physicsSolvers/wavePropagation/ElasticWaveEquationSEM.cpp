@@ -126,7 +126,7 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
 
-  forMeshTargets( meshBodies, [&] ( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
                                     arrayView1d< string const > const & )
   {
@@ -429,7 +429,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -510,8 +510,8 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
-  FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
-  NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
+  FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
+  NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
 
   arrayView1d< real64 > const ux_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_np1 >();
   arrayView1d< real64 > const uy_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_np1 >();
@@ -538,7 +538,7 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   freeSurfaceNodeIndicator.zero();
 
   fsManager.apply( time,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                    string( "FreeSurface" ),
                    [&]( FieldSpecificationBase const & bc,
                         string const &,
@@ -601,7 +601,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -679,7 +679,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
     syncFields.synchronizeFields( fieldsToBeSync,
-                                  domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                  domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                                   domain.getNeighbors(),
                                   true );
 
@@ -724,7 +724,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 void ElasticWaveEquationSEM::cleanup( real64 const time_n, integer const, integer const, real64 const, DomainPartition & domain )
 {
   // compute the remaining seismic traces, if needed
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
