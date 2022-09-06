@@ -20,6 +20,7 @@
 #define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1TRIANGLEFACELAGRANGE1GAUSS1
 
 #include "FiniteElementBase.hpp"
+#include "LagrangeBasis1.hpp"
 
 
 namespace geosx
@@ -48,6 +49,10 @@ namespace finiteElement
 class H1_TriangleFace_Lagrange1_Gauss1 final : public FiniteElementBase
 {
 public:
+
+  /// The type of basis used for this element
+  using BASIS = LagrangeBasis1;
+
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 3;
   /// The maximum number of support points per element.
@@ -128,6 +133,17 @@ public:
   static void setupStack( localIndex const & cellIndex,
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
+
+
+  /**
+   * @brief Calculate shape functions values at a single point.
+   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[out] N The shape function values.
+   */
+  GEOSX_HOST_DEVICE
+  static void calcN( real64 const (&coords)[2],
+                     real64 ( &N )[numNodes] );
+
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -263,6 +279,23 @@ void H1_TriangleFace_Lagrange1_Gauss1::
   GEOSX_UNUSED_VAR( targetVector );
   GEOSX_UNUSED_VAR( scaleFactor );
 }
+
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+H1_TriangleFace_Lagrange1_Gauss1::
+  calcN( real64 const (&coords)[2],
+         real64 ( & N )[numNodes] )
+{
+  real64 const r  = coords[0];
+  real64 const s  = coords[1];
+
+  N[0] = 1.0 - r - s;
+  N[1] = r;
+  N[2] = s;
+}
+
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
