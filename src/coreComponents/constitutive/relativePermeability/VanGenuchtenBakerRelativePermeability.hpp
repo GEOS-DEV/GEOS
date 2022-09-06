@@ -43,9 +43,9 @@ public:
                                                arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
+                                      phaseMinVolumeFraction,
                                       phaseRelPerm,
                                       dPhaseRelPerm_dPhaseVolFrac ),
-    m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
     m_waterOilRelPermExponentInv( waterOilRelPermExponentInv ),
     m_waterOilRelPermMaxValue( waterOilRelPermMaxValue ),
     m_gasOilRelPermExponentInv( gasOilRelPermExponentInv ),
@@ -137,8 +137,6 @@ public:
 protected:
 
   virtual void postProcessInput() override;
-
-  array1d< real64 > m_phaseMinVolumeFraction;
 
   // water-oil data
   array1d< real64 > m_waterOilRelPermExponentInv;

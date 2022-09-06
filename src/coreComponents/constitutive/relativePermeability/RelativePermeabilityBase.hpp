@@ -59,10 +59,12 @@ protected:
 
   RelativePermeabilityBaseUpdate( arrayView1d< integer const > const & phaseTypes,
                                   arrayView1d< integer const > const & phaseOrder,
+                                  arrayView1d< real64 const > const & phaseMin,
                                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
     : m_phaseTypes( phaseTypes ),
     m_phaseOrder( phaseOrder ),
+    m_phaseMinVolumeFraction(phaseMin),
     m_phaseRelPerm( phaseRelPerm ),
     m_dPhaseRelPerm_dPhaseVolFrac( dPhaseRelPerm_dPhaseVolFrac )
   {}
@@ -70,8 +72,11 @@ protected:
   arrayView1d< integer const > m_phaseTypes;
   arrayView1d< integer const > m_phaseOrder;
 
+    arrayView1d< real64 const > m_phaseMinVolumeFraction;
+
   arrayView3d< real64, relperm::USD_RELPERM > m_phaseRelPerm;
   arrayView4d< real64, relperm::USD_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
+
 
 private:
 
@@ -126,6 +131,8 @@ public:
 
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
+  arrayView1d< real64 const> phaseMinVolFrac() const { return m_phaseMinVolumeFraction; }
+
   arrayView3d< real64 const, relperm::USD_RELPERM > phaseRelPerm() const { return m_phaseRelPerm; }
   arrayView4d< real64 const, relperm::USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
 
@@ -141,6 +148,7 @@ public:
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * phaseTypesString() { return "phaseTypes"; }
     static constexpr char const * phaseOrderString() { return "phaseOrder"; }
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
   };
 
 private:
@@ -167,10 +175,12 @@ protected:
   // phase ordering info
   array1d< integer > m_phaseTypes;
   array1d< integer > m_phaseOrder;
+array1d< real64 > m_phaseMinVolumeFraction;
 
   // output quantities
   array3d< real64, relperm::LAYOUT_RELPERM >  m_phaseRelPerm;
   array4d< real64, relperm::LAYOUT_RELPERM_DS >  m_dPhaseRelPerm_dPhaseVolFrac;
+
 };
 
 } // namespace constitutive

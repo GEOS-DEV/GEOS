@@ -124,7 +124,6 @@ private:
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
     static constexpr char const * relPermKernelWrappersString() { return "relPermWrappers"; }
-    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
     static constexpr char const * wettingNonWettingRelPermTableNamesString() { return "wettingNonWettingRelPermTableNames"; }
     static constexpr char const * wettingIntermediateRelPermTableNamesString() { return "wettingIntermediateRelPermTableNames"; }
     static constexpr char const * nonWettingIntermediateRelPermTableNamesString() { return "nonWettingIntermediateRelPermTableNames"; }
@@ -160,9 +159,6 @@ private:
   ///  2- non-wetting-phase
   ///  3- intermediate phase (non-wetting-intermediate data)
   array1d< TableFunction::KernelWrapper > m_relPermKernelWrappers;
-
-  /// Min phase volume fractions (deduced from the tables). With Baker, only the water phase entry is used
-  array1d< real64 > m_phaseMinVolumeFraction;
 
 };
 

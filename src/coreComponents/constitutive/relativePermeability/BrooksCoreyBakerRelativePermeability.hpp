@@ -43,9 +43,9 @@ public:
                                               arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
+                                      phaseMinVolumeFraction,
                                       phaseRelPerm,
                                       dPhaseRelPerm_dPhaseVolFrac ),
-    m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
     m_waterOilRelPermExponent( waterOilRelPermExponent ),
     m_waterOilRelPermMaxValue( waterOilRelPermMaxValue ),
     m_gasOilRelPermExponent( gasOilRelPermExponent ),
@@ -93,8 +93,6 @@ private:
                                real64 & relPerm,
                                real64 & dRelPerm_dVolFrac );
 
-  arrayView1d< real64 const > m_phaseMinVolumeFraction;
-
   arrayView1d< real64 const > m_waterOilRelPermExponent;
   arrayView1d< real64 const > m_waterOilRelPermMaxValue;
 
@@ -125,7 +123,6 @@ public:
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
-    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
     static constexpr char const * waterOilRelPermExponentString() { return "waterOilRelPermExponent"; }
     static constexpr char const * waterOilRelPermMaxValueString() { return "waterOilRelPermMaxValue"; }
     static constexpr char const * gasOilRelPermExponentString() { return "gasOilRelPermExponent"; }
@@ -136,8 +133,6 @@ public:
 protected:
 
   virtual void postProcessInput() override;
-
-  array1d< real64 > m_phaseMinVolumeFraction;
 
   // water-oil data
   array1d< real64 > m_waterOilRelPermExponent;

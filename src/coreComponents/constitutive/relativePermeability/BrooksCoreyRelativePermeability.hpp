@@ -40,9 +40,9 @@ public:
                                          arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
+                                      phaseMinVolumeFraction,
                                       phaseRelPerm,
                                       dPhaseRelPerm_dPhaseVolFrac ),
-    m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
     m_phaseRelPermExponent( phaseRelPermExponent ),
     m_phaseRelPermMaxValue( phaseRelPermMaxValue ),
     m_volFracScale( volFracScale )
@@ -65,8 +65,7 @@ public:
 
 private:
 
-  arrayView1d< real64 const > m_phaseMinVolumeFraction;
-  arrayView1d< real64 const > m_phaseRelPermExponent;
+    arrayView1d< real64 const > m_phaseRelPermExponent;
   arrayView1d< real64 const > m_phaseRelPermMaxValue;
   real64 m_volFracScale;
 };
@@ -94,7 +93,6 @@ public:
 //START_SPHINX_INCLUDE_01
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
-    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
     static constexpr char const * phaseRelPermExponentString() { return "phaseRelPermExponent"; }
     static constexpr char const * phaseRelPermMaxValueString() { return "phaseRelPermMaxValue"; }
     static constexpr char const * volFracScaleString() { return "volFracScale"; }
@@ -106,7 +104,6 @@ protected:
   virtual void postProcessInput() override;
 
 //START_SPHINX_INCLUDE_02
-  array1d< real64 > m_phaseMinVolumeFraction;
   array1d< real64 > m_phaseRelPermExponent;
   array1d< real64 > m_phaseRelPermMaxValue;
 
