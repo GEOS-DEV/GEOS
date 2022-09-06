@@ -83,9 +83,9 @@ PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
 
 void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 {
-  forMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodes = mesh.getNodeManager();
 
@@ -202,7 +202,7 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM(
   dofManager.addField( m_fieldName,
                        FieldLocation::Node,
                        1,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
@@ -218,9 +218,9 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                           arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -428,9 +428,9 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( localSolution, m_fieldName, m_fieldName, scalingFactor );
 
   // Syncronize ghost nodes
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );
@@ -500,9 +500,9 @@ PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
 
   RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
   {
     const NodeManager & nodeManager = mesh.getNodeManager();
     const arrayView1d< const integer > & ghostRank = nodeManager.ghostRank();
@@ -566,9 +566,9 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
 
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
   {
     fsManager.template apply< NodeManager >( time,
                                              mesh,
