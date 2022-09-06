@@ -102,6 +102,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
 
         regionStatistics.phasePoreVolume.resizeDimension< 0 >( numPhases );
         regionStatistics.phaseMass.resizeDimension< 0 >( numPhases );
+        regionStatistics.immobilePhaseMass.resizeDimension<0>( numPhases );
         regionStatistics.dissolvedComponentMass.resizeDimension< 0, 1 >( numPhases, numComps );
       }
     }
@@ -156,7 +157,9 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
   integer const numPhases = m_solver->numFluidPhases();
   integer const numComps = m_solver->numFluidComponents();
 
-  // Step 1: initialize the average/min/max quantities
+
+
+    // Step 1: initialize the average/min/max quantities
   ElementRegionManager & elemManager = mesh.getElemManager();
   for( integer i = 0; i < regionNames.size(); ++i )
   {
@@ -179,6 +182,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     regionStatistics.phasePoreVolume.setValues< serialPolicy >( 0.0 );
 
     regionStatistics.phaseMass.setValues< serialPolicy >( 0.0 );
+    regionStatistics.immobilePhaseMass.setValues< serialPolicy >( 0.0 );
     regionStatistics.dissolvedComponentMass.setValues< serialPolicy >( 0.0 );
   }
 
@@ -207,6 +211,13 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDensity = fluid.phaseDensity();
     arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const phaseCompFraction = fluid.phaseCompFraction();
 
+
+    //get min vol fraction for each phase to dispactche immobile/mobile mass
+      string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
+      RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
+      //TODO get Scrt when hysteresis is on (and not minDrainage)
+      arrayView1d< real64 const > phaseMinVolFrac = relperm.phaseMinVolFrac();
+
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;
     real64 subRegionMaxPres = 0.0;
@@ -218,6 +229,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     real64 subRegionTotalUncompactedPoreVol = 0.0;
     stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionPhaseDynamicPoreVol( numPhases );
     stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionPhaseMass( numPhases );
+    stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionImmobilePhaseMass( numPhases );
     stackArray2d< real64, MultiFluidBase::MAX_NUM_PHASES *MultiFluidBase::MAX_NUM_COMPONENTS > subRegionDissolvedComponentMass( numPhases, numComps );
 
     isothermalCompositionalMultiphaseBaseKernels::
@@ -235,6 +247,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
                                         phaseDensity,
                                         phaseCompFraction,
                                         phaseVolFrac,
+                                        phaseMinVolFrac,
                                         subRegionMinPres,
                                         subRegionAvgPresNumerator,
                                         subRegionMaxPres,
@@ -246,6 +259,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
                                         subRegionTotalUncompactedPoreVol,
                                         subRegionPhaseDynamicPoreVol.toSlice(),
                                         subRegionPhaseMass.toSlice(),
+                                        subRegionImmobilePhaseMass.toSlice(),
                                         subRegionDissolvedComponentMass.toSlice() );
 
     ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
@@ -285,6 +299,11 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     {
       regionStatistics.phasePoreVolume[ip] += subRegionPhaseDynamicPoreVol[ip];
       regionStatistics.phaseMass[ip] += subRegionPhaseMass[ip];
+
+      //TODO use minVolFrac
+      regionStatistics.immobilePhaseMass[ip] += subRegionImmobilePhaseMass[ip];
+
+
       for( integer ic = 0; ic < numComps; ++ic )
       {
         regionStatistics.dissolvedComponentMass[ip][ic] += subRegionDissolvedComponentMass[ip][ic];
@@ -311,6 +330,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     {
       regionStatistics.phasePoreVolume[ip] = MpiWrapper::sum( regionStatistics.phasePoreVolume[ip] );
       regionStatistics.phaseMass[ip] = MpiWrapper::sum( regionStatistics.phaseMass[ip] );
+      regionStatistics.immobilePhaseMass[ip] = MpiWrapper::sum( regionStatistics.immobilePhaseMass[ip] );
       regionStatistics.totalPoreVolume += regionStatistics.phasePoreVolume[ip];
       for( integer ic = 0; ic < numComps; ++ic )
       {
@@ -340,6 +360,8 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
                                          << ": Phase dynamic pore volumes: " << regionStatistics.phasePoreVolume << " rm^3" );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Phase mass: " << regionStatistics.phaseMass << " " << massUnit );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                           << ": Immobile phase mass: " << regionStatistics.immobilePhaseMass << " " << massUnit );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Dissolved component mass: " << regionStatistics.dissolvedComponentMass << " " << massUnit );
   }
