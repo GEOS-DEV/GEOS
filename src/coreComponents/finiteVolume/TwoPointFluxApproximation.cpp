@@ -418,7 +418,7 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
     apertureF[kfe] = aperture[kfe];
 #endif
 #if SET_CREATION_DISPLACEMENT==1
-      aperture[kfe] = 1.0e99;
+    aperture[kfe] = 1.0e99;
 #endif
   } );
 
@@ -427,7 +427,7 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
   SortedArray< localIndex > allNewElems;
   allNewElems.insert( fractureSubRegion.m_newFaceElements.begin(),
                       fractureSubRegion.m_newFaceElements.end() );
-  SortedArrayView< localIndex const > const recalculateFractureConnectorEdges = fractureSubRegion.m_recalculateFractureConnectorEdges.toViewConst(); // What's that?
+  SortedArrayView< localIndex const > const recalculateFractureConnectorEdges = fractureSubRegion.m_recalculateFractureConnectorEdges.toViewConst();
 
   // add new connectors/connections between face elements to the fracture stencil
   forAll< serialPolicy >( recalculateFractureConnectorEdges.size(),
@@ -444,7 +444,7 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
                             aperture,
 #endif
                             &fractureSubRegion
-                            ]
+                          ]
                             ( localIndex const k )
   {
     localIndex const fci = recalculateFractureConnectorEdges[k];
@@ -605,13 +605,13 @@ void TwoPointFluxApproximation::cleanMatrixMatrixConnectionsDFM( MeshLevel & mes
                           [newFaceElements,
                            &cellStencil,
                            &faceMap]( localIndex const k )
-                          {
-                            localIndex const kfe = newFaceElements[k];
-                            // Remove cell-to-cell connections from cell stencil and add in new connections.
-                            // This is there to shut off previously connected cells
-                            // that are not connected anymore due to dynamic fracturing.
-                            cellStencil.zero( faceMap[kfe][0] );
-                          } );
+  {
+    localIndex const kfe = newFaceElements[k];
+    // Remove cell-to-cell connections from cell stencil and add in new connections.
+    // This is there to shut off previously connected cells
+    // that are not connected anymore due to dynamic fracturing.
+    cellStencil.zero( faceMap[kfe][0] );
+  } );
 }
 
 
@@ -672,7 +672,6 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
   forAll< serialPolicy >( newFaceElements.size(),
                           [ newFaceElements,
                             &faceElementsToCells,
-                            &cellStencil,
                             &faceToCellStencil,
                             &faceMap,
                             elemRegionList,
@@ -712,7 +711,9 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
 
         // remove cell-to-cell connections from cell stencil and add in new connections
         if( !regionIndices.contains( er ) )
-        { continue; }
+        {
+          continue;
+        }
 
         // Filter out entries where both fracture and cell element are ghosted
         if( elemGhostRank[fractureRegionIndex][0][kfe] >= 0 && elemGhostRank[er][esr][ei] >= 0 )
@@ -761,7 +762,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   this->addFractureMatrixConnectionsDFM( mesh, faceElementRegionName );
 
   if( initFields )
-  { this->initNewFractureFieldsDFM( mesh, faceElementRegionName ); }
+  {
+    this->initNewFractureFieldsDFM( mesh, faceElementRegionName );
+  }
 }
 
 void TwoPointFluxApproximation::addFractureMatrixConnectionsEDFM( MeshLevel & mesh,
