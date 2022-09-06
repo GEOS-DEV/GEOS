@@ -624,7 +624,7 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
     if( localRow >= 0 && localRow < diagonal.size() )
     {
       real64 const diag = diagonal[localRow];
-      rhs = -diag * (bcValue - fieldValue);
+      rhs = diag * (bcValue - fieldValue);
     }
     else
     {
