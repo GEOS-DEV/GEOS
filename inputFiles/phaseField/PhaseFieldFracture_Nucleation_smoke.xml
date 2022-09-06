@@ -27,7 +27,7 @@
       >
       <NonlinearSolverParameters
         newtonMaxIter="200"
-        newtonTol="1.0e-12"/>
+        newtonTol="1.0e-8"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
@@ -43,7 +43,7 @@
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="200"
-        newtonTol="1.0e-12"/>
+        newtonTol="1.0e-8"/>
       <LinearSolverParameters
         directParallel="0"/>
     </PhaseFieldDamageFEM>
@@ -108,7 +108,7 @@
       defaultDensity="2700"
       defaultBulkModulus="4.4144e9"
       defaultShearModulus="4.3363e9"
-      lengthScale="0.2"
+      lengthScale="0.001"
       criticalFractureEnergy="91"
       criticalStrainEnergy="0"
       extDrivingForceFlag="1"
@@ -123,7 +123,7 @@
       fieldName="TotalDisplacement"
       component="0"
       objectPath="nodeManager"
-      scale="1e-4"
+      scale="1e-3"
       functionName="f_b"
       setNames="{ xpos }"/>
 
