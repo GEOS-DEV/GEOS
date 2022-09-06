@@ -16,6 +16,7 @@ LagrangianContact                         node                 :ref:`XML_Lagrang
 LagrangianContactWithFlow                 node                 :ref:`XML_LagrangianContactWithFlow`                 
 LaplaceFEM                                node                 :ref:`XML_LaplaceFEM`                                
 MultiphasePoromechanics                   node                 :ref:`XML_MultiphasePoromechanics`                   
+MultiphasePoromechanicsReservoir          node                 :ref:`XML_MultiphasePoromechanicsReservoir`          
 PhaseFieldDamageFEM                       node                 :ref:`XML_PhaseFieldDamageFEM`                       
 PhaseFieldFracture                        node                 :ref:`XML_PhaseFieldFracture`                        
 ProppantTransport                         node                 :ref:`XML_ProppantTransport`                         
@@ -25,6 +26,7 @@ SinglePhaseHybridFVM                      node                 :ref:`XML_SingleP
 SinglePhasePoromechanics                  node                 :ref:`XML_SinglePhasePoromechanics`                  
 SinglePhasePoromechanicsEmbeddedFractures node                 :ref:`XML_SinglePhasePoromechanicsEmbeddedFractures` 
 SinglePhasePoromechanicsLagrangianContact node                 :ref:`XML_SinglePhasePoromechanicsLagrangianContact` 
+SinglePhasePoromechanicsReservoir         node                 :ref:`XML_SinglePhasePoromechanicsReservoir`         
 SinglePhaseProppantFVM                    node                 :ref:`XML_SinglePhaseProppantFVM`                    
 SinglePhaseReservoir                      node                 :ref:`XML_SinglePhaseReservoir`                      
 SinglePhaseWell                           node                 :ref:`XML_SinglePhaseWell`                           

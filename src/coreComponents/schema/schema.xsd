@@ -333,6 +333,10 @@
 					<xsd:selector xpath="MultiphasePoromechanics" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversMultiphasePoromechanicsReservoirUniqueName">
+					<xsd:selector xpath="MultiphasePoromechanicsReservoir" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversPhaseFieldDamageFEMUniqueName">
 					<xsd:selector xpath="PhaseFieldDamageFEM" />
 					<xsd:field xpath="@name" />
@@ -367,6 +371,10 @@
 				</xsd:unique>
 				<xsd:unique name="SolversSinglePhasePoromechanicsLagrangianContactUniqueName">
 					<xsd:selector xpath="SinglePhasePoromechanicsLagrangianContact" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversSinglePhasePoromechanicsReservoirUniqueName">
+					<xsd:selector xpath="SinglePhasePoromechanicsReservoir" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="SolversSinglePhaseProppantFVMUniqueName">
@@ -1548,6 +1556,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="lineSearchMaxCuts" type="integer" default="4" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxAllowedResidualNorm => Maximum value of residual norm that is allowed in a Newton loop-->
+		<xsd:attribute name="maxAllowedResidualNorm" type="real64" default="1e+09" />
 		<!--maxNumConfigurationAttempts => Max number of times that the configuration can be changed-->
 		<xsd:attribute name="maxNumConfigurationAttempts" type="integer" default="10" />
 		<!--maxSubSteps => Maximum number of time sub-steps allowed for the solver-->
@@ -1741,6 +1751,7 @@ the relative residual norm satisfies:
 			<xsd:element name="LagrangianContactWithFlow" type="LagrangianContactWithFlowType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="MultiphasePoromechanics" type="MultiphasePoromechanicsType" />
+			<xsd:element name="MultiphasePoromechanicsReservoir" type="MultiphasePoromechanicsReservoirType" />
 			<xsd:element name="PhaseFieldDamageFEM" type="PhaseFieldDamageFEMType" />
 			<xsd:element name="PhaseFieldFracture" type="PhaseFieldFractureType" />
 			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
@@ -1750,6 +1761,7 @@ the relative residual norm satisfies:
 			<xsd:element name="SinglePhasePoromechanics" type="SinglePhasePoromechanicsType" />
 			<xsd:element name="SinglePhasePoromechanicsEmbeddedFractures" type="SinglePhasePoromechanicsEmbeddedFracturesType" />
 			<xsd:element name="SinglePhasePoromechanicsLagrangianContact" type="SinglePhasePoromechanicsLagrangianContactType" />
+			<xsd:element name="SinglePhasePoromechanicsReservoir" type="SinglePhasePoromechanicsReservoirType" />
 			<xsd:element name="SinglePhaseProppantFVM" type="SinglePhaseProppantFVMType" />
 			<xsd:element name="SinglePhaseReservoir" type="SinglePhaseReservoirType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType">
@@ -1816,7 +1828,11 @@ the relative residual norm satisfies:
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
-		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
+		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
+		<!--maxRelativePressureChange => Maximum (relative) change in pressure between two Newton iterations-->
+		<xsd:attribute name="maxRelativePressureChange" type="real64" default="0.5" />
+		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature between two Newton iterations-->
+		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.5" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
@@ -1846,9 +1862,11 @@ the relative residual norm satisfies:
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
-		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
-		<!--maxRelativePressureChange => Maximum (relative) change in (face) pressure between two Newton iterations-->
-		<xsd:attribute name="maxRelativePressureChange" type="real64" default="1" />
+		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
+		<!--maxRelativePressureChange => Maximum (relative) change in pressure between two Newton iterations-->
+		<xsd:attribute name="maxRelativePressureChange" type="real64" default="0.5" />
+		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature between two Newton iterations-->
+		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.5" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
@@ -2136,6 +2154,26 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="MultiphasePoromechanicsReservoirType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
+		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--wellSolverName => Name of the well solver used by the coupled solver-->
+		<xsd:attribute name="wellSolverName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PhaseFieldDamageFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -2372,8 +2410,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="contactFlowSolverName" type="string" use="required" />
 		<!--contactSolverName => Name of the contact mechanics solver to use in the poromechanics solver-->
 		<xsd:attribute name="contactSolverName" type="string" use="required" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -2384,6 +2420,26 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhasePoromechanicsReservoirType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
+		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--wellSolverName => Name of the well solver used by the coupled solver-->
+		<xsd:attribute name="wellSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

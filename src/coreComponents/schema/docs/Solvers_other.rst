@@ -15,6 +15,7 @@ LagrangianContact                         node :ref:`DATASTRUCTURE_LagrangianCon
 LagrangianContactWithFlow                 node :ref:`DATASTRUCTURE_LagrangianContactWithFlow`                 
 LaplaceFEM                                node :ref:`DATASTRUCTURE_LaplaceFEM`                                
 MultiphasePoromechanics                   node :ref:`DATASTRUCTURE_MultiphasePoromechanics`                   
+MultiphasePoromechanicsReservoir          node :ref:`DATASTRUCTURE_MultiphasePoromechanicsReservoir`          
 PhaseFieldDamageFEM                       node :ref:`DATASTRUCTURE_PhaseFieldDamageFEM`                       
 PhaseFieldFracture                        node :ref:`DATASTRUCTURE_PhaseFieldFracture`                        
 ProppantTransport                         node :ref:`DATASTRUCTURE_ProppantTransport`                         
@@ -24,6 +25,7 @@ SinglePhaseHybridFVM                      node :ref:`DATASTRUCTURE_SinglePhaseHy
 SinglePhasePoromechanics                  node :ref:`DATASTRUCTURE_SinglePhasePoromechanics`                  
 SinglePhasePoromechanicsEmbeddedFractures node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures` 
 SinglePhasePoromechanicsLagrangianContact node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsLagrangianContact` 
+SinglePhasePoromechanicsReservoir         node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsReservoir`         
 SinglePhaseProppantFVM                    node :ref:`DATASTRUCTURE_SinglePhaseProppantFVM`                    
 SinglePhaseReservoir                      node :ref:`DATASTRUCTURE_SinglePhaseReservoir`                      
 SinglePhaseWell                           node :ref:`DATASTRUCTURE_SinglePhaseWell`                           

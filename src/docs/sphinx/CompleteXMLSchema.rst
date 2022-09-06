@@ -561,6 +561,13 @@ Element: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
 
 
+.. _XML_MultiphasePoromechanicsReservoir:
+
+Element: MultiphasePoromechanicsReservoir
+=========================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsReservoir.rst
+
+
 .. _XML_MultivariableTableFunction:
 
 Element: MultivariableTableFunction
@@ -860,6 +867,13 @@ Element: SinglePhasePoromechanicsEmbeddedFractures
 Element: SinglePhasePoromechanicsLagrangianContact
 ==================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsLagrangianContact.rst
+
+
+.. _XML_SinglePhasePoromechanicsReservoir:
+
+Element: SinglePhasePoromechanicsReservoir
+==========================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsReservoir.rst
 
 
 .. _XML_SinglePhaseProppantFVM:
@@ -1692,6 +1706,13 @@ Datastructure: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
 
 
+.. _DATASTRUCTURE_MultiphasePoromechanicsReservoir:
+
+Datastructure: MultiphasePoromechanicsReservoir
+===============================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsReservoir_other.rst
+
+
 .. _DATASTRUCTURE_MultivariableTableFunction:
 
 Datastructure: MultivariableTableFunction
@@ -1991,6 +2012,13 @@ Datastructure: SinglePhasePoromechanicsEmbeddedFractures
 Datastructure: SinglePhasePoromechanicsLagrangianContact
 ========================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsLagrangianContact_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsReservoir:
+
+Datastructure: SinglePhasePoromechanicsReservoir
+================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsReservoir_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseProppantFVM:

@@ -77,8 +77,18 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1.0 ).
+    setApplyDefaultValue( 0.5 ).
     setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
+  this->registerWrapper( viewKeyStruct::maxRelativePresChangeString(), &m_maxRelativePresChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.5 ).
+    setDescription( "Maximum (relative) change in pressure between two Newton iterations" );
+  this->registerWrapper( viewKeyStruct::maxRelativeTempChangeString(), &m_maxRelativeTempChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.5 ).
+    setDescription( "Maximum (relative) change in temperature between two Newton iterations" );
 
   this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).
     setSizedFromParent( 0 ).
@@ -96,6 +106,15 @@ void CompositionalMultiphaseBase::postProcessInput()
                          "The maximum absolute change in component fraction must smaller or equal to 1.0" );
   GEOSX_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
                          "The maximum absolute change in component fraction must larger or equal to 0.0" );
+  GEOSX_ERROR_IF_GT_MSG( m_maxRelativePresChange, 1.0,
+                         "The maximum relative change in pressure must smaller or equal to 1.0 (i.e., 100% change)" );
+  GEOSX_ERROR_IF_LT_MSG( m_maxRelativePresChange, 0.0,
+                         "The maximum relative change in pressure must larger or equal to 0.0" );
+  GEOSX_ERROR_IF_GT_MSG( m_maxRelativeTempChange, 1.0,
+                         "The maximum relative change in temperature must smaller or equal to 1.0 (i.e., 100% change)" );
+  GEOSX_ERROR_IF_LT_MSG( m_maxRelativeTempChange, 0.0,
+                         "The maximum relative change in temperature must larger or equal to 0.0" );
+
 }
 
 void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
@@ -955,12 +974,15 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       arrayView1d< TableFunction::KernelWrapper const > compFracTableWrappersViewConst =
         compFracTableWrappers.toViewConst();
 
+      RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
+
       forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
                                                            elemCenter,
                                                            presTableWrapper,
                                                            tempTableWrapper,
                                                            compFracTableWrappersViewConst,
                                                            numComps,
+                                                           minPressure,
                                                            pres,
                                                            temp,
                                                            compFrac] GEOSX_HOST_DEVICE ( localIndex const i )
@@ -969,12 +991,17 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
         real64 const elevation = elemCenter[k][2];
 
         pres[k] = presTableWrapper.compute( &elevation );
+        minPressure.min( pres[k] );
         temp[k] = tempTableWrapper.compute( &elevation );
         for( integer ic = 0; ic < numComps; ++ic )
         {
           compFrac[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
         }
       } );
+
+      GEOSX_ERROR_IF( minPressure.get() < 0.0,
+                      GEOSX_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                                 minPressure.get(), region.getName(), subRegion.getName() ) );
     } );
   } );
 }
