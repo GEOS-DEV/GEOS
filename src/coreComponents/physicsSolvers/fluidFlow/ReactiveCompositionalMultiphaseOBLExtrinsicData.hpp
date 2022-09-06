@@ -104,7 +104,7 @@ EXTRINSIC_MESH_DATA_TRAIT( rockThermalConductivity,
 EXTRINSIC_MESH_DATA_TRAIT( rockKineticRateFactor,
                            "rockKineticRateFactor",
                            array1d< real64 >,
-                           0,
+                           1, // set default value to 1 to avoid a fieldspec in the xml for most cases
                            NOPLOT,
                            NO_WRITE,
                            "Rock kinetic rate factor" );
