@@ -45,7 +45,7 @@ void SinglePhaseThermoPoromechanicsSolver::registerDataOnMesh( Group & meshBodie
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
-  forMeshTargets( meshBodies, [&] ( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
                                     arrayView1d< string const > const & regionNames )
   {
@@ -95,7 +95,7 @@ void SinglePhaseThermoPoromechanicsSolver::setupDofs( DomainPartition const & do
   dofManager.addField( viewKeyStruct::temperatureString(),
                        FieldLocation::Node,
                        1,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( viewKeyStruct::temperatureString(),
                           viewKeyStruct::temperatureString(),
@@ -108,7 +108,7 @@ void SinglePhaseThermoPoromechanicsSolver::initializePreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
@@ -158,7 +158,11 @@ void SinglePhaseThermoPoromechanicsSolver::resetStateToBeginningOfStep( DomainPa
   Base::resetStateToBeginningOfStep( domain );
 
   // Reset thermal state
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  //MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
   NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView1d< real64 > const &
@@ -176,6 +180,8 @@ void SinglePhaseThermoPoromechanicsSolver::resetStateToBeginningOfStep( DomainPa
     oldDeltaTemperature( a ) = newDeltaTemperature( a );
     newDeltaTemperature( a ) = 0.0;
   } );
+
+} );
 }
 
 real64 SinglePhaseThermoPoromechanicsSolver::solverStep( real64 const & time_n,
@@ -246,7 +252,6 @@ void SinglePhaseThermoPoromechanicsSolver::assembleSystem( real64 const time_n,
                                                               this->getDiscretizationName(),
                                                               viewKeyStruct::porousMaterialNamesString(),
                                                               kernelFactory );
-//>>>>>>> develop
 
   } );
 
@@ -298,7 +303,7 @@ void SinglePhaseThermoPoromechanicsSolver::applyBoundaryConditions( real64 const
 */
 FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & )
   {
@@ -380,7 +385,7 @@ void SinglePhaseThermoPoromechanicsSolver::applySystemSolution( DofManager const
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 */
 
-forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
 
@@ -402,7 +407,7 @@ dofManager.addVectorToField( localSolution,
                                scalingFactor );
 
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
 
@@ -420,7 +425,7 @@ dofManager.addVectorToField( localSolution,
 
 void SinglePhaseThermoPoromechanicsSolver::updateState( DomainPartition & domain )
 {
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {

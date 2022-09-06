@@ -141,14 +141,6 @@
     scale="10e6"
     functionName="timeFunction"   
   />
-
-  <FieldSpecification
-    name="innerTemperature"
-    objectPath="nodeManager"
-    fieldName="temperature"
-    scale="100"
-    setNames="{ rneg }"
-  />
 </FieldSpecifications>
 <!-- SPHINX_WELLBORE_BC_END -->
 
@@ -159,7 +151,6 @@
   solidSolverName="mechanicsSolver"
   flowSolverName="SinglePhaseFlowSolver"
   logLevel="1"
-  discretization="FE1"
   targetRegions="{Omega}">
   <LinearSolverParameters 
     solverType="direct"
@@ -218,8 +209,8 @@
 
 <!-- SPHINX_WELLBORE_OUTPUT -->
 <Outputs>
-  <VTK 
-    name="vtkOutput"
+  <Silo 
+    name="siloOutput"
     parallelThreads="1"
     plotFileRoot="plot"
   />

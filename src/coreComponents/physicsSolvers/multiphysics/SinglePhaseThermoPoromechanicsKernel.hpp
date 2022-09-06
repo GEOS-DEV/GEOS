@@ -19,18 +19,11 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASETHERMOPOROMECHANICSKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASETHERMOPOROMECHANICSKERNEL_HPP_
 
-/**
-<<<<<<< HEAD
-#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
-=======
-*/
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
-//>>>>>>> develop
 
 namespace geosx
 {
@@ -70,18 +63,11 @@ public:
                                                   FE_TYPE,
                                                   3,
                                                   3 >;
-/**
-<<<<<<< HEAD
-  /// Number of nodes per element which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
-=======
-*/
+
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
   /// will be the actual number of nodes per element.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
-//>>>>>>> develop
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
@@ -255,12 +241,6 @@ public:
     }
 
     stack.localFlowDofIndex[0] = m_flowDofNumber[k];
-/**
-<<<<<<< HEAD
-=======
-
->>>>>>> develop
-*/
   }
 
   GEOSX_HOST_DEVICE
@@ -337,28 +317,7 @@ public:
 
     // Compute strain increment
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
-/**
-<<<<<<< HEAD
-    m_constitutiveUpdate.smallStrainUpdate( k,
-                                            q,
-                                            m_fluidPressure[k],
-                                            m_deltaFluidPressure[k],
-                                            strainIncrement,
-                                            totalStress,
-                                            dPorosity_dPressure,
-                                            dPorosity_dVolStrainIncrement,
-                                            dTotalStress_dPressure,
-                                            stiffness );
 
-    real64 const porosityNew = m_constitutiveUpdate.getPorosity( k, q );
-    real64 const porosityOld = m_constitutiveUpdate.getOldPorosity( k, q );
-
-    // Evaluate body force vector
-    real64 bodyForce[3] = { m_gravityVector[0],
-                            m_gravityVector[1],
-                            m_gravityVector[2]};
-=======
-*/
     // Evaluate conserved quantities (total stress and fluid mass content) and their derivatives
     m_constitutiveUpdate.smallStrainUpdateSinglePhase( k,
                                                        q,
@@ -391,7 +350,6 @@ public:
       dNdX,
       totalStress,
       -detJxW );
-//>>>>>>> develop
 
     if( m_gravityAcceleration > 0.0 )
     {
@@ -456,13 +414,6 @@ public:
         detJxW );
     }
 
-/**
-<<<<<<< HEAD
-    stack.localFlowResidual[0] += ( porosityNew * m_fluidDensity( k, q ) - porosityOld * m_fluidDensityOld( k ) ) * detJxW;
-    stack.localFlowFlowJacobian[0][0] += ( dPorosity_dPressure * m_fluidDensity( k, q ) + porosityNew * m_dFluidDensity_dPressure( k, q ) ) * detJxW;
-=======
-*/
-
     // Compute local mass balance residual
     LinearFormUtilities::compute< pressureTestSpace,
                                   DifferentialOperator::Identity >
@@ -495,8 +446,6 @@ public:
       dFluidMassContent_dPressure,
       1.0,
       detJxW );
-//>>>>>>> develop
-
 
 	// Thermal conditributon
     for( localIndex a=0; a<numNodesPerElem; ++a )
@@ -528,13 +477,6 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
-/**
-<<<<<<< HEAD
-    CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
-
-=======
->>>>>>> develop
-*/
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )

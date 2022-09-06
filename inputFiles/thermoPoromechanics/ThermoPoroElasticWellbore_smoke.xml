@@ -2,7 +2,7 @@
 
 <Problem>
 <Included>
-  <File name="./ThermoPoroElasticWellbore_base.xml"/>
+  <File name="./PoroElasticWellbore_base.xml"/>
 </Included>
 
 <!-- SPHINX_WELLBORE_MESH -->
@@ -31,7 +31,7 @@
   name="outputs"
   timeFrequency="80"
   targetExactTimestep="1"
-  target="/Outputs/vtkOutput"
+  target="/Outputs/siloOutput"
 />
 
 <PeriodicEvent
