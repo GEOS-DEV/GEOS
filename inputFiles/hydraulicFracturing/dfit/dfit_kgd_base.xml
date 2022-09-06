@@ -224,17 +224,24 @@
 
   <Tasks>
       <PackCollection
-      name="pressureCollection"
-      objectPath="ElementRegions/Fracture/faceElementSubRegion"
-      fieldName="pressure"/>
+        name="pressureCollection"
+        objectPath="ElementRegions/Fracture/faceElementSubRegion"
+        fieldName="pressure"/>
+
       <PackCollection
-      name="apertureCollection"
-      objectPath="ElementRegions/Fracture/faceElementSubRegion"
-      fieldName="elementAperture"/> 
+        name="apertureCollection"
+        objectPath="ElementRegions/Fracture/faceElementSubRegion"
+        fieldName="elementAperture"/> 
+
       <PackCollection
-      name="hydraulicApertureCollection"
-      objectPath="ElementRegions/Fracture/faceElementSubRegion"
-      fieldName="hydraulicAperture"/>  
+        name="hydraulicApertureCollection"
+        objectPath="ElementRegions/Fracture/faceElementSubRegion"
+        fieldName="hydraulicAperture"/>  
+
+      <PackCollection
+        name="areaCollection"
+        objectPath="ElementRegions/Fracture/faceElementSubRegion"
+        fieldName="elementArea"/> 
   </Tasks>
  
   <Outputs>
@@ -246,7 +253,7 @@
 
     <TimeHistory
       name="timeHistoryOutput"
-      sources="{/Tasks/pressureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection}"
+      sources="{/Tasks/pressureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection, /Tasks/areaCollection}"
       filename="dfit_kgd_output" />  
 
     <Restart

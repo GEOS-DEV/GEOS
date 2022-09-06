@@ -15,7 +15,7 @@
       nx="{ 10, 10 }"
       ny="{ 100 }"
       nz="{ 2 }"
-	    xBias="{ 0.5, -0.5 }"
+      xBias="{ 0.5, -0.5 }"
       cellBlockNames="{cb1}"/>
   </Mesh>
 
@@ -40,14 +40,7 @@
     maxTime="300.0">
     <SoloEvent
       name="preFracture"
-      target="/Solvers/SurfaceGen"/>
-      
-    <PeriodicEvent
-      name="solverApplications0"
-      beginTime="0.0"
-      endTime="10.0"
-      forceDt="0.1"
-      target="/Solvers/hydrofracture"/>
+      target="/Solvers/SurfaceGen"/>    
 
     <PeriodicEvent
       name="outputs0"
@@ -55,24 +48,10 @@
       targetExactTimestep="0"
       beginTime="0.0"
       endTime="10.0"
-      target="/Outputs/vtkOutput"/>  
+      target="/Outputs/vtkOutput"/>   
 
     <PeriodicEvent
-      name="solverApplications1"
-      beginTime="10.0"
-      endTime="20.0"
-      forceDt="1"
-      target="/Solvers/hydrofracture"/>
-
-    <PeriodicEvent
-      name="solverApplications2"
-      beginTime="20.0"
-      endTime="300.0"
-      forceDt="2.0"
-      target="/Solvers/hydrofracture"/>
-
-    <PeriodicEvent
-      name="outputs"
+      name="outputs1"
       timeFrequency="1.0"
       targetExactTimestep="0"
       beginTime="10.0"
@@ -94,13 +73,40 @@
       name="timeHistoryCollection2"
       timeFrequency="1.0"
       targetExactTimestep="0"
-      target="/Tasks/hydraulicApertureCollection" />    
+      target="/Tasks/hydraulicApertureCollection" /> 
+
+   <PeriodicEvent
+      name="timeHistoryCollection3"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Tasks/areaCollection" />      
 
     <PeriodicEvent
       name="timeHistoryOutput"
       timeFrequency="1.0"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/> 
+
+   <PeriodicEvent
+      name="solverApplications0"
+      beginTime="0.0"
+      endTime="10.0"
+      forceDt="0.1"
+      target="/Solvers/hydrofracture"/>
+
+   <PeriodicEvent
+      name="solverApplications1"
+      beginTime="10.0"
+      endTime="20.0"
+      forceDt="1"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="20.0"
+      endTime="300.0"
+      forceDt="2.0"
+      target="/Solvers/hydrofracture"/>
   </Events>
   
 </Problem>
