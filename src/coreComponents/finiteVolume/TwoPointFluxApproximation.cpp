@@ -754,13 +754,13 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
 
 void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
                                                       string const & faceElementRegionName,
-                                                      bool const initFlag ) const
+                                                      bool const initFields ) const
 {
   this->addFractureFractureConnectionsDFM( mesh, faceElementRegionName );
   this->cleanMatrixMatrixConnectionsDFM( mesh, faceElementRegionName );
   this->addFractureMatrixConnectionsDFM( mesh, faceElementRegionName );
 
-  if( initFlag )
+  if( initFields )
   { this->initNewFractureFieldsDFM( mesh, faceElementRegionName ); }
 }
 
