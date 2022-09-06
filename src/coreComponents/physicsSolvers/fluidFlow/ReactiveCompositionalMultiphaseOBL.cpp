@@ -352,10 +352,7 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( DomainPartitio
 
   real64 const residual = m_useDARTSL2Norm ? MpiWrapper::max( localResidualNorm ) : std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-  {
-    std::cout << GEOSX_FMT( "    ( Rflow ) = ( {:4.2e} ) ;", residual );
-  }
+  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rflow ) = ( {:4.2e} ) ;", residual ) );
 
   return residual;
 }
