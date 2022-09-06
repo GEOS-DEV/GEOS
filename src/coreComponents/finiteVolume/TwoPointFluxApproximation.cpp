@@ -252,9 +252,6 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
 
   ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements = fractureSubRegion.m_fractureConnectorEdgesToFaceElements.toViewConst();
 
-  SortedArray< localIndex > allNewElems;
-  allNewElems.insert( fractureSubRegion.m_newFaceElements.begin(),
-                      fractureSubRegion.m_newFaceElements.end() );
   SortedArrayView< localIndex const > const recalculateFractureConnectorEdges = fractureSubRegion.m_recalculateFractureConnectorEdges.toViewConst();
 
   // reserve memory for the connections of this fracture
@@ -262,8 +259,7 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
 
   // add new connectors/connections between face elements to the fracture stencil
   forAll< serialPolicy >( recalculateFractureConnectorEdges.size(),
-                          [ &allNewElems,
-                            recalculateFractureConnectorEdges,
+                          [ recalculateFractureConnectorEdges,
                             fractureConnectorsToFaceElements,
                             fractureConnectorsToEdges,
                             &edgeManager,
@@ -272,7 +268,6 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
                             faceCenter,
                             fractureRegionIndex,
                             elemGhostRank,
-                            &fractureSubRegion,
 #if SET_CREATION_DISPLACEMENT==1
                             faceToNodesMap,
                             totalDisplacement,
@@ -308,7 +303,6 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
     edgeManager.calculateCenter( edgeIndex, X, edgeCenter );
     edgeManager.calculateLength( edgeIndex, X, edgeSegment );
     real64 const edgeLength = LvArray::tensorOps::l2Norm< 3 >( edgeSegment );
-    SortedArray< localIndex > newElems;
     bool containsLocalElement = false;
 
     // loop over all face elements attached to the connector and add them to the stencil
@@ -331,13 +325,6 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
       stencilWeights[kfe] = edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
 
       LvArray::tensorOps::copy< 3 >( stencilCellCenterToEdgeCenters[kfe], cellCenterToEdgeCenter );
-
-      // code to initialize new face elements with pressures from neighbors
-      if( fractureSubRegion.m_newFaceElements.contains( fractureElementIndex ) )
-      {
-        newElems.insert( fractureElementIndex );
-        allNewElems.insert( fractureElementIndex );
-      }
     }
 
     if( !containsLocalElement )
