@@ -28,6 +28,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "common/FieldSpecificationOps.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "mesh/MeshObjectPath.hpp"
 #include "functions/FunctionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -107,6 +108,42 @@ public:
   /// deleted move assignement
   FieldSpecificationBase & operator=( FieldSpecificationBase && ) = delete;
 
+  /**
+   * @brief Apply this field specification to the discretization
+   *
+   * @tparam OBJECT_TYPE The type of discretization/mesh object that the
+   *   specification is being applied to.
+   * @tparam BC_TYPE The type of BC being applied
+   * @tparam LAMBDA
+   * @param mesh The MeshLevel that the specification is applied to
+   * @param lambda The being executed
+   */
+  template< typename OBJECT_TYPE,
+            typename BC_TYPE = FieldSpecificationBase,
+            typename LAMBDA >
+  void apply( MeshLevel & mesh,
+              LAMBDA && lambda ) const
+  {
+    MeshObjectPath const & meshObjectPaths = this->getMeshObjectPaths();
+    meshObjectPaths.forObjectsInPath< OBJECT_TYPE >( mesh,
+                                                     [&] ( OBJECT_TYPE & object )
+    {
+// Cannot have this check due to applications like the traction BC which specify a field name that doesn't exist.
+//      if( object.hasWrapper( getFieldName() ) )
+      {
+        dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
+        string_array setNames = this->getSetNames();
+        for( auto & setName : setNames )
+        {
+          if( setGroup.hasWrapper( setName ) )
+          {
+            SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
+            lambda( dynamic_cast< BC_TYPE const & >(*this), setName, targetSet, object, getFieldName() );
+          }
+        }
+      }
+    } );
+  }
 
 
   /**
@@ -497,9 +534,26 @@ public:
     m_setNames.emplace_back( setName );
   }
 
+  /**
+   * @brief Set the Mesh Object Path object
+   *
+   * @param meshBodies The group containing all the MeshBody objects
+   */
+  void setMeshObjectPath( Group const & meshBodies );
+
+  /**
+   * @brief Get the Mesh Object Paths object
+   *
+   * @return reference to const m_meshObjectPaths
+   */
+  MeshObjectPath const & getMeshObjectPaths() const
+  {
+    return *(m_meshObjectPaths.get());
+  }
+
 
 protected:
-  virtual void postProcessInput() override;
+
 
 private:
 
@@ -509,6 +563,8 @@ private:
 
   /// the path to the object which contains the fields that the boundary condition is applied to
   string m_objectPath;
+
+  std::unique_ptr< MeshObjectPath > m_meshObjectPaths;
 
   /// the name of the field the boundary condition is applied to or a key string to use for
   /// determining whether or not to apply the boundary condition.

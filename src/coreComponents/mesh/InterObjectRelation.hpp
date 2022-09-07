@@ -49,6 +49,19 @@ public:
   {}
 
   /**
+   * @brief copy assignement operator
+   *
+   * @param rhs the relation to copy
+   * @return InterObjectRelation< BASETYPE >&
+   */
+  InterObjectRelation< BASETYPE > & operator=( InterObjectRelation< BASETYPE > const & rhs )
+  {
+    base_type::operator=( rhs.base() );
+    m_relatedObject = rhs.m_relatedObject;
+    return *this;
+  }
+
+  /**
    * @brief Get a reference to this object cast to BASETYPE const.
    * @return A reference to this object cast to BASETYPE const.
    */
