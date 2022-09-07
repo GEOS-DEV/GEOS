@@ -1,7 +1,5 @@
 language: minimal
 
-services: docker
-
 vm:
   size: large
 
@@ -77,6 +75,7 @@ geosx_osx_build: &geosx_osx_build
   - brew tap-new ${BREW_OPENMPI_TAP}
   - brew extract --version=${BREW_OPENMPI_VERSION} open-mpi ${BREW_OPENMPI_TAP}
   - HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_MAKE_JOBS=$(nproc) brew install ${BREW_OPENMPI_TAP}/open-mpi@${BREW_OPENMPI_VERSION}
+  <<: *geosx_before_script
   script:
   - python ${TRAVIS_BUILD_DIR}/scripts/config-build.py
     -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -bt Release
@@ -86,7 +85,7 @@ geosx_osx_build: &geosx_osx_build
   - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
 
 geosx_totalenergies_cluster_build: &geosx_totalenergies_cluster_build
-  <<: *geosx_before_script
+  <<: *geosx_linux_build
   # We use the most recent ubuntu distribution available in travis-ci to ensure maximum support of google cloud's sdk.
   dist: bionic
   addons:
