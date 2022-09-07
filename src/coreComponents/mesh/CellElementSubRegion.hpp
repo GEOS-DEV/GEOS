@@ -94,6 +94,11 @@ public:
   void addFracturedElement( localIndex const cellElemIndex,
                             localIndex const embSurfIndex );
 
+  virtual void resizePerElementValues( localIndex const numNodesPerElement,
+                                       localIndex const numEdgesPerElement,
+                                       localIndex const numFacesPerElement ) override;
+
+
   /**
    * @name Overriding packing / Unpacking functions
    */
@@ -347,6 +352,9 @@ private:
    * @param[in] k the index of the element in the subregion
    * @param[in] X an arrayView of (const) node positions
    */
+  void calculateCellVolumesKernel( localIndex const k,
+                                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
+
   void calculateElementCenterAndVolume( localIndex const k,
                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
 
