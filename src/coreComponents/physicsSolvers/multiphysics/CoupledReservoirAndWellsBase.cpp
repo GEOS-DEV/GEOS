@@ -35,9 +35,9 @@ initializePostInitialConditionsPreSubGroups( SolverBase * const solver )
 
   DomainPartition & domain = solver->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  solver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                        MeshLevel & meshLevel,
-                                                        arrayView1d< string const > const & regionNames )
+  solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                        MeshLevel & meshLevel,
+                                                                        arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
 
@@ -66,9 +66,9 @@ addCouplingNumNonzeros( SolverBase const * const solver,
                         string const & resElemDofName,
                         string const & wellElemDofName )
 {
-  solver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                        MeshLevel const & meshLevel,
-                                                        arrayView1d< string const > const & regionNames )
+  solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                        MeshLevel const & meshLevel,
+                                                                        arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
 

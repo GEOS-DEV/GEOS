@@ -48,6 +48,10 @@ public:
       string const key = SolverType::coupledSolverAttributePrefix() + "SolverName";
       registerWrapper( key, &m_names[idx()] ).setInputFlag( dataRepository::InputFlags::REQUIRED );
     } );
+
+    this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
+      setInputFlag( dataRepository::InputFlags::FALSE );
+
   }
 
   /// deleted copy constructor

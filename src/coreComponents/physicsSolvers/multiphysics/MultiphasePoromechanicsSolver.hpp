@@ -23,7 +23,6 @@
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
-
 namespace geosx
 {
 
@@ -44,6 +43,9 @@ public:
     SolidMechanics = 0,
     Flow = 1
   };
+
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "poromechanics"; }
 
   /**
    * @brief main constructor for MultiphasePoromechanicsSolver Objects

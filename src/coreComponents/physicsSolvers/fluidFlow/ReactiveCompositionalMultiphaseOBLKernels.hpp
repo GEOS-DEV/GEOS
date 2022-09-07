@@ -203,6 +203,7 @@ public:
     // we need to convert pressure from Pa (internal unit in GEOSX) to bar (internal unit in DARTS)
     state[0] = m_pressure[ei] * pascalToBarMult;
 
+    // the last component fraction is not used to define the state
     for( integer i = 1; i < numComps; ++i )
     {
       state[i] = compFrac[i - 1];
@@ -342,13 +343,9 @@ public:
     m_rankOffset( rankOffset ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_elemGhostRank( subRegion.ghostRank() ),
-    m_pressure ( subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
-    m_compFrac ( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
-    m_temperature ( subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >() ),
     m_referencePoreVolume( subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePoreVolume >() ),
     m_referenceRockVolume( subRegion.getExtrinsicData< extrinsicMeshData::flow::referenceRockVolume >() ),
     m_rockVolumetricHeatCapacity( subRegion.getExtrinsicData< extrinsicMeshData::flow::rockVolumetricHeatCapacity >() ),
-    m_rockThermalConductivity( subRegion.getExtrinsicData< extrinsicMeshData::flow::rockThermalConductivity >() ),
     m_rockKineticRateFactor( subRegion.getExtrinsicData< extrinsicMeshData::flow::rockKineticRateFactor >() ),
     m_OBLOperatorValues ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >()),
     m_OBLOperatorValues_n ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues_n >()),
@@ -515,19 +512,11 @@ protected:
   /// View on the ghost ranks
   arrayView1d< integer const > const m_elemGhostRank;
 
-
-  // Views on primary variables and their updates
-  arrayView1d< real64 const > const m_pressure;
-  arrayView2d< real64 const, compflow::USD_COMP > const m_compFrac;
-  arrayView1d< real64 const > const m_temperature;
-
   // views on solid properties
   arrayView1d< real64 const > const m_referencePoreVolume;
   arrayView1d< real64 const > const m_referenceRockVolume;
   arrayView1d< real64 const > const m_rockVolumetricHeatCapacity;
-  arrayView1d< real64 const > const m_rockThermalConductivity;
   arrayView1d< real64 const > const m_rockKineticRateFactor;
-
 
   // Views on OBL operators and their derivatives
   arrayView2d< real64 const, compflow::USD_OBL_VAL > const m_OBLOperatorValues;
@@ -642,8 +631,6 @@ public:
     StencilAccessors< extrinsicMeshData::ghostRank,
                       extrinsicMeshData::flow::gravityCoefficient,
                       extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::globalCompFraction,
-                      extrinsicMeshData::flow::temperature,
                       extrinsicMeshData::flow::referencePorosity,
                       extrinsicMeshData::flow::rockThermalConductivity,
                       extrinsicMeshData::flow::OBLOperatorValues,
@@ -684,8 +671,6 @@ public:
     m_ghostRank( compFlowAccessors.get( extrinsicMeshData::ghostRank {} ) ),
     m_gravCoef( compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient {} ) ),
     m_pres( compFlowAccessors.get( extrinsicMeshData::flow::pressure {} ) ),
-    m_compFrac( compFlowAccessors.get( extrinsicMeshData::flow::globalCompFraction {} ) ),
-    m_temp( compFlowAccessors.get( extrinsicMeshData::flow::temperature {} ) ),
     m_OBLOperatorValues ( compFlowAccessors.get( extrinsicMeshData::flow::OBLOperatorValues {} ) ),
     m_OBLOperatorDerivatives ( compFlowAccessors.get( extrinsicMeshData::flow::OBLOperatorDerivatives {} ) ),
     m_localMatrix( localMatrix ),
@@ -721,12 +706,6 @@ protected:
 
   /// Views on pressure
   ElementViewConst< arrayView1d< real64 const > > const m_pres;
-
-  /// Views on global fraction
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_compFrac;
-
-  /// Views on temperature
-  ElementViewConst< arrayView1d< real64 const > > const m_temp;
 
   // Views on OBL operators and their derivatives
   ElementViewConst< arrayView2d< real64 const, compflow::USD_OBL_VAL > > const m_OBLOperatorValues;
