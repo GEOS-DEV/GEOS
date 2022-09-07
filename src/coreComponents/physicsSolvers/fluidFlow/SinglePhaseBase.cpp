@@ -572,13 +572,20 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     arrayView1d< real64 > const pres =
       subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
 
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
+
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
-
       pres[k] = presTableWrapper.compute( &elevation );
+      minPressure.min( pres[k] );
     } );
+
+    // For single phase flow, just issue a warning, because the simulation can proceed with a negative pressure
+    GEOSX_WARNING_IF( minPressure.get() <= 0.0,
+                      GEOSX_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                                 minPressure.get(), region.getName(), subRegion.getName() ) );
   } );
 }
 
