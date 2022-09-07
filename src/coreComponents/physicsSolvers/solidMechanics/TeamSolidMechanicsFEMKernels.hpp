@@ -283,9 +283,9 @@ public:
     symm_strain[0] = strain[0][0];
     symm_strain[1] = strain[1][1];
     symm_strain[2] = strain[2][2];
-    symm_strain[3] = strain[0][1];
-    symm_strain[4] = strain[0][2];
-    symm_strain[5] = strain[1][2];
+    symm_strain[3] = 2 * strain[0][1];
+    symm_strain[4] = 2 * strain[0][2];
+    symm_strain[5] = 2 * strain[1][2];
     real64 symm_stress[6];
     stack.kernelComponent.m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, 0, symm_strain, symm_stress );
     stress[0][0] = symm_stress[0];
@@ -294,6 +294,9 @@ public:
     stress[0][1] = symm_stress[3];
     stress[0][2] = symm_stress[4];
     stress[1][2] = symm_stress[5];
+    stress[1][0] = symm_stress[3];
+    stress[2][0] = symm_stress[4];
+    stress[2][1] = symm_stress[5];
   }
 
   /**
