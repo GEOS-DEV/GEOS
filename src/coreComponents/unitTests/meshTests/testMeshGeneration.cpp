@@ -56,17 +56,17 @@ protected:
   void SetUp() override
   {
     DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
-    MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+    MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
 
     m_nodeManager = &mesh.getNodeManager();
     m_faceManager = &mesh.getFaceManager();
     m_edgeManager = &mesh.getEdgeManager();
 
     ElementRegionManager & elemManager = mesh.getElemManager();
-    ASSERT_EQ( elemManager.getRegions().size(), 1 );
+    ASSERT_EQ( elemManager.numRegions(), 1 );
 
     ElementRegionBase & elemRegion = elemManager.getRegion( 0 );
-    ASSERT_EQ( elemRegion.getSubRegions().size(), 1 );
+    ASSERT_EQ( elemRegion.numSubRegions(), 1 );
 
     m_subRegion = &elemRegion.getSubRegion< CellElementSubRegion >( 0 );
   }
@@ -111,7 +111,7 @@ protected:
     MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
 
-    ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
+    ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
     elementManager.processInputFileRecursive( topLevelNode );
     elementManager.postProcessInputRecursive();

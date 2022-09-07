@@ -83,6 +83,7 @@ public:
     static constexpr auto maxTimeStepCutsString         = "maxTimeStepCuts";
     static constexpr auto minNumNewtonIterationsString  = "minNumberOfNewtonIterations";
     static constexpr auto timeStepCutFactorString       = "timestepCutFactor";
+    static constexpr auto maxAllowedResidualNormString  = "maxAllowedResidualNorm";
 
     static constexpr auto numConfigurationAttemptsString    = "numConfigurationAttempts";
     static constexpr auto maxNumConfigurationAttemptsString = "maxNumConfigurationAttempts";
@@ -153,6 +154,9 @@ public:
 
   /// The number of nonlinear iterations that have been exectued.
   integer m_numNewtonIterations;
+
+  /// The maximum value of residual norm that we allow (otherwise, we cut the time step)
+  real64 m_maxAllowedResidualNorm;
 
   /// Flag to allow for a non-converged nonlinear solution and continue with the problem.
   integer m_allowNonConverged;

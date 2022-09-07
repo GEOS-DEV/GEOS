@@ -24,7 +24,7 @@ set( events_sources
      tasks/TasksManager.cpp
    )
 
-set( dependencyList fileIO )
+set( dependencyList common dataRepository )
 
 if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )

@@ -9,7 +9,6 @@
       solidSolverName="lagsolve"
       flowSolverName="SinglePhaseFlow"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonMaxIter="2"

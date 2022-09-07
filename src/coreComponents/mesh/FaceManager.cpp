@@ -33,8 +33,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-FaceManager::FaceManager( string const &, Group * const parent ):
-  ObjectManagerBase( "FaceManager", parent )
+FaceManager::FaceManager( string const & name, Group * const parent ):
+  ObjectManagerBase( name, parent )
 {
   this->registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
   this->registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
@@ -183,7 +183,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
 
   ArrayOfArraysView< localIndex > const facesToNodes = nodeList().toView();
 
-  elemManager.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion const & subRegion )
+  elemManager.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&] ( auto const & subRegion )
   {
     subRegion.calculateElementCenters( X );
   } );

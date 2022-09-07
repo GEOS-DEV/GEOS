@@ -46,8 +46,8 @@
     <!-- SPHINX_PROPPANT_FLOW_SOLVER_END -->
     <SurfaceGenerator
       name="SurfaceGen"
+      discretization="FE1"
       targetRegions="{ Fracture }"
-      
       rockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>

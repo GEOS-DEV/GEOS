@@ -730,7 +730,7 @@ void WellElementSubRegion::updateNodeManagerNodeToElementMap( MeshLevel & mesh )
   string const & elemRegionName = elemRegion.getName();
 
   localIndex const iregion    = elemManager.getRegions().getIndex( elemRegionName );
-  localIndex const isubRegion = elemRegion.getSubRegions().getIndex( getName() );
+  localIndex const isubRegion = elemRegion.getSubRegions().getSubGroupIndex( getName() );
 
   // for each (new) well element
   for( localIndex iwelemLocal = 0; iwelemLocal < size(); ++iwelemLocal )

@@ -73,9 +73,9 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
                                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                                         DomainPartition & domain )
 {
-  m_solidSolver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                               MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+  m_solidSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                               MeshLevel & mesh,
+                                                                               arrayView1d< string const > const & regionNames )
   {
     // Option 1: zero out velocity, incremental displacement, and displacement
     if( m_resetDisplacements )
