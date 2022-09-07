@@ -260,9 +260,6 @@ public:
     static constexpr char const * elementRegionListString() { return "elemRegionList"; }
     static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
     static constexpr char const * elementListString() { return "elemList"; }
-    static constexpr char const * edgesTofractureConnectorsEdgesString() { return "edgesToFractureConnectors"; }
-    static constexpr char const * fractureConnectorEdgesToEdgesString() { return "fractureConnectorsToEdges"; }
-    static constexpr char const * fractureConnectorsEdgesToFaceElementsIndexString() { return "fractureConnectorsToElementIndex"; }
 
     dataRepository::ViewKey nodesList             = { nodeListString() };
     dataRepository::ViewKey faceList              = { faceListString() };
@@ -324,21 +321,6 @@ public:
   FaceMapType const & faceList() const { return m_toFacesRelation; }
 
   ///@}
-
-  // TODO These should be in their own subset of edges when we add that capability.
-
-  /// map from the edges to the fracture connectors index (edges that are fracture connectors)
-  SortedArray< localIndex > m_recalculateFractureConnectorEdges;
-
-  /// todo
-  map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
-
-  /// todo
-  array1d< localIndex > m_fractureConnectorsEdgesToEdges;
-
-  /// todo
-  ArrayOfArrays< localIndex > m_fractureConnectorEdgesToFaceElements;
-
 
 private:
 

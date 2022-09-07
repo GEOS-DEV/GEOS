@@ -35,7 +35,6 @@
       solidSolverName="lagsolve"
       flowSolverName="SinglePhaseFlow"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Omega }">
       <!-- SPHINX_PoroelasticSolverEnd -->
       <NonlinearSolverParameters

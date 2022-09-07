@@ -82,6 +82,16 @@ public:
    */
   ///@{
 
+
+  /**
+   * @brief Getter for m_cellBlockNames
+   * @return The array of cell block names.
+   */
+  arrayView1d< string const > getCellBlockNames() const
+  {
+    return m_cellBlockNames.toViewConst();
+  }
+
   /**
    * @brief Add a cellBlockRegion name to the list.
    * @param cellBlockName string containing the cell block region name.
@@ -89,6 +99,18 @@ public:
   void addCellBlockName( string const & cellBlockName )
   {
     m_cellBlockNames.emplace_back( cellBlockName );
+  }
+
+  /**
+   * @brief Add an array cellBlockRegion name to the list.
+   * @param cellBlockNames array of string containing the cell block region names.
+   */
+  void addCellBlockNames( arrayView1d< string const > const & cellBlockNames )
+  {
+    for( auto const & name: cellBlockNames )
+    {
+      m_cellBlockNames.emplace_back( name );
+    }
   }
 
   virtual void generateMesh( Group & cellBlocks ) override;

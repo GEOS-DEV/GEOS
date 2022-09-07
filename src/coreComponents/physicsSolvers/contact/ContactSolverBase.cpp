@@ -55,8 +55,6 @@ ContactSolverBase::ContactSolverBase( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fracture region." );
 
-  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-    setInputFlag( InputFlags::FALSE );
 }
 
 
@@ -68,34 +66,37 @@ void ContactSolverBase::postProcessInput()
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  using namespace extrinsicMeshData::contact;
+
+  forDiscretizationOnMeshTargets( meshBodies,
+                                  [&]( string const,
+                                       MeshLevel & meshLevel,
+                                       arrayView1d< string const > const regionNames )
   {
-    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
-
     ElementRegionManager & elemManager = meshLevel.getElemManager();
+    elemManager.forElementRegions< SurfaceElementRegion >( regionNames,
+                                                           [&] ( localIndex const,
+                                                                 SurfaceElementRegion & region )
     {
-      elemManager.forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
+      region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
       {
-        region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
-        {
-          subRegion.registerExtrinsicData< dispJump >( getName() ).
-            reference().resizeDimension< 1 >( 3 );
+        subRegion.registerExtrinsicData< dispJump >( getName() ).
+          reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< deltaDispJump >( getName() ).
-            reference().resizeDimension< 1 >( 3 );
+        subRegion.registerExtrinsicData< deltaDispJump >( getName() ).
+          reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< oldDispJump >( getName() ).
-            reference().resizeDimension< 1 >( 3 );
+        subRegion.registerExtrinsicData< oldDispJump >( getName() ).
+          reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< traction >( getName() ).
-            reference().resizeDimension< 1 >( 3 );
+        subRegion.registerExtrinsicData< traction >( getName() ).
+          reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< fractureState >( getName() );
+        subRegion.registerExtrinsicData< fractureState >( getName() );
 
-          subRegion.registerExtrinsicData< oldFractureState >( getName() );
-        } );
+        subRegion.registerExtrinsicData< oldFractureState >( getName() );
       } );
-    }
+    } );
   } );
 }
 
@@ -192,9 +193,9 @@ void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & d
     globalIndex numSlip  = 0;
     globalIndex numOpen  = 0;
 
-    forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                 MeshLevel const & mesh,
-                                                 arrayView1d< string const > const & )
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel const & mesh,
+                                                                 arrayView1d< string const > const & )
     {
       computeFractureStateStatistics( mesh, numStick, numSlip, numOpen );
 
@@ -234,9 +235,9 @@ real64 ContactSolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
 void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) const
 {
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     FieldIdentifiers fieldsToBeSync;
 

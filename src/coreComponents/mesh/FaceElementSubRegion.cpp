@@ -48,6 +48,21 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "Map to the faces attached to each FaceElement." ).
     reference().resize( 0, 2 );
 
+  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString(), &m_edgesToFractureConnectorsEdges ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "A map of edge local indices to the fracture connector local indices." ).
+    setSizedFromParent( 0 );
+
+  registerWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString(), &m_fractureConnectorsEdgesToEdges ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "A map of fracture connector local indices to edge local indices." ).
+    setSizedFromParent( 0 );
+
+  registerWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString(), &m_fractureConnectorEdgesToFaceElements ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "A map of fracture connector local indices face element local indices" ).
+    setSizedFromParent( 0 );
+
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   registerWrapper( viewKeyStruct::separationCoeffString(), &m_separationCoefficient ).
     setApplyDefaultValue( 0.0 ).
@@ -60,6 +75,38 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_surfaceElementsToCells.resize( 0, 2 );
 
   m_numNodesPerElement = 8;
+}
+
+void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
+{
+  resize( faceBlock.num2dElements() );
+
+  m_toNodesRelation.base() = faceBlock.get2dElemToNodes();
+  m_toEdgesRelation.base() = faceBlock.get2dElemToEdges();
+
+  auto elem2dToElems = faceBlock.get2dElemToElems();
+  m_surfaceElementsToCells.m_toElementIndex = elem2dToElems.toCellIndex;
+  m_surfaceElementsToCells.m_toElementSubRegion = elem2dToElems.toBlockIndex;
+  // TODO We are hard coding the values of the regions here.
+  //      This is work in progress and we'll correct this soon.
+  m_surfaceElementsToCells.m_toElementRegion.setValues< serialPolicy >( 0 );
+
+  m_toFacesRelation.base() = faceBlock.get2dElemToFaces();
+
+  m_fractureConnectorsEdgesToEdges = faceBlock.get2dFaceToEdge();
+  m_fractureConnectorEdgesToFaceElements = faceBlock.get2dFaceTo2dElems();
+
+  for( int i = 0; i < faceBlock.num2dFaces(); ++i )
+  {
+    m_recalculateFractureConnectorEdges.insert( i );
+  }
+
+  for( localIndex i = 0; i < faceBlock.num2dElements(); ++i )
+  {
+    m_newFaceElements.insert( i );
+  }
+
+  // TODO We still need to be able to import fields on the FaceElementSubRegion.
 }
 
 void FaceElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mesh )

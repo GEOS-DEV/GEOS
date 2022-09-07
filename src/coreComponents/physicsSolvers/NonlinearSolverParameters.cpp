@@ -74,6 +74,11 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Number of Newton's iterations." );
 
+  registerWrapper( viewKeysStruct::maxAllowedResidualNormString, &m_maxAllowedResidualNorm ).
+    setApplyDefaultValue( 1e9 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Maximum value of residual norm that is allowed in a Newton loop" );
+
 
   registerWrapper( viewKeysStruct::allowNonConvergedString, &m_allowNonConverged ).
     setApplyDefaultValue( 0 ).

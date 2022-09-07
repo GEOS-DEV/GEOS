@@ -97,7 +97,10 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
 }
 
 /// Subdivide string by delimiters
-string_array tokenize( string const & str, string const & delimiters );
+template< typename RETURN_TYPE = string_array >
+RETURN_TYPE tokenize( string const & str,
+                      string const & delimiters,
+                      bool const treatConsecutiveDelimAsOne = true );
 
 /**
  * @brief Trim the string

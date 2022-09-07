@@ -277,9 +277,9 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
               pres[ei] += dP;
 
               // after perturbing, update the pressure-dependent quantities in the reservoir
-              flowSolver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                       MeshLevel & mesh2,
-                                                                       arrayView1d< string const > const & regionNames2 )
+              flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                                       MeshLevel & mesh2,
+                                                                                       arrayView1d< string const > const & regionNames2 )
               {
                 mesh2.getElemManager().forElementSubRegions( regionNames2,
                                                              [&]( localIndex const,
@@ -310,9 +310,9 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
               compDens.move( LvArray::MemorySpace::host, true );
               compDens[ei][jc] += dRho;
 
-              flowSolver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                       MeshLevel & mesh2,
-                                                                       arrayView1d< string const > const & regionNames2 )
+              flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                                       MeshLevel & mesh2,
+                                                                                       arrayView1d< string const > const & regionNames2 )
               {
                 mesh2.getElemManager().forElementSubRegions( regionNames2,
                                                              [&]( localIndex const,
@@ -343,9 +343,9 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
   /////////////////////////////////////////////////
 
   // loop over the wells
-  wellSolver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                           MeshLevel & mesh,
-                                                           arrayView1d< string const > const & regionNames )
+  wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                           MeshLevel & mesh,
+                                                                           arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
                                                                         [&]( localIndex const,

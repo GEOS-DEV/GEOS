@@ -1270,11 +1270,18 @@ public:
   }
 
   /**
-   * @brief Get the group's index withing its parent group
+   * @brief Get the group's index within its parent group
    * @return integral index of current group within its parent
    */
   localIndex getIndexInParent() const
   { return m_parent->getSubGroups().getIndex( m_name ); }
+
+  /**
+   * @brief Get the index of a sub-Group within this group.
+   * @param key The key of the sub-Group
+   * @return The index of the sub-Group.
+   */
+  localIndex getSubGroupIndex( keyType const & key ) const;
 
   /**
    * @brief Check whether this Group is resized when its parent is resized.

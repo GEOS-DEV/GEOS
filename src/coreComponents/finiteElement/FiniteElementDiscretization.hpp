@@ -81,6 +81,8 @@ public:
   std::unique_ptr< finiteElement::FiniteElementBase >
   factory( ElementType const parentElementShape ) const;
 
+  int getOrder() const { return m_order; }
+
 private:
 
   struct viewKeyStruct
