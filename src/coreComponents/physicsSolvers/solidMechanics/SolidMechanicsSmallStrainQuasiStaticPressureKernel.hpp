@@ -122,7 +122,9 @@ public:
     m_uhat( nodeManager.incrementalDisplacement()),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
-    m_solidDensity( inputConstitutiveType.getDensity() )
+    m_solidDensity( inputConstitutiveType.getDensity() ),
+    m_pressureMatrix( elementSubRegion.template getReference< array1d< real64 > >( "hardCodedPMatrixName" ) ),
+    m_pressureFracture( elementSubRegion.template getReference< array1d< real64 > >( "hardCodedPFractureName" ) )
     //m_pressureMatrix( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::matrixPressure >() ),
     //m_pressureFracture( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::fracturePressure >() )
   {}

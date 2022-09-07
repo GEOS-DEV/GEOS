@@ -117,9 +117,12 @@ public:
     m_X( nodeManager.referencePosition()),
     m_disp( nodeManager.totalDisplacement()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( damageName )),
-    m_localDissipationOption( localDissipationOption )
+    m_localDissipationOption( localDissipationOption ),
     //m_pressureMatrix( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::matrixPressure >() ),
     //m_pressureFracture( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::fracturePressure >() )
+    //this should compile
+    m_pressureMatrix( elementSubRegion.template getReference< array1d< real64 > >( "hardCodedPMatrixName" ) ),
+    m_pressureFracture( elementSubRegion.template getReference< array1d< real64 > >( "hardCodedPFractureName" ) )
 
   {}
 
