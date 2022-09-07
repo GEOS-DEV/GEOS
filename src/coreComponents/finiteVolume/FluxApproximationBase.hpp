@@ -100,11 +100,11 @@ public:
    * @brief Add a new fracture stencil.
    * @param[in,out] mesh the mesh on which to add the fracture stencil
    * @param[in] faceElementRegionName the face element region name
-   * @param[in] initFlag if true initialize physical fields, like pressure
+   * @param[in] initFields if true initialize physical fields, like pressure
    */
   virtual void addToFractureStencil( MeshLevel & mesh,
                                      string const & faceElementRegionName,
-                                     bool const initFlag ) const = 0;
+                                     bool const initFields ) const = 0;
 
   /**
    * @brief Add a new embedded fracture stencil.
@@ -185,10 +185,19 @@ protected:
   virtual void registerCellStencil( Group & stencilGroup ) const = 0;
 
   /**
-   * @brief Actual computation of the cell-to-cell stencil, to be overridden by implementations.
-   * @param[in] mesh the mesh on which to perform the computation
+   * @brief Actual computation of the cell-to-cell stencil.
+   * @param[inout] mesh the mesh on which to perform the computation.
    */
   virtual void computeCellStencil( MeshLevel & mesh ) const = 0;
+
+  /**
+   * @brief Actual Computation of the fracture related stencils.
+   * @param[inout] mesh the mesh on which to perform the computation.
+   *
+   * Compute the stencils within the fracture itself,
+   * but between the fracture and the matrix too.
+   */
+  virtual void computeFractureStencil( MeshLevel & mesh ) const = 0;
 
   /**
    * @brief Register the wrapper for fracture stencil on a mesh.

@@ -63,8 +63,10 @@ public:
     static constexpr char const * usePEDFMString() { return "usePEDFM"; }
   };
 
-protected:
+private:
   virtual void registerCellStencil( Group & stencilGroup ) const override;
+
+  virtual void computeFractureStencil( MeshLevel & mesh ) const override;
 
   virtual void computeCellStencil( MeshLevel & mesh ) const override;
 
@@ -72,7 +74,7 @@ protected:
 
   virtual void addToFractureStencil( MeshLevel & mesh,
                                      string const & faceElementRegionName,
-                                     bool const initFlag ) const override;
+                                     bool const initFields ) const override;
 
   virtual void registerBoundaryStencil( Group & stencilGroup,
                                         string const & setName ) const override;
@@ -95,17 +97,54 @@ protected:
    * @param mesh the mesh object
    * @param embeddedSurfaceRegionName name of the fracture region
    */
-  void addFractureFractureConnections( MeshLevel & mesh,
-                                       string const & embeddedSurfaceRegionName ) const;
+  void addFractureFractureConnectionsEDFM( MeshLevel & mesh,
+                                           string const & embeddedSurfaceRegionName ) const;
 
   /**
    * @brief adds fracture-matrix connections to the edfm stencil
    * @param mesh the mesh object
    * @param embeddedSurfaceRegionName name of the fracture region
    */
-  void addFractureMatrixConnections( MeshLevel & mesh,
-                                     string const & embeddedSurfaceRegionName ) const;
-private:
+  void addFractureMatrixConnectionsEDFM( MeshLevel & mesh,
+                                         string const & embeddedSurfaceRegionName ) const;
+
+  /**
+   * @brief Add the connections within the DFM fracture elements themselves.
+   * @param mesh The mesh object.
+   * @param faceElementRegionName Name of the DFM fracture region.
+   */
+  void addFractureFractureConnectionsDFM( MeshLevel & mesh,
+                                          string const & faceElementRegionName ) const;
+
+  /**
+   * @brief Add the connections between the DFM fracture elements and the matrix elements.
+   * @param mesh The mesh object.
+   * @param faceElementRegionName Name of the DFM fracture region.
+   */
+  void addFractureMatrixConnectionsDFM( MeshLevel & mesh,
+                                        string const & faceElementRegionName ) const;
+
+  /**
+   * @brief Remove the expired connections between in the matrix elements
+   * @param mesh The mesh object.
+   * @param faceElementRegionName Name of the DFM fracture region.
+   *
+   * When a fracture propagates, some elements of the matrix do not connect each other:
+   * the fracture is now in between. The connections between these matrix elements need to be cancelled.
+   */
+  void cleanMatrixMatrixConnectionsDFM( MeshLevel & mesh,
+                                        string const & faceElementRegionName ) const;
+
+  /**
+   * @brief Initialize fields on the newly created elements of the fracture.
+   * @param mesh The mesh object.
+   * @param faceElementRegionName Name of the DFM fracture region.
+   * @deprecated All of this initialization should be performed elsewhere.
+   * It is just here because it was convenient, but it is not appropriate
+   * to have physics based initialization in the flux approximator.
+   */
+  void initNewFractureFieldsDFM( MeshLevel & mesh,
+                                 string const & faceElementRegionName ) const;
 
   /// mean permeability coefficient
   real64 m_meanPermCoefficient;

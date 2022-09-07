@@ -139,6 +139,10 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
         // Compute the main cell-based stencil
         computeCellStencil( mesh );
 
+        // Compute the fracture related stencils (within the fracture itself,
+        // but between the fracture and the matrix as well).
+        computeFractureStencil( mesh );
+
         // For each face-based boundary condition on target field, compute the boundary stencil weights
         fsManager.apply< FaceManager >( 0.0,
                                         mesh,
