@@ -995,15 +995,15 @@
 	<xsd:complexType name="BiotPorosityType">
 		<!--biotCoefficient => Biot coefficient.-->
 		<xsd:attribute name="biotCoefficient" type="real64_array" />
-		<!--dPorosity_dPressure => (no description available)-->
+		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
-		<!--initialPorosity => (no description available)-->
+		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
-		<!--porosity => (no description available)-->
+		<!--porosity => Rock porosity-->
 		<xsd:attribute name="porosity" type="real64_array2d" />
-		<!--porosity_n => (no description available)-->
+		<!--porosity_n => Rock porosity at the previous converged time step-->
 		<xsd:attribute name="porosity_n" type="real64_array2d" />
-		<!--referencePorosity => (no description available)-->
+		<!--referencePorosity => Reference porosity-->
 		<xsd:attribute name="referencePorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
@@ -1738,15 +1738,15 @@
 	<xsd:complexType name="PorousExtendedDruckerPragerType" />
 	<xsd:complexType name="PorousModifiedCamClayType" />
 	<xsd:complexType name="PressurePorosityType">
-		<!--dPorosity_dPressure => (no description available)-->
+		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
-		<!--initialPorosity => (no description available)-->
+		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
-		<!--porosity => (no description available)-->
+		<!--porosity => Rock porosity-->
 		<xsd:attribute name="porosity" type="real64_array2d" />
-		<!--porosity_n => (no description available)-->
+		<!--porosity_n => Rock porosity at the previous converged time step-->
 		<xsd:attribute name="porosity_n" type="real64_array2d" />
-		<!--referencePorosity => (no description available)-->
+		<!--referencePorosity => Reference porosity-->
 		<xsd:attribute name="referencePorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantPermeabilityType">
@@ -1762,15 +1762,15 @@
 		<xsd:attribute name="proppantPackPermeability" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantPorosityType">
-		<!--dPorosity_dPressure => (no description available)-->
+		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
-		<!--initialPorosity => (no description available)-->
+		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
-		<!--porosity => (no description available)-->
+		<!--porosity => Rock porosity-->
 		<xsd:attribute name="porosity" type="real64_array2d" />
-		<!--porosity_n => (no description available)-->
+		<!--porosity_n => Rock porosity at the previous converged time step-->
 		<xsd:attribute name="porosity_n" type="real64_array2d" />
-		<!--referencePorosity => (no description available)-->
+		<!--referencePorosity => Reference porosity-->
 		<xsd:attribute name="referencePorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantSlurryFluidType">
