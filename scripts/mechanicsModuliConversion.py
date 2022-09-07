@@ -24,7 +24,7 @@ def parseArguments():
     """
     Parse command line arguments into an ArgumentParser instance.
     :param arguments: The command line arguments as an array of string.
-    :return: inputType.
+    :return: Values, inputType.
     """
     parser = argparse.ArgumentParser(description=".")
 
