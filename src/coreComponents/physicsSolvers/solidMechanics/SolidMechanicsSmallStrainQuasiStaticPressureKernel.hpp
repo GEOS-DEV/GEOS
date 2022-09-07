@@ -102,7 +102,6 @@ public:
                        FE_TYPE const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                        arrayView1d< globalIndex const > const inputDispDofNumber,
-                       string const inputFlowDofKey,
                        globalIndex const rankOffset,
                        CRSMatrixView< real64, globalIndex const > const inputMatrix,
                        arrayView1d< real64 > const inputRhs,
@@ -123,9 +122,9 @@ public:
     m_uhat( nodeManager.incrementalDisplacement()),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
-    m_solidDensity( inputConstitutiveType.getDensity() ),
-    m_pressureMatrix( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::matrixPressure >() ),
-    m_pressureFracture( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::fracturePressure >() )
+    m_solidDensity( inputConstitutiveType.getDensity() )
+    //m_pressureMatrix( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::matrixPressure >() ),
+    //m_pressureFracture( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::fracturePressure >() )
   {}
 
   //*****************************************************************************
@@ -286,13 +285,14 @@ public:
         detJxW );
     }
 
-    LinearFormUtilities::compute< displacementTestSpace,
-                                  DifferentialOperator::Divergence >
-    (
-      stack.localResidualMomentum,
-      dNdX,
-      matrixPressureTerm,
-      -detJxW );
+    //DIVERGENCE DOESNT EXIST YET
+    // LinearFormUtilities::compute< displacementTestSpace,
+    //                               DifferentialOperator::Divergence >
+    // (
+    //   stack.localResidualMomentum,
+    //   dNdX,
+    //   matrixPressureTerm,
+    //   -detJxW );
 
     LinearFormUtilities::compute< displacementTestSpace,
                                   DifferentialOperator::Identity >
@@ -374,10 +374,10 @@ public:
     real64 damageGrad[3]{};
     real64 pressureDamageGrad[3]{};
 
-    m_solidUpdate.getDamageGrad( k, q, damageGrad );
+    m_constitutiveUpdate.getDamageGrad( k, q, damageGrad );
 
-    real64 const damage = m_solidUpdate.getDamage( k, q );
-    real64 const pressureDamageDeriv = m_solidUpdate.pressureDamageFunctionDerivative( damage ); 
+    real64 const damage = m_constitutiveUpdate.getDamage( k, q );
+    real64 const pressureDamageDeriv = m_constitutiveUpdate.pressureDamageFunctionDerivative( damage ); 
 
     LvArray::tensorOps::scaledCopy< 3 >( pressureDamageGrad, damageGrad, pressureDamageDeriv );
     LvArray::tensorOps::scaledCopy< 3 >( fracturePressureTerm, pressureDamageGrad, m_pressureFracture[k] );
@@ -390,9 +390,9 @@ public:
                                     localIndex const q ) const
   {
 
-    real64 const biotCoefficient = m_solidUpdate.getBiotCoefficient( k );
-    real64 const damage = m_solidUpdate.getDamage( k, q );
-    real64 const pressureDamageFunction = m_solidUpdate.pressureDamageFunction( damage ); 
+    real64 const biotCoefficient = m_constitutiveUpdate.getBiotCoefficient( k );
+    real64 const damage = m_constitutiveUpdate.getDamage( k, q );
+    real64 const pressureDamageFunction = m_constitutiveUpdate.pressureDamageFunction( k, q ); 
     return pressureDamageFunction*biotCoefficient*m_pressureMatrix[k];
 
   }

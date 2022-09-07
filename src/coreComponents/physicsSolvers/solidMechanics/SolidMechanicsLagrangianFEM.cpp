@@ -1001,7 +1001,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
     GEOSX_UNUSED_VAR( dt );
     if (m_pressureEffectsFlag == 1) //add background pressure effects
     { 
-          assemblyLaunch< constitutive::SolidBase,
+          assemblyLaunch< constitutive::DamageBase,
                           solidMechanicsLagrangianFEMKernels::QuasiStaticPressureFactory >( domain,
                                                                                             dofManager,
                                                                                             localMatrix,

@@ -186,6 +186,13 @@ public:
     }
 
     real64 factor = getDegradationValue( k, q );
+
+    // compute volumetric and deviatoric strain invariants
+    real64 strain[6] = {0};
+
+    UPDATE_BASE::getElasticStrain( k, q, strain );
+    real64 traceOfStrain = strain[0] + strain[1] + strain[2];
+    m_volStrain( k, q ) = traceOfStrain;
     LvArray::tensorOps::scale< 6 >( stress, factor );
     stiffness.scaleParams( factor );
   }
@@ -206,6 +213,13 @@ public:
     }
 
     return m_strainEnergyDensity( k, q );
+  }
+
+    GEOSX_HOST_DEVICE
+  virtual real64 getVolStrain( localIndex const k,
+                               localIndex const q ) const
+  {
+    return m_volStrain( k, q );
   }
 
   GEOSX_HOST_DEVICE
@@ -230,12 +244,20 @@ public:
     #endif
   }
 
+    GEOSX_HOST_DEVICE
+  virtual real64 getBiotCoefficient( localIndex const k ) const
+  {
+    return m_biotCoefficient[k];
+  }
+
   arrayView2d< real64 > const m_newDamage;
   arrayView3d< real64 > const m_damageGrad;
   arrayView2d< real64 > const m_strainEnergyDensity;
+  arrayView2d< real64 > const m_volStrain;
   real64 const m_lengthScale;
   real64 const m_criticalFractureEnergy;
   real64 const m_criticalStrainEnergy;
+  arrayView1d< real64 > const m_biotCoefficient;
 };
 
 

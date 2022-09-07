@@ -13,7 +13,7 @@
  */
 
 /**
- * @file BilinearFormUtilities.hpp
+ * @file LinearFormUtilities.hpp
  */
 
 #ifndef GEOSX_FINITEELEMENT_LINEARFORMUTILITIES_HPP_
@@ -81,6 +81,26 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
       vec[a*3+0] = vec[a*3+0] + Nv[a] * A[0] * weight;
       vec[a*3+1] = vec[a*3+1] + Nv[a] * A[1] * weight;
       vec[a*3+2] = vec[a*3+2] + Nv[a] * A[2] * weight;
+    }
+  }
+};
+
+template<>
+struct Helper< PDEUtilities::FunctionSpace::H1,
+               PDEUtilities::DifferentialOperator::SymmetricGradient >
+{
+  // symmetric second-order tensor A
+  template< int numTestDOF >
+  GEOSX_HOST_DEVICE
+  void static compute( real64 (& vec)[numTestDOF],
+                       real64 const (&dNdX)[numTestDOF][3],
+                       real64 const (&A)[3],
+                       real64 const weight )
+  {
+    for( int a = 0; a < numTestDOF; ++a )
+    {
+      vec[a] = vec[a] + ( dNdX[a][0] * A[0] + dNdX[a][1] * A[1] + dNdX[a][2] * A[2] ) * weight;
+      
     }
   }
 };

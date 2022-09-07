@@ -117,9 +117,9 @@ public:
     m_X( nodeManager.referencePosition()),
     m_disp( nodeManager.totalDisplacement()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( damageName )),
-    m_localDissipationOption( localDissipationOption ),
-    m_pressureMatrix( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::matrixPressure >() ),
-    m_pressureFracture( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::fracturePressure >() )
+    m_localDissipationOption( localDissipationOption )
+    //m_pressureMatrix( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::matrixPressure >() ),
+    //m_pressureFracture( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::fracturePressure >() )
 
   {}
 
@@ -209,8 +209,8 @@ public:
     real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
     real64 const ell = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
-    real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
-    real64 const extDrivingForce = m_constitutiveUpdate.getExtDrivingForce( k, q );
+    real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();
+    //real64 const extDrivingForce = m_constitutiveUpdate.getExtDrivingForce( k, q );
     real64 const volStrain = m_constitutiveUpdate.getVolStrain( k, q );
     real64 const biotCoeff = m_constitutiveUpdate.getBiotCoefficient( k );
     real64 c0 = 2;
@@ -221,11 +221,11 @@ public:
     real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
     FE_TYPE::calcN( q, N );
 
-    real64 qp_damage = 0.0;
-    real64 qp_grad_damage[3] = {0, 0, 0};
-    real64 qp_disp[3] = {0, 0, 0};
-    FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
-    FE_TYPE::value(N, stack.dispLocal, qp_disp);
+    real64 qpDamage = 0.0;
+    real64 qpGradDamage[3] = {0, 0, 0};
+    real64 qpDisp[3] = {0, 0, 0};
+    FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qpDamage, qpGradDamage );
+    FE_TYPE::value(N, stack.dispLocal, qpDisp);
 
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
@@ -236,132 +236,135 @@ public:
     }
     
     //REVIEW THESE BECAUSE OF THE D TERM
-    if( m_localDissipationOption == 1 ) //AT1 KERNELS
-    {
+    // if( m_localDissipationOption == 1 ) //AT1 KERNELS
+    // {
 
-        // Compute local dissipation term AT1
-        LinearFormUtilities::compute< damageTestSpace,
-                                      DifferentialOperator::Identity >
-        (
-          stack.localResidual,
-          N,
-          (Gc/(c0*ell))*1,
-          detJxW );
+    //     // Compute local dissipation term AT1
+    //     LinearFormUtilities::compute< damageTestSpace,
+    //                                   DifferentialOperator::Identity >
+    //     (
+    //       stack.localResidual,
+    //       N,
+    //       (Gc/(c0*ell))*1,
+    //       detJxW );
 
-        // Compute driving force term
-        LinearFormUtilities::compute< damageTestSpace,
-                                      DifferentialOperator::Identity >
-        (
-          stack.localResidual,
-          N,
-          m_constitutiveUpdate.getDegradationDerivative( qp_damage )*D,
-          detJxW );  
-    }
-    else //AT2 KERNELS
-    {
-        // Compute local dissipation term AT2
-        LinearFormUtilities::compute< damageTestSpace,
-                                      DifferentialOperator::Identity >
-        (
-          stack.localResidual,
-          N,
-          (Gc/(c0*ell))*2*qp_damage,
-          detJxW );
+    //     // Compute driving force term
+    //     LinearFormUtilities::compute< damageTestSpace,
+    //                                   DifferentialOperator::Identity >
+    //     (
+    //       stack.localResidual,
+    //       N,
+    //       m_constitutiveUpdate.getDegradationDerivative( qpDamage )*D,
+    //       detJxW );  
+    // }
+    // else //AT2 KERNELS
+    // {
+    //     // Compute local dissipation term AT2
+    //     LinearFormUtilities::compute< damageTestSpace,
+    //                                   DifferentialOperator::Identity >
+    //     (
+    //       stack.localResidual,
+    //       N,
+    //       (Gc/(c0*ell))*2*qpDamage,
+    //       detJxW );
 
 
-        // Compute driving force term
-        LinearFormUtilities::compute< damageTestSpace,
-                                      DifferentialOperator::Identity >
-        (
-          stack.localResidual,
-          N,
-          m_constitutiveUpdate.getDegradationDerivative( qp_damage )*strainEnergyDensity,
-          detJxW );  
+    //     // Compute driving force term
+    //     LinearFormUtilities::compute< damageTestSpace,
+    //                                   DifferentialOperator::Identity >
+    //     (
+    //       stack.localResidual,
+    //       N,
+    //       m_constitutiveUpdate.getDegradationDerivative( qpDamage )*strainEnergyDensity,
+    //       detJxW );  
 
-    }
+    // }
 
     // Compute non-local term
+    real64 nonLocalTermIntegrand[3]; 
+    LvArray::tensorOps::scaledCopy< 3 >( nonLocalTermIntegrand, qpGradDamage, (2*Gc*ell/c0) );
     LinearFormUtilities::compute< damageTestSpace,
-                                  DifferentialOperator::Gradient >
+                                  DifferentialOperator::SymmetricGradient >
     (
         stack.localResidual,
         dNdX,
-        (2*Gc*ell/c0)*qp_grad_damage,
+        nonLocalTermIntegrand,
         detJxW );
 
 
-    // Compute matrix pressure contribution
-    LinearFormUtilities::compute< damageTestSpace,
-                                  DifferentialOperator::Identity >
-    (
-        stack.localResidual,
-        N,
-        biotCoeff*m_pressureMatrix[k]*volStrain,
-        -detJxW );
+    // // Compute matrix pressure contribution
+    // LinearFormUtilities::compute< damageTestSpace,
+    //                               DifferentialOperator::Identity >
+    // (
+    //     stack.localResidual,
+    //     N,
+    //     biotCoeff*m_pressureMatrix[k]*volStrain,
+    //     -detJxW );
 
+    // real64 pressureFractureIntegrand[3]; 
+    // LvArray::tensorOps::scaledCopy< 3 >( pressureFractureIntegrand, qpDisp, m_pressureFracture[k] );
+    // // Compute fracture pressure contribuition
+    // LinearFormUtilities::compute< damageTestSpace,
+    //                               DifferentialOperator::Gradient >
+    // (
+    //     stack.localResidual,
+    //     dNdX,
+    //     pressureFractureIntegrand,
+    //     detJxW );
 
-    // Compute fracture pressure contribuition
-    LinearFormUtilities::compute< damageTestSpace,
-                                  DifferentialOperator::Gradient >
-    (
-        stack.localResidual,
-        dNdX,
-        m_pressureFracture[k]*qp_disp,
-        detJxW );
+    // // Compute jacobian terms
 
-    // Compute jacobian terms
+    // if( m_localDissipationOption == 1 )
+    // {
+    //     //no contribution to Jacobian
+    //     BilinearFormUtilities::compute< damageTestSpace,
+    //                                     damageTrialSpace,
+    //                                     DifferentialOperator::Identity,
+    //                                     DifferentialOperator::Identity >
+    //     (
+    //         stack.localJacobian,
+    //         N,
+    //         D*m_constitutiveUpdate.getDegradationSecondDerivative( qpDamage ), 
+    //         N,
+    //         detJxW );
 
-    if( m_localDissipationOption == 1 )
-    {
-        //no contribution to Jacobian
-        BilinearFormUtilities::compute< damageTestSpace,
-                                        damageTrialSpace,
-                                        DifferentialOperator::Identity,
-                                        DifferentialOperator::Identity >
-        (
-            stack.localJacobian,
-            N,
-            D*m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ), 
-            N,
-            detJxW );
+    // }
+    // else
+    // {
 
-    }
-    else
-    {
+    //     BilinearFormUtilities::compute< damageTestSpace,
+    //                                     damageTrialSpace,
+    //                                     DifferentialOperator::Identity,
+    //                                     DifferentialOperator::Identity >
+    //     (
+    //         stack.localJacobian,
+    //         N,
+    //         strainEnergyDensity*m_constitutiveUpdate.getDegradationSecondDerivative( qpDamage ), 
+    //         N,
+    //         detJxW );      
 
-        BilinearFormUtilities::compute< damageTestSpace,
-                                        damageTrialSpace,
-                                        DifferentialOperator::Identity,
-                                        DifferentialOperator::Identity >
-        (
-            stack.localJacobian,
-            N,
-            strainEnergyDensity*m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ), 
-            N,
-            detJxW );      
+    //     BilinearFormUtilities::compute< damageTestSpace,
+    //                                     damageTrialSpace,
+    //                                     DifferentialOperator::Identity,
+    //                                     DifferentialOperator::Identity >
+    //     (
+    //         stack.localJacobian,
+    //         N,
+    //         (2*Gc/(c0*ell)), 
+    //         N,
+    //         detJxW );
 
-        BilinearFormUtilities::compute< damageTestSpace,
-                                        damageTrialSpace,
-                                        DifferentialOperator::Identity,
-                                        DifferentialOperator::Identity >
-        (
-            stack.localJacobian,
-            N,
-            (2*Gc/(c0*ell)), 
-            N,
-            detJxW );
-
-    }
-    BilinearFormUtilities::compute< damageTestSpace,
-                                    damageTrialSpace,
-                                    DifferentialOperator::Gradient,
-                                    DifferentialOperator::Gradient >
-    (
-        stack.localJacobian,
-        dNdX,
-        (2*Gc*ell/c0), 
-        dNdX,
-        detJxW );
+    // }
+    // BilinearFormUtilities::compute< damageTestSpace,
+    //                                 damageTrialSpace,
+    //                                 DifferentialOperator::Gradient,
+    //                                 DifferentialOperator::Gradient >
+    // (
+    //     stack.localJacobian,
+    //     dNdX,
+    //     (2*Gc*ell/c0), 
+    //     dNdX,
+    //     detJxW );
 
   }
 
@@ -401,7 +404,7 @@ public:
 protected:
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
-  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
 
 
   /// The global primary field array.
@@ -419,7 +422,7 @@ using PhaseFieldDamagePressureKernelFactory = finiteElement::KernelFactory< Phas
                                                                             CRSMatrixView< real64, globalIndex const > const,
                                                                             arrayView1d< real64 > const,
                                                                             string const,
-                                                                            integer >;
+                                                                            int >;
 
 } // namespace geosx
 
