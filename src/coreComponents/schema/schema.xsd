@@ -182,6 +182,10 @@
 					<xsd:selector xpath="HydrostaticEquilibrium" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="FieldSpecificationsPMLUniqueName">
+					<xsd:selector xpath="PML" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="FieldSpecificationsSourceFluxUniqueName">
 					<xsd:selector xpath="SourceFlux" />
 					<xsd:field xpath="@name" />
@@ -329,6 +333,10 @@
 					<xsd:selector xpath="MultiphasePoromechanics" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversMultiphasePoromechanicsReservoirUniqueName">
+					<xsd:selector xpath="MultiphasePoromechanicsReservoir" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversPhaseFieldDamageFEMUniqueName">
 					<xsd:selector xpath="PhaseFieldDamageFEM" />
 					<xsd:field xpath="@name" />
@@ -359,6 +367,10 @@
 				</xsd:unique>
 				<xsd:unique name="SolversSinglePhasePoromechanicsEmbeddedFracturesUniqueName">
 					<xsd:selector xpath="SinglePhasePoromechanicsEmbeddedFractures" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversSinglePhasePoromechanicsReservoirUniqueName">
+					<xsd:selector xpath="SinglePhasePoromechanicsReservoir" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="SolversSinglePhaseProppantFVMUniqueName">
@@ -838,6 +850,7 @@
 			<xsd:element name="Dirichlet" type="DirichletType" />
 			<xsd:element name="FieldSpecification" type="FieldSpecificationType" />
 			<xsd:element name="HydrostaticEquilibrium" type="HydrostaticEquilibriumType" />
+			<xsd:element name="PML" type="PMLType" />
 			<xsd:element name="SourceFlux" type="SourceFluxType" />
 			<xsd:element name="Traction" type="TractionType" />
 		</xsd:choice>
@@ -989,6 +1002,44 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--temperatureVsElevationTableName => Name of the table specifying the (temperature [K] vs elevation) relationship-->
 		<xsd:attribute name="temperatureVsElevationTableName" type="string" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PMLType">
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
+		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<!--beginTime => Time at which the boundary condition will start being applied.-->
+		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
+		<!--component => Component of field (if tensor) to apply boundary condition to.-->
+		<xsd:attribute name="component" type="integer" default="-1" />
+		<!--direction => Direction to apply boundary condition to.-->
+		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
+		<!--endTime => Time at which the boundary condition will stop being applied.-->
+		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
+		<xsd:attribute name="functionName" type="string" default="" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--objectPath => Path to the target field-->
+		<xsd:attribute name="objectPath" type="string" default="" />
+		<!--reflectivity => Desired reflectivity of the PML region, used to compute the damping profile-->
+		<xsd:attribute name="reflectivity" type="real64" default="0.001" />
+		<!--scale => Scale factor for value of the boundary condition.-->
+		<xsd:attribute name="scale" type="real64" default="0" />
+		<!--setNames => Name of sets that boundary condition is applied to.-->
+		<xsd:attribute name="setNames" type="string_array" use="required" />
+		<!--thicknessMaxXYZ => Thickness of the PML region, at right, back, and bottom sides, used to compute the damping profile-->
+		<xsd:attribute name="thicknessMaxXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<!--thicknessMinXYZ => Thickness of the PML region, at left, front, and top sides, used to compute the damping profile-->
+		<xsd:attribute name="thicknessMinXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<!--waveSpeedMaxXYZ => Wave speed in the PML, at right, back, and bottom sides, used to compute the damping profile-->
+		<xsd:attribute name="waveSpeedMaxXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<!--waveSpeedMinXYZ => Wave speed in the PML, at left, front, and top sides, used to compute the damping profile-->
+		<xsd:attribute name="waveSpeedMinXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<!--xMax => Maximum (x,y,z) coordinates of the inner PML boundaries-->
+		<xsd:attribute name="xMax" type="R1Tensor" default="{1.79769e+308,1.79769e+308,1.79769e+308}" />
+		<!--xMin => Minimum (x,y,z) coordinates of the inner PML boundaries-->
+		<xsd:attribute name="xMin" type="R1Tensor" default="{-1.79769e+308,-1.79769e+308,-1.79769e+308}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1344,6 +1395,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
 		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
 		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
+		<!--useGlobalIds => Controls the use of global IDs in the input file for cells and points. If set to 0 (default value), the GlobalId arrays in the input mesh are used if available, and generated otherwise. If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated. If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available-->
+		<xsd:attribute name="useGlobalIds" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1509,6 +1562,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="lineSearchMaxCuts" type="integer" default="4" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxAllowedResidualNorm => Maximum value of residual norm that is allowed in a Newton loop-->
+		<xsd:attribute name="maxAllowedResidualNorm" type="real64" default="1e+09" />
 		<!--maxNumConfigurationAttempts => Max number of times that the configuration can be changed-->
 		<xsd:attribute name="maxNumConfigurationAttempts" type="integer" default="10" />
 		<!--maxSubSteps => Maximum number of time sub-steps allowed for the solver-->
@@ -1701,6 +1756,7 @@ the relative residual norm satisfies:
 			<xsd:element name="LagrangianContact" type="LagrangianContactType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="MultiphasePoromechanics" type="MultiphasePoromechanicsType" />
+			<xsd:element name="MultiphasePoromechanicsReservoir" type="MultiphasePoromechanicsReservoirType" />
 			<xsd:element name="PhaseFieldDamageFEM" type="PhaseFieldDamageFEMType" />
 			<xsd:element name="PhaseFieldFracture" type="PhaseFieldFractureType" />
 			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
@@ -1709,6 +1765,7 @@ the relative residual norm satisfies:
 			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
 			<xsd:element name="SinglePhasePoromechanics" type="SinglePhasePoromechanicsType" />
 			<xsd:element name="SinglePhasePoromechanicsEmbeddedFractures" type="SinglePhasePoromechanicsEmbeddedFracturesType" />
+			<xsd:element name="SinglePhasePoromechanicsReservoir" type="SinglePhasePoromechanicsReservoirType" />
 			<xsd:element name="SinglePhaseProppantFVM" type="SinglePhaseProppantFVMType" />
 			<xsd:element name="SinglePhaseReservoir" type="SinglePhaseReservoirType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType">
@@ -1765,7 +1822,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="allowLocalCompDensityChopping" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object to use for this solver.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
@@ -1776,7 +1833,11 @@ the relative residual norm satisfies:
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
-		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
+		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
+		<!--maxRelativePressureChange => Maximum (relative) change in pressure between two Newton iterations-->
+		<xsd:attribute name="maxRelativePressureChange" type="real64" default="0.5" />
+		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature between two Newton iterations-->
+		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.5" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
@@ -1795,7 +1856,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="allowLocalCompDensityChopping" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object to use for this solver.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
@@ -1806,9 +1867,11 @@ the relative residual norm satisfies:
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
-		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
-		<!--maxRelativePressureChange => Maximum (relative) change in (face) pressure between two Newton iterations-->
-		<xsd:attribute name="maxRelativePressureChange" type="real64" default="1" />
+		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
+		<!--maxRelativePressureChange => Maximum (relative) change in pressure between two Newton iterations-->
+		<xsd:attribute name="maxRelativePressureChange" type="real64" default="0.5" />
+		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature between two Newton iterations-->
+		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.5" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
@@ -1929,6 +1992,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="FractureRegion" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1975,8 +2040,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 * FIM
 * SIM_FixedStress-->
 		<xsd:attribute name="couplingTypeOption" type="geosx_HydrofractureSolver_CouplingTypeOption" use="required" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -2008,6 +2071,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fractureRegionName => Name of the fracture region.-->
 		<xsd:attribute name="fractureRegionName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -2059,8 +2124,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -2071,6 +2134,26 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MultiphasePoromechanicsReservoirType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
+		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--wellSolverName => Name of the well solver used by the coupled solver-->
+		<xsd:attribute name="wellSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2142,7 +2225,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--criticalShieldsNumber => Critical Shields number-->
 		<xsd:attribute name="criticalShieldsNumber" type="real64" default="0" />
-		<!--discretization => Name of discretization object to use for this solver.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--frictionCoefficient => Friction coefficient-->
 		<xsd:attribute name="frictionCoefficient" type="real64" default="0.03" />
@@ -2180,7 +2263,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
-		<!--discretization => Name of discretization object to use for this solver.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--enableEnergyBalance => Enable energy balance calculation and temperature degree of freedom-->
 		<xsd:attribute name="enableEnergyBalance" type="integer" use="required" />
@@ -2216,7 +2299,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object to use for this solver.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
@@ -2240,7 +2323,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object to use for this solver.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
@@ -2264,8 +2347,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -2301,6 +2382,26 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="SinglePhasePoromechanicsReservoirType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
+		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--wellSolverName => Name of the well solver used by the coupled solver-->
+		<xsd:attribute name="wellSolverName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseProppantFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -2308,7 +2409,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object to use for this solver.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
@@ -2526,6 +2627,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="Fracture" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -3735,6 +3838,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
 		<!--defaultAperture => The default aperture of newly formed surface elements.-->
 		<xsd:attribute name="defaultAperture" type="real64" use="required" />
+		<!--faceBlock => The name of the face block in the mesh, or the embedded surface.-->
+		<xsd:attribute name="faceBlock" type="string" default="FractureSubRegion" />
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--meshBody => Mesh body that contains this region-->
