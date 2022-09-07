@@ -332,18 +332,24 @@ public:
   /**
    * @brief Empty method, here for compatibility with methods that require a stabilization of the
    * grad-grad bilinear form.
-   * @tparam MATRIXTYPE The type of @p matrix.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
+   * @tparam MAXSUPPORTPOINTS Maximum number of support points allowed for this element.
+   * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables as filled by @ref setupStack.
    * @param matrix The matrix that needs to be stabilized.
    */
-  template< typename MATRIXTYPE >
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS, bool UPPER >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void addGradGradStabilization( StackVariables const & stack,
-                                        MATRIXTYPE & matrix )
+                                        real64 ( & matrix )
+                                        [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT]
+                                        [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT],
+                                        real64 const & scaleFactor )
   {
     GEOSX_UNUSED_VAR( stack,
-                      matrix );
+                      matrix,
+                      scaleFactor );
   }
 
 
@@ -364,9 +370,38 @@ public:
                                        [LEAF::maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT],
                                        real64 const scaleFactor = 1.0 ) const
   {
-    LEAF::template addGradGradStabilization< NUMDOFSPERTRIALSUPPORTPOINT, UPPER >( stack,
-                                                                                   matrix,
-                                                                                   scaleFactor );
+    LEAF::template addGradGradStabilization< NUMDOFSPERTRIALSUPPORTPOINT,
+                                             LEAF::maxSupportPoints,
+                                             UPPER >( stack,
+                                                      matrix,
+                                                      scaleFactor );
+  }
+
+  /**
+   * @brief Empty method, here for compatibility with methods that require a stabilization of the
+   * grad-grad bilinear form.
+   * @details This method is intended to be used with @p targetVector being the residual and @p dofs
+   * being the degrees of freedom of the previous solution.
+   * @tparam NUMDOFSPERTRIALSUPPORTPOINT Number of degrees of freedom for each support point.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @param dofs The degrees of freedom of the function where the stabilization operator has to be
+   * evaluated.
+   * @param targetVector The input vector to which values have to be added, seen in chunks of length
+   * @p NUMDOFSPERTRIALSUPPORTPOINT.
+   * @param scaleFactor Scaling of the stabilization matrix.
+   */
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void addEvaluatedGradGradStabilization( StackVariables const & stack,
+                                                 real64 const ( &dofs )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 ( &targetVector )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 const scaleFactor )
+  {
+    GEOSX_UNUSED_VAR( stack );
+    GEOSX_UNUSED_VAR( dofs );
+    GEOSX_UNUSED_VAR( targetVector );
+    GEOSX_UNUSED_VAR( scaleFactor );
   }
 
   /**
@@ -394,7 +429,7 @@ public:
                                            real64 const scaleFactor = 1.0 ) const
   {
     LEAF::template
-    addEvaluatedGradGradStabilization< NUMDOFSPERTRIALSUPPORTPOINT >( stack,
+    addEvaluatedGradGradStabilization< NUMDOFSPERTRIALSUPPORTPOINT, LEAF::maxSupportPoints >( stack,
                                                                       dofs,
                                                                       targetVector,
                                                                       scaleFactor );
