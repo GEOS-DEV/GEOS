@@ -39,6 +39,8 @@
       fieldName="Damage"
       
       localDissipation="Linear"
+      irreversibilityFlag="1"
+      damageUpperBound="1.0"
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters

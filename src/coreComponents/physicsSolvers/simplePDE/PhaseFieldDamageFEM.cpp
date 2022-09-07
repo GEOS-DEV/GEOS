@@ -70,6 +70,11 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Type of local dissipation function. Can be Linear or Quadratic" );
 
+  registerWrapper( viewKeyStruct::irreversibilityFlagString(), &m_irreversibilityFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether to apply the irreversibility constraint" );
+
   registerWrapper( viewKeyStruct::damageUpperBoundString(), &m_damageUpperBound ).
     setApplyDefaultValue( 1.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -459,9 +464,10 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
   applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 
   // Apply the crack irreversibility constraint
-#if 1 // TODO: set a flag to check whether to call the irreversibility function
-  applyIrreversibilityConstraint( dofManager, domain, localMatrix, localRhs );
-#endif
+  if( m_irreversibilityFlag )
+  {
+    applyIrreversibilityConstraint( dofManager, domain, localMatrix, localRhs );
+  }
 
   if( getLogLevel() == 2 )
   {
