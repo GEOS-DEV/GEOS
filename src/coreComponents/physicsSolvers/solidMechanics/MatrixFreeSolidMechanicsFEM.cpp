@@ -76,14 +76,13 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
       arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > localDst2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localDst.dataBuffer() );
       TeamSolidMechanicsFEMKernelFactory kernelFactory( localSrc2d, localDst2d );
 
-      string const dummyString = "dummy";
       finiteElement::
         regionBasedKernelApplication< team_launch_policy,
-                                      constitutive::ElasticIsotropic,
+                                      constitutive::SolidBase,
                                       CellElementSubRegion >( mesh,
                                                               regionNames,
                                                               m_finiteElementName,
-                                                              dummyString,
+                                                              "solidMaterialNames",
                                                               kernelFactory );
 
     } );
