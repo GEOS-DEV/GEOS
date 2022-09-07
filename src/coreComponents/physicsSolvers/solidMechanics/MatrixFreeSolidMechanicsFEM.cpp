@@ -239,10 +239,11 @@ void MatrixFreeSolidMechanicsFEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
 
-    nodes.registerWrapper< real64_array >( m_fieldName ).
-      setApplyDefaultValue( 0.0 ).
+    nodes.registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement ).
       setPlotLevel( PlotLevel::LEVEL_0 ).
-      setDescription( m_fieldName );
+      setRegisteringObjects( this->getName()).
+      setDescription( "An array that holds the total displacements on the nodes." ).
+      reference().resizeDimension< 1 >( 3 );
   } );
 }
 
