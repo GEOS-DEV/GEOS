@@ -734,12 +734,11 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
 }
 
 void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements,
-                                  FaceElementSubRegion const & faceElemSubRegion,
-                                  EdgeManager & edgeManager )
+                                  FaceElementSubRegion & faceElemSubRegion )
 {
-  ArrayOfArrays< localIndex > & connectorToElem = edgeManager.m_fractureConnectorEdgesToFaceElements;
-  map< localIndex, localIndex > & edgesToConnectorEdges = edgeManager.m_edgesToFractureConnectorsEdges;
-  array1d< localIndex > & connectorEdgesToEdges = edgeManager.m_fractureConnectorsEdgesToEdges;
+  ArrayOfArrays< localIndex > & connectorToElem = faceElemSubRegion.m_fractureConnectorEdgesToFaceElements;
+  map< localIndex, localIndex > & edgesToConnectorEdges = faceElemSubRegion.m_edgesToFractureConnectorsEdges;
+  array1d< localIndex > & connectorEdgesToEdges = faceElemSubRegion.m_fractureConnectorsEdgesToEdges;
 
   ArrayOfArraysView< localIndex const > const facesToEdges = faceElemSubRegion.edgeList().toViewConst();
 
@@ -772,7 +771,7 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
       {
         connectorToElem.resizeArray( connectorIndex, numExistingCells+1 );
         connectorToElem[connectorIndex][ numExistingCells ] = kfe;
-        edgeManager.m_recalculateFractureConnectorEdges.insert( connectorIndex );
+        faceElemSubRegion.m_recalculateFractureConnectorEdges.insert( connectorIndex );
       }
     }
   }
@@ -968,9 +967,9 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
   elemManager.forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex const er,
                                                                          localIndex const esr,
                                                                          ElementRegionBase const &,
-                                                                         FaceElementSubRegion const & subRegion )
+                                                                         FaceElementSubRegion & subRegion )
   {
-    updateConnectorsToFaceElems( receivedObjects.newElements.at( {er, esr} ), subRegion, edgeManager );
+    updateConnectorsToFaceElems( receivedObjects.newElements.at( {er, esr} ), subRegion );
   } );
 
 
