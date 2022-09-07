@@ -395,7 +395,7 @@ public:
   GEOSX_FORCE_INLINE
   static void addEvaluatedGradGradStabilization( StackVariables const & stack,
                                                  real64 const ( &dofs )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
-                                                 real64 ( &targetVector )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
+                                                 real64 ( & targetVector )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
                                                  real64 const scaleFactor )
   {
     GEOSX_UNUSED_VAR( stack );
@@ -430,9 +430,9 @@ public:
   {
     LEAF::template
     addEvaluatedGradGradStabilization< NUMDOFSPERTRIALSUPPORTPOINT, LEAF::maxSupportPoints >( stack,
-                                                                      dofs,
-                                                                      targetVector,
-                                                                      scaleFactor );
+                                                                                              dofs,
+                                                                                              targetVector,
+                                                                                              scaleFactor );
   }
 
   /**
