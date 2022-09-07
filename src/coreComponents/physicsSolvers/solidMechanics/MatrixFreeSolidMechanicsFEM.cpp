@@ -92,7 +92,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
 
 void MatrixFreeSolidMechanicsFEMOperator::computeDiagonal( ParallelVector & diagonal ) const
 {
-  // TODO: error, not yet implemented
+  GEOSX_ERROR( "computeDiagonal: operation not yet implemented" );
 }
 
 globalIndex MatrixFreeSolidMechanicsFEMOperator::numGlobalRows() const
