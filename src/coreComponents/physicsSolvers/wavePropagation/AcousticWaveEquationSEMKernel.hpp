@@ -399,12 +399,12 @@ struct PMLKernelHelper
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void computeDampingProfilePML( real64 const (&xLocal)[3],
-                                        real64 const (&xMin)[3],
-                                        real64 const (&xMax)[3],
-                                        real64 const (&dMin)[3],
-                                        real64 const (&dMax)[3],
-                                        real64 const (&cMin)[3],
-                                        real64 const (&cMax)[3],
+                                        real32 const (&xMin)[3],
+                                        real32 const (&xMax)[3],
+                                        real32 const (&dMin)[3],
+                                        real32 const (&dMax)[3],
+                                        real32 const (&cMin)[3],
+                                        real32 const (&cMax)[3],
                                         real32 const r,
                                         real32 (& sigma)[3] )
   {
@@ -484,12 +484,12 @@ struct PMLKernel
           arrayView1d< real32 const > const p_n,
           arrayView2d< real32 const > const v_n,
           arrayView1d< real32 const > const u_n,
-          real64 const (&xMin)[3],
-          real64 const (&xMax)[3],
-          real64 const (&dMin)[3],
-          real64 const (&dMax)[3],
-          real64 const (&cMin)[3],
-          real64 const (&cMax)[3],
+          real32 const (&xMin)[3],
+          real32 const (&xMax)[3],
+          real32 const (&dMin)[3],
+          real32 const (&dMax)[3],
+          real32 const (&cMin)[3],
+          real32 const (&cMax)[3],
           real32 const r,
           arrayView2d< real32 > const grad_n,
           arrayView1d< real32 > const divV_n )
@@ -628,10 +628,10 @@ struct waveSpeedPMLKernel
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
           arrayView1d< real32 const > const velocity,
-          real64 const (&xMin)[3],
-          real64 const (&xMax)[3],
-          real64 (& cMin)[3],
-          real64 (& cMax)[3],
+          real32 const (&xMin)[3],
+          real32 const (&xMax)[3],
+          real32 (& cMin)[3],
+          real32 (& cMax)[3],
           int (& counterMin)[3],
           int (& counterMax)[3] )
   {

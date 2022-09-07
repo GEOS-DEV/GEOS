@@ -569,12 +569,12 @@ void AcousticWaveEquationSEM::initializePML()
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
     indicatorPML.zero();
 
-    real64 xInteriorMin[3]{};
-    real64 xInteriorMax[3]{};
-    real64 xGlobalMin[3]{};
-    real64 xGlobalMax[3]{};
-    real64 cMin[3]{};
-    real64 cMax[3]{};
+    real32 xInteriorMin[3]{};
+    real32 xInteriorMax[3]{};
+    real32 xGlobalMin[3]{};
+    real32 xGlobalMax[3]{};
+    real32 cMin[3]{};
+    real32 cMax[3]{};
     integer counterMin[3]{};
     integer counterMax[3]{};
 
@@ -610,18 +610,18 @@ void AcousticWaveEquationSEM::initializePML()
 
 
     /// find the interior and global coordinates limits
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > xMinGlobal( LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > yMinGlobal( LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > zMinGlobal( LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > xMaxGlobal( -LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > yMaxGlobal( -LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > zMaxGlobal( -LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > xMinInterior( LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > yMinInterior( LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > zMinInterior( LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > xMaxInterior( -LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > yMaxInterior( -LvArray::NumericLimits< real64 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > zMaxInterior( -LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > xMinGlobal( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > yMinGlobal( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > zMinGlobal( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > xMaxGlobal( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxGlobal( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxGlobal( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > xMinInterior( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > yMinInterior( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > zMinInterior( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > xMaxInterior( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxInterior( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxInterior( -LvArray::NumericLimits< real32 >::max );
 
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -698,8 +698,8 @@ void AcousticWaveEquationSEM::initializePML()
       finiteElement::FiniteElementBase const &
       fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
-      real64 const xMin[3]{param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
-      real64 const xMax[3]{param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
+      real32 const xMin[3]{param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
+      real32 const xMax[3]{param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
 
       finiteElement::dispatch3D( fe,
                                  [&]
@@ -751,12 +751,12 @@ void AcousticWaveEquationSEM::initializePML()
     {
       if( param.thicknessMinXYZPML[i]<=minThicknessPML )
       {
-        param.thicknessMinXYZPML[i]=LvArray::NumericLimits< real64 >::max;
+        param.thicknessMinXYZPML[i]=LvArray::NumericLimits< real32 >::max;
         param.waveSpeedMinXYZPML[i]=0;
       }
       if( param.thicknessMaxXYZPML[i]<=minThicknessPML )
       {
-        param.thicknessMaxXYZPML[i]=LvArray::NumericLimits< real64 >::max;
+        param.thicknessMaxXYZPML[i]=LvArray::NumericLimits< real32 >::max;
         param.waveSpeedMaxXYZPML[i]=0;
       }
     }
@@ -832,12 +832,12 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
       finiteElement::FiniteElementBase const &
       fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
-      real64 xMin[3];
-      real64 xMax[3];
-      real64 dMin[3];
-      real64 dMax[3];
-      real64 cMin[3];
-      real64 cMax[3];
+      real32 xMin[3];
+      real32 xMax[3];
+      real32 dMin[3];
+      real32 dMax[3];
+      real32 cMin[3];
+      real32 cMax[3];
       for( integer i=0; i<3; ++i )
       {
         xMin[i] = param.xMinPML[i];
@@ -962,12 +962,12 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       arrayView1d< real32 > const u_n = nodeManager.getExtrinsicData< extrinsicMeshData::AuxiliaryVar4PML >();
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
-      real64 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
-      real64 const xMax[ 3 ] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
-      real64 const dMin[ 3 ] = {param.thicknessMinXYZPML[0], param.thicknessMinXYZPML[1], param.thicknessMinXYZPML[2]};
-      real64 const dMax[ 3 ] = {param.thicknessMaxXYZPML[0], param.thicknessMaxXYZPML[1], param.thicknessMaxXYZPML[2]};
-      real64 const cMin[ 3 ] = {param.waveSpeedMinXYZPML[0], param.waveSpeedMinXYZPML[1], param.waveSpeedMinXYZPML[2]};
-      real64 const cMax[ 3 ] = {param.waveSpeedMaxXYZPML[0], param.waveSpeedMaxXYZPML[1], param.waveSpeedMaxXYZPML[2]};
+      real32 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
+      real32 const xMax[ 3 ] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
+      real32 const dMin[ 3 ] = {param.thicknessMinXYZPML[0], param.thicknessMinXYZPML[1], param.thicknessMinXYZPML[2]};
+      real32 const dMax[ 3 ] = {param.thicknessMaxXYZPML[0], param.thicknessMaxXYZPML[1], param.thicknessMaxXYZPML[2]};
+      real32 const cMin[ 3 ] = {param.waveSpeedMinXYZPML[0], param.waveSpeedMinXYZPML[1], param.waveSpeedMinXYZPML[2]};
+      real32 const cMax[ 3 ] = {param.waveSpeedMaxXYZPML[0], param.waveSpeedMaxXYZPML[1], param.waveSpeedMaxXYZPML[2]};
       real32 const r = param.reflectivityPML;
 
       /// apply the main function to update some of the PML auxiliary variables

@@ -191,6 +191,7 @@ constexpr bool is_sorted_array_type = traits::is_sorted_array_view< T > || trait
 /// True if T is a Tensor class.
 template< typename T >
 constexpr bool is_tensorT = std::is_same< std::remove_const_t< T >, R1Tensor >::value ||
+                            std::is_same< std::remove_const_t< T >, R1Tensor32b >::value ||
                             std::is_same< std::remove_const_t< T >, R2SymTensor >::value;
 
 /// True of T has operator=() defined.
