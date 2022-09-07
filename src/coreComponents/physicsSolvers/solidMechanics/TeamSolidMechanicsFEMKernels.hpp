@@ -22,6 +22,7 @@
 
 #define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
+#include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "finiteElement/TeamKernelInterface/TeamKernelBase.hpp"
 #include "finiteElement/TeamKernelInterface/TeamKernelFunctions/TeamKernelFunctions.hpp"
 #include "finiteElement/TeamKernelInterface/QuadraturePointKernelFunctions/QuadratureFunctionsHelper.hpp"
@@ -99,35 +100,14 @@ public:
                                SUBREGION_TYPE const & elementSubRegion,
                                FE_TYPE const & finiteElementSpace,
                                CONSTITUTIVE_TYPE & inputConstitutiveType, // end of default args
-                               arrayView1d< real64 const > const inputSrc,
-                               arrayView1d< real64 > const inputDst ):
+                               arrayView2d< real64 const > const inputSrc,
+                               arrayView2d< real64 > const inputDst ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
     m_X( nodeManager.referencePosition() ),
     m_src( inputSrc ),
     m_dst( inputDst )
-  {
-    GEOSX_UNUSED_VAR( edgeManager );
-    GEOSX_UNUSED_VAR( faceManager );
-    GEOSX_UNUSED_VAR( targetRegionIndex );
-  }
-
-  TeamSolidMechanicsFEMKernel( NodeManager const & nodeManager,
-                               EdgeManager const & edgeManager,
-                               FaceManager const & faceManager,
-                               localIndex const targetRegionIndex,
-                               SUBREGION_TYPE const & elementSubRegion,
-                               FE_TYPE const & finiteElementSpace,
-                               CONSTITUTIVE_TYPE & inputConstitutiveType, // end of default args
-                               arrayView1d< real64 > const inputRhs,
-                               string const fieldName ):
-    Base( elementSubRegion,
-          finiteElementSpace,
-          inputConstitutiveType ),
-    m_X( nodeManager.referencePosition() ),
-    m_src( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_dst( inputRhs )
   {
     GEOSX_UNUSED_VAR( edgeManager );
     GEOSX_UNUSED_VAR( faceManager );
@@ -257,7 +237,7 @@ public:
 
     // Computation of the strain
     real64 strain[ dim ][ dim ];
-    for (localIndex i = 0; i < dim; i++)
+    for (localIndex j = 0; j < dim; j++)
     {
       for (localIndex i = 0; i < dim; i++)
       {
@@ -266,14 +246,14 @@ public:
     }
 
     // Local material stiffness values
-    real64 D_mat[ 2*dim ][ 2*dim ];
-    qLocalLoad( quad_index, stack.element.getMaterialStiffnes(), D_mat );
+    // real64 D_mat[ 2*dim ][ 2*dim ];
+    // qLocalLoad( quad_index, stack.element.getMaterialStiffnes(), D_mat );
     
     // Computation of the stress
     real64 stress[ dim ][ dim ];
     // computeStress< DiscretizationOps >( D_mat, strain, stress ); // Tensor product
     // DiscretizationOps::computeStress( stack.element.getMaterialStiffnes(), strain, stress ); // Tensor product
-    computeStress( stack, strain, stress);
+    computeStress( stack, strain, stress );
 
     // Apply J^-T
     real64 D[ dim ][ dim ];
@@ -295,14 +275,14 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void computeStress( StackVariables & stack,
-                      real64 const ( &strain )[ dim ][ dim ],
-                      real64 ( & stress )[ dim ][ dim ] ) const
+                      real64 const ( &strain )[ 3 ][ 3 ],
+                      real64 ( & stress )[ 3 ][ 3 ] ) const
   {
     localIndex const k = stack.element_index;
     real64 const mu = m_shearModulus[k];
     real64 const bulkModulus = m_bulkModulus[k];
     real64 const twoG   = 2 * mu;
-    real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( bulkModulus, mu );
+    real64 const lambda = constitutive::conversions::bulkModAndShearMod::toFirstLame( bulkModulus, mu );
     real64 const vol    = lambda * ( strain[0][0] + strain[1][1] + strain[2][2] );
 
     stress[0][0] = vol + twoG * strain[0][0];
@@ -377,11 +357,8 @@ public:
 
 /// The factory used to construct a TeamSolidMechanicsFEMKernel.
 using TeamSolidMechanicsFEMKernelFactory = finiteElement::KernelFactory< TeamSolidMechanicsFEMKernel,
-                                                                  arrayView2d< real64 > const,
-                                                                  string const >;
-using TeamSolidMechanicsFEMKernelFactory2 = finiteElement::KernelFactory< TeamSolidMechanicsFEMKernel,
-                                                                  arrayView2d< real64 const > const,
-                                                                  arrayView2d< real64 > const >;
+                                                                         arrayView2d< real64 const > const,
+                                                                         arrayView2d< real64 > const >;
 
 } // namesapce geosx
 

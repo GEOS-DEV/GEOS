@@ -23,6 +23,7 @@
 #include "mesh/MeshBody.hpp"
 #include "linearAlgebra/solvers/CgSolver.hpp"
 #include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
+#include "linearAlgebra/common/LinearOperatorWithBC.hpp"
 
 namespace geosx
 {
@@ -69,8 +70,10 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
     MeshBody & meshBody = m_meshBodies.getGroup< MeshBody >( meshBodyName );
     meshBody.forMeshLevels( [&]( MeshLevel & mesh )
     {
-
-      TeamSolidMechanicsFEMKernelFactory2 kernelFactory( localSrc, localDst );
+      auto const & totalDisplacement = mesh.getNodeManager().totalDisplacement();
+      arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > localSrc2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localSrc.dataBuffer() );
+      arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > localDst2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localDst.dataBuffer() );
+      TeamSolidMechanicsFEMKernelFactory kernelFactory( localSrc2d, localDst2d );
 
       string const dummyString = "dummy";
       finiteElement::
@@ -113,35 +116,6 @@ localIndex MatrixFreeSolidMechanicsFEMOperator::numLocalCols() const
 }
 
 MPI_Comm MatrixFreeSolidMechanicsFEMOperator::comm() const
-{
-  return MPI_COMM_GEOSX;
-}
-
-MatrixFreePreconditionerIdentity::MatrixFreePreconditionerIdentity( DofManager & dofManager )
-: m_dofManager( dofManager )
-{ }
-
-globalIndex MatrixFreePreconditionerIdentity::numGlobalRows() const
-{
-  return m_dofManager.numGlobalDofs();
-}
-
-globalIndex MatrixFreePreconditionerIdentity::numGlobalCols() const
-{
-  return m_dofManager.numGlobalDofs();
-}
-
-localIndex MatrixFreePreconditionerIdentity::numLocalRows() const
-{
-  return m_dofManager.numLocalDofs();
-}
-
-localIndex MatrixFreePreconditionerIdentity::numLocalCols() const
-{
-  return m_dofManager.numLocalDofs();
-}
-
-MPI_Comm MatrixFreePreconditionerIdentity::comm() const
 {
   return MPI_COMM_GEOSX;
 }
@@ -232,7 +206,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 
   constrained_solid_mechanics.computeConstrainedRHS( m_rhs );
 
-  MatrixFreePreconditionerIdentity identity( m_dofManager );
+  MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );
 
   auto & params = m_linearSolverParameters.get();
   params.isSymmetric = true;
@@ -242,36 +216,6 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 
   applySystemSolution( m_dofManager, m_solution.values(), 1.0, domain );
 
-  return dt;
-}
-
-real64 MatrixFreeSolidMechanicsFEM::explicitStep( real64 const & time_n,
-                                                  real64 const & dt,
-                                                  const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                                  DomainPartition & domain )
-{
-  m_rhs.zero();
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
-  {
-
-    arrayView1d< real64 > const localRhs = m_rhs.open();
-  
-    TeamSolidMechanicsFEMKernelFactory kernelFactory( localRhs, m_fieldName );
-
-    string const dummyString = "dummy";
-    finiteElement::
-      regionBasedKernelApplication< team_launch_policy,
-                                    constitutive::NullModel,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            this->getDiscretizationName(),
-                                                            dummyString,
-                                                            kernelFactory );
-
-    m_rhs.close();
-  } );
   return dt;
 }
 
