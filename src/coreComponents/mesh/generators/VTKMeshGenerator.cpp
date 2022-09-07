@@ -475,7 +475,7 @@ std::vector< T > collectUniqueValues( std::vector< T > const & data )
  * @param cell The VTK cell, type polyhedron (42)
  * @return int The type of polyhedron:
  *              =0 represent a general polyhedron
- *              >0 correspond to the equivalent vtk cell (10, 12, 13, 14, 15, 16)
+ *              >0 correspond to the equivalent standard vtk cell (10, 12, 13, 14, 15, 16)
  *             N<0 identify a prism with (-N) sides
  */
 int polyhedronType( vtkCell * const cell )
@@ -532,10 +532,10 @@ int polyhedronType( vtkCell * const cell )
   if( ListQuadsPoints == ListNoQuadsPoints ) // The polyhedron is a prism
   {
     if( numberOfQuads == 5 )
-      return 15;                           // VTK_PENTAGONAL_PRISM (=15)
+      return 15;                             // VTK_PENTAGONAL_PRISM (=15)
     if( numberOfQuads == 6 )
-      return 16;                           // VTK_HEXAGONAL_PRISM (=16)
-    return (-numberOfQuads);               // N_PRISM
+      return 16;                             // VTK_HEXAGONAL_PRISM (=16)
+    return (-numberOfQuads);                 // N_PRISM
   }
   else
     return 0;      // General polyhedron
@@ -546,7 +546,6 @@ int polyhedronType( vtkCell * const cell )
  * @param[in] cellType The vtk cell type
  * @return The GEOSX element type
  */
-//ElementType convertVtkToGeosxElementType( VTKCellType const cellType )
 ElementType convertVtkToGeosxElementType( vtkCell *cell )
 {
   VTKCellType cellType = (VTKCellType) cell->GetCellType();
@@ -629,7 +628,6 @@ splitCellsByType( vtkDataSet & mesh )
   std::array< size_t, numElementTypes() > cellTypeCounts{};
   for( vtkIdType c = 0; c < numCells; c++ )
   {
-//    ElementType const elemType = convertVtkToGeosxElementType( static_cast< VTKCellType >( mesh.GetCellType( c ) ) );
     ElementType const elemType = convertVtkToGeosxElementType( static_cast< vtkCell * >( mesh.GetCell( c ) ) );
     ++cellTypeCounts[static_cast< integer >( elemType )];
   }
@@ -644,7 +642,6 @@ splitCellsByType( vtkDataSet & mesh )
   // Collect cell lists for each type (using array for speed in a hot loop)
   for( vtkIdType c = 0; c < numCells; c++ )
   {
-//    ElementType const elemType = convertVtkToGeosxElementType( static_cast< VTKCellType >( mesh.GetCellType( c ) ) );
     ElementType const elemType = convertVtkToGeosxElementType( static_cast< vtkCell * >( mesh.GetCell( c ) ) );
     cellListsByType[static_cast< integer >( elemType )].push_back( c );
   }
@@ -774,7 +771,7 @@ void extendCellMapWithRemoteKeys( VTKMeshGenerator::CellMapType & cellMap )
 
 using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector< vtkIdType > > >;
 /**
- * @brief Get the Tetra Node Ordering From Polyhedron object
+ * @brief Get the tetrahedron node ordering from a vtk polyhedron (42)
  *
  * @param cell The VTK cell, type polyhedron (42)
  * @return std::vector< localIndex > list of nodes
@@ -816,7 +813,7 @@ std::vector< localIndex > getTetrahedronNodeOrderingFromPolyhedron( vtkCell * co
   return nodeOrder;
 }
 /**
- * @brief Get the Hexahedron Node Ordering From Polyhedron object
+ * @brief Get the hexahedron node ordering from a vtk polyhedron (42)
  *
  * @param cell The VTK cell, type polyhedron (42)
  * @return std::vector< localIndex >  list of nodes
@@ -875,7 +872,7 @@ std::vector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * con
 }
 
 /**
- * @brief Get the Wedge Node Ordering From Polyhedron object
+ * @brief Get the wedge node ordering from a vtk polyhedron (42)
  *
  * @param cell The VTK cell, type polyhedron (42)
  * @return std::vector< localIndex > list of nodes
@@ -955,7 +952,7 @@ std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const ce
 }
 
 /**
- * @brief Get the Pyramid Node Ordering From Polyhedron object
+ * @brief Get the pyramid node ordering from a vtk polyhedron (42)
  *
  * @param cell The VTK cell, type polyhedron (42)
  * @return std::vector< localIndex > list of nodes
@@ -1010,7 +1007,7 @@ std::vector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const 
   return nodeOrder;
 }
 /**
- * @brief Get the Prism Node Ordering From Polyhedron object
+ * @brief Get the prism node ordering from a vtk polyhedron (42)
  *
  * @tparam numberOfSides number of sides of the prism
  * @param cell The VTK cell, type polyhedron (42)
@@ -1070,7 +1067,6 @@ std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const ce
 
   return nodeOrder;
 }
-///////////////////////////////////////////////////////////////////////////////
 
 /**
  * @brief Collect lists of VTK cell indices organized by type and attribute value.
@@ -1213,7 +1209,6 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType, vtkCel
       default:                         return { };
     }
 }
-
 
 /**
  * @brief Fill @p cellBlock with the appropriate nodes and local/global mappings.
