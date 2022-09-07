@@ -28,20 +28,22 @@ namespace constitutive
 {
 
 RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group * const parent )
-  : ConstitutiveBase( name, parent )
-{
-  registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "List of fluid phases" );
+  : ConstitutiveBase( name, parent ) {
+    registerWrapper(viewKeyStruct::phaseNamesString(), &m_phaseNames).
+            setInputFlag(InputFlags::REQUIRED).
+            setDescription("List of fluid phases");
 
-  registerWrapper( viewKeyStruct::phaseTypesString(), &m_phaseTypes ).
-    setSizedFromParent( 0 );
+    registerWrapper(viewKeyStruct::phaseTypesString(), &m_phaseTypes).
+            setSizedFromParent(0);
 
-  registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
-    setSizedFromParent( 0 );
+    registerWrapper(viewKeyStruct::phaseOrderString(), &m_phaseOrder).
+            setSizedFromParent(0);
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseRelPerm{}, &m_phaseRelPerm );
-  registerExtrinsicData( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{}, &m_dPhaseRelPerm_dPhaseVolFrac );
+    registerExtrinsicData(extrinsicMeshData::relperm::phaseRelPerm{}, &m_phaseRelPerm);
+    registerExtrinsicData(extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{},
+                          &m_dPhaseRelPerm_dPhaseVolFrac);
+
+    registerExtrinsicData( extrinsicMeshData::relperm::phaseTrapped{}, &m_phaseTrapped);
 
 }
 
@@ -90,6 +92,9 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
 
   m_phaseRelPerm.resize( size, numPts, numPhases );
   m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases );
+  //phase trapped for stats
+  m_phaseTrapped.resize( size, numPhases );//2d(*) or 3d ??
+  m_phaseTrapped.setValues< parallelDevicePolicy<> >( 0.0 );
 }
 
 void RelativePermeabilityBase::setLabels()
@@ -103,6 +108,20 @@ void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group &
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
+}
+
+void RelativePermeabilityBase::updateTrappedPhaseVolFraction( arrayView2d<real64 const, compflow::USD_PHASE> const &phaseVolFraction) const {
+
+    arrayView2d<real64, compflow::USD_PHASE> phaseTrapped = m_phaseTrapped.toView();
+
+    localIndex const numElems = phaseVolFraction.size(0);
+    integer const numPhases = numFluidPhases();
+    forAll<parallelDevicePolicy<> >(numElems, [=] GEOSX_HOST_DEVICE(localIndex const ei) {
+        for (integer ip = 0; ip < numPhases; ++ip) {
+            phaseTrapped[ei][ip] = LvArray::math::min(phaseVolFraction[ei][ip],
+                                                      m_phaseMinVolumeFraction[ip]);
+        }
+    });
 }
 
 } // namespace constitutive

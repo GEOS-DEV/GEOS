@@ -125,7 +125,8 @@ public:
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac );
+                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+                   arrayView2d< real64, compflow::USD_PHASE > const & phaseTrapped );
 
     /**
      * @brief Function updating the relperm (and derivative) for a phase using the drainage table
@@ -335,6 +336,8 @@ private:
   KernelWrapper createKernelWrapper();
 
   virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const override;
+
+  virtual void updateTrappedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE> const & phaseVolFraction ) const override;
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {

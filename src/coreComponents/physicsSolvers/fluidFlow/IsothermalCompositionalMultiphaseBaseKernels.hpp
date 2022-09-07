@@ -1446,6 +1446,7 @@ struct StatisticsKernel
           arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDensity,
           arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFraction,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMassTrapped,
           arrayView1d< real64 const > const & phaseMinVolFrac,
           real64 & minPres,
           real64 & avgPresNumerator,
@@ -1486,6 +1487,7 @@ struct StatisticsKernel
                                              temp,
                                              phaseDensity,
                                              phaseVolFrac,
+                                             phaseMassTrapped,
                                              phaseMinVolFrac,
                                              phaseCompFraction,
                                              subRegionMinPres,
@@ -1526,7 +1528,8 @@ struct StatisticsKernel
       {
         real64 const elemPhaseVolume = dynamicPoreVol * phaseVolFrac[ei][ip];
         real64 const elemPhaseMass = phaseDensity[ei][0][ip] * elemPhaseVolume;
-        real64 const immobileMass = phaseDensity[ei][0][ip] * dynamicPoreVol * std::min(phaseVolFrac[ei][ip],phaseMinVolFrac[ip]);
+//        real64 const immobileMass = phaseDensity[ei][0][ip] * dynamicPoreVol * std::min(phaseVolFrac[ei][ip],phaseMinVolFrac[ip]);
+        real64 const immobileMass = phaseDensity[ei][0][ip] * dynamicPoreVol * phaseMassTrapped[ei][ip];
         // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseDynamicPoreVol[ip], elemPhaseVolume );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseMass[ip], elemPhaseMass );

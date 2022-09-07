@@ -57,25 +57,28 @@ public:
 
 protected:
 
-  RelativePermeabilityBaseUpdate( arrayView1d< integer const > const & phaseTypes,
-                                  arrayView1d< integer const > const & phaseOrder,
-                                  arrayView1d< real64 const > const & phaseMin,
-                                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                                  arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
-    : m_phaseTypes( phaseTypes ),
-    m_phaseOrder( phaseOrder ),
-    m_phaseMinVolumeFraction(phaseMin),
-    m_phaseRelPerm( phaseRelPerm ),
-    m_dPhaseRelPerm_dPhaseVolFrac( dPhaseRelPerm_dPhaseVolFrac )
-  {}
+    RelativePermeabilityBaseUpdate(arrayView1d<integer const> const &phaseTypes,
+                                   arrayView1d<integer const> const &phaseOrder,
+                                   arrayView1d<real64 const> const &phaseMin,
+                                   arrayView3d<real64, relperm::USD_RELPERM> const &phaseRelPerm,
+                                   arrayView4d<real64, relperm::USD_RELPERM_DS> const &dPhaseRelPerm_dPhaseVolFrac,
+                                   arrayView2d<real64, compflow::USD_PHASE> const &phaseTrapped)
+            : m_phaseTypes(phaseTypes),
+              m_phaseOrder(phaseOrder),
+              m_phaseMinVolumeFraction(phaseMin),
+              m_phaseRelPerm(phaseRelPerm),
+              m_dPhaseRelPerm_dPhaseVolFrac(dPhaseRelPerm_dPhaseVolFrac),
+              m_phaseTrapped(phaseTrapped) {}
 
-  arrayView1d< integer const > m_phaseTypes;
-  arrayView1d< integer const > m_phaseOrder;
+    arrayView1d<integer const> m_phaseTypes;
+    arrayView1d<integer const> m_phaseOrder;
 
-    arrayView1d< real64 const > m_phaseMinVolumeFraction;
+    arrayView1d<real64 const> m_phaseMinVolumeFraction;
 
-  arrayView3d< real64, relperm::USD_RELPERM > m_phaseRelPerm;
-  arrayView4d< real64, relperm::USD_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
+    arrayView3d<real64, relperm::USD_RELPERM> m_phaseRelPerm;
+    arrayView4d<real64, relperm::USD_RELPERM_DS> m_dPhaseRelPerm_dPhaseVolFrac;
+
+    arrayView2d<real64, compflow::USD_PHASE> m_phaseTrapped;
 
 
 private:
@@ -131,7 +134,8 @@ public:
 
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
-  arrayView1d< real64 const> phaseMinVolFrac() const { return m_phaseMinVolumeFraction; }
+  arrayView1d< real64 const> phaseMinVolumeFraction() const { return m_phaseMinVolumeFraction; }
+  arrayView2d< real64 const, compflow::USD_PHASE > phaseTrapped() const { return m_phaseTrapped; }
 
   arrayView3d< real64 const, relperm::USD_RELPERM > phaseRelPerm() const { return m_phaseRelPerm; }
   arrayView4d< real64 const, relperm::USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
@@ -142,6 +146,12 @@ public:
    */
   virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
   { GEOSX_UNUSED_VAR( phaseVolFraction ); }
+
+  /**
+   * @brief init and save trapped volfrac at the end of time step in each element
+   * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
+   */
+    virtual void updateTrappedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE> const & phaseVolFraction ) const;
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -169,17 +179,18 @@ protected:
 
   virtual void postProcessInput() override;
 
-  // phase names read from input
-  string_array m_phaseNames;
+    // phase names read from input
+    string_array m_phaseNames;
 
-  // phase ordering info
-  array1d< integer > m_phaseTypes;
-  array1d< integer > m_phaseOrder;
-array1d< real64 > m_phaseMinVolumeFraction;
+    // phase ordering info
+    array1d<integer> m_phaseTypes;
+    array1d<integer> m_phaseOrder;
+    array1d<real64> m_phaseMinVolumeFraction;
 
-  // output quantities
-  array3d< real64, relperm::LAYOUT_RELPERM >  m_phaseRelPerm;
-  array4d< real64, relperm::LAYOUT_RELPERM_DS >  m_dPhaseRelPerm_dPhaseVolFrac;
+    // output quantities
+    array3d<real64, relperm::LAYOUT_RELPERM> m_phaseRelPerm;
+    array4d<real64, relperm::LAYOUT_RELPERM_DS> m_dPhaseRelPerm_dPhaseVolFrac;
+    array2d<real64, compflow::LAYOUT_PHASE> m_phaseTrapped;
 
 };
 

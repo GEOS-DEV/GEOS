@@ -30,19 +30,21 @@ class BrooksCoreyRelativePermeabilityUpdate final : public RelativePermeabilityB
 {
 public:
 
-  BrooksCoreyRelativePermeabilityUpdate( arrayView1d< real64 const > const & phaseMinVolumeFraction,
-                                         arrayView1d< real64 const > const & phaseRelPermExponent,
-                                         arrayView1d< real64 const > const & phaseRelPermMaxValue,
-                                         real64 const volFracScale,
-                                         arrayView1d< integer const > const & phaseTypes,
-                                         arrayView1d< integer const > const & phaseOrder,
-                                         arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                                         arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
-    : RelativePermeabilityBaseUpdate( phaseTypes,
+    BrooksCoreyRelativePermeabilityUpdate(arrayView1d<real64 const> const &phaseMinVolumeFraction,
+                                          arrayView1d<real64 const> const &phaseRelPermExponent,
+                                          arrayView1d<real64 const> const &phaseRelPermMaxValue,
+                                          real64 const volFracScale,
+                                          arrayView1d<integer const> const &phaseTypes,
+                                          arrayView1d<integer const> const &phaseOrder,
+                                          arrayView3d<real64, relperm::USD_RELPERM> const & phaseRelPerm,
+                                          arrayView4d<real64, relperm::USD_RELPERM_DS> const & dPhaseRelPerm_dPhaseVolFrac,
+                                          arrayView2d<real64, compflow::USD_PHASE > const & phaseTrapped)
+            : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
                                       phaseMinVolumeFraction,
                                       phaseRelPerm,
-                                      dPhaseRelPerm_dPhaseVolFrac ),
+                                      dPhaseRelPerm_dPhaseVolFrac,
+                                      phaseTrapped ),
     m_phaseRelPermExponent( phaseRelPermExponent ),
     m_phaseRelPermMaxValue( phaseRelPermMaxValue ),
     m_volFracScale( volFracScale )

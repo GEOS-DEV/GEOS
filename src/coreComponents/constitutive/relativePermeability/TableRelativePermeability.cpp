@@ -255,12 +255,14 @@ TableRelativePermeability::KernelWrapper::
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                 arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
-  : RelativePermeabilityBaseUpdate( phaseTypes,
+                 arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+                arrayView2d< real64, compflow::USD_PHASE > const & phaseTrapped )
+    : RelativePermeabilityBaseUpdate( phaseTypes,
                                     phaseOrder,
                                     phaseMinVolumeFraction,
                                     phaseRelPerm,
-                                    dPhaseRelPerm_dPhaseVolFrac ),
+                                    dPhaseRelPerm_dPhaseVolFrac,
+                                    phaseTrapped ),
   m_relPermKernelWrappers( relPermKernelWrappers )
 {}
 
@@ -277,7 +279,8 @@ TableRelativePermeability::createKernelWrapper()
                         m_phaseTypes,
                         m_phaseOrder,
                         m_phaseRelPerm,
-                        m_dPhaseRelPerm_dPhaseVolFrac );
+                        m_dPhaseRelPerm_dPhaseVolFrac,
+                        m_phaseTrapped );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeability, std::string const &, Group * const )

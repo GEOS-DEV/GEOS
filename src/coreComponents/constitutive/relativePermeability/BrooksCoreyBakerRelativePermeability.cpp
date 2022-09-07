@@ -168,7 +168,8 @@ BrooksCoreyBakerRelativePermeability::createKernelWrapper()
                         m_phaseTypes,
                         m_phaseOrder,
                         m_phaseRelPerm,
-                        m_dPhaseRelPerm_dPhaseVolFrac );
+                        m_dPhaseRelPerm_dPhaseVolFrac,
+                        m_phaseTrapped);
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyBakerRelativePermeability, string const &, Group * const )

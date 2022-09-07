@@ -216,7 +216,8 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
       string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
       //TODO get Scrt when hysteresis is on (and not minDrainage)
-      arrayView1d< real64 const > phaseMinVolFrac = relperm.phaseMinVolFrac();
+      arrayView1d< real64 const > phaseMinVolFrac = relperm.phaseMinVolumeFraction();
+      arrayView2d< real64 const, compflow::USD_PHASE > const phaseMassTrapped = relperm.phaseTrapped();
 
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;
@@ -247,6 +248,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
                                        phaseDensity,
                                        phaseCompFraction,
                                        phaseVolFrac,
+                                       phaseMassTrapped,
                                        phaseMinVolFrac,
                                        subRegionMinPres,
                                        subRegionAvgPresNumerator,
@@ -300,7 +302,6 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
       regionStatistics.phasePoreVolume[ip] += subRegionPhaseDynamicPoreVol[ip];
       regionStatistics.phaseMass[ip] += subRegionPhaseMass[ip];
 
-      //TODO use minVolFrac
       regionStatistics.trappedPhaseMass[ip] += subRegionTrappedPhaseMass[ip];
 
 
