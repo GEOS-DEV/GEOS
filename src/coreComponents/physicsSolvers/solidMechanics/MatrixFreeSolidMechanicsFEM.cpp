@@ -24,6 +24,7 @@
 #include "linearAlgebra/solvers/CgSolver.hpp"
 #include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
 #include "linearAlgebra/common/LinearOperatorWithBC.hpp"
+#include "constitutive/solid/ElasticIsotropic.hpp"
 
 namespace geosx
 {
@@ -78,7 +79,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
       string const dummyString = "dummy";
       finiteElement::
         regionBasedKernelApplication< team_launch_policy,
-                                      constitutive::NullModel,
+                                      constitutive::ElasticIsotropic,
                                       CellElementSubRegion >( mesh,
                                                               regionNames,
                                                               m_finiteElementName,

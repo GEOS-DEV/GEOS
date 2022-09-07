@@ -279,22 +279,21 @@ public:
                       real64 ( & stress )[ 3 ][ 3 ] ) const
   {
     localIndex const k = stack.element_index;
-    real64 const mu = m_shearModulus[k];
-    real64 const bulkModulus = m_bulkModulus[k];
-    real64 const twoG   = 2 * mu;
-    real64 const lambda = constitutive::conversions::bulkModAndShearMod::toFirstLame( bulkModulus, mu );
-    real64 const vol    = lambda * ( strain[0][0] + strain[1][1] + strain[2][2] );
-
-    stress[0][0] = vol + twoG * strain[0][0];
-    stress[1][1] = vol + twoG * strain[1][1];
-    stress[2][2] = vol + twoG * strain[2][2];
-
-    stress[0][1] = mu * strain[0][1];
-    stress[1][0] = mu * strain[1][0];
-    stress[0][2] = mu * strain[0][2];
-    stress[2][0] = mu * strain[2][0];
-    stress[1][2] = mu * strain[1][2];
-    stress[2][1] = mu * strain[2][1];
+    real64 symm_strain[6];
+    symm_strain[0] = strain[0][0];
+    symm_strain[1] = strain[1][1];
+    symm_strain[2] = strain[2][2];
+    symm_strain[3] = strain[0][1];
+    symm_strain[4] = strain[0][2];
+    symm_strain[5] = strain[1][2];
+    real64 symm_stress[6];
+    stack.kernelComponent.m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, 0, symm_strain, symm_stress );
+    stress[0][0] = symm_stress[0];
+    stress[1][1] = symm_stress[1];
+    stress[2][2] = symm_stress[2];
+    stress[0][1] = symm_stress[3];
+    stress[0][2] = symm_stress[4];
+    stress[1][2] = symm_stress[5];
   }
 
   /**
