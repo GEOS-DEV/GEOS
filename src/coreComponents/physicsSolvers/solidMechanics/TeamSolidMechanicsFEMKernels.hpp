@@ -100,8 +100,8 @@ public:
                                SUBREGION_TYPE const & elementSubRegion,
                                FE_TYPE const & finiteElementSpace,
                                CONSTITUTIVE_TYPE & inputConstitutiveType, // end of default args
-                               arrayView2d< real64 const > const inputSrc,
-                               arrayView2d< real64 > const inputDst ):
+                               arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const inputSrc,
+                               arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const inputDst ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -341,26 +341,14 @@ public:
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
-  arrayView2d< real64 const > const m_src;
-  arrayView2d< real64 > const m_dst;
-
-  /// A reference to the ArrayView holding the bulk modulus for each element.
-  arrayView1d< real64 const > const m_bulkModulus;
-
-  /// A reference to the ArrayView holding the shear modulus for each element.
-  arrayView1d< real64 const > const m_shearModulus;
-
-  /// The global primary field array.
-  // arrayView1d< real64 const > const m_primaryField;
-
-  /// The global residual vector.
-  // arrayView1d< real64 > const m_rhs;
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_src;
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const m_dst;
 };
 
 /// The factory used to construct a TeamSolidMechanicsFEMKernel.
 using TeamSolidMechanicsFEMKernelFactory = finiteElement::KernelFactory< TeamSolidMechanicsFEMKernel,
-                                                                         arrayView2d< real64 const > const,
-                                                                         arrayView2d< real64 > const >;
+                                                                         arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const,
+                                                                         arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const >;
 
 } // namesapce geosx
 

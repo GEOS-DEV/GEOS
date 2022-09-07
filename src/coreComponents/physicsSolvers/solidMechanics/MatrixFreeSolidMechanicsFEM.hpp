@@ -87,6 +87,8 @@ public:
 protected:
   string m_fieldName;
 
+  using FieldType = array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM >;
+
 };
 } /* namespace geosx */
 
