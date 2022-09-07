@@ -80,6 +80,10 @@ public:
                      integer const cycleNumber,
                      DomainPartition & domain ) override;
 
+  virtual void setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+                          DofManager & dofManager ) const override;
+
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 protected:
   string m_fieldName;
 

@@ -166,7 +166,7 @@ MPI_Comm MatrixFreeSolidMechanicsFEMOperator::comm() const
 MatrixFreeSolidMechanicsFEM::MatrixFreeSolidMechanicsFEM( const string & name,
                         Group * const parent ):
   SolverBase( name, parent ),
-  m_fieldName( "primaryField" )
+  m_fieldName( "TotalDisplacement" )
 {}
 //END_SPHINX_INCLUDE_CONSTRUCTOR
 
@@ -217,6 +217,33 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
   applySystemSolution( m_dofManager, m_solution.values(), 1.0, domain );
 
   return dt;
+}
+
+void MatrixFreeSolidMechanicsFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+                                             DofManager & dofManager ) const
+{
+  GEOSX_MARK_FUNCTION;
+  dofManager.addField( keys::TotalDisplacement,
+                       FieldLocation::Node,
+                       3,
+                       m_meshTargets );
+
+  dofManager.addCoupling( keys::TotalDisplacement,
+                          keys::TotalDisplacement,
+                          DofManager::Connector::Elem );
+}
+
+void MatrixFreeSolidMechanicsFEM::registerDataOnMesh( Group & meshBodies )
+{
+  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  {
+    NodeManager & nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
+
+    nodes.registerWrapper< real64_array >( m_fieldName ).
+      setApplyDefaultValue( 0.0 ).
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setDescription( m_fieldName );
+  } );
 }
 
 //START_SPHINX_INCLUDE_REGISTER
