@@ -24,6 +24,7 @@
 #include "mesh/MeshBody.hpp"
 #include "linearAlgebra/solvers/CgSolver.hpp"
 #include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
+#include "linearAlgebra/common/LinearOperatorWithBC.hpp"
 
 namespace geosx
 {
@@ -142,35 +143,6 @@ MPI_Comm MatrixFreeLaplaceFEMOperator::comm() const
   return MPI_COMM_GEOSX;
 }
 
-MatrixFreePreconditionerIdentity::MatrixFreePreconditionerIdentity( DofManager & dofManager )
-: m_dofManager( dofManager )
-{ }
-
-globalIndex MatrixFreePreconditionerIdentity::numGlobalRows() const
-{
-  return m_dofManager.numGlobalDofs();
-}
-
-globalIndex MatrixFreePreconditionerIdentity::numGlobalCols() const
-{
-  return m_dofManager.numGlobalDofs();
-}
-
-localIndex MatrixFreePreconditionerIdentity::numLocalRows() const
-{
-  return m_dofManager.numLocalDofs();
-}
-
-localIndex MatrixFreePreconditionerIdentity::numLocalCols() const
-{
-  return m_dofManager.numLocalDofs();
-}
-
-MPI_Comm MatrixFreePreconditionerIdentity::comm() const
-{
-  return MPI_COMM_GEOSX;
-}
-
 /*----------------------------------------------------------------------------------
  * LaplaceFEM: Solving Laplace's partial differential equation with finite elements
  * ---------------------------------------------------------------------------------
@@ -248,7 +220,7 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
                                                                 DiagPolicy::
                                                                   DiagonalOne );
   constrained_laplace.computeConstrainedRHS( m_rhs );
-  MatrixFreePreconditionerIdentity identity( m_dofManager );
+  MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );
   auto & params = m_linearSolverParameters.get();
   params.isSymmetric = true;
   CgSolver< ParallelVector > solver( params, constrained_laplace, identity );

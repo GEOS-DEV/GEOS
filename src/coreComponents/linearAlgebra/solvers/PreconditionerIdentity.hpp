@@ -56,6 +56,44 @@ public:
   }
 };
 
+template< typename LAI >
+class MatrixFreePreconditionerIdentity : public PreconditionerIdentity< LAI >
+{
+public:
+  MatrixFreePreconditionerIdentity( DofManager & dofManager )
+  : m_dofManager( dofManager )
+  { }
+
+  virtual globalIndex numGlobalRows() const
+  {
+    return m_dofManager.numGlobalDofs();
+  }
+
+  virtual globalIndex numGlobalCols() const
+  {
+    return m_dofManager.numGlobalDofs();
+  }
+
+  virtual localIndex numLocalRows() const
+  {
+    return m_dofManager.numLocalDofs();
+  }
+
+  virtual localIndex numLocalCols() const
+  {
+    return m_dofManager.numLocalDofs();
+  }
+
+  virtual MPI_Comm comm() const
+  {
+    return MPI_COMM_GEOSX;
+  }
+
+private:
+  DofManager & m_dofManager;
+
+};
+
 }
 
 #endif //GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
