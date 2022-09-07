@@ -32,6 +32,7 @@
 #include <unordered_map>
 
 class vtkUnstructuredGrid;
+class vtkDataSet;
 class vtkDataArray;
 
 namespace geosx
@@ -76,14 +77,14 @@ public:
    * @param[in] domain the DomainPartition to be written
    * @details This method leverages the VTK library to load the meshes.
    * The supported formats are the official VTK ones dedicated to
-   * unstructured grids (.vtu, .pvtu and .vtk).
+   * unstructured grids (.vtu, .pvtu and .vtk) and structured grids (.vts, .vti and .pvts).
    *
    * Please note that this mesh generator works only with a number of MPI processes than
    * can be decomposed into a power of 2.
    *
-   * - If a .vtu of .vtk file is used, the root MPI process will load it.
+   * - If a .vtu, .vts, .vti or .vtk file is used, the root MPI process will load it.
    *   The mesh will be then redistribute among all the available MPI processes
-   * - If a .pvtu file is used, it means that the mesh is pre-partionned in the file system.
+   * - If a .pvtu or .pvts file is used, it means that the mesh is pre-partionned in the file system.
    *   The available MPI processes will load the pre-partionned mesh. The mesh will be then
    *   redistributed among ALL the available MPI processes.
    *
@@ -125,7 +126,7 @@ private:
 
   real64 writeNodes( CellBlockManager & cellBlockManager ) const;
 
-  void importNodesets( vtkUnstructuredGrid & mesh, CellBlockManager & cellBlockManager ) const;
+  void importNodesets( vtkDataSet & mesh, CellBlockManager & cellBlockManager ) const;
 
   void writeCells( CellBlockManager & cellBlockManager ) const;
 
@@ -146,6 +147,7 @@ private:
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
+    constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
   };
   /// @endcond
 
@@ -153,7 +155,7 @@ private:
    * @brief The VTK mesh to be imported into GEOSX.
    * @note We keep this smart pointer as a member for use in @p importFields().
    */
-  vtkSmartPointer< vtkUnstructuredGrid > m_vtkMesh;
+  vtkSmartPointer< vtkDataSet > m_vtkMesh;
 
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;
@@ -163,6 +165,9 @@ private:
 
   /// Number of graph partitioning refinement iterations
   integer m_partitionRefinement = 0;
+
+  /// Whether global id arrays should be used, if available
+  integer m_useGlobalIds = 0;
 
   /// Method (library) used to partition the mesh
   PartitionMethod m_partitionMethod = PartitionMethod::parmetis;

@@ -12,7 +12,6 @@
       solidSolverName="mechanicsSolver"
       flowSolverName="singlePhaseFlowSolver"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Domain }">
       <LinearSolverParameters 
         solverType="gmres"
@@ -63,7 +62,7 @@
   <Mesh>
      <VTKMesh         
       name="FaultModel"      
-      file="faultMesh.vtk"
+      file="faultMesh.vtu"
       regionAttribute="CellEntityIds"/>
   </Mesh> 
 <!-- SPHINX_MESH_END -->

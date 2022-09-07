@@ -122,7 +122,7 @@ char const * xmlInput =
   "    <FieldSpecification\n"
   "      name=\"cellVelocity\"\n"
   "      initialCondition=\"1\"\n"
-  "      objectPath=\"ElementRegions/Region/elementSubRegions/cb\"\n"
+  "      objectPath=\"ElementRegions/Region/cb\"\n"
   "      fieldName=\"mediumVelocity\"\n"
   "      scale=\"1500\"\n"
   "      setNames=\"{ all }\"/>\n"

@@ -118,9 +118,13 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 void ElementRegionManager::generateMesh( CellBlockManagerABC & cellBlockManager )
 {
-  this->forElementRegions< CellElementRegion, SurfaceElementRegion >( [&]( auto & elemRegion )
+  this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
   {
     elemRegion.generateMesh( cellBlockManager.getCellBlocks() );
+  } );
+  this->forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion & elemRegion )
+  {
+    elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
   } );
 }
 
