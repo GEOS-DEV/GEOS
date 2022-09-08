@@ -69,40 +69,13 @@ if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
-if( GEOSX_BUILD_SHARED_LIBS )
-  set( GEOSX_BUILD_SHARED_BOOL TRUE CACHE BOOL "" )
-  set( CSL_TYPE SHARED )
-else()
-  set( GEOSX_BUILD_SHARED_BOOL FALSE CACHE BOOL "" )
-  set( CSL_TYPE STATIC )
-endif()
-
-if( NOT GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
-  message( "Using static geosx_core library, object coreComponents" )
-  blt_add_library ( NAME geosx_core
-                    SOURCES dummy.cpp
-                    DEPENDS_ON  mainInterface physicsSolvers
-                  )
-elseif( GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
-  message( "Using shared geosx_core library, object coreComponents" )
+if( GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
+  message( "Building shared geosx_core library with object coreComponents, executables link to geosx_core" )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
                     DEPENDS_ON  mainInterface physicsSolvers
                     SHARED TRUE
                   )
-elseif( GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS )
-  message( "Using blt blt_combine_static_libraries" )
-  message( "Using shared geosx_core library, static coreComponents" )
-  blt_combine_static_libraries( NAME          geosx_core
-                                SOURCE_LIBS   ${coreLibs}
-                                LIB_TYPE      ${CSL_TYPE}
-                                LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
-                                LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
-                              )
-endif()
-
-if( GEOSX_BUILD_OBJ_LIBS OR GEOSX_BUILD_SHARED_LIBS )
-
     # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
     if( ENABLE_HYPRE_CUDA )
       set_target_properties( geosx_core PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
@@ -115,6 +88,13 @@ if( GEOSX_BUILD_OBJ_LIBS OR GEOSX_BUILD_SHARED_LIBS )
     install( TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
     
     target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+elseif( NOT GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
+  message( "Building object coreComponents, executables link to coreComponents" )
+elseif( NOT GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS )
+  message( "Building static coreComponents, executables link to coreComponents" )
+else()
+  message( FATAL_ERROR "Build configuration - shared geosx_core library with static coreComponents - is not supported")
 endif()
 
 geosx_add_code_checks( PREFIX coreComponents
