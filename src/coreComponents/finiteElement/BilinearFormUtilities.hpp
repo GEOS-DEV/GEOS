@@ -34,6 +34,8 @@ template< PDEUtilities::FunctionSpace V,
 struct Helper
 {};
 
+////////////////P0xP0 space BilinearForm functions////////////////
+
 template<>
 struct Helper< PDEUtilities::FunctionSpace::P0,
                PDEUtilities::FunctionSpace::H1vector,
@@ -145,6 +147,11 @@ struct Helper< PDEUtilities::FunctionSpace::P0,
     }
   }
 };
+
+////////////////End P0xP0 space BilinearForm functions////////////////
+
+////////////////Begin H1vector x P0 space BilinearForm functions////////////////
+
 
 template<>
 struct Helper< PDEUtilities::FunctionSpace::H1vector,
@@ -263,6 +270,119 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
   }
 };
 
+////////////////End H1vector x P0 space BilinearForm functions////////////////
+
+////////////////Begin H1 x H1 space BilinearForm functions////////////////////
+
+template<>
+struct Helper< PDEUtilities::FunctionSpace::H1,
+               PDEUtilities::FunctionSpace::H1,
+               PDEUtilities::DifferentialOperator::Gradient,
+               PDEUtilities::DifferentialOperator::Gradient >
+{
+  // Second-order tensor A
+  template< int numTestDOF, int numTrialDOF >
+  GEOSX_HOST_DEVICE
+  void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
+                       real64 const (&dNvdX)[numTestDOF][3],
+                       real64 const & A,
+                       real64 const (&dNudX)[numTrialDOF][3],
+                       real64 const weight )
+  {
+    for( int a = 0; a < numTestDOF; ++a )
+    {
+      for( int b = 0; b < numTrialDOF; ++b )
+      {
+        mat[a][b] = mat[a][b] + dNvdX[a][0] * A * dNudX[b][0] * weight;
+      }
+    }
+  }
+};
+
+template<>
+struct Helper< PDEUtilities::FunctionSpace::H1,
+               PDEUtilities::FunctionSpace::H1,
+               PDEUtilities::DifferentialOperator::Identity,
+               PDEUtilities::DifferentialOperator::Gradient >
+{
+  //scalar Trial function x scalar x Grad test function
+  template< int numTestDOF, int numTrialDOF >
+  GEOSX_HOST_DEVICE
+  void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
+                       real64 const (&Nv)[numTestDOF][3],
+                       real64 const (&A),
+                       real64 const (&dNudX)[numTestDOF][3],
+                       real64 const weight )
+  {
+    for( int a = 0; a < numTestDOF/3; ++a )
+    {
+      for( int b = 0; b < numTrialDOF/3; ++b )
+      {
+        mat[a][b] = mat[a][b] + Nv[a] * A * dNudX[b] * weight;
+      }
+    }
+  }
+
+};
+
+template<>
+struct Helper< PDEUtilities::FunctionSpace::H1,
+               PDEUtilities::FunctionSpace::H1,
+               PDEUtilities::DifferentialOperator::Gradient,
+               PDEUtilities::DifferentialOperator::Identity >
+{
+  //scalar Grad trial function x scalar x Test function
+  template< int numTestDOF, int numTrialDOF >
+  GEOSX_HOST_DEVICE
+  void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
+                       real64 const (&dNvdX)[numTestDOF][3],
+                       real64 const (&A),
+                       real64 const (&Nu)[numTestDOF],
+                       real64 const weight )
+  {
+    for( int a = 0; a < numTestDOF/3; ++a )
+    {
+      for( int b = 0; b < numTrialDOF/3; ++b )
+      {
+        mat[a][b] = mat[a][b] + dNvdX[a] * A * Nu[b] * weight;
+      }
+    }
+  }
+
+};
+
+template<>
+struct Helper< PDEUtilities::FunctionSpace::H1,
+               PDEUtilities::FunctionSpace::H1,
+               PDEUtilities::DifferentialOperator::Identity,
+               PDEUtilities::DifferentialOperator::Identity >
+{
+  //scalar Trial function x scalar x Test function
+  template< int numTestDOF, int numTrialDOF >
+  GEOSX_HOST_DEVICE
+  void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
+                       real64 const (&Nv)[numTestDOF],
+                       real64 const (&A),
+                       real64 const (&Nu)[numTestDOF],
+                       real64 const weight )
+  {
+    for( int a = 0; a < numTestDOF/3; ++a )
+    {
+      for( int b = 0; b < numTrialDOF/3; ++b )
+      {
+        mat[a][b] = mat[a][b] + Nv[a] * A * Nu[b] * weight;
+      }
+    }
+  }
+
+};
+
+/////////////////End H1 x H1 space BilinearForm functions/////////////////////
+
+
+////////////Begin H1vector x H1vector space BilinearForm functions///////////
+
+
 template<>
 struct Helper< PDEUtilities::FunctionSpace::H1vector,
                PDEUtilities::FunctionSpace::H1vector,
@@ -315,6 +435,9 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
   }
 
 };
+
+////////////End H1vector x H1vector space BilinearForm functions//////////////
+
 
 /**
  * @brief Generic bilinear form template to assemble elemental matrices.

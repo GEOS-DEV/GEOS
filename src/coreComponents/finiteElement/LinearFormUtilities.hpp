@@ -32,6 +32,7 @@ template< PDEUtilities::FunctionSpace V,
 struct Helper
 {};
 
+////////////////P0 space LinearForm functions////////////////
 template<>
 struct Helper< PDEUtilities::FunctionSpace::P0,
                PDEUtilities::DifferentialOperator::Identity >
@@ -64,6 +65,55 @@ struct Helper< PDEUtilities::FunctionSpace::P0,
     }
   }
 };
+////////////////End P0 space LinearForm functions////////////////
+
+////////////////H1 space LinearForm functions///////////////////
+
+template<>
+struct Helper< PDEUtilities::FunctionSpace::H1,
+               PDEUtilities::DifferentialOperator::Identity >
+{
+  // scalar A times shape function value
+  template< int numTestDOF >
+  GEOSX_HOST_DEVICE
+  void static compute( real64 (& vec)[numTestDOF],
+                       real64 const (&Nv)[numTestDOF],
+                       real64 const (&A),
+                       real64 const weight )
+  {
+    for( int a = 0; a < numTestDOF; ++a )
+    {
+      vec[a] = vec[a] +  Nv[a] * A  * weight;
+      
+    }
+  }
+};
+
+template<>
+struct Helper< PDEUtilities::FunctionSpace::H1,
+               PDEUtilities::DifferentialOperator::Gradient >
+{
+  // vector A times gradient of shape functions
+  template< int numTestDOF >
+  GEOSX_HOST_DEVICE
+  void static compute( real64 (& vec)[numTestDOF],
+                       real64 const (&dNdX)[numTestDOF][3],
+                       real64 const (&A)[3],
+                       real64 const weight )
+  {
+    for( int a = 0; a < numTestDOF; ++a )
+    {
+      vec[a] = vec[a] + ( dNdX[a][0] * A[0] + dNdX[a][1] * A[1] + dNdX[a][2] * A[2] ) * weight;
+      
+    }
+  }
+};
+
+////////////////End H1 space LinearForm functions////////////////
+
+
+
+////////////////H1vec space LinearForm functions///////////////////
 
 template<>
 struct Helper< PDEUtilities::FunctionSpace::H1vector,
@@ -81,26 +131,6 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
       vec[a*3+0] = vec[a*3+0] + Nv[a] * A[0] * weight;
       vec[a*3+1] = vec[a*3+1] + Nv[a] * A[1] * weight;
       vec[a*3+2] = vec[a*3+2] + Nv[a] * A[2] * weight;
-    }
-  }
-};
-
-template<>
-struct Helper< PDEUtilities::FunctionSpace::H1,
-               PDEUtilities::DifferentialOperator::SymmetricGradient >
-{
-  // symmetric second-order tensor A
-  template< int numTestDOF >
-  GEOSX_HOST_DEVICE
-  void static compute( real64 (& vec)[numTestDOF],
-                       real64 const (&dNdX)[numTestDOF][3],
-                       real64 const (&A)[3],
-                       real64 const weight )
-  {
-    for( int a = 0; a < numTestDOF; ++a )
-    {
-      vec[a] = vec[a] + ( dNdX[a][0] * A[0] + dNdX[a][1] * A[1] + dNdX[a][2] * A[2] ) * weight;
-      
     }
   }
 };
@@ -157,6 +187,9 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
     }
   }
 };
+
+////////////////End H1vec space LinearForm functions///////////////////
+
 
 /**
  * @brief Generic linear form template to assemble elemental vectors.

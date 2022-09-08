@@ -249,6 +249,10 @@ public:
     real64 fracturePressureTerm[3]{};
     computeFracturePressureTerm( k, q, fracturePressureTerm );
     real64 matrixPressureTerm = computeMatrixPressureTerm( k,q );
+    //Dont need this because secondOrder identity is implemented in PDEUtilities
+    //real64 const identityTensor[6] = {1, 1, 1, 0, 0, 0};
+    //real64 matrixPressureTerm[6]{};
+    //LvArray::tensorOps::scaledCopy< 6 >(  matrixPressureTerm, matrixPressureTermScalar, identityTensor );
 
     // Displacement finite element basis functions (N), basis function derivatives (dNdX), and
     // determinant of the Jacobian transformation matrix times the quadrature weight (detJxW)
@@ -286,15 +290,14 @@ public:
         bodyForce,
         detJxW );
     }
-
-    //DIVERGENCE DOESNT EXIST YET
-    // LinearFormUtilities::compute< displacementTestSpace,
-    //                               DifferentialOperator::Divergence >
-    // (
-    //   stack.localResidualMomentum,
-    //   dNdX,
-    //   matrixPressureTerm,
-    //   -detJxW );
+    
+    LinearFormUtilities::compute< displacementTestSpace,
+                                  DifferentialOperator::SymmetricGradient >
+    (
+      stack.localResidualMomentum,
+      dNdX,
+      matrixPressureTerm,
+      -detJxW );
 
     LinearFormUtilities::compute< displacementTestSpace,
                                   DifferentialOperator::Identity >
