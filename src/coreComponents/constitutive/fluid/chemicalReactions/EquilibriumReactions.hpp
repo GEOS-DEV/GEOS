@@ -76,39 +76,41 @@ public:
      * @param totalConc
      * @param dLog10PrimaryConc_dTotalConc
      */
+    GEOSX_HOST_DEVICE
     void updateConcentrations( real64 const temperature,
                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                                arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesContentration,
-                               arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const;
-
+                               arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const;    
 private:
 
+    template<int USD>
+    GEOSX_HOST_DEVICE
     void assembleEquilibriumReactionSystem( real64 const temperature,
                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                                             arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                                            arrayView2d< real64 > const matrix,
+                                            arrayView2d< real64, USD > const matrix,
                                             arrayView1d< real64 > const rhs ) const;
-
+    GEOSX_HOST_DEVICE
     void computeSeondarySpeciesConcAndDerivative( real64 const temperature,
                                                   arraySlice1d< real64 const > const & log10PrimaryActCoeff,
                                                   arraySlice1d< real64 const > const & dLog10PrimaryActCoeff_dIonicStrength,
                                                   arraySlice1d< real64 const > const & log10SecActCoeff,
                                                   arraySlice1d< real64 const > const & dLog10SecActCoeff_dIonicStrength,
-                                                  arraySlice1d< real64 const > const & primarySpeciesConcentration,
-                                                  arraySlice1d< real64 > const & secondarySpeciesConcentration,
+                                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                                                  arraySlice1d< real64, compflow::USD_COMP - 1  > const & secondarySpeciesConcentration,
                                                   arraySlice2d< real64 > const & dLog10SecConc_dLog10PrimaryConc ) const;
-
+    GEOSX_HOST_DEVICE
     void computeTotalConcAndDerivative( real64 const temperature,
-                                        arraySlice1d< real64 const > const & primarySpeciesConcentration,
-                                        arraySlice1d< real64 const > const & secondarySpeciesConcentration,
+                                        arraySlice1d< real64 const, compflow::USD_COMP - 1  > const & primarySpeciesConcentration,
+                                        arraySlice1d< real64 const, compflow::USD_COMP - 1  > const & secondarySpeciesConcentration,
                                         arraySlice2d< real64 const > const & dLog10SecConc_dLog10PrimaryConc,
                                         arraySlice1d< real64 > const & totalConc,
                                         arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc ) const;
 
     GEOSX_HOST_DEVICE
     void updatePrimarySpeciesConcentrations( arrayView1d< real64 const > const solution,
-                                             arraySlice1d< real64 > const & primarySpeciesConcentration ) const;
+                                             arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration ) const;
 
     GEOSX_HOST_DEVICE
     void setInitialGuess( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
@@ -127,6 +129,67 @@ private:
   KernelWrapper createKernelWrapper() const;
 
 };
+
+
+template< int USD >
+GEOSX_HOST_DEVICE
+void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( real64 const temperature,
+                                                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
+                                                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                                                                             arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
+                                                                             arrayView2d< real64, USD > const matrix,
+                                                                             arrayView1d< real64 > const rhs ) const
+{
+
+  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > log10PrimaryActCoeff( m_numPrimarySpecies );
+  stackArray1d< real64, ReactionsBase::maxNumSecondarySpecies > log10SecActCoeff( m_numSecondarySpecies );
+  stackArray2d< real64, ReactionsBase::maxNumSecondarySpecies * ReactionsBase::maxNumPrimarySpecies > dLog10SecConc_dLog10PrimaryConc( m_numSecondarySpecies, m_numPrimarySpecies );
+  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > totalConcentration( m_numPrimarySpecies );
+  stackArray2d< real64, ReactionsBase::maxNumPrimarySpecies * ReactionsBase::maxNumPrimarySpecies > dTotalConc_dLog10PrimaryConc( m_numPrimarySpecies, m_numPrimarySpecies );
+
+  real64 ionicStrength = 0.0;
+  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > dIonicStrength_dPrimaryConcentration( m_numPrimarySpecies );
+  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > dLog10PrimaryActCoeff_dIonicStrength( m_numPrimarySpecies );
+  stackArray1d< real64, ReactionsBase::maxNumSecondarySpecies > dLog10SecActCoeff_dIonicStrength( m_numSecondarySpecies );
+
+  /// activity coefficients
+  computeIonicStrength( primarySpeciesConcentration,
+                        secondarySpeciesConcentration,
+                        ionicStrength );
+
+  computeLog10ActCoefBDotModel( temperature,
+                                ionicStrength,
+                                log10PrimaryActCoeff,
+                                dLog10PrimaryActCoeff_dIonicStrength,
+                                log10SecActCoeff,
+                                dLog10SecActCoeff_dIonicStrength );
+
+  computeSeondarySpeciesConcAndDerivative( temperature,
+                                           log10PrimaryActCoeff,
+                                           dLog10PrimaryActCoeff_dIonicStrength,
+                                           log10SecActCoeff,
+                                           dLog10SecActCoeff_dIonicStrength,
+                                           primarySpeciesConcentration,
+                                           secondarySpeciesConcentration,
+                                           dLog10SecConc_dLog10PrimaryConc );
+
+  computeTotalConcAndDerivative( temperature,
+                                 primarySpeciesConcentration,
+                                 secondarySpeciesConcentration,
+                                 dLog10SecConc_dLog10PrimaryConc,
+                                 totalConcentration,
+                                 dTotalConc_dLog10PrimaryConc );
+
+  for( int i=0; i<m_numPrimarySpecies; i++ )
+  {
+    rhs[i] = 1 - totalConcentration[i] / primarySpeciesTotalConcentration[i];
+    rhs[i] = -rhs[i];
+    for( int j=0; j<m_numPrimarySpecies; j++ )
+    {
+      matrix[i][j] = -dTotalConc_dLog10PrimaryConc[i][j] / primarySpeciesTotalConcentration[i];
+    }
+  }
+}
 
 } // end namespace chemicalReactions
 

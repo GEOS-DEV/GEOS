@@ -106,18 +106,27 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
                                                                 arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const
 
 {
-  array2d< real64 > matrix( m_numPrimarySpecies, m_numPrimarySpecies );
-  array1d< real64 > rhs( m_numPrimarySpecies );
-  array1d< real64 > solution( m_numPrimarySpecies );
+  stackArray2d< real64, ReactionsBase::maxNumPrimarySpecies, ReactionsBase::maxNumPrimarySpecies > matrix( m_numPrimarySpecies, m_numPrimarySpecies );
+  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > rhs( m_numPrimarySpecies );
+  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > solution( m_numPrimarySpecies );
+  stackArray1d< integer, ReactionsBase::maxNumPrimarySpecies > pivots( m_numPrimarySpecies );
+
 
   setInitialGuess( primarySpeciesTotalConcentration, primarySpeciesConcentration );
 
   bool converged = false;
   for( int iteration = 0; iteration < m_maxNumIterations; iteration++ )
   {
-    matrix.zero();
-    rhs.zero();
-    solution.zero();
+   
+   for (int i = 0; i< m_numPrimarySpecies; i++)
+   {
+    rhs[i] = 0.0;
+    solution[i] = 0.0;
+    for (int j = 0; j< m_numPrimarySpecies; j++)
+    {
+      matrix(i, j) = 0.0;
+    }
+   }
 
     assembleEquilibriumReactionSystem( temperature,
                                        primarySpeciesTotalConcentration,
@@ -125,8 +134,11 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
                                        secondarySpeciesConcentration,
                                        matrix,
                                        rhs );
-
+    
+    #if defined(GEOSX_USE_CUDA)
+    #else
     real64 const residualNorm = BlasLapackLA::vectorNorm2( rhs.toSliceConst() );
+    #endif
 
     if( residualNorm < m_newtonTol && iteration >= 1 )
     {
@@ -141,68 +153,9 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
     BlasLapackLA::solveLinearSystem( matrix, rhs, solution );
     #endif
 
-    updatePrimarySpeciesConcentrations( solution, primarySpeciesConcentration );
+    updatePrimarySpeciesConcentrations( rhs, primarySpeciesConcentration );
   }
   GEOSX_ERROR_IF( !converged, "Equilibrium reactions did not converge." );
-}
-
-GEOSX_HOST_DEVICE
-void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( real64 const temperature,
-                                                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
-                                                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                                                                             arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                                                                             arrayView2d< real64 > const matrix,
-                                                                             arrayView1d< real64 > const rhs ) const
-{
-
-  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > log10PrimaryActCoeff( m_numPrimarySpecies );
-  stackArray1d< real64, ReactionsBase::maxNumSecondarySpecies > log10SecActCoeff( m_numSecondarySpecies );
-  stackArray2d< real64, ReactionsBase::maxNumSecondarySpecies * ReactionsBase::maxNumPrimarySpecies > dLog10SecConc_dLog10PrimaryConc( m_numSecondarySpecies, m_numPrimarySpecies );
-  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > totalConcentration( m_numPrimarySpecies );
-  stackArray2d< real64, ReactionsBase::maxNumPrimarySpecies * ReactionsBase::maxNumPrimarySpecies > dTotalConc_dLog10PrimaryConc( m_numPrimarySpecies, m_numPrimarySpecies );
-
-  real64 ionicStrength = 0.0;
-  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > dIonicStrength_dPrimaryConcentration( m_numPrimarySpecies );
-  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > dLog10PrimaryActCoeff_dIonicStrength( m_numPrimarySpecies );
-  stackArray1d< real64, ReactionsBase::maxNumSecondarySpecies > dLog10SecActCoeff_dIonicStrength( m_numSecondarySpecies );
-
-  /// activity coefficients
-  computeIonicStrength( primarySpeciesConcentration,
-                        secondarySpeciesConcentration,
-                        ionicStrength );
-
-  computeLog10ActCoefBDotModel( temperature,
-                                ionicStrength,
-                                log10PrimaryActCoeff,
-                                dLog10PrimaryActCoeff_dIonicStrength,
-                                log10SecActCoeff,
-                                dLog10SecActCoeff_dIonicStrength );
-
-  computeSeondarySpeciesConcAndDerivative( temperature,
-                                           log10PrimaryActCoeff,
-                                           dLog10PrimaryActCoeff_dIonicStrength,
-                                           log10SecActCoeff,
-                                           dLog10SecActCoeff_dIonicStrength,
-                                           primarySpeciesConcentration,
-                                           secondarySpeciesConcentration,
-                                           dLog10SecConc_dLog10PrimaryConc );
-
-  computeTotalConcAndDerivative( temperature,
-                                 primarySpeciesConcentration,
-                                 secondarySpeciesConcentration,
-                                 dLog10SecConc_dLog10PrimaryConc,
-                                 totalConcentration,
-                                 dTotalConc_dLog10PrimaryConc );
-
-  for( int i=0; i<m_numPrimarySpecies; i++ )
-  {
-    rhs[i] = 1 - totalConcentration[i] / primarySpeciesTotalConcentration[i];
-    rhs[i] = -rhs[i];
-    for( int j=0; j<m_numPrimarySpecies; j++ )
-    {
-      matrix[i][j] = -dTotalConc_dLog10PrimaryConc[i][j] / primarySpeciesTotalConcentration[i];
-    }
-  }
 }
 
 // function to compute the derivative of the concentration of secondary species with respect to the concentration of the primary species.
@@ -212,8 +165,8 @@ void EquilibriumReactions::KernelWrapper::computeSeondarySpeciesConcAndDerivativ
                                                                                    arraySlice1d< real64 const > const & dLog10PrimaryActCoeff_dIonicStrength,
                                                                                    arraySlice1d< real64 const > const & log10SecActCoeff,
                                                                                    arraySlice1d< real64 const > const & dLog10SecActCoeff_dIonicStrength,
-                                                                                   arraySlice1d< real64 const > const & primarySpeciesConcentration,
-                                                                                   arraySlice1d< real64 > const & secondarySpeciesConectration,
+                                                                                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                                                                                   arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConectration,
                                                                                    arraySlice2d< real64 > const & dLog10SecConc_dLog10PrimaryConc ) const
 {
   // Compute d(concentration of dependent species)/d(concentration of basis species)
@@ -243,8 +196,8 @@ void EquilibriumReactions::KernelWrapper::computeSeondarySpeciesConcAndDerivativ
 
 GEOSX_HOST_DEVICE
 void EquilibriumReactions::KernelWrapper::computeTotalConcAndDerivative( real64 const temperature,
-                                                                         arraySlice1d< real64 const > const & primarySpeciesConcentration,
-                                                                         arraySlice1d< real64 const > const & secondarySpeciesConectration,
+                                                                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                                                                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & secondarySpeciesConectration,
                                                                          arraySlice2d< real64 const > const & dLog10SecConc_dLog10PrimaryConc,
                                                                          arraySlice1d< real64 > const & totalConc,
                                                                          arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc ) const
@@ -274,7 +227,7 @@ void EquilibriumReactions::KernelWrapper::computeTotalConcAndDerivative( real64 
 GEOSX_HOST_DEVICE
 void EquilibriumReactions::KernelWrapper::
   updatePrimarySpeciesConcentrations( arrayView1d< real64 const > const solution,
-                                      arraySlice1d< real64 > const & primarySpeciesConcentration ) const
+                                      arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration ) const
 {
   for( integer i = 0; i < m_numPrimarySpecies; i++ )
   {

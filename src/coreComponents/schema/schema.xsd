@@ -411,13 +411,12 @@
 					<xsd:selector xpath="PackCollection" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-<<<<<<< HEAD
 				<xsd:unique name="TasksReactiveFluidDriverUniqueName">
 					<xsd:selector xpath="ReactiveFluidDriver" />
-=======
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksSinglePhaseStatisticsUniqueName">
 					<xsd:selector xpath="SinglePhaseStatistics" />
->>>>>>> origin/develop
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="TasksSolidMechanicsStateResetUniqueName">
@@ -2595,11 +2594,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
-<<<<<<< HEAD
 			<xsd:element name="ReactiveFluidDriver" type="ReactiveFluidDriverType" />
-=======
 			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
->>>>>>> origin/develop
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
@@ -2649,7 +2645,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-<<<<<<< HEAD
 	<xsd:complexType name="ReactiveFluidDriverType">
 		<!--baseline => Baseline file-->
 		<xsd:attribute name="baseline" type="path" default="none" />
@@ -2667,13 +2662,14 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="steps" type="integer" use="required" />
 		<!--temperatureControl => Function controlling temperature time history-->
 		<xsd:attribute name="temperatureControl" type="string" use="required" />
-=======
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseStatisticsType">
 		<!--flowSolverName => Name of the flow solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
->>>>>>> origin/develop
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

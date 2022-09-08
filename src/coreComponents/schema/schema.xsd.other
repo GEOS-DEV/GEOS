@@ -880,11 +880,8 @@
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
-<<<<<<< HEAD
 			<xsd:element name="ReactiveFluidDriver" type="ReactiveFluidDriverType" />
-=======
 			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
->>>>>>> origin/develop
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
@@ -893,11 +890,8 @@
 	<xsd:complexType name="CompositionalMultiphaseStatisticsType" />
 	<xsd:complexType name="PVTDriverType" />
 	<xsd:complexType name="PackCollectionType" />
-<<<<<<< HEAD
 	<xsd:complexType name="ReactiveFluidDriverType" />
-=======
 	<xsd:complexType name="SinglePhaseStatisticsType" />
->>>>>>> origin/develop
 	<xsd:complexType name="SolidMechanicsStateResetType" />
 	<xsd:complexType name="SolidMechanicsStatisticsType" />
 	<xsd:complexType name="TriaxialDriverType" />
