@@ -18,7 +18,8 @@
 		"vscode": {
 			"extensions": [
 				"ms-vscode.cpptools-extension-pack",
-				"eamodio.gitlens"
+				"eamodio.gitlens",
+				"fredericbonnet.cmake-test-adapter"
 			]
 		}
 	}
