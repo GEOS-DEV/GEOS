@@ -36,10 +36,11 @@ namespace keys
 }
 
 using namespace dataRepository;
+using namespace constitutive;
 
 MatrixFreeSolidMechanicsFEMOperator::
   MatrixFreeSolidMechanicsFEMOperator( DomainPartition & domain,
-                                       map< string, array1d< string > > & meshTargets,
+                                       map< std::pair< string, string >, array1d< string > > const & meshTargets,
                                        DofManager & dofManager,
                                        string const & finiteElementName ):
     m_meshBodies( domain.getMeshBodies() ),
@@ -50,7 +51,7 @@ MatrixFreeSolidMechanicsFEMOperator::
 
 MatrixFreeSolidMechanicsFEMOperator::
   MatrixFreeSolidMechanicsFEMOperator( dataRepository::Group & meshBodies,
-                                       map< string, array1d< string > > & meshTargets,
+                                       map< std::pair< string, string >, array1d< string > > const & meshTargets,
                                        DofManager & dofManager,
                                        string const & finiteElementName ):
     m_meshBodies( meshBodies ),
@@ -64,28 +65,34 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
   dst.zero();
   arrayView1d< real64 const > const localSrc = src.values();
   arrayView1d< real64 > const localDst = dst.open();
+
   for( auto const & target: m_meshTargets )
   {
-    string const meshBodyName = target.first;
+    string const meshBodyName = target.first.first;
+    string const meshLevelName = target.first.second;
     arrayView1d< string const > const & regionNames = target.second.toViewConst();
     MeshBody & meshBody = m_meshBodies.getGroup< MeshBody >( meshBodyName );
-    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
+
+    MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
+    if( meshLevelPtr==nullptr )
     {
-      auto const & totalDisplacement = mesh.getNodeManager().totalDisplacement();
-      arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > localSrc2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localSrc.dataBuffer() );
-      arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > localDst2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localDst.dataBuffer() );
-      TeamSolidMechanicsFEMKernelFactory kernelFactory( localSrc2d, localDst2d );
-
-      finiteElement::
-        regionBasedKernelApplication< team_launch_policy,
-                                      constitutive::SolidBase,
-                                      CellElementSubRegion >( mesh,
-                                                              regionNames,
-                                                              m_finiteElementName,
-                                                              "solidMaterialNames",
-                                                              kernelFactory );
-
-    } );
+      meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
+    }
+    MeshLevel & mesh = *meshLevelPtr;
+      
+    auto const & totalDisplacement = mesh.getNodeManager().totalDisplacement();
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > localSrc2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localSrc.dataBuffer() );
+    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > localDst2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localDst.dataBuffer() );
+    TeamSolidMechanicsFEMKernelFactory kernelFactory( localSrc2d, localDst2d );
+  
+    finiteElement::
+      regionBasedKernelApplication< team_launch_policy,
+                                    constitutive::SolidBase,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            m_finiteElementName,
+                                                            "solidMaterialNames",
+                                                            kernelFactory );
   }
   dst.close();
 }
@@ -189,7 +196,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 
   MatrixFreeSolidMechanicsFEMOperator unconstrained_solid_mechanics(
     domain,
-    m_meshTargets,
+    getMeshTargets(),
     m_dofManager,
     this->getDiscretizationName() );
 
@@ -226,7 +233,7 @@ void MatrixFreeSolidMechanicsFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
   dofManager.addField( keys::TotalDisplacement,
                        FieldLocation::Node,
                        3,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           keys::TotalDisplacement,
@@ -235,17 +242,35 @@ void MatrixFreeSolidMechanicsFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
 
 void MatrixFreeSolidMechanicsFEM::registerDataOnMesh( Group & meshBodies )
 {
-  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & meshLevel,
+                                                    arrayView1d< string const > const & regionNames )
   {
-    NodeManager & nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
+    NodeManager & nodes = meshLevel.getNodeManager();
 
     nodes.registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement ).
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRegisteringObjects( this->getName()).
       setDescription( "An array that holds the total displacements on the nodes." ).
       reference().resizeDimension< 1 >( 3 );
-  } );
+  });
+
 }
+
+void MatrixFreeSolidMechanicsFEM::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
+{
+  SolverBase::setConstitutiveNamesCallSuper( subRegion );
+
+  subRegion.registerWrapper< string >( "solidMaterialNames" ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & solidMaterialName = subRegion.getReference< string >( "solidMaterialNames" );
+  solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
+  GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+}
+
 
 //START_SPHINX_INCLUDE_REGISTER
 REGISTER_CATALOG_ENTRY( SolverBase, MatrixFreeSolidMechanicsFEM, string const &, Group * const )

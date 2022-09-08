@@ -30,13 +30,13 @@ class MatrixFreeLaplaceFEMOperator : public LinearOperator< ParallelVector >
 {
 private:
   dataRepository::Group & m_meshBodies;
-  map< string, array1d< string > > & m_meshTargets;
+  map< std::pair< string, string >, array1d< string > > const & m_meshTargets;
   DofManager & m_dofManager;
   string const & m_finiteElementName;
 
 public:
-  MatrixFreeLaplaceFEMOperator( DomainPartition & domain, map< string, array1d< string > > & meshTargets, DofManager & dofManager, string const & finiteElementName );
-  MatrixFreeLaplaceFEMOperator( dataRepository::Group & meshBodies, map< string, array1d< string > > & meshTargets, DofManager & dofManager, string const & finiteElementName );
+  MatrixFreeLaplaceFEMOperator( DomainPartition & domain, map< std::pair< string, string >, array1d< string > > const & meshTargets, DofManager & dofManager, string const & finiteElementName );
+  MatrixFreeLaplaceFEMOperator( dataRepository::Group & meshBodies, map< std::pair< string, string >, array1d< string > > const & meshTargets, DofManager & dofManager, string const & finiteElementName );
 
   virtual void apply( ParallelVector const & src, ParallelVector & dst ) const;
 

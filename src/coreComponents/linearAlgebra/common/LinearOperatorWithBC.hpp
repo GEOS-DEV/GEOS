@@ -67,13 +67,12 @@ public:
     // compute m_constrainedDofIndices and m_rhsContributions
     FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
     globalIndex totalSize = 0;
-    solver.forMeshTargets( m_domain.getMeshBodies(), [&]( string const &,
+    solver.forDiscretizationOnMeshTargets( m_domain.getMeshBodies(), [&]( string const &,
                                                    MeshLevel & mesh,
                                                    arrayView1d< string const > const & )
     {
-      fsManager.apply( m_time,
+      fsManager.apply<NodeManager>( m_time,
                        mesh,
-                       "nodeManager",
                        m_fieldName,
                        [&]( FieldSpecificationBase const & bc,
                             string const &,
@@ -87,16 +86,15 @@ public:
     // NOTE: we're not checking for duplicates.
     m_constrainedDofIndices.reserve( totalSize );
     m_rhsContributions.reserve( totalSize );
-    solver.forMeshTargets( m_domain.getMeshBodies(), [&]( string const &,
+    solver.forDiscretizationOnMeshTargets( m_domain.getMeshBodies(), [&]( string const &,
                                                    MeshLevel & mesh,
                                                    arrayView1d< string const > const & )
     {
       auto const & nodeManager = mesh.getNodeManager();
       auto const & field = nodeManager.getReference< array1d< real64 > >( m_fieldName ).toViewConst();
 
-      fsManager.apply( m_time,
+      fsManager.apply<NodeManager>( m_time,
                        mesh,
-                       "nodeManager",
                        m_fieldName,
                        [&]( FieldSpecificationBase const & bc,
                             string const &,

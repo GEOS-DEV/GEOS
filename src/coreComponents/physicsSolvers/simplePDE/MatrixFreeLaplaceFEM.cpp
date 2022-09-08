@@ -39,7 +39,7 @@ using namespace dataRepository;
 
 MatrixFreeLaplaceFEMOperator::
   MatrixFreeLaplaceFEMOperator( DomainPartition & domain,
-                                map< string, array1d< string > > & meshTargets,
+                                map< std::pair< string, string >, array1d< string > > const & meshTargets,
                                 DofManager & dofManager,
                                 string const & finiteElementName ):
     m_meshBodies( domain.getMeshBodies() ),
@@ -50,7 +50,7 @@ MatrixFreeLaplaceFEMOperator::
 
 MatrixFreeLaplaceFEMOperator::
   MatrixFreeLaplaceFEMOperator( dataRepository::Group & meshBodies,
-                                map< string, array1d< string > > & meshTargets,
+                                map< std::pair< string, string >, array1d< string > > const & meshTargets,
                                 DofManager & dofManager,
                                 string const & finiteElementName ):
     m_meshBodies( meshBodies ),
@@ -66,11 +66,16 @@ void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVe
   arrayView1d< real64 > const localDst = dst.open();
   for( auto const & target: m_meshTargets )
   {
-    string const meshBodyName = target.first;
+    string const meshBodyName = target.first.first;
+    string const meshLevelName = target.first.second;
     arrayView1d< string const > const & regionNames = target.second.toViewConst();
-    MeshBody & meshBody = m_meshBodies.getGroup< MeshBody >( meshBodyName );
-    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
+    MeshBody & meshBody = m_meshBodies.template getGroup< MeshBody >( meshBodyName );
+
+    MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
+    if( meshLevelPtr==nullptr )
     {
+      meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
+    }
 
       TeamLaplaceFEMKernelFactory2 kernelFactory( localSrc, localDst );
 
@@ -78,13 +83,12 @@ void MatrixFreeLaplaceFEMOperator::apply( ParallelVector const & src, ParallelVe
       finiteElement::
         regionBasedKernelApplication< team_launch_policy,
                                       constitutive::NullModel,
-                                      CellElementSubRegion >( mesh,
+                                      CellElementSubRegion >( *meshLevelPtr,
                                                               regionNames,
                                                               m_finiteElementName,
                                                               dummyString,
                                                               kernelFactory );
 
-    } );
   }
   dst.close();
 }
@@ -95,11 +99,17 @@ void MatrixFreeLaplaceFEMOperator::computeDiagonal( ParallelVector & diagonal ) 
   arrayView1d< real64 > const localDiag = diagonal.open();
   for( auto const & target: m_meshTargets )
   {
-    string const meshBodyName = target.first;
+    string const meshBodyName = target.first.first;
+    string const meshLevelName = target.first.second;
     arrayView1d< string const > const & regionNames = target.second.toViewConst();
-    MeshBody & meshBody = m_meshBodies.getGroup< MeshBody >( meshBodyName );
-    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
+    MeshBody & meshBody = m_meshBodies.template getGroup< MeshBody >( meshBodyName );
+
+    MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
+    if( meshLevelPtr==nullptr )
     {
+      meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
+    }
+
 
       TeamLaplaceFEMDiagonalKernelFactory kernelFactory( localDiag );
 
@@ -107,13 +117,12 @@ void MatrixFreeLaplaceFEMOperator::computeDiagonal( ParallelVector & diagonal ) 
       finiteElement::
         regionBasedKernelApplication< team_launch_policy,
                                       constitutive::NullModel,
-                                      CellElementSubRegion >( mesh,
+                                      CellElementSubRegion >( *meshLevelPtr,
                                                               regionNames,
                                                               m_finiteElementName,
                                                               dummyString,
                                                               kernelFactory );
 
-    } );
   }
   diagonal.close();
 }
@@ -209,7 +218,7 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
                m_solution,
                false );
 
-  MatrixFreeLaplaceFEMOperator unconstrained_laplace( domain, m_meshTargets, m_dofManager, this->getDiscretizationName() );
+  MatrixFreeLaplaceFEMOperator unconstrained_laplace( domain, getMeshTargets(), m_dofManager, this->getDiscretizationName() );
   LinearOperatorWithBC< ParallelVector > constrained_laplace( *this,
                                                               unconstrained_laplace,
                                                               domain,
@@ -235,7 +244,7 @@ real64 MatrixFreeLaplaceFEM::explicitStep( real64 const & time_n,
                                            DomainPartition & domain )
 {
   m_rhs.zero();
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
