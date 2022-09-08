@@ -69,41 +69,27 @@ void PorosityBase::postProcessInput()
     setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
-
-void PorosityBase::saveConvergedState() const
+void PorosityBase::scaleReferencePorosity( arrayView1d< real64 const > scalingFactors ) const
 {
   localIndex const numE = numElem();
-  localIndex const numQ = numQuad();
 
-  arrayView2d< real64 const > newPorosity = m_newPorosity;
-  arrayView2d< real64 >       porosity_n  = m_porosity_n;
+  arrayView1d< real64 > referencePorosity = m_referencePorosity;
 
   forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
-    for( localIndex q = 0; q < numQ; ++q )
-    {
-      porosity_n[k][q] = newPorosity[k][q];
-    }
+    referencePorosity[k] *= scalingFactors[k];
   } );
+}
+
+void PorosityBase::saveConvergedState() const
+{
+  m_porosity_n.setValues< parallelDevicePolicy<> >( m_newPorosity.toViewConst() );
 }
 
 void PorosityBase::initializeState() const
 {
-  localIndex const numE = numElem();
-  localIndex const numQ = numQuad();
-
-  arrayView2d< real64 const > newPorosity     = m_newPorosity;
-  arrayView2d< real64 >       porosity_n      = m_porosity_n;
-  arrayView2d< real64 >       initialPorosity = m_initialPorosity;
-
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-  {
-    for( localIndex q = 0; q < numQ; ++q )
-    {
-      porosity_n[k][q]      = newPorosity[k][q];
-      initialPorosity[k][q] = newPorosity[k][q];
-    }
-  } );
+  m_porosity_n.setValues< parallelDevicePolicy<> >( m_newPorosity.toViewConst() );
+  m_initialPorosity.setValues< parallelDevicePolicy<> >( m_newPorosity.toViewConst() );
 }
 
 }

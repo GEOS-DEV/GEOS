@@ -193,6 +193,12 @@ public:
    */
   arrayView2d< real64 const > const  dPorosity_dPressure() const { return m_dPorosity_dPressure; }
 
+  /**
+   * @brief Utility function to scale the reference porosity (for instance, by net-to-gross)
+   * @param[in] scalingFactors the vector of scaling factors (one value per cell) for the reference porosity
+   */
+  void scaleReferencePorosity( arrayView1d< real64 const > scalingFactors ) const;
+
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
 

@@ -196,14 +196,6 @@ void WellSolverBase::updateState( DomainPartition & domain )
   } );
 }
 
-void WellSolverBase::initializePreSubGroups()
-{
-  SolverBase::initializePreSubGroups();
-
-  FlowSolverBase const & flowSolver = getParent().getGroup< FlowSolverBase >( getFlowSolverName() );
-  m_numDofPerResElement = flowSolver.numDofPerCell();
-}
-
 void WellSolverBase::initializePostInitialConditionsPreSubGroups()
 {
   SolverBase::initializePostInitialConditionsPreSubGroups();

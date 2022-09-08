@@ -161,6 +161,21 @@ void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & ti
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
+      // for output purposes (visualization, etc) we update the last component fraction
+      integer const numComp = m_numComponents;
+      arrayView2d< real64, compflow::USD_COMP > const compFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        compFrac[ei][numComp-1] = 1.0;
+        for( integer ic = 0; ic < numComp - 1; ++ic )
+        {
+          compFrac[ei][numComp-1] -= compFrac[ei][ic];
+        }
+      } );
+
+      // save converged porosity state
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
       porousMaterial.saveConvergedState();
@@ -339,10 +354,7 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
 
   real64 const residual = m_useDARTSL2Norm ? MpiWrapper::max( localResidualNorm ) : std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-  {
-    std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ;", residual );
-  }
+  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rflow ) = ( {:4.2e} ) ;", residual ) );
 
   return residual;
 }
@@ -1058,6 +1070,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
         localRhs[localRow] = rhsValue;
 
         // 3.2. For each component (but the last), apply target global component fraction value
+        //      Note: the FieldSpecification for the last component is ignored
         for( integer ic = 0; ic < numComp - 1; ++ic )
         {
           FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,

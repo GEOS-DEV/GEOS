@@ -276,19 +276,17 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
 {
   GEOSX_MARK_FUNCTION;
 
+  bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
+  bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
+  bool const skipTempDamping = m_maxRelativeTempChange >= 1.0 || !m_isThermal;
+
   // check if we want to rescale the Newton update
-  if( m_maxCompFracChange >= 1.0 )
+  if( skipCompFracDamping && skipPresDamping && skipTempDamping )
   {
     // no rescaling wanted, we just return 1.0;
     return 1.0;
   }
 
-  real64 constexpr eps = isothermalCompositionalMultiphaseBaseKernels::minDensForDivision;
-  real64 const maxCompFracChange = m_maxCompFracChange;
-
-  localIndex const NC = m_numComponents;
-
-  globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   real64 scalingFactor = 1.0;
 
@@ -300,56 +298,33 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-      arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+      real64 const subRegionScalingFactor =
+        m_isThermal
+  ? thermalCompositionalMultiphaseBaseKernels::
+          ScalingForSystemSolutionKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
+                                                     m_maxRelativeTempChange,
+                                                     m_maxCompFracChange,
+                                                     dofManager.rankOffset(),
+                                                     m_numComponents,
+                                                     dofKey,
+                                                     subRegion,
+                                                     localSolution )
+  : isothermalCompositionalMultiphaseBaseKernels::
+          ScalingForSystemSolutionKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
+                                                     m_maxCompFracChange,
+                                                     dofManager.rankOffset(),
+                                                     m_numComponents,
+                                                     dofKey,
+                                                     subRegion,
+                                                     localSolution );
 
-
-      arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-
-      RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
-
-      forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-      {
-        if( elemGhostRank[ei] < 0 )
-        {
-          real64 prevTotalDens = 0;
-          for( localIndex ic = 0; ic < NC; ++ic )
-          {
-            prevTotalDens += compDens[ei][ic];
-          }
-
-          // compute the change in component densities and component fractions
-          for( localIndex ic = 0; ic < NC; ++ic )
-          {
-            localIndex const lid = dofNumber[ei] + ic + 1 - rankOffset;
-
-            // compute scaling factor based on relative change in component densities
-            real64 const absCompDensChange = fabs( localSolution[lid] );
-            real64 const maxAbsCompDensChange = maxCompFracChange * prevTotalDens;
-
-            // This actually checks the change in component fraction, using a lagged total density
-            // Indeed we can rewrite the following check as:
-            //    | prevCompDens / prevTotalDens - newCompDens / prevTotalDens | > maxCompFracChange
-            // Note that the total density in the second term is lagged (i.e, we use prevTotalDens)
-            // because I found it more robust than using directly newTotalDens (which can vary also
-            // wildly when the compDens change is large)
-            if( absCompDensChange > maxAbsCompDensChange && absCompDensChange > eps )
-            {
-              minVal.min( maxAbsCompDensChange / absCompDensChange );
-            }
-          }
-        }
-      } );
-
-      if( minVal.get() < scalingFactor )
-      {
-        scalingFactor = minVal.get();
-      }
+      scalingFactor = std::min( scalingFactor, subRegionScalingFactor );
     } );
   } );
 
-  return LvArray::math::max( MpiWrapper::min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
+  return LvArray::math::max( MpiWrapper::min( scalingFactor ), m_minScalingFactor );
 }
 
 bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & domain,
@@ -360,7 +335,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
   GEOSX_MARK_FUNCTION;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  localIndex localCheck = 1;
+  integer localCheck = 1;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -370,30 +345,34 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-      arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-
-      arrayView1d< real64 const > const & pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-      arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-
-      localIndex const subRegionSolutionCheck =
-        isothermalCompositionalMultiphaseBaseKernels::
-          SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
-                                                                 dofManager.rankOffset(),
-                                                                 numFluidComponents(),
-                                                                 dofNumber,
-                                                                 elemGhostRank,
-                                                                 pres,
-                                                                 compDens,
-                                                                 m_allowCompDensChopping,
-                                                                 scalingFactor );
+      // check that pressure and component densities are non-negative
+      // for thermal, check that temperature is above 273.15 K
+      integer const subRegionSolutionCheck =
+        m_isThermal
+  ? thermalCompositionalMultiphaseBaseKernels::
+          SolutionCheckKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                     scalingFactor,
+                                                     dofManager.rankOffset(),
+                                                     m_numComponents,
+                                                     dofKey,
+                                                     subRegion,
+                                                     localSolution )
+  : isothermalCompositionalMultiphaseBaseKernels::
+          SolutionCheckKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                     scalingFactor,
+                                                     dofManager.rankOffset(),
+                                                     m_numComponents,
+                                                     dofKey,
+                                                     subRegion,
+                                                     localSolution );
 
       localCheck = std::min( localCheck, subRegionSolutionCheck );
     } );
   } );
 
-  return MpiWrapper::min( localCheck, MPI_COMM_GEOSX );
+  return MpiWrapper::min( localCheck );
 }
 
 void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofManager,

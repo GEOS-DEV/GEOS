@@ -150,10 +150,6 @@ public:
   struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
   {
     static constexpr char const * faceDofFieldString() { return "faceCenteredVariables"; }
-
-    // inputs
-    static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
-
   };
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
@@ -166,9 +162,6 @@ protected:
   void precomputeData( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
 private:
-
-  /// maximum relative face pressure change between two Newton iterations
-  real64 m_maxRelativePresChange;
 
   /// tolerance used in the  computation of the transmissibility matrix
   real64 m_lengthTolerance;

@@ -494,6 +494,263 @@ struct SolidInternalEnergyUpdateKernel
   }
 };
 
+/******************************** ScalingForSystemSolutionKernel ********************************/
+
+/**
+ * @class ScalingForSystemSolutionKernel
+ * @brief Define the kernel for scaling the Newton update
+ */
+class ScalingForSystemSolutionKernel : public isothermalCompositionalMultiphaseBaseKernels::ScalingForSystemSolutionKernel
+{
+public:
+
+  using Base = isothermalCompositionalMultiphaseBaseKernels::ScalingForSystemSolutionKernel;
+  using Base::m_numComp;
+  using Base::m_localSolution;
+
+  /**
+   * @brief Create a new kernel instance
+   * @param[in] maxRelativePresChange the max allowed relative pressure change
+   * @param[in] maxRelativeTempChange the max allowed relative temperature change
+   * @param[in] maxCompFracChange the max allowed comp fraction change
+   * @param[in] rankOffset the rank offset
+   * @param[in] numComp the number of components
+   * @param[in] dofKey the dof key to get dof numbers
+   * @param[in] subRegion the subRegion
+   * @param[in] localSolution the Newton update
+   * @param[in] pressure the pressure vector
+   * @param[in] temperature the temperature vector
+   * @param[in] compDens the component density vector
+   */
+  ScalingForSystemSolutionKernel( real64 const maxRelativePresChange,
+                                  real64 const maxRelativeTempChange,
+                                  real64 const maxCompFracChange,
+                                  globalIndex const rankOffset,
+                                  integer const numComp,
+                                  string const dofKey,
+                                  ElementSubRegionBase const & subRegion,
+                                  arrayView1d< real64 const > const localSolution,
+                                  arrayView1d< real64 const > const pressure,
+                                  arrayView1d< real64 const > const temperature,
+                                  arrayView2d< real64 const, compflow::USD_COMP > const compDens )
+    : Base( maxRelativePresChange,
+            maxCompFracChange,
+            rankOffset,
+            numComp,
+            dofKey,
+            subRegion,
+            localSolution,
+            pressure,
+            compDens ),
+    m_maxRelativeTempChange( maxRelativeTempChange ),
+    m_temperature( temperature )
+  {}
+
+  /**
+   * @brief Compute the local value of the scaling factor
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   */
+  GEOSX_HOST_DEVICE
+  void computeScalingFactor( localIndex const ei,
+                             StackVariables & stack ) const
+  {
+    real64 constexpr eps = isothermalCompositionalMultiphaseBaseKernels::minDensForDivision;
+
+    Base::computeScalingFactor( ei, stack, [&] ()
+    {
+      // compute the change in temperature
+      real64 const temp = m_temperature[ei];
+      if( temp > eps )
+      {
+        real64 const absTempChange = LvArray::math::abs( m_localSolution[stack.localRow + m_numComp + 1] );
+        real64 const relativeTempChange = absTempChange / temp;
+        if( relativeTempChange > m_maxRelativeTempChange )
+        {
+          real64 const tempScalingFactor = m_maxRelativeTempChange / relativeTempChange;
+          if( stack.localMinVal > tempScalingFactor )
+          {
+            stack.localMinVal = tempScalingFactor;
+          }
+        }
+      }
+    } );
+  }
+
+protected:
+
+  /// Max allowed changes in primary variables
+  real64 const m_maxRelativeTempChange;
+
+  /// View on the primary variables
+  arrayView1d< real64 const > const m_temperature;
+
+};
+
+/**
+ * @class ScalingForSystemSolutionKernelFactory
+ */
+class ScalingForSystemSolutionKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] maxRelativePresChange the max allowed relative pressure change
+   * @param[in] maxRelativeTempChange the max allowed relative temperature change
+   * @param[in] maxCompFracChange the max allowed comp fraction change
+   * @param[in] rankOffset the rank offset
+   * @param[in] numComp the number of components
+   * @param[in] dofKey the dof key to get dof numbers
+   * @param[in] subRegion the subRegion
+   * @param[in] localSolution the Newton update
+   */
+  template< typename POLICY >
+  static real64
+  createAndLaunch( real64 const maxRelativePresChange,
+                   real64 const maxRelativeTempChange,
+                   real64 const maxCompFracChange,
+                   globalIndex const rankOffset,
+                   integer const numComp,
+                   string const dofKey,
+                   ElementSubRegionBase const & subRegion,
+                   arrayView1d< real64 const > const localSolution )
+  {
+    arrayView1d< real64 const > const pressure = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+    arrayView1d< real64 const > const temperature = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+    ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxRelativeTempChange, maxCompFracChange,
+                                           rankOffset, numComp, dofKey, subRegion, localSolution,
+                                           pressure, temperature, compDens );
+    return ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
+  }
+
+};
+
+/******************************** SolutionCheckKernel ********************************/
+
+/**
+ * @class SolutionCheckKernel
+ * @brief Define the kernel for checking the updated solution
+ */
+class SolutionCheckKernel : public isothermalCompositionalMultiphaseBaseKernels::SolutionCheckKernel
+{
+public:
+
+  using Base = isothermalCompositionalMultiphaseBaseKernels::SolutionCheckKernel;
+  using Base::m_numComp;
+  using Base::m_localSolution;
+  using Base::m_scalingFactor;
+
+  static real64 constexpr minTemperature = 273.15;
+
+  /**
+   * @brief Create a new kernel instance
+   * @param[in] allowCompDensChopping flag to allow the component density chopping
+   * @param[in] scalingFactor the scaling factor
+   * @param[in] rankOffset the rank offset
+   * @param[in] numComp the number of components
+   * @param[in] dofKey the dof key to get dof numbers
+   * @param[in] subRegion the subRegion
+   * @param[in] localSolution the Newton update
+   * @param[in] pressure the pressure vector
+   * @param[in] temperature the temperature vector
+   * @param[in] compDens the component density vector
+   */
+  SolutionCheckKernel( integer const allowCompDensChopping,
+                       real64 const scalingFactor,
+                       globalIndex const rankOffset,
+                       integer const numComp,
+                       string const dofKey,
+                       ElementSubRegionBase const & subRegion,
+                       arrayView1d< real64 const > const localSolution,
+                       arrayView1d< real64 const > const pressure,
+                       arrayView1d< real64 const > const temperature,
+                       arrayView2d< real64 const, compflow::USD_COMP > const compDens )
+    : Base( allowCompDensChopping,
+            scalingFactor,
+            rankOffset,
+            numComp,
+            dofKey,
+            subRegion,
+            localSolution,
+            pressure,
+            compDens ),
+    m_temperature( temperature )
+  {}
+
+  /**
+   * @brief Compute the local value of the solution check
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   */
+  GEOSX_HOST_DEVICE
+  void computeSolutionCheck( localIndex const ei,
+                             StackVariables & stack ) const
+  {
+    Base::computeSolutionCheck( ei, stack, [&] ()
+    {
+      // compute the change in temperature
+      real64 const newTemp = m_temperature[ei] + m_scalingFactor * m_localSolution[stack.localRow + m_numComp + 1];
+      if( newTemp < minTemperature )
+      {
+        stack.localMinVal = 0;
+      }
+    } );
+  }
+
+protected:
+
+  /// View on the primary variables
+  arrayView1d< real64 const > const m_temperature;
+
+};
+
+/**
+ * @class SolutionCheckKernelFactory
+ */
+class SolutionCheckKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] maxRelativePresChange the max allowed relative pressure change
+   * @param[in] maxRelativeTempChange the max allowed relative temperature change
+   * @param[in] maxCompFracChange the max allowed comp fraction change
+   * @param[in] rankOffset the rank offset
+   * @param[in] numComp the number of components
+   * @param[in] dofKey the dof key to get dof numbers
+   * @param[in] subRegion the subRegion
+   * @param[in] localSolution the Newton update
+   */
+  template< typename POLICY >
+  static integer
+  createAndLaunch( integer const allowCompDensChopping,
+                   real64 const scalingFactor,
+                   globalIndex const rankOffset,
+                   integer const numComp,
+                   string const dofKey,
+                   ElementSubRegionBase const & subRegion,
+                   arrayView1d< real64 const > const localSolution )
+  {
+    arrayView1d< real64 const > const pressure =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+    arrayView1d< real64 const > const temperature =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+    arrayView2d< real64 const, compflow::USD_COMP > const compDens =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+    SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor,
+                                rankOffset, numComp, dofKey, subRegion, localSolution,
+                                pressure, temperature, compDens );
+    return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
+  }
+
+};
+
+
 /******************************** ResidualNormKernel ********************************/
 
 /**
