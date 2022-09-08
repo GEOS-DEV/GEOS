@@ -1,8 +1,12 @@
 {
     "cmake": {
         "sourceDirectory": "${workspaceFolder}/src",
-        "buildRoot": "/tmp/build",
-        "cacheInit": "${workspaceFolder}/host-configs/environment.cmake",
-        "configurationType": "Debug"
+        "buildDirectory": "/tmp/build",
+        "cacheInit": "/workspaces/GEOSX/host-configs/environment.cmake",
+        "configureSettings": {
+            "BLT_MPI_COMMAND_APPEND": "--allow-run-as-root;--use-hwthread-cpus;--oversubscribe"
+        },
+        "configurationType": "Debug",
+        "generator": "Ninja"
     }
 }
