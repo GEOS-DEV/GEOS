@@ -1,0 +1,8 @@
+{
+    "cmake": {
+        "sourceDirectory": "${workspaceFolder}/src",
+        "buildRoot": "/tmp/build",
+        "cacheInit": "${workspaceFolder}/host-configs/environment.cmake",
+        "configurationType": "Debug"
+    }
+}
