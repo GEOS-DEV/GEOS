@@ -169,13 +169,9 @@ jobs:
   include:
   - stage: check_pr_is_not_a_draft
     name: Check that the PR is not a draft (cancel job otherwise).
-    vm:
-      size: medium
     <<: *__geosx_draft_script
   - stage: checks
     name: code_style
-    vm:
-      size: medium
     <<: *__geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu20.04-gcc9
@@ -183,8 +179,6 @@ jobs:
     - BUILD_AND_TEST_ARGS=--test-code-style
   - stage: checks
     name: documentation
-    vm:
-      size: medium
     <<: *__geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu20.04-gcc9
@@ -192,13 +186,9 @@ jobs:
     - BUILD_AND_TEST_ARGS=--test-documentation
   - stage: checks
     name: check_submodules
-    vm:
-      size: medium
     script: scripts/test_submodule_updated.sh
   - stage: checks
     name: check_pr_is_assigned
-    vm:
-      size: medium
     <<: *__geosx_assigned_script
   - stage: builds
     name: Ubuntu CUDA debug (18.04, clang 8.0.0 + gcc 8.3.1, open-mpi 2.1.1, cuda-10.1.243)
@@ -282,6 +272,4 @@ jobs:
     - DOCKER_REPOSITORY=geosx/ubuntu20.04-gcc10
     - CMAKE_BUILD_TYPE=Release
   - stage: return_status
-    vm:
-      size: medium
     <<: *__geosx_return_script
