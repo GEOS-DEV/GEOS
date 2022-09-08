@@ -98,6 +98,64 @@ EquilibriumReactions::KernelWrapper EquilibriumReactions::createKernelWrapper() 
                         m_WATEQBDot );
 }
 
+GEOSX_HOST_DEVICE
+void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( real64 const temperature,
+                                                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
+                                                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                                                                             arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
+                                                                             arraySlice2d< real64 > const & matrix,
+                                                                             arraySlice1d< real64 > const & rhs ) const
+{
+
+  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > log10PrimaryActCoeff( m_numPrimarySpecies );
+  stackArray1d< real64, ReactionsBase::maxNumSecondarySpecies > log10SecActCoeff( m_numSecondarySpecies );
+  stackArray2d< real64, ReactionsBase::maxNumSecondarySpecies * ReactionsBase::maxNumPrimarySpecies > dLog10SecConc_dLog10PrimaryConc( m_numSecondarySpecies, m_numPrimarySpecies );
+  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > totalConcentration( m_numPrimarySpecies );
+  stackArray2d< real64, ReactionsBase::maxNumPrimarySpecies * ReactionsBase::maxNumPrimarySpecies > dTotalConc_dLog10PrimaryConc( m_numPrimarySpecies, m_numPrimarySpecies );
+
+  real64 ionicStrength = 0.0;
+  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > dIonicStrength_dPrimaryConcentration( m_numPrimarySpecies );
+  stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > dLog10PrimaryActCoeff_dIonicStrength( m_numPrimarySpecies );
+  stackArray1d< real64, ReactionsBase::maxNumSecondarySpecies > dLog10SecActCoeff_dIonicStrength( m_numSecondarySpecies );
+
+  /// activity coefficients
+  computeIonicStrength( primarySpeciesConcentration,
+                        secondarySpeciesConcentration,
+                        ionicStrength );
+
+  computeLog10ActCoefBDotModel( temperature,
+                                ionicStrength,
+                                log10PrimaryActCoeff,
+                                dLog10PrimaryActCoeff_dIonicStrength,
+                                log10SecActCoeff,
+                                dLog10SecActCoeff_dIonicStrength );
+
+  computeSeondarySpeciesConcAndDerivative( temperature,
+                                           log10PrimaryActCoeff,
+                                           dLog10PrimaryActCoeff_dIonicStrength,
+                                           log10SecActCoeff,
+                                           dLog10SecActCoeff_dIonicStrength,
+                                           primarySpeciesConcentration,
+                                           secondarySpeciesConcentration,
+                                           dLog10SecConc_dLog10PrimaryConc );
+
+  computeTotalConcAndDerivative( temperature,
+                                 primarySpeciesConcentration,
+                                 secondarySpeciesConcentration,
+                                 dLog10SecConc_dLog10PrimaryConc,
+                                 totalConcentration,
+                                 dTotalConc_dLog10PrimaryConc );
+
+  for( int i=0; i<m_numPrimarySpecies; i++ )
+  {
+    rhs[i] = 1 - totalConcentration[i] / primarySpeciesTotalConcentration[i];
+    rhs[i] = -rhs[i];
+    for( int j=0; j<m_numPrimarySpecies; j++ )
+    {
+      matrix[i][j] = -dTotalConc_dLog10PrimaryConc[i][j] / primarySpeciesTotalConcentration[i];
+    }
+  }
+}
 
 GEOSX_HOST_DEVICE
 void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const temperature,
@@ -106,11 +164,9 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
                                                                 arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const
 
 {
-  stackArray2d< real64, ReactionsBase::maxNumPrimarySpecies, ReactionsBase::maxNumPrimarySpecies > matrix( m_numPrimarySpecies, m_numPrimarySpecies );
+  stackArray2d< real64, ReactionsBase::maxNumPrimarySpecies * ReactionsBase::maxNumPrimarySpecies > matrix( m_numPrimarySpecies, m_numPrimarySpecies );
   stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > rhs( m_numPrimarySpecies );
   stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > solution( m_numPrimarySpecies );
-  stackArray1d< integer, ReactionsBase::maxNumPrimarySpecies > pivots( m_numPrimarySpecies );
-
 
   setInitialGuess( primarySpeciesTotalConcentration, primarySpeciesConcentration );
 
@@ -153,7 +209,7 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
     BlasLapackLA::solveLinearSystem( matrix, rhs, solution );
     #endif
 
-    updatePrimarySpeciesConcentrations( rhs, primarySpeciesConcentration );
+    updatePrimarySpeciesConcentrations( solution, primarySpeciesConcentration );
   }
   GEOSX_ERROR_IF( !converged, "Equilibrium reactions did not converge." );
 }
@@ -226,7 +282,7 @@ void EquilibriumReactions::KernelWrapper::computeTotalConcAndDerivative( real64 
 
 GEOSX_HOST_DEVICE
 void EquilibriumReactions::KernelWrapper::
-  updatePrimarySpeciesConcentrations( arrayView1d< real64 const > const solution,
+  updatePrimarySpeciesConcentrations( arraySlice1d< real64 const > const solution,
                                       arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration ) const
 {
   for( integer i = 0; i < m_numPrimarySpecies; i++ )
