@@ -89,6 +89,8 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
+  using FieldType = array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM >;
+
 };
 } /* namespace geosx */
 

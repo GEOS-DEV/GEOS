@@ -219,13 +219,13 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
                false );
 
   MatrixFreeLaplaceFEMOperator unconstrained_laplace( domain, getMeshTargets(), m_dofManager, this->getDiscretizationName() );
-  LinearOperatorWithBC< ParallelVector > constrained_laplace( *this,
+  LinearOperatorWithBC< ParallelVector, FieldType > constrained_laplace( *this,
                                                               unconstrained_laplace,
                                                               domain,
                                                               m_dofManager,
                                                               m_fieldName,
                                                               time_n+dt,
-                                                              LinearOperatorWithBC< ParallelVector >::
+                                                              LinearOperatorWithBC< ParallelVector, FieldType >::
                                                                 DiagPolicy::
                                                                   DiagonalOne );
   constrained_laplace.computeConstrainedRHS( m_rhs );

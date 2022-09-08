@@ -83,7 +83,8 @@ public:
                        real64 const & dt,
                        integer const cycleNumber,
                        DomainPartition & domain ) override;
-
+private:
+  using FieldType = array1d< real64 >;
 };
 } /* namespace geosx */
 

@@ -20,7 +20,7 @@
 namespace geosx
 {
 
-template < typename Vector >
+template < typename Vector, typename PrimaryFieldType >
 class LinearOperatorWithBC : public LinearOperator< Vector >
 {
 public:
@@ -91,7 +91,7 @@ public:
                                                    arrayView1d< string const > const & )
     {
       auto const & nodeManager = mesh.getNodeManager();
-      auto const & field = nodeManager.getReference< array1d< real64 > >( m_fieldName ).toViewConst();
+      auto const & field = nodeManager.getReference< PrimaryFieldType >( m_fieldName ).toViewConst();
 
       fsManager.apply<NodeManager>( m_time,
                        mesh,
