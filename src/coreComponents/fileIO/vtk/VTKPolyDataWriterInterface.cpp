@@ -1000,6 +1000,12 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
   {
     meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
     {
+
+      if( meshLevel.isShallowCopy() )
+      {
+        return;
+      }
+
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
       string const meshPath = joinPath( getCycleSubFolder( cycle ), meshBody.getName(), meshLevel.getName() );
       int const mpiSize = MpiWrapper::commSize();
@@ -1088,6 +1094,12 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   {
     meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
     {
+
+      if( meshLevel.isShallowCopy() )
+      {
+        return;
+      }
+
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
       NodeManager const & nodeManager = meshLevel.getNodeManager();
       EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
