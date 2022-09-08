@@ -67,6 +67,7 @@ MeshLevel::MeshLevel( string const & name,
                       MeshLevel & source ):
   Group( name, parent ),
   m_nodeManager( source.m_nodeManager ),
+  m_particleManager( source.m_particleManager ),
   m_edgeManager( source.m_edgeManager ),
   m_faceManager( source.m_faceManager ),
   m_elementManager( source.m_elementManager ),

@@ -38,6 +38,7 @@ class FunctionManager;
 class FieldSpecificationManager;
 struct CommandLineOptions;
 class CellBlockManagerABC;
+class ParticleBlockManagerABC;
 
 /**
  * @class ProblemManager
@@ -340,6 +341,7 @@ private:
 
   void generateMeshLevel( MeshLevel & meshLevel,
                           CellBlockManagerABC & cellBlockManager,
+                          ParticleBlockManagerABC & particleBlockManager,
                           Group const * const discretization,
                           arrayView1d< string const > const & targetRegions );
 
