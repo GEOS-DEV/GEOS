@@ -59,12 +59,12 @@ HYPRE_Int SuperLUDistSolve( HYPRE_Solver solver,
                             HYPRE_ParVector x )
 {
   GEOSX_UNUSED_VAR( A );
-  //return hypre_SLUDistSolve( solver, b, x );
+  return hypre_SLUDistSolve( solver, b, x );
 }
 
 HYPRE_Int SuperLUDistDestroy( HYPRE_Solver solver )
 {
-  //return hypre_SLUDistDestroy( solver );
+  return hypre_SLUDistDestroy( solver );
 }
 
 /**

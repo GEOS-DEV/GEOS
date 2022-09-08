@@ -84,7 +84,7 @@ endif()
 
 ### BUILD & BLT SETUP ###
 
-option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF )
+option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" ON )
 
 option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
 
@@ -137,11 +137,11 @@ if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/
 endif()
 
 #set(CMAKE_CUDA_STANDARD 14 CACHE STRING "" FORCE)
-#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELEASE 
+#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELEASE
 #                                 DEFAULT "-O3 -DNDEBUG -Xcompiler -DNDEBUG -Xcompiler -O3" )
-#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELWITHDEBINFO 
+#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELWITHDEBINFO
 #                                 DEFAULT "-lineinfo ${CMAKE_CUDA_FLAGS_RELEASE}" )
-#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_DEBUG 
+#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_DEBUG
 #                                 DEFAULT "-G -O0 -Xcompiler -O0" )
 
 

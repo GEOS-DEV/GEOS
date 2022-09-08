@@ -210,21 +210,6 @@ else()
 endif()
 
 ################################
-# CAMP
-################################
-if(DEFINED CAMP_DIR)
-    # Should be found by raja, but it is possible for spack to misconfig raja so we need to find it
-    message(STATUS "CAMP_DIR = ${CAMP_DIR}")
-
-    find_package(camp REQUIRED
-                 PATHS ${CAMP_DIR}
-                 NO_DEFAULT_PATH)
-
-    get_target_property(CAMP_INCLUDE_DIRS camp INTERFACE_INCLUDE_DIRECTORIES)
-    set_target_properties(camp PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CAMP_INCLUDE_DIRS}")
-endif()
-
-################################
 # RAJA
 ################################
 if(DEFINED RAJA_DIR)
@@ -241,6 +226,21 @@ if(DEFINED RAJA_DIR)
     set(thirdPartyLibs ${thirdPartyLibs} RAJA )
 else()
     message(FATAL_ERROR "GEOSX requires RAJA, set RAJA_DIR to the RAJA installation directory.")
+endif()
+
+################################
+# CAMP
+################################
+if(DEFINED CAMP_DIR)
+    # Should be found by raja, but it is possible for spack to misconfig raja so we need to find it
+    message(STATUS "CAMP_DIR = ${CAMP_DIR}")
+
+    find_package(camp REQUIRED
+                 PATHS ${CAMP_DIR}
+                 NO_DEFAULT_PATH)
+
+    get_target_property(CAMP_INCLUDE_DIRS camp INTERFACE_INCLUDE_DIRECTORIES)
+    set_target_properties(camp PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CAMP_INCLUDE_DIRS}")
 endif()
 
 ################################
@@ -491,7 +491,7 @@ endif()
 if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
-    set( HYPRE_DEPENDS blas lapack superlu_dist )
+    set( HYPRE_DEPENDS blas lapack superlu_dist umpire)
     if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
         set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} )
     elseif( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
@@ -527,7 +527,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     # endif()
 
     set(ENABLE_HYPRE ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} hypre ${EXTRA_DEPS} )
+    set(thirdPartyLibs ${thirdPartyLibs} hypre ${HYPRE_DEPENDS} )
 else()
     if(ENABLE_HYPRE)
         message(WARNING "ENABLE_HYPRE is ON but HYPRE_DIR isn't defined.")
@@ -592,7 +592,6 @@ else()
     set(ENABLE_PETSC OFF CACHE BOOL "" FORCE)
     message(STATUS "Not using PETSc")
 endif()
-
 ################################
 # VTK
 ################################

@@ -642,7 +642,6 @@ void HydrofractureSolver::assembleSystem( real64 const time,
   LvArray::print< serialPolicy >( localMatrix );
 
   this->getRefDerivativeFluxResidual_dAperture()->zero();
-  // GEOSX_ERROR("Debug dump.");
 }
 
 void
