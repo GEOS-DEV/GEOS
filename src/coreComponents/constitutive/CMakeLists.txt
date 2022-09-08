@@ -31,6 +31,7 @@ set( constitutive_headers
      fluid/MultiFluidExtrinsicData.hpp
      fluid/PhaseModel.hpp
      fluid/PVTDriver.hpp
+     fluid/PVTDriverRunTest.hpp
      fluid/PVTOData.hpp
      fluid/PVTFunctions/PhillipsBrineDensity.hpp
      fluid/PVTFunctions/PhillipsBrineViscosity.hpp
@@ -107,6 +108,7 @@ set( constitutive_headers
      solid/TriaxialDriver.hpp
      solid/porosity/BiotPorosity.hpp
      solid/porosity/PorosityBase.hpp
+     solid/porosity/PorosityExtrinsicData.hpp
      solid/porosity/PressurePorosity.hpp
      solid/porosity/ProppantPorosity.hpp
      thermalConductivity/MultiPhaseConstantThermalConductivity.hpp
@@ -143,6 +145,12 @@ set( constitutive_sources
      fluid/DeadOilFluid.cpp
      fluid/MultiFluidBase.cpp
      fluid/PVTDriver.cpp
+     fluid/PVTDriverRunTestDeadOilFluid.cpp
+     fluid/PVTDriverRunTestCompositionalMultiphaseFluid.cpp
+     fluid/PVTDriverRunTestCO2BrinePhillipsFluid.cpp
+     fluid/PVTDriverRunTestCO2BrinePhillipsThermalFluid.cpp
+     fluid/PVTDriverRunTestCO2BrineEzrokhiFluid.cpp
+     fluid/PVTDriverRunTestCO2BrineEzrokhiThermalFluid.cpp
      fluid/PVTOData.cpp
      fluid/PVTFunctions/PhillipsBrineDensity.cpp
      fluid/PVTFunctions/PhillipsBrineViscosity.cpp

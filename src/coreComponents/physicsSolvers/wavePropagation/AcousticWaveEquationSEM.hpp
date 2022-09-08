@@ -31,8 +31,8 @@ class AcousticWaveEquationSEM : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
-  using ATOMIC_POLICY = parallelDeviceAtomic;
+  using EXEC_POLICY = serialPolicy;//parallelDevicePolicy< 32 >;
+  using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
 
   /**
@@ -124,6 +124,12 @@ public:
 
 
   /**
+   * @brief Initialize Perfectly Matched Layer (PML) information
+   */
+  virtual void initializePML() override;
+
+
+  /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
    */
   virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain ) override;
@@ -132,7 +138,7 @@ public:
   {
     static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
     static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
-    static constexpr char const * sourceIsLocalString() { return "sourceIsLocal"; }
+    static constexpr char const * sourceIsAccessibleString() { return "sourceIsAccessible"; }
 
     static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
     static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
@@ -179,6 +185,13 @@ private:
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
 
   /**
+   * @brief Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
+   * @param time the time to apply the BC
+   * @param domain the partition domain
+   */
+  virtual void applyPML( real64 const time, DomainPartition & domain ) override;
+
+  /**
    * @brief Temporary debug function. Saves the sismo trace to a file.
    * @param iSeismo index number of the seismo trace
    * @param val value to be written in seismo
@@ -186,14 +199,16 @@ private:
    */
   void saveSeismo( localIndex const iSeismo, real64 const val, string const & filename ) override;
 
+  localIndex getNumNodesPerElem();
+
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
 
   /// Constant part of the source for the nodes listed in m_sourceNodeIds
   array2d< real64 > m_sourceConstants;
 
-  /// Flag that indicates whether the source is local or not to the MPI rank
-  array1d< localIndex > m_sourceIsLocal;
+  /// Flag that indicates whether the source is accessible (is local or in the  ghost cells) or not to the MPI rank
+  array1d< localIndex > m_sourceIsAccessible;
 
   /// Indices of the element nodes (in the right order) for each receiver point
   array2d< localIndex > m_receiverNodeIds;
@@ -206,7 +221,6 @@ private:
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real64 > m_pressureNp1AtReceivers;
-
 
 };
 
@@ -310,6 +324,37 @@ EXTRINSIC_MESH_DATA_TRAIT( PartialGradient,
                            WRITE_AND_READ,
                            "Partiel gradient computed during backward propagation" );
 
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar1PML,
+                           "auxiliaryVar1PML",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "PML vectorial auxiliary variable 1." );
+
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar2PML,
+                           "auxiliaryVar2PML",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "PML vectorial auxiliary variable 2." );
+
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar3PML,
+                           "auxiliaryVar3PML",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "PML scalar auxiliary variable 3." );
+
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar4PML,
+                           "auxiliaryVar4PML",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "PML scalar auxiliary variable 4." );
 }
 
 

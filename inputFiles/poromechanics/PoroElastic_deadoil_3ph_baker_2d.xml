@@ -6,9 +6,8 @@
     <MultiphasePoromechanics
       name="MultiphasePoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
-      fluidSolverName="TwoPhaseFlowSolver"
+      flowSolverName="TwoPhaseFlowSolver"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
@@ -81,6 +80,15 @@
       forceDt="1e5"
       beginTime="1e5"
       target="/Solvers/MultiphasePoroelasticitySolver"/>
+
+    <PeriodicEvent
+      name="LinearElasticityStatistics"
+      timeFrequency="1e5"
+      target="/Tasks/LinearElasticityStatistics"/>
+    <PeriodicEvent
+      name="TwoPhaseFlowStatistics"
+      timeFrequency="1e5"
+      target="/Tasks/TwoPhaseFlowStatistics"/>
 
     <PeriodicEvent
       name="restarts"
@@ -277,9 +285,21 @@
       setNames="{ zneg }"/>
   </FieldSpecifications>
 
+  <Tasks>
+    <SolidMechanicsStatistics
+      name="LinearElasticityStatistics"
+      solidSolverName="LinearElasticitySolver"
+      logLevel="1"/>
+    <CompositionalMultiphaseStatistics
+      name="TwoPhaseFlowStatistics"
+      flowSolverName="TwoPhaseFlowSolver"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+  </Tasks>
+  
   <Outputs>
 
-    <!-- We add deltaPressure just to trigger the warning since this field is not registered -->
     <Silo
       name="siloOutput"
       fieldNames="{ TotalDisplacement, pressure, skeleton_stress, deltaPressure }"/>

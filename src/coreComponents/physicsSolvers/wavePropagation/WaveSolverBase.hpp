@@ -30,6 +30,8 @@ namespace geosx
 class WaveSolverBase : public SolverBase
 {
 public:
+
+
   WaveSolverBase( const std::string & name,
                   Group * const parent );
 
@@ -72,6 +74,8 @@ public:
     static constexpr char const * saveFieldsString() { return "saveFields"; }
     static constexpr char const * shotIndexString() { return "shotIndex"; }
 
+    static constexpr char const * usePMLString() { return "usePML"; }
+    static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
   };
 
@@ -82,12 +86,27 @@ public:
 
 protected:
 
+  virtual void postProcessInput() override;
+
   /**
    * @brief Apply free surface condition to the face defined in the geometry box of the xml
    * @param time the time to apply the BC
    * @param domain the partition domain
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) = 0;
+
+  /**
+   * @brief Initialize Perfectly Matched Layer (PML) information
+   */
+  virtual void initializePML() = 0;
+
+  /**
+   * @brief Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
+   * @param time the time to apply the BC
+   * @param domain the partition domain
+   */
+  virtual void applyPML( real64 const time, DomainPartition & domain ) = 0;
+
 
   /**
    * @brief Compute the value of a Ricker (a Gaussian function)
@@ -205,6 +224,29 @@ protected:
 
   // Indicate the current shot computed for naming saved temporary data
   int m_shotIndex;
+
+  /// Flag to apply PML
+  integer m_usePML;
+
+  struct parametersPML
+  {
+    /// Mininum (x,y,z) coordinates of inner PML boundaries
+    R1Tensor xMinPML;
+
+    /// Maximum (x,y,z) coordinates of inner PML boundaries
+    R1Tensor xMaxPML;
+
+    /// Desired reflectivity of the PML region, used to compute the damping profile
+    real64 reflectivityPML;
+
+    /// Thickness of the PML region, used to compute the damping profile
+    R1Tensor thicknessMinXYZPML;
+    R1Tensor thicknessMaxXYZPML;
+
+    /// Wave speed in the PML region, used to compute the damping profile
+    R1Tensor waveSpeedMinXYZPML;
+    R1Tensor waveSpeedMaxXYZPML;
+  };
 
 };
 

@@ -25,6 +25,7 @@
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
+#include "physicsSolvers/SolverStatistics.hpp"
 
 
 #include <limits>
@@ -55,8 +56,15 @@ public:
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
-
   virtual void initialize_postMeshGeneration() override;
+
+  void generateMeshTargetsFromTargetRegions( Group const & meshBodies );
+
+  virtual void cleanup( real64 const time_n,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        DomainPartition & domain ) override;
 
   /**
    * This method is called when its host event is triggered
@@ -144,8 +152,6 @@ public:
    * @param [in]  time_n time at the beginning of the step
    * @param [in]  dt the perscribed timestep
    * @param [out] return the timestep that was achieved during the step.
-   *
-   * T
    */
   void setNextDtBasedOnNewtonIter( real64 const & currentDt,
                                    real64 & nextDt );
@@ -556,7 +562,7 @@ public:
   {return m_nextDt;};
   /**@}*/
 
-  real64 GetTimestepRequest()
+  real64 getTimestepRequest()
   {return m_nextDt;};
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
@@ -579,6 +585,7 @@ public:
   {
     static constexpr char const * linearSolverParametersString() { return "LinearSolverParameters"; }
     static constexpr char const * nonlinearSolverParametersString() { return "NonlinearSolverParameters"; }
+    static constexpr char const * solverStatisticsString() { return "SolverStatistics"; }
   };
 
 
@@ -636,35 +643,59 @@ public:
   localIndex targetRegionIndex( string const & regionName ) const;
 
 
+
+  /**
+   * @brief Loop over the target discretization on all mesh targets and apply callback.
+   * @tparam LAMBDA The callback function type
+   * @param meshBodies The group of MeshBodies
+   * @param lambda The callback function. Takes the name of the meshBody,
+   * reference to the MeshLevel, and a list of regionNames.
+   */
   template< typename LAMBDA >
-  void forMeshTargets( Group const & meshBodies, LAMBDA && lambda ) const
+  void forDiscretizationOnMeshTargets( Group const & meshBodies, LAMBDA && lambda ) const
   {
     for( auto const & target: m_meshTargets )
     {
-      string const meshBodyName = target.first;
+      string const meshBodyName = target.first.first;
+      string const meshLevelName = target.first.second;
       arrayView1d< string const > const & regionNames = target.second.toViewConst();
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
-      meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
+
+      MeshLevel const * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
+      if( meshLevelPtr==nullptr )
       {
-        lambda( meshBodyName, meshLevel, regionNames );
-      } );
+        meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
+      }
+      lambda( meshBodyName, *meshLevelPtr, regionNames );
     }
   }
 
+  /**
+   * @brief Loop over the target discretization on all mesh targets and apply callback.
+   * @tparam LAMBDA The callback function type
+   * @param meshBodies The group of MeshBodies
+   * @param lambda The callback function. Takes the name of the meshBody,
+   * reference to the MeshLevel, and a list of regionNames.
+   */
   template< typename LAMBDA >
-  void forMeshTargets( Group & meshBodies, LAMBDA && lambda ) const
+  void forDiscretizationOnMeshTargets( Group & meshBodies, LAMBDA && lambda ) const
   {
     for( auto const & target: m_meshTargets )
     {
-      string const meshBodyName = target.first;
+      string const meshBodyName = target.first.first;
+      string const meshLevelName = target.first.second;
       arrayView1d< string const > const & regionNames = target.second.toViewConst();
       MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
-      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+
+      MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
+      if( meshLevelPtr==nullptr )
       {
-        lambda( meshBodyName, meshLevel, regionNames );
-      } );
+        meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
+      }
+      lambda( meshBodyName, *meshLevelPtr, regionNames );
     }
   }
+
 
   string getDiscretizationName() const {return m_discretizationName;}
 
@@ -678,6 +709,10 @@ public:
   virtual PyTypeObject * getPythonType() const override;
 #endif
 
+  map< std::pair< string, string >, array1d< string > > const & getMeshTargets() const
+  {
+    return m_meshTargets;
+  }
 protected:
 
 
@@ -739,14 +774,18 @@ protected:
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;
 
+  /// Solver statistics
+  SolverStatistics m_solverStatistics;
+
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
-  /// Map containing the array of target regions (value) for each MeshBody (key).
-  map< string, array1d< string > > m_meshTargets;
+
+private:
   /// List of names of regions the solver will be applied to
   array1d< string > m_targetRegionNames;
 
-private:
+  /// Map containing the array of target regions (value) for each MeshBody (key).
+  map< std::pair< string, string >, array1d< string > > m_meshTargets;
 
   /**
    * @brief This function sets constitutive name fields on an
