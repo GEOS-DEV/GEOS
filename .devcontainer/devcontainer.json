@@ -3,17 +3,6 @@
 	"runArgs": [
 		"--cap-add=ALL"
 	],
-	"containerEnv": {
-		// "CC": "/usr/bin/gcc-10",
-		// "CXX": "/usr/bin/g++-10",
-		// "MPICC": "/usr/bin/mpicc",
-		// "MPICXX": "/usr/bin/mpic++",
-		// "MPIEXEC": "/usr/bin/mpiexec",
-		// "GEOSX_TPL_DIR": "/opt/GEOSX_TPL",
-		"ENABLE_HYPRE": "OFF",
-		"ENABLE_TRILINOS": "ON",
-		"ENABLE_CUDA": "OFF"
-	},
 	"customizations": {
 		"vscode": {
 			"extensions": [

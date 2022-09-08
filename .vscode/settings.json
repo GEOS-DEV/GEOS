@@ -1,10 +1,14 @@
 {
     "cmake": {
         "sourceDirectory": "${workspaceFolder}/src",
-        "buildDirectory": "/tmp/build",
+        "buildDirectory": "${userHome}/geosx-build",
         "cacheInit": "/workspaces/GEOSX/host-configs/environment.cmake",
         "configureSettings": {
-            "BLT_MPI_COMMAND_APPEND": "--allow-run-as-root;--use-hwthread-cpus;--oversubscribe"
+            "BLT_MPI_COMMAND_APPEND": "--allow-run-as-root;--use-hwthread-cpus;--oversubscribe",
+            "ENABLE_OPENMP": "OFF",
+            "ENABLE_HYPRE": "OFF",
+	        "ENABLE_TRILINOS": "ON",
+		    "ENABLE_CUDA": "OFF"
         },
         "configurationType": "Debug",
         "generator": "Ninja"
