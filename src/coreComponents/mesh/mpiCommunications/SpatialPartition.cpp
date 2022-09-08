@@ -302,7 +302,7 @@ namespace geosx
     MeshBody & meshBody1 = meshBodies.getGroup< MeshBody >(0);
     MeshBody & meshBody2 = meshBodies.getGroup< MeshBody >(1);
     MeshBody & particles = meshBody1.hasParticles() ? meshBody1 : meshBody2;
-    ParticleManager & particleManager = particles.getMeshLevel(0).getParticleManager();
+    ParticleManager & particleManager = particles.getBaseDiscretization().getParticleManager();
 
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {

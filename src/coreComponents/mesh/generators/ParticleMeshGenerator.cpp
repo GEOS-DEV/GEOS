@@ -76,7 +76,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
 
   MeshBody & meshBody = domain.getMeshBody( this->getName() );
   GEOSX_LOG_RANK( "Generating mesh for " + meshBody.getName() );
-  MeshLevel & meshLevel0 = meshBody.getMeshLevel( 0 );
+  MeshLevel & meshLevel0 = meshBody.getBaseDiscretization();
   ParticleManager & particleManager = meshLevel0.getParticleManager();
 
   ParticleBlockManager & particleBlockManager = meshBody.registerGroup< ParticleBlockManager >( keys::particleManager );

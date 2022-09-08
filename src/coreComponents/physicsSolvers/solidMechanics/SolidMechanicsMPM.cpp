@@ -180,9 +180,9 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 {
   ExecutableGroup::registerDataOnMesh( meshBodies );
 
-  forMeshTargets( meshBodies, [&] ( string const & meshBodyName,
-                                    MeshLevel & meshLevel,
-                                    arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
+                                                    MeshLevel & meshLevel,
+                                                    arrayView1d< string const > const & regionNames )
   {
     ParticleManager & particleManager = meshLevel.getParticleManager();
 
@@ -202,9 +202,9 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
   } );
 
-  forMeshTargets( meshBodies, [&] ( string const & meshBodyName,
-                                    MeshLevel & meshLevel,
-                                    arrayView1d<string const> const & GEOSX_UNUSED_PARAM( regionNames ) )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
+                                                    MeshLevel & meshLevel,
+                                                    arrayView1d< string const > const & regionNames )
   {
     MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
     if( meshBody.hasParticles() ) // Particle field registration? TODO: What goes here?
@@ -284,11 +284,13 @@ void SolidMechanicsMPM::initializePreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & meshLevel,
-                                                arrayView1d<string const> const & regionNames )
+  Group & meshBodies = domain.getMeshBodies();
+
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
+                                                                MeshLevel & meshLevel,
+                                                                arrayView1d<string const> const & regionNames )
   {
-    MeshBody const & meshBody = dynamicCast< MeshBody const & >( meshLevel.getParent().getParent() );
+    MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
     if( meshBody.hasParticles() ) // Only particle regions will hold actual materials. Background grid currently holds a null material so that the input file parser doesn't complain, but we don't need to actually do anything with it.
     {
@@ -526,8 +528,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   MeshBody & particles = meshBody1.hasParticles() ? meshBody1 : meshBody2;
   MeshBody & grid = !meshBody1.hasParticles() ? meshBody1 : meshBody2;
 
-  ParticleManager & particleManager = particles.getMeshLevel(0).getParticleManager();
-  MeshLevel & mesh = grid.getMeshLevel(0);
+  ParticleManager & particleManager = particles.getBaseDiscretization().getParticleManager();
+  MeshLevel & mesh = grid.getBaseDiscretization();
   NodeManager & nodeManager = mesh.getNodeManager();
 
   // Get nodal fields
