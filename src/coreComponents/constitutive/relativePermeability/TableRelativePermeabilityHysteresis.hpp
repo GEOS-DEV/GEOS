@@ -124,6 +124,7 @@ public:
                    arrayView1d< integer const > const & phaseOrder,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
+                   arrayView2d< real64, compflow::USD_PHASE > const & phaseCriticalVolFraction,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                    arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
                    arrayView2d< real64, compflow::USD_PHASE > const & phaseTrapped );
@@ -172,6 +173,7 @@ public:
                                           real64 const & imbibitionPhaseMaxVolFraction,
                                           real64 const & drainageRelPermEndPoint,
                                           real64 const & imbibitionRelPermEndPoint,
+                                          real64 & phaseCriticalVolFrac,
                                           real64 & phaseRelPerm,
                                           real64 & dPhaseRelPerm_dPhaseVolFrac ) const;
 
@@ -203,6 +205,7 @@ public:
                                              real64 const & imbibitionMinPhaseVolFraction,
                                              real64 const & drainageMaxPhaseVolFraction,
                                              real64 const & drainageRelPermEndPoint,
+                                             real64 & phaseCriticalVolFrac,
                                              real64 & phaseRelPerm,
                                              real64 & dPhaseRelPerm_dPhaseVolFrac ) const;
 
@@ -224,6 +227,7 @@ public:
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
+                          arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseCriticalVolFraction,
                           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                           arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
@@ -247,6 +251,7 @@ public:
                             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
                             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
+                            arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseCriticalVolFraction,
                             arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                             arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
@@ -262,6 +267,7 @@ public:
     void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
+                  arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseCriticalVolFraction,
                   arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                   arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
@@ -326,6 +332,10 @@ private:
 
     /// Maximum historical phase volume fraction for each phase
     arrayView2d< real64 const, compflow::USD_PHASE > m_phaseMaxHistoricalVolFraction;
+
+
+    /// Array to store computed critical saturations
+      arrayView2d<real64, compflow::USD_PHASE> m_phaseCriticalVolFraction;
 
   };
 
@@ -484,6 +494,9 @@ private:
   /// Maximum historical phase volume fraction for each phase
   array2d< real64, compflow::LAYOUT_PHASE > m_phaseMaxHistoricalVolFraction;
 
+  /// store crit saturation
+  array2d<real64, compflow::LAYOUT_PHASE> m_phaseCriticalVolFraction;
+
 };
 
 GEOSX_HOST_DEVICE
@@ -514,6 +527,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                    real64 const & imbibitionPhaseMaxVolFraction,
                                    real64 const & drainageRelPermEndPoint,
                                    real64 const & imbibitionRelPermEndPoint,
+                                   real64 & phaseCriticalVolFraction,
                                    real64 & phaseRelPerm,
                                    real64 & dPhaseRelPerm_dPhaseVolFrac ) const
 {
@@ -527,6 +541,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 
   // Swc is the common end min endpoint saturation for wetting curves
   real64 const Swc = imbibitionPhaseMinWettingVolFraction;
+  //Residual water is constant in Killough hysteresis model
+  phaseCriticalVolFraction = Swc;
 
   if( S <= Swc )
   {
@@ -592,12 +608,13 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                       real64 const & imbibitionPhaseMinVolFraction,
                                       real64 const & drainagePhaseMaxVolFraction,
                                       real64 const & drainageRelPermEndPoint,
+                                      real64 & phaseCriticalVolFraction,
                                       real64 & phaseRelPerm,
                                       real64 & dPhaseRelPerm_dPhaseVolFrac ) const
 {
   // note: for simplicity, the notations are taken from IX documentation (although this breaks our phaseVolFrac naming convention)
 
-  // Step 1: for a given value of the max historical saturation, Shy, compute the trapped critical saturation, Scrt,
+  // Step 1: for a given value of the max historical saturation, Shy, compute the trapped critical saturation, phaseCriticalVolFraction,
   //         using Land's method. The calculation includes the modifications from Jerauld. This is equation 2.162 from
   //         the IX technical description.
   real64 const S = phaseVolFraction;
@@ -608,9 +625,9 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   real64 const A = 1 + jerauldParam_a * ( Smx - Shy );
   real64 const numerator = Shy - Scrd;
   real64 const denom = A + landParam * pow( ( Shy - Scrd ) / ( Smx - Scrd ), 1 + jerauldParam_b / landParam );
-  real64 const Scrt = Scrd + numerator / denom; // trapped critical saturation from equation 2.162
+  phaseCriticalVolFraction = Scrd + numerator / denom; // trapped critical saturation from equation 2.162
 
-  if( S <= Scrt )  // S is below the trapped critical saturation, so the relperm is zero
+  if(S <= phaseCriticalVolFraction )  // S is below the trapped critical saturation, so the relperm is zero
   {
     phaseRelPerm = 0.0;
     dPhaseRelPerm_dPhaseVolFrac = 0.0;
@@ -624,8 +641,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   {
     // Step 2: compute the normalized saturation, S_norm, at which the imbibition relperm curve will be evaluated.
     //         This is equation 2.166 from the IX technical description.
-    real64 const ratio = ( Smx - Scri ) / ( Shy - Scrt );
-    real64 const Snorm = Scri + ( S - Scrt ) * ratio; // normalized saturation from equation 2.166
+    real64 const ratio = ( Smx - Scri ) / (Shy - phaseCriticalVolFraction );
+    real64 const Snorm = Scri + (S - phaseCriticalVolFraction ) * ratio; // normalized saturation from equation 2.166
     real64 const dSnorm_dS = ratio;
 
     // Step 3: evaluate the imbibition relperm, kri(Snorm), at the normalized saturation, Snorm.
@@ -655,6 +672,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
+                   arraySlice1d< real64 , compflow::USD_PHASE - 1 > const & phaseCriticalVolFrac,
                    arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                    arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
@@ -665,6 +683,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   if( !m_phaseHasHysteresis[IPT::WETTING] ||
       phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer )
   {
+
+      phaseCriticalVolFrac[ipWetting] = m_drainagePhaseMinVolFraction[ipWetting];
     computeDrainageRelPerm( m_drainageRelPermKernelWrappers[TPT::WETTING],
                             phaseVolFraction[ipWetting],
                             phaseRelPerm[ipWetting],
@@ -684,6 +704,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                      m_imbibitionPhaseMaxVolFraction[IPT::WETTING],
                                      m_drainagePhaseRelPermEndPoint[ipWetting],
                                      m_imbibitionPhaseRelPermEndPoint[IPT::WETTING],
+                                     phaseCriticalVolFrac[ipWetting],
                                      phaseRelPerm[ipWetting],
                                      dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting] );
   }
@@ -692,10 +713,13 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   if( !m_phaseHasHysteresis[IPT::NONWETTING] ||
       phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] - flowReversalBuffer )
   {
+      phaseCriticalVolFrac[ipNonWetting] = m_drainagePhaseMinVolFraction[ipNonWetting];
     computeDrainageRelPerm( m_drainageRelPermKernelWrappers[TPT::NONWETTING],
                             phaseVolFraction[ipNonWetting],
                             phaseRelPerm[ipNonWetting],
                             dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting] );
+
+
   }
   else
   {
@@ -710,6 +734,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                         m_imbibitionPhaseMinVolFraction[IPT::NONWETTING],
                                         m_drainagePhaseMaxVolFraction[ipNonWetting],
                                         m_drainagePhaseRelPermEndPoint[ipNonWetting],
+                                        phaseCriticalVolFrac[ipNonWetting],
                                         phaseRelPerm[ipNonWetting],
                                         dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting] );
   }
@@ -724,6 +749,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
                      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
+                     arraySlice1d< real64 , compflow::USD_PHASE - 1 > const & phaseCriticalVolFrac,
                      arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                      arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
@@ -741,6 +767,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   if( !m_phaseHasHysteresis[IPT::WETTING] ||
       phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer )
   {
+      phaseCriticalVolFrac[ipWetting] = m_drainagePhaseMinVolFraction[ipWetting];
     computeDrainageRelPerm( m_drainageRelPermKernelWrappers[TPT::WETTING],
                             phaseVolFraction[ipWetting],
                             phaseRelPerm[ipWetting],
@@ -760,6 +787,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                      m_imbibitionPhaseMaxVolFraction[IPT::WETTING],
                                      m_drainagePhaseRelPermEndPoint[ipWetting],
                                      m_imbibitionPhaseRelPermEndPoint[IPT::WETTING],
+                                     phaseCriticalVolFrac[ipWetting],
                                      phaseRelPerm[ipWetting],
                                      dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting] );
   }
@@ -776,6 +804,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   if( !m_phaseHasHysteresis[IPT::NONWETTING] ||
       phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] - flowReversalBuffer )
   {
+      phaseCriticalVolFrac[ipNonWetting] = m_drainagePhaseMinVolFraction[ipNonWetting];
     computeDrainageRelPerm( m_drainageRelPermKernelWrappers[TPT::NONWETTING],
                             phaseVolFraction[ipNonWetting],
                             phaseRelPerm[ipNonWetting],
@@ -794,6 +823,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                         m_imbibitionPhaseMinVolFraction[IPT::NONWETTING],
                                         m_drainagePhaseMaxVolFraction[ipNonWetting],
                                         m_drainagePhaseRelPermEndPoint[ipNonWetting],
+                                        phaseCriticalVolFrac[ipNonWetting],
                                         phaseRelPerm[ipNonWetting],
                                         dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting] );
   }
@@ -825,6 +855,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
+           arraySlice1d< real64 , compflow::USD_PHASE - 1 > const & phaseCriticalVolFrac,
            arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
            arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
@@ -843,6 +874,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                        phaseVolFraction,
                        phaseMaxHistoricalVolFraction,
                        phaseMinHistoricalVolFraction,
+                       phaseCriticalVolFrac,
                        phaseRelPerm,
                        dPhaseRelPerm_dPhaseVolFrac );
 
@@ -854,6 +886,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                      phaseVolFraction,
                      phaseMaxHistoricalVolFraction,
                      phaseMinHistoricalVolFraction,
+                     phaseCriticalVolFrac,
                      phaseRelPerm,
                      dPhaseRelPerm_dPhaseVolFrac );
   }
@@ -864,6 +897,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                      phaseVolFraction,
                      phaseMaxHistoricalVolFraction,
                      phaseMinHistoricalVolFraction,
+                     phaseCriticalVolFrac,
                      phaseRelPerm,
                      dPhaseRelPerm_dPhaseVolFrac );
   }
@@ -874,6 +908,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                      phaseVolFraction,
                      phaseMaxHistoricalVolFraction,
                      phaseMinHistoricalVolFraction,
+                     phaseCriticalVolFrac,
                      phaseRelPerm,
                      dPhaseRelPerm_dPhaseVolFrac );
   }
@@ -889,6 +924,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   compute( phaseVolFraction,
            m_phaseMaxHistoricalVolFraction[k],
            m_phaseMinHistoricalVolFraction[k],
+           m_phaseCriticalVolFraction[k],
            m_phaseRelPerm[k][q],
            m_dPhaseRelPerm_dPhaseVolFrac[k][q] );
 }

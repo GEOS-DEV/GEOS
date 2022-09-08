@@ -587,6 +587,7 @@ TableRelativePermeabilityHysteresis::createKernelWrapper()
                         m_phaseOrder,
                         m_phaseMinHistoricalVolFraction,
                         m_phaseMaxHistoricalVolFraction,
+                        m_phaseCriticalVolFraction,
                         m_phaseRelPerm,
                         m_dPhaseRelPerm_dPhaseVolFrac,
                         m_phaseTrapped );
@@ -600,8 +601,10 @@ void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, l
 
   m_phaseMaxHistoricalVolFraction.resize( size, numPhases );
   m_phaseMinHistoricalVolFraction.resize( size, numPhases );
+  m_phaseCriticalVolFraction.resize( size, numPhases );
   m_phaseMaxHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
   m_phaseMinHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 1.0 );
+  m_phaseCriticalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
 }
 
 void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
@@ -618,6 +621,9 @@ void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( ar
     {
       phaseMaxHistoricalVolFraction[ei][ip] = LvArray::math::max( phaseVolFraction[ei][ip], phaseMaxHistoricalVolFraction[ei][ip] );
       phaseMinHistoricalVolFraction[ei][ip] = LvArray::math::min( phaseVolFraction[ei][ip], phaseMinHistoricalVolFraction[ei][ip] );
+
+//        std::cout << " check0 " << phaseMinHistoricalVolFraction[ei][ip] << " - " << m_phaseMinHistoricalVolFraction[ei][ip]
+//                  << std::endl;
     }
   } );
 
@@ -628,13 +634,18 @@ void TableRelativePermeabilityHysteresis::updateTrappedPhaseVolFraction( arrayVi
 {
 
     arrayView2d<real64, compflow::USD_PHASE> phaseTrapped = m_phaseTrapped.toView();
+    arrayView2d<real64, compflow::USD_PHASE> phaseCrit = m_phaseCriticalVolFraction.toView();
 
     localIndex const numElems = phaseVolFraction.size(0);
     integer const numPhases = numFluidPhases();
     forAll<parallelDevicePolicy<> >(numElems, [=] GEOSX_HOST_DEVICE(localIndex const ei) {
         for (integer ip = 0; ip < numPhases; ++ip) {
             phaseTrapped[ei][ip] = LvArray::math::min(phaseVolFraction[ei][ip],
-                                                      m_phaseMinHistoricalVolFraction[ei][ip]);
+                                                      phaseCrit[ei][ip]);
+            /// not historical min but Scrt
+
+//            std::cout << " check1 " << phaseVolFraction[ei][ip] << " - " << m_phaseMinHistoricalVolFraction[ei][ip] << " : "
+//            << m_phaseTrapped[ei][ip] << std::endl;
         }
     });
 }
@@ -657,6 +668,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                  arrayView1d< integer const > const & phaseOrder,
                  arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
                  arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
+                 arrayView2d< real64, compflow::USD_PHASE > const & phaseCriticalVolFraction,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                  arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
                  arrayView2d< real64, compflow::USD_PHASE> const & phaseTrapped )
@@ -681,7 +693,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   m_drainagePhaseRelPermEndPoint( drainagePhaseRelPermEndPoint ),
   m_imbibitionPhaseRelPermEndPoint( imbibitionPhaseRelPermEndPoint ),
   m_phaseMinHistoricalVolFraction( phaseMinHistoricalVolFraction ),
-  m_phaseMaxHistoricalVolFraction( phaseMaxHistoricalVolFraction )
+  m_phaseMaxHistoricalVolFraction( phaseMaxHistoricalVolFraction ),
+  m_phaseCriticalVolFraction( phaseCriticalVolFraction )
 {}
 
 
