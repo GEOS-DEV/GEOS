@@ -602,9 +602,6 @@ void HydrofractureSolver::assembleSystem( real64 const time,
   GEOSX_MARK_FUNCTION;
   // Add Adp
   // Apd App
-  localMatrix.move( hostMemorySpace );
-  LvArray::print< serialPolicy >( localMatrix );
-  localMatrix.move( parallelDeviceMemorySpace );
 
   solidMechanicsSolver()->assembleSystem( time,
                                           dt,
@@ -613,9 +610,6 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                           localMatrix,
                                           localRhs );
   // Add
-  localMatrix.move( hostMemorySpace );
-  LvArray::print< serialPolicy >( localMatrix );
-
   flowSolver()->assembleAccumulationTerms( domain,
                                            dofManager,
                                            localMatrix,
@@ -628,19 +622,10 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                             localRhs,
                                             getDerivativeFluxResidual_dAperture() );
   // App
-  localMatrix.move( hostMemorySpace );
-  LvArray::print< serialPolicy >( localMatrix );
-
   assembleForceResidualDerivativeWrtPressure( domain, localMatrix, localRhs );
   // Adp
-  localMatrix.move( hostMemorySpace );
-  LvArray::print< serialPolicy >( localMatrix );
-
   assembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
   // Apd
-  localMatrix.move( hostMemorySpace );
-  LvArray::print< serialPolicy >( localMatrix );
-
   this->getRefDerivativeFluxResidual_dAperture()->zero();
 }
 

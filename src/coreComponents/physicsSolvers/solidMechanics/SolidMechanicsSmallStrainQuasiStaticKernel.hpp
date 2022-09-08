@@ -114,47 +114,8 @@ public:
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
-    m_density( inputConstitutiveType.getDensity() ),
-    m_outputLocalJacobian( )
+    m_density( inputConstitutiveType.getDensity() )
   {}
-
-  /**
-   * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
-   * @param inputGravityVector The gravity vector.
-   */
-  QuasiStatic( NodeManager const & nodeManager,
-               EdgeManager const & edgeManager,
-               FaceManager const & faceManager,
-               localIndex const targetRegionIndex,
-               SUBREGION_TYPE const & elementSubRegion,
-               FE_TYPE const & finiteElementSpace,
-               CONSTITUTIVE_TYPE & inputConstitutiveType,
-               arrayView1d< globalIndex const > const inputDofNumber,
-               globalIndex const rankOffset,
-               CRSMatrixView< real64, globalIndex const > const inputMatrix,
-               arrayView1d< real64 > const inputRhs,
-               real64 const (&inputGravityVector)[3],
-               arrayView3d< real64 > const outputLocalJacobian ):
-    Base( nodeManager,
-          edgeManager,
-          faceManager,
-          targetRegionIndex,
-          elementSubRegion,
-          finiteElementSpace,
-          inputConstitutiveType,
-          inputDofNumber,
-          rankOffset,
-          inputMatrix,
-          inputRhs ),
-    m_X( nodeManager.referencePosition()),
-    m_disp( nodeManager.totalDisplacement()),
-    m_uhat( nodeManager.incrementalDisplacement()),
-    m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
-    m_density( inputConstitutiveType.getDensity() ),
-    m_outputLocalJacobian( outputLocalJacobian )
-  {}
-
 
   //*****************************************************************************
   /**
@@ -337,14 +298,6 @@ public:
       }
     }
 
-    for( int ii = 0; ii < numNodesPerElem * numDofPerTestSupportPoint; ++ii )
-    {
-      for( int jj = 0; jj < numNodesPerElem * numDofPerTestSupportPoint; ++jj )
-      {
-        m_outputLocalJacobian[k][ii][jj] = stack.localJacobian[ii][jj];
-      }
-    }
-
     return maxForce;
   }
 
@@ -366,8 +319,6 @@ protected:
   /// The rank global density
   arrayView2d< real64 const > const m_density;
 
-  arrayView3d< real64 > const m_outputLocalJacobian;
-
 };
 
 using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
@@ -376,15 +327,6 @@ using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
                                                          CRSMatrixView< real64, globalIndex const > const,
                                                          arrayView1d< real64 > const,
                                                          real64 const (&)[3] >;
-
-/// The factory used to construct a QuasiStatic kernel.
-using QuasiStaticFactory2 = finiteElement::KernelFactory< QuasiStatic,
-                                                         arrayView1d< globalIndex const > const,
-                                                         globalIndex,
-                                                         CRSMatrixView< real64, globalIndex const > const,
-                                                         arrayView1d< real64 > const,
-                                                         real64 const (&)[3],
-                                                         arrayView3d< real64 > const >;
 
 } // namespace solidMechanicsLagrangianFEMKernels
 

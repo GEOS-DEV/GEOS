@@ -162,12 +162,6 @@ void SolidModelDiscretizationOpsIsotropic::upperBTDB( BASIS_GRADIENT const & gra
   real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( K, G );
   real64 const lambda2G = lambda + 2*G;
 
-  // real64 const G = 1.0;
-  // real64 const K = 1.0;
-
-  // real64 const lambda = 0.33333333;
-  // real64 const lambda2G = 2.33333333;
-
   SolidModelDiscretizationOps::upperBTDB< NUM_SUPPORT_POINTS >( gradN,
                                                                 elementStiffness,
                                                                 [ lambda,
@@ -189,27 +183,6 @@ void SolidModelDiscretizationOpsIsotropic::upperBTDB( BASIS_GRADIENT const & gra
     elementStiffness[a*3+2][b*3+1] = elementStiffness[a*3+2][b*3+1] + gradNa_gradNb[1][2] * G + gradNa_gradNb[2][1] * lambda;
     elementStiffness[a*3+2][b*3+2] = elementStiffness[a*3+2][b*3+2] + gradNa_gradNb[0][0] * G + gradNa_gradNb[1][1] * G + gradNa_gradNb[2][2] * lambda2G;
 
-    // // still denorms, whether captured G/K/lambdas or hard-coded float values
-    // elementStiffness[a*3+0][b*3+0] += G + G + lambda2G;
-    // elementStiffness[a*3+0][b*3+1] += G + lambda;
-    // elementStiffness[a*3+0][b*3+2] += G + lambda;
-    // elementStiffness[a*3+1][b*3+0] += G + lambda;
-    // elementStiffness[a*3+1][b*3+1] += G + G + lambda2G;
-    // elementStiffness[a*3+1][b*3+2] += G + lambda;
-    // elementStiffness[a*3+2][b*3+0] += G + lambda;
-    // elementStiffness[a*3+2][b*3+1] += G + lambda;
-    // elementStiffness[a*3+2][b*3+2] += G + G + lambda2G;
-
-    // // no denorms, 0s... (which would contradict them being boundary condition dofs, same as just the hard-coded localJ[*] = 1.0 does)
-    // elementStiffness[a*3+0][b*3+0] += 1.0;
-    // elementStiffness[a*3+0][b*3+1] += 1.0;
-    // elementStiffness[a*3+0][b*3+2] += 1.0;
-    // elementStiffness[a*3+1][b*3+0] += 1.0;
-    // elementStiffness[a*3+1][b*3+1] += 1.0;
-    // elementStiffness[a*3+1][b*3+2] += 1.0;
-    // elementStiffness[a*3+2][b*3+0] += 1.0;
-    // elementStiffness[a*3+2][b*3+1] += 1.0;
-    // elementStiffness[a*3+2][b*3+2] += 1.0;
   } );
 }
 

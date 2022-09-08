@@ -59,8 +59,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxForce( 0.0 ),
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
-  m_iComm( CommunicationTools::getInstance().getCommID() ),
-  m_outputLocalJacobian( )
+  m_iComm( CommunicationTools::getInstance().getCommID() )
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -1004,19 +1003,11 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
   {
     GEOSX_UNUSED_VAR( dt );
-    localIndex numElems = 0;
-    domain.forMeshBodies( [&]( MeshBody & body ) {
-      numElems += body.getMeshLevel( 0 ).getElemManager( ).getNumberOfElements( );
-    } );
-    // m_outputLocalJacobian.resize( numElems, 24, 24 );
     assemblyLaunch< constitutive::SolidBase,
-                    solidMechanicsLagrangianFEMKernels::QuasiStaticFactory2 >( domain,
+                    solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
                                                                               dofManager,
                                                                               localMatrix,
-                                                                              localRhs,
-                                                                              m_outputLocalJacobian.toView() );
-    m_outputLocalJacobian.move( hostMemorySpace );
-    std::cout << m_outputLocalJacobian << std::endl;
+                                                                              localRhs );
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
