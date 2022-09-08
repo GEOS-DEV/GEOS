@@ -210,6 +210,21 @@ else()
 endif()
 
 ################################
+# CAMP
+################################
+if(DEFINED CAMP_DIR)
+    # Should be found by raja, but it is possible for spack to misconfig raja so we need to find it
+    message(STATUS "CAMP_DIR = ${CAMP_DIR}")
+
+    find_package(camp REQUIRED
+                 PATHS ${CAMP_DIR}
+                 NO_DEFAULT_PATH)
+
+    get_target_property(CAMP_INCLUDE_DIRS camp INTERFACE_INCLUDE_DIRECTORIES)
+    set_target_properties(camp PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CAMP_INCLUDE_DIRS}")
+endif()
+
+################################
 # RAJA
 ################################
 if(DEFINED RAJA_DIR)
@@ -226,21 +241,6 @@ if(DEFINED RAJA_DIR)
     set(thirdPartyLibs ${thirdPartyLibs} RAJA )
 else()
     message(FATAL_ERROR "GEOSX requires RAJA, set RAJA_DIR to the RAJA installation directory.")
-endif()
-
-################################
-# CAMP
-################################
-if(DEFINED CAMP_DIR)
-    # Should be found by raja, but it is possible for spack to misconfig raja so we need to find it
-    message(STATUS "CAMP_DIR = ${CAMP_DIR}")
-
-    find_package(camp REQUIRED
-                 PATHS ${CAMP_DIR}
-                 NO_DEFAULT_PATH)
-
-    get_target_property(CAMP_INCLUDE_DIRS camp INTERFACE_INCLUDE_DIRECTORIES)
-    set_target_properties(camp PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CAMP_INCLUDE_DIRS}")
 endif()
 
 ################################
