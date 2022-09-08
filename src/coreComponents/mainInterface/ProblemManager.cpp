@@ -562,10 +562,15 @@ void ProblemManager::generateMesh()
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+    ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
 
     MeshLevel & baseMesh = meshBody.getBaseDiscretization();
     array1d< string > junk;
-    this->generateMeshLevel( baseMesh, cellBlockManager, nullptr, junk.toViewConst() );
+    this->generateMeshLevel( baseMesh,
+                             cellBlockManager,
+                             particleBlockManager,
+                             nullptr,
+                             junk.toViewConst() );
 
     ElementRegionManager & elemManager = baseMesh.getElemManager();
     elemManager.generateWells( meshManager, baseMesh );
@@ -590,6 +595,7 @@ void ProblemManager::generateMesh()
         string const & discretizationName = feDiscretization->getName();
         arrayView1d< string const > const regionNames = discretizationPair.second;
         CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+        ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
 
         // create a high order MeshLevel
         if( order > 1 )
@@ -600,6 +606,7 @@ void ProblemManager::generateMesh()
 
           this->generateMeshLevel( mesh,
                                    cellBlockManager,
+                                   particleBlockManager,
                                    feDiscretization,
                                    regionNames );
         }
@@ -634,6 +641,7 @@ void ProblemManager::generateMesh()
   {
 
     meshBody.deregisterGroup( keys::cellManager );
+    meshBody.deregisterGroup( keys::particleManager );
 
 //    GEOSX_THROW_IF_NE( meshBody.getMeshLevels().numSubGroups(), 1, InputError );
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
@@ -732,6 +740,7 @@ ProblemManager::getDiscretizations() const
 
 void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
                                         CellBlockManagerABC & cellBlockManager,
+                                        ParticleBlockManagerABC & particleBlockManager,
                                         Group const * const discretization,
                                         arrayView1d< string const > const & )
 {
@@ -753,6 +762,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   }
 
   NodeManager & nodeManager = meshLevel.getNodeManager();
+  ParticleManager & particleManager = meshLevel.getParticleManager();
   EdgeManager & edgeManager = meshLevel.getEdgeManager();
   FaceManager & faceManager = meshLevel.getFaceManager();
   ElementRegionManager & elemManager = meshLevel.getElemManager();
@@ -768,6 +778,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
   {
     elemManager.generateMesh( cellBlockManager );
+    particleManager.generateMesh( particleBlockManager );
     nodeManager.setGeometricalRelations( cellBlockManager, elemManager );
     edgeManager.setGeometricalRelations( cellBlockManager );
     faceManager.setGeometricalRelations( cellBlockManager,
@@ -803,6 +814,12 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
       subRegion.setMaxGlobalIndex();
     } );
     elemManager.setMaxGlobalIndex();
+
+    particleManager.forParticleSubRegions< ParticleSubRegionBase >( [&]( ParticleSubRegionBase & subRegion )
+    {
+      subRegion.setMaxGlobalIndex();
+    } );
+    particleManager.setMaxGlobalIndex();
   }
 }
 
@@ -839,10 +856,29 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
         MeshLevel & meshLevel = targetMeshLevel.isShallowCopyOf( baseMeshLevel ) ? baseMeshLevel : targetMeshLevel;
 
         NodeManager & nodeManager = meshLevel.getNodeManager();
+        ParticleManager & particleManager = meshLevel.getParticleManager();
         ElementRegionManager & elemManager = meshLevel.getElemManager();
         FaceManager const & faceManager = meshLevel.getFaceManager();
         EdgeManager const & edgeManager = meshLevel.getEdgeManager();
         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+
+        for( auto const & regionName : regionNames )
+        {
+          if( particleManager.hasRegion( regionName ) )
+          {
+            ParticleRegionBase & particleRegion = particleManager.getRegion( regionName );
+
+            particleRegion.forParticleSubRegions( [&]( auto & subRegion )
+            {
+              localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                          meshLevel.getName(),
+                                                                                          regionName,
+                                                                                          subRegion.getName() ) ];
+              localIndex const numQuadraturePoints = 1; // Particles always have 1 quadrature point
+              numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
+            } );
+          }
+        }
 
         for( auto const & regionName : regionNames )
         {
@@ -942,6 +978,24 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
       for( auto & materialName : materialList )
       {
         constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, numQuadraturePoints );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
+                                     meshBodyName,
+                                     meshLevelName,
+                                     regionName,
+                                     subRegionName,
+                                     materialName,
+                                     numQuadraturePoints ) );
+      }
+    }
+    {
+      ParticleManager & particleManager = meshLevel.getParticleManager();
+      ParticleRegionBase & particleRegion = particleManager.getRegion( regionName );
+      ParticleSubRegionBase & particleSubRegion = particleRegion.getSubRegion( subRegionName );
+
+      string_array const & materialList = particleRegion.getMaterialList();
+      for( auto & materialName : materialList )
+      {
+        constitutiveManager.hangConstitutiveRelation( materialName, &particleSubRegion, numQuadraturePoints );
         GEOSX_LOG_RANK_0( GEOSX_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
                                      meshBodyName,
                                      meshLevelName,
