@@ -10,7 +10,6 @@ install-*
 *.swn
 *.nfs*
 *.vscode*
-*.devcontainer*
 *.out
 *.core
 *.DS_Store
