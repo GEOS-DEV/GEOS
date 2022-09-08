@@ -213,7 +213,7 @@ public:
    * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables as filled by @ref setupStack.
    * @param matrix The matrix that needs to be stabilized.
-   * @param scaleFactor Optional scaling of the stabilization matrix.
+   * @param scaleFactor Scaling of the stabilization matrix.
    */
   template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS, bool UPPER >
   GEOSX_HOST_DEVICE

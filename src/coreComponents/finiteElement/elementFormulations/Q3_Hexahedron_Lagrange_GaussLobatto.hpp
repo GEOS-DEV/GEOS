@@ -197,7 +197,7 @@ public:
   GEOSX_FORCE_INLINE
   static void calcN( localIndex const q,
                      StackVariables const & stack,
-                     real64 ( &N )[numNodes] )
+                     real64 ( & N )[numNodes] )
   {
     GEOSX_UNUSED_VAR( stack );
     return calcN( q, N );
