@@ -155,6 +155,7 @@ __geosx_return_script: &__geosx_return_script
            jq '[ .jobs[] | select( (.stage.name == "checks") and (.allow_failure == true) and (.state != "passed")) ] | length')
 
 stages:
+- check_pr_is_not_a_draft
 - checks
 - builds
 - return_status
@@ -166,8 +167,8 @@ jobs:
   - name: check_submodules
   - name: check_pr_is_assigned
   include:
-  - stage: checks
-    name: check_pr_is_not_a_draft
+  - stage: check_pr_is_not_a_draft
+    name: Check that the PR is not a draft (cancel job otherwise).
     <<: *__geosx_draft_script
   - stage: checks
     name: code_style
