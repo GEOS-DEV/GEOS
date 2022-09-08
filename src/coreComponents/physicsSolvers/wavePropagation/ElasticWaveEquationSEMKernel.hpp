@@ -93,7 +93,6 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] elemsToNodes map to obtaint global nodes from element index
    * @param[in] X array of mesh nodes coordinates
    * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
-   * @return true if coords is inside the element num index
    */
   template< typename FE_TYPE >
   GEOSX_HOST_DEVICE
@@ -268,7 +267,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             //Compute source coefficients: this generate a P-wave and an "unwanted" S-wave. It is classical in the case of the elastic wave
             // equation at order 2, the S-wave can be attenuated by refining the mesh or get to high order
-            //However, we will propably use elastic wave at 1st order for the FWI case.
+            //However, we will propably use elastic wave at 1st order for the FWI case.    
             for( localIndex c=0; c<2; ++c )
             {
               for( localIndex b=0; b<2; ++b )
@@ -338,7 +337,8 @@ struct PrecomputeSourceAndReceiverKernel
             receiverIsLocal[ircv] = 1;
 
             real64 Ntest[numNodesPerElem];
-            finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
+            //finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
+            FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {

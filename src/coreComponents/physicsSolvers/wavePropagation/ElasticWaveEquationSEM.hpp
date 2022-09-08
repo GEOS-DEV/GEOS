@@ -139,9 +139,9 @@ public:
     static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
     static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
 
-    static constexpr char const * displacementxNp1AtReceiversString() { return "displacementxNp1AtReceivers"; }
-    static constexpr char const * displacementyNp1AtReceiversString() { return "displacementyNp1AtReceivers"; }
-    static constexpr char const * displacementzNp1AtReceiversString() { return "displacementzNp1AtReceivers"; }
+    static constexpr char const * displacementXNp1AtReceiversString() { return "displacementXNp1AtReceivers"; }
+    static constexpr char const * displacementYNp1AtReceiversString() { return "displacementYNp1AtReceivers"; }
+    static constexpr char const * displacementZNp1AtReceiversString() { return "displacementZNp1AtReceivers"; }
 
   } waveEquationViewKeys;
 
@@ -211,13 +211,13 @@ private:
   array1d< localIndex > m_receiverIsLocal;
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (x-component)
-  array2d< real64 > m_displacementxNp1AtReceivers;
+  array2d< real64 > m_displacementXNp1AtReceivers;
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (y-component)
-  array2d< real64 > m_displacementyNp1AtReceivers;
+  array2d< real64 > m_displacementYNp1AtReceivers;
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (z-component)
-  array2d< real64 > m_displacementzNp1AtReceivers;
+  array2d< real64 > m_displacementZNp1AtReceivers;
 
 };
 

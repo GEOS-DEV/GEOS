@@ -79,17 +79,17 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
 
-  registerWrapper( viewKeyStruct::displacementxNp1AtReceiversString(), &m_displacementxNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::displacementXNp1AtReceiversString(), &m_displacementXNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (x-component)" );
 
-  registerWrapper( viewKeyStruct::displacementyNp1AtReceiversString(), &m_displacementyNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::displacementYNp1AtReceiversString(), &m_displacementYNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (y-component)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_displacementzNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::displacementZNp1AtReceiversString(), &m_displacementZNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-component)" );
@@ -218,9 +218,9 @@ void ElasticWaveEquationSEM::postProcessInput()
   m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverIsLocal.resize( numReceiversGlobal );
 
-  m_displacementxNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_displacementyNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_displacementzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_displacementXNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_displacementYNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_displacementZNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
   m_sourceValue.resize( nsamples, numSourcesGlobal );
 
 
@@ -651,7 +651,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
 
     real64 dt2 = dt*dt;
-    forAll< serialPolicy >( nodeManager.size(), [=] ( localIndex const a )
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] ( localIndex const a )
     {
       if( freeSurfaceNodeIndicator[a]!=1 )
       {
@@ -684,13 +684,13 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
                                   true );
 
     // compute the seismic traces since last step.
-    arrayView2d< real64 > const uxReceivers   = m_displacementxNp1AtReceivers.toView();
-    arrayView2d< real64 > const uyReceivers   = m_displacementyNp1AtReceivers.toView();
-    arrayView2d< real64 > const uzReceivers   = m_displacementzNp1AtReceivers.toView();
+    arrayView2d< real64 > const uXReceivers   = m_displacementXNp1AtReceivers.toView();
+    arrayView2d< real64 > const uYReceivers   = m_displacementYNp1AtReceivers.toView();
+    arrayView2d< real64 > const uZReceivers   = m_displacementZNp1AtReceivers.toView();
 
-    computeAllSeismoTraces( time_n, dt, ux_np1, ux_n, uxReceivers );
-    computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, uyReceivers );
-    computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, uzReceivers );
+    computeAllSeismoTraces( time_n, dt, ux_np1, ux_n, uXReceivers );
+    computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, uYReceivers );
+    computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, uZReceivers );
 
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -735,13 +735,13 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n, integer const, intege
     arrayView1d< real64 const > const uy_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_np1 >();
     arrayView1d< real64 const > const uz_n = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_n >();
     arrayView1d< real64 const > const uz_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_np1 >();
-    arrayView2d< real64 > const uxReceivers   = m_displacementxNp1AtReceivers.toView();
-    arrayView2d< real64 > const uyReceivers   = m_displacementyNp1AtReceivers.toView();
-    arrayView2d< real64 > const uzReceivers   = m_displacementzNp1AtReceivers.toView();
+    arrayView2d< real64 > const uXReceivers   = m_displacementXNp1AtReceivers.toView();
+    arrayView2d< real64 > const uYReceivers   = m_displacementYNp1AtReceivers.toView();
+    arrayView2d< real64 > const uZReceivers   = m_displacementZNp1AtReceivers.toView();
 
-    computeAllSeismoTraces( time_n, 0, ux_np1, ux_n, uxReceivers );
-    computeAllSeismoTraces( time_n, 0, uy_np1, uy_n, uyReceivers );
-    computeAllSeismoTraces( time_n, 0, uz_np1, uz_n, uzReceivers );
+    computeAllSeismoTraces( time_n, 0, ux_np1, ux_n, uXReceivers );
+    computeAllSeismoTraces( time_n, 0, uy_np1, uy_n, uYReceivers );
+    computeAllSeismoTraces( time_n, 0, uz_np1, uz_n, uZReceivers );
   } );
 }
 
