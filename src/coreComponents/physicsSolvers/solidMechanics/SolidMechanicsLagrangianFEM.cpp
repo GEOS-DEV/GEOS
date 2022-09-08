@@ -255,36 +255,36 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNames( ElementSubRegionBase & s
 }
 
 
-void SolidMechanicsLagrangianFEM::initializePreSubGroups()
-{
-  SolverBase::initializePreSubGroups();
+// void SolidMechanicsLagrangianFEM::initializePreSubGroups()
+// {
+//   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+//   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & regionNames )
-  {
-    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
-    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-                                                                       [&]( localIndex const,
-                                                                            CellElementSubRegion & subRegion )
-    {
-      string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-      solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
-    } );
-  } );
+//   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+//                                                                 MeshLevel & meshLevel,
+//                                                                 arrayView1d< string const > const & regionNames )
+//   {
+//     ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+//     elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+//                                                                        [&]( localIndex const,
+//                                                                             CellElementSubRegion & subRegion )
+//     {
+//       string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+//       solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
+//     } );
+//   } );
 
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+//   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+//   FiniteElementDiscretizationManager const &
+//   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
-  FiniteElementDiscretization const &
-  feDiscretization = feDiscretizationManager.getGroup< FiniteElementDiscretization >( m_discretizationName );
-  GEOSX_UNUSED_VAR( feDiscretization );
-}
+//   FiniteElementDiscretization const &
+//   feDiscretization = feDiscretizationManager.getGroup< FiniteElementDiscretization >( m_discretizationName );
+//   GEOSX_UNUSED_VAR( feDiscretization );
+// }
 
 
 

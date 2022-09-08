@@ -84,6 +84,13 @@ public:
                           DofManager & dofManager ) const override;
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
+
+    virtual void
+  applySystemSolution( DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor,
+                       DomainPartition & domain ) override;
+
 protected:
   string m_fieldName;
 

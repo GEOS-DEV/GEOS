@@ -242,6 +242,8 @@ void MatrixFreeSolidMechanicsFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
 
 void MatrixFreeSolidMechanicsFEM::registerDataOnMesh( Group & meshBodies )
 {
+  SolverBase::registerDataOnMesh( meshBodies );
+
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
                                                     arrayView1d< string const > const & regionNames )
@@ -270,6 +272,36 @@ void MatrixFreeSolidMechanicsFEM::setConstitutiveNamesCallSuper( ElementSubRegio
   solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
   GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
 }
+
+
+void
+MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
+                                                  arrayView1d< real64 const > const & localSolution,
+                                                  real64 const scalingFactor,
+                                                  DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+  dofManager.addVectorToField( localSolution,
+                               keys::TotalDisplacement,
+                               keys::TotalDisplacement,
+                               scalingFactor );
+
+  // forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  //                                                               MeshLevel & mesh,
+  //                                                               arrayView1d< string const > const & )
+
+  // {
+  //   FieldIdentifiers fieldsToBeSync;
+
+  //   fieldsToBeSync.addFields( FieldLocation::Node, { keys::TotalDisplacement } );
+
+  //   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+  //                                                        mesh,
+  //                                                        domain.getNeighbors(),
+  //                                                        true );
+  // } );
+}
+
 
 
 //START_SPHINX_INCLUDE_REGISTER
