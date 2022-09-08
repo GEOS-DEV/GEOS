@@ -1,4 +1,6 @@
-language: minimal
+language: shell
+os: linux
+dist: xenial
 
 vm:
   size: large
@@ -13,7 +15,7 @@ env:
 git:
   submodules: false
 
-geosx_before_script: &geosx_before_script
+__geosx_before_script: &__geosx_before_script
   before_script:
     - git submodule update --init --recursive src/cmake/blt
     - git submodule update --init --recursive src/coreComponents/LvArray
@@ -21,9 +23,9 @@ geosx_before_script: &geosx_before_script
     - git submodule update --init src/coreComponents/mesh/PAMELA
     - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
 
-geosx_linux_build: &geosx_linux_build
+__geosx_linux_build: &__geosx_linux_build
   services: docker
-  <<: *geosx_before_script
+  <<: *__geosx_before_script
   script:
     # The linux build relies on two environment variables DOCKER_REPOSITORY and GEOSX_TPL_TAG to define the TPL version.
     # And another CMAKE_BUILD_TYPE to define the build type we want for GEOSX.
@@ -55,7 +57,7 @@ geosx_linux_build: &geosx_linux_build
     ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG}
     ${TRAVIS_BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
 
-geosx_osx_build: &geosx_osx_build
+__geosx_osx_build: &__geosx_osx_build
   os: osx
   osx_image: xcode13.2
   install:
@@ -75,7 +77,7 @@ geosx_osx_build: &geosx_osx_build
   - brew tap-new ${BREW_OPENMPI_TAP}
   - brew extract --version=${BREW_OPENMPI_VERSION} open-mpi ${BREW_OPENMPI_TAP}
   - HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_MAKE_JOBS=$(nproc) brew install ${BREW_OPENMPI_TAP}/open-mpi@${BREW_OPENMPI_VERSION}
-  <<: *geosx_before_script
+  <<: *__geosx_before_script
   script:
   - python ${TRAVIS_BUILD_DIR}/scripts/config-build.py
     -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -bt Release
@@ -84,8 +86,8 @@ geosx_osx_build: &geosx_osx_build
   - make -j $(nproc) VERBOSE=1
   - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
 
-geosx_totalenergies_cluster_build: &geosx_totalenergies_cluster_build
-  <<: *geosx_linux_build
+__geosx_totalenergies_cluster_build: &__geosx_totalenergies_cluster_build
+  <<: *__geosx_linux_build
   # We use the most recent ubuntu distribution available in travis-ci to ensure maximum support of google cloud's sdk.
   dist: bionic
   addons:
@@ -111,7 +113,7 @@ geosx_totalenergies_cluster_build: &geosx_totalenergies_cluster_build
   - gcloud auth activate-service-account --key-file=${GEOSX_GCLOUD_KEY}
   - CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/
 
-draft_script: &draft_script
+__geosx_draft_script: &__geosx_draft_script
   script:
   # TRAVIS_PULL_REQUEST is false if job is not from a PR
   - if [[ $TRAVIS_PULL_REQUEST == false ]]; then exit 0; fi;
@@ -134,7 +136,7 @@ draft_script: &draft_script
 
 # PR must be assigned to be merged.
 # This script will fail if this is not the case.
-assigned_script: &assigned_script
+__geosx_assigned_script: &__geosx_assigned_script
   script:
   # TRAVIS_PULL_REQUEST is false if job is not from a PR
   - if [[ $TRAVIS_PULL_REQUEST == false ]]; then exit 0; fi;
@@ -144,7 +146,7 @@ assigned_script: &assigned_script
         jq ".assignees|length")
   - if [[ $is_assigned == 0 ]]; then exit 1; else exit 0; fi
 
-return_script: &return_script
+__geosx_return_script: &__geosx_return_script
   script:
   # Verifies if all the "checks" jobs passed
   - |
@@ -166,17 +168,17 @@ jobs:
   include:
   - stage: checks
     name: check_pr_is_not_a_draft
-    <<: *draft_script
+    <<: *__geosx_draft_script
   - stage: checks
     name: code_style
-    <<: *geosx_linux_build
+    <<: *__geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu20.04-gcc9
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--test-code-style
   - stage: checks
     name: documentation
-    <<: *geosx_linux_build
+    <<: *__geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu20.04-gcc9
     - CMAKE_BUILD_TYPE=Release
@@ -186,10 +188,10 @@ jobs:
     script: scripts/test_submodule_updated.sh
   - stage: checks
     name: check_pr_is_assigned
-    <<: *assigned_script
+    <<: *__geosx_assigned_script
   - stage: builds
     name: Ubuntu CUDA debug (18.04, clang 8.0.0 + gcc 8.3.1, open-mpi 2.1.1, cuda-10.1.243)
-    <<: *geosx_linux_build
+    <<: *__geosx_linux_build
     # Builds only the geosx executable (timeout when building tests)
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-clang8.0.0-cuda10.1.243
@@ -200,7 +202,7 @@ jobs:
     - ENABLE_TRILINOS=OFF
   - stage: builds
     name: Ubuntu CUDA (18.04, clang 8.0.0 + gcc 8.3.1, open-mpi 2.1.1, cuda-10.1.243)
-    <<: *geosx_linux_build
+    <<: *__geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-clang8.0.0-cuda10.1.243
     - CMAKE_BUILD_TYPE=Release
@@ -210,14 +212,14 @@ jobs:
     - ENABLE_TRILINOS=OFF
   - stage: builds
     name: Centos (7.6, gcc 8.3.1, open-mpi 1.10.7, cuda 10.1.243)
-    <<: *geosx_linux_build
+    <<: *__geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/centos7.6.1810-gcc8.3.1-cuda10.1.243
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS="--disable-unit-tests --reduce-install-logs"
   - stage: builds
     name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 10.2.89p2)
-    <<: *geosx_totalenergies_cluster_build
+    <<: *__geosx_totalenergies_cluster_build
     env:
     - DOCKER_REPOSITORY=geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda10.2.89p2
     - CMAKE_BUILD_TYPE=Release
@@ -226,7 +228,7 @@ jobs:
     - GCP_BUCKET=geosx/Pecan-GPU
   - stage: builds
     name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
-    <<: *geosx_totalenergies_cluster_build
+    <<: *__geosx_totalenergies_cluster_build
     env:
     - DOCKER_REPOSITORY=geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
     - CMAKE_BUILD_TYPE=Release
@@ -234,7 +236,7 @@ jobs:
     - GCP_BUCKET=geosx/Pecan-CPU
   - stage: builds
     name: Pangea 2 (centos 7.6, gcc 8.3.0, open-mpi 2.1.5, mkl 2019.3)
-    <<: *geosx_totalenergies_cluster_build
+    <<: *__geosx_totalenergies_cluster_build
     env:
     - DOCKER_REPOSITORY=geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
     - CMAKE_BUILD_TYPE=Release
@@ -243,30 +245,30 @@ jobs:
     - ENABLE_TRILINOS=OFF
   - stage: builds
     name: Mac_OSX
-    <<: *geosx_osx_build
+    <<: *__geosx_osx_build
   - stage: builds
     name: Centos (7.7, clang 9.0.0 + gcc 4.9.3, open-mpi 1.10.7)
-    <<: *geosx_linux_build
+    <<: *__geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/centos7.7.1908-clang9.0.0
     - CMAKE_BUILD_TYPE=Release
   - stage: builds
     name: Ubuntu (20.04, gcc 9.3.0, open-mpi 4.0.3)
-    <<: *geosx_linux_build
+    <<: *__geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu20.04-gcc9
     - CMAKE_BUILD_TYPE=Release
   - stage: builds
     name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3)
-    <<: *geosx_linux_build
+    <<: *__geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu20.04-gcc10
     - CMAKE_BUILD_TYPE=Debug
   - stage: builds
     name: Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3)
-    <<: *geosx_linux_build
+    <<: *__geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu20.04-gcc10
     - CMAKE_BUILD_TYPE=Release
   - stage: return_status
-    <<: *return_script
+    <<: *__geosx_return_script
