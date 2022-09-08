@@ -333,10 +333,10 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
   ncolsDevice[0] = 1;
   valueDevice[0] = value0;
 
-  rowIndexDevice.move( LvArray::MemorySpace::cuda, false );
-  colIndexDevice.move( LvArray::MemorySpace::cuda, false );
-  ncolsDevice.move( LvArray::MemorySpace::cuda, false );
-  valueDevice.move( LvArray::MemorySpace::cuda, false );
+  rowIndexDevice.move( parallelDeviceMemorySpace, false );
+  colIndexDevice.move( parallelDeviceMemorySpace, false );
+  ncolsDevice.move( parallelDeviceMemorySpace, false );
+  valueDevice.move( parallelDeviceMemorySpace, false );
 
   HYPRE_Int * const ncols = ncolsDevice.data();
   HYPRE_BigInt const * const rowIndex = rowIndexDevice.data();
@@ -410,8 +410,8 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
   rowIndexDevice[0] = rowIndex0;
   ncolsDevice[0] = LvArray::integerConversion< HYPRE_Int >( size );
 
-  rowIndexDevice.move( LvArray::MemorySpace::cuda, false );
-  ncolsDevice.move( LvArray::MemorySpace::cuda, false );
+  rowIndexDevice.move( parallelDeviceMemorySpace, false );
+  ncolsDevice.move( parallelDeviceMemorySpace, false );
 
   globalIndex const * const rowIndex = rowIndexDevice.data();
   HYPRE_Int * const ncols = ncolsDevice.data();
@@ -557,10 +557,10 @@ void HypreMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,
     nCols[i] = 1;
   }
 #if GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOSX_HYPRE_USE_HIP
-  rowIndices.move( LvArray::MemorySpace::cuda, false );
-  colIndices.move( LvArray::MemorySpace::cuda, false );
-  values.move( LvArray::MemorySpace::cuda, false );
-  nCols.move( LvArray::MemorySpace::cuda, false );
+  rowIndices.move( parallelDeviceMemorySpace, false );
+  colIndices.move( parallelDeviceMemorySpace, false );
+  values.move( parallelDeviceMemorySpace, false );
+  nCols.move( parallelDeviceMemorySpace, false );
 #endif
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
                                                     numRows,

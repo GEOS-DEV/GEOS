@@ -29,6 +29,8 @@
 namespace geosx
 {
 
+auto const hostMemorySpace = LvArray::MemorySpace::host;
+
 using serialPolicy = RAJA::loop_exec;
 using serialReduce = RAJA::seq_reduce;
 using serialAtomic = RAJA::seq_atomic;
@@ -37,6 +39,8 @@ using serialStream = RAJA::resources::Host;
 using serialEvent = RAJA::resources::HostEvent;
 
 #if defined(GEOSX_USE_OPENMP)
+
+auto const parallelDeviceMemorySpace = hostMemorySpace;
 
 using parallelHostPolicy = RAJA::omp_parallel_for_exec;
 using parallelHostReduce = RAJA::omp_reduce;
@@ -62,6 +66,8 @@ void RAJA_INLINE parallelHostSync() { }
 
 #if defined(GEOSX_USE_CUDA)
 
+auto const parallelDeviceMemorySpace = LvArray::MemorySpace::cuda;
+
 template< unsigned long BLOCK_SIZE = 256 >
 using parallelDevicePolicy = RAJA::cuda_exec< BLOCK_SIZE >;
 
@@ -85,6 +91,8 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end
 }
 
 #elif defined(GEOSX_USE_HIP)
+
+auto const parallelDeviceMemorySpace = LvArray::MemorySpace::hip;
 
 template< unsigned long BLOCK_SIZE = 128 >
 using parallelDevicePolicy = RAJA::hip_exec< BLOCK_SIZE >;

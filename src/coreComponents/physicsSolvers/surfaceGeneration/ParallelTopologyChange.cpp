@@ -400,7 +400,7 @@ void FilterNewObjectsForPackToGhosts( std::set< localIndex > const & objectList,
                                       localIndex_array & objectsToSend )
 {
 
-  ghostsToSend.move( LvArray::MemorySpace::host );
+  ghostsToSend.move( hostMemorySpace );
   //TODO this needs to be inverted since the ghostToSend list should be much longer....
   // and the objectList is a searchable set.
   for( auto const index : objectList )
@@ -422,7 +422,7 @@ void FilterModObjectsForPackToGhosts( std::set< localIndex > const & objectList,
                                       localIndex_array const & ghostsToSend,
                                       localIndex_array & objectsToSend )
 {
-  ghostsToSend.move( LvArray::MemorySpace::host );
+  ghostsToSend.move( hostMemorySpace );
   for( localIndex a=0; a<ghostsToSend.size(); ++a )
   {
     if( objectList.count( ghostsToSend[a] ) > 0 )
@@ -494,7 +494,7 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
     {
       FaceElementSubRegion::FaceMapType const & faceList = subRegion.faceList();
       localIndex_array & elemGhostsToSend = subRegion.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
-      elemGhostsToSend.move( LvArray::MemorySpace::host );
+      elemGhostsToSend.move( hostMemorySpace );
       for( localIndex const & k : receivedObjects.newElements.at( {er, esr} ) )
       {
         if( faceGhostsToSendSet.count( faceList( k, 0 ) ) )
@@ -679,7 +679,7 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
 
   if( newGhostNodes.size() > 0 )
   {
-    nodeGhostsToRecv.move( LvArray::MemorySpace::host );
+    nodeGhostsToRecv.move( hostMemorySpace );
     for( localIndex a=0; a<newGhostNodes.size(); ++a )
     {
       nodeGhostsToRecv.emplace_back( newGhostNodes[a] );
@@ -688,7 +688,7 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
 
   if( newGhostEdges.size() > 0 )
   {
-    edgeGhostsToRecv.move( LvArray::MemorySpace::host );
+    edgeGhostsToRecv.move( hostMemorySpace );
     for( localIndex a=0; a<newGhostEdges.size(); ++a )
     {
       edgeGhostsToRecv.emplace_back( newGhostEdges[a] );
@@ -697,7 +697,7 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
 
   if( newGhostFaces.size() > 0 )
   {
-    faceGhostsToRecv.move( LvArray::MemorySpace::host );
+    faceGhostsToRecv.move( hostMemorySpace );
     for( localIndex a=0; a<newGhostFaces.size(); ++a )
     {
       faceGhostsToRecv.emplace_back( newGhostFaces[a] );
@@ -711,7 +711,7 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
 
     if( newGhostElemsData[er][esr].size() > 0 )
     {
-      elemGhostsToReceive.move( LvArray::MemorySpace::host );
+      elemGhostsToReceive.move( hostMemorySpace );
 
       for( localIndex const & newElemIndex : newGhostElemsData[er][esr] )
       {

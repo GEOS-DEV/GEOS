@@ -99,6 +99,8 @@
 /// CMake option CMAKE_BUILD_TYPE
 #cmakedefine GEOSX_CMAKE_BUILD_TYPE @GEOSX_CMAKE_BUILD_TYPE@
 
+#cmakedefine DUM_DEBUG @DUM_DEBUG@
+
 /// The type that localIndex will be aliased to.
 #define GEOSX_LOCALINDEX_TYPE @GEOSX_LOCALINDEX_TYPE@
 

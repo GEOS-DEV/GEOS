@@ -130,7 +130,15 @@ public:
       localColDofIndex{ 0 },
       localResidual{ 0.0 },
       localJacobian{ {0.0} }
-    {}
+    {
+      for( int ii = 0; ii < maxNumRows; ++ii )
+      {
+        for( int jj = 0; jj < maxNumCols; ++jj )
+        {
+          localJacobian[ii][jj] = 0.0;
+        }
+      }
+    }
 
     /// The actual number of rows in the element local jacobian matrix (<= maxNumRows).
     localIndex numRows;

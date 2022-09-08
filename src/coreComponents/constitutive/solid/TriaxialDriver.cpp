@@ -446,7 +446,7 @@ bool TriaxialDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   } );
 
   // move table back to host for output
-  m_table.move( LvArray::MemorySpace::host );
+  m_table.move( hostMemorySpace );
 
   validateResults();
 

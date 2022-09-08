@@ -78,12 +78,12 @@ constexpr HYPRE_MemoryLocation getMemoryLocation( LvArray::MemorySpace const spa
 {
   switch( space )
   {
-    case LvArray::MemorySpace::host: return HYPRE_MEMORY_HOST;
+    case hostMemorySpace: return HYPRE_MEMORY_HOST;
 #if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA
     case LvArray::MemorySpace::cuda: return HYPRE_MEMORY_DEVICE;
 #endif
 #if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
-  case LvArray::MemorySpace::hip: return HYPRE_MEMORY_DEVICE;
+  case  LvArray::MemorySpace::hip: return HYPRE_MEMORY_DEVICE;
 #endif
     default: return HYPRE_MEMORY_HOST;
   }
@@ -97,14 +97,14 @@ constexpr LvArray::MemorySpace getLvArrayMemorySpace( HYPRE_MemoryLocation const
 {
   switch( location )
   {
-    case HYPRE_MEMORY_HOST: return LvArray::MemorySpace::host;
+    case HYPRE_MEMORY_HOST: return hostMemorySpace;
 #if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_CUDA
-    case HYPRE_MEMORY_DEVICE: return LvArray::MemorySpace::cuda;
+    case HYPRE_MEMORY_DEVICE: return parallelDeviceMemorySpace;
 #endif
 #if GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
-    case HYPRE_MEMORY_DEVICE: return LvArray::MemorySpace::hip;
+    case HYPRE_MEMORY_DEVICE: return parallelDeviceMemorySpace;
 #endif
-    default: return LvArray::MemorySpace::host;
+    default: return hostMemorySpace;
   }
 }
 
@@ -112,21 +112,21 @@ constexpr LvArray::MemorySpace getLvArrayMemorySpace( HYPRE_MemoryLocation const
 /// Execution policy for operations on hypre data
 using execPolicy = parallelDevicePolicy<>;
 /// Memory space used by hypre matrix/vector objects
-constexpr LvArray::MemorySpace memorySpace = LvArray::MemorySpace::cuda;
+constexpr LvArray::MemorySpace memorySpace = parallelDeviceMemorySpace;
 /// Memory location used by hypre matrix/vector objects
 constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_DEVICE;
 #elif GEOSX_USE_HYPRE_DEVICE == GEOSX_USE_HYPRE_HIP
 /// Execution policy for operations on hypre data
 using execPolicy = parallelDevicePolicy<>;
 /// Memory space used by hypre matrix/vector objects
-constexpr LvArray::MemorySpace memorySpace = LvArray::MemorySpace::hip;
+constexpr LvArray::MemorySpace memorySpace = parallelDeviceMemorySpace;
 /// Memory location used by hypre matrix/vector objects
 constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_DEVICE;
 #else
 /// Execution policy for operations on hypre data
 using execPolicy = parallelHostPolicy;
 /// Memory space used by hypre matrix/vector objects
-constexpr LvArray::MemorySpace memorySpace = LvArray::MemorySpace::host;
+constexpr LvArray::MemorySpace memorySpace = hostMemorySpace;
 /// Memory location used by hypre matrix/vector objects
 constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_HOST;
 #endif

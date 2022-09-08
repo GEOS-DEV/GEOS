@@ -10,9 +10,9 @@
                   xCoords="{  0.0000000,  0.0087500 }"
                   yCoords="{  0.0000000,  0.0075000, 0.0075800, 0.0150000 }"
                   zCoords="{ -0.0075000, -0.0012500, 0.0012500, 0.0075000 }"
-                  nx="{18}"
-                  ny="{14, 2, 14}"
-                  nz="{14, 6, 14}"
+                  nx="{1}"
+                  ny="{1, 1, 1}"
+                  nz="{1, 1, 1}"
                   cellBlockNames="{cb1,  cb1, cb1,
                                    cb1, void, cb1,
                                    cb1,  cb1, cb1 }"/>
@@ -28,7 +28,7 @@
       surfaceGeneratorName="SurfaceGen"
       discretization="FE1"
       couplingTypeOption="FIM"
-      logLevel="1"
+      logLevel="3"
       targetRegions="{Fracture}"
       contactRelationName="fractureContact"
       maxNumResolves="5"

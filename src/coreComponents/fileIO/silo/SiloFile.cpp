@@ -2168,7 +2168,7 @@ void SiloFile::writeDataField( string const & meshName,
   string_array varnamestring( nvars );
   array1d< array1d< OUTTYPE > > castedField( nvars );
 
-  field.move( LvArray::MemorySpace::host );
+  field.move( hostMemorySpace );
 
   for( int i = 0; i < nvars; ++i )
   {
@@ -2294,7 +2294,7 @@ void SiloFile::writeDataField( string const & meshName,
 {
   int const primaryDimIndex = 0;
   int const secondaryDimIndex = 1;
-  field.move( LvArray::MemorySpace::host );
+  field.move( hostMemorySpace );
 
   localIndex const npts = field.size( primaryDimIndex );
   localIndex const nvar = field.size( secondaryDimIndex );
@@ -2333,7 +2333,7 @@ void SiloFile::writeDataField( string const & meshName,
   int const primaryDimIndex = 0;
   int const secondaryDimIndex1 = 1;
   int const secondaryDimIndex2 = 2;
-  field.move( LvArray::MemorySpace::host );
+  field.move( hostMemorySpace );
 
   localIndex const npts  = field.size( primaryDimIndex );
   localIndex const nvar1 = field.size( secondaryDimIndex1 );
@@ -2426,7 +2426,7 @@ void SiloFile::writeDataField( string const & meshName,
                                string const & multiRoot )
 {
   int nvars = 1;
-  field.move( LvArray::MemorySpace::host );
+  field.move( hostMemorySpace );
 
   for( int i=1; i<NDIM; ++i )
   {

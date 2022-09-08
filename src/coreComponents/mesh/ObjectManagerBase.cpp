@@ -841,7 +841,7 @@ void ObjectManagerBase::copyObject( const localIndex source, const localIndex de
     SortedArray< localIndex > & targetSet = m_sets.getReference< SortedArray< localIndex > >( i );
 
 #if !defined(GEOSX_DEVICE_COMPILE)
-    targetSet.move( LvArray::MemorySpace::host, true );
+    targetSet.move( hostMemorySpace, true );
 #endif
 
     if( targetSet.count( source ) > 0 )

@@ -20,9 +20,6 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVERKERNELS_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVERKERNELS_HPP_
 
-#define DUM(X) printf( "%s: %p", STRINGIZE(X), (void*)X )
-
-
 #include "HydrofractureSolverKernels.hpp"
 
 namespace geosx

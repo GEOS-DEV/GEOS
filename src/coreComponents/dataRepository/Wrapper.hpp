@@ -373,14 +373,14 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void resize( int ndims, localIndex const * const dims ) override
   {
-    wrapperHelpers::move( *m_data, LvArray::MemorySpace::host, true );
+    wrapperHelpers::move( *m_data, hostMemorySpace, true );
     wrapperHelpers::resizeDimensions( *m_data, ndims, dims );
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void reserve( localIndex const newCapacity ) override
   {
-    wrapperHelpers::move( *m_data, LvArray::MemorySpace::host, true );
+    wrapperHelpers::move( *m_data, hostMemorySpace, true );
     wrapperHelpers::reserve( reference(), newCapacity );
   }
 
@@ -394,7 +394,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void resize( localIndex const newSize ) override
   {
-    wrapperHelpers::move( *m_data, LvArray::MemorySpace::host, true );
+    wrapperHelpers::move( *m_data, hostMemorySpace, true );
     wrapperHelpers::resizeDefault( reference(), newSize, m_default );
   }
 
@@ -677,7 +677,7 @@ public:
       return;
     }
 
-    move( LvArray::MemorySpace::host, false );
+    move( hostMemorySpace, false );
 
     m_conduitNode[ "__sizedFromParent__" ].set( sizedFromParent() );
 

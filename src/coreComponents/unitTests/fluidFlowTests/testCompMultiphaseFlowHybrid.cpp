@@ -172,13 +172,13 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
   jacobian.zero();
 
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-  residual.move( LvArray::MemorySpace::host, false );
+  residual.move( hostMemorySpace, false );
 
   // copy the analytical residual
   array1d< real64 > residualOrig( residual );
 
   // create the numerical jacobian
-  jacobian.move( LvArray::MemorySpace::host );
+  jacobian.move( hostMemorySpace );
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.zero();
 
@@ -203,16 +203,16 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
     // get the face-based pressure
     arrayView1d< real64 > const & facePres =
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
-    facePres.move( LvArray::MemorySpace::host, false );
+    facePres.move( hostMemorySpace, false );
 
     string const faceDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::faceDofFieldString() );
 
     arrayView1d< globalIndex const > const & faceDofNumber =
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
-    faceDofNumber.move( LvArray::MemorySpace::host );
+    faceDofNumber.move( hostMemorySpace );
 
     arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
-    faceGhostRank.move( LvArray::MemorySpace::host );
+    faceGhostRank.move( hostMemorySpace );
 
     for( localIndex iface = 0; iface < faceManager.size(); ++iface )
     {
@@ -223,11 +223,11 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
 
       solver.resetStateToBeginningOfStep( domain );
 
-      facePres.move( LvArray::MemorySpace::host, true ); // to get the correct facePres after reset
+      facePres.move( hostMemorySpace, true ); // to get the correct facePres after reset
       real64 const dFP = perturbParameter * ( facePres[iface] + perturbParameter );
       facePres[iface] += dFP;
 #if defined(GEOSX_USE_CUDA)
-      facePres.move( LvArray::MemorySpace::cuda, false );
+      facePres.move( parallelDeviceMemorySpace, false );
 #endif
 
 

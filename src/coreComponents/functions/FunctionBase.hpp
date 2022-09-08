@@ -183,7 +183,7 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
       {
         using ArrayType = decltype( array );
         auto const view = dataRepository::Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
-        view.move( LvArray::MemorySpace::host, false );
+        view.move( hostMemorySpace, false );
         for( int dim = 0; dim < ArrayType::NDIM; ++dim )
         {
           varStride[varIndex][dim] = view.strides()[dim];

@@ -672,7 +672,7 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
         solver.resetStateToBeginningOfStep( domain );
 
         real64 totalDensity = 0.0;
-        compDens.move( LvArray::MemorySpace::host, true ); // to get the correct compDens after reset
+        compDens.move( hostMemorySpace, true ); // to get the correct compDens after reset
         for( integer ic = 0; ic < numComp; ++ic )
         {
           totalDensity += compDens[ei][ic];
@@ -681,11 +681,11 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
         // Step 1: compute numerical derivatives wrt pressure
 
         {
-          pres.move( LvArray::MemorySpace::host, true ); // to get the correct pres after reset
+          pres.move( hostMemorySpace, true ); // to get the correct pres after reset
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
           pres[ei] += dP;
 #if defined(GEOSX_USE_CUDA)
-          pres.move( LvArray::MemorySpace::cuda, false );
+          pres.move( parallelDeviceMemorySpace, false );
 #endif
 
 
@@ -713,11 +713,11 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
         {
           solver.resetStateToBeginningOfStep( domain );
 
-          compDens.move( LvArray::MemorySpace::host, true ); // to get the correct compDens after reset
+          compDens.move( hostMemorySpace, true ); // to get the correct compDens after reset
           real64 const dRho = perturbParameter * totalDensity;
           compDens[ei][jc] += dRho;
 #if defined(GEOSX_USE_CUDA)
-          compDens.move( LvArray::MemorySpace::cuda, false );
+          compDens.move( parallelDeviceMemorySpace, false );
 #endif
 
 
@@ -745,15 +745,15 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
         {
           arrayView1d< real64 > const temp =
             subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
-          temp.move( LvArray::MemorySpace::host, false );
+          temp.move( hostMemorySpace, false );
 
           solver.resetStateToBeginningOfStep( domain );
 
-          temp.move( LvArray::MemorySpace::host, true );
+          temp.move( hostMemorySpace, true );
           real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
           temp[ei] += dT;
 #if defined(GEOSX_USE_CUDA)
-          temp.move( LvArray::MemorySpace::cuda, false );
+          temp.move( parallelDeviceMemorySpace, false );
 #endif
 
           // here, we make sure that rock internal energy is updated

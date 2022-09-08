@@ -82,7 +82,6 @@ public:
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
 
-
   /**
    * @brief Constructor
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
@@ -115,7 +114,45 @@ public:
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
-    m_density( inputConstitutiveType.getDensity() )
+    m_density( inputConstitutiveType.getDensity() ),
+    m_outputLocalJacobian( )
+  {}
+
+  /**
+   * @brief Constructor
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @param inputGravityVector The gravity vector.
+   */
+  QuasiStatic( NodeManager const & nodeManager,
+               EdgeManager const & edgeManager,
+               FaceManager const & faceManager,
+               localIndex const targetRegionIndex,
+               SUBREGION_TYPE const & elementSubRegion,
+               FE_TYPE const & finiteElementSpace,
+               CONSTITUTIVE_TYPE & inputConstitutiveType,
+               arrayView1d< globalIndex const > const inputDofNumber,
+               globalIndex const rankOffset,
+               CRSMatrixView< real64, globalIndex const > const inputMatrix,
+               arrayView1d< real64 > const inputRhs,
+               real64 const (&inputGravityVector)[3],
+               arrayView3d< real64 > const outputLocalJacobian ):
+    Base( nodeManager,
+          edgeManager,
+          faceManager,
+          targetRegionIndex,
+          elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType,
+          inputDofNumber,
+          rankOffset,
+          inputMatrix,
+          inputRhs ),
+    m_X( nodeManager.referencePosition()),
+    m_disp( nodeManager.totalDisplacement()),
+    m_uhat( nodeManager.incrementalDisplacement()),
+    m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
+    m_density( inputConstitutiveType.getDensity() ),
+    m_outputLocalJacobian( outputLocalJacobian )
   {}
 
 
@@ -135,10 +172,10 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-                                       xLocal(),
-                                       u_local(),
-                                       uhat_local(),
-                                       constitutiveStiffness()
+      xLocal(),
+      u_local(),
+      uhat_local(),
+      constitutiveStiffness()
     {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
@@ -244,26 +281,21 @@ public:
   {
     real64 dNdX[ numNodesPerElem ][ 3 ];
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
-
     real64 strainInc[6] = {0};
     real64 stress[6] = {0};
 
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
-
     m_constitutiveUpdate.smallStrainUpdate( k, q, strainInc, stress, stiffness );
-
     stressModifier( stress );
     for( localIndex i=0; i<6; ++i )
     {
       stress[i] *= -detJ;
     }
-
     real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJ,
                                      m_gravityVector[1] * m_density( k, q )* detJ,
                                      m_gravityVector[2] * m_density( k, q )* detJ };
-
     real64 N[numNodesPerElem];
     FE_TYPE::calcN( q, N );
     FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
@@ -271,7 +303,8 @@ public:
                                      N,
                                      gravityForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
-    stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
+
+    stiffness.template BTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
   }
 
   /**
@@ -286,7 +319,7 @@ public:
     real64 maxForce = 0;
 
     // TODO: Does this work if BTDB is non-symmetric?
-    CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
+    // CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {
@@ -299,12 +332,18 @@ public:
                                                                                 stack.localRowDofIndex,
                                                                                 stack.localJacobian[ numDofPerTestSupportPoint * localNode + dim ],
                                                                                 numNodesPerElem * numDofPerTrialSupportPoint );
-
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] );
         maxForce = fmax( maxForce, fabs( stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] ) );
       }
     }
 
+    for( int ii = 0; ii < numNodesPerElem * numDofPerTestSupportPoint; ++ii )
+    {
+      for( int jj = 0; jj < numNodesPerElem * numDofPerTestSupportPoint; ++jj )
+      {
+        m_outputLocalJacobian[k][ii][jj] = stack.localJacobian[ii][jj];
+      }
+    }
 
     return maxForce;
   }
@@ -327,15 +366,25 @@ protected:
   /// The rank global density
   arrayView2d< real64 const > const m_density;
 
+  arrayView3d< real64 > const m_outputLocalJacobian;
+
 };
 
-/// The factory used to construct a QuasiStatic kernel.
 using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
                                                          arrayView1d< globalIndex const > const,
                                                          globalIndex,
                                                          CRSMatrixView< real64, globalIndex const > const,
                                                          arrayView1d< real64 > const,
                                                          real64 const (&)[3] >;
+
+/// The factory used to construct a QuasiStatic kernel.
+using QuasiStaticFactory2 = finiteElement::KernelFactory< QuasiStatic,
+                                                         arrayView1d< globalIndex const > const,
+                                                         globalIndex,
+                                                         CRSMatrixView< real64, globalIndex const > const,
+                                                         arrayView1d< real64 > const,
+                                                         real64 const (&)[3],
+                                                         arrayView3d< real64 > const >;
 
 } // namespace solidMechanicsLagrangianFEMKernels
 

@@ -32,6 +32,36 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
+namespace
+{
+
+/**
+ * @brief Helper for debug output of linear algebra objects (matrices and vectors)
+ * @tparam T type of LA object (must have stream insertion and .write() implemented)
+ * @param obj                the object to output
+ * @param cycleNumber        event cycle number
+ * @param nonlinearIteration nonlinear iteration number
+ * @param filePrefix          short filename prefix (e.g. "mat")
+ * @param screenName           long name for screen output (e.g. "System matrix")
+ * @param toScreen           whether to print on screen
+ * @param toFile             whether to write to file
+ */
+template< typename T >
+void debugOutputLAObject( T const & obj,
+                          real64 const & GEOSX_UNUSED_PARAM( time ),
+                          integer const cycleNumber,
+                          integer const nonlinearIteration,
+                          string const & filePrefix,
+                          string const & screenName )
+{
+  string const filename = GEOSX_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
+  obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
+  GEOSX_LOG_RANK_0( screenName << " written to " << filename );
+}
+
+}
+
+
 HydrofractureSolver::HydrofractureSolver( const string & name,
                                           Group * const parent )
   : Base( name, parent ),
@@ -316,9 +346,9 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
     } );
 
 //#if defined(USE_CUDA)
-//    deltaVolume.move( LvArray::MemorySpace::cuda );
-//    aperture.move( LvArray::MemorySpace::cuda );
-//    hydraulicAperture.move( LvArray::MemorySpace::cuda );
+//    deltaVolume.move( parallelDeviceMemorySpace );
+//    aperture.move( parallelDeviceMemorySpace );
+//    hydraulicAperture.move( parallelDeviceMemorySpace );
 //#endif
   } );
 }
@@ -570,6 +600,11 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                           arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
+  // Add Adp
+  // Apd App
+  localMatrix.move( hostMemorySpace );
+  LvArray::print< serialPolicy >( localMatrix );
+  localMatrix.move( parallelDeviceMemorySpace );
 
   solidMechanicsSolver()->assembleSystem( time,
                                           dt,
@@ -577,6 +612,9 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                           dofManager,
                                           localMatrix,
                                           localRhs );
+  // Add
+  localMatrix.move( hostMemorySpace );
+  LvArray::print< serialPolicy >( localMatrix );
 
   flowSolver()->assembleAccumulationTerms( domain,
                                            dofManager,
@@ -589,11 +627,22 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                             localMatrix,
                                             localRhs,
                                             getDerivativeFluxResidual_dAperture() );
+  // App
+  localMatrix.move( hostMemorySpace );
+  LvArray::print< serialPolicy >( localMatrix );
 
   assembleForceResidualDerivativeWrtPressure( domain, localMatrix, localRhs );
+  // Adp
+  localMatrix.move( hostMemorySpace );
+  LvArray::print< serialPolicy >( localMatrix );
+
   assembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
+  // Apd
+  localMatrix.move( hostMemorySpace );
+  LvArray::print< serialPolicy >( localMatrix );
 
   this->getRefDerivativeFluxResidual_dAperture()->zero();
+  // GEOSX_ERROR("Debug dump.");
 }
 
 void
@@ -634,7 +683,9 @@ HydrofractureSolver::
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
-      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+      // if matching on lassen/crusher, move to device policy
+      using execPolicy = serialPolicy;
+      forAll< execPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
         constexpr int kfSign[2] = { -1, 1 };
 
@@ -669,7 +720,7 @@ HydrofractureSolver::
             {
               rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
               nodeRHS[3*a+i] = nodalForce[i] * kfSign[kf];
-              fext[faceToNodeMap( faceIndex, a )][i] += nodalForce[i] * kfSign[kf];
+              RAJA::atomicAdd( AtomicPolicy< execPolicy >{}, &(fext[faceToNodeMap( faceIndex, a )][i]), nodalForce[i] * kfSign[kf] );
 
               dRdP( 3*a+i, 0 ) = Ja * Nbar[i] * kfSign[kf];
             }
@@ -683,11 +734,11 @@ HydrofractureSolver::
               for( int i=0; i<3; ++i )
               {
                 // TODO: use parallel atomic when loop is parallel
-                RAJA::atomicAdd( serialAtomic{}, &localRhs[localRow + i], nodeRHS[3*a+i] );
-                localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + i,
-                                                                                  &colDOF,
-                                                                                  &dRdP[3*a+i][0],
-                                                                                  1 );
+                RAJA::atomicAdd( AtomicPolicy< execPolicy >{}, &localRhs[localRow + i], nodeRHS[3*a+i] );
+                localMatrix.addToRowBinarySearchUnsorted< AtomicPolicy< execPolicy > >( localRow + i,
+                                                                                        &colDOF,
+                                                                                        &dRdP[3*a+i][0],
+                                                                                        1 );
               }
             }
           }

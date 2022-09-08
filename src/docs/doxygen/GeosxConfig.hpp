@@ -99,6 +99,8 @@
 /// CMake option CMAKE_BUILD_TYPE
 #define GEOSX_CMAKE_BUILD_TYPE "Release"
 
+/* #undef DUM_DEBUG */
+
 /// The type that localIndex will be aliased to.
 #define GEOSX_LOCALINDEX_TYPE std::ptrdiff_t
 

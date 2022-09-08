@@ -297,6 +297,8 @@ protected:
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
 
+  array3d< real64 > m_outputLocalJacobian;
+
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 

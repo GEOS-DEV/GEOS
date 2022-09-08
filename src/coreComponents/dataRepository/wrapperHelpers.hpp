@@ -521,7 +521,7 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
     GEOSX_ERROR_IF_NE( localIndex( componentNames.size() ), totalNumberOfComponents );
   }
 
-  var.move( LvArray::MemorySpace::host, false );
+  var.move( hostMemorySpace, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
   dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
@@ -590,7 +590,7 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
     GEOSX_ERROR_IF_NE( localIndex( componentNames.size() ), numComponentsPerValue * var.size() / var.size( 0 ) );
   }
 
-  var.move( LvArray::MemorySpace::host, false );
+  var.move( hostMemorySpace, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
   dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );

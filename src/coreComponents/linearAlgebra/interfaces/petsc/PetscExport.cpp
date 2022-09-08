@@ -67,9 +67,9 @@ void PetscExport::exportCRS( PetscMatrix const & mat,
   Mat * submat; // needed by MatCreateSubMatrices API
   Mat localMatrix;
 
-  rowOffsets.move( LvArray::MemorySpace::host, false );
-  colIndices.move( LvArray::MemorySpace::host, false );
-  values.move( LvArray::MemorySpace::host, false );
+  rowOffsets.move( hostMemorySpace, false );
+  colIndices.move( hostMemorySpace, false );
+  values.move( hostMemorySpace, false );
 
   if( m_targetRank < 0 )
   {
@@ -120,7 +120,7 @@ void PetscExport::exportCRS( PetscMatrix const & mat,
 void PetscExport::exportVector( PetscVector const & vec,
                                 arrayView1d< real64 > const & values ) const
 {
-  values.move( LvArray::MemorySpace::host, false );
+  values.move( hostMemorySpace, false );
   if( m_targetRank >= 0 )
   {
     int const rank = MpiWrapper::commRank( vec.comm() );
@@ -135,7 +135,7 @@ void PetscExport::exportVector( PetscVector const & vec,
   else
   {
     arrayView1d< real64 const > const data = vec.values();
-    data.move( LvArray::MemorySpace::host, false );
+    data.move( hostMemorySpace, false );
     std::copy( data.begin(), data.end(), values.data() );
   }
 }
@@ -143,7 +143,7 @@ void PetscExport::exportVector( PetscVector const & vec,
 void PetscExport::importVector( arrayView1d< const real64 > const & values,
                                 PetscVector & vec ) const
 {
-  values.move( LvArray::MemorySpace::host, false );
+  values.move( hostMemorySpace, false );
   if( m_targetRank >= 0 )
   {
     int const rank = MpiWrapper::commRank( vec.comm() );

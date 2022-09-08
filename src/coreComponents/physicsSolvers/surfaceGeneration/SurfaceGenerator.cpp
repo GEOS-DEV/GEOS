@@ -531,11 +531,11 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
   {
-    elemSubRegion.moveSets( LvArray::MemorySpace::host );
+    elemSubRegion.moveSets( hostMemorySpace );
   } );
-  faceManager.moveSets( LvArray::MemorySpace::host );
-  edgeManager.moveSets( LvArray::MemorySpace::host );
-  nodeManager.moveSets( LvArray::MemorySpace::host );
+  faceManager.moveSets( hostMemorySpace );
+  edgeManager.moveSets( hostMemorySpace );
+  nodeManager.moveSets( hostMemorySpace );
 
   if( !prefrac )
   {
@@ -695,25 +695,25 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   {
     elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
     {
-      elemSubRegion.nodeList().registerTouch( LvArray::MemorySpace::host );
-      elemSubRegion.edgeList().registerTouch( LvArray::MemorySpace::host );
-      elemSubRegion.faceList().registerTouch( LvArray::MemorySpace::host );
+      elemSubRegion.nodeList().registerTouch( hostMemorySpace );
+      elemSubRegion.edgeList().registerTouch( hostMemorySpace );
+      elemSubRegion.faceList().registerTouch( hostMemorySpace );
     } );
 
 
-    faceManager.nodeList().toView().registerTouch( LvArray::MemorySpace::host );
-//    faceManager.edgeList().registerTouch( LvArray::MemorySpace::host );
-    faceManager.elementList().registerTouch( LvArray::MemorySpace::host );
-    faceManager.elementRegionList().registerTouch( LvArray::MemorySpace::host );
-    faceManager.elementSubRegionList().registerTouch( LvArray::MemorySpace::host );
+    faceManager.nodeList().toView().registerTouch( hostMemorySpace );
+//    faceManager.edgeList().registerTouch( hostMemorySpace );
+    faceManager.elementList().registerTouch( hostMemorySpace );
+    faceManager.elementRegionList().registerTouch( hostMemorySpace );
+    faceManager.elementSubRegionList().registerTouch( hostMemorySpace );
 
-    edgeManager.nodeList().registerTouch( LvArray::MemorySpace::host );
+    edgeManager.nodeList().registerTouch( hostMemorySpace );
 
-//    nodeManager.edgeList().registerTouch( LvArray::MemorySpace::host );
-//    nodeManager.faceList()().registerTouch( LvArray::MemorySpace::host );
-//    nodeManager.elementList().registerTouch( LvArray::MemorySpace::host );
-//    nodeManager.elementRegionList().registerTouch( LvArray::MemorySpace::host );
-//    nodeManager.elementSubRegionList().registerTouch( LvArray::MemorySpace::host );
+//    nodeManager.edgeList().registerTouch( hostMemorySpace );
+//    nodeManager.faceList()().registerTouch( hostMemorySpace );
+//    nodeManager.elementList().registerTouch( hostMemorySpace );
+//    nodeManager.elementRegionList().registerTouch( hostMemorySpace );
+//    nodeManager.elementSubRegionList().registerTouch( hostMemorySpace );
 
   }
 
@@ -2842,7 +2842,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
 
 
 
-  nodeManager.totalDisplacement().move( LvArray::MemorySpace::host, false );
+  nodeManager.totalDisplacement().move( hostMemorySpace, false );
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel const &,
                                                arrayView1d< string const > const & regionNames )
@@ -2854,10 +2854,10 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
       string const & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNameString() );
       subRegion.
         getConstitutiveModel( solidMaterialName ).
-        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( LvArray::MemorySpace::host,
+        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( hostMemorySpace,
                                                                                                                        false );
     } );
-    displacement.move( LvArray::MemorySpace::host, false );
+    displacement.move( hostMemorySpace, false );
   } );
 
   for( localIndex const trailingFaceIndex : m_trailingFaces )
