@@ -645,9 +645,14 @@ void ProblemManager::generateMesh()
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-
-    meshBody.deregisterGroup( keys::cellManager );
-    meshBody.deregisterGroup( keys::particleManager );
+    if( meshBody.hasGroup( keys::particleManager ) )
+    {
+      meshBody.deregisterGroup( keys::particleManager );
+    }
+    else if( meshBody.hasGroup( keys::cellManager ) )
+    {
+      meshBody.deregisterGroup( keys::cellManager );
+    }
 
 //    GEOSX_THROW_IF_NE( meshBody.getMeshLevels().numSubGroups(), 1, InputError );
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
@@ -987,25 +992,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
     MeshLevel & meshLevel = meshBody.getMeshLevel( meshLevelName );
 
-//    if( meshLevel.isShallowCopy() )
-    {
-      ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
-      ElementRegionBase & elemRegion = elemRegionManager.getRegion( regionName );
-      ElementSubRegionBase & elemSubRegion = elemRegion.getSubRegion( subRegionName );
-
-      string_array const & materialList = elemRegion.getMaterialList();
-      for( auto & materialName : materialList )
-      {
-        constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, numQuadraturePoints );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
-                                     meshBodyName,
-                                     meshLevelName,
-                                     regionName,
-                                     subRegionName,
-                                     materialName,
-                                     numQuadraturePoints ) );
-      }
-    }
+    if( meshBody.hasParticles() )
     {
       ParticleManager & particleManager = meshLevel.getParticleManager();
       ParticleRegionBase & particleRegion = particleManager.getRegion( regionName );
@@ -1015,6 +1002,26 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
       for( auto & materialName : materialList )
       {
         constitutiveManager.hangConstitutiveRelation( materialName, &particleSubRegion, numQuadraturePoints );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
+                                     meshBodyName,
+                                     meshLevelName,
+                                     regionName,
+                                     subRegionName,
+                                     materialName,
+                                     numQuadraturePoints ) );
+      }
+    }
+//    if( meshLevel.isShallowCopy() )
+    else
+    {
+      ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
+      ElementRegionBase & elemRegion = elemRegionManager.getRegion( regionName );
+      ElementSubRegionBase & elemSubRegion = elemRegion.getSubRegion( subRegionName );
+
+      string_array const & materialList = elemRegion.getMaterialList();
+      for( auto & materialName : materialList )
+      {
+        constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, numQuadraturePoints );
         GEOSX_LOG_RANK_0( GEOSX_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
                                      meshBodyName,
                                      meshLevelName,
