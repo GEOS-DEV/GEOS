@@ -393,8 +393,8 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::viscousStateUpdate( localIndex const k,
-                                                  localIndex const q,
-                                                  real64 beta ) const
+                                                                   localIndex const q,
+                                                                   real64 beta ) const
 {
   GEOSX_UNUSED_VAR( k );
   GEOSX_UNUSED_VAR( q );

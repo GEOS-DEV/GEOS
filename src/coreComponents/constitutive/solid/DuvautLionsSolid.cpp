@@ -51,7 +51,7 @@ void DuvautLionsSolid< BASE >::postProcessInput()
 
 template< typename BASE >
 void DuvautLionsSolid< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
-                                               localIndex const numConstitutivePointsPerParentIndex )
+                                                         localIndex const numConstitutivePointsPerParentIndex )
 {
   BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

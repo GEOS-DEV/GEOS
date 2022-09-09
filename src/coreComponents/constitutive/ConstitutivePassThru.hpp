@@ -136,7 +136,7 @@ struct ConstitutivePassThru< DamageBase >
                                                                         std::forward< LAMBDA >( lambda ) );
   }
 };
-  /**
+/**
  * Specialization for the rate-dependent models.
  */
 template<>
@@ -148,7 +148,7 @@ struct ConstitutivePassThru< DuvautLionsBase >
   {
     ConstitutivePassThruHandler< DuvautLionsSolid< ModifiedCamClay >,
                                  DuvautLionsSolid< DruckerPrager > >::execute( constitutiveRelation,
-                                                                        std::forward< LAMBDA >( lambda ) );
+                                                                               std::forward< LAMBDA >( lambda ) );
   }
 };
 

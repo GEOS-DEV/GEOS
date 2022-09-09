@@ -15,7 +15,7 @@
 
 /**
  * @file DuvautLionsSolid.hpp
- * @brief This class implements Duvaut-Lions viscoplasticity model 
+ * @brief This class implements Duvaut-Lions viscoplasticity model
  *
  */
 
@@ -54,7 +54,7 @@ public:
     m_relaxationTime( relaxationTime )
   {}
 
- // using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
+  // using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
   using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps; // TODO: typo in anistropic (fix in DiscOps PR)
 
   using UPDATE_BASE::smallStrainUpdate;
@@ -71,47 +71,47 @@ public:
                                   real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( & stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override
+                                  real64 ( & stiffness )[6][6] ) const override
   {
     real64 trialStress[6];   // Trial stress (elastic predictor)
     real64 elasticStiffness[6][6];  //Elastic stiffness
     real64 timeRatio = 1.0 / (1.0 + timeIncrement / m_relaxationTime);
     std::cout<<"time increment="<<timeIncrement<<" , time ratio = "<<timeRatio<<std::endl;
 
-  for( localIndex i=0; i<6; ++i )
-  {
-    trialStress[i] = stress[i];
-  }  
+    for( localIndex i=0; i<6; ++i )
+    {
+      trialStress[i] = stress[i];
+    }
 
     if( m_disableInelasticity )
     {
       return;
     }
 
-  //Get trial stress and elastic stiffness by disabling inelasticity
-  // m_solidUpdate.m_disableInelasticity = true;
+    //Get trial stress and elastic stiffness by disabling inelasticity
+    // m_solidUpdate.m_disableInelasticity = true;
 
-  UPDATE_BASE::smallStrainUpdate_ElasticOnly( k, q, timeIncrement, strainIncrement, trialStress, elasticStiffness );
+    UPDATE_BASE::smallStrainUpdate_ElasticOnly( k, q, timeIncrement, strainIncrement, trialStress, elasticStiffness );
 
-  //Enable inelasticity to get the rate-independent update
-  //m_solidUpdate.m_disableInelasticity = false;
-  UPDATE_BASE::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+    //Enable inelasticity to get the rate-independent update
+    //m_solidUpdate.m_disableInelasticity = false;
+    UPDATE_BASE::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
 
-  for( localIndex i=0; i<6; ++i )
-  {
-    stress[i] = timeRatio *  trialStress[i] + (1-timeRatio) * stress[i];
-    for( localIndex j=0; j<6; ++j )
+    for( localIndex i=0; i<6; ++i )
     {
-      stiffness[i][j] = timeRatio * elasticStiffness[i][j]  + (1 - timeRatio) * stiffness[i][j];
+      stress[i] = timeRatio *  trialStress[i] + (1-timeRatio) * stress[i];
+      for( localIndex j=0; j<6; ++j )
+      {
+        stiffness[i][j] = timeRatio * elasticStiffness[i][j]  + (1 - timeRatio) * stiffness[i][j];
+      }
     }
+
+    UPDATE_BASE::saveStress( k, q, stress );
+    UPDATE_BASE::viscousStateUpdate( k, q, timeRatio );
+    return;
   }
 
-  UPDATE_BASE::saveStress( k, q, stress );
-  UPDATE_BASE::viscousStateUpdate( k, q, timeRatio );
-  return;
-  }
-  
 //TODO: modify implementation of smallStrainUpdate to use optimized stiffness -
 // this implementation uses full stiffness tensor
 //  GEOSX_FORCE_INLINE
@@ -120,11 +120,11 @@ public:
                                   localIndex const q,
                                   real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
+                                  real64 ( & stress )[6],
                                   DiscretizationOps & stiffness ) const override final
-{
-  this->smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
-}
+  {
+    this->smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
+  }
 
   real64 const m_relaxationTime;
 

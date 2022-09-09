@@ -132,11 +132,11 @@ public:
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate_ElasticOnly( localIndex const k,
-                                  localIndex const q,
-                                  real64 const & timeIncrement,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override;
+                                              localIndex const q,
+                                              real64 const & timeIncrement,
+                                              real64 const ( &strainIncrement )[6],
+                                              real64 ( &stress )[6],
+                                              real64 ( &stiffness )[6][6] ) const override;
 
   GEOSX_HOST_DEVICE
   virtual real64 getBulkModulus( localIndex const k ) const override final
@@ -435,15 +435,15 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ModifiedCamClayUpdates::smallStrainUpdate_ElasticOnly( localIndex const k,
-                                              localIndex const q,
-                                              real64 const & timeIncrement,
-                                              real64 const ( &strainIncrement )[6],
-                                              real64 ( & stress )[6],
-                                              real64 ( & stiffness )[6][6] ) const
+                                                            localIndex const q,
+                                                            real64 const & timeIncrement,
+                                                            real64 const ( &strainIncrement )[6],
+                                                            real64 ( & stress )[6],
+                                                            real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
   GEOSX_UNUSED_VAR( timeIncrement );
-   ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+  ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
   return;
 }
 
