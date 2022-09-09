@@ -80,7 +80,7 @@ public:
     void updateConcentrations( real64 const temperature,
                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                                arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesContentration,
-                               arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const;    
+                               arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const;
 private:
 
     GEOSX_HOST_DEVICE
@@ -97,12 +97,12 @@ private:
                                                   arraySlice1d< real64 const > const & log10SecActCoeff,
                                                   arraySlice1d< real64 const > const & dLog10SecActCoeff_dIonicStrength,
                                                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                                                  arraySlice1d< real64, compflow::USD_COMP - 1  > const & secondarySpeciesConcentration,
+                                                  arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
                                                   arraySlice2d< real64 > const & dLog10SecConc_dLog10PrimaryConc ) const;
     GEOSX_HOST_DEVICE
     void computeTotalConcAndDerivative( real64 const temperature,
-                                        arraySlice1d< real64 const, compflow::USD_COMP - 1  > const & primarySpeciesConcentration,
-                                        arraySlice1d< real64 const, compflow::USD_COMP - 1  > const & secondarySpeciesConcentration,
+                                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
                                         arraySlice2d< real64 const > const & dLog10SecConc_dLog10PrimaryConc,
                                         arraySlice1d< real64 > const & totalConc,
                                         arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc ) const;

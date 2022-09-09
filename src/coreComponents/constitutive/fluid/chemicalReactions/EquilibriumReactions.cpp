@@ -173,16 +173,16 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
   bool converged = false;
   for( int iteration = 0; iteration < m_maxNumIterations; iteration++ )
   {
-   
-   for (int i = 0; i< m_numPrimarySpecies; i++)
-   {
-    rhs[i] = 0.0;
-    solution[i] = 0.0;
-    for (int j = 0; j< m_numPrimarySpecies; j++)
+
+    for( int i = 0; i< m_numPrimarySpecies; i++ )
     {
-      matrix(i, j) = 0.0;
+      rhs[i] = 0.0;
+      solution[i] = 0.0;
+      for( int j = 0; j< m_numPrimarySpecies; j++ )
+      {
+        matrix( i, j ) = 0.0;
+      }
     }
-   }
 
     assembleEquilibriumReactionSystem( temperature,
                                        primarySpeciesTotalConcentration,
@@ -190,7 +190,7 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
                                        secondarySpeciesConcentration,
                                        matrix,
                                        rhs );
-    
+
     real64 const residualNorm = BlasLapackLA::vectorNorm2( rhs.toSliceConst() );
 
     if( residualNorm < m_newtonTol && iteration >= 1 )
