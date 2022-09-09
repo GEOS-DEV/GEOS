@@ -30,16 +30,16 @@ class BrooksCoreyRelativePermeabilityUpdate final : public RelativePermeabilityB
 {
 public:
 
-    BrooksCoreyRelativePermeabilityUpdate(arrayView1d<real64 const> const &phaseMinVolumeFraction,
-                                          arrayView1d<real64 const> const &phaseRelPermExponent,
-                                          arrayView1d<real64 const> const &phaseRelPermMaxValue,
-                                          real64 const volFracScale,
-                                          arrayView1d<integer const> const &phaseTypes,
-                                          arrayView1d<integer const> const &phaseOrder,
-                                          arrayView3d<real64, relperm::USD_RELPERM> const & phaseRelPerm,
-                                          arrayView4d<real64, relperm::USD_RELPERM_DS> const & dPhaseRelPerm_dPhaseVolFrac,
-                                          arrayView2d<real64, compflow::USD_PHASE > const & phaseTrapped)
-            : RelativePermeabilityBaseUpdate( phaseTypes,
+  BrooksCoreyRelativePermeabilityUpdate( arrayView1d< real64 const > const & phaseMinVolumeFraction,
+                                         arrayView1d< real64 const > const & phaseRelPermExponent,
+                                         arrayView1d< real64 const > const & phaseRelPermMaxValue,
+                                         real64 const volFracScale,
+                                         arrayView1d< integer const > const & phaseTypes,
+                                         arrayView1d< integer const > const & phaseOrder,
+                                         arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                                         arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+                                         arrayView2d< real64, compflow::USD_PHASE > const & phaseTrapped )
+    : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
                                       phaseMinVolumeFraction,
                                       phaseRelPerm,
@@ -67,7 +67,7 @@ public:
 
 private:
 
-    arrayView1d< real64 const > m_phaseRelPermExponent;
+  arrayView1d< real64 const > m_phaseRelPermExponent;
   arrayView1d< real64 const > m_phaseRelPermMaxValue;
   real64 m_volFracScale;
 };

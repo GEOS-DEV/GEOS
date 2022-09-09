@@ -1533,7 +1533,7 @@ struct StatisticsKernel
         // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseDynamicPoreVol[ip], elemPhaseVolume );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseMass[ip], elemPhaseMass );
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &immobilePhaseMass[ip], immobileMass);
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &immobilePhaseMass[ip], immobileMass );
         for( integer ic = 0; ic < numComps; ++ic )
         {
           // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)

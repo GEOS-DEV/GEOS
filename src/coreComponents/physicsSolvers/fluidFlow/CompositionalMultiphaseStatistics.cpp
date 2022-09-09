@@ -102,7 +102,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
 
         regionStatistics.phasePoreVolume.resizeDimension< 0 >( numPhases );
         regionStatistics.phaseMass.resizeDimension< 0 >( numPhases );
-        regionStatistics.trappedPhaseMass.resizeDimension<0>(numPhases );
+        regionStatistics.trappedPhaseMass.resizeDimension< 0 >( numPhases );
         regionStatistics.dissolvedComponentMass.resizeDimension< 0, 1 >( numPhases, numComps );
       }
     }
@@ -159,7 +159,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
 
 
 
-    // Step 1: initialize the average/min/max quantities
+  // Step 1: initialize the average/min/max quantities
   ElementRegionManager & elemManager = mesh.getElemManager();
   for( integer i = 0; i < regionNames.size(); ++i )
   {
@@ -182,7 +182,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     regionStatistics.phasePoreVolume.setValues< serialPolicy >( 0.0 );
 
     regionStatistics.phaseMass.setValues< serialPolicy >( 0.0 );
-    regionStatistics.trappedPhaseMass.setValues< serialPolicy >(0.0 );
+    regionStatistics.trappedPhaseMass.setValues< serialPolicy >( 0.0 );
     regionStatistics.dissolvedComponentMass.setValues< serialPolicy >( 0.0 );
   }
 
@@ -213,11 +213,10 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
 
 
     //get min vol fraction for each phase to dispactche immobile/mobile mass
-      string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
-      RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
-      //TODO get Scrt when hysteresis is on (and not minDrainage)
-      arrayView1d< real64 const > phaseMinVolFrac = relperm.phaseMinVolumeFraction();
-      arrayView2d< real64 const, compflow::USD_PHASE > const phaseMassTrapped = relperm.phaseTrapped();
+    string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
+    RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
+    arrayView1d< real64 const > phaseMinVolFrac = relperm.phaseMinVolumeFraction();
+    arrayView2d< real64 const, compflow::USD_PHASE > const phaseMassTrapped = relperm.phaseTrapped();
 
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;
@@ -230,39 +229,39 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     real64 subRegionTotalUncompactedPoreVol = 0.0;
     stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionPhaseDynamicPoreVol( numPhases );
     stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionPhaseMass( numPhases );
-    stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionTrappedPhaseMass(numPhases );
+    stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionTrappedPhaseMass( numPhases );
     stackArray2d< real64, MultiFluidBase::MAX_NUM_PHASES *MultiFluidBase::MAX_NUM_COMPONENTS > subRegionDissolvedComponentMass( numPhases, numComps );
 
     isothermalCompositionalMultiphaseBaseKernels::
       StatisticsKernel::
-      launch< parallelDevicePolicy<> >(subRegion.size(),
-                                       numComps,
-                                       numPhases,
-                                       elemGhostRank,
-                                       volume,
-                                       pres,
-                                       deltaPres,
-                                       temp,
-                                       refPorosity,
-                                       porosity,
-                                       phaseDensity,
-                                       phaseCompFraction,
-                                       phaseVolFrac,
-                                       phaseMassTrapped,
-                                       phaseMinVolFrac,
-                                       subRegionMinPres,
-                                       subRegionAvgPresNumerator,
-                                       subRegionMaxPres,
-                                       subRegionMinDeltaPres,
-                                       subRegionMaxDeltaPres,
-                                       subRegionMinTemp,
-                                       subRegionAvgTempNumerator,
-                                       subRegionMaxTemp,
-                                       subRegionTotalUncompactedPoreVol,
-                                       subRegionPhaseDynamicPoreVol.toSlice(),
-                                       subRegionPhaseMass.toSlice(),
-                                       subRegionTrappedPhaseMass.toSlice(),
-                                       subRegionDissolvedComponentMass.toSlice() );
+      launch< parallelDevicePolicy<> >( subRegion.size(),
+                                        numComps,
+                                        numPhases,
+                                        elemGhostRank,
+                                        volume,
+                                        pres,
+                                        deltaPres,
+                                        temp,
+                                        refPorosity,
+                                        porosity,
+                                        phaseDensity,
+                                        phaseCompFraction,
+                                        phaseVolFrac,
+                                        phaseMassTrapped,
+                                        phaseMinVolFrac,
+                                        subRegionMinPres,
+                                        subRegionAvgPresNumerator,
+                                        subRegionMaxPres,
+                                        subRegionMinDeltaPres,
+                                        subRegionMaxDeltaPres,
+                                        subRegionMinTemp,
+                                        subRegionAvgTempNumerator,
+                                        subRegionMaxTemp,
+                                        subRegionTotalUncompactedPoreVol,
+                                        subRegionPhaseDynamicPoreVol.toSlice(),
+                                        subRegionPhaseMass.toSlice(),
+                                        subRegionTrappedPhaseMass.toSlice(),
+                                        subRegionDissolvedComponentMass.toSlice() );
 
     ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
     RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
@@ -331,7 +330,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     {
       regionStatistics.phasePoreVolume[ip] = MpiWrapper::sum( regionStatistics.phasePoreVolume[ip] );
       regionStatistics.phaseMass[ip] = MpiWrapper::sum( regionStatistics.phaseMass[ip] );
-      regionStatistics.trappedPhaseMass[ip] = MpiWrapper::sum(regionStatistics.trappedPhaseMass[ip] );
+      regionStatistics.trappedPhaseMass[ip] = MpiWrapper::sum( regionStatistics.trappedPhaseMass[ip] );
       regionStatistics.totalPoreVolume += regionStatistics.phasePoreVolume[ip];
       for( integer ic = 0; ic < numComps; ++ic )
       {

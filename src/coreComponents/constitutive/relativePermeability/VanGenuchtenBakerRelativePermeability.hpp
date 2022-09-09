@@ -47,7 +47,7 @@ public:
                                       phaseMinVolumeFraction,
                                       phaseRelPerm,
                                       dPhaseRelPerm_dPhaseVolFrac,
-                                      phaseTrapped),
+                                      phaseTrapped ),
     m_waterOilRelPermExponentInv( waterOilRelPermExponentInv ),
     m_waterOilRelPermMaxValue( waterOilRelPermMaxValue ),
     m_gasOilRelPermExponentInv( gasOilRelPermExponentInv ),

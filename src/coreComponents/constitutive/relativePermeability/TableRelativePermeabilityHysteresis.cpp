@@ -621,33 +621,27 @@ void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( ar
     {
       phaseMaxHistoricalVolFraction[ei][ip] = LvArray::math::max( phaseVolFraction[ei][ip], phaseMaxHistoricalVolFraction[ei][ip] );
       phaseMinHistoricalVolFraction[ei][ip] = LvArray::math::min( phaseVolFraction[ei][ip], phaseMinHistoricalVolFraction[ei][ip] );
-
-//        std::cout << " check0 " << phaseMinHistoricalVolFraction[ei][ip] << " - " << m_phaseMinHistoricalVolFraction[ei][ip]
-//                  << std::endl;
     }
   } );
 
 }
 
 
-void TableRelativePermeabilityHysteresis::updateTrappedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE> const & phaseVolFraction ) const
+void TableRelativePermeabilityHysteresis::updateTrappedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
 {
 
-    arrayView2d<real64, compflow::USD_PHASE> phaseTrapped = m_phaseTrapped.toView();
-    arrayView2d<real64, compflow::USD_PHASE> phaseCrit = m_phaseCriticalVolFraction.toView();
+  arrayView2d< real64, compflow::USD_PHASE > phaseTrapped = m_phaseTrapped.toView();
+  arrayView2d< real64, compflow::USD_PHASE > phaseCrit = m_phaseCriticalVolFraction.toView();
 
-    localIndex const numElems = phaseVolFraction.size(0);
-    integer const numPhases = numFluidPhases();
-    forAll<parallelDevicePolicy<> >(numElems, [=] GEOSX_HOST_DEVICE(localIndex const ei) {
-        for (integer ip = 0; ip < numPhases; ++ip) {
-            phaseTrapped[ei][ip] = LvArray::math::min(phaseVolFraction[ei][ip],
-                                                      phaseCrit[ei][ip]);
-            /// not historical min but Scrt
-
-//            std::cout << " check1 " << phaseVolFraction[ei][ip] << " - " << m_phaseMinHistoricalVolFraction[ei][ip] << " : "
-//            << m_phaseTrapped[ei][ip] << std::endl;
-        }
-    });
+  localIndex const numElems = phaseVolFraction.size( 0 );
+  integer const numPhases = numFluidPhases();
+  forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei ) {
+    for( integer ip = 0; ip < numPhases; ++ip )
+    {
+      phaseTrapped[ei][ip] = LvArray::math::min( phaseVolFraction[ei][ip],
+                                                 phaseCrit[ei][ip] );
+    }
+  } );
 }
 
 TableRelativePermeabilityHysteresis::KernelWrapper::
@@ -671,7 +665,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                  arrayView2d< real64, compflow::USD_PHASE > const & phaseCriticalVolFraction,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                  arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
-                 arrayView2d< real64, compflow::USD_PHASE> const & phaseTrapped )
+                 arrayView2d< real64, compflow::USD_PHASE > const & phaseTrapped )
   : RelativePermeabilityBaseUpdate( phaseTypes,
                                     phaseOrder,
                                     //temporary put drainage value

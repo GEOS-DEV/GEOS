@@ -268,6 +268,9 @@ void testValuesAgainstReference( TBL_WRAPPER const & relpermTblWrapper,
   phaseMinHistoricalVolFraction[0][0] = 1. - shy;
   phaseMinHistoricalVolFraction[0][1] = 0.;
 
+  StackArray< real64, 2, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES,
+              compflow::LAYOUT_PHASE > phaseTrappedVolFraction( 1, numPhases );
+
   StackArray< real64, 3, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES,
               relperm::LAYOUT_RELPERM > phaseRelPerm( 1, 1, numPhases );
 
@@ -279,11 +282,13 @@ void testValuesAgainstReference( TBL_WRAPPER const & relpermTblWrapper,
                                      phaseVolFraction[0],
                                      phaseMaxHistoricalVolFraction[0],
                                      phaseMinHistoricalVolFraction[0],
+                                     phaseTrappedVolFraction[0],
                                      phaseRelPerm[0][0],
                                      dPhaseRelPerm_dPhaseVolFrac[0][0] );
 
   checkRelativeError( phaseRelPerm[0][0][ipWetting], refRelPerm_w, relTol );
   checkRelativeError( phaseRelPerm[0][0][ipNonWetting], refRelPerm_nw, relTol );
+  //TODO check phaseTrappedVolFraction
 }
 
 TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )

@@ -51,13 +51,13 @@ EXTRINSIC_MESH_DATA_TRAIT( dPhaseRelPerm_dPhaseVolFraction,
                            NO_WRITE,
                            "Derivative of phase relative permeability with respect to phase volume fraction" );
 
-    EXTRINSIC_MESH_DATA_TRAIT( phaseTrapped,
-                               "phaseTrapped",
-                               array2dLayoutPhase,
-                               0,
-                               NOPLOT,
-                               WRITE_AND_READ,
-                               "Phase trapped" );
+EXTRINSIC_MESH_DATA_TRAIT( phaseTrapped,
+                           "phaseTrapped",
+                           array2dLayoutPhase,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Phase trapped" );
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseMaxHistoricalVolFraction,
                            "phaseMaxHistoricalVolFraction",
