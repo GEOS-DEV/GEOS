@@ -118,7 +118,11 @@ public:
                                                                       m_diagonal.toViewConst(),
                                                                       dof,
                                                                       rhsContribution,
-                                                                      field );
+                                                                      [&](localIndex const a)->real64
+                                                                      {
+                                                                        return field.data()[a];
+                                                                      } );
+                                                                      //field );
 
         dofArray.move( LvArray::MemorySpace::host, false );
         rhsContribution.move( LvArray::MemorySpace::host, false );

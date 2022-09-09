@@ -200,18 +200,18 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
     m_dofManager,
     this->getDiscretizationName() );
 
-  // LinearOperatorWithBC< ParallelVector, FieldType > constrained_solid_mechanics(
-  //   *this,
-  //   unconstrained_solid_mechanics,
-  //   domain,
-  //   m_dofManager,
-  //   m_fieldName,
-  //   time_n+dt,
-  //   LinearOperatorWithBC< ParallelVector, FieldType >::
-  //     DiagPolicy::
-  //       DiagonalOne );
+  LinearOperatorWithBC< ParallelVector, FieldType > constrained_solid_mechanics(
+    *this,
+    unconstrained_solid_mechanics,
+    domain,
+    m_dofManager,
+    m_fieldName,
+    time_n+dt,
+    LinearOperatorWithBC< ParallelVector, FieldType >::
+      DiagPolicy::
+        DiagonalOne );
 
-  // constrained_solid_mechanics.computeConstrainedRHS( m_rhs );
+  constrained_solid_mechanics.computeConstrainedRHS( m_rhs );
 
   MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );
 
