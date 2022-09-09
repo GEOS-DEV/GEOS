@@ -162,17 +162,17 @@ void VanGenuchtenBakerRelativePermeability::postProcessInput()
 VanGenuchtenBakerRelativePermeability::KernelWrapper
 VanGenuchtenBakerRelativePermeability::createKernelWrapper()
 {
-  return KernelWrapper(m_phaseMinVolumeFraction,
-                       m_waterOilRelPermExponentInv,
-                       m_waterOilRelPermMaxValue,
-                       m_gasOilRelPermExponentInv,
-                       m_gasOilRelPermMaxValue,
-                       m_volFracScale,
-                       m_phaseTypes,
-                       m_phaseOrder,
-                       m_phaseRelPerm,
-                       m_dPhaseRelPerm_dPhaseVolFrac,
-                       m_phaseTrappedVolFrac );
+  return KernelWrapper( m_phaseMinVolumeFraction,
+                        m_waterOilRelPermExponentInv,
+                        m_waterOilRelPermMaxValue,
+                        m_gasOilRelPermExponentInv,
+                        m_gasOilRelPermMaxValue,
+                        m_volFracScale,
+                        m_phaseTypes,
+                        m_phaseOrder,
+                        m_phaseRelPerm,
+                        m_dPhaseRelPerm_dPhaseVolFrac,
+                        m_phaseTrappedVolFrac );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenBakerRelativePermeability, string const &, Group * const )

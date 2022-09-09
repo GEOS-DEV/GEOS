@@ -274,13 +274,13 @@ TableRelativePermeability::createKernelWrapper()
   createAllTableKernelWrappers();
 
   // then we create the actual TableRelativePermeability::KernelWrapper
-  return KernelWrapper(m_relPermKernelWrappers,
-                       m_phaseMinVolumeFraction,
-                       m_phaseTypes,
-                       m_phaseOrder,
-                       m_phaseRelPerm,
-                       m_dPhaseRelPerm_dPhaseVolFrac,
-                       m_phaseTrappedVolFrac );
+  return KernelWrapper( m_relPermKernelWrappers,
+                        m_phaseMinVolumeFraction,
+                        m_phaseTypes,
+                        m_phaseOrder,
+                        m_phaseRelPerm,
+                        m_dPhaseRelPerm_dPhaseVolFrac,
+                        m_phaseTrappedVolFrac );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeability, std::string const &, Group * const )

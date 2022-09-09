@@ -94,8 +94,8 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
   m_phaseRelPerm.resize( size, numPts, numPhases );
   m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases );
   //phase trapped for stats
-  m_phaseTrappedVolFrac.resize(size, numPts, numPhases );//2d or 3d(*) ??
-//  m_phaseTrappedVolFrac.setValues< parallelDevicePolicy<> >( 0.0 );
+  m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
+  m_phaseTrappedVolFrac.zero();
 }
 
 void RelativePermeabilityBase::setLabels()
@@ -118,12 +118,12 @@ void RelativePermeabilityBase::updateTrappedPhaseVolFraction( arrayView2d< real6
 
   localIndex const numElems = phaseVolFraction.size( 0 );
   integer const numPhases = numFluidPhases();
-  forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei ) 
+  forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
   {
     for( integer ip = 0; ip < numPhases; ++ip )
     {
       phaseTrapped[ei][0][ip] = LvArray::math::min( phaseVolFraction[ei][ip],
-                                                 m_phaseMinVolumeFraction[ip] );
+                                                    m_phaseMinVolumeFraction[ip] );
     }
   } );
 }

@@ -64,11 +64,11 @@ protected:
                                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
                                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
     : m_phaseTypes( phaseTypes ),
-      m_phaseOrder( phaseOrder ),
-      m_phaseMinVolumeFraction( phaseMinVolFrac ),
-      m_phaseRelPerm( phaseRelPerm ),
-      m_dPhaseRelPerm_dPhaseVolFrac( dPhaseRelPerm_dPhaseVolFrac ),
-      m_phaseTrappedVolFrac( phaseTrappedVolFrac ) {}
+    m_phaseOrder( phaseOrder ),
+    m_phaseMinVolumeFraction( phaseMinVolFrac ),
+    m_phaseRelPerm( phaseRelPerm ),
+    m_dPhaseRelPerm_dPhaseVolFrac( dPhaseRelPerm_dPhaseVolFrac ),
+    m_phaseTrappedVolFrac( phaseTrappedVolFrac ) {}
 
   arrayView1d< integer const > m_phaseTypes;
   arrayView1d< integer const > m_phaseOrder;

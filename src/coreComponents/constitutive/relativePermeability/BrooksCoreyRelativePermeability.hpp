@@ -39,12 +39,12 @@ public:
                                          arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                                          arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
                                          arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
-    : RelativePermeabilityBaseUpdate(phaseTypes,
-                                     phaseOrder,
-                                     phaseMinVolumeFraction,
-                                     phaseRelPerm,
-                                     dPhaseRelPerm_dPhaseVolFrac,
-                                     phaseTrappedVolFrac ),
+    : RelativePermeabilityBaseUpdate( phaseTypes,
+                                      phaseOrder,
+                                      phaseMinVolumeFraction,
+                                      phaseRelPerm,
+                                      dPhaseRelPerm_dPhaseVolFrac,
+                                      phaseTrappedVolFrac ),
     m_phaseRelPermExponent( phaseRelPermExponent ),
     m_phaseRelPermMaxValue( phaseRelPermMaxValue ),
     m_volFracScale( volFracScale )
