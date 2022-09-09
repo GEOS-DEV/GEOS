@@ -653,6 +653,14 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     //      - the primary variables
     //      - the fluid constitutive quantities (as they have already been updated)
     // We postpone the other constitutive models for now
+    // In addition, to avoid multiplying permeability/porosity bay netToGross in the assembly kernel, we do it once and for all here
+    arrayView1d< real64 const > const netToGross = subRegion.template getExtrinsicData< extrinsicMeshData::flow::netToGross >();
+    CoupledSolidBase const & porousSolid =
+      getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+    PermeabilityBase const & permeabilityModel =
+      getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
+    permeabilityModel.scaleHorizontalPermeability( netToGross );
+    porousSolid.scaleReferencePorosity( netToGross );
     updatePorosityAndPermeability( subRegion );
     updatePhaseVolumeFraction( subRegion );
 

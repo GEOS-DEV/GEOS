@@ -48,11 +48,11 @@ void ConstantPermeability::allocateConstitutiveData( dataRepository::Group & par
 {
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
+  integer const numQuad = 1; // NOTE: enforcing 1 quadrature point
+
   for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
-    // NOTE: enforcing 1 quadrature point
-    //for( localIndex q = 0; q < numConstitutivePointsPerParentIndex; ++q )
-    for( localIndex q = 0; q < 1; ++q )
+    for( localIndex q = 0; q < numQuad; ++q )
     {
       m_permeability[ei][q][0] =  m_permeabilityComponents[0];
       m_permeability[ei][q][1] =  m_permeabilityComponents[1];
