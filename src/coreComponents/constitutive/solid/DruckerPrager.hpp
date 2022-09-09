@@ -108,7 +108,7 @@ public:
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const;
 
-    GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate_ElasticOnly( localIndex const k,
                                   localIndex const q,
                                   real64 const & timeIncrement,

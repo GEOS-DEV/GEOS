@@ -120,7 +120,7 @@ public:
                                   real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override final;
+                                  real64 ( &stiffness )[6][6] ) const override;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -128,7 +128,15 @@ public:
                                   real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
-                                  DiscretizationOps & stiffness ) const final;
+                                  DiscretizationOps & stiffness ) const;
+
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate_ElasticOnly( localIndex const k,
+                                  localIndex const q,
+                                  real64 const & timeIncrement,
+                                  real64 const ( &strainIncrement )[6],
+                                  real64 ( &stress )[6],
+                                  real64 ( &stiffness )[6][6] ) const override;
 
   GEOSX_HOST_DEVICE
   virtual real64 getBulkModulus( localIndex const k ) const override final
@@ -145,6 +153,14 @@ public:
     m_oldPreConsolidationPressure[k][q] = m_newPreConsolidationPressure[k][q];
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void viscousStateUpdate( localIndex const k,
+                                   localIndex const q,
+                                   real64 beta ) const override
+  {
+    m_newPreConsolidationPressure[k][q] = beta * m_oldPreConsolidationPressure[k][q] + (1 - beta) * m_newPreConsolidationPressure[k][q];
+  }
 private:
 
   /// A reference to the ArrayView holding the virgin compression index for each element.
@@ -416,6 +432,20 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   return;
 }
 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void ModifiedCamClayUpdates::smallStrainUpdate_ElasticOnly( localIndex const k,
+                                              localIndex const q,
+                                              real64 const & timeIncrement,
+                                              real64 const ( &strainIncrement )[6],
+                                              real64 ( & stress )[6],
+                                              real64 ( & stiffness )[6][6] ) const
+{
+  // elastic predictor (assume strainIncrement is all elastic)
+  GEOSX_UNUSED_VAR( timeIncrement );
+   ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+  return;
+}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -530,7 +560,7 @@ public:
    * @return An @p UPDATE_KERNEL object.
    */
   template< typename UPDATE_KERNEL, typename ... PARAMS >
-  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
+  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams ) const
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_refPressure,

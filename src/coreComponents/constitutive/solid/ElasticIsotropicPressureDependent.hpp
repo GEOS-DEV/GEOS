@@ -112,6 +112,10 @@ public:
                                  localIndex const q,
                                  real64 ( &elasticStrain )[6] ) const override final;
 
+  GEOSX_HOST_DEVICE
+  virtual void viscousStateUpdate( localIndex const k,
+                                   localIndex const q,
+                                   real64 beta ) const override;
 
 protected:
 
@@ -386,6 +390,16 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   stiffness.m_shearModulus = m_shearModulus[k];
 }
 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void ElasticIsotropicPressureDependentUpdates::viscousStateUpdate( localIndex const k,
+                                                  localIndex const q,
+                                                  real64 beta ) const
+{
+  GEOSX_UNUSED_VAR( k );
+  GEOSX_UNUSED_VAR( q );
+  GEOSX_UNUSED_VAR( beta );
+}
 
 
 /**
@@ -530,7 +544,7 @@ public:
    * @return An @p UPDATE_KERNEL object.
    */
   template< typename UPDATE_KERNEL, typename ... PARAMS >
-  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
+  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams ) const
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_refPressure,

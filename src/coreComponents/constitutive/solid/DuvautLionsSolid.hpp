@@ -75,7 +75,8 @@ public:
   {
     real64 trialStress[6];   // Trial stress (elastic predictor)
     real64 elasticStiffness[6][6];  //Elastic stiffness
-    real64 timeRatio = 1 / (1 + timeIncrement / m_relaxationTime);
+    real64 timeRatio = 1.0 / (1.0 + timeIncrement / m_relaxationTime);
+    std::cout<<"time increment="<<timeIncrement<<" , time ratio = "<<timeRatio<<std::endl;
 
   for( localIndex i=0; i<6; ++i )
   {

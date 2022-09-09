@@ -22,7 +22,7 @@
 //#include "DelftEgg.hpp"
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
-//#include "ModifiedCamClay.hpp"
+#include "ModifiedCamClay.hpp"
 
 namespace geosx
 {
@@ -60,14 +60,14 @@ void DuvautLionsSolid< BASE >::allocateConstitutiveData( dataRepository::Group &
 typedef DuvautLionsSolid< DruckerPrager > ViscoDruckerPrager;
 //typedef DuvautLionsSolid< DruckerPragerExtended > ViscoDruckerPragerExtended;
 //typedef DuvautLionsSolid< DelftEgg > ViscoDelftEgg;
-//typedef DuvautLionsSolid< ModifiedCamClay > ViscoModifiedCamClay;
+typedef DuvautLionsSolid< ModifiedCamClay > ViscoModifiedCamClay;
 
 //REGISTER_CATALOG_ENTRY( ConstitutiveBase, ViscoElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ViscoDruckerPrager, string const &, Group * const )
 //REGISTER_CATALOG_ENTRY( ConstitutiveBase, ViscoDruckerPragerExtended, string const &, Group * const )
 //REGISTER_CATALOG_ENTRY( ConstitutiveBase, ViscoDelftEgg, string const &, Group * const )
 //REGISTER_CATALOG_ENTRY( ConstitutiveBase, ViscoDruckerPrager, string const &, Group * const )
-//REGISTER_CATALOG_ENTRY( ConstitutiveBase, ViscoModifiedCamClay, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ViscoModifiedCamClay, string const &, Group * const )
 
 }
 } /* namespace geosx */

@@ -1037,6 +1037,13 @@ Element: ViscoDruckerPrager
 .. include:: ../../coreComponents/schema/docs/ViscoDruckerPrager.rst
 
 
+.. _XML_ViscoModifiedCamClay:
+
+Element: ViscoModifiedCamClay
+=============================
+.. include:: ../../coreComponents/schema/docs/ViscoModifiedCamClay.rst
+
+
 .. _XML_WellControls:
 
 Element: WellControls
@@ -2131,6 +2138,13 @@ Datastructure: VanGenuchtenCapillaryPressure
 Datastructure: ViscoDruckerPrager
 =================================
 .. include:: ../../coreComponents/schema/docs/ViscoDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ViscoModifiedCamClay:
+
+Datastructure: ViscoModifiedCamClay
+===================================
+.. include:: ../../coreComponents/schema/docs/ViscoModifiedCamClay_other.rst
 
 
 .. _DATASTRUCTURE_WellControls:
