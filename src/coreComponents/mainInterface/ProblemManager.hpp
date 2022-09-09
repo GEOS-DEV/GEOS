@@ -341,9 +341,12 @@ private:
 
   void generateMeshLevel( MeshLevel & meshLevel,
                           CellBlockManagerABC & cellBlockManager,
-                          ParticleBlockManagerABC & particleBlockManager,
                           Group const * const discretization,
                           arrayView1d< string const > const & targetRegions );
+
+  void generateMeshLevel( MeshLevel & meshLevel,
+                          ParticleBlockManagerABC & particleBlockManager,
+                          arrayView1d< string const > const & );
 
   /**
    * @brief Allocate constitutive relations on each subregion with appropriate
