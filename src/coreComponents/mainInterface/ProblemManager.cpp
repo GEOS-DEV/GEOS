@@ -550,7 +550,6 @@ void ProblemManager::generateMesh()
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
 
-
   meshManager.generateMeshes( domain );
 
   // get all the discretizations from the numerical methods.
@@ -561,20 +560,29 @@ void ProblemManager::generateMesh()
   // setup the base discretizations (hard code this for now)
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-    CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
-    ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
-
     MeshLevel & baseMesh = meshBody.getBaseDiscretization();
     array1d< string > junk;
-    this->generateMeshLevel( baseMesh,
-                             cellBlockManager,
-                             particleBlockManager,
-                             nullptr,
-                             junk.toViewConst() );
 
-    ElementRegionManager & elemManager = baseMesh.getElemManager();
-    elemManager.generateWells( meshManager, baseMesh );
+    if( meshBody.hasParticles() )
+    {
+      ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
+      
+      this->generateMeshLevel( baseMesh,
+                               particleBlockManager,
+                               junk.toViewConst() );
+    }
+    else
+    {
+      CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+      
+      this->generateMeshLevel( baseMesh,
+                               cellBlockManager,
+                               nullptr,
+                               junk.toViewConst() );
 
+      ElementRegionManager & elemManager = baseMesh.getElemManager();
+      elemManager.generateWells( meshManager, baseMesh );
+    }
   } );
 
   // setup the MeshLevel assocaited with the discretizations
@@ -583,7 +591,7 @@ void ProblemManager::generateMesh()
     string const & meshBodyName = discretizationPair.first.first;
     MeshBody & meshBody = domain.getMeshBody( meshBodyName );
 
-    if( discretizationPair.first.second!=nullptr ) // this check shouldn't be required
+    if( discretizationPair.first.second!=nullptr && !meshBody.hasParticles() ) // this check shouldn't be required
     {
       FiniteElementDiscretization const * const
       feDiscretization = dynamic_cast< FiniteElementDiscretization const * >( discretizationPair.first.second );
@@ -595,7 +603,6 @@ void ProblemManager::generateMesh()
         string const & discretizationName = feDiscretization->getName();
         arrayView1d< string const > const regionNames = discretizationPair.second;
         CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
-        ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
 
         // create a high order MeshLevel
         if( order > 1 )
@@ -606,7 +613,6 @@ void ProblemManager::generateMesh()
 
           this->generateMeshLevel( mesh,
                                    cellBlockManager,
-                                   particleBlockManager,
                                    feDiscretization,
                                    regionNames );
         }
@@ -740,7 +746,6 @@ ProblemManager::getDiscretizations() const
 
 void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
                                         CellBlockManagerABC & cellBlockManager,
-                                        ParticleBlockManagerABC & particleBlockManager,
                                         Group const * const discretization,
                                         arrayView1d< string const > const & )
 {
@@ -762,7 +767,6 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   }
 
   NodeManager & nodeManager = meshLevel.getNodeManager();
-  ParticleManager & particleManager = meshLevel.getParticleManager();
   EdgeManager & edgeManager = meshLevel.getEdgeManager();
   FaceManager & faceManager = meshLevel.getFaceManager();
   ElementRegionManager & elemManager = meshLevel.getElemManager();
@@ -778,7 +782,6 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
   {
     elemManager.generateMesh( cellBlockManager );
-    particleManager.generateMesh( particleBlockManager );
     nodeManager.setGeometricalRelations( cellBlockManager, elemManager );
     edgeManager.setGeometricalRelations( cellBlockManager );
     faceManager.setGeometricalRelations( cellBlockManager,
@@ -814,7 +817,23 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
       subRegion.setMaxGlobalIndex();
     } );
     elemManager.setMaxGlobalIndex();
+  }
+}
 
+void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
+                                        ParticleBlockManagerABC & particleBlockManager,
+                                        arrayView1d< string const > const & )
+{
+  ParticleManager & particleManager = meshLevel.getParticleManager();
+
+  if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+  {
+    particleManager.generateMesh( particleBlockManager );
+  }
+  meshLevel.generateSets();
+
+  if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+  {
     particleManager.forParticleSubRegions< ParticleSubRegionBase >( [&]( ParticleSubRegionBase & subRegion )
     {
       subRegion.setMaxGlobalIndex();
