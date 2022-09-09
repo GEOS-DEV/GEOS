@@ -189,10 +189,11 @@ This submodule is not required for building GEOSX. If you see an error message h
 .. code-block:: sh
 
    cd GEOSX
+   git submodule update --init src/cmake/blt
    git submodule update --init src/coreComponents/LvArray
    git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
-   git submodule update --init src/externalComponents/PAMELA
-   git submodule update --init src/externalComponents/PVTPackage
+   git submodule update --init src/coreComponents/mesh/PAMELA
+   git submodule update --init src/coreComponents/constitutive/PVTPackage
    cd ..
 
 Once we have grabbed GEOSX, we do the same for the thirdPartyLibs repository.  From the ``codes`` directory, type
