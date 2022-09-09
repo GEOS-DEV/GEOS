@@ -11,12 +11,9 @@
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Region }"
-      sourceCoordinates="{ { 55, 55, 55 },
-                           { 10, 10, 14 } }"
+      sourceCoordinates="{ { 1000.1, 1000.1, 1000.1 } }"
       timeSourceFrequency="5.0"
-      receiverCoordinates="{ { 5, 5, 11 },
-                             { 5, 50, 11 },
-                             { 5, 95, 11 } }"/>
+      receiverCoordinates="{ { 1000.1, 1000.1, 1500.1 } }" />
   </Solvers>
 
   <!-- hexahedral mesh generated internally by GEOSX -->
@@ -24,17 +21,25 @@
     <InternalMesh
       name="mesh"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 101 }"
-      yCoords="{ 0, 101 }"
-      zCoords="{ 0, 101 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
-      nz="{ 10 }"
+      xCoords="{ 0, 2000 }"
+      yCoords="{ 0, 2000 }"
+      zCoords="{ 0, 2000 }"
+      nx="{ 100 }"
+      ny="{ 100 }"
+      nz="{ 100 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
 
+  <Geometry>
+    <Box
+      name="zpos"
+      xMin="{ -0.01, -0.01, 1999.99 }"
+      xMax="{ 2000.01, 2000.01, 2000.01 }"/>
+  </Geometry>
+
   <Events
-    maxTime="0.2">
+    maxTime="1.5">
+    <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solverApplications"
@@ -44,7 +49,7 @@
     <!-- generate an output that can be read from VTK -->
     <PeriodicEvent
       name="vtk"
-      timeFrequency="0.1"
+      timeFrequency="0.05"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
 
@@ -59,12 +64,6 @@
       timeFrequency="0.05"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
-
-    <!-- restart event -->
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="0.1"
-      target="/Outputs/restartOutput"/>
   </Events>
 
   <NumericalMethods>
@@ -72,11 +71,6 @@
       <FiniteElementSpace
         name="FE1"
         order="1"/>
-    </FiniteElements>
-    <FiniteElements>
-      <FiniteElementSpace
-        name="FE2"
-        order="3"/>
     </FiniteElements>
   </NumericalMethods>
 
@@ -118,13 +112,21 @@
       fieldName="mediumVelocity"
       scale="1500"
       setNames="{ all }"/>
+
+    <!-- 3) The free surface condition the domain -->
+    <FieldSpecification
+      name="zposFreeSurface"
+      objectPath="faceManager"
+      fieldName="FreeSurface"
+      scale="0.0"
+      setNames="{ zpos }"/>
   </FieldSpecifications>
 
   <!-- collect the pressure values at the nodes -->
   <Tasks>
     <PackCollection
       name="pressureCollection"
-      objectPath="/Problem/domain/MeshBodies/mesh/meshLevels/FE1/nodeManager"
+      objectPath="nodeManager"
       fieldName="pressure_np1"/>
   </Tasks>
 
@@ -139,8 +141,5 @@
       name="timeHistoryOutput"
       sources="{ /Tasks/pressureCollection }"
       filename="pressure_history"/>
-
-    <Restart
-      name="restartOutput"/>
   </Outputs>
 </Problem>

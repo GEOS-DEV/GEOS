@@ -19,22 +19,8 @@
                              { 5, 95, 11 } }"/>
   </Solvers>
 
-  <!-- hexahedral mesh generated internally by GEOSX -->
-  <Mesh>
-    <InternalMesh
-      name="mesh"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 101 }"
-      yCoords="{ 0, 101 }"
-      zCoords="{ 0, 101 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
-      nz="{ 10 }"
-      cellBlockNames="{ cb }"/>
-  </Mesh>
-
   <Events
-    maxTime="0.1">
+    maxTime="0.2">
 
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
@@ -233,5 +219,4 @@
       name="restartOutput"/>
 
   </Outputs>
-
 </Problem>
