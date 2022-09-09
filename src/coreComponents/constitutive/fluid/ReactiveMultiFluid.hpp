@@ -37,7 +37,7 @@ class ReactiveMultiFluid : public MultiFluidBase
 {
 public:
 
-  using exec_policy = serialPolicy<>;
+  using exec_policy = serialPolicy;
 
   ReactiveMultiFluid( string const & name,
                       Group * const parent );
