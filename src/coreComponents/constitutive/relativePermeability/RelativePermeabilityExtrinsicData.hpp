@@ -53,7 +53,7 @@ EXTRINSIC_MESH_DATA_TRAIT( dPhaseRelPerm_dPhaseVolFraction,
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseTrapped,
                            "phaseTrapped",
-                           array2dLayoutPhase,
+                           array3dLayoutRelPerm,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,

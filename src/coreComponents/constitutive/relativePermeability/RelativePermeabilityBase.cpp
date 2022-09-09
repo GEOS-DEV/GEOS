@@ -44,7 +44,7 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
   registerExtrinsicData( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{},
                          &m_dPhaseRelPerm_dPhaseVolFrac );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseTrapped{}, &m_phaseTrapped );
+  registerExtrinsicData( extrinsicMeshData::relperm::phaseTrapped{}, &m_phaseTrappedVolFrac );
 
 }
 
@@ -94,8 +94,8 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
   m_phaseRelPerm.resize( size, numPts, numPhases );
   m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases );
   //phase trapped for stats
-  m_phaseTrapped.resize( size, numPhases );//2d(*) or 3d ??
-  m_phaseTrapped.setValues< parallelDevicePolicy<> >( 0.0 );
+  m_phaseTrappedVolFrac.resize(size, numPts, numPhases );//2d or 3d(*) ??
+//  m_phaseTrappedVolFrac.setValues< parallelDevicePolicy<> >( 0.0 );
 }
 
 void RelativePermeabilityBase::setLabels()
@@ -114,14 +114,15 @@ void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group &
 void RelativePermeabilityBase::updateTrappedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
 {
 
-  arrayView2d< real64, compflow::USD_PHASE > phaseTrapped = m_phaseTrapped.toView();
+  arrayView3d< real64, relperm::USD_RELPERM > phaseTrapped = m_phaseTrappedVolFrac.toView();
 
   localIndex const numElems = phaseVolFraction.size( 0 );
   integer const numPhases = numFluidPhases();
-  forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei ) {
+  forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei ) 
+  {
     for( integer ip = 0; ip < numPhases; ++ip )
     {
-      phaseTrapped[ei][ip] = LvArray::math::min( phaseVolFraction[ei][ip],
+      phaseTrapped[ei][0][ip] = LvArray::math::min( phaseVolFraction[ei][ip],
                                                  m_phaseMinVolumeFraction[ip] );
     }
   } );

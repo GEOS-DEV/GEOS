@@ -105,15 +105,15 @@ void BrooksCoreyRelativePermeability::postProcessInput()
 BrooksCoreyRelativePermeability::KernelWrapper
 BrooksCoreyRelativePermeability::createKernelWrapper()
 {
-  return KernelWrapper( m_phaseMinVolumeFraction,
-                        m_phaseRelPermExponent,
-                        m_phaseRelPermMaxValue,
-                        m_volFracScale,
-                        m_phaseTypes,
-                        m_phaseOrder,
-                        m_phaseRelPerm,
-                        m_dPhaseRelPerm_dPhaseVolFrac,
-                        m_phaseTrapped );
+  return KernelWrapper(m_phaseMinVolumeFraction,
+                       m_phaseRelPermExponent,
+                       m_phaseRelPermMaxValue,
+                       m_volFracScale,
+                       m_phaseTypes,
+                       m_phaseOrder,
+                       m_phaseRelPerm,
+                       m_dPhaseRelPerm_dPhaseVolFrac,
+                       m_phaseTrappedVolFrac );
 }
 
 //START_SPHINX_INCLUDE_01

@@ -71,7 +71,7 @@ public:
                    arrayView1d< integer const > const & phaseOrder,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                    arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
-                   arrayView2d< real64, compflow::USD_PHASE > const & phaseTrapped );
+                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac );
 
 
     GEOSX_HOST_DEVICE

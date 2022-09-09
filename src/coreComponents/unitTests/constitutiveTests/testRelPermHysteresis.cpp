@@ -268,8 +268,8 @@ void testValuesAgainstReference( TBL_WRAPPER const & relpermTblWrapper,
   phaseMinHistoricalVolFraction[0][0] = 1. - shy;
   phaseMinHistoricalVolFraction[0][1] = 0.;
 
-  StackArray< real64, 2, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES,
-              compflow::LAYOUT_PHASE > phaseTrappedVolFraction( 1, numPhases );
+  StackArray< real64, 3, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES,
+              relperm::LAYOUT_RELPERM > phaseTrappedVolFrac( 1, 1, numPhases );
 
   StackArray< real64, 3, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES,
               relperm::LAYOUT_RELPERM > phaseRelPerm( 1, 1, numPhases );
@@ -282,7 +282,7 @@ void testValuesAgainstReference( TBL_WRAPPER const & relpermTblWrapper,
                                      phaseVolFraction[0],
                                      phaseMaxHistoricalVolFraction[0],
                                      phaseMinHistoricalVolFraction[0],
-                                     phaseTrappedVolFraction[0],
+                                     phaseTrappedVolFrac[0][0],
                                      phaseRelPerm[0][0],
                                      dPhaseRelPerm_dPhaseVolFrac[0][0] );
 

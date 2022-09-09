@@ -570,27 +570,27 @@ TableRelativePermeabilityHysteresis::createKernelWrapper()
   createAllTableKernelWrappers();
 
   // then we create the actual TableRelativePermeabilityHysteresis::KernelWrapper
-  return KernelWrapper( m_drainageRelPermKernelWrappers,
-                        m_imbibitionRelPermKernelWrappers,
-                        m_jerauldParam_a,
-                        m_jerauldParam_b,
-                        m_killoughCurvatureParam,
-                        m_phaseHasHysteresis,
-                        m_landParam,
-                        m_drainagePhaseMinVolFraction,
-                        m_imbibitionPhaseMinVolFraction,
-                        m_drainagePhaseMaxVolFraction,
-                        m_imbibitionPhaseMaxVolFraction,
-                        m_drainagePhaseRelPermEndPoint,
-                        m_imbibitionPhaseRelPermEndPoint,
-                        m_phaseTypes,
-                        m_phaseOrder,
-                        m_phaseMinHistoricalVolFraction,
-                        m_phaseMaxHistoricalVolFraction,
-                        m_phaseCriticalVolFraction,
-                        m_phaseRelPerm,
-                        m_dPhaseRelPerm_dPhaseVolFrac,
-                        m_phaseTrapped );
+  return KernelWrapper(m_drainageRelPermKernelWrappers,
+                       m_imbibitionRelPermKernelWrappers,
+                       m_jerauldParam_a,
+                       m_jerauldParam_b,
+                       m_killoughCurvatureParam,
+                       m_phaseHasHysteresis,
+                       m_landParam,
+                       m_drainagePhaseMinVolFraction,
+                       m_imbibitionPhaseMinVolFraction,
+                       m_drainagePhaseMaxVolFraction,
+                       m_imbibitionPhaseMaxVolFraction,
+                       m_drainagePhaseRelPermEndPoint,
+                       m_imbibitionPhaseRelPermEndPoint,
+                       m_phaseTypes,
+                       m_phaseOrder,
+                       m_phaseMinHistoricalVolFraction,
+                       m_phaseMaxHistoricalVolFraction,
+                       m_phaseCriticalVolFraction,
+                       m_phaseRelPerm,
+                       m_dPhaseRelPerm_dPhaseVolFrac,
+                       m_phaseTrappedVolFrac );
 }
 
 void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, localIndex const numPts )
@@ -604,7 +604,7 @@ void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, l
   m_phaseCriticalVolFraction.resize( size, numPhases );
   m_phaseMaxHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
   m_phaseMinHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 1.0 );
-  m_phaseCriticalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
+  m_phaseCriticalVolFraction.zero();
 }
 
 void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
@@ -630,7 +630,7 @@ void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( ar
 void TableRelativePermeabilityHysteresis::updateTrappedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
 {
 
-  arrayView2d< real64, compflow::USD_PHASE > phaseTrapped = m_phaseTrapped.toView();
+  arrayView3d< real64, relperm::USD_RELPERM > phaseTrapped = m_phaseTrappedVolFrac.toView();
   arrayView2d< real64, compflow::USD_PHASE > phaseCrit = m_phaseCriticalVolFraction.toView();
 
   localIndex const numElems = phaseVolFraction.size( 0 );
@@ -638,7 +638,7 @@ void TableRelativePermeabilityHysteresis::updateTrappedPhaseVolFraction( arrayVi
   forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei ) {
     for( integer ip = 0; ip < numPhases; ++ip )
     {
-      phaseTrapped[ei][ip] = LvArray::math::min( phaseVolFraction[ei][ip],
+      phaseTrapped[ei][0][ip] = LvArray::math::min( phaseVolFraction[ei][ip],
                                                  phaseCrit[ei][ip] );
     }
   } );
@@ -665,14 +665,14 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                  arrayView2d< real64, compflow::USD_PHASE > const & phaseCriticalVolFraction,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                  arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
-                 arrayView2d< real64, compflow::USD_PHASE > const & phaseTrapped )
-  : RelativePermeabilityBaseUpdate( phaseTypes,
-                                    phaseOrder,
+                 arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
+  : RelativePermeabilityBaseUpdate(phaseTypes,
+                                   phaseOrder,
                                     //temporary put drainage value
                                     drainagePhaseMinVolFraction,
-                                    phaseRelPerm,
-                                    dPhaseRelPerm_dPhaseVolFrac,
-                                    phaseTrapped ),
+                                   phaseRelPerm,
+                                   dPhaseRelPerm_dPhaseVolFrac,
+                                   phaseTrappedVolFrac ),
   m_drainageRelPermKernelWrappers( drainageRelPermKernelWrappers ),
   m_imbibitionRelPermKernelWrappers( imbibitionRelPermKernelWrappers ),
   m_jerauldParam_a( jerauldParam_a ),

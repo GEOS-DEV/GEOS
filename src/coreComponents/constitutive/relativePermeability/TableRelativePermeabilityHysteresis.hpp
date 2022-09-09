@@ -127,7 +127,7 @@ public:
                    arrayView2d< real64, compflow::USD_PHASE > const & phaseCriticalVolFraction,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                    arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
-                   arrayView2d< real64, compflow::USD_PHASE > const & phaseTrapped );
+                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac );
 
     /**
      * @brief Function updating the relperm (and derivative) for a phase using the drainage table
