@@ -1157,6 +1157,12 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
   {
     meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
     {
+
+      if( meshLevel.isShallowCopy() )
+      {
+        return;
+      }
+
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
       ParticleManager const & particleManager = meshLevel.getParticleManager();
       string const meshPath = joinPath( getCycleSubFolder( cycle ), meshBody.getName(), meshLevel.getName() );
@@ -1263,6 +1269,12 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   {
     meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
     {
+
+      if( meshLevel.isShallowCopy() )
+      {
+        return;
+      }
+
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
       ParticleManager const & particleManager = meshLevel.getParticleManager();
       NodeManager const & nodeManager = meshLevel.getNodeManager();
