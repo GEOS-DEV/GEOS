@@ -231,9 +231,6 @@ struct LinearSolverParameters
     StrategyType strategy = StrategyType::invalid; ///< Predefined MGR solution strategy (solver specific)
     integer separateComponents = false;            ///< Apply a separate displacement component (SDC) filter before AMG construction
     string displacementFieldName;                  ///< Displacement field name need for SDC filter
-  
-    integer useThermalStrategy = true;
-    integer useIlukSmoother = false;
   }
   mgr;                                             ///< Multigrid reduction (MGR) parameters
 
@@ -305,12 +302,10 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "hybridSinglePhasePoromechanics",
               "singlePhasePoromechanicsEmbeddedFractures",
               "compositionalMultiphaseFVM",
-              "compositionalMultiphaseFVMwithILU0"
               "compositionalMultiphaseHybridFVM",
               "compositionalMultiphaseReservoirFVM",
               "compositionalMultiphaseReservoirHybridFVM",
               "thermalCompositionalMultiphaseFVM",
-              "thermalCompositionalMultiphaseFVMwithILU0",
               "multiphasePoromechanics",
               "hydrofracture",
               "lagrangianContactMechanics",
