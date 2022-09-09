@@ -20,6 +20,7 @@
 #define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1PYRAMIDLAGRANGE1GAUSS5
 
 #include "FiniteElementBase.hpp"
+#include "LagrangeBasis1.hpp"
 
 
 namespace geosx
@@ -56,6 +57,10 @@ namespace finiteElement
 class H1_Pyramid_Lagrange1_Gauss5 final : public FiniteElementBase
 {
 public:
+
+  /// The type of basis used for this element
+  using BASIS = LagrangeBasis1;
+
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 5;
   /// The maximum number of support points per element.

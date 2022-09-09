@@ -86,7 +86,7 @@ void EmbeddedSurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
+    MeshLevel & meshLevel = meshBody.getBaseDiscretization();
 
     EmbeddedSurfaceNodeManager & nodeManager = meshLevel.getEmbSurfNodeManager();
 
@@ -109,7 +109,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
 
   // Get meshLevel
-  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
 
   // Get managers
   ElementRegionManager & elemManager = meshLevel.getElemManager();
@@ -289,7 +289,7 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
-    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getBaseDiscretization();
 
     for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {

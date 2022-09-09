@@ -105,14 +105,12 @@ public:
    * @param time_np1 rupture time
    * @param faceManager pointer to the FaceManager object.
    * @param originalFaceToEdges face-to-edge map before the rupture.
-   * @param subRegionName the name of the FaceElementSubRegion to insert the new entries.
    * @param faceIndices the local indices of the new faces that define the face element.
    * @return the local index of the new FaceElement entry.
    */
   localIndex addToFractureMesh( real64 const time_np1,
                                 FaceManager const * const faceManager,
                                 ArrayOfArraysView< localIndex const > const & originalFaceToEdges,
-                                string const & subRegionName,
                                 localIndex const faceIndices[2] );
 
   ///@}
@@ -135,6 +133,29 @@ public:
    */
   SurfaceSubRegionType subRegionType() const { return m_subRegionType; }
 
+  /**
+   * @brief Returns the unique sub-region of type @p SUBREGION_TYPE for the current @p SurfaceElementRegion.
+   * @tparam SUBREGION_TYPE The type of the sub region we're looking for.
+   * @return The unique sub region.
+   * @note Kills the simulation if the sub-region is not unique.
+   */
+  template< typename SUBREGION_TYPE >
+  SUBREGION_TYPE & getUniqueSubRegion()
+  {
+    return getSubRegion< SUBREGION_TYPE >( getUniqueSubRegionName< SUBREGION_TYPE >() );
+  }
+
+  /**
+   * @brief Returns the unique sub-region of type @p SUBREGION_TYPE for the current @p SurfaceElementRegion.
+   * @tparam SUBREGION_TYPE The type of the sub region we're looking for.
+   * @return The unique sub region.
+   * @note Kills the simulation if the sub-region is not unique.
+   */
+  template< typename SUBREGION_TYPE >
+  SUBREGION_TYPE const & getUniqueSubRegion() const
+  {
+    return getSubRegion< SUBREGION_TYPE >( getUniqueSubRegionName< SUBREGION_TYPE >() );
+  }
 
   ///@}
 
@@ -164,6 +185,25 @@ protected:
   virtual void initializePreSubGroups() override;
 
 private:
+
+  /**
+   * @brief Returns the name of the unique sub-region.
+   * @tparam SUBREGION_TYPE The type of the sub region we're looking for.
+   * @return The name unique sub region.
+   * @note Kills the simulation if the sub-region is not unique.
+   */
+  template< typename SUBREGION_TYPE >
+  string getUniqueSubRegionName() const
+  {
+    std::vector< string > subRegionNames;
+    forElementSubRegions< SUBREGION_TYPE >( [&]( SUBREGION_TYPE const & sr )
+    {
+      subRegionNames.push_back( sr.getName() );
+    } );
+    GEOSX_ERROR_IF( subRegionNames.size() != 1,
+                    "Surface region \"" << getName() << "\" should have one unique sub region. \"" << subRegionNames.size() << "\" found." );
+    return subRegionNames.front();
+  }
 
   SurfaceSubRegionType m_subRegionType;
 

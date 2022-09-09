@@ -29,6 +29,7 @@
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/multiphysics/MultiphasePoromechanicsSolver.hpp"
 
 namespace geosx
 {
@@ -47,16 +48,15 @@ template< typename COMPOSITIONAL_RESERVOIR_SOLVER > class
 template<> class CompositionalCatalogNames< CompositionalMultiphaseBase >
 {
 public:
+  // TODO: find a way to use the catalog name here
   static string name() { return "CompositionalMultiphaseReservoir"; }
 };
-/*
-   // Class specialization for a RESERVOIR_SOLVER set to MultiphasePoromechanics
-   template<> class CompositionalCatalogNames< MultiphasePoromechanics >
-   {
-   public:
-   static string name() { return "CompositionalMultiphasePoromechanicsReservoir"; }
-   };
- */
+// Class specialization for a RESERVOIR_SOLVER set to MultiphasePoromechanics
+template<> class CompositionalCatalogNames< MultiphasePoromechanicsSolver >
+{
+public:
+  static string name() { return MultiphasePoromechanicsSolver::catalogName()+"Reservoir"; }
+};
 
 }
 
@@ -82,42 +82,62 @@ CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
 ~CompositionalMultiphaseReservoirAndWells()
 {}
 
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
-void
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
-postProcessInput()
+template<>
+CompositionalMultiphaseBase const *
+CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::
+flowSolver() const
 {
-  Base::postProcessInput();
-
-  integer const & useMassFlow = Base::reservoirSolver()->template getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
-  integer const & useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
-  GEOSX_THROW_IF( useMassFlow != useMassWell,
-                  GEOSX_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
-                             this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
-                             Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
-                  InputError );
+  return this->reservoirSolver();
 }
+
+template<>
+CompositionalMultiphaseBase const *
+CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver >::
+flowSolver() const
+{
+  return this->reservoirSolver()->flowSolver();
+}
+
+template<>
+void
+CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::
+setMGRStrategy()
+{
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM )
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
+  }
+  else
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
+  }
+}
+
+template<>
+void
+CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver >::
+setMGRStrategy()
+{
+  // Not implemented yet
+}
+
 
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
 void
 CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
-  if( catalogName() == CompositionalCatalogNames< CompositionalMultiphaseBase >::name() )
-  {
-    if( dynamicCast< CompositionalMultiphaseFVM * >( this->reservoirSolver() ) )
-    {
-      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
-    }
-    else if( dynamicCast< CompositionalMultiphaseHybridFVM * >( this->reservoirSolver() ) )
-    {
-      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
-    }
-  }
-  else
-  {
-    GEOSX_ERROR( "This option is not available yet" );
-  }
+  CompositionalMultiphaseBase const * const flowSolver = this->flowSolver();
+  Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
+  setMGRStrategy();
+
+  bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );;
+  bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
+  GEOSX_THROW_IF( useMassFlow != useMassWell,
+                  GEOSX_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                             this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
+                             Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
+                  InputError );
 }
 
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
@@ -129,9 +149,9 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  this->template forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                               MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                               MeshLevel const & mesh,
+                                                                               arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -243,9 +263,9 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
   using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
-  this->template forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                               MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                               MeshLevel const & mesh,
+                                                                               arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -398,9 +418,9 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
 namespace
 {
 typedef CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > CompositionalMultiphaseFlowAndWells;
-//typedef CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics > CompositionalMultiphasePoromechanicsAndWells;
+typedef CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver > CompositionalMultiphasePoromechanicsAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFlowAndWells, string const &, Group * const )
-//REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphasePoromechanicsAndWells, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphasePoromechanicsAndWells, string const &, Group * const )
 }
 
 } /* namespace geosx */
