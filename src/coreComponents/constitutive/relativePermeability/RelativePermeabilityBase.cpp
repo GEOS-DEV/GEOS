@@ -44,7 +44,8 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
   registerExtrinsicData( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{},
                          &m_dPhaseRelPerm_dPhaseVolFrac );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseTrapped{}, &m_phaseTrappedVolFrac );
+  registerExtrinsicData( extrinsicMeshData::relperm::phaseTrapped{}, &m_phaseTrappedVolFrac ).
+    setDimLabels( 2, phaseNames());
 
 }
 
@@ -111,22 +112,6 @@ void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group &
   resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
 }
 
-void RelativePermeabilityBase::updateTrappedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
-{
-
-  arrayView3d< real64, relperm::USD_RELPERM > phaseTrapped = m_phaseTrappedVolFrac.toView();
-
-  localIndex const numElems = phaseVolFraction.size( 0 );
-  integer const numPhases = numFluidPhases();
-  forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-  {
-    for( integer ip = 0; ip < numPhases; ++ip )
-    {
-      phaseTrapped[ei][0][ip] = LvArray::math::min( phaseVolFraction[ei][ip],
-                                                    m_phaseMinVolumeFraction[ip] );
-    }
-  } );
-}
 
 } // namespace constitutive
 

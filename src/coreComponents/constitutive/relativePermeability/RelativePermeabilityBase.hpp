@@ -80,9 +80,7 @@ protected:
 
   arrayView3d< real64, relperm::USD_RELPERM > m_phaseTrappedVolFrac;
 
-
 private:
-
   GEOSX_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
@@ -146,12 +144,6 @@ public:
    */
   virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
   { GEOSX_UNUSED_VAR( phaseVolFraction ); }
-
-  /**
-   * @brief init and save trapped volfrac at the end of time step in each element
-   * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
-   */
-  virtual void updateTrappedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const;
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {

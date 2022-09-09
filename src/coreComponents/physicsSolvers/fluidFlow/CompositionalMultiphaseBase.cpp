@@ -1808,7 +1808,6 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       RelativePermeabilityBase const & relPermMaterial =
         getConstitutiveModel< RelativePermeabilityBase >( subRegion, relPermName );
       relPermMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac );
-      relPermMaterial.updateTrappedPhaseVolFraction( phaseVolFrac );
 
       // Step 5: if capillary pressure is supported, send the converged porosity and permeability to the capillary pressure model
       // note: this is needed when the capillary pressure depends on porosity and permeability (Leverett J-function for instance)

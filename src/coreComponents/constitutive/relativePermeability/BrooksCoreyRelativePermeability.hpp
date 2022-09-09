@@ -52,6 +52,7 @@ public:
 
   GEOSX_HOST_DEVICE
   void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
                 arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                 arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
@@ -61,6 +62,7 @@ public:
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
   {
     compute( phaseVolFraction,
+             m_phaseTrappedVolFrac[k][q],
              m_phaseRelPerm[k][q],
              m_dPhaseRelPerm_dPhaseVolFrac[k][q] );
   }
@@ -117,6 +119,7 @@ GEOSX_HOST_DEVICE
 inline void
 BrooksCoreyRelativePermeabilityUpdate::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
            arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
            arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
@@ -142,6 +145,9 @@ BrooksCoreyRelativePermeabilityUpdate::
     {
       phaseRelPerm[ip] = (satScaled <= 0.0) ? 0.0 : scale;
     }
+
+    phaseTrappedVolFrac[ip] = std::min( phaseVolFraction[ip], m_phaseMinVolumeFraction[ip] );
+
   }
 }
 
