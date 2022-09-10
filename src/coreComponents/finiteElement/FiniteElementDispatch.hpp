@@ -163,8 +163,38 @@ dispatch2D( FiniteElementBase const & input,
   }
 }
 
+
+
+template<typename LAMBDA>
+void
+dispatchlowOrder3D( FiniteElementBase const & input,
+                    LAMBDA && lambda )
+{
+  if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 const * >(&input) )
+  {
+    lambda( *ptr1 );
+  }
+  else if( auto const * const ptr2 = dynamic_cast< H1_Wedge_Lagrange1_Gauss6 const * >(&input) )
+  {
+    lambda( *ptr2 );
+  }
+  else if( auto const * const ptr3 = dynamic_cast< H1_Tetrahedron_Lagrange1_Gauss1 const * >(&input) )
+  {
+    lambda( *ptr3 );
+  }
+  else if( auto const * const ptr4 = dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 const * >(&input) )
+  {
+    lambda( *ptr4 );
+  }
+  else
+  {
+    GEOSX_ERROR( "finiteElement::dispatchlowOrder3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );
+  }
 }
-}
+
+} // namespace finiteElement
+
+} // namespace geosx 
 
 
 

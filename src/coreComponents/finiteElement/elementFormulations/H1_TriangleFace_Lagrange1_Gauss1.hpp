@@ -150,7 +150,7 @@ public:
   /**
    * @brief Calculate shape functions values for each support point at a
    *   given point in the parent space.
-   * @param coords coordinates of the given point.
+   * @param pointCoord coordinates of the given point.
    * @param N An array to pass back the shape function values for each support
    *   point.
    */
@@ -158,6 +158,18 @@ public:
   GEOSX_FORCE_INLINE
   static void calcN( real64 const (&pointCoord)[3],
                      real64 ( &N )[numNodes] );
+
+  /**
+   * @brief Calculate shape functions values for each support point at a
+   *   given point in the parent space.
+   * @param coords coordinates of the given point.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */ 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const (&coords)[2],
+                     real64 ( & N )[numNodes] )      ;             
 
 
   /**

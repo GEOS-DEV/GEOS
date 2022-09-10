@@ -172,18 +172,6 @@ public:
   }
 
   /**
-   * @brief Calculate shape functions values for each support point at a
-   *   given point in the parent space.
-   * @param coords coordinates of the given point.
-   * @param N An array to pass back the shape function values for each support
-   *   point.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void calcN( real64 const (&pointCoord)[3],
-                     real64 ( &N )[numNodes] );
-
-  /**
    * @brief Calculate shape functions values at a single point.
    * @param[in] coords The parent coordinates at which to evaluate the shape function value
    * @param[out] N The shape function values.
@@ -534,33 +522,6 @@ H1_Wedge_Lagrange1_Gauss6::
 }
 
 //*************************************************************************************************
-
-/**
- * @brief Calculate shape functions values for each support point at a
- *   given point in the parent space.
- * @param coords coordinates of the given point.
- * @param N An array to pass back the shape function values for each support
- *   point.
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-H1_Wedge_Lagrange1_Gauss6::
-  calcN( real64 const (&pointCoord)[3],
-         real64 (& N)[numNodes] )
-{
-  real64 const r  = pointCoord[0];
-  real64 const s  = pointCoord[1];
-  real64 const xi = pointCoord[2];
-
-  N[0] = 0.5 * ( 1.0 - r - s ) * ( 1.0 - xi );
-  N[1] = 0.5 * ( 1.0 - r - s ) * ( 1.0 + xi );
-  N[2] = 0.5 * r * ( 1.0 - xi );
-  N[3] = 0.5 * r * ( 1.0 + xi );
-  N[4] = 0.5 * s * ( 1.0 - xi );
-  N[5] = 0.5 * s * ( 1.0 + xi );
-}
-
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE

@@ -132,23 +132,6 @@ public:
     return numNodes;
   }
 
-
-  /**
-   * @brief Calculate shape functions values at a single point.
-   * @param[in] coords The parent coordinates at which to evaluate the shape function value
-   * @param[out] N The shape function values.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void calcN( real64 const (&coords)[3],
-                     real64 (& N)[numNodes] )
-  {
-    LagrangeBasis1::TensorProduct3D::value( coords, N );
-  }
-
-
-
-
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void getSamplingPointCoordInParentSpace( int const & linearIndex,

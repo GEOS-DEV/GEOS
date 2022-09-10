@@ -207,7 +207,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   {
     finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
-    finiteElement::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
+    finiteElement::dispatchlowOrder3D( subRegionFE, [&] ( auto const finiteElement )
     {
       using FE_TYPE = decltype( finiteElement );
 
