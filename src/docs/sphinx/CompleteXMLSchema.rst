@@ -498,6 +498,13 @@ Element: LaplaceFEM
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM.rst
 
 
+.. _XML_LayeredElasticIsotropicDruckerPrager:
+
+Element: LayeredElasticIsotropicDruckerPrager
+=============================================
+.. include:: ../../coreComponents/schema/docs/LayeredElasticIsotropicDruckerPrager.rst
+
+
 .. _XML_LinearSolverParameters:
 
 Element: LinearSolverParameters
@@ -1599,6 +1606,13 @@ Datastructure: LagrangianContact
 Datastructure: LaplaceFEM
 =========================
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM_other.rst
+
+
+.. _DATASTRUCTURE_LayeredElasticIsotropicDruckerPrager:
+
+Datastructure: LayeredElasticIsotropicDruckerPrager
+===================================================
+.. include:: ../../coreComponents/schema/docs/LayeredElasticIsotropicDruckerPrager_other.rst
 
 
 .. _DATASTRUCTURE_Level0:
