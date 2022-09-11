@@ -171,8 +171,8 @@ using KernelWrapper = LayeredModelUpdates< SOLID_TYPE1, SOLID_TYPE2 >;
    */
   virtual string getCatalogName() const override { return catalogName(); }
 
-  //virtual void initializePreSubGroups() override;
-  using SolidBase::allocateConstitutiveData;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
   
  // real64 relaxationTime() const { return m_relaxationTime; }
 

@@ -60,6 +60,14 @@ template< typename SOLID_TYPE1 ,
 LayeredModel< SOLID_TYPE1 , SOLID_TYPE2 >::~LayeredModel() = default;
 
 
+template< typename SOLID_TYPE1 , 
+          typename SOLID_TYPE2 >
+void LayeredModel< SOLID_TYPE1 , SOLID_TYPE2 >::allocateConstitutiveData( dataRepository::Group & parent,
+                                              localIndex const numConstitutivePointsPerParentIndex )
+{
+
+  SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+}
 
 // Register all LayeredModel model types. Uncomment the ones listed as needed. 
 typedef LayeredModel< ElasticIsotropic , DruckerPrager > LayeredElasticIsotropicDruckerPrager;
