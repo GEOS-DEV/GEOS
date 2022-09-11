@@ -93,6 +93,8 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
                                                             m_finiteElementName,
                                                             "solidMaterialNames",
                                                             kernelFactory );
+
+    std::cout<<localDst2d<<std::endl;
   }
   dst.close();
 }
@@ -285,6 +287,7 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
                                keys::TotalDisplacement,
                                keys::TotalDisplacement,
                                scalingFactor );
+                               
 
   // forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
   //                                                               MeshLevel & mesh,

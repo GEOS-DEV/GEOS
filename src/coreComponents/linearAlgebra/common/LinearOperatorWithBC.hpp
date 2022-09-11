@@ -120,7 +120,7 @@ public:
                                                                       rhsContribution,
                                                                       [&](localIndex const a)->real64
                                                                       {
-                                                                        return field.data()[a];
+                                                                        return field.data()[a*3+bc.getComponent()];
                                                                       } );
                                                                       //field );
 

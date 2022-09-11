@@ -15,6 +15,22 @@
       <LinearSolverParameters
         directParallel="0"/>
     </MatrixFreeSolidMechanicsFEM>
+
+    <!-- <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      targetRegions="{ mesh1/Region1 }"
+      >
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianSSLE> -->
+
+
+    
   </Solvers>
 
   <Mesh>
@@ -23,10 +39,10 @@
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 1 }"
       yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 4 }"
-      ny="{ 4 }"
-      nz="{ 4 }"
+      zCoords="{ 0, 2 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 2 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -37,10 +53,16 @@
       forceDt="1.0"
       target="/Solvers/lagsolve"/>
 
-    <!-- <PeriodicEvent
+    <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
-      target="/Outputs/vtkOutput"/> -->
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="siloOutputs"
+      timeFrequency="1.0"
+      target="/Outputs/siloOutput"/>
+
 
   </Events>
 
@@ -99,7 +121,7 @@
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="2"
-      scale="1.0"
+      scale="-0.001"
       functionName="timeFunction"
       setNames="{ zpos }"/>
   </FieldSpecifications>
@@ -108,12 +130,15 @@
     <TableFunction
       name="timeFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 2.0 }"
-      values="{ 0.0, -0.1 }"/>
+      coordinates="{ 0.0, 1.0, 2.0, 10.0 }"
+      values="{ 0.0, 1.0, 1.0, 1.0 }"/>
   </Functions>
 
-  <!-- <Outputs>
+  <Outputs>
     <VTK
       name="vtkOutput"/>
-  </Outputs> -->
+
+    <Silo
+      name="siloOutput"/>
+  </Outputs>
 </Problem>
