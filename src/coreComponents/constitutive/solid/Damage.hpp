@@ -70,17 +70,21 @@ public:
   DamageUpdates( arrayView2d< real64 > const & inputNewDamage,
                  arrayView3d< real64 > const & inputDamageGrad,
                  arrayView2d< real64 > const & inputStrainEnergyDensity,
+                 arrayView2d< real64 > const & inputVolumetricStrain,
                  real64 const & inputLengthScale,
                  real64 const & inputCriticalFractureEnergy,
                  real64 const & inputcriticalStrainEnergy,
+                 arrayView1d< real64 > const & inputBiotCoefficient,
                  PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
     m_newDamage( inputNewDamage ),
     m_damageGrad( inputDamageGrad ),
     m_strainEnergyDensity( inputStrainEnergyDensity ),
+    m_volStrain( inputVolumetricStrain ),
     m_lengthScale( inputLengthScale ),
     m_criticalFractureEnergy( inputCriticalFractureEnergy ),
-    m_criticalStrainEnergy( inputcriticalStrainEnergy )
+    m_criticalStrainEnergy( inputcriticalStrainEnergy ),
+    m_biotCoefficient( inputBiotCoefficient )
   {}
 
   using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
@@ -114,15 +118,41 @@ public:
   {
     return -2*(1 - d);
   }
+//FRANKS VERSION
+  // GEOSX_FORCE_INLINE
+  // GEOSX_HOST_DEVICE
+  // virtual real64 pressureDamageFunction( localIndex const k,
+  //                                        localIndex const q ) const
+  // {
+  //   real64 pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
+
+  //   return 0.5*(1 + std::cos( M_PI*pf ));
+  // }
+
+
+  // GEOSX_FORCE_INLINE
+  // GEOSX_HOST_DEVICE
+  // virtual real64 pressureDamageFunctionDerivative( real64 const d ) const
+  // {
+  //   return -0.5*M_PI*std::sin( M_PI*d );
+  // }
+
+
+  // GEOSX_FORCE_INLINE
+  // GEOSX_HOST_DEVICE
+  // virtual real64 pressureDamageFunctionSecondDerivative( real64 const d ) const
+  // {
+  //   return -0.5*M_PI*M_PI*std::cos( M_PI*d );
+  // }  
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 pressureDamageFunction( localIndex const k,
                                          localIndex const q ) const
   {
-    real64 pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
+    //real64 pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
 
-    return 0.5*(1 + std::cos( M_PI*pf ));
+    return (1-m_newDamage( k,q ));
   }
 
 
@@ -130,7 +160,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual real64 pressureDamageFunctionDerivative( real64 const d ) const
   {
-    return -0.5*M_PI*std::sin( M_PI*d );
+    return -1.0;
   }
 
 
@@ -138,7 +168,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual real64 pressureDamageFunctionSecondDerivative( real64 const d ) const
   {
-    return -0.5*M_PI*M_PI*std::cos( M_PI*d );
+    return 0.0;
   }  
 
   GEOSX_FORCE_INLINE
@@ -170,6 +200,14 @@ public:
 
   }
 
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual void updateBiotCoefficient( localIndex const k,
+                                      real64 const biotCoefficient ) const
+  {
+    m_biotCoefficient[k] = biotCoefficient;
+  }
+
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -189,7 +227,6 @@ public:
 
     // compute volumetric and deviatoric strain invariants
     real64 strain[6] = {0};
-
     UPDATE_BASE::getElasticStrain( k, q, strain );
     real64 traceOfStrain = strain[0] + strain[1] + strain[2];
     m_volStrain( k, q ) = traceOfStrain;
@@ -215,7 +252,7 @@ public:
     return m_strainEnergyDensity( k, q );
   }
 
-    GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   virtual real64 getVolStrain( localIndex const k,
                                localIndex const q ) const
   {
@@ -244,7 +281,7 @@ public:
     #endif
   }
 
-    GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   virtual real64 getBiotCoefficient( localIndex const k ) const
   {
     return m_biotCoefficient[k];
@@ -290,9 +327,11 @@ public:
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
                                                                        m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
+                                                                       m_volStrain.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
-                                                                       m_criticalStrainEnergy );
+                                                                       m_criticalStrainEnergy,
+                                                                       m_biotCoefficient.toView() );
   }
 
   struct viewKeyStruct : public BASE::viewKeyStruct
@@ -300,12 +339,15 @@ public:
     static constexpr char const * damageString() { return "damage"; }
     static constexpr char const * damageGradString() { return "damageGrad"; }
     static constexpr char const * strainEnergyDensityString() { return "strainEnergyDensity"; }
+    static constexpr char const * volumetricStrainString() { return "volumetricStrain"; }
     /// string/key for regularization length
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
     /// string/key for Gc
     static constexpr char const * criticalFractureEnergyString() { return "criticalFractureEnergy"; }
     /// string/key for sigma_c
     static constexpr char const * criticalStrainEnergyString() { return "criticalStrainEnergy"; }
+    /// string/key for the Biot coefficient
+    static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }    
   };
 
 
@@ -313,9 +355,11 @@ protected:
   array2d< real64 > m_newDamage;
   array3d< real64 > m_damageGrad;
   array2d< real64 > m_strainEnergyDensity;
+  array2d< real64 > m_volStrain; 
   real64 m_lengthScale;
   real64 m_criticalFractureEnergy;
   real64 m_criticalStrainEnergy;
+  array1d< real64 > m_biotCoefficient;
 };
 
 }

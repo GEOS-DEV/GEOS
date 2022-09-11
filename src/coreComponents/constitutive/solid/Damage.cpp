@@ -33,9 +33,11 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_newDamage(),
   m_damageGrad(),
   m_strainEnergyDensity(),
+  m_volStrain(),
   m_lengthScale(),
   m_criticalFractureEnergy(),
-  m_criticalStrainEnergy()
+  m_criticalStrainEnergy(),
+  m_biotCoefficient()
 {
   this->registerWrapper( viewKeyStruct::damageString(), &m_newDamage ).
     setApplyDefaultValue( 0.0 ).
@@ -52,6 +54,11 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Strain Energy Density" );
 
+  this->registerWrapper( viewKeyStruct::volumetricStrainString(), &m_volStrain ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Volumetric strain" );    
+
   this->registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Length scale l in the phase-field equation" );
@@ -63,6 +70,11 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::criticalStrainEnergyString(), &m_criticalStrainEnergy ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Critical stress in a 1d tension test" );
+
+  this->registerWrapper( viewKeyStruct::biotCoefficientString(), &m_biotCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Biot coefficient" );    
 }
 
 
@@ -79,6 +91,8 @@ void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
   m_newDamage.resize( 0, numConstitutivePointsPerParentIndex );
   m_damageGrad.resize( 0, numConstitutivePointsPerParentIndex, 3 );
   m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
+  m_volStrain.resize( 0, numConstitutivePointsPerParentIndex );
+  m_biotCoefficient.resize( parent.size() );
   BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 

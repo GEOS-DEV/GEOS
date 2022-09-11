@@ -57,6 +57,8 @@ public:
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
+  void imposeFakeBackgroundPressures( DomainPartition & domain );
+
   virtual real64
   solverStep( real64 const & time_n,
               real64 const & dt,

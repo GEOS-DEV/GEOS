@@ -82,6 +82,14 @@ void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
         setDescription( "Total Mean Stress" );
       elementSubRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() ).
         setDescription( "Total Mean Stress" );
+      if (m_pressureEffects)
+      {
+        //register fake pressures for testing purposes
+        elementSubRegion.template registerWrapper< array1d< real64 > >( "hardCodedPMatrixName" ).
+        setDescription( "matrix pressure field for testing purposes only" );
+        elementSubRegion.template registerWrapper< array1d< real64 > >( "hardCodedPFractureName" ).
+        setDescription( "fracture pressure field for testing purposes only" );
+      }  
     } );
   } );
 }
@@ -168,6 +176,32 @@ void PhaseFieldFractureSolver::resetStateToBeginningOfStep( DomainPartition & do
   } );
 }
 
+void PhaseFieldFractureSolver::imposeFakeBackgroundPressures( DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const matrixPressure =
+      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "hardCodedPMatrixName" );
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > fracturePressure =
+      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "hardCodedPFractureName" );
+
+    //***** loop over all elements and write manufactured pressure fields *****
+    forAllElemsInMesh( mesh, [ &]( localIndex const er,
+                                   localIndex const esr,
+                                   localIndex const k )
+    {
+      //make a non-trivial field to test
+      matrixPressure[er][esr][k] = 1.0;
+      fracturePressure[er][esr][k] = 1.0;
+    } );
+  } );
+}
+
 real64 PhaseFieldFractureSolver::solverStep( real64 const & time_n,
                                              real64 const & dt,
                                              int const cycleNumber,
@@ -205,6 +239,7 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
   {
     solidSolver.setPressureEffects();
     damageSolver.setPressureEffects();
+    imposeFakeBackgroundPressures(domain);
   }
 
   damageSolver.setupSystem( domain,

@@ -37,12 +37,14 @@ public:
   DamageVolDevUpdates( arrayView2d< real64 > const & inputDamage,
                        arrayView3d< real64 > const & inputDamageGrad,
                        arrayView2d< real64 > const & inputStrainEnergyDensity,
+                       arrayView2d< real64 > const & inputVolumetricStrain,
                        real64 const & inputLengthScale,
                        real64 const & inputCriticalFractureEnergy,
                        real64 const & inputcriticalStrainEnergy,
+                       arrayView1d< real64 > const & inputBiotCoefficient,                       
                        PARAMS && ... baseParams ):
-    DamageUpdates< UPDATE_BASE >( inputDamage, inputDamageGrad, inputStrainEnergyDensity, inputLengthScale,
-                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy,
+    DamageUpdates< UPDATE_BASE >( inputDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputLengthScale,
+                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputBiotCoefficient, 
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
@@ -60,6 +62,7 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
+  using DamageUpdates< UPDATE_BASE >::m_biotCoefficient;
   using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
 
   GEOSX_HOST_DEVICE
@@ -151,9 +154,11 @@ public:
   using Damage< BASE >::m_newDamage;
   using Damage< BASE >::m_damageGrad;
   using Damage< BASE >::m_strainEnergyDensity;
+  using Damage< BASE >::m_volStrain;
   using Damage< BASE >::m_criticalFractureEnergy;
   using Damage< BASE >::m_lengthScale;
   using Damage< BASE >::m_criticalStrainEnergy;
+  using Damage< BASE >::m_biotCoefficient;
 
   DamageVolDev( string const & name, dataRepository::Group * const parent );
   virtual ~DamageVolDev() override;
@@ -168,9 +173,11 @@ public:
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
                                                                        m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
+                                                                       m_volStrain.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
-                                                                       m_criticalStrainEnergy );
+                                                                       m_criticalStrainEnergy,
+                                                                       m_biotCoefficient.toView() );
   }
 
 };
