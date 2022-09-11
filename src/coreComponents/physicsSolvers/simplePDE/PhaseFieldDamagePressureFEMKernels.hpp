@@ -216,7 +216,7 @@ public:
     //real64 const extDrivingForce = m_constitutiveUpdate.getExtDrivingForce( k, q );
     real64 const volStrain = m_constitutiveUpdate.getVolStrain( k, q );
     real64 const biotCoeff = m_constitutiveUpdate.getBiotCoefficient( k );
-    real64 c0 = 2;
+    real64 c0 = 2.0;
 
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
@@ -227,14 +227,14 @@ public:
     real64 qpDamage = 0.0;
     real64 qpGradDamage[3] = {0, 0, 0};
     real64 qpDisp[3] = {0, 0, 0};
-    FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qpDamage, qpGradDamage );
-    //FE_TYPE::value(N, stack.dispLocal, qpDisp);
+    FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qpDamage, qpGradDamage ); //get damage and its gradient at quadrature points
+    FE_TYPE::value(N, stack.dispLocal, qpDisp); //get displacements at quadrature points
 
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
     if( m_localDissipationOption == 1 )
     {
-      c0 = 8/3;
+      c0 = 8.0/3.0;
       D = fmax( threshold, strainEnergyDensity );
     }
     
