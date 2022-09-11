@@ -197,7 +197,7 @@ void PhaseFieldFractureSolver::imposeFakeBackgroundPressures( DomainPartition & 
     {
       //make a non-trivial field to test
       matrixPressure[er][esr][k] = 1.0;
-      fracturePressure[er][esr][k] = 1.0;
+      fracturePressure[er][esr][k] = 0.0;
     } );
   } );
 }

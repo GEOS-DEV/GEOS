@@ -228,7 +228,7 @@ public:
     real64 qpGradDamage[3] = {0, 0, 0};
     real64 qpDisp[3] = {0, 0, 0};
     FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qpDamage, qpGradDamage );
-    FE_TYPE::value(N, stack.dispLocal, qpDisp);
+    //FE_TYPE::value(N, stack.dispLocal, qpDisp);
 
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
@@ -318,7 +318,7 @@ public:
 
     if( m_localDissipationOption == 1 )
     {
-        //no contribution to Jacobian
+
         BilinearFormUtilities::compute< damageTestSpace,
                                         damageTrialSpace,
                                         DifferentialOperator::Identity,

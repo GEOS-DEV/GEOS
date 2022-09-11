@@ -118,6 +118,15 @@ public:
   {
     return -2*(1 - d);
   }
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual real64 getDegradationSecondDerivative( real64 const d ) const
+  {
+    GEOSX_UNUSED_VAR( d );
+    return 2.0;
+  }
+
 //FRANKS VERSION
   // GEOSX_FORCE_INLINE
   // GEOSX_HOST_DEVICE
@@ -171,13 +180,6 @@ public:
     return 0.0;
   }  
 
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 getDegradationSecondDerivative( real64 const d ) const
-  {
-    GEOSX_UNUSED_VAR( d );
-    return 2.0;
-  }
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
