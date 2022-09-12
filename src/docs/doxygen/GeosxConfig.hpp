@@ -74,6 +74,9 @@
 #define GEOSX_USE_HYPRE_HIP 2
 #define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_HIP
 
+/// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
+#define GEOSX_USE_SUPERLU_DIST
+
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #define GEOSX_USE_PETSC
 
@@ -98,8 +101,6 @@
 
 /// CMake option CMAKE_BUILD_TYPE
 #define GEOSX_CMAKE_BUILD_TYPE "Release"
-
-/* #undef DUM_DEBUG */
 
 /// The type that localIndex will be aliased to.
 #define GEOSX_LOCALINDEX_TYPE std::ptrdiff_t

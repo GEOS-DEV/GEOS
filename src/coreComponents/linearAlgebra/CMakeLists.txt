@@ -57,15 +57,15 @@ set( linearAlgebra_sources
 set( dependencyList ${parallelDeps} mesh blas lapack )
 
 
-list( APPEND linearAlgebra_headers
-      interfaces/direct/SuiteSparse.hpp
-      interfaces/direct/SuperLUDist.hpp )
+list( APPEND linearAlgebra_headers interfaces/direct/SuiteSparse.hpp )
+list( APPEND linearAlgebra_sources interfaces/direct/SuiteSparse.cpp )
+list( APPEND dependencyList suitesparse )
 
-list( APPEND linearAlgebra_sources
-      interfaces/direct/SuiteSparse.cpp
-      interfaces/direct/SuperLUDist.cpp )
-
-list( APPEND dependencyList suitesparse superlu_dist )
+if( ENABLE_SUPERLU_DIST )
+      list( APPEND linearAlgebra_headers interfaces/direct/SuperLUDist.hpp )
+      list( APPEND linearAlgebra_sources interfaces/direct/SuperLUDist.cpp )
+      list( APPEND dependencyList superlu_dist )
+endif( )
 
 if( ENABLE_TRILINOS )
 

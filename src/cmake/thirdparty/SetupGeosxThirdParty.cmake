@@ -491,7 +491,10 @@ endif()
 if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
-    set( HYPRE_DEPENDS blas lapack superlu_dist umpire)
+    set( HYPRE_DEPENDS blas lapack umpire)
+    if( ${ENABLE_SUPERLU_DIST} )
+        set( HYPRE_DEPENDS ${HYPRE_DEPENDS} superlu_dist )
+    endif()
     if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
         set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} )
     elseif( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
@@ -575,12 +578,17 @@ endif()
 if(DEFINED PETSC_DIR AND ENABLE_PETSC)
     message(STATUS "PETSC_DIR = ${PETSC_DIR}")
 
+    set( PETSC_DEPENDS metis blas lapack )
+    if( ${ENABLE_SUPERLU_DIST} )
+        set( PETSC_DEPENDS ${PETSC_DEPENDS} superlu_dist )
+    endif()
+
     find_and_register(NAME petsc
                       INCLUDE_DIRECTORIES ${PETSC_DIR}/include
                       LIBRARY_DIRECTORIES ${PETSC_DIR}/lib
                       HEADER petscvec.h
                       LIBRARIES petsc
-                      DEPENDS metis superlu_dist blas lapack)
+                      DEPENDS ${PETSC_DEPENDS})
 
     set(ENABLE_PETSC ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} petsc)

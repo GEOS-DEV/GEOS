@@ -123,7 +123,7 @@ void rescaleMatrixRows( hypre_ParCSRMatrix * const mat,
   HYPRE_BigInt const firstLocalRow = hypre_ParCSRMatrixFirstRowIndex( mat );
   internal::RowReducer< F, R > reducer{ std::move( transform ), std::move( reduce ) };
 
-  forAll< execPolicy >( rowIndices.size(), [diag, offd, reducer, rowIndices, firstLocalRow] GEOSX_HYPRE_DEVICE ( localIndex const i )
+  forAll< execPolicy >( rowIndices.size(), [diag, offd, reducer, rowIndices, firstLocalRow] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
   {
     HYPRE_Int const localRow = LvArray::integerConversion< HYPRE_Int >( rowIndices[i] - firstLocalRow );
     GEOSX_ASSERT( 0 <= localRow && localRow < diag.nrow );
@@ -168,7 +168,7 @@ void computeRowsSums( hypre_ParCSRMatrix const * const mat,
   HYPRE_Real * const values = hypre_VectorData( hypre_ParVectorLocalVector( vec ) );
   internal::RowReducer< F, R > reducer{ std::move( transform ), std::move( reduce ) };
 
-  forAll< execPolicy >( diag.nrow, [diag, offd, reducer, values] GEOSX_HYPRE_DEVICE ( HYPRE_Int const localRow )
+  forAll< execPolicy >( diag.nrow, [diag, offd, reducer, values] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const localRow )
   {
     HYPRE_Real sum = 0.0;
     for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
@@ -233,7 +233,7 @@ void addEntriesRestricted( hypre_CSRMatrix const * const src_mat,
   forAll< hypre::execPolicy >( dst.nrow,
                                [src, src_colmap, dst, dst_colmap, scale,
                                 src_permutation = src_permutation.toView(),
-                                dst_permutation = dst_permutation.toView()] GEOSX_HYPRE_DEVICE ( HYPRE_Int const localRow )
+                                dst_permutation = dst_permutation.toView()] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const localRow )
   {
     HYPRE_Int const src_offset = src.rowptr[localRow];
     HYPRE_Int const src_length = src.rowptr[localRow + 1] - src_offset;

@@ -24,4 +24,4 @@ else()
   set( HYPRE_DIR "${GEOSX_TPL_DIR}/hypre-develop-26xg3xxx6q3q3ineijpty36eorhsp7mh" CACHE PATH "" )
 endif()
 
-set( SUPERLU_DIST_DIR "/sw/crusher/spack-envs/base/opt/cray-sles15-zen3/cce-14.0.0/superlu-dist-7.2.0-kwzr52u5mhumb6exihw2did6h7zkiksq" CACHE PATH "" )
+# set( SUPERLU_DIST_DIR "/sw/crusher/spack-envs/base/opt/cray-sles15-zen3/cce-14.0.0/superlu-dist-7.2.0-kwzr52u5mhumb6exihw2did6h7zkiksq" CACHE PATH "" )

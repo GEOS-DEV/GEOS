@@ -36,9 +36,9 @@ endforeach()
 
 set( STRICT_PPD OPENMP )
 
-# only activate these options if they are ENABLED, not just if they're FOUND
+# only activate these options if they are ENABLED AND FOUND, not if either
 foreach( DEP in ${STRICT_PPD} )
-    if( ENABLE_${DEP} OR GEOSX_ENABLE_${DEP} )
+    if( ${DEP}_FOUND AND ( ENABLE_${DEP} OR GEOSX_ENABLE_${DEP} ) )
         set( USE_${DEP} TRUE )
         set( GEOSX_USE_${DEP} TRUE )
 	message(STATUS "GEOSX_USE_${DEP} = ${GEOSX_USE_${DEP}}")

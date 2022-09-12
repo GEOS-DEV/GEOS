@@ -19,11 +19,14 @@
 #include "HypreInterface.hpp"
 
 #include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
-#include "linearAlgebra/interfaces/direct/SuperLUDist.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
 #include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
+
+#if GEOSX_USE_SUPERLU_DIST
+#include "linearAlgebra/interfaces/direct/SuperLUDist.hpp"
+#endif
 
 #include "HYPRE_utilities.h"
 #if GEOSX_HYPRE_USE_DEVICE == GEOSX_USE_HYPRE_CUDA || GEOSX_HYPRE_USE_DEVICE == GEOSX_USE_HYPRE_HIP
@@ -56,7 +59,12 @@ HypreInterface::createSolver( LinearSolverParameters params )
   {
     if( params.direct.parallel )
     {
+#if defined(GEOSX_USE_SUPERLU_DIST)
       return std::make_unique< SuperLUDist< HypreInterface > >( std::move( params ) );
+#else
+      GEOSX_ERROR("GEOSX is configured without support for SuperLU_dist.");
+      return std::unique_ptr< LinearSolverBase< HypreInterface > >( NULL );
+#endif
     }
     else
     {
