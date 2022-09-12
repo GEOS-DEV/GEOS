@@ -196,8 +196,8 @@ void PhaseFieldFractureSolver::imposeFakeBackgroundPressures( DomainPartition & 
                                    localIndex const k )
     {
       //make a non-trivial field to test
-      matrixPressure[er][esr][k] = 1.0;
-      fracturePressure[er][esr][k] = 0.0;
+      matrixPressure[er][esr][k] = k*1.0e-2;
+      fracturePressure[er][esr][k] = k*1.0e0;
     } );
   } );
 }

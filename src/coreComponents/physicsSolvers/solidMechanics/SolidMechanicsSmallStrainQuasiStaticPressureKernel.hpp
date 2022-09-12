@@ -246,6 +246,7 @@ public:
                                   m_gravityVector[2] * m_solidDensity( k, q ) };
 
     //compute terms that account for the background pressure effects
+    m_constitutiveUpdate.updateBiotCoefficient( k, 0.5 );
     real64 fracturePressureTerm[3]{};
     computeFracturePressureTerm( k, q, fracturePressureTerm );
     real64 matrixPressureTerm = computeMatrixPressureTerm( k,q );
@@ -297,7 +298,7 @@ public:
       stack.localResidualMomentum,
       dNdX,
       matrixPressureTerm,
-      -detJxW );
+      detJxW );
 
     LinearFormUtilities::compute< displacementTestSpace,
                                   DifferentialOperator::Identity >
@@ -398,6 +399,8 @@ public:
     real64 const biotCoefficient = m_constitutiveUpdate.getBiotCoefficient( k );
     real64 const damage = m_constitutiveUpdate.getDamage( k, q );
     real64 const pressureDamageFunction = m_constitutiveUpdate.pressureDamageFunction( k, q ); 
+    // GEOSX_LOG_RANK_0("biot: "<<biotCoefficient<<"\n"); 
+    // GEOSX_LOG_RANK_0("pm: "<<m_pressureMatrix[k]<<"\n"); 
     return pressureDamageFunction*biotCoefficient*m_pressureMatrix[k];
 
   }

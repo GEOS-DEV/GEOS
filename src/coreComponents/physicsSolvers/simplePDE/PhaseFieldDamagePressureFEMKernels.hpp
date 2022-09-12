@@ -225,8 +225,8 @@ public:
     FE_TYPE::calcN( q, N );
 
     real64 qpDamage = 0.0;
-    real64 qpGradDamage[3] = {0, 0, 0};
-    real64 qpDisp[3] = {0, 0, 0};
+    real64 qpGradDamage[3] = {0.0, 0.0, 0.0};
+    real64 qpDisp[3] = {0.0, 0.0, 0.0};
     FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qpDamage, qpGradDamage ); //get damage and its gradient at quadrature points
     FE_TYPE::value(N, stack.dispLocal, qpDisp); //get displacements at quadrature points
 
@@ -247,7 +247,7 @@ public:
         (
           stack.localResidual,
           N,
-          (Gc/(c0*ell))*1,
+          (Gc/(c0*ell)),
           detJxW );
 
         // Compute driving force term
@@ -267,7 +267,7 @@ public:
         (
           stack.localResidual,
           N,
-          (Gc/(c0*ell))*2*qpDamage,
+          (Gc/(c0*ell))*2.0*qpDamage,
           detJxW );
 
 
@@ -284,7 +284,7 @@ public:
 
     // Compute non-local term
     real64 nonLocalTermIntegrand[3]; 
-    LvArray::tensorOps::scaledCopy< 3 >( nonLocalTermIntegrand, qpGradDamage, (2*Gc*ell/c0) );
+    LvArray::tensorOps::scaledCopy< 3 >( nonLocalTermIntegrand, qpGradDamage, (2.0*Gc*ell/c0) );
     LinearFormUtilities::compute< damageTestSpace,
                                   DifferentialOperator::Gradient >
     (
