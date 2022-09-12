@@ -76,25 +76,35 @@ if( GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
                     DEPENDS_ON  mainInterface physicsSolvers
                     SHARED TRUE
                   )
-    # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
-    if( ENABLE_HYPRE_CUDA )
-      set_target_properties( geosx_core PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
-    endif()
-    
-    # To install the library with the runtime path used during the building
-    set_target_properties( geosx_core PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
-    
-    # To install the shared library
-    install( TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
-    
-    target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+elseif( GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS )
+  message( "Building shared geosx_core library with static coreComponents, executables link to geosx_core" )
+  blt_combine_static_libraries( NAME          geosx_core
+                                SOURCE_LIBS   ${coreLibs}
+                                LIB_TYPE      SHARED
+                                LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
+                                LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
+                              )
 
 elseif( NOT GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
   message( "Building object coreComponents, executables link to coreComponents" )
-elseif( NOT GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS )
-  message( "Building static coreComponents, executables link to coreComponents" )
 else()
-  message( FATAL_ERROR "Build configuration - shared geosx_core library with static coreComponents - is not supported")
+  message( "Building static coreComponents, executables link to coreComponents" )
+endif()
+
+if ( TARGET geosx_core)
+  # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
+  if( ENABLE_HYPRE_CUDA )
+    set_target_properties( geosx_core PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
+  endif()
+
+  # To install the library with the runtime path used during the building
+  set_target_properties( geosx_core PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
+
+  # To install the shared library
+  install( TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
+  target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 endif()
 
 geosx_add_code_checks( PREFIX coreComponents
