@@ -174,20 +174,10 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
   }
 }
 
-void ObjectManagerBase::constructLocalListOfBoundaryObjects( localIndex_array & objectList ) const
+array1d< globalIndex >
+ObjectManagerBase::constructGlobalListOfBoundaryObjects() const
 {
-  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
-  for( localIndex k=0; k<size(); ++k )
-  {
-    if( isDomainBoundary[k] == 1 )
-    {
-      objectList.emplace_back( k );
-    }
-  }
-}
-
-void ObjectManagerBase::constructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const
-{
+  array1d< globalIndex > objectList;
   arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
   for( localIndex k=0; k<size(); ++k )
   {
@@ -197,6 +187,7 @@ void ObjectManagerBase::constructGlobalListOfBoundaryObjects( globalIndex_array 
     }
   }
   std::sort( objectList.begin(), objectList.end() );
+  return objectList;
 }
 
 void ObjectManagerBase::constructGlobalToLocalMap()
