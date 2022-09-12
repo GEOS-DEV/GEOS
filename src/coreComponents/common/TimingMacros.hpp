@@ -58,7 +58,7 @@ namespace timingHelpers
 
   class NVTXScopeTracer {
   public:
-    NVTXScopeTracer(const char* name, NVTXColors colorID) {
+    NVTXScopeTracer( const char* name, NVTXColors color ) {
       nvtxEventAttributes_t eventAttrib = { 0 };
       eventAttrib.version = NVTX_VERSION;
       eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
