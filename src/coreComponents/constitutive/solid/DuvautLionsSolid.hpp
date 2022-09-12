@@ -25,6 +25,7 @@
 #include "constitutive/solid/SolidBase.hpp"
 #include "ElasticIsotropic.hpp"
 #include "DruckerPrager.hpp"
+#include "DruckerPragerExtended.hpp"
 #include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
 #include "SolidModelDiscretizationOpsIsotropic.hpp"
 #include "LvArray/src/tensorOps.hpp"

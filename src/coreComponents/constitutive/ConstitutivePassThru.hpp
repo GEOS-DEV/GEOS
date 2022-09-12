@@ -82,8 +82,8 @@ struct ConstitutivePassThru< SolidBase >
     ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
                                  DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic >,
-                                 //DuvautLionsSolid< ElasticIsotropic >,
                                  DuvautLionsSolid< DruckerPrager >,
+                                 DuvautLionsSolid< DruckerPragerExtended >,
                                  DuvautLionsSolid< ModifiedCamClay >,
                                  DruckerPragerExtended,
                                  ModifiedCamClay,
@@ -147,6 +147,7 @@ struct ConstitutivePassThru< DuvautLionsBase >
                        LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< DuvautLionsSolid< ModifiedCamClay >,
+                                 DuvautLionsSolid< DruckerPragerExtended >,
                                  DuvautLionsSolid< DruckerPrager > >::execute( constitutiveRelation,
                                                                                std::forward< LAMBDA >( lambda ) );
   }

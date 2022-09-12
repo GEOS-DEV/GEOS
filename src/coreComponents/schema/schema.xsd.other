@@ -946,6 +946,7 @@
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 			<xsd:element name="ViscoDruckerPrager" type="ViscoDruckerPragerType" />
+			<xsd:element name="ViscoExtendedDruckerPrager" type="ViscoExtendedDruckerPragerType" />
 			<xsd:element name="ViscoModifiedCamClay" type="ViscoModifiedCamClayType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -1944,6 +1945,32 @@
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--shearModulus => Elastic Shear Modulus Field-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="ViscoExtendedDruckerPragerType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--dilationRatio => Plastic potential slope ratio-->
+		<xsd:attribute name="dilationRatio" type="real64_array" />
+		<!--hardening => Hardening parameter-->
+		<xsd:attribute name="hardening" type="real64_array" />
+		<!--initialFriction => Initial yield surface slope-->
+		<xsd:attribute name="initialFriction" type="real64_array" />
+		<!--oldStateVariable => Old equivalent plastic shear strain-->
+		<xsd:attribute name="oldStateVariable" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--pressureIntercept => Pressure point at cone vertex-->
+		<xsd:attribute name="pressureIntercept" type="real64_array" />
+		<!--residualFriction => Residual yield surface slope-->
+		<xsd:attribute name="residualFriction" type="real64_array" />
+		<!--shearModulus => Elastic Shear Modulus Field-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stateVariable => New equivalent plastic shear strain-->
+		<xsd:attribute name="stateVariable" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>

@@ -645,6 +645,10 @@
 					<xsd:selector xpath="ViscoDruckerPrager" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="ConstitutiveViscoExtendedDruckerPragerUniqueName">
+					<xsd:selector xpath="ViscoExtendedDruckerPrager" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="ConstitutiveViscoModifiedCamClayUniqueName">
 					<xsd:selector xpath="ViscoModifiedCamClay" />
 					<xsd:field xpath="@name" />
@@ -2610,6 +2614,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 			<xsd:element name="ViscoDruckerPrager" type="ViscoDruckerPragerType" />
+			<xsd:element name="ViscoExtendedDruckerPrager" type="ViscoExtendedDruckerPragerType" />
 			<xsd:element name="ViscoModifiedCamClay" type="ViscoModifiedCamClayType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -3628,6 +3633,32 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="defaultHardeningRate" type="real64" default="0" />
 		<!--defaultPoissonRatio => Default Poisson's Ratio-->
 		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultShearModulus => Default Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultYoungModulus => Default Young's Modulus-->
+		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--relaxationTime => Relaxation time-->
+		<xsd:attribute name="relaxationTime" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ViscoExtendedDruckerPragerType">
+		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultCohesion => Initial cohesion-->
+		<xsd:attribute name="defaultCohesion" type="real64" default="0" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultDilationRatio => Dilation ratio [0,1] (ratio = tan dilationAngle / tan frictionAngle)-->
+		<xsd:attribute name="defaultDilationRatio" type="real64" default="1" />
+		<!--defaultHardening => Hardening parameter (hardening rate is faster for smaller values)-->
+		<xsd:attribute name="defaultHardening" type="real64" default="0" />
+		<!--defaultInitialFrictionAngle => Initial friction angle (degrees)-->
+		<xsd:attribute name="defaultInitialFrictionAngle" type="real64" default="30" />
+		<!--defaultPoissonRatio => Default Poisson's Ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultResidualFrictionAngle => Residual friction angle (degrees)-->
+		<xsd:attribute name="defaultResidualFrictionAngle" type="real64" default="30" />
 		<!--defaultShearModulus => Default Shear Modulus Parameter-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
