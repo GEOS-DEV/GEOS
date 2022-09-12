@@ -180,15 +180,21 @@ public:
 
     arrayView1d< real64 > const localSrcWithBC = srcWithBC.open();
     arrayView1d< localIndex const > const localBCIndices = m_constrainedDofIndices.toViewConst();
+    std::cout << "constrained ind: " << localBCIndices << std::endl;
     forAll< POLICY >( m_constrainedDofIndices.size(), [localSrcWithBC, localBCIndices] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localSrcWithBC[ localBCIndices[ i ] ] = 0.0;
     } );
     srcWithBC.close();
 
+    std::cout << "srcWithBC: " << srcWithBC << std::endl;
+
     m_unconstrained_op.apply( srcWithBC, dst );
 
+    std::cout << "dst: " << dst << std::endl;
+    
     arrayView1d< real64 const > const localSrc = src.values();
+    std::cout << "localSrc: " << localSrc << std::endl;
     arrayView1d< real64 > const localDst = dst.open();
     switch (m_diagPolicy)
     {
@@ -199,6 +205,7 @@ public:
             localIndex const idx = localBCIndices[ i ];
             localDst[ idx ] = localSrc [ idx ];
           } );
+          std::cout << "localDst: " << localDst << std::endl;
         }
         break;
       case DiagPolicy::DiagonalZero:

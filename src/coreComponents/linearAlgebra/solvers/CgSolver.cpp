@@ -62,8 +62,12 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   // Define residual vector
   VectorTemp r = createTempVector( b );
 
+  std::cout << "son qui\n\n\n\n" << std::endl;
+
   // Compute initial rk =  b - Ax
   m_operator.residual( x, b, r );
+
+  std::cout << "residual: " << r << std::endl;
 
   // Compute the target absolute tolerance
   real64 const rnorm0 = r.norm2();
@@ -92,7 +96,7 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     logProgress();
 
     // Convergence check on ||rk||/||b||
-    if( rnorm <= absTol )
+    if( rnorm <= absTol && k > 1 )
     {
       m_result.status = LinearSolverResult::Status::Success;
       break;
@@ -125,6 +129,8 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     // Keep the old value of tau
     tau_old = tau;
   }
+  std::cout << "iter: " << k << std::endl;
+  std::cout << "solution: " << x << std::endl;
 
   m_result.residualReduction = rnorm0 > 0.0 ? m_residualNorms.back() / rnorm0 : 0.0;
   m_result.solveTime = watch.elapsedTime();

@@ -233,7 +233,9 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
   auto & params = m_linearSolverParameters.get();
   params.isSymmetric = true;
   CgSolver< ParallelVector > solver( params, constrained_laplace, identity );
+  std::cout<< "residual m_rhs: " << m_rhs << std::endl;
   solver.solve( m_rhs, m_solution );
+  std::cout<< "solution m_solution: " << m_solution << std::endl;
   applySystemSolution( m_dofManager, m_solution.values(), 1.0, domain );
   return dt;
 }

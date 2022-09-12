@@ -93,8 +93,6 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
                                                             m_finiteElementName,
                                                             "solidMaterialNames",
                                                             kernelFactory );
-
-    std::cout<<localDst2d<<std::endl;
   }
   dst.close();
 }
@@ -215,13 +213,17 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 
   constrained_solid_mechanics.computeConstrainedRHS( m_rhs );
 
+  std::cout<< "rhs: " << m_rhs << std::endl;
+
   MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );
 
   auto & params = m_linearSolverParameters.get();
   params.isSymmetric = true;
 
-  CgSolver< ParallelVector > solver( params, unconstrained_solid_mechanics, identity );
+  CgSolver< ParallelVector > solver( params, constrained_solid_mechanics, identity );
   solver.solve( m_rhs, m_solution );
+
+  std::cout << "m_solution: " << m_solution << std::endl;
 
   applySystemSolution( m_dofManager, m_solution.values(), 1.0, domain );
 
