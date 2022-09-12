@@ -25,3 +25,7 @@ else()
 endif()
 
 set( SUPERLU_DIST_DIR "/sw/crusher/spack-envs/base/opt/cray-sles15-zen3/cce-14.0.0/superlu-dist-7.2.0-kwzr52u5mhumb6exihw2did6h7zkiksq" CACHE PATH "" )
+
+set( ENABLE_CALIPER ON CACHE BOOL "" )
+set( ADIAK_DIR "${GEOSX_TPL_DIR}/adiak-0.2.1-zvvjdmdwh3x2wijmwferzyeunujmep46" CACHE PATH "" )
+set( CALIPER_DIR "${GEOSX_TPL_DIR}/caliper-2.8.0-keyadpuonorysb3lh4lq3qcozyel3ghk" CACHE PATH "" )
