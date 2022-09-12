@@ -75,11 +75,11 @@ namespace timingHelpers
 
 }
 /// Mark a scope with NVTX with name and color (only a local helper should not be used elsewhere)
-#  define GEOSX_NVTX_MARK_SCOPE_2(name, color) timingHelpers::NVTXScopeTracer __FILE__ ## _ ## __LINE__ ## _ ## scopeTracer = timingHelpers::NVTXScopeTracer(name, color)
+#  define GEOSX_NVTX_MARK_SCOPE_COLORED(name, color) timingHelpers::NVTXScopeTracer __FILE__ ## _ ## __LINE__ ## _ ## scopeTracer = timingHelpers::NVTXScopeTracer(name, color)
 /// Mark a scope with NVTX with a given name and color purple
-#  define GEOSX_NVTX_MARK_SCOPE(name) GEOSX_NVTX_MARK_SCOPE_2(STRINGIZE_NX(name), timingHelpers::PURPLE)
+#  define GEOSX_NVTX_MARK_SCOPE(name) GEOSX_NVTX_MARK_SCOPE_COLORED(STRINGIZE_NX(name), timingHelpers::PURPLE)
 /// Mark a function with NVTX using function name and color blue
-#  define GEOSX_NVTX_MARK_FUNCTION GEOSX_NVTX_MARK_SCOPE_2(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str(), timingHelpers::BLUE)
+#  define GEOSX_NVTX_MARK_FUNCTION GEOSX_NVTX_MARK_SCOPE_COLORED(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str(), timingHelpers::BLUE)
 #else
 /// @cond DO_NOT_DOCUMENT
 #  define GEOSX_NVTX_MARK_SCOPE(name)
