@@ -265,7 +265,8 @@ public:
                                      gravityForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
 
-    stiffness.template BTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
+    // stiffness.template BTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
+    stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
   }
 
   /**
@@ -280,7 +281,7 @@ public:
     real64 maxForce = 0;
 
     // TODO: Does this work if BTDB is non-symmetric?
-    // CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
+    CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {
