@@ -149,15 +149,12 @@ public:
 
 
   /**
-   * @brief Build \p globalEdgeNodes, a  vector containing all the global indices
-   * of each nodes of each edges
+   * @brief Build a vector containing all the global indices of each nodes of each edges
    * @param[in] nodeManager the nodeManager object.
-   * @param[out] globalEdgeNodes the globalEdgesNodes array to be built
-   * [ [global_index_node_0_edge_0, global_index_node1_edge_0], [global_index_node_0_edge_1, global_index_node1_edge_1] ....]
+   * @return an array of pairs of each edge's nodes globalIndices
    */
-  virtual void
-  extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
-                                                   std::vector< std::vector< globalIndex > > & globalEdgeNodes ) override;
+  virtual ArrayOfSets< globalIndex >
+  extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager ) override;
 
   /**
    * @brief Compute the future size of a packed list.
