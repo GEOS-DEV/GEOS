@@ -54,11 +54,11 @@ public:
                             NodeManager const & compositionObject,
                             std::vector< NeighborCommunicator > & neighbors );
 
-  void assignNewGlobalIndices( ObjectManagerBase & object,
-                               std::set< localIndex > const & indexList );
+  static void assignNewGlobalIndices( ObjectManagerBase & object,
+                                      std::set< localIndex > const & indexList );
 
-  void assignNewGlobalIndices( ElementRegionManager & elementManager,
-                               std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
+  static void assignNewGlobalIndices( ElementRegionManager & elementManager,
+                                      std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
 
   void setupGhosts( MeshLevel & meshLevel,
                     std::vector< NeighborCommunicator > & neighbors,
