@@ -37,6 +37,7 @@ set( mesh_headers
      generators/CellBlockManagerABC.hpp
      generators/CellBlockUtilities.hpp
      generators/ExternalMeshGeneratorBase.hpp
+     generators/FaceBlockABC.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
