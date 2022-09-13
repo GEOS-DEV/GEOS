@@ -184,10 +184,17 @@ public:
     arrayView1d< real64 > const localSrcWithBC = srcWithBC.open();
     arrayView1d< localIndex const > const localBCIndices = m_constrainedDofIndices.toViewConst();
     std::cout << "constrained ind: " << localBCIndices << std::endl;
-    forAll< POLICY >( m_constrainedDofIndices.size(), [localSrcWithBC, localBCIndices] GEOSX_HOST_DEVICE ( localIndex const i )
+
+    static bool zero = true;
+    if( zero )
     {
-      localSrcWithBC[ localBCIndices[ i ] ] = 0.0;
-    } );
+      forAll< POLICY >( m_constrainedDofIndices.size(), [localSrcWithBC, localBCIndices] GEOSX_HOST_DEVICE ( localIndex const i )
+      {
+        localSrcWithBC[ localBCIndices[ i ] ] = 0.0;
+      } );
+      zero = false;
+    }
+    
     srcWithBC.close();
 
     std::cout << "srcWithBC: " << srcWithBC << std::endl;
