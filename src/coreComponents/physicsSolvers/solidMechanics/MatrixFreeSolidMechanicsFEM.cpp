@@ -207,11 +207,9 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
     m_dofManager,
     m_fieldName,
     time_n+dt,
-    LinearOperatorWithBC< ParallelVector, FieldType >::
-      DiagPolicy::
-        DiagonalOne );
+    LinearOperatorWithBC< ParallelVector, FieldType >::DiagPolicy::DiagonalOne );
 
-  constrained_solid_mechanics.computeConstrainedRHS( m_rhs );
+  constrained_solid_mechanics.computeConstrainedRHS( m_rhs, m_solution );
 
   std::cout<< "rhs: " << m_rhs << std::endl;
 
@@ -221,6 +219,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
   params.isSymmetric = true;
 
   CgSolver< ParallelVector > solver( params, constrained_solid_mechanics, identity );
+  
   solver.solve( m_rhs, m_solution );
 
   std::cout << "m_solution: " << m_solution << std::endl;
@@ -290,6 +289,15 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
                                keys::TotalDisplacement,
                                scalingFactor );
                                
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    auto const & disp = mesh.getNodeManager().totalDisplacement();
+    std::cout<<disp<<std::endl;
+
+  } );
 
   // forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
   //                                                               MeshLevel & mesh,

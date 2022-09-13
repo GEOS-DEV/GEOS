@@ -34,10 +34,10 @@
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 1 }"
       yCoords="{ 0, 1 }"
-      zCoords="{ 0, 2 }"
-      nx="{ 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 3 }"
       ny="{ 1 }"
-      nz="{ 3 }"
+      nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -88,12 +88,12 @@
 
   <FieldSpecifications>
     <FieldSpecification
-      name="xconstraint"
+      name="zconstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
-      component="0"
+      component="2"
       scale="0.0"
-      setNames="{ xneg, xpos}"/>
+      setNames="{ zneg, zpos}"/>
 
     <FieldSpecification
       name="yconstraint"
@@ -104,21 +104,21 @@
       setNames="{ yneg, ypos }"/>
 
     <FieldSpecification
-      name="zconstraintNeg"
+      name="xconstraintNeg"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
-      component="2"
+      component="0"
       scale="0.0"
-      setNames="{ zneg }"/>
+      setNames="{ xneg }"/>
 
     <FieldSpecification
-      name="zconstraintPos"
+      name="xconstraintPos"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
-      component="2"
+      component="0"
       scale="-0.001"
       functionName="timeFunction"
-      setNames="{ zpos }"/>
+      setNames="{ xpos }"/>
   </FieldSpecifications>
 
   <Functions>

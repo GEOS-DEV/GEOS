@@ -67,7 +67,9 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   // Compute initial rk =  b - Ax
   m_operator.residual( x, b, r );
 
-  std::cout << "residual: " << r << std::endl;
+  std::cout << "x0: \n" << x << std::endl;
+
+  std::cout << "residual: \n" << r << std::endl;
 
   // Compute the target absolute tolerance
   real64 const rnorm0 = r.norm2();
@@ -96,7 +98,7 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     logProgress();
 
     // Convergence check on ||rk||/||b||
-    if( rnorm <= absTol && k > 1 )
+    if( rnorm <= absTol )
     {
       m_result.status = LinearSolverResult::Status::Success;
       break;
@@ -111,9 +113,11 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 
     // Update p = z + beta*p
     p.axpby( 1.0, z, beta );
+    std::cout << "p("<<k<<"): \n" << p << std::endl;
 
     // Compute Ap
     m_operator.apply( p, Ap );
+    std::cout << "Ap("<<k<<"): \n" << Ap << std::endl;
 
     // compute alpha
     real64 const pAp = p.dot( Ap );
@@ -122,15 +126,19 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 
     // Update x = x + alpha*p
     x.axpby( alpha, p, 1.0 );
+    std::cout << "x("<<k<<"+1): \n" << x << std::endl;
 
     // Update rk = rk - alpha*Ap
     r.axpby( -alpha, Ap, 1.0 );
+
+    std::cout << "r("<<k<<"+1): \n" << r << std::endl;
+
 
     // Keep the old value of tau
     tau_old = tau;
   }
   std::cout << "iter: " << k << std::endl;
-  std::cout << "solution: " << x << std::endl;
+  std::cout << "solution: \n" << x << std::endl;
 
   m_result.residualReduction = rnorm0 > 0.0 ? m_residualNorms.back() / rnorm0 : 0.0;
   m_result.solveTime = watch.elapsedTime();

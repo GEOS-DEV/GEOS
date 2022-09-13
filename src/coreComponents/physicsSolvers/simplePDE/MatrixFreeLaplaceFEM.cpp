@@ -228,7 +228,7 @@ real64 MatrixFreeLaplaceFEM::solverStep( real64 const & time_n,
                                                               LinearOperatorWithBC< ParallelVector, FieldType >::
                                                                 DiagPolicy::
                                                                   DiagonalOne );
-  constrained_laplace.computeConstrainedRHS( m_rhs );
+  constrained_laplace.computeConstrainedRHS( m_rhs, m_solution );
   MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );
   auto & params = m_linearSolverParameters.get();
   params.isSymmetric = true;

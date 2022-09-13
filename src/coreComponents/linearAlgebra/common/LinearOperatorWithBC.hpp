@@ -136,24 +136,27 @@ public:
     tmpRhs.create( dofManager.numLocalDofs(), this->comm() );
   }
 
-  void computeConstrainedRHS( ParallelVector & rhs ) const
+  void computeConstrainedRHS( ParallelVector & rhs, ParallelVector & solution ) const
   {
     using POLICY = parallelDevicePolicy<>;
 
     // Construct [x_BC,0]
     srcWithBC.zero();
     arrayView1d< real64 > const localBC = srcWithBC.open();
+    arrayView1d< real64 > const initSolution = solution.open();
     arrayView1d< localIndex const > const localBCIndices = m_constrainedDofIndices.toViewConst();
     arrayView1d< real64 const > const localDiag = m_diagonal.toViewConst();
     arrayView1d< real64 const > const localRhsContributions = m_rhsContributions.toViewConst();
     forAll< POLICY >( m_constrainedDofIndices.size(),
-                      [ localBC, localBCIndices, localDiag, localRhsContributions ] GEOSX_HOST_DEVICE
+                      [ initSolution, localBC, localBCIndices, localDiag, localRhsContributions ] GEOSX_HOST_DEVICE
                         ( localIndex const i )
     {
       localIndex const idx = localBCIndices[ i ];
       localBC[ idx ] = localRhsContributions [ i ] / localDiag[ idx ];
+      initSolution[idx] = localBC[ idx ];
     } );
     srcWithBC.close();
+    solution.close();
 
     // Bottom contribution to rhs
     tmpRhs = rhs;
