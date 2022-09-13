@@ -5,13 +5,13 @@
   <Tasks>
     <TriaxialDriver
       name="triaxialDriver"
-      material="ExtendedDruckerPrager"
+      material="ViscoDruckerPrager"
       mode="mixedControl" 
       axialControl="strainFunction"
       radialControl="stressFunction"
       initialStress="-10.e6"
       steps="200" 
-      output="ExtendedDruckerPragerResults.txt" />
+      output="ViscoDruckerPragerResults.txt" />
   </Tasks>
   <!-- SPHINX_TASK_END -->
 
