@@ -2,11 +2,12 @@ import argparse
 import logging
 from typing import List
 import sys
-# import itertools
+import itertools
 
 from collections import defaultdict
 
 import numpy
+import networkx as nx
 
 import vtk
 import vtk.util
@@ -19,108 +20,100 @@ def id_list_to_tuple(i):
         o.append(i.GetId(v))
     return tuple(o)
 
+def duplicate_fracture_nodes(grid, connected_components, internal_fracture_nodes):
+    pass
 
-def duplicate_nodes(grid, cells_in_contact, internal_fracture_nodes):
-    points = grid.GetPoints()
 
-    is_cell_in_contact = numpy.zeros(grid.GetNumberOfCells(), dtype=bool)
-    for cell_index in cells_in_contact:
-        is_cell_in_contact[cell_index] = True
-    is_fracture_node = numpy.zeros(grid.GetNumberOfPoints(), dtype=bool)
-    for node_index in internal_fracture_nodes:
-        is_fracture_node[cell_index] = True
-
-    # internal fracture nodes to cells
-    if_nodes_to_cells = defaultdict(set)
+def color_fracture_sides(grid, internal_fracture_nodes, external_fracture_nodes):
+    # Build an internal fracture node indicator for fast lookup.
+    is_internal_fracture_node = numpy.zeros(grid.GetNumberOfPoints(), dtype=bool)
     for n in internal_fracture_nodes:
-        for nc in cells_in_contact:
-            if n in id_list_to_tuple(grid.GetCell(nc).GetPointIds()):
-                if_nodes_to_cells[n].add(nc)
-    # internal fracture nodes to triangles
-    if_nodes_to_triangles = defaultdict(set)
-    for n in internal_fracture_nodes:
-        for nc in range(grid.GetNumberOfCells()):
-            cell = grid.GetCell(nc)
-            if cell.GetCellDimension() == 2:
-                if n in id_list_to_tuple(cell.GetPointIds()):
-                    if_nodes_to_triangles[n].add(nc)
+        is_internal_fracture_node[n] = True
 
-    # new_cells = vtk.vtkCellArray()
-    # new_cells.DeepCopy(grid.GetCells())
-    # # new_cells.AllocateCopy(grid.GetCells())  # too much
-    # for i, contact in enumerate(is_cell_in_contact):
-    #     cell = grid.GetCell(cell)
-    #     if not contact:
-    #         # copy old cell
-    #         new_cells.append(cell)
-    #     else:
-
-    # # creating another mesh from some components of the input mesh.
-    # output = vtk.vtkUnstructuredGrid()
-    # output.SetPoints(points)
-    # output.SetCells(output_cell_types, output_cells)
-    # output.GetCellData().AddArray(att)
-    #
-    # return output
-
-
-def find_neighboring_cells(grid):
-    """
-    Find the cells that are in contact of the fracture/fault. Computes all the nodes that need to be split.
-    :param grid:
-    :return: cells_in_contact, internal_fracture_nodes
-    """
-    # output = grid
-
-    nodes = grid.GetPoints()
-    # fracture_nodes contains all the nodes belonging to fracture cells.
-    is_fracture_nodes = numpy.zeros(nodes.GetNumberOfPoints(), dtype=bool)
+    # One big elem_to_nodes: elems can be of all kinds (both tets and triangles, 2d and 3d).
+    elem_to_nodes = [set()] * grid.GetNumberOfCells()
     for i in range(grid.GetNumberOfCells()):
         cell = grid.GetCell(i)
-        if cell.GetCellDimension() == 2:
-            for j in range(cell.GetNumberOfPoints()):
-                is_fracture_nodes[cell.GetPointId(j)] = 1
+        elem_to_nodes[i] = set(map(cell.GetPointId, range(cell.GetNumberOfPoints())))
 
-    # Mapping from the cell id to the sorted nodes
-    cell_to_nodes = [set()] * grid.GetNumberOfCells()
-    for i in range(grid.GetNumberOfCells()):
-        cell = grid.GetCell(i)
-        if cell.GetCellDimension() == 3:
-            cell_to_nodes[i] = set(map(cell.GetPointId, range(cell.GetNumberOfPoints())))
-
-    # Keeping the cells which touch the fracture cells with 3 nodes or more.
-    cells_in_contact = []
-    for cell_index, cell_nodes in enumerate(cell_to_nodes):
-        num_connected_nodes = 0
+    # We want to know which cell is touching each internal fracture node.
+    int_frac_nodes_to_cells = defaultdict(set)
+    int_frac_nodes_to_triangles = defaultdict(set)
+    for cell_index, cell_nodes in enumerate(elem_to_nodes):
+        cell = grid.GetCell(cell_index)
         for n in cell_nodes:
-            num_connected_nodes += is_fracture_nodes[n]
-        if num_connected_nodes > 2:
-            cells_in_contact.append(cell_index)
+            if is_internal_fracture_node[n]:
+                if cell.GetCellDimension() == 3:
+                    int_frac_nodes_to_cells[n].add(cell_index)
+                if cell.GetCellDimension() == 2:
+                    int_frac_nodes_to_triangles[n].add(cell_index)
 
-    # # For each triangle, returns the points of the face
-    # all_triangle_points = {}
-    # for i in range(grid.GetNumberOfCells()):
-    #     if grid.GetCellType(i) == vtk.VTK_TRIANGLE:
-    #         triangle = grid.GetCell(i)
-    #         all_triangle_points[i] = triangle.GetPointId(0), triangle.GetPointId(1), triangle.GetPointId(2)
+    int_frac_nodes_to_triangle_nodes = defaultdict(list)
+    for node, triangles in int_frac_nodes_to_triangles.items():
+        for triangle in triangles:
+            tr = grid.GetCell(triangle)
+            triangle_nodes = {tr.GetPointId(0), tr.GetPointId(1), tr.GetPointId(2)}
+            int_frac_nodes_to_triangle_nodes[node].append(triangle_nodes)
 
-    # # progress = dict() # use a numpy full of -1
-    # triangle_cell_neighbors = defaultdict(list)
-    # for triangle, triangle_points in all_triangle_points.items():
-    #     print(f"Searching face {triangle}")
-    #     triangle_points_set = set(triangle_points)
-    #     counter = 0
-    #     for cell_index in cells_in_contact:
-    #         cell_nodes = cell_to_nodes[cell_index]
-    #         if cell_nodes.issuperset(triangle_points_set):
-    #             # TODO this is good for tets, not all the types of elements
-    #             print(f"    tet {cell_index} contains the face")
-    #             triangle_cell_neighbors[triangle].append(cell_index)
-    #             if len(triangle_cell_neighbors[triangle]) == 2:
-    #                 break
-    # assert set(map(lambda s: len(s), triangle_cell_neighbors.values())) == {2}
+    # Now we must find the neighboring cells which do not cross the fracture
+    # To do this, we find all the connections which cross.
+    # Any other connection will be a valid connection
+    graph = nx.Graph()
+    for node, cells in int_frac_nodes_to_cells.items():
+        print(f"Working on node {node}")
+        # n_cells = len(cells)
+        for ic0, ic1 in itertools.combinations(cells, 2):
+            assert ic0 != ic1
+            c0 = grid.GetCell(ic0) # This is not thread safe, use GetCells instead
+            faces0 = set()
+            for nf in range(c0.GetNumberOfFaces()):
+                f = c0.GetFace(nf)
+                ff = tuple(sorted(map(f.GetPointId, range(f.GetNumberOfPoints()))))
+                faces0.add(ff)
+            faces1 = set()
+            c1 = grid.GetCell(ic1)
+            for nf in range(c1.GetNumberOfFaces()):
+                f = c1.GetFace(nf)
+                ff = tuple(sorted(map(f.GetPointId, range(f.GetNumberOfPoints()))))
+                faces1.add(ff)
+            intersection = faces1.intersection(faces0)
+            # print (faces0, faces1, intersection)
+            if len(intersection) == 1:
+                common_face = set(intersection.pop())
+                if common_face in int_frac_nodes_to_triangle_nodes[node]:
+                    print(f"Crossing fracture between {ic0} and {ic1}.")
+                else:
+                    print(f"There is a non fracture-crossing between {ic0} and {ic1}.")
+                    graph.add_edge(ic0, ic1)  # TODO do not rely on network to remove duplicates. let's do it ourselves.
+            else:
+                print(f"No connection between {ic0} and {ic1}.")
+            # else:
+            #     print("link")
+            # Find common face.
+    # Returning the tuple of connected components.
+    # It's somehow equivalent to the sides of the fractures.
+    # Each element of the tuple is a set containing all the cell indices of each component.
+    return tuple(nx.connected_components(graph))
 
-    # Now it's necessary to find which nodes need to be split.
+
+# # Displaying the sides of the fractures
+# for i, cc in enumerate(nx.connected_components(G)):
+#     for cc_cell in cc:
+#         cell = grid.GetCell(cc_cell)
+#         pt_ids = id_list_to_tuple(cell.GetPointIds())
+#         cell_center = numpy.zeros(3)
+#         for pt_id in pt_ids:
+#             cell_center += numpy.array(grid.GetPoint(pt_id))
+#         cell_center /= len(pt_ids)
+#         print(cell_center[0], cell_center[1], cell_center[2], i)
+
+
+def extract_fracture_nodes(grid):
+    """
+    :param grid:
+    :return: internal_fracture_nodes, external_fracture_nodes
+    """
+    # It's necessary to find which nodes need to be split.
     # The nodes on the boundary do not need to be split.
     fracture_edges = defaultdict(int)  # TODO master the hash...
     # all_fracture_edges = []
@@ -141,7 +134,7 @@ def find_neighboring_cells(grid):
     # Edges that are mentioned once are boundary edges.
     external_fracture_nodes = []
     for kv in filter(lambda i: i[1] == 1, fracture_edges.items()):
-        print(kv)
+        # print(kv)
         for n in kv[0]:
             external_fracture_nodes.append(n)
         # external_fracture_nodes += kv[0]
@@ -154,11 +147,7 @@ def find_neighboring_cells(grid):
     # Warning, we're loosing multiplicities here of edges. Is it important?
     internal_fracture_nodes = all_fracture_nodes - external_fracture_nodes
 
-    return cells_in_contact, internal_fracture_nodes
-
-    # TODO Then split the nodes! (the nodes inside the fracture, not at the boundary) vtkMarkBoundaryFilter?
-    # Done
-
+    return internal_fracture_nodes, external_fracture_nodes
 
 # In [190]: for n in external_fracture_nodes:
 #     ...:     pt = output_mesh.GetPoint(n)
@@ -257,7 +246,8 @@ if __name__ == '__main__':
     # vtk_input_file="/tmp/tmp.EtfQgEUXLg/tmp_buffer/HI24L_coars.vtk"
     vtk_input_file = "HI24L_coars.vtk"
     output_mesh = clean_input_mesh(vtk_input_file)
-    cells_in_contact, internal_fracture_nodes = find_neighboring_cells(output_mesh)
+    internal_fracture_nodes, external_fracture_nodes = extract_fracture_nodes(output_mesh)
+    connected_components = color_fracture_sides(internal_fracture_nodes, extract_fracture_nodes)
 
     writer = vtk.vtkXMLUnstructuredGridWriter()
     writer.SetFileName("output.vtu")
