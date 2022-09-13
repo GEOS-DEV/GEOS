@@ -310,6 +310,17 @@ splitMeshByPartition( vtkDataSet & mesh,
 }
 
 vtkSmartPointer< vtkDataSet >
+generateGlobalIDs( vtkDataSet & mesh )
+{
+  GEOSX_MARK_FUNCTION;
+
+  vtkNew< vtkGenerateGlobalIds > generator;
+  generator->SetInputDataObject( &mesh );
+  generator->Update();
+  return vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
+}
+
+vtkSmartPointer< vtkDataSet >
 redistributeByCellGraph( vtkDataSet & mesh,
                          VTKMeshGenerator::PartitionMethod const method,
                          MPI_Comm const comm,
@@ -444,7 +455,7 @@ redistributeMesh( vtkDataSet & loadedMesh,
     vtkNew< vtkGenerateGlobalIds > generator;
     generator->SetInputDataObject( &loadedMesh );
     generator->Update();
-    mesh = vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
+    mesh = generateGlobalIDs( loadedMesh );
   }
 
 
