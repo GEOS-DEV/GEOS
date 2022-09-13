@@ -310,6 +310,17 @@ splitMeshByPartition( vtkDataSet & mesh,
 }
 
 vtkSmartPointer< vtkDataSet >
+generateGlobalIDs( vtkDataSet & mesh )
+{
+  GEOSX_MARK_FUNCTION;
+
+  vtkNew< vtkGenerateGlobalIds > generator;
+  generator->SetInputDataObject( &mesh );
+  generator->Update();
+  return vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
+}
+
+vtkSmartPointer< vtkDataSet >
 redistributeByCellGraph( vtkDataSet & mesh,
                          VTKMeshGenerator::PartitionMethod const method,
                          MPI_Comm const comm,
@@ -444,7 +455,7 @@ redistributeMesh( vtkDataSet & loadedMesh,
     vtkNew< vtkGenerateGlobalIds > generator;
     generator->SetInputDataObject( &loadedMesh );
     generator->Update();
-    mesh = vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
+    mesh = generateGlobalIDs( loadedMesh );
   }
 
 
@@ -1050,7 +1061,7 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
 
   // TODO Having CellElementSubRegion and ConstitutiveBase... here in a pure geometric module is problematic.
-  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel( 0 ).getElemManager();
+  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getBaseDiscretization().getElemManager();
 
   std::vector< vtkDataArray * > const srcArrays = vtk::findArraysForImport( *m_vtkMesh, m_fieldsToImport );
 
@@ -1075,7 +1086,7 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   }
 
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                       domain.getMeshBody( this->getName() ).getMeshLevel( 0 ),
+                                                       domain.getMeshBody( this->getName() ).getBaseDiscretization(),
                                                        domain.getNeighbors(),
                                                        false );
 }

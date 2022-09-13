@@ -8,6 +8,8 @@
       discretization="fluidTPFA"
       temperature="300"
       useMass="0"
+      maxCompFractionChange="1"
+      maxRelativePressureChange="1"
       targetRegions="{ Domain, Fracture }"
       initialDt="1e4">
       <NonlinearSolverParameters
@@ -24,7 +26,7 @@
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
       logLevel="1"
-      
+      discretization="fluidTPFA"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       mpiCommOrder="1"/>
