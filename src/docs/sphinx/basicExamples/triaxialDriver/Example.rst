@@ -1,9 +1,9 @@
 .. _triaxialDriverExample:
 
 
-###########################################################
-Triaxial Driver
-###########################################################
+#############################################################
+Triaxial Driver: Extended Drucker-Prager elasto-plastic model
+#############################################################
 
 
 **Context**
@@ -30,6 +30,11 @@ The XML file for this test case is located at:
 
   inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager.xml
 
+that includes the base file
+
+.. code-block:: console
+
+  inputFiles/triaxialDriver/triaxialDriver_base.xml
 
 This example also uses a set of table files located at:
 
@@ -114,7 +119,7 @@ If the residual friction angle is set to be less than the initial one, strain we
 Setting ``defaultDilationRatio="1.0"`` corresponds to an associated flow rule.
 
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager.xml
+.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL -->
     :end-before: <!-- SPHINX_MATERIAL_END -->
@@ -133,7 +138,7 @@ In this case, users should define two different time history functions (``strain
 Note that for standard tests with simple loading history, functions can be embedded directly in the XML file without using external tables.
 
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager.xml
+.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml
     :language: xml
     :start-after: <!-- SPHINX_FUNCTION -->
     :end-before: <!-- SPHINX_FUNCTION_END -->
@@ -175,7 +180,7 @@ Mesh
 Even if discretization is not required for the ``TriaxialDriver``, a dummy mesh should be defined to pass all the necessary checks when initializing GEOSX and running the module. A dummy mesh should be created in the ``Mesh`` section and assigned to the ``cellBlocks`` in the ``ElementRegions`` section. 
 
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager.xml
+.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
