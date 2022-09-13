@@ -8,7 +8,6 @@
       solidSolverName="LinearElasticitySolver"
       flowSolverName="TwoPhaseFlowSolver"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Channel, Barrier }"
       initialDt="8.64"
       stabilizationType="None"
@@ -35,7 +34,6 @@
       discretization="fluidTPFA"
       targetRegions="{ Channel, Barrier  }"
       temperature="300"
-      computeCFLNumbers="1"
       useMass="1"/>
   </Solvers>
 

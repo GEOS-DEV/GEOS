@@ -56,9 +56,9 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
-  forMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -87,9 +87,9 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
 
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-    forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                  MeshLevel & mesh,
-                                                  arrayView1d< string const > const & )
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  arrayView1d< string const > const & )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
       for( string const & regionName : m_stabilizationRegionNames )
@@ -100,9 +100,9 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
 
     SortedArrayView< const localIndex > const regionFilterView = regionFilter.toView();
 
-    forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                  MeshLevel & mesh,
-                                                  arrayView1d< string const > const & )
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  arrayView1d< string const > const & )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
       NodeManager const & nodeManager = mesh.getNodeManager();
@@ -143,9 +143,9 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
 
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-    forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                  MeshLevel & mesh,
-                                                  arrayView1d< string const > const & )
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  arrayView1d< string const > const & )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
       for( string const & regionName : m_stabilizationRegionNames )
@@ -156,9 +156,9 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
 
     SortedArrayView< const localIndex > const regionFilterView = regionFilter.toView();
 
-    forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                  MeshLevel & mesh,
-                                                  arrayView1d< string const > const & regionNames )
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  arrayView1d< string const > const & regionNames )
     {
 
       ElementRegionManager & elemManager = mesh.getElemManager();
@@ -329,9 +329,9 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
 {
   GEOSX_MARK_FUNCTION;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
 
@@ -362,7 +362,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
                                       constitutive::PorousSolidBase,
                                       CellElementSubRegion >( mesh,
                                                               regionNames,
-                                                              this->getDiscretizationName(),
+                                                              solidMechanicsSolver()->getDiscretizationName(),
                                                               viewKeyStruct::porousMaterialNamesString(),
                                                               kernelFactory );
   } );
@@ -407,9 +407,9 @@ real64 MultiphasePoromechanicsSolver::solverStep( real64 const & time_n,
 
 void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
 {
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
@@ -427,9 +427,9 @@ void MultiphasePoromechanicsSolver::initializePreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,

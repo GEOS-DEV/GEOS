@@ -33,32 +33,13 @@ using namespace dataRepository;
 
 EdgeManager::EdgeManager( string const & name,
                           Group * const parent ):
-  ObjectManagerBase( name, parent ),
-  m_edgesToFractureConnectorsEdges(),
-  m_fractureConnectorsEdgesToEdges(),
-  m_fractureConnectorEdgesToFaceElements()
+  ObjectManagerBase( name, parent )
 {
   registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
   registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation ).
     setSizedFromParent( 0 );
 
   m_toNodesRelation.resize( 0, 2 );
-
-  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString(), &m_edgesToFractureConnectorsEdges ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "A map of edge local indices to the fracture connector local indices." ).
-    setSizedFromParent( 0 );
-
-  registerWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString(), &m_fractureConnectorsEdgesToEdges ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "A map of fracture connector local indices to edge local indices." ).
-    setSizedFromParent( 0 );
-
-  registerWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString(),
-                   &m_fractureConnectorEdgesToFaceElements ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "A map of fracture connector local indices face element local indices" ).
-    setSizedFromParent( 0 );
 
   excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
                                 viewKeyStruct::faceListString(),
@@ -185,8 +166,8 @@ void EdgeManager::setIsExternal( FaceManager const & faceManager )
   }
 }
 
-void EdgeManager::extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
-                                                                   std::vector< std::vector< globalIndex > > & globalEdgeNodes )
+ArrayOfSets< globalIndex >
+EdgeManager::extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -194,25 +175,23 @@ void EdgeManager::extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager c
 
   arrayView2d< localIndex const > const edgeNodes = this->nodeList();
   arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
+  arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeManager.localToGlobalMap();
 
-  globalEdgeNodes.resize( numEdges );
+  ArrayOfSets< globalIndex > globalEdgeNodes( numEdges, 2 );
 
-  forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeIndex )
+  forAll< parallelHostPolicy >( numEdges, [globalEdgeNodes = globalEdgeNodes.toView(),
+                                           isDomainBoundary, edgeNodes, nodeLocalToGlobal]( localIndex const edgeIndex )
   {
-    std::vector< globalIndex > & curEdgeGlobalNodes = globalEdgeNodes[ edgeIndex ];
-
     if( isDomainBoundary( edgeIndex ) )
     {
-      curEdgeGlobalNodes.resize( 2 );
-
-      for( localIndex a = 0; a < 2; ++a )
+      for( localIndex const nodeIndex : edgeNodes[edgeIndex] )
       {
-        curEdgeGlobalNodes[ a ]= nodeManager.localToGlobalMap()( edgeNodes[ edgeIndex ][ a ] );
+        globalEdgeNodes.insertIntoSet( edgeIndex, nodeLocalToGlobal[nodeIndex] );
       }
-
-      std::sort( curEdgeGlobalNodes.begin(), curEdgeGlobalNodes.end() );
     }
   } );
+
+  return globalEdgeNodes;
 }
 
 localIndex EdgeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
@@ -262,7 +241,7 @@ localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           bool const overwriteUpMaps,
                                           bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
-  // GEOSX_MARK_FUNCTION;
+  GEOSX_MARK_FUNCTION;
 
   localIndex unPackedSize = 0;
 

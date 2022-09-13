@@ -48,6 +48,38 @@ public:
   MeshLevel( string const & name,
              Group * const parent );
 
+
+  /**
+   * @brief Constructor to create a shallow MeshLevel.
+   * @param[in] name the name of the MeshLevel object in the repository
+   * @param[in] parent the parent group of the MeshLevel object being constructed
+   * @param[in] source The MeshLevel to make a shallow copy of.
+   */
+  MeshLevel( string const & name,
+             Group * const parent,
+             MeshLevel & source );
+
+
+  /**
+   * @brief Constructor for the MeshLevel object.
+   * @param[in] name the name of the MeshLevel object in the repository
+   * @param[in] parent the parent group of the MeshLevel object being constructed
+   * @param[in] source The source MeshLevel to build the new one from
+   * @param[in] order The order of the MeshLevel
+   */
+  MeshLevel( string const & name,
+             Group * const parent,
+             MeshLevel const & source,
+             int const order );
+
+  virtual ~MeshLevel() override;
+
+  /**
+   * @brief Generate the sets for the objects within a MeshLevel
+   */
+  void generateSets();
+
+
   /**
    * @brief Collects the nodes, edges, faces, and elements that are adjacent to a given list of nodes.
    * @param[in] seedNodeList the input nodes
@@ -67,11 +99,14 @@ public:
 
   virtual void initializePostInitialConditionsPostSubGroups() override;
 
+
   /// @cond DO_NOT_DOCUMENT
 
   struct viewStructKeys
   {
     dataRepository::ViewKey meshLevel                = { "meshLevel" };
+//    static constexpr char const *  baseDiscretizationString() { return "baseDiscretization"; }
+
   } viewKeys;
 
   struct groupStructKeys
@@ -79,20 +114,20 @@ public:
     dataRepository::GroupKey vertexManager  = { "vertexManager" };
     dataRepository::GroupKey cellManager    = { "cellManager" };
 
-    static constexpr auto nodeManagerString = "nodeManager";
-    static constexpr auto edgeManagerString = "edgeManager";
-    static constexpr auto faceManagerString = "faceManager";
+    static constexpr char const * nodeManagerString() { return "nodeManager"; }
+    static constexpr char const * edgeManagerString() { return "edgeManager"; }
+    static constexpr char const * faceManagerString() { return "faceManager"; }
 
     // This key is defined in problem manager:
-    static constexpr auto elemManagerString = "ElementRegions";
+    static constexpr char const * elemManagerString() { return "ElementRegions"; }
 
     static constexpr auto embSurfNodeManagerString = "embeddedSurfacesNodeManager";
     static constexpr auto embSurfEdgeManagerString = "embeddedSurfacesEdgeManager";
 
-    dataRepository::GroupKey nodeManager = {nodeManagerString};
-    dataRepository::GroupKey edgeManager = {edgeManagerString};
-    dataRepository::GroupKey faceManager = {faceManagerString};
-    dataRepository::GroupKey elemManager = {elemManagerString};
+    dataRepository::GroupKey nodeManager = {nodeManagerString()};
+    dataRepository::GroupKey edgeManager = {edgeManagerString()};
+    dataRepository::GroupKey faceManager = {faceManagerString()};
+    dataRepository::GroupKey elemManager = {elemManagerString()};
     dataRepository::GroupKey embSurfNodeManager = {embSurfNodeManagerString};
     dataRepository::GroupKey embSurfEdgeManager = {embSurfEdgeManagerString};
   } groupKeys;
@@ -109,96 +144,128 @@ public:
    * @return a reference to the nodeManager object
    */
   NodeManager const & getNodeManager() const
-  { return m_nodeManager; }
+  { return *m_nodeManager; }
 
   /**
    * @copydoc getNodeManager() const
    */
   NodeManager & getNodeManager()
-  { return m_nodeManager; }
+  { return *m_nodeManager; }
 
   /**
    * @brief Get the edge manager.
    * @return a reference to the edgeManager object
    */
   EdgeManager const & getEdgeManager() const
-  { return m_edgeManager; }
+  { return *m_edgeManager; }
 
   /**
    * @copydoc getEdgeManager() const
    */
   EdgeManager & getEdgeManager()
-  { return m_edgeManager; }
+  { return *m_edgeManager; }
 
   /**
    * @brief Get the face manager.
    * @return a reference to the faceManager object
    */
   FaceManager const & getFaceManager() const
-  { return m_faceManager; }
+  { return *m_faceManager; }
 
   /**
    * @copydoc getFaceManager() const
    */
   FaceManager & getFaceManager()
-  { return m_faceManager; }
+  { return *m_faceManager; }
 
   /**
    * @brief Get the element region manager.
    * @return a reference to the elementRegionManager object
    */
   ElementRegionManager const & getElemManager() const
-  { return m_elementManager; }
+  { return *m_elementManager; }
 
   /**
    * @copydoc getElemManager() const
    */
   ElementRegionManager & getElemManager()
-  { return m_elementManager; }
+  { return *m_elementManager; }
 
   /**
    * @brief Get the node Manager of the embedded surfaces grid.
    * @return a pointer to the EmbeddedSurfaceNodeManager
    */
   EmbeddedSurfaceNodeManager const & getEmbSurfNodeManager() const
-  { return m_embSurfNodeManager; }
+  { return *m_embSurfNodeManager; }
 
   /**
    * @copydoc getEmbSurfNodeManager() const
    */
   EmbeddedSurfaceNodeManager & getEmbSurfNodeManager()
-  { return m_embSurfNodeManager; }
+  { return *m_embSurfNodeManager; }
 
   /**
    * @brief Get the edge Manager related to the embedded surfaces grid.
    * @return a pointer to the edgeManager related to the embedded surfaces grid
    */
   EdgeManager const & getEmbSurfEdgeManager() const
-  { return m_embSurfEdgeManager; }
+  { return *m_embSurfEdgeManager; }
 
   /**
    * @copydoc getEmbSurfEdgeManager() const
    */
   EdgeManager & getEmbSurfEdgeManager()
-  { return m_embSurfEdgeManager; }
+  { return *m_embSurfEdgeManager; }
+
+  /**
+   * @return value of m_isShallowCopy.
+   */
+  bool isShallowCopy() const
+  { return m_isShallowCopy; }
+
+  /**
+   * @brief Determines if this->MeshLevel is a shallow copy of the input.
+   * @param comparisonLevel The MeshLevel to compare with.
+   * @return Whether or not the comparison is true.
+   */
+  bool isShallowCopyOf( MeshLevel const & comparisonLevel ) const;
+
+
+  /**
+   * @brief If this is a shallow clone of another MeshLevel, then return the source MeshLevel.
+   *
+   * @return MeshLevel const&
+   */
+  MeshLevel const & getShallowParent() const;
+
+  /**
+   * @brief If this is a shallow clone of another MeshLevel, then return the source MeshLevel.
+   *
+   * @return MeshLevel const&
+   */
+  MeshLevel & getShallowParent();
 
   ///@}
 
 private:
 
   /// Manager for node data
-  NodeManager m_nodeManager;
+  NodeManager * const m_nodeManager;
   /// Manager for edge data
-  EdgeManager m_edgeManager;
+  EdgeManager * const m_edgeManager;
   /// Manager for face data
-  FaceManager m_faceManager;
+  FaceManager * const m_faceManager;
   /// Manager for element data
-  ElementRegionManager m_elementManager;
+  ElementRegionManager * const m_elementManager;
 
   ///Manager for embedded surfaces nodes
-  EmbeddedSurfaceNodeManager m_embSurfNodeManager;
+  EmbeddedSurfaceNodeManager * const m_embSurfNodeManager;
   /// Manager for embedded surfaces edge data
-  EdgeManager m_embSurfEdgeManager;
+  EdgeManager * const m_embSurfEdgeManager;
+
+  bool const m_isShallowCopy = false;
+
+  MeshLevel * const m_shallowParent;
 
 };
 

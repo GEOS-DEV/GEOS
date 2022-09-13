@@ -115,7 +115,6 @@ public:
 
   struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
-    static constexpr char const *biotCoefficientString() { return "biotCoefficient"; }
     static constexpr char const *grainBulkModulusString() { return "grainBulkModulus"; }
   } viewKeys;
 

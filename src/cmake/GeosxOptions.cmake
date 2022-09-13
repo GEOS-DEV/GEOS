@@ -31,6 +31,7 @@ option( ENABLE_FORTRAN "Enables Fortran support" OFF )
 
 option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
+option( ENABLE_SCOTCH "Enables SCOTCH" ON )
 
 option( ENABLE_VTK "Enables VTK" ON )
 
@@ -74,7 +75,7 @@ endif()
 
 ### BUILD & BLT SETUP ###
 
-option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF )
+option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" ON )
 
 option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
 

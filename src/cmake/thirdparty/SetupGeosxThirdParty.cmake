@@ -388,6 +388,36 @@ else()
 endif()
 
 ################################
+# SCOTCH
+################################
+if(DEFINED SCOTCH_DIR)
+    message(STATUS "SCOTCH_DIR = ${SCOTCH_DIR}")
+
+    find_and_register(NAME scotch
+                      INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
+                      LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
+                      HEADER scotch.h
+                      LIBRARIES scotch scotcherr )
+
+    find_and_register(NAME ptscotch
+                      INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
+                      LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
+                      DEPENDS scotch
+                      HEADER ptscotch.h
+                      LIBRARIES ptscotch ptscotcherr )
+
+    set(ENABLE_SCOTCH ON CACHE BOOL "")
+    set(thirdPartyLibs ${thirdPartyLibs} scotch ptscotch)
+else()
+    if(ENABLE_SCOTCH)
+        message(WARNING "ENABLE_SCOTCH is ON but SCOTCH_DIR isn't defined.")
+    endif()
+
+    set(ENABLE_SCOTCH OFF CACHE BOOL "" FORCE)
+    message(STATUS "Not using SCOTCH.")
+endif()
+
+################################
 # SUPERLU_DIST
 ################################
 if(DEFINED SUPERLU_DIST_DIR)
@@ -454,6 +484,12 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
                       LIBRARIES HYPRE
                       EXTRA_LIBRARIES ${EXTRA_LIBS}
                       DEPENDS ${HYPRE_DEPENDS})
+
+
+    # Prepend Hypre to link flags, fix for Umpire appearing before Hypre on the link line
+    if (NOT CMAKE_HOST_APPLE)
+      blt_add_target_link_flags (TO hypre FLAGS "-Wl,--whole-archive ${HYPRE_DIR}/lib/libHYPRE.a -Wl,--no-whole-archive")
+    endif()
 
     # if( ENABLE_CUDA AND ( NOT ENABLE_HYPRE_CUDA ) )
     #   set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
