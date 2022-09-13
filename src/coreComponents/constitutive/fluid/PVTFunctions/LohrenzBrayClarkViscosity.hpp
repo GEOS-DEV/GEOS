@@ -19,9 +19,6 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_LOHRENZBRAYCLARKVISCOSITY_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_LOHRENZBRAYCLARKVISCOSITY_HPP_
 
-// Compile-time option to use Wilke mixing rule instead.
-#define USE_WILKE_MIXING true
-
 #include "PVTCompositionalFunctionBase.hpp"
 
 namespace geosx
@@ -83,43 +80,19 @@ public:
                                                  dComponentDiluteViscosity_dTemperature );
 
     // Estimate phase viscosity (in cp) at dilute gas conditions using either 
-    // the Herning and Zipperer [1936] or Wilke [1950] mixture rule.  
-    // Store in final phaseViscosity array.
-    // Wilke is more expensive.  The classic LBC model uses Herning-Zipperer.
+    // the Herning and Zipperer [1936], Wilke [1950], or Brokaw[1968] mixture rule.  
+    // Store in final phaseViscosity array. The classic LBC model uses Herning-Zipperer, 
+    // but the other two may be more accurate.
 
-    #if USE_WILKE_MIXING
-      computePhaseDiluteViscosity_Wilke( numComponents,
-                                         numPhases,
-                                         componentDiluteViscosity,
-                                         dComponentDiluteViscosity_dTemperature,
-                                         phaseComposition,
-                                         phaseViscosity );
+    //computePhaseDiluteViscosity_HerningZipperer( numComponents,
+    //computePhaseDiluteViscosity_Wilke( numComponents,
+    computePhaseDiluteViscosity_Brokaw( numComponents,
+                                        numPhases,
+                                        componentDiluteViscosity,
+                                        dComponentDiluteViscosity_dTemperature,
+                                        phaseComposition,
+                                        phaseViscosity );
 
-// FINITE DIFFERENCE TESTING (TO REMOVE)
-/* 
-                                         phaseComposition.value[1][0] += 0.0001;
-                                         real64 tmp = phaseViscosity.value[1];
-
-      computePhaseDiluteViscosity_Wilke( numComponents,
-                                         numPhases,
-                                         componentDiluteViscosity,
-                                         dComponentDiluteViscosity_dTemperature,
-                                         phaseComposition,
-                                         phaseViscosity );
-                                         
-                                         phaseComposition.value[1][0] -= 0.0001;
-
-    printf("LBC (%.3e) %.3e %.3e\n",phaseViscosity.value[1], phaseViscosity.derivs[1][2],(phaseViscosity.value[1]-tmp)/0.0001);
-*/
-
-    #else
-      computePhaseDiluteViscosity_HerningZipperer( numComponents,
-                                                   numPhases,
-                                                   componentDiluteViscosity,
-                                                   dComponentDiluteViscosity_dTemperature,
-                                                   phaseComposition,
-                                                   phaseViscosity );
-    #endif
 
     // Estimate phase viscosity at given (P,T) conditions using LBC [1964] correlation.
     // This is an additional term added to the dilute gas estimate above.
@@ -141,6 +114,7 @@ public:
         phaseViscosity.derivs[p][k] *= 1e-3;
       }
     }
+
   }
 
 
@@ -323,10 +297,85 @@ public:
         phaseViscosity.derivs[p][Deriv::dT] += phaseComposition.value[p][c] * dComponentDiluteViscosity_dTemperature[c] / A
                                                - phaseComposition.value[p][c] * componentDiluteViscosity[c] / (A*A) * dA_dT;
 
-        phaseViscosity.derivs[p][Deriv::dC+c] += componentDiluteViscosity[c] / A; 
+        phaseViscosity.derivs[p][Deriv::dC+c] += componentDiluteViscosity[c] / A;
+        
+        // the following is some tricky loop merging.  the derivatives for other components "d" will depend on the value of A 
+        // computed above for component "c", so we add these entries for other derivatives immediately.
+
         for( integer d=0; d<numComponents; ++d )
         {  
           phaseViscosity.derivs[p][Deriv::dC+d] -= phaseComposition.value[p][c] * componentDiluteViscosity[c] / (A*A) * phi[c][d];
+        } 
+      }
+    }
+  }
+
+
+  /// Estimate phase viscosity (in cp) at dilute gas conditions using the 
+  /// Brokaw [1968] mixture rule.  Store in phaseViscosity array.
+
+  GEOSX_HOST_DEVICE
+  void computePhaseDiluteViscosity_Brokaw( integer const numComponents,
+                                           integer const numPhases,
+                                           array1d< real64 > const & componentDiluteViscosity,
+                                           array1d< real64 > const & dComponentDiluteViscosity_dTemperature,
+                                           PhaseComp::SliceType const & phaseComposition,
+                                           PhaseProp::SliceType const & phaseViscosity ) const
+  {
+    // compute the "phi" interaction matrix (constant, as only function of molecular weights)
+
+    array2d< real64> phi( numComponents, numComponents );
+    phi.zero();
+
+    for( integer c=0; c<numComponents; ++c )
+    {
+      for( integer d=0; d<numComponents; ++d )
+      {
+        real64 A = m_componentMolarWeight[c] / m_componentMolarWeight[d];
+        real64 B = pow(4*m_componentMolarWeight[c]*m_componentMolarWeight[d]/pow(m_componentMolarWeight[c]+m_componentMolarWeight[d],2),0.25);
+        real64 A45 = pow(A,0.45);
+
+        phi[c][d] = B/sqrt(A)*(1+(A-A45)/(2+2*A+B*(1+A45)/(1+B)));
+      } 
+    }
+
+    // compute phase viscosity via Brokaw mixing rule
+
+    for( integer p=0; p<numPhases; ++p )
+    {
+      phaseViscosity.value[p] = 0;
+      phaseViscosity.derivs[p][Deriv::dP] = 0; // no pressure dependence
+      phaseViscosity.derivs[p][Deriv::dT] = 0;
+
+      for( integer c=0; c<numComponents; ++c )
+      {
+        phaseViscosity.derivs[p][Deriv::dC+c] = 0;
+      } 
+
+      for( integer c=0; c<numComponents; ++c )
+      {
+        real64 A = 0;
+        real64 dA_dT = 0;
+
+        for( integer d=0; d<numComponents; ++d )
+        { 
+          A += phi[c][d]*phaseComposition.value[p][d]/sqrt(componentDiluteViscosity[d]);
+          dA_dT -= 0.5*phi[c][d]*phaseComposition.value[p][d]*pow(componentDiluteViscosity[d],-1.5)*dComponentDiluteViscosity_dTemperature[d];
+        } 
+
+        phaseViscosity.value[p] += phaseComposition.value[p][c] * sqrt(componentDiluteViscosity[c]) / A;
+
+        phaseViscosity.derivs[p][Deriv::dT] += 0.5*phaseComposition.value[p][c] / sqrt(componentDiluteViscosity[c]) * dComponentDiluteViscosity_dTemperature[c] / A
+                                               - phaseComposition.value[p][c] * sqrt(componentDiluteViscosity[c]) / (A*A) * dA_dT;
+
+        phaseViscosity.derivs[p][Deriv::dC+c] += sqrt(componentDiluteViscosity[c]) / A; 
+
+        // the following is some tricky loop merging.  the derivatives for other components "d" will depend on the value of A 
+        // computed above for component "c", so we add these entries for other derivatives immediately.
+
+        for( integer d=0; d<numComponents; ++d )
+        {  
+          phaseViscosity.derivs[p][Deriv::dC+d] -= phaseComposition.value[p][c] * phi[c][d] * sqrt(componentDiluteViscosity[c]/componentDiluteViscosity[d]) / (A*A);
         } 
       }
     }
