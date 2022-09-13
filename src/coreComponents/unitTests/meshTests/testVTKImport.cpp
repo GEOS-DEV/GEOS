@@ -71,8 +71,7 @@ TEST( VTKImport, cube )
     // - All 36 `Line` elements are in "region" 1 except the last two in regions -1 and 9.
     // - All 36 `Quad` elements are in "region" 2 except 4.
     //   Counting backwards from the end, quads number 0, 1, 3 and 4 with respectively regions 9 and -1, -1, -1.
-    //   Those quads were selected such that they form a larger square, excluding the central node (number 55) from the
-    // region 2.
+    //   Those quads were selected such that they form a larger square, excluding the central node (number 55) from the region 2.
     //   This should appear in the test.
     // - All 36 `Hexahedron` elements are in "region" 3 except the last two in regions -1 and 9.
     // - All 36 `Vertex` elements are in "region" 4 except the last two in regions -1 and 9.
@@ -139,8 +138,8 @@ TEST( VTKImport, cube )
       {
         ASSERT_TRUE( cellBlockManager.getCellBlocks().hasGroup< CellBlockABC >( nameAndSize.first ) );
 
-        CellBlockABC const * h = &cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( nameAndSize.first ); //here
-                                                                                                                  // pb
+        // here pb
+        CellBlockABC const * h = &cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( nameAndSize.first );
         localIndex const expectedSize = nameAndSize.second;
 
         // 8 nodes, 12 edges and 6 faces per hex.

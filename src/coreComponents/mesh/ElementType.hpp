@@ -40,11 +40,11 @@ enum class ElementType : integer
   Hexahedron,    ///< Eight-node hexahedral element
   Prism5,        ///< Ten-node pentagonal prism
   Prism6,        ///< Twelve-node hexagonal prism
-  Prism7,
-  Prism8,
-  Prism9,
-  Prism10,
-  Prism11,
+  Prism7,        ///< HeptagonalPrism
+  Prism8,        ///< Octagonal prism
+  Prism9,        ///< Nonagonal prism
+  Prism10,       ///< Decagonal prism
+  Prism11,       ///< Hendecagonal prism
   Polyhedron,    ///< General polyhedral element
   // NOTE: If you add anything below Polyhedron,
   // don't forget to update numElementTypes() below.
