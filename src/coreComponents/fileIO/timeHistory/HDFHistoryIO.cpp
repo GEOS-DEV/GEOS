@@ -240,7 +240,7 @@ void HDFHistoryIO::init( bool existsOkay )
 void HDFHistoryIO::write()
 {
   // check if the size has changed on any process in the primary comm
-  bool anyChanged = false;
+  int anyChanged = false;
   MpiWrapper::allReduce( &m_sizeChanged, &anyChanged, 1, MPI_LOR, m_comm );
   m_sizeChanged = anyChanged;
 
