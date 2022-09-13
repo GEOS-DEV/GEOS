@@ -21,6 +21,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geosx
 {
@@ -230,6 +231,96 @@ protected:
 
   /// View on the ghost ranks
   arrayView1d< integer const > const m_ghostRank;
+
+};
+
+/**
+ * @class LinfResidualNormHelper
+ * @brief Utility class to compute the global Linf residual norm
+ */
+class LinfResidualNormHelper
+{
+public:
+
+  template< integer NUM_NORM >
+  static void updateLocalNorm( real64 const (&subRegionResidualNorm)[NUM_NORM],
+                               array1d< real64 > & localResidualNorm )
+  {
+    for( integer i = 0; i < NUM_NORM; ++i )
+    {
+      if( subRegionResidualNorm[i] > localResidualNorm[i] )
+      {
+        localResidualNorm[i] = subRegionResidualNorm[i];
+      }
+    }
+  }
+
+  static void computeGlobalNorm( real64 const & localResidualNorm,
+                                 real64 & globalResidualNorm )
+  {
+    globalResidualNorm = MpiWrapper::max( localResidualNorm );
+  }
+
+  static void computeGlobalNorm( array1d< real64 > const & localResidualNorm,
+                                 array1d< real64 > & globalResidualNorm )
+  {
+    MpiWrapper::allReduce( localResidualNorm.data(),
+                           globalResidualNorm.data(),
+                           localResidualNorm.size(),
+                           MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
+                           MPI_COMM_GEOSX );
+  }
+};
+
+/**
+ * @class L2ResidualNormHelper
+ * @brief Utility class to compute the global L2 residual norm
+ */
+class L2ResidualNormHelper
+{
+public:
+
+  template< integer NUM_NORM >
+  static void updateLocalNorm( real64 const (&subRegionResidualNorm)[NUM_NORM],
+                               real64 const (&subRegionResidualNormalizer)[NUM_NORM],
+                               array1d< real64 > & localResidualNorm,
+                               array1d< real64 > & localResidualNormalizer )
+  {
+    for( integer i = 0; i < NUM_NORM; ++i )
+    {
+      localResidualNorm[i] += subRegionResidualNorm[i];
+      localResidualNormalizer[i] += subRegionResidualNormalizer[i];
+    }
+  }
+
+  static void computeGlobalNorm( real64 const & localResidualNorm,
+                                 real64 const & localResidualNormalizer,
+                                 real64 & globalResidualNorm )
+  {
+    globalResidualNorm = sqrt( MpiWrapper::sum( localResidualNorm ) ) / MpiWrapper::sum( localResidualNormalizer );
+  }
+
+  static void computeGlobalNorm( array1d< real64 > const & localResidualNorm,
+                                 array1d< real64 > const & localResidualNormalizer,
+                                 array1d< real64 > & globalResidualNorm )
+  {
+    array1d< real64 > sumLocalResidualNorm( localResidualNorm.size() );
+    array1d< real64 > sumLocalResidualNormalizer( localResidualNormalizer.size() );
+    MpiWrapper::allReduce( localResidualNorm.data(),
+                           sumLocalResidualNorm.data(),
+                           localResidualNorm.size(),
+                           MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                           MPI_COMM_GEOSX );
+    MpiWrapper::allReduce( localResidualNormalizer.data(),
+                           sumLocalResidualNormalizer.data(),
+                           localResidualNormalizer.size(),
+                           MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                           MPI_COMM_GEOSX );
+    for( integer i = 0; i < localResidualNorm.size(); ++i )
+    {
+      globalResidualNorm[i] = sqrt( sumLocalResidualNorm[i] ) / sumLocalResidualNormalizer[i];
+    }
+  }
 
 };
 

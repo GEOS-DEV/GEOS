@@ -181,20 +181,14 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOSX_UNUSE
 
       // step 2: first reduction across meshBodies/regions/subRegions
 
-      for( integer i = 0; i < numNorm; ++i )
+      if( BASE::m_normType == solverBaseKernels::NormType::Linf )
       {
-        if( BASE::m_normType == solverBaseKernels::NormType::Linf )
-        {
-          if( subRegionResidualNorm[i] > localResidualNorm[i] )
-          {
-            localResidualNorm[i] = subRegionResidualNorm[i];
-          }
-        }
-        else
-        {
-          localResidualNorm[i] += subRegionResidualNorm[i];
-          localResidualNormalizer[i] += subRegionResidualNormalizer[i];
-        }
+        solverBaseKernels::LinfResidualNormHelper::updateLocalNorm< 2 >( subRegionResidualNorm, localResidualNorm );
+      }
+      else
+      {
+        solverBaseKernels::L2ResidualNormHelper::
+          updateLocalNorm< 2 >( subRegionResidualNorm, subRegionResidualNormalizer, localResidualNorm, localResidualNormalizer );
       }
     } );
   } );
@@ -204,24 +198,36 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOSX_UNUSE
   real64 residualNorm = 0.0;
   if( m_isThermal )
   {
-    real64 const flowResidualNorm = ( BASE::m_normType == solverBaseKernels::NormType::Linf )
-      ? MpiWrapper::max( localResidualNorm[0] )
-      : sqrt( MpiWrapper::sum( localResidualNorm[0] ) ) / MpiWrapper::sum( localResidualNormalizer[0] );
-    real64 const energyResidualNorm = ( BASE::m_normType == solverBaseKernels::NormType::Linf )
-      ? MpiWrapper::max( localResidualNorm[1] )
-      : sqrt( MpiWrapper::sum( localResidualNorm[1] ) ) / MpiWrapper::sum( localResidualNormalizer[1] );
-    residualNorm = sqrt( flowResidualNorm * flowResidualNorm + energyResidualNorm * energyResidualNorm );
+
+    array1d< real64 > globalResidualNorm;
+    if( BASE::m_normType == solverBaseKernels::NormType::Linf )
+    {
+      solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm, globalResidualNorm );
+    }
+    else
+    {
+      solverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, globalResidualNorm );
+    }
+    residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
+
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
       std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
-                              FlowSolverBase::coupledSolverAttributePrefix(), flowResidualNorm, energyResidualNorm );
+                              FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
     }
   }
   else
   {
-    residualNorm = ( BASE::m_normType == solverBaseKernels::NormType::Linf )
-      ? MpiWrapper::max( localResidualNorm[0] )
-      : sqrt( MpiWrapper::sum( localResidualNorm[0] ) ) / MpiWrapper::sum( localResidualNormalizer[0] );
+
+    if( BASE::m_normType == solverBaseKernels::NormType::Linf )
+    {
+      solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm[0], residualNorm );
+    }
+    else
+    {
+      solverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm[0], localResidualNormalizer[0], residualNorm );
+    }
+
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
       std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm );

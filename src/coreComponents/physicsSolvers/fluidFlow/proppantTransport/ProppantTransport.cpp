@@ -884,9 +884,16 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( tim
 
   // step 3: second reduction across MPI ranks
 
-  real64 const residualNorm = ( m_normType == solverBaseKernels::NormType::Linf )
-    ? MpiWrapper::max( localResidualNorm )
-    : sqrt( MpiWrapper::sum( localResidualNorm ) ) / MpiWrapper::sum( localResidualNormalizer );
+  real64 residualNorm = 0.0;
+  if( m_normType == solverBaseKernels::NormType::Linf )
+  {
+    solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm, residualNorm );
+  }
+  else
+  {
+    solverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
+  }
+
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
     std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
