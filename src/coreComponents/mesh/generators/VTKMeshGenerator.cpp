@@ -98,6 +98,14 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
   registerWrapper( viewKeyStruct::partitionMethodString(), &m_partitionMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Method (library) used to partition the mesh" );
+
+  registerWrapper( viewKeyStruct::useGlobalIdsString(), &m_useGlobalIds ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Controls the use of global IDs in the input file for cells and points."
+                    " If set to 0 (default value), the GlobalId arrays in the input mesh are used if available, and generated otherwise."
+                    " If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated."
+                    " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
 }
 
 namespace vtk
@@ -314,6 +322,17 @@ splitMeshByPartition( vtkDataSet & mesh,
 }
 
 vtkSmartPointer< vtkDataSet >
+generateGlobalIDs( vtkDataSet & mesh )
+{
+  GEOSX_MARK_FUNCTION;
+
+  vtkNew< vtkGenerateGlobalIds > generator;
+  generator->SetInputDataObject( &mesh );
+  generator->Update();
+  return vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
+}
+
+vtkSmartPointer< vtkDataSet >
 redistributeByCellGraph( vtkDataSet & mesh,
                          VTKMeshGenerator::PartitionMethod const method,
                          MPI_Comm const comm,
@@ -411,24 +430,49 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
  * @param[in] comm the MPI communicator
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
+ * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
  */
 vtkSmartPointer< vtkDataSet >
 redistributeMesh( vtkDataSet & loadedMesh,
                   MPI_Comm const comm,
                   VTKMeshGenerator::PartitionMethod const method,
-                  int const partitionRefinement )
+                  int const partitionRefinement,
+                  int const useGlobalIds )
 {
   GEOSX_MARK_FUNCTION;
 
-  // Generate global IDs for vertices and cells
-  vtkNew< vtkGenerateGlobalIds > generator;
-  generator->SetInputDataObject( &loadedMesh );
-  generator->Update();
-  vtkSmartPointer< vtkDataSet > mesh =
-    vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
+  // Generate global IDs for vertices and cells, if needed
+  vtkSmartPointer< vtkDataSet > mesh;
+  bool globalIdsAvailable = loadedMesh.GetPointData()->GetGlobalIds() != nullptr
+                            && loadedMesh.GetCellData()->GetGlobalIds() != nullptr;
+  if( useGlobalIds > 0 && !globalIdsAvailable )
+  {
+    GEOSX_ERROR( "Global IDs strictly required (useGlobalId > 0) but unavailable. Set useGlobalIds to 0 to build them automatically." );
+  }
+  else if( useGlobalIds >= 0 && globalIdsAvailable )
+  {
+    mesh = &loadedMesh;
+    vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
+    vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
+    GEOSX_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != mesh->GetNumberOfCells(),
+                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+    GEOSX_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != mesh->GetNumberOfPoints(),
+                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+
+    GEOSX_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
+  }
+  else
+  {
+    GEOSX_LOG_RANK_0( "Generating global Ids from VTK mesh" );
+    vtkNew< vtkGenerateGlobalIds > generator;
+    generator->SetInputDataObject( &loadedMesh );
+    generator->Update();
+    mesh = generateGlobalIDs( loadedMesh );
+  }
+
 
   // Determine if redistribution is required
-  vtkIdType const minCellsOnAnyRank = MpiWrapper::min( loadedMesh.GetNumberOfCells(), comm );
+  vtkIdType const minCellsOnAnyRank = MpiWrapper::min( mesh->GetNumberOfCells(), comm );
   if( minCellsOnAnyRank == 0 )
   {
     // Redistribute the mesh over all ranks using simple octree partitions
@@ -1514,7 +1558,7 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   GEOSX_ASSERT_MSG( m_vtkMesh, "Must call generateMesh() before importFields()" );
 
   // TODO Having CellElementSubRegion and ConstitutiveBase... here in a pure geometric module is problematic.
-  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel( 0 ).getElemManager();
+  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getBaseDiscretization().getElemManager();
 
   std::vector< vtkDataArray * > const srcArrays = vtk::findArraysForImport( *m_vtkMesh, m_fieldsToImport );
 
@@ -1539,7 +1583,7 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   }
 
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                       domain.getMeshBody( this->getName() ).getMeshLevel( 0 ),
+                                                       domain.getMeshBody( this->getName() ).getBaseDiscretization(),
                                                        domain.getNeighbors(),
                                                        false );
 }
@@ -1713,7 +1757,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
     GEOSX_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
     vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
-    m_vtkMesh = vtk::redistributeMesh( *loadedMesh, comm, m_partitionMethod, m_partitionRefinement );
+    m_vtkMesh = vtk::redistributeMesh( *loadedMesh, comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
     std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
     std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
