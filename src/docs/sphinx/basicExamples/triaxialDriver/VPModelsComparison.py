@@ -1,6 +1,5 @@
 import os
 import sys
-sys.path.append("/data/PLI/sytuan/GEOSX/Libs/matplotlib")
 
 import matplotlib
 import numpy as np
