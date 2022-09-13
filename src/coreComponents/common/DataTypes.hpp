@@ -190,6 +190,7 @@ using StackArray = LvArray::StackArray< T, NDIM, PERMUTATION, localIndex, MAXSIZ
 
 /// Alias for a local (stack-based) rank-1 tensor type
 using R1Tensor = Tensor< real64, 3 >;
+/// Alias for a local (stack-based) rank-1 tensor type using 32 bits integers
 using R1Tensor32b = Tensor< real32, 3 >;
 
 /// Alias for a local (stack-based) rank-2 Voigt tensor type
