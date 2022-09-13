@@ -22,6 +22,7 @@
 #include "ElementRegionManager.hpp"
 #include "NodeManager.hpp"
 #include "FaceManager.hpp"
+#include "mesh/utilities/MeshMapUtilities.hpp"
 
 namespace geosx
 {
@@ -127,7 +128,6 @@ MeshLevel::MeshLevel( string const & name,
   localIndex const estimatedNumNodesPerFace = pow( order+1, 2 );
   faceToNodeMapNew.resize( faceToNodeMapNew.size(), estimatedNumNodesPerFace );
 
-
   // add the number of non-edge face nodes
   localIndex numInternalFaceNodes = 0;
   for( localIndex kf=0; kf<m_faceManager->size(); ++kf )
@@ -141,14 +141,26 @@ MeshLevel::MeshLevel( string const & name,
       localIndex const numNonEdgeNodesPerFace = pow( order-1, 2 );
       numInternalFaceNodes += numNonEdgeNodesPerFace;
 
-      localIndex const numNodesPerFace = pow( order+1, 2 );
-      faceToNodeMapNew.resizeArray( kf, numNodesPerFace );
+      // localIndex const numNodesPerFace = pow( order+1, 2 );
+      // faceToNodeMapNew.resizeArray( kf, numNodesPerFace );
     }
     else
     {
       GEOSX_ERROR( "need more support for face geometry" );
     }
   }
+
+  ArrayOfArrays< localIndex > faceToNodeMapNew2;
+  faceToNodeMapNew2.resize(estimatedNumNodesPerFace, m_faceManager->size());
+  for( localIndex korder=0; korder<estimatedNumNodesPerFace; ++korder)
+  {
+    faceToNodeMapNew2.resizeArray( korder, m_faceManager->size() );
+  }
+
+  faceToNodeMapNew=meshMapUtilities::transposeIndexMap< parallelHostPolicy >(
+                                                        faceToNodeMapNew2.toViewConst(),
+                                                        m_faceManager->size(),
+                                                        estimatedNumNodesPerFace);
 
   // add the number of non-face element nodes
   localIndex numInternalElementNodes = 0;
@@ -245,7 +257,7 @@ MeshLevel::MeshLevel( string const & name,
       //Init arrays
       for( localIndex i = 0; i < 6; ++i )
       {
-        for( localIndex j = 0; j < pow( order+1, 3 ); ++j )
+        for( localIndex j = 0; j < numNodesPerElem; ++j )
         {
           localElemToLocalFace[i][j]=-1;
         }
@@ -256,7 +268,7 @@ MeshLevel::MeshLevel( string const & name,
 
       for( localIndex i = 0; i < faceToNodeMapSource.size(); ++i )
       {
-        for( localIndex j = 0; j < pow( order+1, 2 ); ++j )
+        for( localIndex j = 0; j < estimatedNumNodesPerFace; ++j )
         {
           faceToNodeMapNew[i][j] = -1;
         }
@@ -268,7 +280,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex j = 0; j <order+1; j++ )
         {
-          localElemToLocalFace[0][i + pow( order+1, 2 )*j] = i + (order+1)*j;
+          localElemToLocalFace[0][i + estimatedNumNodesPerFace*j] = i + (order+1)*j;
         }
 
       }
@@ -288,7 +300,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex j = 0; j < order+1; j++ )
         {
-          localElemToLocalFace[2][k*pow( order+1, 2 )+j*(order+1)] = j + (order+1)*k;
+          localElemToLocalFace[2][k*estimatedNumNodesPerFace+j*(order+1)] = j + (order+1)*k;
         }
 
       }
@@ -298,7 +310,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex k = 0; k < order+1; k++ )
         {
-          localElemToLocalFace[3][order +k*(order+1)+j*pow( order+1, 2 )] = k + (order+1)*j;
+          localElemToLocalFace[3][order +k*(order+1)+j*estimatedNumNodesPerFace] = k + (order+1)*j;
         }
 
       }
@@ -308,7 +320,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex i = 0; i < order+1; i++ )
         {
-          localElemToLocalFace[4][order*(order+1)+i+j*pow( order+1, 2 )] = i + (order+1)*j;
+          localElemToLocalFace[4][order*(order+1)+i+j*estimatedNumNodesPerFace] = i + (order+1)*j;
         }
 
       }
@@ -318,7 +330,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for( localIndex i = 0; i < order+1; i++ )
         {
-          localElemToLocalFace[5][order*pow( order+1, 2 )+i+k*(order+1)] = i + (order+1)*k;
+          localElemToLocalFace[5][order*estimatedNumNodesPerFace+i+k*(order+1)] = i + (order+1)*k;
         }
 
       }
@@ -346,9 +358,11 @@ MeshLevel::MeshLevel( string const & name,
 
               localIndex face = 0;
               localIndex foundFace = 0;
+              localIndex nindex = i + (order+1)*j + (order+1)*(order+1)*k;
+
               while( face<6 && foundFace<1 )
               {
-                localIndex m = localElemToLocalFace[face][i +(order+1)*j + pow( order+1, 2 )*k];
+                localIndex m = localElemToLocalFace[face][nindex];
 
                 if( m != -1 )
                 {
@@ -360,11 +374,11 @@ MeshLevel::MeshLevel( string const & name,
                       localIndex elemNeighbour = faceToElemIndex[elemToFaces[elem][face]][l];
                       if( elemNeighbour != elem && elemNeighbour != -1 )
                       {
-                        for( localIndex node = 0; node < pow( order+1, 3 ); ++node )
+                        for( localIndex node = 0; node < numNodesPerElem; ++node )
                         {
                           if( elemsToNodesNew[elemNeighbour][node] == faceToNodeMapNew[elemToFaces[elem][face]][m] )
                           {
-                            elemsToNodesNew[elem][i + (order+1)*j + pow( order+1, 2 )*k] = elemsToNodesNew[elemNeighbour][node];
+                            elemsToNodesNew[elem][nindex] = elemsToNodesNew[elemNeighbour][node];
                             break;
                           }
                         }
@@ -373,7 +387,7 @@ MeshLevel::MeshLevel( string const & name,
                     }
                     for( localIndex face2 = 0; face2 < 6; ++face2 )
                     {
-                      localIndex m2 = localElemToLocalFace[face2][i +(order+1)*j + pow( order+1, 2 )*k];
+                      localIndex m2 = localElemToLocalFace[face2][nindex];
 
                       if( m2 != -1 && face2!=face )
                       {
@@ -390,7 +404,7 @@ MeshLevel::MeshLevel( string const & name,
               }
               if( face > 5 && foundFace < 1 )
               {
-                elemsToNodesNew[elem][i + (order+1)*j + pow( order+1, 2 )*k] = count;
+                elemsToNodesNew[elem][nindex] = count;
                 count++;
               }
             }
@@ -458,7 +472,7 @@ MeshLevel::MeshLevel( string const & name,
           {
             for( localIndex i = 0; i < order+1; i++ )
             {
-              localIndex const nodeIndex = elemsToNodesNew( e, i+j*(order+1)+k*pow( order+1, 2 ) );
+              localIndex const nodeIndex = elemsToNodesNew( e, i+j*(order+1)+k*estimatedNumNodesPerFace );
 
               refPosNew( nodeIndex, 0 ) = x[i];
               refPosNew( nodeIndex, 1 ) = y[j];
