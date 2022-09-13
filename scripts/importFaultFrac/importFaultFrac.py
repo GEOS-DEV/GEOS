@@ -13,27 +13,77 @@ import vtk.util
 import vtk.util.numpy_support
 
 
-def cyclic_perm(a):
-    n = len(a)
-    b = [[a[i - j] for i in range(n)] for j in range(n)]
-    return b
+def id_list_to_tuple(i):
+    o = []
+    for v in range(i.GetNumberOfIds()):
+        o.append(i.GetId(v))
+    return tuple(o)
+
+
+def duplicate_nodes(grid, cells_in_contact, internal_fracture_nodes):
+    points = grid.GetPoints()
+
+    is_cell_in_contact = numpy.zeros(grid.GetNumberOfCells(), dtype=bool)
+    for cell_index in cells_in_contact:
+        is_cell_in_contact[cell_index] = True
+    is_fracture_node = numpy.zeros(grid.GetNumberOfPoints(), dtype=bool)
+    for node_index in internal_fracture_nodes:
+        is_fracture_node[cell_index] = True
+
+    # internal fracture nodes to cells
+    if_nodes_to_cells = defaultdict(set)
+    for n in internal_fracture_nodes:
+        for nc in cells_in_contact:
+            if n in id_list_to_tuple(grid.GetCell(nc).GetPointIds()):
+                if_nodes_to_cells[n].add(nc)
+    # internal fracture nodes to triangles
+    if_nodes_to_triangles = defaultdict(set)
+    for n in internal_fracture_nodes:
+        for nc in range(grid.GetNumberOfCells()):
+            cell = grid.GetCell(nc)
+            if cell.GetCellDimension() == 2:
+                if n in id_list_to_tuple(cell.GetPointIds()):
+                    if_nodes_to_triangles[n].add(nc)
+
+    # new_cells = vtk.vtkCellArray()
+    # new_cells.DeepCopy(grid.GetCells())
+    # # new_cells.AllocateCopy(grid.GetCells())  # too much
+    # for i, contact in enumerate(is_cell_in_contact):
+    #     cell = grid.GetCell(cell)
+    #     if not contact:
+    #         # copy old cell
+    #         new_cells.append(cell)
+    #     else:
+
+    # # creating another mesh from some components of the input mesh.
+    # output = vtk.vtkUnstructuredGrid()
+    # output.SetPoints(points)
+    # output.SetCells(output_cell_types, output_cells)
+    # output.GetCellData().AddArray(att)
+    #
+    # return output
 
 
 def find_neighboring_cells(grid):
-    output = grid
+    """
+    Find the cells that are in contact of the fracture/fault. Computes all the nodes that need to be split.
+    :param grid:
+    :return: cells_in_contact, internal_fracture_nodes
+    """
+    # output = grid
 
     nodes = grid.GetPoints()
     # fracture_nodes contains all the nodes belonging to fracture cells.
-    fracture_nodes = numpy.zeros(nodes.GetNumberOfPoints(), dtype=bool)
-    for i in range(output.GetNumberOfCells()):
+    is_fracture_nodes = numpy.zeros(nodes.GetNumberOfPoints(), dtype=bool)
+    for i in range(grid.GetNumberOfCells()):
         cell = grid.GetCell(i)
         if cell.GetCellDimension() == 2:
             for j in range(cell.GetNumberOfPoints()):
-                fracture_nodes[cell.GetPointId(j)] = 1
+                is_fracture_nodes[cell.GetPointId(j)] = 1
 
     # Mapping from the cell id to the sorted nodes
-    cell_to_nodes = [set()] * output.GetNumberOfCells()
-    for i in range(output.GetNumberOfCells()):
+    cell_to_nodes = [set()] * grid.GetNumberOfCells()
+    for i in range(grid.GetNumberOfCells()):
         cell = grid.GetCell(i)
         if cell.GetCellDimension() == 3:
             cell_to_nodes[i] = set(map(cell.GetPointId, range(cell.GetNumberOfPoints())))
@@ -43,116 +93,76 @@ def find_neighboring_cells(grid):
     for cell_index, cell_nodes in enumerate(cell_to_nodes):
         num_connected_nodes = 0
         for n in cell_nodes:
-            num_connected_nodes += fracture_nodes[n]
+            num_connected_nodes += is_fracture_nodes[n]
         if num_connected_nodes > 2:
             cells_in_contact.append(cell_index)
 
-    # For each triangle, returns the points of the face
-    all_triangle_points = {}
-    for i in range(output.GetNumberOfCells()):
-        if grid.GetCellType(i) == vtk.VTK_TRIANGLE:
-            triangle = grid.GetCell(i)
-            all_triangle_points[i] = triangle.GetPointId(0), triangle.GetPointId(1), triangle.GetPointId(2)
+    # # For each triangle, returns the points of the face
+    # all_triangle_points = {}
+    # for i in range(grid.GetNumberOfCells()):
+    #     if grid.GetCellType(i) == vtk.VTK_TRIANGLE:
+    #         triangle = grid.GetCell(i)
+    #         all_triangle_points[i] = triangle.GetPointId(0), triangle.GetPointId(1), triangle.GetPointId(2)
 
-    progress = dict() # use a numpy full of -1
-    # used_cells = numpy.zeros(len(cells_in_contact), dtype=int)
-    for triangle, triangle_points in all_triangle_points.items():
-        # print(f"Searching face {triangle}")
-        triangle_points_set = set(triangle_points)
-        counter = 0
-        for i, cell_index in enumerate(cells_in_contact):
-            # if used_cells[i] < 2:
-                cell_nodes = cell_to_nodes[cell_index]
-                if cell_nodes.issuperset(triangle_points_set):
-                    # TODO this is good for tets, not all the types of elements
-                    # print(f"    tet {cell_index} contains the face")
-                    counter += 1
-                    # used_cells[i] += 1
-                    progress[triangle] = counter
-                    if counter == 2:
-                        break
-    # TODO Store the tet id and find which tet is on which side of the normal
-    #      Then split the nodes! (the nodes inside the fracture, not at the boundary) vtkMarkBoundaryFilter?
-    # Done
-
-# without used_cells
-# 8.18 s ± 175 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
-# with used_cells
-# 19.5 s ± 502 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
-
-    progress = dict() # use a numpy full of -1
-    for triangle, triangle_points in all_triangle_points.items():
-        print(f"Searching face {triangle}")
-        triangle_points_set = set(triangle_points)
-        counter = 0
-        for i, nodes in enumerate(cell_to_nodes):
-            if nodes.issuperset(triangle_points_set):
-                print(f"    tet {i} contains the face")
-                counter += 19
-                progress[triangle] = counter
-                if counter == 2:
-                    break
-    # TODO Store the tet id and find which tet is on which side of the normal
-    assert set(progress.values()) == {2}
-
-
-    # # Finding the tets that contain all the three points of each fracture cell
-    # progress = dict()
+    # # progress = dict() # use a numpy full of -1
+    # triangle_cell_neighbors = defaultdict(list)
     # for triangle, triangle_points in all_triangle_points.items():
     #     print(f"Searching face {triangle}")
-    #     for i in range(output.GetNumberOfCells()):
-    #         if grid.GetCellType(i) == vtk.VTK_TETRA:
-    #             counter = 0
-    #             tet = grid.GetCell(i)
-    #             tet_points = set(map(tet.GetPointId, (0, 1, 2, 3)))
-    #             if tet_points.issuperset(set(triangle_points)):
-    #                 print(f"    tet {i} contains the face")
-    #                 counter += 1
-    #                 progress[i] = counter
-    #                 if counter == 2:
-    #                     break
+    #     triangle_points_set = set(triangle_points)
+    #     counter = 0
+    #     for cell_index in cells_in_contact:
+    #         cell_nodes = cell_to_nodes[cell_index]
+    #         if cell_nodes.issuperset(triangle_points_set):
+    #             # TODO this is good for tets, not all the types of elements
+    #             print(f"    tet {cell_index} contains the face")
+    #             triangle_cell_neighbors[triangle].append(cell_index)
+    #             if len(triangle_cell_neighbors[triangle]) == 2:
+    #                 break
+    # assert set(map(lambda s: len(s), triangle_cell_neighbors.values())) == {2}
+
+    # Now it's necessary to find which nodes need to be split.
+    # The nodes on the boundary do not need to be split.
+    fracture_edges = defaultdict(int)  # TODO master the hash...
+    # all_fracture_edges = []
+    for i in range(grid.GetNumberOfCells()):
+        cell = grid.GetCell(i)
+        if cell.GetCellDimension() == 2:
+            for ie in range(cell.GetNumberOfEdges()):
+                edge = cell.GetEdge(ie)
+                edge_nodes = []
+                for ien in range(edge.GetNumberOfPoints()):  # TODO, do less pedantic
+                    edge_nodes.append(edge.GetPointId(ien))
+                # print(tuple(sorted(edge_nodes)))
+                # edge_nodes = tuple(sorted(edge_nodes))
+                # if edge_nodes[0] == 402 and edge_nodes[1] == 403:
+                #     print("HELLO")
+                # all_fracture_edges.append(edge_nodes)
+                fracture_edges[tuple(sorted(edge_nodes))] += 1
+    # Edges that are mentioned once are boundary edges.
+    external_fracture_nodes = []
+    for kv in filter(lambda i: i[1] == 1, fracture_edges.items()):
+        print(kv)
+        for n in kv[0]:
+            external_fracture_nodes.append(n)
+        # external_fracture_nodes += kv[0]
+    external_fracture_nodes = set(external_fracture_nodes)
+    all_fracture_nodes = []
+    for k in fracture_edges.keys():
+        all_fracture_nodes += k
+    all_fracture_nodes = set(all_fracture_nodes)
+
+    # Warning, we're loosing multiplicities here of edges. Is it important?
+    internal_fracture_nodes = all_fracture_nodes - external_fracture_nodes
+
+    return cells_in_contact, internal_fracture_nodes
+
+    # TODO Then split the nodes! (the nodes inside the fracture, not at the boundary) vtkMarkBoundaryFilter?
+    # Done
 
 
-    # Finding the faces
-    progress = defaultdict(int)
-    for triangle, triangle_points in all_triangle_points.items():
-        print(f"Searching face {triangle}")
-        for i in range(output.GetNumberOfCells()):
-            if grid.GetCellType(i) == vtk.VTK_TETRA:
-                tet = grid.GetCell(i)
-                # Warning, do not store instances to the faces since there is one single instance.
-                # You would end up working with the same unique face, not all the faces of the tet.
-                tet_face_points = []
-                for j in 0, 1, 2, 3:
-                    face = tet.GetFace(j)
-                    tet_face_points.append((face.GetPointId(0), face.GetPointId(1), face.GetPointId(2)))
-                for tet_face_point in tet_face_points:
-                    for cyclic_tet_face_point in cyclic_perm(tet_face_point):
-                        if tuple(cyclic_tet_face_point) == tuple(triangle_points):
-                            print(f"    found tet {i}.")
-                            progress[triangle] += 1
-                    for cyclic_tet_face_point in cyclic_perm(list(reversed(tet_face_point))):
-                        if tuple(cyclic_tet_face_point) == tuple(triangle_points):
-                            print(f"    found reversed tet {i}.")
-                            progress[triangle] += 2
-
-
-    # for i in range(output.GetNumberOfCells()):
-    #     if grid.GetCellType(i) == vtk.VTK_TETRA:
-    #         tet = grid.GetCell(i)
-    #         # Warning, do not store instances to the faces since there is one single instance.
-    #         # You would end up working with the same unique face, not all the faces of the tet.
-    #         face_points = []
-    #         for j in 0, 1, 2, 3:
-    #             face = tet.GetFace(j)
-    #             face_points.append((face.GetPointId(0), face.GetPointId(1), face.GetPointId(2)))
-    #         for face_points in face_points:
-    #             # face_points = face.GetPointId(0), face.GetPointId(1), face.GetPointId(2)
-    #             for triangle, points in triangle_points.items():
-    #                 if face_points == points: # check permutations
-    #                     print(f"Found face {triangle} for tet {i}.")
-    #                     # print(face_points, points)
-
+# In [190]: for n in external_fracture_nodes:
+#     ...:     pt = output_mesh.GetPoint(n)
+#     ...:     print ( pt[0], pt[1], pt[2], n )
 
 
 def clean_input_mesh(vtk_input_file: str):
@@ -247,6 +257,7 @@ if __name__ == '__main__':
     # vtk_input_file="/tmp/tmp.EtfQgEUXLg/tmp_buffer/HI24L_coars.vtk"
     vtk_input_file = "HI24L_coars.vtk"
     output_mesh = clean_input_mesh(vtk_input_file)
+    cells_in_contact, internal_fracture_nodes = find_neighboring_cells(output_mesh)
 
     writer = vtk.vtkXMLUnstructuredGridWriter()
     writer.SetFileName("output.vtu")
