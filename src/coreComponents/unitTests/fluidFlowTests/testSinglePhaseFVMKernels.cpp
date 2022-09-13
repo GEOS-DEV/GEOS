@@ -77,7 +77,6 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
   CellElementStencilTPFA::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
   CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
-  // CellElementStencilTPFA::WeightContainerViewConstType const & stabWeights = stencil.getStabWeights();
 
   auto presView        = AccessorHelper< FULL >::template makeElementAccessor< 1 >( pres,
                                                                                     stencilSize,

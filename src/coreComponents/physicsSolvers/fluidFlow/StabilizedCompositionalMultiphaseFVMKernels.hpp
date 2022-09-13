@@ -64,21 +64,26 @@ public:
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
 
-  using StabCompFlowAccessors = StencilAccessors< extrinsicMeshData::flow::elementMacroID,
-                                                  extrinsicMeshData::flow::pressure_n >;
+  using StabCompFlowAccessors =
+    StencilAccessors< extrinsicMeshData::flow::macroElementIndex,
+                      extrinsicMeshData::flow::pressure_n >;
 
-  using StabMultiFluidAccessors = StencilMaterialAccessors< MultiFluidBase,
-                                                            extrinsicMeshData::multifluid::phaseDensity_n,
-                                                            extrinsicMeshData::multifluid::phaseCompFraction_n >;
+  using StabMultiFluidAccessors =
+    StencilMaterialAccessors< MultiFluidBase,
+                              extrinsicMeshData::multifluid::phaseDensity_n,
+                              extrinsicMeshData::multifluid::phaseCompFraction_n >;
 
-  using SolidAccessors = StencilMaterialAccessors< SolidBase,
-                                                   extrinsicMeshData::solid::bulkModulus,
-                                                   extrinsicMeshData::solid::shearModulus >;
+  using SolidAccessors =
+    StencilMaterialAccessors< SolidBase,
+                              extrinsicMeshData::solid::bulkModulus,
+                              extrinsicMeshData::solid::shearModulus >;
 
-  using PorosityAccessors = StencilMaterialAccessors< PorosityBase,
-                                                      extrinsicMeshData::porosity::biotCoefficient >;
+  using PorosityAccessors =
+    StencilMaterialAccessors< PorosityBase,
+                              extrinsicMeshData::porosity::biotCoefficient >;
 
-  using RelPermAccessors = StencilMaterialAccessors< RelativePermeabilityBase, extrinsicMeshData::relperm::phaseRelPerm_n >;
+  using RelPermAccessors =
+    StencilMaterialAccessors< RelativePermeabilityBase, extrinsicMeshData::relperm::phaseRelPerm_n >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -93,7 +98,6 @@ public:
   using AbstractBase::m_dPhaseCompFrac;
   using AbstractBase::m_dCompFrac_dCompDens;
   using AbstractBase::m_dPhaseCapPressure_dPhaseVolFrac;
-
   using AbstractBase::m_pres;
 
   using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
@@ -157,15 +161,15 @@ public:
             dt,
             localMatrix,
             localRhs ),
-    m_pres_n( stabCompFlowAccessors.get( extrinsicMeshData::flow::pressure_n {} )),
+    m_pres_n( stabCompFlowAccessors.get( extrinsicMeshData::flow::pressure_n {} ) ),
     m_phaseDens_n( stabMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity_n {} ) ),
-    m_phaseCompFrac_n( stabMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction_n {} )),
-    m_phaseRelPerm_n( relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm_n {} )),
-    m_elementMacroID( stabCompFlowAccessors.get( extrinsicMeshData::flow::elementMacroID {} )),
-    m_bulkModulus( solidAccessors.get( extrinsicMeshData::solid::bulkModulus {} )),
-    m_shearModulus( solidAccessors.get( extrinsicMeshData::solid::shearModulus {} )),
-    m_biotCoefficient( porosityAccessors.get( extrinsicMeshData::porosity::biotCoefficient {} )),
-    m_stabWeights( stencilWrapper.getStabWeights())
+    m_phaseCompFrac_n( stabMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction_n {} ) ),
+    m_phaseRelPerm_n( relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm_n {} ) ),
+    m_macroElementIndex( stabCompFlowAccessors.get( extrinsicMeshData::flow::macroElementIndex {} ) ),
+    m_bulkModulus( solidAccessors.get( extrinsicMeshData::solid::bulkModulus {} ) ),
+    m_shearModulus( solidAccessors.get( extrinsicMeshData::solid::shearModulus {} ) ),
+    m_biotCoefficient( porosityAccessors.get( extrinsicMeshData::porosity::biotCoefficient {} ) ),
+    m_stabWeights( stencilWrapper.getStabilizationWeights() )
 
   {}
 
@@ -202,11 +206,6 @@ public:
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
-    // using Deriv = multifluid::DerivativeOffset;
-
-    // std::cout << "Starting the function" << std::endl;
-
-
     // ***********************************************
     // First, we call the base computeFlux to compute:
     //  1) compFlux and its derivatives,
@@ -226,12 +225,9 @@ public:
 
       // We are in the loop over phases, ip provides the current phase index.
 
-      real64 dPresGradStab{};
-
+      real64 dPresGradStab = 0.0;
       real64 tauStab = 0.0;
-      real64 tauC = 1.0;
-
-      integer stencilMacroElements[ 2 ];
+      integer stencilMacroElements[2]{};
 
       // compute potential difference MPFA-style
       for( integer i = 0; i < stack.stencilSize; ++i )
@@ -240,39 +236,38 @@ public:
         localIndex const esr = m_sesri( iconn, i );
         localIndex const ei  = m_sei( iconn, i );
 
-        stencilMacroElements[i] = m_elementMacroID[er][esr][ei];
+        stencilMacroElements[i] = m_macroElementIndex[er][esr][ei];
 
-        tauStab = tauC * 9.0 * (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (32.0 * (10.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
+        tauStab = 9.0 * ( m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei] )
+                  / ( 32.0 * ( 10.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei] ) );
 
         dPresGradStab += tauStab * m_stabWeights( iconn, i ) * (m_pres[er][esr][ei] - m_pres_n[er][esr][ei]); // jump in dp, not p
-
-        // std::cout << tauStab << std::endl;
       }
 
       // modify stabilization flux
       // multiply dPresGrad with upwind, lagged quantities
 
-      localIndex const k_up_stab = (dPresGradStab >= 0) ? 0 : 1;
+      integer const k_up_stab = (dPresGradStab >= 0) ? 0 : 1;
 
       localIndex const er_up_stab   = m_seri( iconn, k_up_stab );
       localIndex const esr_up_stab  = m_sesri( iconn, k_up_stab );
       localIndex const ei_up_stab   = m_sei( iconn, k_up_stab );
 
-      if( stencilMacroElements[0] == stencilMacroElements[1] && (stencilMacroElements[0] >= 0 && stencilMacroElements[1] >= 0))
+      bool const areInSameMacroElement = stencilMacroElements[0] == stencilMacroElements[1];
+      bool const isStabilizationActive = stencilMacroElements[0] >= 0 && stencilMacroElements[1] >= 0;
+      if( isStabilizationActive && areInSameMacroElement )
       {
 
         for( integer ic = 0; ic < numComp; ++ic )
         {
-
-          real64 const laggedUpwind = m_phaseDens_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip]
-                                      * m_phaseCompFrac_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip][ic]
-                                      * m_phaseRelPerm_n[er_up_stab ][esr_up_stab ][ei_up_stab][0][ip];
-
-          stack.stabFlux[ic] += dPresGradStab * laggedUpwind;
+          real64 const laggedUpwindCoef = m_phaseDens_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip]
+                                          * m_phaseCompFrac_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip][ic]
+                                          * m_phaseRelPerm_n[er_up_stab ][esr_up_stab ][ei_up_stab][0][ip];
+          stack.stabFlux[ic] += dPresGradStab * laggedUpwindCoef;
 
           for( integer ke = 0; ke < stack.stencilSize; ++ke )
           {
-            stack.dStabFlux_dP[ke][ic] += tauStab * m_stabWeights( iconn, ke ) * laggedUpwind;
+            stack.dStabFlux_dP[ke][ic] += tauStab * m_stabWeights( iconn, ke ) * laggedUpwindCoef;
           }
         }
       }
@@ -283,36 +278,36 @@ public:
     // populate local flux vector and derivatives
     for( integer ic = 0; ic < numComp; ++ic )
     {
-
-      stack.localFlux[ic]           +=  stack.stabFlux[ic];
+      stack.localFlux[ic]          +=  stack.stabFlux[ic];
       stack.localFlux[numEqn + ic] += -stack.stabFlux[ic];
 
       for( integer ke = 0; ke < stack.stencilSize; ++ke )
       {
         localIndex const localDofIndexPres = ke * numDof;
-        stack.localFluxJacobian[ic][localDofIndexPres]           +=  stack.dStabFlux_dP[ke][ic];
+        stack.localFluxJacobian[ic][localDofIndexPres]          +=  stack.dStabFlux_dP[ke][ic];
         stack.localFluxJacobian[numEqn + ic][localDofIndexPres] += -stack.dStabFlux_dP[ke][ic];
-
       }
     }
-
 
   }
 
 protected:
 
+  /// Views on flow properties at the previous converged time step
   ElementViewConst< arrayView1d< real64 const > > const m_pres_n;
-
   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseDens_n;
   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_phaseCompFrac_n;
   ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const m_phaseRelPerm_n;
 
-  ElementViewConst< arrayView1d< integer const > > const m_elementMacroID;
+  /// Views on the macroelement indices
+  ElementViewConst< arrayView1d< integer const > > const m_macroElementIndex;
 
+  /// Views on the rock/porosity properties
   ElementViewConst< arrayView1d< real64 const > > const m_bulkModulus;
   ElementViewConst< arrayView1d< real64 const > > const m_shearModulus;
   ElementViewConst< arrayView1d< real64 const > > const m_biotCoefficient;
 
+  /// Views on the stabilization weights
   typename STENCILWRAPPER::WeightContainerViewConstType m_stabWeights;
 
 };

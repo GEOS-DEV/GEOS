@@ -209,7 +209,6 @@ public:
 
   /**
    * @brief assembles the flux terms for all cells with pressure jump stabilization
-   * @param time_n previous time value
    * @param dt time step
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system

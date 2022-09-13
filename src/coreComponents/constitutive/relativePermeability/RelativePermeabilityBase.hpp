@@ -134,9 +134,12 @@ public:
    * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
    */
   virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
-  { GEOSX_UNUSED_VAR( phaseVolFraction ); saveConvergedState();}
+  { GEOSX_UNUSED_VAR( phaseVolFraction ); }
 
-  virtual void saveConvergedState(  ) const override;
+  /**
+   * @brief Save converged state after the relperm update
+   */
+  virtual void saveConvergedState() const override;
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {

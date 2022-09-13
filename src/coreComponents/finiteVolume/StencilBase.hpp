@@ -130,7 +130,7 @@ public:
    * @return A view to const
    */
   typename TRAITS::WeightContainerViewConstType
-  getStabWeights() const { return m_stabWeights; }
+  getStabilizationWeights() const { return m_stabWeights; }
 
 protected:
 

@@ -71,7 +71,11 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
         setRestartFlags( RestartFlags::NO_WRITE ).
         setSizedFromParent( 0 );
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::flow::elementMacroID >( getName());
+      if( m_stabilizationType == StabilizationType::Global ||
+          m_stabilizationType == StabilizationType::Local )
+      {
+        subRegion.registerExtrinsicData< extrinsicMeshData::flow::macroElementIndex >( getName() );
+      }
     } );
   } );
 }
@@ -81,235 +85,53 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
 
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
+  GEOSX_THROW_IF( m_stabilizationType == StabilizationType::Local,
+                  catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
+                  InputError );
+
   if( m_stabilizationType == StabilizationType::Global )
   {
-    SortedArray< localIndex > regionFilter;
-
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
+    // Step 1: we loop over the regions where stabilization is active and collect their name
+
+    set< string > regionFilter;
+    for( string const & regionName : m_stabilizationRegionNames )
+    {
+      regionFilter.insert( regionName );
+    }
+
+    // Step 2: loop over the target regions of the solver, and tag the elements belonging to stabilization regions
+
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & )
+                                                                  arrayView1d< string const > const & targetRegionNames )
     {
-      ElementRegionManager & elemManager = mesh.getElemManager();
-      for( string const & regionName : m_stabilizationRegionNames )
+
+      // keep only the target regions that are in the filter
+      array1d< string > filteredTargetRegionNames;
+      filteredTargetRegionNames.reserve( targetRegionNames.size() );
+      for( string const & targetRegionName : targetRegionNames )
       {
-        regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
+        if( regionFilter.count( targetRegionName ) )
+        {
+          filteredTargetRegionNames.emplace_back( targetRegionName );
+        }
       }
-    } );
 
-    SortedArrayView< const localIndex > const regionFilterView = regionFilter.toView();
-
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & )
-    {
-      ElementRegionManager & elemManager = mesh.getElemManager();
-      NodeManager const & nodeManager = mesh.getNodeManager();
-
-      ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > elemMacroID =
-        elemManager.constructViewAccessor< array1d< integer >, arrayView1d< integer > >( extrinsicMeshData::flow::elementMacroID::key() );
-
-      ArrayOfArraysView< localIndex const > elemRegionList = nodeManager.elementRegionList();
-      ArrayOfArraysView< localIndex const > elemSubRegionList = nodeManager.elementSubRegionList();
-      ArrayOfArraysView< localIndex const > elemList = nodeManager.elementList();
-
-      forAll< serialPolicy >( nodeManager.size(), [&] ( localIndex const a )
+      // loop over the elements and make stabilization active
+      mesh.getElemManager().forElementSubRegions( filteredTargetRegionNames.toViewConst(), [&]( localIndex const,
+                                                                                                ElementSubRegionBase & subRegion )
       {
+        arrayView1d< integer > const macroElementIndex = subRegion.getExtrinsicData< extrinsicMeshData::flow::macroElementIndex >();
 
-        for( localIndex k = 0; k < elemRegionList[a].size(); ++k )
+        forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const ei )
         {
-          // collect the element number
-          localIndex const er = elemRegionList[a][k];
-          localIndex const esr = elemSubRegionList[a][k];
-          localIndex const ei = elemList[a][k];
-
-          if( regionFilterView.contains( er ))
-          {
-            elemMacroID[er][esr][ei] = 1;
-          }
-        }
-      } );
-
-    } );
-
-
-  }
-
-  if( m_stabilizationType == StabilizationType::Local )
-  {
-
-    SortedArray< localIndex > regionFilter;
-
-    DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & )
-    {
-      ElementRegionManager & elemManager = mesh.getElemManager();
-      for( string const & regionName : m_stabilizationRegionNames )
-      {
-        regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
-      }
-    } );
-
-    SortedArrayView< const localIndex > const regionFilterView = regionFilter.toView();
-
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
-    {
-
-      ElementRegionManager & elemManager = mesh.getElemManager();
-
-      GEOSX_UNUSED_VAR( regionNames );
-
-      NodeManager const & nodeManager = mesh.getNodeManager();
-
-      ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > elemMacroID =
-        elemManager.constructViewAccessor< array1d< integer >, arrayView1d< integer > >( extrinsicMeshData::flow::elementMacroID::key() );
-
-      array1d< integer > nodeVisited( nodeManager.size() );
-      nodeVisited.setValues< serialPolicy >( 0 );
-      arrayView1d< integer > const nodeVisitedView = nodeVisited.toView();
-
-      arrayView1d< integer const > const bdryNodes = nodeManager.getDomainBoundaryIndicator();
-
-      ArrayOfArraysView< localIndex const > elemRegionList = nodeManager.elementRegionList();
-      ArrayOfArraysView< localIndex const > elemSubRegionList = nodeManager.elementSubRegionList();
-      ArrayOfArraysView< localIndex const > elemList = nodeManager.elementList();
-
-      array1d< integer > mpiBdryNodes( nodeManager.size() );
-      mpiBdryNodes.setValues< serialPolicy >( 0 );
-      arrayView1d< integer > const mpiBdryNodesView = mpiBdryNodes.toView();
-      ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > elemGhostRank =
-        elemManager.constructViewAccessor< array1d< integer >, arrayView1d< integer > >( extrinsicMeshData::ghostRank::key() );
-
-      forAll< serialPolicy >( nodeManager.size(), [&] ( localIndex const a )
-      {
-        for( localIndex k = 0; k < elemRegionList[a].size(); ++k )
-        {
-          localIndex const er = elemRegionList[a][k];
-          localIndex const esr = elemSubRegionList[a][k];
-          localIndex const ei = elemList[a][k];
-
-          if( elemGhostRank[er][esr][ei] >= 0 )
-          {
-            mpiBdryNodesView[a] = 1;
-          }
-        }
-      } );
-
-      integer currentID = 0;
-
-      forAll< serialPolicy >( nodeManager.size(), [&] ( localIndex const a )
-      {
-
-        if( bdryNodes[a] == 1 )
-        {
-          // nodeVisitedView[a] = 1;
-        }
-
-        if( mpiBdryNodes[a] == 1 )
-        {
-          nodeVisitedView[a] = 1;
-        }
-
-        if( nodeVisitedView[a] != 1 )
-        {
-
-          for( localIndex k = 0; k < elemRegionList[a].size(); ++k )
-          {
-            // collect the element number
-            localIndex const er = elemRegionList[a][k];
-            localIndex const esr = elemSubRegionList[a][k];
-            localIndex const ei = elemList[a][k];
-
-            if( regionFilterView.contains( er ))
-            {
-              elemMacroID[er][esr][ei] = currentID;
-            }
-
-            // get the elemToNodes maps
-            ElementRegionBase const & region = elemManager.getRegion( er );
-            CellElementSubRegion const & subRegion = region.getSubRegion< CellElementSubRegion, localIndex >( esr );
-            arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = subRegion.nodeList();
-
-            // get the nodes connected to this element
-            for( localIndex l = 0; l < elemsToNodes[ei].size(); ++l )
-            {
-              localIndex const iNode = elemsToNodes[ei][l];
-              nodeVisitedView[iNode] = 1;
-
-            }
-          }
-
-          ++currentID;
-        }
-
-      } );
-
-
-      // part 2 - assign any unassigned cell
-      // loop through all elements and check if each has been assigned a macroelement (ie, when you index into ID it should be >0)
-      // If not, check elements that share a face and add it to one of their macroelements
-      // If no neighbors in a macroelement, reconsider this element at the end of the loop
-
-
-      FaceManager const & faceManager = mesh.getFaceManager();
-
-      arrayView2d< localIndex const > elemRegionListFace = faceManager.elementRegionList();
-      arrayView2d< localIndex const > elemSubRegionListFace = faceManager.elementSubRegionList();
-      arrayView2d< localIndex const > elemListFace = faceManager.elementList();
-
-      integer badFaces = 1;
-
-      while( badFaces > 0 )
-      {
-        badFaces = 0;
-        forAll< serialPolicy >( faceManager.size(), [&] ( localIndex const a )
-        {
-          localIndex er1 = elemRegionListFace[a][0];
-          localIndex esr1 = elemSubRegionListFace[a][0];
-          localIndex ei1 = elemListFace[a][0];
-
-          localIndex er2 = elemRegionListFace[a][1];
-          localIndex esr2 = elemSubRegionListFace[a][1];
-          localIndex ei2 = elemListFace[a][1];
-
-          if( er1 < 0 || esr1 < 0 || ei1 < 0 || er2 < 0 || esr2 < 0 || ei2 < 0 )
-          {}
-          else
-          {
-
-            if( elemMacroID[er1][esr1][ei1] == -1 && elemMacroID[er2][esr2][ei2] > -1 && elemGhostRank[er1][esr1][ei1] < 0 && regionFilterView.contains( er1 ) &&  regionFilterView.contains( er2 ) )
-            {
-              elemMacroID[er1][esr1][ei1] = elemMacroID[er2][esr2][ei2];
-            }
-
-            if( elemMacroID[er1][esr1][ei1] > -1 && elemMacroID[er2][esr2][ei2] == -1 && elemGhostRank[er2][esr2][ei2] < 0 && regionFilterView.contains( er1 ) &&  regionFilterView.contains( er2 ) )
-            {
-              elemMacroID[er2][esr2][ei2] = elemMacroID[er1][esr1][ei1];
-            }
-
-            if( elemMacroID[er1][esr1][ei1] == -1 && elemMacroID[er2][esr2][ei2] == -1 && elemGhostRank[er1][esr1][ei1] < 0 && elemGhostRank[er2][esr2][ei2] < 0 && regionFilterView.contains( er1 ) &&
-                regionFilterView.contains( er2 ))
-            {
-              ++badFaces;
-            }
-
-          }
-
+          macroElementIndex[ei] = 1;
         } );
-
-        std::cout << badFaces << std::endl;
-      }
-
+      } );
     } );
-
   }
-
 }
 
 void MultiphasePoromechanicsSolver::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
@@ -368,7 +190,8 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
   } );
 
   // Face-based contributions
-  if( m_stabilizationType == StabilizationType::Global ||  m_stabilizationType == StabilizationType::Local )
+  if( m_stabilizationType == StabilizationType::Global ||
+      m_stabilizationType == StabilizationType::Local )
   {
     flowSolver()->assembleStabilizedFluxTerms( dt,
                                                domain,

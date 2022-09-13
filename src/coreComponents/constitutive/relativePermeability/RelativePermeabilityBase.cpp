@@ -105,12 +105,7 @@ void RelativePermeabilityBase::setLabels()
 
 void RelativePermeabilityBase::saveConvergedState( ) const
 {
-
-  // ConstitutiveBase::saveConvergedState();
-
-  arrayView3d< real64 const, relperm::USD_RELPERM > phaseRelPerm = m_phaseRelPerm.toViewConst();
-  arrayView3d< real64, relperm::USD_RELPERM > phaseRelPerm_n = m_phaseRelPerm_n.toView();
-  phaseRelPerm_n.setValues< parallelDevicePolicy<> >( phaseRelPerm );
+  m_phaseRelPerm_n.setValues< parallelDevicePolicy<> >( m_phaseRelPerm.toViewConst() );
 }
 
 void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
