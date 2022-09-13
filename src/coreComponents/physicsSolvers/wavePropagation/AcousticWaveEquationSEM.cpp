@@ -962,9 +962,10 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & GEOSX_UNUSED_PARAM( regionNames ) )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                  [&] ( string const &,
+                                        MeshLevel & mesh,
+                                        arrayView1d< string const > const & GEOSX_UNUSED_PARAM (regionNames ) )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -1015,9 +1016,10 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                       bool computeGradient )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                  [&] ( string const &,
+                                        MeshLevel & mesh,
+                                        arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
