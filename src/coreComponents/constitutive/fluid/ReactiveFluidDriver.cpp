@@ -253,7 +253,7 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
   forAll< serialPolicy >( 1, [=] ( localIndex const ei )
   {
     for( integer n = 0; n <= numSteps; ++n )
-    {   
+    {
       kernelWrapper.updateChemistry( ei, 0, table( n, PRES ), table( n, TEMP ), composition[0] );
       for( integer p=0; p<numPrimarySpecies; ++p )
       {

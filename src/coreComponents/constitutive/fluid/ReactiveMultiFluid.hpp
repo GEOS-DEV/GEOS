@@ -82,7 +82,7 @@ public:
                                   localIndex const q,
                                   real64 const pressure,
                                   real64 const temperature,
-                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const = 0;                       
+                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const = 0;
 
     /**
      * @brief Construct a new Kernel Wrapper object

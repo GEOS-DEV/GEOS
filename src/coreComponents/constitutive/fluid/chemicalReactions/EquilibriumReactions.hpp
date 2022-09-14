@@ -85,7 +85,7 @@ private:
                                             arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
                                             arraySlice2d< real64 > const & matrix,
                                             arraySlice1d< real64 > const & rhs ) const;
-    
+
     void computeSeondarySpeciesConcAndDerivative( real64 const temperature,
                                                   arraySlice1d< real64 const > const & log10PrimaryActCoeff,
                                                   arraySlice1d< real64 const > const & dLog10PrimaryActCoeff_dIonicStrength,

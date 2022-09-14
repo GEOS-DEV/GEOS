@@ -151,7 +151,7 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
     rhs[i] = -rhs[i];
     for( int j=0; j<m_numPrimarySpecies; j++ )
     {
-      matrix( i, j ) = -dTotalConc_dLog10PrimaryConc(i, j) / primarySpeciesTotalConcentration[i];
+      matrix( i, j ) = -dTotalConc_dLog10PrimaryConc( i, j ) / primarySpeciesTotalConcentration[i];
     }
   }
 }

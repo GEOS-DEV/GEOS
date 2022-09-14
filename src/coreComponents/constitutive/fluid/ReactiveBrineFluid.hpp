@@ -103,7 +103,7 @@ public:
                                   localIndex const q,
                                   real64 const pressure,
                                   real64 const temperature,
-                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override;               
+                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override;
 
 private:
 
@@ -376,7 +376,7 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
                     m_primarySpeciesConcentration[k],
                     m_secondarySpeciesConcentration[k],
                     m_kineticReactionRates[k] );
-}          
+}
 
 
 } // namespace constitutive
