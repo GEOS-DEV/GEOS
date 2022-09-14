@@ -230,10 +230,10 @@ ReactiveBrineFluid< PHASE > ::KernelWrapper::
                  integer const numPrimarySpecies,
                  chemicalReactions::EquilibriumReactions const & equilibriumReactions,
                  chemicalReactions::KineticReactions const & kineticReactions,
-                 arrayView2d< real64 > const & primarySpeciesConcentration,
-                 arrayView2d< real64 > const & secondarySpeciesConcentration,
-                 arrayView2d< real64 > const & primarySpeciesTotalConcentration,
-                 arrayView2d< real64 > const & kineticReactionRates )
+                 arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesConcentration,
+                 arrayView2d< real64, compflow::USD_COMP > const & secondarySpeciesConcentration,
+                 arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesTotalConcentration,
+                 arrayView2d< real64, compflow::USD_COMP > const & kineticReactionRates )
   : ReactiveMultiFluid::KernelWrapper( std::move( componentMolarWeight ),
                                        useMass,
                                        isThermal,

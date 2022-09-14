@@ -82,7 +82,7 @@ KineticReactions::KernelWrapper KineticReactions::createKernelWrapper() const
 void KineticReactions::KernelWrapper::computeReactionRates( real64 const & temperature,
                                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                                                            arraySlice1d< real64 > const & reactionRates ) const
+                                                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & reactionRates ) const
 {
   /// 1. Create local vectors
   stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies > log10PrimaryActCoeff( m_numPrimarySpecies );

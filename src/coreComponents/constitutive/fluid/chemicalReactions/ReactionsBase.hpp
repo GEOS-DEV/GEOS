@@ -124,7 +124,6 @@ protected:
      * @param log10SecActCoeff
      * @param dLog10SecActCoeff_dIonicStrength
      */
-    GEOSX_HOST_DEVICE
     void computeLog10ActCoefBDotModel( real64 const temperature,
                                        real64 const ionicStrength,
                                        arraySlice1d< real64 > const & log10PrimaryActCoeff,
@@ -136,7 +135,6 @@ protected:
      *
      * @return
      */
-    GEOSX_HOST_DEVICE
     void computeIonicStrength( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
                                real64 & ionicStrength ) const;

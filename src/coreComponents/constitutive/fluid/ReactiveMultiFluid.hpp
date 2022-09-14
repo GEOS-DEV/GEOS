@@ -120,10 +120,10 @@ public:
                    integer const numPrimarySpecies,
                    chemicalReactions::EquilibriumReactions const & equilibriumReactions,
                    chemicalReactions::KineticReactions const & kineticReactions,
-                   arrayView2d< real64 > const & primarySpeciesConcentration,
-                   arrayView2d< real64 > const & secondarySpeciesConcentration,
-                   arrayView2d< real64 > const & primarySpeciesTotalConcentration,
-                   arrayView2d< real64 > const & kineticReactionRates ):
+                   arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesConcentration,
+                   arrayView2d< real64, compflow::USD_COMP > const & secondarySpeciesConcentration,
+                   arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesTotalConcentration,
+                   arrayView2d< real64, compflow::USD_COMP > const & kineticReactionRates ):
       MultiFluidBase::KernelWrapper( std::move( componentMolarWeight ),
                                      useMass,
                                      std::move( phaseFraction ),
@@ -158,13 +158,13 @@ protected:
 
     chemicalReactions::KineticReactions::KernelWrapper m_kineticReactions;
 
-    arrayView2d< real64 >  m_primarySpeciesConcentration;
+    arrayView2d< real64, compflow::USD_COMP >  m_primarySpeciesConcentration;
 
-    arrayView2d< real64 >  m_secondarySpeciesConcentration;
+    arrayView2d< real64, compflow::USD_COMP >  m_secondarySpeciesConcentration;
 
-    arrayView2d< real64 >  m_primarySpeciesTotalConcentration;
+    arrayView2d< real64, compflow::USD_COMP >  m_primarySpeciesTotalConcentration;
 
-    arrayView2d< real64 >  m_kineticReactionRates;
+    arrayView2d< real64, compflow::USD_COMP >  m_kineticReactionRates;
   };
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
@@ -189,13 +189,13 @@ protected:
 
   std::unique_ptr< chemicalReactions::KineticReactions > m_kineticReactions;
 
-  array2d< real64 >  m_primarySpeciesConcentration;
+  array2d< real64, multifluid::LAYOUT_FLUID >  m_primarySpeciesConcentration;
 
-  array2d< real64 >  m_secondarySpeciesConcentration;
+  array2d< real64, multifluid::LAYOUT_FLUID >  m_secondarySpeciesConcentration;
 
-  array2d< real64 >  m_primarySpeciesTotalConcentration;
+  array2d< real64, multifluid::LAYOUT_FLUID >  m_primarySpeciesTotalConcentration;
 
-  array2d< real64 >  m_kineticReactionRates;
+  array2d< real64, multifluid::LAYOUT_FLUID >  m_kineticReactionRates;
 };
 
 inline void

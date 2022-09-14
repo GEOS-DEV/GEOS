@@ -86,7 +86,7 @@ public:
     void computeReactionRates( real64 const & temperature,
                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                               arraySlice1d< real64 > const & reactionRates ) const;
+                               arraySlice1d< real64, compflow::USD_COMP - 1 > const & reactionRates ) const;
 
 private:
 

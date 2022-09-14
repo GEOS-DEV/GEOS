@@ -124,10 +124,10 @@ private:
                    integer const numPrimarySpecies,
                    chemicalReactions::EquilibriumReactions const & equilibriumReactions,
                    chemicalReactions::KineticReactions const & kineticReactions,
-                   arrayView2d< real64 > const & primarySpeciesConcentration,
-                   arrayView2d< real64 > const & secondarySpeciesConcentration,
-                   arrayView2d< real64 > const & primarySpeciesTotalConcentration,
-                   arrayView2d< real64 > const & kineticReactionRates );
+                   arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesConcentration,
+                   arrayView2d< real64, compflow::USD_COMP > const & secondarySpeciesConcentration,
+                   arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesTotalConcentration,
+                   arrayView2d< real64, compflow::USD_COMP > const & kineticReactionRates );
 
 
     /// Flag to specify whether the model is thermal or not
@@ -274,7 +274,6 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
            FluidProp::SliceType const totalDensity ) const
 {
   integer constexpr numComp = chemicalReactions::ReactionsBase::maxNumPrimarySpecies;
-  integer constexpr numPhase = 1;
 
   // 1. We perform a sort of single phase flash
   stackArray1d< real64, numComp > compMoleFrac( composition.size() );

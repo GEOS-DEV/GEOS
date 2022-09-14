@@ -100,7 +100,7 @@ void ReactionsBase::KernelWrapper::computeLog10ActCoefBDotModel( real64 const te
   // localIndex const NBasis = m_numPrimarySpecies;
   // localIndex const NDependent = m_numSecondarySpecies;
 
-  real64 const TK = temperature + 273.15;
+  GEOSX_UNUSED_VAR( temperature );
 
   for( localIndex i = 0; i < m_numPrimarySpecies; ++i )
   {
