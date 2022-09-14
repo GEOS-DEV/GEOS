@@ -1556,8 +1556,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="timeStepDecreaseFactor" type="real64" default="0.5" />
 		<!--timeStepDecreaseIterLimit => Fraction of the max Newton iterations above which the solver asks for the time-step to be decreased for the next time step.-->
 		<xsd:attribute name="timeStepDecreaseIterLimit" type="real64" default="0.7" />
-		<!--timeStepIncreaseIterLimit => Factor by which the time step is increased when the number of Newton iterations is small.-->
-		<xsd:attribute name="timeStepIncreaseIterLimit" type="real64" default="2" />
+		<!--timeStepIncreaseFactor => Factor by which the time step is increased when the number of Newton iterations is small.-->
+		<xsd:attribute name="timeStepIncreaseFactor" type="real64" default="2" />
+		<!--timeStepIncreaseIterLimit => Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next time step.-->
+		<xsd:attribute name="timeStepIncreaseIterLimit" type="real64" default="0.4" />
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_NonlinearSolverParameters_LineSearchAction">
 		<xsd:restriction base="xsd:string">

@@ -101,7 +101,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Factor by which the time step is decreased when the number of Newton iterations is large." );
 
-  registerWrapper( viewKeysStruct::timeStepIncreaseIterLimString, &m_timeStepIncreaseIterLimit ).
+  registerWrapper( viewKeysStruct::timeStepIncreaseFactorString, &m_timeStepIncreaseFactor ).
     setApplyDefaultValue( 2.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Factor by which the time step is increased when the number of Newton iterations is small." );
