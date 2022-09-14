@@ -59,16 +59,16 @@ protected:
 
   RelativePermeabilityBaseUpdate( arrayView1d< integer const > const & phaseTypes,
                                   arrayView1d< integer const > const & phaseOrder,
-                                  arrayView1d< real64 const > const & phaseMin,
+                                  arrayView1d< real64 const > const & phaseMinVolFrac,
                                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & phaseTrapped )
+                                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
     : m_phaseTypes( phaseTypes ),
     m_phaseOrder( phaseOrder ),
-    m_phaseMinVolumeFraction( phaseMin ),
+    m_phaseMinVolumeFraction( phaseMinVolFrac ),
     m_phaseRelPerm( phaseRelPerm ),
     m_dPhaseRelPerm_dPhaseVolFrac( dPhaseRelPerm_dPhaseVolFrac ),
-    m_phaseTrapped( phaseTrapped ) {}
+    m_phaseTrappedVolFrac( phaseTrappedVolFrac ) {}
 
   arrayView1d< integer const > m_phaseTypes;
   arrayView1d< integer const > m_phaseOrder;
@@ -78,11 +78,9 @@ protected:
   arrayView3d< real64, relperm::USD_RELPERM > m_phaseRelPerm;
   arrayView4d< real64, relperm::USD_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
 
-  arrayView2d< real64, compflow::USD_PHASE > m_phaseTrapped;
-
+  arrayView3d< real64, relperm::USD_RELPERM > m_phaseTrappedVolFrac;
 
 private:
-
   GEOSX_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
@@ -135,7 +133,7 @@ public:
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
   arrayView1d< real64 const > phaseMinVolumeFraction() const { return m_phaseMinVolumeFraction; }
-  arrayView2d< real64 const, compflow::USD_PHASE > phaseTrapped() const { return m_phaseTrapped; }
+  arrayView3d< real64 const, relperm::USD_RELPERM > phaseTrapped() const { return m_phaseTrappedVolFrac; }
 
   arrayView3d< real64 const, relperm::USD_RELPERM > phaseRelPerm() const { return m_phaseRelPerm; }
   arrayView4d< real64 const, relperm::USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
@@ -146,12 +144,6 @@ public:
    */
   virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
   { GEOSX_UNUSED_VAR( phaseVolFraction ); }
-
-  /**
-   * @brief init and save trapped volfrac at the end of time step in each element
-   * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
-   */
-  virtual void updateTrappedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const;
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -190,7 +182,7 @@ protected:
   // output quantities
   array3d< real64, relperm::LAYOUT_RELPERM > m_phaseRelPerm;
   array4d< real64, relperm::LAYOUT_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
-  array2d< real64, compflow::LAYOUT_PHASE > m_phaseTrapped;
+  array3d< real64, relperm::LAYOUT_RELPERM > m_phaseTrappedVolFrac;
 
 };
 

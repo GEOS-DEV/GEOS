@@ -587,10 +587,9 @@ TableRelativePermeabilityHysteresis::createKernelWrapper()
                         m_phaseOrder,
                         m_phaseMinHistoricalVolFraction,
                         m_phaseMaxHistoricalVolFraction,
-                        m_phaseCriticalVolFraction,
+                        m_phaseTrappedVolFrac,
                         m_phaseRelPerm,
-                        m_dPhaseRelPerm_dPhaseVolFrac,
-                        m_phaseTrapped );
+                        m_dPhaseRelPerm_dPhaseVolFrac );
 }
 
 void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, localIndex const numPts )
@@ -601,10 +600,8 @@ void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, l
 
   m_phaseMaxHistoricalVolFraction.resize( size, numPhases );
   m_phaseMinHistoricalVolFraction.resize( size, numPhases );
-  m_phaseCriticalVolFraction.resize( size, numPhases );
   m_phaseMaxHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
   m_phaseMinHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 1.0 );
-  m_phaseCriticalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
 }
 
 void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
@@ -626,53 +623,32 @@ void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( ar
 
 }
 
-
-void TableRelativePermeabilityHysteresis::updateTrappedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
-{
-
-  arrayView2d< real64, compflow::USD_PHASE > phaseTrapped = m_phaseTrapped.toView();
-  arrayView2d< real64, compflow::USD_PHASE > phaseCrit = m_phaseCriticalVolFraction.toView();
-
-  localIndex const numElems = phaseVolFraction.size( 0 );
-  integer const numPhases = numFluidPhases();
-  forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei ) {
-    for( integer ip = 0; ip < numPhases; ++ip )
-    {
-      phaseTrapped[ei][ip] = LvArray::math::min( phaseVolFraction[ei][ip],
-                                                 phaseCrit[ei][ip] );
-    }
-  } );
-}
-
-TableRelativePermeabilityHysteresis::KernelWrapper::
-  KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & drainageRelPermKernelWrappers,
-                 arrayView1d< TableFunction::KernelWrapper const > const & imbibitionRelPermKernelWrappers,
-                 real64 const & jerauldParam_a,
-                 real64 const & jerauldParam_b,
-                 real64 const & killoughCurvatureParam,
-                 arrayView1d< integer const > const & phaseHasHysteresis,
-                 arrayView1d< real64 const > const & landParam,
-                 arrayView1d< real64 const > const & drainagePhaseMinVolFraction,
-                 arrayView1d< real64 const > const & imbibitionPhaseMinVolFraction,
-                 arrayView1d< real64 const > const & drainagePhaseMaxVolFraction,
-                 arrayView1d< real64 const > const & imbibitionPhaseMaxVolFraction,
-                 arrayView1d< real64 const > const & drainagePhaseRelPermEndPoint,
-                 arrayView1d< real64 const > const & imbibitionPhaseRelPermEndPoint,
-                 arrayView1d< integer const > const & phaseTypes,
-                 arrayView1d< integer const > const & phaseOrder,
-                 arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
-                 arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
-                 arrayView2d< real64, compflow::USD_PHASE > const & phaseCriticalVolFraction,
-                 arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                 arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
-                 arrayView2d< real64, compflow::USD_PHASE > const & phaseTrapped )
+TableRelativePermeabilityHysteresis::KernelWrapper::KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & drainageRelPermKernelWrappers,
+                                                                   arrayView1d< TableFunction::KernelWrapper const > const & imbibitionRelPermKernelWrappers,
+                                                                   real64 const & jerauldParam_a,
+                                                                   real64 const & jerauldParam_b,
+                                                                   real64 const & killoughCurvatureParam,
+                                                                   arrayView1d< integer const > const & phaseHasHysteresis,
+                                                                   arrayView1d< real64 const > const & landParam,
+                                                                   arrayView1d< real64 const > const & drainagePhaseMinVolFraction,
+                                                                   arrayView1d< real64 const > const & imbibitionPhaseMinVolFraction,
+                                                                   arrayView1d< real64 const > const & drainagePhaseMaxVolFraction,
+                                                                   arrayView1d< real64 const > const & imbibitionPhaseMaxVolFraction,
+                                                                   arrayView1d< real64 const > const & drainagePhaseRelPermEndPoint,
+                                                                   arrayView1d< real64 const > const & imbibitionPhaseRelPermEndPoint,
+                                                                   arrayView1d< integer const > const & phaseTypes,
+                                                                   arrayView1d< integer const > const & phaseOrder,
+                                                                   arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
+                                                                   arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
+                                                                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
+                                                                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                                                                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
   : RelativePermeabilityBaseUpdate( phaseTypes,
                                     phaseOrder,
-                                    //temporary put drainage value
                                     drainagePhaseMinVolFraction,
                                     phaseRelPerm,
                                     dPhaseRelPerm_dPhaseVolFrac,
-                                    phaseTrapped ),
+                                    phaseTrappedVolFrac ),
   m_drainageRelPermKernelWrappers( drainageRelPermKernelWrappers ),
   m_imbibitionRelPermKernelWrappers( imbibitionRelPermKernelWrappers ),
   m_jerauldParam_a( jerauldParam_a ),
@@ -687,8 +663,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   m_drainagePhaseRelPermEndPoint( drainagePhaseRelPermEndPoint ),
   m_imbibitionPhaseRelPermEndPoint( imbibitionPhaseRelPermEndPoint ),
   m_phaseMinHistoricalVolFraction( phaseMinHistoricalVolFraction ),
-  m_phaseMaxHistoricalVolFraction( phaseMaxHistoricalVolFraction ),
-  m_phaseCriticalVolFraction( phaseCriticalVolFraction )
+  m_phaseMaxHistoricalVolFraction( phaseMaxHistoricalVolFraction )
 {}
 
 

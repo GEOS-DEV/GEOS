@@ -216,7 +216,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
     RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
     arrayView1d< real64 const > phaseMinVolFrac = relperm.phaseMinVolumeFraction();
-    arrayView2d< real64 const, compflow::USD_PHASE > const phaseMassTrapped = relperm.phaseTrapped();
+    arrayView3d< real64 const, relperm::USD_RELPERM > const phaseMassTrapped = relperm.phaseTrapped();
 
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;
@@ -359,7 +359,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Phase dynamic pore volumes: " << regionStatistics.phasePoreVolume << " rm^3" );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Phase mass: " << regionStatistics.phaseMass << " " << massUnit );
+                                         << ": Phase mass (trapped and non-trapped): " << regionStatistics.phaseMass << " " << massUnit );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Trapped phase mass: " << regionStatistics.trappedPhaseMass << " " << massUnit );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]

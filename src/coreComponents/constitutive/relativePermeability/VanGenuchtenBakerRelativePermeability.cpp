@@ -172,7 +172,7 @@ VanGenuchtenBakerRelativePermeability::createKernelWrapper()
                         m_phaseOrder,
                         m_phaseRelPerm,
                         m_dPhaseRelPerm_dPhaseVolFrac,
-                        m_phaseTrapped );
+                        m_phaseTrappedVolFrac );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenBakerRelativePermeability, string const &, Group * const )

@@ -71,7 +71,7 @@ public:
                    arrayView1d< integer const > const & phaseOrder,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                    arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
-                   arrayView2d< real64, compflow::USD_PHASE > const & phaseTrapped );
+                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac );
 
 
     GEOSX_HOST_DEVICE
@@ -91,6 +91,7 @@ public:
 
     GEOSX_HOST_DEVICE
     void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                  arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
                   arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                   arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
@@ -252,6 +253,7 @@ GEOSX_HOST_DEVICE
 inline void
 TableRelativePermeability::KernelWrapper::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
            arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
            arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
@@ -296,6 +298,14 @@ TableRelativePermeability::KernelWrapper::
                      phaseRelPerm,
                      dPhaseRelPerm_dPhaseVolFrac );
   }
+  //update trapped
+  if( ipWater >= 0 )
+    phaseTrappedVolFrac[ipWater] = std::min( phaseVolFraction[ipWater], m_phaseMinVolumeFraction[ipWater] );
+  if( ipGas >= 0 )
+    phaseTrappedVolFrac[ipGas] = std::min( phaseVolFraction[ipGas], m_phaseMinVolumeFraction[ipGas] );
+  if( ipOil >= 0 )
+    phaseTrappedVolFrac[ipOil] = std::min( phaseVolFraction[ipOil], m_phaseMinVolumeFraction[ipOil] );
+
 }
 
 GEOSX_HOST_DEVICE
@@ -306,8 +316,10 @@ TableRelativePermeability::KernelWrapper::
           arraySlice1d< geosx::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
 {
   compute( phaseVolFraction,
+           m_phaseTrappedVolFrac[k][q],
            m_phaseRelPerm[k][q],
            m_dPhaseRelPerm_dPhaseVolFrac[k][q] );
+
 }
 
 } // namespace constitutive
