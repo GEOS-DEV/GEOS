@@ -1812,7 +1812,7 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
 
   using namespace extrinsicMeshData::contact;
 
-  bool hasConfigurationConverged = true;
+  int hasConfigurationConverged = true;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -1923,7 +1923,7 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
   synchronizeFractureState( domain );
 
   // Compute if globally the fracture state has changed
-  bool hasConfigurationConvergedGlobally;
+  int hasConfigurationConvergedGlobally;
   MpiWrapper::allReduce( &hasConfigurationConverged,
                          &hasConfigurationConvergedGlobally,
                          1,
