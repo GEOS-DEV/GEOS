@@ -206,10 +206,10 @@ loadMesh( Path const & filePath )
 
 /**
  * @brief Get the cell array object
- * 
+ *
  * @param mesh vtk mesh
  * @return vtk cell array
- * 
+ *
  * replaces GetCells() that exist only in vtkUnstructuredGrid
  */
 vtkSmartPointer< vtkCellArray > GetCellArray( vtkDataSet & mesh )
@@ -523,7 +523,7 @@ std::vector< T > collectUniqueValues( std::vector< T > const & data )
 
 /**
  * @brief Identify the type of the polyhedron
- * 
+ *
  * @param cell The vtk cell VTK_POLYHEDRON
  * @return geosx::ElementType The geosx element type associated to VTK_POLYHEDRON
  */
@@ -539,13 +539,19 @@ geosx::ElementType polyhedronType( vtkCell * const cell )
   for( localIndex iFace = 0; iFace < numFaces; ++iFace )
   {
     localIndex numFaceNodes = cell->GetFace( iFace )->GetNumberOfPoints();
-    if( numFaceNodes == 3 ) numTriangles++;
-    if( numFaceNodes == 4 ) numQuads++;
+    if( numFaceNodes == 3 )
+    {
+      numTriangles++;
+    }
+    if( numFaceNodes == 4 )
+    {
+      numQuads++;
+    }
   }
 
   if( numTriangles == 4 && numFaces == 4 )
   {
-    return geosx::ElementType::Tetrahedron;    
+    return geosx::ElementType::Tetrahedron;
   }
 
   if( numQuads == 6 && numFaces == 6 )
@@ -607,7 +613,7 @@ geosx::ElementType polyhedronType( vtkCell * const cell )
     case 9:  return geosx::ElementType::Prism9;
     case 10: return geosx::ElementType::Prism10;
     case 11: return geosx::ElementType::Prism11;
-    default: 
+    default:
     {
       GEOSX_ERROR( "Prism with " << numQuads << " sides is not supported." );
       return{};
