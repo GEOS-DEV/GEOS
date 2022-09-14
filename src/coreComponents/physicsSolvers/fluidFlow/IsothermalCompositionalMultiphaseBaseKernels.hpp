@@ -1455,9 +1455,9 @@ struct StatisticsKernel
           real64 & avgTempNumerator,
           real64 & maxTemp,
           real64 & totalUncompactedPoreVol,
-          arraySlice1d< real64 > const & phaseDynamicPoreVol,
-          arraySlice1d< real64 > const & phaseMass,
-          arraySlice2d< real64 > const & dissolvedComponentMass )
+          arrayView1d< real64 > const & phaseDynamicPoreVol,
+          arrayView1d< real64 > const & phaseMass,
+          arrayView2d< real64 > const & dissolvedComponentMass )
   {
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPresNumerator( 0.0 );

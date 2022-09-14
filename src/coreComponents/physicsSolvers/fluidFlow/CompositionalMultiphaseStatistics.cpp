@@ -216,9 +216,9 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     real64 subRegionMinTemp = 0.0;
     real64 subRegionMaxTemp = 0.0;
     real64 subRegionTotalUncompactedPoreVol = 0.0;
-    stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionPhaseDynamicPoreVol( numPhases );
-    stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionPhaseMass( numPhases );
-    stackArray2d< real64, MultiFluidBase::MAX_NUM_PHASES *MultiFluidBase::MAX_NUM_COMPONENTS > subRegionDissolvedComponentMass( numPhases, numComps );
+    array1d< real64 > subRegionPhaseDynamicPoreVol( numPhases );
+    array1d< real64 > subRegionPhaseMass( numPhases );
+    array2d< real64 > subRegionDissolvedComponentMass( numPhases, numComps );
 
     isothermalCompositionalMultiphaseBaseKernels::
       StatisticsKernel::
@@ -244,9 +244,9 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
                                         subRegionAvgTempNumerator,
                                         subRegionMaxTemp,
                                         subRegionTotalUncompactedPoreVol,
-                                        subRegionPhaseDynamicPoreVol.toSlice(),
-                                        subRegionPhaseMass.toSlice(),
-                                        subRegionDissolvedComponentMass.toSlice() );
+                                        subRegionPhaseDynamicPoreVol.toView(),
+                                        subRegionPhaseMass.toView(),
+                                        subRegionDissolvedComponentMass.toView() );
 
     ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
     RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
