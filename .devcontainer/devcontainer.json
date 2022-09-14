@@ -1,5 +1,8 @@
 {
-    "image": "docker.io/geosx/ubuntu20.04-gcc10:false-794",
+    // "image": "docker.io/geosx/ubuntu20.04-gcc10:false-794",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
 	"runArgs": [
 		"--cap-add=ALL"
 	],
