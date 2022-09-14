@@ -122,28 +122,28 @@ static std::vector< int > getVtkConnectivity( ElementType const elementType )
                                              -4, 5, 6, 13, 12,
                                              -4, 6, 0, 7, 13 };
     case ElementType::Prism8:        return {-10,
-                                              -8, 0, 1, 2, 3, 4, 5, 6, 7,
-                                              -8, 8, 9, 10, 11, 12, 13, 14, 15, 
-                                              -4, 0, 1, 9, 8,
-                                              -4, 1, 2, 10, 9,
-                                              -4, 2, 3, 11, 10,
-                                              -4, 3, 4, 12, 11,
-                                              -4, 4, 5, 13, 12,
-                                              -4, 5, 6, 14, 13,
-                                              -4, 6, 7, 15, 14,
-                                              -4, 7, 0, 8, 15 };
+                                             -8, 0, 1, 2, 3, 4, 5, 6, 7,
+                                             -8, 8, 9, 10, 11, 12, 13, 14, 15,
+                                             -4, 0, 1, 9, 8,
+                                             -4, 1, 2, 10, 9,
+                                             -4, 2, 3, 11, 10,
+                                             -4, 3, 4, 12, 11,
+                                             -4, 4, 5, 13, 12,
+                                             -4, 5, 6, 14, 13,
+                                             -4, 6, 7, 15, 14,
+                                             -4, 7, 0, 8, 15 };
     case ElementType::Prism9:        return {-11,
-                                              -9, 0, 1, 2, 3, 4, 5, 6, 7, 8,
-                                              -9, 9, 10, 11, 12, 13, 14, 15, 16, 17,
-                                              -4, 0, 1, 10, 9,
-                                              -4, 1, 2, 11, 10,
-                                              -4, 2, 3, 12, 11,
-                                              -4, 3, 4, 13, 12,
-                                              -4, 4, 5, 14, 13,
-                                              -4, 5, 6, 15, 14,
-                                              -4, 6, 7, 16, 15,
-                                              -4, 7, 8, 17, 16,
-                                              -4, 8, 0, 9, 17 };
+                                             -9, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+                                             -9, 9, 10, 11, 12, 13, 14, 15, 16, 17,
+                                             -4, 0, 1, 10, 9,
+                                             -4, 1, 2, 11, 10,
+                                             -4, 2, 3, 12, 11,
+                                             -4, 3, 4, 13, 12,
+                                             -4, 4, 5, 14, 13,
+                                             -4, 5, 6, 15, 14,
+                                             -4, 6, 7, 16, 15,
+                                             -4, 7, 8, 17, 16,
+                                             -4, 8, 0, 9, 17 };
     case ElementType::Prism10:       return {-12,
                                              -10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
                                              -10, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
@@ -158,8 +158,8 @@ static std::vector< int > getVtkConnectivity( ElementType const elementType )
                                              -4, 8, 9, 19, 18,
                                              -4, 9, 0, 10, 19 };
     case ElementType::Prism11:       return {-13,
-                                             -11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
-                                             -11, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 
+                                             -11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                                             -11, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
                                              -4, 0, 1, 12, 11,
                                              -4, 1, 2, 13, 12,
                                              -4, 2, 3, 14, 13,
@@ -323,7 +323,7 @@ getSurface( FaceElementSubRegion const & subRegion,
 
 /**
  * @brief Gets the cell connectivities and the vertices coordinates as VTK objects for a specific
- *EmbeddedSurafaceSubRegion.
+ * EmbeddedSurafaceSubRegion.
  * @param[in] subRegion the EmbeddedSurfaceSubRegion to be output
  * @param[in] nodeManager the NodeManager associated with the DomainPartition being written.
  * @return a pair containing a VTKPoints (with the information on the vertices and their coordinates)
@@ -451,7 +451,7 @@ getVtkCells( CellElementRegion const & region,
 // Local nodes are mapped to global indices. Any negative value in "vtkOrdering"
 // corresponds to the number of faces or the number of nodes per faces, and they
 // are copied as positive values.
-// Here we privilege code simplicity. This can be more efficient (less tests) if the code is 
+// Here we privilege code simplicity. This can be more efficient (less tests) if the code is
 // specialized for each type of subregion.
 // This is not a time sensitive part of the code. Can be optimized later if needed.
     forAll< parallelHostPolicy >( subRegion.size(), [=, &connectivity, &offsets]( localIndex const c )
