@@ -231,7 +231,7 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
   // note: column indexing should be kept consistent with output file header below.
   integer numSteps = m_numSteps;
   using ExecPolicy = typename ReactiveMultiFluid::exec_policy;
-  forAll< ExecPolicy >( 1, [=]  GEOSX_HOST_DEVICE ( localIndex const ei )
+  forAll< ExecPolicy >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
   {
     for( integer n = 0; n <= numSteps; ++n )
     {
@@ -247,6 +247,14 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
       }
 
       kernelWrapper.update( ei, 0, table( n, PRES ), table( n, TEMP ), composition[0] );
+    }
+  } );
+
+  forAll< serialPolicy >( 1, [=] ( localIndex const ei )
+  {
+    for( integer n = 0; n <= numSteps; ++n )
+    {   
+      kernelWrapper.updateChemistry( ei, 0, table( n, PRES ), table( n, TEMP ), composition[0] );
       for( integer p=0; p<numPrimarySpecies; ++p )
       {
         table( n, TEMP+1+p ) = primarySpeciesConcentration( ei, p );

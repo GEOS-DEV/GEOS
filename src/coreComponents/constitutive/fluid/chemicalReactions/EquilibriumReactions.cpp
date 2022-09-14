@@ -98,7 +98,6 @@ EquilibriumReactions::KernelWrapper EquilibriumReactions::createKernelWrapper() 
                         m_WATEQBDot );
 }
 
-GEOSX_HOST_DEVICE
 void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( real64 const temperature,
                                                                              arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                                                                              arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
@@ -157,7 +156,6 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
   }
 }
 
-GEOSX_HOST_DEVICE
 void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const temperature,
                                                                 arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                                                                 arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
@@ -207,7 +205,6 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
 }
 
 // function to compute the derivative of the concentration of secondary species with respect to the concentration of the primary species.
-GEOSX_HOST_DEVICE
 void EquilibriumReactions::KernelWrapper::computeSeondarySpeciesConcAndDerivative( real64 const temperature,
                                                                                    arraySlice1d< real64 const > const & log10PrimaryActCoeff,
                                                                                    arraySlice1d< real64 const > const & dLog10PrimaryActCoeff_dIonicStrength,
@@ -242,7 +239,6 @@ void EquilibriumReactions::KernelWrapper::computeSeondarySpeciesConcAndDerivativ
 
 }
 
-GEOSX_HOST_DEVICE
 void EquilibriumReactions::KernelWrapper::computeTotalConcAndDerivative( real64 const temperature,
                                                                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                                                                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & secondarySpeciesConectration,
@@ -283,7 +279,6 @@ void EquilibriumReactions::KernelWrapper::
   }
 }
 
-GEOSX_HOST_DEVICE
 void EquilibriumReactions::KernelWrapper::setInitialGuess( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                                                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration ) const
 {

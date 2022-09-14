@@ -99,6 +99,12 @@ public:
                          real64 const temperature,
                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override;
 
+    virtual void updateChemistry( localIndex const k,
+                                  localIndex const q,
+                                  real64 const pressure,
+                                  real64 const temperature,
+                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override;               
+
 private:
 
     friend class ReactiveBrineFluid;
@@ -345,10 +351,18 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
            m_phaseInternalEnergy( k, q ),
            m_phaseCompFraction( k, q ),
            m_totalDensity( k, q ) );
+}
 
+template< typename PHASE >
+inline void
+ReactiveBrineFluid< PHASE >::KernelWrapper::
+  updateChemistry( localIndex const k,
+                   localIndex const q,
+                   real64 const pressure,
+                   real64 const temperature,
+                   arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 
-  // NOTE: for now, I am hardcoding 1 so that we don not need to provide the molecular weight of each species but we consider pure water.
-
+{
   real64 const totalMolecularWeight = PVTProps::PureWaterProperties::MOLECULAR_WEIGHT;
 
   convertMoleFractionToMolarity( m_totalDensity( k, q ).value,
@@ -362,7 +376,7 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
                     m_primarySpeciesConcentration[k],
                     m_secondarySpeciesConcentration[k],
                     m_kineticReactionRates[k] );
-}
+}          
 
 
 } // namespace constitutive

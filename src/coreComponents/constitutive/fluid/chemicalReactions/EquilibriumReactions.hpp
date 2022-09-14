@@ -42,9 +42,6 @@ public:
   {
 public:
 
-    using DenseMatrix = stackArray2d< real64, ReactionsBase::maxNumPrimarySpecies * ReactionsBase::maxNumPrimarySpecies >;
-    using DenseVector = stackArray1d< real64, ReactionsBase::maxNumPrimarySpecies >;
-
     KernelWrapper( integer const numPrimarySpecies,
                    integer const numSecondarySpecies,
                    arrayView1d< real64 > const & log10EqConst,
@@ -76,21 +73,19 @@ public:
      * @param totalConc
      * @param dLog10PrimaryConc_dTotalConc
      */
-    GEOSX_HOST_DEVICE
     void updateConcentrations( real64 const temperature,
                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                                arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesContentration,
                                arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const;
 private:
 
-    GEOSX_HOST_DEVICE
     void assembleEquilibriumReactionSystem( real64 const temperature,
                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                                             arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
                                             arraySlice2d< real64 > const & matrix,
                                             arraySlice1d< real64 > const & rhs ) const;
-    GEOSX_HOST_DEVICE
+    
     void computeSeondarySpeciesConcAndDerivative( real64 const temperature,
                                                   arraySlice1d< real64 const > const & log10PrimaryActCoeff,
                                                   arraySlice1d< real64 const > const & dLog10PrimaryActCoeff_dIonicStrength,
@@ -99,7 +94,7 @@ private:
                                                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                                                   arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
                                                   arraySlice2d< real64 > const & dLog10SecConc_dLog10PrimaryConc ) const;
-    GEOSX_HOST_DEVICE
+
     void computeTotalConcAndDerivative( real64 const temperature,
                                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
@@ -107,15 +102,11 @@ private:
                                         arraySlice1d< real64 > const & totalConc,
                                         arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc ) const;
 
-    GEOSX_HOST_DEVICE
     void updatePrimarySpeciesConcentrations( arraySlice1d< real64 const > const solution,
                                              arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration ) const;
 
-    GEOSX_HOST_DEVICE
     void setInitialGuess( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration ) const;
-
-
 
     integer m_maxNumIterations = 30;
     real64 m_newtonTol = 1e-6;

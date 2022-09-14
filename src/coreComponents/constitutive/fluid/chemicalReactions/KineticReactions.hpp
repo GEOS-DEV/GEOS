@@ -83,7 +83,6 @@ public:
      * @param specificSurfaceArea the surface area available per unit volume
      * @param reactionRates
      */
-    GEOSX_HOST_DEVICE
     void computeReactionRates( real64 const & temperature,
                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,

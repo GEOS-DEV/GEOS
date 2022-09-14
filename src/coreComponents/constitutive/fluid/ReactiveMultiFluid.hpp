@@ -71,13 +71,18 @@ public:
 
 public:
 
-    GEOSX_HOST_DEVICE
     void computeChemistry( real64 const pressure,
                            real64 const temperature,
                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const;
+
+    virtual void updateChemistry( localIndex const k,
+                                  localIndex const q,
+                                  real64 const pressure,
+                                  real64 const temperature,
+                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const = 0;                       
 
     /**
      * @brief Construct a new Kernel Wrapper object
@@ -193,7 +198,6 @@ protected:
   array2d< real64 >  m_kineticReactionRates;
 };
 
-GEOSX_HOST_DEVICE
 inline void
 ReactiveMultiFluid::KernelWrapper::
   computeChemistry( real64 const pressure,
@@ -217,7 +221,6 @@ ReactiveMultiFluid::KernelWrapper::
 }
 
 
-GEOSX_HOST_DEVICE
 inline void
 ReactiveMultiFluid::KernelWrapper::
   convertMoleFractionToMolarity( real64 const totalDensity,
