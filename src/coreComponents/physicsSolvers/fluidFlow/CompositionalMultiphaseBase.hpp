@@ -221,6 +221,17 @@ public:
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
+
+
+    // time stepping controls
+
+    static constexpr char const * solutionChangeScalingFactorString() { return "solutionChangeScalingFactor"; }
+    static constexpr char const * targetPressureChangeString() { return "targetPressureChangeInTimeStep"; }
+    static constexpr char const * targetTemperatureChangeString() { return "targetTemperatureChangeInTimeStep"; }
+    static constexpr char const * targetPhaseVolFracChangeString() { return "targetPhaseVolFractionChangeInTimeStep"; }
+
+    // nonlinear solver parameters
+
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
     static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
@@ -298,6 +309,9 @@ public:
    */
   void chopNegativeDensities( DomainPartition & domain );
 
+  virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
+                                              DomainPartition & domain ) override;
+
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
 protected:
@@ -364,6 +378,18 @@ protected:
 
   /// maximum (relative) change in temperature between two Newton iterations
   real64 m_maxRelativeTempChange;
+
+  /// damping factor for solution change targets
+  real64 m_solutionChangeScalingFactor;
+
+  /// target (absolute) change in pressure in a time step
+  real64 m_targetPressureChange;
+
+  /// target (absolute) change in temperature in a time step
+  real64 m_targetTemperatureChange;
+
+  /// target (absolute) change in phase volume fraction in a time step
+  real64 m_targetPhaseVolFracChange;
 
   /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
   real64 m_minScalingFactor;

@@ -60,7 +60,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_hasCapPressure( 0 ),
-  m_maxCompFracChange( 1.0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
 {
@@ -73,6 +72,27 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use mass formulation instead of molar" );
+
+  this->registerWrapper( viewKeyStruct::solutionChangeScalingFactorString(), &m_solutionChangeScalingFactor ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Damping factor for solution change targets" );
+  this->registerWrapper( viewKeyStruct::targetPressureChangeString(), &m_targetPressureChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.37895e7 ). // 2000 psi (taken from user guide)
+    setDescription( "Target (absolute) change in pressure in a time step" );
+  this->registerWrapper( viewKeyStruct::targetTemperatureChangeString(), &m_targetTemperatureChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 30 ).
+    setDescription( "Target (absolute) change in temperature in a time step" );
+  this->registerWrapper( viewKeyStruct::targetPhaseVolFracChangeString(), &m_targetPhaseVolFracChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.2 ).
+    setDescription( "Target (absolute) change in phase volume fraction in a time step" );
 
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setSizedFromParent( 0 ).
@@ -751,7 +771,6 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       solidInternalEnergyMaterial.saveConvergedState();
 
     }
-
   } );
 
   // 5. Save initial pressure (needed by the poromechanics solvers)
@@ -761,7 +780,10 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
   {
     arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
     arrayView1d< real64 > const initPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::initialPressure >();
+    arrayView1d< real64 > const temp = subRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature >();
+    arrayView1d< real64 > const temp_n = subRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
     initPres.setValues< parallelDevicePolicy<> >( pres );
+    temp_n.setValues< parallelDevicePolicy<> >( temp ); // to make sure temperature_n has a meaningful value in isothermal simulations
   } );
 }
 
@@ -1731,6 +1753,83 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
       } );
     } );
   } );
+}
+
+real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & currentDt,
+                                                                 DomainPartition & domain )
+{
+  real64 maxAbsolutePressureChange = 0.0;
+  real64 maxAbsoluteTemperatureChange = 0.0;
+  real64 maxAbsolutePhaseVolFracChange = 0.0;
+
+  real64 const numPhase = m_numPhases;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+      arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      arrayView1d< real64 const > const pres_n = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
+      arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+      arrayView1d< real64 const > const temp_n = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
+      arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+      arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction_n >();
+
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPresChange( 0.0 );
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTempChange( 0.0 );
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPhaseVolFracChange( 0.0 );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] < 0 )
+        {
+          subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_n[ei] ) );
+          subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_n[ei] ) );
+          for( integer ip = 0; ip < numPhase; ++ip )
+          {
+            subRegionMaxPhaseVolFracChange.max( LvArray::math::abs( phaseVolFrac[ei][ip] - phaseVolFrac_n[ei][ip] ) );
+          }
+        }
+      } );
+
+      maxAbsolutePressureChange = LvArray::math::max( maxAbsolutePressureChange, subRegionMaxPresChange.get() );
+      maxAbsoluteTemperatureChange = LvArray::math::max( maxAbsoluteTemperatureChange, subRegionMaxTempChange.get() );
+      maxAbsolutePhaseVolFracChange = LvArray::math::max( maxAbsolutePhaseVolFracChange, subRegionMaxPhaseVolFracChange.get() );
+
+    } );
+  } );
+
+  maxAbsolutePressureChange = MpiWrapper::max( maxAbsolutePressureChange );
+  maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
+  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max absolute pressure change: "<< maxAbsolutePressureChange << " Pa" );
+  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max absolute phase volume fraction change: "<< maxAbsolutePhaseVolFracChange );
+
+  if( m_isThermal )
+  {
+    maxAbsoluteTemperatureChange = MpiWrapper::max( maxAbsoluteTemperatureChange );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max absolute temperature change: "<< maxAbsoluteTemperatureChange << " K" );
+  }
+
+  real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
+
+  real64 const nextDtPressure = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetPressureChange
+                                / std::max( eps, maxAbsolutePressureChange + m_solutionChangeScalingFactor * m_targetPressureChange );
+  real64 const nextDtPhaseVolFrac = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetPhaseVolFracChange
+                                    / std::max( eps, maxAbsolutePhaseVolFracChange + m_solutionChangeScalingFactor * m_targetPhaseVolFracChange );
+  real64 const nextDtTemperature = m_isThermal
+    ? currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetTemperatureChange
+                                   / std::max( eps, maxAbsoluteTemperatureChange + m_solutionChangeScalingFactor * m_targetTemperatureChange )
+    : LvArray::NumericLimits< real64 >::max;
+
+  return std::min( std::min( nextDtPressure, nextDtPhaseVolFrac ), nextDtTemperature );
 }
 
 void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
