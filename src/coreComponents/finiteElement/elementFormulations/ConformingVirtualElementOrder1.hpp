@@ -398,6 +398,25 @@ public:
   }
 
   /**
+   * @brief This function returns an error, since to get projection of gradients with VEM you have
+   * to use the StackVariables version of this function.
+   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[out] N The shape function values. It is set to zero.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const (&coords)[3],
+                     real64 (& N)[maxSupportPoints] )
+  {
+    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    GEOSX_UNUSED_VAR( coords );
+    for( localIndex i = 0; i < maxSupportPoints; ++i )
+    {
+      N[i] = 0.0;
+    }
+  }
+
+  /**
    * @brief This function returns an error, since there is no reference element defined in the VEM
    * context. It is kept for consistency with other finite element classes.
    * @param q The quadrature point index in 3d space.
@@ -428,8 +447,8 @@ public:
    * to use the StackVariables version of this function.
    * @param q The quadrature point index in 3d space.
    * @param X Array containing the coordinates of the support points.
-   * @param gradN Array to store the gradients of shape functions.
-   * @return A zero matrix.
+   * @param gradN Array to store the gradients of shape functions. It is set to zero.
+   * @return Zero.
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE

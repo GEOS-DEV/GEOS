@@ -75,6 +75,7 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr8 );
   }
+#endif
   else if( auto const * const ptr9 = dynamic_cast< H1_Prism5_VEM_Gauss1 const * >(&input) ) // VEM on Prism5
   {
     lambda( *ptr9 );
@@ -83,7 +84,6 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr10 );
   }
-#endif
   else
   {
     GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
@@ -129,6 +129,7 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr8 );
   }
+#endif
   else if( auto * const ptr9 = dynamic_cast< H1_Prism5_VEM_Gauss1 * >(&input) ) // VEM on Prism5
   {
     lambda( *ptr9 );
@@ -137,7 +138,6 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr10 );
   }
-#endif
   else
   {
     GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );
