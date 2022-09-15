@@ -23,14 +23,18 @@
 #include "common/MpiWrapper.hpp"
 #include "common/TypeDispatch.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
+#ifdef GEOSX_USE_PARMETIS
 #include "mesh/generators/ParMETISInterface.hpp"
+#endif
 #ifdef GEOSX_USE_SCOTCH
 #include "mesh/generators/PTScotchInterface.hpp"
 #endif
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 #include <vtkArrayDispatch.h>
 #include <vtkBoundingBox.h>
@@ -41,6 +45,7 @@
 #include <vtkPointData.h>
 #include <vtkRedistributeDataSetFilter.h>
 #include <vtkSmartPointer.h>
+#include <vtkThreshold.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkUnstructuredGridReader.h>
 #include <vtkXMLPUnstructuredGridReader.h>
@@ -75,10 +80,14 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                                     Group * const parent )
   : ExternalMeshGeneratorBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::regionAttributeString(), &m_attributeName ).
+  registerWrapper( viewKeyStruct::regionAttributeString(), &m_regionAttributeName ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "attribute" ).
     setDescription( "Name of the VTK cell attribute to use as region marker" );
+
+  registerWrapper( viewKeyStruct::structuredIndexAttributeString(), &m_structuredIndexAttributeName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of the VTK cell attribute containing structured cell index (e.g. Cartesian IJK)" );
 
   registerWrapper( viewKeyStruct::nodesetNamesString(), &m_nodesetNames ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -269,13 +278,13 @@ buildElemToNodes( vtkDataSet & mesh )
 template< typename PART_INDEX >
 vtkSmartPointer< vtkPartitionedDataSet >
 splitMeshByPartition( vtkDataSet & mesh,
-                      PART_INDEX const numParts,
+                      int const numParts,
                       arrayView1d< PART_INDEX const > const & part )
 {
   array1d< localIndex > cellCounts( numParts );
   forAll< parallelHostPolicy >( part.size(), [part, cellCounts = cellCounts.toView()] ( localIndex const cellIdx )
   {
-    RAJA::atomicInc< parallelHostAtomic >( &cellCounts[part[cellIdx]] );
+    RAJA::atomicInc< parallelHostAtomic >( &cellCounts[LvArray::integerConversion< localIndex >( part[cellIdx] )] );
   } );
 
   ArrayOfArrays< vtkIdType > cellsLists;
@@ -310,29 +319,56 @@ splitMeshByPartition( vtkDataSet & mesh,
 }
 
 vtkSmartPointer< vtkDataSet >
-generateGlobalIDs( vtkDataSet & mesh )
+generateGlobalIDs( vtkDataSet & loadedMesh,
+                   integer const useGlobalIds )
 {
   GEOSX_MARK_FUNCTION;
 
-  vtkNew< vtkGenerateGlobalIds > generator;
-  generator->SetInputDataObject( &mesh );
-  generator->Update();
-  return vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
+  vtkSmartPointer< vtkDataSet > mesh;
+  bool globalIdsAvailable = loadedMesh.GetPointData()->GetGlobalIds() != nullptr
+                            && loadedMesh.GetCellData()->GetGlobalIds() != nullptr;
+  if( useGlobalIds > 0 && !globalIdsAvailable )
+  {
+    GEOSX_ERROR( "Global IDs strictly required (useGlobalId > 0) but unavailable. Set useGlobalIds to 0 to build them automatically." );
+  }
+  else if( useGlobalIds >= 0 && globalIdsAvailable )
+  {
+    mesh = &loadedMesh;
+    vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
+    vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
+    GEOSX_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != mesh->GetNumberOfCells(),
+                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+    GEOSX_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != mesh->GetNumberOfPoints(),
+                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+
+    GEOSX_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
+  }
+  else
+  {
+    GEOSX_LOG_RANK_0( "Generating global Ids from VTK mesh" );
+    vtkNew< vtkGenerateGlobalIds > generator;
+    generator->SetInputDataObject( &loadedMesh );
+    generator->Update();
+    mesh = vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
+  }
+
+  return mesh;
 }
 
-vtkSmartPointer< vtkDataSet >
-redistributeByCellGraph( vtkDataSet & mesh,
-                         VTKMeshGenerator::PartitionMethod const method,
-                         MPI_Comm const comm,
-                         int const numRefinements )
+array1d< int64_t >
+partitionByCellGraph( vtkDataSet & mesh,
+                      VTKMeshGenerator::PartitionMethod const method,
+                      MPI_Comm const comm,
+                      int const numParts,
+                      int const minCommonNodes,
+                      int const numRefinements )
 {
   GEOSX_MARK_FUNCTION;
 
   int64_t const numElems = mesh.GetNumberOfCells();
-  int64_t const numProcs = MpiWrapper::commSize( comm );
 
   // Compute `elemdist` parameter (element range owned by each rank)
-  array1d< int64_t > const elemDist( numProcs + 1 );
+  array1d< int64_t > const elemDist( MpiWrapper::commSize( comm ) + 1 );
   {
     array1d< int64_t > elemCounts;
     MpiWrapper::allGather( numElems, elemCounts, comm );
@@ -341,31 +377,197 @@ redistributeByCellGraph( vtkDataSet & mesh,
 
   // Use int64_t here to match ParMETIS' idx_t
   ArrayOfArrays< int64_t, int64_t > const elemToNodes = buildElemToNodes< int64_t >( mesh );
-  ArrayOfArrays< int64_t, int64_t > const graph = parmetis::meshToDual( elemToNodes.toViewConst(), elemDist, comm, 3 );
 
-  array1d< int64_t > const newParts = [&]()
-  {
-    switch( method )
-    {
-      case VTKMeshGenerator::PartitionMethod::parmetis:
-      {
-        return parmetis::partition( graph.toViewConst(), elemDist, numProcs, comm, numRefinements );
-      }
-      case VTKMeshGenerator::PartitionMethod::ptscotch:
-      {
-#ifdef GEOSX_USE_SCOTCH
-        GEOSX_WARNING_IF( numRefinements > 0, "Partition refinement is not supported by 'ptscotch' partitioning method" );
-        return ptscotch::partition( graph.toViewConst(), numProcs, comm );
+  ArrayOfArrays< int64_t, int64_t > graph;
+#ifdef GEOSX_USE_PARMETIS
+  graph = parmetis::meshToDual( elemToNodes.toViewConst(), elemDist, comm, minCommonNodes );
 #else
-        GEOSX_THROW( "GEOSX must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method" );
+  GEOSX_THROW( "Currently GEOSX must be built with ParMETIS support (ENABLE_PARMETIS=ON)"
+               "to use any graph partitioning method for parallel mesh distribution", InputError );
 #endif
-      }
-      default:
-      {
-        GEOSX_THROW( "Unknown partition method", InputError );
-      }
+
+  switch( method )
+  {
+    case VTKMeshGenerator::PartitionMethod::parmetis:
+    {
+#ifdef GEOSX_USE_PARMETIS
+      return parmetis::partition( graph.toViewConst(), elemDist, numParts, comm, numRefinements );
+#else
+      GEOSX_THROW( "GEOSX must be built with ParMETIS support (ENABLE_PARMETIS=ON) to use 'parmetis' partitioning method", InputError );
+#endif
     }
-  }();
+    case VTKMeshGenerator::PartitionMethod::ptscotch:
+    {
+#ifdef GEOSX_USE_SCOTCH
+      GEOSX_WARNING_IF( numRefinements > 0, "Partition refinement is not supported by 'ptscotch' partitioning method" );
+      return ptscotch::partition( graph.toViewConst(), numParts, comm );
+#else
+      GEOSX_THROW( "GEOSX must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
+#endif
+    }
+    default:
+    {
+      GEOSX_THROW( "Unknown partition method", InputError );
+    }
+  }
+}
+
+vtkSmartPointer< vtkUnstructuredGrid >
+redistributeByCellGraph( vtkDataSet & mesh,
+                         VTKMeshGenerator::PartitionMethod const method,
+                         MPI_Comm const comm,
+                         int const numRefinements )
+{
+  GEOSX_MARK_FUNCTION;
+
+  int const numProcs = MpiWrapper::commSize( comm );
+  array1d< int64_t > const newParts = partitionByCellGraph( mesh, method, comm, numProcs, 3, numRefinements );
+  vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numProcs, newParts.toViewConst() );
+  return vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
+}
+
+vtkSmartPointer< vtkUnstructuredGrid >
+threshold( vtkDataSet & mesh,
+           string const & arrayName,
+           int const component,
+           double const lo,
+           double const hi )
+{
+  vtkNew< vtkThreshold > threshold;
+  threshold->SetInputDataObject( &mesh );
+  threshold->SetInputArrayToProcess( 0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_CELLS, arrayName.c_str() );
+  threshold->SetComponentModeToUseSelected();
+  threshold->SetSelectedComponent( component );
+  threshold->SetThresholdFunction( vtkThreshold::THRESHOLD_BETWEEN );
+  threshold->SetLowerThreshold( lo );
+  threshold->SetUpperThreshold( hi );
+  threshold->Update();
+  return threshold->GetOutput();
+}
+
+template< typename VTK_TYPES, typename FUNC >
+void dispatchArray( vtkDataSetAttributes & data,
+                    string const & arrayName,
+                    FUNC && func )
+{
+  vtkDataArray * const array = data.GetArray( arrayName.c_str() );
+  GEOSX_THROW_IF( array == nullptr, GEOSX_FMT( "VTK array '{}' not found", arrayName ), InputError );
+  bool const result = vtkArrayDispatch::DispatchByValueType< VTK_TYPES >::Execute( array, [&]( auto const * const typedArray )
+  {
+    vtkDataArrayAccessor< TYPEOFPTR( typedArray ) > const accessor( typedArray );
+    func( accessor );
+  } );
+  GEOSX_THROW_IF( !result,
+                  GEOSX_FMT( "VTK dispatch failed, array '{}' is not of expected type", arrayName ),
+                  InputError );
+}
+
+std::array< std::pair< int, int >, 2 >
+findGlobalIndexBounds( vtkDataSet & mesh,
+                       MPI_Comm const & comm,
+                       string const & indexArrayName )
+{
+  RAJA::ReduceMin< parallelHostReduce, int > minIdx[2]{ std::numeric_limits< int >::max(), std::numeric_limits< int >::max() };
+  RAJA::ReduceMax< parallelHostReduce, int > maxIdx[2]{ std::numeric_limits< int >::min(), std::numeric_limits< int >::min() };
+  dispatchArray< vtkArrayDispatch::Integrals >( *mesh.GetCellData(), indexArrayName, [&]( auto const index )
+  {
+    forAll< parallelHostPolicy >( mesh.GetNumberOfCells(), [index, minIdx, maxIdx]( vtkIdType const i )
+    {
+      for( int k = 0; k < 2; ++k )
+      {
+        auto const idx = index.Get( i, k );
+        minIdx[k].min( idx );
+        maxIdx[k].max( idx );
+      }
+    } );
+  } );
+
+  int const minIdxLocal[2] = { minIdx[0].get(), minIdx[1].get() };
+  int const maxIdxLocal[2] = { maxIdx[0].get(), maxIdx[1].get() };
+  int minIdxGlobal[2], maxIdxGlobal[2];
+  MpiWrapper::min< int >( minIdxLocal, minIdxGlobal, comm );
+  MpiWrapper::max< int >( maxIdxLocal, maxIdxGlobal, comm );
+  return { std::make_pair( minIdxGlobal[0], maxIdxGlobal[0] ), std::make_pair( minIdxGlobal[1], maxIdxGlobal[1] ) };
+}
+
+vtkSmartPointer< vtkDataSet >
+redistributeByAreaGraphAndLayer( vtkDataSet & mesh,
+                                 VTKMeshGenerator::PartitionMethod const method,
+                                 string const & indexArrayName,
+                                 MPI_Comm const comm,
+                                 int const numPartZ,
+                                 int const numRefinements )
+{
+  GEOSX_MARK_FUNCTION;
+
+  localIndex const numCells = LvArray::integerConversion< localIndex >( mesh.GetNumberOfCells() );
+  int const numProcs = MpiWrapper::commSize( comm );
+  int const numPartA = numProcs / numPartZ;
+  GEOSX_ERROR_IF_NE_MSG( numProcs % numPartZ, 0, "Number of ranks must evenly divide the number of z-partitions" );
+
+  // Compute conversion from cell z-index to partition z-index
+  std::array< std::pair< int, int >, 2 > const idxLimits = findGlobalIndexBounds( mesh, comm, indexArrayName );
+  double const cellPerPartZInv = static_cast< double >( numPartZ ) / ( idxLimits[1].second - idxLimits[1].first + 1 );
+  auto const computePartIndexZ = [minZ = idxLimits[1].first, cellPerPartZInv]( auto const zidx )
+  {
+    return static_cast< int >( ( zidx - minZ + 0.5 ) * cellPerPartZInv );
+  };
+
+  // Extract cells in z-layer "0"
+  vtkSmartPointer< vtkUnstructuredGrid > layer0 = threshold( mesh, indexArrayName, 1, idxLimits[1].first, idxLimits[1].first );
+
+  // Ranks that have the layer form a subcomm and compute the area partitioning
+  bool const haveLayer0 = layer0->GetNumberOfCells() > 0;
+  MPI_Comm subComm = MpiWrapper::commSplit( comm, haveLayer0 ? 0 : MPI_UNDEFINED, MpiWrapper::commRank( comm ) );
+  array1d< int64_t > layer0Parts;
+  if( haveLayer0 )
+  {
+    layer0Parts = partitionByCellGraph( *layer0, method, subComm, numPartA, 3, numRefinements );
+    MpiWrapper::commFree( subComm );
+  }
+
+  // pack the area index into unused high 32 bits of the 64-bit partition index
+  dispatchArray< vtkArrayDispatch::Integrals >( *layer0->GetCellData(), indexArrayName,
+                                                [&]( auto const index )
+  {
+    forAll< parallelHostPolicy >( layer0Parts.size(), [dst = layer0Parts.toView(), index,
+                                                       minA = idxLimits[0].first]( localIndex const i )
+    {
+      auto const aidx = index.Get( i, 0 );
+      GEOSX_ASSERT_GE( aidx, 0 );
+      GEOSX_ASSERT_GT( std::numeric_limits< int32_t >::max(), dst[i] );
+      dst[i] |= static_cast< int64_t >( aidx - minA ) << 32;
+    } );
+  } );
+
+  // Distribute the partitioning of layer 0 (or columns) to everyone
+  array1d< int64_t > columnParts;
+  MpiWrapper::allGatherv( layer0Parts.toViewConst(), columnParts, comm );
+
+  // Sort w.r.t. area index. If this becomes too expensive, may need a diff approach.
+  // The goal is to enable fast lookup of area partition index by area index.
+  std::sort( columnParts.begin(), columnParts.end() );
+
+  auto const computePartIndexA = [minA = idxLimits[0].first, partsA = columnParts.toViewConst()]( auto const aidx )
+  {
+    return partsA[aidx - minA] & 0xFFFFFFFF;
+  };
+
+  // Finally, we can compute the target partitioning by combining area and z-partition data
+  array1d< int > const newParts( numCells );
+  dispatchArray< vtkArrayDispatch::Integrals >( *mesh.GetCellData(), indexArrayName,
+                                                [&]( auto const index )
+  {
+    forAll< parallelHostPolicy >( numCells, [computePartIndexA, computePartIndexZ,
+                                             newParts = newParts.toView(),
+                                             index, numPartZ]( localIndex const i )
+    {
+      int const partIdxA = computePartIndexA( index.Get( i, 0 ) );
+      int const partIdxZ = computePartIndexZ( index.Get( i, 1 ) );
+      newParts[i] = partIdxA * numPartZ + partIdxZ;
+    } );
+  } );
+
   vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numProcs, newParts.toViewConst() );
   return vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
 }
@@ -411,69 +613,6 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
   }
 
   return neighbors;
-}
-
-/**
- * @brief Generate global point/cell IDs and redistribute the mesh among MPI ranks.
- * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
- * @param[in] comm the MPI communicator
- * @param[in] partitionRefinement number of graph partitioning refinement cycles
- * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
- */
-vtkSmartPointer< vtkDataSet >
-redistributeMesh( vtkDataSet & loadedMesh,
-                  MPI_Comm const comm,
-                  VTKMeshGenerator::PartitionMethod const method,
-                  int const partitionRefinement,
-                  int const useGlobalIds )
-{
-  GEOSX_MARK_FUNCTION;
-
-  // Generate global IDs for vertices and cells, if needed
-  vtkSmartPointer< vtkDataSet > mesh;
-  bool globalIdsAvailable = loadedMesh.GetPointData()->GetGlobalIds() != nullptr
-                            && loadedMesh.GetCellData()->GetGlobalIds() != nullptr;
-  if( useGlobalIds > 0 && !globalIdsAvailable )
-  {
-    GEOSX_ERROR( "Global IDs strictly required (useGlobalId > 0) but unavailable. Set useGlobalIds to 0 to build them automatically." );
-  }
-  else if( useGlobalIds >= 0 && globalIdsAvailable )
-  {
-    mesh = &loadedMesh;
-    vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
-    vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
-    GEOSX_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != mesh->GetNumberOfCells(),
-                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
-    GEOSX_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != mesh->GetNumberOfPoints(),
-                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
-
-    GEOSX_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
-  }
-  else
-  {
-    GEOSX_LOG_RANK_0( "Generating global Ids from VTK mesh" );
-    vtkNew< vtkGenerateGlobalIds > generator;
-    generator->SetInputDataObject( &loadedMesh );
-    generator->Update();
-    mesh = generateGlobalIDs( loadedMesh );
-  }
-
-
-  // Determine if redistribution is required
-  vtkIdType const minCellsOnAnyRank = MpiWrapper::min( mesh->GetNumberOfCells(), comm );
-  if( minCellsOnAnyRank == 0 )
-  {
-    // Redistribute the mesh over all ranks using simple octree partitions
-    mesh = redistributeByKdTree( *mesh );
-  }
-
-  // Redistribute the mesh again using higher-quality graph partitioner
-  if( partitionRefinement > 0 )
-  {
-    mesh = redistributeByCellGraph( *mesh, method, comm, partitionRefinement - 1 );
-  }
-
-  return mesh;
 }
 
 /**
@@ -626,7 +765,7 @@ splitCellsByTypeAndAttribute( std::map< ElementType, std::vector< vtkIdType > > 
     {
       GEOSX_ERROR_IF_NE_MSG( attributeDataArray->GetNumberOfComponents(), 1,
                              "Invalid number of components in attribute array" );
-      vtkArrayDispatch::Dispatch::Execute( attributeDataArray, [&]( auto const * attributeArray )
+      vtkArrayDispatch::Dispatch::Execute( attributeDataArray, [&]( auto const * const attributeArray )
       {
         using ArrayType = TYPEOFPTR( attributeArray );
         vtkDataArrayAccessor< ArrayType > attribute( attributeArray );
@@ -746,9 +885,11 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
  */
 void fillCellBlock( vtkDataSet & mesh,
                     ElementType const elemType,
-                    std::vector< vtkIdType > const & cellIds,
+                    Span< vtkIdType const > const cellIds,
                     CellBlock & cellBlock )
 {
+  GEOSX_ASSERT_EQ( LvArray::integerConversion< localIndex >( cellIds.size() ), cellBlock.size() );
+
   localIndex const numNodesPerElement = cellBlock.numNodesPerElement();
   arrayView2d< localIndex, cells::NODE_MAP_USD > const cellToVertex = cellBlock.getElemToNode();
   arrayView1d< globalIndex > const & localToGlobal = cellBlock.localToGlobalMap();
@@ -764,10 +905,40 @@ void fillCellBlock( vtkDataSet & mesh,
     vtkCell * const currentCell = mesh.GetCell( c );
     for( localIndex v = 0; v < numNodesPerElement; v++ )
     {
-      cellToVertex[cellCount][v] = currentCell->GetPointId( nodeOrder[v] );
+      cellToVertex[cellCount][v] = LvArray::integerConversion< localIndex >( currentCell->GetPointId( nodeOrder[v] ) );
     }
     localToGlobal[cellCount++] = globalCellId->GetValue( c );
   }
+}
+
+void writeStructuredIndex( vtkDataSet & mesh,
+                           string const & indexArrayName,
+                           Span< vtkIdType const > const cellIds,
+                           CellBlock & cellBlock )
+{
+  GEOSX_ASSERT_EQ( LvArray::integerConversion< localIndex >( cellIds.size() ), cellBlock.size() );
+
+  vtkDataArray * const srcDataArray = mesh.GetCellData()->GetArray( indexArrayName.c_str() );
+  GEOSX_THROW_IF( srcDataArray == nullptr, "Structured index array not found", InputError );
+  integer const numComp = srcDataArray->GetNumberOfComponents();
+
+  using StructIndex = extrinsicMeshData::StructuredIndex;
+  cellBlock.addProperty< StructIndex::type >( StructIndex::key() )
+    .resizeDimension< 1 >( numComp );
+  auto const dstIndex =
+    cellBlock.getReference< StructIndex::type >( StructIndex::key() ).toView();
+
+  vtkArrayDispatch::DispatchByValueType< vtkArrayDispatch::Integrals >::Execute( srcDataArray, [&]( auto const * const srcArray )
+  {
+    vtkDataArrayAccessor< TYPEOFPTR( srcArray ) > const srcIndex( srcArray );
+    forAll< parallelHostPolicy >( cellBlock.size(), [numComp, dstIndex, srcIndex, cellIds]( localIndex const i )
+    {
+      for( integer c = 0; c < numComp; ++c )
+      {
+        dstIndex( i, c ) = static_cast< StructIndex::dataType >( srcIndex.Get( cellIds[i], c ) );
+      }
+    } );
+  } );
 }
 
 /**
@@ -884,6 +1055,7 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
 {
+  vtkArray->GetArrayType();
   using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > >;
   types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto dstArray )
   {
@@ -994,6 +1166,46 @@ findArraysForImport( vtkDataSet & mesh,
 }
 
 } // namespace vtk
+
+vtkSmartPointer< vtkDataSet >
+VTKMeshGenerator::redistributeMesh( vtkDataSet & loadedMesh,
+                                    DomainPartition const & domain ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  // Generate global IDs for vertices and cells
+  vtkSmartPointer< vtkDataSet > mesh = vtk::generateGlobalIDs( loadedMesh, m_useGlobalIds );
+
+  // Determine if redistribution is required
+  vtkIdType const minCellsOnAnyRank = MpiWrapper::min( loadedMesh.GetNumberOfCells(), MPI_COMM_GEOSX );
+  if( minCellsOnAnyRank == 0 )
+  {
+    // Redistribute the mesh over all ranks using simple octree partitions
+    mesh = vtk::redistributeByKdTree( *mesh );
+  }
+
+  // Redistribute the mesh again using higher-quality graph partitioner
+  if( !m_structuredIndexAttributeName.empty() )
+  {
+    SpatialPartition const & partition =
+      dynamic_cast< SpatialPartition const & >( domain.getReference< PartitionBase >( keys::partitionManager ) );
+    mesh = vtk::redistributeByAreaGraphAndLayer( *mesh,
+                                                 m_partitionMethod,
+                                                 m_structuredIndexAttributeName,
+                                                 MPI_COMM_GEOSX,
+                                                 partition.m_Partitions[2],
+                                                 m_partitionRefinement - 1 );
+  }
+  else if( m_partitionRefinement > 0 )
+  {
+    mesh = vtk::redistributeByCellGraph( *mesh,
+                                         m_partitionMethod,
+                                         MPI_COMM_GEOSX,
+                                         m_partitionRefinement - 1 );
+  }
+
+  return mesh;
+}
 
 void VTKMeshGenerator::
   importFieldOnCellElementSubRegion( int const regionId,
@@ -1205,6 +1417,11 @@ void VTKMeshGenerator::writeCells( CellBlockManager & cellBlockManager ) const
       cellBlock.resize( LvArray::integerConversion< localIndex >( cellIds.size() ) );
 
       vtk::fillCellBlock( *m_vtkMesh, elemType, cellIds, cellBlock );
+
+      if( !m_structuredIndexAttributeName.empty() )
+      {
+        vtk::writeStructuredIndex( *m_vtkMesh, m_structuredIndexAttributeName, cellIds, cellBlock );
+      }
     }
   }
 }
@@ -1251,7 +1468,6 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOSX_MARK_FUNCTION;
 
-  MPI_Comm const comm = MPI_COMM_GEOSX;
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
   vtkMultiProcessController::SetGlobalController( controller );
 
@@ -1260,9 +1476,9 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
     GEOSX_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
     vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
-    m_vtkMesh = vtk::redistributeMesh( *loadedMesh, comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
+    m_vtkMesh = redistributeMesh( *loadedMesh, domain );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
-    std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
+    std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, MPI_COMM_GEOSX );
     std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
     domain.getMetisNeighborList().insert( neighbors.begin(), neighbors.end() );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
@@ -1276,7 +1492,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  preprocessing..." );
-  m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_attributeName );
+  m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_regionAttributeName );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  writing nodes..." );
   real64 const globalLength = writeNodes( cellBlockManager );
@@ -1292,7 +1508,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   cellBlockManager.buildMaps();
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
-  vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );
+  vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, MPI_COMM_GEOSX );
 }
 
 void VTKMeshGenerator::freeResources()

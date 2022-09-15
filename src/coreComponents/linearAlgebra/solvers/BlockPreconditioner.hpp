@@ -23,42 +23,10 @@
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 #include "linearAlgebra/utilities/BlockOperator.hpp"
 #include "linearAlgebra/utilities/BlockVector.hpp"
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
 namespace geosx
 {
-
-/**
- * @brief Type of Schur complement approximation used
- *
- * @todo Need more descriptive names for options
- */
-enum class SchurComplementOption
-{
-  None,                  //!< No Schur complement - just block-GS/block-Jacobi preconditioner
-  FirstBlockDiagonal,    //!< Approximate first block with its diagonal
-  RowsumDiagonalProbing, //!< Rowsum-preserving diagonal approximation constructed with probing
-  FirstBlockUserDefined  //!< User defined preconditioner for the first block
-};
-
-/**
- * @brief Type of block row scaling to apply
- */
-enum class BlockScalingOption
-{
-  None,          //!< No scaling
-  FrobeniusNorm, //!< Equilibrate Frobenius norm of the diagonal blocks
-  UserProvided   //!< User-provided scaling
-};
-
-/**
- * @brief Shape of the block preconditioner
- */
-enum class BlockShapeOption
-{
-  Diagonal,            //!< (D)^{-1}
-  UpperTriangular,     //!< (DU)^{-1}
-  LowerUpperTriangular //!< (LDU)^{-1}
-};
 
 /*
  * Since formulas in Doxygen are broken with 1.8.13 and certain versions of ghostscript,
@@ -116,14 +84,7 @@ public:
    * @param schurOption type of Schur complement approximation to use
    * @param scalingOption type of scaling to apply to blocks
    */
-  explicit BlockPreconditioner( BlockShapeOption const shapeOption,
-                                SchurComplementOption const schurOption,
-                                BlockScalingOption const scalingOption );
-
-  /**
-   * @brief Destructor.
-   */
-  virtual ~BlockPreconditioner() override;
+  explicit BlockPreconditioner( LinearSolverParameters::Block params );
 
   /**
    * @brief Setup data for one of the two blocks.
@@ -142,11 +103,25 @@ public:
                    real64 const scaling = 1.0 );
 
   /**
+   * @copydoc setupBlock(localIndex,std::vector<DofManager::SubComponent>,std::unique_ptr<PreconditionerBase<LAI>>,real64)
+   */
+  void setupBlock( localIndex const blockIndex,
+                   std::vector< DofManager::SubComponent > blockDofs,
+                   PreconditionerBase< LAI > * const solver,
+                   real64 const scaling = 1.0 );
+
+  /**
+   * @brief Set user-provided prolongation operator for a block
+   * @param blockIndex index of the block to set up
+   * @param P the operator
+   */
+  void setProlongation( localIndex const blockIndex,
+                        Matrix const & P );
+
+  /**
    * @name PreconditionerBase interface methods
    */
   ///@{
-
-  using PreconditionerBase< LAI >::setup;
 
   /**
    * @brief Compute the preconditioner from a matrix
@@ -167,14 +142,18 @@ public:
 
   ///@}
 
+  BlockOperator< Vector, Matrix > const & blocks() const
+  {
+    return m_matBlocks;
+  }
+
 private:
 
   /**
    * @brief Initialize/resize internal data structures for a new linear system.
    * @param mat the new system matrix
-   * @param dofManager the new dof manager
    */
-  void reinitialize( Matrix const & mat, DofManager const & dofManager );
+  void reinitialize( Matrix const & mat );
 
   /**
    * @brief Apply block scaling to system blocks (which must be already extracted).
@@ -186,32 +165,29 @@ private:
    */
   void computeSchurComplement();
 
-  /// Shape of the block preconditioner
-  BlockShapeOption m_shapeOption;
-
-  /// Type of Schur complement to construct
-  SchurComplementOption m_schurOption;
-
-  /// Whether to scale blocks to equilibrate norms
-  BlockScalingOption m_scalingOption;
+  /// Block preconditioner parameters
+  LinearSolverParameters::Block m_params;
 
   /// Description of dof components making up each of the two main blocks
-  std::array< std::vector< DofManager::SubComponent >, 2 > m_blockDofs;
+  std::array< std::vector< DofManager::SubComponent >, 2 > m_blockDofs{};
 
-  /// Restriction operators for each sub-block
-  std::array< Matrix, 2 > m_restrictors;
+  /// Pointers to prolongation operators for each sub-block
+  std::array< Matrix const *, 2 > m_prolongators{};
 
   /// Prolongation operators for each sub-block
-  std::array< Matrix, 2 > m_prolongators;
+  std::array< Matrix, 2 > m_prolongatorsOwned{};
 
   /// Matrix blocks
   BlockOperator< Vector, Matrix > m_matBlocks;
 
-  /// Individual block preconditioners
-  std::array< std::unique_ptr< PreconditionerBase< LAI > >, 2 > m_solvers;
+  /// Individual block preconditioner pointers
+  std::array< PreconditionerBase< LAI > *, 2 > m_solvers{};
+
+  /// Individual block preconditioner operators (when owned)
+  std::array< std::unique_ptr< PreconditionerBase< LAI > >, 2 > m_solversOwned{};
 
   /// Scaling of each block
-  std::array< real64, 2 > m_scaling;
+  std::array< real64, 2 > m_scaling{};
 
   /// Internal vector of block residuals
   mutable BlockVector< Vector > m_rhs;

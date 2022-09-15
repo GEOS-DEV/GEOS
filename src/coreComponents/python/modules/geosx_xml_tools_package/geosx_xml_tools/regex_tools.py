@@ -26,7 +26,8 @@ patterns = {
 }
 
 # String formatting for symbolic expressions
-symbolic_format = '%1.6e'
+# symbolic_format = '%1.6e'
+symbolic_format = '%g'
 
 
 def SymbolicMathRegexHandler(match):

@@ -32,10 +32,16 @@ FunctionBase::FunctionBase( const string & name,
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( keys::inputVarNames, &m_inputVarNames ).
+  registerWrapper( viewKeyStruct::inputVarNamesString(), &m_inputVarNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Name of fields are input to function." );
+
+  registerWrapper( viewKeyStruct::inputVarScaleString(), &m_inputVarScale ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( 1.0 ).
+    setSizedFromParent( 0 ).
+    setDescription( "Scaling applied to function inputs before function evaluation." );
 }
 
 integer FunctionBase::isFunctionOfTime() const
@@ -45,6 +51,16 @@ integer FunctionBase::isFunctionOfTime() const
     return 1 + ( m_inputVarNames.size() == 1 );
   }
   return 0;
+}
+
+void FunctionBase::postProcessInput()
+{
+  if( !getWrapperBase( viewKeyStruct::inputVarScaleString() ).getSuccessfulReadFromInput() )
+  {
+    m_inputVarScale.resizeDefault( MAX_VARS, 1.0 );
+  }
+
+  initializeFunction();
 }
 
 real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,

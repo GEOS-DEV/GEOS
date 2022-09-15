@@ -60,14 +60,14 @@ PCType getPetscSmootherType( LinearSolverParameters::PreconditionerType const & 
 {
   static std::map< LinearSolverParameters::PreconditionerType, PCType > const typeMap =
   {
-    { LinearSolverParameters::PreconditionerType::iluk, PCILU },
-    { LinearSolverParameters::PreconditionerType::ic, PCICC },
-    { LinearSolverParameters::PreconditionerType::jacobi, PCJACOBI },
+    { LinearSolverParameters::PreconditionerType::ilu,      PCILU },
+    { LinearSolverParameters::PreconditionerType::ic,       PCICC },
+    { LinearSolverParameters::PreconditionerType::jacobi,   PCJACOBI },
     { LinearSolverParameters::PreconditionerType::l1jacobi, PCJACOBI },
-    { LinearSolverParameters::PreconditionerType::fgs, PCSOR },
-    { LinearSolverParameters::PreconditionerType::bgs, PCSOR },
-    { LinearSolverParameters::PreconditionerType::sgs, PCSOR },
-    { LinearSolverParameters::PreconditionerType::l1sgs, PCSOR },
+    { LinearSolverParameters::PreconditionerType::fgs,      PCSOR },
+    { LinearSolverParameters::PreconditionerType::bgs,      PCSOR },
+    { LinearSolverParameters::PreconditionerType::sgs,      PCSOR },
+    { LinearSolverParameters::PreconditionerType::l1sgs,    PCSOR },
   };
 
   GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Petsc smoother option: " << type );
@@ -165,6 +165,9 @@ void createPetscAMG( LinearSolverParameters const & params,
 
   // Set max number of levels
   GEOSX_LAI_CHECK_ERROR( PCGAMGSetNlevels( precond, params.amg.maxLevels ) );
+
+  // Set coarse grid max size (coarsening will stop once this limit is reached)
+  GEOSX_LAI_CHECK_ERROR( PCGAMGSetCoarseEqLim( precond, params.amg.maxCoarseSize ) );
 
   // TODO: need someone familiar with PETSc to take a look at this
 #if 0
@@ -325,7 +328,7 @@ void PetscPreconditioner::setup( PetscMatrix const & mat )
       case LinearSolverParameters::PreconditionerType::fgs:
       case LinearSolverParameters::PreconditionerType::bgs:
       case LinearSolverParameters::PreconditionerType::sgs:
-      case LinearSolverParameters::PreconditionerType::iluk:
+      case LinearSolverParameters::PreconditionerType::ilu:
       case LinearSolverParameters::PreconditionerType::ic:
       {
         createPetscSmoother( m_params, m_precond );

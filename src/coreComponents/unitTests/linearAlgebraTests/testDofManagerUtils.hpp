@@ -77,10 +77,10 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
  *
  * Mainly used to allow empty region lists to mean all regions.
  */
-std::vector< DofManager::Regions > getRegions( DomainPartition const & domain, std::vector< DofManager::Regions > const & input )
+std::vector< DofSupport > getRegions( DomainPartition const & domain, std::vector< DofSupport > const & input )
 {
-  std::vector< DofManager::Regions > regions( input.begin(), input.end() );
-  for( DofManager::Regions & support : regions )
+  std::vector< DofSupport > regions( input.begin(), input.end() );
+  for( DofSupport & support : regions )
   {
     if( support.regionNames.empty() )
     {
@@ -236,10 +236,10 @@ void forLocalObjects( MeshLevel const & mesh,
  * @return the number of locally owned objects (e.g. nodes)
  */
 template< FieldLocation LOC >
-localIndex countLocalObjects( DomainPartition const & domain, std::vector< DofManager::Regions > const & support )
+localIndex countLocalObjects( DomainPartition const & domain, std::vector< DofSupport > const & support )
 {
   localIndex numLocal = 0;
-  for( DofManager::Regions const & regions : support )
+  for( DofSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
@@ -259,12 +259,12 @@ localIndex countLocalObjects( DomainPartition const & domain, std::vector< DofMa
  */
 void makeSparsityTPFA( DomainPartition const & domain,
                        string const & dofIndexKey,
-                       std::vector< DofManager::Regions > const & support,
+                       std::vector< DofSupport > const & support,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
@@ -340,12 +340,12 @@ void makeSparsityTPFA( DomainPartition const & domain,
  */
 void makeSparsityFEM( DomainPartition const & domain,
                       string const & dofIndexKey,
-                      std::vector< DofManager::Regions > const & support,
+                      std::vector< DofSupport > const & support,
                       globalIndex const rankOffset,
                       localIndex const numComp,
                       CRSMatrix< real64 > & sparsity )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
@@ -405,13 +405,13 @@ void makeSparsityFEM( DomainPartition const & domain,
 void makeSparsityFEM_FVM( DomainPartition const & domain,
                           string const & dofIndexKeyNode,
                           string const & dofIndexKeyElem,
-                          std::vector< DofManager::Regions > const & support,
+                          std::vector< DofSupport > const & support,
                           globalIndex const rankOffset,
                           localIndex const numCompNode,
                           localIndex const numCompElem,
                           CRSMatrix< real64 > & sparsity )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
@@ -495,13 +495,13 @@ void makeSparsityFEM_FVM( DomainPartition const & domain,
  */
 void makeSparsityMass( DomainPartition const & domain,
                        string const & dofIndexKey,
-                       std::vector< DofManager::Regions > const & support,
+                       std::vector< DofSupport > const & support,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
 {
 
-  for( DofManager::Regions const & regions : support )
+  for( DofSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
@@ -548,12 +548,12 @@ void makeSparsityMass( DomainPartition const & domain,
  */
 void makeSparsityFlux( DomainPartition const & domain,
                        string const & dofIndexKey,
-                       std::vector< DofManager::Regions > const & support,
+                       std::vector< DofSupport > const & support,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );

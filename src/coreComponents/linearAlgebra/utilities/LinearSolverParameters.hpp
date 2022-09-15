@@ -42,6 +42,7 @@ struct LinearSolverParameters
     gmres,         ///< GMRES
     fgmres,        ///< Flexible GMRES
     bicgstab,      ///< BiCGStab
+    richardson,    ///< Richardson iteration
     preconditioner ///< Preconditioner only
   };
 
@@ -57,7 +58,7 @@ struct LinearSolverParameters
     sgs,       ///< Symmetric Gauss-Seidel smoothing
     l1sgs,     ///< l1-Symmetric Gauss-Seidel smoothing
     chebyshev, ///< Chebyshev polynomial smoothing
-    iluk,      ///< Incomplete LU with k-level of fill
+    ilu,       ///< Incomplete LU with k-level of fill
     ilut,      ///< Incomplete LU with thresholding
     ic,        ///< Incomplete Cholesky
     ict,       ///< Incomplete Cholesky with thresholding
@@ -66,6 +67,7 @@ struct LinearSolverParameters
     block,     ///< Block preconditioner
     direct,    ///< Direct solver as preconditioner
     bgs,       ///< Gauss-Seidel smoothing (backward sweep)
+    multiscale,///< Multiscale preconditioner
   };
 
   integer logLevel = 0;     ///< Output level [0=none, 1=basic, 2=everything]
@@ -74,7 +76,7 @@ struct LinearSolverParameters
   integer stopIfError = 1;  ///< Whether to stop the simulation if the linear solver reports an error
 
   SolverType solverType = SolverType::direct;          ///< Solver type
-  PreconditionerType preconditionerType = PreconditionerType::iluk;  ///< Preconditioner type
+  PreconditionerType preconditionerType = PreconditionerType::ilu;  ///< Preconditioner type
 
   /// Direct solver parameters: used for SuperLU_Dist interface through hypre and PETSc
   struct Direct
@@ -122,6 +124,19 @@ struct LinearSolverParameters
   }
   krylov;                             ///< Krylov-method parameter struct
 
+  /// Relaxation/stationary iteration parameters (Richardson, damped Jacobi, etc.)
+  struct Relaxation
+  {
+    real64 weight = 2.0 / 3.0;        ///< Relaxation weight (omega) for stationary iterations
+  } relaxation;
+
+  /// Chebyshev iteration/smoothing parameters
+  struct Chebyshev
+  {
+    integer order = 2;                ///< Chebyshev order
+    integer eigNumIter = 10;          ///< Number of eigenvalue estimation CG iterations
+  } chebyshev;
+
   /// Matrix-scaling parameters
   struct Scaling
   {
@@ -159,9 +174,9 @@ struct LinearSolverParameters
       sgs,       ///< Symmetric Gauss-Seidel smoothing
       l1sgs,     ///< l1-Symmetric Gauss-Seidel smoothing
       chebyshev, ///< Chebyshev polynomial smoothing
-      ilu0,      ///< ILU(0)
+      ilu,       ///< Incomplete LU
       ilut,      ///< Incomplete LU with thresholding
-      ic0,       ///< Incomplete Cholesky
+      ic,        ///< Incomplete Cholesky
       ict,       ///< Incomplete Cholesky with thresholding
     };
 
@@ -187,6 +202,7 @@ struct LinearSolverParameters
     };
 
     integer maxLevels = 20;                         ///< Maximum number of coarsening levels
+    integer numCycles = 1;                          ///< Number of multigrid cycles
     CycleType cycleType = CycleType::V;             ///< AMG cycle type
     SmootherType smootherType = SmootherType::fgs;  ///< Smoother type
     CoarseType coarseType = CoarseType::direct;     ///< Coarse-level solver/smoother
@@ -195,6 +211,7 @@ struct LinearSolverParameters
     integer numSweeps = 2;                          ///< Number of smoother sweeps
     integer numFunctions = 1;                       ///< Number of amg functions
     integer aggresiveNumLevels = 0;                 ///< Number of levels for aggressive coarsening.
+    integer maxCoarseSize = 9;                      ///< Threshold for coarse grid size
     PreOrPost preOrPostSmoothing = PreOrPost::both; ///< Pre and/or post smoothing
     real64 threshold = 0.0;                         ///< Threshold for "strong connections" (for classical and smoothed-aggregation AMG)
     integer separateComponents = false;             ///< Apply a separate component filter before AMG construction
@@ -248,6 +265,148 @@ struct LinearSolverParameters
     integer overlap = 0;   ///< Ghost overlap
   }
   dd;                      ///< Domain decomposition parameter struct
+
+  /// Block preconditioner parameters
+  struct Block
+  {
+    /// Shape of the block preconditioner
+    enum class Shape
+    {
+      Diagonal,            //!< (D)^{-1}
+      UpperTriangular,     //!< (DU)^{-1}
+      LowerTriangular,     //!< (LD)^{-1}
+      LowerUpperTriangular //!< (LDU)^{-1}
+    };
+
+    /// Type of Schur complement approximation used
+    enum class SchurType
+    {
+      None,                  //!< No Schur complement - just block-GS/block-Jacobi preconditioner
+      FirstBlockDiagonal,    //!< Approximate first block with its diagonal
+      RowsumDiagonalProbing, //!< Rowsum-preserving diagonal approximation constructed with probing
+      FirstBlockUserDefined  //!< User defined preconditioner for the first block
+    };
+
+    /// Type of block row scaling to apply
+    enum class Scaling
+    {
+      None,          //!< No scaling
+      FrobeniusNorm, //!< Equilibrate Frobenius norm of the diagonal blocks
+      UserProvided   //!< User-provided scaling
+    };
+
+    Shape shape = Shape::UpperTriangular;
+    SchurType schurType = SchurType::RowsumDiagonalProbing;
+    Scaling scaling = Scaling::FrobeniusNorm;
+
+    array1d< LinearSolverParameters const * > subParams; ///< Pointers to parameters for subproblems
+  } block;
+
+  struct Multiscale
+  {
+    enum class BasisType
+    {
+      msrsb,   ///< Restricted Smoothing Basis Multiscale
+    };
+
+    // Core parameters
+    BasisType basisType = BasisType::msrsb;                     ///< Type of basis functions
+    string fieldName;                                           ///< DofManager field name, populated by the physics solver
+    integer maxLevels = 5;                                      ///< Limit on total number of grid levels
+    integer galerkin = 1;                                       ///< Whether to use Galerkin definition R = P^T (otherwise R = P_0^T)
+    real64 droptol = 0.0;                                       ///< Dropping tolerance for coarse matrix values (relative to row max)
+    PreconditionerType coarseType = PreconditionerType::direct; ///< Coarse solver type
+    integer separateComponents = false;                         ///< Apply a separate component filter before multiscale
+    array1d< string > boundarySets;                             ///< List of boundary node set names (needed for coarse node detection)
+
+    // Debugging/user-display settings
+    string label;                                               ///< User-displayed label of the scheme
+    integer debugLevel = 0;                                     ///< Flag for enabling addition debugging output
+
+    struct Smoother
+    {
+      PreconditionerType type = PreconditionerType::sgs; ///< Smoother type
+      AMG::PreOrPost preOrPost = AMG::PreOrPost::both;   ///< Pre and/or post smoothing [pre,post,both]
+      integer numSweeps = 1;                             ///< Number of smoother sweeps
+    } smoother;
+
+    struct Coupled
+    {
+      integer useBlockSmoother = 1; ///< Whether to use block smoother
+    } coupled;
+
+    struct Coarsening
+    {
+      enum class PartitionType
+      {
+        graph,          ///< Graph-based
+        cartesian,      ///< Cartesian (only with internal mesh)
+        semistructured, ///< For 2.5D (extruded) meshes
+      };
+
+      PartitionType partitionType = PartitionType::graph; ///< Partitioning/coarsening method
+      array1d< real64 > ratio;                            ///< Coarsening ratio (cell-based), total or per-dimension
+      globalIndex maxCoarseDof = 0;                       ///< Limit of coarsening globally (trims the grid hierarchy)
+
+      struct Structured
+      {
+        integer semicoarsening = 0; ///< Use semicoarsenining in Z-direction
+      } structured;
+
+      struct Graph
+      {
+        enum class Method
+        {
+          metis,
+          scotch,
+        };
+
+        Method method = Method::metis; ///< Graph partitioning method (library)
+        integer minCommonNodes = 3;    ///< Min number of common nodes when constructing a cell connectivity graph
+        integer preserveRegions = 0;   ///< Attempt to keep cells from the same region in one aggregate
+        integer matrixWeights = 0;     ///< If >0, specifies matrix weight multiplier
+        CRSMatrix< real64, localIndex > const * localMatrix{}; ///< Local matrix to use for weights
+
+        struct Metis
+        {
+          enum class Method
+          {
+            kway,
+            recursive
+          };
+
+          Method method = Method::kway;    ///< METIS partitioning algorithm
+          integer ufactor = 30;            ///< METIS UFACTOR option (allowed partition imbalance)
+          integer seed = 2020;             ///< Random number generator seed
+        } metis;
+
+        struct Scotch
+        {
+          // TODO
+        } scotch;
+
+      } graph;
+
+    } coarsening;
+
+    struct MsRSB
+    {
+      enum class SupportType : integer
+      {
+        layers,
+        matching
+      };
+
+      SupportType support     = SupportType::matching; ///< algorithm used to construct support regions
+      integer numLayers       = 3;          ///< Number of layers to grow (for support = layers)
+      integer maxIter         = 100;        ///< Max number of smoothing iterations
+      real64 tolerance        = 1e-3;       ///< Smoothing iteration convergence tolerance
+      real64 relaxation       = 2.0 / 3.0;  ///< Relaxation parameter for Jacobi smoothing
+      integer checkFrequency  = 10;         ///< Convergence check frequency (num smoothing iterations)
+      integer updateFrequency = 10;         ///< Coarse operator update frequency (num smoothing iterations)
+    } msrsb;
+  }
+  multiscale;
 };
 
 /// Declare strings associated with enumeration values.
@@ -257,6 +416,7 @@ ENUM_STRINGS( LinearSolverParameters::SolverType,
               "gmres",
               "fgmres",
               "bicgstab",
+              "richardson",
               "preconditioner" );
 
 /// Declare strings associated with enumeration values.
@@ -268,15 +428,16 @@ ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "sgs",
               "l1sgs",
               "chebyshev",
-              "iluk",
+              "ilu",
               "ilut",
-              "icc",
+              "ic",
               "ict",
               "amg",
               "mgr",
               "block",
               "direct",
-              "bgs" );
+              "bgs",
+              "multiscale" );
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,
@@ -332,9 +493,9 @@ ENUM_STRINGS( LinearSolverParameters::AMG::SmootherType,
               "sgs",
               "l1sgs",
               "chebyshev",
-              "ilu0",
+              "ilu",
               "ilut",
-              "ic0",
+              "ic",
               "ict" );
 
 /// Declare strings associated with enumeration values.
@@ -353,6 +514,51 @@ ENUM_STRINGS( LinearSolverParameters::AMG::CoarseType,
 ENUM_STRINGS( LinearSolverParameters::AMG::NullSpaceType,
               "constantModes",
               "rigidBodyModes" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Block::Shape,
+              "D",
+              "DU",
+              "LD",
+              "LDU" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Block::SchurType,
+              "none",
+              "diagonal",
+              "probing",
+              "user" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Block::Scaling,
+              "none",
+              "frobenius",
+              "user" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Multiscale::BasisType,
+              "msrsb" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Multiscale::Coarsening::PartitionType,
+              "graph",
+              "cartesian",
+              "semistructured" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Multiscale::Coarsening::Graph::Method,
+              "metis",
+              "scotch" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Multiscale::Coarsening::Graph::Metis::Method,
+              "kway",
+              "recursive" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Multiscale::MsRSB::SupportType,
+              "layers",
+              "matching" );
 
 } /* namespace geosx */
 

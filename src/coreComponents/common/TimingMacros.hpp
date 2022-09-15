@@ -40,16 +40,16 @@ namespace timingHelpers
   {
     std::string input(prettyFunction);
     std::string::size_type const end = input.find_first_of( '(' );
-    std::string::size_type const beg = input.find_last_of( ' ', end)+1;
+    std::string::size_type const beg = input.find_last_of( ' ', end ) + 1;
     return input.substr( beg, end-beg );
   }
 }
 
 /// Mark a function or scope for timing with a given name
-#define GEOSX_MARK_SCOPE(name) cali::Function __cali_ann##__LINE__(STRINGIZE_NX(name))
+#define GEOSX_MARK_SCOPE(name) cali::Function GEOSX_CONCAT(_cali_ann, __LINE__)(STRINGIZE_NX(name))
 
 /// Mark a function for timing using a compiler-provided name
-#define GEOSX_MARK_FUNCTION cali::Function __cali_ann##__func__(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str())
+#define GEOSX_MARK_FUNCTION cali::Function _cali_ann_func(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str())
 
 /// Mark the beginning of timed statement group
 #define GEOSX_MARK_BEGIN(name) CALI_MARK_BEGIN(STRINGIZE(name))

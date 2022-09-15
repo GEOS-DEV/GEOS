@@ -55,9 +55,6 @@ public:
   SinglePhasePoromechanicsSolver( const string & name,
                                   Group * const parent );
 
-  /// Destructor for the class
-  ~SinglePhasePoromechanicsSolver() override {}
-
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new SinglePhasePoromechanicsSolver object through the object catalog.
@@ -101,6 +98,9 @@ public:
                             ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const override;
+
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
@@ -115,6 +115,11 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
+  virtual void solveLinearSystem( DofManager const & dofManager,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution ) override;
+
   /**@}*/
 
 protected:
@@ -122,6 +127,7 @@ protected:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
+    constexpr static char const * linearSystemScalingString() { return "linearSystemScaling"; }
   };
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
@@ -130,8 +136,11 @@ protected:
 
 private:
 
-  void createPreconditioner();
+  // input flag indicating whether system scaling should be performed
+  integer m_systemScaling = 0;
 
+  // A vector to perform row/block-wise linear system scaling
+  ParallelVector m_scalingVector;
 };
 
 } /* namespace geosx */

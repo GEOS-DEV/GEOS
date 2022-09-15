@@ -182,14 +182,23 @@ inline HYPRE_BigInt const * toHypreBigInt( geosx::globalIndex const * const inde
 }
 
 /**
- * @brief Gather a parallel vector on a every rank.
+ * @brief Gather a parallel vector on every rank.
  * @param vec the vector to gather
- * @return A newly allocated serial vector (may be null on ranks that don't have any elements)
+ * @return a newly allocated serial vector (may be null on ranks that don't have any elements)
+ * @note caller takes ownership and must dispose of the vector appropriately
  *
  * This is a wrapper around hypre_ParVectorToVectorAll() that works for both host-based
  * and device-based vectors without relying on Unified Memory.
  */
 HYPRE_Vector parVectorToVectorAll( HYPRE_ParVector const vec );
+
+/**
+ * @brief Gather a parallel vector onto a single rank.
+ * @param vec the vector to gather
+ * @return a newly allocated serial vector on @p targetRank, nullptr on the rest
+ * @note caller takes ownership and must dispose of the vector appropriately
+ */
+HYPRE_Vector parVectorToVector( HYPRE_ParVector const vec, int const targetRank );
 
 /**
  * @brief Dummy function that does nothing but conform to hypre's signature for preconditioner setup/apply functions.
@@ -265,6 +274,50 @@ HYPRE_Int relaxationSolve( HYPRE_Solver solver,
 HYPRE_Int relaxationDestroy( HYPRE_Solver solver );
 
 /**
+ * @brief Create a Chebyshev smoother.
+ * @param solver the solver
+ * @param order Chebyshev order (degree)
+ * @param eigNumIter number of eigenvalue estimation iterations
+ * @return always 0
+ */
+HYPRE_Int chebyshevCreate( HYPRE_Solver & solver,
+                           HYPRE_Int const order,
+                           HYPRE_Int const eigNumIter );
+
+/**
+ * @brief Setup a Chebyshev smoother.
+ * @param solver the solver
+ * @param A the matrix
+ * @param b the rhs vector (unused)
+ * @param x the solution vector (unused)
+ * @return hypre error code
+ */
+HYPRE_Int chebyshevSetup( HYPRE_Solver solver,
+                          HYPRE_ParCSRMatrix A,
+                          HYPRE_ParVector b,
+                          HYPRE_ParVector x );
+
+/**
+ * @brief Solve with a Chebyshev smoother.
+ * @param solver the solver
+ * @param A the matrix
+ * @param b the rhs vector (unused)
+ * @param x the solution vector (unused)
+ * @return hypre error code
+ */
+HYPRE_Int chebyshevSolve( HYPRE_Solver solver,
+                          HYPRE_ParCSRMatrix A,
+                          HYPRE_ParVector b,
+                          HYPRE_ParVector x );
+
+/**
+ * @brief Destroy a Chebyshev smoother.
+ * @param solver the solver
+ * @return always 0
+ */
+HYPRE_Int chebyshevDestroy( HYPRE_Solver solver );
+
+/**
  * @brief Returns hypre's identifier of the AMG cycle type.
  * @param type AMG cycle type
  * @return hypre AMG cycle type identifier code
@@ -313,7 +366,7 @@ inline HYPRE_Int getILUType( LinearSolverParameters::AMG::SmootherType const typ
 {
   static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
   {
-    { LinearSolverParameters::AMG::SmootherType::ilu0, 0 },
+    { LinearSolverParameters::AMG::SmootherType::ilu,  0 },
     { LinearSolverParameters::AMG::SmootherType::ilut, 1 },
   };
   return findOption( typeMap, type, "ILU", "HyprePreconditioner" );
@@ -400,7 +453,7 @@ inline HYPRE_Int getILUType( LinearSolverParameters::PreconditionerType const ty
 {
   static map< LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
   {
-    { LinearSolverParameters::PreconditionerType::iluk, 0 },
+    { LinearSolverParameters::PreconditionerType::ilu,  0 },
     { LinearSolverParameters::PreconditionerType::ilut, 1 },
   };
   return findOption( typeMap, type, "ILU", "HyprePreconditioner" );
