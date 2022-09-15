@@ -56,6 +56,17 @@ public:
   };
 
   /**
+   * @enum BoundaryConditionOption
+   *
+   * The options for essential boundary conditions
+   */
+  enum struct BoundaryConditionOption : integer
+  {
+    OUTFLOW,    //!<Outflow
+    SYMMETRY    //!<Symmetry
+  };
+
+  /**
    * Constructor
    * @param name The name of the solver instance
    * @param parent the parent group of the solver
@@ -165,21 +176,30 @@ public:
     static constexpr char const * surfaceNormalString() { return "surfaceNormal"; }
     static constexpr char const * materialPositionString() { return "materialPosition"; }
 
+    static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
+    static constexpr char const * bufferNodesString() { return "bufferNodes"; }
 
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
 
-  void initialize(NodeManager & nodeManager,
-                  ParticleManager & particleManager,
-                  SpatialPartition & partition);
+  void initialize (NodeManager & nodeManager,
+                   ParticleManager & particleManager,
+                   SpatialPartition & partition );
 
 protected:
   virtual void postProcessInput() override final;
 
   virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const override;
 
+  int m_solverProfiling;
+
+  std::vector< real64 > m_profilingTimes;
+  std::vector< std::string > m_profilingLabels;
+
   TimeIntegrationOption m_timeIntegrationOption;
   MPI_iCommData m_iComm;
+
+  array1d< int > m_boundaryConditionTypes;
 
   real64 m_smallMass;
 
@@ -191,16 +211,18 @@ protected:
   int m_planeStrain;
   int m_numDims;
 
-  std::array<real64, 3> m_hEl;                // Grid spacing in x-y-z
-  std::array<real64, 3> m_xLocalMin;          // Minimum local grid coordinate including ghost nodes
-  std::array<real64, 3> m_xLocalMax;          // Maximum local grid coordinate including ghost nodes
-  std::array<real64, 3> m_xLocalMinNoGhost;   // Minimum local grid coordinate EXCLUDING ghost nodes
-  std::array<real64, 3> m_xLocalMaxNoGhost;   // Maximum local grid coordinate EXCLUDING ghost nodes
-  std::array<real64, 3> m_xGlobalMin;         // Minimum global grid coordinate
-  std::array<real64, 3> m_xGlobalMax;         // Maximum global grid coordinate
-  std::array<real64, 3> m_domainLengths;      // Length of each edge of grid
-  std::array<int, 3> m_nEl;                   // Number of elements in each grid direction
-  array3d< int > m_ijkMap;                    // Map from cell-spaced coordinates to cell ID
+
+
+  std::array< real64, 3 > m_hEl;                // Grid spacing in x-y-z
+  std::array< real64, 3 > m_xLocalMin;          // Minimum local grid coordinate including ghost nodes
+  std::array< real64, 3 > m_xLocalMax;          // Maximum local grid coordinate including ghost nodes
+  std::array< real64, 3 > m_xLocalMinNoGhost;   // Minimum local grid coordinate EXCLUDING ghost nodes
+  std::array< real64, 3 > m_xLocalMaxNoGhost;   // Maximum local grid coordinate EXCLUDING ghost nodes
+  std::array< real64, 3 > m_xGlobalMin;         // Minimum global grid coordinate excluding buffer nodes
+  std::array< real64, 3 > m_xGlobalMax;         // Maximum global grid coordinate excluding buffer nodes
+  std::array< real64, 3 > m_domainLengths;      // Length of each edge of grid
+  std::array< int, 3 > m_nEl;                   // Number of elements in each grid direction including buffer cells
+  array3d< int > m_ijkMap;                      // Map from cell-spaced coordinates to cell ID
 
   int m_voigtMap[3][3];
 
@@ -211,6 +233,10 @@ private:
                        DomainPartition & domain,
                        NodeManager & nodeManager,
                        MeshLevel & mesh );
+
+  void enforceGridVectorFieldSymmetryBC( array3d< real64 > & vectorField,
+                                         arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridReferencePosition,
+                                         Group & nodeSets );
 
   void computeGridSurfaceNormals( ParticleManager & particleManager,
                                   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridReferencePosition,
@@ -254,12 +280,18 @@ private:
 
   void setGridFieldLabels( NodeManager & nodeManager );
 
+  void solverProfiling( std::string label );
+
 };
 
 ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,
               "QuasiStatic",
               "ImplicitDynamic",
               "ExplicitDynamic" );
+
+ENUM_STRINGS( SolidMechanicsMPM::BoundaryConditionOption,
+              "Outflow",
+              "Symmetry" );
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************

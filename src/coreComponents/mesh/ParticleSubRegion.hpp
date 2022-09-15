@@ -86,6 +86,10 @@ public:
 
   ///@}
 
+  void deleteOutOfRangeParticles( std::array< real64, 3 > const & xGlobalMin,
+                                  std::array< real64, 3 > const & xGlobalMax,
+                                  std::array< real64, 3 > const & hEl );
+
   void updateRVectors(int const p,
                       LvArray::ArraySlice<double, 2, 1, int> const & p_F);
 
