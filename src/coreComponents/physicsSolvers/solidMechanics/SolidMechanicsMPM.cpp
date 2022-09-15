@@ -57,9 +57,11 @@ namespace tOps = LvArray::tensorOps; // We call this A LOT, make an alias
 SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
                                       Group * const parent ):
   SolverBase( name, parent ),
+  m_solverProfiling( 0 ),
   m_timeIntegrationOption( TimeIntegrationOption::ExplicitDynamic ),
   m_iComm( CommunicationTools::getInstance().getCommID() ),
-  m_smallMass( 1.0e-12 ),
+  m_boundaryConditionTypes(),
+  m_smallMass(),
   m_numContactGroups(),
   m_numContactFlags(),
   m_numVelocityFields(),
@@ -68,22 +70,30 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_frictionCoefficient( 0.0 ),
   m_planeStrain( false ),
   m_numDims( 3 ),
-  m_hEl{DBL_MAX, DBL_MAX, DBL_MAX},
-  m_xLocalMin{DBL_MAX, DBL_MAX, DBL_MAX},
-  m_xLocalMax{DBL_MIN, DBL_MIN, DBL_MIN},
-  m_xLocalMinNoGhost{0.0, 0.0, 0.0},
-  m_xLocalMaxNoGhost{0.0, 0.0, 0.0},
-  m_xGlobalMin{0.0, 0.0, 0.0},
-  m_xGlobalMax{0.0, 0.0, 0.0},
-  m_domainLengths{0.0, 0.0, 0.0},
-  m_nEl{0, 0, 0},
+  m_hEl{ DBL_MAX, DBL_MAX, DBL_MAX },
+  m_xLocalMin{ DBL_MAX, DBL_MAX, DBL_MAX },
+  m_xLocalMax{ DBL_MIN, DBL_MIN, DBL_MIN },
+  m_xLocalMinNoGhost{ 0.0, 0.0, 0.0 },
+  m_xLocalMaxNoGhost{ 0.0, 0.0, 0.0 },
+  m_xGlobalMin{ 0.0, 0.0, 0.0 },
+  m_xGlobalMax{ 0.0, 0.0, 0.0 },
+  m_domainLengths{ 0.0, 0.0, 0.0 },
+  m_nEl{ 0, 0, 0 },
   m_ijkMap(),
   m_voigtMap{ {0, 5, 4}, {5, 1, 3}, {4, 3, 2} }
 {
+  registerWrapper( "solverProfiling", &m_solverProfiling ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag for timing subroutines in the solver" );
+  
   registerWrapper( viewKeyStruct::timeIntegrationOptionString(), &m_timeIntegrationOption ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_timeIntegrationOption ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
+
+  registerWrapper( "boundaryConditionTypes", &m_boundaryConditionTypes ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Boundary conditions on x-, x+, y-, y+, z- and z+ faces. Options are:\n* " + EnumStrings< BoundaryConditionOption >::concat( "\n* " ) );
 
   registerWrapper( "numContactGroups", &m_numContactGroups ).
     setInputFlag( InputFlags::FALSE ).
@@ -167,7 +177,20 @@ void SolidMechanicsMPM::postProcessInput()
 {
   SolverBase::postProcessInput();
 
+  // Set number of active dimensions based on m_planeStrain
   m_numDims = m_planeStrain ? 2 : 3;
+
+  // Throw error if boundary conditions are incorrectly specified
+  GEOSX_ERROR_IF( m_boundaryConditionTypes.size() != 6 && m_boundaryConditionTypes.size() > 0,
+                  "boundaryConditionTypes must be of length 6. "
+                  "The 6 entries correspond to BCs on the x-, x+, y-, y+, z- and z+ faces." );
+
+  // Initialize boundary condition types if they're not specified by the user
+  if( m_boundaryConditionTypes.size() == 0 )
+  {
+    m_boundaryConditionTypes.resize(6);
+    tOps::fill< 6 >( m_boundaryConditionTypes, 0 );
+  }
 }
 
 SolidMechanicsMPM::~SolidMechanicsMPM()
@@ -273,7 +296,15 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
 
 
-      // Group & nodeSets = nodes.sets(); // Do we need to register BC nodes on this?
+      Group & nodeSets = nodes.sets();
+
+      nodeSets.registerWrapper< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRestartFlags( RestartFlags::NO_WRITE );
+
+      nodeSets.registerWrapper< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRestartFlags( RestartFlags::NO_WRITE );
     }
   } );
 }
@@ -377,23 +408,20 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   array3d< real64 > & gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceContactString() );
   array3d< real64 > & gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::surfaceNormalString() );
   array3d< real64 > & gridMaterialPosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() );
-
   
-  // Get global domain extent
+  // Get local domain extent
   for(int g=0; g<numNodes; g++)
   {
     for(int i=0; i<3; i++)
     {
-      m_xLocalMin[i] = std::min(m_xLocalMin[i],gridReferencePosition[g][i]);
-      m_xLocalMax[i] = std::max(m_xLocalMax[i],gridReferencePosition[g][i]);
+      m_xLocalMin[i] = std::fmin( m_xLocalMin[i], gridReferencePosition[g][i] );
+      m_xLocalMax[i] = std::fmax( m_xLocalMax[i], gridReferencePosition[g][i] );
     }
   }
   for(int i=0; i<3; i++)
   {
     m_xLocalMinNoGhost[i] = partition.getLocalMin()[i];
     m_xLocalMaxNoGhost[i] = partition.getLocalMax()[i];
-    m_xGlobalMin[i] = partition.getGlobalMin()[i];
-    m_xGlobalMax[i] = partition.getGlobalMax()[i];
     m_domainLengths[i] = m_xLocalMax[i] - m_xLocalMin[i];
   }
 
@@ -405,25 +433,70 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       real64 test = gridReferencePosition[g][i] - m_xLocalMin[i]; // By definition, this should always be positive. Furthermore, the gridReferencePosition should only be those on the local partition
       if(test > 0.0) // We're looking for the smallest nonzero distance from the "min" node. TODO: Could be vulnerable to a finite precision bug.
       {
-        m_hEl[i] = std::fmin(test, m_hEl[i]);
+        m_hEl[i] = std::fmin( test, m_hEl[i] );
       }
     }
+  }
+
+  // Get global domain extent excluding buffer nodes
+  for(int i=0; i<3; i++)
+  {
+    m_xGlobalMin[i] = partition.getGlobalMin()[i] + m_hEl[i];
+    m_xGlobalMax[i] = partition.getGlobalMax()[i] - m_hEl[i];
   }
 
   // Get number of elements in each direction
   for(int i=0; i<3; i++)
   {
-    m_nEl[i] = std::round(m_domainLengths[i]/m_hEl[i]);
+    m_nEl[i] = std::round( m_domainLengths[i] / m_hEl[i] );
   }
 
   // Create element map
   m_ijkMap.resize( m_nEl[0] + 1, m_nEl[1] + 1, m_nEl[2] + 1 );
-  for( int g = 0 ; g < numNodes ; g++ )
+  for( int g=0 ; g<numNodes ; g++ )
   {
     int i = std::round( ( gridReferencePosition[g][0] - m_xLocalMin[0] ) / m_hEl[0] ) ;
     int j = std::round( ( gridReferencePosition[g][1] - m_xLocalMin[1] ) / m_hEl[1] ) ;
     int k = std::round( ( gridReferencePosition[g][2] - m_xLocalMin[2] ) / m_hEl[2] ) ;
     m_ijkMap[i][j][k] = g;
+  }
+
+  // Identify node sets for applying boundary conditions. We need boundary nodes and buffer nodes.
+  Group & nodeSets = nodeManager.sets();
+  array1d< SortedArray< localIndex > > & m_boundaryNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() );
+  array1d< SortedArray< localIndex > > & m_bufferNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
+  m_boundaryNodes.resize(6);
+  m_bufferNodes.resize(6);
+
+  for( int face=0; face<6; face++ )
+  {
+    std::set< localIndex > tmpBoundaryNodes;
+    std::set< localIndex > tmpBufferNodes;
+
+    int dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
+
+    int positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
+    int sign = 2 * positiveNormal - 1;
+    real64 minOrMax = positiveNormal == 0 ? m_xGlobalMin[dir0] : m_xGlobalMax[dir0];
+
+    for( localIndex g=0; g<numNodes; g++ )
+    {
+      real64 positionRelativeToBoundary = gridReferencePosition[g][dir0] - minOrMax;
+      real64 tolerance = 1.0e-12 * m_hEl[dir0]; // small multiple of element dimension
+
+      if( std::fabs( positionRelativeToBoundary ) < tolerance )
+      {
+        tmpBoundaryNodes.insert(g);
+      }
+
+      if( sign * positionRelativeToBoundary > 0 ) // basically a dot product with the face normal
+      {
+        tmpBufferNodes.insert(g);
+      }
+    }
+
+    m_boundaryNodes[face].insert( tmpBoundaryNodes.begin(), tmpBoundaryNodes.end() );
+    m_bufferNodes[face].insert( tmpBufferNodes.begin(), tmpBufferNodes.end() );
   }
 
   // Set particle masses based on their volume and density. Set deformation gradient to identity;
@@ -436,11 +509,14 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView1d< real64 > const particleMass = subRegion.getParticleMass();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getParticleDeformationGradient();
 
-    // mass
+    // Set particle masses and small mass threshold
+    real64 minMass = 0.0;
     for(int p=0; p<subRegion.size(); p++)
     {
       particleMass[p] = particleDensity[p][0] * particleVolume[p]; // TODO: This should probably be done in ParticleMeshGenerator...
+      minMass = particleMass[p] < minMass ? particleMass[p] : minMass;
     }
+    m_smallMass = minMass * 1.0e-12;
 
     // deformation gradient - TODO: there's probably a LvArray function that makes this a one-liner - I don't think the ParticleSubRegionBase constructor can easily initialize this to identity
     for(int p=0; p<subRegion.size(); p++)
@@ -517,10 +593,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
   #define USE_PHYSICS_LOOP
 
-  // Spatial Partition
+  //#######################################################################################
+  solverProfiling( "Get spatial partition, get node and particle managers" );
+  //#######################################################################################
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
-
-  // Get node and particle managers. ***** We implicitly assume that there are exactly two mesh bodies, and that one has particles and one does not. *****
+  
+  // ***** We implicitly assume that there are exactly two mesh bodies, and that one has particles and one does not. *****
   Group & meshBodies = domain.getMeshBodies();
 
   MeshBody & meshBody1 = meshBodies.getGroup< MeshBody >(0);
@@ -532,7 +610,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   MeshLevel & mesh = grid.getBaseDiscretization();
   NodeManager & nodeManager = mesh.getNodeManager();
 
-  // Get nodal fields
+  //#######################################################################################
+  solverProfiling( "Get nodal fields" );
+  //#######################################################################################
   // TODO: If we decide to have all subroutines only take particleManager and nodeManager as inputs,
   //       we won't need these at all as they'll all be defined locally in each subroutine.
   int numNodes = nodeManager.size();
@@ -549,17 +629,24 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   array3d< real64 > & gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::surfaceNormalString() );
   array3d< real64 > & gridMaterialPosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() );
 
-  // At time step zero, perform initialization calculations
+  //#######################################################################################
+  solverProfiling( "At time step zero, perform initialization calculations" );
+  //#######################################################################################
   if(cycleNumber == 0)
   {
-    initialize(nodeManager, particleManager, partition);
+    initialize( nodeManager, particleManager, partition );
   }
+  
 
-  // Set grid multi-field labels to avoid a VTK output bug, must be done every time step despite grid fields being registered
-  // TODO: Only doing this on the 1st cycle breaks restarts, can we do better? Why aren't labels part of the restart data?
-  setGridFieldLabels( nodeManager );
+  //#######################################################################################
+  solverProfiling( "Set grid multi-field labels to avoid a VTK output bug, must be done every time step despite grid fields being registered" );
+  //#######################################################################################
+  setGridFieldLabels( nodeManager ); // TODO: Only doing this on the 1st cycle breaks restarts, can we do better? Why aren't labels part of the restart data?
 
-  // Zero out grid scalar fields
+
+  //#######################################################################################
+  solverProfiling( "Set grid fields to zero" );
+  //#######################################################################################
   gridMass.zero();
   gridDamage.zero();
   gridMaxDamage.zero();
@@ -572,7 +659,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   gridSurfaceNormal.zero();
   gridMaterialPosition.zero();
 
-  // Particle to grid interpolation
+
+  //#######################################################################################
+  solverProfiling( "Particle-to-grid interpolation" );
+  //#######################################################################################
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
@@ -629,15 +719,20 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     } // particle loop
   } ); // subregion loop
 
-  // Grid MPI operations
+
+  //#######################################################################################
+  solverProfiling( "Grid MPI operations" );
+  //#######################################################################################
   std::vector< std::string > fieldNames = { keys::Mass,
                                             viewKeyStruct::momentumString(),
                                             viewKeyStruct::forceInternalString(),
                                             viewKeyStruct::forceExternalString() };
   syncGridFields( fieldNames, domain, nodeManager, mesh );
 
-  // Determine trial momenta and velocities based on acceleration due to internal
-  // and external forces, but before contact enforcement
+
+  //#######################################################################################
+  solverProfiling( "Determine trial momenta and velocities based on acceleration due to internal and external forces, but before contact enforcement" );
+  //#######################################################################################
   for( int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++ )
   {
     for( int g=0; g<numNodes; g++ )
@@ -666,7 +761,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     }
   }
 
-  // Enforce contact if necessary
+
+  //#######################################################################################
+  solverProfiling( "Contact enforcement" );
+  //#######################################################################################
   if( m_numVelocityFields > 1 )
   {
     // Compute grid surface normals
@@ -674,6 +772,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
     // Sync surface normals
     syncGridFields( { viewKeyStruct::surfaceNormalString() }, domain, nodeManager, mesh );
+
+    // Apply symmetry boundary conditions to surface normals
+    enforceGridVectorFieldSymmetryBC( gridSurfaceNormal, gridReferencePosition, nodeManager.sets() );
 
     // Normalize grid surface normals
     normalizeGridSurfaceNormals( gridMass, gridSurfaceNormal );
@@ -708,7 +809,19 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     }
   }
 
-  // Grid to particle interpolation
+  // Read F-Table?
+
+
+  //#######################################################################################
+  solverProfiling( "Apply essential boundary conditions" );
+  //#######################################################################################
+  enforceGridVectorFieldSymmetryBC( gridVelocity, gridReferencePosition, nodeManager.sets() );
+  enforceGridVectorFieldSymmetryBC( gridAcceleration, gridReferencePosition, nodeManager.sets() );
+
+
+  //#######################################################################################
+  solverProfiling( "Grid-to-particle interpolation" );
+  //#######################################################################################
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
@@ -862,11 +975,27 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   } ); // subregion loop
 
 
-  // Particle repartitioning
+  // Resize grid based on F-table
+
+
+  //#######################################################################################
+  solverProfiling( "Particle repartitioning" );
+  //#######################################################################################
   partition.repartitionMasterParticlesToNeighbors( domain, m_iComm );
 
 
-  // Calculate stable time step
+  //#######################################################################################
+  solverProfiling( "Delete particles that map outside the domain (including buffer cells)" );
+  //#######################################################################################
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    subRegion.deleteOutOfRangeParticles( m_xGlobalMin, m_xGlobalMax, m_hEl );
+  } );
+
+
+  //#######################################################################################
+  solverProfiling( "Calculate stable time step" );
+  //#######################################################################################
   real64 wavespeed = 0.0;
   real64 length = std::fmin( m_hEl[0], std::fmin( m_hEl[1], m_hEl[2] ) );
 
@@ -879,11 +1008,38 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     arrayView1d< real64 > const k = constitutiveRelation.bulkModulus();
     for(int p=0; p<subRegion.size(); p++)
     {
-      wavespeed = std::max(wavespeed,sqrt((k[p]+(4.0/3.0)*g[p])/rho[p][0]));
+      wavespeed = std::max( wavespeed, sqrt( ( k[p] + (4.0/3.0) * g[p] ) / rho[p][0] ) );
     }
   } );
 
   real64 dtReturn = wavespeed > 1.0e-12 ? m_cflFactor*length/wavespeed : DBL_MAX; // This partitions's dt, make it huge if wavespeed=0.0 (this happens when there are no particles on this partition)
+
+
+  //#######################################################################################
+  solverProfiling( "Print profiling results" );
+  //#######################################################################################
+  if( m_solverProfiling && MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+  {
+    // MPI reduction
+    unsigned int numQueries = m_profilingTimes.size();
+    std::vector< real64 > averagedProfilingTimes(numQueries);
+    
+    // Print out solver profiling
+    std::cout << "---------------------------------------------" << std::endl;
+    std::cout << "Fraction of total time for one step: " << std::endl;
+    real64 tTot = m_profilingTimes[numQueries] - m_profilingTimes[0];
+    for( unsigned int i = 1 ; i < numQueries ; i++ )
+    {
+      std::cout << " (" << i << ") " << m_profilingLabels[i] << ":  " << ( m_profilingTimes[i] - m_profilingTimes[i-1] ) / tTot << "." << std::endl;
+    }
+    std::cout << " ** Total solver step:   " << tTot << ". **" << std::endl;
+    std::cout << "---------------------------------------------" << std::endl;
+
+    // Reset profiling arrays
+    m_profilingTimes.resize(0);
+    m_profilingLabels.resize(0);
+  }
+
   return dtReturn;
 }
 
@@ -937,6 +1093,52 @@ void SolidMechanicsMPM::syncGridFields( std::vector< std::string > const & field
   CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, true, packEvents2 );
   parallelDeviceEvents unpackEvents2;
   CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, m_iComm, true, unpackEvents2 );
+}
+
+void SolidMechanicsMPM::enforceGridVectorFieldSymmetryBC( array3d< real64 > & vectorMultiField,
+                                                          arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridReferencePosition,
+                                                          Group & nodeSets )
+{
+  array1d< SortedArray< localIndex > > & m_boundaryNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() );
+  array1d< SortedArray< localIndex > > & m_bufferNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
+  
+  int numNodes = vectorMultiField.size(0);
+
+  for( int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++ )
+  {
+    for( int face=0; face<6; face++ )
+    {
+      if( m_boundaryConditionTypes[face] == 1 )
+      {
+        // Face-assocaited quantities
+        int dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
+        int dir1 = ( dir0 + 1 ) % 3;   // 1, 1, 2, 2, 0, 0
+        int dir2 = ( dir0 + 2 ) % 3;   // 2, 2, 0, 0, 1, 1
+        int positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
+        
+        // Enforce BCs on boundary nodes
+        for( const auto & g : m_boundaryNodes[face] )
+        {
+          vectorMultiField[fieldIndex][g][dir0] = 0.0;
+        }
+      
+        // Perform field reflection on buffer nodes
+        for( const auto & g : m_bufferNodes[face] )
+        {
+          int ijk[3];
+          ijk[dir0] = positiveNormal * ( m_nEl[dir0] - 2 ) + ( 1 - positiveNormal ) * ( 2 );
+          ijk[dir1] = std::round( ( gridReferencePosition[g][dir1] - m_xLocalMin[dir1] ) / m_hEl[dir1] );
+          ijk[dir2] = std::round( ( gridReferencePosition[g][dir2] - m_xLocalMin[dir2] ) / m_hEl[dir2] );
+
+          localIndex gFrom = m_ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+          vectorMultiField[fieldIndex][g][dir0] = -vectorMultiField[fieldIndex][gFrom][dir0]; // Negate component aligned with surface normal
+          vectorMultiField[fieldIndex][g][dir1] =  vectorMultiField[fieldIndex][gFrom][dir1];
+          vectorMultiField[fieldIndex][g][dir2] =  vectorMultiField[fieldIndex][gFrom][dir2];
+        }
+      }
+    }
+  }
 }
 
 void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleManager,
@@ -1282,6 +1484,16 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
   }
 }
 
+void SolidMechanicsMPM::solverProfiling( std::string label )
+{
+  if( m_solverProfiling )
+  {
+    MPI_Barrier( MPI_COMM_GEOSX );
+    m_profilingTimes.push_back( MPI_Wtime() );
+    m_profilingLabels.push_back( label );
+  }
+}
+
 void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const
 {
   SolverBase::setConstitutiveNamesCallSuper( subRegion );
@@ -1304,3 +1516,4 @@ void SolidMechanicsMPM::setConstitutiveNames( ParticleSubRegionBase & subRegion 
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsMPM, string const &, dataRepository::Group * const )
 }
+
