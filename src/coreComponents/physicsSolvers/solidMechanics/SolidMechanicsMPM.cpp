@@ -1024,41 +1024,49 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   {
     // Use MPI reduction to get the average elapsed time for each step on all partitions
     int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    unsigned int numQueries = m_profilingTimes.size();
-    std::vector< real64 > averagedElapsedTimes( numQueries - 1 );
-    int numPartitions = MpiWrapper::commSize( MPI_COMM_GEOSX );
-    for( unsigned int i = 0 ; i < numQueries - 1; i++ )
+    unsigned int numIntervals = m_profilingTimes.size() - 1;
+    std::vector< real64 > timeIntervalsAllRanks( numIntervals );    
+
+    // Get total CPU time for the entire time step
+    real64 totalStepTimeThisRank = m_profilingTimes[numIntervals] - m_profilingTimes[0];
+    real64 totalStepTimeAllRanks;
+    MpiWrapper::allReduce< real64 >( &totalStepTimeThisRank,
+                                     &totalStepTimeAllRanks,
+                                     1,
+                                     MPI_SUM,
+                                     MPI_COMM_GEOSX );
+
+    // Get total CPU times for each queried time interval
+    for( unsigned int i = 0 ; i < numIntervals; i++ )
     {
-      real64 elapsedTimeThisRank = m_profilingTimes[i+1] - m_profilingTimes[i];
-      real64 elapsedTimeAllRanksSummed;
-      MpiWrapper::allReduce< real64 >( &elapsedTimeThisRank,
-                                       &elapsedTimeAllRanksSummed,
+      real64 timeIntervalThisRank = ( m_profilingTimes[i+1] - m_profilingTimes[i] );
+      real64 timeIntervalAllRanks;
+      MpiWrapper::allReduce< real64 >( &timeIntervalThisRank,
+                                       &timeIntervalAllRanks,
                                        1,
                                        MPI_SUM,
                                        MPI_COMM_GEOSX );
       if( rank == 0 )
       {
-        averagedElapsedTimes[i] = elapsedTimeAllRanksSummed / numPartitions;
+        timeIntervalsAllRanks[i] = timeIntervalAllRanks;
       }
     }
 
+    // Print out solver profiling
     MPI_Barrier( MPI_COMM_GEOSX );
-    
     if( rank == 0 )
     {
-      // Print out solver profiling
       std::cout << "---------------------------------------------" << std::endl;
       std::cout << "Fraction of total time for one step: " << std::endl;
-      real64 tTot = m_profilingTimes[numQueries-1] - m_profilingTimes[0];
-      for( unsigned int i = 0 ; i < numQueries - 1 ; i++ )
+      for( unsigned int i = 0 ; i < numIntervals ; i++ )
       {
         std::cout << " (" << i << ") ";
         std::cout << std::fixed;
         std::cout << std::showpoint;
-        std::cout << std::setprecision(6) << averagedElapsedTimes[i] / tTot;
+        std::cout << std::setprecision(6) << timeIntervalsAllRanks[i] / totalStepTimeAllRanks;
         std::cout << ": " << m_profilingLabels[i] << std::endl;
       }
-      std::cout << " ** Total solver step:  " << tTot << " s **" << std::endl;
+      std::cout << " ** Total step CPU time:  " << totalStepTimeAllRanks << " s **" << std::endl;
       std::cout << "---------------------------------------------" << std::endl;
     }
 
