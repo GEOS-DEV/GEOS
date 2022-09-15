@@ -161,6 +161,20 @@ struct ConstitutivePassThru< PorousSolidBase >
 };
 
 /**
+ * Specialization for the LayeredModel models.
+ */
+template<>
+struct ConstitutivePassThru< LayeredModelBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< LayeredModel< ElasticIsotropic , DruckerPrager > >::execute( constitutiveRelation,
+                                                                                              std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+/**
  * Specialization for the CompressibleSolid models.
  */
 template<>

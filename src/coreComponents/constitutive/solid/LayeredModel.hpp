@@ -77,6 +77,7 @@ public:
 
   /// Use base version of saveConvergedState
   using SolidBaseUpdates::saveConvergedState;
+  
 
 //TODO: modify implementation of smallStrainUpdate to use optimized stiffness -
 // this implementation uses full stiffness tensor
@@ -105,8 +106,11 @@ void smallStrainUpdate( localIndex const k,
 
   //Enable inelasticity to get the rate-independent update
   //m_solidUpdate.m_disableInelasticity = false;
+  std::cout<<"m_newStress size in LayeredModel = "<<m_newStress.size(0)<<std::endl;
+  
+ // m_solidUpdateLayer2.allocateConstitutiveData();
   m_solidUpdateLayer2.smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
-
+ 
 
   // for( localIndex i=0; i<6; ++i )
   // {
@@ -116,8 +120,7 @@ void smallStrainUpdate( localIndex const k,
   //     stiffness[i][j] = timeRatio * elasticStiffness[i][j]  + (1 - timeRatio) * stiffness[i][j];
   //   }
   // }
-
- // saveStress( k, q, stress );
+  saveStress( k, q, stress );
 
   return;
 }     
@@ -129,7 +132,11 @@ protected:
  // real64 const m_relaxationTime;
 };
 
-
+/**
+ * @brief LayeredModelBase class used for dispatch of all layered solids.
+ */
+class LayeredModelBase
+{};
 
 
 /**

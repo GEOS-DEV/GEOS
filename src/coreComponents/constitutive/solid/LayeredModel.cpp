@@ -67,6 +67,9 @@ void LayeredModel< SOLID_TYPE1 , SOLID_TYPE2 >::allocateConstitutiveData( dataRe
 {
 
   SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  std::cout<<"I'm in LayeredModel::allocateConstitutive data!"<<std::endl;
+  //SOLID_TYPE1::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  //SOLID_TYPE2::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 // Register all LayeredModel model types. Uncomment the ones listed as needed. 
