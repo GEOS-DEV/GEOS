@@ -246,7 +246,7 @@ jobs:
     - ENABLE_TRILINOS=OFF
   - stage: builds
     name: Sherlock CPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10)
-    <<: *geosx_totalenergies_cluster_build
+    <<: *__geosx_totalenergies_cluster_build
     env:
       - DOCKER_REPOSITORY=geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
       - CMAKE_BUILD_TYPE=Release
@@ -257,7 +257,7 @@ jobs:
       - ENABLE_TRILINOS=OFF
   - stage: builds
     name: Sherlock GPU (centos 7.9.2009, gcc 10.1.0, cuda 11.5.0, open-mpi 4.1.2, openblas 0.3.10)
-    <<: *geosx_totalenergies_cluster_build
+    <<: *__geosx_totalenergies_cluster_build
     env:
       - DOCKER_REPOSITORY=geosx/sherlock-gcc10.1.0-openmpi4.1.2-cuda11.5.0-openblas0.3.10-zlib1.2.11
       - CMAKE_BUILD_TYPE=Release
