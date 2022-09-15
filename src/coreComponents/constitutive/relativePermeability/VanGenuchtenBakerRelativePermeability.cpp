@@ -37,7 +37,6 @@ VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( st
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Minimum volume fraction value for each phase" );
 
-
   registerWrapper( viewKeyStruct::waterOilRelPermExponentInvString(), &m_waterOilRelPermExponentInv ).
     setApplyDefaultValue( 0.5 ).
     setInputFlag( InputFlags::OPTIONAL ).

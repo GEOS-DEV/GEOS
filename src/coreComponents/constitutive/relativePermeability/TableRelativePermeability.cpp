@@ -259,10 +259,10 @@ TableRelativePermeability::KernelWrapper::
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
   : RelativePermeabilityBaseUpdate( phaseTypes,
                                     phaseOrder,
-                                    phaseMinVolumeFraction,
                                     phaseRelPerm,
                                     dPhaseRelPerm_dPhaseVolFrac,
                                     phaseTrappedVolFrac ),
+  m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
   m_relPermKernelWrappers( relPermKernelWrappers )
 {}
 

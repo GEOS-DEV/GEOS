@@ -1447,7 +1447,6 @@ struct StatisticsKernel
           arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFraction,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
-          arrayView1d< real64 const > const & phaseMinVolFrac,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
@@ -1488,7 +1487,6 @@ struct StatisticsKernel
                                              phaseDensity,
                                              phaseVolFrac,
                                              phaseTrappedVolFrac,
-                                             phaseMinVolFrac,
                                              phaseCompFraction,
                                              subRegionMinPres,
                                              subRegionAvgPresNumerator,
@@ -1528,12 +1526,11 @@ struct StatisticsKernel
       {
         real64 const elemPhaseVolume = dynamicPoreVol * phaseVolFrac[ei][ip];
         real64 const elemPhaseMass = phaseDensity[ei][0][ip] * elemPhaseVolume;
-//        real64 const immobileMass = phaseDensity[ei][0][ip] * dynamicPoreVol * std::min(phaseVolFrac[ei][ip],phaseMinVolFrac[ip]);
-        real64 const immobileMass = phaseDensity[ei][0][ip] * dynamicPoreVol * phaseTrappedVolFrac[ei][0][ip];
+        real64 const elemTrappedPhaseMass = phaseDensity[ei][0][ip] * dynamicPoreVol * phaseTrappedVolFrac[ei][0][ip];
         // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseDynamicPoreVol[ip], elemPhaseVolume );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseMass[ip], elemPhaseMass );
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &trappedPhaseMass[ip], immobileMass );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &trappedPhaseMass[ip], elemTrappedPhaseMass );
         for( integer ic = 0; ic < numComps; ++ic )
         {
           // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)

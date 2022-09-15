@@ -44,10 +44,10 @@ public:
                                               arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
-                                      phaseMinVolumeFraction,
                                       phaseRelPerm,
                                       dPhaseRelPerm_dPhaseVolFrac,
                                       phaseTrappedVolFrac ),
+    m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
     m_waterOilRelPermExponent( waterOilRelPermExponent ),
     m_waterOilRelPermMaxValue( waterOilRelPermMaxValue ),
     m_gasOilRelPermExponent( gasOilRelPermExponent ),
@@ -97,6 +97,8 @@ private:
                                real64 & relPerm,
                                real64 & dRelPerm_dVolFrac );
 
+  arrayView1d< real64 const > m_phaseMinVolumeFraction;
+
   arrayView1d< real64 const > m_waterOilRelPermExponent;
   arrayView1d< real64 const > m_waterOilRelPermMaxValue;
 
@@ -127,6 +129,7 @@ public:
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
     static constexpr char const * waterOilRelPermExponentString() { return "waterOilRelPermExponent"; }
     static constexpr char const * waterOilRelPermMaxValueString() { return "waterOilRelPermMaxValue"; }
     static constexpr char const * gasOilRelPermExponentString() { return "gasOilRelPermExponent"; }
@@ -137,6 +140,8 @@ public:
 protected:
 
   virtual void postProcessInput() override;
+
+  array1d< real64 > m_phaseMinVolumeFraction;
 
   // water-oil data
   array1d< real64 > m_waterOilRelPermExponent;
@@ -266,14 +271,19 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
                                           dPhaseRelPerm_dPhaseVolFrac[ipOil] );
   }
 
-  //update trapped
+  // update trapped phase volume fraction
   if( ipWater >= 0 )
-    phaseTrappedVolFrac[ipWater] = std::min( phaseVolFraction[ipWater], m_phaseMinVolumeFraction[ipWater] );
+  {
+    phaseTrappedVolFrac[ipWater] = LvArray::math::min( phaseVolFraction[ipWater], m_phaseMinVolumeFraction[ipWater] );
+  }
   if( ipGas >= 0 )
-    phaseTrappedVolFrac[ipGas] = std::min( phaseVolFraction[ipGas], m_phaseMinVolumeFraction[ipGas] );
+  {
+    phaseTrappedVolFrac[ipGas] = LvArray::math::min( phaseVolFraction[ipGas], m_phaseMinVolumeFraction[ipGas] );
+  }
   if( ipOil >= 0 )
-    phaseTrappedVolFrac[ipOil] = std::min( phaseVolFraction[ipOil], m_phaseMinVolumeFraction[ipOil] );
-
+  {
+    phaseTrappedVolFrac[ipOil] = LvArray::math::min( phaseVolFraction[ipOil], m_phaseMinVolumeFraction[ipOil] );
+  }
 
 }
 

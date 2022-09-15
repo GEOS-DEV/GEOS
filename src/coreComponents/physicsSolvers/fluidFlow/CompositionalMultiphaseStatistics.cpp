@@ -213,8 +213,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     //get min vol fraction for each phase to dispactche immobile/mobile mass
     string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
     RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
-    arrayView1d< real64 const > phaseMinVolFrac = relperm.phaseMinVolumeFraction();
-    arrayView3d< real64 const, relperm::USD_RELPERM > const phaseMassTrapped = relperm.phaseTrapped();
+    arrayView3d< real64 const, relperm::USD_RELPERM > const phaseTrappedVolFrac = relperm.phaseTrappedVolFraction();
 
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;
@@ -245,8 +244,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
                                         phaseDensity,
                                         phaseCompFraction,
                                         phaseVolFrac,
-                                        phaseMassTrapped,
-                                        phaseMinVolFrac,
+                                        phaseTrappedVolFrac,
                                         subRegionMinPres,
                                         subRegionAvgPresNumerator,
                                         subRegionMaxPres,
@@ -298,9 +296,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     {
       regionStatistics.phasePoreVolume[ip] += subRegionPhaseDynamicPoreVol[ip];
       regionStatistics.phaseMass[ip] += subRegionPhaseMass[ip];
-
       regionStatistics.trappedPhaseMass[ip] += subRegionTrappedPhaseMass[ip];
-
 
       for( integer ic = 0; ic < numComps; ++ic )
       {
@@ -357,7 +353,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Phase dynamic pore volumes: " << regionStatistics.phasePoreVolume << " rm^3" );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Phase mass (trapped and non-trapped): " << regionStatistics.phaseMass << " " << massUnit );
+                                         << ": Phase mass (including both trapped and non-trapped): " << regionStatistics.phaseMass << " " << massUnit );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                          << ": Trapped phase mass: " << regionStatistics.trappedPhaseMass << " " << massUnit );
     GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]

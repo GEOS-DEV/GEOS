@@ -44,10 +44,10 @@ public:
                                                arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
-                                      phaseMinVolumeFraction,
                                       phaseRelPerm,
                                       dPhaseRelPerm_dPhaseVolFrac,
                                       phaseTrappedVolFrac ),
+    m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
     m_waterOilRelPermExponentInv( waterOilRelPermExponentInv ),
     m_waterOilRelPermMaxValue( waterOilRelPermMaxValue ),
     m_gasOilRelPermExponentInv( gasOilRelPermExponentInv ),
@@ -142,6 +142,8 @@ protected:
 
   virtual void postProcessInput() override;
 
+  array1d< real64 > m_phaseMinVolumeFraction;
+
   // water-oil data
   array1d< real64 > m_waterOilRelPermExponentInv;
   array1d< real64 > m_waterOilRelPermMaxValue;
@@ -208,7 +210,6 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
 
   }
 
-
   // 2) Gas and oil phase relative permeabilities using gas-oil data
   if( ipGas >= 0 )
   {
@@ -218,7 +219,6 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
     using GOPT = RelativePermeabilityBase::GasOilPairPhaseType;
     real64 const gasExponentInv = m_gasOilRelPermExponentInv[GOPT::GAS];
     real64 const gasMaxValue = m_gasOilRelPermMaxValue[GOPT::GAS];
-
     // gas rel perm
     evaluateVanGenuchtenFunction( scaledGasVolFrac,
                                   volFracScaleInv,
@@ -237,10 +237,7 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
                                   oilMaxValue_go,
                                   oilRelPerm_go,
                                   dOilRelPerm_go_dOilVolFrac );
-
-
   }
-
 
   // 3) Compute the "three-phase" oil relperm
 
@@ -273,16 +270,19 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
                                           dPhaseRelPerm_dPhaseVolFrac[ipOil] );
   }
 
-
-  //update trapped
+  // update trapped phase volume fraction
   if( ipWater >= 0 )
-    phaseTrappedVolFrac[ipWater] = std::min( phaseVolFraction[ipWater], m_phaseMinVolumeFraction[ipWater] );
+  {
+    phaseTrappedVolFrac[ipWater] = LvArray::math::min( phaseVolFraction[ipWater], m_phaseMinVolumeFraction[ipWater] );
+  }
   if( ipGas >= 0 )
-    phaseTrappedVolFrac[ipGas] = std::min( phaseVolFraction[ipGas], m_phaseMinVolumeFraction[ipGas] );
+  {
+    phaseTrappedVolFrac[ipGas] = LvArray::math::min( phaseVolFraction[ipGas], m_phaseMinVolumeFraction[ipGas] );
+  }
   if( ipOil >= 0 )
-    phaseTrappedVolFrac[ipOil] = std::min( phaseVolFraction[ipOil], m_phaseMinVolumeFraction[ipOil] );
-
-
+  {
+    phaseTrappedVolFrac[ipOil] = LvArray::math::min( phaseVolFraction[ipOil], m_phaseMinVolumeFraction[ipOil] );
+  }
 }
 
 GEOSX_HOST_DEVICE

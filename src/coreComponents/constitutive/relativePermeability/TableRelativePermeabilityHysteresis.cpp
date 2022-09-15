@@ -645,7 +645,6 @@ TableRelativePermeabilityHysteresis::KernelWrapper::KernelWrapper( arrayView1d< 
                                                                    arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
   : RelativePermeabilityBaseUpdate( phaseTypes,
                                     phaseOrder,
-                                    drainagePhaseMinVolFraction,
                                     phaseRelPerm,
                                     dPhaseRelPerm_dPhaseVolFrac,
                                     phaseTrappedVolFrac ),

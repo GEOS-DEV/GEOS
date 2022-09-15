@@ -44,7 +44,7 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
   registerExtrinsicData( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{},
                          &m_dPhaseRelPerm_dPhaseVolFrac );
 
-  registerExtrinsicData( extrinsicMeshData::relperm::phaseTrapped{}, &m_phaseTrappedVolFrac );
+  registerExtrinsicData( extrinsicMeshData::relperm::phaseTrappedVolFraction{}, &m_phaseTrappedVolFrac );
 
 }
 
@@ -103,8 +103,8 @@ void RelativePermeabilityBase::setLabels()
   getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm >().
     setDimLabels( 2, m_phaseNames );
 
-    getExtrinsicData< extrinsicMeshData::relperm::phaseTrapped>().
-            setDimLabels( 2, m_phaseNames );
+  getExtrinsicData< extrinsicMeshData::relperm::phaseTrappedVolFraction >().
+    setDimLabels( 2, m_phaseNames );
 }
 
 void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
