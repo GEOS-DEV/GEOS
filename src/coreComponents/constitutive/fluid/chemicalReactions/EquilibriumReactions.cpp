@@ -250,6 +250,8 @@ void EquilibriumReactions::KernelWrapper::computeTotalConcAndDerivative( real64 
 
 
 {
+  GEOSX_UNUSED_VAR( temperature );
+
   // This function computes the total concentration and its derivative with respect to log10(basis species concentrations).
   for( int iPri = 0; iPri < m_numPrimarySpecies; iPri++ )
   {
