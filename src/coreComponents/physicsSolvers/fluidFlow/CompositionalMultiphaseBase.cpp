@@ -77,8 +77,18 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1.0 ).
+    setApplyDefaultValue( 0.5 ).
     setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
+  this->registerWrapper( viewKeyStruct::maxRelativePresChangeString(), &m_maxRelativePresChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.5 ).
+    setDescription( "Maximum (relative) change in pressure between two Newton iterations" );
+  this->registerWrapper( viewKeyStruct::maxRelativeTempChangeString(), &m_maxRelativeTempChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.5 ).
+    setDescription( "Maximum (relative) change in temperature between two Newton iterations" );
 
   this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).
     setSizedFromParent( 0 ).
@@ -96,6 +106,15 @@ void CompositionalMultiphaseBase::postProcessInput()
                          "The maximum absolute change in component fraction must smaller or equal to 1.0" );
   GEOSX_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
                          "The maximum absolute change in component fraction must larger or equal to 0.0" );
+  GEOSX_ERROR_IF_GT_MSG( m_maxRelativePresChange, 1.0,
+                         "The maximum relative change in pressure must smaller or equal to 1.0 (i.e., 100% change)" );
+  GEOSX_ERROR_IF_LT_MSG( m_maxRelativePresChange, 0.0,
+                         "The maximum relative change in pressure must larger or equal to 0.0" );
+  GEOSX_ERROR_IF_GT_MSG( m_maxRelativeTempChange, 1.0,
+                         "The maximum relative change in temperature must smaller or equal to 1.0 (i.e., 100% change)" );
+  GEOSX_ERROR_IF_LT_MSG( m_maxRelativeTempChange, 0.0,
+                         "The maximum relative change in temperature must larger or equal to 0.0" );
+
 }
 
 void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
@@ -108,9 +127,9 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   // 0. Find a "reference" fluid model name (at this point, models are already attached to subregions)
-  forMeshTargets( meshBodies, [&]( string const &,
-                                   MeshLevel & mesh,
-                                   arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
+                                                   MeshLevel & mesh,
+                                                   arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -142,9 +161,9 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
   m_numDofPerCell = m_isThermal ? m_numComponents + 2 : m_numComponents + 1;
 
   // 2. Register and resize all fields as necessary
-  forMeshTargets( meshBodies, [&]( string const &,
-                                   MeshLevel & mesh,
-                                   arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
+                                                   MeshLevel & mesh,
+                                                   arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -364,9 +383,9 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
   validateConstitutiveModels( domain );
 
   // 2. Set the value of temperature
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
@@ -390,9 +409,9 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
   MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel const & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
@@ -634,6 +653,14 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     //      - the primary variables
     //      - the fluid constitutive quantities (as they have already been updated)
     // We postpone the other constitutive models for now
+    // In addition, to avoid multiplying permeability/porosity bay netToGross in the assembly kernel, we do it once and for all here
+    arrayView1d< real64 const > const netToGross = subRegion.template getExtrinsicData< extrinsicMeshData::flow::netToGross >();
+    CoupledSolidBase const & porousSolid =
+      getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+    PermeabilityBase const & permeabilityModel =
+      getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
+    permeabilityModel.scaleHorizontalPermeability( netToGross );
+    porousSolid.scaleReferencePorosity( netToGross );
     updatePorosityAndPermeability( subRegion );
     updatePhaseVolumeFraction( subRegion );
 
@@ -791,9 +818,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
   // first compute the region filter
   std::set< string > regionFilter;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     for( string const & regionName : regionNames )
     {
@@ -955,12 +982,15 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       arrayView1d< TableFunction::KernelWrapper const > compFracTableWrappersViewConst =
         compFracTableWrappers.toViewConst();
 
+      RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
+
       forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
                                                            elemCenter,
                                                            presTableWrapper,
                                                            tempTableWrapper,
                                                            compFracTableWrappersViewConst,
                                                            numComps,
+                                                           minPressure,
                                                            pres,
                                                            temp,
                                                            compFrac] GEOSX_HOST_DEVICE ( localIndex const i )
@@ -969,12 +999,17 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
         real64 const elevation = elemCenter[k][2];
 
         pres[k] = presTableWrapper.compute( &elevation );
+        minPressure.min( pres[k] );
         temp[k] = tempTableWrapper.compute( &elevation );
         for( integer ic = 0; ic < numComps; ++ic )
         {
           compFrac[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
         }
       } );
+
+      GEOSX_ERROR_IF( minPressure.get() < 0.0,
+                      GEOSX_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                                 minPressure.get(), region.getName(), subRegion.getName() ) );
     } );
   } );
 }
@@ -988,9 +1023,9 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   // set mass fraction flag on fluid models
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key(),
@@ -1044,9 +1079,9 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARA
                                                 real64 const & GEOSX_UNUSED_PARAM( dt ),
                                                 DomainPartition & domain )
 {
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion,
                                                 SurfaceElementSubRegion >( regionNames,
@@ -1135,9 +1170,9 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
 {
   GEOSX_MARK_FUNCTION;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel const & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -1253,9 +1288,9 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
   // Step 3: we are ready to impose the boundary condition, normalized by the set size
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
   {
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
@@ -1357,9 +1392,9 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
 
   bool bcConsistent = true;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
   {
     // map: regionName -> subRegionName -> setName -> numComps to check pressure/comp are present consistent
     map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcPresCompStatusMap;
@@ -1505,9 +1540,9 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
   {
 
     // 1. Apply pressure Dirichlet BCs, store in a separate field
@@ -1668,9 +1703,9 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
 
   integer const numComp = m_numComponents;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -1702,9 +1737,9 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
 {
   GEOSX_MARK_FUNCTION;
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion,
                                                 SurfaceElementSubRegion >( regionNames,
@@ -1755,9 +1790,9 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
   // otherwise the aquifer flux is saved with the wrong pressure time level
   saveAquiferConvergedState( time, dt, domain );
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -1816,9 +1851,9 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
 
 void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
 {
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion,
                                                 SurfaceElementSubRegion >( regionNames, [&]( localIndex const,

@@ -37,7 +37,8 @@
       targetRegions="{ Domain, Fracture }"/>
 
     <EmbeddedSurfaceGenerator
-      name="SurfaceGenerator"      
+      name="SurfaceGenerator"
+      discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="2"
@@ -191,7 +192,7 @@
     <FieldSpecification
       name="initialPressureFracture"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="pressure"
       scale="1.0e5"/>
 
