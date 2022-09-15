@@ -40,11 +40,13 @@ public:
                                                arrayView1d< integer const > const & phaseTypes,
                                                arrayView1d< integer const > const & phaseOrder,
                                                arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                                               arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
+                                               arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+                                               arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
                                       phaseRelPerm,
-                                      dPhaseRelPerm_dPhaseVolFrac ),
+                                      dPhaseRelPerm_dPhaseVolFrac,
+                                      phaseTrappedVolFrac ),
     m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
     m_waterOilRelPermExponentInv( waterOilRelPermExponentInv ),
     m_waterOilRelPermMaxValue( waterOilRelPermMaxValue ),
@@ -55,6 +57,7 @@ public:
 
   GEOSX_HOST_DEVICE
   void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
                 arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                 arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
@@ -64,6 +67,7 @@ public:
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
   {
     compute( phaseVolFraction,
+             m_phaseTrappedVolFrac[k][q],
              m_phaseRelPerm[k][q],
              m_dPhaseRelPerm_dPhaseVolFrac[k][q] );
   }
@@ -156,6 +160,7 @@ GEOSX_HOST_DEVICE
 inline void
 VanGenuchtenBakerRelativePermeabilityUpdate::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
            arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
            arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
@@ -205,7 +210,6 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
 
   }
 
-
   // 2) Gas and oil phase relative permeabilities using gas-oil data
   if( ipGas >= 0 )
   {
@@ -215,7 +219,6 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
     using GOPT = RelativePermeabilityBase::GasOilPairPhaseType;
     real64 const gasExponentInv = m_gasOilRelPermExponentInv[GOPT::GAS];
     real64 const gasMaxValue = m_gasOilRelPermMaxValue[GOPT::GAS];
-
     // gas rel perm
     evaluateVanGenuchtenFunction( scaledGasVolFrac,
                                   volFracScaleInv,
@@ -234,10 +237,7 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
                                   oilMaxValue_go,
                                   oilRelPerm_go,
                                   dOilRelPerm_go_dOilVolFrac );
-
-
   }
-
 
   // 3) Compute the "three-phase" oil relperm
 
@@ -268,6 +268,20 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
                                           dOilRelPerm_go_dOilVolFrac,
                                           phaseRelPerm[ipOil],
                                           dPhaseRelPerm_dPhaseVolFrac[ipOil] );
+  }
+
+  // update trapped phase volume fraction
+  if( ipWater >= 0 )
+  {
+    phaseTrappedVolFrac[ipWater] = LvArray::math::min( phaseVolFraction[ipWater], m_phaseMinVolumeFraction[ipWater] );
+  }
+  if( ipGas >= 0 )
+  {
+    phaseTrappedVolFrac[ipGas] = LvArray::math::min( phaseVolFraction[ipGas], m_phaseMinVolumeFraction[ipGas] );
+  }
+  if( ipOil >= 0 )
+  {
+    phaseTrappedVolFrac[ipOil] = LvArray::math::min( phaseVolFraction[ipOil], m_phaseMinVolumeFraction[ipOil] );
   }
 }
 
