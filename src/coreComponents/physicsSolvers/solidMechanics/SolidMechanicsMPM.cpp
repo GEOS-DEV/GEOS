@@ -1022,9 +1022,21 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   //#######################################################################################
   if( m_solverProfiling && MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {
-    // MPI reduction
+    // Use MPI reduction to get the average elapsed time for each step on all partitions
     unsigned int numQueries = m_profilingTimes.size();
-    std::vector< real64 > averagedProfilingTimes(numQueries);
+    std::vector< real64 > averagedElapsedTimes(numQueries - 1);
+    int numPartitions = MpiWrapper::commSize( MPI_COMM_GEOSX );
+    for( unsigned int i = 0 ; i < numQueries - 1; i++ )
+    {
+      real64 elapsedTimeThisRank = m_profilingTimes[i+1] - m_profilingTimes[i];
+      real64 elapsedTimeAllRanksSummed;
+      MpiWrapper::allReduce< real64 >( &elapsedTimeThisRank,
+                                       &elapsedTimeAllRanksSummed,
+                                       1,
+                                       MPI_SUM,
+                                       MPI_COMM_GEOSX );
+      averagedElapsedTimes[i] = elapsedTimeAllRanksSummed / numPartitions;
+    }
     
     // Print out solver profiling
     std::cout << "---------------------------------------------" << std::endl;
@@ -1035,7 +1047,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       std::cout << " (" << i << ") ";
       std::cout << std::fixed;
       std::cout << std::showpoint;
-      std::cout << std::setprecision(6) << ( m_profilingTimes[i+1] - m_profilingTimes[i] ) / tTot;
+      std::cout << std::setprecision(6) << averagedElapsedTimes[i] / tTot;
       std::cout << ": " << m_profilingLabels[i] << std::endl;
     }
     std::cout << " ** Total solver step:  " << tTot << " s **" << std::endl;
