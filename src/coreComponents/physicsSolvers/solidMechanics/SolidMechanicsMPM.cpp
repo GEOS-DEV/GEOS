@@ -1020,11 +1020,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   //#######################################################################################
   solverProfiling( "End of explicitStep" );
   //#######################################################################################
-  if( m_solverProfiling && MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+  if( m_solverProfiling )
   {
     // Use MPI reduction to get the average elapsed time for each step on all partitions
+    int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
     unsigned int numQueries = m_profilingTimes.size();
-    std::vector< real64 > averagedElapsedTimes(numQueries - 1);
+    std::vector< real64 > averagedElapsedTimes( numQueries - 1 );
     int numPartitions = MpiWrapper::commSize( MPI_COMM_GEOSX );
     for( unsigned int i = 0 ; i < numQueries - 1; i++ )
     {
@@ -1035,23 +1036,31 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
                                        1,
                                        MPI_SUM,
                                        MPI_COMM_GEOSX );
-      averagedElapsedTimes[i] = elapsedTimeAllRanksSummed / numPartitions;
+      if( rank == 0 )
+      {
+        averagedElapsedTimes[i] = elapsedTimeAllRanksSummed / numPartitions;
+      }
     }
+
+    MPI_Barrier( MPI_COMM_GEOSX );
     
-    // Print out solver profiling
-    std::cout << "---------------------------------------------" << std::endl;
-    std::cout << "Fraction of total time for one step: " << std::endl;
-    real64 tTot = m_profilingTimes[numQueries-1] - m_profilingTimes[0];
-    for( unsigned int i = 0 ; i < numQueries - 1 ; i++ )
+    if( rank == 0 )
     {
-      std::cout << " (" << i << ") ";
-      std::cout << std::fixed;
-      std::cout << std::showpoint;
-      std::cout << std::setprecision(6) << averagedElapsedTimes[i] / tTot;
-      std::cout << ": " << m_profilingLabels[i] << std::endl;
+      // Print out solver profiling
+      std::cout << "---------------------------------------------" << std::endl;
+      std::cout << "Fraction of total time for one step: " << std::endl;
+      real64 tTot = m_profilingTimes[numQueries-1] - m_profilingTimes[0];
+      for( unsigned int i = 0 ; i < numQueries - 1 ; i++ )
+      {
+        std::cout << " (" << i << ") ";
+        std::cout << std::fixed;
+        std::cout << std::showpoint;
+        std::cout << std::setprecision(6) << averagedElapsedTimes[i] / tTot;
+        std::cout << ": " << m_profilingLabels[i] << std::endl;
+      }
+      std::cout << " ** Total solver step:  " << tTot << " s **" << std::endl;
+      std::cout << "---------------------------------------------" << std::endl;
     }
-    std::cout << " ** Total solver step:  " << tTot << " s **" << std::endl;
-    std::cout << "---------------------------------------------" << std::endl;
 
     // Reset profiling arrays
     m_profilingTimes.resize(0);
