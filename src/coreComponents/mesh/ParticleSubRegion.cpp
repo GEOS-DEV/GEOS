@@ -66,7 +66,6 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   // before calling the `ParticleSubRegion::resize` in order to keep the first dimension.
   // Be careful when refactoring.
   this->resize( particleBlock.numParticles() );
-  unsigned int size = particleBlock.numParticles();
 
   this->m_localToGlobalMap = particleBlock.localToGlobalMap();
 
