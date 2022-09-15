@@ -79,9 +79,9 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
     return;
   }
 
-  m_solver->forMeshTargets( meshBodies, [&] ( string const &,
-                                              MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+  m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                              MeshLevel & mesh,
+                                                              arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -130,9 +130,9 @@ bool CompositionalMultiphaseStatistics::execute( real64 const GEOSX_UNUSED_PARAM
                                                  real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                                                  DomainPartition & domain )
 {
-  m_solver->forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                          MeshLevel & mesh,
-                                                          arrayView1d< string const > const & regionNames )
+  m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                          MeshLevel & mesh,
+                                                                          arrayView1d< string const > const & regionNames )
   {
     if( m_computeRegionStatistics )
     {
@@ -216,9 +216,9 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     real64 subRegionMinTemp = 0.0;
     real64 subRegionMaxTemp = 0.0;
     real64 subRegionTotalUncompactedPoreVol = 0.0;
-    stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionPhaseDynamicPoreVol( numPhases );
-    stackArray1d< real64, MultiFluidBase::MAX_NUM_PHASES > subRegionPhaseMass( numPhases );
-    stackArray2d< real64, MultiFluidBase::MAX_NUM_PHASES *MultiFluidBase::MAX_NUM_COMPONENTS > subRegionDissolvedComponentMass( numPhases, numComps );
+    array1d< real64 > subRegionPhaseDynamicPoreVol( numPhases );
+    array1d< real64 > subRegionPhaseMass( numPhases );
+    array2d< real64 > subRegionDissolvedComponentMass( numPhases, numComps );
 
     isothermalCompositionalMultiphaseBaseKernels::
       StatisticsKernel::
@@ -244,9 +244,9 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
                                         subRegionAvgTempNumerator,
                                         subRegionMaxTemp,
                                         subRegionTotalUncompactedPoreVol,
-                                        subRegionPhaseDynamicPoreVol.toSlice(),
-                                        subRegionPhaseMass.toSlice(),
-                                        subRegionDissolvedComponentMass.toSlice() );
+                                        subRegionPhaseDynamicPoreVol.toView(),
+                                        subRegionPhaseMass.toView(),
+                                        subRegionDissolvedComponentMass.toView() );
 
     ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
     RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
@@ -354,9 +354,9 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
   integer const numComps = m_solver->numFluidComponents();
 
   // Step 1: reset the arrays involved in the computation of CFL numbers
-  m_solver->forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                         MeshLevel & mesh,
-                                                         arrayView1d< string const > const & regionNames )
+  m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                         MeshLevel & mesh,
+                                                                         arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -424,9 +424,9 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
   real64 localMaxPhaseCFLNumber = 0.0;
   real64 localMaxCompCFLNumber = 0.0;
 
-  m_solver->forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                         MeshLevel & mesh,
-                                                         arrayView1d< string const > const & regionNames )
+  m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                         MeshLevel & mesh,
+                                                                         arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,

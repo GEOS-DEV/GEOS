@@ -7,10 +7,9 @@
       solidSolverName="LinearElasticitySolver"
       flowSolverName="SinglePhaseFlowSolver"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Domain }">
       <LinearSolverParameters
-	solverType="gmres"
+        solverType="gmres"
         preconditionerType="mgr"/>
     </SinglePhasePoromechanics>
 

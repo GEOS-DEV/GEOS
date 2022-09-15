@@ -11,7 +11,6 @@
       surfaceGeneratorName="SurfaceGen"
       couplingTypeOption="FIM"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact">
       <LinearSolverParameters
@@ -43,9 +42,9 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
+      discretization="FE1"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
-      
       rockToughness="0.01e6"/>
   </Solvers>
 

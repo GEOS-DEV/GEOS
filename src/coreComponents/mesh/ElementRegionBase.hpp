@@ -100,13 +100,9 @@ public:
 
   /**
    * @brief Generate mesh.
-   * @param cellBlocks cell blocks where the mesh is generated
+   * @param blocks Cell or face blocks from where the mesh is extracted.
    */
-  virtual void generateMesh( Group & cellBlocks )
-  {
-    GEOSX_UNUSED_VAR( cellBlocks );
-    GEOSX_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called." );
-  }
+  virtual void generateMesh( Group & blocks ) = 0;
 
   ///@}
 
@@ -116,13 +112,22 @@ public:
   ///@{
 
   /**
+   * @copydoc getSubRegions() const
+   */
+  Group & getSubRegions()
+  {
+    return getGroup( viewKeyStruct::elementSubRegions() );
+  }
+
+  /**
    * @brief Get a collection of the subregions.
    * @return a collection of the subregions
    */
-  subGroupMap const & getSubRegions() const
+  Group const & getSubRegions() const
   {
-    return getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups();
+    return getGroup( viewKeyStruct::elementSubRegions() );
   }
+
 
   /**
    * @brief Get a reference to a subregion.
@@ -166,7 +171,7 @@ public:
    */
   localIndex numSubRegions() const
   {
-    return this->getSubRegions().size();
+    return this->getSubRegions().numSubGroups();
   }
 
   /**
