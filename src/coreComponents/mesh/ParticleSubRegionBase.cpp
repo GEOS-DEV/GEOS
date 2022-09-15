@@ -131,13 +131,14 @@ void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
   this->unpack( receiveBufferPtr, indices, 0, false, events );
 }
 
-void ParticleSubRegionBase::erase(localIndex pp)
+void ParticleSubRegionBase::erase( localIndex pp )
 {
   int newSize = this->size()-1;
 
   // Scalar fields:
   m_particleRank.erase(pp); // TODO: Can we automatically loop over all registered wrappers and erase that way?
   m_particleID.erase(pp);
+  m_particleGroup.erase(pp);
   m_particleVolume.erase(pp);
   m_particleInitialVolume.erase(pp);
   m_particleMass.erase(pp);

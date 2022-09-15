@@ -81,8 +81,68 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   } );
 }
 
-void ParticleSubRegion::updateRVectors(int const p,
-                                       LvArray::ArraySlice<double, 2, 1, int> const & p_F)
+void ParticleSubRegion::deleteOutOfRangeParticles( std::array< real64, 3 > const & xGlobalMin,
+                                                   std::array< real64, 3 > const & xGlobalMax,
+                                                   std::array< real64, 3 > const & hEl )
+{
+  // For CPDI
+  int signs[8][3] = { { 1,  1,  1},
+                      { 1,  1, -1},
+                      { 1, -1,  1},
+                      { 1, -1, -1},
+                      {-1,  1,  1},
+                      {-1,  1, -1},
+                      {-1, -1,  1},
+                      {-1, -1, -1} };
+  
+  std::array< real64, 3 > globalMin; // including buffer nodes
+  std::array< real64, 3 > globalMax; // including buffer nodes
+  for( int i=0; i<3; i++)
+  {
+    globalMin[i] = xGlobalMin[i] - hEl[i];
+    globalMax[i] = xGlobalMax[i] + hEl[i];
+  }
+
+  for( unsigned int p=this->size()-1; p>=0; p-- )
+  {
+    arraySlice1d< real64 > const & p_x = m_particleCenter[p];
+
+    switch( m_particleType )
+    {
+      case ParticleType::SinglePoint:
+      {
+        for( int i=0; i<3; i++ )
+        {
+          if( p_x[i] < globalMin[i] || globalMax[i] < p_x[i] )
+          {
+            this->erase(p);
+          }
+        }
+      }
+      case ParticleType::CPDI:
+      {
+        for(int cornerIndex=0; cornerIndex<8; cornerIndex++)
+        {
+          for(int i=0; i<3; i++)
+          {
+            real64 cornerPositionComponent = p_x[i] + signs[cornerIndex][0] * m_particleRVectors[p][0][i] + signs[cornerIndex][1] * m_particleRVectors[p][1][i] + signs[cornerIndex][2] * m_particleRVectors[p][2][i];
+            if( cornerPositionComponent < globalMin[i] || globalMax[i] < cornerPositionComponent )
+            {
+              this->erase(p);
+            }
+          }
+        }
+      }
+      default:
+      {
+        GEOSX_ERROR( "Particle type \"" << m_particleType << "\" is not yet supported." );
+      }
+    }
+  }
+}
+
+void ParticleSubRegion::updateRVectors( int const p,
+                                        LvArray::ArraySlice<double, 2, 1, int> const & p_F )
 {
   if(m_hasRVectors)
   {
@@ -280,7 +340,7 @@ void ParticleSubRegion::getAllWeights( int const p,
 
     default:
     {
-      GEOSX_ERROR( "Invalid particle type: " << m_particleType );
+      GEOSX_ERROR( "Particle type \"" << m_particleType << "\" is not yet supported." );
     }
   }
 
