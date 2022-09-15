@@ -39,7 +39,8 @@ SolverBase::SolverBase( string const & name,
   m_nextDt( 1e99 ),
   m_dofManager( name ),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
-  m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this )
+  m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
+  m_solverStatistics( groupKeyStruct::solverStatisticsString(), this )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -76,6 +77,7 @@ SolverBase::SolverBase( string const & name,
 
   registerWrapper( viewKeyStruct::meshTargetsString(), &m_meshTargets ).
     setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "MeshBody/Region combinations that the solver will be applied to." );
 
   registerWrapper( viewKeyStruct::initialDtString(), &m_nextDt ).
@@ -86,6 +88,7 @@ SolverBase::SolverBase( string const & name,
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
+  registerGroup( groupKeyStruct::solverStatisticsString(), &m_solverStatistics );
 
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_matrix.setDofManager( &m_dofManager );
@@ -98,36 +101,69 @@ void SolverBase::initialize_postMeshGeneration()
 {
   ExecutableGroup::initialize_postMeshGeneration();
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  Group const & meshBodies = domain.getMeshBodies();
+  generateMeshTargetsFromTargetRegions( domain.getMeshBodies());
+}
+
+void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies )
+{
   for( auto const & target : m_targetRegionNames )
   {
-    auto const delimPos = target.find_first_of( '/' );
-    if( delimPos == string::npos )
+
+    string_array targetTokens = stringutilities::tokenize( target, "/" );
+
+    if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {
       GEOSX_ERROR_IF( meshBodies.numSubGroups() != 1,
                       "No MeshBody information is specified in SolverBase::meshTargets, but there are multiple MeshBody objects" );
-      string const meshBodyName = meshBodies.getGroup( 0 ).getName();
+      MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( 0 );
+      string const meshBodyName = meshBody.getName();
+
+//      Group const & meshLevels = meshBody.getMeshLevels();
+
+      string const meshLevelName = m_discretizationName;
+//      GEOSX_ERROR_IF( !meshLevels.hasGroup<MeshLevel>(meshLevelName),
+//                      "Specified MeshBody named ("<<meshBodyName<<") does not contain a MeshLevel named "<<meshLevelName );
+
+
       string const regionName = target;
-      m_meshTargets[meshBodyName].emplace_back( regionName );
+      auto const key = std::make_pair( meshBodyName, meshLevelName );
+      m_meshTargets[key].emplace_back( regionName );
+    }
+    else if( targetTokens.size()==2 )
+    {
+      string const meshBodyName = targetTokens[0];
+      GEOSX_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
+                      "MeshBody ("<<meshBodyName<<") is specified in targetRegions, but does not exist." );
+
+//      MeshBody const & meshBody = meshBodies.getGroup<MeshBody>( meshBodyName );
+
+//      Group const & meshLevels = meshBody.getMeshLevels();
+
+      string const meshLevelName = m_discretizationName;
+//      GEOSX_ERROR_IF( !meshLevels.hasGroup<MeshLevel>(meshLevelName),
+//                      "Specified MeshBody named ("<<meshBodyName<<") does not contain a MeshLevel named "<<meshLevelName );
+
+      string const regionName = targetTokens[1];
+
+
+      auto const key = std::make_pair( meshBodyName, meshLevelName );
+      m_meshTargets[key].emplace_back( regionName );
     }
     else
     {
-      string const meshBodyName = target.substr( 0, delimPos );
-      GEOSX_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
-                      "MeshBody ("<<meshBodyName<<") is specified in targetRegions, but does not exist." );
-      string const regionName = target.substr( delimPos+1 );
-      m_meshTargets[meshBodyName].emplace_back( regionName );
+      GEOSX_ERROR( "Invalid specification of targetRegions" );
     }
   }
 }
+
 
 void SolverBase::registerDataOnMesh( Group & meshBodies )
 {
   ExecutableGroup::registerDataOnMesh( meshBodies );
 
-  forMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
@@ -196,10 +232,17 @@ bool SolverBase::execute( real64 const time_n,
 
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
+    // reset number of nonlinear and linear iterations
+    m_solverStatistics.initializeTimeStepStatistics();
+
     real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
                                           nextDt,
                                           cycleNumber,
                                           domain );
+
+    // increment the cumulative number of nonlinear and linear iterations
+    m_solverStatistics.saveTimeStepStatistics();
+
     /*
      * Let us check convergence history of previous solve:
      * - number of nonlinear iter.
@@ -317,6 +360,9 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
 
   // Solve the linear system
   solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+
+  // Increment the solver statistics for reporting purposes
+  m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
 
   // Output the linear system solution for debugging purposes
   debugOutputSolution( 0.0, 0, 0, m_solution );
@@ -618,6 +664,9 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
         }
         else
         {
+          // increment the solver statistics for reporting purposes
+          m_solverStatistics.logOuterLoopIteration();
+
           GEOSX_LOG_LEVEL_RANK_0( 1, "   " );
           GEOSX_LOG_LEVEL_RANK_0( 1, "---------- Configuration did not converge. Testing new configuration. ----------" );
           GEOSX_LOG_LEVEL_RANK_0( 1, "   " );
@@ -642,13 +691,17 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
     if( isConfigurationLoopConverged )
     {
-      break; // get out of outer loop
+      // get out of outer loop
+      break;
     }
     else
     {
       // cut timestep, go back to beginning of step and restart the Newton loop
       stepDt *= dtCutFactor;
       GEOSX_LOG_LEVEL_RANK_0 ( 1, GEOSX_FMT( "New dt = {}", stepDt ) );
+
+      // notify the solver statistics counter that this is a time step cut
+      m_solverStatistics.logTimeStepCut();
     }
   } // end of outer loop (dt chopping strategy)
 
@@ -707,6 +760,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                       m_localMatrix.toViewConstSizes(),
                       localRhs );
 
+//      LvArray::print<serialPolicy>( m_localMatrix.toViewConst() );
+
       // apply boundary conditions to system
       applyBoundaryConditions( time_n,
                                stepDt,
@@ -717,6 +772,9 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
       m_rhs.close();
 
+//      m_rhs.print( std::cout );
+//      LvArray::print<serialPolicy>( m_localMatrix.toViewConst() );
+
     }
     if( m_assemblyCallback )
     {
@@ -725,9 +783,6 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
       m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
     }
-
-    // TODO: maybe add scale function here?
-    // Scale()
 
     // get residual norm
     real64 residualNorm = calculateResidualNorm( domain, m_dofManager, m_rhs.values() );
@@ -743,10 +798,21 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     // if the residual norm is less than the Newton tolerance we denote that we have
     // converged and break from the Newton loop immediately.
-
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
     {
       isNewtonConverged = true;
+      break;
+    }
+
+    // if the residual norm is above the max allowed residual norm, we break from
+    // the Newton loop to avoid crashes due to Newton divergence
+    if( residualNorm > m_nonlinearSolverParameters.m_maxAllowedResidualNorm )
+    {
+      string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString;
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
+                                            maxAllowedResidualNormString,
+                                            m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
+      isNewtonConverged = false;
       break;
     }
 
@@ -821,9 +887,13 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // Solve the linear system
     solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
+    // Increment the solver statistics for reporting purposes
+    m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
+
     // Output the linear system solution for debugging purposes
     debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
 
+    // Compute the scaling factor for the Newton update
     scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
 
     if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
@@ -1013,6 +1083,9 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
+  rhs.scale( -1.0 );
+  solution.zero();
+
   LinearSolverParameters const & params = m_linearSolverParameters.get();
   matrix.setDofManager( &dofManager );
 
@@ -1100,6 +1173,15 @@ void SolverBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time )
                                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden." );
+}
+
+void SolverBase::cleanup( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                          integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                          real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                          DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+{
+  m_solverStatistics.outputStatistics();
 }
 
 R1Tensor const SolverBase::gravityVector() const

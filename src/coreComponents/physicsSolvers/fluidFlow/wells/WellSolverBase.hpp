@@ -38,6 +38,9 @@ class WellSolverBase : public SolverBase
 {
 public:
 
+  /// String used to form the solverName used to register single-physics solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "well"; }
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
@@ -152,6 +155,14 @@ public:
                                      real64 const & GEOSX_UNUSED_PARAM( dt ),
                                      DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
 
+  virtual void applyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                        real64 const GEOSX_UNUSED_PARAM( dt ),
+                                        DomainPartition & GEOSX_UNUSED_PARAM( domain ),
+                                        DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                        CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
+                                        arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) ) override {}
+
+
   /**@}*/
 
   /**
@@ -257,9 +268,8 @@ private:
 
 
 protected:
-  virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups() override;
+  virtual void postProcessInput() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
@@ -269,11 +279,6 @@ protected:
    */
   virtual void initializeWells( DomainPartition & domain ) = 0;
 
-  /**
-   * @brief Check if the controls are viable; if not, switch the controls
-   * @param domain the domain containing the well manager to access individual wells
-   */
-  //virtual void CheckWellControlSwitch( DomainPartition & domain ) = 0;
 
   /// name of the flow solver
   string m_flowSolverName;
