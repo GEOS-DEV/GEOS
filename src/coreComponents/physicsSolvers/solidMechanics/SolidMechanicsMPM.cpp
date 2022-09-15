@@ -639,9 +639,11 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
   
 
   //#######################################################################################
-  solverProfiling( "Set grid multi-field labels to avoid a VTK output bug, must be done every time step despite grid fields being registered" );
+  solverProfiling( "Set grid multi-field labels to avoid a VTK output bug" );
   //#######################################################################################
-  setGridFieldLabels( nodeManager ); // TODO: Only doing this on the 1st cycle breaks restarts, can we do better? Why aren't labels part of the restart data?
+  // Must be done every time step despite grid fields being registered
+  // TODO: Only doing this on the 1st cycle breaks restarts, can we do better? Why aren't labels part of the restart data?
+  setGridFieldLabels( nodeManager );
 
 
   //#######################################################################################
@@ -1016,7 +1018,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
 
   //#######################################################################################
-  solverProfiling( "Print profiling results" );
+  solverProfiling( "End of explicitStep" );
   //#######################################################################################
   if( m_solverProfiling && MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {
@@ -1027,12 +1029,16 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
     // Print out solver profiling
     std::cout << "---------------------------------------------" << std::endl;
     std::cout << "Fraction of total time for one step: " << std::endl;
-    real64 tTot = m_profilingTimes[numQueries] - m_profilingTimes[0];
-    for( unsigned int i = 1 ; i < numQueries ; i++ )
+    real64 tTot = m_profilingTimes[numQueries-1] - m_profilingTimes[0];
+    for( unsigned int i = 0 ; i < numQueries - 1 ; i++ )
     {
-      std::cout << " (" << i << ") " << m_profilingLabels[i] << ":  " << ( m_profilingTimes[i] - m_profilingTimes[i-1] ) / tTot << "." << std::endl;
+      std::cout << " (" << i << ") ";
+      std::cout << std::fixed;
+      std::cout << std::showpoint;
+      std::cout << std::setprecision(6) << ( m_profilingTimes[i+1] - m_profilingTimes[i] ) / tTot;
+      std::cout << ": " << m_profilingLabels[i] << std::endl;
     }
-    std::cout << " ** Total solver step:   " << tTot << ". **" << std::endl;
+    std::cout << " ** Total solver step:  " << tTot << " s **" << std::endl;
     std::cout << "---------------------------------------------" << std::endl;
 
     // Reset profiling arrays

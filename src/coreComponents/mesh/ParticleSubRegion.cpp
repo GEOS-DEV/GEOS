@@ -66,6 +66,7 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   // before calling the `ParticleSubRegion::resize` in order to keep the first dimension.
   // Be careful when refactoring.
   this->resize( particleBlock.numParticles() );
+  unsigned int size = particleBlock.numParticles();
 
   this->m_localToGlobalMap = particleBlock.localToGlobalMap();
 
@@ -103,7 +104,7 @@ void ParticleSubRegion::deleteOutOfRangeParticles( std::array< real64, 3 > const
     globalMax[i] = xGlobalMax[i] + hEl[i];
   }
 
-  for( unsigned int p=this->size()-1; p>=0; p-- )
+  for( int p=this->size()-1; p>=0; p-- )
   {
     arraySlice1d< real64 > const & p_x = m_particleCenter[p];
 
@@ -118,6 +119,7 @@ void ParticleSubRegion::deleteOutOfRangeParticles( std::array< real64, 3 > const
             this->erase(p);
           }
         }
+        break;
       }
       case ParticleType::CPDI:
       {
@@ -132,6 +134,7 @@ void ParticleSubRegion::deleteOutOfRangeParticles( std::array< real64, 3 > const
             }
           }
         }
+        break;
       }
       default:
       {
