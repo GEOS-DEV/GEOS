@@ -15,12 +15,12 @@ objectPath             string                                                   
 reflectivity           real64       0.001                                       Desired reflectivity of the PML region, used to compute the damping profile                        
 scale                  real64       0                                           Scale factor for value of the boundary condition.                                                  
 setNames               string_array required                                    Name of sets that boundary condition is applied to.                                                
-thicknessMaxXYZ        R1Tensor     {-1,-1,-1}                                  Thickness of the PML region, at right, back, and bottom sides, used to compute the damping profile 
-thicknessMinXYZ        R1Tensor     {-1,-1,-1}                                  Thickness of the PML region, at left, front, and top sides, used to compute the damping profile    
-waveSpeedMaxXYZ        R1Tensor     {-1,-1,-1}                                  Wave speed in the PML, at right, back, and bottom sides, used to compute the damping profile       
-waveSpeedMinXYZ        R1Tensor     {-1,-1,-1}                                  Wave speed in the PML, at left, front, and top sides, used to compute the damping profile          
-xMax                   R1Tensor     {1.79769e+308,1.79769e+308,1.79769e+308}    Maximum (x,y,z) coordinates of the inner PML boundaries                                            
-xMin                   R1Tensor     {-1.79769e+308,-1.79769e+308,-1.79769e+308} Minimum (x,y,z) coordinates of the inner PML boundaries                                            
+thicknessMaxXYZ        R1Tensor32b  {-1,-1,-1}                                  Thickness of the PML region, at right, back, and bottom sides, used to compute the damping profile 
+thicknessMinXYZ        R1Tensor32b  {-1,-1,-1}                                  Thickness of the PML region, at left, front, and top sides, used to compute the damping profile    
+waveSpeedMaxXYZ        R1Tensor32b  {-1,-1,-1}                                  Wave speed in the PML, at right, back, and bottom sides, used to compute the damping profile       
+waveSpeedMinXYZ        R1Tensor32b  {-1,-1,-1}                                  Wave speed in the PML, at left, front, and top sides, used to compute the damping profile          
+xMax                   R1Tensor32b  {1.79769e+308,1.79769e+308,1.79769e+308}    Maximum (x,y,z) coordinates of the inner PML boundaries                                            
+xMin                   R1Tensor32b  {-1.79769e+308,-1.79769e+308,-1.79769e+308} Minimum (x,y,z) coordinates of the inner PML boundaries                                            
 ====================== ============ =========================================== ================================================================================================== 
 
 
