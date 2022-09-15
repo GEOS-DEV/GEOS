@@ -295,7 +295,7 @@ protected:
   integer m_strainTheory;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
-  integer m_effectiveStressFlag; 
+  integer m_effectiveStressFlag;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
@@ -345,14 +345,14 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   std::forward< PARAMS >( params )... );
 
     m_maxForce = finiteElement::
-                  regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                                CONSTITUTIVE_BASE,
-                                                CellElementSubRegion >( mesh,
-                                                                        regionNames,
-                                                                        this->getDiscretizationName(),
-                                                                        viewKeyStruct::solidMaterialNamesString(),
-                                                                        kernelWrapper );
-  
+                   regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                                 CONSTITUTIVE_BASE,
+                                                 CellElementSubRegion >( mesh,
+                                                                         regionNames,
+                                                                         this->getDiscretizationName(),
+                                                                         viewKeyStruct::solidMaterialNamesString(),
+                                                                         kernelWrapper );
+
   } );
 
 

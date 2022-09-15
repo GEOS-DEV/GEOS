@@ -91,7 +91,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerExtrinsicData< temperature >( getName() );
       subRegion.registerExtrinsicData< temperature_n >( getName() );
-      subRegion.registerExtrinsicData< initialTemperature >( getName() ); 
+      subRegion.registerExtrinsicData< initialTemperature >( getName() );
 
       subRegion.registerExtrinsicData< bcTemperature >( getName() ); // needed for the application of boundary conditions
 

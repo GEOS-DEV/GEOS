@@ -77,11 +77,11 @@ void ThermalSinglePhasePoromechanicsSolver::postProcessInput()
     // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it
     // will never converge.
     SolidMechanicsLagrangianFEM &
-      solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+    solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
     integer & minNewtonIterSolid = solidSolver.getNonlinearSolverParameters().m_minIterNewton;
 
     SinglePhaseBase &
-      fluidSolver = this->getParent().getGroup< SinglePhaseBase >( m_fluidSolverName );
+    fluidSolver = this->getParent().getGroup< SinglePhaseBase >( m_fluidSolverName );
     integer & minNewtonIterFluid = fluidSolver.getNonlinearSolverParameters().m_minIterNewton;
 
     minNewtonIterSolid = 0;
@@ -128,10 +128,10 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
   real64 dtReturnTemporary;
 
   SolidMechanicsLagrangianFEM &
-    solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 
   SinglePhaseBase &
-    fluidSolver = this->getParent().getGroup< SinglePhaseBase >( m_fluidSolverName );
+  fluidSolver = this->getParent().getGroup< SinglePhaseBase >( m_fluidSolverName );
 
   fluidSolver.setupSystem( domain,
                            fluidSolver.getDofManager(),

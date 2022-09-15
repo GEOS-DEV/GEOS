@@ -139,8 +139,8 @@ public:
                                             real64 const & initialFluidPressure,
                                             real64 const & fluidPressure_n,
                                             real64 const & fluidPressure,
-                                            real64 const & initialTemperature, 
-                                            real64 const & temperature, 
+                                            real64 const & initialTemperature,
+                                            real64 const & temperature,
                                             real64 const ( &strainIncrement )[6],
                                             real64 ( & totalStress )[6],
                                             DiscretizationOps & stiffness ) const
@@ -150,7 +150,7 @@ public:
                                q,
                                initialFluidPressure,
                                fluidPressure,
-                               initialTemperature, 
+                               initialTemperature,
                                temperature,
                                strainIncrement,
                                totalStress,
@@ -161,8 +161,8 @@ public:
     real64 porosity;
     real64 porosity_n;
     real64 porosityInit;
-    real64 dPorosity_dVolStrain; // No use. Just to input something 
-    real64 dPorosity_dPressure; // No use. Just to input something 
+    real64 dPorosity_dVolStrain; // No use. Just to input something
+    real64 dPorosity_dPressure; // No use. Just to input something
     computePorosity( k,
                      q,
                      deltaFluidPressure,
@@ -171,7 +171,7 @@ public:
                      porosity_n,
                      porosityInit,
                      dPorosity_dVolStrain,
-                     dPorosity_dPressure ); 
+                     dPorosity_dPressure );
   }
 
   template< int NUM_MAX_COMPONENTS >
@@ -540,8 +540,8 @@ private:
                                   localIndex const q,
                                   real64 const & initialFluidPressure,
                                   real64 const & fluidPressure,
-                                  real64 const & initialTemperature, 
-                                  real64 const & temperature, 
+                                  real64 const & initialTemperature,
+                                  real64 const & temperature,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( & totalStress )[6],
                                   DiscretizationOps & stiffness ) const
@@ -562,7 +562,7 @@ private:
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * fluidPressure + initialBiotCoefficient * initialFluidPressure );
 
     // Add the contribution of the thermal expansion into the total stress
-    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k ); 
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -3 * thermalExpansionCoefficient * bulkModulus * ( temperature - initialTemperature ) );

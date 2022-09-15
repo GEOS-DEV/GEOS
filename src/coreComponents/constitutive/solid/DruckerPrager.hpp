@@ -61,7 +61,7 @@ public:
                         arrayView2d< real64 > const & oldCohesion,
                         arrayView1d< real64 const > const & bulkModulus,
                         arrayView1d< real64 const > const & shearModulus,
-                        arrayView1d< real64 const > const & thermalExpansionCoefficient, 
+                        arrayView1d< real64 const > const & thermalExpansionCoefficient,
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
                         arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                         bool const & disableInelasticity ):
@@ -399,7 +399,7 @@ public:
                                  m_oldCohesion,
                                  m_bulkModulus,
                                  m_shearModulus,
-                                 m_thermalExpansionCoefficient, 
+                                 m_thermalExpansionCoefficient,
                                  m_newStress,
                                  m_oldStress,
                                  m_disableInelasticity );
@@ -423,7 +423,7 @@ public:
                           m_oldCohesion,
                           m_bulkModulus,
                           m_shearModulus,
-                          m_thermalExpansionCoefficient, 
+                          m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );

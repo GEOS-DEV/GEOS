@@ -51,13 +51,13 @@ public:
    */
   ElasticIsotropicUpdates( arrayView1d< real64 const > const & bulkModulus,
                            arrayView1d< real64 const > const & shearModulus,
-                           arrayView1d< real64 const > const & thermalExpansionCoefficient, 
+                           arrayView1d< real64 const > const & thermalExpansionCoefficient,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
                            arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                            const bool & disableInelasticity ):
     SolidBaseUpdates( newStress, oldStress, disableInelasticity ),
     m_bulkModulus( bulkModulus ),
-    m_shearModulus( shearModulus ), 
+    m_shearModulus( shearModulus ),
     m_thermalExpansionCoefficient( thermalExpansionCoefficient )
   {}
 
@@ -433,7 +433,7 @@ public:
     /// string/key for shear modulus
     static constexpr char const * shearModulusString() { return "shearModulus"; }
 
-    /// string/key for thermal expansion coefficient 
+    /// string/key for thermal expansion coefficient
     static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; }
   };
 
@@ -477,7 +477,7 @@ public:
     {
       return ElasticIsotropicUpdates( m_bulkModulus,
                                       m_shearModulus,
-                                      m_thermalExpansionCoefficient, 
+                                      m_thermalExpansionCoefficient,
                                       m_newStress,
                                       m_oldStress,
                                       m_disableInelasticity );
@@ -486,7 +486,7 @@ public:
     {
       return ElasticIsotropicUpdates( m_bulkModulus,
                                       m_shearModulus,
-                                      m_thermalExpansionCoefficient, 
+                                      m_thermalExpansionCoefficient,
                                       arrayView3d< real64, solid::STRESS_USD >(),
                                       arrayView3d< real64, solid::STRESS_USD >(),
                                       m_disableInelasticity );
@@ -507,7 +507,7 @@ public:
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_bulkModulus,
                           m_shearModulus,
-                          m_thermalExpansionCoefficient, 
+                          m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );

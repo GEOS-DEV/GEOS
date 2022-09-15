@@ -42,13 +42,13 @@ namespace solidMechanicsLagrangianFEMKernels
  * ### ThermoPoroElastic Description
  * Implements the KernelBase interface functions required for using the
  * effective stress for the integration of the stress divergence. This is
- * templated on one of the "finite element kernel application" functions 
+ * templated on one of the "finite element kernel application" functions
  * such as geosx::finiteElement::RegionBasedKernelApplication.
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ThermoPoroElastic : 
+class ThermoPoroElastic :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
                                             FE_TYPE,
@@ -109,11 +109,11 @@ public:
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
-    m_density( inputConstitutiveType.getDensity() ), 
+    m_density( inputConstitutiveType.getDensity() ),
     m_initialFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >() ),
     m_fluidPressure_n( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >() ),
-    m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ), 
-    m_initialTemperature( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialTemperature >() ), 
+    m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
+    m_initialTemperature( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialTemperature >() ),
     m_temperature( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::temperature >() )
   {}
 
@@ -133,10 +133,10 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-            xLocal(),
-            u_local(),
-            uhat_local(),
-            constitutiveStiffness()
+                                       xLocal(),
+                                       u_local(),
+                                       uhat_local(),
+                                       constitutiveStiffness()
     {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
@@ -188,7 +188,7 @@ public:
     }
 
   }
-  
+
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
@@ -205,23 +205,23 @@ public:
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
     // Evaluate total stress and its derivatives
-    m_constitutiveUpdate.smallStrainUpdateThermalSinglePhase( k, 
-                                                              q, 
-                                                              m_initialFluidPressure[k], 
+    m_constitutiveUpdate.smallStrainUpdateThermalSinglePhase( k,
+                                                              q,
+                                                              m_initialFluidPressure[k],
                                                               m_fluidPressure_n[k],
-                                                              m_fluidPressure[k], 
-                                                              m_initialTemperature[k], 
+                                                              m_fluidPressure[k],
+                                                              m_initialTemperature[k],
                                                               m_temperature[k],
-                                                              strainIncrement, 
-                                                              totalStress, 
-                                                              stiffness ); 
+                                                              strainIncrement,
+                                                              totalStress,
+                                                              stiffness );
 
     for( localIndex i=0; i<6; ++i )
     {
       totalStress[i] *= -detJxW;
     }
 
-    // Here we consider the bodyForce is purely from the solid 
+    // Here we consider the bodyForce is purely from the solid
     real64 const bodyForce[3] = { m_gravityVector[0] * m_density( k, q )* detJxW,
                                   m_gravityVector[1] * m_density( k, q )* detJxW,
                                   m_gravityVector[2] * m_density( k, q )* detJxW };
@@ -281,9 +281,9 @@ protected:
 
   /// The gravity vector.
   real64 const m_gravityVector[3];
-  
+
   /// The rank global densities
-  arrayView2d< real64 const > const m_density; 
+  arrayView2d< real64 const > const m_density;
 
   /// The rank-global initial fluid pressure array
   arrayView1d< real64 const > const m_initialFluidPressure;

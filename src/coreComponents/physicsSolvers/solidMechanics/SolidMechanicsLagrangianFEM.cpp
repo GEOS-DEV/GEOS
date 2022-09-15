@@ -60,7 +60,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxForce( 0.0 ),
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
-  m_iComm( CommunicationTools::getInstance().getCommID() ), 
+  m_iComm( CommunicationTools::getInstance().getCommID() ),
   m_effectiveStressFlag( 0 )
 {
 
@@ -124,8 +124,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
 
   registerWrapper( viewKeyStruct::effectiveStressString(), &m_effectiveStressFlag ).
     setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ). 
-    setDescription( "The flag to indicate whether to apply fluid pressure and thermal effects to produce effective stress" ); 
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether to apply fluid pressure and thermal effects to produce effective stress" );
 
 }
 

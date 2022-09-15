@@ -111,7 +111,7 @@ EXTRINSIC_MESH_DATA_TRAIT( initialTemperature,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Initial temperature" );
-                           
+
 EXTRINSIC_MESH_DATA_TRAIT( netToGross,
                            "netToGross",
                            array1d< real64 >,

@@ -29,7 +29,7 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
   m_defaultBulkModulus(),
   m_defaultShearModulus(),
   m_bulkModulus(),
-  m_shearModulus(), 
+  m_shearModulus(),
   m_thermalExpansionCoefficient()
 {
   registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
@@ -60,10 +60,10 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
     setApplyDefaultValue( -1 ).
     setDescription( "Elastic Shear Modulus Field" );
 
-  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ). 
-    setApplyDefaultValue( 0.0 ). 
-    setInputFlag( InputFlags::OPTIONAL ). 
-    setDescription( "Thermal Expansion Coefficient Field" ); 
+  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Thermal Expansion Coefficient Field" );
 }
 
 ElasticIsotropic::~ElasticIsotropic()
