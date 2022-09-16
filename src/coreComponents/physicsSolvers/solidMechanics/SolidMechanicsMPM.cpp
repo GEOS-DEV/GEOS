@@ -1152,7 +1152,7 @@ void SolidMechanicsMPM::enforceGridVectorFieldSymmetryBC( array3d< real64 > & ve
         // Enforce BCs on boundary nodes
         for( const auto & g : m_boundaryNodes[face] )
         {
-          vectorMultiField[fieldIndex][g][dir0] = 0.0;
+          vectorMultiField[g][fieldIndex][dir0] = 0.0;
         }
       
         // Perform field reflection on buffer nodes
@@ -1165,9 +1165,9 @@ void SolidMechanicsMPM::enforceGridVectorFieldSymmetryBC( array3d< real64 > & ve
 
           localIndex gFrom = m_ijkMap[ijk[0]][ijk[1]][ijk[2]];
 
-          vectorMultiField[fieldIndex][g][dir0] = -vectorMultiField[fieldIndex][gFrom][dir0]; // Negate component aligned with surface normal
-          vectorMultiField[fieldIndex][g][dir1] =  vectorMultiField[fieldIndex][gFrom][dir1];
-          vectorMultiField[fieldIndex][g][dir2] =  vectorMultiField[fieldIndex][gFrom][dir2];
+          vectorMultiField[g][fieldIndex][dir0] = -vectorMultiField[gFrom][fieldIndex][dir0]; // Negate component aligned with surface normal
+          vectorMultiField[g][fieldIndex][dir1] =  vectorMultiField[gFrom][fieldIndex][dir1];
+          vectorMultiField[g][fieldIndex][dir2] =  vectorMultiField[gFrom][fieldIndex][dir2];
         }
       }
     }
