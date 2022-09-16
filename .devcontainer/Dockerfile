@@ -6,6 +6,7 @@ RUN apt-get install -y \
     git-lfs \
     vim \
     ninja-build \
+    gdb \
 # for paraview headless
     libcurl4 \
     libglapi-mesa
