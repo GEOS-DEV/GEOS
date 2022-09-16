@@ -170,7 +170,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "ijkMap", &m_ijkMap ).
     setInputFlag( InputFlags::FALSE ).
-    setDescription( "Map from cell-spaced coordinates to cell ID" );
+    setDescription( "Map from indices in each spatial dimension to local node ID" );
 }
 
 void SolidMechanicsMPM::postProcessInput()
@@ -1136,8 +1136,6 @@ void SolidMechanicsMPM::enforceGridVectorFieldSymmetryBC( array3d< real64 > & ve
 {
   array1d< SortedArray< localIndex > > & m_boundaryNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() );
   array1d< SortedArray< localIndex > > & m_bufferNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
-  
-  int numNodes = vectorMultiField.size(0);
 
   for( int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++ )
   {

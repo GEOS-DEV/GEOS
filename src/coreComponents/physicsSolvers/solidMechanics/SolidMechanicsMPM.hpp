@@ -222,7 +222,7 @@ protected:
   std::array< real64, 3 > m_xGlobalMax;         // Maximum global grid coordinate excluding buffer nodes
   std::array< real64, 3 > m_domainLengths;      // Length of each edge of grid
   std::array< int, 3 > m_nEl;                   // Number of elements in each grid direction including buffer cells
-  array3d< int > m_ijkMap;                      // Map from cell-spaced coordinates to cell ID
+  array3d< int > m_ijkMap;                      // Map from indices in each spatial dimension to local node ID
 
   int m_voigtMap[3][3];
 
