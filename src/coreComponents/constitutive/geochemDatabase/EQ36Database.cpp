@@ -72,62 +72,59 @@ void EQ36Database::CreateChemicalSystem( string_array const primarySpeciesNames,
     "Internal error when reading database" );
 
 
-// Read primary species related enteries
+  // read and ignore everything till you hit the basis species block
+  readAndIgnoreActivityCoefficientBlock( EQ36File, buffer_size, "basis species") 
 
+  // We probably don't need this. Left it as is for now, will evaluate later
   unordered_map< string, int > primarySpeciesMap;
-// populate primarySpeciesMap with the input primary species
+  // populate primarySpeciesMap with the input primary species
   for( int ic = 0; ic < primarySpeciesNames.size(); ic++ )
   {
     primarySpeciesMap[primarySpeciesNames[ic] ] = -1;
   }
-
-  while( is.getline( buf, buf_size ))
-  {
-    std::string str( buf );
-    auto found = str.find( "basis species" );
-    if( found!=std::string::npos )
-      break;
-  }
-
-  string speciesName;
-  real64 MW = 0;
-  integer charge = 0;
-  real64 ionSize = 0;
   int H2OIndex = -1, O2gIndex = -1;
 
+
+  integer numPrimarySpecies = primarySpeciesNames.size();
+  real64 MW
+  m_MWPrimary.resize( numPrimarySpecies )
+  real64 ionSize
+  m_ionSizePrimary.resize( numPrimarySpecies )
+  integer charge
+  m_chargePrimary.resize( numPrimarySpecies )
+  string speciesName;
+
   int count = 0;
-  while( is.getline( buf, buf_size ))
+  while( EQ36File.getline( fileLine, buffer_size ))
   {
-    std::string str( buf );
+    std::string fileLineString( fileLine );
     {
-      auto found = str.find( "+-------" );
+      auto found = fileLineString.find( "+-------" );
       if( found!=std::string::npos )
       {
-        auto it = primarySpeciesMap.find( speciesName );
-        // Only include the primary species mentioned in the input file, H2O and O2(g)
-        if( it != primarySpeciesMap.end() || speciesName == "H2O" ||speciesName == "O2(g)" )
+        // auto it = primarySpeciesMap.find( speciesName );
+        // if( it != primarySpeciesMap.end() || speciesName == "H2O" ||speciesName == "O2(g)" )
+        // Only include the primary species mentioned in the input file. 
+        // For the time being ignore H2O and O2(g) because I don't know why they need special treatment
+        // Not a 100 % sure if the map variable can be replaced by the string array variable while still using the find() and end() functions. 
+        auto it = primarySpeciesNames.find( speciesName );          
+        if( it != primarySpeciesNames.end() )
         {
-          speciesProperties entry;
-          entry.name = speciesName;
-          entry.type = speciesType::aqueous;
-          entry.MW = MW;
-          entry.ionSize = ionSize;
-          entry.charge = charge;
-          m_primarySpecies.emplace_back( entry );
+          // Ignoring speciesType information since I don't know what difference does it make at this point
+          m_MWPrimary[speciesIndex] = MW;
+          m_ionSizePrimary[speciesIndex] = ionSize;
+          m_chargePrimary[speciesIndex] = charge;
 
-          if( speciesName == "H2O" )
-            H2OIndex = count;
-          else if( speciesName == "O2(g)" )
-            O2gIndex = count;
-          else
-            primarySpeciesMap[speciesName] = count;
-
+          // Have to figure out how are we going to find out the species index to replace this line. Ask Matteo
+          primarySpeciesMap[speciesName] = count;
           count++;
         }
-        is.getline( buf, buf_size );
-        speciesName = buf;
-        auto found2 = speciesName.find( "auxiliary basis species" );
+        // the line after +------ is either the species name or indicates the start of the next block
+        EQ36File.getline( fileLine, buffer_size );
+        speciesName = fileLine;
 
+        // if the next block has started, exit the loop
+        auto found2 = speciesName.find( "auxiliary basis species" );
         if( found2 != std::string::npos )
         {
           break;
@@ -135,49 +132,46 @@ void EQ36Database::CreateChemicalSystem( string_array const primarySpeciesNames,
       }
     }
 
+    // molecular weight block
     {
-      auto found = str.find( "mol.wt." );
+      auto found = fileLineString.find( "mol.wt." );
       if( found != std::string::npos )
       {
-        string_array strs = Tokenize( str, " " );
-        MW = std::stod( strs[3] ) * 0.001;
+        string_array lineEntries = Tokenize( fileLineString, " " );
+        MW = std::stod( lineEntries[3] ) * 0.001;
       }
     }
 
+    // ion size block
     {
-      auto found = str.find( "DHazero" );
+      auto found = fileLineString.find( "DHazero" );
       if( found != std::string::npos )
       {
-        string_array strs = Tokenize( str, " " );
-        ionSize = std::stod( strs[3] ) * 1e-8;
+        string_array lineEntries = Tokenize( fileLineString, " " );
+        ionSize = std::stod( lineEntries[3] ) * 1e-8;
       }
     }
-
+    // charge block
     {
-      auto found = str.find( "charge" );
+      auto found = fileLineString.find( "charge" );
       if( found != std::string::npos )
       {
-        string_array strs = Tokenize( str, " " );
-        charge = std::stoi( strs[2] );
+        string_array lineEntries = Tokenize( fileLineString, " " );
+        charge = std::stoi( lineEntries[2] );
       }
     }
   }
 
+  // Likely we don't need any of this. Will evaluate in the next round. 
   integer idx;
   integer numPrimarySpecies = primarySpeciesNames.size();
-  m_primarySpeciesIndices.resize( numPrimarySpecies + 2 );
+  m_primarySpeciesIndices.resize( numPrimarySpecies );
   for( int ic = 0; ic < numPrimarySpecies; ic++ )
   {
     idx = primarySpeciesMap[primarySpeciesNames[ic] ];
     m_primarySpeciesIndices[ic] = idx;
     primarySpeciesMap[primarySpeciesNames[ic] ] = int(ic);
   }
-
-  m_primarySpeciesIndices[numPrimarySpecies] = H2OIndex;
-  primarySpeciesMap[m_primarySpecies[H2OIndex].name] = int(numPrimarySpecies);
-
-  m_primarySpeciesIndices[numPrimarySpecies + 1] = O2gIndex;
-  primarySpeciesMap[m_primarySpecies[O2gIndex].name ] = int(numPrimarySpecies + 1);
 
 
 // Read secondary species related enteries
@@ -967,7 +961,7 @@ void EQ36Database::readActivityCoefficientBlock( std::ifstream const EQ36File,
     if( found!=std::string::npos )                         // if yes, you have reached the next block and should exit
       break;
 
-    string_array lineEntries = Tokenize( str, " " );      // separate the different numeric enteries and store them
+    string_array lineEntries = Tokenize( fileLineString, " " );      // separate the different numeric enteries and store them
     for( int i = 0; i < lineEntries.size(); i++ )
     {
       readVariable.emplace_back( std::stod( lineEntries[i] ));
