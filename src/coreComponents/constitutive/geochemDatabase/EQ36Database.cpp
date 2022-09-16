@@ -36,123 +36,39 @@ void EQ36Database::CreateChemicalSystem( string_array const primarySpeciesNames,
                                          string_array const secondarySpeciesNames )
 {
 // Read activity coefficient model related enteries
-  std::ifstream is( m_databaseFileName );
-  constexpr std::streamsize buf_size = 256;
-  char buf[buf_size];
+  std::ifstream EQ36File ( m_databaseFileName );
+  constexpr std::streamsize buffer_size = 256;
+  char fileLine[buffer_size];
 
-  while( is.getline( buf, buf_size ))
+  while( EQ36File.getline( fileLine, buffer_size ))
   {
-    std::string str( buf );
-    auto found = str.find( "Temperature grid" );
+    std::string fileLineString ( fileLine );
+    auto found = fileLineString.find( "Temperature grid" );
     if( found!=std::string::npos )
       break;
   }
 
-// Lines 54 - 67 repeat multiple times with the only difference being in 
-// lines 57 and 65 (the term it is searching for to determine the end of 
-// the block and the variable in which to store the enteries (including unit conversion))  
-  while( is.getline( buf, buf_size ))
-  {
-    std::string str( buf );
-    auto found = str.find( "Pressure grid" );
-    if( found!=std::string::npos )
-      break;
+  // read and store temperature information
+  readActivityCoefficientBlock( EQ36File, buffer_size, "Pressure grid", m_actCoeffParameters.temperatures ) 
+  // read and ignore pressure and pressure envelope information
+  // As of now, we don't make use of pressure and hence I am not storing it
+  readAndIgnoreActivityCoefficientBlock( EQ36File, buffer_size, "Pressure envelope") 
+  readAndIgnoreActivityCoefficientBlock( EQ36File, buffer_size, "Debye-Huckel A_gamma") 
+  // read and store Debye-Huckel A information
+  readActivityCoefficientBlock( EQ36File, buffer_size, "Debye-Huckel A_H", m_actCoeffParameters.DebyeHuckelAs ) 
+  // read and ignore Debye-Huckel A_H information
+  readAndIgnoreActivityCoefficientBlock( EQ36File, buffer_size, "Debye-Huckel B_gamma") 
+  // read and store Debye-Huckel B information and convert it in the correct units
+  readActivityCoefficientBlock( EQ36File, buffer_size, "Debye-Huckel B_H", m_actCoeffParameters.DebyeHuckelBs ) 
+  m_actCoeffParameters.DebyeHuckelBs = m_actCoeffParameters.DebyeHuckelBs*1e8
+  // read and ignore Debye-Huckel B_H information
+  readAndIgnoreActivityCoefficientBlock( EQ36File, buffer_size, "B-dot") 
+  // read and store WATEQB-Dot information
+  readActivityCoefficientBlock( EQ36File, buffer_size, "B-dot_H", m_actCoeffParameters.WATEQBDots ) 
 
-    string_array strs = Tokenize( str, " " );
-    for( int i = 0; i < strs.size(); i++ )
-    {
-      // store the temperature grid
-      m_actCoeffParameters.temperatures.emplace_back( std::stod( strs[i] ));
-    }
-  }
-
-  while( is.getline( buf, buf_size ))
-  {
-    std::string str( buf );
-    auto found = str.find( "Pressure envelope" );
-    if( found!=std::string::npos )
-      break;
-
-    string_array strs = Tokenize( str, " " );
-    for( int i = 0; i < strs.size(); i++ )
-    {
-      // store the pressure grid
-      // I think this is the saturation pressure of water at the temperatures in the temperature grid
-      m_actCoeffParameters.pressures.emplace_back( std::stod( strs[i] ));
-    }
-  }
-
-// Lines 93 - 99 repeat multiple times with the only difference being in lines 96
-// (the term it is searching for to determine the end of the block)  
-// This block is used when the database enteries are not necessary
-  while( is.getline( buf, buf_size ))
-  {
-    std::string str( buf );
-    auto found = str.find( "Debye-Huckel A_gamma" );
-    if( found!=std::string::npos )
-      break;
-  }
-
-  while( is.getline( buf, buf_size ))
-  {
-    std::string str( buf );
-    auto found = str.find( "Debye-Huckel A_H" );
-    if( found!=std::string::npos )
-      break;
-
-    string_array strs = Tokenize( str, " " );
-    for( int i = 0; i < strs.size(); i++ )
-    {
-      m_actCoeffParameters.DebyeHuckelAs.emplace_back( std::stod( strs[i] ));
-    }
-  }
-
-  while( is.getline( buf, buf_size ))
-  {
-    std::string str( buf );
-    auto found = str.find( "Debye-Huckel B_gamma" );
-    if( found!=std::string::npos )
-      break;
-  }
-
-  while( is.getline( buf, buf_size ))
-  {
-    std::string str( buf );
-    auto found = str.find( "Debye-Huckel B_H" );
-    if( found!=std::string::npos )
-      break;
-
-    string_array strs = Tokenize( str, " " );
-    for( int i = 0; i < strs.size(); i++ )
-    {
-      m_actCoefParameters.DebyeHuckelBs.emplace_back( std::stod( strs[i] )*1e8 );
-    }
-  }
-
-  while( is.getline( buf, buf_size ))
-  {
-    std::string str( buf );
-    auto found = str.find( "B-dot" );
-    if( found!=std::string::npos )
-      break;
-  }
-
-  while( is.getline( buf, buf_size ))
-  {
-    std::string str( buf );
-    auto found = str.find( "B-dot_H" );
-    if( found!=std::string::npos )
-      break;
-
-    string_array strs = Tokenize( str, " " );
-    for( int i = 0; i < strs.size(); i++ )
-    {
-      m_actCoeffParameters.WATEQBDots.emplace_back( std::stod( strs[i] ));
-    }
-  }
-
+  // if the size of the variables to be interpolated are not the same, throw an error
   GEOSX_ERROR_IF(
-    m_actCoeffParameters.temperatures.size() != m_actCoeffParameters.pressures.size() || m_actCoeffParameters.temperatures.size() != m_actCoeffParameters.DebyeHuckelAs.size() || m_actCoeffParameters.temperatures.size() != m_actCoeffParameters.DebyeHuckelBs.size() || m_actCoeffParameters.temperatures.size() != m_actCoeffParameters.WATEQBDots.size(),
+    m_actCoeffParameters.temperatures.size() != m_actCoeffParameters.DebyeHuckelAs.size() || m_actCoeffParameters.temperatures.size() != m_actCoeffParameters.DebyeHuckelBs.size() || m_actCoeffParameters.temperatures.size() != m_actCoeffParameters.WATEQBDots.size(),
     "Internal error when reading database" );
 
 
@@ -1030,6 +946,55 @@ void EQ36Database::CreateChemicalSystem( string_array const primarySpeciesNames,
   }
 
   is.close();
+}
+
+
+void EQ36Database::readActivityCoefficientBlock( std::ifstream const EQ36File, 
+                                                 std::streamsize const bufferSize,
+                                                 string const nextBlockString,
+                                                 arraySlice1d< real64 > const & readVariable ) const
+
+{
+
+  // This function reads a block from the EQ3/6 Database file and returns the read enteries in a vector.
+  char fileLine[bufferSize];
+  // I am not sure if information on which line was read is preserved when passing information through a function. 
+  // That is critical because if the file is going to be read from the first line every single time then this won't work
+  while( EQ36File.getline( fileLine, bufferSize ))         //read the line
+  {
+    std::string fileLineString ( fileLine );
+    auto found = fileLineString.find( nextBlockString );   // can you find the required string in the line
+    if( found!=std::string::npos )                         // if yes, you have reached the next block and should exit
+      break;
+
+    string_array lineEntries = Tokenize( str, " " );      // separate the different numeric enteries and store them
+    for( int i = 0; i < lineEntries.size(); i++ )
+    {
+      readVariable.emplace_back( std::stod( lineEntries[i] ));
+    }
+  }
+
+}
+
+void EQ36Database::readAndIgnoreActivityCoefficientBlock( std::ifstream const EQ36File, 
+                                                          std::streamsize const bufferSize,
+                                                          string const nextBlockString ) const
+
+{
+
+  // This function reads a block from the EQ3/6 Database file and ignores it as it isn't useful for us
+  char fileLine[bufferSize];
+  // I am not sure if information on which line was read is preserved when passing information through a function. 
+  // That is critical becuase if the file is going to be read from the first line every single time then this won't work
+  while( EQ36File.getline( fileLine, bufferSize ))
+  {
+    std::string fileLineString ( fileLine );
+    auto found = fileLineString.find( nextBlockString );
+    if( found!=std::string::npos )
+      break;
+
+  }
+
 }
 
 // Not sure what is this for
