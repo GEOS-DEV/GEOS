@@ -121,15 +121,15 @@ setMGRStrategy()
   // Not implemented yet
 }
 
-
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
 void
 CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
+  Base::initializePreSubGroups();
+
   CompositionalMultiphaseBase const * const flowSolver = this->flowSolver();
   Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
-  setMGRStrategy();
 
   bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );;
   bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
@@ -138,6 +138,15 @@ initializePreSubGroups()
                              this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
                              Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
                   InputError );
+}
+
+template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
+void
+CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+initializePostInitialConditionsPreSubGroups()
+{
+  Base::initializePostInitialConditionsPreSubGroups();
+  setMGRStrategy();
 }
 
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
