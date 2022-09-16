@@ -107,6 +107,8 @@ void ParticleSubRegion::deleteOutOfRangeParticles( std::array< real64, 3 > const
   {
     arraySlice1d< real64 > const & p_x = m_particleCenter[p];
 
+    bool deleted = false;
+
     switch( m_particleType )
     {
       case ParticleType::SinglePoint:
@@ -116,6 +118,8 @@ void ParticleSubRegion::deleteOutOfRangeParticles( std::array< real64, 3 > const
           if( p_x[i] < globalMin[i] || globalMax[i] < p_x[i] )
           {
             this->erase(p);
+            deleted = true;
+            break;
           }
         }
         break;
@@ -130,7 +134,13 @@ void ParticleSubRegion::deleteOutOfRangeParticles( std::array< real64, 3 > const
             if( cornerPositionComponent < globalMin[i] || globalMax[i] < cornerPositionComponent )
             {
               this->erase(p);
+              deleted = true;
+              break;
             }
+          }
+          if( deleted )
+          {
+            break;
           }
         }
         break;
