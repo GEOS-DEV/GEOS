@@ -179,21 +179,21 @@ protected:
   struct parametersPML
   {
     /// Mininum (x,y,z) coordinates of inner PML boundaries
-    R1Tensor32b xMinPML;
+    R1Tensor32 xMinPML;
 
     /// Maximum (x,y,z) coordinates of inner PML boundaries
-    R1Tensor32b xMaxPML;
+    R1Tensor32 xMaxPML;
 
     /// Desired reflectivity of the PML region, used to compute the damping profile
     real32 reflectivityPML;
 
     /// Thickness of the PML region, used to compute the damping profile
-    R1Tensor32b thicknessMinXYZPML;
-    R1Tensor32b thicknessMaxXYZPML;
+    R1Tensor32 thicknessMinXYZPML;
+    R1Tensor32 thicknessMaxXYZPML;
 
     /// Wave speed in the PML region, used to compute the damping profile
-    R1Tensor32b waveSpeedMinXYZPML;
-    R1Tensor32b waveSpeedMaxXYZPML;
+    R1Tensor32 waveSpeedMinXYZPML;
+    R1Tensor32 waveSpeedMaxXYZPML;
   };
 
 };

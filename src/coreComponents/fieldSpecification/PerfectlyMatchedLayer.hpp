@@ -62,13 +62,13 @@ public:
    * @brief Getter for the PML minimum coordinates
    * @return Mininum (x,y,z) coordinates of inner PML boundaries
    */
-  R1Tensor32b getMin() const { return m_xMin; }
+  R1Tensor32 getMin() const { return m_xMin; }
 
   /**
    * @brief Getter for the PML maximum coordinates
    * @return Maximum (x,y,z) coordinates of inner PML boundaries
    */
-  R1Tensor32b getMax() const { return m_xMax; }
+  R1Tensor32 getMax() const { return m_xMax; }
 
   /**
    * @brief Getter for the PML reflectivity
@@ -80,25 +80,25 @@ public:
    * @brief Getter for the PML thickness
    * @return Thickness of the PML region at left, front, and top sides
    */
-  R1Tensor32b getThicknessMinXYZ() const { return m_thicknessMinXYZ; }
+  R1Tensor32 getThicknessMinXYZ() const { return m_thicknessMinXYZ; }
 
   /**
    * @brief Getter for the PML thickness
    * @return Thickness of the PML region at right, back, and bottom sides
    */
-  R1Tensor32b getThicknessMaxXYZ() const { return m_thicknessMaxXYZ; }
+  R1Tensor32 getThicknessMaxXYZ() const { return m_thicknessMaxXYZ; }
 
   /**
    * @brief Getter for the PML wave speed
    * @return Wave speed of the PML region at left, front, and top sides
    */
-  R1Tensor32b getWaveSpeedMinXYZ() const { return m_waveSpeedMinXYZ; }
+  R1Tensor32 getWaveSpeedMinXYZ() const { return m_waveSpeedMinXYZ; }
 
   /**
    * @brief Getter for the PML wave speed
    * @return Wave speed of the PML region at right, back, and bottom sides
    */
-  R1Tensor32b getWaveSpeedMaxXYZ() const { return m_waveSpeedMaxXYZ; }
+  R1Tensor32 getWaveSpeedMaxXYZ() const { return m_waveSpeedMaxXYZ; }
 
   /**
    * @brief View keys
@@ -150,21 +150,21 @@ protected:
 private:
 
   /// Mininum (x,y,z) coordinates of inner PML boundaries
-  R1Tensor32b m_xMin;
+  R1Tensor32 m_xMin;
 
   /// Maximum (x,y,z) coordinates of inner PML boundaries
-  R1Tensor32b m_xMax;
+  R1Tensor32 m_xMax;
 
   /// Desired reflectivity of the PML region, used to compute the damping profile
   real32 m_reflectivity;
 
   /// Thickness of the PML region, used to compute the damping profile
-  R1Tensor32b m_thicknessMinXYZ;
-  R1Tensor32b m_thicknessMaxXYZ;
+  R1Tensor32 m_thicknessMinXYZ;
+  R1Tensor32 m_thicknessMaxXYZ;
 
   /// Wave speed in the PML region, used to compute the damping profile
-  R1Tensor32b m_waveSpeedMinXYZ;
-  R1Tensor32b m_waveSpeedMaxXYZ;
+  R1Tensor32 m_waveSpeedMinXYZ;
+  R1Tensor32 m_waveSpeedMaxXYZ;
 
 };
 
