@@ -798,10 +798,21 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     // if the residual norm is less than the Newton tolerance we denote that we have
     // converged and break from the Newton loop immediately.
-
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
     {
       isNewtonConverged = true;
+      break;
+    }
+
+    // if the residual norm is above the max allowed residual norm, we break from
+    // the Newton loop to avoid crashes due to Newton divergence
+    if( residualNorm > m_nonlinearSolverParameters.m_maxAllowedResidualNorm )
+    {
+      string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString;
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
+                                            maxAllowedResidualNormString,
+                                            m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
+      isNewtonConverged = false;
       break;
     }
 
