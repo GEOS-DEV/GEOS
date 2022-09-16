@@ -1036,7 +1036,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       arrayView1d< real64 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
 
       int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-      std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber-1, rank );
+      std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
       std::ifstream wf( fileName, std::ios::in | std::ios::binary );
       GEOSX_THROW_IF( !wf,
                       "Could not open file "<< fileName << " for reading",
@@ -1061,7 +1061,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
           for( localIndex i = 0; i < numNodesPerElem; ++i )
           {
             localIndex nodeIdx = elemsToNodes[eltIdx][i];
-            grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx] * (p_dt2[nodeIdx] * p_n[nodeIdx]);
+            grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
           }
         } );
       } );
