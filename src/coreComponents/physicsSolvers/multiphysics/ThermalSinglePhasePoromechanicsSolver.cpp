@@ -134,11 +134,11 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
   flowSolver = this->getParent().getGroup< SinglePhaseBase >( m_flowSolverName );
 
   flowSolver.setupSystem( domain,
-                           flowSolver.getDofManager(),
-                           flowSolver.getLocalMatrix(),
-                           flowSolver.getSystemRhs(),
-                           flowSolver.getSystemSolution(),
-                           true );
+                          flowSolver.getDofManager(),
+                          flowSolver.getLocalMatrix(),
+                          flowSolver.getSystemRhs(),
+                          flowSolver.getSystemSolution(),
+                          true );
 
   solidSolver.setupSystem( domain,
                            solidSolver.getDofManager(),
@@ -196,9 +196,9 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", FlowSolver: " );
 
     dtReturnTemporary = flowSolver.nonlinearImplicitStep( time_n,
-                                                           dtReturn,
-                                                           cycleNumber,
-                                                           domain );
+                                                          dtReturn,
+                                                          cycleNumber,
+                                                          domain );
 
     if( dtReturnTemporary < dtReturn )
     {
