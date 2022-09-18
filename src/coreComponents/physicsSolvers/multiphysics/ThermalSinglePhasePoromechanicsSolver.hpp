@@ -77,7 +77,7 @@ public:
     constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
 
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
-    constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
+    constexpr static char const * flowSolverNameString() { return "flowSolverName"; }
     constexpr static char const * subcyclingOptionString() { return "subcycling"; }
   };
 
@@ -89,7 +89,7 @@ protected:
 private:
 
   string m_solidSolverName;
-  string m_fluidSolverName;
+  string m_flowSolverName;
   CouplingTypeOption m_couplingTypeOption;
   integer m_subcyclingOption;
 

@@ -38,7 +38,7 @@ ThermalSinglePhasePoromechanicsSolver::ThermalSinglePhasePoromechanicsSolver( co
                                                                               Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
-  m_fluidSolverName(),
+  m_flowSolverName(),
   m_couplingTypeOption( CouplingTypeOption::FixedStress )
 
 {
@@ -47,10 +47,10 @@ ThermalSinglePhasePoromechanicsSolver::ThermalSinglePhasePoromechanicsSolver( co
     setDescription(
     "Name of the solid mechanics solver to use in the ThermalSinglePhasePoromechanics solver" );
 
-  registerWrapper( viewKeyStruct::fluidSolverNameString(), &m_fluidSolverName ).
+  registerWrapper( viewKeyStruct::flowSolverNameString(), &m_flowSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription(
-    "Name of the fluid solver to use in the ThermalSinglePhasePoromechanics solver" );
+    "Name of the flow solver to use in the ThermalSinglePhasePoromechanics solver" );
 
   registerWrapper( viewKeyStruct::couplingTypeOptionString(), &m_couplingTypeOption ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -81,8 +81,8 @@ void ThermalSinglePhasePoromechanicsSolver::postProcessInput()
     integer & minNewtonIterSolid = solidSolver.getNonlinearSolverParameters().m_minIterNewton;
 
     SinglePhaseBase &
-    fluidSolver = this->getParent().getGroup< SinglePhaseBase >( m_fluidSolverName );
-    integer & minNewtonIterFluid = fluidSolver.getNonlinearSolverParameters().m_minIterNewton;
+    flowSolver = this->getParent().getGroup< SinglePhaseBase >( m_flowSolverName );
+    integer & minNewtonIterFluid = flowSolver.getNonlinearSolverParameters().m_minIterNewton;
 
     minNewtonIterSolid = 0;
     minNewtonIterFluid = 0;
@@ -131,13 +131,13 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
   solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 
   SinglePhaseBase &
-  fluidSolver = this->getParent().getGroup< SinglePhaseBase >( m_fluidSolverName );
+  flowSolver = this->getParent().getGroup< SinglePhaseBase >( m_flowSolverName );
 
-  fluidSolver.setupSystem( domain,
-                           fluidSolver.getDofManager(),
-                           fluidSolver.getLocalMatrix(),
-                           fluidSolver.getSystemRhs(),
-                           fluidSolver.getSystemSolution(),
+  flowSolver.setupSystem( domain,
+                           flowSolver.getDofManager(),
+                           flowSolver.getLocalMatrix(),
+                           flowSolver.getSystemRhs(),
+                           flowSolver.getSystemSolution(),
                            true );
 
   solidSolver.setupSystem( domain,
@@ -146,7 +146,7 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
                            solidSolver.getSystemRhs(),
                            solidSolver.getSystemSolution() );
 
-  fluidSolver.implicitStepSetup( time_n, dt, domain );
+  flowSolver.implicitStepSetup( time_n, dt, domain );
 
   solidSolver.implicitStepSetup( time_n, dt, domain );
 
@@ -161,7 +161,7 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
     if( iter == 0 )
     {
       // reset the states of all slave solvers if any of them has been reset
-      fluidSolver.resetStateToBeginningOfStep( domain );
+      flowSolver.resetStateToBeginningOfStep( domain );
       solidSolver.resetStateToBeginningOfStep( domain );
       resetStateToBeginningOfStep( domain );
     }
@@ -195,7 +195,7 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", FlowSolver: " );
 
-    dtReturnTemporary = fluidSolver.nonlinearImplicitStep( time_n,
+    dtReturnTemporary = flowSolver.nonlinearImplicitStep( time_n,
                                                            dtReturn,
                                                            cycleNumber,
                                                            domain );
@@ -219,7 +219,7 @@ real64 ThermalSinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & 
 
   GEOSX_ERROR_IF( !isConverged, "ThermalSinglePhasePoromechanicsSolver::SplitOperatorStep() did not converge" );
 
-  fluidSolver.implicitStepComplete( time_n, dt, domain );
+  flowSolver.implicitStepComplete( time_n, dt, domain );
   solidSolver.implicitStepComplete( time_n, dt, domain );
   this->implicitStepComplete( time_n, dt, domain );
 
