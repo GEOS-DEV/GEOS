@@ -39,7 +39,7 @@ public:
    */
   static string catalogName()
   {
-    return "PhaseFieldFracture";
+    return "ThermalSinglePhasePoromechanics";
   }
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override final;
@@ -101,4 +101,4 @@ ENUM_STRINGS( ThermalSinglePhasePoromechanicsSolver::CouplingTypeOption,
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldFractureSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_ThermalSinglePhasePoromechanicsSOLVER_HPP_ */
