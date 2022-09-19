@@ -133,7 +133,7 @@ public:
   {
     static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
     static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
-    static constexpr char const * sourceIsLocalString() { return "sourceIsLocal"; }
+    static constexpr char const * sourceIsAccessibleString() { return "sourceIsAccessible"; }
 
     static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
     static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
@@ -198,8 +198,8 @@ private:
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
   array2d< real64 > m_sourceConstantsz;
 
-  /// Flag that indicates whether the source is local or not to the MPI rank
-  array1d< localIndex > m_sourceIsLocal;
+  /// Flag that indicates whether the source is accessible or not to the MPI rank
+  array1d< localIndex > m_sourceIsAccessible;
 
   /// Indices of the element nodes (in the right order) for each receiver point
   array2d< localIndex > m_receiverNodeIds;

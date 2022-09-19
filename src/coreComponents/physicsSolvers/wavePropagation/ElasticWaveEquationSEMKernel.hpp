@@ -178,7 +178,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] dt time-step
    * @param[in] timeSourceFrequency Peak frequency of the source
    * @param[in] rickerOrder Order of the Ricker wavelet
-   * @param[out] sourceIsLocal flag indicating whether the source is local or not
+   * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
    * @param[out] sourceConstantsx constant part of the source terms in x-direction
    * @param[out] sourceConstantsy constant part of the source terms in y-direction
@@ -200,7 +200,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 const > const faceNormal,
           arrayView2d< real64 const > const faceCenter,
           arrayView2d< real64 const > const sourceCoordinates,
-          arrayView1d< localIndex > const sourceIsLocal,
+          arrayView1d< localIndex > const sourceIsAccessible,
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstantsx,
           arrayView2d< real64 > const sourceConstantsy,
@@ -229,7 +229,7 @@ struct PrecomputeSourceAndReceiverKernel
       /// loop over all the source that haven't been found yet
       for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
       {
-        if( sourceIsLocal[isrc] == 0 )
+        if( sourceIsAccessible[isrc] == 0 )
         {
           real64 const coords[3] = { sourceCoordinates[isrc][0],
                                      sourceCoordinates[isrc][1],
@@ -254,7 +254,7 @@ struct PrecomputeSourceAndReceiverKernel
                                  elemsToFaces[k],
                                  coords );
 
-          if( sourceFound && elemGhostRank[k] < 0 )
+          if( sourceFound )
           {
             real64 coordsOnRefElem[3]{};
 
@@ -263,7 +263,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                              elemsToNodes[k],
                                                              X,
                                                              coordsOnRefElem );
-            sourceIsLocal[isrc] = 1;
+            sourceIsAccessible[isrc] = 1;
 
             //Compute source coefficients: this generate a P-wave and an "unwanted" S-wave. It is classical in the case of the elastic wave
             // equation at order 2, the S-wave can be attenuated by refining the mesh or get to high order

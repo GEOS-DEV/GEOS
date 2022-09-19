@@ -59,10 +59,10 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds in z-direction" );
 
-  registerWrapper( viewKeyStruct::sourceIsLocalString(), &m_sourceIsLocal ).
+  registerWrapper( viewKeyStruct::sourceIsAccessibleString(), &m_sourceIsAccessible ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
-    setDescription( "Flag that indicates whether the source is local to this MPI rank" );
+    setDescription( "Flag that indicates whether the source is accessible to this MPI rank" );
 
   registerWrapper( viewKeyStruct::receiverNodeIdsString(), &m_receiverNodeIds ).
     setInputFlag( InputFlags::FALSE ).
@@ -210,7 +210,7 @@ void ElasticWaveEquationSEM::postProcessInput()
   m_sourceConstantsx.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceConstantsy.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceConstantsz.resize( numSourcesGlobal, numNodesPerElem );
-  m_sourceIsLocal.resize( numSourcesGlobal );
+  m_sourceIsAccessible.resize( numSourcesGlobal );
 
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
@@ -243,12 +243,12 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   arrayView2d< real64 > const sourceConstantsx = m_sourceConstantsx.toView();
   arrayView2d< real64 > const sourceConstantsy = m_sourceConstantsy.toView();
   arrayView2d< real64 > const sourceConstantsz = m_sourceConstantsz.toView();
-  arrayView1d< localIndex > const sourceIsLocal = m_sourceIsLocal.toView();
+  arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
   sourceNodeIds.setValues< EXEC_POLICY >( -1 );
   sourceConstantsx.setValues< EXEC_POLICY >( -1 );
   sourceConstantsy.setValues< EXEC_POLICY >( -1 );
   sourceConstantsz.setValues< EXEC_POLICY >( -1 );
-  sourceIsLocal.zero();
+  sourceIsAccessible.zero();
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
@@ -308,7 +308,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
         faceNormal,
         faceCenter,
         sourceCoordinates,
-        sourceIsLocal,
+        sourceIsAccessible,
         sourceNodeIds,
         sourceConstantsx,
         sourceConstantsy,
@@ -333,19 +333,22 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumb
   arrayView2d< real64 const > const sourceConstantsx   = m_sourceConstantsx.toViewConst();
   arrayView2d< real64 const > const sourceConstantsy   = m_sourceConstantsy.toViewConst();
   arrayView2d< real64 const > const sourceConstantsz   = m_sourceConstantsz.toViewConst();
-  arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
+  arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real64 const > const sourceValue   = m_sourceValue.toViewConst();
 
   GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
-  forAll< serialPolicy >( m_sourceConstantsx.size( 0 ), [=] ( localIndex const isrc )
+  forAll< EXEC_POLICY >( m_sourceConstantsx.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
   {
-    if( sourceIsLocal[isrc] == 1 )
+    if( sourceIsAccessible[isrc] == 1 )
     {
-      for( localIndex inode = 0; inode < m_sourceConstantsx.size( 1 ); ++inode )
+      for( localIndex inode = 0; inode < sourceConstantsx.size( 1 ); ++inode )
       {
-        rhsx[sourceNodeIds[isrc][inode]] = sourceConstantsx[isrc][inode] * sourceValue[cycleNumber][isrc];
-        rhsy[sourceNodeIds[isrc][inode]] = sourceConstantsy[isrc][inode] * sourceValue[cycleNumber][isrc];
-        rhsz[sourceNodeIds[isrc][inode]] = sourceConstantsz[isrc][inode] * sourceValue[cycleNumber][isrc];
+        real64 const localIncrementx = sourceConstantsx[isrc][inode] * sourceValue[cycleNumber][isrc];
+        RAJA::atomicAdd< ATOMIC_POLICY >( &rhsx[sourceNodeIds[isrc][inode]], localIncrementx );
+        real64 const localIncrementy = sourceConstantsy[isrc][inode] * sourceValue[cycleNumber][isrc];
+        RAJA::atomicAdd< ATOMIC_POLICY >( &rhsy[sourceNodeIds[isrc][inode]], localIncrementy );
+        real64 const localIncrementz = sourceConstantsz[isrc][inode] * sourceValue[cycleNumber][isrc];
+        RAJA::atomicAdd< ATOMIC_POLICY >( &rhsz[sourceNodeIds[isrc][inode]], localIncrementz );
       }
     }
   } );
@@ -651,7 +654,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
 
     real64 dt2 = dt*dt;
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] ( localIndex const a )
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       if( freeSurfaceNodeIndicator[a]!=1 )
       {
