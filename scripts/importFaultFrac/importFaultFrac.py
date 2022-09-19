@@ -1,7 +1,7 @@
 import argparse
 import logging
 import sys
-from typing import List, Tuple, Iterable
+from typing import List, Tuple, Iterable, Dict
 import itertools
 from collections import defaultdict
 
@@ -26,9 +26,51 @@ def id_list_to_tuple(i):
     return tuple(o)
 
 
+def remove_fracture_cells(grid: vtk.vtkUnstructuredGrid):
+    # do not forget to renumber the FieldData.
+    num_tets = 0
+    for cell_idx in range(grid.GetNumberOfCells()):
+        cell = grid.GetCell(cell_idx)
+        if cell.GetCellDimension() == 3:
+            num_tets += 1
+
+    output_cells = vtk.vtkCellArray()
+    output_cells.AllocateExact(num_tets, num_tets * 4)
+
+    cell_renumbering = dict()
+    for cell_idx in range(grid.GetNumberOfCells()):
+        cell = grid.GetCell(cell_idx)
+        if cell.GetCellDimension() == 3:
+            assert cell.GetCellType() == vtk.VTK_TETRA
+            cell_renumbering[cell_idx] = output_cells.InsertNextCell(cell)
+
+    cell_types = [vtk.VTK_TETRA] * num_tets
+
+    old_da = grid.GetFieldData().GetArray("fracture_info")
+
+    da = vtk.vtkIntArray()
+    da.SetName(old_da.GetName())
+    da.SetNumberOfComponents(old_da.GetNumberOfComponents())  # Warning the component has to be defined first...
+    da.SetNumberOfTuples(old_da.GetNumberOfTuples())
+    for i in range(da.GetNumberOfTuples()):
+        e0, f0, e1, f1 = old_da.GetTuple(i)
+        da.SetTuple(i, (cell_renumbering[e0], f0, cell_renumbering[e1], f1))
+    fracture_field_data = vtk.vtkFieldData()
+    fracture_field_data.AddArray(da)
+
+    output = vtk.vtkUnstructuredGrid()
+    output.SetPoints(grid.GetPoints())
+    output.SetCells(cell_types, output_cells)
+    output.SetFieldData(fracture_field_data)
+
+    # TODO Add global ids!
+    return output
+
+
 def duplicate_fracture_nodes(grid: vtk.vtkUnstructuredGrid,
                              connected_components: Iterable[Iterable[int]],
-                             internal_fracture_nodes: Iterable[int]) -> vtk.vtkUnstructuredGrid:
+                             internal_fracture_nodes: Iterable[int],
+                             triangle_to_neighbors: Dict[int, Tuple[int]]) -> vtk.vtkUnstructuredGrid:
     """
     Splits the mesh on the internal_fracture_nodes.
     New nodes are then created and inserted in the new mesh.
@@ -165,10 +207,23 @@ def duplicate_fracture_nodes(grid: vtk.vtkUnstructuredGrid,
     assert moved_nodes_from == set(range(num_points))
     assert moved_nodes_to == set(range(num_new_points))
 
+    # Building the field data for the fracture
+    # fracture_field_data = []
+    da = vtk.vtkIntArray()
+    da.SetName("fracture_info")
+    da.SetNumberOfComponents(4)  # Warning the component has to be defined first...
+    da.SetNumberOfTuples(len(triangle_to_neighbors))
+    for i, data in enumerate(triangle_to_neighbors.values()):
+        # c0, f0, c1, f1 = data
+        da.SetTuple(i, data)
+    fracture_field_data = vtk.vtkFieldData()
+    fracture_field_data.AddArray(da)
+
     # creating another mesh from some components of the input mesh.
     output = vtk.vtkUnstructuredGrid()
     output.SetPoints(new_points)
     output.SetCells(grid.GetCellTypesArray(), new_cells)  # The cell types are unchanged; we reuse the old cell types!
+    output.SetFieldData(fracture_field_data)
 
     # Defining the regions of the mesh. Volume will be `0`, fracture 2d elements will be `1`.
     attributes = []
@@ -182,6 +237,54 @@ def duplicate_fracture_nodes(grid: vtk.vtkUnstructuredGrid,
     output.GetCellData().AddArray(att)
 
     return output
+
+
+def fracture_neighbors_info(grid: vtk.vtkUnstructuredGrid,
+                            connected_components: Iterable[Iterable[int]]) -> Dict[int, Tuple[int]]:
+    """
+
+    :param grid:
+    :param connected_components:
+    :return: 2d cell index to the [cell 0 index, local face index, cell 1 index, local face index]
+    """
+    # FIXME Duplicated code snippet.
+    # Building an indicator to find fracture cells.
+    num_cells = grid.GetNumberOfCells()
+    is_fracture_side_cells = numpy.zeros(num_cells, dtype=bool)
+    for fracture_side_cells in connected_components:
+        for fracture_side_cell in fracture_side_cells:
+            is_fracture_side_cells[fracture_side_cell] = True
+
+    cells = grid.GetCells()
+
+    triangle_to_nodes = dict()  # Maybe this can be a list and we append
+    for cell_idx in range(num_cells):
+        cell = grid.GetCell(cell_idx)
+        if cell.GetCellDimension() == 2:
+            points = vtk.vtkIdList()
+            cells.GetCellAtId(cell_idx, points)
+            triangle_to_nodes[cell_idx] = set(id_list_to_tuple(points))
+
+    # TODO The algorithm is bad.
+    # Now we loop on all the cells touching the fractures, to get the neighbor elements.
+    triangle_to_neighbors = defaultdict(list)
+    for cell_idx in range(num_cells):
+        if not is_fracture_side_cells[cell_idx]:
+            continue  # This is for fracture 3d elements.
+        cell = grid.GetCell(cell_idx)
+        for nf in range(cell.GetNumberOfFaces()):
+            f = cell.GetFace(nf)
+            ff = set(map(f.GetPointId, range(f.GetNumberOfPoints())))
+            for triangle_index, triangle_nodes in triangle_to_nodes.items():
+                if triangle_nodes == ff:
+                    triangle_to_neighbors[triangle_index] += cell_idx, nf
+                    break
+    assert set(map(len, triangle_to_neighbors.values())) == {4}
+    return triangle_to_neighbors
+
+    # # Creating the new cells, removing the fracture 2d elements.
+    # output = vtk.vtkUnstructuredGrid()
+    # output.SetPoints(grid.GetPoints())
 
 
 def color_fracture_sides(grid: vtk.vtkUnstructuredGrid,
@@ -405,8 +508,9 @@ def main():
     output_mesh = clean_input_mesh(vtk_input_file)
     internal_fracture_nodes, external_fracture_nodes = extract_fracture_nodes(output_mesh)
     connected_components = color_fracture_sides(output_mesh, internal_fracture_nodes)
+    triangle_to_neighbors = fracture_neighbors_info(output_mesh, connected_components)
 
-    duplicated = duplicate_fracture_nodes(output_mesh, connected_components, internal_fracture_nodes)
+    duplicated = duplicate_fracture_nodes(output_mesh, connected_components, internal_fracture_nodes, triangle_to_neighbors)
 
     writer = vtk.vtkXMLUnstructuredGridWriter()
     writer.SetFileName("dupli.vtu")
