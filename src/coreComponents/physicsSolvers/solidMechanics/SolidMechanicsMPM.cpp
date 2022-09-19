@@ -854,10 +854,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       auto const & p_stress = particleStress[p][0];
       int const & p_group = particleGroup[p];
       real64 p_L[3][3] = { {0} }; // Velocity gradient
+      real64 p_D[3][3] = { {0} }; // Rate of deformation
+      real64 p_Diso[3][3] = { {0} }; // Rate of deformation
+      real64 p_Ddev[3][3] = { {0} }; // Rate of deformation
       real64 p_FOld[3][3] = { {0} }; // Old particle F
-      real64 EG[3][3] = { {0} }; // Green-Lagrange Strain
-      real64 PK2[3][3] = { {0} }; // 2nd Piola-Kirchhoff Stress
-      real64 sigTemp[3][3] = { {0} }; // Temporary stress-like object
       real64 detF = 0.0; // Material Jacobian
 
       // Store the old particle F
@@ -890,12 +890,39 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
         int fieldIndex = p_group;
         for(int i=0; i<3; i++)
         {
-          p_x[i] += gridVelocity[mappedNode][fieldIndex][i]*dt*weights[g];
-          p_v[i] += gridAcceleration[mappedNode][fieldIndex][i]*dt*weights[g]; // FLIP
+          p_x[i] += gridVelocity[mappedNode][fieldIndex][i] * dt * weights[g];
+          p_v[i] += gridAcceleration[mappedNode][fieldIndex][i] * dt * weights[g]; // FLIP
           for(int j=0; j<3; j++)
           {
-            p_L[i][j] += gridVelocity[mappedNode][fieldIndex][i]*gradWeights[j][g];
+            p_L[i][j] += gridVelocity[mappedNode][fieldIndex][i] * gradWeights[j][g];
           }
+        }
+      }
+
+      // Get D
+      for(int i=0; i<3; i++)
+      {
+        for(int j=0; j<3; j++)
+        {
+          p_D[i][j] = 0.5 * ( p_L[i][j] + p_L[j][i] );
+        }
+      }
+
+      // Get Diso
+      for(int i=0; i<3; i++)
+      {
+        for(int j=0; j<3; j++)
+        {
+          p_Diso[i][j] = i == j ? ( p_D[0][0] + p_D[1][1] + p_D[2][2] ) / 3.0 : 0.0;
+        }
+      }
+
+      // Get Ddev
+      for(int i=0; i<3; i++)
+      {
+        for(int j=0; j<3; j++)
+        {
+          p_Ddev[i][j] = p_D[i][j] - p_Diso[i][j];
         }
       }
 
@@ -927,49 +954,31 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
       p_rho = p_m/p_vol;
       subRegion.updateRVectors(p, p_F);
 
-      // Particle constitutive update - Elastic Isotropic model doesn't have a hyperelastic update yet (waiting on strain and stress measure confirmation?) so we implement our own - St. Venant-Kirchhoff
-      // Get Green-Lagrange strain
-      for(int i=0; i<3; i++)
-      {
-       for(int j=0; j<3; j++)
-       {
-         EG[i][j] = 0.5*( (p_F[0][i]*p_F[0][j] + p_F[1][i]*p_F[1][j] + p_F[2][i]*p_F[2][j]) - ( i==j ? 1.0 : 0.0 ) );
-       }
-      }
+      // Particle constitutive update - hyperelastic model from vortex MMS paper
+      real64 lambda = bulkModulus[p] - 2.0 * shearModulus[p] / 3.0;
+      real64 stressFull[3][3] = { { 0.0 } };
 
-      // Get PK2 stress
-      for(int i=0; i<3; i++)
+      // Populate full stress tensor
+      for( int i = 0 ; i < 3 ; i++ )
       {
-        for(int j=0; j<3; j++)
+        for( int j = 0 ; j < 3 ; j++ )
         {
-          if(i == j)
+          stressFull[i][j] = i == j ? ( lambda * log( detF ) / detF - ( shearModulus[p] / detF ) ) : 0.0;
+
+          for( int k = 0 ; k < 3 ; k++ )
           {
-            real64 lambda = bulkModulus[p] - (2.0/3.0)*shearModulus[p];
-            PK2[i][j] = lambda*(EG[0][0] + EG[1][1] + EG[2][2]) + 2.0*shearModulus[p]*EG[i][j];
-          }
-          else
-          {
-            PK2[i][j] = 2.0*shearModulus[p]*EG[i][j];
+            stressFull[i][j] += ( shearModulus[p] / detF ) * p_F[i][k] * p_F[j][k];
           }
         }
       }
 
-      // Partially convert to Cauchy stress
-      for(int i=0; i<3; i++)
-      {
-        for(int j=0; j<3; j++)
-        {
-          sigTemp[i][j] = (p_F[i][0]*PK2[0][j] + p_F[i][1]*PK2[1][j] + p_F[i][2]*PK2[2][j])/detF;
-        }
-      }
-
-      // Finish conversion to Cauchy stress
+      // Assign full stress tensor to the symmetric version
       for(int i=0; i<3; i++)
       {
         for(int j=i; j<3; j++) // symmetric update, yes this works, I checked it
         {
           int voigt = m_voigtMap[i][j];
-          p_stress[voigt] = (sigTemp[i][0]*p_F[j][0] + sigTemp[i][1]*p_F[j][1] + sigTemp[i][2]*p_F[j][2]);
+          p_stress[voigt] = stressFull[i][j];
         }
       }
 
