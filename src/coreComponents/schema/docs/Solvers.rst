@@ -32,6 +32,7 @@ SolidMechanicsEmbeddedFractures           node                 :ref:`XML_SolidMe
 SolidMechanicsLagrangianSSLE              node                 :ref:`XML_SolidMechanicsLagrangianSSLE`              
 SolidMechanics_LagrangianFEM              node                 :ref:`XML_SolidMechanics_LagrangianFEM`              
 SurfaceGenerator                          node                 :ref:`XML_SurfaceGenerator`                          
+ThermalSinglePhasePoromechanics           node                 :ref:`XML_ThermalSinglePhasePoromechanics`           
 ========================================= ======== =========== ==================================================== 
 
 
