@@ -223,10 +223,30 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   } );
 
   // add all new nodes to newObject list
+  auto nodeCoords = embSurfNodeManager.referencePosition();  
+  int const rank = MpiWrapper::commRank();
+  if (rank == 0)
+  {
+    std::cout<< "rank: " << rank<<std::endl;
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
   {
     newObjects.newNodes.insert( ni );
+    
+      std::cout << "node " << ni << " coords: " << nodeCoords[ni] << std::endl;
   }
+  }
+  MpiWrapper::barrier();
+  if (rank == 1)
+  {
+    std::cout<< "rank: " << rank<<std::endl;
+  for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
+  {
+    newObjects.newNodes.insert( ni );
+    
+      std::cout << "node " << ni << " coords: " << nodeCoords[ni] << std::endl;
+  }
+  }
+
 
   // Set the ghostRank form the parent cell
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
@@ -252,7 +272,30 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion.edgeList();
 
   localIndex numOfPoints = embSurfNodeManager.size();
-
+  
+  if (rank == 0)
+  {
+  std::cout<< "rank: " << rank<<std::endl;
+  std::cout<<"after sync." <<std::endl;
+  auto newNodeCoords = embSurfNodeManager.referencePosition();  
+  for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
+  {
+    
+      std::cout << "node " << ni << " coords: " << nodeCoords[ni] << std::endl;
+  }
+  }
+  MpiWrapper::barrier();
+  if (rank == 1)
+  {
+  std::cout<< "rank: " << rank<<std::endl;
+  std::cout<<"after sync." <<std::endl;
+  auto newNodeCoords = embSurfNodeManager.referencePosition();  
+  for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
+  {
+    
+      std::cout << "node " << ni << " coords: " << nodeCoords[ni] << std::endl;
+  }
+  }
   // Create the edges
   embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
   // Node to cell map

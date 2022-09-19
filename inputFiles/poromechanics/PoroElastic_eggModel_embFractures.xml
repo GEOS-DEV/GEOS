@@ -5,7 +5,7 @@
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <SinglePhasePoromechanicsEmbeddedFractures
       name="poroSolver"
-      targetRegions="{ Domain, Fracture }"
+      targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
       initialDt="1e-3"
       fracturesSolverName="fractureMechSolver"
       flowSolverName="flowSolver"
@@ -16,14 +16,14 @@
         newtonTol="1e-03"
         newtonMaxIter="10"/>
       <LinearSolverParameters
-        directParallel="0"
+        directParallel="1"
         solverType="direct"
         preconditionerType="mgr"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
-      targetRegions="{ Domain, Fracture }"
+      targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
       solidSolverName="matrixMechSolver"
       fractureRegionName="Fracture"
       contactRelationName="fractureContact">
@@ -39,12 +39,12 @@
       name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }"/>
+      targetRegions="{ Reservoir, Overburden, Underburden, Sideburden }"/>
 
     <SinglePhaseFVM
       name="flowSolver"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }">
+      targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"
         newtonTol="1e-03"
@@ -55,7 +55,7 @@
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"      
-      targetRegions="{ Domain, Fracture }"
+      targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
       fractureRegion="Fracture"
       logLevel="2"
       discretization="FE1"
@@ -65,9 +65,10 @@
   <Mesh>
     <VTKMesh
       name="mesh"
-      file="../../../../GEOSXDATA/DataSets/Egg/egg.vtu"
+      file="egg.vts"
+      regionAttribute="elementRegionMarker"
       fieldsToImport="{ PERM }"
-      fieldNamesInGEOSX="{ rockPerm_permeability }"/>
+      fieldNamesInGEOSX="{ rockPermeability_permeability }"/>
   </Mesh>
 
   <Geometry>
@@ -82,51 +83,62 @@
 
     <Box xMax="{1.0, 500.0, 500.0}" 
          xMin="{-1.0, 0.0, -500.0}" 
-         name="left" />     
+         name="left" />
+         
+    <Box xMax="{500.0, 481.0, 500.0}" 
+         xMin="{0.0,   479.0, -500.0}" 
+         name="back" />
+
+    <Box xMax="{479.0, 500.0, 500.0}" 
+         xMin="{481.0, 0.0, -500.0}" 
+         name="right" />     
 
     <BoundedPlane
       name="Fracture1"
-      origin="{ 110, 340, 0.5 }"
+      origin="{ 110, 340, 40 }"
       normal="{ -0.707, 0.707, 0 }"
       lengthVector="{ 0.707, 0.707, 0 }"
       widthVector="{ 0, 0, 1 }"
-      dimensions="{ 80, 200 }"/>
+      dimensions="{ 80, 60 }"/>
     <BoundedPlane
       name="Fracture2"
-      origin="{ 140, 280, 0.5 }"
+      origin="{ 140, 280, 35 }"
       normal="{ 1, -1, 1 }"
       lengthVector="{ 0.3333, 0.6666, 0.3333 }"
       widthVector="{ -0.5, 0, 0.5 }"
-      dimensions="{ 120, 200 }"/>
-    <BoundedPlane
+      dimensions="{ 120, 30 }"/>
+
+    <!-- <BoundedPlane
       name="Fracture3"
       origin="{ 160, 220, 1.5 }"
       normal="{ 1, -1, 1 }"
       lengthVector="{ 0.3333, 0.6666, 0.3333 }"
       widthVector="{ -0.5, 0, 0.5 }"
-      dimensions="{ 160, 200 }"/>
-    <BoundedPlane
+      dimensions="{ 160, 200 }"/> -->
+
+    <!-- <BoundedPlane
       name="Fracture4"
-      origin="{ 200, 180, 0.5 }"
+      origin="{ 200, 180, 40 }"
       normal="{ -0.707, 0.707, 0 }"
       lengthVector="{ 0.707, 0.707, 0 }"
       widthVector="{ 0, 0, 1 }"
-      dimensions="{ 180, 200 }"/> 
-    <BoundedPlane
+      dimensions="{ 180, 55 }"/> -->
+
+    <!-- <BoundedPlane
       name="Fracture5"
-      origin="{ 220, 100, 0.5 }"
+      origin="{ 220, 100, 40 }"
       normal="{ 1, -1, 1 }"
       lengthVector="{ 0.3333, 0.6666, 0.3333 }"
       widthVector="{ -0.5, 0, 0.5 }"
-      dimensions="{ 120, 200 }"/>
+      dimensions="{ 120, 30 }"/> -->
 
     <!-- <BoundedPlane
       name="Fracture6"
-      origin="{ 350, 195, 1.5 }"
+      origin="{ 350, 195, 40 }"
       normal="{ -0.5, 0, 0.5 }"
       widthVector="{ 1, -1, 1 }"
       lengthVector="{ 0.3333, 0.6666, 0.3333 }"
-      dimensions="{ 140, 200 }"/>  -->
+      dimensions="{ 140, 40 }"/>  -->
   </Geometry>
 
   <Events
@@ -165,9 +177,24 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Domain"
-      cellBlocks="{ hexahedra }"
+      name="Reservoir"
+      cellBlocks="{ 1_hexahedra }"
       materialList="{ porousRock, water }"/>
+
+    <CellElementRegion
+      name="Overburden"
+      cellBlocks="{ 3_hexahedra }"
+      materialList="{ porousRock, water }"/> 
+    
+    <CellElementRegion
+      name="Underburden"
+      cellBlocks="{ 2_hexahedra }"
+      materialList="{ porousRock, water }"/>
+      
+    <CellElementRegion
+      name="Sideburden"
+      cellBlocks="{ 0_hexahedra }"
+      materialList="{ porousRock, water }"/>  
 
     <SurfaceElementRegion
       name="Fracture"
@@ -181,7 +208,7 @@
       name="porousRock"
       solidModelName="rock"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPermeability"/>
 
     <ElasticIsotropic
       name="rock"
@@ -190,7 +217,7 @@
       defaultShearModulus="15e9"/>
 
     <ConstantPermeability
-      name="rockPerm"
+      name="rockPermeability"
       permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
 
     <CompressibleSinglePhaseFluid
@@ -241,43 +268,75 @@
       scale="1.00"/>
 
     <FieldSpecification
+      name="sideBurdenPerm"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Sideburden"
+      fieldName="rockPermeability_permeability"
+      scale="1.00e-14"/>
+
+    <FieldSpecification
+      name="overBurdenPerm"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Overburden"
+      fieldName="rockPermeability_permeability"
+      scale="1.00e-14"/>
+      
+    <FieldSpecification
+      name="underBurdenPerm"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Underburden"
+      fieldName="rockPermeability_permeability"
+      scale="1.00e-14"/>
+
+    <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain"
+      objectPath="ElementRegions"
       fieldName="pressure"
       scale = "0.0"/>
 
     <FieldSpecification
       name="initialPressureFracture"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
       fieldName="pressure"
       scale="1.0e6"/>
 
     <FieldSpecification
-      name="left"
+      name="xConstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ left }"/>
+      setNames="{ left, right }"/>
 
     <FieldSpecification
-      name="front"
+      name="yConstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ front }"/>
+      setNames="{ front, back }"/>
 
     <FieldSpecification
-      name="zconstraint"
+      name="zConstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ bottom }"/>
+
+    <!-- <FieldSpecification
+      name="Traction"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="traction"
+      component="0"
+      scale="-2.0e6"/>       -->
   </FieldSpecifications>
 
   <Functions>
