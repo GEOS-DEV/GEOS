@@ -260,7 +260,7 @@ jobs:
     <<: *__geosx_totalenergies_cluster_build
     env:
       - DOCKER_REPOSITORY=geosx/sherlock-gcc10.1.0-openmpi4.1.2-cuda11.5.0-openblas0.3.10-zlib1.2.11
-      - CMAKE_BUILD_TYPE=Release
+      - CMAKE_BUILD_TYPE=Debug
       #might be too strong but benchmarkOuterProduct failed
       - BUILD_AND_TEST_ARGS="--disable-unit-tests --build-exe-only"
       - HOST_CONFIG=host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10-cuda11.5.0-sm80.cmake
