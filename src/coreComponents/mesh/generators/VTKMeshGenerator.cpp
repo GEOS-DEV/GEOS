@@ -841,8 +841,8 @@ std::vector< localIndex > getTetrahedronNodeOrderingFromPolyhedron( vtkCell * co
  *
  * @param cell The vtk cell, type VTK_POLYHEDRON
  * @return The node ordering
- * 
- * It could be possible to use getPrismNodeOrderingFromPolyhedron< 4 > with additional 
+ *
+ * It could be possible to use getPrismNodeOrderingFromPolyhedron< 4 > with additional
  * permutations. But at this point computationalGeometry::prismVolume< NUM_SIDES >
  * is not ready.
  */
@@ -916,8 +916,8 @@ std::vector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * con
  *
  * @param cell The vtk cell, type VTK_POLYHEDRON
  * @return The node ordering
- * 
- * It could be possible to use getPrismNodeOrderingFromPolyhedron< 3 > with additional 
+ *
+ * It could be possible to use getPrismNodeOrderingFromPolyhedron< 3 > with additional
  * permutations. But at this point computationalGeometry::prismVolume< NUM_SIDES >
  * is not ready.
  */
