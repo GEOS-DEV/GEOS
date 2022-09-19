@@ -709,11 +709,10 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
       rhsz[a] = 0.0;
     } );
 
-    for( real64 timeSeismo;
-         (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace;
-         m_indexSeismoTrace++ )
+    // increment m_indexSeismoTrace
+    while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
     {
-      /// do nothing
+      m_indexSeismoTrace++;
     }
 
   } );
@@ -721,8 +720,15 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
 }
 
-void ElasticWaveEquationSEM::cleanup( real64 const time_n, integer const, integer const, real64 const, DomainPartition & domain )
+void ElasticWaveEquationSEM::cleanup( real64 const time_n,
+                                      integer const cycleNumber,
+                                      integer const eventCounter,
+                                      real64 const eventProgress,
+                                      DomainPartition & domain )
 {
+  // call the base class cleanup (for reporting purposes)
+  SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+
   // compute the remaining seismic traces, if needed
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -743,6 +749,12 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n, integer const, intege
     computeAllSeismoTraces( time_n, 0, uy_np1, uy_n, uYReceivers );
     computeAllSeismoTraces( time_n, 0, uz_np1, uz_n, uZReceivers );
   } );
+
+  // increment m_indexSeismoTrace
+  while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
+  {
+    m_indexSeismoTrace++;
+  }
 }
 
 void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
