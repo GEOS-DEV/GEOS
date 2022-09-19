@@ -65,10 +65,6 @@
 
 #include <numeric>
 #include <unordered_set>
-#include "mesh/CellElementSubRegion.hpp"
-#include "common/TypeDispatch.hpp"
-#include "mesh/MeshLevel.hpp"
-#include "mesh/generators/CellBlockUtilities.hpp"
 
 namespace geosx
 {
@@ -522,12 +518,12 @@ std::vector< T > collectUniqueValues( std::vector< T > const & data )
 }
 
 /**
- * @brief Identify the type of the polyhedron
+ * @brief Identify the GEOSX type of the polyhedron
  *
  * @param cell The vtk cell VTK_POLYHEDRON
- * @return geosx::ElementType The geosx element type associated to VTK_POLYHEDRON
+ * @return The geosx element type associated to VTK_POLYHEDRON
  */
-geosx::ElementType polyhedronType( vtkCell * const cell )
+geosx::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
 {
   GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input for polyhedronType() must be a VTK_POLYHEDRON." );
 
@@ -641,7 +637,7 @@ ElementType convertVtkToGeosxElementType( vtkCell *cell )
     case VTK_HEXAHEDRON:       return ElementType::Hexahedron;
     case VTK_PENTAGONAL_PRISM: return ElementType::Prism5;
     case VTK_HEXAGONAL_PRISM:  return ElementType::Prism6;
-    case VTK_POLYHEDRON:       return polyhedronType( cell );
+    case VTK_POLYHEDRON:       return buildGeosxPolyhedronType( cell );
     default:
     {
       GEOSX_ERROR( cell->GetCellType() << " is not a recognized cell type to be used with the VTKMeshGenerator" );
@@ -674,7 +670,7 @@ splitCellsByType( vtkDataSet & mesh )
   // Collect cell lists for each type (using array for speed in a hot loop)
   for( vtkIdType c = 0; c < numCells; c++ )
   {
-    ElementType const elemType = convertVtkToGeosxElementType( static_cast< vtkCell * >( mesh.GetCell( c ) ) );
+    ElementType const elemType = convertVtkToGeosxElementType( mesh.GetCell( c ) );
     cellListsByType[static_cast< integer >( elemType )].push_back( c );
   }
 
@@ -803,13 +799,15 @@ void extendCellMapWithRemoteKeys( VTKMeshGenerator::CellMapType & cellMap )
 
 using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector< vtkIdType > > >;
 /**
- * @brief Get the tetrahedron node ordering from a vtk polyhedron (42)
+ * @brief Get the tetrahedron node ordering from a VTK_POLYHEDRON
  *
- * @param cell The vtk cell, type polyhedron (42)
- * @return std::vector< localIndex > list of nodes
+ * @param cell The vtk cell, type VTK_POLYHEDRON
+ * @return The node ordering
  */
 std::vector< localIndex > getTetrahedronNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
+  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
+
   real64 vectorA[3];
   real64 vectorB[3];
   real64 vectorC[3];
@@ -839,21 +837,27 @@ std::vector< localIndex > getTetrahedronNodeOrderingFromPolyhedron( vtkCell * co
 }
 
 /**
- * @brief Get the hexahedron node ordering from a vtk polyhedron (42)
+ * @brief Get the hexahedron node ordering from a VTK_POLYHEDRON
  *
- * @param cell The vtk cell, type polyhedron (42)
- * @return std::vector< localIndex >  list of nodes
+ * @param cell The vtk cell, type VTK_POLYHEDRON
+ * @return The node ordering
+ * 
+ * It could be possible to use getPrismNodeOrderingFromPolyhedron< 4 > with additional 
+ * permutations. But at this point computationalGeometry::prismVolume< NUM_SIDES >
+ * is not ready.
  */
 std::vector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
+  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
+
   localIndex iFace;
   std::vector< localIndex > nodeOrder( 8 );
-  std::map< localIndex, localIndex > G2L;
 
   // Generate global to local map
+  std::unordered_map< localIndex, localIndex > G2L;
   for( localIndex iPoint = 0; iPoint < 8; ++iPoint )
   {
-    G2L.insert( {cell->GetPointId( iPoint ), iPoint} );
+    G2L[cell->GetPointId( iPoint )] = iPoint;
   }
 
   // Assuming the input parameters are correct, take the first quad
@@ -908,23 +912,29 @@ std::vector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * con
 }
 
 /**
- * @brief Get the wedge node ordering from a vtk polyhedron (42)
+ * @brief Get the wedge node ordering from a VTK_POLYHEDRON
  *
- * @param cell The vtk cell, type polyhedron (42)
- * @return std::vector< localIndex > list of nodes
+ * @param cell The vtk cell, type VTK_POLYHEDRON
+ * @return The node ordering
+ * 
+ * It could be possible to use getPrismNodeOrderingFromPolyhedron< 3 > with additional 
+ * permutations. But at this point computationalGeometry::prismVolume< NUM_SIDES >
+ * is not ready.
  */
 std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
+  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
+
   localIndex iFace;
   std::vector< localIndex > nodeTri0( 3 );
   std::vector< localIndex > nodeTri1( 3 );
   std::vector< localIndex > nodeOrder( 6 );
-  std::map< localIndex, localIndex > G2L;
 
   // Generate global to local map
+  std::unordered_map< localIndex, localIndex > G2L;
   for( localIndex iPoint = 0; iPoint < 6; ++iPoint )
   {
-    G2L.insert( {cell->GetPointId( iPoint ), iPoint} );
+    G2L[cell->GetPointId( iPoint )] = iPoint;
   }
 
   // Assuming the input parameters are correct, identify one of the triangles
@@ -1002,22 +1012,24 @@ std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const ce
 }
 
 /**
- * @brief Get the pyramid node ordering from a vtk polyhedron (42)
+ * @brief Get the pyramid node ordering from a VTK_POLYHEDRON
  *
- * @param cell The vtk cell, type polyhedron (42)
- * @return std::vector< localIndex > list of nodes
+ * @param cell The vtk cell, type VTK_POLYHEDRON
+ * @return The node ordering
  */
 std::vector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
+  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
+
   localIndex iPoint;
   localIndex iFace;
   std::vector< localIndex > nodeOrder( 5 );
 
   // Generate global to local map
-  std::map< localIndex, localIndex > G2L;
+  std::unordered_map< localIndex, localIndex > G2L;
   for( iPoint = 0; iPoint < 5; ++iPoint )
   {
-    G2L.insert( {cell->GetPointId( iPoint ), iPoint} );
+    G2L[cell->GetPointId( iPoint )] = iPoint;
   }
 
   // Assuming the input parameters are correct, identify the base
@@ -1073,23 +1085,25 @@ std::vector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const 
 }
 
 /**
- * @brief Get the prism node ordering from a vtk polyhedron (42)
+ * @brief Get the prism node ordering from a VTK_POLYHEDRON
  *
  * @tparam NUM_SIDES number of sides of the prism
- * @param cell The vtk cell, type polyhedron (42)
- * @return std::vector< localIndex > list of nodes
+ * @param cell The vtk cell, type VTK_POLYHEDRON
+ * @return The node ordering
  */
 template< integer NUM_SIDES >
 std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
+  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
+
   localIndex iFace;
   std::vector< localIndex > nodeOrder( 2*NUM_SIDES );
 
   // Generate global to local map
-  std::map< localIndex, localIndex > G2L;
+  std::unordered_map< localIndex, localIndex > G2L;
   for( localIndex iPoint = 0; iPoint < cell->GetNumberOfPoints(); ++iPoint )
   {
-    G2L.insert( {cell->GetPointId( iPoint ), iPoint} );
+    G2L[cell->GetPointId( iPoint )] = iPoint;
   }
 
   // Assuming the input parameters are correct, identify one of the bases

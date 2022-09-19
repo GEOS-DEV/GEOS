@@ -61,19 +61,19 @@ static std::vector< int > getBlueprintNodeOrdering( ElementType const elementTyp
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
     case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
-    case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
+    case ElementType::Polygon:       return { }; // TODO
     case ElementType::Tetrahedron:   return { 1, 0, 2, 3 };
     case ElementType::Pyramid:       return { 0, 3, 2, 1, 4, 0, 0, 0 };
     case ElementType::Wedge:         return { 0, 4, 2, 1, 5, 3, 0, 0 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
-    case ElementType::Prism5:        return { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // TODO
-    case ElementType::Prism6:        return { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // TODO
-    case ElementType::Prism7:        return { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // TODO
-    case ElementType::Prism8:        return { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // TODO
-    case ElementType::Prism9:        return { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // TODO
-    case ElementType::Prism10:       return { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // TODO
-    case ElementType::Prism11:       return { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // TODO
-    case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
+    case ElementType::Prism5:        return { }; // TODO
+    case ElementType::Prism6:        return { }; // TODO
+    case ElementType::Prism7:        return { }; // TODO
+    case ElementType::Prism8:        return { }; // TODO
+    case ElementType::Prism9:        return { }; // TODO
+    case ElementType::Prism10:       return { }; // TODO
+    case ElementType::Prism11:       return { }; // TODO
+    case ElementType::Polyhedron:    return { }; // TODO
   }
   return {};
 }

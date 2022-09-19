@@ -83,7 +83,7 @@ toVTKCellType( ElementType const elementType )
  * @brief Provide the local list of nodes or face streams for the corresponding VTK element
  *
  * @param elementType geosx element type
- * @return std::vector< int > list of nodes or face streams
+ * @return list of nodes or face streams
  *
  * For geosx element with existing standard VTK element the corresponding list of nodes is provided.
  * For Prism7+, the geosx element is converted to VTK_POLYHEDRON. The vtkUnstructuredGrid
