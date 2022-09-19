@@ -76,18 +76,18 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   this->registerWrapper( viewKeyStruct::solutionChangeScalingFactorString(), &m_solutionChangeScalingFactor ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( 0.5 ).
     setDescription( "Damping factor for solution change targets" );
-  this->registerWrapper( viewKeyStruct::targetPressureChangeString(), &m_targetPressureChange ).
+  this->registerWrapper( viewKeyStruct::targetRelativePresChangeString(), &m_targetRelativePresChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1.37895e7 ). // 2000 psi (taken from user guide)
-    setDescription( "Target (absolute) change in pressure in a time step" );
-  this->registerWrapper( viewKeyStruct::targetTemperatureChangeString(), &m_targetTemperatureChange ).
+    setApplyDefaultValue( 0.2 ).
+    setDescription( "Target (relative) change in pressure in a time step (expected value between 0 and 1)" );
+  this->registerWrapper( viewKeyStruct::targetRelativeTempChangeString(), &m_targetRelativeTempChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 30 ).
-    setDescription( "Target (absolute) change in temperature in a time step" );
+    setApplyDefaultValue( 0.2 ).
+    setDescription( "Target (relative) change in temperature in a time step (expected value between 0 and 1)" );
   this->registerWrapper( viewKeyStruct::targetPhaseVolFracChangeString(), &m_targetPhaseVolFracChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -98,17 +98,17 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
-    setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
+    setDescription( "Maximum (absolute) change in a component fraction in a Newton iteration" );
   this->registerWrapper( viewKeyStruct::maxRelativePresChangeString(), &m_maxRelativePresChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
-    setDescription( "Maximum (relative) change in pressure between two Newton iterations" );
+    setDescription( "Maximum (relative) change in pressure in a Newton iteration (expected value between 0 and 1)" );
   this->registerWrapper( viewKeyStruct::maxRelativeTempChangeString(), &m_maxRelativeTempChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
-    setDescription( "Maximum (relative) change in temperature between two Newton iterations" );
+    setDescription( "Maximum (relative) change in temperature in a Newton iteration (expected value between 0 and 1)" );
 
   this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).
     setSizedFromParent( 0 ).
@@ -123,17 +123,29 @@ void CompositionalMultiphaseBase::postProcessInput()
   FlowSolverBase::postProcessInput();
 
   GEOSX_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                         "The maximum absolute change in component fraction must smaller or equal to 1.0" );
-  GEOSX_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
-                         "The maximum absolute change in component fraction must larger or equal to 0.0" );
+                         "The maximum absolute change in component fraction in a Newton iteration must be smaller or equal to 1.0" );
+  GEOSX_ERROR_IF_LE_MSG( m_maxCompFracChange, 0.0,
+                         "The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0" );
   GEOSX_ERROR_IF_GT_MSG( m_maxRelativePresChange, 1.0,
-                         "The maximum relative change in pressure must smaller or equal to 1.0 (i.e., 100% change)" );
-  GEOSX_ERROR_IF_LT_MSG( m_maxRelativePresChange, 0.0,
-                         "The maximum relative change in pressure must larger or equal to 0.0" );
+                         "The maximum relative change in pressure in a Newton iteration must be smaller or equal to 1.0 (i.e., 100% change)" );
+  GEOSX_ERROR_IF_LE_MSG( m_maxRelativePresChange, 0.0,
+                         "The maximum relative change in pressure in a Newton iteration must be larger than 0.0" );
   GEOSX_ERROR_IF_GT_MSG( m_maxRelativeTempChange, 1.0,
-                         "The maximum relative change in temperature must smaller or equal to 1.0 (i.e., 100% change)" );
-  GEOSX_ERROR_IF_LT_MSG( m_maxRelativeTempChange, 0.0,
-                         "The maximum relative change in temperature must larger or equal to 0.0" );
+                         "The maximum relative change in temperature in a Newton iteration must be smaller or equal to 1.0 (i.e., 100% change)" );
+  GEOSX_ERROR_IF_LE_MSG( m_maxRelativeTempChange, 0.0,
+                         "The maximum relative change in temperature in a Newton iteration must be larger than 0.0" );
+
+  GEOSX_ERROR_IF_LE_MSG( m_targetRelativePresChange, 0.0,
+                         "The target relative change in pressure in a time step must be larger than 0.0" );
+  GEOSX_ERROR_IF_LE_MSG( m_targetRelativeTempChange, 0.0,
+                         "The target relative change in temperature in a time step must be larger than to 0.0" );
+  GEOSX_ERROR_IF_LE_MSG( m_targetPhaseVolFracChange, 0.0,
+                         "The target change in phase volume fraction in a time step must be larger than to 0.0" );
+
+  GEOSX_ERROR_IF_LT_MSG( m_solutionChangeScalingFactor, 0.0,
+                         "The solution change scaling factor must be larger or equal to 0.0" );
+  GEOSX_ERROR_IF_GT_MSG( m_solutionChangeScalingFactor, 1.0,
+                         "The solution change scaling factor must be smaller or equal to 1.0" );
 
 }
 
@@ -1758,8 +1770,15 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
 real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & currentDt,
                                                                  DomainPartition & domain )
 {
-  real64 maxAbsolutePressureChange = 0.0;
-  real64 maxAbsoluteTemperatureChange = 0.0;
+  if( m_targetRelativePresChange >= 1.0 &&
+      m_targetPhaseVolFracChange >= 1.0 &&
+      ( !m_isThermal || m_targetRelativeTempChange >= 1.0 ) )
+  {
+    return LvArray::NumericLimits< real64 >::max;
+  }
+
+  real64 maxRelativePresChange = 0.0;
+  real64 maxRelativeTempChange = 0.0;
   real64 maxAbsolutePhaseVolFracChange = 0.0;
 
   real64 const numPhase = m_numPhases;
@@ -1791,8 +1810,8 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
       {
         if( ghostRank[ei] < 0 )
         {
-          subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_n[ei] ) );
-          subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_n[ei] ) );
+          subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_n[ei] ) / LvArray::math::max( pres_n[ei], LvArray::NumericLimits< real64 >::epsilon ) );
+          subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_n[ei] ) / LvArray::math::max( temp_n[ei], LvArray::NumericLimits< real64 >::epsilon ) );
           for( integer ip = 0; ip < numPhase; ++ip )
           {
             subRegionMaxPhaseVolFracChange.max( LvArray::math::abs( phaseVolFrac[ei][ip] - phaseVolFrac_n[ei][ip] ) );
@@ -1800,33 +1819,33 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
         }
       } );
 
-      maxAbsolutePressureChange = LvArray::math::max( maxAbsolutePressureChange, subRegionMaxPresChange.get() );
-      maxAbsoluteTemperatureChange = LvArray::math::max( maxAbsoluteTemperatureChange, subRegionMaxTempChange.get() );
+      maxRelativePresChange = LvArray::math::max( maxRelativePresChange, subRegionMaxPresChange.get() );
+      maxRelativeTempChange = LvArray::math::max( maxRelativeTempChange, subRegionMaxTempChange.get() );
       maxAbsolutePhaseVolFracChange = LvArray::math::max( maxAbsolutePhaseVolFracChange, subRegionMaxPhaseVolFracChange.get() );
 
     } );
   } );
 
-  maxAbsolutePressureChange = MpiWrapper::max( maxAbsolutePressureChange );
+  maxRelativePresChange = MpiWrapper::max( maxRelativePresChange );
   maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
-  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max absolute pressure change: "<< maxAbsolutePressureChange << " Pa" );
+  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max relative pressure change: "<< 100*maxRelativePresChange << " %" );
   GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max absolute phase volume fraction change: "<< maxAbsolutePhaseVolFracChange );
 
   if( m_isThermal )
   {
-    maxAbsoluteTemperatureChange = MpiWrapper::max( maxAbsoluteTemperatureChange );
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max absolute temperature change: "<< maxAbsoluteTemperatureChange << " K" );
+    maxRelativeTempChange = MpiWrapper::max( maxRelativeTempChange );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max relative temperature change: "<< 100*maxRelativeTempChange << " %" );
   }
 
   real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
 
-  real64 const nextDtPressure = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetPressureChange
-                                / std::max( eps, maxAbsolutePressureChange + m_solutionChangeScalingFactor * m_targetPressureChange );
+  real64 const nextDtPressure = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativePresChange
+                                / std::max( eps, maxRelativePresChange + m_solutionChangeScalingFactor * m_targetRelativePresChange );
   real64 const nextDtPhaseVolFrac = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetPhaseVolFracChange
                                     / std::max( eps, maxAbsolutePhaseVolFracChange + m_solutionChangeScalingFactor * m_targetPhaseVolFracChange );
   real64 const nextDtTemperature = m_isThermal
-    ? currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetTemperatureChange
-                                   / std::max( eps, maxAbsoluteTemperatureChange + m_solutionChangeScalingFactor * m_targetTemperatureChange )
+    ? currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativeTempChange
+                                   / std::max( eps, maxRelativeTempChange + m_solutionChangeScalingFactor * m_targetRelativeTempChange )
     : LvArray::NumericLimits< real64 >::max;
 
   return std::min( std::min( nextDtPressure, nextDtPhaseVolFrac ), nextDtTemperature );

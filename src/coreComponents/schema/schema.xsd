@@ -1820,15 +1820,15 @@ the relative residual norm satisfies:
 		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature between two Newton iterations-->
 		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.5" />
 		<!--solutionChangeScalingFactor => Damping factor for solution change targets-->
-		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0" />
+		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
 		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in phase volume fraction in a time step-->
 		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
-		<!--targetPressureChangeInTimeStep => Target (absolute) change in pressure in a time step-->
-		<xsd:attribute name="targetPressureChangeInTimeStep" type="real64" default="1.37895e+07" />
+		<!--targetPressureChangeInTimeStep => Target (relative) change in pressure in a time step-->
+		<xsd:attribute name="targetPressureChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--targetTemperatureChangeInTimeStep => Target (absolute) change in temperature in a time step-->
-		<xsd:attribute name="targetTemperatureChangeInTimeStep" type="real64" default="30" />
+		<xsd:attribute name="targetTemperatureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->
@@ -1862,15 +1862,15 @@ the relative residual norm satisfies:
 		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature between two Newton iterations-->
 		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.5" />
 		<!--solutionChangeScalingFactor => Damping factor for solution change targets-->
-		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0" />
+		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
 		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in phase volume fraction in a time step-->
 		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
-		<!--targetPressureChangeInTimeStep => Target (absolute) change in pressure in a time step-->
-		<xsd:attribute name="targetPressureChangeInTimeStep" type="real64" default="1.37895e+07" />
+		<!--targetPressureChangeInTimeStep => Target (relative) change in pressure in a time step-->
+		<xsd:attribute name="targetPressureChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--targetTemperatureChangeInTimeStep => Target (absolute) change in temperature in a time step-->
-		<xsd:attribute name="targetTemperatureChangeInTimeStep" type="real64" default="30" />
+		<xsd:attribute name="targetTemperatureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->

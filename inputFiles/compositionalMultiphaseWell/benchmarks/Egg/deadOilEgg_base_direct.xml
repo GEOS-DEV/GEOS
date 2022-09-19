@@ -28,6 +28,8 @@
       targetRegions="{ reservoir }"
       discretization="fluidTPFA"
       temperature="297.15"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
       maxCompFractionChange="0.3"
       logLevel="1"
       useMass="1"/>
