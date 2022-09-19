@@ -183,12 +183,12 @@ void ParticleSubRegion::getAllWeights( int const p,
   {
     case ParticleType::SinglePoint:
     {
-      // get cell IDs
-      std::vector<int> cellID;
-      cellID.resize(3);
+      // get IJK associated with particle center
+      std::vector<int> centerIJK;
+      centerIJK.resize(3);
       for(int i=0; i<3; i++)
       {
-        cellID[i] = std::floor( (p_x[i] - xMin[i])/hx[i] );
+        centerIJK[i] = std::floor( (p_x[i] - xMin[i])/hx[i] );
       }
 
       // get node IDs
@@ -198,13 +198,13 @@ void ParticleSubRegion::getAllWeights( int const p,
         {
           for(int k=0; k<2; k++)
           {
-            nodeIDs.push_back( ijkMap[cellID[0]+i][cellID[1]+j][cellID[2]+k] );
+            nodeIDs.push_back( ijkMap[centerIJK[0]+i][centerIJK[1]+j][centerIJK[2]+k] );
           }
         }
       }
 
       // get weights and grad weights
-      int corner = ijkMap[cellID[0]][cellID[1]][cellID[2]];
+      int corner = ijkMap[centerIJK[0]][centerIJK[1]][centerIJK[2]];
       auto corner_x = g_X[corner];
 
       real64 xRel = (p_x[0] - corner_x[0])/hx[0];
@@ -237,17 +237,17 @@ void ParticleSubRegion::getAllWeights( int const p,
     case ParticleType::CPDI:
     {
       // Precalculated things
-      int signs[8][3] = { { 1,  1,  1},
-                          { 1,  1, -1},
-                          { 1, -1,  1},
-                          { 1, -1, -1},
-                          {-1,  1,  1},
-                          {-1,  1, -1},
-                          {-1, -1,  1},
-                          {-1, -1, -1} };
+      int signs[8][3] = { { -1, -1, -1},
+                          {  1, -1, -1},
+                          {  1,  1, -1},
+                          { -1,  1, -1},
+                          { -1, -1,  1},
+                          {  1, -1,  1},
+                          {  1,  1,  1},
+                          { -1,  1,  1} };
 
       real64 alpha[8][8];
-      real64 one_over_V = 1.0 / m_particleVolume[p];
+      real64 oneOverV = 1.0 / m_particleVolume[p];
       real64 p_r1[3], p_r2[3], p_r3[3]; // allowing 1-indexed r-vectors to persist to torture future postdocs >:)
 
       for(int i=0; i<3; i++)
@@ -257,49 +257,47 @@ void ParticleSubRegion::getAllWeights( int const p,
         p_r3[i] = m_particleRVectors[p][2][i];
       }
 
-      alpha[0][0] = one_over_V * ( p_r1[2] * p_r2[1] - p_r1[1] * p_r2[2] - p_r1[2] * p_r3[1] + p_r2[2] * p_r3[1] + p_r1[1] * p_r3[2] - p_r2[1] * p_r3[2] );
-      alpha[0][1] = one_over_V * ( -( p_r1[2] * p_r2[0] ) + p_r1[0] * p_r2[2] + p_r1[2] * p_r3[0] - p_r2[2] * p_r3[0] - p_r1[0] * p_r3[2] + p_r2[0] * p_r3[2] );
-      alpha[0][2] = one_over_V * ( p_r1[1] * p_r2[0] - p_r1[0] * p_r2[1] - p_r1[1] * p_r3[0] + p_r2[1] * p_r3[0] + p_r1[0] * p_r3[1] - p_r2[0] * p_r3[1] );
-      alpha[1][0] = one_over_V * ( p_r1[2] * p_r2[1] - p_r1[1] * p_r2[2] - p_r1[2] * p_r3[1] - p_r2[2] * p_r3[1] + p_r1[1] * p_r3[2] + p_r2[1] * p_r3[2] );
-      alpha[1][1] = one_over_V * ( -( p_r1[2] * p_r2[0] ) + p_r1[0] * p_r2[2] + p_r1[2] * p_r3[0] + p_r2[2] * p_r3[0] - p_r1[0] * p_r3[2] - p_r2[0] * p_r3[2] );
-      alpha[1][2] = one_over_V * ( p_r1[1] * p_r2[0] - p_r1[0] * p_r2[1] - p_r1[1] * p_r3[0] - p_r2[1] * p_r3[0] + p_r1[0] * p_r3[1] + p_r2[0] * p_r3[1] );
-      alpha[2][0] = one_over_V * ( p_r1[2] * p_r2[1] - p_r1[1] * p_r2[2] + p_r1[2] * p_r3[1] - p_r2[2] * p_r3[1] - p_r1[1] * p_r3[2] + p_r2[1] * p_r3[2] );
-      alpha[2][1] = one_over_V * ( -( p_r1[2] * p_r2[0] ) + p_r1[0] * p_r2[2] - p_r1[2] * p_r3[0] + p_r2[2] * p_r3[0] + p_r1[0] * p_r3[2] - p_r2[0] * p_r3[2] );
-      alpha[2][2] = one_over_V * ( p_r1[1] * p_r2[0] - p_r1[0] * p_r2[1] + p_r1[1] * p_r3[0] - p_r2[1] * p_r3[0] - p_r1[0] * p_r3[1] + p_r2[0] * p_r3[1] );
-      alpha[3][0] = one_over_V * ( p_r1[2] * p_r2[1] - p_r1[1] * p_r2[2] + p_r1[2] * p_r3[1] + p_r2[2] * p_r3[1] - p_r1[1] * p_r3[2] - p_r2[1] * p_r3[2] );
-      alpha[3][1] = one_over_V * ( -( p_r1[2] * p_r2[0] ) + p_r1[0] * p_r2[2] - p_r1[2] * p_r3[0] - p_r2[2] * p_r3[0] + p_r1[0] * p_r3[2] + p_r2[0] * p_r3[2] );
-      alpha[3][2] = one_over_V * ( p_r1[1] * p_r2[0] - p_r1[0] * p_r2[1] + p_r1[1] * p_r3[0] + p_r2[1] * p_r3[0] - p_r1[0] * p_r3[1] - p_r2[0] * p_r3[1] );
-      alpha[4][0] = -alpha[2][0];
-      alpha[4][1] = -alpha[2][1];
-      alpha[4][2] = -alpha[2][2];
-      alpha[5][0] = -alpha[3][0];
-      alpha[5][1] = -alpha[3][1];
-      alpha[5][2] = -alpha[3][2];
-      alpha[6][0] = -alpha[0][0];
-      alpha[6][1] = -alpha[0][1];
-      alpha[6][2] = -alpha[0][2];
-      alpha[7][0] = -alpha[1][0];
-      alpha[7][1] = -alpha[1][1];
-      alpha[7][2] = -alpha[1][2];
+      alpha[0][0]=oneOverV*(p_r1[2]*p_r2[1] - p_r1[1]*p_r2[2] - p_r1[2]*p_r3[1] + p_r2[2]*p_r3[1] + p_r1[1]*p_r3[2] - p_r2[1]*p_r3[2]);
+      alpha[0][1]=oneOverV*(-(p_r1[2]*p_r2[0]) + p_r1[0]*p_r2[2] + p_r1[2]*p_r3[0] - p_r2[2]*p_r3[0] - p_r1[0]*p_r3[2] + p_r2[0]*p_r3[2]);
+      alpha[0][2]=oneOverV*(p_r1[1]*p_r2[0] - p_r1[0]*p_r2[1] - p_r1[1]*p_r3[0] + p_r2[1]*p_r3[0] + p_r1[0]*p_r3[1] - p_r2[0]*p_r3[1]);
+      alpha[1][0]=oneOverV*(p_r1[2]*p_r2[1] - p_r1[1]*p_r2[2] - p_r1[2]*p_r3[1] - p_r2[2]*p_r3[1] + p_r1[1]*p_r3[2] + p_r2[1]*p_r3[2]);
+      alpha[1][1]=oneOverV*(-(p_r1[2]*p_r2[0]) + p_r1[0]*p_r2[2] + p_r1[2]*p_r3[0] + p_r2[2]*p_r3[0] - p_r1[0]*p_r3[2] - p_r2[0]*p_r3[2]);
+      alpha[1][2]=oneOverV*(p_r1[1]*p_r2[0] - p_r1[0]*p_r2[1] - p_r1[1]*p_r3[0] - p_r2[1]*p_r3[0] + p_r1[0]*p_r3[1] + p_r2[0]*p_r3[1]);
+      alpha[2][0]=oneOverV*(p_r1[2]*p_r2[1] - p_r1[1]*p_r2[2] + p_r1[2]*p_r3[1] - p_r2[2]*p_r3[1] - p_r1[1]*p_r3[2] + p_r2[1]*p_r3[2]);
+      alpha[2][1]=oneOverV*(-(p_r1[2]*p_r2[0]) + p_r1[0]*p_r2[2] - p_r1[2]*p_r3[0] + p_r2[2]*p_r3[0] + p_r1[0]*p_r3[2] - p_r2[0]*p_r3[2]);
+      alpha[2][2]=oneOverV*(p_r1[1]*p_r2[0] - p_r1[0]*p_r2[1] + p_r1[1]*p_r3[0] - p_r2[1]*p_r3[0] - p_r1[0]*p_r3[1] + p_r2[0]*p_r3[1]);
+      alpha[3][0]=oneOverV*(p_r1[2]*p_r2[1] - p_r1[1]*p_r2[2] + p_r1[2]*p_r3[1] + p_r2[2]*p_r3[1] - p_r1[1]*p_r3[2] - p_r2[1]*p_r3[2]);
+      alpha[3][1]=oneOverV*(-(p_r1[2]*p_r2[0]) + p_r1[0]*p_r2[2] - p_r1[2]*p_r3[0] - p_r2[2]*p_r3[0] + p_r1[0]*p_r3[2] + p_r2[0]*p_r3[2]);
+      alpha[3][2]=oneOverV*(p_r1[1]*p_r2[0] - p_r1[0]*p_r2[1] + p_r1[1]*p_r3[0] + p_r2[1]*p_r3[0] - p_r1[0]*p_r3[1] - p_r2[0]*p_r3[1]);
+      alpha[4][0]=oneOverV*(-(p_r1[2]*p_r2[1]) + p_r1[1]*p_r2[2] - p_r1[2]*p_r3[1] + p_r2[2]*p_r3[1] + p_r1[1]*p_r3[2] - p_r2[1]*p_r3[2]);
+      alpha[4][1]=oneOverV*(p_r1[2]*p_r2[0] - p_r1[0]*p_r2[2] + p_r1[2]*p_r3[0] - p_r2[2]*p_r3[0] - p_r1[0]*p_r3[2] + p_r2[0]*p_r3[2]);
+      alpha[4][2]=oneOverV*(-(p_r1[1]*p_r2[0]) + p_r1[0]*p_r2[1] - p_r1[1]*p_r3[0] + p_r2[1]*p_r3[0] + p_r1[0]*p_r3[1] - p_r2[0]*p_r3[1]);
+      alpha[5][0]=oneOverV*(-(p_r1[2]*p_r2[1]) + p_r1[1]*p_r2[2] - p_r1[2]*p_r3[1] - p_r2[2]*p_r3[1] + p_r1[1]*p_r3[2] + p_r2[1]*p_r3[2]);
+      alpha[5][1]=oneOverV*(p_r1[2]*p_r2[0] - p_r1[0]*p_r2[2] + p_r1[2]*p_r3[0] + p_r2[2]*p_r3[0] - p_r1[0]*p_r3[2] - p_r2[0]*p_r3[2]);
+      alpha[5][2]=oneOverV*(-(p_r1[1]*p_r2[0]) + p_r1[0]*p_r2[1] - p_r1[1]*p_r3[0] - p_r2[1]*p_r3[0] + p_r1[0]*p_r3[1] + p_r2[0]*p_r3[1]);
+      alpha[6][0]=oneOverV*(-(p_r1[2]*p_r2[1]) + p_r1[1]*p_r2[2] + p_r1[2]*p_r3[1] - p_r2[2]*p_r3[1] - p_r1[1]*p_r3[2] + p_r2[1]*p_r3[2]);
+      alpha[6][1]=oneOverV*(p_r1[2]*p_r2[0] - p_r1[0]*p_r2[2] - p_r1[2]*p_r3[0] + p_r2[2]*p_r3[0] + p_r1[0]*p_r3[2] - p_r2[0]*p_r3[2]);
+      alpha[6][2]=oneOverV*(-(p_r1[1]*p_r2[0]) + p_r1[0]*p_r2[1] + p_r1[1]*p_r3[0] - p_r2[1]*p_r3[0] - p_r1[0]*p_r3[1] + p_r2[0]*p_r3[1]);
+      alpha[7][0]=oneOverV*(-(p_r1[2]*p_r2[1]) + p_r1[1]*p_r2[2] + p_r1[2]*p_r3[1] + p_r2[2]*p_r3[1] - p_r1[1]*p_r3[2] - p_r2[1]*p_r3[2]);
+      alpha[7][1]=oneOverV*(p_r1[2]*p_r2[0] - p_r1[0]*p_r2[2] - p_r1[2]*p_r3[0] - p_r2[2]*p_r3[0] + p_r1[0]*p_r3[2] + p_r2[0]*p_r3[2]);
+      alpha[7][2]=oneOverV*(-(p_r1[1]*p_r2[0]) + p_r1[0]*p_r2[1] + p_r1[1]*p_r3[0] + p_r2[1]*p_r3[0] - p_r1[0]*p_r3[1] - p_r2[0]*p_r3[1]);
 
-      // GEOS-to-GEOSX corner mapping, because I'm lazy
-      int cornerMap[8] = {0, 4, 3, 7, 1, 5, 2, 6};
-
-      // get cell IDs
-      std::vector<std::vector<int>> cellID;
-      cellID.resize(8); // CPDI can map to up to 8 cells
-      for(int cell=0; cell<8; cell++)
+      // get IJK associated with each corner
+      std::vector<std::vector<int>> cornerIJK;
+      cornerIJK.resize(8); // CPDI can map to up to 8 cells
+      for(int corner=0; corner<8; corner++)
       {
-        cellID[cell].resize(3);
+        cornerIJK[corner].resize(3);
         for(int i=0; i<3; i++)
         {
-          real64 CPDIcorner = p_x[i] + signs[cell][0]*m_particleRVectors[p][0][i] + signs[cell][1]*m_particleRVectors[p][1][i] + signs[cell][2]*m_particleRVectors[p][2][i];
-          cellID[cell][i] = std::floor((CPDIcorner - xMin[i])/hx[i]); // TODO: Temporarily store the CPDI corners since they're re-used below?
+          real64 cornerPositionComponent = p_x[i] + signs[corner][0] * m_particleRVectors[p][0][i] + signs[corner][1] * m_particleRVectors[p][1][i] + signs[corner][2] * m_particleRVectors[p][2][i];
+          cornerIJK[corner][i] = std::floor( ( cornerPositionComponent - xMin[i] ) / hx[i] ); // TODO: Temporarily store the CPDI corners since they're re-used below?
         }
       }
 
-      // get node IDs
-      for(size_t cell=0; cell<cellID.size(); cell++)
+      // get node IDs associated with each corner from IJK map
+      // *** The order in which we access the IJK map must match the order we evaluate the shape functions! ***
+      for(int corner=0; corner<8; corner++)
       {
         for(int i=0; i<2; i++)
         {
@@ -307,41 +305,41 @@ void ParticleSubRegion::getAllWeights( int const p,
           {
             for(int k=0; k<2; k++)
             {
-              nodeIDs.push_back(ijkMap[cellID[cell][0]+i][cellID[cell][1]+j][cellID[cell][2]+k]);
+              nodeIDs.push_back( ijkMap[cornerIJK[corner][0]+i][cornerIJK[corner][1]+j][cornerIJK[corner][2]+k] );
             }
           }
         }
       }
 
       // get weights and grad weights
-      for(size_t cell=0; cell<cellID.size(); cell++)
+      for(int corner=0; corner<8; corner++)
       {
-        int corner = ijkMap[cellID[cell][0]][cellID[cell][1]][cellID[cell][2]];
-        auto corner_x = g_X[corner];
+        int cornerNode = ijkMap[cornerIJK[corner][0]][cornerIJK[corner][1]][cornerIJK[corner][2]];
+        auto cornerNodePosition = g_X[cornerNode];
 
         real64 x, y, z;
-        x = p_x[0] + signs[cell][0]*m_particleRVectors[p][0][0] + signs[cell][1]*m_particleRVectors[p][1][0] + signs[cell][2]*m_particleRVectors[p][2][0];
-        y = p_x[1] + signs[cell][0]*m_particleRVectors[p][0][1] + signs[cell][1]*m_particleRVectors[p][1][1] + signs[cell][2]*m_particleRVectors[p][2][1];
-        z = p_x[2] + signs[cell][0]*m_particleRVectors[p][0][2] + signs[cell][1]*m_particleRVectors[p][1][2] + signs[cell][2]*m_particleRVectors[p][2][2];
+        x = p_x[0] + signs[corner][0] * m_particleRVectors[p][0][0] + signs[corner][1] * m_particleRVectors[p][1][0] + signs[corner][2] * m_particleRVectors[p][2][0];
+        y = p_x[1] + signs[corner][0] * m_particleRVectors[p][0][1] + signs[corner][1] * m_particleRVectors[p][1][1] + signs[corner][2] * m_particleRVectors[p][2][1];
+        z = p_x[2] + signs[corner][0] * m_particleRVectors[p][0][2] + signs[corner][1] * m_particleRVectors[p][1][2] + signs[corner][2] * m_particleRVectors[p][2][2];
 
-        real64 xRel = (x - corner_x[0])/hx[0];
-        real64 yRel = (y - corner_x[1])/hx[1];
-        real64 zRel = (z - corner_x[2])/hx[2];
+        real64 xRel = ( x - cornerNodePosition[0] ) / hx[0];
+        real64 yRel = ( y - cornerNodePosition[1] ) / hx[1];
+        real64 zRel = ( z - cornerNodePosition[2] ) / hx[2];
 
         for(int i=0; i<2; i++)
         {
-          real64 xWeight = i*xRel + (1-i)*(1.0-xRel);
+          real64 xWeight = i * xRel + ( 1 - i ) * ( 1.0 - xRel );
           for(int j=0; j<2; j++)
           {
-            real64 yWeight = j*yRel + (1-j)*(1.0-yRel);
+            real64 yWeight = j * yRel + ( 1 - j ) * ( 1.0 - yRel );
             for(int k=0; k<2; k++)
             {
-              real64 zWeight = k*zRel + (1-k)*(1.0-zRel);
-              real64 weight = xWeight*yWeight*zWeight;
-              weights.push_back(0.125*weight); // note the built-in factor of 1/8 so we don't need it in the solver
-              gradWeights[0].push_back(-alpha[cornerMap[cell]][0]*weight);
-              gradWeights[1].push_back(-alpha[cornerMap[cell]][1]*weight);
-              gradWeights[2].push_back(-alpha[cornerMap[cell]][2]*weight);
+              real64 zWeight = k * zRel + ( 1 - k ) * ( 1.0 - zRel );
+              real64 weight = xWeight * yWeight * zWeight;
+              weights.push_back( 0.125 * weight ); // note the built-in factor of 1/8 so we don't need it in the solver
+              gradWeights[0].push_back( alpha[corner][0] * weight );
+              gradWeights[1].push_back( alpha[corner][1] * weight );
+              gradWeights[2].push_back( alpha[corner][2] * weight );
             }
           }
         }
