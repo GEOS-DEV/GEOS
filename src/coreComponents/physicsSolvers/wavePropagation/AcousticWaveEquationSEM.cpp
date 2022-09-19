@@ -965,7 +965,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
                                         MeshLevel & mesh,
-                                        arrayView1d< string const > const & GEOSX_UNUSED_PARAM (regionNames ) )
+                                        arrayView1d< string const > const & GEOSX_UNUSED_PARAM ( regionNames ) )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
