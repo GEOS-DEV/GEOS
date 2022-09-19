@@ -26,6 +26,7 @@
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/multiphysics/ThermalSinglePhasePoromechanicsSolver.hpp"
 
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 
@@ -344,15 +345,28 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   gravityVectorData,
                                   std::forward< PARAMS >( params )... );
 
-    m_maxForce = finiteElement::
-                   regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                                 CONSTITUTIVE_BASE,
-                                                 CellElementSubRegion >( mesh,
-                                                                         regionNames,
-                                                                         this->getDiscretizationName(),
-                                                                         viewKeyStruct::solidMaterialNamesString(),
-                                                                         kernelWrapper );
-
+    if( m_effectiveStressFlag )
+    {
+      m_maxForce = finiteElement::
+                    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                                  CONSTITUTIVE_BASE,
+                                                  CellElementSubRegion >( mesh,
+                                                                          regionNames,
+                                                                          this->getDiscretizationName(),
+                                                                          ThermalSinglePhasePoromechanicsSolver::viewKeyStruct::porousMaterialNamesString(),
+                                                                          kernelWrapper );
+    }
+    else
+    {
+      m_maxForce = finiteElement::
+                    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                                  CONSTITUTIVE_BASE,
+                                                  CellElementSubRegion >( mesh,
+                                                                          regionNames,
+                                                                          this->getDiscretizationName(),
+                                                                          viewKeyStruct::solidMaterialNamesString(),
+                                                                          kernelWrapper );
+    }
   } );
 
 

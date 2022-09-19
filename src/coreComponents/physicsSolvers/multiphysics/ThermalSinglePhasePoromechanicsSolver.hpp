@@ -72,9 +72,7 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * couplingTypeOptionString() { return "couplingTypeOption"; }
-
-    constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
-    constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
+    static constexpr char const * porousMaterialNamesString() { return "porousMaterialNames"; }
 
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * flowSolverNameString() { return "flowSolverName"; }
@@ -86,6 +84,8 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
+  virtual void initializePreSubGroups() override;
+  
 private:
 
   string m_solidSolverName;

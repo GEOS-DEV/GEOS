@@ -62,8 +62,50 @@ ThermalSinglePhasePoromechanicsSolver::ThermalSinglePhasePoromechanicsSolver( co
 
 }
 
-void ThermalSinglePhasePoromechanicsSolver::registerDataOnMesh( Group & GEOSX_UNUSED_PARAM( meshBodies ))
-{}
+void ThermalSinglePhasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
+{
+  SolverBase::registerDataOnMesh( meshBodies );
+
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
+  {
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
+    {
+      subRegion.registerWrapper< string >( viewKeyStruct::porousMaterialNamesString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
+        setSizedFromParent( 0 );
+    } );
+  } );
+}
+
+void ThermalSinglePhasePoromechanicsSolver::initializePreSubGroups()
+{
+  SolverBase::initializePreSubGroups();
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                       [&]( localIndex const,
+                                                                            ElementSubRegionBase & subRegion )
+    {
+      string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
+      porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
+      GEOSX_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+    } );
+  } );
+} 
 
 void ThermalSinglePhasePoromechanicsSolver::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                                                   real64 const & GEOSX_UNUSED_PARAM( dt ),
