@@ -1446,6 +1446,7 @@ struct StatisticsKernel
           arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDensity,
           arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFraction,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
+          arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
@@ -1457,6 +1458,7 @@ struct StatisticsKernel
           real64 & totalUncompactedPoreVol,
           arrayView1d< real64 > const & phaseDynamicPoreVol,
           arrayView1d< real64 > const & phaseMass,
+          arrayView1d< real64 > const & trappedPhaseMass,
           arrayView2d< real64 > const & dissolvedComponentMass )
   {
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
@@ -1484,6 +1486,7 @@ struct StatisticsKernel
                                              temp,
                                              phaseDensity,
                                              phaseVolFrac,
+                                             phaseTrappedVolFrac,
                                              phaseCompFraction,
                                              subRegionMinPres,
                                              subRegionAvgPresNumerator,
@@ -1496,6 +1499,7 @@ struct StatisticsKernel
                                              subRegionTotalUncompactedPoreVol,
                                              phaseDynamicPoreVol,
                                              phaseMass,
+                                             trappedPhaseMass,
                                              dissolvedComponentMass] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       if( elemGhostRank[ei] >= 0 )
@@ -1522,9 +1526,11 @@ struct StatisticsKernel
       {
         real64 const elemPhaseVolume = dynamicPoreVol * phaseVolFrac[ei][ip];
         real64 const elemPhaseMass = phaseDensity[ei][0][ip] * elemPhaseVolume;
+        real64 const elemTrappedPhaseMass = phaseDensity[ei][0][ip] * dynamicPoreVol * phaseTrappedVolFrac[ei][0][ip];
         // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseDynamicPoreVol[ip], elemPhaseVolume );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseMass[ip], elemPhaseMass );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &trappedPhaseMass[ip], elemTrappedPhaseMass );
         for( integer ic = 0; ic < numComps; ++ic )
         {
           // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
@@ -1545,9 +1551,9 @@ struct StatisticsKernel
     totalUncompactedPoreVol = subRegionTotalUncompactedPoreVol.get();
 
     // dummy loop to bring data back to the CPU
-    forAll< serialPolicy >( 1, [phaseDynamicPoreVol, phaseMass, dissolvedComponentMass] ( localIndex const )
+    forAll< serialPolicy >( 1, [phaseDynamicPoreVol, phaseMass, trappedPhaseMass, dissolvedComponentMass] ( localIndex const )
     {
-      GEOSX_UNUSED_VAR( phaseDynamicPoreVol, phaseMass, dissolvedComponentMass );
+      GEOSX_UNUSED_VAR( phaseDynamicPoreVol, phaseMass, trappedPhaseMass, dissolvedComponentMass );
     } );
   }
 };
