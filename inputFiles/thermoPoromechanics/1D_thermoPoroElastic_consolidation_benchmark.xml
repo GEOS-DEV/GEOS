@@ -1,0 +1,56 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./1D_thermoPoroElastic_consolidation_base.xml" />
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 7 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 7 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="1e2">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="10"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication0"
+      endTime="1.e-5"
+      forceDt="1.e-5"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="solverApplication1"
+      beginTime="1.e-5"
+      endTime="1.0"
+      forceDt="0.99999"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="solverApplication2"
+      beginTime="1.0"
+      endTime="100.0"
+      forceDt="1.0"
+      target="/Solvers/thermoPoroSolver"/>
+
+  </Events>
+
+  <Geometry>
+    <Box
+      name="top"
+      xMin="{ -0.001, 5.999, -0.001 }"
+      xMax="{ 1.001, 7.001, 1.001 }"/>
+  </Geometry>
+</Problem>

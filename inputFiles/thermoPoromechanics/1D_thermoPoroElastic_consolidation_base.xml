@@ -1,0 +1,191 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <ThermalSinglePhasePoromechanics
+      name="thermoPoroSolver"
+      solidSolverName="SolidMechSolve"
+      flowSolverName="FlowSolve"
+      couplingTypeOption="FixedStress"
+      logLevel="1"
+      discretization="FE1"
+      subcycling="0"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </ThermalSinglePhasePoromechanics>
+
+    <SolidMechanicsLagrangianSSLE
+      name="SolidMechSolve"
+      timeIntegrationOption="QuasiStatic"
+      effectiveStress="1"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }"
+      >
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+    <SinglePhaseFVM
+      name="FlowSolve"
+      logLevel="1"
+      discretization="tpfaFlow"
+      temperature="0.0"
+      isThermal="1"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonMaxIter="100"
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfaFlow"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock, water, thermalCond }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="rock"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <ElasticIsotropic
+      name="rockSolid"
+      defaultDensity="0.0"
+      defaultBulkModulus="1e4"
+      defaultShearModulus="2.143e3"
+      defaultThermalExpansionCoefficient="9e-7"/>
+    
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="1.0e27"
+      defaultReferencePorosity="0.2"/>
+    
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      volumetricHeatCapacity="1.672e5"
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 4.0e-9, 4.0e-9, 4.0e-9 }"/>
+
+    <ThermalCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="1e-3"
+      referencePressure="0.0"
+      referenceTemperature="0.0"
+      compressibility="1e-10"
+      thermalExpansionCoeff="9.0e-7"
+      viscosibility="0.0"
+      volumetricHeatCapacity="1.672e2"
+      referenceInternalEnergy="4.56e7"/>
+
+    <SinglePhaseConstantThermalConductivity
+      name="thermalCond"
+      thermalConductivityComponents="{ 836, 836, 836 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="pressure"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="temperature"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      fieldName="TotalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      setNames="{ xneg, xpos, yneg }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      fieldName="TotalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      fieldName="TotalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      setNames="{ zneg, zpos }"/>
+
+    <Traction
+      name="traction"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-1.0"
+      setNames="{ ypos }"
+      functionName="timeFunction"/>
+
+    <FieldSpecification
+      name="boundaryPressure"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="pressure"
+      scale="0.0"
+      setNames="{ top }"/>
+
+    <FieldSpecification
+      name="boundaryTemperature"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="temperature"
+      scale="50.0"
+      setNames="{ top }"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 1e-10, 1e5 }"
+      values="{ 0.0, 1.0, 1.0 }"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+  </Outputs>
+</Problem>
