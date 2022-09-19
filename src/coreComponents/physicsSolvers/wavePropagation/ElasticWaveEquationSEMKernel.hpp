@@ -267,7 +267,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             //Compute source coefficients: this generate a P-wave and an "unwanted" S-wave. It is classical in the case of the elastic wave
             // equation at order 2, the S-wave can be attenuated by refining the mesh or get to high order
-            //However, we will propably use elastic wave at 1st order for the FWI case.    
+            //However, we will propably use elastic wave at 1st order for the FWI case.
             for( localIndex c=0; c<2; ++c )
             {
               for( localIndex b=0; b<2; ++b )
