@@ -61,8 +61,6 @@ public:
   /// The number of quadrature points per element.
   static constexpr localIndex numQuadraturePoints = 1;
 
-  static constexpr int numSamplingPoints = 1000;
-
   ConformingVirtualElementOrder1() = default;
 
   virtual ~ConformingVirtualElementOrder1() = default;

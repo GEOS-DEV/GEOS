@@ -61,9 +61,6 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 1;
 
-  /// The number of sampling points per element.
-  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection;
-
   virtual ~H1_TriangleFace_Lagrange1_Gauss1() override
   {}
 
@@ -136,28 +133,6 @@ public:
   static void setupStack( localIndex const & cellIndex,
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
-
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void getSamplingPointCoordInParentSpace( int const & linearIndex,
-                                                  real64 (& samplingPointCoord)[3] )
-  {
-    GEOSX_UNUSED_VAR( linearIndex, samplingPointCoord );
-    GEOSX_ERROR( " Element type not supported." );
-  }
-
-  /**
-   * @brief Calculate shape functions values for each support point at a
-   *   given point in the parent space.
-   * @param pointCoord coordinates of the given point.
-   * @param N An array to pass back the shape function values for each support
-   *   point.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void calcN( real64 const (&pointCoord)[3],
-                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -274,17 +249,6 @@ H1_TriangleFace_Lagrange1_Gauss1::
   N[0] = 1.0 - r - s;
   N[1] = r;
   N[2] = s;
-}
-
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-H1_TriangleFace_Lagrange1_Gauss1::
-  calcN( real64 const (&pointCoord)[3],
-         real64 (& N)[numNodes] )
-{
-  GEOSX_UNUSED_VAR( pointCoord, N );
 }
 
 GEOSX_HOST_DEVICE
