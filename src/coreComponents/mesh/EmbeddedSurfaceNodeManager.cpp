@@ -355,9 +355,9 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
       localIndex const b = oldSize + a;
       m_localToGlobalMap[b] = newGlobalIndices( a );
       m_ghostRank[b] = ghostRank( a );
-      if ( originalIndex[a] > -1 && m_ghostRank[b] == -1 )
+      if( originalIndex[a] > -1 && m_ghostRank[b] == -1 )
       {
-        LvArray::tensorOps::copy<3>(m_referencePosition[b], referencePosition[originalIndex[a]] );
+        LvArray::tensorOps::copy< 3 >( m_referencePosition[b], referencePosition[originalIndex[a]] );
       }
     }
 

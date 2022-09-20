@@ -165,7 +165,7 @@ dispatch2D( FiniteElementBase const & input,
 
 
 
-template<typename LAMBDA>
+template< typename LAMBDA >
 void
 dispatchlowOrder3D( FiniteElementBase const & input,
                     LAMBDA && lambda )
@@ -194,7 +194,7 @@ dispatchlowOrder3D( FiniteElementBase const & input,
 
 } // namespace finiteElement
 
-} // namespace geosx 
+} // namespace geosx
 
 
 

@@ -157,12 +157,13 @@ public:
     real64 const r = i0 * step;
     real64 const s = i1 * step;
     real64 const t = i2 * 2 * step;
-    if ( (r+s) <= 1 )
+    if( (r+s) <= 1 )
     {
       samplingPointCoord[0] = r;
       samplingPointCoord[1] = s;
       samplingPointCoord[2] = t;
-    }else
+    }
+    else
     {
       // if outside of the triangle need to reproject it. Points will be doubled though.
       samplingPointCoord[0] = 1 - r;

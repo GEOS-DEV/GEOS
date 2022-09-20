@@ -165,11 +165,11 @@ public:
    * @param coords coordinates of the given point.
    * @param N An array to pass back the shape function values for each support
    *   point.
-   */ 
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void calcN( real64 const (&coords)[2],
-                     real64 ( & N )[numNodes] )      ;             
+                     real64 ( &N )[numNodes] );
 
 
   /**

@@ -252,7 +252,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion.edgeList();
 
   localIndex numOfPoints = embSurfNodeManager.size();
-  
+
   // Create the edges
   embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
   // Node to cell map

@@ -225,13 +225,13 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
       }
       if( isNew )
       {
-        // Add the point to the node Manager 
+        // Add the point to the node Manager
         globalIndex parentEdgeID = edgeLocalToGlobal[ pointParentIndex[ originalIndices[ j ] ] ];
         nodeIndex = embSurfNodeManager.size();
-        
+
         embSurfNodeManager.appendNode( intersectionPoints[ j ],
                                        pointGhostRank[ originalIndices[ j ] ] );
-        
+
         arrayView1d< localIndex > const & parentIndex =
           embSurfNodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
 
