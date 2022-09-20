@@ -400,15 +400,6 @@ getEmbeddedSurface( EmbeddedSurfaceSubRegion const & subRegion,
   localIndex const numNodes = nodeManager.size();
   auto const intersectionPoints = nodeManager.referencePosition();
 
-  int const rank = MpiWrapper::commRank();
-  if (rank == 0)
-  { 
-  for (int i = 0; i < intersectionPoints.size(); i++)
-  {
-    std::cout<< "node: " << i << " coords:" << intersectionPoints[i] << std::endl;
-  }
-  }
-
   points->SetNumberOfPoints( numNodes );
   for( localIndex pointIndex = 0; pointIndex < numNodes; ++pointIndex )
   {

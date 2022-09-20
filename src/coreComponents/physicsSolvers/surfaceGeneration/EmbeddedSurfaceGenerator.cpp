@@ -225,25 +225,22 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   // add all new nodes to newObject list
   auto nodeCoords = embSurfNodeManager.referencePosition();  
   int const rank = MpiWrapper::commRank();
+  auto ghostR = embSurfNodeManager.ghostRank();
   if (rank == 0)
   {
-    std::cout<< "rank: " << rank<<std::endl;
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
   {
     newObjects.newNodes.insert( ni );
-    
-      std::cout << "node " << ni << " coords: " << nodeCoords[ni] << std::endl;
+    std::cout << "rank: " << rank << " node " << ni << "ghostRank: " << ghostR[ni] << " coords: " << nodeCoords[ni] << std::endl;
   }
   }
   MpiWrapper::barrier();
   if (rank == 1)
   {
-    std::cout<< "rank: " << rank<<std::endl;
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
   {
     newObjects.newNodes.insert( ni );
-    
-      std::cout << "node " << ni << " coords: " << nodeCoords[ni] << std::endl;
+    std::cout << "rank: " << rank << " node " << ni << "ghostRank: " << ghostR[ni] << " coords: " << nodeCoords[ni] << std::endl;
   }
   }
 
@@ -273,6 +270,17 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   localIndex numOfPoints = embSurfNodeManager.size();
   
+  // Create the edges
+  embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
+  // Node to cell map
+  embSurfNodeManager.setElementMaps( elemManager );
+  // Node to edge map
+  embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
+  embSurfNodeManager.compressRelationMaps();
+
+  auto localNodeToGlobalNode  = embSurfNodeManager.localToGlobalMap();
+  auto ghostNodeRank = embSurfNodeManager.ghostRank();
+  
   if (rank == 0)
   {
   std::cout<< "rank: " << rank<<std::endl;
@@ -281,7 +289,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
   {
     
-      std::cout << "node " << ni << " coords: " << nodeCoords[ni] << std::endl;
+      std::cout << "node "  << ni  << " - global Index: " << localNodeToGlobalNode[ni] << " ghost rank " <<  ghostNodeRank[ni] << " coords: " << newNodeCoords[ni] << std::endl;
   }
   }
   MpiWrapper::barrier();
@@ -293,16 +301,10 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
   {
     
-      std::cout << "node " << ni << " coords: " << nodeCoords[ni] << std::endl;
+      std::cout << "node " << ni << " - global Index: " << localNodeToGlobalNode[ni] << " ghost rank " <<  ghostNodeRank[ni] << " coords: " << newNodeCoords[ni] << std::endl;
   }
   }
-  // Create the edges
-  embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
-  // Node to cell map
-  embSurfNodeManager.setElementMaps( elemManager );
-  // Node to edge map
-  embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
-  embSurfNodeManager.compressRelationMaps();
+  
 }
 
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()

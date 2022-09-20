@@ -286,6 +286,8 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
     newGlobalIndices.reserve( numUnpackedIndices );
     array1d< integer > ghostRank;
     ghostRank.reserve( numUnpackedIndices );
+    array1d< integer > originalIndex;
+    originalIndex.reserve( numUnpackedIndices );
     localIndex const oldSize = this->size();
     for( localIndex a = 0; a < numUnpackedIndices; ++a )
     {
@@ -325,10 +327,12 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
         if( ghostRankOnSendingRank[a] == rank )
         {
           ghostRank.emplace_back( -1 );
+          originalIndex.emplace_back( a );
         }
         else
         {
-          ghostRank.emplace_back( rank );
+          ghostRank.emplace_back( sendingRank );
+          originalIndex.emplace_back( -1 );
         }
 
         ++numNewIndices;
@@ -351,6 +355,10 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
       localIndex const b = oldSize + a;
       m_localToGlobalMap[b] = newGlobalIndices( a );
       m_ghostRank[b] = ghostRank( a );
+      if ( originalIndex[a] > -1 && m_ghostRank[b] == -1 )
+      {
+        LvArray::tensorOps::copy<3>(m_referencePosition[b], referencePosition[originalIndex[a]] );
+      }
     }
 
 
