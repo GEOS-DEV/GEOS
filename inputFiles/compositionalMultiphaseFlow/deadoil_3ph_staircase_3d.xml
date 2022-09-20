@@ -7,6 +7,8 @@
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"      
       targetRegions="{ Channel }"
       temperature="300">
       <NonlinearSolverParameters

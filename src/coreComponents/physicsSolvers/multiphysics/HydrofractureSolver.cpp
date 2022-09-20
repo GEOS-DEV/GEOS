@@ -785,13 +785,15 @@ void HydrofractureSolver::updateState( DomainPartition & domain )
   flowSolver()->updateState( domain );
 }
 
-void HydrofractureSolver::setNextDt( real64 const & currentDt,
-                                     real64 & nextDt )
+real64 HydrofractureSolver::setNextDt( real64 const & currentDt,
+                                       DomainPartition & domain )
 {
+  GEOSX_UNUSED_VAR( domain );
+  real64 nextDt = 0.0;
 
   if( m_numResolves[0] == 0 && m_numResolves[1] == 0 )
   {
-    this->setNextDtBasedOnNewtonIter( currentDt, nextDt );
+    nextDt = this->setNextDtBasedOnNewtonIter( currentDt );
   }
   else
   {
@@ -800,6 +802,7 @@ void HydrofractureSolver::setNextDt( real64 const & currentDt,
   }
 
   GEOSX_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );
+  return nextDt;
 }
 
 void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,

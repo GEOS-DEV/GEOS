@@ -22,6 +22,8 @@
       discretization="fluidHM"
       targetRegions="{ Channel }"
       temperature="368.15"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
       maxCompFractionChange="0.2"
       maxRelativePressureChange="0.2"
       useMass="1"/>
