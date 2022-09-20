@@ -1863,10 +1863,11 @@ bool LagrangianContactSolver::isFractureAllInStickCondition( DomainPartition con
   return ( ( numSlip + numOpen ) == 0 );
 }
 
-void LagrangianContactSolver::setNextDt( real64 const & currentDt,
-                                         real64 & nextDt )
+real64 LagrangianContactSolver::setNextDt( real64 const & currentDt,
+                                           DomainPartition & domain )
 {
-  nextDt = currentDt;
+  GEOSX_UNUSED_VAR( domain );
+  return currentDt;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactSolver, string const &, Group * const )

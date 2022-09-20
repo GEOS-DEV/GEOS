@@ -13,7 +13,7 @@
       numPhases="2"
       OBLOperatorsTableFile="ccs_thermal_10p_static.txt">
       <NonlinearSolverParameters
-	timestepCutFactor="0.5"
+	timeStepCutFactor="0.5"
 	newtonTol="1.0e-4"
 	newtonMaxIter="15"/>
       <LinearSolverParameters
