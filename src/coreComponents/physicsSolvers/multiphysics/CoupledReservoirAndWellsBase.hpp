@@ -23,6 +23,11 @@
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
+#include "mesh/PerforationExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
 namespace geosx
 {
@@ -182,7 +187,50 @@ protected:
   {
     Base::initializePostInitialConditionsPreSubGroups( );
 
-    coupledReservoirAndWellsInternal::initializePostInitialConditionsPreSubGroups( this );
+    DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                                 MeshLevel & meshLevel,
+                                                                                 arrayView1d< string const > const & regionNames )
+    {
+      ElementRegionManager & elemManager = meshLevel.getElemManager();
+
+      // loop over the wells
+      elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                  WellElementSubRegion & subRegion )
+      {
+        array1d< array1d< arrayView3d< real64 const > > > const permeability =
+          elemManager.constructMaterialExtrinsicAccessor< constitutive::PermeabilityBase,
+                                                          extrinsicMeshData::permeability::permeability >();
+
+        PerforationData & perforationData = *subRegion.getPerforationData();
+        WellControls const & wellControls = wellSolver()->getWellControls( subRegion );
+
+        // compute the Peaceman index (if not read from XML)
+        perforationData.computeWellTransmissibility( meshLevel, subRegion, permeability );
+
+        // if the log level is 1, we output the value of the transmissibilities
+        if( wellControls.getLogLevel() >= 2 )
+        {
+          arrayView2d< real64 const > const perfLocation =
+            perforationData.getExtrinsicData< extrinsicMeshData::perforation::location >();
+          arrayView1d< real64 const > const perfTrans =
+            perforationData.getExtrinsicData< extrinsicMeshData::perforation::wellTransmissibility >();
+
+          real64 const cP2Pas = 0.001;
+          real64 const day2s = 24 * 3600;
+          real64 const bar2Pa = 100000;
+          real64 const conversionFactor = day2s * bar2Pa / cP2Pas;
+
+          forAll< serialPolicy >( perforationData.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+          {
+            GEOSX_LOG_RANK( GEOSX_FMT( "The perforation at ({},{},{}) has a transmissibility of {} Pa.s.rm^3/s/Pa ({} cP.rm^3/day/bar)",
+                                       perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
+                                       perfTrans[iperf], perfTrans[iperf]*conversionFactor ) );
+          } );
+        }
+      } );
+    } );
   }
 
   /**

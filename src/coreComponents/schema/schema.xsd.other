@@ -2185,7 +2185,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="elementSubRegionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="WellElementRegionuniqueSubRegion" type="WellElementRegionuniqueSubRegionType" />
+			<xsd:element name="WellElementRegionUniqueSubRegion" type="WellElementRegionUniqueSubRegionType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceElementRegionType">
@@ -2226,7 +2226,7 @@
 		<!--wellGeneratorName => (no description available)-->
 		<xsd:attribute name="wellGeneratorName" type="string" />
 	</xsd:complexType>
-	<xsd:complexType name="WellElementRegionuniqueSubRegionType">
+	<xsd:complexType name="WellElementRegionUniqueSubRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="ConstitutiveModels" type="ConstitutiveModelsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />

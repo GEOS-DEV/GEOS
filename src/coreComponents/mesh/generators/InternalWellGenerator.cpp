@@ -621,29 +621,12 @@ void InternalWellGenerator::debugWellGeometry() const
     }
   }
 
-  std::cout << std::endl << "Number of well nodes = " << m_numNodes << " (well nodes are connecting well elements)" << std::endl;
-
-  for( globalIndex inode = 0; inode < m_numNodes; ++inode )
-  {
-    std::cout << "Well node #" << inode << std::endl;
-    std::cout << "Coordinates of the well node: " << m_nodeCoords[inode] << std::endl;
-    std::cout << "Node distance from head: " << m_nodeDistFromHead[inode] << std::endl;
-  }
-
   std::cout << std::endl << "Number of perforations = " << m_numPerforations << std::endl;
 
   for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
   {
     std::cout << "Perforation #" << iperf << std::endl;
     std::cout << "Coordinates of the perforation: " << m_perfCoords[iperf] << std::endl;
-    if( m_perfTransmissibility[iperf] < 0 )
-    {
-      std::cout << "Transmissibility computed internally" << std::endl;
-    }
-    else
-    {
-      std::cout << "Transmissibility: " << m_perfTransmissibility[iperf] << std::endl;
-    }
     std::cout << "Is connected to well element #" << m_perfElemId[iperf] << std::endl;
   }
   std::cout << std::endl;

@@ -20,6 +20,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
+#include "common/FieldSpecificationOps.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
@@ -173,7 +174,8 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
   // control data
 
   WellControls & wellControls = getWellControls( subRegion );
-
+  string const wellControlsName = wellControls.getName();
+  integer const logLevel = wellControls.getLogLevel();
   real64 const & refGravCoef = wellControls.getReferenceGravityCoef();
 
   real64 & currentBHP =
@@ -194,6 +196,13 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
     currentBHP = pres[iwelemRef] + dens[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
     dCurrentBHP_dPres = 1.0 + dDens_dPres[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
   } );
+
+  if( logLevel >= 2 )
+  {
+    GEOSX_LOG_RANK( GEOSX_FMT( "{}: The BHP (at the specified reference elevation) is {} Pa",
+                               wellControlsName, currentBHP ) );
+  }
+
 }
 
 void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegion )
@@ -225,7 +234,8 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
   // control data
 
   WellControls & wellControls = getWellControls( subRegion );
-
+  string const wellControlsName = wellControls.getName();
+  integer const logLevel = wellControls.getLogLevel();
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
   real64 const & surfacePres = wellControls.getSurfacePressure();
 
@@ -251,7 +261,9 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
                                 &currentVolRate,
                                 &dCurrentVolRate_dPres,
                                 &dCurrentVolRate_dRate,
-                                &iwelemRef] ( localIndex const )
+                                &iwelemRef,
+                                &logLevel,
+                                &wellControlsName] ( localIndex const )
     {
       //    We need to evaluate the density as follows:
       //      - Surface conditions: using the surface pressure provided by the user
@@ -261,6 +273,11 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
       {
         // we need to compute the surface density
         fluidWrapper.update( iwelemRef, 0, surfacePres );
+        if( logLevel >= 2 )
+        {
+          GEOSX_LOG_RANK( GEOSX_FMT( "{}: surface density computed with P_surface = {} Pa",
+                                     wellControlsName, surfacePres ) );
+        }
       }
       else
       {
@@ -273,6 +290,13 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
       dCurrentVolRate_dPres = -( useSurfaceConditions ==  0 ) * dDens_dPres[iwelemRef][0] * currentVolRate * densInv;
       dCurrentVolRate_dRate = densInv;
 
+      if( logLevel >= 2 && useSurfaceConditions )
+      {
+        GEOSX_LOG_RANK( GEOSX_FMT( "{}: The total fluid density at surface conditions is {} kg/sm3. \n"
+                                   "The total rate is {} kg/s, which corresponds to a total surface volumetric rate of {} sm3/s",
+                                   wellControlsName, dens[iwelemRef][0],
+                                   currentVolRate, currentVolRate ) );
+      }
     } );
   } );
 }
@@ -576,6 +600,83 @@ void SinglePhaseWell::assembleVolumeBalanceTerms( DomainPartition const & GEOSX_
   // not implemented for single phase flow
 }
 
+void SinglePhaseWell::applyWellShutDown( real64 const time_n,
+                                         real64 const dt,
+                                         DomainPartition const & domain,
+                                         DofManager const & dofManager,
+                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                         arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_MARK_FUNCTION;
+
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   WellElementSubRegion const & subRegion )
+    {
+
+      // if the well is open, we don't have to do anything, so we just return
+      WellControls const & wellControls = getWellControls( subRegion );
+      if( wellControls.isWellOpen( time_n + dt ) )
+      {
+        return;
+      }
+
+      globalIndex const rankOffset = dofManager.rankOffset();
+
+      arrayView1d< integer const > const ghostRank =
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< globalIndex const > const dofNumber =
+        subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+
+      arrayView1d< real64 const > const pres =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+      arrayView1d< real64 const > const connRate =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] >= 0 )
+        {
+          return;
+        }
+
+        globalIndex const dofIndex = dofNumber[ei];
+        localIndex const localRow = dofIndex - rankOffset;
+        real64 rhsValue;
+
+        // 4.1. Apply pressure value to the matrix/rhs
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
+                                                    rankOffset,
+                                                    localMatrix,
+                                                    rhsValue,
+                                                    pres[ei], // freeze the current pressure value
+                                                    pres[ei] );
+        localRhs[localRow] = rhsValue;
+
+        // 4.2. Apply rate value to the matrix/rhs
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex + 1,
+                                                    rankOffset,
+                                                    localMatrix,
+                                                    rhsValue,
+                                                    connRate[ei], // freeze the current pressure value
+                                                    connRate[ei] );
+        localRhs[localRow + 1] = rhsValue;
+
+      } );
+    } );
+  } );
+}
+
+
 void SinglePhaseWell::computePerforationRates( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -867,6 +968,80 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
       validateWellConstraints( subRegion );
 
       updateSubRegionState( subRegion );
+    } );
+  } );
+}
+
+void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
+                                            real64 const & dt,
+                                            DomainPartition & domain )
+{
+  WellSolverBase::implicitStepComplete( time_n, dt, domain );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   WellElementSubRegion & subRegion )
+    {
+
+      // the rank that owns the reference well element is responsible for the calculations below.
+      if( !subRegion.isLocallyOwned() )
+      {
+        return;
+      }
+
+      localIndex const iwelemRef = subRegion.getTopWellElementIndex();
+
+      // subRegion data
+
+      arrayView1d< real64 const > const & connRate =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
+
+      // control data
+
+      WellControls const & wellControls = getWellControls( subRegion );
+      string const wellControlsName = wellControls.getName();
+
+      if( wellControls.getLogLevel() == 0 )
+      {
+        return;
+      }
+      if( wellControls.isWellOpen( time_n + dt ) )
+      {
+        GEOSX_LOG( GEOSX_FMT( "{}: well is shut", wellControlsName ) );
+        return;
+      }
+
+      integer const useSurfaceConditions = wellControls.useSurfaceConditions();
+
+      real64 const & currentBHP =
+        wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
+      real64 const & currentTotalVolRate =
+        wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
+
+      // bring everything back to host, capture the scalars by reference
+      forAll< serialPolicy >( 1, [&useSurfaceConditions,
+                                  &currentBHP,
+                                  connRate,
+                                  &currentTotalVolRate,
+                                  &iwelemRef,
+                                  &wellControlsName] ( localIndex const )
+      {
+        string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
+        string const unitKey = useSurfaceConditions ? "s" : "r";
+
+        real64 const currentTotalRate = connRate[iwelemRef];
+        GEOSX_LOG( GEOSX_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
+                              wellControlsName, currentBHP ) );
+        GEOSX_LOG( GEOSX_FMT( "{}: Total rate: {} kg/s; total {} volumetric rate: {} {}m3/s",
+                              wellControlsName, currentTotalRate, conditionKey, currentTotalVolRate, unitKey ) );
+      } );
     } );
   } );
 }

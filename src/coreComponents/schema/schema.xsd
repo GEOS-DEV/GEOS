@@ -1922,6 +1922,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--injectionTemperature => Temperature of the injection stream [K]-->
 		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--referenceElevation => Reference elevation where BHP control is enforced [m]-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
 		<!--surfacePressure => Surface pressure used to compute volumetric rates when surface conditions are used [Pa]-->

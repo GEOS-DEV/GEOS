@@ -154,14 +154,6 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
   {
     initializeWells( domain );
   }
-
-//  // backup fields used in time derivative approximation
-//  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-//                                                MeshLevel & mesh,
-//                                                arrayView1d< string const > const & regionNames )
-//  {
-//    backupFields( mesh, regionNames );
-//  } );
 }
 
 void WellSolverBase::assembleSystem( real64 const time,
@@ -185,6 +177,9 @@ void WellSolverBase::assembleSystem( real64 const time,
 
   // then compute the perforation rates (later assembled by the coupled solver)
   computePerforationRates( domain );
+
+  // then apply a special treatment to the wells that are shut
+  applyWellShutDown( time, dt, domain, dofManager, localMatrix, localRhs );
 }
 
 void WellSolverBase::updateState( DomainPartition & domain )
