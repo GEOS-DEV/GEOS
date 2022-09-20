@@ -223,27 +223,10 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   } );
 
   // add all new nodes to newObject list
-  auto nodeCoords = embSurfNodeManager.referencePosition();  
-  int const rank = MpiWrapper::commRank();
-  auto ghostR = embSurfNodeManager.ghostRank();
-  if (rank == 0)
-  {
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
   {
     newObjects.newNodes.insert( ni );
-    std::cout << "rank: " << rank << " node " << ni << "ghostRank: " << ghostR[ni] << " coords: " << nodeCoords[ni] << std::endl;
   }
-  }
-  MpiWrapper::barrier();
-  if (rank == 1)
-  {
-  for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
-  {
-    newObjects.newNodes.insert( ni );
-    std::cout << "rank: " << rank << " node " << ni << "ghostRank: " << ghostR[ni] << " coords: " << nodeCoords[ni] << std::endl;
-  }
-  }
-
 
   // Set the ghostRank form the parent cell
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
@@ -277,34 +260,6 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   // Node to edge map
   embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
   embSurfNodeManager.compressRelationMaps();
-
-  auto localNodeToGlobalNode  = embSurfNodeManager.localToGlobalMap();
-  auto ghostNodeRank = embSurfNodeManager.ghostRank();
-  
-  if (rank == 0)
-  {
-  std::cout<< "rank: " << rank<<std::endl;
-  std::cout<<"after sync." <<std::endl;
-  auto newNodeCoords = embSurfNodeManager.referencePosition();  
-  for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
-  {
-    
-      std::cout << "node "  << ni  << " - global Index: " << localNodeToGlobalNode[ni] << " ghost rank " <<  ghostNodeRank[ni] << " coords: " << newNodeCoords[ni] << std::endl;
-  }
-  }
-  MpiWrapper::barrier();
-  if (rank == 1)
-  {
-  std::cout<< "rank: " << rank<<std::endl;
-  std::cout<<"after sync." <<std::endl;
-  auto newNodeCoords = embSurfNodeManager.referencePosition();  
-  for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
-  {
-    
-      std::cout << "node " << ni << " - global Index: " << localNodeToGlobalNode[ni] << " ghost rank " <<  ghostNodeRank[ni] << " coords: " << newNodeCoords[ni] << std::endl;
-  }
-  }
-  
 }
 
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()

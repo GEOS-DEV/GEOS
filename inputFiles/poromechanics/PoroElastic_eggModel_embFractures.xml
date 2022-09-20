@@ -57,7 +57,7 @@
       name="SurfaceGenerator"      
       targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
       fractureRegion="Fracture"
-      logLevel="2"
+      logLevel="1"
       discretization="FE1"
       mpiCommOrder="1"/>
   </Solvers>
@@ -108,21 +108,21 @@
       widthVector="{ -0.5, 0, 0.5 }"
       dimensions="{ 120, 30 }"/>
 
-    <!-- <BoundedPlane
+    <BoundedPlane
       name="Fracture3"
       origin="{ 160, 220, 1.5 }"
       normal="{ 1, -1, 1 }"
       lengthVector="{ 0.3333, 0.6666, 0.3333 }"
       widthVector="{ -0.5, 0, 0.5 }"
-      dimensions="{ 160, 200 }"/> -->
+      dimensions="{ 160, 200 }"/>
 
-    <!-- <BoundedPlane
+    <BoundedPlane
       name="Fracture4"
       origin="{ 200, 180, 40 }"
       normal="{ -0.707, 0.707, 0 }"
       lengthVector="{ 0.707, 0.707, 0 }"
       widthVector="{ 0, 0, 1 }"
-      dimensions="{ 180, 55 }"/> -->
+      dimensions="{ 180, 55 }"/>
 
     <!-- <BoundedPlane
       name="Fracture5"
@@ -132,13 +132,13 @@
       widthVector="{ -0.5, 0, 0.5 }"
       dimensions="{ 120, 30 }"/> -->
 
-    <!-- <BoundedPlane
+    <BoundedPlane
       name="Fracture6"
       origin="{ 350, 195, 40 }"
       normal="{ -0.5, 0, 0.5 }"
       widthVector="{ 1, -1, 1 }"
       lengthVector="{ 0.3333, 0.6666, 0.3333 }"
-      dimensions="{ 140, 40 }"/>  -->
+      dimensions="{ 140, 40 }"/> 
   </Geometry>
 
   <Events
@@ -154,7 +154,7 @@
     <PeriodicEvent
       name="solverApplications"
       forceDt="1000"
-      target="/Solvers/poroSolver"/>
+      target="/Solvers/flowSolver"/>
 
     <PeriodicEvent
       name="outputs"
@@ -329,14 +329,6 @@
       component="2"
       scale="0.0"
       setNames="{ bottom }"/>
-
-    <!-- <FieldSpecification
-      name="Traction"
-      setNames="{ all }"
-      objectPath="ElementRegions/Fracture"
-      fieldName="traction"
-      component="0"
-      scale="-2.0e6"/>       -->
   </FieldSpecifications>
 
   <Functions>
