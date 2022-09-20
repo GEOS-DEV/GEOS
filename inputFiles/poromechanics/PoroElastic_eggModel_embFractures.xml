@@ -65,7 +65,7 @@
   <Mesh>
     <VTKMesh
       name="mesh"
-      file="egg.vts"
+      file="../../../../GEOSXDATA/DataSets/Egg/egg_withBurdens.vts"
       regionAttribute="elementRegionMarker"
       fieldsToImport="{ PERM }"
       fieldNamesInGEOSX="{ rockPermeability_permeability }"/>
@@ -154,7 +154,7 @@
     <PeriodicEvent
       name="solverApplications"
       forceDt="1000"
-      target="/Solvers/flowSolver"/>
+      target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
       name="outputs"
