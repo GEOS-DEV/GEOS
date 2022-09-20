@@ -204,6 +204,8 @@ public:
     real64 totalStress[6]{};
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
+    FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
+
     // Evaluate total stress and its derivatives
     m_constitutiveUpdate.smallStrainUpdateThermalSinglePhase( k,
                                                               q,
