@@ -18,7 +18,11 @@ ArrayOfArrays< localIndex > myConvert( std::vector< std::vector< localIndex > > 
 
 array2d< localIndex > myConvert2d( std::vector< std::vector< localIndex > > const & vv )
 {
-  array2d< localIndex > res( 10, 2 );
+  for( auto const & vvv: vv )
+  {
+    GEOSX_ERROR_IF_NE_MSG( vvv.size(), 2, "my conversion function sucks." );
+  }
+  array2d< localIndex > res( vv.size(), 2 );
 
   for( std::size_t i = 0; i < vv.size(); ++i )
   {
@@ -179,6 +183,50 @@ ArrayOfArrays< localIndex > FaceBlock::get2dFaceTo2dElems() const
   result[30][0] = 9;
 
   return result;
+}
+
+localIndex MyFaceBlock::num2dElements() const
+{
+  return m_num2dElements;
+}
+
+localIndex MyFaceBlock::num2dFaces() const
+{
+  return m_num2dFaces;
+}
+
+ArrayOfArrays< localIndex > MyFaceBlock::get2dElemToNodes() const
+{
+  return myConvert( m_2dElemToNodes );
+}
+
+ArrayOfArrays< localIndex > MyFaceBlock::get2dElemToEdges() const
+{
+  return myConvert( m_2dElemToEdges );
+}
+
+array2d< localIndex > MyFaceBlock::get2dElemToFaces() const
+{
+  return myConvert2d( m_2dElemToFaces );
+}
+
+ToCellRelation< array2d< localIndex > > MyFaceBlock::get2dElemToElems() const
+{
+  array2d< localIndex > converted = myConvert2d( m_2dElemToElems );
+  array2d< localIndex > blocks( converted );
+  blocks.setValues< serialPolicy >( 0 );
+
+  return { blocks, converted };
+}
+
+array1d< localIndex > MyFaceBlock::get2dFaceToEdge() const
+{
+  return myConvert( m_2dFaceToEdge );
+}
+
+ArrayOfArrays< localIndex > MyFaceBlock::get2dFaceTo2dElems() const
+{
+  return myConvert( m_2dFaceTo2dElems );
 }
 
 }

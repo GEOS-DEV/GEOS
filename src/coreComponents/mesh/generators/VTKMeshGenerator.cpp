@@ -84,6 +84,10 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of the VTK nodesets to import" );
 
+  registerWrapper( viewKeyStruct::faceBlockNamesString(), &m_faceBlockNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of the VTK faces to import" );
+
   registerWrapper( viewKeyStruct::partitionRefinementString(), &m_partitionRefinement ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
@@ -1731,6 +1735,194 @@ void VTKMeshGenerator::writeCells( CellBlockManager & cellBlockManager ) const
   }
 }
 
+int pairToEdge( std::pair< int, int > const & p,
+                ArrayOfArrays< localIndex > const & n2ed )
+{
+    int const n0 = p.first, n1 = p.second;
+    auto const & edges0 = n2ed[n0];
+    auto const & edges1 = n2ed[n1];
+    std::set< int > const es0( edges0.begin(), edges0.end() );
+    std::set< int > const es1( edges1.begin(), edges1.end() );
+    std::vector< int > intersect;
+    std::set_intersection( es0.cbegin(), es0.cend(), es1.cbegin(), es1.cend(), std::back_inserter( intersect ) );
+    GEOSX_ERROR_IF_NE_MSG( intersect.size(), 1, "We should only have one element" );
+    return intersect.front();
+}
+
+void ImportFracture( string const & faceBlockName,
+                     vtkSmartPointer< vtkDataSet > vtkMesh,
+                     CellBlockManager & cellBlockManager )
+{
+  vtkDataArray * array = vtkMesh->GetFieldData()->GetArray( faceBlockName.c_str() );
+  GEOSX_ERROR_IF(array == 0, "Face block name \"" << faceBlockName << "\" was not found in the mesh.");
+  vtkIdType const num2dElements = array->GetNumberOfTuples(); // API
+
+  // Reading the raw data from the field data.
+  std::vector< std::vector< int > > rawFaceData;
+  {
+    auto const numComponents = array->GetNumberOfComponents();
+    GEOSX_ERROR_IF_NE_MSG( 4, numComponents, "FieldData \"fracture_info\" should have 4 components." );
+    for( int i = 0; i < num2dElements; ++i )
+    {
+      std::vector< double > tuple( 4 );
+      array->GetTuple( i, tuple.data() );
+      std::vector< int > res( 4 );
+      res[0] = tuple[0];
+      res[1] = tuple[1];
+      res[2] = tuple[2];
+      res[3] = tuple[3];
+      rawFaceData.push_back( res );
+    }
+  }
+
+  // Computing the number of 2d faces
+  localIndex num2dFaces; // API
+  {
+    std::vector< std::pair< int, int > > allPairs;
+    for( int i = 0; i < num2dElements; ++i )
+    {
+      int const & e0 = rawFaceData[i][0];
+      int const & f0 = rawFaceData[i][1];
+      vtkCell * c = vtkMesh->GetCell( e0 );
+      vtkCell * f = c->GetFace( f0 );
+      for( int k = 0; k < f->GetNumberOfEdges(); ++k )
+      {
+        vtkCell * e = f->GetEdge( k );
+        vtkIdType const p0 = e->GetPointId( 0 ), p1 = e->GetPointId( 1 );
+        allPairs.push_back( { std::min( p0, p1 ), std::max( p0, p1 ) } );
+      }
+    }
+    std::set< std::pair< int, int > > uniquePairs( allPairs.cbegin(), allPairs.cend() );
+    num2dFaces = uniquePairs.size();
+  }
+
+  std::vector< std::vector< localIndex > > elem2dToElems; // API
+  for( auto const & val: rawFaceData )
+  {
+    elem2dToElems.push_back( { val[0], val[2] } );
+  }
+
+  // A utility function to convert a vtkIdList into a std::set< int >.
+  auto vtkIdListToSet = []( vtkIdList * in ) -> std::set< int >
+  {
+    std::set< int > result;
+    for( int i = 0; i < in->GetNumberOfIds(); ++i )
+    { result.insert( in->GetId( i ) ); }
+    return result;
+  };
+
+  CellBlock & cb = cellBlockManager.getCellBlock( "hexahedra" );
+  ArrayOfArrays< localIndex > const & f2n = cellBlockManager.getFaceToNodes();
+  array2d< localIndex > const & e2f = cb.getElemToFaces();
+  ArrayOfArrays< localIndex > const & n2ed = cellBlockManager.getNodeToEdges();
+
+  std::vector< std::vector< localIndex > > elem2dToNodes; // API
+  std::vector< std::vector< localIndex > > elem2dToFaces; // API
+  {
+    for( int i = 0; i < num2dElements; ++i )
+    {
+      std::vector< localIndex > nodeLine;
+      std::vector< localIndex > faceLine;
+      for( int j = 0; j < 2; ++j )
+      {
+        int const & ei = rawFaceData[i][2 * j];
+        int const & fi = rawFaceData[i][2 * j + 1];
+        vtkCell * c = vtkMesh->GetCell( ei );
+        vtkCell * f = c->GetFace( fi );
+        vtkIdList * p = f->GetPointIds();
+        std::set< int > const vtkPoints = vtkIdListToSet( p );
+        auto faces = e2f[ei];
+        for( int const & k: faces )
+        {
+          auto const faceNodes = f2n[k];
+          std::set< int > const nodes( faceNodes.begin(), faceNodes.end() );
+          if( vtkPoints == nodes )
+          {
+            std::copy( nodes.cbegin(), nodes.cend(), back_inserter( nodeLine ) );
+            faceLine.push_back( k );
+            break;
+          }
+        }
+      }
+      elem2dToNodes.push_back( nodeLine );
+      elem2dToFaces.push_back( faceLine );
+    }
+  }
+
+  // The order is from the most little edge index to the largest.
+  // Since two edges are in the same location, we always take the more little index of the two colocated edges.
+  // Computing face 2d -> -> edges
+  std::vector< localIndex > face2dToEdges; // API
+  std::vector< std::vector< localIndex > > elem2dToEdges; // API
+  {
+    // 2d elem -> left/right -> edges
+    std::vector< std::vector< std::vector< int > > > allEdges;
+    for( int i = 0; i < num2dElements; ++i )
+    {
+      allEdges.push_back({});
+      for( int j = 0; j < 2; ++j )
+      {
+        allEdges[i].push_back({});
+        int const & ei = rawFaceData[i][2 * j];
+        int const & fi = rawFaceData[i][2 * j + 1];
+        vtkCell * c = vtkMesh->GetCell( ei );
+        vtkCell * f = c->GetFace( fi );
+        for( int k = 0; k < f->GetNumberOfEdges(); ++k )
+        {
+          vtkCell * e = f->GetEdge( k );
+          vtkIdType const p0 = e->GetPointId( 0 ), p1 = e->GetPointId( 1 );
+          int edge = pairToEdge( { std::min( p0, p1 ), std::max( p0, p1 ) }, n2ed );
+          allEdges[i][j].push_back(edge);
+        }
+      }
+    }
+    std::vector< int > allEdgesFlat;
+    for( int i = 0; i < num2dElements; ++i )
+    {
+      elem2dToEdges.push_back({});
+      for( std::size_t k = 0; k < allEdges[i][0].size(); ++k )
+      {
+        const int edge = std::min( allEdges[i][0][k], allEdges[i][1][k] );
+        elem2dToEdges.back().push_back( edge );
+        allEdgesFlat.push_back( edge );
+      }
+    }
+    std::set< int > uniqueEdges( allEdgesFlat.cbegin(), allEdgesFlat.cend() );
+    std::copy( uniqueEdges.cbegin(), uniqueEdges.cend(), std::back_inserter( face2dToEdges ) );
+  }
+
+  std::vector< std::vector< localIndex > > face2dToElems2d( num2dFaces ); // API
+  {
+    std::map< int, std::vector< int > > edgesToElems2d;
+    for( std::size_t i = 0; i < elem2dToEdges.size(); ++i )
+    {
+      for( int const & e: elem2dToEdges[i] )
+      {
+        edgesToElems2d[e].push_back( i );
+      }
+    }
+
+    for( int fi = 0; fi < num2dFaces; ++fi )
+    {
+      int const & edge = face2dToEdges[fi];
+      std::vector< int > const & elems2d = edgesToElems2d[edge];
+      std::copy(elems2d.begin(), elems2d.end(), std::back_inserter(face2dToElems2d[fi]));
+    }
+  }
+
+  MyFaceBlock & faceBlock = cellBlockManager.getFaceBlocks().registerGroup< MyFaceBlock >( faceBlockName );
+  faceBlock.m_num2dElements = num2dElements;
+  faceBlock.m_num2dFaces = num2dFaces;
+  faceBlock.m_2dElemToNodes = elem2dToNodes;
+  faceBlock.m_2dElemToEdges = elem2dToEdges;
+  faceBlock.m_2dElemToFaces = elem2dToFaces;
+  faceBlock.m_2dFaceTo2dElems = face2dToElems2d;
+  faceBlock.m_2dFaceToEdge = face2dToEdges;
+  faceBlock.m_2dElemToElems = elem2dToElems;
+
+  int a = 0;
+}
+
 /**
  * @brief Build the "surface" node sets from the surface information.
  * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
@@ -1812,6 +2004,11 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  building connectivity maps..." );
   cellBlockManager.buildMaps();
+
+  for( string const & faceBlockName: m_faceBlockNames )
+  {
+    ImportFracture( faceBlockName, m_vtkMesh, cellBlockManager );
+  }
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );

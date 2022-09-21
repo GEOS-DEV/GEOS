@@ -21,7 +21,8 @@
   <Mesh>
     <VTKMesh
       name="mesh1"
-      file="frac-hex.vtk"/>
+      file="frac-hex-fielddata.vtu"
+      faceBlocks="{ fracture_info }"/>
 
 <!--        <InternalMesh-->
 <!--          name="mesh1"-->
@@ -106,7 +107,7 @@
             name="Fracture"
             defaultAperture="1.0e-5"
             subRegionType="faceElement"
-            faceBlock="fbFrac"
+            faceBlock="fracture_info"
             materialList="{ water, fractureFilling }"/>
   </ElementRegions>
 
