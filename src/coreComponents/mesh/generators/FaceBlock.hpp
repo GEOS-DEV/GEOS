@@ -19,33 +19,33 @@
 
 namespace geosx {
 
+//class FaceBlock: public FaceBlockABC
+//{
+//public:
+//  FaceBlock( string const & name, Group * const parent );
+//
+//  localIndex num2dElements() const override;
+//
+//  localIndex num2dFaces() const override;
+//
+//  ArrayOfArrays< localIndex > get2dElemToNodes() const override;
+//
+//  ArrayOfArrays< localIndex > get2dElemToEdges() const override;
+//
+//  array2d< localIndex > get2dElemToFaces() const override;
+//
+//  ToCellRelation< array2d< localIndex > > get2dElemToElems() const override;
+//
+//  array1d< localIndex > get2dFaceToEdge() const override;
+//
+//  ArrayOfArrays< localIndex > get2dFaceTo2dElems() const override;
+//};
+
 class FaceBlock: public FaceBlockABC
 {
 public:
-  FaceBlock( string const & name, Group * const parent );
-
-  localIndex num2dElements() const override;
-
-  localIndex num2dFaces() const override;
-
-  ArrayOfArrays< localIndex > get2dElemToNodes() const override;
-
-  ArrayOfArrays< localIndex > get2dElemToEdges() const override;
-
-  array2d< localIndex > get2dElemToFaces() const override;
-
-  ToCellRelation< array2d< localIndex > > get2dElemToElems() const override;
-
-  array1d< localIndex > get2dFaceToEdge() const override;
-
-  ArrayOfArrays< localIndex > get2dFaceTo2dElems() const override;
-};
-
-class MyFaceBlock: public FaceBlockABC
-{
-public:
-  MyFaceBlock( string const & name,
-               Group * const parent )
+  FaceBlock( string const & name,
+             Group * const parent )
     :
     FaceBlockABC( name, parent )
   { }
@@ -65,6 +65,24 @@ public:
   array1d< localIndex > get2dFaceToEdge() const override;
 
   ArrayOfArrays< localIndex > get2dFaceTo2dElems() const override;
+
+  void setNum2DElements( localIndex num2DElements );
+
+  void setNum2DFaces( localIndex num2DFaces );
+
+  void set2dElemToNodes( std::vector< std::vector< localIndex > > _2dElemToNodes );
+
+  void set2dElemToEdges( std::vector< std::vector< localIndex > > _2dElemToEdges );
+
+  void set2dElemToFaces( std::vector< std::vector< localIndex > > _2dElemToFaces );
+
+  void set2dFaceTo2dElems( std::vector< std::vector< localIndex > > _2dFaceTo2dElems );
+
+  void set2dFaceToEdge( std::vector< localIndex > _2dFaceToEdge );
+
+  void set2dElemToElems( std::vector< std::vector< localIndex > > _2dElemToElems );
+
+private:
 
   localIndex m_num2dElements;
   localIndex m_num2dFaces;
