@@ -4,6 +4,19 @@
   <Included>
     <File name="./PoroElastic_efem-edfm_verticalFrac_base.xml" />
   </Included>
+  
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 20 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 5 }"
+      ny="{ 10 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
 
   <Geometry>
     <BoundedPlane
@@ -15,21 +28,28 @@
       dimensions="{ 12, 4 }"/>
   </Geometry>
 
-  <Outputs>
-    <VTK
-      name="vtkOutput"
-      plotFileRoot="PoroElastic_efem-edfm_verticalFrac"
-      plotLevel="2"
-      format="binary"/>
-    <!-- <TimeHistory
-      name="pressureHistoryOutput"
-      sources="{/Tasks/pressureCollection}"
-      filename="pressure_history"/> 
-    <TimeHistory
-      name="apertureOutput"
-      sources="{/Tasks/apertureCollection}"
-      filename="aperture_history"/>  -->
-    <Restart
-      name="restartOutput"/>
-  </Outputs>
+  
+  <Events
+    maxTime="100">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGenerator"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="10.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication0"
+      endTime="100.0"
+      forceDt="10.0"
+      target="/Solvers/poroSolver"/>
+ 
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="100"
+      target="/Outputs/restartOutput"/>
+</Events>
+
 </Problem>

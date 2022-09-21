@@ -2,8 +2,21 @@
 
 <Problem>
   <Included>
-    <File name="./deadOil_fractureMatrixFlow_EDFM_inclinedbase.xml" />
+    <File name="./PoroElastic_efem-edfm_inclinedFrac_base.xml" />
   </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 20 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 5 }"
+      ny="{ 10 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
 
   <Geometry>
     <BoundedPlane
@@ -14,15 +27,24 @@
       widthVector="{ 0, 0, 1 }"
       dimensions="{ 8, 4 }"/>
   </Geometry>
+  
+  <Events
+    maxTime="100">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="100"
+      target="/Outputs/vtkOutput"/>
 
-  <Outputs>
-    <VTK
-      name="vtkOutput"
-      plotFileRoot="PoroElastic_efem-edfm_horizFrac"
-      plotLevel="2"
-      format="binary"/>
+    <PeriodicEvent
+      name="solverApplication0"
+      endTime="100.0"
+      forceDt="10.0"
+      target="/Solvers/poroSolver"/>
 
-    <Restart
-      name="sidreRestart"/>
-  </Outputs>
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="100"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
 </Problem>
