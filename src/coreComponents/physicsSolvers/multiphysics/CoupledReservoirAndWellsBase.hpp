@@ -180,8 +180,6 @@ public:
   WELL_SOLVER *
   wellSolver() const { return std::get< toUnderlying( SolverType::Well ) >( m_solvers ); }
 
-protected:
-
   virtual void
   initializePostInitialConditionsPreSubGroups() override
   {
@@ -217,21 +215,18 @@ protected:
           arrayView1d< real64 const > const perfTrans =
             perforationData.getExtrinsicData< extrinsicMeshData::perforation::wellTransmissibility >();
 
-          real64 const cP2Pas = 0.001;
-          real64 const day2s = 24 * 3600;
-          real64 const bar2Pa = 100000;
-          real64 const conversionFactor = day2s * bar2Pa / cP2Pas;
-
           forAll< serialPolicy >( perforationData.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
           {
-            GEOSX_LOG_RANK( GEOSX_FMT( "The perforation at ({},{},{}) has a transmissibility of {} Pa.s.rm^3/s/Pa ({} cP.rm^3/day/bar)",
+            GEOSX_LOG_RANK( GEOSX_FMT( "The perforation at ({},{},{}) has a transmissibility of {} Pa.s.rm^3/s/Pa",
                                        perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
-                                       perfTrans[iperf], perfTrans[iperf]*conversionFactor ) );
+                                       perfTrans[iperf] ) );
           } );
         }
       } );
     } );
   }
+
+protected:
 
   /**
    * @Brief loop over perforations and increase Jacobian matrix row lengths for reservoir and well elements accordingly

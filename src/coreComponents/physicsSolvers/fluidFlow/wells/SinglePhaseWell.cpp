@@ -1012,7 +1012,7 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
       {
         return;
       }
-      if( wellControls.isWellOpen( time_n + dt ) )
+      if( !wellControls.isWellOpen( time_n + dt ) )
       {
         GEOSX_LOG( GEOSX_FMT( "{}: well is shut", wellControlsName ) );
         return;
