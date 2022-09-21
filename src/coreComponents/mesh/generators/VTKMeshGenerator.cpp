@@ -1749,6 +1749,13 @@ int pairToEdge( std::pair< int, int > const & p,
     return intersect.front();
 }
 
+/**
+ * @brief Import face block @p faceBlockName from @p vtkMesh into the @p cellBlockManager.
+ * @param faceBlockName
+ * @param vtkMesh
+ * @param cellBlockManager
+ * @deprecated This is most likely not entirely the place to do this.
+ */
 void ImportFracture( string const & faceBlockName,
                      vtkSmartPointer< vtkDataSet > vtkMesh,
                      CellBlockManager & cellBlockManager )
@@ -1758,7 +1765,7 @@ void ImportFracture( string const & faceBlockName,
   vtkIdType const num2dElements = array->GetNumberOfTuples(); // API
 
   // Reading the raw data from the field data.
-  std::vector< std::vector< int > > rawFaceData;
+  std::vector< std::vector< int > > rawFaceData; // TODO Build a utility class.
   {
     auto const numComponents = array->GetNumberOfComponents();
     GEOSX_ERROR_IF_NE_MSG( 4, numComponents, "FieldData \"fracture_info\" should have 4 components." );
@@ -1910,17 +1917,15 @@ void ImportFracture( string const & faceBlockName,
     }
   }
 
-  MyFaceBlock & faceBlock = cellBlockManager.getFaceBlocks().registerGroup< MyFaceBlock >( faceBlockName );
-  faceBlock.m_num2dElements = num2dElements;
-  faceBlock.m_num2dFaces = num2dFaces;
-  faceBlock.m_2dElemToNodes = elem2dToNodes;
-  faceBlock.m_2dElemToEdges = elem2dToEdges;
-  faceBlock.m_2dElemToFaces = elem2dToFaces;
-  faceBlock.m_2dFaceTo2dElems = face2dToElems2d;
-  faceBlock.m_2dFaceToEdge = face2dToEdges;
-  faceBlock.m_2dElemToElems = elem2dToElems;
-
-  int a = 0;
+  FaceBlock & faceBlock = cellBlockManager.getFaceBlocks().registerGroup< FaceBlock >( faceBlockName );
+  faceBlock.setNum2DElements( num2dElements );
+  faceBlock.setNum2DFaces( num2dFaces );
+  faceBlock.set2dElemToNodes( elem2dToNodes );
+  faceBlock.set2dElemToEdges( elem2dToEdges );
+  faceBlock.set2dElemToFaces( elem2dToFaces );
+  faceBlock.set2dFaceTo2dElems( face2dToElems2d );
+  faceBlock.set2dFaceToEdge( face2dToEdges );
+  faceBlock.set2dElemToElems( elem2dToElems );
 }
 
 /**
