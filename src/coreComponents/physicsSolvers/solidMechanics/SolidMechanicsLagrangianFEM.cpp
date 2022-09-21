@@ -129,7 +129,7 @@ void SolidMechanicsLagrangianFEM::postProcessInput()
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.isSymmetric = true;
   linParams.dofsPerNode = 3;
-  linParams.amg.separateComponents = true;
+  linParams.amg.separateComponents = false;
 }
 
 SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()

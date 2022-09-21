@@ -44,6 +44,11 @@ SinglePhasePoromechanicsSolverEmbeddedFractures::SinglePhasePoromechanicsSolverE
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
+
+   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsEmbeddedFractures;
+   m_linearSolverParameters.get().mgr.separateComponents = false;
+   m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+   m_linearSolverParameters.get().dofsPerNode = 3;  
 }
 
 SinglePhasePoromechanicsSolverEmbeddedFractures::~SinglePhasePoromechanicsSolverEmbeddedFractures()

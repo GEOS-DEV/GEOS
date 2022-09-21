@@ -21,14 +21,14 @@
       plotFileRoot="PoroElastic_efem-edfm_verticalFrac"
       plotLevel="2"
       format="binary"/>
-    <TimeHistory
+    <!-- <TimeHistory
       name="pressureHistoryOutput"
       sources="{/Tasks/pressureCollection}"
       filename="pressure_history"/> 
     <TimeHistory
       name="apertureOutput"
       sources="{/Tasks/apertureCollection}"
-      filename="aperture_history"/> 
+      filename="aperture_history"/>  -->
     <Restart
       name="restartOutput"/>
   </Outputs>

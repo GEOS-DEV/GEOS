@@ -17,8 +17,9 @@
         newtonMaxIter="10"/>
       <LinearSolverParameters
         directParallel="1"
-        solverType="direct"
-        preconditionerType="mgr"/>
+        solverType="gmres"
+        preconditionerType="mgr"
+        logLevel="1"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures
@@ -89,8 +90,8 @@
          xMin="{0.0,   479.0, -500.0}" 
          name="back" />
 
-    <Box xMax="{479.0, 500.0, 500.0}" 
-         xMin="{481.0, 0.0, -500.0}" 
+    <Box xMax="{481.0, 500.0, 500.0}" 
+         xMin="{479.0, 0.0, -500.0}" 
          name="right" />     
 
     <BoundedPlane
@@ -124,21 +125,21 @@
       widthVector="{ 0, 0, 1 }"
       dimensions="{ 180, 55 }"/>
 
+    <BoundedPlane
+      name="Fracture5"
+      origin="{ 350, 195, 40 }"
+      normal="{ -0.5, 0, 0.5 }"
+      widthVector="{ 1, -1, 1 }"
+      lengthVector="{ 0.3333, 0.6666, 0.3333 }"
+      dimensions="{ 140, 40 }"/>
+      
     <!-- <BoundedPlane
       name="Fracture5"
       origin="{ 220, 100, 40 }"
       normal="{ 1, -1, 1 }"
       lengthVector="{ 0.3333, 0.6666, 0.3333 }"
       widthVector="{ -0.5, 0, 0.5 }"
-      dimensions="{ 120, 30 }"/> -->
-
-    <BoundedPlane
-      name="Fracture6"
-      origin="{ 350, 195, 40 }"
-      normal="{ -0.5, 0, 0.5 }"
-      widthVector="{ 1, -1, 1 }"
-      lengthVector="{ 0.3333, 0.6666, 0.3333 }"
-      dimensions="{ 140, 40 }"/> 
+      dimensions="{ 120, 30 }"/> -->       
   </Geometry>
 
   <Events

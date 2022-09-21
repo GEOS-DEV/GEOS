@@ -14,7 +14,10 @@
       <NonlinearSolverParameters
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        directParallel="0"
+        solverType="gmres"
+        preconditionerType="mgr"
+        logLevel="1"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures

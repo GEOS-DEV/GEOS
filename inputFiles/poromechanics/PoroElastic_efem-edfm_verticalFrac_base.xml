@@ -16,7 +16,10 @@
         newtonMaxIter="10"
         maxTimeStepCuts="4"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        directParallel="0"
+        solverType="gmres"
+        preconditionerType="mgr"
+        logLevel="1"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures
@@ -43,7 +46,7 @@
       targetRegions="{ Domain, Fracture }"
       discretization="FE1"    
       fractureRegion="Fracture"
-      logLevel="2"
+      logLevel="1"
       mpiCommOrder="1"/>
   </Solvers>
 
@@ -71,7 +74,7 @@
       timeFrequency="3.6e3"
       target="/Outputs/vtkOutput"/>
 
-    <PeriodicEvent
+    <!-- <PeriodicEvent
       name="pressureCollection" 
       timeFrequency="3.6e3"
       target="/Tasks/pressureCollection"/>
@@ -88,7 +91,7 @@
     <PeriodicEvent
       name="apertureOutput"
       targetExactTimestep="0" 
-      target="/Outputs/apertureOutput" /> 
+      target="/Outputs/apertureOutput" />  -->
 
     <PeriodicEvent
       name="solverApplication0"
@@ -219,7 +222,7 @@
       name="initialPressureFracture"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="pressure"
       scale="0.0e6"/>
 
@@ -269,7 +272,7 @@
       values="{ 4.01e-3, 5.0e-3 }"/>
   </Functions>
 
-  <Tasks>
+  <!-- <Tasks>
     <PackCollection
       name="pressureCollection"
       objectPath="ElementRegions/Domain/cb1"
@@ -279,6 +282,6 @@
       name="apertureCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="hydraulicAperture"/> 
-  </Tasks>
+  </Tasks> -->
   
 </Problem>
