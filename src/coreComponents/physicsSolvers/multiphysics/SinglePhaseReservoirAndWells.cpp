@@ -116,14 +116,22 @@ setMGRStrategy()
   // not implemented yet
 }
 
-
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >
 void
 SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
+  Base::initializePreSubGroups();
   SinglePhaseBase const * const flowSolver = this->flowSolver();
   Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
+}
+
+template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+void
+SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+initializePostInitialConditionsPreSubGroups()
+{
+  Base::initializePostInitialConditionsPreSubGroups();
   setMGRStrategy();
 }
 
