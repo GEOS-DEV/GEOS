@@ -153,8 +153,8 @@ void ParticleSubRegion::deleteOutOfRangeParticles( std::array< real64, 3 > const
   }
 }
 
-void ParticleSubRegion::updateRVectors( int const p,
-                                        LvArray::ArraySlice<double, 2, 1, int> const & p_F )
+void ParticleSubRegion::applyFtoRVectors( int const p,
+                                          LvArray::ArraySlice<double, 2, 1, int> const & p_F )
 {
   if(m_hasRVectors)
   {
@@ -166,6 +166,110 @@ void ParticleSubRegion::updateRVectors( int const p,
       }
     }
   }
+}
+
+void ParticleSubRegion::cpdiDomainScaling( int p,
+                                           real64 lCrit,
+                                           int m_planeStrain )
+{
+//  for( int p=0; p<this->size(); p++ )
+//  {
+    arraySlice1d< real64 > r1 = m_particleRVectors[p][0];
+    arraySlice1d< real64 > r2 = m_particleRVectors[p][1];
+    arraySlice1d< real64 > r3 = m_particleRVectors[p][2];
+
+    if( m_planeStrain ) // 2D cpdi domain scaling
+    {
+      // Initialize l-vectors.  Eq. 8a-d in the CPDI domain scaling paper.
+      array2d< real64 > l;
+      l.resize( 2, 3 );
+
+      // l[0] = r1 + r2; // la
+      LvArray::tensorOps::copy< 3 >( l[0], r1 );
+      LvArray::tensorOps::add< 3 >( l[0], r2 );
+      // l[1] = r1 - r2; // lb
+      LvArray::tensorOps::copy< 3 >( l[1], r1 );
+      LvArray::tensorOps::subtract< 3 >( l[1], r2 );
+
+      // scale l-vectors if needed.  Eq. 9 in the CPDI domain scaling paper.
+      bool scale = false;
+      for( int i = 0 ; i < 2 ; i++ )
+      {
+        real64 lLength = LvArray::tensorOps::l2Norm< 3 >( l[i] );
+        if( lLength > lCrit )
+        {
+          LvArray::tensorOps::scale< 3 >( l[i], lCrit / lLength );
+          scale = true;
+        }
+      }
+
+      // reconstruct r-vectors.  eq. 11 in the CPDI domain scaling paper.
+      if( scale )
+      {
+        // r1 = 0.5 * ( l[0] + l[1] );
+        LvArray::tensorOps::scaledCopy< 3 >( r1, l[0], 0.5 );
+        LvArray::tensorOps::scaledAdd< 3 >( r1, l[1], 0.5 );
+        // r2 = 0.5 * ( l[0] - l[1] );
+        LvArray::tensorOps::scaledCopy< 3 >( r2, l[0], 0.5 );
+        LvArray::tensorOps::scaledAdd< 3 >( r2, l[1], -0.5 );
+      }
+    }
+    else // 3D cpdi domain scaling
+    {
+      // Initialize l-vectors.  Eq. 8a-d in the CPDI domain scaling paper.
+      array2d< real64 > l;
+      l.resize( 4, 3 );
+
+      // l[0] = r1 + r2 + r3; // la
+      LvArray::tensorOps::copy< 3 >( l[0], r1 );
+      LvArray::tensorOps::add< 3 >( l[0], r2 );
+      LvArray::tensorOps::add< 3 >( l[0], r3 );
+      // l[1] = r1 - r2 + r3; // lb
+      LvArray::tensorOps::copy< 3 >( l[1], r1 );
+      LvArray::tensorOps::subtract< 3 >( l[1], r2 );
+      LvArray::tensorOps::add< 3 >( l[1], r3 );
+      // l[2] = r2 - r1 + r3; // lc
+      LvArray::tensorOps::copy< 3 >( l[2], r2 );
+      LvArray::tensorOps::subtract< 3 >( l[2], r1 );
+      LvArray::tensorOps::add< 3 >( l[2], r3 );
+      // l[3] = r3 - r1 - r2; // ld
+      LvArray::tensorOps::copy< 3 >( l[3], r3 );
+      LvArray::tensorOps::subtract< 3 >( l[3], r1 );
+      LvArray::tensorOps::subtract< 3 >( l[3], r2 );
+
+      // scale l vectors if needed.  Eq. 9 in the CPDI domain scaling paper.
+      bool scale = false;
+      for( int i = 0 ; i < 4 ; i++ )
+      {
+        real64 lLength = LvArray::tensorOps::l2Norm< 3 >( l[i] );
+        if( lLength > lCrit )
+        {
+          LvArray::tensorOps::scale< 3 >( l[i], lCrit / lLength );
+          scale = true;
+        }
+      }
+
+      // reconstruct r vectors.  eq. 11 in the CPDI domain scaling paper.
+      if( scale )
+      {
+        // r1 = 0.25 * ( l[0] + l[1] - l[2] - l[3] );
+        LvArray::tensorOps::scaledCopy< 3 >( r1, l[0], 0.25 );
+        LvArray::tensorOps::scaledAdd< 3 >( r1, l[1], 0.25 );
+        LvArray::tensorOps::scaledAdd< 3 >( r1, l[2], -0.25 );
+        LvArray::tensorOps::scaledAdd< 3 >( r1, l[3], -0.25 );
+        // r2 = 0.25 * ( l[0] - l[1] + l[2] - l[3] );
+        LvArray::tensorOps::scaledCopy< 3 >( r2, l[0], 0.25 );
+        LvArray::tensorOps::scaledAdd< 3 >( r2, l[1], -0.25 );
+        LvArray::tensorOps::scaledAdd< 3 >( r2, l[2], 0.25 );
+        LvArray::tensorOps::scaledAdd< 3 >( r2, l[3], -0.25 );
+        // r3 = 0.25 * ( l[0] + l[1] + l[2] + l[3] );
+        LvArray::tensorOps::scaledCopy< 3 >( r3, l[0], 0.25 );
+        LvArray::tensorOps::scaledAdd< 3 >( r3, l[1], 0.25 );
+        LvArray::tensorOps::scaledAdd< 3 >( r3, l[2], 0.25 );
+        LvArray::tensorOps::scaledAdd< 3 >( r3, l[3], 0.25 );
+      }
+    }
+//  }
 }
 
 void ParticleSubRegion::getAllWeights( int const p,
@@ -247,7 +351,7 @@ void ParticleSubRegion::getAllWeights( int const p,
                           { -1,  1,  1} };
 
       real64 alpha[8][8];
-      real64 oneOverV = 1.0 / m_particleVolume[p];
+      real64 cpdiVolume, oneOverV;
       real64 p_r1[3], p_r2[3], p_r3[3]; // allowing 1-indexed r-vectors to persist to torture future postdocs >:)
 
       for(int i=0; i<3; i++)
@@ -256,6 +360,10 @@ void ParticleSubRegion::getAllWeights( int const p,
         p_r2[i] = m_particleRVectors[p][1][i];
         p_r3[i] = m_particleRVectors[p][2][i];
       }
+
+      // We need this because of CPDI domain scaling
+      cpdiVolume = 8.0*(-(p_r1[2]*p_r2[1]*p_r3[0]) + p_r1[1]*p_r2[2]*p_r3[0] + p_r1[2]*p_r2[0]*p_r3[1] - p_r1[0]*p_r2[2]*p_r3[1] - p_r1[1]*p_r2[0]*p_r3[2] + p_r1[0]*p_r2[1]*p_r3[2]);
+      oneOverV = 1.0 / cpdiVolume;
 
       alpha[0][0]=oneOverV*(p_r1[2]*p_r2[1] - p_r1[1]*p_r2[2] - p_r1[2]*p_r3[1] + p_r2[2]*p_r3[1] + p_r1[1]*p_r3[2] - p_r2[1]*p_r3[2]);
       alpha[0][1]=oneOverV*(-(p_r1[2]*p_r2[0]) + p_r1[0]*p_r2[2] + p_r1[2]*p_r3[0] - p_r2[2]*p_r3[0] - p_r1[0]*p_r3[2] + p_r2[0]*p_r3[2]);
@@ -336,7 +444,7 @@ void ParticleSubRegion::getAllWeights( int const p,
             {
               real64 zWeight = k * zRel + ( 1 - k ) * ( 1.0 - zRel );
               real64 weight = xWeight * yWeight * zWeight;
-              weights.push_back( 0.125 * weight ); // note the built-in factor of 1/8 so we don't need it in the solver
+              weights.push_back( 0.125 * weight );
               gradWeights[0].push_back( alpha[corner][0] * weight );
               gradWeights[1].push_back( alpha[corner][1] * weight );
               gradWeights[2].push_back( alpha[corner][2] * weight );

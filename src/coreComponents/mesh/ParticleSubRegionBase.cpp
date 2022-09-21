@@ -45,16 +45,16 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     setSizedFromParent( 1 );
 
   registerWrapper( viewKeyStruct::particleRankString(), &m_particleRank ).
-    setPlotLevel( PlotLevel::LEVEL_1 );
+    setPlotLevel( PlotLevel::NOPLOT );
 
   registerWrapper( viewKeyStruct::particleIDString(), &m_particleID ).
-    setPlotLevel( PlotLevel::LEVEL_1 );
+    setPlotLevel( PlotLevel::NOPLOT );
 
   registerWrapper( viewKeyStruct::particleGroupString(), &m_particleGroup ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleCenterString(), &m_particleCenter ).
-    setPlotLevel( PlotLevel::LEVEL_1 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
     reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::particleVelocityString(), &m_particleVelocity ).
@@ -65,7 +65,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleInitialVolumeString(), &m_particleInitialVolume ).
-    setPlotLevel( PlotLevel::LEVEL_1 );
+    setPlotLevel( PlotLevel::NOPLOT );
 
   registerWrapper( viewKeyStruct::particleMassString(), &m_particleMass ).
     setPlotLevel( PlotLevel::LEVEL_1 );
@@ -82,7 +82,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   // A solver(?) should then on the first cycle register particle mass and calculate it from volume and density. Same idea for other similarly post-processed and/or solver-specific fields.
 
   registerWrapper( viewKeyStruct::particleDeformationGradientString(), &m_particleDeformationGradient ).
-    setPlotLevel( PlotLevel::LEVEL_1 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
     reference().resizeDimension< 1, 2 >( 3, 3 );
 }
 

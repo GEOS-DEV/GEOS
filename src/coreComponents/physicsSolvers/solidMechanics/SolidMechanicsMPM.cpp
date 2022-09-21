@@ -61,6 +61,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_timeIntegrationOption( TimeIntegrationOption::ExplicitDynamic ),
   m_iComm( CommunicationTools::getInstance().getCommID() ),
   m_boundaryConditionTypes(),
+  m_cpdiDomainScaling(0),
   m_smallMass(),
   m_numContactGroups(),
   m_numContactFlags(),
@@ -93,7 +94,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "boundaryConditionTypes", &m_boundaryConditionTypes ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Boundary conditions on x-, x+, y-, y+, z- and z+ faces. Options are:\n* " + EnumStrings< BoundaryConditionOption >::concat( "\n* " ) );
+
+  registerWrapper( "cpdiDomainScaling", &m_cpdiDomainScaling ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Option for CPDI domain scaling" );
 
   registerWrapper( "numContactGroups", &m_numContactGroups ).
     setInputFlag( InputFlags::FALSE ).
@@ -300,11 +306,11 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
       nodeSets.registerWrapper< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE );
+        setRestartFlags( RestartFlags::WRITE_AND_READ );
 
       nodeSets.registerWrapper< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE );
+        setRestartFlags( RestartFlags::WRITE_AND_READ );
     }
   } );
 }
@@ -950,9 +956,21 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
       // Get det(F), update volume and r-vectors
       detF = -p_F[0][2]*p_F[1][1]*p_F[2][0] + p_F[0][1]*p_F[1][2]*p_F[2][0] + p_F[0][2]*p_F[1][0]*p_F[2][1] - p_F[0][0]*p_F[1][2]*p_F[2][1] - p_F[0][1]*p_F[1][0]*p_F[2][2] + p_F[0][0]*p_F[1][1]*p_F[2][2];
-      p_vol = p_vol0*detF;
+      if( detF <= 0.0 )
+      {
+        subRegion.erase(p);
+        GEOSX_LOG_RANK( "Deleting particle with negative Jacobian! Local particle ID: " << p);
+        p--;
+        break;
+      }
+      p_vol = p_vol0 * detF;
       p_rho = p_m/p_vol;
-      subRegion.updateRVectors(p, p_F);
+      subRegion.applyFtoRVectors( p, p_F );
+      if( m_cpdiDomainScaling == 1 && subRegion.getParticleType() == ParticleType::CPDI )
+      {
+        real64 lCrit = m_planeStrain ? 0.49999 * fmin( m_hEl[0], m_hEl[1] ) : 0.49999 * fmin( m_hEl[0], fmin( m_hEl[1], m_hEl[2] ) );
+        subRegion.cpdiDomainScaling( p, lCrit, m_planeStrain );
+      }
 
       // Particle constitutive update - hyperelastic model from vortex MMS paper
       real64 lambda = bulkModulus[p] - 2.0 * shearModulus[p] / 3.0;
@@ -1239,12 +1257,18 @@ void SolidMechanicsMPM::normalizeGridSurfaceNormals( array2d< real64 > & gridMas
         }
         else
         {
-          tOps::fill< 3 >( gridSurfaceNormal[g][fieldIndex], 0.0 );
+          //tOps::fill< 3 >( gridSurfaceNormal[g][fieldIndex], 0.0 );
+          gridSurfaceNormal[g][fieldIndex][0] = 1.0;
+          gridSurfaceNormal[g][fieldIndex][1] = 0.0;
+          gridSurfaceNormal[g][fieldIndex][2] = 0.0;
         }
       }
       else
       {
-        tOps::fill< 3 >( gridSurfaceNormal[g][fieldIndex], 0.0 );
+        //tOps::fill< 3 >( gridSurfaceNormal[g][fieldIndex], 0.0 );
+        gridSurfaceNormal[g][fieldIndex][0] = 1.0;
+        gridSurfaceNormal[g][fieldIndex][1] = 0.0;
+        gridSurfaceNormal[g][fieldIndex][2] = 0.0;
       }
     }
   }
@@ -1410,16 +1434,25 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( const int & separable,
     real64 fnor = contact * ( mA / dt ) * subtractDot( vAB, vA, nAB ),
            ftan1 = ( mA / dt ) * subtractDot( vAB, vA, s1AB ),
            ftan2 = ( mA / dt ) * subtractDot( vAB, vA, s2AB );
+    real64 ftanMag = sqrt( ftan1 * ftan1 + ftan2 * ftan2 );
 
     // Get direction of tangential contact force
     array1d< real64 > sAB(3);
-    tOps::scaledCopy< 3 >( sAB, s1AB, ftan1 );
-    tOps::scaledAdd< 3 >( sAB, s2AB, ftan2 );
-    tOps::normalize< 3 >( sAB );
+    if( ftanMag > 0.0 )
+    {
+      tOps::scaledCopy< 3 >( sAB, s1AB, ftan1 );
+      tOps::scaledAdd< 3 >( sAB, s2AB, ftan2 );
+      tOps::scale< 3 >( sAB, 1.0 / ftanMag );
+      //tOps::normalize< 3 >( sAB );
+    }
+    else
+    {
+      tOps::fill< 3 >( sAB, 0.0 );
+    }
 
     // Update fA and fB - tangential force is bounded by friction
     tOps::scaledAdd< 3 >( fA, nAB, fnor );
-    tOps::scaledAdd< 3 >( fA, sAB, std::min( m_frictionCoefficient * std::abs( fnor ), sqrt( ftan1 * ftan1 + ftan2 * ftan2 ) ) );
+    tOps::scaledAdd< 3 >( fA, sAB, std::min( m_frictionCoefficient * std::abs( fnor ), ftanMag ) );
     tOps::scaledAdd< 3 >( fB, fA, -1.0 );
   }
 }
@@ -1458,13 +1491,13 @@ void SolidMechanicsMPM::computeOrthonormalBasis( const array1d< real64 > & e1, /
 
   // This part amounts to setting the smallest component of the input vector to 0.
   // Then, the orthogonal vector is a simple operation in the 2D plane.
-  if( maxp1 > maxp2 && maxp1 > maxp3 )
+  if( maxp1 >= maxp2 && maxp1 >= maxp3 )
   {
     e2x = e1y;
     e2y = -e1x;
     e2z = 0.0;
   }
-  else if( maxp2 > maxp1 && maxp2 > maxp3 )
+  else if( maxp2 >= maxp1 && maxp2 >= maxp3 )
   {
     e2y = e1z;
     e2z = -e1y;

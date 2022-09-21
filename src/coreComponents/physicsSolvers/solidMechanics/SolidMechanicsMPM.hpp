@@ -201,6 +201,8 @@ protected:
 
   array1d< int > m_boundaryConditionTypes;
 
+  int m_cpdiDomainScaling;
+
   real64 m_smallMass;
 
   int m_numContactGroups, m_numContactFlags, m_numVelocityFields; // TODO: I think we only need m_numVelocityFields
