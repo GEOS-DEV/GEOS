@@ -54,7 +54,7 @@ void copySets( ObjectManagerBase const & srcManager,
 template< typename T >
 struct SetCompare
 {
-  ArrayOfSetsView< T const > const & sets;
+  ArrayOfSetsView< T const > const sets;
   bool operator()( localIndex const i, localIndex const j ) const
   {
     arraySlice1d< T const > const si = sets[i];
@@ -70,6 +70,8 @@ findCoarseNodesByDualPartition( MeshObjectManager::MapViewConst const & nodeToDu
                                 integer const minSubdomains,
                                 bool allowMultiNodes )
 {
+  GEOSX_MARK_FUNCTION;
+
   // Construct a list of "skeleton" nodes (those with at least minSubdomains adjacent subdomains)
   array1d< localIndex > skelNodes;
   for( localIndex inf = 0; inf < nodeToDual.size(); ++inf )
@@ -82,7 +84,7 @@ findCoarseNodesByDualPartition( MeshObjectManager::MapViewConst const & nodeToDu
 
   // Sort skeleton nodes according to subdomain lists to locate nodes of identical adjacencies
   SetCompare< globalIndex > const adjacencyComp{ nodeToSubdomain.toViewConst() };
-  std::sort( skelNodes.begin(), skelNodes.end(), adjacencyComp );
+  RAJA::sort< parallelHostPolicy >( RAJA::make_span( skelNodes.begin(), skelNodes.size() ), adjacencyComp );
 
   // Identify "features" (groups of skeleton nodes with the same subdomain adjacency)
   array1d< localIndex > const featureIndex( nodeToDual.size() );
@@ -172,7 +174,7 @@ findCoarseNodesByDualPartition( MeshObjectManager::MapViewConst const & nodeToDu
     }
   }
 
-  std::sort( coarseNodes.begin(), coarseNodes.end() );
+  RAJA::sort< parallelHostPolicy >( RAJA::make_span( coarseNodes.begin(), coarseNodes.size() ) );
   return coarseNodes;
 }
 

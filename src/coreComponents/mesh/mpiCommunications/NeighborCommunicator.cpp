@@ -555,8 +555,6 @@ void NeighborCommunicator::packCommBufferForSync( string_array const & fieldName
                                                   bool onDevice,
                                                   parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
-
   arrayView1d< localIndex const > const & ghostsToSend = manager.getNeighborData( m_neighborRank ).ghostsToSend();
 
   buffer_type & sendBuff = sendBuffer( commID );
@@ -632,8 +630,6 @@ void NeighborCommunicator::unpackBufferForSync( ObjectManagerBase & manager,
                                                 bool onDevice,
                                                 parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
-
   buffer_type const & receiveBuff = receiveBuffer( commID );
   buffer_unit_type const * receiveBufferPtr = receiveBuff.data();
 

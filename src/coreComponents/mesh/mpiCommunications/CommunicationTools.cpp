@@ -1004,6 +1004,7 @@ void CommunicationTools::synchronizeFields( string_array const & fieldNames,
                                             std::vector< NeighborCommunicator > & neighbors,
                                             bool onDevice )
 {
+  GEOSX_MARK_FUNCTION;
   MPI_iCommData icomm( getCommID() );
   icomm.resize( neighbors.size() );
   synchronizePackSendRecvSizes( fieldNames, manager, neighbors, icomm, onDevice );

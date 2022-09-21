@@ -180,9 +180,9 @@ void buildCoarseCells( multiscale::MeshLevel & fineMesh,
   MeshObjectManager & coarseCellManager = coarseMesh.cellManager();
 
   // Allocate arrays to hold partitioning info (local and global)
-  arrayView1d< localIndex > const & coarseLocalIndex =
+  arrayView1d< localIndex > const coarseLocalIndex =
     fineCellManager.registerExtrinsicData< meshData::CoarseCellLocalIndex >( coarseMesh.name() ).referenceAsView();
-  arrayView1d< globalIndex > const & coarseGlobalIndex =
+  arrayView1d< globalIndex > const coarseGlobalIndex =
     fineCellManager.registerExtrinsicData< meshData::CoarseCellGlobalIndex >( coarseMesh.name() ).referenceAsView();
 
   // Generate the partitioning locally
@@ -193,10 +193,12 @@ void buildCoarseCells( multiscale::MeshLevel & fineMesh,
   globalIndex const rankOffset = MpiWrapper::prefixSum< globalIndex >( numLocalCoarseCells );
 
   // Fill in partition global index for locally owned cells
-  for( localIndex icf = 0; icf < fineCellManager.numOwnedObjects(); ++icf )
+  forAll< parallelHostPolicy >( fineCellManager.numOwnedObjects(),
+                                [coarseLocalIndex = coarseLocalIndex.toViewConst(),
+                                 coarseGlobalIndex, rankOffset]( localIndex const icf )
   {
     coarseGlobalIndex[icf] = coarseLocalIndex[icf] + rankOffset;
-  }
+  } );
 
   // Synchronize partition global index across ranks
   string_array fieldNames;
@@ -222,10 +224,12 @@ void buildCoarseCells( multiscale::MeshLevel & fineMesh,
   buildCellLocalToGlobalMaps( ghostGlobalIndices, rankOffset, coarseCellManager );
 
   // finish filling the partition array for ghosted fine cells
-  for( localIndex ic = fineCellManager.numOwnedObjects(); ic < fineCellManager.size(); ++ic )
+  forRange< parallelHostPolicy >( fineCellManager.numOwnedObjects(), fineCellManager.size(),
+                                  [coarseGlobalIndex = coarseGlobalIndex.toViewConst(),
+                                   coarseLocalIndex, &coarseCellManager]( localIndex const icf )
   {
-    coarseLocalIndex[ic] = coarseCellManager.globalToLocalMap( coarseGlobalIndex[ic] );
-  }
+    coarseLocalIndex[icf] = coarseCellManager.globalToLocalMap( coarseGlobalIndex[icf] );
+  } );
 
   fillBasicCellData( fineCellManager, coarseCellManager );
 
@@ -251,7 +255,7 @@ findCoarseNodes( DomainPartition & domain,
                  MeshObjectManager const & fineCellManager,
                  arrayView1d< string const > const & boundaryNodeSets )
 {
-// Build and sync an adjacency map of fine nodes to coarse subdomains (including global boundaries)
+  // Build and sync an adjacency map of fine nodes to coarse subdomains (including global boundaries)
   ArrayOfSets< globalIndex > nodeToSubdomainLocal =
     meshUtils::buildFineObjectToSubdomainMap( fineNodeManager,
                                               fineCellManager.getExtrinsicData< meshData::CoarseCellGlobalIndex >().toViewConst(),

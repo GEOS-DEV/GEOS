@@ -58,10 +58,7 @@ public:
 
   ~ScopedDataRegistrar()
   {
-    // For debugging only, do not delete the data for now
-#if 0
     m_manager.deregisterWrapper( m_key );
-#endif
   }
 
   void sync( DomainPartition & domain ) const;
