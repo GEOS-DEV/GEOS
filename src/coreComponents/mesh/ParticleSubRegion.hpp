@@ -90,17 +90,21 @@ public:
                                   std::array< real64, 3 > const & xGlobalMax,
                                   std::array< real64, 3 > const & hEl );
 
-  void updateRVectors(int const p,
-                      LvArray::ArraySlice<double, 2, 1, int> const & p_F);
+  void applyFtoRVectors( int const p,
+                         LvArray::ArraySlice<double, 2, 1, int> const & p_F );
 
-  void getAllWeights(int const p,
-                     std::array< real64, 3 > const & xMin,
-                     std::array< real64, 3 > const & hx,
-                     array3d< int > const & ijkMap,
-                     arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X,
-                     std::vector< int > & nodeIDs,
-                     std::vector< real64 > & weights,
-                     std::vector< std::vector< real64 > > & gradWeights);
+  void cpdiDomainScaling( int p,
+                          real64 lCrit,
+                          int m_planeStrain );
+
+  void getAllWeights( int const p,
+                      std::array< real64, 3 > const & xMin,
+                      std::array< real64, 3 > const & hx,
+                      array3d< int > const & ijkMap,
+                      arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X,
+                      std::vector< int > & nodeIDs,
+                      std::vector< real64 > & weights,
+                      std::vector< std::vector< real64 > > & gradWeights );
 
   /**
    * @name Miscellaneous
