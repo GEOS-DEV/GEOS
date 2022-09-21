@@ -134,15 +134,6 @@ public:
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void getSamplingPointCoordInParentSpace( int const & linearIndex,
-                                                  real64 (& samplingPointCoord)[3] )
-  {
-    GEOSX_UNUSED_VAR( linearIndex, samplingPointCoord );
-    GEOSX_ERROR( " Element type not supported." );
-  }
-
   /**
    * @brief Calculate shape functions values at a single point.
    * @param[in] coords The parent coordinates at which to evaluate the shape function value

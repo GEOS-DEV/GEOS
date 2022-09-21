@@ -50,7 +50,6 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      discretization="FE1"
       targetRegions="{ Domain }"
       rockToughness="$K_upscaled$"
       nodeBasedSIF="1"

@@ -63,7 +63,6 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      discretization="FE1"
       targetRegions="{ Domain }"
       rockToughness="1e6"
       nodeBasedSIF="1"

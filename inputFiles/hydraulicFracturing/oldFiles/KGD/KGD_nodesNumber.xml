@@ -42,10 +42,8 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      discretization="FE1"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
-      
       rockToughness="0.01e6"/>
   </Solvers>
 
