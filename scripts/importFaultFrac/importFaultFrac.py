@@ -518,6 +518,72 @@ def main():
     writer.Write()
 
 
+def fill_frac_hex():
+    vtk_input_file = "frac-hex.vtk"
+    reader = vtk.vtkUnstructuredGridReader()
+    reader.SetFileName(vtk_input_file)
+    reader.Update()
+    mesh = reader.GetOutput()
+
+    def add_one(v):
+        return v + 1
+
+    num_faces = 10
+    left_faces_nodes, right_faces_nodes = [], []
+    for i in range(num_faces):
+        lf = {12 * i + 5, 12 * i + 5 + 12, 12 * i + 5 + 132, 12 * i + 5 + 12 + 132}
+        rf = set(map(add_one, lf))
+        left_faces_nodes.append(lf)
+        right_faces_nodes.append(rf)
+
+    left_face_elems, right_face_elems = [], []
+    for i in range(num_faces):
+        left_face_elems.append(4 + 10 * i)
+        right_face_elems.append(5 + 10 * i)
+    #
+    # for i, data in enumerate(zip(left_face_elems, left_faces_nodes)):
+    #     elem, face_nodes = data
+    #     cell = mesh.GetCell(elem)
+    #     for nf in range(cell.GetNumberOfFaces()):
+    #         f = cell.GetFace(nf)
+    #         elem_face_points = set(map(f.GetPointId, range(f.GetNumberOfPoints())))
+    #         if elem_face_points == face_nodes:
+    #             print(f"The left for face {i} is {elem}, {nf}.")
+    #
+    # for i, data in enumerate(zip(right_face_elems, right_faces_nodes)):
+    #     elem, face_nodes = data
+    #     cell = mesh.GetCell(elem)
+    #     for nf in range(cell.GetNumberOfFaces()):
+    #         f = cell.GetFace(nf)
+    #         elem_face_points = set(map(f.GetPointId, range(f.GetNumberOfPoints())))
+    #         if elem_face_points == face_nodes:
+    #             print(f"The right for face {i} is {elem}, {nf}.")
+
+    da = vtk.vtkIntArray()
+    da.SetName("fracture_info")
+    da.SetNumberOfComponents(4)  # Warning the component has to be defined first...
+    da.SetNumberOfTuples(num_faces)
+    for i in range(num_faces):
+        # c0, f0, c1, f1 = data
+        # data = (left_face_elems[i], 0, right_face_elems[i], 1)
+        data = (left_face_elems[i], 1, right_face_elems[i], 0)
+        da.SetTuple(i, data)
+    fracture_field_data = vtk.vtkFieldData()
+    fracture_field_data.AddArray(da)
+
+    # creating another mesh from some components of the input mesh.
+    mesh.SetFieldData(fracture_field_data)
+
+    # writer = vtk.vtkXMLUnstructuredGridWriter()
+    writer = vtk.vtkUnstructuredGridWriter()
+    writer.SetFileName("frac-hex-fielddata.vtu")
+    writer.SetInputData(mesh)
+    writer.Write()
+
+
+
+
+
 if __name__ == '__main__':
     logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.INFO)
     args = parse(sys.argv[1:])

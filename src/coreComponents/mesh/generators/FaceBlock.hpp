@@ -41,6 +41,44 @@ public:
   ArrayOfArrays< localIndex > get2dFaceTo2dElems() const override;
 };
 
+class MyFaceBlock: public FaceBlockABC
+{
+public:
+  MyFaceBlock( string const & name,
+               Group * const parent )
+    :
+    FaceBlockABC( name, parent )
+  { }
+
+  localIndex num2dElements() const override;
+
+  localIndex num2dFaces() const override;
+
+  ArrayOfArrays< localIndex > get2dElemToNodes() const override;
+
+  ArrayOfArrays< localIndex > get2dElemToEdges() const override;
+
+  array2d< localIndex > get2dElemToFaces() const override;
+
+  ToCellRelation< array2d< localIndex > > get2dElemToElems() const override;
+
+  array1d< localIndex > get2dFaceToEdge() const override;
+
+  ArrayOfArrays< localIndex > get2dFaceTo2dElems() const override;
+
+  localIndex m_num2dElements;
+  localIndex m_num2dFaces;
+
+  std::vector< std::vector< localIndex > > m_2dElemToNodes;
+  std::vector< std::vector< localIndex > > m_2dElemToEdges;
+  std::vector< std::vector< localIndex > > m_2dElemToFaces;
+  std::vector< std::vector< localIndex > > m_2dFaceTo2dElems;
+  std::vector< localIndex > m_2dFaceToEdge;
+
+  std::vector< std::vector< localIndex > > m_2dElemToElems;
+};
+
+
 }
 
 #endif // include guard
