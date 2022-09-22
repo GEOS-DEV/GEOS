@@ -55,7 +55,7 @@ public:
    * @brief Constructor.
    */
   explicit SinglePhasePoromechanicsEmbeddedFractures( arrayView1d< int const > const & )
-    : MGRStrategyBase( 7 ) 
+    : MGRStrategyBase( 7 )
   {
     // we keep u and p
     m_labels[0].push_back( 3 );
