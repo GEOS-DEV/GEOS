@@ -1,14 +1,19 @@
 import os
 import numpy as np
+from typing import Dict, Iterable, List, Tuple
 
 
-def save_tables(axes, properties, table_root='./tables', axes_names=[]):
+def save_tables(axes: Iterable[np.ndarray],
+                properties: Dict[str, np.ndarray],
+                table_root: str = './tables',
+                axes_names: List[str] = []) -> None:
     """
     Saves a set of tables in GEOSX format
-    Notes: The shape of these arrays should match the length of each axis in the specified order
-           The output directory will be created if it does not exist yet
-           If axes_names are not supplied, then they will be selected based
-           on the dimensionality of the grid: 1D=[t]; 3D=[x, y, z]; 4D=[x, y, z, t]
+    
+    The shape of these arrays should match the length of each axis in the specified order.
+    The output directory will be created if it does not exist yet.
+    If axes_names are not supplied, then they will be selected based
+    on the dimensionality of the grid: 1D=[t]; 3D=[x, y, z]; 4D=[x, y, z, t].
 
     Args:
         axes (list): A list of numpy ndarrays defining the table axes
@@ -52,7 +57,10 @@ def save_tables(axes, properties, table_root='./tables', axes_names=[]):
         np.savetxt('%s/%s.csv' % (table_root, k), np.reshape(p, (-1), order='F'), fmt='%1.5e', delimiter=',')
 
 
-def load_tables(axes_names, property_names, table_root='./tables', extension='csv'):
+def load_tables(axes_names: Iterable[str],
+                property_names: Iterable[str],
+                table_root: str = './tables',
+                extension: str = 'csv') -> Tuple[Iterable[np.ndarray], Dict[str, np.ndarray]]:
     """
     Load a set of tables in GEOSX format
 
