@@ -106,25 +106,31 @@ void EQ36Database::CreateChemicalSystem( string_array const & primarySpeciesName
                           (m_actCoeffParameters.temperatures[loopIndex] - m_actCoeffParameters.temperatures[loopIndex-1]) * 
                           (temperature - m_actCoeffParameters.temperatures[loopIndex-1])
   }
+
   GEOSX_ERROR_IF( loopIndex == 0 || loopIndex == m_actCoeffParameters.temperatures.size(), "Input temperature not in permitted range." )
 
   // Read primary species related entries
 
   // read and ignore everything till you reach the basis species block
-  readAndIgnoreActivityCoefficientBlock( EQ36File, buffer_size, "basis species") 
+  nextBlockString = "basis species"
+  readAndIgnoreActivityCoefficientBlock( nextBlockString ) 
 
   // Resize variables that will store the read information
   integer numPrimarySpecies = primarySpeciesNames.size();
-  m_MWPrimary.resize( numPrimarySpecies )
-  m_ionSizePrimary.resize( numPrimarySpecies )
-  m_chargePrimary.resize( numPrimarySpecies )
+  MWPrimary.resize( numPrimarySpecies )
+  ionSizePrimary.resize( numPrimarySpecies )
+  chargePrimary.resize( numPrimarySpecies )
 
   // read and store primary species information
-  readPrimarySpeciesBlock( EQ36File, buffer_size, "auxiliary basis species", primarySpeciesNames, m_MWPrimary, m_ionSizePrimary, m_chargePrimary )
+  nextBlockString = "auxiliary basis species"
+  readPrimarySpeciesBlock( nextBlockString, primarySpeciesNames, MWPrimary, ionSizePrimary, chargePrimary )
 
   // Read secondary species related entries
   // flag to determine is user has provided a list of secondary species to track
+  // Code is currently not set up to work when user does not list secondary species due to difficulty in working with unknown sizes
   bool inputSecondarySpeciesFlag = secondarySpeciesNames.size() == 0 ? 1 : 0; 
+  GEOSX_ERROR_IF( inputSecondarySpeciesFlag, "Currently user is expected to supply secondary species names as well." )
+
 
   // We probably don't need this. Will evaluate in next round. 
   unordered_map< string, int > secondarySpeciesMap;
@@ -151,19 +157,15 @@ void EQ36Database::CreateChemicalSystem( string_array const & primarySpeciesName
 }
 
 
-void EQ36Database::readActivityCoefficientBlock( std::ifstream const EQ36File, 
-                                                 std::streamsize const bufferSize,
-                                                 string const nextBlockString,
+void EQ36Database::readActivityCoefficientBlock( string const nextBlockString,
                                                  arraySlice1d< real64 > const & readVariable ) const
 
 {
 
-  // This function reads a block from the EQ3/6 Database file related to the B-Dot activity coefficient model and returns the read entries in a vector.
+  // This function reads a block from the EQ3/6 Database file related to the B-Dot activity coefficient model and returns the read entries.
 
-  char fileLine[bufferSize];
-  // I am not sure if information on which line was read is preserved when passing information through a function. 
-  // That is critical because if the file is going to be read from the first line every single time then this won't work
-  while( EQ36File.getline( fileLine, bufferSize ))         //read the line
+  char fileLine[m_bufferSize];
+  while( m_EQ36File.getline( fileLine, m_bufferSize ))         //read the line
   {
     std::string fileLineString ( fileLine );
     auto found = fileLineString.find( nextBlockString );   // can you find the next block string string in the line
@@ -173,21 +175,20 @@ void EQ36Database::readActivityCoefficientBlock( std::ifstream const EQ36File,
     string_array lineEntries = Tokenize( fileLineString, " " );      // separate the different numeric enteries and store them
     for( int i = 0; i < lineEntries.size(); i++ )
     {
+      // Ask Matteo if this is acceptable as readVariable hasn't been resized anywhere
       readVariable.emplace_back( std::stod( lineEntries[i] ));       // do we need to size the variable beforehand?
     }
   }
 
 }
 
-void EQ36Database::readAndIgnoreActivityCoefficientBlock( std::ifstream const EQ36File, 
-                                                          std::streamsize const bufferSize,
-                                                          string const nextBlockString ) const
+void EQ36Database::readAndIgnoreActivityCoefficientBlock( string const nextBlockString ) const
 
 {
 
   // This function reads a block from the EQ3/6 Database file and ignores it as it isn't currently useful
-  char fileLine[bufferSize];
-  while( EQ36File.getline( fileLine, bufferSize ))         //read the line
+  char fileLine[m_bufferSize];
+  while( m_EQ36File.getline( fileLine, m_bufferSize ))         //read the line
   {
     std::string fileLineString ( fileLine );
     auto found = fileLineString.find( nextBlockString );   // can you find the next block string string in the line
@@ -198,57 +199,46 @@ void EQ36Database::readAndIgnoreActivityCoefficientBlock( std::ifstream const EQ
 
 }
 
-void EQ36Database::readPrimarySpeciesBlock( std::ifstream const EQ36File, 
-                                            std::streamsize const bufferSize,
-                                            string const nextBlockString,
+void EQ36Database::readPrimarySpeciesBlock( string const nextBlockString,
                                             string_array const & primarySpeciesNames,
                                             arraySlice1d< real64 > const & MWPrimary,
                                             arraySlice1d< real64 > const & ionSizePrimary,
                                             arraySlice1d< integer > const & chargePrimary ) const
 {
 
-  // We probably don't need this. Left it as is for now, will evaluate later
+  // create a map to get the index numbers of the primary species
   unordered_map< string, int > primarySpeciesMap;
-  // populate primarySpeciesMap with the input primary species
   for( int ic = 0; ic < primarySpeciesNames.size(); ic++ )
   {
-    primarySpeciesMap[primarySpeciesNames[ic] ] = -1;
+    primarySpeciesMap[primarySpeciesNames[ic] ] = ic;
   }
-  int H2OIndex = -1, O2gIndex = -1;
 
   // define variables to store things
   real64 MW
   real64 ionSize
   integer charge
-  string speciesName;
+  string speciesName = " ";
 
-  int count = 0;
-  while( EQ36File.getline( fileLine, bufferSize ))          // read the line
+  int countPrimary = 0;
+  while( m_EQ36File.getline( fileLine, m_bufferSize ))          // read the line
   {
     std::string fileLineString( fileLine );
     {
       auto found = fileLineString.find( "+-------" );       // if one finds "+-----" in the line, it means that the next line is either the start of a new block or new primary species
-      if( found!=std::string::npos )                        // Either you have information for the last species or you are just starting
+      if( found!=std::string::npos )                        // Either you have all the information for the previous species or you are just starting
       {
-        // auto it = primarySpeciesMap.find( speciesName );
-        // if( it != primarySpeciesMap.end() || speciesName == "H2O" ||speciesName == "O2(g)" )
-        // Only include the primary species mentioned in the input file. 
-        // For the time being ignore H2O and O2(g) because I don't know why they need special treatment
-        // Not a 100 % sure if the map variable can be replaced by the string array variable while still using the find() and end() functions. 
-        auto it = primarySpeciesNames.find( speciesName );          
-        if( it != primarySpeciesNames.end() )
+        auto it = primarySpeciesMap.find( speciesName );          
+        if( it != primarySpeciesMap.end() )
         {
           // Ignoring speciesType information since it doesn't make a difference at this point
+          int speciesIndex = primarySpeciesMap[ speciesName ] 
           MWPrimary[speciesIndex] = MW;
           ionSizePrimary[speciesIndex] = ionSize;
           chargePrimary[speciesIndex] = charge;
-
-          // Have to figure out how are we going to find out the species index to replace this line. Ask Matteo
-          primarySpeciesMap[speciesName] = count;
-          count++;
+          countPrimary++
         }
 
-        EQ36File.getline( fileLine, buffer_size );          // read next line
+        m_EQ36File.getline( fileLine, m_bufferSize );          // read next line
         speciesName = fileLine;
 
         auto found2 = speciesName.find( nextBlockString );  // if the next block has started, exit the loop
@@ -289,16 +279,7 @@ void EQ36Database::readPrimarySpeciesBlock( std::ifstream const EQ36File,
     }
   }
 
-  // Likely we don't need any of this. Will evaluate in the next round. 
-  integer idx;
-  integer numPrimarySpecies = primarySpeciesNames.size();
-  m_primarySpeciesIndices.resize( numPrimarySpecies );
-  for( int ic = 0; ic < numPrimarySpecies; ic++ )
-  {
-    idx = primarySpeciesMap[primarySpeciesNames[ic] ];
-    m_primarySpeciesIndices[ic] = idx;
-    primarySpeciesMap[primarySpeciesNames[ic] ] = int(ic);
-  }
+  GEOSX_ERROR_IF( countPrimary != primarySpeciesNames.size(), "Could not find all input primary species." )
 }
 
 void EQ36Database::readSecondarySpeciesBlock( std::ifstream const EQ36File, 
