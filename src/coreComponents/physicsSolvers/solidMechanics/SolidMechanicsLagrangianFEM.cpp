@@ -301,7 +301,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   {
     auto kernelFactory = solidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
     rval = finiteElement::
-             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+             regionBasedKernelApplication< parallelDevicePolicy< 256 >,
                                            constitutive::SolidBase,
                                            CellElementSubRegion >( mesh,
                                                                    targetRegions,

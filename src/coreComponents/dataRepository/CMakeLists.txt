@@ -35,7 +35,7 @@ set( dataRepository_sources
      xmlWrapper.cpp
    )
 
-set( dependencyList ${parallelDeps} codingUtilities )
+set( dependencyList ${parallelDeps} codingUtilities pugixml )
 
 if( ENABLE_PYGEOSX )
   list( APPEND dataRepository_headers

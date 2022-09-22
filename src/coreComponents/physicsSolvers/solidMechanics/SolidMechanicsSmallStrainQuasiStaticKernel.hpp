@@ -266,6 +266,7 @@ public:
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
 
     stiffness.template BTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
+    // stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
   }
 
   /**

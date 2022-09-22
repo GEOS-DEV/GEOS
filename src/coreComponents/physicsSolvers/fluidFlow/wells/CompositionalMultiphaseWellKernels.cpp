@@ -301,6 +301,8 @@ FluxKernel::
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
 #ifdef GEOSX_CRUSHER_SUPPRESSION
+    GEOSX_UNUSED_VAR( isProducer,iwelem,injection,rankOffset,wellElemDofNumber,nextWellElemIndex,
+                      connRate,wellElemCompFrac,dWellElemCompFrac_dCompDens,dt,localMatrix,localRhs );
     GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
 #else
     // create local work arrays

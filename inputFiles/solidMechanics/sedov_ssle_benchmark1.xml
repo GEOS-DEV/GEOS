@@ -45,6 +45,16 @@
         timeLimit="10"
         strongScaling="{ 1, 2, 4, 8 }"/>
     </lassen>
+    <crusher>
+      <Run
+        name="HIP"
+        tasksPerNode="1"
+        autoPartition="On"
+        timeLimit="60"
+        scaling="weak"
+        meshSizes="{ 32000000 }"
+        scaleList="{ 1 }"/>
+    </crusher>
   </Benchmarks>
 
   <Mesh>
@@ -61,7 +71,7 @@
   </Mesh>
 
   <Events
-    maxTime="5.0e-3">
+    maxTime="5.0e-5">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent

@@ -229,7 +229,7 @@ public:
     real64 dLocalPoreVolumeConstraint_dComponents[1][numMaxComponents];
 
     /// C-array storage for the element local row degrees of freedom.
-    globalIndex localPressureDofIndex[1];
+    globalIndex localPressureDofIndex; // couldn't be an array of size 1 on crusher or the compiler would balk
     globalIndex localComponentDofIndices[numMaxComponents];
 
   };
@@ -265,15 +265,11 @@ public:
       }
     }
 
-    auto flowDof = m_flowDofNumber[k];
-#ifdef GEOSX_CRUSHER_SUPPRESSION
-    GEOSX_ERROR( GEOSX_CRUSHER_SUPPRESSION );
-#else
-    stack.localPressureDofIndex[0] = flowDof;
-#endif
+    // this assignment caused a compiler balk on crusher when the lhs was a size-1 array
+    stack.localPressureDofIndex = m_flowDofNumber[k];
     for( int flowDofIndex=0; flowDofIndex < numMaxComponents; ++flowDofIndex )
     {
-      stack.localComponentDofIndices[flowDofIndex] = stack.localPressureDofIndex[0] + flowDofIndex + 1;
+      stack.localComponentDofIndices[flowDofIndex] = stack.localPressureDofIndex + flowDofIndex + 1;
     }
   }
 
@@ -562,7 +558,7 @@ public:
         maxForce = fmax( maxForce, fabs( stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] ) );
 
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                                stack.localPressureDofIndex,
+                                                                                &stack.localPressureDofIndex,
                                                                                 stack.dLocalResidualMomentum_dPressure[numDofPerTestSupportPoint * localNode + dim],
                                                                                 1 );
 
@@ -573,7 +569,7 @@ public:
       }
     }
 
-    localIndex const dof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex[0] - m_dofRankOffset );
+    localIndex const dof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex - m_dofRankOffset );
     if( 0 <= dof && dof < m_matrix.numRows() )
     {
       for( localIndex i = 0; i < m_numComponents; ++i )
@@ -583,7 +579,7 @@ public:
                                                                         stack.dLocalResidualMass_dDisplacement[i],
                                                                         nUDof );
         m_matrix.template addToRow< serialAtomic >( dof + i,
-                                                    stack.localPressureDofIndex,
+                                                    &stack.localPressureDofIndex,
                                                     stack.dLocalResidualMass_dPressure[i],
                                                     1 );
         m_matrix.template addToRow< serialAtomic >( dof + i,
@@ -594,7 +590,7 @@ public:
       }
 
       m_matrix.template addToRow< serialAtomic >( dof + m_numComponents,
-                                                  stack.localPressureDofIndex,
+                                                  &stack.localPressureDofIndex,
                                                   stack.dLocalPoreVolumeConstraint_dPressure[0],
                                                   1 );
 

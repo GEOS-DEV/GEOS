@@ -120,7 +120,8 @@ FiniteElementDiscretization::
 
   constexpr localIndex numNodesPerElem = FE_TYPE::maxSupportPoints;
   constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-  dNdX.resizeWithoutInitializationOrDestruction( elementSubRegion->size(), numQuadraturePointsPerElem, numNodesPerElem, 3 );
+  // dNdX.resizeWithoutInitializationOrDestruction( elementSubRegion->size(), numQuadraturePointsPerElem, numNodesPerElem, 3 );
+  dNdX.resizeWithoutInitializationOrDestruction( 0, numQuadraturePointsPerElem, numNodesPerElem, 3 );
   detJ.resize( elementSubRegion->size(), numQuadraturePointsPerElem );
 
   finiteElement.setGradNView( dNdX.toViewConst() );
@@ -148,10 +149,10 @@ FiniteElementDiscretization::
       real64 dNdXLocal[numNodesPerElem][3];
       detJ( k, q ) = finiteElement.calcGradN( q, xLocal, feStack, dNdXLocal );
 
-      for( localIndex b = 0; b < numSupportPoints; ++b )
-      {
-        LvArray::tensorOps::copy< 3 >( dNdX[ k ][ q ][ b ], dNdXLocal[b] );
-      }
+      // for( localIndex b = 0; b < numSupportPoints; ++b )
+      // {
+      //   LvArray::tensorOps::copy< 3 >( dNdX[ k ][ q ][ b ], dNdXLocal[b] );
+      // }
     }
   }
 

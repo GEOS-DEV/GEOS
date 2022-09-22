@@ -16,7 +16,7 @@ set( mainInterface_sources
      initialization.cpp
    )
 
-set( dependencyList ${parallelDeps} physicsSolvers discretizationMethods fieldSpecification linearAlgebra events fileIO optionparser )
+set( dependencyList ${parallelDeps} physicsSolvers discretizationMethods fieldSpecification linearAlgebra dataRepository events fileIO optionparser )
 
 blt_add_library( NAME       mainInterface
                  SOURCES    ${mainInterface_sources}

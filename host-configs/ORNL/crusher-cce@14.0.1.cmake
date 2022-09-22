@@ -13,15 +13,12 @@ set( SUITESPARSE_DIR "${GEOSX_TPL_DIR}/suite-sparse-5.10.1-vouqh5scdgojuqw2fkdr5
 
 # HYPRE options
 set( ENABLE_HYPRE_DEVICE "HIP" CACHE BOOL "" )
-
 if( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
-  set( HYPRE_DIR "/gpfs/alpine/csc326/world-shared/victorapm/hypre-b378dca-cce14.0.1_rocm5.1_uvm_rel" CACHE PATH "" ) # victor's debug build
-  # set( HYPRE_DIR "${GEOSX_TPL_DIR}/hypre-develop-yyketmjppcbcqjmf2z5q5j6jhee52sog" CACHE PATH "" ) # dev debug build
-  # set( HYPRE_DIR "${GEOSX_TPL_DIR}/hypre-develop-jsr2pkhycafvztrl6s5dj2t3temd6q3f" CACHE PATH "" ) # debug build
-  # set( HYPRE_DIR "${GEOSX_TPL_DIR}/hypre-develop-tumd2xi7jd5fbcb5rtvlydtssdje3h2v" CACHE PATH "" ) # unified memory
-  # set( HYPRE_DIR "${GEOSX_TPL_DIR}/hypre-develop-" CACHE PATH "" ) # w/out UM
+  set( HYPRE_DIR "/gpfs/alpine/csc326/world-shared/victorapm/hypre-b378dca-cce14.0.1_rocm5.1_uvm_rel" CACHE PATH "" ) # victor's build
 else()
   set( HYPRE_DIR "${GEOSX_TPL_DIR}/hypre-develop-26xg3xxx6q3q3ineijpty36eorhsp7mh" CACHE PATH "" )
 endif()
 
-# set( SUPERLU_DIST_DIR "/sw/crusher/spack-envs/base/opt/cray-sles15-zen3/cce-14.0.0/superlu-dist-7.2.0-kwzr52u5mhumb6exihw2did6h7zkiksq" CACHE PATH "" )
+set( ENABLE_CALIPER ON CACHE BOOL "" FORCE )
+set( ADIAK_DIR "${GEOSX_TPL_DIR}/adiak-0.2.1-zvvjdmdwh3x2wijmwferzyeunujmep46" CACHE PATH "" )
+set( CALIPER_DIR "${GEOSX_TPL_DIR}/caliper-2.8.0-keyadpuonorysb3lh4lq3qcozyel3ghk" CACHE PATH "" )
