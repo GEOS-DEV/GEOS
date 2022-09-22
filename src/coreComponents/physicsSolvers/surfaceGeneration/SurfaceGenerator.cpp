@@ -208,7 +208,8 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
   registerWrapper( viewKeyStruct::trailingFacesString(), &m_trailingFaces ).
     setDescription( "Set containing all the trailing faces" );
 
-
+  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
+  setInputFlag( InputFlags::FALSE ); 
 }
 
 SurfaceGenerator::~SurfaceGenerator()
