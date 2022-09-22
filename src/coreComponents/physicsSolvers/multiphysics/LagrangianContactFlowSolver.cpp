@@ -328,7 +328,7 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
 
   bool const allowNonConverged = m_nonlinearSolverParameters.m_allowNonConverged > 0;
 
-  integer & dtAttempt = m_nonlinearSolverParameters.m_numdtAttempts;
+  integer & dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
 
   // a flag to denote whether we have converged
   bool isNewtonConverged = false;
@@ -1911,10 +1911,12 @@ void LagrangianContactFlowSolver::solveLinearSystem( DofManager const & dofManag
   // MpiWrapper::barrier( MPI_COMM_GEOSX );
 }
 
-void LagrangianContactFlowSolver::setNextDt( real64 const & currentDt,
-                                             real64 & nextDt )
+real64 LagrangianContactFlowSolver::setNextDt( real64 const & currentDt,
+                                               DomainPartition & domain )
 {
-  nextDt = currentDt;
+  GEOSX_UNUSED_VAR( domain );
+  real64 nextDt = currentDt;
+  return nextDt;
 }
 
 

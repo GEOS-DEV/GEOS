@@ -14,8 +14,8 @@
       targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-04"
-        dtIncIterLimit="0.1"
-        dtCutIterLimit="0.7"
+        timeStepIncreaseIterLimit="0.1"
+        timeStepDecreaseIterLimit="0.7"
         logLevel="1"
         newtonMaxIter="10"
         lineSearchAction="Attempt"
