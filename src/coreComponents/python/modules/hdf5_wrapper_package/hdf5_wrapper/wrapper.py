@@ -1,47 +1,57 @@
-import h5py
+import h5py    # type: ignore[import]
 import numpy as np
 from numpy.core.defchararray import encode, decode
+from typing import Union, Dict, Any, Iterable, Optional, Tuple
+
+# Note: I would like to replace Any here with str, float, int, np.ndarray, etc.
+#       However, this heterogeneous pattern causes issues with mypy indexing
+hdf5_get_types = Union['hdf5_wrapper', Any]
+nested_dict_type = Dict[str, Any]
+hdf5_set_types = Union['hdf5_wrapper', nested_dict_type, Any]
 
 
 class hdf5_wrapper():
     """
-    @brief a class for reading/writing hdf5 files, which behaves similar to a native dict
+    A class for reading/writing hdf5 files, which behaves similar to a native dict
     """
 
-    def __init__(self, fname='', target='', mode='r'):
+    def __init__(self, fname: str = '', target: Optional[h5py.File] = None, mode: str = 'r') -> None:
         """
-        @brief initialize the hdf5_wrapper class
-        @param fname the filename of a new or existing hdf5 database
-        @param target the handle of an existing hdf5 dataset
-        @param mode the read/write behavior of the database (default='r')
+        Initialize the hdf5_wrapper class
 
-        @details If the fname is supplied (either by a positional or keyword argument),
-                 the wrapper will open a hdf5 database from the filesystem.  The reccomended
-                 options for the mode flag include 'r' for read-only and 'a' for read/write
-                 access.  If write mode is enabled, and the fname does not point
-                 to an existing file, a new database will be created.
+        If the fname is supplied (either by a positional or keyword argument),
+        the wrapper will open a hdf5 database from the filesystem.
+        The recommended options for the mode flag include 'r' for read-only
+        and 'a' for read/write access.
+        If write mode is enabled, and the fname does not point
+        to an existing file, a new database will be created.
 
-                 If the target is supplied, then a new instance of the wrapper will
-                 be created using an existing database handle.
+        If the target is supplied, then a new instance of the wrapper will
+        be created using an existing database handle.
+
+        Args:
+            fname (str): the filename of a new or existing hdf5 database
+            target (hdf5_wrapper): the handle of an existing hdf5 dataset
+            mode (str): the read/write behavior of the database (default='r')
         """
-
-        self.mode = mode
-        self.target = target
+        self.mode: str = mode
+        self.target: h5py.File = target
         if fname:
             self.target = h5py.File(fname, self.mode)
 
-    def __getitem__(self, k):
+    def __getitem__(self, k: str) -> hdf5_get_types:
         """
-        @brief get a target from the database
-        @param k name of target group or array
+        Get a target from the database
 
-        @return the returned value depends on the type of the target:
-                  - An existing hdf5 group will return an instance of hdf5_wrapper
-                  - An existing array will return an numpy ndarray
-                  - If the target is not present in the datastructure and the
-                    database is open in read/write mode, the wrapper will create a
-                    new group and return an hdf5_wrapper
-                  - Otherwise, this will throw an error
+        If the target is not present in the datastructure and the
+        database is open in read/write mode, the wrapper will create a
+        new group and return an hdf5_wrapper.  Otherwise it will throw an error
+
+        Args:
+            k (str): name of target group or array
+
+        Returns:
+            hdf5_wrapper/np.ndarray: The returned value
         """
         if (k not in self.target):
             if (self.mode in ['w', 'a']):
@@ -68,21 +78,22 @@ class hdf5_wrapper():
         else:
             return tmp
 
-    def __setitem__(self, k, value):
+    def __setitem__(self, k: str, value: hdf5_set_types):
         """
-        @brief write an object to the database if write-mode is enabled
-        @param k the name of the object
-        @param value the object to be written
-        """
+        Write an object to the database if write-mode is enabled
 
+        Args:
+            k (str): the name of the object
+            value (dict, np.ndarray, float, int, str): the object to be written
+        """
         if (self.mode in ['w', 'a']):
-            if isinstance(value, dict):
+            if isinstance(value, (dict, hdf5_wrapper)):
                 # Recursively add groups and their children
                 if (k not in self.target):
                     self.target.create_group(k)
                 new_group = self[k]
-                for x in value:
-                    new_group[x] = value[x]
+                for kb, x in value.items():
+                    new_group[kb] = x
             else:
                 # Delete the old copy if necessary
                 if (k in self.target):
@@ -98,39 +109,52 @@ class hdf5_wrapper():
                 'Cannot write to an hdf5 opened in read-only mode!  This can be changed by overriding the default mode argument for the wrapper.'
             )
 
-    def link(self, k, target):
+    def link(self, k: str, target: str) -> None:
         """
-        @brief link an external hdf5 file to this location in the database
-        @param k the name of the new link in the database
-        @param target the path to the external database
+        Link an external hdf5 file to this location in the database
+
+        Args:
+            k (str): the name of the new link in the database
+            target (str): the path to the external database
         """
         self.target[k] = h5py.ExternalLink(target, '/')
 
-    def keys(self):
+    def keys(self) -> Iterable[str]:
         """
-        @brief get a list of groups and arrays located at the current level
-        @return a list of strings 
+        Get a list of groups and arrays located at the current level
+
+        Returns:
+            list: a list of key names pointing to objects at the current level
         """
         if isinstance(self.target, h5py._hl.group.Group):
             return list(self.target)
         else:
             raise ValueError('Object not a group!')
 
+    def values(self) -> Iterable[hdf5_get_types]:
+        """
+        Get a list of values located on the current level
+        """
+        return [self[k] for k in self.keys()]
+
+    def items(self) -> Iterable[Tuple[str, hdf5_get_types]]:
+        return zip(self.keys(), self.values())
+
     def __enter__(self):
         """
-        @brief entry point for an iterator
+        Entry point for an iterator
         """
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, type, value, traceback) -> None:
         """
-        @brief end point for an iterator
+        End point for an iterator
         """
         self.target.close()
 
-    def __del__(self):
+    def __del__(self) -> None:
         """
-        @brief closes the database on wrapper deletion
+        Closes the database on wrapper deletion
         """
         try:
             if isinstance(self.target, h5py._hl.files.File):
@@ -138,32 +162,45 @@ class hdf5_wrapper():
         except:
             pass
 
-    def close(self):
+    def close(self) -> None:
         """
-        @brief closes the database
+        Closes the database
         """
         if isinstance(self.target, h5py._hl.files.File):
             self.target.close()
 
-    def get_copy(self):
+    def get_copy(self) -> nested_dict_type:
         """
-        @brief copy the entire database into memory
-        @return a dictionary holding the database contents
-        """
-        tmp = {}
-        self.copy(tmp)
-        return tmp
+        Copy the entire database into memory
 
-    def copy(self, output):
+        Returns:
+            dict: a dictionary holding the database contents
         """
-        @brief pack the contents of the current database level onto the target dict
-        @param output the dictionary to pack objects into
-        """
+        result: Dict[Union[str, int], Any] = {}
         for k in self.keys():
             tmp = self[k]
-
             if isinstance(tmp, hdf5_wrapper):
-                output[k] = {}
-                tmp.copy(output[k])
+                result[k] = tmp.get_copy()
             else:
-                output[k] = tmp
+                result[k] = tmp
+
+        return result
+
+    def copy(self) -> nested_dict_type:
+        """
+        Copy the entire database into memory
+
+        Returns:
+            dict: a dictionary holding the database contents
+        """
+        return self.get_copy()
+
+    def insert(self, x: Union[nested_dict_type, 'hdf5_wrapper']) -> None:
+        """
+        Insert the contents of the target object to the current location
+
+        Args:
+            x (dict, hdf5_wrapper): the dictionary to insert
+        """
+        for k, v in x.items():
+            self[k] = v
