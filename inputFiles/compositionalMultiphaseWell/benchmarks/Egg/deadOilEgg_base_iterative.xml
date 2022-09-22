@@ -13,9 +13,9 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="25"
-        dtCutIterLimit="0.9"
-        dtIncIterLimit="0.6"
-        timestepCutFactor="0.1"
+        timeStepDecreaseIterLimit="0.9"
+        timeStepIncreaseIterLimit="0.6"
+        timeStepCutFactor="0.1"
         maxTimeStepCuts="10"
         lineSearchAction="None"/>
       <LinearSolverParameters
