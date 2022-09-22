@@ -11,8 +11,8 @@ set( gtest_tests_with_input
    )
 
 set( input_files
-     basic_input
-     include_input
+     basic_input.xml
+     include_input.xml
    )
 
 set( multi_files
@@ -22,6 +22,12 @@ set( multi_files
      multifile_input/solver.xml
    )
 
+set( input_data
+     multifile_input/boundary_conditions/constraints.xml
+     multifile_input/boundary_conditions/velocity.xml
+     multifile_input/boundary_conditions/tables/time.txt
+     multifile_input/boundary_conditions/tables/velocity.txt
+   )
 #
 # Add gtest C++ based tests
 #
@@ -54,19 +60,24 @@ foreach(test ${gtest_geosx_tests})
                 COMMAND ${test_name} )
 endforeach()
 
+foreach( file ${input_files} ${multi_files} ${input_data} )
+  configure_file( ${file} ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY )
+endforeach()
+
 # add tests that do require input files
 foreach( test ${gtest_tests_with_input} )
   get_filename_component( test_name ${test} NAME_WE )
 
   # test a single input file
   foreach( input ${input_files} )
-    blt_add_test( NAME ${test_name}_${input}
-                  COMMAND ${test_name} -i ${CMAKE_CURRENT_LIST_DIR}/${input}.xml )
+    get_filename_component( input_name ${input} NAME_WE )
+    blt_add_test( NAME ${test_name}_${input_name}
+                  COMMAND ${test_name} -i ${CMAKE_CURRENT_BINARY_DIR}/${input} )
   endforeach()
 
   # test multiple input files
   foreach( file ${multi_files} )
-    set( args ${args} -i ${CMAKE_CURRENT_LIST_DIR}/${file} )
+    set( args ${args} -i ${CMAKE_CURRENT_BINARY_DIR}/${file} )
   endforeach()
   blt_add_test( NAME ${test_name}_multiple_input
                 COMMAND ${test_name} ${args} )

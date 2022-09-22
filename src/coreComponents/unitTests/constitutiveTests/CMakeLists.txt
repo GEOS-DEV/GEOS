@@ -26,6 +26,35 @@ set( gtest_pvt_xmls
      testPVT.xml
    )
 
+set( input_data
+     testPVT_brine.txt
+     testPVT_hydrogenMixtureB.txt
+     testTriaxial_delftEggCase2.txt
+     testTriaxial_delftEggLoadPathWetUseLinear.txt
+     testTriaxial_druckerPragerExtended.txt
+     testTriaxial_elasticIsotropicPressureDependent.txt
+     testTriaxial_modifiedCamClayVolumetric.txt
+     testPVT_CO2.txt
+     testPVT_hydrogenMixtureA.txt
+     testTriaxial_delftEggCase1.txt
+     testTriaxial_delftEggLoadPathDryUseLinear.txt
+     testTriaxial_delftEggUseLinear.txt
+     testTriaxial_elasticIsotropic.txt
+     testTriaxial_modifiedCamClay.txt
+     testPVT_data/brinePVT.txt
+     testPVT_data/oilPVT.txt
+     testPVT_data/carbonDioxideFlash.txt
+     testPVT_data/referencePVT_CO2.txt
+     testPVT_data/carbonDioxidePVT.txt
+     testPVT_data/referencePVT_H2_CH4.txt
+     testPVT_data/gasPVT.txt
+     testPVT_data/referencePVT_brine.txt
+  )
+
+foreach( file ${gtest_triaxial_xmls} ${gtest_pvt_xmls} ${input_data} )
+  configure_file( ${file} ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY )
+endforeach()
+
 set( dependencyList gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
@@ -76,7 +105,7 @@ blt_add_executable( NAME testTriaxial
 foreach(test ${gtest_triaxial_xmls})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_test( NAME ${test_name}
-                  COMMAND testTriaxial -i ${CMAKE_CURRENT_LIST_DIR}/${test}
+                  COMMAND testTriaxial -i ${CMAKE_CURRENT_BINARY_DIR}/${test}
                   )
 endforeach()
 
@@ -93,6 +122,6 @@ blt_add_executable( NAME testPVT
 foreach(test ${gtest_pvt_xmls})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_test( NAME ${test_name}
-                  COMMAND testPVT -i ${CMAKE_CURRENT_LIST_DIR}/${test}
+                  COMMAND testPVT -i ${CMAKE_CURRENT_BINARY_DIR}/${test}
                   )
 endforeach()

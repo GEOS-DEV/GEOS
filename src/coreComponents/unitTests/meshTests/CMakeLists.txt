@@ -28,8 +28,33 @@ if( ENABLE_VTK )
         )
 endif()
 
+set( input_data
+     cube.msh
+     cube.pvtu
+     cube.vtu
+     cube.pvts
+     cube.vts
+     cube.vtk
+     cube/cube_0.vtu
+     cube/cube_1.vtu
+     cube/cube_2.vtu
+     cube/cube_3.vtu
+     cube/cube_0.vts
+     cube/cube_1.vts
+     cube/cube_2.vts
+     cube/cube_3.vts
+     medley.vtk
+     toy_model.msh
+     toy_model.GRDECL
+   )
+
+foreach( file ${input_data} )
+  configure_file( ${file} ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY )
+endforeach()
+
+
 if( ENABLE_VTK OR ENABLE_PAMELA )
-  set( TEST_MESH_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
+  set( TEST_MESH_DIR ${CMAKE_CURRENT_BINARY_DIR} )
   configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshDirName.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshDirName.hpp )
 endif()
 
@@ -57,7 +82,7 @@ foreach( test ${gtest_geosx_tests} )
                       )
 
   blt_add_test( NAME ${test_name}
-                COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR}
+                COMMAND ${test_name} ${CMAKE_CURRENT_BINARY_DIR}
                 )
 endforeach()
 
