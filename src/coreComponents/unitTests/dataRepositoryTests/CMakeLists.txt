@@ -26,6 +26,10 @@ if( ENABLE_CUDA_NVTOOLSEXT )
   set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
 #
 # Add gtest C++ based tests
 #
