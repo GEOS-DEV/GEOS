@@ -290,6 +290,21 @@ public:
     return scalingFactor;
   }
 
+  virtual real64
+  setNextDtBasedOnStateChange( real64 const & currentDt,
+                               DomainPartition & domain ) override
+  {
+    real64 nextDt = LvArray::NumericLimits< real64 >::max;
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      real64 const singlePhysicsNextDt =
+        solver->setNextDtBasedOnStateChange( currentDt, domain );
+      nextDt = LvArray::math::min( singlePhysicsNextDt, nextDt );
+    } );
+    return nextDt;
+  }
+
+
   /**@}*/
 
 protected:

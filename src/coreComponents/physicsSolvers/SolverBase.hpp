@@ -134,28 +134,30 @@ public:
                              integer const cycleNumber,
                              DomainPartition & domain );
 
-
+  /**
+   * @brief function to set the next time step size
+   * @param[in] currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  virtual real64 setNextDt( real64 const & currentDt,
+                            DomainPartition & domain );
 
   /**
-   * @brief entry function to perform a solver step
-   * @param [in]  time_n time at the beginning of the step
-   * @param [in]  dt the perscribed timestep
-   * @param [out] return the timestep that was achieved during the step.
-   *
-   * T
+   * @brief function to set the next time step size based on Newton convergence
+   * @param[in] currentDt the current time step size
+   * @return the prescribed time step size
    */
-  virtual void setNextDt( real64 const & currentDt,
-                          real64 & nextDt );
+  real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
 
   /**
-   * @brief entry function to perform a solver step
-   * @param [in]  time_n time at the beginning of the step
-   * @param [in]  dt the perscribed timestep
-   * @param [out] return the timestep that was achieved during the step.
+   * @brief function to set the next dt based on state change
+   * @param [in]  currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
    */
-  void setNextDtBasedOnNewtonIter( real64 const & currentDt,
-                                   real64 & nextDt );
-
+  virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
+                                              DomainPartition & domain );
 
   /**
    * @brief Entry function for an explicit time integration step

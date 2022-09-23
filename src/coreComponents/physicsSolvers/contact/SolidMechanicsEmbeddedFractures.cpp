@@ -771,7 +771,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 
 bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )
 {
-  bool hasConfigurationConverged = true;
+  int hasConfigurationConverged = true;
 
   using namespace extrinsicMeshData::contact;
 
@@ -818,7 +818,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
   synchronizeFractureState( domain );
 
   // Compute if globally the fracture state has changed
-  bool hasConfigurationConvergedGlobally;
+  int hasConfigurationConvergedGlobally;
   MpiWrapper::allReduce( &hasConfigurationConverged,
                          &hasConfigurationConvergedGlobally,
                          1,
