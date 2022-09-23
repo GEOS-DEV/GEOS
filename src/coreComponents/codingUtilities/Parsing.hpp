@@ -22,7 +22,6 @@
 #include "common/DataTypes.hpp"
 
 #include <fstream>
-#include <cstdlib>
 
 namespace geosx
 {

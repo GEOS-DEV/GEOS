@@ -18,6 +18,8 @@
 
 #include <fast_float.h>
 
+#include <cstdlib>
+
 namespace geosx
 {
 
