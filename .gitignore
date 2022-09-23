@@ -21,3 +21,4 @@ install-*
 uberenv_libs
 spack-*.txt
 *~
+__pycache__

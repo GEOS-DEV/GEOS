@@ -15,7 +15,8 @@
       sourceCoordinates="{ { 1005.0, 1005.0, 1005.0 } }"
       timeSourceFrequency="5.0"
       receiverCoordinates="{ { 1105,1005, 1005 } }"
-      outputSeismoTrace="1"/>
+      outputSeismoTrace="1"
+      dtSeismoTrace="0.002"/>
 
   </Solvers>
 
@@ -37,8 +38,8 @@
   <Geometry>
     <Box
       name="zpos"
-      xMin="{-0.01, -0.01, 2999.99}"
-      xMax="{3000.01, 3000.01, 3000.01}"/>
+      xMin="{-0.01, -0.01, 1999.99}"
+      xMax="{2000.01, 2000.01, 2000.01}"/>
 
   </Geometry>
 
@@ -174,7 +175,7 @@
     <FieldSpecification
       name="cellVelocityVp"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="mediumVelocityVp"
       scale="2000"
       setNames="{ all }"/>
@@ -182,7 +183,7 @@
     <FieldSpecification
       name="cellVelocityVs"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="mediumVelocityVs"
       scale="1155"
       setNames="{ all }"/>
@@ -190,7 +191,7 @@
     <FieldSpecification
       name="cellDensity"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="mediumDensity"
       scale="1"
       setNames="{ all }"/>
