@@ -61,6 +61,10 @@ if ( ENABLE_CUDA )
   set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
 endif()
 
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( extraComponentsLinkList ${extraComponentsLinkList} CUDA::nvToolsExt )
+endif()
+
 if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
