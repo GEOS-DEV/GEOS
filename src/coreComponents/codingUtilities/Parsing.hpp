@@ -30,59 +30,18 @@ namespace geosx
 {
 
 /**
- * @brief Parse a floating point value from a character sequence.
- * @tparam T type of value (float or double)
- * @param first pointer to start of the character sequence
- * @param last pointer past-the-end of the character sequence
- * @param value the parsed value, or unchanged if parsing failed
- * @return pointer to the first character following the parsed value,
- *         or @p first if parsing dit no succeed for any reason
- */
-template< typename T, std::enable_if_t< std::is_floating_point< T >::value > * = nullptr >
-char const * parseValue( char const * const first,
-                         char const * const last,
-                         T & value )
-{
-  using namespace fast_float;
-  from_chars_result const res = from_chars( first, last, value, chars_format::general );
-  return res.ec == std::errc() && !std::isinf( value ) ? res.ptr : first;
-}
-
-/**
- * @brief Parse an integral value from a character sequence.
+ * @brief Parse an numeric value from a character sequence.
  * @tparam T type of value
  * @param first pointer to start of the character sequence
  * @param last pointer past-the-end of the character sequence
  * @param value the parsed value, or unchanged if parsing failed
  * @return pointer to the first character following the parsed value,
  *         or @p first if parsing did no succeed for any reason
- * @note Only supports values between LLONG_MIN and LLONG_MAX, regardless of T
- * @note If parsed value does not fit into T, terminates the program instead of returning
- *       (due to relying on LvArray::integerConversion for casting the result)
  */
-template< typename T, std::enable_if_t< std::is_integral< T >::value > * = nullptr >
+template< typename T >
 char const * parseValue( char const * const first,
                          char const * const last,
-                         T & value )
-{
-  if( first == last )
-  {
-    return first;
-  }
-
-  errno = 0;
-  char * tmp{};
-  long long const v = std::strtoll( first, &tmp, 0 ); // strtol is not const-correct
-  char const * const ptr = tmp;
-
-  // Error handling from strtol is a bit quirky
-  if( tmp == nullptr || std::distance( ptr, last ) <= 0 || ( ( v == LLONG_MIN || v == LLONG_MAX ) && errno == ERANGE ) )
-  {
-    return first;
-  }
-  value = LvArray::integerConversion< T >( v );
-  return ptr;
-}
+                         T & value );
 
 /**
  * @brief Parse a sequence of values into a container
