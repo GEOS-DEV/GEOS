@@ -128,30 +128,35 @@ void EQ36Database::CreateChemicalSystem( string_array const & primarySpeciesName
   // Read secondary species related entries
   // flag to determine is user has provided a list of secondary species to track
   // Code is currently not set up to work when user does not list secondary species due to difficulty in working with unknown sizes
+  // To allow for automatic population of secondary species based on the database a function similar to readSeconarySpeciesBlock would 
+  // have to be written that just counts the number of secondary species and creates the secondarySpeciesNames variable
   bool inputSecondarySpeciesFlag = secondarySpeciesNames.size() == 0 ? 1 : 0; 
   GEOSX_ERROR_IF( inputSecondarySpeciesFlag, "Currently user is expected to supply secondary species names as well." )
 
-
-  // We probably don't need this. Will evaluate in next round. 
+  // create a map to get the index numbers of the secondary species
   unordered_map< string, int > secondarySpeciesMap;
   for( int ic = 0; ic < secondarySpeciesNames.size(); ic++ )
     secondarySpeciesMap[ secondarySpeciesNames[ic] ] = ic;
 
-  // Have to figure out how to size the different variables as we may not know how many secondary species would we need. 
   // read auxiliary basis species information
-  readSecondarySpeciesBlock( EQ36File, buffer_size, "aqueous species", secondarySpeciesNames, m_MWSec, m_ionSizeSec, m_chargeSec, m_stoichMatrix, m_log10EqConstTempFunction )
+  nextBlockString = "aqueous species"
+  readSecondarySpeciesBlock( nextBlockString, secondarySpeciesNames, MWSec, ionSizeSec, chargeSec, stoichMatrix, log10EqConstTempFunction )
 
   // read auxiliary aqueous species information
-  readSecondarySpeciesBlock( EQ36File, buffer_size, "solids", secondarySpeciesNames, m_MWSec, m_ionSizeSec, m_chargeSec, m_stoichMatrix, m_log10EqConstTempFunction )
+  nextBlockString = "solids"
+  readSecondarySpeciesBlock( nextBlockString, secondarySpeciesNames, MWSec, ionSizeSec, chargeSec, stoichMatrix, log10EqConstTempFunction )
 
   // read solid species information
-  readSecondarySpeciesBlock( EQ36File, buffer_size, "liquids", secondarySpeciesNames, m_MWSec, m_ionSizeSec, m_chargeSec, m_stoichMatrix, m_log10EqConstTempFunction )
+  nextBlockString = "liquids"
+  readSecondarySpeciesBlock( nextBlockString, secondarySpeciesNames, MWSec, ionSizeSec, chargeSec, stoichMatrix, log10EqConstTempFunction )
 
   // read liquid species information
-  readSecondarySpeciesBlock( EQ36File, buffer_size, "gases", secondarySpeciesNames, m_MWSec, m_ionSizeSec, m_chargeSec, m_stoichMatrix, m_log10EqConstTempFunction )
+  nextBlockString = "gases"
+  readSecondarySpeciesBlock( nextBlockString, secondarySpeciesNames, MWSec, ionSizeSec, chargeSec, stoichMatrix, log10EqConstTempFunction )
 
   // read gases species information
-  readSecondarySpeciesBlock( EQ36File, buffer_size, "solid solutions", secondarySpeciesNames, m_MWSec, m_ionSizeSec, m_chargeSec, m_stoichMatrix, m_log10EqConstTempFunction )
+  nextBlockString = "solid solutions"
+  readSecondarySpeciesBlock( nextBlockString, secondarySpeciesNames, MWSec, ionSizeSec, chargeSec, stoichMatrix, log10EqConstTempFunction )
 
   is.close();
 }
@@ -282,10 +287,8 @@ void EQ36Database::readPrimarySpeciesBlock( string const nextBlockString,
   GEOSX_ERROR_IF( countPrimary != primarySpeciesNames.size(), "Could not find all input primary species." )
 }
 
-void EQ36Database::readSecondarySpeciesBlock( std::ifstream const EQ36File, 
-                                              std::streamsize const bufferSize,
-                                              string const nextBlockString,
-                                              string_array const & secondarySpeciesNames,
+void EQ36Database::readSecondarySpeciesBlock( string const nextBlockString,
+                                              unordered_map const & secondarySpeciesMap,
                                               arraySlice1d< real64 > const & MWSec,
                                               arraySlice1d< real64 > const & ionSizeSec,
                                               arraySlice1d< integer > const & chargeSec, 
@@ -299,9 +302,10 @@ void EQ36Database::readSecondarySpeciesBlock( std::ifstream const EQ36File,
   array1d< real64 > stoichs;
   array1d< real64 > logKs;
 
-  count = 0;
+  countSecondary = 0;
+  bool primarySpeciesFound = 0
 
-  while( EQ36File.getline( fileLine, bufferSize ))          // read from file
+  while( m_EQ36File.getline( fileLine, m_bufferSize ))          // read from file
   {
     std::string fileLineString( fileLine );
     {
@@ -310,27 +314,23 @@ void EQ36Database::readSecondarySpeciesBlock( std::ifstream const EQ36File,
       {
         // record these entries only when all the products in the reaction associated with this species are listed as a primary species in the input file
         // Have to update how that is determined in the bottom. Will do in next round
-        if( primarySpeciesIndices.size() > 1 )
+        if( primarySpeciesFound )
         {
-          // Find if the species is listed as a secondary species or if no secondary species are provided in the input file
-          // Have to check if find() and end() can be used with the varaible secondarySpeciesNames
-          auto iter = secondarySpeciesNames.find( speciesName );
-          if( iter != secondarySpeciesNames.end() || inputSecondarySpeciesFlag )
+          // Find if the species is listed as a secondary species 
+          auto iter = secondarySpeciesMap.find( speciesName );
+          if( iter != secondarySpeciesMap.end() )
           {
-            // Have to figure out how to get the speciesIndex
-            if( inputSecondarySpeciesFlag )
-            {
-              secondarySpeciesNames.emplace_back( speciesName )
-            }
-            // Ignoring speciesType information since I don't know what difference does it make
-            MWSec[speciesIndex] = MW;
-            ionSizeSec[speciesIndex] = ionSize;
-            chargeSec[speciesIndex] = charge;
-            log10EqConstTempFunction[speciesIndex][:] = logKs;         // rectify syntax
-            stoichMatrix[speciesIndex][:] = stoichs;                   // rectify syntax
 
-            // This will probably get replaced by whatever lines we use to determine the species index
-            count++;
+            int secSpeciesIndex = secondarySpeciesMap[speciesName]
+
+            // Ignoring speciesType information since I don't know what difference does it make
+            MWSec[secSpeciesIndex] = MW;
+            ionSizeSec[secSpeciesIndex] = ionSize;
+            chargeSec[secSpeciesIndex] = charge;
+            log10EqConstTempFunction[secSpeciesIndex][:] = logKs;         // rectify syntax
+            stoichMatrix[secSpeciesIndex][:] = stoichs;                   // rectify syntax
+
+            countSecondary++;
           }
 
           speciesIndices.clear();
@@ -339,12 +339,12 @@ void EQ36Database::readSecondarySpeciesBlock( std::ifstream const EQ36File,
           speciesNames.clear();
         }
 
-        EQ36File.getline( fileLine, bufferSize );                       // read the next line
+        m_EQ36File.getline( fileLine, m_bufferSize );                       // read the next line
         std::string fileLineString2( fileLine );
         string_array lineEntries2 = Tokenize( fileLineString2, " " );
         speciesName = lineEntries2[0];
 
-        auto found2 = lineEntries2.find( "aqueous species" );           // if reached next block, exit the loop
+        auto found2 = lineEntries2.find( nextBlockString );           // if reached next block, exit the loop
         if( found2 != std::string::npos )
         {
           break;
@@ -381,18 +381,22 @@ void EQ36Database::readSecondarySpeciesBlock( std::ifstream const EQ36File,
         charge = std::stoi( lineEntries[2] );
       }
     }
-
     // stoichiometric section
     {
       auto found = fileLineString.find( "aqueous dissociation reaction" );
       if( found != std::string::npos )
       {
         string_array lineEntries = Tokenize( fileLineString, " " );
-        integer numSpecies =  std::stoi( lineEntries[0] );       // number of species that participate in the reaction
-        speciesNames.clear();
+        integer numRxnSpecies =  std::stoi( lineEntries[0] );       // number of species that participate in the reaction
+        reactionPrimarySpeciesNames.clear();    
+        reactionPrimarySpeciesIndices.clear();    
         stoichs.clear();
+        reactionPrimarySpeciesNames.resize( numRxnSpecies-1 )
+        reactionPrimarySpeciesIndices.resize( numRxnSpecies-1 )
+        stoichs.resize( numRxnSpecies-1 )
 
-        while( EQ36File.getline( fileLine, bufferSize ))
+        int reactionSpeciesCount = 0
+        while( m_EQ36File.getline( fileLine, m_bufferSize ))
         {
           std::string fileLineString2( fileLine );
           auto found2 = fileLineString2.find( "* Log K" );      // reached the end of this block so exit loop
@@ -400,51 +404,41 @@ void EQ36Database::readSecondarySpeciesBlock( std::ifstream const EQ36File,
             break;
 
           string_array lineEntries2 = Tokenize( fileLineString2, " " );
-          for( int i = 0; i < lineEntries2.size(); i++ )
+          for( int i = 0; i < lineEntries2.size(); i = i+2 )
           {
-            if( i % 2 == 0 )
-              stoichs.emplace_back( std::stod( lineEntries2[i] ));
-            else
-              // have to figure out a way to find the index corresponding to this primary species. Needs to be done in the next round
-              // Will have to treat H2O as special case
-              speciesNames.emplace_back( lineEntries2[i] );
+            GEOSX_ERROR_IF( reactionSpeciesCount == 0 & lineEntries2[0] != speciesName, "Internal error when reading database" );
+            GEOSX_ERROR_IF( reactionSpeciesCount == 0 & lineEntries2[1] != -1, "First species in the reaction is expected to have a stoichiometry of -1" );
+            reactionSpeciesCount++
+            if( reactionSpeciesCount > 1 )
+            {
+              auto it = primarySpeciesMap.find( lineEntries2[i+1] );
+              // Note that no special treatment for H2O or O2 gas has been implemented. 
+              // If these are present in one's problem, they need to be listed as input primary species. 
+              if ( it != primarySpeciesMap.end() )
+              {
+                reactionPrimarySpeciesNames[reactionSpeciesCount-1] = lineEntries2[i+1];
+                stoichs[reactionSpeciesCount-1] = lineEntries2[i];
+                reactionPrimarySpeciesIndices[reactionSpeciesCount-1] = primarySpeciesMap[ lineEntries2[i+1] ];
+                primarySpeciesFound = 1
+              }
+              else
+              {
+                primarySpeciesFound = 0
+                break
+              }
+            }
           }
         }
 
-        GEOSX_ERROR_IF( numSpecies != speciesNames.size() || numSpecies != stoichs.size() || speciesName != speciesNames[0], "Internal error when reading database" );
-
-        // Find if all the  species listed in the dissociation reaction are listed as primary species in the input file 
-        // Will have to write something special for H2O
-        // This might get combined in the piece of code we need to write to tie the primary species in the reaction to its corresponding index
-        bool notFound = 0;
-        speciesIndices.resize( numSpecies );
-        speciesIndices[0] = count;
-
-        for( int i = 1; i < numSpecies; i++ )
-        {
-          auto it = primarySpeciesNames.find( speciesNames[i] );
-          if( it != primarySpeciesNames.end())
-          {
-            speciesIndices[i] = it->second;
-          }
-          else
-          {
-            notFound = 1;
-            break;
-          }
-        }
+        GEOSX_ERROR_IF( reactionSpeciesCount != numRxnSpecies, "Internal error when reading database" );
 
         // If even one of the species in the reaction is not listed as a primary species in the input file, do not include this secondary species
         // Else, read the equilibrium constant section.         
         // This may also get combined in the piece of code we need to write to tie the primary species in the reaction to its corresponding index
-        if( notFound )
-        {
-          speciesIndices.clear();
-        }
-        else
+        if( primarySpeciesFound )
         {
           logKs.clear();
-          while( EQ36File.getline( fileLine, bufferSize ))
+          while( m_EQ36File.getline( fileLine, m_bufferSize ))
           {
             std::string fileLineString2( fileLine );
             auto found2 = fileLineString2.find( "*" );          // if reached next section, exit the loop
@@ -453,7 +447,7 @@ void EQ36Database::readSecondarySpeciesBlock( std::ifstream const EQ36File,
 
             string_array lineEntries2 = Tokenize( fileLineString2, " " );
             for( int i = 0; i < lineEntries2.size(); i++ )
-              logKs.emplace_back( std::stod( lineEntries2[i] ));
+              logKs.emplace_back( std::stod( lineEntries2[i] ));      // Check with Matteo what to do about this since we don't know the size of the vector
           }
         }
       }
