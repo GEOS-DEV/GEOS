@@ -360,9 +360,10 @@ void buildCoarseNodes( multiscale::MeshLevel & fineMesh,
   CommunicationTools::getInstance().synchronizeFields( fieldNames, fineNodeManager, fineMesh.domain()->getNeighbors(), false );
 
   // Fill the ghosted part
-  forAll< parallelHostPolicy >( numLocalCoarseNodes, coarseNodes.size(),
-                                [=, coarseNodes = coarseNodes.toViewConst()]( localIndex const i )
+  forAll< parallelHostPolicy >( coarseNodes.size() - numLocalCoarseNodes,
+                                [=, coarseNodes = coarseNodes.toViewConst()]( localIndex const k )
   {
+    localIndex const i = k + numLocalCoarseNodes;
     localIndex const inf = coarseNodes[i];
     coarseNodeLocalIndex[inf] = i;
     coarseNodeLocalToGlobal[i] = coarseNodeGlobalIndex[inf];

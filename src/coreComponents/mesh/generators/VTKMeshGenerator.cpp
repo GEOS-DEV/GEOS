@@ -467,23 +467,23 @@ findGlobalIndexBounds( vtkDataSet & mesh,
                        MPI_Comm const & comm,
                        string const & indexArrayName )
 {
-  RAJA::ReduceMin< parallelHostReduce, int > minIdx[2]{ std::numeric_limits< int >::max(), std::numeric_limits< int >::max() };
-  RAJA::ReduceMax< parallelHostReduce, int > maxIdx[2]{ std::numeric_limits< int >::min(), std::numeric_limits< int >::min() };
+  RAJA::ReduceMin< parallelHostReduce, int > minIdx0{ std::numeric_limits< int >::max() }, minIdx1{ std::numeric_limits< int >::max() };
+  RAJA::ReduceMax< parallelHostReduce, int > maxIdx0{ std::numeric_limits< int >::min() }, maxIdx1{ std::numeric_limits< int >::min() };
   dispatchArray< vtkArrayDispatch::Integrals >( *mesh.GetCellData(), indexArrayName, [&]( auto const index )
   {
-    forAll< parallelHostPolicy >( mesh.GetNumberOfCells(), [index, minIdx, maxIdx]( vtkIdType const i )
+    forAll< parallelHostPolicy >( mesh.GetNumberOfCells(), [=]( vtkIdType const i )
     {
-      for( int k = 0; k < 2; ++k )
-      {
-        auto const idx = index.Get( i, k );
-        minIdx[k].min( idx );
-        maxIdx[k].max( idx );
-      }
+      auto const idx0 = index.Get( i, 0 );
+      minIdx0.min( idx0 );
+      maxIdx0.max( idx0 );
+      auto const idx1 = index.Get( i, 1 );
+      minIdx1.min( idx1 );
+      maxIdx1.max( idx1 );
     } );
   } );
 
-  int const minIdxLocal[2] = { minIdx[0].get(), minIdx[1].get() };
-  int const maxIdxLocal[2] = { maxIdx[0].get(), maxIdx[1].get() };
+  int const minIdxLocal[2] = { minIdx0.get(), minIdx1.get() };
+  int const maxIdxLocal[2] = { maxIdx0.get(), maxIdx1.get() };
   int minIdxGlobal[2], maxIdxGlobal[2];
   MpiWrapper::min< int >( minIdxLocal, minIdxGlobal, comm );
   MpiWrapper::max< int >( maxIdxLocal, maxIdxGlobal, comm );

@@ -84,7 +84,9 @@ findCoarseNodesByDualPartition( MeshObjectManager::MapViewConst const & nodeToDu
 
   // Sort skeleton nodes according to subdomain lists to locate nodes of identical adjacencies
   SetCompare< globalIndex > const adjacencyComp{ nodeToSubdomain.toViewConst() };
-  RAJA::sort< parallelHostPolicy >( RAJA::make_span( skelNodes.begin(), skelNodes.size() ), adjacencyComp );
+  //RAJA::sort< parallelHostPolicy >( RAJA::make_span( skelNodes.begin(), skelNodes.size() ), adjacencyComp );
+  std::sort( skelNodes.begin(), skelNodes.end(), adjacencyComp );
+
 
   // Identify "features" (groups of skeleton nodes with the same subdomain adjacency)
   array1d< localIndex > const featureIndex( nodeToDual.size() );

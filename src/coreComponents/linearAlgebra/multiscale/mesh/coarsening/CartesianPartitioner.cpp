@@ -46,18 +46,18 @@ localIndex CartesianPartitioner::generate( MeshLevel const & mesh,
   // Find the range of locally owned cell cartesian indices
   integer constexpr minIdx = std::numeric_limits< integer >::min();
   integer constexpr maxIdx = std::numeric_limits< integer >::max();
-  RAJA::ReduceMin< parallelHostReduce, integer > loCartIndex[3]{ maxIdx, maxIdx, maxIdx };
-  RAJA::ReduceMax< parallelHostReduce, integer > hiCartIndex[3]{ minIdx, minIdx, minIdx };
+
+  RAJA::ReduceMin< parallelHostReduce, integer > lo0( maxIdx ), lo1( maxIdx ), lo2( maxIdx );
+  RAJA::ReduceMax< parallelHostReduce, integer > hi0( minIdx ), hi1( minIdx ), hi2( minIdx );
 
   forAll< parallelHostPolicy >( cellManager.numOwnedObjects(), [=]( localIndex const i )
   {
-    for( int dim = 0; dim < 3; ++dim )
-    {
-      GEOSX_ASSERT_GE( cartIndex[i][dim], 0 );
-      loCartIndex[dim].min( cartIndex[i][dim] );
-      hiCartIndex[dim].max( cartIndex[i][dim] );
-    }
+    lo0.min( cartIndex[i][0] ); lo1.min( cartIndex[i][1] ); lo2.min( cartIndex[i][2] );
+    hi0.max( cartIndex[i][0] ); hi1.max( cartIndex[i][1] ); hi2.max( cartIndex[i][2] );
   } );
+
+  integer loCartIndex[3] = { lo0.get(), lo1.get(), lo2.get() };
+  integer hiCartIndex[3] = { hi0.get(), hi1.get(), hi2.get() };
 
   // Special treatment for ranks that don't have a piece of the mesh
   if( cellManager.numOwnedObjects() == 0 )
