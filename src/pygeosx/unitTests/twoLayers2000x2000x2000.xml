@@ -73,7 +73,7 @@
       materialList="{ nullModel }"/>
     <CellElementRegion
       name="Region1"
-      cellBlocks="{ cb1}"
+      cellBlocks="{ cb1 }"
       materialList="{ nullModel }"/>
   </ElementRegions>
 
@@ -110,14 +110,14 @@
    <FieldSpecification
       name="cellVelocity"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="mediumVelocity"
       scale="1500"
       setNames="{ all }"/>
    <FieldSpecification
       name="cellVelocity1"
       initialCondition="1"
-      objectPath="ElementRegions/Region1/elementSubRegions/cb1"
+      objectPath="ElementRegions/Region1/cb1"
       fieldName="mediumVelocity"
       scale="1500"
       setNames="{ all }"/>
@@ -127,12 +127,12 @@
   <Tasks>
     <PackCollection
       name="partialGradientCollection"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="partialGradient"/>
 
     <PackCollection
       name="partialGradientCollection1"
-      objectPath="ElementRegions/Region1/elementSubRegions/cb1"
+      objectPath="ElementRegions/Region1/cb1"
       fieldName="partialGradient"/>
   </Tasks>
 
