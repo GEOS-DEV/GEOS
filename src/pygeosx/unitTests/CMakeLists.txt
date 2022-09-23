@@ -25,8 +25,9 @@ if( ENABLE_CUDA )
 endif()
 
 foreach( file ${xmlFiles} )
-  configure_file( ${file} ${CMAKE_CURRENT_BINARY_DIR}/$file COPYONLY )
+  configure_file( ${file} ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY )
 endforeach()
+
 # This macro parse a test file and extract test_ function from it to pass it to ctest
 macro( parse_test_file filename )
   set( filename ${filename} )
