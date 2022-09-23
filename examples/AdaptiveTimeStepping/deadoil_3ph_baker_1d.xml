@@ -16,7 +16,7 @@
         maxTimeStepCuts="10"
         lineSearchMaxCuts="2"
         maxSubSteps="100"
-        dtIncIterLimit="0.3"/>
+        timeStepIncreaseIterLimit="0.3"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
 
