@@ -83,11 +83,11 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
-     solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
+     solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
      solidMechanics/SolidMechanicsStateReset.hpp
-     solidMechanics/SolidMechanicsStatistics.hpp	     
+     solidMechanics/SolidMechanicsStatistics.hpp       
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
      surfaceGeneration/ParallelTopologyChange.hpp
@@ -130,8 +130,8 @@ set( physicsSolvers_sources
      fluidFlow/wells/SinglePhaseWellKernels.cpp
      fluidFlow/wells/WellControls.cpp
      fluidFlow/wells/WellSolverBase.cpp
-     multiphysics/CompositionalMultiphaseReservoirAndWells.cpp               
-     multiphysics/CoupledReservoirAndWellsBase.cpp		
+     multiphysics/CompositionalMultiphaseReservoirAndWells.cpp
+     multiphysics/CoupledReservoirAndWellsBase.cpp  
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/MultiphasePoromechanicsSolver.cpp
@@ -146,7 +146,7 @@ set( physicsSolvers_sources
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      solidMechanics/SolidMechanicsStateReset.cpp
-     solidMechanics/SolidMechanicsStatistics.cpp	          
+     solidMechanics/SolidMechanicsStatistics.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.cpp
      surfaceGeneration/ParallelTopologyChange.cpp
@@ -155,13 +155,37 @@ set( physicsSolvers_sources
      wavePropagation/AcousticWaveEquationSEM.cpp
    )
 
+  set( subregionList CellElementSubRegion )
+  set( solidBaseDispatch "DamageSpectral<ElasticIsotropic>;DamageVolDev<ElasticIsotropic>;Damage<ElasticIsotropic>;DruckerPragerExtended;ModifiedCamClay;DelftEgg;DruckerPrager;ElasticIsotropic;ElasticTransverseIsotropic;ElasticIsotropicPressureDependent;ElasticOrthotropic")
+  set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
+                             H1_Wedge_Lagrange1_Gauss6 )
+  foreach( SUBREGION_TYPE  ${subregionList} )
+    foreach( CONSTITUTIVE_TYPE ${solidBaseDispatch} )
+      foreach( FE_TYPE ${finiteElementDispatch} )
+        message( "SUBREGION_TYPE/CONSTITUTIVE_TYPE/FE_TYPE = ${SUBREGION_TYPE}/${CONSTITUTIVE_TYPE}/${FE_TYPE}")
+        file(READ "${CMAKE_CURRENT_SOURCE_DIR}/solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel/SolidMechanicsSmallStrainExplicitNewmarkKernel.cpp.template" FILE_CONTENTS)
+        string(REPLACE "SUBREGION_TYPE" "${SUBREGION_TYPE}" FILE_CONTENTS ${FILE_CONTENTS})
+        string(REPLACE "CONSTITUTIVE_TYPE" "${CONSTITUTIVE_TYPE}" FILE_CONTENTS ${FILE_CONTENTS})
+        string(REPLACE "FE_TYPE" "${FE_TYPE}" FILE_CONTENTS ${FILE_CONTENTS})
+        set( filename "SolidMechanicsSmallStrainExplicitNewmarkKernel/SolidMechanicsSmallStrainExplicitNewmarkKernel_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
+        set( filepath "${CMAKE_CURRENT_SOURCE_DIR}/solidMechanics/${filename}")
+        string(REPLACE "<" "" filename ${filename})
+        string(REPLACE ">" "" filename ${filename})
+        file(WRITE ${filepath} ${FILE_CONTENTS})
+        list( APPEND physicsSolvers_sources ${filename} )
+      endforeach()
+    endforeach()
+  endforeach()
+
+
+
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
-	python/PySolver.hpp 
-	python/PySolverType.hpp ) 
+  python/PySolver.hpp 
+  python/PySolverType.hpp ) 
   list( APPEND physicsSolvers_sources
-	python/PySolver.cpp ) 
+  python/PySolver.cpp ) 
   list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 

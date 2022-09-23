@@ -19,7 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSFINITESTRAINEXPLICITNEWMARK_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSFINITESTRAINEXPLICITNEWMARK_HPP_
 
-#include "SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
+#include "SolidMechanicsSmallStrainExplicitNewmarkKernel/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
 #include "finiteElement/Kinematics.h"
 
 namespace geosx

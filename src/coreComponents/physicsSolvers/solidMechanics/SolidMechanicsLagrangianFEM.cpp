@@ -19,7 +19,7 @@
 #include "SolidMechanicsLagrangianFEM.hpp"
 #include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
 #include "SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp"
-#include "SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
+#include "SolidMechanicsSmallStrainExplicitNewmarkKernel/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
 #include "SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp"
 
 #include "codingUtilities/Utilities.hpp"
