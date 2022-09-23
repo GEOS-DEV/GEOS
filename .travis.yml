@@ -89,7 +89,7 @@ __geosx_osx_build: &__geosx_osx_build
 __geosx_totalenergies_cluster_build: &__geosx_totalenergies_cluster_build
   <<: *__geosx_linux_build
   # We use the most recent ubuntu distribution available in travis-ci to ensure maximum support of google cloud's sdk.
-  dist: bionic
+  dist: focal
   addons:
     apt:
       sources:
