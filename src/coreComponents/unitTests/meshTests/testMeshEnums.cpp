@@ -38,9 +38,14 @@ TEST( MeshEnums, ElementType )
   ASSERT_EQ( "C3D8", toString( EnumType::Hexahedron ) );
   ASSERT_EQ( "PentagonalPrism", toString( EnumType::Prism5 ) );
   ASSERT_EQ( "HexagonalPrism", toString( EnumType::Prism6 ) );
+  ASSERT_EQ( "HeptagonalPrism", toString( EnumType::Prism7 ) );
+  ASSERT_EQ( "OctagonalPrism", toString( EnumType::Prism8 ) );
+  ASSERT_EQ( "NonagonalPrism", toString( EnumType::Prism9 ) );
+  ASSERT_EQ( "DecagonalPrism", toString( EnumType::Prism10 ) );
+  ASSERT_EQ( "HendecagonalPrism", toString( EnumType::Prism11 ) );
   ASSERT_EQ( "Polyhedron", toString( EnumType::Polyhedron ) );
 
-  ASSERT_EQ( numElementTypes(), 12 );
+  ASSERT_EQ( numElementTypes(), 17 );
 }
 
 
