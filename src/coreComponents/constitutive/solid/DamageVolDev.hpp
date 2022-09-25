@@ -29,6 +29,21 @@ namespace geosx
 namespace constitutive
 {
 
+/**
+ * @class DamageVolDevUpdates
+ * 
+ * @tparam UPDATE_BASE the underlying intact solid model
+ * 
+ * this class implements the material updates for the case of a damage response
+ * that is assymetric in tension and compression. The volumetric-deviatoric
+ * decomposition of the strain tensor is used to effect the assymetry. 
+ * 
+ * References: (for the vol-dev split)
+ * 
+ * Amor, H., Marigo, J.-J., Maurini, C., 2009. Regularized formulation of the variational brittle fracture with unilateral
+ * contact: Numerical experiments. Journal of the Mechanics and Physics of Solids 57 (8), 1209 – 1229.
+ * 
+ */
 template< typename UPDATE_BASE >
 class DamageVolDevUpdates : public DamageUpdates< UPDATE_BASE >
 {
@@ -61,6 +76,7 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
   using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
 
+  ///this function implements the modified strain update to account for the volumetric-deviatoric split
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -129,7 +145,7 @@ public:
     }
   }
 
-
+  ///accessor for strain energy density - in this case, it only cares about the positive part
   GEOSX_HOST_DEVICE
   virtual real64 getStrainEnergyDensity( localIndex const k,
                                          localIndex const q ) const override final
@@ -139,7 +155,18 @@ public:
 
 };
 
-
+/**
+ * @class DamageVolDev
+ *
+ * This class implements the changes to the update functions that are needed 
+ * to account for an assymetric damage response in tension and compression.
+ * In this case, the split between tension and compression is effected through the
+ * use of a volumetric-deviatoric decomposition of the strain tensor. Only the positive
+ * part of the strain tensor in this decomposition will be degraded. Also, only this 
+ * part will contribute to the active part of the strain energy that drives damage
+ * evolution.
+ * 
+ */
 template< typename BASE >
 class DamageVolDev : public Damage< BASE >
 {

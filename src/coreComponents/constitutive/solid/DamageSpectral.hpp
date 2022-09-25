@@ -35,6 +35,30 @@ namespace geosx
 namespace constitutive
 {
 
+/**
+ * @class DamageSpectralUpdates
+ * 
+ * @tparam UPDATE_BASE the underlying intact solid model
+ * 
+ * this class implements the material updates for the case of a damage response
+ * that is assymetric in tension and compression. The spectral decomposition of
+ * the strain tensor is used to effect the assymetry. 
+ * 
+ * In this implementation, the fracture behavior of the material is assumed to be
+ * cohesive, and the degradation function proposed by Lorentz et al. is used.
+ * 
+ * References: (for the cohesive model)
+ * 
+ * Lorentz, E., Cuvilliez, S., Kazymyrenko, K., 2011. Convergence of a gradient damage model toward a cohesive zone
+ * model. Comptes Rendus Mcanique 339 (1), 20 – 26
+ * 
+ * Lorentz, E., Cuvilliez, S., Kazymyrenko, K., 2012. Modelling large crack propagation: from gradient damage to
+ * cohesive zone models. International Journal of Fracture 178 (1), 85–95
+ * 
+ * Geelen, R., Liu, Y., Hu, T., Tupek, M., Dolbow, J., 2019. A phase-field formulation for dynamic cohesive fracture.
+ * Computer Methods in Applied Mechanics and Engineering 348, 680-711
+ * 
+ */
 template< typename UPDATE_BASE >
 class DamageSpectralUpdates : public DamageUpdates< UPDATE_BASE >
 {
@@ -71,8 +95,8 @@ public:
   using UPDATE_BASE::m_bulkModulus;  // TODO: model below strongly assumes iso elasticity, templating not so useful
   using UPDATE_BASE::m_shearModulus;
 
-  // Lorentz type degradation functions
-
+  
+  ///degradation function of the quasi-quadratic type, used to model a cohesive fracture behavior
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationValue( localIndex const k,
@@ -87,7 +111,7 @@ public:
     return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
   }
 
-
+  ///first derivative of the quasi-quadratic degradation function
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationDerivative( real64 const d ) const override
@@ -101,7 +125,7 @@ public:
     return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
   }
 
-
+  ///second derivative of the quasi-quadratic degradation function
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( real64 const d ) const override
@@ -115,7 +139,7 @@ public:
     return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
   }
 
-
+  ///this function implements the modified strain update to account for the spectral split
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -235,7 +259,7 @@ public:
     }
   }
 
-
+  ///alternatative form of the strain update if stiffness is passed as a DiscretizationOps
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -246,7 +270,7 @@ public:
     smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
   }
 
-
+  ///accessor for strain energy density - in this case, it only cares about the positive part
   GEOSX_HOST_DEVICE
   virtual real64 getStrainEnergyDensity( localIndex const k,
                                          localIndex const q ) const override final
@@ -254,7 +278,7 @@ public:
     return m_strainEnergyDensity( k, q );
   }
 
-
+  ///accessor for the energy threshold, which, in the cohesive formulation, is independent of the regularization length
   GEOSX_HOST_DEVICE
   virtual real64 getEnergyThreshold() const override final
   {
@@ -263,7 +287,24 @@ public:
 
 };
 
-
+/**
+ * @class DamageSpectral
+ *
+ * This class implements the changes to the update functions that are needed 
+ * to account for an assymetric damage response in tension and compression.
+ * In this case, the split between tension and compression is effected through the
+ * use of a spectral decomposition of the strain tensor. Only the positive part 
+ * of the strain tensor in this decomposition will be degraded. Also, only this 
+ * part will contribute to the active part of the strain energy that drives damage
+ * evolution.
+ * 
+ * Reference:
+ * 
+ * Miehe, Christian; Hofacker, Martina; Welschinger, Fabian. A phase field model for rate-independent crack
+ * propagation: Robust algorithmic implementation based on operator splits.
+ * Computer Methods in Applied Mechianics and Engineering, v. 199, n. 45-48, p. 2765-2778, 2010
+ * 
+ */
 template< typename BASE >
 class DamageSpectral : public Damage< BASE >
 {
