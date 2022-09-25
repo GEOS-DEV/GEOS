@@ -139,7 +139,24 @@ public:
     return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
   }
 
-  ///this function implements the modified strain update to account for the spectral split
+  ///this function implements the modified stress update to account for the spectral split - it also computes the stiffness and active part of the strain energy
+    /**
+   * @brief performs the update of stresses and stiffness, using damage with spectral decomposition
+   *
+   * This function performs the updates of the mechanical state of a damaged solid, assuming the spectral decomposition 
+   * for assymetric damage behavior in tension and compression. From the strain increment computed in the solver, it 
+   * updates the stresses and stiffness of the material at each quadrature point.
+   * 
+   * @note The active part of the strain energy density, stored in m_strainEnergyDensity is also updated in this step.
+   * This active part depends on the strain decomposition, since only the positive part of strain contributes to damage 
+   * evolution.
+   *
+   * @param[in] k The element index.
+   * @param[in] q The quadrature point index.
+   * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
+   * @param[out] stress New stress value (Cauchy stress)
+   * @param[out] stiffness New stiffness value
+   */
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
