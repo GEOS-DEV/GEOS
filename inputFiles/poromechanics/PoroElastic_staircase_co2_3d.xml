@@ -38,6 +38,8 @@
       name="twoPhaseFlow"
       logLevel="1"
       discretization="fluidTPFA"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
       targetRegions="{ channel, barrier  }"
       temperature="300"
       useMass="1"/>

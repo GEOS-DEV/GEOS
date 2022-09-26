@@ -41,7 +41,10 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
     setSizedFromParent( 0 );
 
   registerExtrinsicData( extrinsicMeshData::relperm::phaseRelPerm{}, &m_phaseRelPerm );
-  registerExtrinsicData( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{}, &m_dPhaseRelPerm_dPhaseVolFrac );
+  registerExtrinsicData( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{},
+                         &m_dPhaseRelPerm_dPhaseVolFrac );
+
+  registerExtrinsicData( extrinsicMeshData::relperm::phaseTrappedVolFraction{}, &m_phaseTrappedVolFrac );
 
   registerExtrinsicData( extrinsicMeshData::relperm::phaseRelPerm_n{}, &m_phaseRelPerm_n );
 
@@ -93,6 +96,9 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
   m_phaseRelPerm.resize( size, numPts, numPhases );
   m_phaseRelPerm_n.resize( size, numPts, numPhases );
   m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases );
+  //phase trapped for stats
+  m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
+  m_phaseTrappedVolFrac.zero();
 }
 
 void RelativePermeabilityBase::setLabels()
@@ -100,6 +106,8 @@ void RelativePermeabilityBase::setLabels()
   getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm >().
     setDimLabels( 2, m_phaseNames );
   getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm_n >().
+    setDimLabels( 2, m_phaseNames );
+  getExtrinsicData< extrinsicMeshData::relperm::phaseTrappedVolFraction >().
     setDimLabels( 2, m_phaseNames );
 }
 
@@ -114,6 +122,7 @@ void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group &
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
 }
+
 
 } // namespace constitutive
 

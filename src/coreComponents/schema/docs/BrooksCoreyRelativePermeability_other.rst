@@ -7,6 +7,7 @@ dPhaseRelPerm_dPhaseVolFraction real64_array4d Derivative of phase relative perm
 phaseOrder                      integer_array  (no description available)                                                                                                 
 phaseRelPerm                    real64_array3d Phase relative permeability                                                                                                
 phaseRelPerm_n                  real64_array3d Phase relative permeability at previous time                                                                               
+phaseTrappedVolFraction         real64_array3d Phase trapped volume fraction                                                                                              
 phaseTypes                      integer_array  (no description available)                                                                                                 
 volFracScale                    real64         Factor used to scale the phase relative permeability, defined as: one minus the sum of the phase minimum volume fractions. 
 =============================== ============== ========================================================================================================================== 
