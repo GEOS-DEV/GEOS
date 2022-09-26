@@ -1,0 +1,19 @@
+
+
+#include "../KERNELNAME_impl.hpp"
+
+namespace geosx
+{
+using namespace constitutive;
+using namespace finiteElement;
+namespace solidMechanicsLagrangianFEMKernels
+{
+template class KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
+
+template real64 KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+kernelLaunch< parallelDevicePolicy<32>, 
+              KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > >
+              ( localIndex const, 
+                KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > const & );
+}
+}
