@@ -41,19 +41,19 @@ public:
    * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
    * @param elementIndices The container for the element indices for each point in each stencil
    * @param weights The container for the weights for each point in each stencil
-   * @param stabWeights The container for the stabilization weights for each point in each stencil
    * @param faceNormal Face normal vector
    * @param cellToFaceVec Cell center to face center vector
    * @param transMultiplier Transmissibility multiplier
+   * @param geometricStabilizationCoef Geometric coefficient for pressure jump stabilization
    */
   CellElementStencilTPFAWrapper( IndexContainerType const & elementRegionIndices,
                                  IndexContainerType const & elementSubRegionIndices,
                                  IndexContainerType const & elementIndices,
                                  WeightContainerType const & weights,
-                                 WeightContainerType const & stabWeights,
                                  arrayView2d< real64 > const & faceNormal,
                                  arrayView3d< real64 > const & cellToFaceVec,
-                                 arrayView1d< real64 > const & transMultiplier );
+                                 arrayView1d< real64 > const & transMultiplier,
+                                 arrayView1d< real64 > const & geometricStabilizationCoef );
 
   /**
    * @brief Compute weights and derivatives w.r.t to one variable.
@@ -71,17 +71,26 @@ public:
                        real64 ( &dWeight_dVar )[1][2] ) const;
 
   /**
-   * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
+   * @brief Compute weights and derivatives w.r.t to one variable without coefficient
    * Used in ReactiveCompositionalMultiphaseOBL solver for thermal transmissibility computation:
-   * here, conductivity is a part of operator and connot be used directly as a coefficient
+   * here, conductivity is a part of operator and cannot be used directly as a coefficient
    * @param[in] iconn connection index
    * @param[out] weight view weights
-   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
    */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar )[1][2] ) const;
+
+  /**
+   * @brief Compute the stabilization weights
+   * @param[in] iconn connection index
+   * @param[out] stabilizationWeight view weights
+   */
+  GEOSX_HOST_DEVICE
+  void computeStabilizationWeights( localIndex iconn,
+                                    real64 ( &stabilizationWeight )[1][2] ) const;
 
   /**
    * @brief Give the number of stencil entries.
@@ -123,6 +132,7 @@ private:
   arrayView2d< real64 > m_faceNormal;
   arrayView3d< real64 > m_cellToFaceVec;
   arrayView1d< real64 > m_transMultiplier;
+  arrayView1d< real64 > m_geometricStabilizationCoef;
 };
 
 
@@ -145,16 +155,17 @@ public:
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
                     real64 const * const weights,
-                    real64 const * const stabWeights,
                     localIndex const connectorIndex ) override;
 
   /**
    * @brief Add the vectors need to compute the transmissiblity to the Stencil.
    * @param[in] transMultiplier the transmissibility multiplier
+   * @param[in] geometricStabilizationCoef the stabilization weight
    * @param[in] faceNormal the normal to the face
    * @param[in] cellToFaceVec distance vector between the cell center and the face
    */
   void addVectors( real64 const & transMultiplier,
+                   real64 const & geometricStabilizationCoef,
                    real64 const (&faceNormal)[3],
                    real64 const (&cellToFaceVec)[2][3] );
 
@@ -196,6 +207,7 @@ private:
   array2d< real64 > m_faceNormal;
   array3d< real64 > m_cellToFaceVec;
   array1d< real64 > m_transMultiplier;
+  array1d< real64 > m_geometricStabilizationCoef;
 };
 
 GEOSX_HOST_DEVICE
@@ -315,6 +327,16 @@ CellElementStencilTPFAWrapper::
 
   dWeight_dVar[0][0] = 0.0;
   dWeight_dVar[0][1] = 0.0;
+}
+
+GEOSX_HOST_DEVICE
+inline void
+CellElementStencilTPFAWrapper::
+  computeStabilizationWeights( localIndex iconn,
+                               real64 ( & stabilizationWeight )[1][2] ) const
+{
+  stabilizationWeight[0][0] = m_geometricStabilizationCoef[iconn];
+  stabilizationWeight[0][1] = -m_geometricStabilizationCoef[iconn];
 }
 
 

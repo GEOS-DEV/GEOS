@@ -168,9 +168,7 @@ public:
     m_macroElementIndex( stabCompFlowAccessors.get( extrinsicMeshData::flow::macroElementIndex {} ) ),
     m_bulkModulus( solidAccessors.get( extrinsicMeshData::solid::bulkModulus {} ) ),
     m_shearModulus( solidAccessors.get( extrinsicMeshData::solid::shearModulus {} ) ),
-    m_biotCoefficient( porosityAccessors.get( extrinsicMeshData::porosity::biotCoefficient {} ) ),
-    m_stabWeights( stencilWrapper.getStabilizationWeights() )
-
+    m_biotCoefficient( porosityAccessors.get( extrinsicMeshData::porosity::biotCoefficient {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables
@@ -192,6 +190,10 @@ public:
     using Base::StackVariables::localFlux;
     using Base::StackVariables::localFluxJacobian;
 
+    /// Stabilization transmissibility
+    real64 stabTransmissibility[maxNumConns][2]{};
+
+    /// Stabilization flux and derivatives
     stackArray1d< real64, maxNumElems * numEqn > stabFlux;
     stackArray2d< real64, maxNumElems * numEqn * maxStencilSize * numDof > dStabFlux_dP;
 
@@ -206,6 +208,10 @@ public:
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
+
+    m_stencilWrapper.computeStabilizationWeights( iconn,
+                                                  stack.stabTransmissibility );
+
     // ***********************************************
     // First, we call the base computeFlux to compute:
     //  1) compFlux and its derivatives,
@@ -241,7 +247,7 @@ public:
         tauStab = 9.0 * ( m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei] )
                   / ( 32.0 * ( 10.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei] ) );
 
-        dPresGradStab += tauStab * m_stabWeights( iconn, i ) * (m_pres[er][esr][ei] - m_pres_n[er][esr][ei]); // jump in dp, not p
+        dPresGradStab += tauStab * stack.stabTransmissibility[0][i] * (m_pres[er][esr][ei] - m_pres_n[er][esr][ei]); // jump in dp, not p
       }
 
       // modify stabilization flux
@@ -267,7 +273,7 @@ public:
 
           for( integer ke = 0; ke < stack.stencilSize; ++ke )
           {
-            stack.dStabFlux_dP[ke][ic] += tauStab * m_stabWeights( iconn, ke ) * laggedUpwindCoef;
+            stack.dStabFlux_dP[ke][ic] += tauStab * stack.stabTransmissibility[0][ke] * laggedUpwindCoef;
           }
         }
       }
@@ -306,9 +312,6 @@ protected:
   ElementViewConst< arrayView1d< real64 const > > const m_bulkModulus;
   ElementViewConst< arrayView1d< real64 const > > const m_shearModulus;
   ElementViewConst< arrayView1d< real64 const > > const m_biotCoefficient;
-
-  /// Views on the stabilization weights
-  typename STENCILWRAPPER::WeightContainerViewConstType m_stabWeights;
 
 };
 

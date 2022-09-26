@@ -41,7 +41,6 @@ public:
    * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
    * @param elementIndices The container for the element indices for each point in each stencil
    * @param weights The container for the weights for each point in each stencil
-   * @param stabWeights The container for the stabilization weights for each point in each stencil
    * @param faceNormal Face normal vector
    * @param cellToFaceVec Cell center to face center vector
    * @param transMultiplier Transmissibility multiplier
@@ -50,7 +49,6 @@ public:
                                    IndexContainerType const & elementSubRegionIndices,
                                    IndexContainerType const & elementIndices,
                                    WeightContainerType const & weights,
-                                   WeightContainerType const & stabWeights,
                                    arrayView2d< real64 > const & faceNormal,
                                    arrayView2d< real64 > const & cellToFaceVec,
                                    arrayView1d< real64 > const & transMultiplier );
@@ -139,6 +137,16 @@ public:
                        real64 ( &dWeight_dVar1 )[1][2],
                        real64 ( &dWeight_dVar2 )[1][2] ) const;
 
+  /**
+   * @brief Compute the stabilization weights
+   * @param[in] iconn connection index
+   * @param[out] stabilizationWeight view weights
+   */
+  GEOSX_HOST_DEVICE
+  void computeStabilizationWeights( localIndex iconn,
+                                    real64 ( & stabilizationWeight )[1][2] ) const
+  { GEOSX_UNUSED_VAR( iconn, stabilizationWeight ); }
+
 private:
 
   /// Face normal vector
@@ -172,7 +180,6 @@ public:
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
                     real64 const * const weights,
-                    real64 const * const stabWeights,
                     localIndex const connectorIndex ) override;
 
   /**

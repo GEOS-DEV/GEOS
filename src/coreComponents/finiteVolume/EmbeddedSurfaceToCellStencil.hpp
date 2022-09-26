@@ -41,13 +41,11 @@ public:
    * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
    * @param elementIndices The container for the element indices for each point in each stencil
    * @param weights The container for the weights for each point in each stencil
-   * @param stabWeights The container for the stabilization weights for each point in each stencil
    */
   EmbeddedSurfaceToCellStencilWrapper( IndexContainerType const & elementRegionIndices,
                                        IndexContainerType const & elementSubRegionIndices,
                                        IndexContainerType const & elementIndices,
-                                       WeightContainerType const & weights,
-                                       WeightContainerType const & stabWeights );
+                                       WeightContainerType const & weights );
 
   /**
    * @brief Give the number of stencil entries.
@@ -131,6 +129,16 @@ public:
                        real64 ( &dWeight_dVar1 )[1][2],
                        real64 ( &dWeight_dVar2 )[1][2] ) const;
 
+  /**
+   * @brief Compute the stabilization weights
+   * @param[in] iconn connection index
+   * @param[out] stabilizationWeight view weights
+   */
+  GEOSX_HOST_DEVICE
+  void computeStabilizationWeights( localIndex iconn,
+                                    real64 ( & stabilizationWeight )[1][2] ) const
+  { GEOSX_UNUSED_VAR( iconn, stabilizationWeight ); }
+
 };
 
 /**
@@ -147,7 +155,6 @@ public:
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
                     real64 const * const weights,
-                    real64 const * const stabWeights,
                     localIndex const connectorIndex ) override;
 
   /// Type of kernel wrapper for in-kernel update

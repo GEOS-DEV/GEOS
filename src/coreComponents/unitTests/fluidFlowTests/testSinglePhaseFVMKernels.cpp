@@ -171,13 +171,11 @@ TEST( SinglePhaseFVMKernels, fluxFull )
   localIndex elemSubReg[2] = {0, 0};
   localIndex elemIndex[2] = {1, 0};
   real64 weight[] = { 1e-12, -1e-12 };
-  real64 stabWeight[] = { 1e-12, -1e-12 };
   stencil.add( stencilSize,
                elemReg,
                elemSubReg,
                elemIndex,
                weight,
-               stabWeight,
                0 );
 
 

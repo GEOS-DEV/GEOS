@@ -83,18 +83,15 @@ public:
    * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
    * @param elementIndices The container for the element indices for each point in each stencil
    * @param weights The container for the weights for each point in each stencil
-   * @param stabWeights The container for the weights for stablilization for each point in each stencil
    */
   StencilWrapperBase( typename TRAITS::IndexContainerType const & elementRegionIndices,
                       typename TRAITS::IndexContainerType const & elementSubRegionIndices,
                       typename TRAITS::IndexContainerType const & elementIndices,
-                      typename TRAITS::WeightContainerType const & weights,
-                      typename TRAITS::WeightContainerType const & stabWeights ):
+                      typename TRAITS::WeightContainerType const & weights ):
     m_elementRegionIndices( elementRegionIndices.toViewConst() ),
     m_elementSubRegionIndices( elementSubRegionIndices.toViewConst() ),
     m_elementIndices( elementIndices.toViewConst() ),
-    m_weights( weights.toViewConst() ),
-    m_stabWeights( stabWeights.toViewConst() )
+    m_weights( weights.toViewConst() )
   {};
 
   /**
@@ -125,13 +122,6 @@ public:
   typename TRAITS::WeightContainerViewConstType
   getWeights() const { return m_weights; }
 
-  /**
-   * @brief Const access to the stencil stabilization weights.
-   * @return A view to const
-   */
-  typename TRAITS::WeightContainerViewConstType
-  getStabilizationWeights() const { return m_stabWeights; }
-
 protected:
 
   /// The container for the element region indices for each point in each stencil
@@ -145,9 +135,6 @@ protected:
 
   /// The container for the weights for each point in each stencil
   typename TRAITS::WeightContainerViewConstType m_weights;
-
-  /// The container for the weights for stabilization for each point in each stencil
-  typename TRAITS::WeightContainerViewConstType m_stabWeights;
 };
 
 
@@ -190,7 +177,6 @@ public:
    * @param[in] elementSubRegionIndices The element sub-region indices for each point in the stencil entry
    * @param[in] elementIndices The element indices for each point in the stencil entry
    * @param[in] weights The weights each point in the stencil entry
-   * @param[in] stabWeights The weights for stabilization for each point in the stencil entry
    * @param[in] connectorIndex The index of the connector element that the stencil acts across
    */
   virtual void add( localIndex const numPts,
@@ -198,7 +184,6 @@ public:
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
                     real64 const * const weights,
-                    real64 const * const stabWeights,
                     localIndex const connectorIndex ) = 0;
 
   /**
@@ -249,13 +234,6 @@ public:
   typename TRAITS::WeightContainerViewConstType
   getWeights() const { return m_weights.toViewConst(); }
 
-  /**
-   * @brief Const access to the stencil weights for stabilization.
-   * @return A view to const
-   */
-  typename TRAITS::WeightContainerViewConstType
-  getStabWeights() const { return m_stabWeights.toViewConst(); }
-
 protected:
 
   /// The container for the element region indices for each point in each stencil
@@ -270,9 +248,6 @@ protected:
   /// The container for the weights for each point in each stencil
   typename TRAITS::WeightContainerType m_weights;
 
-  /// The container for the weights for stabilization for each point in each stencil
-  typename TRAITS::WeightContainerType m_stabWeights;
-
   /// The map that provides the stencil index given the index of the underlying connector object.
   unordered_map< localIndex, localIndex > m_connectorIndices;
 };
@@ -286,7 +261,6 @@ void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::reserve( localIndex const size )
   m_elementSubRegionIndices.reserve( size * 2 );
   m_elementIndices.reserve( size * 2 );
   m_weights.reserve( size * 2 );
-  m_stabWeights.reserve( size * 2 );
 }
 
 
@@ -299,7 +273,6 @@ bool StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::zero( localIndex const connector
     for( localIndex i = 0; i < static_cast< LEAFCLASS * >(this)->stencilSize( connectorIndex ); ++i )
     {
       m_weights[connectionListIndex][i] = 0;
-      m_stabWeights[connectionListIndex][i] = 0;
     }
   } );
 }
@@ -311,7 +284,6 @@ void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::setName( string const & name )
   m_elementSubRegionIndices.setName( name + "/elementSubRegionIndices" );
   m_elementIndices.setName( name + "/elementIndices" );
   m_weights.setName( name + "/weights" );
-  m_stabWeights.setName( name + "/stabWeights" );
 }
 
 template< typename LEAFCLASSTRAITS, typename LEAFCLASS >
@@ -321,7 +293,6 @@ void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::move( LvArray::MemorySpace const
   m_elementSubRegionIndices.move( space, true );
   m_elementIndices.move( space, true );
   m_weights.move( space, true );
-  m_stabWeights.move( space, true );
 }
 
 } /* namespace geosx */

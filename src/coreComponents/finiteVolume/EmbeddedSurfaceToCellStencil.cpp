@@ -31,7 +31,6 @@ void EmbeddedSurfaceToCellStencil::add( localIndex const numPts,
                                         localIndex const * const elementSubRegionIndices,
                                         localIndex const * const elementIndices,
                                         real64 const * const weights,
-                                        real64 const * const stabWeights,
                                         localIndex const connectorIndex )
 {
   GEOSX_ERROR_IF_NE_MSG( numPts, 2, "Number of cells in TPFA stencil should be 2" );
@@ -42,7 +41,6 @@ void EmbeddedSurfaceToCellStencil::add( localIndex const numPts,
   m_elementSubRegionIndices.resize( newSize, numPts );
   m_elementIndices.resize( newSize, numPts );
   m_weights.resize( newSize, numPts );
-  m_stabWeights.resize( newSize, numPts );
 
   for( localIndex a=0; a<numPts; ++a )
   {
@@ -50,7 +48,6 @@ void EmbeddedSurfaceToCellStencil::add( localIndex const numPts,
     m_elementSubRegionIndices( oldSize, a ) = elementSubRegionIndices[a];
     m_elementIndices( oldSize, a ) = elementIndices[a];
     m_weights( oldSize, a ) = weights[a];
-    m_stabWeights( oldSize, a ) = stabWeights[a];
   }
   m_connectorIndices[connectorIndex] = oldSize;
 }
@@ -61,21 +58,18 @@ EmbeddedSurfaceToCellStencil::createKernelWrapper() const
   return { m_elementRegionIndices,
            m_elementSubRegionIndices,
            m_elementIndices,
-           m_weights,
-           m_stabWeights };
+           m_weights };
 }
 
 EmbeddedSurfaceToCellStencilWrapper::
   EmbeddedSurfaceToCellStencilWrapper( IndexContainerType const & elementRegionIndices,
                                        IndexContainerType const & elementSubRegionIndices,
                                        IndexContainerType const & elementIndices,
-                                       WeightContainerType const & weights,
-                                       WeightContainerType const & stabWeights )
+                                       WeightContainerType const & weights )
   : StencilWrapperBase( elementRegionIndices,
                         elementSubRegionIndices,
                         elementIndices,
-                        weights,
-                        stabWeights )
+                        weights )
 {}
 
 } /* namespace geosx */

@@ -35,7 +35,6 @@ void CellElementStencilMPFA::add( localIndex const numPts,
                                   localIndex const * const elementSubRegionIndices,
                                   localIndex const * const elementIndices,
                                   real64 const * const weights,
-                                  real64 const * const stabWeights,
                                   localIndex const connectorIndex )
 {
   GEOSX_ERROR_IF( numPts >= maxStencilSize, "Maximum stencil size exceeded" );
@@ -44,7 +43,6 @@ void CellElementStencilMPFA::add( localIndex const numPts,
   m_elementSubRegionIndices.appendArray( elementSubRegionIndices, elementSubRegionIndices + numPts );
   m_elementIndices.appendArray( elementIndices, elementIndices + numPts );
   m_weights.appendArray( weights, weights + numPts );
-  m_stabWeights.appendArray( stabWeights, stabWeights + numPts );
 
   m_connectorIndices[connectorIndex] = m_elementRegionIndices.size()-1;
 }

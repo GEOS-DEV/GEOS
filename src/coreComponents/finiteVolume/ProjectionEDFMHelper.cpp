@@ -222,7 +222,6 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex const fracEle
   array1d< localIndex > stencilCellsSubRegionIndex( 2 );
   array1d< localIndex > stencilCellsIndex( 2 );
   array1d< real64 > stencilWeights( 2 );
-  array1d< real64 > stencilStabWeights( 2 );
 
   // cell data
   stencilCellsRegionIndex[0] = cell.region;
@@ -241,7 +240,6 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex const fracEle
                      stencilCellsSubRegionIndex.data(),
                      stencilCellsIndex.data(),
                      stencilWeights.data(),
-                     stencilStabWeights.data(),
                      m_edfmStencil.size() );
 }
 
