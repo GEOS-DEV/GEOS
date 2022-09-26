@@ -20,7 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
 #define GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
 
-#include "physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
 #include "SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/contact/ContactExtrinsicData.hpp"
 

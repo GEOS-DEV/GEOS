@@ -17,10 +17,10 @@
  */
 
 #include "SolidMechanicsLagrangianFEM.hpp"
-#include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
-#include "SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp"
-#include "SolidMechanicsSmallStrainExplicitNewmarkKernel/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
-#include "SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp"
+#include "kernels/SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
+#include "kernels/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp"
+#include "kernels/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
+#include "kernels/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"

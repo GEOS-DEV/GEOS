@@ -79,13 +79,14 @@ set( physicsSolvers_headers
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
-     solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
-     solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
-     solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
-     solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
-     solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
+     solidMechanics/kernels/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
+     solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp
+     solidMechanics/kernels/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
+     solidMechanics/kernels/SolidMechanicsSmallStrainExplicitNewmarkKernel_impl.hpp
+     solidMechanics/kernels/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
+     solidMechanics/kernels/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
      solidMechanics/SolidMechanicsStateReset.hpp
      solidMechanics/SolidMechanicsStatistics.hpp       
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
@@ -155,27 +156,50 @@ set( physicsSolvers_sources
      wavePropagation/AcousticWaveEquationSEM.cpp
    )
 
+
+
+  set( kernelNames SolidMechanicsSmallStrainExplicitNewmarkKernel )
   set( subregionList CellElementSubRegion )
   set( solidBaseDispatch "DamageSpectral<ElasticIsotropic>;DamageVolDev<ElasticIsotropic>;Damage<ElasticIsotropic>;DruckerPragerExtended;ModifiedCamClay;DelftEgg;DruckerPrager;ElasticIsotropic;ElasticTransverseIsotropic;ElasticIsotropicPressureDependent;ElasticOrthotropic")
   set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
-                             H1_Wedge_Lagrange1_Gauss6 )
-  foreach( SUBREGION_TYPE  ${subregionList} )
-    foreach( CONSTITUTIVE_TYPE ${solidBaseDispatch} )
-      foreach( FE_TYPE ${finiteElementDispatch} )
-        message( "SUBREGION_TYPE/CONSTITUTIVE_TYPE/FE_TYPE = ${SUBREGION_TYPE}/${CONSTITUTIVE_TYPE}/${FE_TYPE}")
-        file(READ "${CMAKE_CURRENT_SOURCE_DIR}/solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel/SolidMechanicsSmallStrainExplicitNewmarkKernel.cpp.template" FILE_CONTENTS)
-        string(REPLACE "SUBREGION_TYPE" "${SUBREGION_TYPE}" FILE_CONTENTS ${FILE_CONTENTS})
-        string(REPLACE "CONSTITUTIVE_TYPE" "${CONSTITUTIVE_TYPE}" FILE_CONTENTS ${FILE_CONTENTS})
-        string(REPLACE "FE_TYPE" "${FE_TYPE}" FILE_CONTENTS ${FILE_CONTENTS})
-        set( filename "SolidMechanicsSmallStrainExplicitNewmarkKernel/SolidMechanicsSmallStrainExplicitNewmarkKernel_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
-        set( filepath "${CMAKE_CURRENT_SOURCE_DIR}/solidMechanics/${filename}")
-        string(REPLACE "<" "" filename ${filename})
-        string(REPLACE ">" "" filename ${filename})
-        file(WRITE ${filepath} ${FILE_CONTENTS})
-        list( APPEND physicsSolvers_sources ${filename} )
+                             H1_Wedge_Lagrange1_Gauss6
+                             H1_Tetrahedron_Lagrange1_Gauss1
+                             H1_Pyramid_Lagrange1_Gauss5
+                             Q3_Hexahedron_Lagrange_GaussLobatto
+                             H1_Tetrahedron_VEM_Gauss1
+                             H1_Wedge_VEM_Gauss1
+                             H1_Hexahedron_VEM_Gauss1
+                             H1_Prism5_VEM_Gauss1
+                             H1_Prism6_VEM_Gauss1
+                             H1_Prism7_VEM_Gauss1
+                             H1_Prism8_VEM_Gauss1
+                             H1_Prism9_VEM_Gauss1
+                             H1_Prism10_VEM_Gauss1
+                             H1_Prism11_VEM_Gauss1 )
+
+
+  foreach( kernelName ${kernelNames} )
+#    message( "kernelName = ${kernelName}")
+    foreach( SUBREGION_TYPE  ${subregionList} )
+      foreach( CONSTITUTIVE_TYPE ${solidBaseDispatch} )
+        foreach( FE_TYPE ${finiteElementDispatch} )
+          message( "SUBREGION_TYPE/CONSTITUTIVE_TYPE/FE_TYPE = ${SUBREGION_TYPE}/${CONSTITUTIVE_TYPE}/${FE_TYPE}")
+          file(READ "${CMAKE_CURRENT_SOURCE_DIR}/solidMechanics/kernels/${kernelName}.cpp.template" FILE_CONTENTS)
+          string(REPLACE "SUBREGION_TYPE" "${SUBREGION_TYPE}" FILE_CONTENTS "${FILE_CONTENTS}")
+          string(REPLACE "CONSTITUTIVE_TYPE" "${CONSTITUTIVE_TYPE}" FILE_CONTENTS "${FILE_CONTENTS}")
+          string(REPLACE "FE_TYPE" "${FE_TYPE}" FILE_CONTENTS "${FILE_CONTENTS}")
+          set( filename "solidMechanics/kernels/generatedSrc/${kernelName}_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
+          string(REPLACE "<" "" filename "${filename}")
+          string(REPLACE ">" "" filename "${filename}")
+          set( filepath "${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
+#          message( "filepath = ${filepath}" )
+          file(WRITE ${filepath} "${FILE_CONTENTS}")
+          list( APPEND physicsSolvers_sources ${filename} )
+        endforeach()
       endforeach()
     endforeach()
   endforeach()
+
 
 
 

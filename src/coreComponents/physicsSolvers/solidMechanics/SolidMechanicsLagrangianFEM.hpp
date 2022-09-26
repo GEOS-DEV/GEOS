@@ -26,7 +26,7 @@
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
-#include "SolidMechanicsLagrangianFEMKernels.hpp"
+#include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 
 namespace geosx
 {
