@@ -250,19 +250,18 @@ jobs:
     env:
       - DOCKER_REPOSITORY=geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
       - CMAKE_BUILD_TYPE=Release
-#      - BUILD_AND_TEST_ARGS=--disable-unit-tests
       - HOST_CONFIG=host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
       - GCP_BUCKET=geosx/Sherlock-CPU
       - ENABLE_HYPRE=ON
       - ENABLE_TRILINOS=OFF
   - stage: builds
-    name: Sherlock GPU (centos 7.9.2009, gcc 10.1.0, cuda 11.5.0, open-mpi 4.1.2, openblas 0.3.10)
+    name: Sherlock GPU Debug (centos 7.9.2009, gcc 10.1.0, cuda 11.5.0, open-mpi 4.1.2, openblas 0.3.10)
     <<: *__geosx_totalenergies_cluster_build
     env:
       - DOCKER_REPOSITORY=geosx/sherlock-gcc10.1.0-openmpi4.1.2-cuda11.5.0-openblas0.3.10-zlib1.2.11
       - CMAKE_BUILD_TYPE=Debug
       #might be too strong but benchmarkOuterProduct failed
-      - BUILD_AND_TEST_ARGS="--disable-unit-tests --build-exe-only"
+      - BUILD_AND_TEST_ARGS="--disable-unit-tests"
       - HOST_CONFIG=host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10-cuda11.5.0-sm80.cmake
       - GCP_BUCKET=geosx/Sherlock-GPU
       - ENABLE_HYPRE=ON
