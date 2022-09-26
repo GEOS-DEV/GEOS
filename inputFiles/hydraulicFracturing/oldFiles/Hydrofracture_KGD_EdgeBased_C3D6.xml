@@ -38,7 +38,6 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      discretization="FE1"
       targetRegions="{ Region2 }"
       rockToughness="1e7"/>
   </Solvers>
