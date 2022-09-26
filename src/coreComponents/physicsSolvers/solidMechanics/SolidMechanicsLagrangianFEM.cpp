@@ -19,8 +19,8 @@
 #include "SolidMechanicsLagrangianFEM.hpp"
 #include "kernels/SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
 #include "kernels/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp"
-#include "kernels/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
-#include "kernels/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp"
+#include "kernels/ExplicitSmallStrain.hpp"
+#include "kernels/ExplicitFiniteStrain.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"

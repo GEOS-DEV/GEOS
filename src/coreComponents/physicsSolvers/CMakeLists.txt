@@ -81,10 +81,11 @@ set( physicsSolvers_headers
      simplePDE/PhaseFieldDamageFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
-     solidMechanics/kernels/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
      solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp
-     solidMechanics/kernels/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
-     solidMechanics/kernels/SolidMechanicsSmallStrainExplicitNewmarkKernel_impl.hpp
+     solidMechanics/kernels/ExplicitFiniteStrain.hpp
+     solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp
+     solidMechanics/kernels/ExplicitSmallStrain.hpp
+     solidMechanics/kernels/ExplicitSmallStrain_impl.hpp
      solidMechanics/kernels/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
      solidMechanics/kernels/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
      solidMechanics/SolidMechanicsStateReset.hpp
@@ -158,7 +159,7 @@ set( physicsSolvers_sources
 
 
 
-  set( kernelNames SolidMechanicsSmallStrainExplicitNewmarkKernel )
+  set( kernelNames SolidMechanicsKernels )
   set( subregionList CellElementSubRegion )
   set( solidBaseDispatch "DamageSpectral<ElasticIsotropic>;DamageVolDev<ElasticIsotropic>;Damage<ElasticIsotropic>;DruckerPragerExtended;ModifiedCamClay;DelftEgg;DruckerPrager;ElasticIsotropic;ElasticTransverseIsotropic;ElasticIsotropicPressureDependent;ElasticOrthotropic")
   set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
