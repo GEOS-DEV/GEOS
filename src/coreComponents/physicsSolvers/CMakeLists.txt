@@ -86,8 +86,9 @@ set( physicsSolvers_headers
      solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp
      solidMechanics/kernels/ExplicitSmallStrain.hpp
      solidMechanics/kernels/ExplicitSmallStrain_impl.hpp
-     solidMechanics/kernels/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
-     solidMechanics/kernels/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
+     solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp
+     solidMechanics/kernels/ImplicitSmallStrainQuasiStatic_impl.hpp
+#     solidMechanics/kernels/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsStateReset.hpp
      solidMechanics/SolidMechanicsStatistics.hpp       
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
@@ -159,7 +160,7 @@ set( physicsSolvers_sources
 
 
 
-  set( kernelNames SolidMechanicsKernels )
+  set( kernelNames ExplicitSmallStrain ExplicitFiniteStrain ImplicitSmallStrainQuasiStatic )
   set( subregionList CellElementSubRegion )
   set( solidBaseDispatch "DamageSpectral<ElasticIsotropic>;DamageVolDev<ElasticIsotropic>;Damage<ElasticIsotropic>;DruckerPragerExtended;ModifiedCamClay;DelftEgg;DruckerPrager;ElasticIsotropic;ElasticTransverseIsotropic;ElasticIsotropicPressureDependent;ElasticOrthotropic")
   set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
@@ -180,12 +181,12 @@ set( physicsSolvers_sources
 
 
   foreach( kernelName ${kernelNames} )
-#    message( "kernelName = ${kernelName}")
     foreach( SUBREGION_TYPE  ${subregionList} )
       foreach( CONSTITUTIVE_TYPE ${solidBaseDispatch} )
         foreach( FE_TYPE ${finiteElementDispatch} )
           message( "SUBREGION_TYPE/CONSTITUTIVE_TYPE/FE_TYPE = ${SUBREGION_TYPE}/${CONSTITUTIVE_TYPE}/${FE_TYPE}")
-          file(READ "${CMAKE_CURRENT_SOURCE_DIR}/solidMechanics/kernels/${kernelName}.cpp.template" FILE_CONTENTS)
+          file(READ "${CMAKE_CURRENT_SOURCE_DIR}/solidMechanics/kernels/SolidMechanicsKernels.cpp.template" FILE_CONTENTS)
+          string(REPLACE "KERNELNAME" "${kernelName}" FILE_CONTENTS "${FILE_CONTENTS}")
           string(REPLACE "SUBREGION_TYPE" "${SUBREGION_TYPE}" FILE_CONTENTS "${FILE_CONTENTS}")
           string(REPLACE "CONSTITUTIVE_TYPE" "${CONSTITUTIVE_TYPE}" FILE_CONTENTS "${FILE_CONTENTS}")
           string(REPLACE "FE_TYPE" "${FE_TYPE}" FILE_CONTENTS "${FILE_CONTENTS}")
@@ -193,7 +194,6 @@ set( physicsSolvers_sources
           string(REPLACE "<" "" filename "${filename}")
           string(REPLACE ">" "" filename "${filename}")
           set( filepath "${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
-#          message( "filepath = ${filepath}" )
           file(WRITE ${filepath} "${FILE_CONTENTS}")
           list( APPEND physicsSolvers_sources ${filename} )
         endforeach()

@@ -17,8 +17,8 @@
  */
 
 #include "SolidMechanicsLagrangianFEM.hpp"
-#include "kernels/SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
-#include "kernels/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp"
+#include "kernels/ImplicitSmallStrainQuasiStatic.hpp"
+//#include "kernels/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp"
 #include "kernels/ExplicitSmallStrain.hpp"
 #include "kernels/ExplicitFiniteStrain.hpp"
 
@@ -956,7 +956,7 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
 
       finiteElement::
         fillSparsity< FaceElementSubRegion,
-                      solidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
+                      solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
                                                                          allFaceElementRegions,
                                                                          this->getDiscretizationName(),
                                                                          dofNumber,
@@ -966,7 +966,7 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
     }
     finiteElement::
       fillSparsity< CellElementSubRegion,
-                    solidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
+                    solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
                                                                        regionNames,
                                                                        this->getDiscretizationName(),
                                                                        dofNumber,
@@ -1005,16 +1005,16 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
-    assemblyLaunch< constitutive::SolidBase,
-                    solidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
-                                                                                  dofManager,
-                                                                                  localMatrix,
-                                                                                  localRhs,
-                                                                                  m_newmarkGamma,
-                                                                                  m_newmarkBeta,
-                                                                                  m_massDamping,
-                                                                                  m_stiffnessDamping,
-                                                                                  dt );
+    // assemblyLaunch< constitutive::SolidBase,
+    //                 solidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
+    //                                                                               dofManager,
+    //                                                                               localMatrix,
+    //                                                                               localRhs,
+    //                                                                               m_newmarkGamma,
+    //                                                                               m_newmarkBeta,
+    //                                                                               m_massDamping,
+    //                                                                               m_stiffnessDamping,
+    //                                                                               dt );
   }
 }
 
