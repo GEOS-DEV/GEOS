@@ -193,10 +193,11 @@ public:
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();
 
-    real64 D = 0;                                                                  
+    real64 D = 0;
     if( m_localDissipationOption == 1 )
     {
-      D = fmax( threshold, strainEnergyDensity );//max between threshold and Elastic energy, used in the AT1 formulation (LocalDissipation = Linear) to prevent negative damage
+      D = fmax( threshold, strainEnergyDensity );//max between threshold and Elastic energy, used in the AT1 formulation (LocalDissipation =
+                                                 // Linear) to prevent negative damage
     }
 
     //Interpolate d and grad_d

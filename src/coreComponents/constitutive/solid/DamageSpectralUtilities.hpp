@@ -34,7 +34,8 @@ namespace geosx
 {
 
 /**
- *@brief Get the positive part only of a symmetric, 3x3, tensor T using spectral split. The eigenvectors and eigenvalues of T must be passed in.
+ *@brief Get the positive part only of a symmetric, 3x3, tensor T using spectral split. The eigenvectors and eigenvalues of T must be passed
+ * in.
  *@param[in] eigs Array of eigenvalues of T.
  *@param[in] eigevecs 3x3 array with the eigenvectors of T as rows.
  *@param[out] positivePart Array that stores the positive part of T in Voigt Notation.
@@ -51,7 +52,8 @@ void PositivePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 
 }
 
 /**
- *@brief Get the negative part only of a symmetric, 3x3, tensor T using spectral split. The eigenvectors and eigenvalues of T must be passed in.
+ *@brief Get the negative part only of a symmetric, 3x3, tensor T using spectral split. The eigenvectors and eigenvalues of T must be passed
+ * in.
  *@param[in] eigs Array of eigenvalues of T.
  *@param[in] eigevecs 3x3 array with the eigenvectors of T as rows.
  *@param[out] negativePart Array that stores the negative part of T in Voigt Notation.

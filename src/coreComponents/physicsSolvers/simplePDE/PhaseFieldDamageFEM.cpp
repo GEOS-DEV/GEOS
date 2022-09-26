@@ -58,7 +58,7 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
   m_fieldName( "primaryField" )
 {
   //this equation is almost always time-independent, although some people have proposed models
-  //with damage dissipation, but it is not in GEOSX. Should we just make this parameter default 
+  //with damage dissipation, but it is not in GEOSX. Should we just make this parameter default
   //to SteadyState then?
   registerWrapper< string >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key() ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -301,15 +301,15 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
 
 /**
  * @brief implements the calculation of the L2 norm of the residual
- * 
+ *
  * @param domain the domain object
  * @param dofManager degree-of-freedom manager associated with the linear system
  * @param localRhs the system right-hand side vector
  * @return real64 the L2 norm of the residual
  */
 real64 PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
-                                            DofManager const & dofManager,
-                                            arrayView1d< real64 const > const & localRhs )
+                                                   DofManager const & dofManager,
+                                                   arrayView1d< real64 const > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 

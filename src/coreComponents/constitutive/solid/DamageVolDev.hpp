@@ -31,18 +31,18 @@ namespace constitutive
 
 /**
  * @class DamageVolDevUpdates
- * 
+ *
  * @tparam UPDATE_BASE the underlying intact solid model
- * 
+ *
  * this class implements the material updates for the case of a damage response
  * that is assymetric in tension and compression. The volumetric-deviatoric
- * decomposition of the strain tensor is used to effect the assymetry. 
- * 
+ * decomposition of the strain tensor is used to effect the assymetry.
+ *
  * References: (for the vol-dev split)
- * 
+ *
  * Amor, H., Marigo, J.-J., Maurini, C., 2009. Regularized formulation of the variational brittle fracture with unilateral
  * contact: Numerical experiments. Journal of the Mechanics and Physics of Solids 57 (8), 1209 – 1229.
- * 
+ *
  */
 template< typename UPDATE_BASE >
 class DamageVolDevUpdates : public DamageUpdates< UPDATE_BASE >
@@ -76,16 +76,17 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
   using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
 
-  ///this function implements the modified stress update to account for the volumetric-deviatori split - it also computes the stiffness and active part of the strain energy
-    /**
+  ///this function implements the modified stress update to account for the volumetric-deviatori split - it also computes the stiffness and
+  /// active part of the strain energy
+  /**
    * @brief performs the update of stresses and stiffness, using damage with volumetric-deviatoric decomposition
    *
-   * This function performs the updates of the mechanical state of a damaged solid, assuming the vol-dev decomposition 
-   * for assymetric damage behavior in tension and compression. From the strain increment computed in the solver, it 
+   * This function performs the updates of the mechanical state of a damaged solid, assuming the vol-dev decomposition
+   * for assymetric damage behavior in tension and compression. From the strain increment computed in the solver, it
    * updates the stresses and stiffness of the material at each quadrature point.
-   * 
+   *
    * @note The active part of the strain energy density, stored in m_strainEnergyDensity is also updated in this step.
-   * This active part depends on the strain decomposition, since only the positive part of strain contributes to damage 
+   * This active part depends on the strain decomposition, since only the positive part of strain contributes to damage
    * evolution.
    *
    * @param[in] k The element index.
@@ -93,7 +94,7 @@ public:
    * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
    * @param[out] stress New stress value (Cauchy stress)
    * @param[out] stiffness New stiffness value
-   */  
+   */
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -175,14 +176,14 @@ public:
 /**
  * @class DamageVolDev
  *
- * This class implements the changes to the update functions that are needed 
+ * This class implements the changes to the update functions that are needed
  * to account for an assymetric damage response in tension and compression.
  * In this case, the split between tension and compression is effected through the
  * use of a volumetric-deviatoric decomposition of the strain tensor. Only the positive
- * part of the strain tensor in this decomposition will be degraded. Also, only this 
+ * part of the strain tensor in this decomposition will be degraded. Also, only this
  * part will contribute to the active part of the strain energy that drives damage
  * evolution.
- * 
+ *
  */
 template< typename BASE >
 class DamageVolDev : public Damage< BASE >

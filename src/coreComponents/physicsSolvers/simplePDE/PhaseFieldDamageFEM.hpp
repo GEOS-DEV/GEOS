@@ -41,11 +41,11 @@ class DomainPartition;
 
 /**
  * @brief class that implements the solver for the damage equation in a phase-field solver of fracture
- * 
- * This class implements the an FEM solver for the reaction-diffusion equation that governs damage 
+ *
+ * This class implements the an FEM solver for the reaction-diffusion equation that governs damage
  * evolution in a phase-field description of brittle fracture. The drivinf force for damage growth
- * is the strain energy density, that is stored in the solid constitutive option and retrived in the 
- * assembly routine of this solver.  
+ * is the strain energy density, that is stored in the solid constitutive option and retrived in the
+ * assembly routine of this solver.
  */
 
 class PhaseFieldDamageFEM : public SolverBase
@@ -133,7 +133,7 @@ public:
     ImplicitTransient,
     ExplicitTransient
   };
-  
+
   ///struct with names used in the xml file
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {

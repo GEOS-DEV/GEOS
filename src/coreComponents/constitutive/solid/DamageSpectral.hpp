@@ -37,27 +37,27 @@ namespace constitutive
 
 /**
  * @class DamageSpectralUpdates
- * 
+ *
  * @tparam UPDATE_BASE the underlying intact solid model
- * 
+ *
  * this class implements the material updates for the case of a damage response
  * that is assymetric in tension and compression. The spectral decomposition of
- * the strain tensor is used to effect the assymetry. 
- * 
+ * the strain tensor is used to effect the assymetry.
+ *
  * In this implementation, the fracture behavior of the material is assumed to be
  * cohesive, and the degradation function proposed by Lorentz et al. is used.
- * 
+ *
  * References: (for the cohesive model)
- * 
+ *
  * Lorentz, E., Cuvilliez, S., Kazymyrenko, K., 2011. Convergence of a gradient damage model toward a cohesive zone
  * model. Comptes Rendus Mcanique 339 (1), 20 – 26
- * 
+ *
  * Lorentz, E., Cuvilliez, S., Kazymyrenko, K., 2012. Modelling large crack propagation: from gradient damage to
  * cohesive zone models. International Journal of Fracture 178 (1), 85–95
- * 
+ *
  * Geelen, R., Liu, Y., Hu, T., Tupek, M., Dolbow, J., 2019. A phase-field formulation for dynamic cohesive fracture.
  * Computer Methods in Applied Mechanics and Engineering 348, 680-711
- * 
+ *
  */
 template< typename UPDATE_BASE >
 class DamageSpectralUpdates : public DamageUpdates< UPDATE_BASE >
@@ -95,7 +95,7 @@ public:
   using UPDATE_BASE::m_bulkModulus;  // TODO: model below strongly assumes iso elasticity, templating not so useful
   using UPDATE_BASE::m_shearModulus;
 
-  
+
   ///degradation function of the quasi-quadratic type, used to model a cohesive fracture behavior
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
@@ -139,16 +139,17 @@ public:
     return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
   }
 
-  ///this function implements the modified stress update to account for the spectral split - it also computes the stiffness and active part of the strain energy
-    /**
+  ///this function implements the modified stress update to account for the spectral split - it also computes the stiffness and active part
+  /// of the strain energy
+  /**
    * @brief performs the update of stresses and stiffness, using damage with spectral decomposition
    *
-   * This function performs the updates of the mechanical state of a damaged solid, assuming the spectral decomposition 
-   * for assymetric damage behavior in tension and compression. From the strain increment computed in the solver, it 
+   * This function performs the updates of the mechanical state of a damaged solid, assuming the spectral decomposition
+   * for assymetric damage behavior in tension and compression. From the strain increment computed in the solver, it
    * updates the stresses and stiffness of the material at each quadrature point.
-   * 
+   *
    * @note The active part of the strain energy density, stored in m_strainEnergyDensity is also updated in this step.
-   * This active part depends on the strain decomposition, since only the positive part of strain contributes to damage 
+   * This active part depends on the strain decomposition, since only the positive part of strain contributes to damage
    * evolution.
    *
    * @param[in] k The element index.
@@ -307,20 +308,20 @@ public:
 /**
  * @class DamageSpectral
  *
- * This class implements the changes to the update functions that are needed 
+ * This class implements the changes to the update functions that are needed
  * to account for an assymetric damage response in tension and compression.
  * In this case, the split between tension and compression is effected through the
- * use of a spectral decomposition of the strain tensor. Only the positive part 
- * of the strain tensor in this decomposition will be degraded. Also, only this 
+ * use of a spectral decomposition of the strain tensor. Only the positive part
+ * of the strain tensor in this decomposition will be degraded. Also, only this
  * part will contribute to the active part of the strain energy that drives damage
  * evolution.
- * 
+ *
  * Reference:
- * 
+ *
  * Miehe, Christian; Hofacker, Martina; Welschinger, Fabian. A phase field model for rate-independent crack
  * propagation: Robust algorithmic implementation based on operator splits.
  * Computer Methods in Applied Mechianics and Engineering, v. 199, n. 45-48, p. 2765-2778, 2010
- * 
+ *
  */
 template< typename BASE >
 class DamageSpectral : public Damage< BASE >

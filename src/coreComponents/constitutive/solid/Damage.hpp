@@ -68,7 +68,7 @@ namespace constitutive
  * Class to provide material updates for damaged solids that may be
  * called from a kernel function. The intact solid behavior is that of UDPATE_BASE
  * and this class adds the functions needed to account for damage.
- * 
+ *
  */
 template< typename UPDATE_BASE >
 class DamageUpdates : public UPDATE_BASE
@@ -103,10 +103,10 @@ public:
 
   using UPDATE_BASE::m_disableInelasticity;
 
-  
+
   /**
    * @brief quadratic degradation function, used to reduce the material stiffness when there is damage
-   * 
+   *
    * @param k the element number
    * @param q the quadrature point
    * @return the value of the degradation function at element k, quadrature point q
@@ -122,7 +122,7 @@ public:
 
   /**
    * @brief derivative of the degratation function
-   * 
+   *
    * @param d the damage value
    * @return the derivative of the degradation function at d
    */
@@ -135,9 +135,9 @@ public:
 
   /**
    * @brief the second derivative of the degradation function
-   * 
+   *
    * @param d the damage value
-   * @return the second derivative of the degradation at d 
+   * @return the second derivative of the degradation at d
    */
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
@@ -237,10 +237,10 @@ class DamageBase : public SolidBase
 /**
  * @class Damage
  *
- * Template class to account for damage effects in a solid. The damage formulation is 
- * that of the phase-field approach to fracture (which can also be interpreted as a 
+ * Template class to account for damage effects in a solid. The damage formulation is
+ * that of the phase-field approach to fracture (which can also be interpreted as a
  * gradient damage model)
- * 
+ *
  */
 template< typename BASE >
 class Damage : public BASE
