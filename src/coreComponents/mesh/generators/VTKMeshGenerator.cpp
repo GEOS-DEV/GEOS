@@ -1749,6 +1749,68 @@ int pairToEdge( std::pair< int, int > const & p,
     return intersect.front();
 }
 
+class FaceData
+{
+public:
+  explicit FaceData( vtkDataArray * array )
+  {
+    // TODO use a builder and not the constructor.
+    m_num2dElements = array->GetNumberOfTuples();
+
+    {
+      auto const numComponents = array->GetNumberOfComponents();
+      GEOSX_ERROR_IF_NE_MSG( 4, numComponents, "FieldData \"fracture_info\" should have 4 components." );
+    }
+
+    for( int i = 0; i < m_num2dElements; ++i )
+    {
+      std::vector< double > tuple( 4 );
+      array->GetTuple( i, tuple.data() );
+      std::vector< int > res( 4 );
+      res[0] = tuple[0];
+      res[1] = tuple[1];
+      res[2] = tuple[2];
+      res[3] = tuple[3];
+      m_data.push_back( res );
+    }
+  }
+
+  vtkIdType num2DElements() const
+  {
+    return m_num2dElements;
+  }
+
+  /**
+   * @brief For @p elem2d, returns the global vtk index of @p neighbor.
+   * @param elem2d The local (the the "fracture") index of the 2d element.
+   * @param neighbor The neighbor index, can be 0 or 1.
+   * @return The global vtk index of the pointed cell.
+   */
+  int cell( int elem2d,
+            int neighbor ) const
+  {
+    GEOSX_ERROR_IF( neighbor != 0 and neighbor != 1, "Wrong neighbor index." );
+    return m_data[elem2d][2 * neighbor];
+  }
+
+  /**
+   * @brief For @p elem2d, returns the local (to the vek cell) vtk index of @p neighbor.
+   * @param elem2d The local (the the "fracture") index of the 2d element.
+   * @param neighbor The neighbor index, can be 0 or 1.
+   * @return The local face vtk index of the pointed cell that touches the 2d element.
+   */
+  int face( int elem2d,
+            int neighbor ) const
+  {
+    GEOSX_ERROR_IF( neighbor != 0 and neighbor != 1, "Wrong neighbor index." );
+    return m_data[elem2d][2 * neighbor + 1];
+  }
+
+private:
+  vtkIdType m_num2dElements;
+  std::vector< std::vector< int > > m_data;
+};
+
 /**
  * @brief Import face block @p faceBlockName from @p vtkMesh into the @p cellBlockManager.
  * @param faceBlockName
@@ -1762,25 +1824,9 @@ void ImportFracture( string const & faceBlockName,
 {
   vtkDataArray * array = vtkMesh->GetFieldData()->GetArray( faceBlockName.c_str() );
   GEOSX_ERROR_IF(array == 0, "Face block name \"" << faceBlockName << "\" was not found in the mesh.");
-  vtkIdType const num2dElements = array->GetNumberOfTuples(); // API
+  FaceData const faceData( array );
 
-  // Reading the raw data from the field data.
-  std::vector< std::vector< int > > rawFaceData; // TODO Build a utility class.
-  {
-    auto const numComponents = array->GetNumberOfComponents();
-    GEOSX_ERROR_IF_NE_MSG( 4, numComponents, "FieldData \"fracture_info\" should have 4 components." );
-    for( int i = 0; i < num2dElements; ++i )
-    {
-      std::vector< double > tuple( 4 );
-      array->GetTuple( i, tuple.data() );
-      std::vector< int > res( 4 );
-      res[0] = tuple[0];
-      res[1] = tuple[1];
-      res[2] = tuple[2];
-      res[3] = tuple[3];
-      rawFaceData.push_back( res );
-    }
-  }
+  vtkIdType const num2dElements = faceData.num2DElements(); // API
 
   // Computing the number of 2d faces
   localIndex num2dFaces; // API
@@ -1788,8 +1834,8 @@ void ImportFracture( string const & faceBlockName,
     std::vector< std::pair< int, int > > allPairs;
     for( int i = 0; i < num2dElements; ++i )
     {
-      int const & e0 = rawFaceData[i][0];
-      int const & f0 = rawFaceData[i][1];
+      int const e0 = faceData.cell( i, 0 );
+      int const f0 = faceData.face( i, 0 );
       vtkCell * c = vtkMesh->GetCell( e0 );
       vtkCell * f = c->GetFace( f0 );
       for( int k = 0; k < f->GetNumberOfEdges(); ++k )
@@ -1804,9 +1850,9 @@ void ImportFracture( string const & faceBlockName,
   }
 
   std::vector< std::vector< localIndex > > elem2dToElems; // API
-  for( auto const & val: rawFaceData )
+  for( int i = 0; i < num2dElements; ++i )
   {
-    elem2dToElems.push_back( { val[0], val[2] } );
+    elem2dToElems.push_back( { faceData.cell( i, 0 ), faceData.cell( i, 1 ) } );
   }
 
   // A utility function to convert a vtkIdList into a std::set< int >.
@@ -1832,8 +1878,8 @@ void ImportFracture( string const & faceBlockName,
       std::vector< localIndex > faceLine;
       for( int j = 0; j < 2; ++j )
       {
-        int const & ei = rawFaceData[i][2 * j];
-        int const & fi = rawFaceData[i][2 * j + 1];
+        int const ei = faceData.cell( i, j );
+        int const fi = faceData.face( i, j );
         vtkCell * c = vtkMesh->GetCell( ei );
         vtkCell * f = c->GetFace( fi );
         vtkIdList * p = f->GetPointIds();
@@ -1870,8 +1916,8 @@ void ImportFracture( string const & faceBlockName,
       for( int j = 0; j < 2; ++j )
       {
         allEdges[i].push_back({});
-        int const & ei = rawFaceData[i][2 * j];
-        int const & fi = rawFaceData[i][2 * j + 1];
+        int const ei = faceData.cell( i, j );
+        int const fi = faceData.face( i, j );
         vtkCell * c = vtkMesh->GetCell( ei );
         vtkCell * f = c->GetFace( fi );
         for( int k = 0; k < f->GetNumberOfEdges(); ++k )
