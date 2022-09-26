@@ -70,14 +70,6 @@ EXTRINSIC_MESH_DATA_TRAIT( referencePorosity,
                            WRITE_AND_READ,
                            "Reference porosity" );
 
-EXTRINSIC_MESH_DATA_TRAIT( grainBulkModulus,
-                           "grainBulkModulus",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Grain bulk modulus" );
-
 EXTRINSIC_MESH_DATA_TRAIT( biotCoefficient,
                            "biotCoefficient",
                            array1d< real64 >,

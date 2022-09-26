@@ -1405,7 +1405,7 @@
 		<xsd:attribute name="elasticSlip" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
-		<!--bulkModulus => Bulk Modulus-->
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
 		<!--damage => Material Damage Variable-->
 		<xsd:attribute name="damage" type="real64_array2d" />
@@ -1413,7 +1413,7 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--shearModulus => Shear Modulus-->
+		<!--shearModulus => Elastic Shear Modulus Field-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--strainEnergyDensity => Strain Energy Density-->
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
@@ -1421,7 +1421,7 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageSpectralElasticIsotropicType">
-		<!--bulkModulus => Bulk Modulus-->
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
 		<!--damage => Material Damage Variable-->
 		<xsd:attribute name="damage" type="real64_array2d" />
@@ -1429,7 +1429,7 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--shearModulus => Shear Modulus-->
+		<!--shearModulus => Elastic Shear Modulus Field-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--strainEnergyDensity => Strain Energy Density-->
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
@@ -1437,7 +1437,7 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
-		<!--bulkModulus => Bulk Modulus-->
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
 		<!--damage => Material Damage Variable-->
 		<xsd:attribute name="damage" type="real64_array2d" />
@@ -1445,7 +1445,7 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--shearModulus => Shear Modulus-->
+		<!--shearModulus => Elastic Shear Modulus Field-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--strainEnergyDensity => Strain Energy Density-->
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
@@ -1511,7 +1511,7 @@
 		<xsd:attribute name="viscosityTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="DelftEggType">
-		<!--bulkModulus => Bulk Modulus-->
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
 		<!--cslSlope => Slope of the critical state line-->
 		<xsd:attribute name="cslSlope" type="real64_array" />
@@ -1527,7 +1527,7 @@
 		<xsd:attribute name="recompressionIndex" type="real64_array" />
 		<!--shapeParameter => Shape parameter for the yield surface-->
 		<xsd:attribute name="shapeParameter" type="real64_array" />
-		<!--shearModulus => Shear Modulus-->
+		<!--shearModulus => Elastic Shear Modulus Field-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
@@ -1535,7 +1535,7 @@
 		<xsd:attribute name="virginCompressionIndex" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DruckerPragerType">
-		<!--bulkModulus => Bulk Modulus-->
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
 		<!--cohesion => New cohesion state-->
 		<xsd:attribute name="cohesion" type="real64_array2d" />
@@ -1551,19 +1551,19 @@
 		<xsd:attribute name="oldCohesion" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--shearModulus => Shear Modulus-->
+		<!--shearModulus => Elastic Shear Modulus Field-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicType">
-		<!--bulkModulus => Bulk Modulus-->
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--shearModulus => Shear Modulus-->
+		<!--shearModulus => Elastic Shear Modulus Field-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
@@ -1629,7 +1629,7 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="ExtendedDruckerPragerType">
-		<!--bulkModulus => Bulk Modulus-->
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
@@ -1647,7 +1647,7 @@
 		<xsd:attribute name="pressureIntercept" type="real64_array" />
 		<!--residualFriction => Residual yield surface slope-->
 		<xsd:attribute name="residualFriction" type="real64_array" />
-		<!--shearModulus => Shear Modulus-->
+		<!--shearModulus => Elastic Shear Modulus Field-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stateVariable => New equivalent plastic shear strain-->
 		<xsd:attribute name="stateVariable" type="real64_array2d" />

@@ -36,7 +36,7 @@ EXTRINSIC_MESH_DATA_TRAIT( bulkModulus,
                            -1,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "Bulk Modulus" );
+                           "Elastic Bulk Modulus Field" );
 
 EXTRINSIC_MESH_DATA_TRAIT( shearModulus,
                            "shearModulus",
@@ -44,7 +44,7 @@ EXTRINSIC_MESH_DATA_TRAIT( shearModulus,
                            -1,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "Shear Modulus" );
+                           "Elastic Shear Modulus Field" );
 
 
 
