@@ -242,12 +242,12 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void applyWellShutDown( real64 const time_n,
-                                  real64 const dt,
-                                  DomainPartition const & domain,
-                                  DofManager const & dofManager,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs ) = 0;
+  virtual void shutDownWell( real64 const time_n,
+                             real64 const dt,
+                             DomainPartition const & domain,
+                             DofManager const & dofManager,
+                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                             arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)

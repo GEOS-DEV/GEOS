@@ -179,7 +179,7 @@ void WellSolverBase::assembleSystem( real64 const time,
   computePerforationRates( domain );
 
   // then apply a special treatment to the wells that are shut
-  applyWellShutDown( time, dt, domain, dofManager, localMatrix, localRhs );
+  shutDownWell( time, dt, domain, dofManager, localMatrix, localRhs );
 }
 
 void WellSolverBase::updateState( DomainPartition & domain )

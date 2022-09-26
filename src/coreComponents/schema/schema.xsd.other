@@ -352,7 +352,6 @@
 	<xsd:complexType name="InternalWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Perforation" type="PerforationType" />
-			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="PerforationType" />
@@ -1981,7 +1980,6 @@
 	<xsd:complexType name="MeshBodiesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
-			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
 			<xsd:element name="PAMELAMesh" type="PAMELAMeshType" />
 			<xsd:element name="VTKMesh" type="VTKMeshType" />

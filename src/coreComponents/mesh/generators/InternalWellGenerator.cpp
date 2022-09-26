@@ -104,10 +104,6 @@ InternalWellGenerator::~InternalWellGenerator()
 
 void InternalWellGenerator::postProcessInput()
 {
-  GEOSX_THROW_IF( getName().find( "well" ) == string::npos,
-                  "For now, we require that the name of a well contain the word \"well\", which is not the case for " << getName(),
-                  InputError );
-
   GEOSX_THROW_IF( m_polyNodeCoords.size( 1 ) != m_nDims,
                   "Invalid number of physical coordinates in " << viewKeyStruct::polylineNodeCoordsString() << " for well " << getName(),
                   InputError );

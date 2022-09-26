@@ -1636,12 +1636,12 @@ void CompositionalMultiphaseWell::assemblePressureRelations( DomainPartition con
   } );
 }
 
-void CompositionalMultiphaseWell::applyWellShutDown( real64 const time_n,
-                                                     real64 const dt,
-                                                     DomainPartition const & domain,
-                                                     DofManager const & dofManager,
-                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                     arrayView1d< real64 > const & localRhs )
+void CompositionalMultiphaseWell::shutDownWell( real64 const time_n,
+                                                real64 const dt,
+                                                DomainPartition const & domain,
+                                                DofManager const & dofManager,
+                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
