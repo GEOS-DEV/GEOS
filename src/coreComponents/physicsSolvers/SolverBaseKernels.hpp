@@ -297,7 +297,7 @@ public:
                                  real64 const & localResidualNormalizer,
                                  real64 & globalResidualNorm )
   {
-    globalResidualNorm = sqrt( MpiWrapper::sum( localResidualNorm ) ) / MpiWrapper::sum( localResidualNormalizer );
+    globalResidualNorm = sqrt( MpiWrapper::sum( localResidualNorm ) ) / sqrt( MpiWrapper::sum( localResidualNormalizer ) );
   }
 
   static void computeGlobalNorm( array1d< real64 > const & localResidualNorm,
@@ -318,7 +318,7 @@ public:
                            MPI_COMM_GEOSX );
     for( integer i = 0; i < localResidualNorm.size(); ++i )
     {
-      globalResidualNorm[i] = sqrt( sumLocalResidualNorm[i] ) / sumLocalResidualNormalizer[i];
+      globalResidualNorm[i] = sqrt( sumLocalResidualNorm[i] ) / sqrt( sumLocalResidualNormalizer[i] );
     }
   }
 
