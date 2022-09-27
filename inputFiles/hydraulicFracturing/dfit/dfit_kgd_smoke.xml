@@ -37,17 +37,10 @@
 
   <Events
     maxTime="400.0">
-    <!-- SoloEvent 
-      name="initialPlot"
-      target="/Outputs/siloOutput"/-->
 
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
-
-    <!-- SoloEvent 
-      name="preFracturePlot"
-      target="/Outputs/siloOutput"/-->
 
     <PeriodicEvent
       name="solverApplications0"
@@ -55,12 +48,6 @@
       endTime="10.0"
       forceDt="0.25"
       target="/Solvers/hydrofracture"/>
-
-    <PeriodicEvent
-      name="outputs"
-      timeFrequency="10.0"
-      targetExactTimestep="0"
-      target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="restarts"

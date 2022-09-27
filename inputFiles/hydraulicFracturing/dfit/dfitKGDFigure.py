@@ -142,7 +142,7 @@ def main():
     vliney = [0.0, GdPdG[tangent_ind]*1.2]
 
 
-    # Visulization
+    # Visualization
     N1 = 2
     fsize = 30
     msize = 16

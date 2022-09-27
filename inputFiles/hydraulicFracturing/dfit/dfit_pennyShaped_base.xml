@@ -23,6 +23,22 @@
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
+    <CompressibleSolidConstantPermeability
+      name="porousRock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.3"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-15, 2.0e-15, 2.0e-15 }"/>    
+
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
@@ -67,6 +83,35 @@
   </NumericalMethods>
 
   <FieldSpecifications>
+    <!-- In situ stress  -->
+    <FieldSpecification
+      name="sigma_xx"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rock_stress"
+      component="0"
+      scale="-55e6"/>
+
+    <FieldSpecification
+      name="sigma_yy"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rock_stress"
+      component="1"
+      scale="-60e6"/>
+
+    <FieldSpecification
+      name="sigma_zz"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rock_stress"
+      component="2"
+      scale="-60e6"/>  
+    
+    <!-- Initial water density  -->
     <FieldSpecification
       name="waterDensity"
       initialCondition="1"
@@ -74,6 +119,15 @@
       objectPath="ElementRegions"
       fieldName="water_density"
       scale="1000"/>
+
+    <!-- Initial pressure -->
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      setNames="{all}"
+      scale="35e6"/>  
 
     <FieldSpecification
       name="separableFace"
@@ -92,6 +146,14 @@
       scale="1"/>
 
     <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+    
+    <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
@@ -107,27 +169,50 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
 
-    <FieldSpecification
-      name="xconstraint"
-      objectPath="nodeManager"
-      fieldName="TotalDisplacement"
-      component="0"
-      scale="0.0"
-      setNames="{ xneg, xpos }"/>
-
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
       scale="-3.3"
+      functionName="flow_rate"
       setNames="{ source }"/>
   </FieldSpecifications>
+  
 
   <Functions>
     <TableFunction
       name="apertureTable"
       coordinates="{ -1.0e-3, 0.0 }"
       values="{ 0.002e-3, 0.02e-3 }"/>
+
+  <!-- Pumping Schedule -->
+    <TableFunction
+      name="flow_rate"
+      inputVarNames="{ time }"
+      coordinateFiles="{ tables/flowRate_time.csv }"
+      voxelFile="tables/flowRate.csv"/>        
   </Functions>
+
+  <Tasks>
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="pressure"/>
+
+    <PackCollection
+      name="apertureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="elementAperture"/> 
+
+    <PackCollection
+      name="hydraulicApertureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="hydraulicAperture"/>  
+
+    <PackCollection
+      name="areaCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="elementArea"/> 
+</Tasks>
 
   <Outputs>
     <VTK
@@ -135,5 +220,10 @@
       plotFileRoot="dfit_pennyShaped"
       plotLevel="3"
       parallelThreads="16"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/pressureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection, /Tasks/areaCollection}"
+      filename="dfit_kgd_output" />  
   </Outputs>
 </Problem>

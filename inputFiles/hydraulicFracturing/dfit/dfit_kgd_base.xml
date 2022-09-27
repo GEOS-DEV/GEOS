@@ -5,7 +5,7 @@
     gravityVector="{ 0.0, 0.0, -0.0 }">
     <Hydrofracture
       name="hydrofracture"
-      solidSolverName="lagsolve"
+      solidSolverName="solidMechSolver"
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       couplingTypeOption="FIM"
@@ -23,7 +23,7 @@
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
-      name="lagsolve"
+      name="solidMechSolver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
@@ -55,7 +55,6 @@
     </FiniteVolume>
   </NumericalMethods>
 
-
   <ElementRegions>
     <CellElementRegion
       name="Domain"
@@ -77,6 +76,22 @@
       compressibility="5e-10"
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
+
+    <CompressibleSolidConstantPermeability
+      name="porousRock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>  
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.3"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-15, 2.0e-15, 2.0e-15 }"/>    
 
     <ElasticIsotropic
       name="rock"
@@ -106,22 +121,6 @@
       name="fractureContact"
       penaltyStiffness="1.0e15"
       apertureTableName="aperTable"/>
-
-    <CompressibleSolidConstantPermeability
-      name="porousRock"
-      solidModelName="nullSolid"
-      porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
-
-    <PressurePorosity
-      name="rockPorosity"
-      defaultReferencePorosity="0.3"
-      referencePressure="0.0"
-      compressibility="1.0e-9"/>
-
-    <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="{ 2.0e-15, 2.0e-15, 2.0e-15 }"/>  
   </Constitutive>
 
   <FieldSpecifications>
@@ -217,29 +216,29 @@
     <TableFunction
       name="flow_rate"
       inputVarNames="{ time }"
-      coordinateFiles="{ tables/flowRate_time.csv }"
-      voxelFile="tables/flowRate.csv"/>    
+      coordinateFiles="{ tables/dfit_kgd_flowRate_time.csv }"
+      voxelFile="tables/dfit_kgd_flowRate.csv"/>    
   </Functions>
 
   <Tasks>
       <PackCollection
         name="pressureCollection"
-        objectPath="ElementRegions/Fracture/faceElementSubRegion"
+        objectPath="ElementRegions/Fracture/FractureSubRegion"
         fieldName="pressure"/>
 
       <PackCollection
         name="apertureCollection"
-        objectPath="ElementRegions/Fracture/faceElementSubRegion"
+        objectPath="ElementRegions/Fracture/FractureSubRegion"
         fieldName="elementAperture"/> 
 
       <PackCollection
         name="hydraulicApertureCollection"
-        objectPath="ElementRegions/Fracture/faceElementSubRegion"
+        objectPath="ElementRegions/Fracture/FractureSubRegion"
         fieldName="hydraulicAperture"/>  
 
       <PackCollection
         name="areaCollection"
-        objectPath="ElementRegions/Fracture/faceElementSubRegion"
+        objectPath="ElementRegions/Fracture/FractureSubRegion"
         fieldName="elementArea"/> 
   </Tasks>
  

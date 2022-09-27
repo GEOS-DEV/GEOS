@@ -10,12 +10,11 @@
     gravityVector="{ 0.0, 0.0, -0.0 }">
     <Hydrofracture
       name="hydrofracture"
-      solidSolverName="lagsolve"
+      solidSolverName="solidMechSolver"
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       couplingTypeOption="FIM"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="5"
@@ -31,16 +30,11 @@
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
-      name="lagsolve"
+      name="solidMechSolver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-10"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM
@@ -48,12 +42,6 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       inputFluxEstimate="1.0">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-5"
-        newtonMaxIter="10"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-12"/>
     </SinglePhaseFVM>
 
     <SurfaceGenerator
@@ -61,7 +49,7 @@
       targetRegions="{ Domain }"
       nodeBasedSIF="1"      
       rockToughness="10.0e6"
-      mpiCommOrder="1"/>
+      mpiCommOrder="0"/>
   </Solvers>
  
   <Mesh>
