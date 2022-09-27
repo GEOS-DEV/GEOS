@@ -8,12 +8,15 @@
       solidSolverName="SolidMechSolve"
       damageSolverName="DamageSolve"
       couplingTypeOption="FixedStress"
-      logLevel="2"
+      logLevel="1"
       subcycling="0"
       discretization="FE1"
-      targetRegions="{ Region1 }">
+      targetRegions="{ Region1 }"
+      pressureEffects="1">
       <NonlinearSolverParameters
-        newtonMaxIter="100"/>
+        newtonMaxIter="1"/>
+      <LinearSolverParameters
+        directParallel="0"/>
     </PhaseFieldFracture>
 
     <SolidMechanicsLagrangianSSLE
@@ -24,8 +27,8 @@
       targetRegions="{ Region1 }"
       >
       <NonlinearSolverParameters
-        newtonMaxIter="200"
-        newtonTol="1.0e-12"/>
+        newtonMaxIter="2"
+        newtonTol="1.0e-6"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
@@ -34,11 +37,11 @@
       name="DamageSolve"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      localDissipation="Quadratic"
+      localDissipation="Linear"
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
-        newtonMaxIter="200"
+        newtonMaxIter="2"
         newtonTol="1.0e-12"/>
       <LinearSolverParameters
         directParallel="0"/>
@@ -46,35 +49,20 @@
   </Solvers>
 
   <Mesh>
-    <VTKMesh
-      name="Mode2Notched"
-      file="notchedMesh.vtk"/>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ -1, 1 }"
+      zCoords="{ -0.5, 0.5 }"
+      nx="{ 2 }"
+      ny="{ 2 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
-  <Geometry>
-    <Box
-      name="top"
-      xMin="{ -0.01,  0.99, -0.01 }"
-      xMax="{  1.01,  1.01,  0.11 }"/>
-
-    <Box
-      name="bottom"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{  1.01,  0.01,  0.11 }"/>
-
-    <Box
-      name="left"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{  0.01,  1.01,  0.11 }"/>
-
-    <Box
-      name="right"
-      xMin="{  0.99, -0.01, -0.01 }"
-      xMax="{  1.01, 1.01,  0.11 }"/>
-  </Geometry>
-
   <Events
-    maxTime="30.0">
+    maxTime="2.0">
     <!-- <SoloEvent name="siloOutput0"
                target="/Outputs/SiloOutput"/> -->
     <!-- This event is applied every cycle, and overrides the
@@ -90,16 +78,16 @@
     <PeriodicEvent
       name="vtkOutput"
       timeFrequency="1.0"
-      target="/Outputs/Mode2VolDev_VTKOutput"/>
+      target="/Outputs/DamageAndPressure_VTKOutput"/>
 
     <PeriodicEvent
       name="siloOutputs"
       timeFrequency="1.0"
-      target="/Outputs/Mode2VolDev_SiloOutput"/>
+      target="/Outputs/DamageAndPressure_SiloOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="15.0"
+      timeFrequency="1.0"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
@@ -115,77 +103,115 @@
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocks="{ hexahedra }"
+      cellBlocks="{ cb1 }"
       materialList="{ shale }"/>
   </ElementRegions>
 
   <Constitutive>
-    <DamageVolDevElasticIsotropic
+    <DamageElasticIsotropic
       name="shale"
       defaultDensity="2700"
-      defaultBulkModulus="1.750e5"
-      defaultShearModulus="8.077e4"
-      lengthScale="0.25"
-      criticalFractureEnergy="54.0"
-      criticalStrainEnergy="14.88"/>
+      defaultBulkModulus="3.6"
+      defaultShearModulus="3.6"
+      lengthScale="0.2"
+      criticalFractureEnergy="2.7"
+      criticalStrainEnergy="0"/>
   </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification
-      name="shearLoad"
+      name="fixLeftX"
       fieldName="TotalDisplacement"
       component="0"
       objectPath="nodeManager"
-      scale="1.00e-3"
-      functionName="f_b"
-      setNames="{ top }"/>
+      scale="0"
+      setNames="{ xneg }"/>
 
     <FieldSpecification
-      name="fixedY"
+      name="fixLeftY"
       fieldName="TotalDisplacement"
       component="1"
       objectPath="nodeManager"
-      setNames="{ top, bottom, left, right }"/>
+      scale="0"
+      setNames="{ xneg }"/>  
 
     <FieldSpecification
-      name="fixedX"
+      name="fixBottomX"
       fieldName="TotalDisplacement"
       component="0"
       objectPath="nodeManager"
-      setNames="{ bottom }"/>
+      setNames="{ yneg }"/>
 
     <FieldSpecification
-      name="fixedZ"
+      name="fixBottomY"
+      fieldName="TotalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      setNames="{ yneg }"/>      
+
+    <FieldSpecification
+      name="pullCornerX"
+      fieldName="TotalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="1"
+      setNames="{ corner }"/>
+
+    <FieldSpecification
+      name="pullCornerY"
+      fieldName="TotalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="1"
+      setNames="{ corner }"/>  
+
+    <FieldSpecification
+      name="zfix"
       fieldName="TotalDisplacement"
       component="2"
       objectPath="nodeManager"
-      setNames="{ top, bottom, left, right }"/>
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="pointSource"
+      fieldName="Damage"
+      objectPath="nodeManager"
+      scale="1.0"
+      setNames="{ centerPoint }"/>
   </FieldSpecifications>
 
   <Functions>
+    <!-- These are example mathpresso functions.  In order to use them, you need to specify the order that the
+    symbolic math function should expect the variables to be given, and an expression that it will compile.
+    A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
     <TableFunction
       name="f_b"
       inputVarNames="{ time }"
-      coordinates="{ 0, 101 }"
-      values="{ -1, 100 }"/>
+      coordinates="{ 0, 130 }"
+      values="{ -0.5, 129.5 }"/>
   </Functions>
 
   <Outputs>
     <Silo
-      name="Mode2VolDev_SiloOutput"/>
+      name="DamageAndPressure_SiloOutput"/>
 
     <VTK
-      name="Mode2VolDev_VTKOutput"
+      name="DamageAndPressure_VTKOutput"
       plotFileRoot="plot"/>
 
     <Restart
       name="restartOutput"/>
   </Outputs>
 
-  <!-- <Geometry> -->
-  <!--   <Box name="bottom" xMin="{-0.51, -0.51, -0.01" xMax="0.51, -0.49, +0.11"/> -->
-  <!--   <Box name="top" xMin="{-0.51, 0.49, -0.01" xMax="0.51, 0.51, +0.11"/> -->
-  <!--   <Box name="left" xMin="{-0.51, -0.51, -0.01" xMax="-0.49, 0.51, +0.11"/> -->
-  <!--   <Box name="right" xMin="0.49, -0.51, -0.01" xMax="0.51, 0.51, +0.11"/> -->
-  <!-- </Geometry> -->
+  <Geometry>
+    <Box
+      name="centerPoint"
+      xMin="{ -0.001, -0.001, -1.001 }"
+      xMax="{ +0.001, +0.001, +1.001 }"/>
+
+    <Box
+      name="corner"
+      xMin="{ +0.999, +0.999, -1.001 }"
+      xMax="{ +1.001, +1.001, +1.001 }"/>  
+  </Geometry>
 </Problem>
