@@ -68,6 +68,7 @@ public:
     static constexpr auto lineSearchActionString        = "lineSearchAction";
     static constexpr auto lineSearchMaxCutsString       = "lineSearchMaxCuts";
     static constexpr auto lineSearchCutFactorString     = "lineSearchCutFactor";
+    static constexpr auto lineSearchInterpolationTypeString   = "lineSearchInterpolationType";
 
     static constexpr auto newtonTolString               = "newtonTol";
     static constexpr auto newtonMaxIterString           = "newtonMaxIter";
@@ -76,35 +77,59 @@ public:
     static constexpr auto newtonSplitOperMaxIterString  = "newtonSplitOperMaxIter";
 
     static constexpr auto allowNonConvergedString       = "allowNonConverged";
-    static constexpr auto dtCutIterLimString            = "dtCutIterLimit";
-    static constexpr auto dtIncIterLimString            = "dtIncIterLimit";
+    static constexpr auto timeStepDecreaseIterLimString = "timeStepDecreaseIterLimit";
+    static constexpr auto timeStepIncreaseIterLimString = "timeStepIncreaseIterLimit";
+    static constexpr auto timeStepDecreaseFactorString  = "timeStepDecreaseFactor";
+    static constexpr auto timeStepIncreaseFactorString  = "timeStepIncreaseFactor";
+
     static constexpr auto maxSubStepsString             = "maxSubSteps";
     static constexpr auto maxTimeStepCutsString         = "maxTimeStepCuts";
     static constexpr auto minNumNewtonIterationsString  = "minNumberOfNewtonIterations";
-    static constexpr auto timeStepCutFactorString       = "timestepCutFactor";
+    static constexpr auto timeStepCutFactorString       = "timeStepCutFactor";
+    static constexpr auto maxAllowedResidualNormString  = "maxAllowedResidualNorm";
 
+    static constexpr auto numConfigurationAttemptsString    = "numConfigurationAttempts";
+    static constexpr auto maxNumConfigurationAttemptsString = "maxNumConfigurationAttempts";
   } viewKeys;
 
 
   /**
    * @brief Calculates the upper limit for the number of iterations to allow a
-   * cut to the next timestep.
-   * @return The scaled value of the limit (m_dtCutIterLimit * m_maxIterNewton)
+   * decrease to the next time step.
+   * @return The scaled value of the limit (m_timeStepDecreaseIterLimit * m_maxIterNewton)
    */
-  integer dtCutIterLimit() const
+  integer timeStepDecreaseIterLimit() const
   {
-    return std::ceil( m_dtCutIterLimit * m_maxIterNewton );
+    return std::ceil( m_timeStepDecreaseIterLimit * m_maxIterNewton );
   }
 
 
   /**
    * @brief Calculates the lower limit for the number of iterations to force an
-   * increase to the next timestep.
-   * @return The scaled value of the limit (m_dtIncIterLimit * m_maxIterNewton)
+   * increase to the next time step.
+   * @return The scaled value of the limit (m_timeStepIncreaseIterLimit * m_maxIterNewton)
    */
-  integer dtIncIterLimit() const
+  integer timeStepIncreaseIterLimit() const
   {
-    return std::ceil( m_dtIncIterLimit * m_maxIterNewton );
+    return std::ceil( m_timeStepIncreaseIterLimit * m_maxIterNewton );
+  }
+
+  /**
+   * @brief Getter for the factor used to decrease the time step size
+   * @return the factor used to decrease the time step size
+   */
+  real64 timeStepDecreaseFactor() const
+  {
+    return m_timeStepDecreaseFactor;
+  }
+
+  /**
+   * @brief Getter for the factor used to increase the time step size
+   * @return the factor used to increase the time step size
+   */
+  real64 timeStepIncreaseFactor() const
+  {
+    return m_timeStepIncreaseFactor;
   }
 
   /**
@@ -117,8 +142,21 @@ public:
     Require, ///< Use line search. If smaller residual than starting residual is not achieved, cut time step.
   };
 
+  /**
+   * @brief Indicates the handling of line each interpolation strategy.
+   */
+  enum class LineSearchInterpolationType : integer
+  {
+    Linear,    ///< linear decrease of line search scaling factor.
+    Parabolic, ///< use parabolic interpolation to define line search scaling factor.
+  };
+
+
   /// Flag to apply a line search.
   LineSearchAction m_lineSearchAction;
+
+  /// Flag to pick the type of linesearch
+  LineSearchInterpolationType m_lineSearchInterpType;
 
   /// The maximum number of line search cuts to attempt.
   integer m_lineSearchMaxCuts;
@@ -138,14 +176,23 @@ public:
   /// The number of nonlinear iterations that have been exectued.
   integer m_numNewtonIterations;
 
+  /// The maximum value of residual norm that we allow (otherwise, we cut the time step)
+  real64 m_maxAllowedResidualNorm;
+
   /// Flag to allow for a non-converged nonlinear solution and continue with the problem.
   integer m_allowNonConverged;
 
-  /// Fraction of the Max Newton iterations above which the solver asks for the time-step to be cut for the next dt
-  real64 m_dtCutIterLimit;
+  /// Fraction of the max Newton iterations above which the solver asks for the time-step to be decreased for the next timeStep
+  real64 m_timeStepDecreaseIterLimit;
 
-  /// Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt
-  real64 m_dtIncIterLimit;
+  /// Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next timeStep
+  real64 m_timeStepIncreaseIterLimit;
+
+  /// Factor used to decrease the time step size
+  real64 m_timeStepDecreaseFactor;
+
+  /// Factor used to increase the time step size
+  real64 m_timeStepIncreaseFactor;
 
   /// Maximum number of time sub-steps allowed for the solver
   integer m_maxSubSteps;
@@ -157,14 +204,23 @@ public:
   real64 m_timeStepCutFactor;
 
   /// number of times that the time-step had to be cut
-  integer m_numdtAttempts;
+  integer m_numTimeStepAttempts;
 
+  /// number of times that the configuration had to be changed
+  integer m_numConfigurationAttempts;
+
+  /// Max number of times that the configuration can be changed
+  integer m_maxNumConfigurationAttempts;
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,
               "None",
               "Attempt",
               "Require" );
+
+ENUM_STRINGS( NonlinearSolverParameters::LineSearchInterpolationType,
+              "Linear",
+              "Parabolic" );
 
 } /* namespace geosx */
 

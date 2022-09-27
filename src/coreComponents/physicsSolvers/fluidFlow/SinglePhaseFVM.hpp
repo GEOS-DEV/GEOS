@@ -45,7 +45,7 @@ public:
 
   // Aliasing public/protected members/methods of SolverBase so we don't
   // have to use this->member etc.
-  using BASE::forMeshTargets;
+  using BASE::forDiscretizationOnMeshTargets;
   using BASE::m_cflFactor;
   using BASE::m_maxStableDt;
   using BASE::m_nextDt;
@@ -60,10 +60,10 @@ public:
 
   // Aliasing public/protected members/methods of FlowSolverBase so we don't
   // have to use this->member etc.
-  using BASE::m_poroElasticFlag;
-  using BASE::m_coupledWellsFlag;
   using BASE::m_numDofPerCell;
   using BASE::m_fluxEstimate;
+
+  using BASE::m_isThermal;
 
 
   // Aliasing public/protected members/methods of SinglePhaseBase so we don't

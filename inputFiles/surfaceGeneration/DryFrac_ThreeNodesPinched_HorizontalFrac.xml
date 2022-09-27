@@ -18,7 +18,7 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      
+      discretization="FE1"
       rockToughness="1e6"
       nodeBasedSIF="1"
       logLevel="1"
@@ -63,12 +63,6 @@
       name="solverApplications"
       forceDt="0.5"
       target="/Solvers/lagSolve"/>
-
-    <PeriodicEvent
-      name="outputs"
-      timeFrequency="0.5"
-      targetExactTimestep="0"
-      target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="restarts"

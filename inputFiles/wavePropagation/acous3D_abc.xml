@@ -73,6 +73,11 @@
         name="FE1"
         order="1"/>
     </FiniteElements>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE2"
+        order="3"/>
+    </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
@@ -98,7 +103,7 @@
       scale="0.0"/>
 
     <FieldSpecification
-      name="initialPressure"
+      name="initialPressure_nm1"
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
@@ -109,7 +114,7 @@
     <FieldSpecification
       name="cellVelocity"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="mediumVelocity"
       scale="1500"
       setNames="{ all }"/>

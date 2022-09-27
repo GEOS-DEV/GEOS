@@ -22,8 +22,9 @@
 #include "CommID.hpp"
 
 #include "common/MpiWrapper.hpp"
-#include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+
+#include "mesh/FieldIdentifiers.hpp"
 
 #include <set>
 
@@ -53,11 +54,11 @@ public:
                             NodeManager const & compositionObject,
                             std::vector< NeighborCommunicator > & neighbors );
 
-  void assignNewGlobalIndices( ObjectManagerBase & object,
-                               std::set< localIndex > const & indexList );
+  static void assignNewGlobalIndices( ObjectManagerBase & object,
+                                      std::set< localIndex > const & indexList );
 
-  void assignNewGlobalIndices( ElementRegionManager & elementManager,
-                               std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
+  static void assignNewGlobalIndices( ElementRegionManager & elementManager,
+                                      std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
 
   void setupGhosts( MeshLevel & meshLevel,
                     std::vector< NeighborCommunicator > & neighbors,
@@ -69,24 +70,24 @@ public:
   void findMatchedPartitionBoundaryObjects( ObjectManagerBase & group,
                                             std::vector< NeighborCommunicator > & allNeighbors );
 
-  void synchronizeFields( const std::map< string, string_array > & fieldNames,
+  void synchronizeFields( FieldIdentifiers const & fieldsToBeSync,
                           MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & allNeighbors,
                           bool onDevice );
 
-  void synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
+  void synchronizePackSendRecvSizes( FieldIdentifiers const & fieldsToBeSync,
                                      MeshLevel & mesh,
                                      std::vector< NeighborCommunicator > & neighbors,
                                      MPI_iCommData & icomm,
                                      bool onDevice );
 
-  void synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
+  void synchronizePackSendRecv( FieldIdentifiers const & fieldsToBeSync,
                                 MeshLevel & mesh,
                                 std::vector< NeighborCommunicator > & allNeighbors,
                                 MPI_iCommData & icomm,
                                 bool onDevice );
 
-  void asyncPack( const std::map< string, string_array > & fieldNames,
+  void asyncPack( FieldIdentifiers const & fieldsToBeSync,
                   MeshLevel & mesh,
                   std::vector< NeighborCommunicator > & neighbors,
                   MPI_iCommData & icomm,

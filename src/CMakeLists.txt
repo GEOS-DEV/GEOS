@@ -1,7 +1,7 @@
 cmake_minimum_required( VERSION 3.9 )
 
 # At the moment we are manually passing the cuda arch flag.
-if(${CMAKE_VERSION} VERSION_GREATER "3.18.0") 
+if(${CMAKE_VERSION} VERSION_GREATER "3.18.0")
   cmake_policy(SET CMP0104 OLD)
 endif()
 
@@ -12,6 +12,8 @@ project( geosx LANGUAGES C CXX )
 set( BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard" )
 set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "" )
 set( CMAKE_ENABLE_EXPORTS ON )
+
+#set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
 
 ################################
 # Include blt
@@ -51,7 +53,7 @@ add_subdirectory( thirdparty )
 ################################
 # Add components
 ################################
-set( externalComponentsLinkList "" ) 
+set( externalComponentsLinkList "" )
 add_subdirectory( coreComponents )
 add_subdirectory( externalComponents )
 add_subdirectory( main )
@@ -106,8 +108,9 @@ endif()
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
                     DEPENDS_ON ${extraComponentsLinkList}
-                               ${externalComponentsLinkList}
-                  )
+                               ${externalComponentsLinkList} 
+                   )
+
 
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
 if( ENABLE_HYPRE_CUDA )
@@ -137,7 +140,7 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx
                      COMMENT "Generating XML schema"
-                   )
+                     )
 
   add_custom_target( geosx_update_rst_tables
                      ALL
@@ -145,15 +148,19 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_generate_schema
                      COMMENT "Generating schema-dependent RST files"
-                   )
+                     )
 
   add_custom_target( geosx_validate_all_xml_files
                      ALL
-                     COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+                     COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples ${CMAKE_SOURCE_DIR}/../inputFiles
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_update_rst_tables
                      COMMENT "Validating all XML files in the repository against the schema"
-                   )
+                     )
+endif()
+
+if( ENABLE_PYGEOSX )
+   add_subdirectory( pygeosx )
 endif()
 
 if( SPHINX_FOUND )
@@ -161,12 +168,9 @@ if( SPHINX_FOUND )
 endif()
 
 
-install( DIRECTORY ../examples/ 
+install( DIRECTORY ../examples/
          DESTINATION examples )
 
-install( DIRECTORY ../scripts/ 
+install( DIRECTORY ../scripts/
          DESTINATION scripts )
 
-if( ENABLE_PYGEOSX )
-  add_subdirectory( pygeosx )
-endif()

@@ -31,8 +31,14 @@ class AcousticWaveEquationSEM : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
-  using ATOMIC_POLICY = parallelDeviceAtomic;
+  using EXEC_POLICY = serialPolicy;//parallelDevicePolicy< 32 >;
+  using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
+
+
+  /**
+   * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
+   */
+  static constexpr real64 epsilonLoc = 1e-8;
 
   AcousticWaveEquationSEM( const std::string & name,
                            Group * const parent );
@@ -76,23 +82,63 @@ public:
 
   /**
    * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
-   * @param time_n the time of evaluation of the source
+   * @param cycleNumber the cycle number/step number of evaluation of the source
    * @param rhs the right hand side vector to be computed
    */
-  virtual void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs ) override;
+  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) override;
 
   /**
-   * @brief Compute the pressure at each receiver coordinate in one time step
-   * @param iseismo the index number of of the seismo trace
-   * @param pressure_np1 the array to save the pressure value at the receiver position
+   * TODO: move implementation into WaveSolverBase
+   * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
+   * last two timesteps.
+   * @param time_n the time corresponding to the field values pressure_n
+   * @param dt the simulation timestep
+   * @param timeSeismo the time at which the seismogram is computed
+   * @param iSeismo the index of the seismogram time in the seismogram array
+   * @param var_at_np1 the field values at time_n + dt
+   * @param var_at_n the field values at time_n
+   * @param var_at_receivers the array holding the trace values, where the output is written
    */
-  virtual void computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 ) override;
+  virtual void computeSeismoTrace( real64 const time_n,
+                                   real64 const dt,
+                                   real64 const timeSeismo,
+                                   localIndex const iSeismo,
+                                   arrayView1d< real64 const > const var_np1,
+                                   arrayView1d< real64 const > const var_n,
+                                   arrayView2d< real64 > varAtReceivers ) override;
+
+  /**
+   * TODO: move implementation into WaveSolverBase
+   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
+   * @param time_n the time corresponding to the field values pressure_n
+   * @param dt the simulation timestep
+   * @param var_at_np1 the field values at time_n + dt
+   * @param var_at_n the field values at time_n
+   * @param var_at_receivers the array holding the trace values, where the output is written
+   */
+  virtual void computeAllSeismoTraces( real64 const time_n,
+                                       real64 const dt,
+                                       arrayView1d< real64 const > const var_np1,
+                                       arrayView1d< real64 const > const var_n,
+                                       arrayView2d< real64 > varAtReceivers );
+
+
+  /**
+   * @brief Initialize Perfectly Matched Layer (PML) information
+   */
+  virtual void initializePML() override;
+
+
+  /**
+   * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
+   */
+  virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain ) override;
 
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
     static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
     static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
-    static constexpr char const * sourceIsLocalString() { return "sourceIsLocal"; }
+    static constexpr char const * sourceIsAccessibleString() { return "sourceIsAccessible"; }
 
     static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
     static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
@@ -126,12 +172,21 @@ private:
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
 
   /**
-   * @brief Save the seismo trace in file
-   * @param iseismo index number of the seismo trace
-   * @param valPressure value of the pressure for iseismo
+   * @brief Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
+   * @param time the time to apply the BC
+   * @param domain the partition domain
+   */
+  virtual void applyPML( real64 const time, DomainPartition & domain ) override;
+
+  /**
+   * @brief Temporary debug function. Saves the sismo trace to a file.
+   * @param iSeismo index number of the seismo trace
+   * @param val value to be written in seismo
    * @param filename name of the output file
    */
-  void saveSeismo( localIndex iseismo, real64 valPressure, string const & filename ) override;
+  void saveSeismo( localIndex const iSeismo, real64 const val, string const & filename ) override;
+
+  localIndex getNumNodesPerElem();
 
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
@@ -139,8 +194,8 @@ private:
   /// Constant part of the source for the nodes listed in m_sourceNodeIds
   array2d< real64 > m_sourceConstants;
 
-  /// Flag that indicates whether the source is local or not to the MPI rank
-  array1d< localIndex > m_sourceIsLocal;
+  /// Flag that indicates whether the source is accessible (is local or in the  ghost cells) or not to the MPI rank
+  array1d< localIndex > m_sourceIsAccessible;
 
   /// Indices of the element nodes (in the right order) for each receiver point
   array2d< localIndex > m_receiverNodeIds;
@@ -152,8 +207,7 @@ private:
   array1d< localIndex > m_receiverIsLocal;
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
-  array1d< real64 > m_pressureNp1AtReceivers;
-
+  array2d< real64 > m_pressureNp1AtReceivers;
 
 };
 
@@ -241,7 +295,37 @@ EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceNodeIndicator,
                            WRITE_AND_READ,
                            "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar1PML,
+                           "auxiliaryVar1PML",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "PML vectorial auxiliary variable 1." );
 
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar2PML,
+                           "auxiliaryVar2PML",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "PML vectorial auxiliary variable 2." );
+
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar3PML,
+                           "auxiliaryVar3PML",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "PML scalar auxiliary variable 3." );
+
+EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar4PML,
+                           "auxiliaryVar4PML",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "PML scalar auxiliary variable 4." );
 }
 
 

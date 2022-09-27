@@ -294,6 +294,7 @@ public:
                                  meshData.cellCenters( cellIndex, 1 ),
                                  meshData.cellCenters( cellIndex, 2 ) };
     real64 const cellVolume = meshData.cellVolumes( cellIndex );
+
     computeProjectors< SUBREGION_TYPE >( cellIndex,
                                          meshData.nodesCoords,
                                          meshData.cellToNodeMap,
@@ -526,13 +527,27 @@ private:
 };
 
 /// Convenience typedef for VEM on tetrahedra.
-using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 4 >;
+using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 3 >;
 /// Convenience typedef for VEM on hexahedra.
-using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 6 >;
+using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 4 >;
 /// Convenience typedef for VEM on pyramids.
-using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 5 >;
+using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 4 >;
 /// Convenience typedef for VEM on wedges.
-using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 5 >;
+using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 4 >;
+/// Convenience typedef for VEM on prism5.
+using H1_Prism5_VEM_Gauss1 = ConformingVirtualElementOrder1< 10, 5 >;
+/// Convenience typedef for VEM on prism6.
+using H1_Prism6_VEM_Gauss1 = ConformingVirtualElementOrder1< 12, 6 >;
+/// Convenience typedef for VEM on prism7.
+using H1_Prism7_VEM_Gauss1 = ConformingVirtualElementOrder1< 14, 7 >;
+/// Convenience typedef for VEM on prism8.
+using H1_Prism8_VEM_Gauss1 = ConformingVirtualElementOrder1< 16, 8 >;
+/// Convenience typedef for VEM on prism9.
+using H1_Prism9_VEM_Gauss1 = ConformingVirtualElementOrder1< 18, 9 >;
+/// Convenience typedef for VEM on prism10.
+using H1_Prism10_VEM_Gauss1 = ConformingVirtualElementOrder1< 20, 10 >;
+/// Convenience typedef for VEM on prism11.
+using H1_Prism11_VEM_Gauss1 = ConformingVirtualElementOrder1< 22, 11 >;
 }
 }
 

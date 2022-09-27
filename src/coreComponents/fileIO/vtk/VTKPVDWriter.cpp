@@ -42,11 +42,7 @@ void VTKPVDWriter::setFileName( string fileName )
 
 void VTKPVDWriter::save() const
 {
-  int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  if( mpiRank == 0 )
-  {
-    m_pvdFile.save_file( m_fileName.c_str() );
-  }
+  m_pvdFile.save_file( m_fileName.c_str() );
 }
 
 void VTKPVDWriter::addData( real64 time, string const & filePath ) const
@@ -55,6 +51,14 @@ void VTKPVDWriter::addData( real64 time, string const & filePath ) const
   auto dataSetNode = collectionNode.append_child( "DataSet" );
   dataSetNode.append_attribute( "timestep" ) = time;
   dataSetNode.append_attribute( "file" ) = filePath.c_str();
+}
+
+void VTKPVDWriter::reinitData() const
+{
+  auto collectionNode = m_pvdFile.child( "VTKFile" ).child( "Collection" );
+
+  while( collectionNode.remove_child( "DataSet" ) )
+  {}
 }
 }
 }

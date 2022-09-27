@@ -53,6 +53,8 @@ public:
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
+                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
+                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
                           arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
                           real64 & totalDensity ) const override;
 
@@ -64,6 +66,8 @@ public:
                           PhaseProp::SliceType const phaseDensity,
                           PhaseProp::SliceType const phaseMassDensity,
                           PhaseProp::SliceType const phaseViscosity,
+                          PhaseProp::SliceType const phaseEnthalpy,
+                          PhaseProp::SliceType const phaseInternalEnergy,
                           PhaseComp::SliceType const phaseCompFraction,
                           FluidProp::SliceType const totalDensity ) const override;
 
@@ -109,6 +113,8 @@ private:
                    PhaseProp::ViewType phaseDensity,
                    PhaseProp::ViewType phaseMassDensity,
                    PhaseProp::ViewType phaseViscosity,
+                   PhaseProp::ViewType phaseEnthalpy,
+                   PhaseProp::ViewType phaseInternalEnergy,
                    PhaseComp::ViewType phaseCompFraction,
                    FluidProp::ViewType totalDensity );
 
@@ -294,7 +300,9 @@ DeadOilFluid::KernelWrapper::
     // get the phase index
     integer const ip = m_hydrocarbonPhaseOrder[iph];
     // interpolate in the table to get the phase viscosity and derivatives
-    phaseVisc.value[ip] = m_viscosityTables[iph].compute( &pressure, &(phaseVisc.derivs)[ip][Deriv::dP] );
+    real64 dPhaseVisc_dPres = 0.0;
+    phaseVisc.value[ip] = m_viscosityTables[iph].compute( &pressure, &dPhaseVisc_dPres );
+    phaseVisc.derivs[ip][Deriv::dP] = dPhaseVisc_dPres;
   }
 
   // 2. Water phase: use the constant viscosity provided by the user
@@ -321,10 +329,12 @@ DeadOilFluid::KernelWrapper::
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
+           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
+           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
            arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction,
            real64 & totalDensity ) const
 {
-  GEOSX_UNUSED_VAR( temperature );
+  GEOSX_UNUSED_VAR( temperature, phaseEnthalpy, phaseInternalEnergy );
 
   integer constexpr maxNumComp = 3;
   integer constexpr maxNumPhase = 3;
@@ -369,10 +379,12 @@ DeadOilFluid::KernelWrapper::
            PhaseProp::SliceType const phaseDensity,
            PhaseProp::SliceType const phaseMassDensity,
            PhaseProp::SliceType const phaseViscosity,
+           PhaseProp::SliceType const phaseEnthalpy,
+           PhaseProp::SliceType const phaseInternalEnergy,
            PhaseComp::SliceType const phaseCompFraction,
            FluidProp::SliceType const totalDensity ) const
 {
-  GEOSX_UNUSED_VAR( temperature );
+  GEOSX_UNUSED_VAR( temperature, phaseEnthalpy, phaseInternalEnergy );
 
   using Deriv = multifluid::DerivativeOffset;
 
@@ -438,6 +450,8 @@ DeadOilFluid::KernelWrapper::
            m_phaseDensity( k, q ),
            m_phaseMassDensity( k, q ),
            m_phaseViscosity( k, q ),
+           m_phaseEnthalpy( k, q ),
+           m_phaseInternalEnergy( k, q ),
            m_phaseCompFraction( k, q ),
            m_totalDensity( k, q ) );
 }

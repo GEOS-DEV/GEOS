@@ -42,7 +42,6 @@ void computeSinglePhaseFlux( localIndex const ( &seri )[2],
                              real64 const ( &transmissibility )[2],
                              real64 const ( &dTrans_dPres )[2],
                              ElementViewConst< arrayView1d< real64 const > > const & pres,
-                             ElementViewConst< arrayView1d< real64 const > > const & dPres,
                              ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                              ElementViewConst< arrayView2d< real64 const > > const & dens,
                              ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
@@ -75,7 +74,7 @@ void computeSinglePhaseFlux( localIndex const ( &seri )[2],
     localIndex const esr = sesri[ke];
     localIndex const ei  = sei[ke];
 
-    real64 const pressure = pres[er][esr][ei] + dPres[er][esr][ei];
+    real64 const pressure = pres[er][esr][ei];
     real64 const gravD = gravCoef[er][esr][ei];
     real64 const pot = transmissibility[ke] * ( pressure - densMean * gravD );
 
@@ -123,6 +122,7 @@ void computeSinglePhaseFlux( localIndex const ( &seri )[2],
     dFlux_dP[ke] = mobility * ( transmissibility[ke] - dDensMean_dP[ke] * sumWeightGrav )
                    + dMobility_dP[ke] * potDif + dFlux_dTrans * dTrans_dPres[ke];
   }
+
 }
 
 /******************************** AquiferBCKernel ********************************/
@@ -148,7 +148,7 @@ struct AquiferBCKernel
   sumFluxes( BoundaryStencil const & stencil,
              AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
              ElementViewConst< arrayView1d< real64 const > > const & pres,
-             ElementViewConst< arrayView1d< real64 const > > const & dPres,
+             ElementViewConst< arrayView1d< real64 const > > const & presOld,
              ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
              real64 const & timeAtBeginningOfStep,
              real64 const & dt )
@@ -174,7 +174,7 @@ struct AquiferBCKernel
       real64 const aquiferVolFlux = aquiferBCWrapper.compute( timeAtBeginningOfStep,
                                                               dt,
                                                               pres[er][esr][ei],
-                                                              dPres[er][esr][ei],
+                                                              presOld[er][esr][ei],
                                                               gravCoef[er][esr][ei],
                                                               areaFraction,
                                                               dAquiferVolFlux_dPres );

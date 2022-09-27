@@ -5,15 +5,18 @@ set( fileIO_headers
      Outputs/BlueprintOutput.hpp
      Outputs/OutputBase.hpp
      Outputs/OutputManager.hpp
+     Outputs/OutputUtilities.hpp     
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
      Outputs/SiloOutput.hpp
      Outputs/TimeHistoryOutput.hpp
      silo/SiloFile.hpp
-     timeHistory/HistoryIO.hpp
+     timeHistory/HDFFile.hpp
+     timeHistory/HistoryCollectionBase.hpp
+     timeHistory/BufferedHistoryIO.hpp
      timeHistory/PackCollection.hpp
-     timeHistory/TimeHistHDF.hpp
-     timeHistory/TimeHistoryCollection.hpp
+     timeHistory/HDFHistoryIO.hpp
+     timeHistory/HistoryCollection.hpp
    )
 
 #
@@ -23,16 +26,32 @@ set( fileIO_sources
      Outputs/BlueprintOutput.cpp
      Outputs/OutputBase.cpp
      Outputs/OutputManager.cpp
+     Outputs/OutputUtilities.cpp
      Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
      Outputs/SiloOutput.cpp
      Outputs/TimeHistoryOutput.cpp
      silo/SiloFile.cpp
+     timeHistory/HDFFile.cpp
+     timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
-     timeHistory/TimeHistHDF.cpp
-   ) 
+     timeHistory/HDFHistoryIO.cpp
+   )
 
 set( dependencyList mesh constitutive silo hdf5 )
+if( ENABLE_PYGEOSX )
+  list( APPEND fileIO_headers
+        python/PyHistoryCollectionType.hpp 
+        python/PyHistoryOutputType.hpp 
+        python/PyVTKOutputType.hpp
+	      )
+  list( APPEND fileIO_sources 
+        python/PyHistoryCollection.cpp 
+        python/PyHistoryOutput.cpp 
+        python/PyVTKOutput.cpp
+        )
+  list( APPEND dependencyList Python3::Python pylvarray ) 
+endif()
 
 
 if( ENABLE_MPI )
@@ -40,7 +59,7 @@ if( ENABLE_MPI )
   set( dependencyList ${dependencyList} mpi hdf5_interface )
   list( APPEND fileIO_headers coupling/ChomboCoupler.hpp Outputs/ChomboIO.hpp )
   list( APPEND fileIO_sources coupling/ChomboCoupler.cpp Outputs/ChomboIO.cpp )
-endif() 
+endif()
 
 if( ENABLE_VTK )
   list( APPEND fileIO_headers
@@ -76,3 +95,4 @@ blt_add_library( NAME       fileIO
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks(PREFIX fileIO )
+

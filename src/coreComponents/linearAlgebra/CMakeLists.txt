@@ -108,7 +108,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirHybridFVM.hpp
           interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/Hydrofracture.hpp
-          interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp
+          interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp      
           interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp
@@ -128,7 +128,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreVector.cpp
         )
 
-    list( APPEND dependencyList hypre )
+    list( APPEND dependencyList hypre umpire )
 
 endif()
 

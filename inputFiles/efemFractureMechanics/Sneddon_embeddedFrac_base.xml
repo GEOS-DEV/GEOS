@@ -32,7 +32,7 @@
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
-      
+      discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="1"
@@ -69,6 +69,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="embeddedSurfaceSubRegion"
       subRegionType="embeddedElement"
       materialList="{ fractureContact }"
       defaultAperture="1e-3"/>
@@ -124,11 +125,11 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
       
-      <FieldSpecification
+    <FieldSpecification
       name="Traction"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="fractureTraction"
+      objectPath="ElementRegions/Fracture"
+      fieldName="traction"
       component="0"
       scale="-2.0e6"/>      
   </FieldSpecifications>
@@ -154,7 +155,7 @@
     <VTK
       name="vtkOutput"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
       
     <TimeHistory
       name="timeHistoryOutput"

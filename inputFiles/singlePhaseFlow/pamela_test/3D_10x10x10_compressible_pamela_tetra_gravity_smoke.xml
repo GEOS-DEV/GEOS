@@ -8,7 +8,7 @@
 
   <!-- SPHINX_TUT_EXT_TETRA_MESH -->
   <Mesh>
-    <PAMELAMeshGenerator
+    <PAMELAMesh
         name="CubeTetra"
         file="cube_10x10x10_tet.msh"/>
   </Mesh>

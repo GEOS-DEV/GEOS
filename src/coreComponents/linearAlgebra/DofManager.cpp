@@ -133,7 +133,7 @@ array1d< integer > DofManager::numComponentsPerField() const
   return ret;
 }
 
-DofManager::Location DofManager::location( string const & fieldName ) const
+FieldLocation DofManager::location( string const & fieldName ) const
 {
   return m_fields[getFieldIndex( fieldName )].location;
 }
@@ -183,11 +183,18 @@ void DofManager::createIndexArray( FieldDescription const & field )
 
     forMeshSupport( field.support, *m_domain, [&]( MeshBody &, MeshLevel & mesh, auto const & regions )
     {
-      Location constexpr LOC = decltype(loc)::value;
+      FieldLocation constexpr LOC = decltype(loc)::value;
       using helper = ArrayHelper< globalIndex, LOC >;
 
-      std::map< string, string_array > fieldNames;
-      fieldNames[MeshHelper< LOC >::syncObjName].emplace_back( field.key );
+      FieldIdentifiers fieldsToBeSync;
+      if( field.location == FieldLocation::Elem )
+      {
+        fieldsToBeSync.addElementFields( { field.key }, regions );
+      }
+      else
+      {
+        fieldsToBeSync.addFields( field.location, { field.key } );
+      }
 
       // register index array
       helper::template create<>( mesh, field.key, field.docstring, regions );
@@ -200,7 +207,7 @@ void DofManager::createIndexArray( FieldDescription const & field )
       } );
 
       // synchronize across ranks
-      CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, m_domain->getNeighbors(), false );
+      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, m_domain->getNeighbors(), false );
     } );
   } );
 }
@@ -211,7 +218,7 @@ void DofManager::removeIndexArray( FieldDescription const & field )
   {
     forMeshSupport( field.support, *m_domain, [&]( MeshBody &, MeshLevel & mesh, auto const & regions )
     {
-      Location constexpr LOC = decltype(loc)::value;
+      FieldLocation constexpr LOC = decltype(loc)::value;
       ArrayHelper< globalIndex, LOC >::template remove<>( mesh, field.key, regions );
     } );
   } );
@@ -298,7 +305,7 @@ processFieldRegionList( DomainPartition const & domain,
 } // namespace
 
 void DofManager::addField( string const & fieldName,
-                           Location const location,
+                           FieldLocation const location,
                            integer const components,
                            std::vector< Regions > const & regions )
 {
@@ -326,16 +333,16 @@ void DofManager::addField( string const & fieldName,
 }
 
 void DofManager::addField( string const & fieldName,
-                           Location const location,
+                           FieldLocation const location,
                            integer const components,
-                           map< string, array1d< string > > const & regions )
+                           map< std::pair< string, string >, array1d< string > > const & regions )
 {
   // Convert input into internal format
   std::vector< Regions > support;
   for( auto const & p : regions )
   {
-    MeshBody const & meshBody = m_domain->getMeshBody( p.first );
-    MeshLevel const & mesh = meshBody.getMeshLevel( 0 ); // TODO by name?
+    MeshBody const & meshBody = m_domain->getMeshBody( p.first.first );
+    MeshLevel const & mesh = meshBody.getMeshLevel( p.first.second ).getShallowParent();
     std::vector< string > regionNames( p.second.begin(), p.second.end() );
     support.push_back( { meshBody.getName(), mesh.getName(), std::move( regionNames ) } );
   }
@@ -483,7 +490,7 @@ void DofManager::addCoupling( string const & fieldName,
   localIndex const fieldIndex = getFieldIndex( fieldName );
   FieldDescription const & field = m_fields[fieldIndex];
 
-  GEOSX_ERROR_IF( field.location != Location::Elem, "Field must be supported on elements in order to use stencil sparsity" );
+  GEOSX_ERROR_IF( field.location != FieldLocation::Elem, "Field must be supported on elements in order to use stencil sparsity" );
 
   CouplingDescription & coupling = m_coupling[ {fieldIndex, fieldIndex} ];
   coupling.connector = Connector::Stencil;
@@ -494,15 +501,15 @@ void DofManager::addCoupling( string const & fieldName,
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               DofManager::Connector connectivity,
-                              map< string, array1d< string > > const & regions,
+                              map< std::pair< string, string >, array1d< string > > const & regions,
                               bool symmetric )
 {
   // Convert input into internal format
   std::vector< Regions > support;
   for( auto const & p : regions )
   {
-    MeshBody const & meshBody = m_domain->getMeshBody( p.first );
-    MeshLevel const & mesh = meshBody.getMeshLevel( 0 ); // TODO by name?
+    MeshBody const & meshBody = m_domain->getMeshBody( p.first.first );
+    MeshLevel const & mesh = meshBody.getMeshLevel( p.first.second ).getShallowParent();
     std::vector< string > regionNames( p.second.begin(), p.second.end() );
     support.push_back( { meshBody.getName(), mesh.getName(), std::move( regionNames ) } );
   }
@@ -527,7 +534,7 @@ namespace
  * was built with the same type of connectors and list of region names and types, otherwise connector
  * numbering will be incompatible between the two.
  */
-template< DofManager::Location LOC, DofManager::Location CONN, typename ... SUBREGIONTYPES >
+template< FieldLocation LOC, FieldLocation CONN, typename ... SUBREGIONTYPES >
 struct ConnLocPatternBuilder
 {
   static void build( MeshLevel const & mesh,
@@ -576,7 +583,7 @@ struct ConnLocPatternBuilder
  * and runtime overhead, so we only use this method when absolutely have to, i.e. in this case.
  */
 template< typename ... SUBREGIONTYPES >
-struct ConnLocPatternBuilder< DofManager::Location::Elem, DofManager::Location::Edge, SUBREGIONTYPES... >
+struct ConnLocPatternBuilder< FieldLocation::Elem, FieldLocation::Edge, SUBREGIONTYPES... >
 {
   static void build( MeshLevel const & mesh,
                      string const & key,
@@ -585,8 +592,8 @@ struct ConnLocPatternBuilder< DofManager::Location::Elem, DofManager::Location::
                      localIndex const rowOffset,
                      SparsityPattern< globalIndex > & connLocPattern )
   {
-    DofManager::Location constexpr ELEM  = DofManager::Location::Elem;
-    DofManager::Location constexpr EDGE = DofManager::Location::Edge;
+    FieldLocation constexpr ELEM  = FieldLocation::Elem;
+    FieldLocation constexpr EDGE = FieldLocation::Edge;
 
     EdgeManager const & edgeManager = mesh.getEdgeManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -620,7 +627,7 @@ struct ConnLocPatternBuilder< DofManager::Location::Elem, DofManager::Location::
   }
 };
 
-template< DofManager::Location LOC, DofManager::Location CONN >
+template< FieldLocation LOC, FieldLocation CONN >
 void makeConnLocPattern( MeshLevel const & mesh,
                          string const & key,
                          localIndex const numComp,
@@ -628,7 +635,7 @@ void makeConnLocPattern( MeshLevel const & mesh,
                          std::vector< string > const & regions,
                          SparsityPattern< globalIndex > & connLocPattern )
 {
-  using Loc = DofManager::Location;
+  using Loc = FieldLocation;
 
   // 1. Count number of connectors in order to size the sparsity pattern
   localIndex const numConnectors = countMeshObjects< CONN, true >( mesh, regions );
@@ -730,7 +737,7 @@ void DofManager::setSparsityPatternFromStencil( SparsityPatternView< globalIndex
     // (e.g. a single fracture element not connected to any other)
     auto dofNumberView = dofNumber.toNestedViewConst();
     colDofIndices.resize( numComp );
-    forMeshLocation< Location::Elem, false, parallelHostPolicy >( mesh, regions, [=]( auto const & elemIdx )
+    forMeshLocation< FieldLocation::Elem, false, parallelHostPolicy >( mesh, regions, [=]( auto const & elemIdx )
     {
       globalIndex const elemDof = dofNumberView[elemIdx[0]][elemIdx[1]][elemIdx[2]];
       for( localIndex c = 0; c < numComp; ++c )
@@ -772,11 +779,11 @@ void DofManager::setSparsityPatternOneBlock( SparsityPatternView< globalIndex > 
   {
     SparsityPattern< globalIndex > connLocRow( 0, 0, 0 ), connLocCol( 0, 0, 0 );
 
-    LocationSwitch( rowField.location, static_cast< Location >( coupling.connector ),
+    LocationSwitch( rowField.location, static_cast< FieldLocation >( coupling.connector ),
                     [&]( auto const locType, auto const connType )
     {
-      Location constexpr LOC  = decltype(locType)::value;
-      Location constexpr CONN = decltype(connType)::value;
+      FieldLocation constexpr LOC  = decltype(locType)::value;
+      FieldLocation constexpr CONN = decltype(connType)::value;
 
       makeConnLocPattern< LOC, CONN >( mesh,
                                        rowField.key,
@@ -792,11 +799,11 @@ void DofManager::setSparsityPatternOneBlock( SparsityPatternView< globalIndex > 
     }
     else
     {
-      LocationSwitch( colField.location, static_cast< Location >( coupling.connector ),
+      LocationSwitch( colField.location, static_cast< FieldLocation >( coupling.connector ),
                       [&]( auto const locType, auto const connType )
       {
-        Location constexpr LOC = decltype(locType)::value;
-        Location constexpr CONN = decltype(connType)::value;
+        FieldLocation constexpr LOC = decltype(locType)::value;
+        FieldLocation constexpr CONN = decltype(connType)::value;
 
         makeConnLocPattern< LOC, CONN >( mesh,
                                          colField.key,
@@ -917,11 +924,11 @@ void DofManager::countRowLengthsOneBlock( arrayView1d< localIndex > const & rowL
   {
     SparsityPattern< globalIndex > connLocRow( 0, 0, 0 ), connLocCol( 0, 0, 0 );
 
-    LocationSwitch( rowField.location, static_cast< Location >( coupling.connector ),
+    LocationSwitch( rowField.location, static_cast< FieldLocation >( coupling.connector ),
                     [&]( auto const locType, auto const connType )
     {
-      Location constexpr LOC  = decltype(locType)::value;
-      Location constexpr CONN = decltype(connType)::value;
+      FieldLocation constexpr LOC  = decltype(locType)::value;
+      FieldLocation constexpr CONN = decltype(connType)::value;
 
       makeConnLocPattern< LOC, CONN >( mesh,
                                        rowField.key,
@@ -937,11 +944,11 @@ void DofManager::countRowLengthsOneBlock( arrayView1d< localIndex > const & rowL
     }
     else
     {
-      LocationSwitch( colField.location, static_cast< Location >( coupling.connector ),
+      LocationSwitch( colField.location, static_cast< FieldLocation >( coupling.connector ),
                       [&]( auto const locType, auto const connType )
       {
-        Location constexpr LOC = decltype(locType)::value;
-        Location constexpr CONN = decltype(connType)::value;
+        FieldLocation constexpr LOC = decltype(locType)::value;
+        FieldLocation constexpr CONN = decltype(connType)::value;
 
         makeConnLocPattern< LOC, CONN >( mesh,
                                          colField.key,
@@ -1140,7 +1147,7 @@ void DofManager::vectorToField( arrayView1d< real64 const > const & localVector,
 
   forMeshSupport( field.support, *m_domain, [&]( MeshBody const &, MeshLevel & mesh, auto const & regions )
   {
-    if( field.location == Location::Elem )
+    if( field.location == FieldLocation::Elem )
     {
       mesh.getElemManager().forElementSubRegions( regions, [&]( localIndex const,
                                                                 ElementSubRegionBase & subRegion )
@@ -1205,7 +1212,7 @@ void DofManager::fieldToVector( arrayView1d< real64 > const & localVector,
 
   forMeshSupport( field.support, *m_domain, [&]( MeshBody const &, MeshLevel & mesh, auto const & regions )
   {
-    if( field.location == Location::Elem )
+    if( field.location == FieldLocation::Elem )
     {
       mesh.getElemManager().forElementSubRegions( regions, [&]( localIndex const,
                                                                 ElementSubRegionBase const & subRegion )
@@ -1274,7 +1281,7 @@ void DofManager::reorderByRank()
   // ( MeshBody name, MeshLevel name), and a value that is another map with a
   // key that indicates the name of the object that contains the field to be
   // synced, and a value that contans the name of the field to be synced.
-  std::map< std::pair< string, string >, std::map< string, string_array > > fieldsToSync;
+  std::map< std::pair< string, string >, FieldIdentifiers > fieldsToBeSync;
 
   // adjust index arrays for owned locations
   for( FieldDescription const & field : m_fields )
@@ -1285,7 +1292,7 @@ void DofManager::reorderByRank()
     {
       LocationSwitch( field.location, [&]( auto const loc )
       {
-        Location constexpr LOC = decltype(loc)::value;
+        FieldLocation constexpr LOC = decltype(loc)::value;
         using ArrayHelper = ArrayHelper< globalIndex, LOC >;
 
         typename ArrayHelper::Accessor indexArray = ArrayHelper::get( mesh, field.key );
@@ -1295,13 +1302,21 @@ void DofManager::reorderByRank()
           ArrayHelper::reference( indexArray, locIdx ) += adjustment;
         } );
 
-        fieldsToSync[{ body.getName(), mesh.getName() }][MeshHelper< LOC >::syncObjName].emplace_back( field.key );
+        if( field.location == FieldLocation::Elem )
+        {
+          fieldsToBeSync[{ body.getName(), mesh.getName() }].addElementFields( {field.key}, regions );
+
+        }
+        else
+        {
+          fieldsToBeSync[{ body.getName(), mesh.getName() }].addFields( field.location, {field.key} );
+        }
+
       } );
     } );
   }
 
-  // synchronize index arrays for all fields across ranks
-  for( auto const & meshFieldPair : fieldsToSync )
+  for( auto const & meshFieldPair : fieldsToBeSync )
   {
     MeshLevel & mesh = m_domain->getMeshBody( meshFieldPair.first.first ).getMeshLevel( meshFieldPair.first.second );
     CommunicationTools::getInstance().synchronizeFields( meshFieldPair.second, mesh, m_domain->getNeighbors(), false );

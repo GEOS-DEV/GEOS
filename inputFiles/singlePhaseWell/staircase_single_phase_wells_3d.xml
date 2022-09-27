@@ -16,13 +16,14 @@
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
+      logLevel="1"	
       discretization="singlePhaseTPFA"
       targetRegions="{ Channel }"/>
 
     <SinglePhaseWell
       name="SinglePhaseWell"
       logLevel="1"
-      targetRegions="{ wellRegion1, wellRegion2 }">>
+      targetRegions="{ wellRegion1, wellRegion2 }">
       <WellControls
         name="wellControls1"
         type="producer"

@@ -14,15 +14,18 @@ set( mesh_headers
      ExtrinsicMeshData.hpp
      FaceElementSubRegion.hpp
      FaceManager.hpp
+     FieldIdentifiers.hpp
      InterObjectRelation.hpp
      MeshBody.hpp
      MeshForLoopInterface.hpp
      MeshLevel.hpp
      MeshManager.hpp
+     MeshObjectPath.hpp
      NodeManager.hpp
      ObjectManagerBase.hpp
      Perforation.hpp
      PerforationData.hpp
+     PerforationExtrinsicData.hpp	     
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
@@ -33,10 +36,14 @@ set( mesh_headers
      generators/CellBlockManager.hpp
      generators/CellBlockManagerABC.hpp
      generators/CellBlockUtilities.hpp
+     generators/ExternalMeshGeneratorBase.hpp
+     generators/FaceBlockABC.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
      generators/MeshGeneratorBase.hpp
+     generators/ParMETISInterface.hpp
+     generators/PrismUtilities.hpp
      mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp
      mpiCommunications/MPI_iCommData.hpp
@@ -72,6 +79,7 @@ set( mesh_sources
      MeshBody.cpp
      MeshLevel.cpp
      MeshManager.cpp
+     MeshObjectPath.cpp
      NodeManager.cpp
      ObjectManagerBase.cpp
      Perforation.cpp
@@ -84,10 +92,13 @@ set( mesh_sources
      generators/CellBlock.cpp
      generators/CellBlockManager.cpp
      generators/CellBlockUtilities.cpp
+     generators/ExternalMeshGeneratorBase.cpp
      generators/InternalMeshGenerator.cpp
      generators/InternalWellGenerator.cpp
      generators/InternalWellboreGenerator.cpp
      generators/MeshGeneratorBase.cpp
+     generators/ParMETISInterface.cpp
+     generators/PTScotchInterface.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp
      mpiCommunications/MPI_iCommData.cpp
@@ -103,7 +114,7 @@ set( mesh_sources
      utilities/ComputationalGeometry.cpp
      )
 
-set( dependencyList schema dataRepository constitutive metis )
+set( dependencyList schema dataRepository constitutive finiteElement parmetis metis )
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
@@ -119,12 +130,18 @@ endif()
 
 if( ENABLE_VTK )
     message(STATUS "Adding VTKMeshGenerator sources and headers")
-    set( mesh_headers ${mesh_headers} generators/VTKMeshGenerator.hpp )                                                                                                                                         
-    set( mesh_sources ${mesh_sources} generators/VTKMeshGenerator.cpp)
+    set( mesh_headers ${mesh_headers} generators/VTKMeshGenerator.hpp generators/VTKMeshGeneratorTools.hpp )
+    set( mesh_sources ${mesh_sources} generators/VTKMeshGenerator.cpp generators/VTKMeshGeneratorTools.cpp )
     set( dependencyList ${dependencyList} VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
       set( dependencyList ${dependencyList} VTK::IOParallelXML VTK::ParallelMPI )
     endif()
+endif()
+
+if( ENABLE_SCOTCH )
+    set( mesh_headers ${mesh_headers} generators/PTScotchInterface.hpp )
+    set( mesh_sources ${mesh_sources} generators/PTScotchInterface.cpp )
+    set( dependencyList ${dependencyList} ptscotch )
 endif()
 
 blt_add_library( NAME       mesh
@@ -135,6 +152,8 @@ blt_add_library( NAME       mesh
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+add_subdirectory( unitTests )
 
 geosx_add_code_checks( PREFIX mesh
                        EXCLUDES PAMELA )

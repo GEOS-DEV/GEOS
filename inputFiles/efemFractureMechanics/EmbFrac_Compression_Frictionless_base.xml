@@ -1,0 +1,153 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{0.0, 0.0, 0.0}">
+    <SolidMechanicsEmbeddedFractures
+      name="mechSolve"
+      targetRegions="{ Domain, Fracture }"
+      fractureRegionName="Fracture"
+      initialDt="10"
+      solidSolverName="matrixSolver"
+      contactRelationName="fractureContact"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="2"
+        maxTimeStepCuts="1"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
+    </SolidMechanicsEmbeddedFractures>
+
+    <SolidMechanicsLagrangianSSLE
+      name="matrixSolver"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }"/>
+
+    <EmbeddedSurfaceGenerator
+      name="SurfaceGenerator"
+      discretization="FE1"
+      targetRegions="{ Domain, Fracture }"
+      fractureRegion="Fracture"
+      logLevel="1"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      faceBlock="embeddedSurfaceSubRegion"
+      subRegionType="embeddedElement"
+      materialList="{ fractureContact }"
+      defaultAperture="1e-3"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultBulkModulus="16.66666666666666e9"
+      defaultShearModulus="1.0e10"/>
+
+    <FrictionlessContact
+      name="fractureContact"
+      penaltyStiffness="1.0e8"
+      apertureTableName="apertureTable"/>
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.002e-3, 0.02e-3 }"/>
+  </Functions>
+
+  <FieldSpecifications>
+    <Traction
+      name="xload1"
+      objectPath="faceManager"
+      tractionType="vector"
+      direction="{1,0,0}"
+      scale="-1.0e7"
+      setNames="{ xpos }"/>
+
+    <Traction
+      name="xload2"
+      objectPath="faceManager"
+      tractionType="vector"
+      direction="{1,0,0}"
+      scale="+1.0e7"
+      setNames="{ xneg }"/> 
+
+    <FieldSpecification
+      name="xnegconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ bottomPoint, topPoint }"/>
+
+    <FieldSpecification
+      name="yposconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ leftPoint, rightPoint }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>   
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-6, 1.0e-4 }"/>
+  </Functions>
+  
+  <Tasks>
+    <PackCollection
+      name="displacementJumpCollection"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      fieldName="displacementJump"/>   
+  </Tasks>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="CompressedFrac_frictionless"
+      plotLevel="2"
+      format="binary"/>
+      
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/displacementJumpCollection}"
+      filename="displacementJump_embeddedFrac" />
+      
+     <Restart
+      name="restartOutput"/> 
+  </Outputs>
+</Problem>

@@ -6,11 +6,9 @@
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
-      discretization="FE1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
@@ -34,8 +32,8 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="1"
+      discretization="FE1"
       targetRegions="{ Region2 }"
-      
       rockToughness="1.0e6"/>
   </Solvers>
 
@@ -167,7 +165,7 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="0.0e8"
       apertureTableName="apertureTable" />

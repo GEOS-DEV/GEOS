@@ -12,14 +12,27 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_CELLBLOCKUTILITIES_HPP
-#define GEOSX_CELLBLOCKUTILITIES_HPP
+#ifndef GEOSX_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
+#define GEOSX_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
 
 #include "mesh/ElementType.hpp"
 #include "common/DataTypes.hpp"
+#include "common/Span.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
+
+/**
+ * @brief Container for maps from a mesh object (node, edge or face) to cells.
+ * @tparam T underlying map type
+ */
+template< typename T >
+struct ToCellRelation
+{
+  T toBlockIndex; ///< Map containing a list of cell block indices for each object
+  T toCellIndex;  ///< Map containing cell indices, same shape as above
+};
 
 /**
  * @brief Free function that generates face to edges, edge to faces and edge to nodes mappings.
@@ -33,23 +46,58 @@ namespace geosx
 localIndex buildEdgeMaps( localIndex numNodes,
                           ArrayOfArraysView< localIndex const > const & faceToNodeMap,
                           ArrayOfArrays< localIndex > & faceToEdgeMap,
-                          ArrayOfSets< localIndex > & edgeToFaceMap,
+                          ArrayOfArrays< localIndex > & edgeToFaceMap,
                           array2d< localIndex > & edgeToNodeMap );
 
 /**
  * @brief Get the local indices of the nodes in a face of the element.
  * @param[in] elementType Type of the element
- * @param[in] iElement the local index of the target element
- * @param[in] iFace the local index of the target face in the element  (this will be 0-numFacesInElement)
+ * @param[in] elemIdx the local index of the target element
+ * @param[in] faceNumber the local index of the target face in the element  (this will be 0-numFacesInElement)
  * @param[in] elementToNodes Element to nodes mapping.
- * @param[out] nodeIndices A reference to the array of node indices of the face. Gets resized at the proper size.
+ * @param[out] faceNodes space to write node indices to, must be of sufficient size
+ * @return number of nodes in the face
  */
-void getFaceNodes( ElementType const & elementType,
-                   localIndex const iElement,
-                   localIndex const iFace,
-                   array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & elementToNodes,
-                   array1d< localIndex > & nodeIndices );
+localIndex getFaceNodes( ElementType const elementType,
+                         localIndex const elemIdx,
+                         localIndex const faceNumber,
+                         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elementToNodes,
+                         Span< localIndex > const faceNodes );
+
+/**
+ * @brief Find and count ranges of repeated values in an array of sorted arrays and compute offsets.
+ * @tparam POLICY execution policy
+ * @tparam T value type of input arrays
+ * @param [in] sortedLists the input array of sorted arrays of values
+ * @return an array of size @p sortedLists.size() + 1, where element i contains starting index of
+ *         unique values from sub-array i in a global list of unique values, while the last value
+ *         contains the total number of unique edges (i.e. an exclusive scan + total reduction).
+ */
+template< typename POLICY, typename T >
+array1d< localIndex >
+computeUniqueValueOffsets( ArrayOfArraysView< T const > const & sortedLists )
+{
+  localIndex const numNodes = sortedLists.size();
+  array1d< localIndex > uniqueValueOffsets( numNodes + 1 );
+  uniqueValueOffsets[0] = 0;
+
+  // For each node, count number of unique edges that have the node as its lowest
+  arrayView1d< localIndex > const numUniqueValuesView = uniqueValueOffsets.toView();
+  forAll< POLICY >( numNodes, [sortedLists, numUniqueValuesView]( localIndex const i )
+  {
+    numUniqueValuesView[ i + 1 ] = 0;
+    arraySlice1d< T const > const list = sortedLists[ i ];
+    forEqualRanges( list.begin(), list.end(), [&]( auto, auto )
+    {
+      ++numUniqueValuesView[ i + 1 ];
+    } );
+  } );
+
+  // Perform an inplace prefix-sum to get the unique edge offset.
+  RAJA::inclusive_scan_inplace< POLICY >( RAJA::make_span( uniqueValueOffsets.data(), uniqueValueOffsets.size() ) );
+  return uniqueValueOffsets;
+}
 
 }
 
-#endif // include guard
+#endif // GEOSX_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_

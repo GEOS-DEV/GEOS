@@ -44,6 +44,7 @@ FrictionlessContactUpdates FrictionlessContact::createKernelWrapper() const
 {
   return FrictionlessContactUpdates( m_penaltyStiffness,
                                      m_shearStiffness,
+                                     m_displacementJumpThreshold,
                                      *m_apertureTable );
 }
 

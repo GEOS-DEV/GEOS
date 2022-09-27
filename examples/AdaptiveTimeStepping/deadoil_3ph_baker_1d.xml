@@ -16,7 +16,7 @@
         maxTimeStepCuts="10"
         lineSearchMaxCuts="2"
         maxSubSteps="100"
-        dtIncIterLimit="0.3"/>
+        timeStepIncreaseIterLimit="0.3"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
 
@@ -48,13 +48,11 @@
   <Events
     maxTime="1e3"
     logLevel="1">
-
     <PeriodicEvent
       name="solverApplications1"
       endTime="2e8"
       maxEventDt="1e8"
       target="/Solvers/compflow"/>
-
   </Events>
 
   <NumericalMethods>
@@ -212,5 +210,4 @@
       component="2"
       scale="0.001"/>
   </FieldSpecifications>
-
 </Problem>

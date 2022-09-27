@@ -18,7 +18,7 @@
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
       logLevel="1"
-      
+      discretization="singlePhaseTPFA"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       mpiCommOrder="1"/>
@@ -197,7 +197,7 @@
       name="vtkOutput"
       plotFileRoot="impermFractureAndMatrixFlow"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <Restart
       name="sidreRestart"/>

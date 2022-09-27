@@ -18,7 +18,7 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      
+      discretization="FE1"
       targetRegions="{ Fracture }"
       rockToughness="1e6"
       mpiCommOrder="1"/>
@@ -192,14 +192,6 @@
       objectPath="ElementRegions/Region2/cb1"
       fieldName="pressure"
       scale="0.0"/>
-
-    <FieldSpecification
-      name="frac"
-      initialCondition="1"
-      setNames="{ fracture }"
-      objectPath="faceManager"
-      fieldName="ruptureState"
-      scale="1"/>
 
     <FieldSpecification
       name="source"

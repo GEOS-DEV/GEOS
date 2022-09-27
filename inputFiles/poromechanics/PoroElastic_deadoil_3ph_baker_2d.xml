@@ -6,9 +6,8 @@
     <MultiphasePoromechanics
       name="MultiphasePoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
-      fluidSolverName="TwoPhaseFlowSolver"
+      flowSolverName="TwoPhaseFlowSolver"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
@@ -66,7 +65,7 @@
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
-      name="outputs"
+      name="vtkOutput"
       timeFrequency="1e5"
       target="/Outputs/vtkOutput"/>
 
@@ -81,6 +80,15 @@
       forceDt="1e5"
       beginTime="1e5"
       target="/Solvers/MultiphasePoroelasticitySolver"/>
+
+    <PeriodicEvent
+      name="LinearElasticityStatistics"
+      timeFrequency="1e5"
+      target="/Tasks/LinearElasticityStatistics"/>
+    <PeriodicEvent
+      name="TwoPhaseFlowStatistics"
+      timeFrequency="1e5"
+      target="/Tasks/TwoPhaseFlowStatistics"/>
 
     <PeriodicEvent
       name="restarts"
@@ -277,12 +285,29 @@
       setNames="{ zneg }"/>
   </FieldSpecifications>
 
+  <Tasks>
+    <SolidMechanicsStatistics
+      name="LinearElasticityStatistics"
+      solidSolverName="LinearElasticitySolver"
+      logLevel="1"/>
+    <CompositionalMultiphaseStatistics
+      name="TwoPhaseFlowStatistics"
+      flowSolverName="TwoPhaseFlowSolver"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+  </Tasks>
+  
   <Outputs>
+
     <Silo
-      name="siloOutput"/>
+      name="siloOutput"
+      fieldNames="{ TotalDisplacement, pressure, skeleton_stress, deltaPressure }"/>
 
     <VTK
-      name="vtkOutput"/>
+      name="vtkOutput"
+      onlyPlotSpecifiedFieldNames="1"
+      fieldNames="{ TotalDisplacement, pressure, skeleton_stress, skeleton_density }"/>
 
     <Restart
       name="restartOutput"/>

@@ -16,22 +16,13 @@
  * @file PVTDriver.hpp
  */
 
-#ifndef SRC_CORECOMPONENTS_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_
-#define SRC_CORECOMPONENTS_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_
 
-#include "common/MpiWrapper.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/multiFluidSelector.hpp"
 #include "events/tasks/TaskBase.hpp"
-#include "functions/FunctionManager.hpp"
-#include "functions/TableFunction.hpp"
-#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {
-
-using namespace constitutive;
 
 /**
  * @class PVTDriver
@@ -45,7 +36,6 @@ class PVTDriver : public TaskBase
 public:
   PVTDriver( const string & name,
              Group * const parent );
-  ~PVTDriver() override;
 
   static string catalogName() { return "PVTDriver"; }
 
@@ -60,11 +50,11 @@ public:
 
   /**
    * @brief Run test using loading protocol in table
-   * @param fluid Fluid constitutive model
+   * @param i Fluid constitutive model
    * @param table Table with input/output time history
    */
   template< typename FLUID_TYPE >
-  void runTest( FLUID_TYPE & fluid, arrayView2d< real64 > & table );
+  void runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table );
 
   /**
    * @brief Ouput table to file for easy plotting
@@ -114,4 +104,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_FLUID_PVTDRIVER_HPP_ */

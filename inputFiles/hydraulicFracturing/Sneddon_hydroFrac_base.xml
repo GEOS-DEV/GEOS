@@ -7,11 +7,10 @@
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       couplingTypeOption="FIM"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">
@@ -37,9 +36,9 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
+      discretization="FE1"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
-      
       rockToughness="10.0e6"
       mpiCommOrder="1"/>
   <!-- SPHINX_SNEDDON_SOLVER_END -->
@@ -87,6 +86,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="faceElementSubRegion"
       defaultAperture="0.02e-3"
       materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
@@ -126,12 +126,6 @@
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>
-
-    <ElasticIsotropic
-      name="rock"
-      defaultDensity="2700"
-      defaultBulkModulus="16.66666666666666e9"
-      defaultShearModulus="1.0e10"/>
 
     <FrictionlessContact
       name="fractureContact"
@@ -219,7 +213,7 @@
      <VTK
       name="vtkOutput"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
      <TimeHistory
       name="timeHistoryOutput"

@@ -161,8 +161,6 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
                             real64 const relTol,
                             LAMBDA assembleFunction )
 {
-  localIndex const NC = solver.numFluidComponents();
-
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
   DofManager const & dofManager = solver.getDofManager();
@@ -184,99 +182,21 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.zero();
 
-  string const elemDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::elemDofFieldString() );
+  // fill jacobian FD for cell centered variables
+  fillCellCenteredNumericalJacobian( solver,
+                                     domain,
+                                     false,
+                                     perturbParameter,
+                                     residual.toView(),
+                                     residualOrig.toView(),
+                                     jacobian.toView(),
+                                     jacobianFD.toView(),
+                                     assembleFunction );
 
-  solver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                       MeshLevel & mesh,
-                                                       arrayView1d< string const > const & regionNames )
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                       MeshLevel & mesh,
+                                                                       arrayView1d< string const > const & )
   {
-    mesh.getElemManager().forElementSubRegions( regionNames,
-                                                [&]( localIndex const,
-                                                     ElementSubRegionBase & subRegion )
-    {
-      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-      arrayView1d< globalIndex const > const & elemDofNumber =
-        subRegion.getReference< array1d< globalIndex > >( elemDofKey );
-
-      arrayView1d< real64 const > const & pres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-      pres.move( LvArray::MemorySpace::host, false );
-
-      arrayView1d< real64 > const & dPres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
-
-      arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-      compDens.move( LvArray::MemorySpace::host, false );
-
-      arrayView2d< real64, compflow::USD_COMP > const & dCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
-
-      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
-      {
-        if( elemGhostRank[ei] >= 0 )
-        {
-          continue;
-        }
-
-        real64 totalDensity = 0.0;
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          totalDensity += compDens[ei][ic];
-        }
-
-        {
-          solver.resetStateToBeginningOfStep( domain );
-
-          real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
-          dPres.move( LvArray::MemorySpace::host, true );
-          dPres[ei] = dP;
-
-          mesh.getElemManager().forElementSubRegions( regionNames,
-                                                      [&]( localIndex const,
-                                                           ElementSubRegionBase & subRegion2 )
-          {
-            solver.updateFluidState( subRegion2 );
-          } );
-
-          residual.zero();
-          jacobian.zero();
-          assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-
-          fillNumericalJacobian( residual.toViewConst(),
-                                 residualOrig.toViewConst(),
-                                 elemDofNumber[ei],
-                                 dP,
-                                 jacobianFD.toViewConstSizes() );
-        }
-
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          solver.resetStateToBeginningOfStep( domain );
-
-          real64 const dRho = perturbParameter * totalDensity;
-          dCompDens.move( LvArray::MemorySpace::host, true );
-          dCompDens[ei][jc] = dRho;
-
-          mesh.getElemManager().forElementSubRegions( regionNames,
-                                                      [&]( localIndex const,
-                                                           ElementSubRegionBase & subRegion2 )
-          {
-            solver.updateFluidState( subRegion2 );
-          } );
-
-          residual.zero();
-          jacobian.zero();
-          assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-
-          fillNumericalJacobian( residual.toViewConst(),
-                                 residualOrig.toViewConst(),
-                                 elemDofNumber[ei] + jc + 1,
-                                 dRho,
-                                 jacobianFD.toViewConstSizes() );
-        }
-      }
-    } );
 
     FaceManager & faceManager = mesh.getFaceManager();
 
@@ -284,8 +204,6 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
     arrayView1d< real64 > const & facePres =
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
     facePres.move( LvArray::MemorySpace::host, false );
-    arrayView1d< real64 > const & dFacePres =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::deltaFacePressure >();
 
     string const faceDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::faceDofFieldString() );
 
@@ -305,9 +223,13 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
 
       solver.resetStateToBeginningOfStep( domain );
 
+      facePres.move( LvArray::MemorySpace::host, true ); // to get the correct facePres after reset
       real64 const dFP = perturbParameter * ( facePres[iface] + perturbParameter );
-      dFacePres.move( LvArray::MemorySpace::host, true );
-      dFacePres[iface] = dFP;
+      facePres[iface] += dFP;
+#if defined(GEOSX_USE_CUDA)
+      facePres.move( LvArray::MemorySpace::cuda, false );
+#endif
+
 
       residual.zero();
       jacobian.zero();

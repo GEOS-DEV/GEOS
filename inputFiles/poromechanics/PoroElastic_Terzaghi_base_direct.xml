@@ -5,9 +5,8 @@
     <SinglePhasePoromechanics
       name="PoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
-      fluidSolverName="SinglePhaseFlowSolver"
+      flowSolverName="SinglePhaseFlowSolver"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Domain }">
       <LinearSolverParameters
         directParallel="0"/>
@@ -107,7 +106,7 @@
       scale="0.0"/>
 
     <FieldSpecification
-      name="xInitialDisplacement"
+      name="yInitialDisplacement"
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
@@ -116,7 +115,7 @@
       scale="0.0"/>
 
     <FieldSpecification
-      name="xInitialDisplacement"
+      name="zInitialDisplacement"
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"

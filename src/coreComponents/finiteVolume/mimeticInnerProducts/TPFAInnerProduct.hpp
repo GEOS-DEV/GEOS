@@ -20,8 +20,6 @@
 #define GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_TPFAINNERPRODUCT_HPP_
 
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
-#include "finiteVolume/mimeticInnerProducts/MimeticInnerProductHelpers.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
 
 namespace geosx
 {

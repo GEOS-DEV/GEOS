@@ -33,10 +33,7 @@ using namespace dataRepository;
 
 EdgeManager::EdgeManager( string const & name,
                           Group * const parent ):
-  ObjectManagerBase( name, parent ),
-  m_edgesToFractureConnectorsEdges(),
-  m_fractureConnectorsEdgesToEdges(),
-  m_fractureConnectorEdgesToFaceElements()
+  ObjectManagerBase( name, parent )
 {
   registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
   registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation ).
@@ -44,29 +41,16 @@ EdgeManager::EdgeManager( string const & name,
 
   m_toNodesRelation.resize( 0, 2 );
 
-  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString(), &m_edgesToFractureConnectorsEdges ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "A map of edge local indices to the fracture connector local indices." ).
-    setSizedFromParent( 0 );
-
-  registerWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString(), &m_fractureConnectorsEdgesToEdges ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "A map of fracture connector local indices to edge local indices." ).
-    setSizedFromParent( 0 );
-
-  registerWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString(),
-                   &m_fractureConnectorEdgesToFaceElements ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "A map of fracture connector local indices face element local indices" ).
-    setSizedFromParent( 0 );
+  excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
+                                viewKeyStruct::faceListString(),
+                                viewKeyStruct::elementRegionListString(),
+                                viewKeyStruct::elementSubRegionListString(),
+                                viewKeyStruct::elementListString() } );
 }
-
-EdgeManager::~EdgeManager()
-{}
 
 void EdgeManager::resize( localIndex const newSize )
 {
-  m_toFacesRelation.resize( newSize, 2 * faceMapExtraSpacePerEdge() );
+  m_toFacesRelation.resize( newSize, 2 * faceMapOverallocation() );
   ObjectManagerBase::resize( newSize );
 }
 
@@ -97,20 +81,27 @@ void EdgeManager::buildEdges( localIndex const numNodes,
                               ArrayOfArraysView< localIndex const > const & faceToNodeMap,
                               ArrayOfArrays< localIndex > & faceToEdgeMap )
 {
-  localIndex const numEdges = buildEdgeMaps( numNodes, faceToNodeMap,
+  ArrayOfArrays< localIndex > edgeToFace;
+  localIndex const numEdges = buildEdgeMaps( numNodes,
+                                             faceToNodeMap,
                                              faceToEdgeMap,
-                                             m_toFacesRelation,
+                                             edgeToFace,
                                              m_toNodesRelation );
 
+  m_toFacesRelation.base().assimilate< parallelHostPolicy >( std::move( edgeToFace ),
+                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
   resize( numEdges );
 }
 
 void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager )
 {
+  GEOSX_MARK_FUNCTION;
+
   resize( cellBlockManager.numEdges() );
 
   m_toNodesRelation.base() = cellBlockManager.getEdgeToNodes();
-  m_toFacesRelation.base() = cellBlockManager.getEdgeToFaces();
+  m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getEdgeToFaces(),
+                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
 }
 
 void EdgeManager::setupRelatedObjectsInRelations( NodeManager const & nodeManager,
@@ -122,54 +113,31 @@ void EdgeManager::setupRelatedObjectsInRelations( NodeManager const & nodeManage
 
 void EdgeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 {
-  // get the "isDomainBoundary" field from the faceManager. This should have
-  // been set already!
-  arrayView1d< integer const > const & isFaceOnDomainBoundary = faceManager.getDomainBoundaryIndicator();
+  // get the "isDomainBoundary" field from the faceManager. This should have been set already!
+  arrayView1d< integer const > const isFaceOnDomainBoundary = faceManager.getDomainBoundaryIndicator();
 
   // get the "isDomainBoundary" field from for *this, and set it to zero
-  arrayView1d< integer > const & isEdgeOnDomainBoundary = this->getDomainBoundaryIndicator();
+  arrayView1d< integer > const isEdgeOnDomainBoundary = this->getDomainBoundaryIndicator();
   isEdgeOnDomainBoundary.zero();
 
-  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
 
-  // loop through all faces
-  for( localIndex kf = 0; kf < faceManager.size(); ++kf )
+  forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const faceIndex )
   {
-    // check to see if the face is on a domain boundary
-    if( isFaceOnDomainBoundary[kf] == 1 )
+    if( isFaceOnDomainBoundary[faceIndex] == 1 )
     {
-      localIndex const numFaceEdges = faceToEdgeMap.sizeOfArray( kf );
-
-      // loop over all nodes connected to face, and set isNodeDomainBoundary
-      for( localIndex a = 0; a < numFaceEdges; ++a )
+      for( localIndex const edgeIndex : faceToEdgeMap[faceIndex] )
       {
-        isEdgeOnDomainBoundary( faceToEdgeMap( kf, a ) ) = 1;
+        isEdgeOnDomainBoundary[edgeIndex] = 1;
       }
     }
-  }
+  } );
 }
 
-bool EdgeManager::hasNode( const localIndex edgeID, const localIndex nodeID ) const
+bool EdgeManager::hasNode( const localIndex edgeIndex, const localIndex nodeIndex ) const
 {
-  return m_toNodesRelation( edgeID, 0 ) == nodeID || m_toNodesRelation( edgeID, 1 ) == nodeID;
+  return m_toNodesRelation( edgeIndex, 0 ) == nodeIndex || m_toNodesRelation( edgeIndex, 1 ) == nodeIndex;
 }
-
-//localIndex EdgeManager::FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex nodeB, const NodeManager *
-// nodeManager)
-//{
-//  localIndex val = std::numeric_limits<localIndex>::max();
-//
-//  if (nodeA == nodeB)
-//    return (val);
-//
-//  for( SortedArray<localIndex>::const_iterator iedge=nodeManager->m_nodeToEdgeMap[nodeA].begin() ;
-//       iedge!=nodeManager->m_nodeToEdgeMap[nodeA].end() ; ++iedge )
-//  {
-//    if (hasNode(*iedge, nodeB))
-//      val = *iedge;
-//  }
-//  return(val);
-//}
 
 void EdgeManager::setIsExternal( FaceManager const & faceManager )
 {
@@ -198,9 +166,8 @@ void EdgeManager::setIsExternal( FaceManager const & faceManager )
   }
 }
 
-
-void EdgeManager::extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
-                                                                   std::vector< std::vector< globalIndex > > & globalEdgeNodes )
+ArrayOfSets< globalIndex >
+EdgeManager::extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -208,109 +175,61 @@ void EdgeManager::extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager c
 
   arrayView2d< localIndex const > const edgeNodes = this->nodeList();
   arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
+  arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeManager.localToGlobalMap();
 
-  globalEdgeNodes.resize( numEdges );
+  ArrayOfSets< globalIndex > globalEdgeNodes( numEdges, 2 );
 
-  forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeID )
+  forAll< parallelHostPolicy >( numEdges, [globalEdgeNodes = globalEdgeNodes.toView(),
+                                           isDomainBoundary, edgeNodes, nodeLocalToGlobal]( localIndex const edgeIndex )
   {
-    std::vector< globalIndex > & curEdgeGlobalNodes = globalEdgeNodes[ edgeID ];
-
-    if( isDomainBoundary( edgeID ) )
+    if( isDomainBoundary( edgeIndex ) )
     {
-      curEdgeGlobalNodes.resize( 2 );
-
-      for( localIndex a = 0; a < 2; ++a )
+      for( localIndex const nodeIndex : edgeNodes[edgeIndex] )
       {
-        curEdgeGlobalNodes[ a ]= nodeManager.localToGlobalMap()( edgeNodes[ edgeID ][ a ] );
+        globalEdgeNodes.insertIntoSet( edgeIndex, nodeLocalToGlobal[nodeIndex] );
       }
-
-      std::sort( curEdgeGlobalNodes.begin(), curEdgeGlobalNodes.end() );
     }
   } );
-}
 
-
-void EdgeManager::connectivityFromGlobalToLocal( const SortedArray< localIndex > & indices,
-                                                 const map< globalIndex, localIndex > & nodeGlobalToLocal,
-                                                 const map< globalIndex, localIndex > & GEOSX_UNUSED_PARAM( faceGlobalToLocal ) )
-{
-
-
-  for( localIndex const ke : indices )
-  {
-    for( localIndex a=0; a<m_toNodesRelation.size( 1 ); ++a )
-    {
-      const globalIndex gnode = m_toNodesRelation( ke, a );
-      const localIndex lnode = stlMapLookup( nodeGlobalToLocal, gnode );
-      m_toNodesRelation( ke, a ) = lnode;
-    }
-  }
-
-//  array1d<SortedArray<localIndex>>* const edgesToFlowFaces =
-// GetUnorderedVariableOneToManyMapPointer("edgeToFlowFaces");
-//  if( edgesToFlowFaces != NULL )
-//  {
-//    for( SortedArray<localIndex>::const_iterator ke=indices.begin() ; ke!=indices.end() ; ++ke )
-//    {
-//      SortedArray<localIndex>& edgeToFlowFaces = (*edgesToFlowFaces)[*ke];
-//      SortedArray<localIndex> newSet;
-//      for( SortedArray<localIndex>::iterator faceIndex=edgeToFlowFaces.begin() ;
-// faceIndex!=edgeToFlowFaces.end() ; ++faceIndex )
-//      {
-//
-//        std::map<globalIndex,localIndex>::const_iterator MapIter =
-// faceGlobalToLocal.find( static_cast<globalIndex>(*faceIndex) );
-//        if( MapIter!=faceGlobalToLocal.end()  )
-//        {
-////          const localIndex faceLocalIndex = stlMapLookup( faceGlobalToLocal,
-// static_cast<globalIndex>(*faceIndex) );
-//          newSet.insert( MapIter->second );
-//
-//        }
-//      }
-//      edgeToFlowFaces = newSet;
-//    }
-//
-//  }
-
+  return globalEdgeNodes;
 }
 
 localIndex EdgeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 localIndex EdgeManager::packUpDownMaps( buffer_unit_type * & buffer,
                                         arrayView1d< localIndex const > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
-template< bool DOPACK >
-localIndex EdgeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               arrayView1d< localIndex const > const & packList ) const
+template< bool DO_PACKING >
+localIndex EdgeManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                            arrayView1d< localIndex const > const & packList ) const
 {
   arrayView1d< globalIndex const > const localToGlobal = localToGlobalMap();
   arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
   arrayView1d< globalIndex const > faceLocalToGlobal = faceList().relatedObjectLocalToGlobal();
 
-  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toNodesRelation.base().toViewConst(),
-                                           m_unmappedGlobalIndicesInToNodes,
-                                           packList,
-                                           localToGlobal,
-                                           nodeLocalToGlobal );
+  localIndex packedSize = bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::nodeListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_toNodesRelation.base().toViewConst(),
+                                               m_unmappedGlobalIndicesInToNodes,
+                                               packList,
+                                               localToGlobal,
+                                               nodeLocalToGlobal );
 
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toFacesRelation.base().toArrayOfArraysView(),
-                                           m_unmappedGlobalIndicesInToFaces,
-                                           packList,
-                                           localToGlobal,
-                                           faceLocalToGlobal );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::faceListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_toFacesRelation.base().toArrayOfArraysView(),
+                                               m_unmappedGlobalIndicesInToFaces,
+                                               packList,
+                                               localToGlobal,
+                                               faceLocalToGlobal );
 
   return packedSize;
 }
@@ -322,7 +241,7 @@ localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           bool const overwriteUpMaps,
                                           bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
-  // GEOSX_MARK_FUNCTION;
+  GEOSX_MARK_FUNCTION;
 
   localIndex unPackedSize = 0;
 

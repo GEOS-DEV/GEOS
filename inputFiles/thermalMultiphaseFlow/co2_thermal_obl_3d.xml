@@ -1,0 +1,243 @@
+<?xml version="1.0"?>
+
+<Problem>
+  <Solvers>
+    <ReactiveCompositionalMultiphaseOBL
+      name="compflow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      targetRegions="{ Region1 }"
+      enableEnergyBalance="1"
+      maxCompFractionChange="1"
+      numComponents="3"
+      numPhases="2"
+      OBLOperatorsTableFile="ccs_thermal_10p_static.txt">
+      <NonlinearSolverParameters
+	timeStepCutFactor="0.5"
+	newtonTol="1.0e-4"
+	newtonMaxIter="15"/>
+      <LinearSolverParameters
+	directParallel="0"/>
+    </ReactiveCompositionalMultiphaseOBL>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 500 }"
+      yCoords="{ 0, 500 }"
+      zCoords="{ 0, 20 }"
+      nx="{ 25 }"
+      ny="{ 25 }"
+      nz="{ 4 }"
+      cellBlockNames="{ block1 }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 20.01, 20.01, 20.01 }"/>
+    <Box
+      name="sink"
+      xMin="{ 479.99, 479.99, -0.01 }"
+      xMax="{ 500.01, 500.01, 20.01 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="1e7">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1e6"
+      target="/Outputs/vtkOutput"/>
+    <PeriodicEvent
+      name="solverApplications1"
+      forceDt="1e5"
+      endTime="1e6"
+      target="/Solvers/compflow"/>
+    <PeriodicEvent
+      name="solverApplications2"
+      forceDt="1e6"
+      beginTime="1e6"
+      endTime="1e7"
+      target="/Solvers/compflow"/>
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5e6"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+  
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="fluidTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ block1 }"
+      materialList="{ rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+    <NullModel
+      name="nullSolid"/>
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.25"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>
+    <!-- permeability: {100mD, 100mD, 100mD}  -->
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 9.869233e-14, 9.869233e-14, 9.869233e-14 }"/>
+    
+  </Constitutive>
+
+  <FieldSpecifications>
+    
+    <FieldSpecification
+      name="rockHeatCap"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="rockVolumetricHeatCapacity"
+      scale="2200"/>
+    <FieldSpecification
+      name="rockThermalConductivity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="rockThermalConductivity"
+      scale="181.44"/>
+        
+    <!-- Initial pressure: ~100 bar -->
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="pressure"
+      scale="1e7"/>
+    <FieldSpecification
+      name="initialTemp"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="temperature"
+      scale="348.15"/>
+    <FieldSpecification
+      name="initialComposition_CO2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.005"/>
+    <FieldSpecification
+      name="initialComposition_C1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.69"/>
+    <FieldSpecification
+      name="initialComposition_H2O"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="globalCompFraction"
+      component="2"
+      scale="0.305"/>
+
+    <!-- Injection pressure: ~125 bar -->
+    <FieldSpecification
+      name="sourceTermPressure1"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="pressure"
+      scale="1.25e7"
+      setNames="{ source }"/>
+    <FieldSpecification
+      name="sourceTermTemp"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="temperature"
+      scale="300"/>
+    <FieldSpecification
+      name="sourceTermComposition_CO2"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.6"/>
+    <FieldSpecification
+      name="sourceTermComposition_C1"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.1"/>
+    <FieldSpecification
+      name="sourceTermComposition_H2O"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="globalCompFraction"
+      component="2"
+      scale="0.3"/>
+
+    <!-- Production pressure: ~75 bar -->
+    <FieldSpecification
+      name="sinkTermPressure1"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="pressure"
+      scale="7.5e6"
+      setNames="{ sink }"/>
+    <!-- no heating / cooling from sink -->
+    <FieldSpecification
+      name="sinkTermTemp1"
+      setNames="{ sink }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="temperature"
+      scale="348.15"/>
+    <!-- the rest does not matter due to upwinding -->
+    <FieldSpecification
+      name="sinkTermComposition_CO2"
+      setNames="{ sink }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.8"/>
+    <FieldSpecification
+      name="sinkTermComposition_C1"
+      setNames="{ sink }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.1"/>
+    <FieldSpecification
+      name="sinkTermComposition_H2O"
+      setNames="{ sink }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="globalCompFraction"
+      component="2"
+      scale="0.1"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+  
+</Problem>

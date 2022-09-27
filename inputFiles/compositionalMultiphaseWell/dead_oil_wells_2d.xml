@@ -18,6 +18,8 @@
     <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
       logLevel="1"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
       discretization="fluidTPFA"
       targetRegions="{ Region1 }"
       temperature="297.15"/>
@@ -36,7 +38,7 @@
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="297.15"
-        targetBHP="4e6"
+        targetBHPTableName="BHPTable"
         targetPhaseRate="1e-3"
         targetPhaseName="oil"/>
       <WellControls
@@ -262,6 +264,14 @@
   </FieldSpecifications>
 
   <Functions>
+
+    <TableFunction
+      name="BHPTable"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 10e10 }"
+      values="{ 4e6, 4e6 }" 
+      interpolation="lower"/>
+    
     <TableFunction
       name="waterRelPermTable"
       coordinateFiles="{ satw.txt }"

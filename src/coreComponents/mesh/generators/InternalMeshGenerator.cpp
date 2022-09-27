@@ -18,7 +18,10 @@
 
 #include "InternalMeshGenerator.hpp"
 
+#include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/PartitionBase.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "mesh/MeshBody.hpp"
@@ -105,7 +108,7 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   registerWrapper( viewKeyStruct::trianglePatternString(), &m_trianglePattern ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Pattern by which to decompose the hex mesh into prisms (more explanation required)" );
+    setDescription( "Pattern by which to decompose the hex mesh into wedges" );
 
   registerWrapper( viewKeyStruct::positionToleranceString(), &m_coordinatePrecision ).
     setApplyDefaultValue( 1e-10 ).
@@ -120,8 +123,8 @@ static int getNumElemPerBox( ElementType const elementType )
   {
     case ElementType::Triangle:      return 2;
     case ElementType::Quadrilateral: return 1;
-    case ElementType::Tetrahedron:    return 6;
-    case ElementType::Prism:         return 2;
+    case ElementType::Tetrahedron:   return 6;
+    case ElementType::Wedge:         return 2;
     case ElementType::Pyramid:       return 6;
     case ElementType::Hexahedron:    return 1;
     default:
@@ -130,23 +133,6 @@ static int getNumElemPerBox( ElementType const elementType )
       return 0;
     }
   }
-}
-
-static int getElementDim( ElementType const elementType )
-{
-  switch( elementType )
-  {
-    case ElementType::Line:          return 1;
-    case ElementType::Triangle:
-    case ElementType::Quadrilateral:
-    case ElementType::Polygon:       return 2;
-    case ElementType::Tetrahedron:
-    case ElementType::Pyramid:
-    case ElementType::Prism:
-    case ElementType::Hexahedron:
-    case ElementType::Polyhedron:    return 3;
-  }
-  return 0;
 }
 
 void InternalMeshGenerator::postProcessInput()
@@ -241,12 +227,6 @@ void InternalMeshGenerator::postProcessInput()
   m_fPerturb = 0.0;
 }
 
-Group * InternalMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ),
-                                            string const & GEOSX_UNUSED_PARAM( childName ) )
-{
-  return nullptr;
-}
-
 /**
  * @brief Get the label mapping of element vertices indexes onto node indexes for a type of element.
  * @param[in] elementType the element type
@@ -277,7 +257,7 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
       nodeIDInBox[7] = 6;
       break;
     }
-    case ElementType::Prism:
+    case ElementType::Wedge:
     {
       if( trianglePattern == 0 )
       {
@@ -567,7 +547,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshBody & meshBody = domain.getMeshBody( this->getName() );
+  MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( this->getName() );
 
   // Make sure that the node manager fields are initialized
 
@@ -575,6 +555,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   auto & nodeSets = cellBlockManager.getNodeSets();
 
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+
+//  bool isRadialWithOneThetaPartition = false;
 
   // This should probably handled elsewhere:
   int aa = 0;
@@ -754,7 +736,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   cellBlockManager.setNumNodes( numNodes );
 
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X = cellBlockManager.getNodesPositions();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X = cellBlockManager.getNodePositions();
 
   arrayView1d< globalIndex > const nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
 
@@ -988,10 +970,10 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   cellBlockManager.buildMaps();
 
-  GEOSX_LOG_RANK_0( "Total number of nodes:" << ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) );
-  GEOSX_LOG_RANK_0( "Total number of elems:" << m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] );
-
-  GEOSX_LOG_RANK( "Total number of nodes:" << numNodes );
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: total number of nodes = {}", getName(),
+                               ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: total number of elems = {}", getName(),
+                               m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] ) );
 }
 
 void

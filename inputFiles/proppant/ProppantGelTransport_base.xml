@@ -47,8 +47,8 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
+      discretization="FE1"
       targetRegions="{ Fracture }"
-      
       rockToughness="1e6"/>
   </Solvers>
 
@@ -110,8 +110,8 @@
       referencePressure="1e5"
       compressibility="0e-10"
       referenceProppantDensity="2550.0"
-      defaultDensity="{ 800.0 }"
-      defaultViscosity="{ 0.1 }"
+      defaultComponentDensity="{ 800.0 }"
+      defaultComponentViscosity="{ 0.1 }"
       defaultCompressibility="{ 0.0 }"/>
 
     <ParticleFluid

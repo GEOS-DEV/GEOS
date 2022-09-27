@@ -71,7 +71,7 @@ void LaplaceBaseH1::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    NodeManager & nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
+    NodeManager & nodes = meshBody.getBaseDiscretization().getNodeManager();
 
     nodes.registerWrapper< real64_array >( m_fieldName ).
       setApplyDefaultValue( 0.0 ).
@@ -123,9 +123,9 @@ void LaplaceBaseH1::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domai
                                DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName,
-                       DofManager::Location::Node,
+                       FieldLocation::Node,
                        1,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
@@ -142,14 +142,19 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
                                m_fieldName,
                                scalingFactor );
 
-  // Synchronize ghost nodes
-  std::map< string, string_array > fieldNames;
-  fieldNames["node"].emplace_back( m_fieldName );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                              domain.getNeighbors(),
-                                                              true );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
+  } );
 }
 
 void LaplaceBaseH1::updateState( DomainPartition & domain )
@@ -186,41 +191,31 @@ void LaplaceBaseH1::
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
 
-  fsManager.apply( time,
-                   domain,
-                   "nodeManager",
-                   m_fieldName,
-                   [&]( FieldSpecificationBase const & bc,
-                        string const &,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group & targetGroup,
-                        string const & GEOSX_UNUSED_PARAM( fieldName ) )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
   {
-    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                       parallelDevicePolicy< 32 > >( targetSet,
-                                                                     time,
-                                                                     targetGroup,
-                                                                     m_fieldName,
-                                                                     dofManager.getKey( m_fieldName ),
-                                                                     dofManager.rankOffset(),
-                                                                     localMatrix,
-                                                                     localRhs );
-  } );
-}
 
-/*
-   SOLVE SYSTEM
-   This method is simply initiating the solution and right-hand side
-   and pass it to the base class solver.
- */
-void LaplaceBaseH1::solveSystem( DofManager const & dofManager,
-                                 ParallelMatrix & matrix,
-                                 ParallelVector & rhs,
-                                 ParallelVector & solution )
-{
-  rhs.scale( -1.0 ); // TODO decide if we want this here
-  solution.zero();
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+    fsManager.apply< NodeManager >( time,
+                                    mesh,
+                                    m_fieldName,
+                                    [&]( FieldSpecificationBase const & bc,
+                                         string const &,
+                                         SortedArrayView< localIndex const > const & targetSet,
+                                         NodeManager & targetGroup,
+                                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
+    {
+      bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                         parallelDevicePolicy< 32 > >( targetSet,
+                                                                       time,
+                                                                       targetGroup,
+                                                                       m_fieldName,
+                                                                       dofManager.getKey( m_fieldName ),
+                                                                       dofManager.rankOffset(),
+                                                                       localMatrix,
+                                                                       localRhs );
+    } );
+  } );
 }
 
 void LaplaceBaseH1::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )

@@ -69,9 +69,6 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "FractureRegion" );
 
-  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-    setInputFlag( InputFlags::FALSE );
-
   registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable MPI consistent communication ordering" );
@@ -85,7 +82,7 @@ void EmbeddedSurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
+    MeshLevel & meshLevel = meshBody.getBaseDiscretization();
 
     EmbeddedSurfaceNodeManager & nodeManager = meshLevel.getEmbSurfNodeManager();
 
@@ -108,7 +105,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
 
   // Get meshLevel
-  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
 
   // Get managers
   ElementRegionManager & elemManager = meshLevel.getElemManager();
@@ -175,8 +172,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
           if( isPositive * isNegative == 1 )
           {
             bool added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( cellIndex,
-                                                                         esr,
                                                                          er,
+                                                                         esr,
                                                                          nodeManager,
                                                                          embSurfNodeManager,
                                                                          edgeManager,
@@ -216,50 +213,15 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
-  // Synchronize embedded Surfaces
-  embeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
-                                                                   domain.getNeighbors(),
-                                                                   newObjects,
-                                                                   m_mpiCommOrder );
-
-  EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
-
-  auto const & surfaceWithGhostNodes = embeddedSurfaceSubRegion.surfaceWithGhostNodes();
-  arrayView1d< globalIndex > const & parentEdgeGlobalIndex =
-    embSurfNodeManager.getParentEdgeGlobalIndex();
-
-  for( std::size_t i =0; i < surfaceWithGhostNodes.size(); i++ )
-  {
-    localIndex elemIndex = surfaceWithGhostNodes[i].surfaceIndex;
-    std::vector< globalIndex > parentEdges = surfaceWithGhostNodes[i].parentEdgeIndex;
-
-    for( localIndex surfNi = 0; surfNi < surfaceWithGhostNodes[i].numOfNodes; surfNi++ )
-    {
-      globalIndex surfaceNodeParentEdge = parentEdges[ surfNi ];
-
-      for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
-      {
-        if( surfaceNodeParentEdge == parentEdgeGlobalIndex[ ni ] )
-        {
-          embSurfToNodeMap[elemIndex][surfNi] = ni;
-        }
-      }
-    }
-  }
-
-  MpiWrapper::barrier( MPI_COMM_GEOSX );
-
-  // TODO this is kind of brute force to resync everything.
-  embeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
-                                                                   domain.getNeighbors(),
-                                                                   newObjects,
-                                                                   m_mpiCommOrder );
-
-  embeddedSurfacesParallelSynchronization::synchronizeFracturedElements( meshLevel,
-                                                                         domain.getNeighbors(),
-                                                                         this->m_fractureRegionName );
+  embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
+                                                               domain.getNeighbors(),
+                                                               newObjects,
+                                                               m_mpiCommOrder,
+                                                               this->m_fractureRegionName );
 
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
+
+  EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
 
   // Populate EdgeManager for embedded surfaces.
   EdgeManager & embSurfEdgeManager = meshLevel.getEmbSurfEdgeManager();
@@ -278,9 +240,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 }
 
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
-{
-  // I don't think there is  much to do here.
-}
+{}
 
 real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
@@ -306,7 +266,7 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
-    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getBaseDiscretization();
 
     for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {
@@ -359,15 +319,12 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
   MpiWrapper::allGather( embSurfNodeManager.size(), numberOfNodesPerRank );
 
   globalIndexOffset[0] = 0; // offSet for the globalIndex
-  localIndex totalNumberOfNodes = numberOfNodesPerRank[ 0 ];  // Sum across all ranks
   for( int rank = 1; rank < commSize; ++rank )
   {
     globalIndexOffset[rank] = globalIndexOffset[rank - 1] + numberOfNodesPerRank[rank - 1];
-    totalNumberOfNodes += numberOfNodesPerRank[rank];
   }
 
   arrayView1d< globalIndex > const & nodesLocalToGlobal = embSurfNodeManager.localToGlobalMap();
-
   forAll< serialPolicy >( embSurfNodeManager.size(), [=, &embSurfNodeManager, &globalIndexOffset] ( localIndex const ni )
   {
     nodesLocalToGlobal( ni ) = ni + globalIndexOffset[ thisRank ];

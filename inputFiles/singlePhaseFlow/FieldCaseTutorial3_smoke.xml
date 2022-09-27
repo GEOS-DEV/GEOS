@@ -5,11 +5,14 @@
     <File name="./FieldCaseTutorial3_base.xml" />
   </Included>
 
+  <!-- SPHINX_FIELD_CASE_MESH -->
   <Mesh>
-    <PAMELAMeshGenerator name="SyntheticMesh"
-                         file="synthetic.msh" />
+    <VTKMesh name="SyntheticMesh"
+                file="synthetic.vtu" />
   </Mesh>
+  <!-- SPHINX_FIELD_CASE_MESH_END -->
 
+  <!-- SPHINX_FIELD_CASE_EVENTS -->
   <Events maxTime="100.0e6">
     <PeriodicEvent name="solverApplications"
                    forceDt="10.0e6"
@@ -19,5 +22,6 @@
                    timeFrequency="10.0e6"
                    target="/Outputs/reservoir_with_properties" />
   </Events>
+  <!-- SPHINX_FIELD_CASE_EVENTS_END -->
 
 </Problem>

@@ -5,41 +5,15 @@ Validation and Verification Studies
 ===================================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   kirschWellbore/Example	      
+   carbonStorage/Index
 
-   casedElasticWellbore/Example
+   faultMechanics/Index
 
-   deviatedElasticWellbore/Example
+   hydraulicFracture/Index
 
-   edpWellbore/Example
-   
-   mccWellbore/Example
-
-   mandel/Example
-
-   deviatedPoroElasticWellbore/Example
-
-   deviatedPoroElasticWellbore/Example2
-
-   verticalPoroElastoPlasticWellbore/Example
-   
-   sneddon/Example
-
-   singleFracCompression/Example
-
-   intersectFrac/Example
-
-   kgdToughnessDominated/Example  
-
-   kgdViscosityDominated/Example
-
-   kgdValidation/Example 
- 
-   proppantSlotTest/Example
-
-   isothermalLeakyWell/Example
+   wellboreProblems/Index
   
 
 

@@ -8,8 +8,10 @@
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
       logLevel="1"
+      discretization="FE1"
       targetRegions="{ Region, Fracture }"
-      contactRelationName="fractureMaterial">
+      contactRelationName="fractureMaterial"
+      fractureRegionName="Fracture">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         logLevel="2"
@@ -33,8 +35,8 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
+      discretization="FE1"
       targetRegions="{ Region }"
-      
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>
@@ -57,7 +59,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ South_HEX, North_HEX }"
+      cellBlocks="{ 0_hexahedra, 1_hexahedra }"
       materialList="{ rock }"/>
 
     <SurfaceElementRegion
@@ -76,6 +78,7 @@
     <Coulomb
       name="fractureMaterial"
       cohesion="0.0"
+      apertureTableName="apertureTable"
       frictionCoefficient="0.577350269189626"/>
   </Constitutive>
 
@@ -136,6 +139,13 @@
       scale="0.0"
       setNames="{ rear }"/>
   </FieldSpecifications>
+ 
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.0, 0.0 }"/>
+  </Functions>
 
   <Outputs>
     <Silo

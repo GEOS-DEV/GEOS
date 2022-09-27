@@ -99,7 +99,7 @@ public:
   /**
    * @copydoc catalogName()
    */
-  virtual const string getCatalogName() const override { return catalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   ///@}
 
@@ -221,34 +221,6 @@ public:
   {
     /// @return String key for the global number of perforations
     static constexpr char const * numPerforationsGlobalString() { return "numPerforationsGlobal"; }
-    /// @return String key for the reservoir element region index
-    static constexpr char const * reservoirElementRegionString() { return "reservoirElementRegion"; }
-    /// @return String key for the reservoir element subregion index
-    static constexpr char const * reservoirElementSubregionString() { return "reservoirElementSubregion"; }
-    /// @return String key for the reservoir element index
-    static constexpr char const * reservoirElementIndexString() { return "reservoirElementIndex"; }
-    /// @return String key for the well element index
-    static constexpr char const * wellElementIndexString() { return "wellElementIndex"; }
-    /// @return String key for the perforation location
-    static constexpr char const * locationString() { return "location"; }
-    /// @return String key for the well transmissibility
-    static constexpr char const * wellTransmissibilityString() { return "wellTransmissibility"; }
-
-    /// ViewKey for the global number of perforations
-    dataRepository::ViewKey numPerforationsGlobal     = { numPerforationsGlobalString() };
-    /// ViewKey for the reservoir element region index
-    dataRepository::ViewKey reservoirElementRegion    = { reservoirElementRegionString() };
-    /// ViewKey for the reservoir element subregion index
-    dataRepository::ViewKey reservoirElementSubregion = { reservoirElementSubregionString() };
-    /// ViewKey for the reservoir element index
-    dataRepository::ViewKey reservoirElementIndex     = { reservoirElementIndexString() };
-    /// ViewKey for the well element index
-    dataRepository::ViewKey wellElementIndex          = { wellElementIndexString() };
-    /// ViewKey for the perf location
-    dataRepository::ViewKey location                  = { locationString() };
-    /// ViewKey for the well transmissibility
-    dataRepository::ViewKey wellTransmissibility      = { wellTransmissibilityString() };
-
   }
   /// ViewKey struct for the PerforationData class
   viewKeysPerforationData;

@@ -22,8 +22,9 @@
       name="compositionalMultiphaseFlow"
       logLevel="1"
       discretization="fluidTPFA"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
       targetRegions="{ region }"
-      computeCFLNumbers="1"      
       temperature="297.15"
       useMass="1"/>
 
@@ -122,6 +123,11 @@
       name="solverApplications"
       maxEventDt="315360"      
       target="/Solvers/reservoirSystem"/>
+
+    <PeriodicEvent
+      name="statistics"
+      timeFrequency="3153600"
+      target="/Tasks/compositionalMultiphaseFlowStatistics"/>
     
     <PeriodicEvent
       name="timeHistoryCollection"
@@ -270,6 +276,13 @@
   </Functions>
     
   <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="compositionalMultiphaseFlowStatistics"
+      flowSolverName="compositionalMultiphaseFlow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+    
     <PackCollection
       name="wellRateCollection"
       objectPath="ElementRegions/wellRegion1/wellRegion1uniqueSubRegion"

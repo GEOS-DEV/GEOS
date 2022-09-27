@@ -44,16 +44,39 @@ public:
             Group * const parent );
 
   /**
-   * @brief Destructor
-   */
-  virtual ~MeshBody();
-
-  /**
    * @brief Create a new mesh level
    * @param [in] newLevel index of the new mesh level
    * @return reference to the created MeshLevel
    */
   MeshLevel & createMeshLevel( localIndex const newLevel );
+
+  /**
+   * @brief Create a new mesh level.
+   * @param[in] name The name of the new MeshLevel.
+   * @return A reference to the new MeshLevel.
+   */
+  MeshLevel & createMeshLevel( string const & name );
+
+  /**
+   * @brief Create a new mesh level from a source MeshLevel.
+   * @param sourceLevelName The name of the source MeshLevel.
+   * @param newLevelName The name of the new MeshLevel.
+   * @param order The order of the new MeshLevel.
+   * @return A reference to the new MeshLevel.
+   */
+  MeshLevel & createMeshLevel( string const & sourceLevelName,
+                               string const & newLevelName,
+                               int const order );
+
+  /**
+   * @brief Creates a mesh level in which the member pointers are set to the
+   *        allocations from another MeshLevel.
+   * @param sourceLevelName The MeshLevel to be "copied"
+   * @param newLevelName The name of the new shallow copy.
+   * @return A reference to the new shallow MeshLevel.
+   */
+  MeshLevel & createShallowMeshLevel( string const & sourceLevelName,
+                                      string const & newLevelName );
 
   /**
    * @brief Get the meshLevels group
@@ -66,36 +89,47 @@ public:
   Group const & getMeshLevels() const { return m_meshLevels; }
 
   /**
-   * @brief Get mesh level
-   * @param [in] level index of the mesh level
-   * @return reference to MeshLevel
+   * @brief Get a reference to a MeshLevel.
+   * @tparam T The type of the lookup key. Function is only implemented for
+   *  string and const char * key types.
+   * @param[in] level The lookup key of the MeshLevel
+   * @return const reference to the MeshLevel
    */
-  MeshLevel & getMeshLevel( string const & level )
+  template< typename T, std::enable_if_t< std::is_same< T, string >::value ||
+                                          std::is_same< T, const char * >::value, bool > = false >
+  MeshLevel & getMeshLevel( T const & level ) const
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
 
   /**
-   * @brief Get mesh level
-   * @param [in] level index of the mesh level
-   * @return reference to const MeshLevel
+   * @brief Get a reference to a MeshLevel.
+   * @tparam T The type of the lookup key. Function is only implemented for
+   *  string and const char * key types.
+   * @param[in] level The lookup key of the MeshLevel
+   * @return Reference to the MeshLevel
    */
-  MeshLevel const & getMeshLevel( string const & level ) const
+  template< typename T, std::enable_if_t< std::is_same< T, string >::value ||
+                                          std::is_same< T, const char * >::value, bool > = false >
+  MeshLevel & getMeshLevel( T const & level )
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
 
-  /**
-   * @brief Get mesh level
-   * @param [in] level index of the mesh level
-   * @return pointer to MeshLevel
-   */
-  MeshLevel & getMeshLevel( localIndex const level )
-  { return getMeshLevel( intToMeshLevelString( level ) ); }
 
   /**
-   * @brief Get mesh level
-   * @param [in] level index of the mesh level
-   * @return pointer to const MeshLevel
+   * @brief Convenience function to access the baseDiscretization.
+   * @return Reference to the base discretization.
    */
-  MeshLevel const & getMeshLevel( localIndex const level ) const
-  { return getMeshLevel( intToMeshLevelString( level ) ); }
+  MeshLevel & getBaseDiscretization()
+  {
+    return getMeshLevel( groupStructKeys::baseDiscretizationString() );
+  }
+
+  /**
+   * @brief Convenience function to access the baseDiscretization.
+   * @return Reference to the base discretization.
+   */
+  MeshLevel const & getBaseDiscretization() const
+  {
+    return getMeshLevel( groupStructKeys::baseDiscretizationString() );
+  }
 
   /**
    * @brief Apply the given functor to all meshLevels on this meshBody.
@@ -145,6 +179,9 @@ public:
   {
     /// @return The key/string used to register/access the Group that contains the MeshLevel objects.
     static constexpr char const * meshLevelsString() { return "meshLevels"; }
+
+    /// @return The key/string used to register/access the Group that contains the base discretization.
+    static constexpr char const * baseDiscretizationString() { return "Level0"; }
   } groupKeys; ///< groupKeys
 
 private:

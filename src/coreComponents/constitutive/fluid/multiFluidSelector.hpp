@@ -21,7 +21,7 @@
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/DeadOilFluid.hpp"
 #include "constitutive/fluid/BlackOilFluid.hpp"
-#include "constitutive/fluid/MultiPhaseMultiComponentFluid.hpp"
+#include "constitutive/fluid/CO2BrineFluid.hpp"
 
 #include "common/GeosxConfig.hpp"
 #ifdef GEOSX_USE_PVTPackage
@@ -46,7 +46,12 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
                                CO2BrinePhillipsFluid,
                                CO2BrinePhillipsFluidDelft,
                                CO2BrineEzrokhiFluid,
-                               CO2BrineEzrokhiFluidDelft >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               CO2BrineEzrokhiFluidDelft,
+                               CO2BrinePhillipsThermalFluid,
+			       CO2BrinePhillipsThermalFluidDelft
+//                               ,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
+// units for all the options"
+                               >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
@@ -61,7 +66,12 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
                                CO2BrinePhillipsFluid,
                                CO2BrinePhillipsFluidDelft,
                                CO2BrineEzrokhiFluid,
-                               CO2BrineEzrokhiFluidDelft >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               CO2BrineEzrokhiFluidDelft,
+                               CO2BrinePhillipsThermalFluid,
+                               CO2BrinePhillipsThermalFluidDelft
+//                               ,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
+// units for all the options"
+                               >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

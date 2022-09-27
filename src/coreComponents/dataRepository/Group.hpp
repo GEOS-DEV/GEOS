@@ -27,6 +27,7 @@
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
 
+
 #include <iostream>
 
 #ifndef NOCHARTOSTRING_KEYLOOKUP
@@ -215,7 +216,7 @@ public:
    */
   template< typename T = Group >
   T & registerGroup( string const & name )
-  { return registerGroup< T >( name, std::move( std::make_unique< T >( name, this ) ) ); }
+  { return registerGroup< T >( name, std::make_unique< T >( name, this ) ); }
 
   /**
    * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
@@ -230,8 +231,8 @@ public:
   template< typename T = Group >
   T & registerGroup( subGroupMap::KeyIndex const & keyIndex )
   {
-    T & rval = registerGroup< T >( keyIndex.key(), std::move( std::make_unique< T >( keyIndex.key(), this )) );
-    keyIndex.setIndex( m_subGroups.getIndex( keyIndex.key()) );
+    T & rval = registerGroup< T >( keyIndex.key(), std::make_unique< T >( keyIndex.key(), this ) );
+    keyIndex.setIndex( m_subGroups.getIndex( keyIndex.key() ) );
     return rval;
   }
 
@@ -769,6 +770,7 @@ public:
    * @param[in] name the name of the wrapper to use as a string key
    * @param[in] newObject an owning pointer to the object that is being registered
    * @return A reference to the newly registered/created Wrapper
+   * @note Not intended to register a @p WrapperBase instance. Use dedicated member function instead.
    */
   template< typename T >
   Wrapper< T > & registerWrapper( string const & name, std::unique_ptr< T > newObject );
@@ -779,6 +781,7 @@ public:
    * @param[in] name the name of the wrapper to use as a string key
    * @param[in] newObject a pointer to the object that is being registered
    * @return A reference to the newly registered/created Wrapper
+   * @note Not intended to register a @p WrapperBase instance. Use dedicated member function instead.
    */
   template< typename T >
   Wrapper< T > & registerWrapper( string const & name,
@@ -786,12 +789,10 @@ public:
 
   /**
    * @brief Register and take ownership of an existing Wrapper.
-   * @param name The name of the wrapper to use as a string key
    * @param wrapper A pointer to the an existing wrapper.
    * @return An un-typed pointer to the newly registered/created wrapper
    */
-  WrapperBase & registerWrapper( string const & name,
-                                 std::unique_ptr< WrapperBase > wrapper );
+  WrapperBase & registerWrapper( std::unique_ptr< WrapperBase > wrapper );
 
   /**
    * @brief Removes a Wrapper from this group.
@@ -896,7 +897,7 @@ public:
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] packList     the list of indices to pack
    * @param[in] recursive    whether or not to perform a recursive pack.
-   * @param[in] onDevice    whether to use device-based packing functions
+   * @param[in] onDevice     whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @param[out] events      a collection of events to poll for completion of async
    *                         packing kernels ( device packing is incomplete until all
@@ -908,6 +909,22 @@ public:
                                integer const recursive,
                                bool onDevice,
                                parallelDeviceEvents & events ) const;
+
+  /**
+   * @brief Get the size required to pack a list of indices for all registered wrappers.
+   * @param[in] packList     the list of indices to pack
+   * @param[in] recursive    whether or not to perform a recursive pack.
+   * @param[in] onDevice     whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
+   * @return                 the size of the buffer required to pack the wrapper indices.
+   */
+  localIndex packSize( arrayView1d< localIndex const > const & packList,
+                       integer const recursive,
+                       bool onDevice,
+                       parallelDeviceEvents & events ) const;
 
   /**
    * @brief Pack a list of wrappers to a buffer.
@@ -939,7 +956,7 @@ public:
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] packList     the list of indices to pack
    * @param[in] recursive    whether or not to perform a recursive pack.
-   * @param[in] onDevice    whether to use device-based packing functions
+   * @param[in] onDevice     whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @param[out] events      a collection of events to poll for completion of async
    *                         packing kernels ( device packing is incomplete until all
@@ -957,6 +974,29 @@ public:
                            integer const recursive,
                            bool onDevice,
                            parallelDeviceEvents & events ) const;
+
+  /**
+   * @brief Pack a list of indices for all registered wrappers.
+   * @param[in,out] buffer   the buffer that will be packed.
+   * @param[in] packList     the list of indices to pack
+   * @param[in] recursive    whether or not to perform a recursive pack.
+   * @param[in] onDevice     whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
+   * @return                 the size of data packed to the buffer.
+   *
+   * This function takes in a reference to a pointer @p buffer, and packs data specified by
+   * @p wrapperNames, @p packList, and @p recursive to that pointer location. The
+   * pointer is altered and returned to the new location corresponding the
+   * original value of @p buffer plus the size of data packed to the buffer.
+   */
+  localIndex pack( buffer_unit_type * & buffer,
+                   arrayView1d< localIndex const > const & packList,
+                   integer const recursive,
+                   bool onDevice,
+                   parallelDeviceEvents & events ) const;
 
   /**
    * @brief Unpack a buffer.
@@ -1229,11 +1269,18 @@ public:
   }
 
   /**
-   * @brief Get the group's index withing its parent group
+   * @brief Get the group's index within its parent group
    * @return integral index of current group within its parent
    */
   localIndex getIndexInParent() const
   { return m_parent->getSubGroups().getIndex( m_name ); }
+
+  /**
+   * @brief Get the index of a sub-Group within this group.
+   * @param key The key of the sub-Group
+   * @return The index of the sub-Group.
+   */
+  localIndex getSubGroupIndex( keyType const & key ) const;
 
   /**
    * @brief Check whether this Group is resized when its parent is resized.
@@ -1329,6 +1376,19 @@ public:
   integer getLogLevel() const { return m_logLevel; }
   ///@}
 
+  /**
+   * @brief Performs re-initialization of certain variable depending on the solver being used.
+   */
+  virtual void reinit() {}
+
+  /**
+   * @brief Return PyGroup type.
+   * @return Return PyGroup type.
+   */
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const;
+#endif
+
 protected:
 
   /**
@@ -1375,6 +1435,8 @@ protected:
   virtual void postRestartInitialization()
   {}
 
+
+
   ///@}
 
 private:
@@ -1386,6 +1448,28 @@ private:
   virtual void processInputFile( xmlWrapper::xmlNode const & targetNode );
 
   Group const & getBaseGroupByPath( string const & path ) const;
+
+  /**
+   * @brief Concrete implementation of the packing method.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
+   * @param[in,out] buffer The buffer that will receive the packed data.
+   * @param[in] wrapperNames The names of the wrapper to be packed. If empty, all the wrappers will be packed.
+   * @param[in] packList The element we want packed. If empty, all the elements will be packed.
+   * @param[in] recursive Recursive pack or not.
+   * @param[in] onDevice Whether to use device-based packing functions
+   *                     (buffer must be either pinned or a device pointer)
+   * @param[out] events A collection of events to poll for completion of async
+   *                    packing kernels ( device packing is incomplete until all
+   *                    events are finalized )
+   * @return The packed size.
+   */
+  template< bool DO_PACKING >
+  localIndex packImpl( buffer_unit_type * & buffer,
+                       array1d< string > const & wrapperNames,
+                       arrayView1d< localIndex const > const & packList,
+                       integer const recursive,
+                       bool onDevice,
+                       parallelDeviceEvents & events ) const;
 
   //START_SPHINX_INCLUDE_02
   /// The parent Group that contains "this" Group in its "sub-Group" collection.
@@ -1476,6 +1560,7 @@ template< typename T >
 Wrapper< T > & Group::registerWrapper( string const & name,
                                        std::unique_ptr< T > newObject )
 {
+  static_assert( !std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
   m_wrappers.insert( name,
                      new Wrapper< T >( name, *this, std::move( newObject ) ),
                      true );
@@ -1492,6 +1577,7 @@ template< typename T >
 Wrapper< T > & Group::registerWrapper( string const & name,
                                        T * newObject )
 {
+  static_assert( !std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
   m_wrappers.insert( name,
                      new Wrapper< T >( name, *this, newObject ),
                      true );

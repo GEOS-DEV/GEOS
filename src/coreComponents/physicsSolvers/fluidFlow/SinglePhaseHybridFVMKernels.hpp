@@ -54,12 +54,10 @@ struct AssemblerKernelHelper
 
   /**
    * @brief In a given element, compute the one-sided volumetric fluxes at this element's faces
-   * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
-   * @param[in] faceGravCoef the depth at the mesh facesb
+   * @param[in] facePres the pressure at the mesh faces
+   * @param[in] faceGravCoef the depth at the mesh faces
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
-   * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravCoef the depth at this element's center
    * @param[in] elemDens the density at this elenent's center
    * @param[in] dElemDens_dp the derivative of the density at this element's center
@@ -72,11 +70,9 @@ struct AssemblerKernelHelper
   GEOSX_HOST_DEVICE
   static void
   applyGradient( arrayView1d< real64 const > const & facePres,
-                 arrayView1d< real64 const > const & dFacePres,
                  arrayView1d< real64 const > const & faceGravCoef,
                  arraySlice1d< localIndex const > const & elemToFaces,
                  real64 const & elemPres,
-                 real64 const & dElemPres,
                  real64 const & elemGravCoef,
                  real64 const & elemDens,
                  real64 const & dElemDens_dp,
@@ -92,8 +88,8 @@ struct AssemblerKernelHelper
       for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
       {
         // 1) compute the potential diff between the cell center and the face center
-        real64 const ccPres = elemPres + dElemPres;
-        real64 const fPres  = facePres[elemToFaces[jfaceLoc]] + dFacePres[elemToFaces[jfaceLoc]];
+        real64 const ccPres = elemPres;
+        real64 const fPres  = facePres[elemToFaces[jfaceLoc]];
 
         real64 const ccGravCoef = elemGravCoef;
         real64 const fGravCoef  = faceGravCoef[elemToFaces[jfaceLoc]];
@@ -306,7 +302,7 @@ struct AssemblerKernelHelper
       }
 
       // residual
-      atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnLocalRowIndex], flux );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnLocalRowIndex], flux );
 
       // jacobian -- derivative wrt local cell centered pressure term
       localMatrix.addToRow< parallelDeviceAtomic >( eqnLocalRowIndex, &dofColIndexElemPres, &dFlux_dp, 1 );
@@ -348,12 +344,10 @@ struct AssemblerKernel
    * @param[in] elemList face-to-elemIds map
    * @param[in] faceDofNumber the dof numbers of the face pressures
    * @param[in] faceGhostRank ghost rank of each face
-   * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
+   * @param[in] facePres the pressure at the mesh faces
    * @param[in] faceGravCoef the depth at the mesh faces
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
-   * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravCoef the depth at this element's center
    * @param[in] elemDens the density at this elenent's center
    * @param[in] dElemDens_dp the derivative of the density at this element's center
@@ -380,11 +374,9 @@ struct AssemblerKernel
            arrayView1d< globalIndex const > const & faceDofNumber,
            arrayView1d< integer const > const & faceGhostRank,
            arrayView1d< real64 const > const & facePres,
-           arrayView1d< real64 const > const & dFacePres,
            arrayView1d< real64 const > const & faceGravCoef,
            arraySlice1d< localIndex const > const & elemToFaces,
            real64 const & elemPres,
-           real64 const & dElemPres,
            real64 const & elemGravCoef,
            real64 const & elemDens,
            real64 const & dElemDens_dp,
@@ -414,11 +406,9 @@ struct AssemblerKernel
     // for each one-sided face of the elem,
     // compute the volumetric flux using transMatrix
     AssemblerKernelHelper::applyGradient< NF >( facePres,
-                                                dFacePres,
                                                 faceGravCoef,
                                                 elemToFaces,
                                                 elemPres,
-                                                dElemPres,
                                                 elemGravCoef,
                                                 elemDens,
                                                 dElemDens_dp,
@@ -505,8 +495,7 @@ struct FluxKernel
    * @param[in] elemList face-to-elemIds map
    * @param[in] faceToNodes map from face to nodes
    * @param[in] faceDofNumber the dof numbers of the face pressures
-   * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
+   * @param[in] facePres the pressure at the mesh faces
    * @param[in] faceGravCoef the depth at the mesh faces
    * @param[in] transMultiplier the transmissibility multiplier at the mesh faces
    * @param[in] mob the mobilities in the domain (non-local)
@@ -533,7 +522,6 @@ struct FluxKernel
           arrayView1d< globalIndex const > const & faceDofNumber,
           arrayView1d< integer const > const & faceGhostRank,
           arrayView1d< real64 const > const & facePres,
-          arrayView1d< real64 const > const & dFacePres,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & transMultiplier,
           ElementViewConst< arrayView1d< real64 const > > const & mob,
@@ -554,8 +542,6 @@ struct FluxKernel
     // get the cell-centered pressures
     arrayView1d< real64 const > const elemPres  =
       subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-    arrayView1d< real64 const > const dElemPres =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
     // get the element data needed for transmissibility computation
     arrayView2d< real64 const > const elemCenter =
@@ -607,11 +593,9 @@ struct FluxKernel
                                                                    faceDofNumber,
                                                                    faceGhostRank,
                                                                    facePres,
-                                                                   dFacePres,
                                                                    faceGravCoef,
                                                                    elemToFaces[ei],
                                                                    elemPres[ei],
-                                                                   dElemPres[ei],
                                                                    elemGravCoef[ei],
                                                                    elemDens[ei][0],
                                                                    dElemDens_dp[ei][0],
@@ -638,9 +622,9 @@ struct ResidualNormKernel
   template< typename VIEWTYPE >
   using ElementViewConst = typename ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  template< typename POLICY >
   static void
-  launch( LOCAL_VECTOR const localResidual,
+  launch( arrayView1d< real64 const > const & localResidual,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & facePresDofNumber,
           arrayView1d< integer const > const & faceGhostRank,
@@ -652,7 +636,7 @@ struct ResidualNormKernel
           real64 * localResidualNorm )
   {
 
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > sumScaled( 0.0 );
 
     forAll< POLICY >( facePresDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
     {

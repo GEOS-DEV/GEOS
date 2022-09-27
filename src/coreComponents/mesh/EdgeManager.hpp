@@ -56,7 +56,7 @@ public:
   /**
    * @return the string representing the edge manager name in the catalog
    */
-  static const string catalogName()
+  static string catalogName()
   { return "EdgeManager"; }
 
 
@@ -64,8 +64,8 @@ public:
    * @brief Getter used to access the edge manager catalog name.
    * @return the edge manager catalog name
    */
-  virtual const string getCatalogName() const override
-  { return EdgeManager::catalogName(); }
+  virtual string getCatalogName() const override
+  { return catalogName(); }
 
   ///@}
 
@@ -75,7 +75,7 @@ public:
    *
    * @note Value forwarding is due to refactoring.
    */
-  static localIndex faceMapExtraSpacePerEdge()
+  static constexpr localIndex faceMapOverallocation()
   { return CellBlockManagerABC::faceMapExtraSpacePerEdge(); }
 
   /**
@@ -91,11 +91,6 @@ public:
   EdgeManager( string const & name,
                Group * const parent );
 
-  /**
-   * @brief default destructor
-   */
-  ~EdgeManager() override;
-
   ///@}
 
   /**
@@ -108,9 +103,9 @@ public:
 
   /**
    * @brief Set the node of the domain boundary object.
-   * @param[in] faceManager The reference of the face manager.
+   * @param[in] faceIndex The reference of the face manager.
    */
-  void setDomainBoundaryObjects( FaceManager const & faceManager );
+  void setDomainBoundaryObjects( FaceManager const & faceIndex );
 
   /**
    * @brief Set external edges.
@@ -154,15 +149,12 @@ public:
 
 
   /**
-   * @brief Build \p globalEdgeNodes, a  vector containing all the global indices
-   * of each nodes of each edges
+   * @brief Build a vector containing all the global indices of each nodes of each edges
    * @param[in] nodeManager the nodeManager object.
-   * @param[out] globalEdgeNodes the globalEdgesNodes array to be built
-   * [ [global_index_node_0_edge_0, global_index_node1_edge_0], [global_index_node_0_edge_1, global_index_node1_edge_1] ....]
+   * @return an array of pairs of each edge's nodes globalIndices
    */
-  virtual void
-  extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
-                                                   std::vector< std::vector< globalIndex > > & globalEdgeNodes ) override;
+  virtual ArrayOfSets< globalIndex >
+  extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager ) override;
 
   /**
    * @brief Compute the future size of a packed list.
@@ -217,34 +209,12 @@ public:
                          ArrayOfArraysView< localIndex const > const & facesToEdges );
 
   /**
-   * @brief Build the mapping edge-to-nodes relation from the mapping global to local nodes.
-   * @param[in] indices array of index of the global to local nodes
-   * @param[in] nodeGlobalToLocal map of the global to local nodes
-   * @param[in] faceGlobalToLocal GEOX UNUSED PARAMETER
+   * @brief Check if edge \p edgeIndex contains node \p nodeIndex
+   * @param[in] edgeIndex local index of the edge
+   * @param[in] nodeIndex local index of the node
+   * @return boolean : true if the node \p nodeIndex is part of the edge \p edgeIndex; false otherwise
    */
-  void connectivityFromGlobalToLocal( const SortedArray< localIndex > & indices,
-                                      const map< globalIndex, localIndex > & nodeGlobalToLocal,
-                                      const map< globalIndex, localIndex > & faceGlobalToLocal );
-
-  /**
-   * @brief Split an edge (separate its two extremity nodes)
-   * @param[in] indexToSplit Index of the edge to split
-   * @param[in] parentNodeIndex index of the parent node
-   * @param[in] childNodeIndex index of the child node
-   * @param[in] nodesToEdges array of nodes-to-edges list
-   */
-  void splitEdge( const localIndex indexToSplit,
-                  const localIndex parentNodeIndex,
-                  const localIndex childNodeIndex[2],
-                  array1d< SortedArray< localIndex > > & nodesToEdges );
-
-  /**
-   * @brief Check if edge \p edgeID contains node \p nodeID
-   * @param[in] edgeID local index of the edge
-   * @param[in] nodeID local index of the node
-   * @return boolean : true if the node \p nodeID is part of the edge \p edgeID; false otherwise
-   */
-  bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
+  bool hasNode( const localIndex edgeIndex, const localIndex nodeIndex ) const;
 
   /**
    * @brief Calculate the center of an edge given its index.
@@ -287,9 +257,6 @@ public:
     static constexpr char const * elementRegionListString() { return "elemRegionList"; }
     static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
     static constexpr char const * elementListString() { return "elemList"; }
-    static constexpr char const * edgesTofractureConnectorsEdgesString() { return "edgesToFractureConnectors"; }
-    static constexpr char const * fractureConnectorEdgesToEdgesString() { return "fractureConnectorsToEdges"; }
-    static constexpr char const * fractureConnectorsEdgesToFaceElementsIndexString() { return "fractureConnectorsToElementIndex"; }
 
     dataRepository::ViewKey nodesList             = { nodeListString() };
     dataRepository::ViewKey faceList              = { faceListString() };
@@ -302,15 +269,6 @@ public:
   viewKeys;
 
   ///}@
-
-  /**
-   * @brief Return the  maximum number of edges per node.
-   * @return Maximum allowable number of edges connected to one node (hardcoded for now)
-   *
-   * @note Value forwarding is due to refactoring.
-   */
-  static constexpr int maxEdgesPerNode()
-  { return CellBlockManagerABC::maxEdgesPerNode(); }
 
   /**
    * @name Getters for stored value.
@@ -361,21 +319,6 @@ public:
 
   ///@}
 
-  // TODO These should be in their own subset of edges when we add that capability.
-
-  /// map from the edges to the fracture connectors index (edges that are fracture connectors)
-  SortedArray< localIndex > m_recalculateFractureConnectorEdges;
-
-  /// todo
-  map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
-
-  /// todo
-  array1d< localIndex > m_fractureConnectorsEdgesToEdges;
-
-  /// todo
-  ArrayOfArrays< localIndex > m_fractureConnectorEdgesToFaceElements;
-
-
 private:
 
   /// Map for the edges-to-nodes relation
@@ -392,15 +335,15 @@ private:
 
   /**
    * @brief function to pack the upward and downward pointing maps.
-   * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
-   *                packed and the function returns the size of the packing that would have occurred if set to TRUE.
+   * @tparam DO_PACKING template argument to determine whether or not to pack the buffer. If false, the buffer is not
+   *                    packed and the function returns the size of the packing that would have occurred if set to TRUE.
    * @param buffer the buffer to pack data into
    * @param packList the indices of nodes that should be packed.
    * @return size of data packed in terms of number of chars
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
 };
 

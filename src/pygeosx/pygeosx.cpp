@@ -19,10 +19,14 @@
 
 // Source includes
 #include "pygeosx.hpp"
-#include "PyGroup.hpp"
-#include "PyWrapper.hpp"
+#include "dataRepository/python/PyGroup.hpp"
+#include "dataRepository/python/PyGroupType.hpp"
+#include "physicsSolvers/python/PySolverType.hpp"
+#include "fileIO/python/PyHistoryCollectionType.hpp"
+#include "fileIO/python/PyHistoryOutputType.hpp"
+#include "fileIO/python/PyVTKOutputType.hpp"
 #include "mainInterface/initialization.hpp"
-#include "mainInterface/GeosxState.hpp"
+#include "LvArray/src/python/PyArray.hpp"
 
 // System includes
 #pragma GCC diagnostic push
@@ -32,11 +36,11 @@
 #pragma GCC diagnostic pop
 #include <chrono>
 
+
 namespace geosx
 {
 
 std::unique_ptr< GeosxState > g_state;
-
 bool g_alreadyInitialized = false;
 
 PyObject * init( PyObject * const pyArgv, bool const performSetup, long const pythonMPIRank=-1 )
@@ -256,6 +260,7 @@ PyObject * finalize( PyObject * self, PyObject * args ) noexcept
 /**
  * Add geosx::State enums to the given module. Return the module, or nullptr on failure
  */
+
 static bool addConstants( PyObject * module )
 {
   std::array< std::pair< long, char const * >, 4 > const constants = { {
@@ -309,11 +314,14 @@ static bool addExitHandler( PyObject * module )
   return returnval != nullptr;
 }
 
+
+
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 /**
  *
  */
+
 static PyMethodDef pygeosxFuncs[] = {
   { "initialize", geosx::initialize, METH_VARARGS, geosx::initializeDocString },
   { "reinit", geosx::reinit, METH_VARARGS, geosx::reinitDocString },
@@ -322,6 +330,8 @@ static PyMethodDef pygeosxFuncs[] = {
   { "_finalize", geosx::finalize, METH_NOARGS, geosx::finalizeDocString },
   { nullptr, nullptr, 0, nullptr }        /* Sentinel */
 };
+
+
 
 static constexpr char const * pygeosxDocString =
   "Python driver for GEOSX.";
@@ -337,7 +347,9 @@ static struct PyModuleDef pygeosxModuleFunctions = {
   .m_methods = pygeosxFuncs
 };
 
+
 END_ALLOW_DESIGNATED_INITIALIZERS
+
 
 /**
  * @brief Initialize the module with functions, constants, and exit handler
@@ -376,6 +388,26 @@ PyInit_pygeosx()
     return nullptr;
   }
 
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolverType(), "Solver" ) )
+  {
+    return nullptr;
+  }
+
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyHistoryCollectionType(), "HistoryCollection" ) )
+  {
+    return nullptr;
+  }
+
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyHistoryOutputType(), "HistoryOutput" ) )
+  {
+    return nullptr;
+  }
+
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyVTKOutputType(), "VTKOutput" ) )
+  {
+    return nullptr;
+  }
+
   // Add the LvArray submodule.
   if( !LvArray::python::addPyLvArrayModule( module ) )
   {
@@ -385,3 +417,7 @@ PyInit_pygeosx()
   // Since we return module we don't want to decrease the reference count.
   return module.release();
 }
+
+
+
+//=====================================================================================================================================

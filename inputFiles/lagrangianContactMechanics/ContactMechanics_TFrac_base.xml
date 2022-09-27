@@ -9,12 +9,14 @@
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
       logLevel="1"
-      activeSetMaxIter="10"
+      discretization="FE1"
       targetRegions="{ Region, Fracture }"
-      contactRelationName="fractureMaterial">
+      contactRelationName="fractureMaterial"
+      fractureRegionName="Fracture">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         logLevel="2"
+        maxNumConfigurationAttempts="10"
         newtonMaxIter="10"
         lineSearchAction="Require"
         lineSearchMaxCuts="2"
@@ -42,9 +44,9 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
+      discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{ Region }"
-      
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   <!-- SPHINX_SOLVER_END -->
@@ -107,6 +109,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="faceElementSubRegion"
       defaultAperture="0.0"
       materialList="{ fractureMaterial, rock }"/>
   </ElementRegions>
@@ -219,7 +222,7 @@
     <VTK
       name="vtkOutput"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <TimeHistory
       name="tractionOutput"

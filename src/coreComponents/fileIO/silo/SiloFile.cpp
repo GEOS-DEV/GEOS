@@ -24,15 +24,17 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+#include "common/Logger.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/TypeDispatch.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/contact/ContactBase.hpp"
 #include "constitutive/NullModel.hpp"
+#include "fileIO/Outputs/OutputUtilities.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "common/MpiWrapper.hpp"
 
 #include <iostream>
 
@@ -261,6 +263,7 @@ SiloFile::SiloFile():
   m_writeCellElementMesh( 1 ),
   m_writeFaceElementMesh( 1 ),
   m_plotLevel( dataRepository::PlotLevel::LEVEL_1 ),
+  m_requireFieldRegistrationCheck( true ),
   m_ghostFlags( true )
 {
   DBSetAllowEmptyObjects( 1 );
@@ -878,7 +881,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
       {
         auto const & wrapper = wrapperIter.second;
 
-        if( wrapper->getPlotLevel() < m_plotLevel )
+        if( isFieldPlotEnabled( *wrapper ) )
         {
           std::type_info const & typeID = wrapper->getTypeId();
 
@@ -1233,7 +1236,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
     {
       WrapperBase const & wrapper = *wrapperIter.second;
 
-      if( wrapper.getPlotLevel() < m_plotLevel )
+      if( isFieldPlotEnabled( wrapper ) )
       {
         // the field name is the key to the map
         string const & fieldName = wrapper.getName();
@@ -1312,7 +1315,7 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
                                      bool const isRestart )
 {
 
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   writeMeshLevel( mesh, cycleNum, problemTime, isRestart );
 
   if( isRestart )
@@ -1326,15 +1329,23 @@ static std::vector< int > getSiloNodeOrdering( ElementType const elementType )
 {
   switch( elementType )
   {
+    case ElementType::Vertex:        return { 0 };
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
     case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
-    case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
-    case ElementType::Tetrahedron:    return { 1, 0, 2, 3 };
-    case ElementType::Pyramid:       return { 0, 3, 2, 1, 4, 0, 0, 0 };
-    case ElementType::Prism:         return { 1, 0, 2, 3, 5, 4, 0, 0 };
+    case ElementType::Polygon:       return { }; // TODO
+    case ElementType::Tetrahedron:   return { 0, 1, 3, 2 };
+    case ElementType::Pyramid:       return { 0, 2, 3, 1, 4 };
+    case ElementType::Wedge:         return { 1, 0, 2, 3, 5, 4 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
-    case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
+    case ElementType::Prism5:        return { }; // TODO
+    case ElementType::Prism6:        return { }; // TODO
+    case ElementType::Prism7:        return { }; // TODO
+    case ElementType::Prism8:        return { }; // TODO
+    case ElementType::Prism9:        return { }; // TODO
+    case ElementType::Prism10:       return { }; // TODO
+    case ElementType::Prism11:       return { }; // TODO
+    case ElementType::Polyhedron:    return { }; // TODO
   }
   return {};
 }
@@ -1347,11 +1358,22 @@ static int toSiloShapeType( ElementType const elementType )
     case ElementType::Triangle:      return DB_ZONETYPE_TRIANGLE;
     case ElementType::Quadrilateral: return DB_ZONETYPE_QUAD;
     case ElementType::Polygon:       return DB_ZONETYPE_POLYGON;
-    case ElementType::Tetrahedron:    return DB_ZONETYPE_TET;
+    case ElementType::Tetrahedron:   return DB_ZONETYPE_TET;
     case ElementType::Pyramid:       return DB_ZONETYPE_PYRAMID;
-    case ElementType::Prism:         return DB_ZONETYPE_PRISM;
+    case ElementType::Wedge:         return DB_ZONETYPE_PRISM;
     case ElementType::Hexahedron:    return DB_ZONETYPE_HEX;
+    case ElementType::Prism5:        return DB_ZONETYPE_POLYHEDRON; //TODO
+    case ElementType::Prism6:        return DB_ZONETYPE_POLYHEDRON; //TODO
+    case ElementType::Prism7:        return DB_ZONETYPE_POLYHEDRON; //TODO
+    case ElementType::Prism8:        return DB_ZONETYPE_POLYHEDRON; //TODO
+    case ElementType::Prism9:        return DB_ZONETYPE_POLYHEDRON; //TODO
+    case ElementType::Prism10:       return DB_ZONETYPE_POLYHEDRON; //TODO
+    case ElementType::Prism11:       return DB_ZONETYPE_POLYHEDRON; //TODO
     case ElementType::Polyhedron:    return DB_ZONETYPE_POLYHEDRON;
+    default:
+    {
+      GEOSX_ERROR( "Unsupported element type: " << elementType );
+    }
   }
   return -1;
 }
@@ -1618,9 +1640,17 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
   coords[1] = ycoords.data();
   coords[2] = zcoords.data();
 
-
-
   ElementRegionManager const & elementManager = meshLevel.getElemManager();
+
+  if( m_requireFieldRegistrationCheck && !m_fieldNames.empty() )
+  {
+    outputUtilities::checkFieldRegistration( elementManager,
+                                             nodeManager,
+                                             m_fieldNames,
+                                             "SiloOutput" );
+    m_requireFieldRegistrationCheck = false;
+  }
+
   elementManager.forElementRegions( [&]( ElementRegionBase const & elemRegion )
   {
     string const & regionName = elemRegion.getName();
@@ -3160,6 +3190,15 @@ int SiloFile::getMeshType( string const & meshName ) const
     DBSetDir( m_dbFilePtr, pwd );
   }
   return meshType;
+}
+
+bool SiloFile::isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const
+{
+  return outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(),
+                                              m_plotLevel,
+                                              wrapper.getName(),
+                                              m_fieldNames,
+                                              m_onlyPlotSpecifiedFieldNames );
 }
 
 }

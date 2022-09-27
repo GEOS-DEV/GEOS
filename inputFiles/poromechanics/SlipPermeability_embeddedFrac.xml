@@ -8,7 +8,7 @@
       targetRegions="{ Domain, Fracture }"
       initialDt="1e-3"
       fracturesSolverName="fractureMechSolver"
-      fluidSolverName="flowSolver"
+      flowSolverName="flowSolver"
       solidSolverName="matrixMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
@@ -39,6 +39,7 @@
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
+      discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="2"
@@ -163,10 +164,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm, fracturePerm, fractureContact }"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -178,6 +176,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="embeddedSurfaceSubRegion"
       subRegionType="embeddedElement"
       materialList="{ water, fractureFilling, fractureContact }"
       defaultAperture="1e-3"/>
@@ -278,7 +277,7 @@
       name="initialPressureFracture"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      objectPath="ElementRegions/Fracture"
       fieldName="pressure"
       scale="0.0"/>
 
@@ -351,7 +350,7 @@
     <VTK
       name="vtkOutput"
       plotLevel="3"
-      writeBinaryData="1"/>
+      format="binary"/>
 
    <TimeHistory
       name="timeHistoryOutput"

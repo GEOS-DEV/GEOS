@@ -9,9 +9,9 @@
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH -->
   <Mesh>
-    <PAMELAMeshGenerator
+    <VTKMesh
       name="mesh"
-      file="../../../../../GEOSXDATA/DataSets/Egg/egg.msh"
+      file="../../../../../GEOSXDATA/DataSets/Egg/egg.vtu"
       fieldsToImport="{ PERM }"
       fieldNamesInGEOSX="{ rockPerm_permeability }"/>
 

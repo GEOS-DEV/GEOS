@@ -21,7 +21,7 @@
 <!-- SPHINX_PROPPANT_MESH_END -->
 
   <Events
-    maxTime="1">
+    maxTime="0.1">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -39,7 +39,7 @@
       
     <PeriodicEvent
       name="restarts"
-      timeFrequency="1.0"
+      timeFrequency="0.1"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>  
   </Events>
@@ -96,8 +96,8 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
+      discretization="FE1"
       targetRegions="{ Fracture }"
-      
       rockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>

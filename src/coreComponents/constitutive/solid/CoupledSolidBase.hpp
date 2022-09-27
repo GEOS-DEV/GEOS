@@ -71,9 +71,9 @@ public:
    * @brief get the old porosity.
    * return a constant arrayView2d to the old porosity
    */
-  arrayView2d< real64 const > const getOldPorosity() const
+  arrayView2d< real64 const > const getPorosity_n() const
   {
-    return getBasePorosityModel().getOldPorosity();
+    return getBasePorosityModel().getPorosity_n();
   }
 
   /*
@@ -106,9 +106,9 @@ public:
    * @brief get the old internal energy.
    * return a constant arrayView2d to the old internal energy
    */
-  arrayView2d< real64 const > const getOldInternalEnergy() const
+  arrayView2d< real64 const > const getInternalEnergy_n() const
   {
-    return getSolidInternalEnergyModel().getOldInternalEnergy();
+    return getSolidInternalEnergyModel().getInternalEnergy_n();
   }
 
   /*
@@ -126,6 +126,13 @@ public:
    */
   arrayView2d< real64 const > const  getDinternalEnergy_dTemperature() const
   { return getSolidInternalEnergyModel().getDinternalEnergy_dTemperature(); }
+
+  /*
+   * @brief Utility function to scale the reference porosity (for instance, by net-to-gross)
+   * @param[in] scalingFactors the vector of scaling factors for the reference porosity
+   */
+  void scaleReferencePorosity( arrayView1d< real64 const > scalingFactors ) const
+  { getBasePorosityModel().scaleReferencePorosity( scalingFactors ); }
 
   /**
    * @brief initialize the constitutive models fields.

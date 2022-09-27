@@ -40,16 +40,16 @@ EXTRINSIC_MESH_DATA_TRAIT( connectionRate,
                            WRITE_AND_READ,
                            "Connection rate" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaConnectionRate,
-                           "deltaConnectionRate",
+EXTRINSIC_MESH_DATA_TRAIT( connectionRate_n,
+                           "connectionRate_n",
                            array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "Accumulated connection rate updates" );
+                           "Connection rate at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( densityOld,
-                           "densityOld",
+EXTRINSIC_MESH_DATA_TRAIT( density_n,
+                           "density_n",
                            array1d< real64 >,
                            0,
                            NOPLOT,

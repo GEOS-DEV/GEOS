@@ -66,6 +66,7 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
   using DamageUpdates< UPDATE_BASE >::m_damage;
+  using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
 
   using UPDATE_BASE::m_bulkModulus;  // TODO: model below strongly assumes iso elasticity, templating not so useful
   using UPDATE_BASE::m_shearModulus;
@@ -125,6 +126,11 @@ public:
     // perform elastic update for "undamaged" stress
 
     UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );  // elastic trial update
+
+    if( m_disableInelasticity )
+    {
+      return;
+    }
 
     // get undamaged elastic strain
 
