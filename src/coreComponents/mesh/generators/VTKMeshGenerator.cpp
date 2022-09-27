@@ -1835,7 +1835,8 @@ public:
    */
   int uniqueNode( int nodeId ) const
   {
-    return m_duplicatedNodes.at( nodeId );
+    auto const it = m_duplicatedNodes.find( nodeId );
+    return it == m_duplicatedNodes.cend() ? nodeId : it->second;
   }
 
   /**
@@ -1929,8 +1930,8 @@ void ImportFracture( string const & faceBlockName,
     return result;
   };
 
-  CellBlock & cb = cellBlockManager.getCellBlock( "hexahedra" );
-//  CellBlock & cb = cellBlockManager.getCellBlock( "tetrahedra" );
+//  CellBlock & cb = cellBlockManager.getCellBlock( "hexahedra" );
+  CellBlock & cb = cellBlockManager.getCellBlock( "0_tetrahedra" );
   ArrayOfArrays< localIndex > const & f2n = cellBlockManager.getFaceToNodes();
   array2d< localIndex > const & e2f = cb.getElemToFaces();
   ArrayOfArrays< localIndex > const & n2ed = cellBlockManager.getNodeToEdges();
