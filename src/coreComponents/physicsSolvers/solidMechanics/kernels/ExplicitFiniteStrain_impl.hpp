@@ -32,15 +32,15 @@ namespace solidMechanicsLagrangianFEMKernels
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-ExplicitFiniteStrain<SUBREGION_TYPE,CONSTITUTIVE_TYPE,FE_TYPE>::ExplicitFiniteStrain( NodeManager & nodeManager,
-                      EdgeManager const & edgeManager,
-                      FaceManager const & faceManager,
-                      localIndex const targetRegionIndex,
-                      SUBREGION_TYPE const & elementSubRegion,
-                      FE_TYPE const & finiteElementSpace,
-                      CONSTITUTIVE_TYPE & inputConstitutiveType,
-                      real64 const dt,
-                      string const elementListName ):
+ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::ExplicitFiniteStrain( NodeManager & nodeManager,
+                                                                                          EdgeManager const & edgeManager,
+                                                                                          FaceManager const & faceManager,
+                                                                                          localIndex const targetRegionIndex,
+                                                                                          SUBREGION_TYPE const & elementSubRegion,
+                                                                                          FE_TYPE const & finiteElementSpace,
+                                                                                          CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                                                                          real64 const dt,
+                                                                                          string const elementListName ):
   Base( nodeManager,
         edgeManager,
         faceManager,
@@ -57,8 +57,8 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void ExplicitFiniteStrain<SUBREGION_TYPE,CONSTITUTIVE_TYPE,FE_TYPE>::setup( localIndex const k,
-            StackVariables & stack ) const
+void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
+                                                                                StackVariables & stack ) const
 {
   for( localIndex a=0; a< numNodesPerElem; ++a )
   {
@@ -79,9 +79,9 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void ExplicitFiniteStrain<SUBREGION_TYPE,CONSTITUTIVE_TYPE,FE_TYPE>::quadraturePointKernel( localIndex const k,
-                            localIndex const q,
-                            StackVariables & stack ) const
+void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
+                                                                                                localIndex const q,
+                                                                                                StackVariables & stack ) const
 {
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
@@ -133,10 +133,10 @@ template< typename SUBREGION_TYPE,
 template< typename POLICY,
           typename KERNEL_TYPE >
 real64
-ExplicitFiniteStrain<SUBREGION_TYPE,CONSTITUTIVE_TYPE,FE_TYPE>::kernelLaunch( localIndex const numElems,
-              KERNEL_TYPE const & kernelComponent )
+ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch( localIndex const numElems,
+                                                                                  KERNEL_TYPE const & kernelComponent )
 {
-  return Base::template kernelLaunch<POLICY,KERNEL_TYPE>( numElems, kernelComponent );
+  return Base::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernelComponent );
 }
 
 #undef UPDATE_STRESS

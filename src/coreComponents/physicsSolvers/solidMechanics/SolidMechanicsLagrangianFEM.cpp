@@ -957,21 +957,21 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
       finiteElement::
         fillSparsity< FaceElementSubRegion,
                       solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
-                                                                         allFaceElementRegions,
-                                                                         this->getDiscretizationName(),
-                                                                         dofNumber,
-                                                                         dofManager.rankOffset(),
-                                                                         sparsityPattern );
+                                                                                            allFaceElementRegions,
+                                                                                            this->getDiscretizationName(),
+                                                                                            dofNumber,
+                                                                                            dofManager.rankOffset(),
+                                                                                            sparsityPattern );
 
     }
     finiteElement::
       fillSparsity< CellElementSubRegion,
                     solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
-                                                                       regionNames,
-                                                                       this->getDiscretizationName(),
-                                                                       dofNumber,
-                                                                       dofManager.rankOffset(),
-                                                                       sparsityPattern );
+                                                                                          regionNames,
+                                                                                          this->getDiscretizationName(),
+                                                                                          dofNumber,
+                                                                                          dofManager.rankOffset(),
+                                                                                          sparsityPattern );
 
 
   } );

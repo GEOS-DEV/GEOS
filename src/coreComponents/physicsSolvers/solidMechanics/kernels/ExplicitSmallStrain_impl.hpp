@@ -31,179 +31,179 @@ namespace solidMechanicsLagrangianFEMKernels
 {
 
 
-  template< typename SUBREGION_TYPE,
-            typename CONSTITUTIVE_TYPE,
-            typename FE_TYPE >
-  ExplicitSmallStrain<SUBREGION_TYPE,CONSTITUTIVE_TYPE,FE_TYPE>::ExplicitSmallStrain( NodeManager & nodeManager,
-                       EdgeManager const & edgeManager,
-                       FaceManager const & faceManager,
-                       localIndex const targetRegionIndex,
-                       SUBREGION_TYPE const & elementSubRegion,
-                       FE_TYPE const & finiteElementSpace,
-                       CONSTITUTIVE_TYPE & inputConstitutiveType,
-                       real64 const dt,
-                       string const elementListName ):
-    Base( elementSubRegion,
-          finiteElementSpace,
-          inputConstitutiveType ),
-    m_X( nodeManager.referencePosition()),
-    m_u( nodeManager.totalDisplacement()),
-    m_vel( nodeManager.velocity()),
-    m_acc( nodeManager.acceleration() ),
-    m_dt( dt ),
-    m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
-  {
-    GEOSX_UNUSED_VAR( edgeManager );
-    GEOSX_UNUSED_VAR( faceManager );
-    GEOSX_UNUSED_VAR( targetRegionIndex );
-  }
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::ExplicitSmallStrain( NodeManager & nodeManager,
+                                                                                        EdgeManager const & edgeManager,
+                                                                                        FaceManager const & faceManager,
+                                                                                        localIndex const targetRegionIndex,
+                                                                                        SUBREGION_TYPE const & elementSubRegion,
+                                                                                        FE_TYPE const & finiteElementSpace,
+                                                                                        CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                                                                        real64 const dt,
+                                                                                        string const elementListName ):
+  Base( elementSubRegion,
+        finiteElementSpace,
+        inputConstitutiveType ),
+  m_X( nodeManager.referencePosition()),
+  m_u( nodeManager.totalDisplacement()),
+  m_vel( nodeManager.velocity()),
+  m_acc( nodeManager.acceleration() ),
+  m_dt( dt ),
+  m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
+{
+  GEOSX_UNUSED_VAR( edgeManager );
+  GEOSX_UNUSED_VAR( faceManager );
+  GEOSX_UNUSED_VAR( targetRegionIndex );
+}
 
 
-  template< typename SUBREGION_TYPE,
-            typename CONSTITUTIVE_TYPE,
-            typename FE_TYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void ExplicitSmallStrain<SUBREGION_TYPE,CONSTITUTIVE_TYPE,FE_TYPE>::setup( localIndex const k,
-              StackVariables & stack ) const
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
+                                                                               StackVariables & stack ) const
+{
+  for( localIndex a=0; a< numNodesPerElem; ++a )
   {
-    for( localIndex a=0; a< numNodesPerElem; ++a )
+    localIndex const nodeIndex = m_elemsToNodes( k, a );
+    for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
-      localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int i=0; i<numDofPerTrialSupportPoint; ++i )
-      {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+      stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
 #endif
 
 #if UPDATE_STRESS==2
-        stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ] * m_dt;
+      stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ] * m_dt;
 #else
-        stack.varLocal[ a ][ i ] = m_u[ nodeIndex ][ i ];
+      stack.varLocal[ a ][ i ] = m_u[ nodeIndex ][ i ];
 #endif
-      }
     }
   }
+}
 
-  template< typename SUBREGION_TYPE,
-            typename CONSTITUTIVE_TYPE,
-            typename FE_TYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void ExplicitSmallStrain<SUBREGION_TYPE,CONSTITUTIVE_TYPE,FE_TYPE>::quadraturePointKernel( localIndex const k,
-                              localIndex const q,
-                              StackVariables & stack ) const
-  {
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
+                                                                                               localIndex const q,
+                                                                                               StackVariables & stack ) const
+{
 //#define USE_JACOBIAN
 #if !defined( USE_JACOBIAN )
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
-    /// Macro to substitute in the shape function derivatives.
-    real64 strain[6] = {0};
-    FE_TYPE::symmetricGradient( dNdX, stack.varLocal, strain );
+  real64 dNdX[ numNodesPerElem ][ 3 ];
+  real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+  /// Macro to substitute in the shape function derivatives.
+  real64 strain[6] = {0};
+  FE_TYPE::symmetricGradient( dNdX, stack.varLocal, strain );
 
-    real64 stressLocal[ 6 ] = {0};
+  real64 stressLocal[ 6 ] = {0};
 #if UPDATE_STRESS == 2
-    m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
+  m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
 #else
-    m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
+  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
 #endif
 
-    for( localIndex c = 0; c < 6; ++c )
-    {
+  for( localIndex c = 0; c < 6; ++c )
+  {
 #if UPDATE_STRESS == 2
-      stressLocal[ c ] *= -detJ;
+    stressLocal[ c ] *= -detJ;
 #elif UPDATE_STRESS == 1
-      stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ; // TODO: decide on
+    stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ;   // TODO: decide on
                                                                                                      // initial stress
                                                                                                      // strategy
 #else
-      stressLocal[ c ] *= -detJ;
+    stressLocal[ c ] *= -detJ;
 #endif
-    }
+  }
 
-    FE_TYPE::plusGradNajAij( dNdX, stressLocal, stack.fLocal );
+  FE_TYPE::plusGradNajAij( dNdX, stressLocal, stack.fLocal );
 
 #else
-    real64 invJ[3][3];
-    real64 const detJ = FE_TYPE::inverseJacobianTransformation( q, stack.xLocal, invJ );
+  real64 invJ[3][3];
+  real64 const detJ = FE_TYPE::inverseJacobianTransformation( q, stack.xLocal, invJ );
 
-    real64 strain[6] = {0};
-    FE_TYPE::symmetricGradient( q, invJ, stack.varLocal, strain );
+  real64 strain[6] = {0};
+  FE_TYPE::symmetricGradient( q, invJ, stack.varLocal, strain );
 
-    real64 stressLocal[ 6 ] = {0};
+  real64 stressLocal[ 6 ] = {0};
 #if UPDATE_STRESS == 2
-    m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
+  m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
 #else
-    m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
+  m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
 #endif
 
-    for( localIndex c = 0; c < 6; ++c )
-    {
+  for( localIndex c = 0; c < 6; ++c )
+  {
 #if UPDATE_STRESS == 2
-      stressLocal[ c ] *= detJ;
+    stressLocal[ c ] *= detJ;
 #elif UPDATE_STRESS == 1
-      stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * DETJ; // TODO: decide on
+    stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * DETJ;   // TODO: decide on
                                                                                                     // initial stress
                                                                                                     // strategy
 #else
-      stressLocal[ c ] *= DETJ;
-#endif
-    }
-
-    FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
+    stressLocal[ c ] *= DETJ;
 #endif
   }
 
-  template< typename SUBREGION_TYPE,
-            typename CONSTITUTIVE_TYPE,
-            typename FE_TYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  real64 ExplicitSmallStrain<SUBREGION_TYPE,CONSTITUTIVE_TYPE,FE_TYPE>::complete( localIndex const k,
-                   StackVariables const & stack ) const
+  FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
+#endif
+}
+
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
+                                                                                    StackVariables const & stack ) const
+{
+  for( localIndex a = 0; a < numNodesPerElem; ++a )
   {
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
+    localIndex const nodeIndex = m_elemsToNodes( k, a );
+    for( int b = 0; b < numDofPerTestSupportPoint; ++b )
     {
-      localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int b = 0; b < numDofPerTestSupportPoint; ++b )
-      {
-        RAJA::atomicAdd< parallelDeviceAtomic >( &m_acc( nodeIndex, b ), stack.fLocal[ a ][ b ] );
-      }
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_acc( nodeIndex, b ), stack.fLocal[ a ][ b ] );
     }
-    return 0;
   }
+  return 0;
+}
 
-  template< typename SUBREGION_TYPE,
-            typename CONSTITUTIVE_TYPE,
-            typename FE_TYPE >
-  template< typename POLICY,
-            typename KERNEL_TYPE >
-  real64
-  ExplicitSmallStrain<SUBREGION_TYPE,CONSTITUTIVE_TYPE,FE_TYPE>::kernelLaunch( localIndex const numElems,
-                KERNEL_TYPE const & kernelComponent )
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+template< typename POLICY,
+          typename KERNEL_TYPE >
+real64
+ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch( localIndex const numElems,
+                                                                                 KERNEL_TYPE const & kernelComponent )
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( numElems );
+
+  localIndex const numProcElems = kernelComponent.m_elementList.size();
+  forAll< POLICY >( numProcElems,
+                    [=] GEOSX_DEVICE ( localIndex const index )
   {
-    GEOSX_MARK_FUNCTION;
+    localIndex const k = kernelComponent.m_elementList[ index ];
 
-    GEOSX_UNUSED_VAR( numElems );
+    typename KERNEL_TYPE::StackVariables stack;
 
-    localIndex const numProcElems = kernelComponent.m_elementList.size();
-    forAll< POLICY >( numProcElems,
-                      [=] GEOSX_DEVICE ( localIndex const index )
+    kernelComponent.setup( k, stack );
+    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
     {
-      localIndex const k = kernelComponent.m_elementList[ index ];
-
-      typename KERNEL_TYPE::StackVariables stack;
-
-      kernelComponent.setup( k, stack );
-      for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
-      {
-        kernelComponent.quadraturePointKernel( k, q, stack );
-      }
-      kernelComponent.complete( k, stack );
-    } );
-    return 0;
-  }
+      kernelComponent.quadraturePointKernel( k, q, stack );
+    }
+    kernelComponent.complete( k, stack );
+  } );
+  return 0;
+}
 
 
 #undef UPDATE_STRESS

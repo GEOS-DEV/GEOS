@@ -215,13 +215,10 @@ protected:
 
 
 
-
 /// The factory used to construct a ExplicitSmallStrain kernel.
 using ExplicitSmallStrainFactory = finiteElement::KernelFactory< ExplicitSmallStrain,
                                                                  real64,
                                                                  string const >;
-
-
 
 
 
