@@ -45,7 +45,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
-      discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{ Region }"
       rockToughness="1.0e6"

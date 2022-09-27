@@ -63,7 +63,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
-      discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{Domain, void}"
       nodeBasedSIF="1"

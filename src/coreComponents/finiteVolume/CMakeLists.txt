@@ -46,6 +46,10 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
+endif()
+
 blt_add_library( NAME       finiteVolume
                  SOURCES    ${finiteVolume_sources}
                  HEADERS    ${finiteVolume_headers}
