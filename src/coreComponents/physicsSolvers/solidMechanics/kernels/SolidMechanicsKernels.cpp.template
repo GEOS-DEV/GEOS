@@ -15,5 +15,26 @@ kernelLaunch< parallelDevicePolicy<32>,
               KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > >
               ( localIndex const, 
                 KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > const & );
+
+#if defined( GEOSX_USE_CUDA )
+template real64 KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+kernelLaunch< parallelDevicePolicy<64>, 
+              KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > >
+              ( localIndex const, 
+                KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > const & );
+
+template real64 KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+kernelLaunch< parallelDevicePolicy<128>, 
+              KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > >
+              ( localIndex const, 
+                KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > const & );
+
+template real64 KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+kernelLaunch< parallelDevicePolicy<256>, 
+              KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > >
+              ( localIndex const, 
+                KERNELNAME< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > const & );
+
+#endif
 }
 }
