@@ -12,10 +12,12 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        directParallel="0"
+        logLevel="2"
+        krylovMaxIter="300"/>
     </MatrixFreeSolidMechanicsFEM>
 
-    <SolidMechanicsLagrangianSSLE
+    <!--SolidMechanicsLagrangianSSLE
       name="matrixSolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
@@ -24,8 +26,11 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        directParallel="0"/>
-    </SolidMechanicsLagrangianSSLE>
+        solverType="bicgstab"
+        preconditionerType="none"
+        logLevel="2"
+        krylovMaxIter="300"/>
+    </SolidMechanicsLagrangianSSLE-->
   </Solvers>
 
   <Mesh>
@@ -35,9 +40,9 @@
       xCoords="{ 0, 1 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 3 }"
-      ny="{ 3 }"
-      nz="{ 3 }"
+      nx="{ 96 }"
+      ny="{ 96}"
+      nz="{ 96 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -48,7 +53,7 @@
       forceDt="1.0"
       target="/Solvers/matrixFreeSolve"/>
 
-    <PeriodicEvent
+    <!--PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
       target="/Outputs/vtkOutput"/>
@@ -56,7 +61,7 @@
     <PeriodicEvent
       name="siloOutputs"
       timeFrequency="1.0"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/siloOutput"/-->
 
 
   </Events>
@@ -130,10 +135,10 @@
   </Functions>
 
   <Outputs>
-    <VTK
+    <!--VTK
       name="vtkOutput"/>
 
     <Silo
-      name="siloOutput"/>
+      name="siloOutput"/-->
   </Outputs>
 </Problem>

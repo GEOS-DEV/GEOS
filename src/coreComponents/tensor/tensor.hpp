@@ -74,8 +74,8 @@ public:
    template <typename... Idx> GEOSX_HOST_DEVICE inline
    T& operator()(Idx... args)
    {
-      static_assert(get_tensor_rank<TensorBase> == sizeof...(Idx),
-                    "Wrong number of indices");
+    //   static_assert(get_tensor_rank<TensorBase> == sizeof...(Idx),
+    //                 "Wrong number of indices");
       return this->operator[]( this->index(args...) );
    }
 
@@ -87,8 +87,8 @@ public:
    template <typename... Idx> GEOSX_HOST_DEVICE inline
    const T& operator()(Idx... args) const
    {
-      static_assert(get_tensor_rank<TensorBase> == sizeof...(Idx),
-                    "Wrong number of indices");
+    //   static_assert(get_tensor_rank<TensorBase> == sizeof...(Idx),
+    //                 "Wrong number of indices");
       return this->operator[]( this->index(args...) );
    }
 };

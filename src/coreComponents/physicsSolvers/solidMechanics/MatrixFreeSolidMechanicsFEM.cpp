@@ -62,6 +62,7 @@ MatrixFreeSolidMechanicsFEMOperator::
 
 void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, ParallelVector & dst ) const
 {
+  GEOSX_MARK_FUNCTION;
   dst.zero();
   arrayView1d< real64 const > const localSrc = src.values();
   arrayView1d< real64 > const localDst = dst.open();
@@ -187,12 +188,24 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
                                                 const int cycleNumber,
                                                 DomainPartition & domain )
 {
-  setupSystem( domain,
-               m_dofManager,
-               m_localMatrix,
-               m_rhs,
-               m_solution,
-               false );
+  GEOSX_MARK_FUNCTION;
+
+  m_dofManager.setDomain( domain );
+  setupDofs( domain, m_dofManager );
+  m_dofManager.reorderByRank();
+  m_rhs.setName( this->getName() + "/rhs" );
+  m_rhs.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  m_solution.setName( this->getName() + "/solution" );
+  m_solution.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+
+  // std::cout<<"calling setupSystem..."<<std::flush;
+  // setupSystem( domain,
+  //              m_dofManager,
+  //              m_localMatrix,
+  //              m_rhs,
+  //              m_solution,
+  //              false );
+  // std::cout<<"done.";
 
   MatrixFreeSolidMechanicsFEMOperator unconstrained_solid_mechanics(
     domain,
@@ -211,7 +224,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 
   constrained_solid_mechanics.computeConstrainedRHS( m_rhs, m_solution );
 
-  std::cout<< "rhs: " << m_rhs << std::endl;
+//  std::cout<< "rhs: " << m_rhs << std::endl;
 
   MatrixFreePreconditionerIdentity< HypreInterface > identity( m_dofManager );
 
@@ -222,7 +235,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
   
   solver.solve( m_rhs, m_solution );
 
-  std::cout << "m_solution: " << m_solution << std::endl;
+//  std::cout << "m_solution: " << m_solution << std::endl;
 
   applySystemSolution( m_dofManager, m_solution.values(), 1.0, domain );
 
@@ -295,7 +308,7 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
                                                                 arrayView1d< string const > const & )
   {
     auto const & disp = mesh.getNodeManager().totalDisplacement();
-    std::cout<<disp<<std::endl;
+//    std::cout<<disp<<std::endl;
 
   } );
 

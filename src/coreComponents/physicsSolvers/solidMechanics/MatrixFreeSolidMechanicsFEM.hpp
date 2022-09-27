@@ -34,7 +34,7 @@ private:
   dataRepository::Group & m_meshBodies;
   map< std::pair< string, string >, array1d< string > > const & m_meshTargets;
   DofManager & m_dofManager;
-  string const & m_finiteElementName;
+  string const m_finiteElementName;
 
 public:
   MatrixFreeSolidMechanicsFEMOperator( DomainPartition & domain, map< std::pair< string, string >, array1d< string > > const & meshTargets, DofManager & dofManager, string const & finiteElementName );

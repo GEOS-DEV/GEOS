@@ -34,7 +34,7 @@ namespace solidMechanicsLagrangianFEMKernels
 /// If UPDATE_STRESS 1, uses total displacement to and adds material stress
 /// state to integral for nodalforces.
 /// If UPDATE_STRESS 2 then velocity*dt is used to update material stress state
-#define UPDATE_STRESS 2
+//#define UPDATE_STRESS 2
 
 /**
  * @brief Implements kernels for solving the equations of motion using the

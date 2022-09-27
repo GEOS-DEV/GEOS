@@ -31,6 +31,17 @@ public:
     DiagonalZero, ///< Use zero on the diagonal
   };
 
+  // struct fieldFunctor
+  // {
+  //   GEOSX_HOST_DEVICE real64 operator()( localIndex const a )
+  //   {
+  //     return 
+  //   }
+
+  //   int const component;
+  //   int const numComponents;
+  // };
+
   LinearOperatorWithBC( SolverBase const & solver,
                         LinearOperator< Vector > const & unconstrained_op,
                         DomainPartition & domain,
@@ -86,6 +97,18 @@ public:
     // NOTE: we're not checking for duplicates.
     m_constrainedDofIndices.reserve( totalSize );
     m_rhsContributions.reserve( totalSize );
+
+    setupBoundaryConditions( solver, fsManager );
+
+    // TODO: sort m_constrainedDofIndices and m_rhsContributions together
+
+    srcWithBC.create( dofManager.numLocalDofs(), this->comm() );
+    tmpRhs.create( dofManager.numLocalDofs(), this->comm() );
+  }
+
+  void setupBoundaryConditions( SolverBase const & solver,
+                                FieldSpecificationManager const & fsManager )
+  {
     solver.forDiscretizationOnMeshTargets( m_domain.getMeshBodies(), [&]( string const &,
                                                    MeshLevel & mesh,
                                                    arrayView1d< string const > const & )
@@ -106,11 +129,13 @@ public:
         arrayView1d< globalIndex > const & dof = dofArray.toView();
 
         array1d< real64 > rhsContributionArray( targetSet.size() );
-        arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView();
+        arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView(); 
         arrayView1d< globalIndex const > const & dofMap =
           targetGroup.getReference< array1d< globalIndex > >( m_dofManager.getKey( fieldName ) );
-        bc.computeRhsContribution< FieldSpecificationEqual, POLICY >( targetSet,
-                                                                      time,
+        int const component = bc.getComponent();
+        bc.computeRhsContribution< FieldSpecificationEqual, 
+                                   parallelDevicePolicy<> >( targetSet,
+                                                                      m_time,
                                                                       1.0, // TODO: double check
                                                                       targetGroup,
                                                                       dofMap,
@@ -118,9 +143,9 @@ public:
                                                                       m_diagonal.toViewConst(),
                                                                       dof,
                                                                       rhsContribution,
-                                                                      [&](localIndex const a)->real64
+                                                                      [=] GEOSX_HOST_DEVICE (localIndex const a)->real64
                                                                       {
-                                                                        return field.data()[a*3+bc.getComponent()];
+                                                                        return field.data()[a*3+component];
                                                                       } );
                                                                       //field );
 
@@ -130,14 +155,12 @@ public:
         m_rhsContributions.insert( m_rhsContributions.size(), rhsContribution.begin(), rhsContribution.end() );
       } );
     } );
-    // TODO: sort m_constrainedDofIndices and m_rhsContributions together
-
-    srcWithBC.create( dofManager.numLocalDofs(), this->comm() );
-    tmpRhs.create( dofManager.numLocalDofs(), this->comm() );
   }
 
   void computeConstrainedRHS( ParallelVector & rhs, ParallelVector & solution ) const
   {
+    GEOSX_MARK_FUNCTION;
+
     using POLICY = parallelDevicePolicy<>;
 
     // Construct [x_BC,0]
@@ -177,13 +200,15 @@ public:
 
   virtual void apply( ParallelVector const & src, ParallelVector & dst ) const
   {
+    GEOSX_MARK_FUNCTION;
+
     using POLICY = parallelDevicePolicy<>;
 
     srcWithBC = src;
 
     arrayView1d< real64 > const localSrcWithBC = srcWithBC.open();
     arrayView1d< localIndex const > const localBCIndices = m_constrainedDofIndices.toViewConst();
-    std::cout << "constrained ind: " << localBCIndices << std::endl;
+//    std::cout << "constrained ind: " << localBCIndices << std::endl;
 
     static bool zero = true;
     if( zero )
@@ -197,14 +222,14 @@ public:
     
     srcWithBC.close();
 
-    std::cout << "srcWithBC: " << srcWithBC << std::endl;
+//    std::cout << "srcWithBC: " << srcWithBC << std::endl;
 
     m_unconstrained_op.apply( srcWithBC, dst );
 
-    std::cout << "dst: " << dst << std::endl;
+//    std::cout << "dst: " << dst << std::endl;
     
     arrayView1d< real64 const > const localSrc = src.values();
-    std::cout << "localSrc: " << localSrc << std::endl;
+//    std::cout << "localSrc: " << localSrc << std::endl;
     arrayView1d< real64 > const localDst = dst.open();
     switch (m_diagPolicy)
     {
@@ -215,7 +240,7 @@ public:
             localIndex const idx = localBCIndices[ i ];
             localDst[ idx ] = localSrc [ idx ];
           } );
-          std::cout << "localDst: " << localDst << std::endl;
+//          std::cout << "localDst: " << localDst << std::endl;
         }
         break;
       case DiagPolicy::DiagonalZero:

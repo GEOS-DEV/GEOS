@@ -403,11 +403,14 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
           {
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
+              real64 const detJ = 1;//finiteElement.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+
               FE_TYPE::calcN( q, N );
 
               for( localIndex a=0; a< numNodesPerElem; ++a )
               {
-                mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
+//                mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
+                mass[elemsToNodes[k][a]] += rho[k][q] * detJ * N[a];
               }
             }
 
