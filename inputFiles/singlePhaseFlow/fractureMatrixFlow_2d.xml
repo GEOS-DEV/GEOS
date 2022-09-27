@@ -18,7 +18,6 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      discretization="FE1"
       targetRegions="{ Fracture }"
       rockToughness="1e6"
       mpiCommOrder="1"/>
