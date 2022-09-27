@@ -19,42 +19,11 @@
 
 #include "CoupledReservoirAndWellsBase.hpp"
 
-#include "mesh/PerforationExtrinsicData.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
-#include "constitutive/permeability/PermeabilityBase.hpp"
-
 namespace geosx
 {
 
 namespace coupledReservoirAndWellsInternal
 {
-
-void
-initializePostInitialConditionsPreSubGroups( SolverBase * const solver )
-{
-
-  DomainPartition & domain = solver->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                        MeshLevel & meshLevel,
-                                                                        arrayView1d< string const > const & regionNames )
-  {
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
-
-    // loop over the wells
-    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                WellElementSubRegion & subRegion )
-    {
-      array1d< array1d< arrayView3d< real64 const > > > const permeability =
-        elemManager.constructMaterialExtrinsicAccessor< constitutive::PermeabilityBase, extrinsicMeshData::permeability::permeability >();
-
-      PerforationData * const perforationData = subRegion.getPerforationData();
-
-      // compute the Peaceman index (if not read from XML)
-      perforationData->computeWellTransmissibility( meshLevel, subRegion, permeability );
-    } );
-  } );
-}
 
 void
 addCouplingNumNonzeros( SolverBase const * const solver,

@@ -259,7 +259,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
 void
 CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
-assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+assembleCouplingTerms( real64 const time_n,
                        real64 const dt,
                        DomainPartition const & domain,
                        DofManager const & dofManager,
@@ -301,6 +301,11 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
       bool const detectCrossflow =
         ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
         getLogLevel() >= 1; // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
+
+      if( !wellControls.isWellOpen( time_n + dt ) )
+      {
+        return;
+      }
 
       PerforationData const * const perforationData = subRegion.getPerforationData();
 

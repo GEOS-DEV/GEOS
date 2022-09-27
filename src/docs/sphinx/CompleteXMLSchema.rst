@@ -2210,11 +2210,11 @@ Datastructure: WellElementRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegion_other.rst
 
 
-.. _DATASTRUCTURE_WellElementRegionuniqueSubRegion:
+.. _DATASTRUCTURE_WellElementRegionUniqueSubRegion:
 
-Datastructure: WellElementRegionuniqueSubRegion
+Datastructure: WellElementRegionUniqueSubRegion
 ===============================================
-.. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
+.. include:: ../../coreComponents/schema/docs/WellElementRegionUniqueSubRegion_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:
