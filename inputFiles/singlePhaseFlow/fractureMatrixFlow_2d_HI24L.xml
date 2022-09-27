@@ -21,27 +21,21 @@
   <Mesh>
     <VTKMesh
       name="mesh1"
-      file="/tmp/tmp.EtfQgEUXLg/tmp_buffer/frac-t.vtk"
+      file="/tmp/tmp.EtfQgEUXLg/tmp_buffer/hi42l_global_ids.vtk"
       useGlobalIds="1"
       faceBlocks="{ fracture_info }"/>
 
-<!--    <VTKMesh-->
-<!--      name="mesh1"-->
-<!--      file="/tmp/tmp.EtfQgEUXLg/tmp_buffer/frac-hex-fielddata-global-ids.vtk"-->
-<!--      useGlobalIds="1"-->
-<!--      faceBlocks="{ fracture_info }"/>-->
-
-<!--    <VTKMesh-->
-<!--      name="mesh1"-->
-<!--      file="frac-hex-fielddata.vtu"-->
-<!--      faceBlocks="{ fracture_info }"/>-->
   </Mesh>
 
   <Geometry>
+<!--    <Box-->
+<!--            name="source"-->
+<!--            xMin="{ -0.01, -0.01, -0.01 }"-->
+<!--            xMax="{ 0.01, 1.01, 1.01 }"/>-->
     <Box
             name="source"
-            xMin="{ -0.01, -0.01, -0.01 }"
-            xMax="{ 0.01, 1.01, 1.01 }"/>
+            xMin="{ 389800, 3269900, -2200 }"
+            xMax="{ 390200, 3270300, -1800 }"/>
   </Geometry>
 
   <Events
@@ -56,11 +50,11 @@
             name="outputs"
             target="/Outputs/vtkOutput"/>
 
-    <PeriodicEvent
-            name="restarts"
-            timeFrequency="25000"
-            targetExactTimestep="0"
-            target="/Outputs/restartOutput"/>
+<!--    <PeriodicEvent-->
+<!--            name="restarts"-->
+<!--            timeFrequency="25000"-->
+<!--            targetExactTimestep="0"-->
+<!--            target="/Outputs/restartOutput"/>-->
   </Events>
 
   <NumericalMethods>
@@ -73,7 +67,7 @@
   <ElementRegions>
     <CellElementRegion
             name="Region2"
-            cellBlocks="{ hexahedra }"
+            cellBlocks="{ tetrahedra }"
             materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
@@ -116,7 +110,8 @@
 
     <ConstantPermeability
             name="rockPerm"
-            permeabilityComponents="{ 5.0e-19, 5.0e-19, 5.0e-19 }"/>
+            permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+<!--            permeabilityComponents="{ 5.0e-19, 5.0e-19, 5.0e-19 }"/>-->
 
     <PressurePorosity
             name="fracturePorosity"
@@ -133,7 +128,7 @@
             name="Porosity"
             initialCondition="1"
             setNames="{ all }"
-            objectPath="ElementRegions/Region2/hexahedra"
+            objectPath="ElementRegions/Region2/tetrahedra"
             fieldName="rockPorosity_referencePorosity"
             scale="0.01"/>
 
@@ -149,7 +144,7 @@
             name="initialPressure"
             initialCondition="1"
             setNames="{ all }"
-            objectPath="ElementRegions/Region2/hexahedra"
+            objectPath="ElementRegions/Region2/tetrahedra"
             fieldName="pressure"
             scale="0.0"/>
 
@@ -159,15 +154,14 @@
             fieldName="pressure"
             scale="2.0e6"
             setNames="{ source }"/>
-    <!--    Could we remove the setNames="{ source }" here?-->
   </FieldSpecifications>
 
   <Outputs>
     <VTK
             name="vtkOutput"
-            plotFileRoot="fractureMatrixFlow"/>
+            plotFileRoot="hi24l"/>
 
-    <Restart
-            name="restartOutput"/>
+<!--    <Restart-->
+<!--            name="restartOutput"/>-->
   </Outputs>
 </Problem>
