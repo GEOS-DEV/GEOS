@@ -60,7 +60,6 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       rockToughness="1.0e6"
-      discretization="FE1"
       mpiCommOrder="1"/>
 
     <SinglePhaseFVM
