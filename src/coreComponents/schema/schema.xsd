@@ -2711,9 +2711,15 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
 			<xsd:element name="CO2BrineEzrokhiFluid" type="CO2BrineEzrokhiFluidType" />
 <<<<<<< HEAD
+<<<<<<< HEAD
 			<xsd:element name="CO2BrineEzrokhiFluidDelft" type="CO2BrineEzrokhiFluidDelftType" />
 			<xsd:element name="CO2BrinePhillipsFluid" type="CO2BrinePhillipsFluidType" />
 			<xsd:element name="CO2BrinePhillipsFluidDelft" type="CO2BrinePhillipsFluidDelftType" />
+=======
+			<xsd:element name="CO2BrineEzrokhiThermalFluid" type="CO2BrineEzrokhiThermalFluidType" />
+			<xsd:element name="CO2BrinePhillipsFluid" type="CO2BrinePhillipsFluidType" />
+			<xsd:element name="CO2BrinePhillipsThermalFluid" type="CO2BrinePhillipsThermalFluidType" />
+>>>>>>> develop
 =======
 			<xsd:element name="CO2BrineEzrokhiThermalFluid" type="CO2BrineEzrokhiThermalFluidType" />
 			<xsd:element name="CO2BrinePhillipsFluid" type="CO2BrinePhillipsFluidType" />
@@ -2870,7 +2876,11 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 <<<<<<< HEAD
+<<<<<<< HEAD
 	<xsd:complexType name="CO2BrineEzrokhiFluidDelftType">
+=======
+	<xsd:complexType name="CO2BrineEzrokhiThermalFluidType">
+>>>>>>> develop
 =======
 	<xsd:complexType name="CO2BrineEzrokhiThermalFluidType">
 >>>>>>> develop
@@ -2902,7 +2912,11 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 <<<<<<< HEAD
+<<<<<<< HEAD
 	<xsd:complexType name="CO2BrinePhillipsFluidDelftType">
+=======
+	<xsd:complexType name="CO2BrinePhillipsThermalFluidType">
+>>>>>>> develop
 =======
 	<xsd:complexType name="CO2BrinePhillipsThermalFluidType">
 >>>>>>> develop

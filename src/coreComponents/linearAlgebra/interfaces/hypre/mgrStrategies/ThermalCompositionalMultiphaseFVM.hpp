@@ -80,6 +80,7 @@ public:
     // after the reservoir density associated with the volume constraint has been eliminated
     m_levelSmoothType[0]  = 16;
     m_levelSmoothIters[0] = 1;
+
     m_levelSmoothType[1]  = 1;
     m_levelSmoothIters[1] = 1;
   }

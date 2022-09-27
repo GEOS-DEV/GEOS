@@ -25,6 +25,7 @@
 #include "constitutive/fluid/PhaseModel.hpp"
 #include "constitutive/fluid/PVTFunctions/BrineEnthalpy.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Enthalpy.hpp"
+#include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
 #include "constitutive/fluid/PVTFunctions/EzrokhiBrineDensity.hpp"
 #include "constitutive/fluid/PVTFunctions/EzrokhiBrineViscosity.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
@@ -199,6 +200,7 @@ private:
   std::unique_ptr< FLASH > m_flash;
 
 };
+
 
 // these aliases are useful in constitutive dispatch
 using CO2BrinePhillipsFluid =
