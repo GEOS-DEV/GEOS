@@ -130,7 +130,8 @@ MeshLevel::MeshLevel( string const & name,
   for( localIndex kf=0; kf<m_faceManager->size(); ++kf )
   {
     localIndex const numEdgesPerFace = facesToEdges.sizeOfArray( kf );
-    if( numEdgesPerFace==4 )  numInternalFaceNodes += numNonEdgeNodesPerFace;
+    if( numEdgesPerFace==4 )
+      numInternalFaceNodes += numNonEdgeNodesPerFace;
     else
     {
       GEOSX_ERROR( "need more support for face geometry" );
@@ -149,7 +150,7 @@ MeshLevel::MeshLevel( string const & name,
   {
     for( faceIndex =0; faceIndex < faceToNodeMapNew.size(); faceIndex++ )
     {
-      faceToNodeMapNew.emplaceBackAtomic< AtomicPolicy< parallelHostPolicy > >( faceIndex, 0);
+      faceToNodeMapNew.emplaceBackAtomic< AtomicPolicy< parallelHostPolicy > >( faceIndex, 0 );
     }
 
   } );
@@ -349,7 +350,7 @@ MeshLevel::MeshLevel( string const & name,
 
               localIndex face = 0;
               localIndex foundFace = 0;
-	      localIndex nindex = i + (order+1)*j + (order+1)*(order+1)*k;
+              localIndex nindex = i + (order+1)*j + (order+1)*(order+1)*k;
 
               while( face<6 && foundFace<1 )
               {
