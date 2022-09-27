@@ -38,7 +38,9 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_newFaceElements(),
   m_toFacesRelation()
 {
-  m_elementType = ElementType::Hexahedron;
+//  m_elementType = ElementType::Hexahedron;
+//  m_elementType = ElementType::Tetrahedron;
+  m_elementType = ElementType::Wedge;
 
   registerWrapper( viewKeyStruct::dNdXString(), &m_dNdX ).setSizedFromParent( 1 ).reference().resizeDimension< 3 >( 3 );
 
@@ -74,7 +76,8 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
   m_surfaceElementsToCells.resize( 0, 2 );
 
-  m_numNodesPerElement = 8;
+//  m_numNodesPerElement = 8;
+  m_numNodesPerElement = 6;
 }
 
 //ArrayOfArrays< localIndex > convert__( array2d< localIndex > const & vv )

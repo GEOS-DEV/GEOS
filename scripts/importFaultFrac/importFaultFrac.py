@@ -27,6 +27,11 @@ def id_list_to_tuple(i):
 
 
 def remove_fracture_cells(grid: vtk.vtkUnstructuredGrid):
+    """
+    Removes the fracture cells and adds the global ids.
+    :param grid:
+    :return:
+    """
     # do not forget to renumber the FieldData.
     num_tets = 0
     for cell_idx in range(grid.GetNumberOfCells()):
@@ -55,15 +60,33 @@ def remove_fracture_cells(grid: vtk.vtkUnstructuredGrid):
     for i in range(da.GetNumberOfTuples()):
         e0, f0, e1, f1 = old_da.GetTuple(i)
         da.SetTuple(i, (cell_renumbering[e0], f0, cell_renumbering[e1], f1))
-    fracture_field_data = vtk.vtkFieldData()
-    fracture_field_data.AddArray(da)
+    field_data = vtk.vtkFieldData()
+    field_data.AddArray(da)
+
+    old_da2 = grid.GetFieldData().GetArray("duplicated_points_info")
+    field_data.AddArray(old_da2)
 
     output = vtk.vtkUnstructuredGrid()
     output.SetPoints(grid.GetPoints())
     output.SetCells(cell_types, output_cells)
-    output.SetFieldData(fracture_field_data)
+    output.SetFieldData(field_data)
 
-    # TODO Add global ids!
+    # # Building GLOBAL_IDS for points and cells.g GLOBAL_IDS for points and cells.
+    # # First for points...
+    # point_global_ids = vtk.vtkIdTypeArray()
+    # point_global_ids.SetName("GLOBAL_IDS_POINTS")
+    # point_global_ids.Allocate(output.GetNumberOfPoints())
+    # for i in range(output.GetNumberOfPoints()):
+    #     point_global_ids.InsertNextValue(i)
+    # output.GetPointData().SetGlobalIds(point_global_ids)
+    # # ... then for cells.
+    # cells_global_ids = vtk.vtkIdTypeArray()
+    # cells_global_ids.SetName("GLOBAL_IDS_CELLS")
+    # cells_global_ids.Allocate(output.GetNumberOfCells())
+    # for i in range(output.GetNumberOfCells()):
+    #     cells_global_ids.InsertNextValue(i)
+    # output.GetCellData().SetGlobalIds(cells_global_ids)
+
     return output
 
 
@@ -207,6 +230,8 @@ def duplicate_fracture_nodes(grid: vtk.vtkUnstructuredGrid,
     assert moved_nodes_from == set(range(num_points))
     assert moved_nodes_to == set(range(num_new_points))
 
+    field_data = vtk.vtkFieldData()
+
     # Building the field data for the fracture
     # fracture_field_data = []
     da = vtk.vtkIntArray()
@@ -216,14 +241,32 @@ def duplicate_fracture_nodes(grid: vtk.vtkUnstructuredGrid,
     for i, data in enumerate(triangle_to_neighbors.values()):
         # c0, f0, c1, f1 = data
         da.SetTuple(i, data)
-    fracture_field_data = vtk.vtkFieldData()
-    fracture_field_data.AddArray(da)
+    field_data.AddArray(da)
+
+    # The nodes bindings field data
+    moved_nodes_from = {}
+    for duplicated_nodes in component_to_dup_nodes.values():
+        for from_ in duplicated_nodes.keys():
+            moved_nodes_from[from_] = set()
+    for duplicated_nodes in component_to_dup_nodes.values():
+        for from_, to in duplicated_nodes.items():
+            moved_nodes_from[from_].add(to)
+    # print(moved_nodes_from)
+    duplication_max_multiplicity = max(map(len, moved_nodes_from.values()))
+    da2 = vtk.vtkIntArray()
+    da2.SetName("duplicated_points_info")
+    da2.SetNumberOfComponents(duplication_max_multiplicity)  # Warning the component has to be defined first...
+    da2.SetNumberOfTuples(len(moved_nodes_from))
+    for i, data in enumerate(moved_nodes_from.values()):
+        tmp = list(data) + [-1] * (duplication_max_multiplicity - len(data))
+        da2.SetTuple(i, tmp)
+    field_data.AddArray(da2)
 
     # creating another mesh from some components of the input mesh.
     output = vtk.vtkUnstructuredGrid()
     output.SetPoints(new_points)
     output.SetCells(grid.GetCellTypesArray(), new_cells)  # The cell types are unchanged; we reuse the old cell types!
-    output.SetFieldData(fracture_field_data)
+    output.SetFieldData(field_data)
 
     # Defining the regions of the mesh. Volume will be `0`, fracture 2d elements will be `1`.
     attributes = []
@@ -235,6 +278,22 @@ def duplicate_fracture_nodes(grid: vtk.vtkUnstructuredGrid,
     att = vtk.util.numpy_support.numpy_to_vtk(attributes)
     att.SetName("attribute")
     output.GetCellData().AddArray(att)
+
+    # Building GLOBAL_IDS for points and cells.g GLOBAL_IDS for points and cells.
+    # First for points...
+    point_global_ids = vtk.vtkIdTypeArray()
+    point_global_ids.SetName("GLOBAL_IDS_POINTS")
+    point_global_ids.Allocate(output.GetNumberOfPoints())
+    for i in range(output.GetNumberOfPoints()):
+        point_global_ids.InsertNextValue(i)
+    output.GetPointData().SetGlobalIds(point_global_ids)
+    # ... then for cells.
+    cells_global_ids = vtk.vtkIdTypeArray()
+    cells_global_ids.SetName("GLOBAL_IDS_CELLS")
+    cells_global_ids.Allocate(output.GetNumberOfCells())
+    for i in range(output.GetNumberOfCells()):
+        cells_global_ids.InsertNextValue(i)
+    output.GetCellData().SetGlobalIds(cells_global_ids)
 
     return output
 
@@ -513,7 +572,7 @@ def main():
     duplicated = duplicate_fracture_nodes(output_mesh, connected_components, internal_fracture_nodes, triangle_to_neighbors)
 
     writer = vtk.vtkXMLUnstructuredGridWriter()
-    writer.SetFileName("dupli.vtu")
+    writer.SetFileName("hi24l-coarse-fracture-duplicated-nodes-field-data.vtu")
     writer.SetInputData(duplicated)
     writer.Write()
 

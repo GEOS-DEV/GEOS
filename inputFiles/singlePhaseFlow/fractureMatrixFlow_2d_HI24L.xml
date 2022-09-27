@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-          gravityVector="{ 0.0, 0.0, -9.81 }">
+          gravityVector="{ 0.0, 0.0, 0.0 }">
     <SinglePhaseFVM
             name="SinglePhaseFlow"
             logLevel="1"
@@ -21,7 +21,7 @@
   <Mesh>
     <VTKMesh
       name="mesh1"
-      file="/tmp/tmp.EtfQgEUXLg/tmp_buffer/hi42l_global_ids.vtk"
+      file="/tmp/tmp.EtfQgEUXLg/tmp_buffer/hi24l-coarse-fracture-duplicated-nodes-field-data.vtu"
       useGlobalIds="1"
       faceBlocks="{ fracture_info }"/>
 
@@ -67,12 +67,12 @@
   <ElementRegions>
     <CellElementRegion
             name="Region2"
-            cellBlocks="{ tetrahedra }"
+            cellBlocks="{ 0_tetrahedra }"
             materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
             name="Fracture"
-            defaultAperture="1.0e-5"
+            defaultAperture="1.0e-3"
             subRegionType="faceElement"
             faceBlock="fracture_info"
             materialList="{ water, fractureFilling }"/>
@@ -110,7 +110,7 @@
 
     <ConstantPermeability
             name="rockPerm"
-            permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+            permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
 <!--            permeabilityComponents="{ 5.0e-19, 5.0e-19, 5.0e-19 }"/>-->
 
     <PressurePorosity
@@ -128,7 +128,7 @@
             name="Porosity"
             initialCondition="1"
             setNames="{ all }"
-            objectPath="ElementRegions/Region2/tetrahedra"
+            objectPath="ElementRegions/Region2/0_tetrahedra"
             fieldName="rockPorosity_referencePorosity"
             scale="0.01"/>
 
@@ -144,7 +144,7 @@
             name="initialPressure"
             initialCondition="1"
             setNames="{ all }"
-            objectPath="ElementRegions/Region2/tetrahedra"
+            objectPath="ElementRegions/Region2/0_tetrahedra"
             fieldName="pressure"
             scale="0.0"/>
 
