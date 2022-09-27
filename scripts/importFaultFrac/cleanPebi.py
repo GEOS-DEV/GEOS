@@ -1,8 +1,10 @@
 import logging
+from collections import defaultdict
+
 import numpy
+
 import vtk
 
-from collections import defaultdict
 
 def main():
     # vtk_input_file = "/docker-exchange/PEBI_10InjectorWells_ResMin100_TRI_14092022.vtu"
@@ -40,26 +42,25 @@ def main():
 
     # Building GLOBAL_IDS for points and cells.
     # First for points...
-    point_global_ids = vtk.vtkIntArray()
-    point_global_ids.SetName("GLOBAL_IDS")
-    point_global_ids.Allocate(points.GetNumberOfPoints())
+    point_global_ids = vtk.vtkIdTypeArray()
+    point_global_ids.SetName("GLOBAL_IDS_POINTS")
+    point_global_ids.Allocate(mesh.GetNumberOfPoints())
     for i in range(mesh.GetNumberOfPoints()):
         point_global_ids.InsertNextValue(i)
-    mesh.GetPointData().AddArray(point_global_ids)
+    mesh.GetPointData().SetGlobalIds(point_global_ids)
     # ... then for cells.
-    cells_global_ids = vtk.vtkIntArray()
-    cells_global_ids.SetName("GLOBAL_IDS")
+    cells_global_ids = vtk.vtkIdTypeArray()
+    cells_global_ids.SetName("GLOBAL_IDS_CELLS")
     cells_global_ids.Allocate(mesh.GetNumberOfCells())
     for i in range(mesh.GetNumberOfCells()):
         cells_global_ids.InsertNextValue(i)
-    mesh.GetCellData().AddArray(cells_global_ids)
+    mesh.GetCellData().SetGlobalIds(cells_global_ids)
 
-    # writer = vtk.vtkUnstructuredGridWriter()
-    # writer.SetFileTypeToASCII()
-    # writer.SetFileName("/docker-exchange/pebi_with_global_ids.vtu")
-    # writer.SetInputData(mesh)
-    # writer.Write()
-
+    writer = vtk.vtkUnstructuredGridWriter()
+    writer.SetFileTypeToASCII()
+    writer.SetFileName("/docker-exchange/pebi_with_global_ids.vtu")
+    writer.SetInputData(mesh)
+    writer.Write()
 
 
 if __name__ == '__main__':

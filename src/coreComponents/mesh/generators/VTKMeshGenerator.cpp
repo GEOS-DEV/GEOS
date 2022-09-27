@@ -452,6 +452,7 @@ redistributeMesh( vtkDataSet & loadedMesh,
   else if( useGlobalIds >= 0 && globalIdsAvailable )
   {
     mesh = &loadedMesh;
+    // FIXME Why the cast?
     vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
     vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
     GEOSX_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != mesh->GetNumberOfCells(),
@@ -1735,49 +1736,106 @@ void VTKMeshGenerator::writeCells( CellBlockManager & cellBlockManager ) const
   }
 }
 
+/**
+ * @brief Given a pair @p p of nodes, return the GEOSX edge index made of these 2 nodes.
+ * @param p The pair of nodes in no specific order.
+ * @param n2ed The nodes to edges mapping.
+ * @return The GEOSX index
+ */
 int pairToEdge( std::pair< int, int > const & p,
                 ArrayOfArrays< localIndex > const & n2ed )
 {
-    int const n0 = p.first, n1 = p.second;
-    auto const & edges0 = n2ed[n0];
-    auto const & edges1 = n2ed[n1];
-    std::set< int > const es0( edges0.begin(), edges0.end() );
-    std::set< int > const es1( edges1.begin(), edges1.end() );
-    std::vector< int > intersect;
-    std::set_intersection( es0.cbegin(), es0.cend(), es1.cbegin(), es1.cend(), std::back_inserter( intersect ) );
-    GEOSX_ERROR_IF_NE_MSG( intersect.size(), 1, "We should only have one element" );
-    return intersect.front();
+  // This functions takes all the edges that have one of the two nodes,
+  // and find the unique edge with both nodes.
+  // The current implementation can surely be improved,
+  // but for the moment it's seems to be working.
+  int const n0 = p.first, n1 = p.second;
+  auto const & edges0 = n2ed[n0];
+  auto const & edges1 = n2ed[n1];
+  std::set< int > const es0( edges0.begin(), edges0.end() );
+  std::set< int > const es1( edges1.begin(), edges1.end() );
+  std::vector< int > intersect;
+  std::set_intersection( es0.cbegin(), es0.cend(), es1.cbegin(), es1.cend(), std::back_inserter( intersect ) );
+  GEOSX_ERROR_IF_NE_MSG( intersect.size(), 1, "We should only have one element" );
+  return intersect.front();
 }
 
 class FaceData
 {
 public:
-  explicit FaceData( vtkDataArray * array )
+  FaceData( vtkFieldData * fieldData,
+            string const & faceBlockName )
   {
     // TODO use a builder and not the constructor.
-    m_num2dElements = array->GetNumberOfTuples();
-
+    // Formatting the duplicated nodes' information.
     {
-      auto const numComponents = array->GetNumberOfComponents();
-      GEOSX_ERROR_IF_NE_MSG( 4, numComponents, "FieldData \"fracture_info\" should have 4 components." );
+      vtkDataArray * duplicatedNodes = fieldData->GetArray( "duplicated_points_info" );
+      auto const numComponents = duplicatedNodes->GetNumberOfComponents();
+
+      int const numDuplicatedLocations = duplicatedNodes->GetNumberOfTuples();
+      for( int i = 0; i < numDuplicatedLocations; ++i )
+      {
+        std::vector< double > tuple( numComponents );
+        duplicatedNodes->GetTuple( i, tuple.data() );
+        std::set< int > nodes;
+        for( double const & v: tuple )
+        {
+          if( v >= 0 )
+          { nodes.insert( int( v ) ); }
+        }
+        // At that point, `nodes` contain all the duplicated nodes, sorted.
+        for( const int & n: nodes )
+        {
+          auto const & it = m_duplicatedNodes.find( n );
+          if( it == m_duplicatedNodes.end() )
+          {
+            m_duplicatedNodes[n] = *nodes.begin();
+          }
+          else
+          {
+            it->second = std::min( it->second, *nodes.begin() );
+          }
+        }
+      }
     }
 
-    for( int i = 0; i < m_num2dElements; ++i )
+    // Formatting the faces' information.
     {
-      std::vector< double > tuple( 4 );
-      array->GetTuple( i, tuple.data() );
-      std::vector< int > res( 4 );
-      res[0] = tuple[0];
-      res[1] = tuple[1];
-      res[2] = tuple[2];
-      res[3] = tuple[3];
-      m_data.push_back( res );
+      vtkDataArray * array = fieldData->GetArray( faceBlockName.c_str() );
+      GEOSX_ERROR_IF( array == 0, "Face block name \"" << faceBlockName << "\" was not found in the mesh." );
+
+      m_num2dElements = array->GetNumberOfTuples();
+
+      auto const numComponents = array->GetNumberOfComponents();
+      GEOSX_ERROR_IF_NE_MSG( 4, numComponents, "FieldData \"" + faceBlockName + "\" should have 4 components." );
+
+      for( int i = 0; i < m_num2dElements; ++i )
+      {
+        std::vector< double > tuple( numComponents );
+        array->GetTuple( i, tuple.data() );
+        std::vector< int > res;
+        res.reserve( numComponents );
+        std::copy( tuple.cbegin(), tuple.cend(), std::back_inserter( res ) );
+        m_data.push_back( res );
+      }
     }
   }
 
   vtkIdType num2DElements() const
   {
     return m_num2dElements;
+  }
+
+  /**
+   * @brief Given the vtk global index @p nodeId, returns the duplicated node with the lowest index.
+   * @param nodeId
+   * @return
+   *
+   * This functions can be used to identify if two nodes are duplicated one of each other: they share the same lowest index.
+   */
+  int uniqueNode( int nodeId ) const
+  {
+    return m_duplicatedNodes.at( nodeId );
   }
 
   /**
@@ -1809,6 +1867,10 @@ public:
 private:
   vtkIdType m_num2dElements;
   std::vector< std::vector< int > > m_data;
+  /**
+   * @brief All for any duplicated node, among all duplicated nodes in the same "position", returns the node index with the lowest value.
+   */
+  std::map< int, int > m_duplicatedNodes;
 };
 
 /**
@@ -1822,27 +1884,30 @@ void ImportFracture( string const & faceBlockName,
                      vtkSmartPointer< vtkDataSet > vtkMesh,
                      CellBlockManager & cellBlockManager )
 {
-  vtkDataArray * array = vtkMesh->GetFieldData()->GetArray( faceBlockName.c_str() );
-  GEOSX_ERROR_IF(array == 0, "Face block name \"" << faceBlockName << "\" was not found in the mesh.");
-  FaceData const faceData( array );
+  vtkFieldData * fieldData = vtkMesh->GetFieldData();
+
+  FaceData const faceData( fieldData, faceBlockName );
 
   vtkIdType const num2dElements = faceData.num2DElements(); // API
 
   // Computing the number of 2d faces
   localIndex num2dFaces; // API
   {
+    // Storing all the edges nodes, then we remove duplicates to get the number of different edges.
+    // To deal with duplicated nodes, we do not store the edge nodes, but the lowest duplicated node index instead.
     std::vector< std::pair< int, int > > allPairs;
     for( int i = 0; i < num2dElements; ++i )
     {
-      int const e0 = faceData.cell( i, 0 );
-      int const f0 = faceData.face( i, 0 );
-      vtkCell * c = vtkMesh->GetCell( e0 );
-      vtkCell * f = c->GetFace( f0 );
-      for( int k = 0; k < f->GetNumberOfEdges(); ++k )
+      for( int j = 0; j < 2; ++j )
       {
-        vtkCell * e = f->GetEdge( k );
-        vtkIdType const p0 = e->GetPointId( 0 ), p1 = e->GetPointId( 1 );
-        allPairs.push_back( { std::min( p0, p1 ), std::max( p0, p1 ) } );
+        vtkCell * cell = vtkMesh->GetCell( faceData.cell( i, j ) );
+        vtkCell * face = cell->GetFace( faceData.face( i, j ) );
+        for( int k = 0; k < face->GetNumberOfEdges(); ++k )
+        {
+          vtkCell * edge = face->GetEdge( k );
+          vtkIdType const pt0 = edge->GetPointId( 0 ), pt1 = edge->GetPointId( 1 );
+          allPairs.push_back( std::minmax( faceData.uniqueNode( pt0 ), faceData.uniqueNode( pt1 ) ) );
+        }
       }
     }
     std::set< std::pair< int, int > > uniquePairs( allPairs.cbegin(), allPairs.cend() );
@@ -1865,6 +1930,7 @@ void ImportFracture( string const & faceBlockName,
   };
 
   CellBlock & cb = cellBlockManager.getCellBlock( "hexahedra" );
+//  CellBlock & cb = cellBlockManager.getCellBlock( "tetrahedra" );
   ArrayOfArrays< localIndex > const & f2n = cellBlockManager.getFaceToNodes();
   array2d< localIndex > const & e2f = cb.getElemToFaces();
   ArrayOfArrays< localIndex > const & n2ed = cellBlockManager.getNodeToEdges();
@@ -1872,6 +1938,7 @@ void ImportFracture( string const & faceBlockName,
   std::vector< std::vector< localIndex > > elem2dToNodes; // API
   std::vector< std::vector< localIndex > > elem2dToFaces; // API
   {
+    // Standard element/face double loop to find extract the nodes and faces indices required for the mappings.
     for( int i = 0; i < num2dElements; ++i )
     {
       std::vector< localIndex > nodeLine;
@@ -1880,19 +1947,18 @@ void ImportFracture( string const & faceBlockName,
       {
         int const ei = faceData.cell( i, j );
         int const fi = faceData.face( i, j );
-        vtkCell * c = vtkMesh->GetCell( ei );
-        vtkCell * f = c->GetFace( fi );
-        vtkIdList * p = f->GetPointIds();
-        std::set< int > const vtkPoints = vtkIdListToSet( p );
+        vtkCell * c = vtkMesh->GetCell( faceData.cell( i, j ) );
+        vtkCell * f = c->GetFace( faceData.face( i, j ) );
+        std::set< int > const vtkPoints = vtkIdListToSet( f->GetPointIds() );
         auto faces = e2f[ei];
-        for( int const & k: faces )
+        for( int const & face: faces )
         {
-          auto const faceNodes = f2n[k];
+          auto const faceNodes = f2n[face];
           std::set< int > const nodes( faceNodes.begin(), faceNodes.end() );
           if( vtkPoints == nodes )
           {
             std::copy( nodes.cbegin(), nodes.cend(), back_inserter( nodeLine ) );
-            faceLine.push_back( k );
+            faceLine.push_back( face );
             break;
           }
         }
@@ -1904,48 +1970,105 @@ void ImportFracture( string const & faceBlockName,
 
   // The order is from the most little edge index to the largest.
   // Since two edges are in the same location, we always take the more little index of the two colocated edges.
-  // Computing face 2d -> -> edges
+  // Computing face 2d -> edges
   std::vector< localIndex > face2dToEdges; // API
   std::vector< std::vector< localIndex > > elem2dToEdges; // API
   {
-    // 2d elem -> left/right -> edges
-    std::vector< std::vector< std::vector< int > > > allEdges;
+    // [2d elem index] -> [left/right index] -> [edges (stored as a pair of ints)]
+    // The pairs of `allEdges` do not deal with the duplication challenge: all the edges are there, even duplicates.
+    std::vector< std::vector< std::vector< std::pair< int, int > > > > allEdges;
     for( int i = 0; i < num2dElements; ++i )
     {
-      allEdges.push_back({});
+      allEdges.push_back( {} );
       for( int j = 0; j < 2; ++j )
       {
-        allEdges[i].push_back({});
-        int const ei = faceData.cell( i, j );
-        int const fi = faceData.face( i, j );
-        vtkCell * c = vtkMesh->GetCell( ei );
-        vtkCell * f = c->GetFace( fi );
-        for( int k = 0; k < f->GetNumberOfEdges(); ++k )
+        vtkCell * cell = vtkMesh->GetCell( faceData.cell( i, j ) );
+        vtkCell * face = cell->GetFace( faceData.face( i, j ) );
+        allEdges[i].push_back( {} );
+        for( int k = 0; k < face->GetNumberOfEdges(); ++k )
         {
-          vtkCell * e = f->GetEdge( k );
-          vtkIdType const p0 = e->GetPointId( 0 ), p1 = e->GetPointId( 1 );
-          int edge = pairToEdge( { std::min( p0, p1 ), std::max( p0, p1 ) }, n2ed );
-          allEdges[i][j].push_back(edge);
+          vtkCell * edge = face->GetEdge( k );
+          vtkIdType const p0 = edge->GetPointId( 0 ), p1 = edge->GetPointId( 1 );
+          allEdges[i][j].push_back( { std::min( p0, p1 ), std::max( p0, p1 ) } ); // FIXE is it useful to sort here?
         }
       }
     }
-    std::vector< int > allEdgesFlat;
-    for( int i = 0; i < num2dElements; ++i )
+
+    // `allEdgesFlat` is the flat list containing all the edges, stored as pairs of nodes.
+    // Duplicated nodes challenge is not considered here. Thus, there will be "duplicated" edges.
+    std::vector< std::pair< int, int > > allEdgesFlat;
+    for( auto const & leftRight: allEdges )
     {
-      elem2dToEdges.push_back({});
-      for( std::size_t k = 0; k < allEdges[i][0].size(); ++k )
+      for( auto const & edges: leftRight )
       {
-        const int edge = std::min( allEdges[i][0][k], allEdges[i][1][k] );
-        elem2dToEdges.back().push_back( edge );
-        allEdgesFlat.push_back( edge );
+        for( auto const & edge: edges )
+        {
+          allEdgesFlat.push_back( edge );
+        }
       }
     }
-    std::set< int > uniqueEdges( allEdgesFlat.cbegin(), allEdgesFlat.cend() );
-    std::copy( uniqueEdges.cbegin(), uniqueEdges.cend(), std::back_inserter( face2dToEdges ) );
+
+    // What we hereafter call a `pairId` is the pair with the lowest duplicated node indices.
+    // It's worth mentioning that such a pair may not be an existing edge.
+    // It's a more kind of signature/hash to reconcile duplicated edges.
+    // On the other hand, `edgeId` is the minimal (existing) edge index for the given `pairId` signature.
+    // Two edges sharing the same `edgeId` are therefore duplicated.
+    std::map< std::pair< int, int >, int > pairIdToEdgeId;
+    for( std::pair< int, int > const & p: allEdgesFlat )
+    {
+      std::pair< int, int > const pairId( std::minmax( faceData.uniqueNode( p.first ), faceData.uniqueNode( p.second ) ) );
+
+      auto const & it = pairIdToEdgeId.find( pairId );
+      if( it == pairIdToEdgeId.end() )
+      {
+        pairIdToEdgeId[pairId] = pairToEdge( p, n2ed );
+      }
+      else
+      {
+        it->second = std::min( it->second, pairToEdge( p, n2ed ) );
+      }
+    }
+    GEOSX_ERROR_IF_NE_MSG( std::size_t(num2dFaces), pairIdToEdgeId.size(), "Something wrong happened" );
+
+    // This loop build the `elem2dToEdges` mapping.
+    // It uses the `pairIdToEdgeId` to remove duplicates.
+    for( int i = 0; i < num2dElements; ++i )
+    {
+      elem2dToEdges.push_back( {} );
+      std::set< int > edges;
+      for( std::size_t j = 0; j < allEdges[i].size(); ++j )
+      {
+        for( std::size_t k = 0; k < allEdges[i][j].size(); ++k )
+        {
+          std::pair< int, int > const & p = allEdges[i][j][k];
+          std::pair< int, int > const pairId = std::minmax( faceData.uniqueNode( p.first ), faceData.uniqueNode( p.second ) );
+          int const edge = pairIdToEdgeId.at( pairId );
+          edges.insert( edge );
+        }
+      }
+      std::copy( edges.cbegin(), edges.cend(), std::back_inserter( elem2dToEdges.back() ) );
+    }
+
+    // Here we compute the `face2dToEdges` mapping.
+    // We do not pay attention to the ordering of the `face2d`, it will be in the sorting order.
+    auto cmp = [&faceData]( std::pair< int, int > const & p0,
+                            std::pair< int, int > const & p1 ) -> bool
+    {
+      std::pair< int, int > const tmp0( std::minmax( faceData.uniqueNode( p0.first ), faceData.uniqueNode( p0.second ) ) );
+      std::pair< int, int > const tmp1( std::minmax( faceData.uniqueNode( p1.first ), faceData.uniqueNode( p1.second ) ) );
+      return tmp0 < tmp1;
+    };
+    std::set< std::pair< int, int >, decltype( cmp ) > uniqueEdges( cmp );
+    uniqueEdges.insert( allEdgesFlat.cbegin(), allEdgesFlat.cend() );
+    for( std::pair< int, int > const & p: uniqueEdges )
+    {
+      face2dToEdges.push_back( pairToEdge( p, n2ed ) );
+    }
   }
 
   std::vector< std::vector< localIndex > > face2dToElems2d( num2dFaces ); // API
   {
+    // First, a mapping inversion TODO there are optimized implementations here and there.
     std::map< int, std::vector< int > > edgesToElems2d;
     for( std::size_t i = 0; i < elem2dToEdges.size(); ++i )
     {
@@ -1954,15 +2077,16 @@ void ImportFracture( string const & faceBlockName,
         edgesToElems2d[e].push_back( i );
       }
     }
-
+    // Then we fill chain mappings...
     for( int fi = 0; fi < num2dFaces; ++fi )
     {
       int const & edge = face2dToEdges[fi];
       std::vector< int > const & elems2d = edgesToElems2d[edge];
-      std::copy(elems2d.begin(), elems2d.end(), std::back_inserter(face2dToElems2d[fi]));
+      std::copy( elems2d.begin(), elems2d.end(), std::back_inserter( face2dToElems2d[fi] ) );
     }
   }
 
+  // Mappings are computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.getFaceBlocks().registerGroup< FaceBlock >( faceBlockName );
   faceBlock.setNum2DElements( num2dElements );
   faceBlock.setNum2DFaces( num2dFaces );
