@@ -86,7 +86,7 @@ __geosx_osx_build: &__geosx_osx_build
   - make -j $(nproc) VERBOSE=1
   - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
 
-__geosx_totalenergies_cluster_build: &__geosx_totalenergies_cluster_build
+__geosx_auto_deploy: &__geosx_auto_deploy
   <<: *__geosx_linux_build
   # We use the most recent ubuntu distribution available in travis-ci to ensure maximum support of google cloud's sdk.
   dist: focal
@@ -220,7 +220,7 @@ jobs:
     - BUILD_AND_TEST_ARGS="--disable-unit-tests --reduce-install-logs"
   - stage: builds
     name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 10.2.89p2)
-    <<: *__geosx_totalenergies_cluster_build
+    <<: *__geosx_auto_deploy
     env:
     - DOCKER_REPOSITORY=geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda10.2.89p2
     - CMAKE_BUILD_TYPE=Release
@@ -229,7 +229,7 @@ jobs:
     - GCP_BUCKET=geosx/Pecan-GPU
   - stage: builds
     name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
-    <<: *__geosx_totalenergies_cluster_build
+    <<: *__geosx_auto_deploy
     env:
     - DOCKER_REPOSITORY=geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
     - CMAKE_BUILD_TYPE=Release
@@ -237,7 +237,7 @@ jobs:
     - GCP_BUCKET=geosx/Pecan-CPU
   - stage: builds
     name: Pangea 2 (centos 7.6, gcc 8.3.0, open-mpi 2.1.5, mkl 2019.3)
-    <<: *__geosx_totalenergies_cluster_build
+    <<: *__geosx_auto_deploy
     env:
     - DOCKER_REPOSITORY=geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
     - CMAKE_BUILD_TYPE=Release
@@ -267,7 +267,7 @@ jobs:
     - CMAKE_BUILD_TYPE=Release
   - stage: builds
     name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
-    <<: *__geosx_totalenergies_cluster_build
+    <<: *__geosx_auto_deploy
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu22.04-gcc11
     - CMAKE_BUILD_TYPE=RelWithDebInfo
