@@ -12,7 +12,7 @@ __OPTIONS_SEP = ":"
 __KV_SEP = "="
 
 
-@dataclass
+@dataclass(frozen=True)
 class Arguments:
     vtk_input_file: str
     checks: OrderedDict()

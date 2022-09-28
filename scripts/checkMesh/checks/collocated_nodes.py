@@ -8,12 +8,12 @@ import numpy
 import vtk  # TODO use new pyvtk style + deal with ImportError
 
 
-@dataclass
+@dataclass(frozen=True)
 class Options:
     tolerance: float
 
 
-@dataclass
+@dataclass(frozen=True)
 class Result:
     nodes_buckets: Tuple[Tuple[int]]
 

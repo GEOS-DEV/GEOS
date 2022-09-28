@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Callable, Dict, Any
 
 
-@dataclass
+@dataclass(frozen=True)
 class CheckHelper:
     parse: Callable[[Dict[str, str]], Any]
     display_results: Callable[[Any, Any], None]
