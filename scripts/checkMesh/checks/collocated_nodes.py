@@ -18,12 +18,7 @@ class Result:
     nodes_buckets: Tuple[Tuple[int]]
 
 
-def check(vtk_input_file: str, options: Options) -> Result:
-    reader = vtk.vtkXMLUnstructuredGridReader()  # TODO Find a generic way to read the vtk mesh.
-    reader.SetFileName(vtk_input_file)
-    reader.Update()
-    mesh = reader.GetOutput()
-
+def __check(mesh, options: Options) -> Result:
     points = mesh.GetPoints()
 
     locator = vtk.vtkIncrementalOctreePointLocator()
@@ -51,3 +46,12 @@ def check(vtk_input_file: str, options: Options) -> Result:
         tmp.append((n, *ns))
 
     return Result(nodes_buckets=tmp)
+
+
+def check(vtk_input_file: str, options: Options) -> Result:
+    reader = vtk.vtkXMLUnstructuredGridReader()  # TODO Find a generic way to read the vtk mesh.
+    reader.SetFileName(vtk_input_file)
+    reader.Update()
+    mesh = reader.GetOutput()
+
+    return __check(mesh, options)
