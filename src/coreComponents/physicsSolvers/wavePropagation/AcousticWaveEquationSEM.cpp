@@ -29,6 +29,7 @@
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
+#define GEOSX_DISPATCH_SEM /// selects SEM-specific elements (based on Gauss-Lobatto points) in FiniteElementDispatch 
 namespace geosx
 {
 
@@ -1167,3 +1168,4 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationSEM, string const &, dataRepository::Group * const )
 
 } /* namespace geosx */
+#undef GEOSX_DISPATCH_SEM

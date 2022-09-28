@@ -27,7 +27,9 @@
 #include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
+#include "elementFormulations/Q1_Hexahedron_Lagrange_GaussLobatto.hpp"
 #include "elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
+#include "elementFormulations/Q5_Hexahedron_Lagrange_GaussLobatto.hpp"
 #include "LvArray/src/system.hpp"
 
 
@@ -42,6 +44,20 @@ void
 dispatch3D( FiniteElementBase const & input,
             LAMBDA && lambda )
 {
+#ifdef GEOSX_DISPATCH_SEM
+  if( auto const * const ptr1 = dynamic_cast< Q1_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+  {
+    lambda( *ptr1 );
+  }
+  else if( auto const * const ptr3 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+  {
+    lambda( *ptr3 );
+  }
+  else if( auto const * const ptr5 = dynamic_cast< Q5_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+  {
+    lambda( *ptr5 );
+  }
+#else
   if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 const * >(&input) )
   {
     lambda( *ptr1 );
@@ -58,10 +74,7 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr4 );
   }
-  else if( auto const * const ptr5 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
-  {
-    lambda( *ptr5 );
-  }
+#endif
 #ifdef GEOSX_DISPATCH_VEM
   else if( auto const * const ptr6 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 const * >(&input) ) // VEM on Tetrahedron
   {
@@ -116,6 +129,20 @@ void
 dispatch3D( FiniteElementBase & input,
             LAMBDA && lambda )
 {
+#ifdef GEOSX_DISPATCH_SEM
+  if( auto const * const ptr1 = dynamic_cast< Q1_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+  {
+    lambda( *ptr1 );
+  }
+  else if( auto const * const ptr3 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+  {
+    lambda( *ptr3 );
+  }
+  else if( auto const * const ptr5 = dynamic_cast< Q5_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+  {
+    lambda( *ptr5 );
+  }
+#else
   if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 * >(&input) )
   {
     lambda( *ptr1 );
@@ -132,10 +159,7 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr4 );
   }
-  else if( auto * const ptr5 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto * >(&input) )
-  {
-    lambda( *ptr5 );
-  }
+#endif
 #ifdef GEOSX_DISPATCH_VEM
   else if( auto * const ptr6 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 * >(&input) ) // VEM on Tetrahedron
   {
