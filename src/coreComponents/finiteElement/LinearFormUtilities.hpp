@@ -84,7 +84,7 @@ struct Helper< PDEUtilities::FunctionSpace::H1,
     for( int a = 0; a < numTestDOF; ++a )
     {
       vec[a] = vec[a] +  Nv[a] * A  * weight;
-      
+
     }
   }
 };
@@ -104,7 +104,7 @@ struct Helper< PDEUtilities::FunctionSpace::H1,
     for( int a = 0; a < numTestDOF; ++a )
     {
       vec[a] = vec[a] + ( dNdX[a][0] * A[0] + dNdX[a][1] * A[1] + dNdX[a][2] * A[2] ) * weight;
-      
+
     }
   }
 };

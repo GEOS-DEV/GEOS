@@ -42,8 +42,8 @@ namespace solidMechanicsLagrangianFEMKernels
  * quasi-static equilibrium equations using one of the
  * "finite element kernel application" functions such as
  * geosx::finiteElement::RegionBasedKernelApplication. Pressure effects in
- * the rock and its fractures are accounted for in the fracturePressure and 
- * matrixPressure terms. Currently (Sept22), only use case for this kernel is 
+ * the rock and its fractures are accounted for in the fracturePressure and
+ * matrixPressure terms. Currently (Sept22), only use case for this kernel is
  * the multi-resolution phase-field method.
  *
  * In this implementation, the template parameter @p NUM_NODES_PER_ELEM is used
@@ -151,7 +151,7 @@ public:
             u_local(),
             uhat_local(),
             localResidualMomentum( Base::StackVariables::localResidual ),
-            dLocalResidualMomentum_dDisplacement( Base::StackVariables::localJacobian )
+      dLocalResidualMomentum_dDisplacement( Base::StackVariables::localJacobian )
     {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
@@ -170,7 +170,7 @@ public:
 
     real64 ( &localResidualMomentum )[numDispDofPerElem];
     real64 ( &dLocalResidualMomentum_dDisplacement )[numDispDofPerElem][numDispDofPerElem];
-    
+
   };
   //*****************************************************************************
 
@@ -178,7 +178,7 @@ public:
    * @brief Copy global values from primary field to a local stack array.
    * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
    *
-   * Global values from the displacement, incremental displacement, 
+   * Global values from the displacement, incremental displacement,
    * and degree of freedom numbers are placed into element local stack storage.
    */
   GEOSX_HOST_DEVICE
@@ -213,8 +213,9 @@ public:
     // Governing equations (strong form)
     // ---------------------------------
     //
-    //   divergence( stress - biotCoefficient*matrixPressure*I ) + fracturePressureTerm + bodyForces = 0   (quasi-static linear momentum balance)
-    //  
+    //   divergence( stress - biotCoefficient*matrixPressure*I ) + fracturePressureTerm + bodyForces = 0   (quasi-static linear momentum
+    // balance)
+    //
     //   the pressures are assumed to be constant and the term with the biotCoefficient is simply implemented as a body force.
     //   Damage dependency is ignored here since the damage variable is not fully coupled with the displacement or pressure.
     //
@@ -224,7 +225,8 @@ public:
     //
     // Using a weak formulation of the governing equation the following terms are assembled in this kernel
     //
-    //   Rmom = - \int symmetricGradient( \eta ) : stress +\int biotCoefficient*matrixPressure*grad(\eta) \cdot I + \int \eta \cdot fracturePressureTerm + \int \eta \cdot bodyForce = 0
+    //   Rmom = - \int symmetricGradient( \eta ) : stress +\int biotCoefficient*matrixPressure*grad(\eta) \cdot I + \int \eta \cdot
+    // fracturePressureTerm + \int \eta \cdot bodyForce = 0
     //       //
     //   dRmom_dVolStrain = - \int_Omega symmetricGradient( \eta ) : dstress_dVolStrain
     //                      + \int \eta \cdot dBodyForce_dVolStrain
@@ -249,7 +251,7 @@ public:
     m_constitutiveUpdate.updateBiotCoefficient( k, 0.5 );
     real64 fracturePressureTerm[3]{};
     computeFracturePressureTerm( k, q, fracturePressureTerm );
-    real64 matrixPressureTerm = computeMatrixPressureTerm( k,q );
+    real64 matrixPressureTerm = computeMatrixPressureTerm( k, q );
     //Dont need this because secondOrder identity is implemented in PDEUtilities
     //real64 const identityTensor[6] = {1, 1, 1, 0, 0, 0};
     //real64 matrixPressureTerm[6]{};
@@ -291,7 +293,7 @@ public:
         bodyForce,
         detJxW );
     }
-    
+
     LinearFormUtilities::compute< displacementTestSpace,
                                   DifferentialOperator::SymmetricGradient >
     (
@@ -374,7 +376,7 @@ public:
   GEOSX_FORCE_INLINE
   void computeFracturePressureTerm( localIndex const k,
                                     localIndex const q,
-                                    real64 ( & fracturePressureTerm )[3]) const
+                                    real64 ( & fracturePressureTerm )[3] ) const
   {
 
     real64 damageGrad[3]{};
@@ -383,7 +385,7 @@ public:
     m_constitutiveUpdate.getDamageGrad( k, q, damageGrad );
 
     real64 const damage = m_constitutiveUpdate.getDamage( k, q );
-    real64 const pressureDamageDeriv = m_constitutiveUpdate.pressureDamageFunctionDerivative( damage ); 
+    real64 const pressureDamageDeriv = m_constitutiveUpdate.pressureDamageFunctionDerivative( damage );
 
     LvArray::tensorOps::scaledCopy< 3 >( pressureDamageGrad, damageGrad, pressureDamageDeriv );
     LvArray::tensorOps::scaledCopy< 3 >( fracturePressureTerm, pressureDamageGrad, m_pressureFracture[k] );
@@ -398,14 +400,14 @@ public:
 
     real64 const biotCoefficient = m_constitutiveUpdate.getBiotCoefficient( k );
     real64 const damage = m_constitutiveUpdate.getDamage( k, q );
-    real64 const pressureDamageFunction = m_constitutiveUpdate.pressureDamageFunction( k, q ); 
-    // GEOSX_LOG_RANK_0("biot: "<<biotCoefficient<<"\n"); 
-    // GEOSX_LOG_RANK_0("pm: "<<m_pressureMatrix[k]<<"\n"); 
+    real64 const pressureDamageFunction = m_constitutiveUpdate.pressureDamageFunction( k, q );
+    // GEOSX_LOG_RANK_0("biot: "<<biotCoefficient<<"\n");
+    // GEOSX_LOG_RANK_0("pm: "<<m_pressureMatrix[k]<<"\n");
     return pressureDamageFunction*biotCoefficient*m_pressureMatrix[k];
 
   }
 
- 
+
 
 protected:
   /// The array containing the nodal position array.

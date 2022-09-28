@@ -297,12 +297,12 @@ struct Helper< PDEUtilities::FunctionSpace::H1,
         mat[a][b] = mat[a][b] + dNvdX[a][0] * A[0] * dNudX[b][0] * weight; //A11
         mat[a][b] = mat[a][b] + dNvdX[a][1] * A[1] * dNudX[b][1] * weight; //A22
         mat[a][b] = mat[a][b] + dNvdX[a][2] * A[2] * dNudX[b][2] * weight; //A33
-        mat[a][b] = mat[a][b] + dNvdX[a][0] * A[3] * dNudX[b][1] * weight; //A12
-        mat[a][b] = mat[a][b] + dNvdX[a][1] * A[3] * dNudX[b][0] * weight; //A21
+        mat[a][b] = mat[a][b] + dNvdX[a][0] * A[5] * dNudX[b][1] * weight; //A12
+        mat[a][b] = mat[a][b] + dNvdX[a][1] * A[5] * dNudX[b][0] * weight; //A21
         mat[a][b] = mat[a][b] + dNvdX[a][0] * A[4] * dNudX[b][2] * weight; //A13
         mat[a][b] = mat[a][b] + dNvdX[a][2] * A[4] * dNudX[b][0] * weight; //A31
-        mat[a][b] = mat[a][b] + dNvdX[a][1] * A[5] * dNudX[b][2] * weight; //A23
-        mat[a][b] = mat[a][b] + dNvdX[a][2] * A[5] * dNudX[b][1] * weight; //A32
+        mat[a][b] = mat[a][b] + dNvdX[a][1] * A[3] * dNudX[b][2] * weight; //A23
+        mat[a][b] = mat[a][b] + dNvdX[a][2] * A[3] * dNudX[b][1] * weight; //A32
       }
     }
   }
@@ -322,15 +322,15 @@ struct Helper< PDEUtilities::FunctionSpace::H1,
       {
         mat[a][b] = mat[a][b] + A * LvArray::tensorOps::AiBi< 3 >( dNvdX[a], dNudX[b] ) * weight;
         //must verify voigt notation and order of indices in dNvdX and dNudX
-        // mat[a][b] = mat[a][b] + dNvdX[a][0] * A * dNudX[b][0] * weight; 
-        // mat[a][b] = mat[a][b] + dNvdX[a][1] * A * dNudX[b][1] * weight; 
-        // mat[a][b] = mat[a][b] + dNvdX[a][2] * A * dNudX[b][2] * weight; 
-        // mat[a][b] = mat[a][b] + dNvdX[a][0] * A * dNudX[b][1] * weight; 
-        // mat[a][b] = mat[a][b] + dNvdX[a][1] * A * dNudX[b][0] * weight; 
-        // mat[a][b] = mat[a][b] + dNvdX[a][0] * A * dNudX[b][2] * weight; 
-        // mat[a][b] = mat[a][b] + dNvdX[a][2] * A * dNudX[b][0] * weight; 
-        // mat[a][b] = mat[a][b] + dNvdX[a][1] * A * dNudX[b][2] * weight; 
-        // mat[a][b] = mat[a][b] + dNvdX[a][2] * A * dNudX[b][1] * weight; 
+        // mat[a][b] = mat[a][b] + dNvdX[a][0] * A * dNudX[b][0] * weight;
+        // mat[a][b] = mat[a][b] + dNvdX[a][1] * A * dNudX[b][1] * weight;
+        // mat[a][b] = mat[a][b] + dNvdX[a][2] * A * dNudX[b][2] * weight;
+        // mat[a][b] = mat[a][b] + dNvdX[a][0] * A * dNudX[b][1] * weight;
+        // mat[a][b] = mat[a][b] + dNvdX[a][1] * A * dNudX[b][0] * weight;
+        // mat[a][b] = mat[a][b] + dNvdX[a][0] * A * dNudX[b][2] * weight;
+        // mat[a][b] = mat[a][b] + dNvdX[a][2] * A * dNudX[b][0] * weight;
+        // mat[a][b] = mat[a][b] + dNvdX[a][1] * A * dNudX[b][2] * weight;
+        // mat[a][b] = mat[a][b] + dNvdX[a][2] * A * dNudX[b][1] * weight;
       }
     }
   }

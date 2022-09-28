@@ -47,7 +47,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::damageGradString(), &m_damageGrad ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Material Damage Gradient" );    
+    setDescription( "Material Damage Gradient" );
 
   this->registerWrapper( viewKeyStruct::strainEnergyDensityString(), &m_strainEnergyDensity ).
     setApplyDefaultValue( 0.0 ).
@@ -57,7 +57,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::volumetricStrainString(), &m_volStrain ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Volumetric strain" );    
+    setDescription( "Volumetric strain" );
 
   this->registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -74,7 +74,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::biotCoefficientString(), &m_biotCoefficient ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Biot coefficient" );    
+    setDescription( "Biot coefficient" );
 }
 
 

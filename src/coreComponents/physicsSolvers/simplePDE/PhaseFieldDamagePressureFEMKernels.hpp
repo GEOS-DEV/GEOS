@@ -102,7 +102,7 @@ public:
                                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                   arrayView1d< real64 > const inputRhs,
                                   string const damageName,
-                                  int const localDissipationOption):
+                                  int const localDissipationOption ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -183,8 +183,8 @@ public:
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
       LvArray::tensorOps::copy< 3 >( stack.xLocal[ a ], m_X[ localNodeIndex ] );
 #endif
-      
-      for( localIndex i=0; i<3; ++i)
+
+      for( localIndex i=0; i<3; ++i )
       {
         stack.dispLocal[a][i] = m_disp[ localNodeIndex ][ i ];
       }
@@ -228,7 +228,7 @@ public:
     real64 qpGradDamage[3] = {0.0, 0.0, 0.0};
     real64 qpDisp[3] = {0.0, 0.0, 0.0};
     FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qpDamage, qpGradDamage ); //get damage and its gradient at quadrature points
-    FE_TYPE::value(N, stack.dispLocal, qpDisp); //get displacements at quadrature points
+    FE_TYPE::value( N, stack.dispLocal, qpDisp ); //get displacements at quadrature points
 
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
@@ -237,124 +237,124 @@ public:
       c0 = 8.0/3.0;
       D = fmax( threshold, strainEnergyDensity );
     }
-    
+
     if( m_localDissipationOption == 1 ) //AT1 KERNELS
     {
 
-        // Compute local dissipation term AT1
-        LinearFormUtilities::compute< damageTestSpace,
-                                      DifferentialOperator::Identity >
-        (
-          stack.localResidual,
-          N,
-          (Gc/(c0*ell)),
-          detJxW );
+      // Compute local dissipation term AT1
+      LinearFormUtilities::compute< damageTestSpace,
+                                    DifferentialOperator::Identity >
+      (
+        stack.localResidual,
+        N,
+        (Gc/(c0*ell)),
+        detJxW );
 
-        // Compute driving force term
-        LinearFormUtilities::compute< damageTestSpace,
-                                      DifferentialOperator::Identity >
-        (
-          stack.localResidual,
-          N,
-          m_constitutiveUpdate.getDegradationDerivative( qpDamage )*D,
-          detJxW );  
+      // Compute driving force term
+      LinearFormUtilities::compute< damageTestSpace,
+                                    DifferentialOperator::Identity >
+      (
+        stack.localResidual,
+        N,
+        m_constitutiveUpdate.getDegradationDerivative( qpDamage )*D,
+        detJxW );
     }
     else //AT2 KERNELS
     {
-        // Compute local dissipation term AT2
-        LinearFormUtilities::compute< damageTestSpace,
-                                      DifferentialOperator::Identity >
-        (
-          stack.localResidual,
-          N,
-          (Gc/(c0*ell))*2.0*qpDamage,
-          detJxW );
+      // Compute local dissipation term AT2
+      LinearFormUtilities::compute< damageTestSpace,
+                                    DifferentialOperator::Identity >
+      (
+        stack.localResidual,
+        N,
+        (Gc/(c0*ell))*2.0*qpDamage,
+        detJxW );
 
 
-        // Compute driving force term
-        LinearFormUtilities::compute< damageTestSpace,
-                                      DifferentialOperator::Identity >
-        (
-          stack.localResidual,
-          N,
-          m_constitutiveUpdate.getDegradationDerivative( qpDamage )*strainEnergyDensity,
-          detJxW );  
+      // Compute driving force term
+      LinearFormUtilities::compute< damageTestSpace,
+                                    DifferentialOperator::Identity >
+      (
+        stack.localResidual,
+        N,
+        m_constitutiveUpdate.getDegradationDerivative( qpDamage )*strainEnergyDensity,
+        detJxW );
 
     }
 
     // Compute non-local term
-    real64 nonLocalTermIntegrand[3]; 
+    real64 nonLocalTermIntegrand[3];
     LvArray::tensorOps::scaledCopy< 3 >( nonLocalTermIntegrand, qpGradDamage, (2.0*Gc*ell/c0) );
     LinearFormUtilities::compute< damageTestSpace,
                                   DifferentialOperator::Gradient >
     (
-        stack.localResidual,
-        dNdX,
-        nonLocalTermIntegrand,
-        detJxW );
+      stack.localResidual,
+      dNdX,
+      nonLocalTermIntegrand,
+      detJxW );
 
 
     // Compute matrix pressure contribution
     LinearFormUtilities::compute< damageTestSpace,
                                   DifferentialOperator::Identity >
     (
-        stack.localResidual,
-        N,
-        biotCoeff*m_pressureMatrix[k]*volStrain,
-        -detJxW );
+      stack.localResidual,
+      N,
+      biotCoeff*m_pressureMatrix[k]*volStrain,
+      -detJxW );
 
-    real64 pressureFractureIntegrand[3]; 
+    real64 pressureFractureIntegrand[3];
     LvArray::tensorOps::scaledCopy< 3 >( pressureFractureIntegrand, qpDisp, m_pressureFracture[k] );
     // Compute fracture pressure contribuition
     LinearFormUtilities::compute< damageTestSpace,
                                   DifferentialOperator::Gradient >
     (
-        stack.localResidual,
-        dNdX,
-        pressureFractureIntegrand,
-        detJxW );
+      stack.localResidual,
+      dNdX,
+      pressureFractureIntegrand,
+      detJxW );
 
     // // Compute jacobian terms
 
     if( m_localDissipationOption == 1 )
     {
 
-        BilinearFormUtilities::compute< damageTestSpace,
-                                        damageTrialSpace,
-                                        DifferentialOperator::Identity,
-                                        DifferentialOperator::Identity >
-        (
-            stack.localJacobian,
-            N,
-            D*m_constitutiveUpdate.getDegradationSecondDerivative( qpDamage ), 
-            N,
-            detJxW );
+      BilinearFormUtilities::compute< damageTestSpace,
+                                      damageTrialSpace,
+                                      DifferentialOperator::Identity,
+                                      DifferentialOperator::Identity >
+      (
+        stack.localJacobian,
+        N,
+        D*m_constitutiveUpdate.getDegradationSecondDerivative( qpDamage ),
+        N,
+        detJxW );
 
     }
     else
     {
 
-        BilinearFormUtilities::compute< damageTestSpace,
-                                        damageTrialSpace,
-                                        DifferentialOperator::Identity,
-                                        DifferentialOperator::Identity >
-        (
-            stack.localJacobian,
-            N,
-            strainEnergyDensity*m_constitutiveUpdate.getDegradationSecondDerivative( qpDamage ), 
-            N,
-            detJxW );      
+      BilinearFormUtilities::compute< damageTestSpace,
+                                      damageTrialSpace,
+                                      DifferentialOperator::Identity,
+                                      DifferentialOperator::Identity >
+      (
+        stack.localJacobian,
+        N,
+        strainEnergyDensity*m_constitutiveUpdate.getDegradationSecondDerivative( qpDamage ),
+        N,
+        detJxW );
 
-        BilinearFormUtilities::compute< damageTestSpace,
-                                        damageTrialSpace,
-                                        DifferentialOperator::Identity,
-                                        DifferentialOperator::Identity >
-        (
-            stack.localJacobian,
-            N,
-            (2*Gc/(c0*ell)), 
-            N,
-            detJxW );
+      BilinearFormUtilities::compute< damageTestSpace,
+                                      damageTrialSpace,
+                                      DifferentialOperator::Identity,
+                                      DifferentialOperator::Identity >
+      (
+        stack.localJacobian,
+        N,
+        (2*Gc/(c0*ell)),
+        N,
+        detJxW );
 
     }
     BilinearFormUtilities::compute< damageTestSpace,
@@ -362,11 +362,11 @@ public:
                                     DifferentialOperator::Gradient,
                                     DifferentialOperator::Gradient >
     (
-        stack.localJacobian,
-        dNdX,
-        (2*Gc*ell/c0), 
-        dNdX,
-        detJxW );
+      stack.localJacobian,
+      dNdX,
+      (2*Gc*ell/c0),
+      dNdX,
+      detJxW );
 
   }
 

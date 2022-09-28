@@ -130,12 +130,12 @@ public:
   }
 
 //FRANKS VERSION
-  // GEOSX_FORCE_INLINE
-  // GEOSX_HOST_DEVICE
-  // virtual real64 pressureDamageFunction( localIndex const k,
-  //                                        localIndex const q ) const
-  // {
-  //   real64 pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
+// GEOSX_FORCE_INLINE
+// GEOSX_HOST_DEVICE
+// virtual real64 pressureDamageFunction( localIndex const k,
+//                                        localIndex const q ) const
+// {
+//   real64 pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
 
   //   return 0.5*(1 + std::cos( M_PI*pf ));
   // }
@@ -154,7 +154,7 @@ public:
   // virtual real64 pressureDamageFunctionSecondDerivative( real64 const d ) const
   // {
   //   return -0.5*M_PI*M_PI*std::cos( M_PI*d );
-  // }  
+  // }
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
@@ -163,7 +163,7 @@ public:
   {
     //real64 pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
 
-    return (1-m_newDamage( k,q ));
+    return (1-m_newDamage( k, q ));
   }
 
 
@@ -180,7 +180,7 @@ public:
   virtual real64 pressureDamageFunctionSecondDerivative( real64 const d ) const
   {
     return 0.0;
-  }  
+  }
 
 
   GEOSX_FORCE_INLINE
@@ -351,7 +351,7 @@ public:
     /// string/key for sigma_c
     static constexpr char const * criticalStrainEnergyString() { return "criticalStrainEnergy"; }
     /// string/key for the Biot coefficient
-    static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }    
+    static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
   };
 
 
@@ -359,7 +359,7 @@ protected:
   array2d< real64 > m_newDamage;
   array3d< real64 > m_damageGrad;
   array2d< real64 > m_strainEnergyDensity;
-  array2d< real64 > m_volStrain; 
+  array2d< real64 > m_volStrain;
   real64 m_lengthScale;
   real64 m_criticalFractureEnergy;
   real64 m_criticalStrainEnergy;

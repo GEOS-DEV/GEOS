@@ -41,10 +41,10 @@ public:
                        real64 const & inputLengthScale,
                        real64 const & inputCriticalFractureEnergy,
                        real64 const & inputcriticalStrainEnergy,
-                       arrayView1d< real64 > const & inputBiotCoefficient,                       
+                       arrayView1d< real64 > const & inputBiotCoefficient,
                        PARAMS && ... baseParams ):
     DamageUpdates< UPDATE_BASE >( inputDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputLengthScale,
-                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputBiotCoefficient, 
+                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputBiotCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
 

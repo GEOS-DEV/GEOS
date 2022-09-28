@@ -999,22 +999,22 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
   {
     GEOSX_UNUSED_VAR( dt );
-    if (m_pressureEffectsFlag == 1) //add background pressure effects
-    { 
-          assemblyLaunch< constitutive::DamageBase,
-                          solidMechanicsLagrangianFEMKernels::QuasiStaticPressureFactory >( domain,
-                                                                                            dofManager,
-                                                                                            localMatrix,
-                                                                                            localRhs );
+    if( m_pressureEffectsFlag == 1 ) //add background pressure effects
+    {
+      assemblyLaunch< constitutive::DamageBase,
+                      solidMechanicsLagrangianFEMKernels::QuasiStaticPressureFactory >( domain,
+                                                                                        dofManager,
+                                                                                        localMatrix,
+                                                                                        localRhs );
     }
     else
     { // standard quasi-static run
-    assemblyLaunch< constitutive::SolidBase,
-                    solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
-                                                                              dofManager,
-                                                                              localMatrix,
-                                                                              localRhs );
-    }                                                                         
+      assemblyLaunch< constitutive::SolidBase,
+                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
+                                                                                dofManager,
+                                                                                localMatrix,
+                                                                                localRhs );
+    }
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {

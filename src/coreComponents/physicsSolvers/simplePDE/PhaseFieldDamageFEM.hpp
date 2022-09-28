@@ -151,7 +151,7 @@ public:
     return m_damageName;
   }
 
-  void setPressureEffects() 
+  void setPressureEffects()
   {
     m_pressureEffectsFlag = 1;
   }
@@ -164,7 +164,7 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
-  integer m_pressureEffectsFlag; 
+  integer m_pressureEffectsFlag;
 
 #if 0 //if this still pass the tests, we can get rid of this guy
   array1d< real64 > m_coeff; //can probably get rid of this

@@ -62,8 +62,8 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
 
   registerWrapper( viewKeyStruct::pressureEffectsString(), &m_pressureEffects ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue(0).
-    setDescription( "consider background pressure effects (matrix and fracture pressures)" );  
+    setDefaultValue( 0 ).
+    setDescription( "consider background pressure effects (matrix and fracture pressures)" );
 
 }
 
@@ -82,14 +82,16 @@ void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
         setDescription( "Total Mean Stress" );
       elementSubRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() ).
         setDescription( "Total Mean Stress" );
-      if (m_pressureEffects)
+      if( m_pressureEffects )
       {
         //register fake pressures for testing purposes
         elementSubRegion.template registerWrapper< array1d< real64 > >( "hardCodedPMatrixName" ).
-        setDescription( "matrix pressure field for testing purposes only" );
+          setPlotLevel( PlotLevel::LEVEL_1 ).
+          setDescription( "matrix pressure field for testing purposes only" );
         elementSubRegion.template registerWrapper< array1d< real64 > >( "hardCodedPFractureName" ).
-        setDescription( "fracture pressure field for testing purposes only" );
-      }  
+          setPlotLevel( PlotLevel::LEVEL_1 ).
+          setDescription( "fracture pressure field for testing purposes only" );
+      }
     } );
   } );
 }
@@ -235,11 +237,12 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
   PhaseFieldDamageFEM &
   damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
 
-  if (m_pressureEffects == 1) //this will add background pressure effects to solid and damage solvers - must be done before assemble routine
+  if( m_pressureEffects == 1 ) //this will add background pressure effects to solid and damage solvers - must be done before assemble
+                               // routine
   {
     solidSolver.setPressureEffects();
     damageSolver.setPressureEffects();
-    imposeFakeBackgroundPressures(domain);
+    imposeFakeBackgroundPressures( domain );
   }
 
   damageSolver.setupSystem( domain,
@@ -311,7 +314,7 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
 
     if( m_pressureEffects )
     {
-      mapDamageAndGradientToQuadrature( domain );  
+      mapDamageAndGradientToQuadrature( domain );
     }
     else
     {

@@ -18,7 +18,7 @@
 
 #include "PhaseFieldDamageFEM.hpp"
 #include "PhaseFieldDamageFEMKernels.hpp"
-#include "PhaseFieldDamagePressureFEMKernels.hpp" 
+#include "PhaseFieldDamagePressureFEMKernels.hpp"
 #include <math.h>
 #include <vector>
 
@@ -229,7 +229,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
     localMatrix.zero();
     localRhs.zero();
 
-    if (m_pressureEffectsFlag == 1)
+    if( m_pressureEffectsFlag == 1 )
     {
       //use pressurized phase-field kernels
       PhaseFieldDamagePressureKernelFactory kernelFactory( dofIndex,
@@ -246,16 +246,16 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                               regionNames,
                                                               this->getDiscretizationName(),
                                                               viewKeyStruct::solidModelNamesString(),
-                                                              kernelFactory );                                                           
+                                                              kernelFactory );
     }
     else //use standard phase-field kernels
-    { 
+    {
       PhaseFieldDamageKernelFactory kernelFactory( dofIndex,
-                                                 dofManager.rankOffset(),
-                                                 localMatrix,
-                                                 localRhs,
-                                                 m_damageName,
-                                                 m_localDissipationOption=="Linear" ? 1 : 2 );
+                                                   dofManager.rankOffset(),
+                                                   localMatrix,
+                                                   localRhs,
+                                                   m_damageName,
+                                                   m_localDissipationOption=="Linear" ? 1 : 2 );
 
       finiteElement::
         regionBasedKernelApplication< parallelDevicePolicy<>,
@@ -264,9 +264,9 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                               regionNames,
                                                               this->getDiscretizationName(),
                                                               viewKeyStruct::solidModelNamesString(),
-                                                              kernelFactory );                                                    
+                                                              kernelFactory );
     }
-   
+
 
   } );
 }
