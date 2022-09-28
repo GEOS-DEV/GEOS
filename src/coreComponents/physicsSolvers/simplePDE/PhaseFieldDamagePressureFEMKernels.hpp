@@ -357,6 +357,7 @@ public:
         detJxW );
 
     }
+    //real64 integrandTerm[6] = {(2*Gc*ell/c0), (2*Gc*ell/c0), (2*Gc*ell/c0), 0.0, 0.0, 0.0};//use this to test H1 bilinear form with 3x3 tensor
     BilinearFormUtilities::compute< damageTestSpace,
                                     damageTrialSpace,
                                     DifferentialOperator::Gradient,
@@ -367,6 +368,11 @@ public:
       (2*Gc*ell/c0),
       dNdX,
       detJxW );
+      // stack.localJacobian,//use this to test H1 bilinear form with 3x3 tensor
+      // dNdX,
+      // integrandTerm,
+      // dNdX,
+      // detJxW );
 
   }
 

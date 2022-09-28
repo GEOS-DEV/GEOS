@@ -293,7 +293,7 @@ struct Helper< PDEUtilities::FunctionSpace::H1,
     {
       for( int b = 0; b < numTrialDOF; ++b )
       {
-        //must verify voigt notation and order of indices in dNvdX and dNudX
+        //this is working in the trivial case where A is diagonal, but I haven't tested it in general
         mat[a][b] = mat[a][b] + dNvdX[a][0] * A[0] * dNudX[b][0] * weight; //A11
         mat[a][b] = mat[a][b] + dNvdX[a][1] * A[1] * dNudX[b][1] * weight; //A22
         mat[a][b] = mat[a][b] + dNvdX[a][2] * A[2] * dNudX[b][2] * weight; //A33
