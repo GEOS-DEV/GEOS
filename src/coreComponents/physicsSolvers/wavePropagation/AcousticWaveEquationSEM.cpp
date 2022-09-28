@@ -985,7 +985,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
       p_dt2.move( MemorySpace::host, false );
       int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-      std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber+1, rank );
+      std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
       std::ofstream wf( fileName, std::ios::out | std::ios::binary );
       GEOSX_THROW_IF( !wf,
                       "Could not open file "<< fileName << " for writting",
