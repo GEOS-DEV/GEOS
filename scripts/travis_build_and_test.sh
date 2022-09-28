@@ -75,15 +75,15 @@ fi
 # "Make" target check (builds geosx executable target only if true)
 # Use one process to prevent out-of-memory error
 if [[ "$*" == *--build-exe-only* ]]; then
-  or_die make -j $(nproc) geosx VERBOSE=0
+  or_die make -j $(nproc) geosx
 else
-  or_die make -j $(nproc) VERBOSE=0
+  or_die make -j $(nproc)
 
   # Verbosity check for installation to prevent hitting Travis log limit
   if [[ "$*" == *--reduce-install-logs* ]]; then
     or_die make install
   else
-    or_die make install VERBOSE=1
+    or_die make install
   fi
 fi
 
