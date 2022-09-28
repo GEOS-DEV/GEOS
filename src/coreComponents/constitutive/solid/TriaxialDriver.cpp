@@ -104,14 +104,14 @@ void TriaxialDriver::postProcessInput()
 
   for( integer n=0; n<length; ++n )
   {
-    m_table( n, TIME ) = minTime + n*dt;
+    m_table( n, static_cast< localIndex >(TIME) ) = minTime + n*dt;
   }
 
   // initial stress is always isotropic
 
-  m_table( 0, SIG0 ) = m_initialStress;
-  m_table( 0, SIG1 ) = m_initialStress;
-  m_table( 0, SIG2 ) = m_initialStress;
+  m_table( 0, static_cast< localIndex >(SIG0) ) = m_initialStress;
+  m_table( 0, static_cast< localIndex >(SIG1) ) = m_initialStress;
+  m_table( 0, static_cast< localIndex >(SIG2) ) = m_initialStress;
 
   // preset certain columns depending on testing mode:
   //   mixedControl .... specified axial strain and radial stress
@@ -120,37 +120,37 @@ void TriaxialDriver::postProcessInput()
 
   for( integer n=0; n<length; ++n )
   {
-    real64 axi = axialFunction.evaluate( &m_table( n, TIME ) );
-    real64 rad = radialFunction.evaluate( &m_table( n, TIME ) );
+    real64 axi = axialFunction.evaluate( &m_table( n, static_cast< localIndex >(TIME) ) );
+    real64 rad = radialFunction.evaluate( &m_table( n, static_cast< localIndex >(TIME) ) );
 
     if( m_mode == "mixedControl" )
     {
-      m_table( n, EPS0 ) = axi;
-      m_table( n, SIG1 ) = rad;
-      m_table( n, SIG2 ) = rad;
+      m_table( n, static_cast< localIndex >(EPS0) ) = axi;
+      m_table( n, static_cast< localIndex >(SIG1) ) = rad;
+      m_table( n, static_cast< localIndex >(SIG2) ) = rad;
     }
     else if( m_mode == "strainControl" )
     {
-      m_table( n, EPS0 ) = axi;
-      m_table( n, EPS1 ) = rad;
-      m_table( n, EPS2 ) = rad;
+      m_table( n, static_cast< localIndex >(EPS0) ) = axi;
+      m_table( n, static_cast< localIndex >(EPS1) ) = rad;
+      m_table( n, static_cast< localIndex >(EPS2) ) = rad;
     }
     else if( m_mode == "stressControl" )
     {
-      m_table( n, SIG0 ) = axi;
-      m_table( n, SIG1 ) = rad;
-      m_table( n, SIG2 ) = rad;
+      m_table( n, static_cast< localIndex >(SIG0) ) = axi;
+      m_table( n, static_cast< localIndex >(SIG1) ) = rad;
+      m_table( n, static_cast< localIndex >(SIG2) ) = rad;
     }
   }
 
   // double check the initial stress value is consistent with any function values that
   // may overwrite it.
 
-  GEOSX_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG0 ), 1e-6 ),
+  GEOSX_THROW_IF( !isEqual( m_initialStress, m_table( 0, static_cast< localIndex >(SIG0) ), 1e-6 ),
                   "Initial stress values indicated by initialStress and axialFunction(time=0) appear inconsistent",
                   InputError );
 
-  GEOSX_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG1 ), 1e-6 ),
+  GEOSX_THROW_IF( !isEqual( m_initialStress, m_table( 0, static_cast< localIndex >(SIG1) ), 1e-6 ),
                   "Initial stress values indicated by initialStress and radialFunction(time=0) appear inconsistent",
                   InputError );
 }
@@ -170,18 +170,18 @@ void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real
 
     for( integer n = 1; n <= numSteps; ++n )
     {
-      strainIncrement[0] = table( n, EPS0 )-table( n-1, EPS0 );
-      strainIncrement[1] = table( n, EPS1 )-table( n-1, EPS1 );
-      strainIncrement[2] = table( n, EPS2 )-table( n-1, EPS2 );
+      strainIncrement[0] = table( n, static_cast< localIndex >(EPS0) )-table( n-1, static_cast< localIndex >(EPS0) );
+      strainIncrement[1] = table( n, static_cast< localIndex >(EPS1) )-table( n-1, static_cast< localIndex >(EPS1) );
+      strainIncrement[2] = table( n, static_cast< localIndex >(EPS2) )-table( n-1, static_cast< localIndex >(EPS2) );
 
       updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
       updates.saveConvergedState ( ei, 0 );
 
-      table( n, SIG0 ) = stress[0];
-      table( n, SIG1 ) = stress[1];
-      table( n, SIG2 ) = stress[2];
+      table( n, static_cast< localIndex >(SIG0) ) = stress[0];
+      table( n, static_cast< localIndex >(SIG1) ) = stress[1];
+      table( n, static_cast< localIndex >(SIG2) ) = stress[2];
 
-      table( n, ITER ) = 0;
+      table( n, static_cast< localIndex >(ITER) ) = 0;
     }
   } );
 }
@@ -206,13 +206,13 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
     real64 scale = 0;
     for( integer n = 1; n <= numSteps; ++n )
     {
-      scale += fabs( table( n, SIG0 )) + fabs( table( n, SIG1 )) + fabs( table( n, SIG2 ));
+      scale += fabs( table( n, static_cast< localIndex >(SIG0) )) + fabs( table( n, static_cast< localIndex >(SIG1) )) + fabs( table( n, static_cast< localIndex >(SIG2) ));
     }
     scale = 3 * numSteps / scale;
 
     for( integer n=1; n<=numSteps; ++n )
     {
-      strainIncrement[0] = table( n, EPS0 )-table( n-1, EPS0 );
+      strainIncrement[0] = table( n, static_cast< localIndex >(EPS0) )-table( n-1, static_cast< localIndex >(EPS0) );
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
 
@@ -224,7 +224,7 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
       {
         updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
 
-        norm = scale*fabs( stress[1]-table( n, SIG1 ) );
+        norm = scale*fabs( stress[1]-table( n, static_cast< localIndex >(SIG1) ) );
 
         if( k == 0 )
         {
@@ -244,7 +244,7 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
         }
         else // newton update
         {
-          deltaStrainIncrement  = (stress[1]-table( n, SIG1 )) / (stiffness[1][1]+stiffness[1][2]);
+          deltaStrainIncrement  = (stress[1]-table( n, static_cast< localIndex >(SIG1) )) / (stiffness[1][1]+stiffness[1][2]);
           strainIncrement[1]   -= deltaStrainIncrement;
           strainIncrement[2]    = strainIncrement[1];
         }
@@ -252,12 +252,12 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
 
       updates.saveConvergedState ( ei, 0 );
 
-      table( n, SIG0 ) = stress[0];
-      table( n, EPS1 ) = table( n-1, EPS1 )+strainIncrement[1];
-      table( n, EPS2 ) = table( n, EPS1 );
+      table( n, static_cast< localIndex >(SIG0) ) = stress[0];
+      table( n, static_cast< localIndex >(EPS1) ) = table( n-1, static_cast< localIndex >(EPS1) )+strainIncrement[1];
+      table( n, static_cast< localIndex >(EPS2) ) = table( n, static_cast< localIndex >(EPS1) );
 
-      table( n, ITER ) = k;
-      table( n, NORM ) = norm;
+      table( n, static_cast< localIndex >(ITER) ) = k;
+      table( n, static_cast< localIndex >(NORM) ) = norm;
 
       if( norm > newtonTol )
       {
@@ -290,7 +290,7 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
     real64 scale = 0;
     for( integer n = 1; n <= numSteps; ++n )
     {
-      scale += fabs( table( n, SIG0 )) + fabs( table( n, SIG1 )) + fabs( table( n, SIG2 ));
+      scale += fabs( table( n, static_cast< localIndex >(SIG0) )) + fabs( table( n, static_cast< localIndex >(SIG1) )) + fabs( table( n, static_cast< localIndex >(SIG2) ));
     }
     scale = 3 * numSteps / scale;
 
@@ -309,8 +309,8 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
       {
         updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
 
-        resid[0] = scale * (stress[0]-table( n, SIG0 ));
-        resid[1] = scale * (stress[1]-table( n, SIG1 ));
+        resid[0] = scale * (stress[0]-table( n, static_cast< localIndex >(SIG0) ));
+        resid[1] = scale * (stress[1]-table( n, static_cast< localIndex >(SIG1) ));
 
         norm = sqrt( resid[0]*resid[0] + resid[1]*resid[1] );
         //  std::cout<<"k= "<<k<<std::endl;
@@ -356,12 +356,12 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
 
       updates.saveConvergedState ( ei, 0 );
 
-      table( n, EPS0 ) = table( n-1, EPS0 )+strainIncrement[0];
-      table( n, EPS1 ) = table( n-1, EPS1 )+strainIncrement[1];
-      table( n, EPS2 ) = table( n, EPS1 );
+      table( n, static_cast< localIndex >(EPS0) ) = table( n-1, static_cast< localIndex >(EPS0) )+strainIncrement[0];
+      table( n, static_cast< localIndex >(EPS1) ) = table( n-1, static_cast< localIndex >(EPS1) )+strainIncrement[1];
+      table( n, static_cast< localIndex >(EPS2) ) = table( n, static_cast< localIndex >(EPS1) );
 
-      table( n, ITER ) = k;
-      table( n, NORM ) = norm;
+      table( n, static_cast< localIndex >(ITER) ) = k;
+      table( n, static_cast< localIndex >(NORM) ) = norm;
 
       if( norm > newtonTol )
       {
@@ -420,9 +420,9 @@ bool TriaxialDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
   arrayView3d< real64, solid::STRESS_USD > stressArray = baseSolid.getStress();
 
-  stressArray( 0, 0, 0 ) = m_table( 0, SIG0 );
-  stressArray( 0, 0, 1 ) = m_table( 0, SIG1 );
-  stressArray( 0, 0, 2 ) = m_table( 0, SIG2 );
+  stressArray( 0, 0, 0 ) = m_table( 0, static_cast< localIndex >(SIG0) );
+  stressArray( 0, 0, 1 ) = m_table( 0, static_cast< localIndex >(SIG1) );
+  stressArray( 0, 0, 2 ) = m_table( 0, static_cast< localIndex >(SIG2) );
 
   baseSolid.saveConvergedState();
 
@@ -471,13 +471,13 @@ void TriaxialDriver::validateResults()
 {
   for( integer n=0; n<m_numSteps; ++n )
   {
-    if( m_table( n, NORM ) > m_newtonTol )
+    if( m_table( n, static_cast< localIndex >(NORM) ) > m_newtonTol )
     {
       GEOSX_LOG_RANK_0( "WARNING: Material driver failed to converge at loadstep " << n << "." );
       GEOSX_LOG_RANK_0( "         This usually indicates the material has completely failed and/or the loading state is inadmissible." );
       GEOSX_LOG_RANK_0( "         In rare cases, it may indicate a problem in the material model implementation." );
 
-      for( integer col=EPS0; col<ITER; ++col )
+      for( integer col=static_cast< localIndex >(EPS0); col<static_cast< localIndex >(ITER); ++col )
       {
         m_table( n, col ) = 0;
       }
@@ -551,7 +551,7 @@ void TriaxialDriver::compareWithBaseline()
       GEOSX_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
-      if( col < ITER ) // only compare "real" data columns
+      if( col < static_cast< localIndex >(ITER) ) // only compare "real" data columns
       {
         error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
         GEOSX_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1

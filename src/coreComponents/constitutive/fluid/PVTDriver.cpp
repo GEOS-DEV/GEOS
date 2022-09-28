@@ -108,9 +108,9 @@ void PVTDriver::postProcessInput()
 
   for( integer n=0; n<m_numSteps+1; ++n )
   {
-    m_table( n, TIME ) = minTime + n*dt;
-    m_table( n, PRES ) = pressureFunction.evaluate( &m_table( n, TIME ) );
-    m_table( n, TEMP ) = temperatureFunction.evaluate( &m_table( n, TIME ) );
+    m_table( n, static_cast< localIndex >(TIME) ) = minTime + n*dt;
+    m_table( n, static_cast< localIndex >(PRES) ) = pressureFunction.evaluate( &m_table( n, static_cast< localIndex >(TIME) ) );
+    m_table( n, static_cast< localIndex >(TEMP) ) = temperatureFunction.evaluate( &m_table( n, static_cast< localIndex >(TIME) ) );
   }
 }
 
