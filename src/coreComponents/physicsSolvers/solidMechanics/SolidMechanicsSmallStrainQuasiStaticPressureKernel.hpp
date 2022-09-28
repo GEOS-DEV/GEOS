@@ -350,7 +350,7 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
-    constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
+    //constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {
@@ -399,7 +399,7 @@ public:
   {
 
     real64 const biotCoefficient = m_constitutiveUpdate.getBiotCoefficient( k );
-    real64 const damage = m_constitutiveUpdate.getDamage( k, q );
+    //real64 const damage = m_constitutiveUpdate.getDamage( k, q );
     real64 const pressureDamageFunction = m_constitutiveUpdate.pressureDamageFunction( k, q );
     // GEOSX_LOG_RANK_0("biot: "<<biotCoefficient<<"\n");
     // GEOSX_LOG_RANK_0("pm: "<<m_pressureMatrix[k]<<"\n");

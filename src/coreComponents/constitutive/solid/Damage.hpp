@@ -124,6 +124,7 @@ public:
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( real64 const d ) const
+  //virtual real64 getDegradationSecondDerivative( real64 const GEOSX_UNUSED_PARAM(d) ) const
   {
     GEOSX_UNUSED_VAR( d );
     return 2.0;
@@ -171,6 +172,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual real64 pressureDamageFunctionDerivative( real64 const d ) const
   {
+    GEOSX_UNUSED_VAR( d );
     return -1.0;
   }
 
@@ -179,6 +181,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual real64 pressureDamageFunctionSecondDerivative( real64 const d ) const
   {
+    GEOSX_UNUSED_VAR( d );
     return 0.0;
   }
 
