@@ -19,9 +19,12 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
 
+#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+
 
 namespace geosx
 {
@@ -109,6 +112,69 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
+  virtual void
+  implicitStepComplete( real64 const & time_n,
+                        real64 const & dt,
+                        DomainPartition & domain ) override
+  { 
+    CoupledSolver< SolidMechanicsLagrangianFEM, CompositionalMultiphaseBase > :: implicitStepComplete(time_n, dt, domain);
+
+    if( m_stabilizationType == StabilizationType::Global )
+    {
+
+       // Step 1: we loop over the regions where stabilization is active and collect their name
+    
+       set< string > regionFilter;
+       for( string const & regionName : m_stabilizationRegionNames )
+       {
+         regionFilter.insert( regionName );
+       }
+
+       // Step 2: loop over the target regions of the solver, and tag the elements belonging to stabilization regions
+       forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  arrayView1d< string const > const & targetRegionNames )
+       {
+         // keep only the target regions that are in the filter
+         array1d< string > filteredTargetRegionNames;
+         filteredTargetRegionNames.reserve( targetRegionNames.size() );
+
+         for( string const & targetRegionName : targetRegionNames )
+         {
+           if( regionFilter.count( targetRegionName ) )
+           {
+             filteredTargetRegionNames.emplace_back( targetRegionName );
+           }
+         }
+
+         // loop over the elements and make stabilization active
+         mesh.getElemManager().forElementSubRegions( filteredTargetRegionNames.toViewConst(), [&]( localIndex const,
+                                                                                                ElementSubRegionBase & subRegion )
+
+         {
+           arrayView1d< real64 > const elementStabConstant = subRegion.getExtrinsicData< extrinsicMeshData::flow::elementStabConstant >();
+        
+           geosx::constitutive::CoupledSolidBase const & porousSolid =
+           getConstitutiveModel< geosx::constitutive::CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );
+
+           arrayView1d< const real64 > const bulkModulus = porousSolid.getBulkModulus();
+           arrayView1d< const real64 > const shearModulus = porousSolid.getShearModulus();
+           arrayView1d< const real64 > const biotCoefficient = porousSolid.getBiotCoefficient();
+
+           forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const ei )
+           {
+            real64 bM = bulkModulus[ei];
+            real64 sM = shearModulus[ei];
+            real64 bC = biotCoefficient[ei];
+            elementStabConstant[ei] = m_stabilizationMultiplier * 9.0 * (bC * bC) / (32.0 * (10.0 * sM / 3.0 + bM));
+           } );
+         } );
+ 
+       } );
+    
+    } 
+  }
+
   /**@}*/
 
   enum class StabilizationType : integer
@@ -130,6 +196,9 @@ protected:
 
     /// Names of the regions where the stabilization is applied
     constexpr static char const * stabilizationRegionNamesString() { return "stabilizationRegionNames"; }
+
+    /// Multiplier on stabilization
+    constexpr static char const * stabilizationMultiplierString() { return "stabilizationMultiplier"; }
   };
 
   virtual void initializePreSubGroups() override;
@@ -141,6 +210,9 @@ protected:
 
   /// Names of the regions where the stabilization is applied
   array1d< string > m_stabilizationRegionNames;
+
+  /// Multiplier on stabilization constant
+  real64 m_stabilizationMultiplier;
 
 };
 

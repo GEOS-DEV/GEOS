@@ -120,6 +120,11 @@ public:
 
   virtual void initializeState() const override final;
 
+  virtual arrayView1d< real64 const > const getBiotCoefficient() const override final
+  {
+    return m_biotCoefficient.toView();
+  }
+
   using KernelWrapper = BiotPorosityUpdates;
 
   /**

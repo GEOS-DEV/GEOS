@@ -46,6 +46,10 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Regions where stabilization is applied." );
 
+  registerWrapper ( viewKeyStruct::stabilizationMultiplierString(), &m_stabilizationMultiplier ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Constant multiplier of stabilization strength." );
+
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
@@ -75,6 +79,7 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
           m_stabilizationType == StabilizationType::Local )
       {
         subRegion.registerExtrinsicData< extrinsicMeshData::flow::macroElementIndex >( getName() );
+	subRegion.registerExtrinsicData< extrinsicMeshData::flow::elementStabConstant >( getName() );
       }
     } );
   } );
@@ -124,10 +129,23 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
                                                                                                 ElementSubRegionBase & subRegion )
       {
         arrayView1d< integer > const macroElementIndex = subRegion.getExtrinsicData< extrinsicMeshData::flow::macroElementIndex >();
+        arrayView1d< real64 > const elementStabConstant = subRegion.getExtrinsicData< extrinsicMeshData::flow::elementStabConstant >();
+
+        CoupledSolidBase const & porousSolid =
+        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );
+
+        arrayView1d< const real64 > const bulkModulus = porousSolid.getBulkModulus();
+        arrayView1d< const real64 > const shearModulus = porousSolid.getShearModulus();
+        arrayView1d< const real64 > const biotCoefficient = porousSolid.getBiotCoefficient();
 
         forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const ei )
         {
           macroElementIndex[ei] = 1;
+
+          real64 bM = bulkModulus[ei];
+          real64 sM = shearModulus[ei];
+          real64 bC = biotCoefficient[ei];
+          elementStabConstant[ei] = m_stabilizationMultiplier * 9.0 * (bC * bC) / (32.0 * (10.0 * sM / 3.0 + bM)); 
         } );
       } );
     } );

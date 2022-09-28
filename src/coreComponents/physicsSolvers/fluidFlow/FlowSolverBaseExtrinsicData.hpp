@@ -176,6 +176,13 @@ EXTRINSIC_MESH_DATA_TRAIT( bcTemperature,
                            WRITE_AND_READ,
                            "Boundary condition temperature" );
 
+EXTRINSIC_MESH_DATA_TRAIT( elementStabConstant,
+                           "elementStabConstant",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_1,
+                           WRITE_AND_READ,
+                           "Stabilization constant for pressure jump stabilization" );
 
 }
 

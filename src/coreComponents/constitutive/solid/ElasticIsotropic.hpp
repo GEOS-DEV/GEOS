@@ -450,6 +450,16 @@ public:
    */
   arrayView1d< real64 const > const shearModulus() const { return m_shearModulus; }
 
+  virtual arrayView1d< real64 const > getBulkModulus() const override final
+  {
+    return m_bulkModulus;
+  }
+
+  virtual arrayView1d< real64 const > getShearModulus() const override final
+  {
+    return m_shearModulus;
+  }
+
   /**
    * @brief Create a instantiation of the ElasticIsotropicUpdate class
    *        that refers to the data in this.

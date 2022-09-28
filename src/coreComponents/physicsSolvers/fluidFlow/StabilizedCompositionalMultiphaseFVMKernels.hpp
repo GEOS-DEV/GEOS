@@ -66,6 +66,7 @@ public:
 
   using StabCompFlowAccessors =
     StencilAccessors< extrinsicMeshData::flow::macroElementIndex,
+                      extrinsicMeshData::flow::elementStabConstant,
                       extrinsicMeshData::flow::pressure_n >;
 
   using StabMultiFluidAccessors =
@@ -166,6 +167,7 @@ public:
     m_phaseCompFrac_n( stabMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction_n {} ) ),
     m_phaseRelPerm_n( relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm_n {} ) ),
     m_macroElementIndex( stabCompFlowAccessors.get( extrinsicMeshData::flow::macroElementIndex {} ) ),
+    m_elementStabConstant( stabCompFlowAccessors.get( extrinsicMeshData::flow::elementStabConstant {} ) ),
     m_bulkModulus( solidAccessors.get( extrinsicMeshData::solid::bulkModulus {} ) ),
     m_shearModulus( solidAccessors.get( extrinsicMeshData::solid::shearModulus {} ) ),
     m_biotCoefficient( porosityAccessors.get( extrinsicMeshData::porosity::biotCoefficient {} ) )
@@ -244,8 +246,10 @@ public:
 
         stencilMacroElements[i] = m_macroElementIndex[er][esr][ei];
 
-        tauStab = 9.0 * ( m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei] )
-                  / ( 32.0 * ( 10.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei] ) );
+        // tauStab = 9.0 * ( m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei] )
+        //          / ( 32.0 * ( 10.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei] ) );
+
+        tauStab = m_elementStabConstant[er][esr][ei];
 
         dPresGradStab += tauStab * stack.stabTransmissibility[0][i] * (m_pres[er][esr][ei] - m_pres_n[er][esr][ei]); // jump in dp, not p
       }
@@ -307,6 +311,7 @@ protected:
 
   /// Views on the macroelement indices
   ElementViewConst< arrayView1d< integer const > > const m_macroElementIndex;
+  ElementViewConst< arrayView1d< integer const > > const m_elementStabConstant;
 
   /// Views on the rock/porosity properties
   ElementViewConst< arrayView1d< real64 const > > const m_bulkModulus;
