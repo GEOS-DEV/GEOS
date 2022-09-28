@@ -19,6 +19,7 @@ set( common_headers
      TimingMacros.hpp
      TypeDispatch.hpp
      initializeEnvironment.hpp
+     lifoStorage.hpp
    )
 
 #
