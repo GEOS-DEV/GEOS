@@ -225,6 +225,56 @@
       datumPressure="1e7"/>
 
     <FieldSpecification
+      name="initialSigmaChannel_x"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="skeletonChannel_stress"
+      component="0"
+      scale="1e7"/>
+    <FieldSpecification
+      name="initialSigmaChannel_y"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="skeletonChannel_stress"
+      component="1"
+      scale="1e7"/>
+    <FieldSpecification
+      name="initialSigmaChannel_z"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="skeletonChannel_stress"
+      component="2"
+      scale="1e7"/>
+
+    <FieldSpecification
+      name="initialSigmaBarrier_x"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="skeletonBarrier_stress"
+      component="0"
+      scale="1e7"/>
+    <FieldSpecification
+      name="initialSigmaBarrier_y"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="skeletonBarrier_stress"
+      component="1"
+      scale="1e7"/>
+    <FieldSpecification
+      name="initialSigmaBarrier_z"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="skeletonBarrier_stress"
+      component="2"
+      scale="1e7"/>
+    
+    <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"

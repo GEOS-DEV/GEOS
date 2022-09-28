@@ -166,6 +166,31 @@
       fieldName="pressure"
       scale="7.5e6"/>
 
+    <FieldSpecification
+      name="initialSigma_x"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="skeleton_stress"
+      component="0"
+      scale="7.5e6"/>
+    <FieldSpecification
+      name="initialSigma_y"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="skeleton_stress"
+      component="1"
+      scale="7.5e6"/>
+    <FieldSpecification
+      name="initialSigma_z"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="skeleton_stress"
+      component="2"
+      scale="7.5e6"/>
+    
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
     <FieldSpecification
       name="initialComposition_oil"
