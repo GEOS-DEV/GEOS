@@ -40,7 +40,7 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
+      targetRegions="{ Domain, Fracture }"
       inputFluxEstimate="1.0">
     </SinglePhaseFVM>
 
@@ -87,6 +87,11 @@
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
+    
+    <SoloEvent
+      name="outputs0"
+      target="/Outputs/vtkOutput"/>
+
     <PeriodicEvent
       name="solverApplications1"
       beginTime="0.0"
@@ -132,22 +137,22 @@
     <PeriodicEvent
       name="solverApplications6"
       beginTime="60.0"
-      endTime="100.0"
+      endTime="120.0"
       forceDt="8.0"
       target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent
       name="solverApplications7"
-      beginTime="100.0"
+      beginTime="120.0"
       endTime="200.0"
-      forceDt="10.0"
+      forceDt="1.0"
       target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent
       name="solverApplications8"
       beginTime="200.0"
       endTime="400.0"
-      forceDt="20.0"
+      forceDt="5.0"
       target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent

@@ -5,7 +5,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, porousRock, rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
@@ -18,7 +18,7 @@
       name="water"
       defaultDensity="1000"
       defaultViscosity="1.0e-3"
-      referencePressure="0.0"
+      referencePressure="35e6"
       compressibility="4.58e-10"
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
@@ -37,7 +37,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 2.0e-15, 2.0e-15, 2.0e-15 }"/>    
+      permeabilityComponents="{ 2.0e-19, 2.0e-19, 2.0e-19 }"/>    
 
     <ElasticIsotropic
       name="rock"
@@ -91,7 +91,7 @@
       objectPath="ElementRegions"
       fieldName="rock_stress"
       component="0"
-      scale="-55e6"/>
+      scale="-60e6"/>
 
     <FieldSpecification
       name="sigma_yy"
@@ -109,16 +109,7 @@
       objectPath="ElementRegions"
       fieldName="rock_stress"
       component="2"
-      scale="-60e6"/>  
-    
-    <!-- Initial water density  -->
-    <FieldSpecification
-      name="waterDensity"
-      initialCondition="1"
-      setNames="{ fracture }"
-      objectPath="ElementRegions"
-      fieldName="water_density"
-      scale="1000"/>
+      scale="-54e6"/>  
 
     <!-- Initial pressure -->
     <FieldSpecification
@@ -172,7 +163,7 @@
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
-      scale="-3.3"
+      scale="-1"
       functionName="flow_rate"
       setNames="{ source }"/>
   </FieldSpecifications>
@@ -188,8 +179,8 @@
     <TableFunction
       name="flow_rate"
       inputVarNames="{ time }"
-      coordinateFiles="{ tables/flowRate_time.csv }"
-      voxelFile="tables/flowRate.csv"/>        
+      coordinateFiles="{ tables/dfit_penny_flowRate_time.csv }"
+      voxelFile="tables/dfit_penny_flowRate.csv"/>        
   </Functions>
 
   <Tasks>
@@ -218,12 +209,14 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="dfit_pennyShaped"
-      plotLevel="3"
-      parallelThreads="16"/>
+      plotLevel="1"
+      parallelThreads="16"
+      onlyPlotSpecifiedFieldNames="0"
+      fieldNames="{ TotalDisplacement, pressure, elementAperture, elementArea }"/>
 
     <TimeHistory
       name="timeHistoryOutput"
       sources="{/Tasks/pressureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection, /Tasks/areaCollection}"
-      filename="dfit_kgd_output" />  
+      filename="dfit_penny_output" />  
   </Outputs>
 </Problem>

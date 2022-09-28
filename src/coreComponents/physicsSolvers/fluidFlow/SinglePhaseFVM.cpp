@@ -485,8 +485,6 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
                                                                       MeshLevel const & mesh,
                                                                       arrayView1d< string const > const & )
   {
-    std::cout<<mesh.getName()<<std::endl;
-
     ElementRegionManager const & elemManager = mesh.getElemManager();
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
     elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
