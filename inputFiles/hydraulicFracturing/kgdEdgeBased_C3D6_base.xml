@@ -49,7 +49,6 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      discretization="FE1"
       targetRegions="{ Domain }"
       rockToughness="0.707e7"
       mpiCommOrder="1"/>
