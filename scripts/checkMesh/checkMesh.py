@@ -2,11 +2,13 @@ import logging
 import sys
 
 from checks import all_checks
+from parsing import register
 from parsing import all_checks_helpers
 from parsing.cli_parsing import parse
 
 
 def main():
+    register.register()
     args = parse(sys.argv)
     logging.info(f"Checking mesh {args.vtk_input_file}.")
     for check_name, check_options in args.checks.items():
@@ -18,7 +20,7 @@ def main():
         helper = all_checks_helpers[check_name]
         options = helper.parse(check_options)
         result = check(args.vtk_input_file, options)
-        helper.present(options, result)
+        helper.display_results(options, result)
 
 
 if __name__ == '__main__':

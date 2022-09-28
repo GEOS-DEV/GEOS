@@ -3,7 +3,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 import logging
 import sys
-from typing import List, Dict
+from typing import List, Dict, Set
 
 from . import all_checks_helpers
 
@@ -19,6 +19,10 @@ class Arguments:
 
 
 def __get_checks_help_msg() -> str:
+    """
+    Gathers all the doc messages into one string.
+    :return: A string.
+    """
     tmp = []
     for check_name, check_helper in all_checks_helpers.items():
         h = check_name + ": " + check_helper.get_help()
@@ -30,13 +34,26 @@ def __parse_cli_options(s: List[str]) -> Dict[str, str]:
     """
     Parse a command line option into a dict:
     :param s: Ths cli string, e.g. "a=1;b=5"
-    :return:
+    :return: The user options as a dict.
     """
     result = OrderedDict()
     for option in s:
         k, v = option.split(__KV_SEP)
         result[k] = v
     return result
+
+
+def validate_cli_options(check_name: str, valid_keys: Set[str], options: Dict[str, str]):
+    """
+    Checks the user input options and logs if an options is not recognized.
+    :param check_name: The key/name of the check.
+    :param valid_keys: The option keys that are valid for the considered check.
+    :param options: The user options.
+    :return: None
+    :todo: Deal with default options.
+    """
+    invalid_keys = set(options.keys()) - valid_keys
+    logging.warning(f"Key(s) [{', '.join(invalid_keys)}] is (are) not valid option(s) of {check_name}. Ignoring.")
 
 
 def parse(cli_args: List[str]) -> Arguments:
@@ -76,7 +93,7 @@ def parse(cli_args: List[str]) -> Arguments:
         split_check_input = c.split(__OPTIONS_SEP)
         check_name, check_parameters = split_check_input[0], split_check_input[1:]
         if not check_name:
-            logging.error("Check has no name, aborting")
+            logging.critical("Check has no name, aborting")
             sys.exit(1)
         checks[check_name] = __parse_cli_options(check_parameters)
 

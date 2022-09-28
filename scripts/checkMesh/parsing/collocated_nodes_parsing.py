@@ -1,7 +1,10 @@
 import logging
 from typing import List, Dict
 
+from checks import COLLOCATES_NODES
 from checks.collocated_nodes import Options, Result
+
+from . import cli_parsing
 
 __TOLERANCE = "tolerance"
 
@@ -13,10 +16,16 @@ def get_help():
 
 
 def parse_options(options: Dict[str, str]) -> Options:
+    """
+    From the parsed cli options, return the converted options for collocated nodes check.
+    :param options: Parsed cli options.
+    :return: Options instance.
+    """
+    cli_parsing.validate_cli_options(COLLOCATES_NODES, {__TOLERANCE}, options)
     return Options(float(options[__TOLERANCE]))
 
 
-def present_results(options: Options, result: Result):
+def display_results(options: Options, result: Result):
     all_duplicated_nodes = []
     for bucket in result.nodes_buckets:
         for node in bucket:
