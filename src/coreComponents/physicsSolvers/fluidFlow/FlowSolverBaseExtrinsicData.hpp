@@ -168,6 +168,16 @@ EXTRINSIC_MESH_DATA_TRAIT( bcTemperature,
                            WRITE_AND_READ,
                            "Boundary temperature" );
 
+EXTRINSIC_MESH_DATA_TRAIT( transMultiplier,
+                           "permeabilityTransMultiplier",
+                           array1d< real64 >,
+                           1,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "An array that holds the permeability transmissibility multipliers" );
+
+
+
 }
 
 }

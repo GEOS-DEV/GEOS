@@ -39,6 +39,7 @@ namespace compositionalMultiphaseHybridFVMKernels
 
 using namespace constitutive;
 
+
 // struct to specify local and neighbor derivatives
 struct Pos
 {
@@ -988,7 +989,7 @@ namespace internal
 {
 
 template< typename T, typename LAMBDA >
-void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
+void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 {
   static_assert( std::is_integral< T >::value, "KernelLaunchSelectorFaceSwitch: type should be integral" );
 
@@ -1007,29 +1008,39 @@ void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 } // namespace internal
 
 template< typename KERNELWRAPPER, typename IP_TYPE, typename ... ARGS >
-void KernelLaunchSelector( integer numFacesInElem, integer numComps, integer numPhases, ARGS && ... args )
+void simpleKernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
+{
+  internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+  {
+    KERNELWRAPPER::template launch< IP_TYPE, NF() >( std::forward< ARGS >( args )... );
+  } );
+}
+
+
+template< typename KERNELWRAPPER, typename IP_TYPE, typename ... ARGS >
+void kernelLaunchSelector( integer numFacesInElem, integer numComps, integer numPhases, ARGS && ... args )
 {
   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
   if( numPhases == 2 )
   {
     if( numComps == 2 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 2, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 3 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 3, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 4 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 4, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 5 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 5, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else
@@ -1041,22 +1052,22 @@ void KernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
   {
     if( numComps == 2 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 2, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 3 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 3, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 4 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 4, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else if( numComps == 5 )
     {
-      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 5, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else
