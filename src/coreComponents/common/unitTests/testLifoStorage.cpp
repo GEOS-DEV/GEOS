@@ -23,7 +23,7 @@ TEST( LifoStorageTest, LifoStorage )
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
-    for( int i = 0; i < elemCnt; i++ )
+    for( int i = 0; i < (int)elemCnt; i++ )
       array[i] = j*elemCnt+i;
     lifo.push( array );
   }
@@ -31,7 +31,7 @@ TEST( LifoStorageTest, LifoStorage )
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
     lifo.pop( array );
-    for( int i = 0; i < elemCnt; i++ )
+    for( int i = 0; i < (int)elemCnt; i++ )
       assert( array[i] == (totalNumberOfBuffers-j-1)*elemCnt+i );
   }
 

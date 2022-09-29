@@ -19,9 +19,10 @@ set( common_headers
      TimingMacros.hpp
      TypeDispatch.hpp
      initializeEnvironment.hpp
-     lifoStorage.hpp
    )
-
+if ( ENABLE_CUDA )
+  list( APPEND common_headers lifoStorage.hpp )
+endif()
 #
 # Specify all sources
 #

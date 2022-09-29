@@ -5,12 +5,12 @@
 set(gtest_geosx_tests
     testDataTypes.cpp
     testTypeDispatch.cpp
-    testLifoStorage.cpp
    )
 
 set( dependencyList common hdf5 gtest )
 
 if( ENABLE_CUDA )
+  list( APPEND gtest_geosx_tests testLifoStorage.cpp )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
