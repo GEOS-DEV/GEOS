@@ -112,13 +112,6 @@ protected:
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) = 0;
 
   /**
-   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
-   * @param time_n the time of evaluation of the source
-   * @param rhs the right hand side vector to be computed
-   */
-  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs ) = 0;
-
-  /**
    * @brief Compute the sesimic traces for a given variable at each receiver coordinate at a given time, using the field values at the
    * last two timesteps.
    * @param time_n the time corresponding to the field values pressure_n
