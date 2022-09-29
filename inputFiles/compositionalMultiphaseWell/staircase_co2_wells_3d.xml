@@ -33,6 +33,7 @@
       useMass="1">
       <WellControls
         name="wellControls1"
+	logLevel="1"  
         type="producer"
         control="phaseVolRate"
         referenceElevation="12"
@@ -41,6 +42,7 @@
         targetPhaseName="water"/>
       <WellControls
         name="wellControls2"
+	logLevel="1"  
         type="injector"
         control="totalVolRate"
         referenceElevation="12"

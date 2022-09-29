@@ -7,6 +7,8 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Channel }"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
       initialDt="1"
       temperature="300">
       <NonlinearSolverParameters
