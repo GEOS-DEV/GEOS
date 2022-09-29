@@ -4,7 +4,7 @@ from typing import Callable, Dict, Any
 
 @dataclass(frozen=True)
 class CheckHelper:
-    parse: Callable[[Dict[str, str]], Any]
+    parse_cli_options: Callable[[str], Any]
     display_results: Callable[[Any, Any], None]
     get_help: Callable[[None], str]
 

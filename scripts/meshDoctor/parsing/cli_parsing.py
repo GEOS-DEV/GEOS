@@ -2,7 +2,6 @@ import argparse
 from collections import OrderedDict
 from dataclasses import dataclass
 import logging
-import sys
 from typing import List, Dict, Set
 
 from . import all_checks_helpers
@@ -10,6 +9,8 @@ from . import all_checks_helpers
 
 __OPTIONS_SEP = ":"
 __KV_SEP = "="
+
+__VERBOSE_KEY = "verbose"
 
 
 @dataclass(frozen=True)
@@ -30,15 +31,15 @@ def __get_checks_help_msg() -> str:
     return "\n".join(tmp)
 
 
-def __parse_cli_options(s: List[str]) -> Dict[str, str]:
+def parse_cli_option(s: str) -> Dict[str, str]:
     """
-    Parse a command line option into a dict:
-    :param s: Ths cli string, e.g. "a=1;b=5"
-    :return: The user options as a dict.
+    Taking a CLI option string, and converts into a dict.
+    :param s: A string of options like "foo=bar:fizz=buzz".
+    :return: The corresponding {foo:bar, fizz:buzz} dict.
     """
     result = OrderedDict()
-    for option in s:
-        k, v = option.split(__KV_SEP)
+    for opt in s.split(__OPTIONS_SEP):
+        k, v = opt.split(__KV_SEP)
         result[k] = v
     return result
 
@@ -53,7 +54,30 @@ def validate_cli_options(check_name: str, valid_keys: Set[str], options: Dict[st
     :todo: Deal with default options.
     """
     invalid_keys = set(options.keys()) - valid_keys
-    logging.warning(f"Key(s) [{', '.join(invalid_keys)}] is (are) not valid option(s) of {check_name}. Ignoring.")
+    if invalid_keys:
+        if len(invalid_keys) == 1:
+            logging.warning(f"Key \"{invalid_keys.pop()}\" is not a valid option of \"{check_name}\". Ignoring it.")
+        else:
+            logging.warning(f"Keys \"{', '.join(invalid_keys)}\" are not valid options of \"{check_name}\". Ignoring them.")
+
+
+def parse_and_set_verbosity(cli_args: List[str]) -> None:
+    """
+    Parse the verbosity flag only. And sets the logger's level accordingly.
+    :param cli_args: The list of arguments (as strings)
+    :return: None
+    """
+    dummy_verbosity_parser = argparse.ArgumentParser(add_help=None)
+    dummy_verbosity_parser.add_argument('-v',
+                                        '--verbose',
+                                        action='count',
+                                        default=1,
+                                        dest=__VERBOSE_KEY)
+    args = dummy_verbosity_parser.parse_known_args(cli_args[1:])[0]
+    v = vars(args)[__VERBOSE_KEY]
+    verbosity = 50 - (10 * v) if v > 0 else 0
+    logging.getLogger().setLevel(verbosity)
+    logging.info(f"Logger level set to \"{logging.getLevelName(verbosity)}\"")
 
 
 def parse(cli_args: List[str]) -> Arguments:
@@ -62,39 +86,41 @@ def parse(cli_args: List[str]) -> Arguments:
     :param cli_args: The list of arguments (as strings)
     :return: The struct
     """
-    parser = argparse.ArgumentParser(description='Inspects meshes for GEOSX.')
-    parser.add_argument('-i',
-                        '--vtk-input-file',
-                        metavar='VTK_MESH_FILE',
-                        type=str,
-                        required=True,
-                        dest="vtk_input_file")
-    parser.add_argument('-c',
-                        '--check',
-                        metavar='CHECK' + __OPTIONS_SEP + 'opt0' + __KV_SEP + 'val0' + __OPTIONS_SEP + 'opt1' + __KV_SEP + 'val1...',
-                        type=str,
-                        action='extend',
-                        nargs='+',
-                        dest="checks",
-                        required=True,
-                        help=__get_checks_help_msg())
-    parser.add_argument('-v',
-                        '--verbose',
-                        action='count',
-                        default=1,
-                        help="Use -v for warning, -vv for info, -vvv for debug.")
+    vtk_input_file_key = "vtk_input_file"
+
+    parser = argparse.ArgumentParser(description='Inspects meshes for GEOSX.',
+                                     formatter_class=argparse.RawTextHelpFormatter)
+    misc_grp = parser.add_argument_group('main')
+    # Nothing will be done with this verbosity input.
+    # It's only here for the `--help` message.
+    # `parse_verbosity` does the real parsing instead.
+    misc_grp.add_argument('-v',
+                          '--verbose',
+                          action='count',
+                          default=1,
+                          dest=__VERBOSE_KEY,
+                          help="Use -v for warning, -vv for info, -vvv for debug. Defaults to 'ERROR'.")
+    misc_grp.add_argument('-i',
+                          '--vtk-input-file',
+                          metavar='VTK_MESH_FILE',
+                          type=str,
+                          required=True,
+                          dest=vtk_input_file_key)
+    checks_grp = parser.add_argument_group('checks')
+    for check_name, check_helper in all_checks_helpers.items():
+        checks_grp.add_argument('--' + check_name,
+                                metavar='opt0' + __KV_SEP + 'val0' + __OPTIONS_SEP + 'opt1' + __KV_SEP + 'val1...',
+                                type=check_helper.parse_cli_options,
+                                dest=check_name,
+                                required=False,
+                                help=check_helper.get_help())
     args = parser.parse_args(cli_args[1:])
 
-    verbosity = 50 - (10 * args.verbose) if args.verbose > 0 else 0
-    logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=verbosity)
-
+    args = vars(args)  # converting to `dict` allows to access keys by variable.
     checks = OrderedDict()
-    for c in args.checks:
-        split_check_input = c.split(__OPTIONS_SEP)
-        check_name, check_parameters = split_check_input[0], split_check_input[1:]
-        if not check_name:
-            logging.critical("Check has no name, aborting")
-            sys.exit(1)
-        checks[check_name] = __parse_cli_options(check_parameters)
+    for check_name in all_checks_helpers.keys():
+        options = args[check_name]
+        checks[check_name] = options
+        logging.debug(f"Check \"{check_name}\" was found with options \"{options}\".")
 
-    return Arguments(vtk_input_file=args.vtk_input_file, checks=checks)
+    return Arguments(vtk_input_file=args[vtk_input_file_key], checks=checks)
