@@ -86,7 +86,7 @@ public:
    * @param rhsy the right hand side vector to be computed (x-component)
    * @param rhsz the right hand side vector to be computed (x-component)
    */
-  void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhsx, arrayView1d< real64 > const rhsy, arrayView1d< real64 > const rhsz );
+  void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhsx, arrayView1d< real32 > const rhsy, arrayView1d< real32 > const rhsz );
 
   /**
    * TODO: move implementation into WaveSolverBase
@@ -104,9 +104,9 @@ public:
                                    real64 const dt,
                                    real64 const timeSeismo,
                                    localIndex const iSeismo,
-                                   arrayView1d< real64 const > const var_np1,
-                                   arrayView1d< real64 const > const var_n,
-                                   arrayView2d< real64 > varAtReceivers ) override;
+                                   arrayView1d< real32 const > const var_np1,
+                                   arrayView1d< real32 const > const var_n,
+                                   arrayView2d< real32 > varAtReceivers ) override;
 
   /**
    * TODO: move implementation into WaveSolverBase
@@ -119,9 +119,9 @@ public:
    */
   virtual void computeAllSeismoTraces( real64 const time_n,
                                        real64 const dt,
-                                       arrayView1d< real64 const > const var_np1,
-                                       arrayView1d< real64 const > const var_n,
-                                       arrayView2d< real64 > varAtReceivers );
+                                       arrayView1d< real32 const > const var_np1,
+                                       arrayView1d< real32 const > const var_n,
+                                       arrayView2d< real32 > varAtReceivers );
 
 
   /**
@@ -183,7 +183,7 @@ private:
 
 
   /// save the sismo trace in file
-  void saveSeismo( localIndex iseismo, real64 val, string const & filename ) override;
+  void saveSeismo( localIndex iseismo, real32 val, string const & filename ) override;
 
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
@@ -211,13 +211,13 @@ private:
   array1d< localIndex > m_receiverIsLocal;
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (x-component)
-  array2d< real64 > m_displacementXNp1AtReceivers;
+  array2d< real32 > m_displacementXNp1AtReceivers;
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (y-component)
-  array2d< real64 > m_displacementYNp1AtReceivers;
+  array2d< real32 > m_displacementYNp1AtReceivers;
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (z-component)
-  array2d< real64 > m_displacementZNp1AtReceivers;
+  array2d< real32 > m_displacementZNp1AtReceivers;
 
 };
 
@@ -227,7 +227,7 @@ namespace extrinsicMeshData
 
 EXTRINSIC_MESH_DATA_TRAIT( Displacementx_nm1,
                            "displacementx_nm1",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -235,7 +235,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Displacementx_nm1,
 
 EXTRINSIC_MESH_DATA_TRAIT( Displacementy_nm1,
                            "displacementy_nm1",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -243,7 +243,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Displacementy_nm1,
 
 EXTRINSIC_MESH_DATA_TRAIT( Displacementz_nm1,
                            "displacementz_nm1",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -252,7 +252,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Displacementz_nm1,
 
 EXTRINSIC_MESH_DATA_TRAIT( Displacementx_n,
                            "displacementx_n",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -260,7 +260,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Displacementx_n,
 
 EXTRINSIC_MESH_DATA_TRAIT( Displacementy_n,
                            "displacementy_n",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -268,14 +268,14 @@ EXTRINSIC_MESH_DATA_TRAIT( Displacementy_n,
 
 EXTRINSIC_MESH_DATA_TRAIT( Displacementz_n,
                            "displacementz_n",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
                            "z-component of displacement at time n." );
 EXTRINSIC_MESH_DATA_TRAIT( Displacementx_np1,
                            "displacementx_np1",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
@@ -283,7 +283,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Displacementx_np1,
 
 EXTRINSIC_MESH_DATA_TRAIT( Displacementy_np1,
                            "displacementy_np1",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
@@ -291,7 +291,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Displacementy_np1,
 
 EXTRINSIC_MESH_DATA_TRAIT( Displacementz_np1,
                            "displacementz_np1",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
@@ -299,7 +299,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Displacementz_np1,
 
 EXTRINSIC_MESH_DATA_TRAIT( ForcingRHSx,
                            "rhsx",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -307,7 +307,7 @@ EXTRINSIC_MESH_DATA_TRAIT( ForcingRHSx,
 
 EXTRINSIC_MESH_DATA_TRAIT( ForcingRHSy,
                            "rhsy",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -315,7 +315,7 @@ EXTRINSIC_MESH_DATA_TRAIT( ForcingRHSy,
 
 EXTRINSIC_MESH_DATA_TRAIT( ForcingRHSz,
                            "rhsz",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -323,7 +323,7 @@ EXTRINSIC_MESH_DATA_TRAIT( ForcingRHSz,
 
 EXTRINSIC_MESH_DATA_TRAIT( MassVector,
                            "massVector",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -331,7 +331,7 @@ EXTRINSIC_MESH_DATA_TRAIT( MassVector,
 
 EXTRINSIC_MESH_DATA_TRAIT( DampingVectorx,
                            "dampingVectorx",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -339,7 +339,7 @@ EXTRINSIC_MESH_DATA_TRAIT( DampingVectorx,
 
 EXTRINSIC_MESH_DATA_TRAIT( DampingVectory,
                            "dampingVectory",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -347,7 +347,7 @@ EXTRINSIC_MESH_DATA_TRAIT( DampingVectory,
 
 EXTRINSIC_MESH_DATA_TRAIT( DampingVectorz,
                            "dampingVectorz",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -355,7 +355,7 @@ EXTRINSIC_MESH_DATA_TRAIT( DampingVectorz,
 
 EXTRINSIC_MESH_DATA_TRAIT( StiffnessVectorx,
                            "stiffnessVectorx",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -363,7 +363,7 @@ EXTRINSIC_MESH_DATA_TRAIT( StiffnessVectorx,
 
 EXTRINSIC_MESH_DATA_TRAIT( StiffnessVectory,
                            "stiffnessVectory",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -371,7 +371,7 @@ EXTRINSIC_MESH_DATA_TRAIT( StiffnessVectory,
 
 EXTRINSIC_MESH_DATA_TRAIT( StiffnessVectorz,
                            "stiffnessVectorz",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -379,7 +379,7 @@ EXTRINSIC_MESH_DATA_TRAIT( StiffnessVectorz,
 
 EXTRINSIC_MESH_DATA_TRAIT( MediumVelocityVp,
                            "mediumVelocityVp",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -387,7 +387,7 @@ EXTRINSIC_MESH_DATA_TRAIT( MediumVelocityVp,
 
 EXTRINSIC_MESH_DATA_TRAIT( MediumVelocityVs,
                            "mediumVelocityVs",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -395,7 +395,7 @@ EXTRINSIC_MESH_DATA_TRAIT( MediumVelocityVs,
 
 EXTRINSIC_MESH_DATA_TRAIT( MediumDensity,
                            "mediumDensity",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,

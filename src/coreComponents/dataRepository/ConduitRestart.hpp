@@ -80,6 +80,7 @@ struct conduitTypeInfo< T, std::enable_if_t< std::is_enum< T >::value > > : publ
 
 // Tensor types
 CONDUIT_TYPE_INFO( R1Tensor, CONDUIT_NATIVE_DOUBLE );
+CONDUIT_TYPE_INFO( R1Tensor32, CONDUIT_NATIVE_FLOAT );
 CONDUIT_TYPE_INFO( R2SymTensor, CONDUIT_NATIVE_DOUBLE );
 
 } // namespace internal
