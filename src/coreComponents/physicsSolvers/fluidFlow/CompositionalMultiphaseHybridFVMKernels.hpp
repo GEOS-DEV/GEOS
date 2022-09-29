@@ -1007,12 +1007,12 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 
 } // namespace internal
 
-template< typename KERNELWRAPPER, typename IP_TYPE, typename ... ARGS >
+template< typename KERNELWRAPPER, typename INNER_PRODUCT, typename ... ARGS >
 void simpleKernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
 {
-  internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+  internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NUM_FACES )
   {
-    KERNELWRAPPER::template launch< IP_TYPE, NF() >( std::forward< ARGS >( args )... );
+    KERNELWRAPPER::template launch< INNER_PRODUCT, NUM_FACES() >( std::forward< ARGS >( args )... );
   } );
 }
 

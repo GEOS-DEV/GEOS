@@ -181,9 +181,6 @@ public:
   struct StackVariables
   {
 
-    /**
-     * @brief Constructor for the stack variables
-     */
     GEOSX_HOST_DEVICE
     StackVariables()
       : transMatrix( NUM_FACE, NUM_FACE )
@@ -216,10 +213,10 @@ public:
   {
     stack.cellCenteredEqnRowIndex = m_elemDofNumber[m_er][m_esr][ei] - m_rankOffset;
     stack.elemDofColIndices[0] = m_elemDofNumber[m_er][m_esr][ei];
-    for( integer ifaceLoc = 0; ifaceLoc < NUM_FACE; ++ifaceLoc )
+    for( integer iFaceLoc = 0; iFaceLoc < NUM_FACE; ++iFaceLoc )
     {
-      stack.faceCenteredEqnRowIndex[ifaceLoc] = m_faceDofNumber[m_elemToFaces[ei][ifaceLoc]] - m_rankOffset;
-      stack.faceDofColIndices[ifaceLoc] = m_faceDofNumber[m_elemToFaces[ei][ifaceLoc]];
+      stack.faceCenteredEqnRowIndex[iFaceLoc] = m_faceDofNumber[m_elemToFaces[ei][iFaceLoc]] - m_rankOffset;
+      stack.faceDofColIndices[iFaceLoc] = m_faceDofNumber[m_elemToFaces[ei][iFaceLoc]];
     }
   }
 
@@ -232,18 +229,18 @@ public:
   void computeGradient( localIndex const ei,
                         StackVariables & stack ) const
   {
-    for( integer ifaceLoc = 0; ifaceLoc < NUM_FACE; ++ifaceLoc )
+    for( integer iFaceLoc = 0; iFaceLoc < NUM_FACE; ++iFaceLoc )
     {
       // now in the following nested loop,
-      // we compute the contribution of face jfaceLoc to the one sided total volumetric flux at face iface
-      for( integer jfaceLoc = 0; jfaceLoc < NUM_FACE; ++jfaceLoc )
+      // we compute the contribution of face jFaceLoc to the one sided total volumetric flux at face iFaceLoc
+      for( integer jFaceLoc = 0; jFaceLoc < NUM_FACE; ++jFaceLoc )
       {
         // 1) compute the potential diff between the cell center and the face center
         real64 const ccPres = m_elemPres[ei];
-        real64 const fPres = m_facePres[m_elemToFaces[ei][jfaceLoc]];
+        real64 const fPres = m_facePres[m_elemToFaces[ei][jFaceLoc]];
 
         real64 const ccGravCoef = m_elemGravCoef[ei];
-        real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][jfaceLoc]];
+        real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][jFaceLoc]];
 
         real64 const ccDens = m_elemDens[ei][0];
         real64 const dCcDens_dPres = m_dElemDens_dPres[ei][0];
@@ -265,12 +262,12 @@ public:
         real64 const dPotDif_dFacePres = dPresDif_dFacePres;
 
         // this is going to store T \sum_p \lambda_p (\nabla p - \rho_p g \nabla d)
-        stack.oneSidedVolFlux[ifaceLoc] = stack.oneSidedVolFlux[ifaceLoc]
-                                          + stack.transMatrix[ifaceLoc][jfaceLoc] * potDif;
-        stack.dOneSidedVolFlux_dPres[ifaceLoc] = stack.dOneSidedVolFlux_dPres[ifaceLoc]
-                                                 + stack.transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dPres;
-        stack.dOneSidedVolFlux_dFacePres[ifaceLoc][jfaceLoc] = stack.dOneSidedVolFlux_dFacePres[ifaceLoc][jfaceLoc]
-                                                               + stack.transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dFacePres;
+        stack.oneSidedVolFlux[iFaceLoc] = stack.oneSidedVolFlux[iFaceLoc]
+                                          + stack.transMatrix[iFaceLoc][jFaceLoc] * potDif;
+        stack.dOneSidedVolFlux_dPres[iFaceLoc] = stack.dOneSidedVolFlux_dPres[iFaceLoc]
+                                                 + stack.transMatrix[iFaceLoc][jFaceLoc] * dPotDif_dPres;
+        stack.dOneSidedVolFlux_dFacePres[iFaceLoc][jFaceLoc] = stack.dOneSidedVolFlux_dFacePres[iFaceLoc][jFaceLoc]
+                                                               + stack.transMatrix[iFaceLoc][jFaceLoc] * dPotDif_dFacePres;
       }
     }
   }
@@ -290,16 +287,16 @@ public:
     globalIndex upwDofNumber = 0;
 
     // for each element, loop over the one-sided faces
-    for( integer ifaceLoc = 0; ifaceLoc < NUM_FACE; ++ifaceLoc )
+    for( integer iFaceLoc = 0; iFaceLoc < NUM_FACE; ++iFaceLoc )
     {
 
       // 1) Find if there is a neighbor, and if there is, grab the indices of the neighbor element
       localIndex local[3] = { m_er, m_esr, ei };
       localIndex neighbor[3] = { m_er, m_esr, ei };
-      bool const hasNeighbor =
+      bool const isNeighborFound =
         hybridFVMKernels::CellConnectivity::
           findNeighbor( local,
-                        ifaceLoc,
+                        iFaceLoc,
                         m_elemRegionList,
                         m_elemSubRegionList,
                         m_elemList,
@@ -308,7 +305,7 @@ public:
                         neighbor );
 
       // 2) Upwind the mobility at this face
-      if( stack.oneSidedVolFlux[ifaceLoc] >= 0 || !hasNeighbor )
+      if( stack.oneSidedVolFlux[iFaceLoc] >= 0 || !isNeighborFound )
       {
         upwMobility = m_mob[m_er][m_esr][ei];
         dUpwMobility_dPres = m_dMob_dPres[m_er][m_esr][ei];
@@ -325,17 +322,17 @@ public:
       real64 const dt_upwMobility = m_dt * upwMobility;
 
       // compute the mass flux at the one-sided face plus its derivatives and add the newly computed flux to the sum
-      stack.divMassFluxes = stack.divMassFluxes + dt_upwMobility * stack.oneSidedVolFlux[ifaceLoc];
-      stack.dDivMassFluxes_dElemVars[0] = stack.dDivMassFluxes_dElemVars[0] + m_dt * upwMobility * stack.dOneSidedVolFlux_dPres[ifaceLoc];
-      stack.dDivMassFluxes_dElemVars[ifaceLoc+1] = m_dt * dUpwMobility_dPres * stack.oneSidedVolFlux[ifaceLoc];
-      for( integer jfaceLoc = 0; jfaceLoc < NUM_FACE; ++jfaceLoc )
+      stack.divMassFluxes = stack.divMassFluxes + dt_upwMobility * stack.oneSidedVolFlux[iFaceLoc];
+      stack.dDivMassFluxes_dElemVars[0] = stack.dDivMassFluxes_dElemVars[0] + m_dt * upwMobility * stack.dOneSidedVolFlux_dPres[iFaceLoc];
+      stack.dDivMassFluxes_dElemVars[iFaceLoc+1] = m_dt * dUpwMobility_dPres * stack.oneSidedVolFlux[iFaceLoc];
+      for( integer jFaceLoc = 0; jFaceLoc < NUM_FACE; ++jFaceLoc )
       {
-        stack.dDivMassFluxes_dFaceVars[jfaceLoc] = stack.dDivMassFluxes_dFaceVars[jfaceLoc]
-                                                   + dt_upwMobility * stack.dOneSidedVolFlux_dFacePres[ifaceLoc][jfaceLoc];
+        stack.dDivMassFluxes_dFaceVars[jFaceLoc] = stack.dDivMassFluxes_dFaceVars[jFaceLoc]
+                                                   + dt_upwMobility * stack.dOneSidedVolFlux_dFacePres[iFaceLoc][jFaceLoc];
       }
 
       // collect the relevant dof numbers
-      stack.elemDofColIndices[ifaceLoc+1] = upwDofNumber;
+      stack.elemDofColIndices[iFaceLoc+1] = upwDofNumber;
     }
   }
 
@@ -436,23 +433,23 @@ public:
     globalIndex const dofColIndexElemPres = stack.elemDofColIndices[0];
 
     // for each element, loop over the local (one-sided) faces
-    for( integer ifaceLoc = 0; ifaceLoc < NUM_FACE; ++ifaceLoc )
+    for( integer iFaceLoc = 0; iFaceLoc < NUM_FACE; ++iFaceLoc )
     {
-      if( m_faceGhostRank[m_elemToFaces[ei][ifaceLoc]] < 0 )
+      if( m_faceGhostRank[m_elemToFaces[ei][iFaceLoc]] < 0 )
       {
         // residual
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[stack.faceCenteredEqnRowIndex[ifaceLoc]], stack.oneSidedVolFlux[ifaceLoc] );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[stack.faceCenteredEqnRowIndex[iFaceLoc]], stack.oneSidedVolFlux[iFaceLoc] );
 
         // jacobian -- derivative wrt local cell centered pressure term
-        m_localMatrix.addToRow< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[ifaceLoc],
+        m_localMatrix.addToRow< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
                                                         &dofColIndexElemPres,
-                                                        &stack.dOneSidedVolFlux_dPres[ifaceLoc],
+                                                        &stack.dOneSidedVolFlux_dPres[iFaceLoc],
                                                         1 );
 
         // jacobian -- derivatives wrt face pressure terms
-        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[ifaceLoc],
+        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
                                                                             &stack.faceDofColIndices[0],
-                                                                            stack.dOneSidedVolFlux_dFacePres[ifaceLoc],
+                                                                            stack.dOneSidedVolFlux_dFacePres[iFaceLoc],
                                                                             NUM_FACE );
       }
     }
@@ -588,20 +585,20 @@ public:
     {
       using IP = TYPEOFREF( mimeticInnerProduct );
 
-      internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACE )
+      internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACES )
       {
         ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
           elemManager.constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
         dofNumberAccessor.setName( solverName + "/accessors/" + elemDofKey );
 
-        using kernelType = ElementBasedAssemblyKernel< NUM_FACE, IP >;
+        using kernelType = ElementBasedAssemblyKernel< NUM_FACES, IP >;
         typename kernelType::FlowAccessors flowAccessors( elemManager, solverName );
 
-        ElementBasedAssemblyKernel< NUM_FACE, IP >
+        ElementBasedAssemblyKernel< NUM_FACES, IP >
         kernel( rankOffset, er, esr, lengthTolerance, faceDofKey, nodeManager, faceManager,
                 subRegion, dofNumberAccessor, flowAccessors, fluid, permeability,
                 regionFilter, dt, localMatrix, localRhs );
-        ElementBasedAssemblyKernel< NUM_FACE, IP >::template launch< POLICY >( subRegion.size(), kernel );
+        ElementBasedAssemblyKernel< NUM_FACES, IP >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     } );
   }

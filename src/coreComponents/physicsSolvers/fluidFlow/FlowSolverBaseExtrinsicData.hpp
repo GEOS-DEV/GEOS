@@ -174,7 +174,7 @@ EXTRINSIC_MESH_DATA_TRAIT( transMultiplier,
                            1,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "An array that holds the permeability transmissibility multipliers" );
+                           "Permeability transmissibility multipliers" );
 
 
 
