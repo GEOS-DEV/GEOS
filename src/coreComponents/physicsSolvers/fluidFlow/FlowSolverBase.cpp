@@ -107,6 +107,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
     {
       subRegion.registerExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >( getName() ).
         setApplyDefaultValue( 0.0 );
+      subRegion.registerExtrinsicData< extrinsicMeshData::flow::netToGross >( getName() );
     } );
 
     elemManager.forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,
@@ -342,8 +343,7 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
     RAJA::ReduceMax< parallelDeviceReduce, real64 > targetSetMaxElevation( -1e99 );
     RAJA::ReduceMin< parallelDeviceReduce, real64 > targetSetMinElevation( 1e99 );
 
-    arrayView2d< real64 const > const elemCenter =
-      subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
 
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
@@ -391,8 +391,7 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
                                                   ElementSubRegionBase & subRegion,
                                                   string const & )
     {
-      arrayView1d< integer const > const ghostRank =
-        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       // loop over all the elements of this target set
       RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > localSetSize( 0 );
