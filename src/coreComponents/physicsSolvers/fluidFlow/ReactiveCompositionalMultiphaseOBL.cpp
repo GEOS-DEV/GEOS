@@ -22,7 +22,8 @@
 #include "dataRepository/Group.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
- #include "finiteVolume/FiniteVolumeManager.hpp"
+#include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
+#include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -738,9 +739,6 @@ void ReactiveCompositionalMultiphaseOBL::assembleFluxTerms( real64 const dt,
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
     string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
-      mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
-    elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
     {
@@ -775,15 +773,144 @@ void ReactiveCompositionalMultiphaseOBL::applyBoundaryConditions( real64 const t
 
   // apply pressure boundary conditions.
   applyDirichletBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+
+  // apply flux boundary conditions
+  applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 }
 
-namespace internal
+namespace
 {
-string const bcLogMessage = string( "ReactiveCompositionalMultiphaseOBL {}: at time {}s, " )
-                            + string( "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. " )
-                            + string( "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). " )
-                            + string( "\nThe total number of target elements (including ghost elements) is {}. " )
-                            + string( "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set." );
+char const bcLogMessage[] =
+  "CompositionalMultiphaseBase {}: at time {}s, "
+  "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. "
+  "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). "
+  "\nThe total number of target elements (including ghost elements) is {}. "
+  "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.";
+}
+
+void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
+                                                            real64 const dt,
+                                                            DofManager const & dofManager,
+                                                            DomainPartition & domain,
+                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                            arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+
+  // Step 1: count individual source flux boundary conditions
+
+  std::map< string, localIndex > bcNameToBcId;
+  localIndex bcCounter = 0;
+
+  fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
+  {
+    // collect all the bc names to idx
+    bcNameToBcId[bc.getName()] = bcCounter;
+    bcCounter++;
+  } );
+
+  if( bcCounter == 0 )
+  {
+    return;
+  }
+
+  // Step 2: count the set size for each source flux (each source flux may have multiple target sets)
+
+  array1d< globalIndex > bcAllSetsSize( bcNameToBcId.size() );
+
+  computeSourceFluxSizeScalingFactor( time,
+                                      dt,
+                                      domain,
+                                      bcNameToBcId,
+                                      bcAllSetsSize.toView() );
+
+  // Step 3: we are ready to impose the boundary condition, normalized by the set size
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
+  {
+    fsManager.apply< ElementSubRegionBase >( time + dt,
+                                             mesh,
+                                             FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
+                                             [&]( FieldSpecificationBase const & fs,
+                                                  string const & setName,
+                                                  SortedArrayView< localIndex const > const & targetSet,
+                                                  ElementSubRegionBase & subRegion,
+                                                  string const & )
+    {
+      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
+                                     getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
+                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+      }
+
+      if( targetSet.size() == 0 )
+      {
+        return;
+      }
+
+      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+      // Step 3.1: get the values of the source boundary condition that need to be added to the rhs
+
+      array1d< globalIndex > dofArray( targetSet.size() );
+      array1d< real64 > rhsContributionArray( targetSet.size() );
+      arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
+      localIndex const rankOffset = dofManager.rankOffset();
+
+      // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
+      fs.computeRhsContribution< FieldSpecificationAdd,
+                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
+                                                           time + dt,
+                                                           dt,
+                                                           subRegion,
+                                                           dofNumber,
+                                                           rankOffset,
+                                                           localMatrix,
+                                                           dofArray.toView(),
+                                                           rhsContributionArrayView,
+                                                           [] GEOSX_HOST_DEVICE ( localIndex const )
+      {
+        return 0.0;
+      } );
+
+      // Step 3.2: we are ready to add the right-hand side contributions
+
+      // get the normalizer
+      real64 const sizeScalingFactor = bcAllSetsSize[bcNameToBcId.at( fs.getName())];
+
+      integer const fluidComponentId = fs.getComponent();
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
+                                                           targetSet,
+                                                           rankOffset,
+                                                           ghostRank,
+                                                           fluidComponentId,
+                                                           dofNumber,
+                                                           rhsContributionArrayView,
+                                                           localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
+      {
+        // we need to filter out ghosts here, because targetSet may contain them
+        localIndex const ei = targetSet[a];
+        if( ghostRank[ei] >= 0 )
+        {
+          return;
+        }
+
+        // for all "fluid components", we add the value to the component mass balance equation
+        globalIndex const compMassBalanceRow = dofNumber[ei] - rankOffset + fluidComponentId;
+        localRhs[compMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor;
+      } );
+    } );
+  } );
 }
 
 bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & domain,
@@ -959,7 +1086,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
                                      getName(), time+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
@@ -999,7 +1126,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+        GEOSX_LOG_RANK_0( GEOSX_FMT( bcLogMessage,
                                      getName(), time+dt, FieldSpecificationBase::catalogName(),
                                      fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
@@ -1024,24 +1151,16 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
                                                    ElementSubRegionBase & subRegion,
                                                    string const & )
     {
-      arrayView1d< real64 const > const bcPres =
-        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcPressure::key() );
-      arrayView2d< real64 const, compflow::USD_COMP > const bcCompFrac =
-        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::bcGlobalCompFraction::key() );
-      arrayView1d< real64 const > const bcTemp =
-        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcTemperature::key() );
+      arrayView1d< real64 const > const bcPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::bcPressure >();
+      arrayView2d< real64 const, compflow::USD_COMP > const bcCompFrac = subRegion.getExtrinsicData< extrinsicMeshData::flow::bcGlobalCompFraction >();
+      arrayView1d< real64 const > const bcTemp = subRegion.getExtrinsicData< extrinsicMeshData::flow::bcTemperature >();
 
-      arrayView1d< real64 const > const pres =
-        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-      arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::globalCompFraction::key() );
-      arrayView1d< real64 const > const temp =
-        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
+      arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      arrayView2d< real64 const, compflow::USD_COMP > const compFrac = subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+      arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
 
-      arrayView1d< integer const > const ghostRank =
-        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-      arrayView1d< globalIndex const > const dofNumber =
-        subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
       integer const numComp = m_numComponents;
       integer const enableEnergyBalance = m_enableEnergyBalance;
