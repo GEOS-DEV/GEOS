@@ -94,62 +94,8 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
                   catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
                   InputError );
 
-  if( m_stabilizationType == StabilizationType::Global )
-  {
-    DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  updateStabilizationParams(true, true);
 
-    // Step 1: we loop over the regions where stabilization is active and collect their name
-
-    set< string > regionFilter;
-    for( string const & regionName : m_stabilizationRegionNames )
-    {
-      regionFilter.insert( regionName );
-    }
-
-    // Step 2: loop over the target regions of the solver, and tag the elements belonging to stabilization regions
-
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & targetRegionNames )
-    {
-
-      // keep only the target regions that are in the filter
-      array1d< string > filteredTargetRegionNames;
-      filteredTargetRegionNames.reserve( targetRegionNames.size() );
-      for( string const & targetRegionName : targetRegionNames )
-      {
-        if( regionFilter.count( targetRegionName ) )
-        {
-          filteredTargetRegionNames.emplace_back( targetRegionName );
-        }
-      }
-
-      // loop over the elements and make stabilization active
-      mesh.getElemManager().forElementSubRegions( filteredTargetRegionNames.toViewConst(), [&]( localIndex const,
-                                                                                                ElementSubRegionBase & subRegion )
-      {
-        arrayView1d< integer > const macroElementIndex = subRegion.getExtrinsicData< extrinsicMeshData::flow::macroElementIndex >();
-        arrayView1d< real64 > const elementStabConstant = subRegion.getExtrinsicData< extrinsicMeshData::flow::elementStabConstant >();
-
-        CoupledSolidBase const & porousSolid =
-        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );
-
-        arrayView1d< const real64 > const bulkModulus = porousSolid.getBulkModulus();
-        arrayView1d< const real64 > const shearModulus = porousSolid.getShearModulus();
-        arrayView1d< const real64 > const biotCoefficient = porousSolid.getBiotCoefficient();
-
-        forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const ei )
-        {
-          macroElementIndex[ei] = 1;
-
-          real64 bM = bulkModulus[ei];
-          real64 sM = shearModulus[ei];
-          real64 bC = biotCoefficient[ei];
-          elementStabConstant[ei] = m_stabilizationMultiplier * 9.0 * (bC * bC) / (32.0 * (10.0 * sM / 3.0 + bM)); 
-        } );
-      } );
-    } );
-  }
 }
 
 void MultiphasePoromechanicsSolver::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),

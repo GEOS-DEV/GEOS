@@ -112,15 +112,13 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
-  virtual void
-  implicitStepComplete( real64 const & time_n,
-                        real64 const & dt,
-                        DomainPartition & domain ) override
+  void updateStabilizationParams(bool updateMacro, bool updateTau)
   { 
-    CoupledSolver< SolidMechanicsLagrangianFEM, CompositionalMultiphaseBase > :: implicitStepComplete(time_n, dt, domain);
 
     if( m_stabilizationType == StabilizationType::Global )
     {
+
+       DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
        // Step 1: we loop over the regions where stabilization is active and collect their name
     
@@ -152,6 +150,7 @@ public:
                                                                                                 ElementSubRegionBase & subRegion )
 
          {
+           arrayView1d< integer > const macroElementIndex = subRegion.getExtrinsicData< extrinsicMeshData::flow::macroElementIndex >();
            arrayView1d< real64 > const elementStabConstant = subRegion.getExtrinsicData< extrinsicMeshData::flow::elementStabConstant >();
         
            geosx::constitutive::CoupledSolidBase const & porousSolid =
@@ -163,16 +162,33 @@ public:
 
            forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const ei )
            {
-            real64 bM = bulkModulus[ei];
-            real64 sM = shearModulus[ei];
-            real64 bC = biotCoefficient[ei];
-            elementStabConstant[ei] = m_stabilizationMultiplier * 9.0 * (bC * bC) / (32.0 * (10.0 * sM / 3.0 + bM));
+             if (updateMacro)
+             {
+               macroElementIndex[ei] = 1;
+             }
+
+             if (updateTau)
+             {
+               real64 bM = bulkModulus[ei];
+               real64 sM = shearModulus[ei];
+               real64 bC = biotCoefficient[ei];
+               elementStabConstant[ei] = m_stabilizationMultiplier * 9.0 * (bC * bC) / (32.0 * (10.0 * sM / 3.0 + bM));
+             }
            } );
          } );
  
        } );
     
     } 
+  }
+
+  virtual void
+  implicitStepComplete( real64 const & time_n,
+                        real64 const & dt,
+                        DomainPartition & domain ) override
+  {
+    CoupledSolver< SolidMechanicsLagrangianFEM, CompositionalMultiphaseBase > :: implicitStepComplete(time_n, dt, domain);
+    updateStabilizationParams(false, true);
   }
 
   /**@}*/

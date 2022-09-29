@@ -701,7 +701,7 @@ public:
     GEOSX_ERROR( "getBulkModulus() not implemented for this model" );
 
     array1d< real64 > out;
-    return out.toView();
+    return out.toViewConst();
   }
 
   /**
@@ -714,7 +714,7 @@ public:
     GEOSX_ERROR( "getShearModulus() not implemented for this model" );
 
     array1d< real64 > out;
-    return out.toView();
+    return out.toViewConst();
   }
 
 protected:

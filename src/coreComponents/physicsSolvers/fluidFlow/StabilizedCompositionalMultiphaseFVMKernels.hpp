@@ -74,15 +74,6 @@ public:
                               extrinsicMeshData::multifluid::phaseDensity_n,
                               extrinsicMeshData::multifluid::phaseCompFraction_n >;
 
-  using SolidAccessors =
-    StencilMaterialAccessors< SolidBase,
-                              extrinsicMeshData::solid::bulkModulus,
-                              extrinsicMeshData::solid::shearModulus >;
-
-  using PorosityAccessors =
-    StencilMaterialAccessors< PorosityBase,
-                              extrinsicMeshData::porosity::biotCoefficient >;
-
   using RelPermAccessors =
     StencilMaterialAccessors< RelativePermeabilityBase, extrinsicMeshData::relperm::phaseRelPerm_n >;
 
@@ -126,8 +117,6 @@ public:
    * @param[in] stabMultiFluidAccessor accessor for wrappers registered by the multifluid model needed for stabilization
    * @param[in] capPressureAccessors accessor for wrappers registered by the cap pressure model
    * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
-   * @param[in] solidAccessors accessor for wrappers registered by the solid model needed for stabilization
-   * @param[in] porosityAccessors accessor for wrappers registered by the porosity model needed for stabilization
    * @param[in] relPermAccessors accessor for wrappers registered by the relative permeability model needed for stabilization
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
@@ -144,8 +133,6 @@ public:
                            StabMultiFluidAccessors const & stabMultiFluidAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
-                           SolidAccessors const & solidAccessors,
-                           PorosityAccessors const & porosityAccessors,
                            RelPermAccessors const & relPermAccessors,
                            real64 const & dt,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -167,10 +154,7 @@ public:
     m_phaseCompFrac_n( stabMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction_n {} ) ),
     m_phaseRelPerm_n( relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm_n {} ) ),
     m_macroElementIndex( stabCompFlowAccessors.get( extrinsicMeshData::flow::macroElementIndex {} ) ),
-    m_elementStabConstant( stabCompFlowAccessors.get( extrinsicMeshData::flow::elementStabConstant {} ) ),
-    m_bulkModulus( solidAccessors.get( extrinsicMeshData::solid::bulkModulus {} ) ),
-    m_shearModulus( solidAccessors.get( extrinsicMeshData::solid::shearModulus {} ) ),
-    m_biotCoefficient( porosityAccessors.get( extrinsicMeshData::porosity::biotCoefficient {} ) )
+    m_elementStabConstant( stabCompFlowAccessors.get( extrinsicMeshData::flow::elementStabConstant {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables
@@ -309,14 +293,9 @@ protected:
   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_phaseCompFrac_n;
   ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const m_phaseRelPerm_n;
 
-  /// Views on the macroelement indices
+  /// Views on the macroelement indices and stab constant
   ElementViewConst< arrayView1d< integer const > > const m_macroElementIndex;
   ElementViewConst< arrayView1d< integer const > > const m_elementStabConstant;
-
-  /// Views on the rock/porosity properties
-  ElementViewConst< arrayView1d< real64 const > > const m_bulkModulus;
-  ElementViewConst< arrayView1d< real64 const > > const m_shearModulus;
-  ElementViewConst< arrayView1d< real64 const > > const m_biotCoefficient;
 
 };
 
@@ -374,13 +353,11 @@ public:
       typename KERNEL_TYPE::StabMultiFluidAccessors stabMultiFluidAccessors( elemManager, solverName );
       typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::SolidAccessors solidAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::PorosityAccessors porosityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, stabMultiFluidAccessors,
-                          capPressureAccessors, permeabilityAccessors, solidAccessors, porosityAccessors, relPermAccessors,
+                          capPressureAccessors, permeabilityAccessors, relPermAccessors,
                           dt, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
