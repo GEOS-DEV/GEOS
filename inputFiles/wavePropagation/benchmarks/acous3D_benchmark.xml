@@ -11,9 +11,9 @@
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Region }"
-      sourceCoordinates="{ { 10.05, 10.05, 10.05 } }"
-      timeSourceFrequency="2.0"
-      receiverCoordinates="{ { 11.05, 10.05, 10.05 } }"/>
+      sourceCoordinates="{ { 1000.1, 1000.1, 1000.1 } }"
+      timeSourceFrequency="5.0"
+      receiverCoordinates="{ { 1000.1, 1000.1, 1500.1 } }" />
   </Solvers>
 
   <!-- hexahedral mesh generated internally by GEOSX -->
@@ -21,36 +21,35 @@
     <InternalMesh
       name="mesh"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 20 }"
-      yCoords="{ 0, 20 }"
-      zCoords="{ 0, 20 }"
-      nx="{ 20 }"
-      ny="{ 20 }"
-      nz="{ 20 }"
+      xCoords="{ 0, 2000 }"
+      yCoords="{ 0, 2000 }"
+      zCoords="{ 0, 2000 }"
+      nx="{ 100 }"
+      ny="{ 100 }"
+      nz="{ 100 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
 
   <Geometry>
-    <!-- tag the free surface boundary using box -->
     <Box
       name="zpos"
-      xMin="{ -0.01, -0.01, 19.99 }"
-      xMax="{ 20.01, 0.11, 20.01 }"/>
+      xMin="{ -0.01, -0.01, 1999.99 }"
+      xMax="{ 2000.01, 2000.01, 2000.01 }"/>
   </Geometry>
 
   <Events
-    maxTime="0.2">
-
+    maxTime="1.5">
+    <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.001"
+      forceDt="0.005"
       target="/Solvers/acousticSolver"/>
 
     <!-- generate an output that can be read from VTK -->
     <PeriodicEvent
       name="vtk"
-      timeFrequency="0.1"
+      timeFrequency="0.05"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
 
@@ -65,13 +64,6 @@
       timeFrequency="0.05"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
-
-    <!-- restart event -->
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="0.1"
-      target="/Outputs/restartOutput"/>
-    
   </Events>
 
   <NumericalMethods>
@@ -118,7 +110,7 @@
       initialCondition="1"
       objectPath="ElementRegions/Region/cb"
       fieldName="mediumVelocity"
-      scale="150"
+      scale="1500"
       setNames="{ all }"/>
 
     <!-- 3) The free surface condition the domain -->
@@ -126,6 +118,7 @@
       name="zposFreeSurface"
       objectPath="faceManager"
       fieldName="FreeSurface"
+      scale="0.0"
       setNames="{ zpos }"/>
   </FieldSpecifications>
 
@@ -148,8 +141,5 @@
       name="timeHistoryOutput"
       sources="{ /Tasks/pressureCollection }"
       filename="pressure_history"/>
-
-    <Restart
-      name="restartOutput"/>
   </Outputs>
 </Problem>

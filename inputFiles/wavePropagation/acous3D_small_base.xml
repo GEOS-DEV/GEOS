@@ -11,61 +11,13 @@
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Region }"
-      sourceCoordinates="{ { 1005.0, 1005.0, 1005.0 } }"
+      sourceCoordinates="{ { 55, 55, 55 },
+                           { 10, 10, 14 } }"
       timeSourceFrequency="5.0"
-      receiverCoordinates="{ { 1105, 1005, 1005 } }"
-      outputSeismoTrace="1"/>
+      receiverCoordinates="{ { 5, 5, 11 },
+                             { 5, 50, 11 },
+                             { 5, 95, 11 } }"/>
   </Solvers>
-
-  <!-- hexahedral mesh generated internally by GEOSX -->
-  <Mesh>
-    <InternalMesh
-      name="mesh"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 2000 }"
-      yCoords="{ 0, 2000 }"
-      zCoords="{ 0, 2000 }"
-      nx="{ 100 }"
-      ny="{ 100 }"
-      nz="{ 100 }"
-      cellBlockNames="{ cb }"/>
-  </Mesh>
-
-  <Geometry>
-    <Box
-      name="zpos"
-      xMin="{ -0.01, -0.01, 1999.99 }"
-      xMax="{ 2000.01, 0.11, 2000.01 }"/>
-  </Geometry>
-
-  <Events
-    maxTime="1.5">
-    <!-- trigger the application of the solver -->
-    <!-- control the timestepping here with forceDt -->
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="0.005"
-      target="/Solvers/acousticSolver"/>
-
-    <!-- generate an output that can be read from VTK -->
-    <PeriodicEvent
-      name="vtk"
-      timeFrequency="0.05"
-      targetExactTimestep="0"
-      target="/Outputs/vtkOutput"/>
-
-    <!-- two events to output pressure in an hdf5 file -->
-    <PeriodicEvent
-      name="timeHistoryCollection"
-      timeFrequency="0.005"
-      target="/Tasks/pressureCollection"/>
-
-    <PeriodicEvent
-      name="timeHistoryOutput"
-      timeFrequency="0.05"
-      targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/>
-  </Events>
 
   <NumericalMethods>
     <FiniteElements>
@@ -86,7 +38,7 @@
     <NullModel
       name="nullModel"/>
   </Constitutive>
-
+ 
   <FieldSpecifications>
     <!-- 1) The initial pressure field -->
     <FieldSpecification
@@ -123,11 +75,45 @@
       setNames="{ zpos }"/>
   </FieldSpecifications>
 
+  <Events
+    maxTime="0.2">
+    <!-- trigger the application of the solver -->
+    <!-- control the timestepping here with forceDt -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="0.001"
+      target="/Solvers/acousticSolver"/>
+
+    <!-- generate an output that can be read from VTK -->
+    <PeriodicEvent
+      name="vtk"
+      timeFrequency="0.01"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
+
+    <!-- two events to output pressure in an hdf5 file -->
+    <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="0.001"
+      target="/Tasks/pressureCollection"/>
+
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="0.01"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.1"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
   <!-- collect the pressure values at the nodes -->
   <Tasks>
     <PackCollection
       name="pressureCollection"
-      objectPath="nodeManager"
+      objectPath="/Problem/domain/MeshBodies/mesh/meshLevels/FE1/nodeManager"
       fieldName="pressure_np1"/>
   </Tasks>
 
@@ -142,5 +128,8 @@
       name="timeHistoryOutput"
       sources="{ /Tasks/pressureCollection }"
       filename="pressure_history"/>
+ 
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 </Problem>
