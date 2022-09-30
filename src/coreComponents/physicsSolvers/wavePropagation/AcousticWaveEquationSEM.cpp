@@ -388,8 +388,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
-
-  real32 const a1 = (dt < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
+  real32 const a1 = (std::abs( dt ) < epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
   real32 const a2 = 1.0 - a1;
 
   if( m_nsamplesSeismoTrace > 0 )
