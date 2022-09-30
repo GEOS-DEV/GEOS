@@ -44,7 +44,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Domain }"
       nodeBasedSIF="0"      
       rockToughness="1.2e6"

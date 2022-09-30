@@ -250,10 +250,10 @@ public:
   /**
    * @brief Extract a face-to-nodes map with global indexed for boundary faces.
    * @param[in] nodeManager mesh nodeManager
-   * @param[out] faceToNodes face-to-node map
+   * @return face-to-node map
    */
-  virtual void extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
-                                                                std::vector< std::vector< globalIndex > > & faceToNodes ) override;
+  virtual ArrayOfSets< globalIndex >
+  extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager ) override;
 
   /**
    * @name viewKeyStruct/groupKeyStruct

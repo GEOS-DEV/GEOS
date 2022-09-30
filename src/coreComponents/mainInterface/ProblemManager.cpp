@@ -556,7 +556,7 @@ void ProblemManager::generateMesh()
     if( discretizationPair.first.second!=nullptr ) // this check shouldn't be required
     {
       FiniteElementDiscretization const * const
-      feDiscretization = dynamic_cast< FiniteElementDiscretization const * const >( discretizationPair.first.second );
+      feDiscretization = dynamic_cast< FiniteElementDiscretization const * >( discretizationPair.first.second );
 
       // if the discretization is a finite element discretization
       if( feDiscretization != nullptr )

@@ -540,6 +540,13 @@ Element: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
 
 
+.. _XML_MultiphasePoromechanicsReservoir:
+
+Element: MultiphasePoromechanicsReservoir
+=========================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsReservoir.rst
+
+
 .. _XML_MultivariableTableFunction:
 
 Element: MultivariableTableFunction
@@ -832,6 +839,13 @@ Element: SinglePhasePoromechanics
 Element: SinglePhasePoromechanicsEmbeddedFractures
 ==================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures.rst
+
+
+.. _XML_SinglePhasePoromechanicsReservoir:
+
+Element: SinglePhasePoromechanicsReservoir
+==========================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsReservoir.rst
 
 
 .. _XML_SinglePhaseProppantFVM:
@@ -1643,6 +1657,13 @@ Datastructure: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
 
 
+.. _DATASTRUCTURE_MultiphasePoromechanicsReservoir:
+
+Datastructure: MultiphasePoromechanicsReservoir
+===============================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsReservoir_other.rst
+
+
 .. _DATASTRUCTURE_MultivariableTableFunction:
 
 Datastructure: MultivariableTableFunction
@@ -1937,6 +1958,13 @@ Datastructure: SinglePhasePoromechanicsEmbeddedFractures
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures_other.rst
 
 
+.. _DATASTRUCTURE_SinglePhasePoromechanicsReservoir:
+
+Datastructure: SinglePhasePoromechanicsReservoir
+================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsReservoir_other.rst
+
+
 .. _DATASTRUCTURE_SinglePhaseProppantFVM:
 
 Datastructure: SinglePhaseProppantFVM
@@ -2182,11 +2210,11 @@ Datastructure: WellElementRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegion_other.rst
 
 
-.. _DATASTRUCTURE_WellElementRegionuniqueSubRegion:
+.. _DATASTRUCTURE_WellElementRegionUniqueSubRegion:
 
-Datastructure: WellElementRegionuniqueSubRegion
+Datastructure: WellElementRegionUniqueSubRegion
 ===============================================
-.. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
+.. include:: ../../coreComponents/schema/docs/WellElementRegionUniqueSubRegion_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:

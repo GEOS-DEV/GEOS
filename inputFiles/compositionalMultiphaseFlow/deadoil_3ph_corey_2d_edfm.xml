@@ -8,6 +8,10 @@
       discretization="fluidTPFA"
       temperature="300"
       useMass="0"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
+      maxCompFractionChange="1"
+      maxRelativePressureChange="1"
       targetRegions="{ Domain, Fracture }"
       initialDt="1e4">
       <NonlinearSolverParameters
