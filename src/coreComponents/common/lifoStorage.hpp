@@ -108,11 +108,11 @@ public:
    * A LIFO storage will store numberOfBuffersToStoreDevice buffer on
    * device, numberOfBuffersToStoreHost on host and the rest on disk.
    *
-   * @param name                         Prefix of the files used to save the occurenncy of the saved buffer on disk.
-   * @param elemCnt                      Number of elments in the LvArray we want to store in the LIFO storage.
-   * @param numberOfBuffersToStoreDevice Maximum number of array to store on device memory.
-   * @param numberOfBuffersToStoreHost   Maximum number of array to store on host memory.
-   * @param maxNumberOfBuffers           Number of arrays expected to be stores in the LIFO.
+   * @param name                           Prefix of the files used to save the occurenncy of the saved buffer on disk.
+   * @param elemCnt                        Number of elments in the LvArray we want to store in the LIFO storage.
+   * @param numberOfBuffersToStoreOnDevice Maximum number of array to store on device memory.
+   * @param numberOfBuffersToStoreOnHost   Maximum number of array to store on host memory.
+   * @param maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
    */
   lifoStorage( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
     m_maxNumberOfBuffers( maxNumberOfBuffers ),
@@ -123,14 +123,15 @@ public:
   {
     GEOSX_ASSERT( numberOfBuffersToStoreOnDevice > 0 && numberOfBuffersToStoreOnHost >= 0 && maxNumberOfBuffers >= numberOfBuffersToStoreOnHost * numberOfBuffersToStoreOnDevice );
   }
+
   /**
    * Build a LIFO storage for a given LvArray array.
    *
-   * @param name                         Prefix of the files used to save the occurenncy of the saved buffer on disk.
-   * @param array                        The LvArray that will be store in the LIFO.
-   * @param numberOfBuffersToStoreDevice Maximum number of array to store on device memory.
-   * @param numberOfBuffersToStoreHost   Maximum number of array to store on host memory.
-   * @param maxNumberOfBuffers           Number of arrays expected to be stores in the LIFO.
+   * @param name                           Prefix of the files used to save the occurenncy of the saved buffer on disk.
+   * @param array                          The LvArray that will be store in the LIFO.
+   * @param numberOfBuffersToStoreOnDevice Maximum number of array to store on device memory.
+   * @param numberOfBuffersToStoreOnHost   Maximum number of array to store on host memory.
+   * @param maxNumberOfBuffers             Number of arrays expected to be stores in the LIFO.
    */
   lifoStorage( std::string name, arrayView1d< T > array, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
     lifoStorage( name, array.size(), numberOfBuffersToStoreOnDevice, numberOfBuffersToStoreOnHost, maxNumberOfBuffers ) {}
@@ -154,7 +155,7 @@ public:
     push( array.data(), array.size() );
   }
 
-  /*
+  /**
    * push elemCnt T elements from buffer data into the LIFO.
    *
    * @param data    buffer to store data from in the LIFO.
