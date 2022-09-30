@@ -13,7 +13,7 @@ configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/physicsSolvers/solidMechanics
                 ${CMAKE_BINARY_DIR}/generatedSrc/coreComponents/physicsSolvers/solidMechanics/kernels/policies.hpp )
 
 
-set( kernelNames ExplicitSmallStrain ExplicitFiniteStrain ImplicitSmallStrainQuasiStatic )
+set( kernelNames SolidMechanicsKernels )
 set( subregionList CellElementSubRegion )
 set( solidBaseDispatch "DamageSpectral<ElasticIsotropic>;DamageVolDev<ElasticIsotropic>;Damage<ElasticIsotropic>;DruckerPragerExtended;ModifiedCamClay;DelftEgg;DruckerPrager;ElasticIsotropic;ElasticTransverseIsotropic;ElasticIsotropicPressureDependent;ElasticOrthotropic")
 set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2

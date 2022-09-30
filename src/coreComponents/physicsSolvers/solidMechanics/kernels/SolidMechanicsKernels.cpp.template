@@ -1,6 +1,8 @@
 
 
-#include "physicsSolvers/solidMechanics/kernels/@KERNELNAME@_impl.hpp"
+#include "physicsSolvers/solidMechanics/kernels/ExplicitSmallStrain_impl.hpp"
+#include "physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp"
+#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic_impl.hpp"
 #include "policies.hpp"
 
 
@@ -10,13 +12,35 @@ using namespace constitutive;
 using namespace finiteElement;
 namespace solidMechanicsLagrangianFEMKernels
 {
-template class @KERNELNAME@< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >;
+template class ExplicitSmallStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >;
 
-template real64 @KERNELNAME@< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >::
-kernelLaunch< @KERNELNAME@Policy, 
-              @KERNELNAME@< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > >
+template real64 ExplicitSmallStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >::
+kernelLaunch< ExplicitSmallStrainPolicy, 
+              ExplicitSmallStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > >
               ( localIndex const, 
-                @KERNELNAME@< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > const & );
+                ExplicitSmallStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > const & );
+
+
+
+template class ExplicitFiniteStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >;
+
+template real64 ExplicitFiniteStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >::
+kernelLaunch< ExplicitFiniteStrainPolicy, 
+              ExplicitFiniteStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > >
+              ( localIndex const, 
+                ExplicitFiniteStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > const & );
+
+
+
+
+template class ImplicitSmallStrainQuasiStatic< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >;
+
+template real64 ImplicitSmallStrainQuasiStatic< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >::
+kernelLaunch< ImplicitSmallStrainQuasiStaticPolicy, 
+              ImplicitSmallStrainQuasiStatic< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > >
+              ( localIndex const, 
+                ImplicitSmallStrainQuasiStatic< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > const & );
+
 
 
 }
