@@ -90,7 +90,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setDescription( "Compressive strength from the uniaxial compression test" );
 
   this->registerWrapper( viewKeyStruct::deltaCoefficientString(), &m_deltaCoefficient ).
-    setApplyDefaultValue( 0.0 ).
+    setApplyDefaultValue( -1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Coefficient in the calculation of the external driving force" );
 }
@@ -101,10 +101,10 @@ void Damage< BASE >::postProcessInput()
 {
   BASE::postProcessInput();
 
-  if( m_extDrivingForceFlag != 0 and m_extDrivingForceFlag != 1 )
-  {
-    GEOSX_ERROR( "invalid external driving force flag option - must be 0 or 1" );
-  }
+  GEOSX_ERROR_IF( m_extDrivingForceFlag != 0 && m_extDrivingForceFlag!= 1, "invalid external driving force flag option - must be 0 or 1" );
+  GEOSX_ERROR_IF( m_extDrivingForceFlag == 1 && m_tensileStrength <= 0.0, "tensile strength must be input and positive when the external driving force flag is turned on" );
+  GEOSX_ERROR_IF( m_extDrivingForceFlag == 1 && m_compressStrength <= 0.0, "compressive strength must be input and positive when the external driving force flag is turned on" );
+  GEOSX_ERROR_IF( m_extDrivingForceFlag == 1 && m_deltaCoefficient < 0.0, "delta coefficient must be input and non-negative when the external driving force flag is turned on" );
 }
 
 template< typename BASE >

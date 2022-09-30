@@ -2176,6 +2176,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--irreversibilityFlag => The flag to indicate whether to apply the irreversibility constraint-->
+		<xsd:attribute name="irreversibilityFlag" type="integer" default="0" />
 		<!--localDissipation => Type of local dissipation function. Can be Linear or Quadratic-->
 		<xsd:attribute name="localDissipation" type="string" use="required" />
 		<!--logLevel => Log level-->
@@ -3067,7 +3069,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--degradationLowerLimit => The lower limit of the degradation function-->
 		<xsd:attribute name="degradationLowerLimit" type="real64" default="0" />
 		<!--deltaCoefficient => Coefficient in the calculation of the external driving force-->
-		<xsd:attribute name="deltaCoefficient" type="real64" default="0" />
+		<xsd:attribute name="deltaCoefficient" type="real64" default="-1" />
 		<!--extDrivingForceFlag => Whether to have external driving force. Can be 0 or 1-->
 		<xsd:attribute name="extDrivingForceFlag" type="integer" default="0" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
@@ -3097,7 +3099,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--degradationLowerLimit => The lower limit of the degradation function-->
 		<xsd:attribute name="degradationLowerLimit" type="real64" default="0" />
 		<!--deltaCoefficient => Coefficient in the calculation of the external driving force-->
-		<xsd:attribute name="deltaCoefficient" type="real64" default="0" />
+		<xsd:attribute name="deltaCoefficient" type="real64" default="-1" />
 		<!--extDrivingForceFlag => Whether to have external driving force. Can be 0 or 1-->
 		<xsd:attribute name="extDrivingForceFlag" type="integer" default="0" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
@@ -3127,7 +3129,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--degradationLowerLimit => The lower limit of the degradation function-->
 		<xsd:attribute name="degradationLowerLimit" type="real64" default="0" />
 		<!--deltaCoefficient => Coefficient in the calculation of the external driving force-->
-		<xsd:attribute name="deltaCoefficient" type="real64" default="0" />
+		<xsd:attribute name="deltaCoefficient" type="real64" default="-1" />
 		<!--extDrivingForceFlag => Whether to have external driving force. Can be 0 or 1-->
 		<xsd:attribute name="extDrivingForceFlag" type="integer" default="0" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
