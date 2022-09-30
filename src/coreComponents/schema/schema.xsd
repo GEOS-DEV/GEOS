@@ -8,6 +8,11 @@
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="R1Tensor32">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="R2SymTensor">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
@@ -1036,17 +1041,17 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
 		<!--thicknessMaxXYZ => Thickness of the PML region, at right, back, and bottom sides, used to compute the damping profile-->
-		<xsd:attribute name="thicknessMaxXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<xsd:attribute name="thicknessMaxXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
 		<!--thicknessMinXYZ => Thickness of the PML region, at left, front, and top sides, used to compute the damping profile-->
-		<xsd:attribute name="thicknessMinXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<xsd:attribute name="thicknessMinXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
 		<!--waveSpeedMaxXYZ => Wave speed in the PML, at right, back, and bottom sides, used to compute the damping profile-->
-		<xsd:attribute name="waveSpeedMaxXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<xsd:attribute name="waveSpeedMaxXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
 		<!--waveSpeedMinXYZ => Wave speed in the PML, at left, front, and top sides, used to compute the damping profile-->
-		<xsd:attribute name="waveSpeedMinXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<xsd:attribute name="waveSpeedMinXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
 		<!--xMax => Maximum (x,y,z) coordinates of the inner PML boundaries-->
-		<xsd:attribute name="xMax" type="R1Tensor" default="{1.79769e+308,1.79769e+308,1.79769e+308}" />
+		<xsd:attribute name="xMax" type="R1Tensor32" default="{1.79769e+308,1.79769e+308,1.79769e+308}" />
 		<!--xMin => Minimum (x,y,z) coordinates of the inner PML boundaries-->
-		<xsd:attribute name="xMin" type="R1Tensor" default="{-1.79769e+308,-1.79769e+308,-1.79769e+308}" />
+		<xsd:attribute name="xMin" type="R1Tensor32" default="{-1.79769e+308,-1.79769e+308,-1.79769e+308}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
