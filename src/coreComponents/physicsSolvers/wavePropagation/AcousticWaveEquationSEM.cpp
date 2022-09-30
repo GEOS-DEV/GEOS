@@ -500,7 +500,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView1d< real32 const > const velocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
 
       /// Partial gradient if gradient as to be computed
-      arrayView1d< real64 > grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
+      arrayView1d< real32 > grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
       grad.zero();
 
       finiteElement::FiniteElementBase const &
@@ -612,9 +612,9 @@ void AcousticWaveEquationSEM::initializePML()
 
   /// Get the default thicknesses and wave speeds in the PML regions from the PerfectlyMatchedLayer
   /// field specification parameters (from the xml)
-  real64 minThicknessPML=0;
-  real64 smallestXMinPML=0;
-  real64 largestXMaxPML=0;
+  real32 minThicknessPML=0;
+  real32 smallestXMinPML=0;
+  real32 largestXMaxPML=0;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & fs )
   {
@@ -971,14 +971,14 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
-    arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-    arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+    arrayView1d< real32 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
+    arrayView1d< real32 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+    arrayView1d< real32 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
 
     if( computeGradient )
     {
 
-      arrayView1d< real64 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
+      arrayView1d< real32 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
 
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIdx )
       {
@@ -992,7 +992,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       GEOSX_THROW_IF( !wf,
                       "Could not open file "<< fileName << " for writting",
                       InputError );
-      wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real64 ) );
+      wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
       wf.close();
       GEOSX_THROW_IF( !wf.good(),
                       "An error occured while writting "<< fileName,
@@ -1025,17 +1025,17 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+    arrayView1d< real32 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
 
-    arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
-    arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-    arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+    arrayView1d< real32 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
+    arrayView1d< real32 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+    arrayView1d< real32 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
 
     if( computeGradient )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      arrayView1d< real64 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
+      arrayView1d< real32 > const p_dt2 = nodeManager.getExtrinsicData< extrinsicMeshData::PressureDoubleDerivative >();
 
       int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
       std::string fileName = GEOSX_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
@@ -1045,15 +1045,15 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                       InputError );
       // maybe better with registerTouch()
       p_dt2.move( MemorySpace::host, true );
-      wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real64 ) );
+      wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
       wf.close();
       remove( fileName.c_str() );
 
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                   CellElementSubRegion & elementSubRegion )
       {
-        arrayView1d< real64 const > const velocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
-        arrayView1d< real64 > grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
+        arrayView1d< real32 const > const velocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
+        arrayView1d< real32 > grad = elementSubRegion.getExtrinsicData< extrinsicMeshData::PartialGradient >();
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
         constexpr localIndex numNodesPerElem = 8;
 

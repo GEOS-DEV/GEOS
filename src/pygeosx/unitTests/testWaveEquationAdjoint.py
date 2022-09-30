@@ -271,7 +271,7 @@ def run_adjoint_validation( xmlFile, solverName ):
 
     prod21 = np.dot(np.array(seismos2, float).transpose(), np.array(source1, float))
     prod12 = np.dot(np.array(seismos1, float).transpose(), np.array(source2_rev, float))
-    assert prod21 == pytest.approx(prod12)
+    assert prod21 == pytest.approx( prod12, rel=1e-5 )
 
     pygeosx._finalize()
 
