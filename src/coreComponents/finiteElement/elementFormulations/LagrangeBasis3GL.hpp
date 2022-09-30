@@ -44,6 +44,9 @@ public:
   /// sqrt(5)
   constexpr static real64 sqrt5 = 2.2360679774997897;
 
+  // The quadrature weights associated to the support points
+  constexpr static real64 weights[4] = { 1.0/6.0, 5.0/6.0, 5.0/6.0, 1.0/6.0 };
+  
   /**
    * @brief Calculate the parent coordinates for the xi0 direction, given the
    *   linear index of a support point.

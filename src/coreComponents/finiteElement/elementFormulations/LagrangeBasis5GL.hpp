@@ -58,6 +58,10 @@ public:
   /// sqrt(1/21)
   static constexpr real64 sqrt_inv21 = 0.218217890235992381;
 
+  // The quadrature weights associated to the support points
+  constexpr static real64 weights[6] = { 1.0/15.0, (1.0/30.0)*(14.0-sqrt_7_), (1.0/30.0)*(14.0+sqrt_7_),
+                                         (1.0/30.0)*(14.0+sqrt_7_), (1.0/30.0)*(14.0-sqrt_7_), 1.0/15.0 };
+
   /**
    * @brief Calculate the parent coordinates for the xi0 direction, given the
    *   linear index of a support point. Here we hardcode GL points at order 5.

@@ -41,6 +41,8 @@ public:
   /// The number of support points for the basis
   constexpr static localIndex numSupportPoints = 2;
 
+  // The quadrature weights associated to the support points
+  constexpr static real64 weights[2] = { 1.0, 1.0 };
   /**
    * @brief Calculate the parent coordinates for the xi0 direction, given the
    *   linear index of a support point.
@@ -139,7 +141,6 @@ public:
     GEOSX_UNUSED_VAR( xi );
     return 0.5;
   }
-
 
   /**
    * @struct TensorProduct3D

@@ -13,7 +13,7 @@
  */
 
 /**
- * @file Q1_Hexahedron_Lagrange_GaussLobatto.hpp
+ * @file Qk_Hexahedron_Lagrange_GaussLobatto.hpp
  */
 
 #ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_Q1HEXAHEDRON
@@ -21,7 +21,8 @@
 
 #include "FiniteElementBase.hpp"
 #include "LagrangeBasis1.hpp"
-
+#include "LagrangeBasis3GL.hpp"
+#include "LagrangeBasis5GL.hpp"
 #include <utility>
 
 
@@ -32,48 +33,28 @@ namespace finiteElement
 {
 
 /**
- * This class contains the kernel accessible functions specific to the standard
- * Trilinear Hexahedron finite element with a Gaussian quadrature rule. It is
- * assumed that the indexing for the quadrature points mirrors that of the
- * nodes. Also note that the assumed node ordering is not the standard
- * right-hand-rule used in the literature. Here we use a Cartesian aligned
- * numbering in order to simplify the mapping to the parent coordinates and
- * tensor product indices.
- *
- *                  6                   7                       ____________________
- *                   o-----------------o                       |Node   xi0  xi1  xi2|
- *                  /.                /|                       |=====  ===  ===  ===|
- *                 / .               / |                       | 0     -1   -1   -1 |
- *              4 o-----------------o 5|                       | 1      1   -1   -1 |
- *                |  .              |  |                       | 2     -1    1   -1 |
- *                |  .              |  |                       | 3      1    1   -1 |
- *                |  .              |  |                       | 4     -1   -1    1 |
- *                |  .              |  |                       | 5      1   -1    1 |
- *                |2 o..............|..o 3       xi2           | 6     -1    1    1 |
- *                | ,               | /          |             | 7      1    1    1 |
- *                |,                |/           | / xi1       |____________________|
- *                o-----------------o            |/
- *               0                   1           ------ xi0
- *
- *
+ * This class is the basis class for the hexahedron finite element cells with 
+ * shape functions defined on Gauss-Lobatto quadrature points.
+ * All thedegree-specific versions (Q1, Q3, Q5, ...) are defined at the end of this file. 
  */
-
-class Q1_Hexahedron_Lagrange_GaussLobatto final : public FiniteElementBase
+template< typename GL_BASIS >
+class Qk_Hexahedron_Lagrange_GaussLobatto final : public FiniteElementBase
 {
 public:
   /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = LagrangeBasis1::TensorProduct3D::numSupportPoints;
+  constexpr static localIndex numNodes = GL_BASIS::TensorProduct3D::numSupportPoints;
+
   /// The maximum number of support points per element.
   constexpr static localIndex maxSupportPoints = numNodes;
 
   /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = 8;
-
+  constexpr static localIndex numQuadraturePoints = numNodes*numNodes*numNodes;
+  
   /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
   /** @endcond Doxygen_Suppress */
 
-  virtual ~Q1_Hexahedron_Lagrange_GaussLobatto() override
+  virtual ~Qk_Hexahedron_Lagrange_GaussLobatto() override
   {}
 
   GEOSX_HOST_DEVICE
@@ -129,7 +110,7 @@ public:
   static void calcN( real64 const (&coords)[3],
                      real64 (& N)[numNodes] )
   {
-    LagrangeBasis1::TensorProduct3D::value( coords, N );
+    GL_BASIS::TensorProduct3D::value( coords, N );
   }
 
 
@@ -146,12 +127,12 @@ public:
                      real64 (& N)[numNodes] )
   {
     int qa, qb, qc;
-    LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
-    real64 const qCoords[3] = { LagrangeBasis1::parentSupportCoord( qa ),
-                                LagrangeBasis1::parentSupportCoord( qb ),
-                                LagrangeBasis1::parentSupportCoord( qc ) };
+    GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+    real64 const qCoords[3] = { GL_BASIS::parentSupportCoord( qa ),
+                                GL_BASIS::parentSupportCoord( qb ),
+                                GL_BASIS::parentSupportCoord( qc ) };
 
-    LagrangeBasis1::TensorProduct3D::value( qCoords, N );
+    GL_BASIS::TensorProduct3D::value( qCoords, N );
   }
 
   /**
@@ -229,7 +210,7 @@ public:
                                            real64 ( & J )[3][3] )
   {
     int qa, qb, qc;
-    LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+    GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
     jacobianTransformation( qa, qb, qc, X, J );
     return LvArray::tensorOps::invert< 3 >( J );
   }
@@ -314,6 +295,24 @@ public:
                                       real64 const (&X)[numNodes][3],
                                       real64 ( &J )[3][3] );
 
+  /**
+   * @brief computes the matrix B, defined as J^{-T}J^{-1}/det(J), where J is the Jacobian matrix,
+   *   at the given Gauss-Lobatto point.
+   * @param qa The 1d quadrature point index in xi0 direction (0,1)
+   * @param qb The 1d quadrature point index in xi1 direction (0,1)
+   * @param qc The 1d quadrature point index in xi2 direction (0,1)
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to store the Jacobian
+   * @param B Array to store the matrix B, in Voigt notation
+   */
+  GEOSX_HOST_DEVICE
+  static void
+    computeBMatrix( int const qa,
+                    int const qb,
+                    int const qc,
+                    real64 const (&X)[numNodes][3],
+                    real64 ( & J )[3][3],
+                    real64 ( & B )[6] );
 
   /**
    * @brief Apply a Jacobian transformation matrix from the parent space to the
@@ -337,18 +336,10 @@ public:
 
 private:
   /// The length of one dimension of the parent element.
-  constexpr static real64 parentLength = LagrangeBasis1::parentSupportCoord( 1 ) - LagrangeBasis1::parentSupportCoord( 0 );
+  constexpr static real64 parentLength = GL_BASIS::parentSupportCoord( 1 ) - GL_BASIS::parentSupportCoord( 0 );
 
   /// The volume of the element in the parent configuration.
   constexpr static real64 parentVolume = parentLength*parentLength*parentLength;
-
-  /// The weight of each quadrature point.
-  constexpr static real64 weight = parentVolume / numQuadraturePoints;
-
-  /// The scaling factor specifying the location of the quadrature points
-  /// relative to the origin and the outer extent of the element in the
-  /// parent space.
-  constexpr static real64 quadratureFactor = 0.0;
 
   /**
    * @brief Applies a function inside a generic loop in over the tensor product
@@ -373,57 +364,58 @@ private:
 
 /// @cond Doxygen_Suppress
 
+template< typename GL_BASIS >
 template< typename FUNC, typename ... PARAMS >
 GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
-Q1_Hexahedron_Lagrange_GaussLobatto::supportLoop( int const qa,
-                                                     int const qb,
-                                                     int const qc,
-                                                     FUNC && func,
-                                                     PARAMS &&... params )
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( int const qa,
+                                                  int const qb,
+                                                  int const qc,
+                                                  FUNC && func,
+                                                  PARAMS &&... params )
 {
 
-  real64 const qCoords[3] = { LagrangeBasis1::parentSupportCoord( qa ),
-                              LagrangeBasis1::parentSupportCoord( qb ),
-                              LagrangeBasis1::parentSupportCoord( qc ) };
+  real64 const qCoords[3] = { GL_BASIS::parentSupportCoord( qa ),
+                              GL_BASIS::parentSupportCoord( qb ),
+                              GL_BASIS::parentSupportCoord( qc ) };
 
-  for( int c=0; c<2; ++c )
+  for( int c=0; c<numNodes; ++c )
   {
-    for( int b=0; b<2; ++b )
+    for( int b=0; b<numNodes; ++b )
     {
-      for( int a=0; a<2; ++a )
+      for( int a=0; a<numNodes; ++a )
       {
-        real64 const dNdXi[3] = { LagrangeBasis1::gradient( a, qCoords[0] )*
-                                  LagrangeBasis1::value( b, qCoords[1] )*
-                                  LagrangeBasis1::value( c, qCoords[2] ),
-                                  LagrangeBasis1::value( a, qCoords[0] )*
-                                  LagrangeBasis1::gradient( b, qCoords[1] )*
-                                  LagrangeBasis1::value( c, qCoords[2] ),
-                                  LagrangeBasis1::value( a, qCoords[0] )*
-                                  LagrangeBasis1::value( b, qCoords[1] )*
-                                  LagrangeBasis1::gradient( c, qCoords[2] )};
+        real64 const dNdXi[3] = { GL_BASIS::gradient( a, qCoords[0] )*
+                                  GL_BASIS::value( b, qCoords[1] )*
+                                  GL_BASIS::value( c, qCoords[2] ),
+                                  GL_BASIS::value( a, qCoords[0] )*
+                                  GL_BASIS::gradient( b, qCoords[1] )*
+                                  GL_BASIS::value( c, qCoords[2] ),
+                                  GL_BASIS::value( a, qCoords[0] )*
+                                  GL_BASIS::value( b, qCoords[1] )*
+                                  GL_BASIS::gradient( c, qCoords[2] )};
 
-        localIndex const nodeIndex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
+        localIndex const nodeIndex = GL_BASIS::TensorProduct3D::linearIndex( a, b, c );
 
         func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
       }
     }
   }
-
 }
 
 //*************************************************************************************************
+template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
-Q1_Hexahedron_Lagrange_GaussLobatto::calcGradN( localIndex const q,
-                                                   real64 const (&X)[numNodes][3],
-                                                   real64 (& gradN)[numNodes][3] )
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
+                                                real64 const (&X)[numNodes][3],
+                                                real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
 
   int qa, qb, qc;
-  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
   jacobianTransformation( qa, qb, qc, X, J );
 
@@ -431,12 +423,13 @@ Q1_Hexahedron_Lagrange_GaussLobatto::calcGradN( localIndex const q,
 
   applyTransformationToParentGradients( qa, qb, qc, J, gradN );
 
-  return detJ * weight;
+  return detJ;
 }
 
+template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 Q1_Hexahedron_Lagrange_GaussLobatto::
+real64 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
   calcGradN( localIndex const q,
              real64 const (&X)[numNodes][3],
              StackVariables const & GEOSX_UNUSED_PARAM( stack ),
@@ -451,10 +444,11 @@ real64 Q1_Hexahedron_Lagrange_GaussLobatto::
 #pragma GCC diagnostic ignored "-Wshadow"
 #endif
 
+template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
-Q1_Hexahedron_Lagrange_GaussLobatto::
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
   jacobianTransformation( int const qa,
                           int const qb,
                           int const qc,
@@ -488,12 +482,48 @@ Q1_Hexahedron_Lagrange_GaussLobatto::
   }, X, J );
 }
 
-
-//*************************************************************************************************
+/**
+ * @brief computes the matrix B, defined as J^{-T}J^{-1}/det(J), where J is the Jacobian matrix,
+ *   at the given Gauss-Lobatto point.
+ * @param qa The 1d quadrature point index in xi0 direction (0,1)
+ * @param qb The 1d quadrature point index in xi1 direction (0,1)
+ * @param qc The 1d quadrature point index in xi2 direction (0,1)
+ * @param X Array containing the coordinates of the support points.
+ * @param J Array to store the Jacobian
+ * @param B Array to store the matrix B, in Voigt notation
+ */
+template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
-Q1_Hexahedron_Lagrange_GaussLobatto::
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+  computeBMatrix( int const qa,
+                  int const qb,
+                  int const qc,
+                  real64 const (&X)[numNodes][3],
+                  real64 ( & J )[3][3],
+                  real64 ( & B )[6] )
+{
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  // compute J^T.J/det(J), using Voigt notation for B
+  B[0] = (J[0][0]*J[0][0]+J[1][0]*J[1][0]+J[2][0]*J[2][0])/detJ; 
+  B[1] = (J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1])/detJ; 
+  B[2] = (J[0][2]*J[0][2]+J[1][2]*J[1][2]+J[2][2]*J[2][2])/detJ;
+  B[3] = (J[0][1]*J[0][2]+J[1][1]*J[1][2]+J[2][1]*J[2][2])/detJ;
+  B[4] = (J[0][0]*J[0][2]+J[1][0]*J[1][2]+J[2][0]*J[2][2])/detJ;
+  B[5] = (J[0][0]*J[0][1]+J[1][0]*J[1][1]+J[2][0]*J[2][1])/detJ;
+  // compute J^{1}J^{-T}
+  LvArray::tensorOps::symInvert< 3 >(B); 
+}
+
+
+//*************************************************************************************************
+template< typename GL_BASIS >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
   applyTransformationToParentGradients( int const qa,
                                         int const qb,
                                         int const qc,
@@ -523,17 +553,18 @@ Q1_Hexahedron_Lagrange_GaussLobatto::
 }
 
 
+template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
-Q1_Hexahedron_Lagrange_GaussLobatto::
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
   transformedQuadratureWeight( localIndex const q,
                                real64 const (&X)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
   int qa, qb, qc;
-  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
   jacobianTransformation( qa, qb, qc, X, J );
 
@@ -542,15 +573,17 @@ Q1_Hexahedron_Lagrange_GaussLobatto::
 
 
 
+template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void Q1_Hexahedron_Lagrange_GaussLobatto::symmetricGradient( int const q,
-                                                                real64 const (&invJ)[3][3],
-                                                                real64 const (&var)[numNodes][3],
-                                                                real64 (& grad)[6] )
+void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+  symmetricGradient( int const q,
+                     real64 const (&invJ)[3][3],
+                     real64 const (&var)[numNodes][3],
+                     real64 (& grad)[6] )
 {
   int qa, qb, qc;
-  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
   supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
@@ -577,15 +610,17 @@ void Q1_Hexahedron_Lagrange_GaussLobatto::symmetricGradient( int const q,
   }, invJ, var, grad );
 }
 
+template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void Q1_Hexahedron_Lagrange_GaussLobatto::plusGradNajAij( int const q,
-                                                             real64 const (&invJ)[3][3],
-                                                             real64 const (&var)[6],
-                                                             real64 (& R)[numNodes][3] )
+void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+  plusGradNajAij( int const q,
+                  real64 const (&invJ)[3][3],
+                  real64 const (&var)[6],
+                  real64 (& R)[numNodes][3] )
 {
   int qa, qb, qc;
-  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
   supportLoop( qa, qb, qc,
                [] GEOSX_HOST_DEVICE
@@ -612,15 +647,17 @@ void Q1_Hexahedron_Lagrange_GaussLobatto::plusGradNajAij( int const q,
 
 
 
+template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void Q1_Hexahedron_Lagrange_GaussLobatto::gradient( int const q,
-                                                       real64 const (&invJ)[3][3],
-                                                       real64 const (&var)[numNodes][3],
-                                                       real64 (& grad)[3][3] )
+void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+  gradient( int const q,
+            real64 const (&invJ)[3][3],
+            real64 const (&var)[numNodes][3],
+            real64 (& grad)[3][3] )
 {
   int qa, qb, qc;
-  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
   supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
@@ -643,12 +680,137 @@ void Q1_Hexahedron_Lagrange_GaussLobatto::gradient( int const q,
   }, invJ, var, grad );
 }
 
+/**
+ * This class contains the kernel accessible functions specific to the standard
+ * Trilinear Hexahedron finite element with a Gaussian quadrature rule. It is
+ * assumed that the indexing for the quadrature points mirrors that of the
+ * nodes. Also note that the assumed node ordering is not the standard
+ * right-hand-rule used in the literature. Here we use a Cartesian aligned
+ * numbering in order to simplify the mapping to the parent coordinates and
+ * tensor product indices.
+ *
+ *                  6                   7                       ____________________
+ *                   o-----------------o                       |Node   xi0  xi1  xi2|
+ *                  /.                /|                       |=====  ===  ===  ===|
+ *                 / .               / |                       | 0     -1   -1   -1 |
+ *              4 o-----------------o 5|                       | 1      1   -1   -1 |
+ *                |  .              |  |                       | 2     -1    1   -1 |
+ *                |  .              |  |                       | 3      1    1   -1 |
+ *                |  .              |  |                       | 4     -1   -1    1 |
+ *                |  .              |  |                       | 5      1   -1    1 |
+ *                |2 o..............|..o 3       xi2           | 6     -1    1    1 |
+ *                | ,               | /          |             | 7      1    1    1 |
+ *                |,                |/           | / xi1       |____________________|
+ *                o-----------------o            |/
+ *               0                   1           ------ xi0
+ *
+ *
+ */
+using Q1_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >;
+/**
+ * This class contains the kernel accessible functions specific to the standard
+ * Trilinear Hexahedron finite element with a Gaussian quadrature rule. It is
+ * assumed that the indexing for the quadrature points mirrors that of the
+ * nodes. Also note that the assumed node ordering is not the standard
+ * right-hand-rule used in the literature. Here we use a Cartesian aligned
+ * numbering in order to simplify the mapping to the parent coordinates and
+ * tensor product indices.
+ *
+ *
+ *                                                                  _____________________________________
+ *                                                                 |Node      xi0         xi1         xi2|
+ *                                                                 |=====     ===         ===         ===|
+ *                                                                 |  0       -1          -1          -1 |
+ *                                                                 |  1   -1/sqrt(5)      -1          -1 |
+ *                                                                 |  2    1/sqrt(5)      -1          -1 |
+ *              60       61         62        63                   |  3        1          -1          -1 |
+ *                o---------o---------o---------o                  |  4       -1      -1/sqrt(5)      -1 |
+ *            56 /.     57        58        59 /|                  |  5   -1/sqrt(5)  -1/sqrt(5)      -1 |
+ *              o .       o         o         o |                  |  6    1/sqrt(5)  -1/sqrt(5)      -1 |
+ *          52 /  .   53        54        55 /  |                  |  7        1      -1/sqrt(5)      -1 |
+ *            o   .     o         o         o   |                  |  8       -1       1/sqrt(5)      -1 |
+ *        48 /    o 49      o 50      o 51 /    o                  |  9   -1/sqrt(5)   1/sqrt(5)      -1 |
+ *          o---------o---------o---------o     |                  | 10    1/sqrt(5)   1/sqrt(5)      -1 |
+ *          |   o .       o         o     |   o |                  | 11        1       1/sqrt(5)      -1 |
+ *          |     .                       |     |                  | 12       -1           1          -1 |
+ *          | o   o     o   o     o   o   | o   o                  | 13   -1/sqrt(5)       1          -1 |
+ *          |     .                       |     |                  | 14    1/sqrt(5)       1          -1 |
+ *          o   o .   o   o     o   o     o   o |                  | 15        1           1          -1 |
+ *          |     .                       |     |                  | ..       ..          ..          .. |
+ *          | o   .     o         o       | o   |                  | ..       ..          ..          .. |
+ *          |     o.........o.........o...|.....o                  | 55        1      -1/sqrt(5)       1 |
+ *          o    ,12  o     13  o     14  o    /15                 | 56       -1       1/sqrt(5)       1 |
+ *          |   o         o         o     |   o                    | 57   -1/sqrt(5)   1/sqrt(5)       1 |
+ *          |  ,8         9         10    |  /11       xi2         | 58    1/sqrt(5)   1/sqrt(5)       1 |
+ *          | o         o         o       | o          |           | 59        1       1/sqrt(5)       1 |
+ *          |,4         5         6       |/7          | / xi1     | 60       -1           1           1 |
+ *          o---------o---------o---------o            |/          | 61   -1/sqrt(5)       1           1 |
+ *         0         1         2         3             o----- xi0  | 62    1/sqrt(5)       1           1 |
+ *                                                                 | 63        1           1           1 |
+ *                                                                 |_____________________________________|
+ *
+ */
+using Q3_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >;
+/**
+ * This class contains the kernel accessible functions specific to the standard
+ * Trilinear Hexahedron finite element with a Gauss Lobatto quadrature rule. It is
+ * assumed that the indexing for the quadrature points mirrors that of the
+ * nodes. Also note that the assumed node ordering is not the standard
+ * right-hand-rule used in the literature. Here we use a Cartesian aligned
+ * numbering in order to simplify the mapping to the parent coordinates and
+ * tensor product indices.
+ *
+ *
+ *                210      211      212      213      214      215                  _______________________________________________________________________
+ *                   o--------o--------o--------o--------o--------o                |Node      xi0                        xi1                          xi2  |
+ *                  /.                                           /|                |=====     ===                        ===                          ===  |
+ *            204  / .  205      206      207      208      209 / |                |  0       -1                         -1                           -1   |
+ *                o  .     o        o        o        o        o  |                |  1   -sqrt(1/21(7+/sqrt(7))         -1                           -1   |
+ *               /   o                                        /   |                |  2    -sqrt(1/21(7-/sqrt(7))        -1                           -1   |
+ *         198  /    .199     200      201      202      203 /    o                |  3    sqrt(1/21(7-/sqrt(7))         -1                           -1   |
+ *             o     .  o        o        o        o        o     |                |  4    sqrt(1/21(7+/sqrt(7))         -1                           -1   |
+ *            /      .                                     /      |                |  5       -1                         -1                           -1   |
+ *      192  /   193 o     194      195      196      197 /    o  |                |  6       -1                 -sqrt(1/21(7+/sqrt(7))               -1   |
+ *          o        o        o        o        o        o        o                |  7   -sqrt(1/21(7+/sqrt(7)) -sqrt(1/21(7+/sqrt(7))               -1   |
+ *         /         .                                  /         |                |  8   -sqrt(1/21(7-/sqrt(7)) -sqrt(1/21(7+/sqrt(7))               -1   |
+ *    186 /    187   .  188      189      190      191 /    o     |                |  9    sqrt(1/21(7-/sqrt(7)) -sqrt(1/21(7+/sqrt(7))               -1   |
+ *       o        o  o     o        o        o        o        o  |                | 10    sqrt(1/21(7+/sqrt(7)) -sqrt(1/21(7+/sqrt(7))               -1   |
+ *      /            .                               /            o                | 11       -1                 -sqrt(1/21(7+/sqrt(7))               -1   |
+ * 180 /    181      . 182    183      184      185 /    o        |                | ..       ..                         ..                           ..   |
+ *    o--------o--------o--------o--------o--------o        o     |                | ..       ..                         ..                           ..   |
+ *    |           o  .                             |           o  |                | 204      -1                  sqrt(1/21(7+/sqrt(7))               1    |
+ *    |  o           o        o        o        o  |  o  o        o                | 205  -sqrt(1/21(7+/sqrt(7))  sqrt(1/21(7+/sqrt(7))               1    |
+ *    |     o        .                             |     o        |                | 206  -sqrt(1/21(7-/sqrt(7))  sqrt(1/21(7-/sqrt(7))               1    |
+ *    |        o     .                             |        o     |                | 207  sqrt(1/21(7+/sqrt(7))   sqrt(1/21(7-/sqrt(7))               1    |
+ *    o           o  .                             o           o  |                | 208  sqrt(1/21(7-/sqrt(7))   sqrt(1/21(7+/sqrt(7))               1    |
+ *    |  o           .                             |  o           |                | 209       1                  sqrt(1/21(7+/sqrt(                  1    |
+ *    |     o        o--------o--------o--------o--|-----o--------o                | 210      -1                          1                           1    |
+ *    |        o    ,30       31      32        33 |     34 o    /35               | 211  -sqrt(1/21(7+/sqrt(7))          1                           1    |
+ *    o            ,                               o            /                  | 212  -sqrt(1/21(7-/sqrt(7))          1                           1    |
+ *    |  o        o        o         o       o     |  o        o                   | 213   sqrt(1/21(7-/sqrt(7))          1                           1    |
+ *    |     o    ,24       25        26      27    |  28 o    /29                  | 214   sqrt(1/21(7+/sqrt(7))          1                           1    |
+ *    |         ,                                  |         /                     | 215       1                          1                           1    |
+ *    o        o        o         o       o     22 o        o                      |_______________________________________________________________________|
+ *    |  o    ,18       19        20      21       |  o    /23
+ *    |      ,                                     |      /
+ *    |     o        o         o       o        o  |     o
+ *    o    ,12       13        14      15       16 o    /17
+ *    |   ,                                        |   /
+ *    |  o        o        o        o        o     |  o               xi2
+ *    | ,6        7        8        9        10    | /11               |
+ *    |,                                           |/                  | / xi1
+ *    o--------o--------o--------o--------o--------o                   |/
+ *    0        1        2        3        4        5                   o----- xi0
+ *
+ *
+ */
+using Q5_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis5GL >;
+
 /// @endcond
 
 #if __GNUC__
 #pragma GCC diagnostic pop
 #endif
-
 #undef PARENT_GRADIENT_METHOD
 }
 }
