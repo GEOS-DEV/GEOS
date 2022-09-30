@@ -12,6 +12,7 @@ __OPTIONS_SEP = ":"
 __KV_SEP = "="
 
 __VERBOSE_KEY = "verbose"
+__QUIET_KEY = "quiet"
 
 
 @dataclass(frozen=True)
@@ -74,9 +75,19 @@ def parse_and_set_verbosity(cli_args: List[str]) -> None:
                                         action='count',
                                         default=1,
                                         dest=__VERBOSE_KEY)
+    dummy_verbosity_parser.add_argument('-q',
+                                        '--quiet',
+                                        action='count',
+                                        default=0,
+                                        dest=__QUIET_KEY)
     args = dummy_verbosity_parser.parse_known_args(cli_args[1:])[0]
-    v = vars(args)[__VERBOSE_KEY]
-    verbosity = 50 - (10 * v) if v > 0 else 0
+    d = vars(args)
+    v = d[__VERBOSE_KEY] - d[__QUIET_KEY]
+    verbosity = 50 - (10 * v)
+    if verbosity < 10:
+        verbosity = 10
+    elif verbosity > 50:
+        verbosity = 50
     logging.getLogger().setLevel(verbosity)
     logging.info(f"Logger level set to \"{logging.getLevelName(verbosity)}\"")
 
@@ -99,7 +110,7 @@ def parse(cli_args: List[str]) -> Arguments:
                                      epilog=textwrap.dedent(epilog_msg),
                                      formatter_class=argparse.RawTextHelpFormatter)
     misc_grp = parser.add_argument_group('main')
-    # Nothing will be done with this verbosity input.
+    # Nothing will be done with this verbosity/quiet input.
     # It's only here for the `--help` message.
     # `parse_verbosity` does the real parsing instead.
     misc_grp.add_argument('-v',
@@ -108,6 +119,12 @@ def parse(cli_args: List[str]) -> Arguments:
                           default=1,
                           dest=__VERBOSE_KEY,
                           help="Use -v for warning, -vv for info, -vvv for debug. Defaults to 'ERROR'.")
+    misc_grp.add_argument('-q',
+                          '--quiet',
+                          action='count',
+                          default=0,
+                          dest=__VERBOSE_KEY,
+                          help="Use -q to reduce the verbosity of the output.")
     misc_grp.add_argument('-i',
                           '--vtk-input-file',
                           metavar='VTK_MESH_FILE',
