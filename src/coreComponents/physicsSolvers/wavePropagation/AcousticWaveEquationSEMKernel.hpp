@@ -150,20 +150,20 @@ struct PrecomputeSourceAndReceiverKernel
 
 
   GEOSX_HOST_DEVICE
-  static real64
+  static real32
   evaluateRicker( real64 const & time_n,
                   real64 const & f0,
                   localIndex const & order )
   {
-    real64 const o_tpeak = 1.0/f0;
-    real64 pulse = 0.0;
+    real32 const o_tpeak = 1.0/f0;
+    real32 pulse = 0.0;
     if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
     {
       return pulse;
     }
 
-    constexpr real64 pi = M_PI;
-    real64 const lam = (f0*pi)*(f0*pi);
+    constexpr real32 pi = M_PI;
+    real32 const lam = (f0*pi)*(f0*pi);
 
     switch( order )
     {
@@ -229,9 +229,9 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView2d< localIndex > const receiverNodeIds,
           arrayView2d< real64 > const receiverConstants,
-          arrayView2d< real64 > const sourceValue,
+          arrayView2d< real32 > const sourceValue,
           real64 const dt,
-          real64 const timeSourceFrequency,
+          real32 const timeSourceFrequency,
           localIndex const rickerOrder )
   {
 
@@ -367,9 +367,9 @@ struct MassAndDampingMatrixKernel
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
           arrayView2d< real64 const > const faceNormal,
-          arrayView1d< real64 const > const velocity,
-          arrayView1d< real64 > const mass,
-          arrayView1d< real64 > const damping )
+          arrayView1d< real32 const > const velocity,
+          arrayView1d< real32 > const mass,
+          arrayView1d< real32 > const damping )
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
@@ -377,7 +377,7 @@ struct MassAndDampingMatrixKernel
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-      real64 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
+      real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
@@ -393,16 +393,16 @@ struct MassAndDampingMatrixKernel
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         FE_TYPE::calcN( q, N );
-        real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+        real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
         for( localIndex a = 0; a < numNodesPerElem; ++a )
         {
-          real64 const localIncrement = invC2 * detJ * N[a];
+          real32 const localIncrement = invC2 * detJ * N[a];
           RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][a]], localIncrement );
         }
       }
 
-      real64 const alpha = 1.0 / velocity[k];
+      real32 const alpha = 1.0 / velocity[k];
 
       for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
       {
@@ -414,7 +414,7 @@ struct MassAndDampingMatrixKernel
           for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
           {
             FE_TYPE::calcN( q, N );
-            real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+            real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
             real64 invJ[3][3]{};
             FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
@@ -423,10 +423,10 @@ struct MassAndDampingMatrixKernel
             {
               // compute ds = || detJ*invJ*normalFace_{kfe} ||
 
-              real64 ds = 0.0;
+              real32 ds = 0.0;
               for( localIndex i = 0; i < 3; ++i )
               {
-                real64 tmp = 0.0;
+                real32 tmp = 0.0;
                 for( localIndex j = 0; j < 3; ++j )
                 {
                   tmp += invJ[j][i] * faceNormal[iface][j];
@@ -436,7 +436,7 @@ struct MassAndDampingMatrixKernel
               }
               ds = sqrt( ds );
 
-              real64 const localIncrement = alpha * detJ * ds * N[a];
+              real32 const localIncrement = alpha * detJ * ds * N[a];
               RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[iface][a]], localIncrement );
             }
           }
@@ -468,14 +468,14 @@ struct PMLKernelHelper
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void computeDampingProfilePML( real64 const (&xLocal)[3],
-                                        real64 const (&xMin)[3],
-                                        real64 const (&xMax)[3],
-                                        real64 const (&dMin)[3],
-                                        real64 const (&dMax)[3],
-                                        real64 const (&cMin)[3],
-                                        real64 const (&cMax)[3],
-                                        real64 const r,
-                                        real64 (& sigma)[3] )
+                                        real32 const (&xMin)[3],
+                                        real32 const (&xMax)[3],
+                                        real32 const (&dMin)[3],
+                                        real32 const (&dMax)[3],
+                                        real32 const (&cMin)[3],
+                                        real32 const (&cMax)[3],
+                                        real32 const r,
+                                        real32 (& sigma)[3] )
   {
 
     sigma[0] = 0;
@@ -484,32 +484,32 @@ struct PMLKernelHelper
 
     if( xLocal[0] < xMin[0] )
     {
-      real64 const factor =  -3.0/2.0*cMin[0]*log( r )/(dMin[0]*dMin[0]*dMin[0]);
+      real32 const factor =  -3.0/2.0*cMin[0]*log( r )/(dMin[0]*dMin[0]*dMin[0]);
       sigma[0] = factor*(xLocal[0]-xMin[0])*(xLocal[0]-xMin[0]);
     }
     else if( xLocal[0] > xMax[0] )
     {
-      real64 const factor =  -3.0/2.0*cMax[0]*log( r )/(dMax[0]*dMax[0]*dMax[0]);
+      real32 const factor =  -3.0/2.0*cMax[0]*log( r )/(dMax[0]*dMax[0]*dMax[0]);
       sigma[0] = factor*(xLocal[0]-xMax[0])*(xLocal[0]-xMax[0]);
     }
     if( xLocal[1] < xMin[1] )
     {
-      real64 const factor =  -3.0/2.0*cMin[1]*log( r )/(dMin[1]*dMin[1]*dMin[1]);
+      real32 const factor =  -3.0/2.0*cMin[1]*log( r )/(dMin[1]*dMin[1]*dMin[1]);
       sigma[1] = factor*(xLocal[1]-xMin[1])*(xLocal[1]-xMin[1]);
     }
     else if( xLocal[1] > xMax[1] )
     {
-      real64 const factor =  -3.0/2.0*cMax[1]*log( r )/(dMax[1]*dMax[1]*dMax[1]);
+      real32 const factor =  -3.0/2.0*cMax[1]*log( r )/(dMax[1]*dMax[1]*dMax[1]);
       sigma[1] = factor*(xLocal[1]-xMax[1])*(xLocal[1]-xMax[1]);
     }
     if( xLocal[2] < xMin[2] )
     {
-      real64 const factor =  -3.0/2.0*cMin[2]*log( r )/(dMin[2]*dMin[2]*dMin[2]);
+      real32 const factor =  -3.0/2.0*cMin[2]*log( r )/(dMin[2]*dMin[2]*dMin[2]);
       sigma[2] = factor*(xLocal[2]-xMin[2])*(xLocal[2]-xMin[2]);
     }
     else if( xLocal[2] > xMax[2] )
     {
-      real64 const factor =  -3.0/2.0*cMax[2]*log( r )/(dMax[2]*dMax[2]*dMax[2]);
+      real32 const factor =  -3.0/2.0*cMax[2]*log( r )/(dMax[2]*dMax[2]*dMax[2]);
       sigma[2] = factor*(xLocal[2]-xMax[2])*(xLocal[2]-xMax[2]);
     }
   }
@@ -549,19 +549,19 @@ struct PMLKernel
   launch( SortedArrayView< localIndex const > const targetSet,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
-          arrayView1d< real64 const > const velocity,
-          arrayView1d< real64 const > const p_n,
-          arrayView2d< real64 const > const v_n,
-          arrayView1d< real64 const > const u_n,
-          real64 const (&xMin)[3],
-          real64 const (&xMax)[3],
-          real64 const (&dMin)[3],
-          real64 const (&dMax)[3],
-          real64 const (&cMin)[3],
-          real64 const (&cMax)[3],
-          real64 const r,
-          arrayView2d< real64 > const grad_n,
-          arrayView1d< real64 > const divV_n )
+          arrayView1d< real32 const > const velocity,
+          arrayView1d< real32 const > const p_n,
+          arrayView2d< real32 const > const v_n,
+          arrayView1d< real32 const > const u_n,
+          real32 const (&xMin)[3],
+          real32 const (&xMax)[3],
+          real32 const (&dMin)[3],
+          real32 const (&dMax)[3],
+          real32 const (&cMin)[3],
+          real32 const (&cMax)[3],
+          real32 const r,
+          arrayView2d< real32 > const grad_n,
+          arrayView1d< real32 > const divV_n )
   {
 
     /// Loop over elements in the subregion, 'l' is the element index within the target set
@@ -573,7 +573,7 @@ struct PMLKernel
       localIndex const k = targetSet[l];
 
       /// wave speed at the element
-      real64 const c = velocity[k];
+      real32 const c = velocity[k];
 
       /// coordinates of the element nodes
       real64 xLocal[ numNodesPerElem ][ 3 ];
@@ -591,7 +591,7 @@ struct PMLKernel
       real64 auxUGrad[3];
 
       /// local array to store the PML damping profile
-      real64 sigma[ 3 ];
+      real32 sigma[ 3 ];
 
       /// copy from global to local arrays
       for( localIndex i=0; i<numNodesPerElem; ++i )
@@ -615,7 +615,7 @@ struct PMLKernel
       {
 
         /// compute the shape functions gradients
-        real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, i, xLocal, gradN );
+        real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, i, xLocal, gradN );
         GEOSX_UNUSED_VAR ( detJ );
 
         /// compute the gradient of the pressure and the PML auxiliary variables at the node
@@ -643,7 +643,7 @@ struct PMLKernel
         /// gradient and divergence at the nodes are sought. It is the number of cells contributing
         /// to each node that is needed. In this case, it is equal to 'numNodesPerElem'. For high-order
         /// SEM, this approach won't work and the average needs to be computed differently (maybe using counters).
-        real64 localIncrementArray[3];
+        real32 localIncrementArray[3];
         localIncrementArray[0] = (sigma[0]-sigma[1]-sigma[2])*pressureGrad[0] - (sigma[1]*sigma[2])*auxUGrad[0];
         localIncrementArray[1] = (sigma[1]-sigma[0]-sigma[2])*pressureGrad[1] - (sigma[0]*sigma[2])*auxUGrad[1];
         localIncrementArray[2] = (sigma[2]-sigma[0]-sigma[1])*pressureGrad[2] - (sigma[0]*sigma[1])*auxUGrad[2];
@@ -652,9 +652,9 @@ struct PMLKernel
           RAJA::atomicAdd< ATOMIC_POLICY >( &grad_n[elemToNodesViewConst[k][i]][j], localIncrementArray[j]/numNodesPerElem );
         }
         /// compute beta.pressure + gamma.u - c^2 * divV where beta and gamma are functions of the damping profile
-        real64 const beta = sigma[0]*sigma[1]+sigma[0]*sigma[2]+sigma[1]*sigma[2];
-        real64 const gamma = sigma[0]*sigma[1]*sigma[2];
-        real64 const localIncrement = beta*p_n[elemToNodesViewConst[k][i]]
+        real32 const beta = sigma[0]*sigma[1]+sigma[0]*sigma[2]+sigma[1]*sigma[2];
+        real32 const gamma = sigma[0]*sigma[1]*sigma[2];
+        real32 const localIncrement = beta*p_n[elemToNodesViewConst[k][i]]
                                       + gamma*u_n[elemToNodesViewConst[k][i]]
                                       - c*c*( auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2] );
 
@@ -696,21 +696,21 @@ struct waveSpeedPMLKernel
   launch( SortedArrayView< localIndex const > const targetSet,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
-          arrayView1d< real64 const > const velocity,
-          real64 const (&xMin)[3],
-          real64 const (&xMax)[3],
-          real64 (& cMin)[3],
-          real64 (& cMax)[3],
+          arrayView1d< real32 const > const velocity,
+          real32 const (&xMin)[3],
+          real32 const (&xMax)[3],
+          real32 (& cMin)[3],
+          real32 (& cMax)[3],
           int (& counterMin)[3],
           int (& counterMax)[3] )
   {
 
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgWaveSpeedLeft( 0.0 );
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgWaveSpeedRight( 0.0 );
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgWaveSpeedFront( 0.0 );
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgWaveSpeedBack( 0.0 );
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgWaveSpeedTop( 0.0 );
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgWaveSpeedBottom( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real32 > subRegionAvgWaveSpeedLeft( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real32 > subRegionAvgWaveSpeedRight( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real32 > subRegionAvgWaveSpeedFront( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real32 > subRegionAvgWaveSpeedBack( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real32 > subRegionAvgWaveSpeedTop( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real32 > subRegionAvgWaveSpeedBottom( 0.0 );
     RAJA::ReduceSum< parallelDeviceReduce, int > subRegionAvgWaveSpeedCounterLeft( 0 );
     RAJA::ReduceSum< parallelDeviceReduce, int > subRegionAvgWaveSpeedCounterRight( 0 );
     RAJA::ReduceSum< parallelDeviceReduce, int > subRegionAvgWaveSpeedCounterFront( 0 );
@@ -727,7 +727,7 @@ struct waveSpeedPMLKernel
       localIndex const k = targetSet[l];
 
       /// wave speed at the element
-      real64 const c = velocity[k];
+      real32 const c = velocity[k];
 
       /// coordinates of the element center
       real64 xLocal[ 3 ] = {0.0, 0.0, 0.0};
@@ -946,14 +946,15 @@ public:
                               StackVariables & stack ) const
   {
     real64 gradN[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
+    real32 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
+
 
     for( localIndex i=0; i<numNodesPerElem; ++i )
     {
       for( localIndex j=0; j<numNodesPerElem; ++j )
       {
-        real64 const Rh_ij = detJ * LvArray::tensorOps::AiBi< 3 >( gradN[ i ], gradN[ j ] );
-        real64 const localIncrement = Rh_ij*m_p_n[m_elemsToNodes[k][j]];
+        real32 const Rh_ij = detJ * LvArray::tensorOps::AiBi< 3 >( gradN[ i ], gradN[ j ] );
+        real32 const localIncrement = Rh_ij*m_p_n[m_elemsToNodes[k][j]];
 
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
       }
@@ -966,10 +967,10 @@ protected:
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
   /// The array containing the nodal pressure array.
-  arrayView1d< real64 const > const m_p_n;
+  arrayView1d< real32 const > const m_p_n;
 
   /// The array containing the product of the stiffness matrix and the nodal pressure.
-  arrayView1d< real64 > const m_stiffnessVector;
+  arrayView1d< real32 > const m_stiffnessVector;
 
   /// The time increment for this time integration step.
   real64 const m_dt;
