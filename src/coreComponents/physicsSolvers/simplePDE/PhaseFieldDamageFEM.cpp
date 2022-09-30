@@ -609,56 +609,49 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                arrayView1d< string const > const &  )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
     arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
-    //should get reference to damage field here.
     arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( m_fieldName );
 
-    ElementRegionManager & elemManager = mesh.getElemManager();
+    globalIndex const rankOffSet = dofManager.rankOffset();
 
-    // begin region loop
-    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]
-                                                                ( localIndex const,
-                                                                CellElementSubRegion & elementSubRegion )
+    real64 const damangeUpperBound = m_damageUpperBound;
+
+    forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOSX_HOST_DEVICE (localIndex const nodeIndex ) 
     {
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
+      localIndex const dof = dofIndex[nodeIndex];
 
-      localIndex const numNodesPerElement = elementSubRegion.numNodesPerElement();
-
-      forAll< serialPolicy >( elementSubRegion.size(), [&] ( localIndex const k )
+      if ( dof > -1 )
       {
-        for( localIndex a = 0; a < numNodesPerElement; ++a )
-        {
-          real64 const damageAtNode = nodalDamage[elemNodes( k, a )];
+         real64 const damageAtNode = nodalDamage[nodeIndex];
 
-          if( damageAtNode >= m_damageUpperBound )
+          if( damageAtNode >= damangeUpperBound )
           {
-            localIndex const dof = dofIndex[elemNodes( k, a )];
-
+            
             // Specify the contribution to rhs
             real64 rhsContribution;
 
             FieldSpecificationEqual::SpecifyFieldValue( dof,
-                                                        dofManager.rankOffset(),
+                                                        rankOffSet,
                                                         localMatrix,
                                                         rhsContribution,
-                                                        m_damageUpperBound,
+                                                        damangeUpperBound,
                                                         damageAtNode );
 
-            globalIndex const localRow = dof - dofManager.rankOffset();
+            globalIndex const localRow = dof - rankOffSet;
 
             if( localRow >= 0 && localRow < localRhs.size() )
             {
               localRhs[ localRow ] = rhsContribution;
             }
           }
-        }
-      } );
+      }
     } );
+
   } );
 }
 
