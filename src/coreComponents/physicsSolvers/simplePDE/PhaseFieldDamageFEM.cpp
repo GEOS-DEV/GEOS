@@ -609,7 +609,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const &  )
+                                                                arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -621,34 +621,34 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
 
     real64 const damangeUpperBound = m_damageUpperBound;
 
-    forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOSX_HOST_DEVICE (localIndex const nodeIndex ) 
+    forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIndex )
     {
       localIndex const dof = dofIndex[nodeIndex];
 
-      if ( dof > -1 )
+      if( dof > -1 )
       {
-         real64 const damageAtNode = nodalDamage[nodeIndex];
+        real64 const damageAtNode = nodalDamage[nodeIndex];
 
-          if( damageAtNode >= damangeUpperBound )
+        if( damageAtNode >= damangeUpperBound )
+        {
+
+          // Specify the contribution to rhs
+          real64 rhsContribution;
+
+          FieldSpecificationEqual::SpecifyFieldValue( dof,
+                                                      rankOffSet,
+                                                      localMatrix,
+                                                      rhsContribution,
+                                                      damangeUpperBound,
+                                                      damageAtNode );
+
+          globalIndex const localRow = dof - rankOffSet;
+
+          if( localRow >= 0 && localRow < localRhs.size() )
           {
-            
-            // Specify the contribution to rhs
-            real64 rhsContribution;
-
-            FieldSpecificationEqual::SpecifyFieldValue( dof,
-                                                        rankOffSet,
-                                                        localMatrix,
-                                                        rhsContribution,
-                                                        damangeUpperBound,
-                                                        damageAtNode );
-
-            globalIndex const localRow = dof - rankOffSet;
-
-            if( localRow >= 0 && localRow < localRhs.size() )
-            {
-              localRhs[ localRow ] = rhsContribution;
-            }
+            localRhs[ localRow ] = rhsContribution;
           }
+        }
       }
     } );
 
