@@ -126,7 +126,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
-      discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{Region2, void}"
       nodeBasedSIF="1"

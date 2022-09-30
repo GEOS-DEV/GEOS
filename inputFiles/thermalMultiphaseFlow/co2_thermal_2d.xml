@@ -10,6 +10,9 @@
       useMass="1"
       isThermal="1"
       initialDt="1e3"
+      targetRelativePressureChangeInTimeStep="1"
+      targetRelativeTemperatureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"      
       maxCompFractionChange="0.5"
       targetRegions="{ region }">
       <NonlinearSolverParameters

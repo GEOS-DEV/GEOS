@@ -4,30 +4,16 @@ import sys
 import argparse
 import os
 import time
-from geosx_xml_tools import xml_processor
+from geosx_xml_tools import xml_processor, command_line_parsers
+from typing import Callable, Any, Union, Tuple, Iterable
 
 
-def parse_arguments():
-    # Parse the user arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', type=str, action='append', help='Input file name (multiple allowed)')
-    parser.add_argument('-c',
-                        '--compiled-name',
-                        type=str,
-                        help='Compiled xml file name (otherwise, it is randomly genrated)',
-                        default='')
-    parser.add_argument('-s', '--schema', type=str, help='GEOSX schema to use for validation', default='')
-    parser.add_argument('-v', '--verbose', type=int, help='Verbosity of outputs', default=0)
-    parser.add_argument('-p',
-                        '--parameters',
-                        nargs='+',
-                        action='append',
-                        help='Parameter overrides (name value, multiple allowed)',
-                        default=[])
-    return parser.parse_known_args()
+def check_mpi_rank() -> int:
+    """Check the MPI rank
 
-
-def check_mpi_rank():
+    Returns:
+        int: MPI rank
+    """
     rank = 0
     mpi_rank_key_options = ['OMPI_COMM_WORLD_RANK', 'PMI_RANK']
     for k in mpi_rank_key_options:
@@ -36,11 +22,33 @@ def check_mpi_rank():
     return rank
 
 
-def wait_for_file_write_rank_0(target_file_argument=0, max_wait_time=100, max_startup_delay=1):
+TFunc = Callable[..., Any]
 
-    def wait_for_file_write_rank_0_inner(writer):
 
-        def wait_for_file_write_rank_0_decorator(*args, **kwargs):
+def wait_for_file_write_rank_0(target_file_argument: Union[int, str] = 0,
+                               max_wait_time: float = 100,
+                               max_startup_delay: float = 1) -> Callable[[TFunc], TFunc]:
+    """Constructor for a function decorator that waits for a target file to be written on rank 0
+
+    Args:
+        target_file_argument (int, str): Index or keyword of the filename argument in the decorated function
+        max_wait_time (float): Maximum amount of time to wait (seconds)
+        max_startup_delay (float): Maximum delay allowed for thread startup (seconds)
+
+    Returns:
+        Wrapped function
+    """
+
+    def wait_for_file_write_rank_0_inner(writer: TFunc) -> TFunc:
+        """Intermediate constructor for the function decorator
+
+        Args:
+            writer (typing.Callable): A function that writes to a file
+        """
+
+        def wait_for_file_write_rank_0_decorator(*args, **kwargs) -> Any:
+            """Apply the writer on rank 0, and wait for completion on other ranks
+            """
             # Check the target file status
             rank = check_mpi_rank()
             fname = ''
@@ -50,14 +58,14 @@ def wait_for_file_write_rank_0(target_file_argument=0, max_wait_time=100, max_st
                 fname = kwargs[target_file_argument]
 
             target_file_exists = os.path.isfile(fname)
-            target_file_edit_time = 0
+            target_file_edit_time = 0.0
             if target_file_exists:
                 target_file_edit_time = os.path.getmtime(fname)
 
                 # Variations in thread startup times may mean the file has already been processed
                 # If the last edit was done within the specified time, then allow the thread to proceed
                 if (abs(target_file_edit_time - time.time()) < max_startup_delay):
-                    target_file_edit_time = 0
+                    target_file_edit_time = 0.0
 
             # Go into the target process or wait for the expected file update
             if (rank == 0):
@@ -78,12 +86,12 @@ def wait_for_file_write_rank_0(target_file_argument=0, max_wait_time=100, max_st
     return wait_for_file_write_rank_0_inner
 
 
-def preprocess_serial():
+def preprocess_serial() -> None:
     """
     Entry point for the geosx_xml_tools console script
     """
     # Process the xml file
-    args, unknown_args = parse_arguments()
+    args, unknown_args = command_line_parsers.parse_xml_preprocessor_arguments()
 
     # Attempt to only process the file on rank 0
     # Note: The rank here is determined by inspecting the system environment variables
@@ -111,16 +119,16 @@ def preprocess_serial():
     print(compiled_name)
 
 
-def preprocess_parallel():
+def preprocess_parallel() -> Iterable[str]:
     """
     MPI aware xml preprocesing
     """
     # Process the xml file
-    from mpi4py import MPI
+    from mpi4py import MPI    # type: ignore[import]
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
 
-    args, unknown_args = parse_arguments()
+    args, unknown_args = command_line_parsers.parse_xml_preprocessor_arguments()
     compiled_name = ''
     if (rank == 0):
         compiled_name = xml_processor.process(args.input,
@@ -132,8 +140,16 @@ def preprocess_parallel():
     return format_geosx_arguments(compiled_name, unknown_args)
 
 
-def format_geosx_arguments(compiled_name, unknown_args):
-    # Return GEOSX arguments
+def format_geosx_arguments(compiled_name: str, unknown_args: Iterable[str]) -> Iterable[str]:
+    """Format GEOSX arguments
+
+    Args:
+        compiled_name (str): Name of the compiled xml file
+        unknown_args (list): List of unprocessed arguments
+
+    Returns:
+        list: List of arguments to pass to GEOSX
+    """
     geosx_args = [sys.argv[0], '-i', compiled_name]
     if unknown_args:
         geosx_args.extend(unknown_args)

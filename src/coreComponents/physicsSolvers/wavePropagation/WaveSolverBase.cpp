@@ -136,17 +136,17 @@ void WaveSolverBase::postProcessInput()
 }
 
 
-real64 WaveSolverBase::evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order )
+real32 WaveSolverBase::evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
 {
-  real64 const o_tpeak = 1.0/f0;
-  real64 pulse = 0.0;
+  real32 const o_tpeak = 1.0/f0;
+  real32 pulse = 0.0;
   if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
   {
     return pulse;
   }
 
-  constexpr real64 pi = M_PI;
-  real64 const lam = (f0*pi)*(f0*pi);
+  constexpr real32 pi = M_PI;
+  real32 const lam = (f0*pi)*(f0*pi);
 
   switch( order )
   {

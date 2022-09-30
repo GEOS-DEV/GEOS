@@ -31,7 +31,7 @@ class AcousticWaveEquationSEM : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = serialPolicy;//parallelDevicePolicy< 32 >;
+  using EXEC_POLICY = parallelDevicePolicy< 32 >;
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
 
@@ -85,7 +85,7 @@ public:
    * @param cycleNumber the cycle number/step number of evaluation of the source
    * @param rhs the right hand side vector to be computed
    */
-  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) override;
+  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
 
   /**
    * TODO: move implementation into WaveSolverBase
@@ -103,9 +103,9 @@ public:
                                    real64 const dt,
                                    real64 const timeSeismo,
                                    localIndex const iSeismo,
-                                   arrayView1d< real64 const > const var_np1,
-                                   arrayView1d< real64 const > const var_n,
-                                   arrayView2d< real64 > varAtReceivers ) override;
+                                   arrayView1d< real32 const > const var_np1,
+                                   arrayView1d< real32 const > const var_n,
+                                   arrayView2d< real32 > varAtReceivers ) override;
 
   /**
    * TODO: move implementation into WaveSolverBase
@@ -118,9 +118,9 @@ public:
    */
   virtual void computeAllSeismoTraces( real64 const time_n,
                                        real64 const dt,
-                                       arrayView1d< real64 const > const var_np1,
-                                       arrayView1d< real64 const > const var_n,
-                                       arrayView2d< real64 > varAtReceivers );
+                                       arrayView1d< real32 const > const var_np1,
+                                       arrayView1d< real32 const > const var_n,
+                                       arrayView2d< real32 > varAtReceivers );
 
 
   /**
@@ -197,7 +197,7 @@ private:
    * @param val value to be written in seismo
    * @param filename name of the output file
    */
-  void saveSeismo( localIndex const iSeismo, real64 const val, string const & filename ) override;
+  void saveSeismo( localIndex const iSeismo, real32 const val, string const & filename ) override;
 
   localIndex getNumNodesPerElem();
 
@@ -220,7 +220,7 @@ private:
   array1d< localIndex > m_receiverIsLocal;
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
-  array2d< real64 > m_pressureNp1AtReceivers;
+  array2d< real32 > m_pressureNp1AtReceivers;
 
 };
 
@@ -230,7 +230,7 @@ namespace extrinsicMeshData
 
 EXTRINSIC_MESH_DATA_TRAIT( Pressure_nm1,
                            "pressure_nm1",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -238,7 +238,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Pressure_nm1,
 
 EXTRINSIC_MESH_DATA_TRAIT( Pressure_n,
                            "pressure_n",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -246,7 +246,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Pressure_n,
 
 EXTRINSIC_MESH_DATA_TRAIT( Pressure_np1,
                            "pressure_np1",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
@@ -254,7 +254,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Pressure_np1,
 
 EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS,
                            "rhs",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -262,7 +262,7 @@ EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS,
 
 EXTRINSIC_MESH_DATA_TRAIT( MassVector,
                            "massVector",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -270,7 +270,7 @@ EXTRINSIC_MESH_DATA_TRAIT( MassVector,
 
 EXTRINSIC_MESH_DATA_TRAIT( DampingVector,
                            "dampingVector",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -278,7 +278,7 @@ EXTRINSIC_MESH_DATA_TRAIT( DampingVector,
 
 EXTRINSIC_MESH_DATA_TRAIT( MediumVelocity,
                            "mediumVelocity",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -286,7 +286,7 @@ EXTRINSIC_MESH_DATA_TRAIT( MediumVelocity,
 
 EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector,
                            "stiffnessVector",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -326,7 +326,7 @@ EXTRINSIC_MESH_DATA_TRAIT( PartialGradient,
 
 EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar1PML,
                            "auxiliaryVar1PML",
-                           array2d< real64 >,
+                           array2d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -334,7 +334,7 @@ EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar1PML,
 
 EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar2PML,
                            "auxiliaryVar2PML",
-                           array2d< real64 >,
+                           array2d< real32 >,
                            0,
                            NOPLOT,
                            NO_WRITE,
@@ -342,7 +342,7 @@ EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar2PML,
 
 EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar3PML,
                            "auxiliaryVar3PML",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            NO_WRITE,
@@ -350,7 +350,7 @@ EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar3PML,
 
 EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar4PML,
                            "auxiliaryVar4PML",
-                           array1d< real64 >,
+                           array1d< real32 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
