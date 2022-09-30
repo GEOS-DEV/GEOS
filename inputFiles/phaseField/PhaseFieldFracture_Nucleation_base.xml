@@ -53,9 +53,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Region1 }"
-      discretization="FE1"
-      nodeBasedSIF="1"
-      
       rockToughness="0"
       mpiCommOrder="1"/>
   </Solvers>
