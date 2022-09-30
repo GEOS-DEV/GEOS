@@ -192,7 +192,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   propagator->cleanup( 1.0, 10, 0, 0, domain );
 
   // retrieve seismo
-  arrayView2d< real64 > const pReceivers = propagator->getReference< array2d< real64 > >( AcousticWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
+  arrayView2d< real32 > const pReceivers = propagator->getReference< array2d< real32 > >( AcousticWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
 
   // move it to CPU, if needed
   pReceivers.move( LvArray::MemorySpace::host, false );
