@@ -613,7 +613,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+    arrayView1d< globalIndex const > const dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
     arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( m_fieldName );
 
