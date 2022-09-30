@@ -2,6 +2,7 @@ import argparse
 from collections import OrderedDict
 from dataclasses import dataclass
 import logging
+import textwrap
 from typing import List, Dict, Set
 
 from . import all_checks_helpers
@@ -88,7 +89,14 @@ def parse(cli_args: List[str]) -> Arguments:
     """
     vtk_input_file_key = "vtk_input_file"
 
+    epilog_msg = """\
+    Note that checks are dynamically loaded.
+    An option may be missing because of an unloaded module.
+    Increase verbosity to get full information.
+    """
+
     parser = argparse.ArgumentParser(description='Inspects meshes for GEOSX.',
+                                     epilog=textwrap.dedent(epilog_msg),
                                      formatter_class=argparse.RawTextHelpFormatter)
     misc_grp = parser.add_argument_group('main')
     # Nothing will be done with this verbosity input.
