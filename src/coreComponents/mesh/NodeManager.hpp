@@ -22,6 +22,7 @@
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
 #include "ToElementRelation.hpp"
 
 namespace geosx
@@ -247,12 +248,6 @@ public:
     /// @return String to access the location of the nodes
     static constexpr char const * EmbSurfNodesPositionString() { return "EmbSurfNodesPosition"; }
 
-    /// @return String to access the displacement
-    static constexpr char const * totalDisplacementString() { return "TotalDisplacement"; }
-
-    /// @return String to access the incremental displacement
-    static constexpr char const * incrementalDisplacementString() { return "IncrementalDisplacement"; }
-
     /// @return String to access the edge map
     static constexpr char const * edgeListString() { return "edgeList"; }
 
@@ -271,12 +266,6 @@ public:
     /// Accessor to reference position
     dataRepository::ViewKey referencePosition       = { referencePositionString() };
 
-    /// Accessor to displacement
-    dataRepository::ViewKey totalDisplacement       = { totalDisplacementString() };
-
-    /// Accessor to incremental displacement
-    dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString() };
-
     /// Accessor to edge map
     dataRepository::ViewKey edgeList                = { edgeListString() };
 
@@ -292,11 +281,6 @@ public:
     /// Accessor to element map
     dataRepository::ViewKey elementList             = { elementListString() };
 
-    /// Accessor to velocity
-    dataRepository::ViewKey velocity                = { dataRepository::keys::Velocity };
-
-    /// Accessor to acceleration
-    dataRepository::ViewKey acceleration            = { dataRepository::keys::Acceleration };
   }
   /// viewKeys
   viewKeys;
@@ -424,7 +408,7 @@ public:
    * @note An error is thrown if the total displacement does not exist
    */
   array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & totalDisplacement()
-  { return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement ); }
+  { return getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >(); }
 
   /**
    * @brief Provide an immutable arrayView to the total displacement array.
@@ -432,7 +416,7 @@ public:
    * @note An error is thrown if the total displacement does not exist
    */
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > totalDisplacement() const
-  {return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement ); }
+  { return getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >(); }
 
   /**
    * @brief Get a mutable incremental displacement array.
@@ -440,7 +424,7 @@ public:
    * @note An error is thrown if the incremental displacement does not exist
    */
   array2d< real64, nodes::INCR_DISPLACEMENT_PERM > & incrementalDisplacement()
-  { return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement ); }
+  { return getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >(); }
 
   /**
    * @brief Provide an immutable arrayView to the incremental displacement array.
@@ -448,7 +432,7 @@ public:
    * @note An error is thrown if the total incremental does not exist
    */
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > incrementalDisplacement() const
-  { return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement ); }
+  { return getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >(); }
 
   /**
    * @brief Get a mutable velocity array.
@@ -456,7 +440,7 @@ public:
    * @note An error is thrown if the velocity array does not exist
    */
   array2d< real64, nodes::VELOCITY_PERM > & velocity()
-  { return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity ); }
+  { return getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >(); }
 
   /**
    * @brief Provide an immutable arrayView to the velocity array.
@@ -464,7 +448,7 @@ public:
    * @note An error is thrown if the velocity array does not exist
    */
   arrayView2d< real64 const, nodes::VELOCITY_USD > velocity() const
-  { return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity ); }
+  { return getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >(); }
 
   /**
    * @brief Get a mutable acceleration array.
@@ -472,7 +456,7 @@ public:
    * @note An error is thrown if the acceleration array does not exist
    */
   array2d< real64, nodes::ACCELERATION_PERM > & acceleration()
-  { return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration ); }
+  { return getExtrinsicData< extrinsicMeshData::solidMechanics::acceleration >(); }
 
   /**
    * @brief Provide an immutable arrayView to the acceleration array.
@@ -480,7 +464,7 @@ public:
    * @note An error is thrown if the acceleration array does not exist
    */
   arrayView2d< real64 const, nodes::ACCELERATION_USD > acceleration() const
-  { return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration ); }
+  { return getExtrinsicData< extrinsicMeshData::solidMechanics::acceleration >(); }
 
   ///@}
 

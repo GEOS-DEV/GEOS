@@ -29,6 +29,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernels.hpp"
@@ -77,7 +78,7 @@ void SolidMechanicsEmbeddedFractures::postProcessInput()
   {
     linParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures;
     linParams.mgr.separateComponents = true;
-    linParams.mgr.displacementFieldName = keys::TotalDisplacement;
+    linParams.mgr.displacementFieldName = extrinsicMeshData::solidMechanics::totalDisplacement::key();
   }
 }
 
@@ -301,7 +302,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
     SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
-    string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+    string const dispDofKey = dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
 
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
 
@@ -371,7 +372,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     string const jumpDofKey = dofManager.getKey( extrinsicMeshData::contact::dispJump::key() );
-    string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+    string const dispDofKey = dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
 
     arrayView1d< globalIndex const > const &
     dispDofNumber =  nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -439,7 +440,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     string const jumpDofKey = dofManager.getKey( extrinsicMeshData::contact::dispJump::key() );
-    string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+    string const dispDofKey = dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
 
     arrayView1d< globalIndex const > const &
     dispDofNumber =  nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -693,7 +694,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
     SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
-    string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+    string const dispDofKey = dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
 
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
 

@@ -264,42 +264,42 @@
 
     <FieldSpecification name="yconstraint"
                objectPath="nodeManager"
-               fieldName="TotalDisplacement"
+               fieldName="totalDisplacement"
                component="1"
                scale="0.0"
                setNames="{yneg, ypos}"/>
 
     <FieldSpecification name="zconstraint"
                objectPath="nodeManager"
-               fieldName="TotalDisplacement"
+               fieldName="totalDisplacement"
                component="2"
                scale="0.0"
                setNames="{zneg, zpos}"/>
 
     <FieldSpecification name="xconstraint"
                objectPath="nodeManager"
-               fieldName="TotalDisplacement"
+               fieldName="totalDisplacement"
                component="0"
                scale="0.0"
                setNames="{xneg, xpos}"/>
 
     <FieldSpecification name="coreLine0"
                         objectPath="nodeManager"
-                        fieldName="TotalDisplacement"
+                        fieldName="totalDisplacement"
                         component="0"
                         scale="0.0"
                         setNames="{coreline}"/>
 
     <FieldSpecification name="coreLine1"
                         objectPath="nodeManager"
-                        fieldName="TotalDisplacement"
+                        fieldName="totalDisplacement"
                         component="1"
                         scale="0.0"
                         setNames="{coreline}"/>
 
     <FieldSpecification name="coreLine2"
                         objectPath="nodeManager"
-                        fieldName="TotalDisplacement"
+                        fieldName="totalDisplacement"
                         component="2"
                         scale="0.0"
                         setNames="{coreline}"/>

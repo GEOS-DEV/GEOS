@@ -35,6 +35,7 @@
 #include "fileIO/Outputs/OutputUtilities.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
 
 #include <iostream>
 
@@ -1625,7 +1626,7 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
     }
   }
 
-  if( nodeManager.hasWrapper( keys::TotalDisplacement ) )
+  if( nodeManager.hasWrapper( extrinsicMeshData::solidMechanics::totalDisplacement::key() ) )
   {
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & totalDisplacement = nodeManager.totalDisplacement();
     for( localIndex a = 0; a < numNodes; ++a )

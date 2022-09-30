@@ -29,6 +29,7 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
@@ -522,9 +523,9 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   FieldIdentifiers fieldsToBeSync;
 
   fieldsToBeSync.addFields( FieldLocation::Face, { extrinsicMeshData::RuptureState::key() } );
-  if( nodeManager.hasWrapper( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() ) )
+  if( nodeManager.hasWrapper( extrinsicMeshData::solidMechanics::externalForce::key() ) )
   {
-    fieldsToBeSync.addFields( FieldLocation::Node, { SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() } );
+    fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::solidMechanics::externalForce::key() } );
   }
 
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
@@ -2789,7 +2790,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   SIFNode.zero();
   SIFonFace.zero();
 
-  arrayView2d< real64 const > const & fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() );
+  arrayView2d< real64 const > const & fext = nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::externalForce >();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodeManager.totalDisplacement();
   ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList().toViewConst();
   ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList().toViewConst();

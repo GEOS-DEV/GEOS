@@ -24,6 +24,7 @@
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsKernel.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
@@ -38,7 +39,7 @@ SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & n
 {
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
-  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+  m_linearSolverParameters.get().mgr.displacementFieldName = extrinsicMeshData::solidMechanics::totalDisplacement::key();
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
@@ -68,7 +69,7 @@ void SinglePhasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
 void SinglePhasePoromechanicsSolver::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                                     DofManager & dofManager ) const
 {
-  dofManager.addCoupling( keys::TotalDisplacement,
+  dofManager.addCoupling( extrinsicMeshData::solidMechanics::totalDisplacement::key(),
                           SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
 }
@@ -161,7 +162,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
 
-    string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+    string const dofKey = dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
     arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
     string const pDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
@@ -207,7 +208,7 @@ void SinglePhasePoromechanicsSolver::createPreconditioner()
 
     auto mechPrecond = LAInterface::createPreconditioner( solidMechanicsSolver()->getLinearSolverParameters() );
     precond->setupBlock( 0,
-                         { { keys::TotalDisplacement, { 3, true } } },
+                         { { extrinsicMeshData::solidMechanics::totalDisplacement::key(), { 3, true } } },
                          std::make_unique< SeparateComponentPreconditioner< LAInterface > >( 3, std::move( mechPrecond ) ) );
 
     auto flowPrecond = LAInterface::createPreconditioner( flowSolver()->getLinearSolverParameters() );

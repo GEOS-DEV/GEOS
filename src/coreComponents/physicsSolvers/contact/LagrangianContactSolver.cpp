@@ -65,7 +65,7 @@ LagrangianContactSolver::LagrangianContactSolver( const string & name,
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
-  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+  m_linearSolverParameters.get().mgr.displacementFieldName = extrinsicMeshData::solidMechanics::totalDisplacement::key();
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
@@ -540,7 +540,7 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
                           extrinsicMeshData::contact::traction::key(),
                           DofManager::Connector::Face,
                           meshTargets );
-  dofManager.addCoupling( keys::TotalDisplacement,
+  dofManager.addCoupling( extrinsicMeshData::solidMechanics::totalDisplacement::key(),
                           extrinsicMeshData::contact::traction::key(),
                           DofManager::Connector::Elem,
                           meshTargets );
@@ -584,7 +584,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     arrayView1d< globalIndex const > const & dispDofNumber =
-      nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( keys::TotalDisplacement ) );
+      nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() ) );
 
     string const & dofKey = dofManager.getKey( extrinsicMeshData::contact::traction::key() );
     globalIndex const rankOffset = dofManager.rankOffset();
@@ -735,7 +735,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
         MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
         LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
-                                                   { keys::TotalDisplacement },
+                                                   { extrinsicMeshData::solidMechanics::totalDisplacement::key() },
                                                    m_solidSolver->getRigidBodyModes() );
       }
     }
@@ -743,7 +743,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
     // Preconditioner for the Schur complement: mechPrecond
     std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_solidSolver->getRigidBodyModes() );
     precond->setupBlock( 1,
-                         { { keys::TotalDisplacement, { 3, true } } },
+                         { { extrinsicMeshData::solidMechanics::totalDisplacement::key(), { 3, true } } },
                          std::move( mechPrecond ) );
 
     m_precond = std::move( precond );
@@ -880,7 +880,7 @@ void LagrangianContactSolver::
     ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
     string const & tracDofKey = dofManager.getKey( extrinsicMeshData::contact::traction::key() );
-    string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+    string const & dispDofKey = dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
 
     arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
     globalIndex const rankOffset = dofManager.rankOffset();
@@ -1016,7 +1016,7 @@ void LagrangianContactSolver::
     ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
     string const & tracDofKey = dofManager.getKey( extrinsicMeshData::contact::traction::key() );
-    string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+    string const & dispDofKey = dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
 
     arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
     globalIndex const rankOffset = dofManager.rankOffset();

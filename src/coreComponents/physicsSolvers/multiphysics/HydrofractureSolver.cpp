@@ -23,6 +23,7 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 
@@ -61,7 +62,7 @@ HydrofractureSolver::HydrofractureSolver( const string & name,
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hydrofracture;
   m_linearSolverParameters.get().mgr.separateComponents = false;
-  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+  m_linearSolverParameters.get().mgr.displacementFieldName = extrinsicMeshData::solidMechanics::totalDisplacement::key();
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
@@ -225,8 +226,8 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
                                          { m_surfaceGenerator->getFractureRegionName() } );
 
         fieldsToBeSync.addFields( FieldLocation::Node,
-                                  { keys::IncrementalDisplacement,
-                                    keys::TotalDisplacement } );
+                                  { extrinsicMeshData::solidMechanics::incrementalDisplacement::key(),
+                                    extrinsicMeshData::solidMechanics::totalDisplacement::key() } );
 
         CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                              domain.getMeshBody( 0 ).getBaseDiscretization(),
@@ -376,7 +377,7 @@ void HydrofractureSolver::setupCoupling( DomainPartition const & domain,
     presMeshTargets[std::make_pair( meshBodyName, flowDiscretizationName )] = std::move( regions );
   } );
 
-  dofManager.addCoupling( keys::TotalDisplacement,
+  dofManager.addCoupling( extrinsicMeshData::solidMechanics::totalDisplacement::key(),
                           SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem,
                           dispMeshTargets );
@@ -514,7 +515,7 @@ void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartitio
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   string const presDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
-  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const dispDofKey = dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -624,11 +625,11 @@ HydrofractureSolver::
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   arrayView2d< real64 > const &
-  fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() );
+  fext = nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::externalForce >();
   fext.zero();
 
   string const presDofKey = m_dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
-  string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
+  string const dispDofKey = m_dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
 
   globalIndex const rankOffset = m_dofManager.rankOffset();
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -641,7 +642,7 @@ HydrofractureSolver::
 
     if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
     {
-      arrayView1d< real64 const > const & fluidPressure = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+      arrayView1d< real64 const > const & fluidPressure = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
@@ -717,7 +718,7 @@ HydrofractureSolver::
   GEOSX_MARK_FUNCTION;
 
   string const presDofKey = m_dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
-  string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
+  string const dispDofKey = m_dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
 
   globalIndex const rankOffset = m_dofManager.rankOffset();
 
