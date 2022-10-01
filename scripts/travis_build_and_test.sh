@@ -51,12 +51,12 @@ fi
 # This will tells OpenMPI to discover the number of hardware threads on the node,
 # and use that as the number of slots available. (There is a distinction between threads and cores).
 GEOSX_BUILD_DIR=/tmp/build
-or_die python scripts/config-build.py \
-              -hc ${HOST_CONFIG} \
-              -bt ${CMAKE_BUILD_TYPE} \
-              -bp ${GEOSX_BUILD_DIR} \
-              -ip ${GEOSX_DIR} \
-              -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"'
+or_die python3 scripts/config-build.py \
+               -hc ${HOST_CONFIG} \
+               -bt ${CMAKE_BUILD_TYPE} \
+               -bp ${GEOSX_BUILD_DIR} \
+               -ip ${GEOSX_DIR} \
+               -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"'
 
 or_die cd ${GEOSX_BUILD_DIR}
 
