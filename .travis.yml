@@ -83,7 +83,7 @@ __geosx_osx_build: &__geosx_osx_build
     -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -bt Release
     -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe" -DENABLE_VTK:BOOL=OFF
   - cd build-darwin-clang-release
-  - make -j $(nproc) VERBOSE=1
+  - make -j $(nproc) 
   - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
 
 __geosx_totalenergies_cluster_build: &__geosx_totalenergies_cluster_build
