@@ -572,6 +572,23 @@ struct BlasLapackLA
   static void matrixEigenvalues( MatColMajor< real64 const > const & A,
                                  Vec< std::complex< real64 > > const & lambda );
 
+  /**
+   * @brief Computes the least squares solution of B - AX
+   *
+   * @param [in]    A GEOSX array2d.
+   * @param [in]    B GEOSX array1d.
+   * @param [out]   X GEOSX array1d.
+   */
+  static void matrixLeastSquaresSolutionSolve( MatRowMajor< real64 const > const & A,
+                                               Vec< real64 const > const & B,
+                                               Vec< real64 > const & X );
+
+  /**
+   * @copydoc matrixLeastSquaresSolutionSolve
+   */
+  static void matrixLeastSquaresSolutionSolve( MatColMajor< real64 const > const & A,
+                                               Vec< real64 const > const & B,
+                                               Vec< real64 > const & X );
 };
 
 }

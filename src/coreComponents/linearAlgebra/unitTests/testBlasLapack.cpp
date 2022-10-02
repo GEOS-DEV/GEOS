@@ -1136,6 +1136,55 @@ void matrix_svd_test()
   }
 }
 
+template< typename LAI > 
+void matrix_linear_system_least_square_solve_test()
+{
+  INDEX_TYPE M = 3; 
+  INDEX_TYPE N = 2; 
+
+  array2d< real64 > A( M, N ); 
+  array1d< real64 > B( M ); 
+  array1d< real64 > X( N ); 
+
+  array1d< real64 > vecResult( N ); 
+
+  // Assign component values to A
+  A( 0, 0 ) = 0.0; 
+  A( 0, 1 ) = 1.0;
+  // A( 0, 2 ) = 1.0;
+  A( 1, 0 ) = 1.0;  
+  A( 1, 1 ) = 1.0; 
+  // A( 1, 2 ) = 1.0;
+  A( 2, 0 ) = 2.0; 
+  A( 2, 1 ) = 1.0;
+  // A( 2, 2 ) = 1.0;
+  // A( 3, 0 ) = 0.0; 
+  // A( 3, 1 ) = -1.0;
+  // A( 3, 2 ) = 1.0;
+
+  // Assign component values to B
+  B( 0 ) = 6.0; 
+  B( 1 ) = 0.0;
+  B( 2 ) = 0.0;
+  // B( 3 ) = 4.0; 
+
+  // Compute X
+  LAI::matrixLeastSquaresSolutionSolve( A, B, X ); 
+
+  // Assign component values to the reference solution   
+  vecResult( 0 ) = -3.0; 
+  vecResult( 1 ) = 5.0;
+  // vecResult( 2 ) = 2.0; 
+
+  // Check
+  for( INDEX_TYPE i = 0; i < N; ++i )
+  {
+    EXPECT_NEAR( vecResult( i ),
+                 X( i ),
+                 machinePrecision );
+  }
+}
+
 TEST( Array1D, vectorNorm1 )
 {
   vector_norm1_test< BlasLapackLA >();
@@ -1260,6 +1309,12 @@ TEST( DenseLAInterface, matrixSVD )
 {
   matrix_svd_test< BlasLapackLA >();
 }
+
+TEST( Array2D, matrixLinearSystemSolve )
+{
+  matrix_linear_system_least_square_solve_test< BlasLapackLA >();
+}
+
 
 int main( int argc, char * * argv )
 {

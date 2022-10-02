@@ -349,6 +349,36 @@ void matrixInverse( arraySlice2d< real64 const, USD > const & A,
   matrixInverse( A, Ainv, detA );
 }
 
+template< int USD >
+void matrixLeastSquaresSolutionSolve( arraySlice2d< real64, USD > const & A,
+                                      arraySlice1d< real64 > const & B,
+                                      arraySlice1d< real64 > const & X )
+{
+  GEOSX_ASSERT_MSG( A.size( 1 ) == X.size() && A.size( 0 ) == B.size(),
+                    "Matrix, unknown vector and rhs vector not compatible" );
+
+  GEOSX_ASSERT_MSG( X.size() <= B.size(),
+                    "Matrix, unknown vector and rhs vector not compatible" );
+
+  int const M = LvArray::integerConversion< int >( A.size( 0 ) );
+  int const N = LvArray::integerConversion< int >( A.size( 1 ) );
+  int const NRHS = 1;
+
+  int const LWORK = N + N;
+  array1d< double > WORK( LWORK );
+
+  int INFO = 0;
+
+  GEOSX_dgels( "N", &M, &N, &NRHS, A.dataIfContiguous(), &M, B.dataIfContiguous(), &M, WORK.data(), &LWORK, &INFO );
+
+  for( int i = 0; i < N; ++i )
+  {
+    X[i] = B[i];
+  }
+
+  GEOSX_ERROR_IF( INFO != 0, "The algorithm computing matrix linear system failed to converge." );
+}
+
 } // namespace detail
 
 real64 BlasLapackLA::determinant( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
@@ -853,6 +883,39 @@ void BlasLapackLA::matrixEigenvalues( MatRowMajor< real64 const > const & A,
   }
 
   matrixEigenvalues( AT.toSliceConst(), lambda );
+}
+
+void BlasLapackLA::matrixLeastSquaresSolutionSolve( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                                    arraySlice1d< real64 const > const & B,
+                                                    arraySlice1d< real64 > const & X )
+{
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > AT( A.size( 0 ), A.size( 1 ) );
+
+  // convert A to a row major format
+  for( int i = 0; i < A.size( 0 ); ++i )
+  {
+    for( int j = 0; j < A.size( 1 ); ++j )
+    {
+      AT( i, j ) = A( i, j );
+    }
+  }
+
+  matrixLeastSquaresSolutionSolve( AT.toSliceConst(), B, X ); 
+}
+
+void BlasLapackLA::matrixLeastSquaresSolutionSolve( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+                                                    arraySlice1d< real64 const > const & B,
+                                                    arraySlice1d< real64 > const & X )
+{
+  // make a copy of A, since dgels modifies the components in A 
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > ACOPY( A.size( 0 ), A.size( 1 ) );
+  BlasLapackLA::matrixCopy( A, ACOPY );
+
+  // make a copy of B, since dgels modifies the components in B 
+  array1d< real64 > BCOPY( B.size() );
+  BlasLapackLA::vectorCopy( B, BCOPY );
+
+  detail::matrixLeastSquaresSolutionSolve( ACOPY.toSlice(), BCOPY.toSlice(), X ); 
 }
 
 } // end geosx namespace
