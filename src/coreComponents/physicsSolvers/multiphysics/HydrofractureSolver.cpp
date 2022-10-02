@@ -258,9 +258,9 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
   NodeManager const & nodeManager = meshLevel.getNodeManager();
   FaceManager & faceManager = meshLevel.getFaceManager();
 
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u = nodeManager.totalDisplacement();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u =
+    nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
   arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
-  // arrayView1d<real64 const> const faceArea = faceManager.faceArea();
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
@@ -640,7 +640,7 @@ HydrofractureSolver::
     arrayView1d< globalIndex const > const &
     pressureDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
 
-    if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
+    if( subRegion.hasExtrinsicData< extrinsicMeshData::flow::pressure >() )
     {
       arrayView1d< real64 const > const & fluidPressure = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();

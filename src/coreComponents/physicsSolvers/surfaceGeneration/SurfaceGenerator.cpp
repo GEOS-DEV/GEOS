@@ -523,7 +523,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   FieldIdentifiers fieldsToBeSync;
 
   fieldsToBeSync.addFields( FieldLocation::Face, { extrinsicMeshData::RuptureState::key() } );
-  if( nodeManager.hasWrapper( extrinsicMeshData::solidMechanics::externalForce::key() ) )
+  if( nodeManager.hasExtrinsicData< extrinsicMeshData::solidMechanics::externalForce >() )
   {
     fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::solidMechanics::externalForce::key() } );
   }
@@ -2791,7 +2791,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   SIFonFace.zero();
 
   arrayView2d< real64 const > const & fext = nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::externalForce >();
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodeManager.totalDisplacement();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement =
+    nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
   ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList().toViewConst();
   ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList().toViewConst();
   ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager.elementList().toViewConst();
@@ -2840,9 +2841,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const
   detJ = elementManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( keys::detJ );
 
+  nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >().move( LvArray::MemorySpace::host, false );
 
-
-  nodeManager.totalDisplacement().move( LvArray::MemorySpace::host, false );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const &,
                                                                arrayView1d< string const > const & regionNames )
@@ -3229,7 +3229,8 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
 
   ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList().toViewConst();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodeManager.totalDisplacement();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement =
+    nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
 
   arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList();
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();

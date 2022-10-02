@@ -22,7 +22,6 @@
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
 #include "ToElementRelation.hpp"
 
 namespace geosx
@@ -401,70 +400,6 @@ public:
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > referencePosition() const
   { return m_referencePosition; }
   //END_SPHINX_REFPOS_ACCESS
-
-  /**
-   * @brief Get a mutable total displacement array.
-   * @return the total displacement array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the total displacement does not exist
-   */
-  array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & totalDisplacement()
-  { return getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >(); }
-
-  /**
-   * @brief Provide an immutable arrayView to the total displacement array.
-   * @return immutable arrayView of the total displacement array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the total displacement does not exist
-   */
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > totalDisplacement() const
-  { return getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >(); }
-
-  /**
-   * @brief Get a mutable incremental displacement array.
-   * @return the incremental displacement array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the incremental displacement does not exist
-   */
-  array2d< real64, nodes::INCR_DISPLACEMENT_PERM > & incrementalDisplacement()
-  { return getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >(); }
-
-  /**
-   * @brief Provide an immutable arrayView to the incremental displacement array.
-   * @return immutable arrayView of the incremental displacement array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the total incremental does not exist
-   */
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > incrementalDisplacement() const
-  { return getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >(); }
-
-  /**
-   * @brief Get a mutable velocity array.
-   * @return the velocity array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the velocity array does not exist
-   */
-  array2d< real64, nodes::VELOCITY_PERM > & velocity()
-  { return getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >(); }
-
-  /**
-   * @brief Provide an immutable arrayView to the velocity array.
-   * @return immutable arrayView of the velocity array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the velocity array does not exist
-   */
-  arrayView2d< real64 const, nodes::VELOCITY_USD > velocity() const
-  { return getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >(); }
-
-  /**
-   * @brief Get a mutable acceleration array.
-   * @return the acceleration array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the acceleration array does not exist
-   */
-  array2d< real64, nodes::ACCELERATION_PERM > & acceleration()
-  { return getExtrinsicData< extrinsicMeshData::solidMechanics::acceleration >(); }
-
-  /**
-   * @brief Provide an immutable arrayView to the acceleration array.
-   * @return immutable arrayView of the acceleration array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the acceleration array does not exist
-   */
-  arrayView2d< real64 const, nodes::ACCELERATION_USD > acceleration() const
-  { return getExtrinsicData< extrinsicMeshData::solidMechanics::acceleration >(); }
 
   ///@}
 

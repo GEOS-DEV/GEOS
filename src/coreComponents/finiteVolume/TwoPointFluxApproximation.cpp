@@ -378,8 +378,10 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
   FaceManager const & faceManager = mesh.getFaceManager();
   ArrayOfArraysView< localIndex const > const & faceToNodesMap = faceManager.nodeList();
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion.faceList();
-  arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const incrementalDisplacement = nodeManager.incrementalDisplacement();
-  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const totalDisplacement = nodeManager.totalDisplacement();
+  arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const incrementalDisplacement =
+    nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >();
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const totalDisplacement =
+    nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
   arrayView1d< real64 > const aperture = fractureSubRegion.getReference< array1d< real64 > >( "elementAperture" );
 #endif
 

@@ -17,6 +17,7 @@
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/FaceManager.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
 
 #include <cstdint>
 #include <tuple>
@@ -159,8 +160,10 @@ void ChomboCoupler::copyNodalData()
   NodeManager const & nodes = m_mesh.getNodeManager();
   localIndex const numNodes = nodes.size();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePos = nodes.referencePosition();
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodes.totalDisplacement();
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & velocity = nodes.velocity();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement =
+    nodes.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & velocity =
+    nodes.getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >();
 
   GEOSX_ERROR_IF_NE( referencePos.size( 0 ), numNodes );
   GEOSX_ERROR_IF_NE( referencePos.size( 1 ), 3 );
