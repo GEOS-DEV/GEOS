@@ -63,7 +63,7 @@ namespace timingHelpers
       eventAttrib.version = NVTX_VERSION;
       eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
       eventAttrib.colorType = NVTX_COLOR_ARGB;
-      eventAttrib.color = colorID;
+      eventAttrib.color = color;
       eventAttrib.messageType = NVTX_MESSAGE_TYPE_ASCII;
       eventAttrib.message.ascii = name;
       nvtxRangePushEx(&eventAttrib);
