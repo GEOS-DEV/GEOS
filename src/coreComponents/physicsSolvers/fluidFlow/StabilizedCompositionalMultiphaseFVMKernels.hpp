@@ -295,7 +295,7 @@ protected:
 
   /// Views on the macroelement indices and stab constant
   ElementViewConst< arrayView1d< integer const > > const m_macroElementIndex;
-  ElementViewConst< arrayView1d< integer const > > const m_elementStabConstant;
+  ElementViewConst< arrayView1d< real64 const > > const m_elementStabConstant;
 
 };
 

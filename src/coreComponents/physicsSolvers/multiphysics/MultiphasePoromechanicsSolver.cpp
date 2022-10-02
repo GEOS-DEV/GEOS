@@ -85,19 +85,6 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups()
-{
-
-  SolverBase::initializePostInitialConditionsPreSubGroups();
-
-  GEOSX_THROW_IF( m_stabilizationType == StabilizationType::Local,
-                  catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
-                  InputError );
-
-  updateStabilizationParams(true, true);
-
-}
-
 void MultiphasePoromechanicsSolver::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                                    DofManager & dofManager ) const
 {

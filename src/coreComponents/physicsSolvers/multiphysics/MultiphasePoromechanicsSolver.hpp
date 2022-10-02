@@ -115,9 +115,6 @@ public:
   void updateStabilizationParams(bool updateMacro, bool updateTau)
   { 
 
-    if( m_stabilizationType == StabilizationType::Global )
-    {
-
        DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
        // Step 1: we loop over the regions where stabilization is active and collect their name
@@ -150,17 +147,17 @@ public:
                                                                                                 ElementSubRegionBase & subRegion )
 
          {
-           arrayView1d< integer > const macroElementIndex = subRegion.getExtrinsicData< extrinsicMeshData::flow::macroElementIndex >();
-           arrayView1d< real64 > const elementStabConstant = subRegion.getExtrinsicData< extrinsicMeshData::flow::elementStabConstant >();
+           arrayView1d< integer > macroElementIndex = subRegion.getExtrinsicData< extrinsicMeshData::flow::macroElementIndex >();
+           arrayView1d< real64 > elementStabConstant = subRegion.getExtrinsicData< extrinsicMeshData::flow::elementStabConstant >();
         
            geosx::constitutive::CoupledSolidBase const & porousSolid =
            getConstitutiveModel< geosx::constitutive::CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );
 
-           arrayView1d< const real64 > const bulkModulus = porousSolid.getBulkModulus();
-           arrayView1d< const real64 > const shearModulus = porousSolid.getShearModulus();
-           arrayView1d< const real64 > const biotCoefficient = porousSolid.getBiotCoefficient();
+           arrayView1d< real64 const > const bulkModulus = porousSolid.getBulkModulus();
+           arrayView1d< real64 const > const shearModulus = porousSolid.getShearModulus();
+           arrayView1d< real64 const > const biotCoefficient = porousSolid.getBiotCoefficient();
 
-           forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const ei )
+           forAll< parallelDevicePolicy<> >( subRegion.size(), [=] ( localIndex const ei )
            {
              if (updateMacro)
              {
@@ -169,26 +166,34 @@ public:
 
              if (updateTau)
              {
-               real64 bM = bulkModulus[ei];
-               real64 sM = shearModulus[ei];
-               real64 bC = biotCoefficient[ei];
+               real64 const bM = bulkModulus[ei];
+               real64 const sM = shearModulus[ei];
+               real64 const bC = biotCoefficient[ei];
+
                elementStabConstant[ei] = m_stabilizationMultiplier * 9.0 * (bC * bC) / (32.0 * (10.0 * sM / 3.0 + bM));
+
              }
            } );
          } );
  
        } );
-    
-    } 
   }
 
   virtual void
-  implicitStepComplete( real64 const & time_n,
-                        real64 const & dt,
-                        DomainPartition & domain ) override
+  implicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain ) override
   {
-    CoupledSolver< SolidMechanicsLagrangianFEM, CompositionalMultiphaseBase > :: implicitStepComplete(time_n, dt, domain);
-    updateStabilizationParams(false, true);
+    CoupledSolver< SolidMechanicsLagrangianFEM, CompositionalMultiphaseBase > :: implicitStepSetup(time_n, dt, domain);
+    
+    GEOSX_THROW_IF( m_stabilizationType == StabilizationType::Local,
+                  catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
+                  InputError );
+    
+    if(m_stabilizationType == StabilizationType::Global)
+    {
+      updateStabilizationParams(true, true);
+    }
   }
 
   /**@}*/
@@ -218,8 +223,6 @@ protected:
   };
 
   virtual void initializePreSubGroups() override;
-
-  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /// Type of stabilization used in the simulation
   StabilizationType m_stabilizationType;

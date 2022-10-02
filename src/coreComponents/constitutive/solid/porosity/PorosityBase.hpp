@@ -212,7 +212,7 @@ public:
     GEOSX_ERROR( "getBiotPorosity() not implemented for this model" );
 
     array1d< real64 > out;
-    return out.toView();
+    return out.toViewConst();
   }
 
   using KernelWrapper = PorosityBaseUpdates;
