@@ -295,14 +295,14 @@ public:
       localIndex neighbor[3] = { m_er, m_esr, ei };
       bool const isNeighborFound =
         hybridFVMKernels::CellConnectivity::
-          findNeighbor( local,
-                        iFaceLoc,
-                        m_elemRegionList,
-                        m_elemSubRegionList,
-                        m_elemList,
-                        m_regionFilter,
-                        m_elemToFaces[ei],
-                        neighbor );
+          isNeighborFound( local,
+                           iFaceLoc,
+                           m_elemRegionList,
+                           m_elemSubRegionList,
+                           m_elemList,
+                           m_regionFilter,
+                           m_elemToFaces[ei],
+                           neighbor );
 
       // 2) Upwind the mobility at this face
       if( stack.oneSidedVolFlux[iFaceLoc] >= 0 || !isNeighborFound )
