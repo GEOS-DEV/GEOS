@@ -119,6 +119,11 @@ public:
                      DomainPartition & domain ) override;
 
   virtual void
+  implicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        DomainPartition & domain ) override;
+
+  virtual void
   assembleFluxTerms( real64 const time_n,
                      real64 const dt,
                      DomainPartition const & domain,
@@ -157,6 +162,8 @@ public:
                              real64 const & dt,
                              DomainPartition & domain ) override;
 
+  void updatePressureGradient( DomainPartition & domain ); 
+
   /**@}*/
 
 
@@ -164,6 +171,9 @@ public:
   {
     // primary face-based field
     static constexpr char const * deltaFacePressureString() { return "deltaFacePressure"; }
+
+    // cellwise pressure gradient
+    static constexpr char const * pressureGradientString() { return "pressureGradient"; }
   };
 
   virtual void initializePreSubGroups() override;

@@ -71,6 +71,26 @@ void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
     // primary variables: face pressures at the previous converged time step
     faceManager.registerExtrinsicData< extrinsicMeshData::flow::facePressure_n >( getName() );
   } );
+
+  // 3) Register the pressure gradient data 
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
+  {
+    
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
+    {
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::pressureGradientString() ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the cellwise pressure gradient." ).
+        reference().resizeDimension< 1 >( 3 );
+    } ); 
+  } ); 
 }
 
 void SinglePhaseHybridFVM::initializePreSubGroups()
@@ -174,6 +194,15 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
     facePres_n.setValues< parallelDevicePolicy<> >( facePres );
   } );
 }
+
+void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time,
+                                                 real64 const & dt,
+                                                 DomainPartition & domain )
+{
+  SinglePhaseBase::implicitStepComplete( time, dt, domain ); 
+
+  updatePressureGradient( domain ); 
+}                                             
 
 void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                       DofManager & dofManager ) const
@@ -636,6 +665,48 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
     arrayView1d< real64 const > const & facePres_n =
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure_n >();
     facePres.setValues< parallelDevicePolicy<> >( facePres_n );
+  } );
+}
+
+void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    FaceManager & faceManager = mesh.getFaceManager();
+
+    // get the face-centered pressures
+    arrayView1d< real64 const > const facePres =
+      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+
+    // get the face center coordinates
+    arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
+
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          auto & subRegion )
+    {
+      arrayView2d< real64 > const presGradient =
+        subRegion.template getReference< array2d< real64 > >( viewKeyStruct::pressureGradientString() );
+
+      // get the cell-centered pressures
+      arrayView1d< real64 const > const pres = subRegion.template getReference< array1d< real64 > >( "pressure" );
+
+      // get the cell center coordinates
+      arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
+
+      // get the elements to faces map
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+
+      PressureGradientKernel::launch< parallelDevicePolicy<> >( subRegion.numFacesPerElement(),
+                                                                subRegion.size(),
+                                                                faceCenter,
+                                                                elemCenter,
+                                                                elemsToFaces,
+                                                                facePres,
+                                                                pres,
+                                                                presGradient );
+    } );
   } );
 }
 
