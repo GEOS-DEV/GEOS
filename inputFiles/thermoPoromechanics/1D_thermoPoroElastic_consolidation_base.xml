@@ -10,7 +10,7 @@
       couplingTypeOption="FixedStress"
       logLevel="1"
       discretization="FE1"
-      subcycling="0"
+      subcycling="1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonMaxIter="50"/>
