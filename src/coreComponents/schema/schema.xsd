@@ -8,6 +8,11 @@
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="R1Tensor32">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="R2SymTensor">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
@@ -1024,17 +1029,17 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
 		<!--thicknessMaxXYZ => Thickness of the PML region, at right, back, and bottom sides, used to compute the damping profile-->
-		<xsd:attribute name="thicknessMaxXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<xsd:attribute name="thicknessMaxXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
 		<!--thicknessMinXYZ => Thickness of the PML region, at left, front, and top sides, used to compute the damping profile-->
-		<xsd:attribute name="thicknessMinXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<xsd:attribute name="thicknessMinXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
 		<!--waveSpeedMaxXYZ => Wave speed in the PML, at right, back, and bottom sides, used to compute the damping profile-->
-		<xsd:attribute name="waveSpeedMaxXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<xsd:attribute name="waveSpeedMaxXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
 		<!--waveSpeedMinXYZ => Wave speed in the PML, at left, front, and top sides, used to compute the damping profile-->
-		<xsd:attribute name="waveSpeedMinXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<xsd:attribute name="waveSpeedMinXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
 		<!--xMax => Maximum (x,y,z) coordinates of the inner PML boundaries-->
-		<xsd:attribute name="xMax" type="R1Tensor" default="{1.79769e+308,1.79769e+308,1.79769e+308}" />
+		<xsd:attribute name="xMax" type="R1Tensor32" default="{1.79769e+308,1.79769e+308,1.79769e+308}" />
 		<!--xMin => Minimum (x,y,z) coordinates of the inner PML boundaries-->
-		<xsd:attribute name="xMin" type="R1Tensor" default="{-1.79769e+308,-1.79769e+308,-1.79769e+308}" />
+		<xsd:attribute name="xMin" type="R1Tensor32" default="{-1.79769e+308,-1.79769e+308,-1.79769e+308}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1525,10 +1530,6 @@ the relative residual norm satisfies:
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--allowNonConverged => Allow non-converged solution to be accepted. (i.e. exit from the Newton loop without achieving the desired tolerance)-->
 		<xsd:attribute name="allowNonConverged" type="integer" default="0" />
-		<!--dtCutIterLimit => Fraction of the Max Newton iterations above which the solver asks for the time-step to be cut for the next dt.-->
-		<xsd:attribute name="dtCutIterLimit" type="real64" default="0.7" />
-		<!--dtIncIterLimit => Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt.-->
-		<xsd:attribute name="dtIncIterLimit" type="real64" default="0.4" />
 		<!--lineSearchAction => How the line search is to be used. Options are: 
  * None    - Do not use line search.
 * Attempt - Use line search. Allow exit from line search without achieving smaller residual than starting residual.
@@ -1558,8 +1559,16 @@ the relative residual norm satisfies:
 		<xsd:attribute name="newtonMinIter" type="integer" default="1" />
 		<!--newtonTol => The required tolerance in order to exit the Newton iteration loop.-->
 		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
-		<!--timestepCutFactor => Factor by which the time step will be cut if a timestep cut is required.-->
-		<xsd:attribute name="timestepCutFactor" type="real64" default="0.5" />
+		<!--timeStepCutFactor => Factor by which the time step will be cut if a timestep cut is required.-->
+		<xsd:attribute name="timeStepCutFactor" type="real64" default="0.5" />
+		<!--timeStepDecreaseFactor => Factor by which the time step is decreased when the number of Newton iterations is large.-->
+		<xsd:attribute name="timeStepDecreaseFactor" type="real64" default="0.5" />
+		<!--timeStepDecreaseIterLimit => Fraction of the max Newton iterations above which the solver asks for the time-step to be decreased for the next time step.-->
+		<xsd:attribute name="timeStepDecreaseIterLimit" type="real64" default="0.7" />
+		<!--timeStepIncreaseFactor => Factor by which the time step is increased when the number of Newton iterations is small.-->
+		<xsd:attribute name="timeStepIncreaseFactor" type="real64" default="2" />
+		<!--timeStepIncreaseIterLimit => Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next time step.-->
+		<xsd:attribute name="timeStepIncreaseIterLimit" type="real64" default="0.4" />
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_NonlinearSolverParameters_LineSearchAction">
 		<xsd:restriction base="xsd:string">
@@ -1814,14 +1823,22 @@ the relative residual norm satisfies:
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
+		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
-		<!--maxRelativePressureChange => Maximum (relative) change in pressure between two Newton iterations-->
+		<!--maxRelativePressureChange => Maximum (relative) change in pressure in a Newton iteration (expected value between 0 and 1)-->
 		<xsd:attribute name="maxRelativePressureChange" type="real64" default="0.5" />
-		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature between two Newton iterations-->
+		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature in a Newton iteration (expected value between 0 and 1)-->
 		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.5" />
+		<!--solutionChangeScalingFactor => Damping factor for solution change targets-->
+		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
+		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in phase volume fraction in a time step-->
+		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--targetRelativePressureChangeInTimeStep => Target (relative) change in pressure in a time step (expected value between 0 and 1)-->
+		<xsd:attribute name="targetRelativePressureChangeInTimeStep" type="real64" default="0.2" />
+		<!--targetRelativeTemperatureChangeInTimeStep => Target (relative) change in temperature in a time step (expected value between 0 and 1)-->
+		<xsd:attribute name="targetRelativeTemperatureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->
@@ -1848,14 +1865,22 @@ the relative residual norm satisfies:
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
+		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
-		<!--maxRelativePressureChange => Maximum (relative) change in pressure between two Newton iterations-->
+		<!--maxRelativePressureChange => Maximum (relative) change in pressure in a Newton iteration (expected value between 0 and 1)-->
 		<xsd:attribute name="maxRelativePressureChange" type="real64" default="0.5" />
-		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature between two Newton iterations-->
+		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature in a Newton iteration (expected value between 0 and 1)-->
 		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.5" />
+		<!--solutionChangeScalingFactor => Damping factor for solution change targets-->
+		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
+		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in phase volume fraction in a time step-->
+		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--targetRelativePressureChangeInTimeStep => Target (relative) change in pressure in a time step (expected value between 0 and 1)-->
+		<xsd:attribute name="targetRelativePressureChangeInTimeStep" type="real64" default="0.2" />
+		<!--targetRelativeTemperatureChangeInTimeStep => Target (relative) change in temperature in a time step (expected value between 0 and 1)-->
+		<xsd:attribute name="targetRelativeTemperatureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->
@@ -1927,6 +1952,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--injectionTemperature => Temperature of the injection stream [K]-->
 		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--referenceElevation => Reference elevation where BHP control is enforced [m]-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
 		<!--surfacePressure => Surface pressure used to compute volumetric rates when surface conditions are used [Pa]-->
@@ -2567,8 +2594,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="Fracture" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->

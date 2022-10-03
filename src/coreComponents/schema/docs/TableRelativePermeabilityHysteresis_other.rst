@@ -18,6 +18,7 @@ phaseMaxHistoricalVolFraction    real64_array2d                                 
 phaseMinHistoricalVolFraction    real64_array2d                                                                                           Phase min historical phase volume fraction                                      
 phaseOrder                       integer_array                                                                                            (no description available)                                                      
 phaseRelPerm                     real64_array3d                                                                                           Phase relative permeability                                                     
+phaseTrappedVolFraction          real64_array3d                                                                                           Phase trapped volume fraction                                                   
 phaseTypes                       integer_array                                                                                            (no description available)                                                      
 ================================ ======================================================================================================== =============================================================================== 
 
