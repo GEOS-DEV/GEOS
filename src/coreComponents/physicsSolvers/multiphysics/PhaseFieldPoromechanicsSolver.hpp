@@ -70,6 +70,8 @@ public:
 
   void mapDamageAndGradientToQuadrature( DomainPartition & domain );
 
+  void applyDamageOnTractionBC( DomainPartition & domain ); 
+
   enum class CouplingTypeOption : integer
   {
     FixedStress,

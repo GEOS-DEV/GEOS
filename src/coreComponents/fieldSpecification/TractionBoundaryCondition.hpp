@@ -80,6 +80,10 @@ public:
                SortedArrayView< localIndex const > const & targetSet,
                arrayView1d< real64 > const & localRhs ) const;
 
+  void reinitScaleSet( FaceManager const & faceManager,
+                       SortedArrayView< localIndex const > const & targetSet,
+                       arrayView1d< real64 const > const nodalScaleSet ); 
+
   /**
    * @brief View keys
    */
@@ -93,6 +97,12 @@ public:
 
 //    /// @return The key for the function describing the components of stress.
 //    constexpr static char const * stressFunctionString() { return "stressFunctions"; }
+
+    /// @return The key for scaleSet
+    constexpr static char const * scaleSetString() { return "scaleSet"; }
+
+    /// @return The key for nodalScaleFlag
+    constexpr static char const * nodalScaleFlagString() { return "nodalScaleFlag"; }
 
   };
 
@@ -117,6 +127,12 @@ protected:
 
   /// single specified value for stress used to generate the traction if m_tractionType == stress.
   R2SymTensor m_inputStress;
+
+  /// Array of scale values
+  array1d< real64 > m_scaleSet;
+
+  /// The flag for applying the nodal scale
+  integer m_nodalScaleFlag;
 
 //  /// names of the functions used to specify stress for the generation of tractions.
 //  array1d<string> m_stressFunctionNames;
