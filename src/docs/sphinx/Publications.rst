@@ -11,10 +11,6 @@ Preprints and Early-Views
    :widths: 100
    :header-rows: 0
 
-   * - | **Deep learning-accelerated 3D carbon storage reservoir pressure forecasting based on data assimilation using surface displacement from InSAR**
-       | H Tang, P Fu, H Jo, S Jiang, CS Sherman, F Hamon, NA Azzolina, JP Morris
-       | arXiv preprint
-       | `arXiv:2201.08543 <https://arxiv.org/abs/2201.08543>`_
 
 
 2022
@@ -24,21 +20,11 @@ Preprints and Early-Views
    :widths: 100
    :header-rows: 0
 
-   * - | **Validation and Application of a Three-Dimensional Model for Simulating Proppant Transport and Fracture Conductivity**
-       | J Huang, Y Hao, RR Settgast, JA White, K Mateen, H Gross
-       | Rock Mechanics and Rock Engineering
-       | `doi:10.1007/s00603-022-03092-3 <https://doi.org/10.1007/s00603-022-03092-3>`_
-
    * - | **Smooth implicit hybrid upwinding for compositional multiphase flow in porous media**
        | SBM Bosma, FP Hamon, BT Mallison, HA Tchelepi
        | Computer Methods in Applied Mechanics and Engineering
        | `doi:10.1016/j.cma.2021.114288 <https://doi.org/10.1016/j.cma.2021.114288>`_
 
-   * - | **An aggregation-based nonlinear multigrid solver for two-phase flow and transport in porous media**
-       | CS Lee, F Hamon, N Castelletto, PS Vassilevski, JA White
-       | Computers & Mathematics with Applications
-       | `doi:10.1016/j.camwa.2022.03.026 <https://doi.org/10.1016/j.camwa.2022.03.026>`_  
-       
    * - | **Phase-field modeling of rock fractures with roughness**
        | F Fei, J Choo, C Liu, JA White
        | International Journal for Numerical and Analytical Methods in Geomechanics 
@@ -57,7 +43,22 @@ Preprints and Early-Views
    * - | **Enhanced Relaxed Physical Factorization preconditioner for coupled poromechanics**
        | M Frigo, N Castelletto, M Ferronato
        | Computers & Mathematics with Applications
-       | `doi:10.1016/j.camwa.2021.11.015 <https://doi.org/10.1016/j.camwa.2021.11.015>`_  
+       | `doi:10.1016/j.camwa.2021.11.015 <https://doi.org/10.1016/j.camwa.2021.11.015>`_ 
+
+   * - | **Validation and Application of a Three-Dimensional Model for Simulating Proppant Transport and Fracture Conductivity**
+       | J Huang, Y Hao, RR Settgast, JA White, K Mateen, H Gross
+       | Rock Mechanics and Rock Engineering
+       | `doi:10.1007/s00603-022-03092-3 <https://doi.org/10.1007/s00603-022-03092-3>`_ 
+
+   * - | **An aggregation-based nonlinear multigrid solver for two-phase flow and transport in porous media**
+       | CS Lee, F Hamon, N Castelletto, PS Vassilevski, JA White
+       | Computers & Mathematics with Applications
+       | `doi:10.1016/j.camwa.2022.03.026 <https://doi.org/10.1016/j.camwa.2022.03.026>`_
+
+   * - | **Deep learning-accelerated 3D carbon storage reservoir pressure forecasting based on data assimilation using surface displacement from InSAR**
+       | H Tang, P Fu, H Jo, S Jiang, CS Sherman, F Hamon, NA Azzolina, JP Morris
+       | International Journal of Greenhouse Gas Control
+       | `doi:10.1016/j.ijggc.2022.103765 <https://doi.org/10.1016/j.ijggc.2022.103765>`_        
 
 
 2021
