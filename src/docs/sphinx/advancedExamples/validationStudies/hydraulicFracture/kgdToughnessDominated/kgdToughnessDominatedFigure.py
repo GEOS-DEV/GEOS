@@ -51,49 +51,78 @@ def main():
     halfLength = kgdFrac[6]
     inletAperture = kgdFrac[7]
 
-    # GEOSX results
-    t_geosx, halfLength_geosx = [], []
-    for line in open('surfaceArea.curve', 'r'):
-        if not (line.strip().startswith("#") or line.strip() == ''):
-            values = [float(s) for s in line.split()]
-            t_geosx.append(values[0])
-            halfLength_geosx.append(values[1] / 2.0)
+    # GEOSX results   
+    t_geosx, inletPressure_geosx, inletAperture_geosx, halfLength_geosx = np.loadtxt("model-results.txt", skiprows=1, unpack=True)
 
-    inletAperture_geosx = []
-    for line in open('inletAperture.curve', 'r'):
-        if not (line.strip().startswith("#") or line.strip() == ''):
-            values = [float(s) for s in line.split()]
-            inletAperture_geosx.append(values[1] * 1e3)
+    # Visulization
+    N1 = 2
+    fsize = 30
+    msize = 12
+    lw = 8
+    mew = 2
+    malpha = 1.0
+    lablelist = ['Asymptotic ( $\mu$ => 0, $C_{L}$ => 0 )', 'GEOSX ( $\mu$ => 0, $C_{L}$ => 0 )']
 
-    inletPressure_geosx = []
-    for line in open('inletPressure.curve', 'r'):
-        if not (line.strip().startswith("#") or line.strip() == ''):
-            values = [float(s) for s in line.split()]
-            inletPressure_geosx.append(values[1] / 1e6)
+    fig, ax = plt.subplots(2, 2, figsize=(24, 18))
+    cmap = plt.get_cmap("tab10")
 
-    fig = plt.figure(figsize=[15, 10])
+    ax[0, 0].plot(t, halfLength, lw=lw, alpha=0.8, color=cmap(0), label=lablelist[0])
+    ax[0, 0].plot(t_geosx[0::N1],
+                  halfLength_geosx[0::N1],
+                  'o',
+                  color=cmap(0),
+                  mec=cmap(0),
+                  fillstyle='none',
+                  markersize=msize,
+                  mew=mew,
+                  label=lablelist[1],
+                  alpha=malpha)    
+    ax[0, 0].set_xlabel(r'Time (s)', size=fsize, weight="bold")
+    ax[0, 0].set_ylabel(r'Fracture Half Length (m)', size=fsize, weight="bold")
+    ax[0, 0].legend(loc='lower right', fontsize=fsize * 0.7)
+    ax[0, 0].grid(True)
+    ax[0, 0].xaxis.set_tick_params(labelsize=fsize)
+    ax[0, 0].yaxis.set_tick_params(labelsize=fsize)
 
-    plt.subplot(221)
-    plt.plot(t_geosx, halfLength_geosx, 'ko', label='GEOSX result')
-    plt.plot(t, halfLength, 'k', linewidth=2, label='Analytical solution')
-    plt.ylabel('Fracture half-length (m)')
-    plt.xlabel('Injection time (s)')
+    ax[0, 1].plot(t, inletAperture * 1000, lw=lw, alpha=0.8, color=cmap(0), label=lablelist[0])
+    ax[0, 1].plot(t_geosx[0::N1],
+                  inletAperture_geosx[0::N1] * 1e3,
+                  'o',
+                  color=cmap(0),
+                  mec=cmap(0),
+                  fillstyle='none',
+                  markersize=msize,
+                  mew=mew,
+                  label=lablelist[1],
+                  alpha=malpha)    
+    ax[0, 1].set_xlabel(r'Time (s)', size=fsize, weight="bold")
+    ax[0, 1].set_ylabel(r'Fracture Mouth Opening (mm)', size=fsize, weight="bold")
+    ax[0, 1].legend(loc='lower right', fontsize=fsize * 0.7)
+    ax[0, 1].grid(True)
+    ax[0, 1].xaxis.set_tick_params(labelsize=fsize)
+    ax[0, 1].yaxis.set_tick_params(labelsize=fsize)
 
-    plt.subplot(222)
-    plt.plot(t_geosx, inletAperture_geosx, 'ko', label='GEOSX result')
-    plt.plot(t, inletAperture * 1e3, 'k', linewidth=2, label='Analytical solution')
-    plt.ylabel('Inlet aperture (mm)')
-    plt.xlabel('Injection time (s)')
+    ax[1, 0].plot(t, inletPressure / 1.0e6, lw=lw, alpha=0.8, color=cmap(0), label=lablelist[0])
+    ax[1, 0].plot(t_geosx[0::N1],
+                  inletPressure_geosx[0::N1] / 1e6,
+                  'o',
+                  color=cmap(0),
+                  mec=cmap(0),
+                  fillstyle='none',
+                  markersize=msize,
+                  mew=mew,
+                  label=lablelist[1],
+                  alpha=malpha)    
+    ax[1, 0].set_xlabel(r'Time (s)', size=fsize, weight="bold")
+    ax[1, 0].set_ylabel(r'Net Pressure at Well (MPa)', size=fsize, weight="bold")
+    ax[1, 0].legend(loc='upper right', fontsize=fsize * 0.7)
+    ax[1, 0].grid(True)
+    ax[1, 0].xaxis.set_tick_params(labelsize=fsize)
+    ax[1, 0].yaxis.set_tick_params(labelsize=fsize)
 
-    plt.subplot(223)
-    plt.plot(t_geosx, inletPressure_geosx, 'ko', label='GEOSX result')
-    plt.plot(t, inletPressure / 1e6, 'k', linewidth=2, label='Analytical solution')
-    plt.ylabel('Inlet fluid pressure (MPa)')
-    plt.xlabel('Injection time (s)')
-
-    plt.legend()
+    ax[1, 1].axis('off')
+    
     plt.show()
-
 
 if __name__ == "__main__":
     main()

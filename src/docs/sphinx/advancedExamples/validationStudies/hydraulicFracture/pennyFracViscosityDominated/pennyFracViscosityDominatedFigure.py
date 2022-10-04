@@ -54,8 +54,7 @@ def main():
     inletAperture = pennyFrac[10]
 
     # Load GEOSX results
-    t_sim, p0_sim, w0_sim, fracArea_sim = np.loadtxt("model-results.txt", skiprows=1, unpack=True)
-    Radius_sim = (fracArea_sim / np.pi)**0.5
+    t_sim, p0_sim, w0_sim, Radius_sim = np.loadtxt("model-results.txt", skiprows=1, unpack=True)    
 
     # Visulization
     N1 = 1

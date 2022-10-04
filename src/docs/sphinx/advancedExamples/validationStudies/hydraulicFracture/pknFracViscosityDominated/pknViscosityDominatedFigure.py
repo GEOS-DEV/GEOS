@@ -75,9 +75,8 @@ def main():
     halfLength, inletAperture, inletPressure = pknFrac.analyticalSolution()
 
     # Load GEOSX results
-    t_sim, p0_sim, w0_sim, fracArea_sim = np.loadtxt("model-results.txt", skiprows=1, unpack=True)
-    halfLength_sim = 2.0 * fracArea_sim / h
-
+    t_sim, p0_sim, w0_sim, halfLength_sim = np.loadtxt("model-results.txt", skiprows=1, unpack=True)
+    
     # Visulization
     N1 = 1
     fsize = 30
