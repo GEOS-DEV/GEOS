@@ -11,6 +11,10 @@ Preprints and Early-Views
    :widths: 100
    :header-rows: 0
 
+   * - | **A Multi-Resolution Approach to Hydraulic Fracture Simulation**
+       | A Costa, M Cusini, T Jin, R Settgast, J Dolbow
+       | arXiv preprint
+       | `arXiv:2207.00661 <https://arxiv.org/abs/2207.00661>`_
 
 
 2022
