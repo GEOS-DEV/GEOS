@@ -100,7 +100,8 @@ public:
                           CRSMatrixView< real64, globalIndex const > const inputMatrix,
                           arrayView1d< real64 > const inputRhs,
                           string const fieldName,
-                          int const localDissipationOption ):
+                          int const localDissipationOption,
+                          integer fracturePressureTermFlag ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -113,8 +114,12 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition()),
+    m_disp( nodeManager.totalDisplacement() ), 
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_localDissipationOption( localDissipationOption )
+    m_localDissipationOption( localDissipationOption ),
+    m_fracturePressureTermFlag( fracturePressureTermFlag ), 
+    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( "pressure" ) ), 
+    m_fluidPressureGradient( elementSubRegion.template getReference< array2d< real64 > >( "pressureGradient" ) )
   {}
 
   //***************************************************************************
@@ -146,6 +151,9 @@ public:
     real64 xLocal[ numNodesPerElem ][ 3 ];
 #endif
 
+    /// Stack storage for the element local nodal displacement
+    real64 u_local[numNodesPerElem][3];
+
     /// C-array storage for the element local primary field variable.
     real64 nodalDamageLocal[numNodesPerElem];
   };
@@ -172,6 +180,8 @@ public:
       LvArray::tensorOps::copy< 3 >( stack.xLocal[ a ], m_X[ localNodeIndex ] );
 #endif
 
+      LvArray::tensorOps::copy< 3 >( stack.u_local[ a ], m_disp[ localNodeIndex ] );
+
       stack.nodalDamageLocal[ a ] = m_nodalDamage[ localNodeIndex ];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
@@ -193,6 +203,8 @@ public:
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
     real64 const extDrivingForce = m_constitutiveUpdate.getExtDrivingForce( k, q );
+    real64 const volStrain = m_constitutiveUpdate.getVolStrain( k, q );
+    real64 const biotCoeff = m_constitutiveUpdate.getBiotCoefficient( k ); 
 
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
@@ -203,6 +215,16 @@ public:
     real64 qp_damage = 0.0;
     real64 qp_grad_damage[3] = {0, 0, 0};
     FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
+    
+    real64 qp_disp[3] = {0, 0, 0};
+
+    FE_TYPE::value( N, stack.u_local, qp_disp );
+
+    real64 elemPresGradient[3] = {0, 0, 0};
+    for( integer i=0; i<3; ++i )
+    {
+      elemPresGradient[i] = m_fluidPressureGradient( k, i );
+    }
 
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
@@ -227,6 +249,13 @@ public:
                                                 + N[a] * (ell*strainEnergyDensity/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) ) );
 
       }
+
+      if( m_fracturePressureTermFlag )
+      {
+        stack.localResidual[ a ] -= detJ * 0.5 * ell/Gc * ( ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k ) * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a]
+                                                            + LvArray::tensorOps::AiBi< 3 >( qp_disp, elemPresGradient ) * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a] ); 
+      }
+
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
         if( m_localDissipationOption == 1 )
@@ -239,6 +268,13 @@ public:
         {
           stack.localJacobian[ a ][ b ] -= detJ * ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
                                                     + N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell * strainEnergyDensity/Gc ) );
+        }
+
+        if( m_fracturePressureTermFlag )
+        {
+          stack.localJacobian[ a ][ b ] -= detJ * 0.5 * ell/Gc * 
+                                           ( ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k ) * m_constitutiveUpdate.pressureDamageFunctionSecondDerivative( qp_damage ) * N[a] * N[b]
+                                              + LvArray::tensorOps::AiBi< 3 >( qp_disp, elemPresGradient ) * m_constitutiveUpdate.pressureDamageFunctionSecondDerivative( qp_damage ) * N[a] * N[b] );
         }
       }
     }
@@ -281,10 +317,19 @@ protected:
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
+  /// The rank-global displacement array.
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
+
   /// The global primary field array.
   arrayView1d< real64 const > const m_nodalDamage;
 
   int const m_localDissipationOption;
+
+  integer m_fracturePressureTermFlag; 
+
+  arrayView1d< real64 const > const m_fluidPressure;
+
+  arrayView2d< real64 const > const m_fluidPressureGradient; 
 
 };
 
@@ -294,7 +339,8 @@ using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDa
                                                                     CRSMatrixView< real64, globalIndex const > const,
                                                                     arrayView1d< real64 > const,
                                                                     string const,
-                                                                    int >;
+                                                                    int, 
+                                                                    integer >;
 
 } // namespace geosx
 
