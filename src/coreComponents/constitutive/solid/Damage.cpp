@@ -38,7 +38,8 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_lengthScale(),
   m_criticalFractureEnergy(),
   m_criticalStrainEnergy(),
-  m_extDrivingForceSwitch(),
+  m_degradationLowerLimit( 0.0 ),
+  m_extDrivingForceFlag( 0 ),
   m_tensileStrength(),
   m_compressStrength(),
   m_deltaCoefficient(),
@@ -86,9 +87,15 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Critical stress in a 1d tension test" );
 
-  this->registerWrapper( viewKeyStruct::extDrivingForceSwitchString(), &m_extDrivingForceSwitch ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Whether to have external driving force. Can be True or False" );
+  this->registerWrapper( viewKeyStruct::degradationLowerLimitString(), &m_degradationLowerLimit ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The lower limit of the degradation function" );
+
+  this->registerWrapper( viewKeyStruct::extDrivingForceFlagString(), &m_extDrivingForceFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Whether to have external driving force. Can be 0 or 1" );
 
   this->registerWrapper( viewKeyStruct::tensileStrengthString(), &m_tensileStrength ).
     setApplyDefaultValue( 0.0 ).
@@ -101,7 +108,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setDescription( "Compressive strength from the uniaxial compression test" );
 
   this->registerWrapper( viewKeyStruct::deltaCoefficientString(), &m_deltaCoefficient ).
-    setApplyDefaultValue( 0.0 ).
+    setApplyDefaultValue( -1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Coefficient in the calculation of the external driving force" );
 
@@ -117,10 +124,10 @@ void Damage< BASE >::postProcessInput()
 {
   BASE::postProcessInput();
 
-  if( m_extDrivingForceSwitch != "True" and m_extDrivingForceSwitch != "False" )
-  {
-    GEOSX_ERROR( "invalid external driving force option - must be True or False" );
-  }
+  GEOSX_ERROR_IF( m_extDrivingForceFlag != 0 && m_extDrivingForceFlag!= 1, "invalid external driving force flag option - must be 0 or 1" );
+  GEOSX_ERROR_IF( m_extDrivingForceFlag == 1 && m_tensileStrength <= 0.0, "tensile strength must be input and positive when the external driving force flag is turned on" );
+  GEOSX_ERROR_IF( m_extDrivingForceFlag == 1 && m_compressStrength <= 0.0, "compressive strength must be input and positive when the external driving force flag is turned on" );
+  GEOSX_ERROR_IF( m_extDrivingForceFlag == 1 && m_deltaCoefficient < 0.0, "delta coefficient must be input and non-negative when the external driving force flag is turned on" );
 }
 
 template< typename BASE >

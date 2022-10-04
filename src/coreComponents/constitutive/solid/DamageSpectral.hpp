@@ -49,14 +49,15 @@ public:
                          real64 const & inputLengthScale,
                          real64 const & inputCriticalFractureEnergy,
                          real64 const & inputcriticalStrainEnergy,
-                         int const & inputExtDrivingForceSwitch,
+                         real64 const & inputDegradationLowerLimit,
+                         int const & inputExtDrivingForceFlag,
                          real64 const & inputTensileStrength,
                          real64 const & inputCompressStrength,
                          real64 const & inputDeltaCoefficient,
                          arrayView1d< real64 > const & inputBiotCoefficient,
                          PARAMS && ... baseParams ):
     DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
-                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputExtDrivingForceSwitch,
+                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
                                   inputTensileStrength, inputCompressStrength, inputDeltaCoefficient, inputBiotCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
@@ -81,7 +82,7 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_newDamage;
   using DamageUpdates< UPDATE_BASE >::m_oldDamage;
   using DamageUpdates< UPDATE_BASE >::m_damageGrad;
-  using DamageUpdates< UPDATE_BASE >::m_extDrivingForceSwitch;
+  using DamageUpdates< UPDATE_BASE >::m_extDrivingForceFlag;
   using DamageUpdates< UPDATE_BASE >::m_tensileStrength;
   using DamageUpdates< UPDATE_BASE >::m_compressStrength;
   using DamageUpdates< UPDATE_BASE >::m_deltaCoefficient;
@@ -305,7 +306,8 @@ public:
   using Damage< BASE >::m_criticalFractureEnergy;
   using Damage< BASE >::m_lengthScale;
   using Damage< BASE >::m_criticalStrainEnergy;
-  using Damage< BASE >::m_extDrivingForceSwitch;
+  using Damage< BASE >::m_degradationLowerLimit;
+  using Damage< BASE >::m_extDrivingForceFlag;
   using Damage< BASE >::m_tensileStrength;
   using Damage< BASE >::m_compressStrength;
   using Damage< BASE >::m_deltaCoefficient;
@@ -330,7 +332,8 @@ public:
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
                                                                        m_criticalStrainEnergy,
-                                                                       m_extDrivingForceSwitch=="True"? 1 : 0,
+                                                                       m_degradationLowerLimit,
+                                                                       m_extDrivingForceFlag,
                                                                        m_tensileStrength,
                                                                        m_compressStrength,
                                                                        m_deltaCoefficient,
