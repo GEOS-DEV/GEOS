@@ -1,0 +1,236 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldPoromechanics
+      name="phasefieldPoroSolve"
+      poromechanicsSolverName="poroSolve"
+      damageSolverName="damageSolve"
+      couplingTypeOption="FixedStress"
+      logLevel="1"
+      subcycling="0"
+      discretization="FE1"
+      targetRegions="{ Region1 }">
+    </PhaseFieldPoromechanics>
+
+    <SinglePhasePoromechanics
+      name="poroSolve"
+      solidSolverName="solidMech"
+      flowSolverName="singlePhaseFlow"
+      logLevel="1"
+      targetRegions="{ Region1 }"
+      damageFlag="1">
+      <NonlinearSolverParameters
+        newtonMaxIter="100"
+        newtonTol="1.0e-10"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"/>
+    </SinglePhasePoromechanics>
+
+    <PhaseFieldDamageFEM
+      name="damageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="Damage"
+      localDissipation="Linear"
+      irreversibilityFlag="1"
+      damageUpperBound="1.0"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        newtonTol="1.0e-8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </PhaseFieldDamageFEM>
+
+    <SolidMechanicsLagrangianSSLE
+      name="solidMech"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region1 }"/>
+
+    <SinglePhaseHybridFVM
+      name="singlePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseHybridMimetic"
+      targetRegions="{ Region1 }"/>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 100 }"
+      yCoords="{ 0, 100 }"
+      zCoords="{ 0, 0.1 }"
+      nx="{ 251 }"
+      ny="{ 251 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="0.5">
+ 
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="0.01"
+      target="/Solvers/phasefieldPoroSolve"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      timeFrequency="0.01"
+      target="/Outputs/WellboreVTKOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.25"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace 
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+    <FiniteVolume>
+      <HybridMimeticDiscretization
+        name="singlePhaseHybridMimetic"
+        innerProductType="quasiTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock, water }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <PorousDamageElasticIsotropic
+      name="rock"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <DamageElasticIsotropic
+      name="rockSolid"
+      defaultDensity="2.7e-9"
+      defaultBulkModulus="4.4144e3"
+      defaultShearModulus="4.3363e3"
+      lengthScale="1"
+      criticalFractureEnergy="9.1e-2"
+      criticalStrainEnergy="0"
+      extDrivingForceFlag="1"
+      degradationLowerLimit="1e-4"
+      tensileStrength="27.0"
+      compressiveStrength="77.0"
+      deltaCoefficient="0.0"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="2.0e4"
+      defaultReferencePorosity="0.05"/>
+
+    <DamagePermeability
+      name="rockPerm"
+      bulkPermeability="1.0e-9"/>
+
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1e-9"
+      defaultViscosity="1.0e-9"
+      referencePressure="0.000"
+      referenceDensity="1e-9"
+      compressibility="1e-10"
+      referenceViscosity="1.0e-9"
+      viscosibility="0.0"/>
+  </Constitutive>
+
+  <FieldSpecifications>    
+    <FieldSpecification 
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <FieldSpecification 
+      name="initialDamage"
+      setNames="{ fracture }"
+      objectPath="nodeManager"
+      fieldName="Damage"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="fixedY"
+      fieldName="TotalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ ypos, yneg }"/>
+
+    <FieldSpecification
+      name="fixedX"
+      fieldName="TotalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ xpos, xneg }"/>
+
+    <FieldSpecification
+      name="fixedZ"
+      fieldName="TotalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ zpos, zneg }"/> 
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/Region1/cb1"
+      scale="-8e-9"
+      component="0"
+      setNames="{ source }"
+      functionName="timeFunction"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 0.02, 0.5 }"
+      values="{ 0.0, 0.0, 0.5 }"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="WellboreVTKOutput"
+      plotFileRoot="phaseFieldPoro_nucleation_injection"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Geometry>
+    <Box
+      name="fracture"
+      xMin="{ 45.999, 49.80, -0.001 }"
+      xMax="{ 54.001, 50.20,  0.101 }"/>
+
+    <Box
+      name="source"
+      xMin="{ 47.999, 47.999, -0.001 }"
+      xMax="{ 52.001, 52.001,  0.101 }"/>
+  </Geometry>
+
+</Problem>
