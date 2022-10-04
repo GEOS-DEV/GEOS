@@ -128,11 +128,11 @@ public:
 
     if( m_extDrivingForceFlag )
     {
-      pf = fmax( fmin( 1.0, m_damage( k, q )), 0.0 );
+      pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
     }
     else
     {
-      pf = m_damage( k, q );
+      pf = m_newDamage( k, q );
     }
 
     // Set a lower bound tolerance for the degradation
@@ -249,7 +249,7 @@ public:
 
     m_volStrain( k, q ) = traceOfStrain;
 
-    if( m_extDrivingForceSwitch == 1 )
+    if( m_extDrivingForceFlag == 1 )
     {
       real64 stressP;
       real64 stressQ;
