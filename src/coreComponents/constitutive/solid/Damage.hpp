@@ -15,7 +15,7 @@
 
 /**
  * @file Damage.hpp
- * @brief This class overrides the SSLE constitutive updates to account for a Damage field
+ * @brief This class overrides the linear elastic constitutive updates to account for a damage field
  *
  * In a phase-field for fracture model, the damage variable affects the Elasticity equation
  * with the degradation of the stresses. Instead of sigma = C : epsilon, we have sigma = g(d)*C:epsilon,
@@ -62,6 +62,14 @@ namespace constitutive
 //       would be required to use this directly within a SolidMechanics-only solver, to
 //       internally update the damage variable and consistently linearize the system.
 
+/**
+ * @class DamageUpdates
+ *
+ * Class to provide material updates for damaged solids that may be
+ * called from a kernel function. The intact solid behavior is that of UDPATE_BASE
+ * and this class adds the functions needed to account for damage.
+ *
+ */
 template< typename UPDATE_BASE >
 class DamageUpdates : public UPDATE_BASE
 {
@@ -95,8 +103,14 @@ public:
 
   using UPDATE_BASE::m_disableInelasticity;
 
-  //Standard quadratic degradation functions
 
+  /**
+   * @brief quadratic degradation function, used to reduce the material stiffness when there is damage
+   *
+   * @param k the element number
+   * @param q the quadrature point
+   * @return the value of the degradation function at element k, quadrature point q
+   */
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationValue( localIndex const k,
@@ -106,6 +120,12 @@ public:
   }
 
 
+  /**
+   * @brief derivative of the degratation function
+   *
+   * @param d the damage value
+   * @return the derivative of the degradation function at d
+   */
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationDerivative( real64 const d ) const
@@ -113,7 +133,12 @@ public:
     return -2*(1 - d);
   }
 
-
+  /**
+   * @brief the second derivative of the degradation function
+   *
+   * @param d the damage value
+   * @return the second derivative of the degradation at d
+   */
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( real64 const d ) const
@@ -122,7 +147,7 @@ public:
     return 2.0;
   }
 
-
+  ///modified smallStrainUpdate to account for the presence of damage
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -143,8 +168,17 @@ public:
   }
 
 
+  /**
+   * @defgroup Getter Functions
+   *
+   * These are getters to access members of the Damage class
+   */
+  /**@{*/
+
   // TODO: The code below assumes the strain energy density will never be
   //       evaluated in a non-converged / garbage configuration.
+  // the history approach (passing the max of sed over time) is being used
+  // to enforce damage irreversibilty
 
   GEOSX_HOST_DEVICE
   virtual real64 getStrainEnergyDensity( localIndex const k,
@@ -182,10 +216,16 @@ public:
     #endif
   }
 
+  /**@}*/
+  ///an array with the values of damage at quadrature points
   arrayView2d< real64 > const m_damage;
+  ///an array with the values of the strain energy density at quadrature points
   arrayView2d< real64 > const m_strainEnergyDensity;
+  ///the phase-field regularization length
   real64 const m_lengthScale;
+  ///the critical energy release rate (Gc)
   real64 const m_criticalFractureEnergy;
+  ///the critical strain energy denstiy (Psi_c) - threshold for damage initiation
   real64 const m_criticalStrainEnergy;
 };
 
@@ -194,6 +234,14 @@ public:
 class DamageBase : public SolidBase
 {};
 
+/**
+ * @class Damage
+ *
+ * Template class to account for damage effects in a solid. The damage formulation is
+ * that of the phase-field approach to fracture (which can also be interpreted as a
+ * gradient damage model)
+ *
+ */
 template< typename BASE >
 class Damage : public BASE
 {
@@ -237,10 +285,15 @@ public:
 
 
 protected:
+  ///an array with the values of damage at quadrature points
   array2d< real64 > m_damage;
+  ///an array with the values of the strain energy density at quadrature points
   array2d< real64 > m_strainEnergyDensity;
+  ///the phase-field regularization length
   real64 m_lengthScale;
+  ///the critical energy release rate (Gc)
   real64 m_criticalFractureEnergy;
+  ///the critical strain energy denstiy (Psi_c) - threshold for damage initiation
   real64 m_criticalStrainEnergy;
 };
 

@@ -39,6 +39,15 @@ class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
+/**
+ * @brief class that implements the solver for the damage equation in a phase-field solver of fracture
+ *
+ * This class implements the an FEM solver for the reaction-diffusion equation that governs damage
+ * evolution in a phase-field description of brittle fracture. The drivinf force for damage growth
+ * is the strain energy density, that is stored in the solid constitutive option and retrived in the
+ * assembly routine of this solver.
+ */
+
 class PhaseFieldDamageFEM : public SolverBase
 {
 public:
@@ -56,8 +65,8 @@ public:
   /**
    * @defgroup Solver Interface Functions
    *
-   * These functions provide the primary interface that is required for derived
-   * classes
+   * These functions implement all the standard solution steps of an FEM solver
+   * class
    */
   /**@{*/
 
@@ -109,14 +118,15 @@ public:
   virtual void
   resetStateToBeginningOfStep( DomainPartition & ) override {}
 
-  /**@}*/
-
   void applyDirichletBCImplicit( real64 const time,
                                  DofManager const & dofManager,
                                  DomainPartition & domain,
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs );
 
+  /**@}*/
+
+  ///enum with possible time integration options, but Explicit is not implemented
   enum class timeIntegrationOption
   {
     SteadyState,
@@ -124,6 +134,7 @@ public:
     ExplicitTransient
   };
 
+  ///struct with names used in the xml file
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
     static constexpr char const * coeffNameString() { return "coeffField"; }
@@ -153,11 +164,15 @@ protected:
   virtual void postProcessInput() override final;
 
 private:
+  ///name of the primary variable, will be switched to Damage in future PR
   string m_fieldName;
+  ///the stable time step
   stabledt m_stabledt;
+  ///the time integration option, can probably be set to SteadyState in all cases
   timeIntegrationOption m_timeIntegrationOption;
+  ///the type of local dissipation function, can either be Linear (AT1 model) or Quadratic (AT2 model)
   string m_localDissipationOption;
-
+  ///this was used for debugging in an older version of the code, it is already set to be removed in another PR
   array1d< real64 > m_coeff;
 
   PhaseFieldDamageFEM();
