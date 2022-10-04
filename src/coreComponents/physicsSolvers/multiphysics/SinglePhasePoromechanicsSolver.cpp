@@ -19,11 +19,13 @@
 #include "SinglePhasePoromechanicsSolver.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
+#include "constitutive/solid/PorousDamageSolid.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsKernel.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsDamageKernel.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
@@ -33,13 +35,19 @@ using namespace dataRepository;
 using namespace constitutive;
 
 SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & name,
-                                                                Group * const parent )
-  : Base( name, parent )
+                                                                Group * const parent ): 
+  Base( name, parent ), 
+  m_damageFlag()
 {
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
   m_linearSolverParameters.get().dofsPerNode = 3;
+
+  registerWrapper( viewKeyStruct::damageFlagString(), &m_damageFlag ). 
+     setApplyDefaultValue( 0 ).
+     setInputFlag( InputFlags::OPTIONAL ).
+     setDescription( "The flag to indicate whether a damage solid model is used" );
 }
 
 void SinglePhasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
@@ -168,25 +176,48 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    poromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                  pDofKey,
-                                                                  dofManager.rankOffset(),
-                                                                  localMatrix,
-                                                                  localRhs,
-                                                                  gravityVectorData,
-                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    if( m_damageFlag )
+    {
+      poromechanicsDamageKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
+                                                                          pDofKey,
+                                                                          dofManager.rankOffset(),
+                                                                          localMatrix,
+                                                                          localRhs,
+                                                                          gravityVectorData,
+                                                                          FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
-    // Cell-based contributions
-    solidMechanicsSolver()->getMaxForce() =
-      finiteElement::
-        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                      constitutive::PorousSolidBase,
-                                      CellElementSubRegion >( mesh,
-                                                              regionNames,
-                                                              solidMechanicsSolver()->getDiscretizationName(),
-                                                              viewKeyStruct::porousMaterialNamesString(),
-                                                              kernelFactory );
+      // Cell-based contributions
+      solidMechanicsSolver()->getMaxForce() =
+        finiteElement::
+          regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                        constitutive::PorousDamageSolidBase,
+                                        CellElementSubRegion >( mesh,
+                                                                regionNames,
+                                                                solidMechanicsSolver()->getDiscretizationName(),
+                                                                viewKeyStruct::porousMaterialNamesString(),
+                                                                kernelFactory );
+    }
+    else
+    {
+      poromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
+                                                                    pDofKey,
+                                                                    dofManager.rankOffset(),
+                                                                    localMatrix,
+                                                                    localRhs,
+                                                                    gravityVectorData,
+                                                                    FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
+      // Cell-based contributions
+      solidMechanicsSolver()->getMaxForce() =
+        finiteElement::
+          regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                        constitutive::PorousSolidBase,
+                                        CellElementSubRegion >( mesh,
+                                                                regionNames,
+                                                                solidMechanicsSolver()->getDiscretizationName(),
+                                                                viewKeyStruct::porousMaterialNamesString(),
+                                                                kernelFactory );
+    }
   } );
 
   flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,

@@ -122,11 +122,14 @@ protected:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
+    constexpr static char const * damageFlagString() { return "damageFlag"; }
   };
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void initializePreSubGroups() override;
+
+  integer m_damageFlag; 
 
 private:
 
