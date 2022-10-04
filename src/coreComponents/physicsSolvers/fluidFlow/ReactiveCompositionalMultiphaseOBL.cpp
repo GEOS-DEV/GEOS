@@ -372,7 +372,7 @@ real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainParti
     return 1.0;
   }
 
-  real64 constexpr eps = reactiveCompositionalMultiphaseOBLKernels::minValueForDivision;
+  real64 constexpr eps = minValueForDivision;
   real64 const maxCompFracChange = m_maxCompFracChange;
 
   localIndex const NC = m_numComponents;
