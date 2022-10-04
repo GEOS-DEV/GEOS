@@ -24,6 +24,11 @@ Preprints and Early-Views
    :widths: 100
    :header-rows: 0
 
+   * - | **Validation and Application of a Three-Dimensional Model for Simulating Proppant Transport and Fracture Conductivity**
+       | J Huang, Y Hao, RR Settgast, JA White, K Mateen, H Gross
+       | Rock Mechanics and Rock Engineering
+       | `doi:10.1007/s00603-022-03092-3 <https://doi.org/10.1007/s00603-022-03092-3>`_
+
    * - | **Smooth implicit hybrid upwinding for compositional multiphase flow in porous media**
        | SBM Bosma, FP Hamon, BT Mallison, HA Tchelepi
        | Computer Methods in Applied Mechanics and Engineering
