@@ -1560,7 +1560,7 @@ Unpack( buffer_unit_type const * & buffer,
   {
     // Copy old capacities (no way to direct copy, must kernel launch)
     array1d< localIndex > newCapacities( var.size() );
-    forAll< parallelHostPolicy >( var.size(), [&var, &newCapacities]( localIndex const k )
+    forAll< parallelHostPolicy >( var.size(), [var = var.toViewConst(), newCapacities = newCapacities.toView()]( localIndex const k )
     {
       newCapacities[k] = var.capacityOfSet( k );
     } );
@@ -1576,7 +1576,7 @@ Unpack( buffer_unit_type const * & buffer,
     newVar.resizeFromCapacities< parallelHostPolicy >( var.size(), newCapacities.data() );
 
     // Fill new map with old values
-    forAll< parallelHostPolicy >( var.size(), [&var, &newVar]( localIndex const k )
+    forAll< parallelHostPolicy >( var.size(), [var = var.toViewConst(), newVar = newVar.toView()]( localIndex const k )
     {
       newVar.insertIntoSet( k, var[k].begin(), var[k].end() );
     } );
