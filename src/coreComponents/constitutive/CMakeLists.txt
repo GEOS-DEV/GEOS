@@ -96,6 +96,7 @@ set( constitutive_headers
      solid/ElasticTransverseIsotropic.hpp
      solid/ElasticOrthotropic.hpp
      solid/InvariantDecompositions.hpp
+     solid/PorousDamageSolid.hpp
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
@@ -197,6 +198,7 @@ set( constitutive_sources
      solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
      solid/ElasticOrthotropic.cpp
+     solid/PorousDamageSolid.cpp
      solid/PorousSolid.cpp
      solid/SolidBase.cpp
      solid/SolidInternalEnergy.cpp
