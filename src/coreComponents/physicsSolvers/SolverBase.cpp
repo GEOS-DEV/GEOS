@@ -921,12 +921,12 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // Compute the scaling factor for the Newton update
     scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
 
-    if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
-    {
-      // TODO try chopping (similar to line search)
-      GEOSX_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
-      break;
-    }
+    // if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
+    // {
+    //   // TODO try chopping (similar to line search)
+    //   GEOSX_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
+    //   break;
+    // }
 
     // apply the system solution to the fields/variables
     applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, domain );
