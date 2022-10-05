@@ -1,0 +1,288 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldPoromechanics
+      name="phasefieldPoroSolve"
+      poromechanicsSolverName="poroSolve"
+      damageSolverName="damageSolve"
+      couplingTypeOption="FixedStress"
+      logLevel="1"
+      subcycling="0"
+      discretization="FE1"
+      targetRegions="{ Region1 }">
+    </PhaseFieldPoromechanics>
+
+    <SinglePhasePoromechanics
+      name="poroSolve"
+      solidSolverName="solidMech"
+      flowSolverName="singlePhaseFlow"
+      logLevel="1"
+      targetRegions="{ Region1 }"
+      damageFlag="1">
+      <NonlinearSolverParameters
+        newtonMaxIter="100"
+        newtonTol="1.0e-4"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1e-4"/>
+    </SinglePhasePoromechanics>
+
+    <PhaseFieldDamageFEM
+      name="damageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="Damage"
+      localDissipation="Linear"
+      irreversibilityFlag="1"
+      damageUpperBound="1.0"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        newtonTol="1.0e-3"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </PhaseFieldDamageFEM>
+
+    <SolidMechanicsLagrangianSSLE
+      name="solidMech"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region1 }"/>
+
+    <SinglePhaseHybridFVM
+      name="singlePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseHybridMimetic"
+      targetRegions="{ Region1 }"/>
+  </Solvers>
+
+  <Mesh>
+    <VTKMesh 
+      name="mesh"
+      regionAttribute="MIDDLE_RING-LOWER_RING-UPPER_RING-MATRIX"
+      file="WellboreMesh/wellbore.vtu"
+      nodesetNames="{ xneg, xpos, yneg, ypos, zneg, zpos, hole_middle, hole_upper, hole_lower }"/>
+  </Mesh>
+
+
+  <Events
+    maxTime="50.0">
+ 
+    <PeriodicEvent
+      name="solverApplication0"
+      endTime="48.0"
+      forceDt="1.0"
+      target="/Solvers/phasefieldPoroSolve"/>
+
+    <PeriodicEvent
+      name="solverApplication1"
+      beginTime="48.0"
+      endTime="50.0"
+      forceDt="0.01"
+      target="/Solvers/phasefieldPoroSolve"/>
+
+    <PeriodicEvent
+      name="vtkOutput0"
+      endTime="48.0"
+      forceDt="1.0"
+      target="/Outputs/VTKOutput"/>
+
+    <PeriodicEvent
+      name="vtkOutput1"
+      beginTime="48.0"
+      endTime="50.0"
+      forceDt="0.01"
+      target="/Outputs/VTKOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="25"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace 
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+    <FiniteVolume>
+      <HybridMimeticDiscretization
+        name="singlePhaseHybridMimetic"
+        innerProductType="quasiTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ 0_hexahedra, 1_hexahedra, 2_hexahedra, 3_hexahedra }"
+      materialList="{ concrete, water }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <PorousDamageElasticIsotropic
+      name="concrete"
+      solidModelName="concreteSolid"
+      porosityModelName="concretePorosity"
+      permeabilityModelName="concretePerm"/>
+
+    <DamageElasticIsotropic
+      name="concreteSolid"
+      defaultDensity="2.7e-9"
+      defaultBulkModulus="1.67e4"
+      defaultShearModulus="1.25e4"
+      lengthScale="0.4"
+      criticalFractureEnergy="4e-3"
+      criticalStrainEnergy="0"
+      extDrivingForceFlag="1"
+      degradationLowerLimit="1e-4"
+      tensileStrength="5.0"
+      compressiveStrength="40.0"
+      deltaCoefficient="0.0"/>
+
+    <BiotPorosity
+      name="concretePorosity"
+      grainBulkModulus="2.0e4"
+      defaultReferencePorosity="0.1"/>
+
+    <DamagePermeability
+      name="concretePerm"
+      bulkPermeability="1.0e-9"/>
+
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1e-9"
+      defaultViscosity="1.0e-9"
+      referencePressure="0.000"
+      referenceDensity="1e-9"
+      compressibility="1e-10"
+      referenceViscosity="1.0e-9"
+      viscosibility="0.0"/>
+  </Constitutive>
+
+  <FieldSpecifications>    
+    <FieldSpecification 
+      name="Sh"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1"
+      fieldName="concreteSolid_stress"
+      component="0"
+      scale="-12.0"/>
+
+    <FieldSpecification 
+      name="SH"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1"
+      fieldName="concreteSolid_stress"
+      component="1"
+      scale="-15.0"/>
+
+    <FieldSpecification 
+      name="Sv"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1"
+      fieldName="concreteSolid_stress"
+      component="2"
+      scale="-20.0"/>
+
+    <FieldSpecification 
+      name="xconstraint"    
+      objectPath="nodeManager" 
+      fieldName="TotalDisplacement" 
+      component="0" 
+      scale="0.0" 
+      setNames="{xneg, xpos}"/>
+
+    <FieldSpecification 
+      name="yconstraint"    
+      objectPath="nodeManager" 
+      fieldName="TotalDisplacement" 
+      component="1" 
+      scale="0.0" 
+      setNames="{yneg, ypos}"/>
+
+    <FieldSpecification 
+      name="zconstraint" 
+      objectPath="nodeManager" 
+      fieldName="TotalDisplacement" 
+      component="2" 
+      scale="0.0" 
+      setNames="{zneg, zpos}"
+    />  
+
+    <FieldSpecification 
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Region1"
+      fieldName="pressure"
+      scale="0.0"
+    />
+
+    <FieldSpecification
+      name="sourceTerm"
+      objectPath="ElementRegions/Region1/0_hexahedra"
+      fieldName="pressure"
+      scale="80.0"
+      setNames="{ all }"
+      functionName="timeFunction"
+      />
+
+    <FieldSpecification
+      name="pressureUpper"
+      objectPath="ElementRegions/Region1/1_hexahedra"
+      fieldName="pressure"
+      scale="0.0"
+      setNames="{ all }"
+      functionName="timeFunction"
+      />
+    
+    <FieldSpecification
+      name="pressureLower"
+      objectPath="ElementRegions/Region1/2_hexahedra"
+      fieldName="pressure"
+      scale="0.0"
+      setNames="{ all }"
+      functionName="timeFunction"
+      />
+
+    <Traction 
+      name="traction"
+      setNames="{ hole_middle }"
+      objectPath="faceManager"
+      scale="-80.0"
+      tractionType="normal"
+      nodalScaleFlag="1"
+      functionName="timeFunction"    
+      />
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 1, 1e2 }"
+      values="{ 0.0, 0.0, 1.0 }"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="VTKOutput"
+      plotFileRoot="phaseFieldPoro_nucleation_wellboreConcrete"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+</Problem>
