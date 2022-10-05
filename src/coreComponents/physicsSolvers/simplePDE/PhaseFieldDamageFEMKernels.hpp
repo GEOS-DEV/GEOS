@@ -216,7 +216,7 @@ public:
       if( m_localDissipationOption == 1 )
       {
         stack.localResidual[ a ] -= detJ * ( 3 * N[a] / 16
-                                             + 0.375* ell ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
+                                             + 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
                                              + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * N[a]
                                              + 0.5 * ell * extDrivingForce/Gc * N[a] );
       }
@@ -231,7 +231,7 @@ public:
       {
         if( m_localDissipationOption == 1 )
         {
-          stack.localJacobian[ a ][ b ] -= detJ * ( 0.375* ell* ell * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
+          stack.localJacobian[ a ][ b ] -= detJ * ( 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
                                                     + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * N[a] * N[b] );
 
         }
