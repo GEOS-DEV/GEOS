@@ -24,7 +24,11 @@ This example uses no external input files. Everything we need is contained withi
   inputFiles/hydraulicFracturing/pknViscosityDominated_benchmark.xml
 
 
-A python script for post-processing the simulation results is also prepared:
+Python scripts for post-processing and visualizing the simulation results are also prepared:
+
+.. code-block:: console
+
+  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pknViscosityDominated/pknViscosityDominatedQueries.py
 
 .. code-block:: console
 
@@ -156,6 +160,26 @@ The single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to sim
 All constitutive parameters such as density, viscosity, bulk modulus, and shear modulus are specified in the International System of Units.
 
 
+------------------------------
+Time history function
+------------------------------
+
+In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time history information from fields. 
+Either the entire field or specified named sets of indices in the field can be collected.
+In this example, ``pressureCollection``, ``apertureCollection``, ``hydraulicApertureCollection`` and ``areaCollection`` are specified to output the time history of fracture characterisctics (pressure, width and area). 
+``objectPath="ElementRegions/Fracture/FractureSubRegion"`` indicates that these ``PackCollection`` tasks are applied to the fracure element subregion.
+
+.. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/pknViscosityDominated_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_TASKS -->
+    :end-before: <!-- SPHINX_TASKS_END -->
+
+These tasks are triggered using the ``Event`` manager with a ``PeriodicEvent`` defined for the recurring tasks. 
+GEOSX writes one file named after the string defined in the ``filename`` keyword and formatted as a HDF5 file (``PKN_zeroToughness_output.hdf5``). This TimeHistory file contains the collected time history information from specified time history collector.
+This file includes datasets for the simulation time, fluid pressure, element aperture, hydraulic aperture and element area for the propagating hydraulic fracture.
+A Python script is prepared to read and query any specified subset of the time history data for verification and visualization. 
+
+
 -----------------------------------------------------------
 Initial and boundary conditions
 -----------------------------------------------------------
@@ -212,9 +236,20 @@ The following figure shows the distribution of :math:`\sigma_{zz}` at :math:`t=2
 
    Simulation result of :math:`\sigma_{zz}` at :math:`t=200 s`
 
+First, by running the query script ``pknViscosityDominatedQueries.py``, the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure half length) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
+
+.. code-block:: console
+		
+[['      time', '  pressure', '  aperture', '    length']]
+         2 1.413e+06 0.0006093       5.6
+         4 1.174e+06 0.0007132       8.4
+         6 1.077e+06 0.0007849      10.8
+         8 1.044e+06 0.0008482      12.8
+        10 1.047e+06 0.0009098      14.8
+
  
-Figure below shows the comparisons between the results from GEOSX simulations (markers) and the corresponding
-analytical solutions (curves) for the example with viscosity-storage dominated assumptions. The evolution in time
+Next, figure below shows the comparisons between the results from GEOSX simulations (markers) and the corresponding
+analytical solutions (curves) for the example with viscosity-storage dominated assumptions, which is generated using the visualization script ``pknViscosityDominatedFigure.py``. The evolution in time
 of the fracture half-length, the near-wellbore fracture aperture, and the fluid pressure all correlate well with the analytical
 solutions.  
 

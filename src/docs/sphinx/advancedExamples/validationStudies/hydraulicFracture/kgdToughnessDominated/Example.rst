@@ -51,6 +51,16 @@ The corresponding integrated test with coarser mesh and smaller injection durati
 
   inputFiles/hydraulicFracturing/kgdToughnessDominated_Smoke.xml
 
+Python scripts for post-processing and visualizing the simulation results are also prepared:
+
+.. code-block:: console
+
+  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdToughnessDominated/kgdToughnessDominatedQueries.py
+
+.. code-block:: console
+
+  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdToughnessDominated/kgdToughnessDominatedFigure.py
+
 -----------------------------------------------------------
 Mechanics solvers
 -----------------------------------------------------------
@@ -162,6 +172,26 @@ Fluid is injected into a sub-area of the initial fracture. Only half of the inje
   :start-after: <!-- Sphinx_SourceFlux_InjSource -->
   :end-before:  <!-- Sphinx_SourceFlux_InjSource_End -->
 
+------------------------------
+Time history function
+------------------------------
+
+In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time history information from fields. 
+Either the entire field or specified named sets of indices in the field can be collected.
+In this example, ``pressureCollection``, ``apertureCollection``, ``hydraulicApertureCollection`` and ``areaCollection`` are specified to output the time history of fracture characterisctics (pressure, width and area). 
+``objectPath="ElementRegions/Fracture/FractureSubRegion"`` indicates that these ``PackCollection`` tasks are applied to the fracure element subregion.
+
+.. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_TASKS -->
+    :end-before: <!-- SPHINX_TASKS_END -->
+
+These tasks are triggered using the ``Event`` manager with a ``PeriodicEvent`` defined for the recurring tasks. 
+GEOSX writes one file named after the string defined in the ``filename`` keyword and formatted as a HDF5 file (``KGD_zeroViscosity_output.hdf5``). This TimeHistory file contains the collected time history information from specified time history collector.
+This file includes datasets for the simulation time, fluid pressure, element aperture, hydraulic aperture and element area for the propagating hydraulic fracture.
+A Python script is prepared to read and query any specified subset of the time history data for verification and visualization. 
+
+
 The parameters used in the simulation are summarized in the following table.
 
   +----------------+-----------------------+--------------------+-------------------+
@@ -189,7 +219,19 @@ Fracture propagation during the fluid injection period is shown in the figure be
    :width: 1000
    :figclass: align-center
 
-A good agreement between GEOSX results and analytical solutions is shown in the comparison below:
+First, by running the query script ``kgdToughnessDominatedQueries.py``, the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure half length) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
+
+.. code-block:: console
+		
+[['      time', '  pressure', '  aperture', '    length']]
+         2 4.086e+05 8.425e-05         2
+         4 3.063e+05 0.0001021         3
+         6 3.121e+05 0.0001238       3.5
+         8 2.446e+05 0.0001277       4.5
+        10 2.411e+05 0.0001409         5
+
+
+A good agreement between GEOSX results and analytical solutions is shown in the comparison below, which is generated using the visualization script ``kgdToughnessDominatedFigure.py``:
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdToughnessDominated/kgdToughnessDominatedFigure.py
 

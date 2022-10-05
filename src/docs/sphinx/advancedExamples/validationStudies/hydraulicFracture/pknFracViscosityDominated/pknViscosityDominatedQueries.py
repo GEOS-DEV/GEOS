@@ -51,7 +51,7 @@ def SaveTimeHistory( name, array, header ):
 def main():
     # Load and process GEOSX results
     # File path
-    hdf5File1Path = "../../../../../../../inputFiles/hydraulicFracturing/Penny_zeroToughness_output.hdf5"
+    hdf5File1Path = "../../../../../../../inputFiles/hydraulicFracturing/PKN_zeroToughness_output.hdf5"
     xmlFile1Path = "../../../../../../../inputFiles/hydraulicFracturing/pknViscosityDominated_base.xml"
     xmlFile2Path = "../../../../../../../inputFiles/hydraulicFracturing/pknViscosityDominated_benchmark.xml"
 

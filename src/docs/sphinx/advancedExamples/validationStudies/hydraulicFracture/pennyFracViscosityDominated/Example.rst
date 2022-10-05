@@ -24,7 +24,11 @@ This example uses no external input files. Everything we need is contained withi
   inputFiles/hydraulicFracturing/pennyShapedViscosityDominated_benchmark.xml
 
 
-A python script for post-processing the simulation results is also prepared:
+Python scripts for post-processing and visualizing the simulation results are also prepared:
+
+.. code-block:: console
+
+  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracViscosityDominated/pennyFracViscosityDominatedQueries.py
 
 .. code-block:: console
 
@@ -167,6 +171,26 @@ The single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to sim
 All constitutive parameters such as density, viscosity, bulk modulus, and shear modulus are specified in the International System of Units.
 
 
+------------------------------
+Time history function
+------------------------------
+
+In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time history information from fields. 
+Either the entire field or specified named sets of indices in the field can be collected.
+In this example, ``pressureCollection``, ``apertureCollection``, ``hydraulicApertureCollection`` and ``areaCollection`` are specified to output the time history of fracture characterisctics (pressure, width and area). 
+``objectPath="ElementRegions/Fracture/FractureSubRegion"`` indicates that these ``PackCollection`` tasks are applied to the fracure element subregion.
+
+.. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/pennyShapedViscosityDominated_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_TASKS -->
+    :end-before: <!-- SPHINX_TASKS_END -->
+
+These tasks are triggered using the ``Event`` manager with a ``PeriodicEvent`` defined for the recurring tasks. 
+GEOSX writes one file named after the string defined in the ``filename`` keyword and formatted as a HDF5 file (``Penny_zeroToughness_output.hdf5``). This TimeHistory file contains the collected time history information from specified time history collector.
+This file includes datasets for the simulation time, fluid pressure, element aperture, hydraulic aperture and element area for the propagating hydraulic fracture.
+A Python script is prepared to read and query any specified subset of the time history data for verification and visualization. 
+
+
 -----------------------------------------------------------
 Initial and boundary conditions
 -----------------------------------------------------------
@@ -221,9 +245,21 @@ The following figure shows the distribution of :math:`\sigma_{zz}` at :math:`t=4
 
    Simulation result of :math:`\sigma_{zz}` at :math:`t=400 s`
 
+
+First, by running the query script ``pennyFracViscosityDominatedQueries.py``, the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure radius) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
+
+.. code-block:: console
+		
+[['      time', '  pressure', '  aperture', '    length']]
+         2 1.654e+06 0.0006768     8.137
+         4 1.297e+06  0.000743     10.59
+         6 1.115e+06 0.0007734     12.36
+         8 1.005e+06 0.0007918     13.73
+        10 9.482e+05 0.0008189     15.14
+
  
-GEOSX simulation results (markers) and asymptotic solutions (curves) for the case with viscosity-storage
-dominated assumptions are plotted together in the following figure. As seen, GEOSX predictions of the temporal evolution of fracture radius, wellbore aperture and pressure at fluid inlet are nearly identical to the asymptotic solutions.
+Next, GEOSX simulation results (markers) and asymptotic solutions (curves) for the case with viscosity-storage
+dominated assumptions are plotted together in the following figure, which is generated using the visualization script ``pennyFracViscosityDominatedFigure.py``. As seen, GEOSX predictions of the temporal evolution of fracture radius, wellbore aperture and pressure at fluid inlet are nearly identical to the asymptotic solutions.
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracViscosityDominated/pennyFracViscosityDominatedFigure.py
 
