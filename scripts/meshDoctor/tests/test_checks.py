@@ -1,4 +1,4 @@
-from typing import Generator, Tuple
+from typing import Iterator, Tuple
 
 import pytest
 
@@ -12,7 +12,7 @@ from vtkmodules.vtkCommonDataModel import (
 from checks.collocated_nodes import Options, __check
 
 
-def get_points() -> Generator[Tuple[vtkPoints, int], None, None]:
+def get_points() -> Iterator[Tuple[vtkPoints, int]]:
     """
     Generates the data for the cases.
     One case has two nodes at the exact same position.
