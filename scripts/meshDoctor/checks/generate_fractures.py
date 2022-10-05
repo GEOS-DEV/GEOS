@@ -11,6 +11,8 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import networkx
 
+import vtk_utils
+
 
 @dataclass(frozen=True)
 class Options:
@@ -276,53 +278,6 @@ def __copy_fields(input_mesh: vtk.vtkUnstructuredGrid,
     output_mesh.SetFieldData(field_data)
 
 
-def __write_mesh(mesh: vtk.vtkUnstructuredGrid, output: str) -> None:
-    """
-    Writes the mesh to disk.
-    Nothing will be done if the file already exists.
-    :param mesh:
-    :param output:
-    :return: None
-    """
-    if os.path.exists(output):
-        logging.error(f"File \"{output}\" already exists, nothing done.")
-        return
-    writer = vtk.vtkUnstructuredGridWriter()
-    writer.SetFileName(output)
-    writer.SetInputData(mesh)
-    logging.info(f"Writing mesh into file {output}")
-    writer.Write()
-
-
-def __build_global_ids(mesh) -> None:  # TODO Move to dedicated check.
-    """
-    Adds the global ids for cells and points in place into the mesh instance.
-    :param mesh:
-    :return: None
-    """
-    # Building GLOBAL_IDS for points and cells.g GLOBAL_IDS for points and cells.
-    # First for points...
-    if mesh.GetPointData().GetGlobalIds():
-        logging.error("Mesh already has globals ids for points; nothing done.")
-    else:
-        point_global_ids = vtk.vtkIdTypeArray()
-        point_global_ids.SetName("GLOBAL_IDS_POINTS")
-        point_global_ids.Allocate(mesh.GetNumberOfPoints())
-        for i in range(mesh.GetNumberOfPoints()):
-            point_global_ids.InsertNextValue(i)
-        mesh.GetPointData().SetGlobalIds(point_global_ids)
-    # ... then for cells.
-    if mesh.GetCellData().GetGlobalIds():
-        logging.error("Mesh already has globals ids for cells; nothing done.")
-    else:
-        cells_global_ids = vtk.vtkIdTypeArray()
-        cells_global_ids.SetName("GLOBAL_IDS_CELLS")
-        cells_global_ids.Allocate(mesh.GetNumberOfCells())
-        for i in range(mesh.GetNumberOfCells()):
-            cells_global_ids.InsertNextValue(i)
-        mesh.GetCellData().SetGlobalIds(cells_global_ids)
-
-
 def __color_fracture_sides(mesh: vtk.vtkUnstructuredGrid, cell_frac_info: FractureCellsInfo, node_frac_info: FractureNodesInfo) -> Iterable[Iterable[int]]:
     """
     Given all the cells that are in contact with the detected fracture,
@@ -412,24 +367,18 @@ def __split_mesh_on_fracture(mesh, options: Options) -> vtk.vtkUnstructuredGrid:
     connected_cells = __color_fracture_sides(mesh, cell_frac_info, node_frac_info)
     output_mesh, duplicated_nodes_info = __duplicate_fracture_nodes(mesh, connected_cells, node_frac_info)
     __copy_fields(mesh, output_mesh, cell_frac_info, duplicated_nodes_info)
-    __build_global_ids(output_mesh)
     return output_mesh
 
 
 def __check(mesh, options: Options) -> Result:
     output_mesh = __split_mesh_on_fracture(mesh, options)
     if options.output:
-        __write_mesh(output_mesh, options.output)
+        vtk_utils.write_mesh(output_mesh, options.output)
 
 
 def check(vtk_input_file: str, options: Options) -> Result:
-    # TODO refactor this duplicated code
-    reader = vtk.vtkXMLUnstructuredGridReader()  # TODO Find a generic way to read the vtk mesh.
-    reader.SetFileName(vtk_input_file)
-    reader.Update()
-    mesh = reader.GetOutput()
-
     try:
+        mesh = vtk_utils.read_mesh(vtk_input_file)
         return __check(mesh, options)
     except BaseException as e:
         logging.error(e)

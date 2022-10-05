@@ -7,6 +7,8 @@ import numpy
 
 import vtk  # TODO use new pyvtk style + deal with ImportError
 
+import vtk_utils
+
 
 @dataclass(frozen=True)
 class Options:
@@ -54,10 +56,5 @@ def __check(mesh, options: Options) -> Result:
 
 
 def check(vtk_input_file: str, options: Options) -> Result:
-    # TODO refactor this duplicated code
-    reader = vtk.vtkXMLUnstructuredGridReader()  # TODO Find a generic way to read the vtk mesh.
-    reader.SetFileName(vtk_input_file)
-    reader.Update()
-    mesh = reader.GetOutput()
-
+    mesh = vtk_utils.read_mesh(vtk_input_file)
     return __check(mesh, options)
