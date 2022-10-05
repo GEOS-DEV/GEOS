@@ -1,5 +1,4 @@
-FROM docker.io/geosx/ubuntu20.04-gcc10:false-794
-
+FROM docker.io/geosx/ubuntu20.04-gcc10:203-189
 
 RUN apt-get update
 RUN apt-get install -y \
