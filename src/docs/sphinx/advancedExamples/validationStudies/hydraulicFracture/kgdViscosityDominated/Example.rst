@@ -76,12 +76,12 @@ First, by running the query script ``kgdViscosityDominatedQueries.py``, the HDF5
 
 .. code-block:: console
 		
-[['      time', '  pressure', '  aperture', '    length']]
-         2 1.075e+06 0.0001176       1.5
-         4 9.636e+05 0.0001645         2
-         6 8.372e+05 0.0001917       2.5
-         8  7.28e+05  0.000209         3
-        10 6.512e+05  0.000222       3.5
+  [['      time', '  pressure', '  aperture', '    length']]
+           2 1.075e+06 0.0001176       1.5
+           4 9.636e+05 0.0001645         2
+           6 8.372e+05 0.0001917       2.5
+           8  7.28e+05  0.000209         3
+          10 6.512e+05  0.000222       3.5
 
 
 A good agreement between GEOSX results and analytical solutions is shown in the comparison below, which is generated using the visualization script ``kgdViscosityDominatedFigure.py``:

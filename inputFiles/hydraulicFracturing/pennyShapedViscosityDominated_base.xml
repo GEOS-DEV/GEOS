@@ -161,7 +161,7 @@
       objectPath="ElementRegions/Fracture/FractureSubRegion"
       fieldName="elementArea"/> 
   </Tasks>
-  <!-- SPHINX_TASKS --> 
+  <!-- SPHINX_TASKS_END --> 
 
   <!-- SPHINX_OUTPUT -->          
   <Outputs>

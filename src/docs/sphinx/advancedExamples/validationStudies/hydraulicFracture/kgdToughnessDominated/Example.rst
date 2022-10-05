@@ -223,12 +223,12 @@ First, by running the query script ``kgdToughnessDominatedQueries.py``, the HDF5
 
 .. code-block:: console
 		
-[['      time', '  pressure', '  aperture', '    length']]
-         2 4.086e+05 8.425e-05         2
-         4 3.063e+05 0.0001021         3
-         6 3.121e+05 0.0001238       3.5
-         8 2.446e+05 0.0001277       4.5
-        10 2.411e+05 0.0001409         5
+  [['      time', '  pressure', '  aperture', '    length']]
+           2 4.086e+05 8.425e-05         2
+           4 3.063e+05 0.0001021         3
+           6 3.121e+05 0.0001238       3.5
+           8 2.446e+05 0.0001277       4.5
+          10 2.411e+05 0.0001409         5
 
 
 A good agreement between GEOSX results and analytical solutions is shown in the comparison below, which is generated using the visualization script ``kgdToughnessDominatedFigure.py``:

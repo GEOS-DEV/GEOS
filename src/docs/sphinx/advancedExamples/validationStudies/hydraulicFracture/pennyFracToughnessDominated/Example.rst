@@ -245,12 +245,12 @@ First, by running the query script ``pennyFracToughnessDominatedQueries.py``, th
 
 .. code-block:: console
 		
-[['      time', '  pressure', '  aperture', '    length']]
-         2 8.207e+05 0.0004661     8.137
-         4 6.799e+05 0.0005258     10.59
-         6 7.082e+05 0.0006183     11.94
-         8  6.07e+05 0.0006163     13.73
-        10  6.32e+05 0.0006827     14.45
+  [['      time', '  pressure', '  aperture', '    length']]
+           2 8.207e+05 0.0004661     8.137
+           4 6.799e+05 0.0005258     10.59
+           6 7.082e+05 0.0006183     11.94
+           8  6.07e+05 0.0006163     13.73
+          10  6.32e+05 0.0006827     14.45
 
  
 Next, the figure below compares the asymptotic solutions (curves) and the GEOSX simulation results (markers) for this analysis, which is generated using the visualization script ``pennyFracToughnessDominatedFigure.py``. The time history plots of fracture radius, fracture aperture and fluid pressure at the point source match the asymptotic solutions, confirming the accuracy of GEOSX simulations. 

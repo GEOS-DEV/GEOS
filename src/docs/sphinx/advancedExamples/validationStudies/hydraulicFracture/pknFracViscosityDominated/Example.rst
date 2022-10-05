@@ -240,12 +240,12 @@ First, by running the query script ``pknViscosityDominatedQueries.py``, the HDF5
 
 .. code-block:: console
 		
-[['      time', '  pressure', '  aperture', '    length']]
-         2 1.413e+06 0.0006093       5.6
-         4 1.174e+06 0.0007132       8.4
-         6 1.077e+06 0.0007849      10.8
-         8 1.044e+06 0.0008482      12.8
-        10 1.047e+06 0.0009098      14.8
+  [['      time', '  pressure', '  aperture', '    length']]
+           2 1.413e+06 0.0006093       5.6
+           4 1.174e+06 0.0007132       8.4
+           6 1.077e+06 0.0007849      10.8
+           8 1.044e+06 0.0008482      12.8
+          10 1.047e+06 0.0009098      14.8
 
  
 Next, figure below shows the comparisons between the results from GEOSX simulations (markers) and the corresponding

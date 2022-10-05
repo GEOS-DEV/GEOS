@@ -250,12 +250,12 @@ First, by running the query script ``pennyFracViscosityDominatedQueries.py``, th
 
 .. code-block:: console
 		
-[['      time', '  pressure', '  aperture', '    length']]
-         2 1.654e+06 0.0006768     8.137
-         4 1.297e+06  0.000743     10.59
-         6 1.115e+06 0.0007734     12.36
-         8 1.005e+06 0.0007918     13.73
-        10 9.482e+05 0.0008189     15.14
+  [['      time', '  pressure', '  aperture', '    length']]
+           2 1.654e+06 0.0006768     8.137
+           4 1.297e+06  0.000743     10.59
+           6 1.115e+06 0.0007734     12.36
+           8 1.005e+06 0.0007918     13.73
+          10 9.482e+05 0.0008189     15.14
 
  
 Next, GEOSX simulation results (markers) and asymptotic solutions (curves) for the case with viscosity-storage
