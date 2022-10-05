@@ -231,7 +231,7 @@ public:
       {
         if( m_localDissipationOption == 1 )
         {
-          stack.localJacobian[ a ][ b ] -= detJ * ( 0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
+          stack.localJacobian[ a ][ b ] -= detJ * ( 0.375* ell* ell * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
                                                     + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * N[a] * N[b] );
 
         }
