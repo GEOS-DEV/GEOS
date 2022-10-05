@@ -116,14 +116,22 @@ setMGRStrategy()
   // not implemented yet
 }
 
-
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >
 void
 SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
+  Base::initializePreSubGroups();
   SinglePhaseBase const * const flowSolver = this->flowSolver();
   Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
+}
+
+template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+void
+SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+initializePostInitialConditionsPreSubGroups()
+{
+  Base::initializePostInitialConditionsPreSubGroups();
   setMGRStrategy();
 }
 
@@ -223,7 +231,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >
 void
 SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
-assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+assembleCouplingTerms( real64 const time_n,
                        real64 const dt,
                        DomainPartition const & domain,
                        DofManager const & dofManager,
@@ -252,6 +260,12 @@ assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                                                 WellElementSubRegion const & subRegion )
     {
       PerforationData const * const perforationData = subRegion.getPerforationData();
+
+      WellControls const & wellControls = Base::wellSolver()->getWellControls( subRegion );
+      if( !wellControls.isWellOpen( time_n + dt ) )
+      {
+        return;
+      }
 
       // get the degrees of freedom
       string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );

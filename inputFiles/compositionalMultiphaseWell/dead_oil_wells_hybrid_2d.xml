@@ -17,6 +17,8 @@
     <CompositionalMultiphaseHybridFVM
       name="compositionalMultiphaseFlow"
       logLevel="1"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
       discretization="fluidHM"
       targetRegions="{ Region1 }"
       temperature="297.15"/>
