@@ -1,9 +1,11 @@
-from vtkmodules.vtkCommonCore import vtkPoints
+from vtkmodules.vtkCommonCore import (
+    vtkPoints,
+)
 from vtkmodules.vtkCommonDataModel import (
+    VTK_VERTEX,
     vtkCellArray,
     vtkUnstructuredGrid,
     vtkVertex,
-    VTK_VERTEX,
 )
 
 

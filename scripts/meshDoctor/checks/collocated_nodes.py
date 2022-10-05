@@ -5,7 +5,13 @@ from typing import Tuple
 
 import numpy
 
-import vtk  # TODO use new pyvtk style + deal with ImportError
+from vtkmodules.vtkCommonCore import (
+    reference,
+    vtkPoints,
+)
+from vtkmodules.vtkCommonDataModel import (
+    vtkIncrementalOctreePointLocator,
+)
 
 import vtk_utils
 
@@ -23,9 +29,9 @@ class Result:
 def __check(mesh, options: Options) -> Result:
     points = mesh.GetPoints()
 
-    locator = vtk.vtkIncrementalOctreePointLocator()
+    locator = vtkIncrementalOctreePointLocator()
     locator.SetTolerance(options.tolerance)
-    output = vtk.vtkPoints()
+    output = vtkPoints()
     locator.InitPointInsertion(output, points.GetBounds())
 
     # original ids to/from filtered ids.
@@ -33,7 +39,7 @@ def __check(mesh, options: Options) -> Result:
     filtered_to_original = numpy.ones(points.GetNumberOfPoints(), dtype=int) * -1
 
     rejected_points = defaultdict(list)
-    point_id = vtk.reference(0)
+    point_id = reference(0)
     for i in range(points.GetNumberOfPoints()):
         is_inserted = locator.InsertUniquePoint(points.GetPoint(i), point_id)
         if not is_inserted:

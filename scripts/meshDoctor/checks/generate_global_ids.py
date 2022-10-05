@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 import logging
 
-import vtk
+from vtkmodules.vtkCommonCore import (
+    vtkIdTypeArray,
+)
 
 import vtk_utils
 
@@ -27,7 +29,7 @@ def __build_global_ids(mesh) -> None:
     if mesh.GetPointData().GetGlobalIds():
         logging.error("Mesh already has globals ids for points; nothing done.")
     else:
-        point_global_ids = vtk.vtkIdTypeArray()
+        point_global_ids = vtkIdTypeArray()
         point_global_ids.SetName("GLOBAL_IDS_POINTS")
         point_global_ids.Allocate(mesh.GetNumberOfPoints())
         for i in range(mesh.GetNumberOfPoints()):
@@ -37,7 +39,7 @@ def __build_global_ids(mesh) -> None:
     if mesh.GetCellData().GetGlobalIds():
         logging.error("Mesh already has globals ids for cells; nothing done.")
     else:
-        cells_global_ids = vtk.vtkIdTypeArray()
+        cells_global_ids = vtkIdTypeArray()
         cells_global_ids.SetName("GLOBAL_IDS_CELLS")
         cells_global_ids.Allocate(mesh.GetNumberOfCells())
         for i in range(mesh.GetNumberOfCells()):

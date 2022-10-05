@@ -2,12 +2,17 @@ from typing import Generator, Tuple
 
 import pytest
 
-import vtk
+from vtkmodules.vtkCommonCore import (
+    vtkPoints,
+)
+from vtkmodules.vtkCommonDataModel import (
+    vtkUnstructuredGrid,
+)
 
 from checks.collocated_nodes import Options, __check
 
 
-def get_points() -> Generator[Tuple[vtk.vtkPoints, int], None, None]:
+def get_points() -> Generator[Tuple[vtkPoints, int], None, None]:
     """
     Generates the data for the cases.
     One case has two nodes at the exact same position.
@@ -15,7 +20,7 @@ def get_points() -> Generator[Tuple[vtk.vtkPoints, int], None, None]:
     :return: Generator to (vtk points, number of expected duplicated locations)
     """
     for p0, p1 in ((0, 0, 0), (1, 1, 1)), ((0, 0, 0), (0, 0, 0)):
-        points = vtk.vtkPoints()
+        points = vtkPoints()
         points.SetNumberOfPoints(2)
         points.SetPoint(0, p0)
         points.SetPoint(1, p1)
@@ -24,10 +29,10 @@ def get_points() -> Generator[Tuple[vtk.vtkPoints, int], None, None]:
 
 
 @pytest.mark.parametrize("data", get_points())
-def test_simple_collocated_points(data: Tuple[vtk.vtkPoints, int]):
+def test_simple_collocated_points(data: Tuple[vtkPoints, int]):
     points, num_nodes_bucket = data
 
-    mesh = vtk.vtkUnstructuredGrid()
+    mesh = vtkUnstructuredGrid()
     mesh.SetPoints(points)
 
     result = __check(mesh, Options(tolerance=1.e-12))
