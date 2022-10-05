@@ -9,6 +9,7 @@ install-*
 *.swo
 *.swn
 *.nfs*
+*.vscode*
 *.out
 *.core
 *.DS_Store
