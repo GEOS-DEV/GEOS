@@ -14,6 +14,9 @@ def main():
     args = parse(sys.argv)
     logging.info(f"Checking mesh \"{args.vtk_input_file}\".")
     for check_name, check_options in args.checks.items():
+        # If there is no option, this means that the check was not requested by the user
+        if not check_options:
+            continue
         try:
             check = all_checks[check_name]
         except KeyError as e:

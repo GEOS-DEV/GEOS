@@ -1,21 +1,25 @@
 import logging
 from typing import Dict, Callable
 
-from . import all_checks_helpers, CheckHelper
+from . import all_checks_helpers, CheckHelper, build_check_helper
 
 import checks.register
-from checks import COLLOCATES_NODES
+from checks import COLLOCATES_NODES, GENERATE_FRACTURES
 
 
 def __register_collocated_nodes() -> CheckHelper:
     from . import collocated_nodes_parsing
-    return CheckHelper(parse_cli_options=collocated_nodes_parsing.parse_cli_options,
-                       display_results=collocated_nodes_parsing.display_results,
-                       get_help=collocated_nodes_parsing.get_help)
+    return build_check_helper(collocated_nodes_parsing)
+
+
+def __register_generate_fractures() -> CheckHelper:
+    from . import generate_fractures_parsing
+    return build_check_helper(generate_fractures_parsing)
 
 
 __HELPERS: Dict[str, Callable[[None], CheckHelper]] = {
-    COLLOCATES_NODES: __register_collocated_nodes
+    COLLOCATES_NODES: __register_collocated_nodes,
+    GENERATE_FRACTURES: __register_generate_fractures,
 }
 
 

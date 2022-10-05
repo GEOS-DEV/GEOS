@@ -54,6 +54,7 @@ def __check(mesh, options: Options) -> Result:
 
 
 def check(vtk_input_file: str, options: Options) -> Result:
+    # TODO refactor this duplicated code
     reader = vtk.vtkXMLUnstructuredGridReader()  # TODO Find a generic way to read the vtk mesh.
     reader.SetFileName(vtk_input_file)
     reader.Update()

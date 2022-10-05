@@ -1,7 +1,7 @@
 import logging
 from typing import Tuple, Dict, Callable, Any
 
-from . import all_checks, COLLOCATES_NODES
+from . import all_checks, COLLOCATES_NODES, GENERATE_FRACTURES
 
 
 def __get_collocated_nodes_check():
@@ -13,8 +13,18 @@ def __get_collocated_nodes_check():
     return collocated_nodes.check
 
 
+def __get_generate_fractures_check():
+    """
+    Returns the "collocated nodes" check.
+    :return: The "check" function.
+    """
+    from . import generate_fractures
+    return generate_fractures.check
+
+
 __CHECKS: Dict[str, Callable[[None], Any]] = {
-    COLLOCATES_NODES: __get_collocated_nodes_check
+    COLLOCATES_NODES: __get_collocated_nodes_check,
+    GENERATE_FRACTURES: __get_generate_fractures_check,
 }
 
 
