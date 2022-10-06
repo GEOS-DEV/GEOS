@@ -22,6 +22,7 @@ CompressibleSolidSlipDependentPermeability  node         :ref:`XML_CompressibleS
 ConstantPermeability                        node         :ref:`XML_ConstantPermeability`                        
 Coulomb                                     node         :ref:`XML_Coulomb`                                     
 DamageElasticIsotropic                      node         :ref:`XML_DamageElasticIsotropic`                      
+DamagePermeability                          node         :ref:`XML_DamagePermeability`                          
 DamageSpectralElasticIsotropic              node         :ref:`XML_DamageSpectralElasticIsotropic`              
 DamageVolDevElasticIsotropic                node         :ref:`XML_DamageVolDevElasticIsotropic`                
 DeadOilFluid                                node         :ref:`XML_DeadOilFluid`                                
@@ -41,6 +42,9 @@ NullModel                                   node         :ref:`XML_NullModel`
 ParallelPlatesPermeability                  node         :ref:`XML_ParallelPlatesPermeability`                  
 ParticleFluid                               node         :ref:`XML_ParticleFluid`                               
 PermeabilityBase                            node         :ref:`XML_PermeabilityBase`                            
+PorousDamageElasticIsotropic                node         :ref:`XML_PorousDamageElasticIsotropic`                
+PorousDamageSpectralElasticIsotropic        node         :ref:`XML_PorousDamageSpectralElasticIsotropic`        
+PorousDamageVolDevElasticIsotropic          node         :ref:`XML_PorousDamageVolDevElasticIsotropic`          
 PorousDelftEgg                              node         :ref:`XML_PorousDelftEgg`                              
 PorousDruckerPrager                         node         :ref:`XML_PorousDruckerPrager`                         
 PorousElasticIsotropic                      node         :ref:`XML_PorousElasticIsotropic`                      

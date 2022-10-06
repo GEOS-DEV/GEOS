@@ -22,6 +22,7 @@ CompressibleSolidSlipDependentPermeability  node :ref:`DATASTRUCTURE_Compressibl
 ConstantPermeability                        node :ref:`DATASTRUCTURE_ConstantPermeability`                        
 Coulomb                                     node :ref:`DATASTRUCTURE_Coulomb`                                     
 DamageElasticIsotropic                      node :ref:`DATASTRUCTURE_DamageElasticIsotropic`                      
+DamagePermeability                          node :ref:`DATASTRUCTURE_DamagePermeability`                          
 DamageSpectralElasticIsotropic              node :ref:`DATASTRUCTURE_DamageSpectralElasticIsotropic`              
 DamageVolDevElasticIsotropic                node :ref:`DATASTRUCTURE_DamageVolDevElasticIsotropic`                
 DeadOilFluid                                node :ref:`DATASTRUCTURE_DeadOilFluid`                                
@@ -41,6 +42,9 @@ NullModel                                   node :ref:`DATASTRUCTURE_NullModel`
 ParallelPlatesPermeability                  node :ref:`DATASTRUCTURE_ParallelPlatesPermeability`                  
 ParticleFluid                               node :ref:`DATASTRUCTURE_ParticleFluid`                               
 PermeabilityBase                            node :ref:`DATASTRUCTURE_PermeabilityBase`                            
+PorousDamageElasticIsotropic                node :ref:`DATASTRUCTURE_PorousDamageElasticIsotropic`                
+PorousDamageSpectralElasticIsotropic        node :ref:`DATASTRUCTURE_PorousDamageSpectralElasticIsotropic`        
+PorousDamageVolDevElasticIsotropic          node :ref:`DATASTRUCTURE_PorousDamageVolDevElasticIsotropic`          
 PorousDelftEgg                              node :ref:`DATASTRUCTURE_PorousDelftEgg`                              
 PorousDruckerPrager                         node :ref:`DATASTRUCTURE_PorousDruckerPrager`                         
 PorousElasticIsotropic                      node :ref:`DATASTRUCTURE_PorousElasticIsotropic`                      

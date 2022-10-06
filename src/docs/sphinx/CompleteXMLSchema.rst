@@ -253,6 +253,13 @@ Element: DamageElasticIsotropic
 .. include:: ../../coreComponents/schema/docs/DamageElasticIsotropic.rst
 
 
+.. _XML_DamagePermeability:
+
+Element: DamagePermeability
+===========================
+.. include:: ../../coreComponents/schema/docs/DamagePermeability.rst
+
+
 .. _XML_DamageSpectralElasticIsotropic:
 
 Element: DamageSpectralElasticIsotropic
@@ -671,6 +678,34 @@ Element: PhaseFieldDamageFEM
 Element: PhaseFieldFracture
 ===========================
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
+
+
+.. _XML_PhaseFieldPoromechanics:
+
+Element: PhaseFieldPoromechanics
+================================
+.. include:: ../../coreComponents/schema/docs/PhaseFieldPoromechanics.rst
+
+
+.. _XML_PorousDamageElasticIsotropic:
+
+Element: PorousDamageElasticIsotropic
+=====================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageElasticIsotropic.rst
+
+
+.. _XML_PorousDamageSpectralElasticIsotropic:
+
+Element: PorousDamageSpectralElasticIsotropic
+=============================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageSpectralElasticIsotropic.rst
+
+
+.. _XML_PorousDamageVolDevElasticIsotropic:
+
+Element: PorousDamageVolDevElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageVolDevElasticIsotropic.rst
 
 
 .. _XML_PorousDelftEgg:
@@ -1356,6 +1391,13 @@ Datastructure: DamageElasticIsotropic
 .. include:: ../../coreComponents/schema/docs/DamageElasticIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_DamagePermeability:
+
+Datastructure: DamagePermeability
+=================================
+.. include:: ../../coreComponents/schema/docs/DamagePermeability_other.rst
+
+
 .. _DATASTRUCTURE_DamageSpectralElasticIsotropic:
 
 Datastructure: DamageSpectralElasticIsotropic
@@ -1788,6 +1830,34 @@ Datastructure: PhaseFieldDamageFEM
 Datastructure: PhaseFieldFracture
 =================================
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
+
+
+.. _DATASTRUCTURE_PhaseFieldPoromechanics:
+
+Datastructure: PhaseFieldPoromechanics
+======================================
+.. include:: ../../coreComponents/schema/docs/PhaseFieldPoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_PorousDamageElasticIsotropic:
+
+Datastructure: PorousDamageElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PorousDamageSpectralElasticIsotropic:
+
+Datastructure: PorousDamageSpectralElasticIsotropic
+===================================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageSpectralElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PorousDamageVolDevElasticIsotropic:
+
+Datastructure: PorousDamageVolDevElasticIsotropic
+=================================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageVolDevElasticIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_PorousDelftEgg:
