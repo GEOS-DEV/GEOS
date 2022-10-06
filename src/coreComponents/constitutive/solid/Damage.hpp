@@ -150,15 +150,6 @@ public:
     return 2.0;
   }
 
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 getDamage( localIndex const k,
-                            localIndex const q ) const
-  {
-    return m_damage( k, q );
-  }
-
-
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -233,13 +224,6 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  virtual real64 getExtDrivingForce( localIndex const k,
-                                     localIndex const q ) const
-  {
-    return m_extDrivingForce( k, q );
-  }
-
-  GEOSX_HOST_DEVICE
   real64 getRegularizationLength() const
   {
     return m_lengthScale;
@@ -304,6 +288,11 @@ public:
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
+
+  /// *** The interface to get member variables 
+  arrayView2d< real64 const > getDamage() const { return m_damage; }
+
+  arrayView2d< real64 const > getExtDrivingForce() const { return m_extDrivingForce; }
 
 
   KernelWrapper createKernelUpdates() const
