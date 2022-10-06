@@ -1,0 +1,208 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="SolidMechSolve"
+      damageSolverName="DamageSolve"
+      couplingTypeOption="FixedStress"
+      logLevel="1"
+      subcycling="0"
+      discretization="FE1"
+      targetRegions="{ Region1 }">
+    </PhaseFieldFracture>
+
+    <SolidMechanicsLagrangianSSLE
+      name="SolidMechSolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region1 }"
+      fracturePressureFlag="1">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        newtonTol="1.0e-4"/>
+      <LinearSolverParameters
+        logLevel="0"
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </SolidMechanicsLagrangianSSLE>
+
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="Damage"
+      localDissipation="Linear"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        logLevel="0"
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </PhaseFieldDamageFEM>
+  </Solvers>
+
+  <Mesh>
+    <InternalWellbore
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      radius="{ 13, 100.0 }"
+      theta="{ 0, 180 }"
+      zCoords="{ 0, 100 }"
+      nr="{ 100 }"
+      nt="{ 400 }"
+      nz="{ 40 }"
+      trajectory="{ { 0.0, 0.0, -1.0 },
+                    { 0.0, 0.0, 1.0 } }"
+      autoSpaceRadialElems="{ 1 }"
+      useCartesianOuterBoundary="0"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="1.0">
+ 
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      timeFrequency="0.01"
+      target="/Outputs/WellboreVTKOutput"/>
+
+    <PeriodicEvent
+      name="siloOutputs"
+      timeFrequency="0.01"
+      target="/Outputs/WellboreSiloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.5"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+ 
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <DamageElasticIsotropic
+      name="rock"
+      defaultDensity="2.7e-9"
+      defaultBulkModulus="4.4144e3"
+      defaultShearModulus="4.3363e3"
+      lengthScale="1"
+      criticalFractureEnergy="9.1e-2"
+      criticalStrainEnergy="0"
+      extDrivingForceFlag="1"
+      degradationLowerLimit="1e-4"
+      tensileStrength="27.0"
+      compressiveStrength="77.0"
+      deltaCoefficient="0.0"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification 
+      name="Sh"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rock_stress"
+      component="0"
+      scale="-9.0"/>
+
+    <FieldSpecification 
+      name="SH"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rock_stress"
+      component="1"
+      scale="-12.0"/>
+
+    <FieldSpecification 
+      name="Sv"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rock_stress"
+      component="2"
+      scale="-15.0"/>
+
+    <Traction
+      name="WellLoad"
+      setNames="{ rneg }"
+      objectPath="faceManager"
+      scale="-1.0"
+      functionName="pressure"
+      tractionType="normal"
+      nodalScaleFlag="1"/>
+
+    <FieldSpecification 
+      name="xconstraint"    
+      objectPath="nodeManager" 
+      fieldName="TotalDisplacement" 
+      component="0" 
+      scale="0.0" 
+      setNames="{xneg, xpos}"/>
+
+    <FieldSpecification 
+      name="yconstraint"    
+      objectPath="nodeManager" 
+      fieldName="TotalDisplacement" 
+      component="1" 
+      scale="0.0" 
+      setNames="{tneg, tpos, ypos}"/>
+
+    <FieldSpecification 
+      name="zconstraint" 
+      objectPath="nodeManager" 
+      fieldName="TotalDisplacement" 
+      component="2" 
+      scale="0.0" 
+      setNames="{zneg, zpos}"
+    />  
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="pressure"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 0.4, 1 }"
+      values="{ 0.0, 40.0, 50.0 }"/>
+  </Functions>
+
+  <Outputs>
+    <Silo
+      name="WellboreSiloOutput"/>
+
+    <VTK
+      name="WellboreVTKOutput"
+      plotFileRoot="phaseFieldNucleation_wellbore"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+</Problem>
