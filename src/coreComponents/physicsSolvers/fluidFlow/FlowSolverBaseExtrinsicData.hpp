@@ -44,7 +44,7 @@ EXTRINSIC_MESH_DATA_TRAIT( pressure_n,
                            "pressure_n",
                            array1d< real64 >,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "Pressure at the previous converged time step" );
 
@@ -55,6 +55,14 @@ EXTRINSIC_MESH_DATA_TRAIT( initialPressure,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Initial pressure" );
+
+EXTRINSIC_MESH_DATA_TRAIT( deltaPressure,
+                           "deltaPressure",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Delta pressure: current pressure - initial pressure" );
 
 EXTRINSIC_MESH_DATA_TRAIT( facePressure,
                            "facePressure",
@@ -92,9 +100,17 @@ EXTRINSIC_MESH_DATA_TRAIT( temperature_n,
                            "temperature_n",
                            array1d< real64 >,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "Temperature at the previous converged time step" );
+
+EXTRINSIC_MESH_DATA_TRAIT( netToGross,
+                           "netToGross",
+                           array1d< real64 >,
+                           1,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Net to gross" );
 
 EXTRINSIC_MESH_DATA_TRAIT( deltaVolume,
                            "deltaVolume",

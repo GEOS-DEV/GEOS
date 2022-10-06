@@ -20,6 +20,7 @@ set( mesh_headers
      MeshForLoopInterface.hpp
      MeshLevel.hpp
      MeshManager.hpp
+     MeshObjectPath.hpp
      NodeManager.hpp
      ObjectManagerBase.hpp
      Perforation.hpp
@@ -36,6 +37,7 @@ set( mesh_headers
      generators/CellBlockManagerABC.hpp
      generators/CellBlockUtilities.hpp
      generators/ExternalMeshGeneratorBase.hpp
+     generators/FaceBlockABC.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
@@ -77,6 +79,7 @@ set( mesh_sources
      MeshBody.cpp
      MeshLevel.cpp
      MeshManager.cpp
+     MeshObjectPath.cpp
      NodeManager.cpp
      ObjectManagerBase.cpp
      Perforation.cpp
@@ -149,6 +152,8 @@ blt_add_library( NAME       mesh
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+add_subdirectory( unitTests )
 
 geosx_add_code_checks( PREFIX mesh
                        EXCLUDES PAMELA )
