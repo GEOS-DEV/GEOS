@@ -23,6 +23,15 @@ This example uses no external input files. Everything we need is contained withi
 
   inputFiles/hydraulicFracturing/kgdValidation_benchmark.xml
 
+Python scripts for post-processing and visualizing the simulation results are also prepared:
+
+.. code-block:: console
+
+  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdValidation/kgdValidationQueries.py
+
+.. code-block:: console
+
+  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdValidation/kgdValidationFigure.py
 
 ------------------------------------------------------------------
 Description of the case
@@ -145,6 +154,26 @@ For this problem, a homogeneous and isotropic domain with one solid material is 
 All constitutive parameters such as density, viscosity, bulk modulus, and shear modulus are specified in the International System of Units.
 
 
+------------------------------
+Time history function
+------------------------------
+
+In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time history information from fields. 
+Either the entire field or specified named sets of indices in the field can be collected.
+In this example, ``pressureCollection``, ``apertureCollection``, ``hydraulicApertureCollection`` and ``areaCollection`` are specified to output the time history of fracture characterisctics (pressure, width and area). 
+``objectPath="ElementRegions/Fracture/FractureSubRegion"`` indicates that these ``PackCollection`` tasks are applied to the fracure element subregion.
+
+.. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_TASKS -->
+    :end-before: <!-- SPHINX_TASKS_END -->
+
+These tasks are triggered using the ``Event`` manager with a ``PeriodicEvent`` defined for the recurring tasks. 
+GEOSX writes one file named after the string defined in the ``filename`` keyword and formatted as a HDF5 file (``KGD_validation_output.hdf5``). This TimeHistory file contains the collected time history information from specified time history collector.
+This file includes datasets for the simulation time, fluid pressure, element aperture, hydraulic aperture and element area for the propagating hydraulic fracture.
+A Python script is prepared to read and query any specified subset of the time history data for verification and visualization. 
+
+
 -----------------------------------------------------------
 Initial and boundary conditions
 -----------------------------------------------------------
@@ -204,12 +233,20 @@ The following figure shows the distribution of :math:`\sigma_{yy}` at :math:`t=1
 
    Simulation result of :math:`\sigma_{xx}` at :math:`t=100 s`
 
+By running the query script ``kgdValidationQueries.py``, the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure half length) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
+
+.. code-block:: console
+		
+  [['      time', ' wpressure', '58pressure', '57pressure', ' Laperture', '      area']]
+            0          0          0          0          0  0.0001048
+          0.1  1.515e+07          0          0          0  0.0003145
+          0.2  1.451e+07          0          0          0  0.0003774
+          0.3  1.349e+07          0          0          0  0.0004194
+          0.4  1.183e+07          0          0          0  0.0005662
+          0.5  1.125e+07          0          0          0  0.0005662
+
  
-The figure below shows simulation results of the fracture extent at the end of the injection. The temporal
-evolution of the fracture characteristics (length, aperture and pressure) from the GEOSX simulation are extracted and
-compared with the experimental data gathered at specific locations. As observed, the time history plots of
-the modelling predictions (green curves) for the pressure at three gage locations, the fracture length, and the fracture
-aperture at LVDT location correlate well with the experimental data (blue circles).  
+The figure below shows simulation results of the fracture extent at the end of the injection, which is generated using the visualization script ``kgdValidationFigure.py``. The temporal evolution of the fracture characteristics (length, aperture and pressure) from the GEOSX simulation are extracted and compared with the experimental data gathered at specific locations. As observed, the time history plots of the modelling predictions (green curves) for the pressure at three gage locations, the fracture length, and the fracture aperture at LVDT location correlate well with the experimental data (blue circles).  
 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdValidation/kgdValidationFigure.py
