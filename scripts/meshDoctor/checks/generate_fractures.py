@@ -14,12 +14,13 @@ from vtkmodules.vtkCommonDataModel import (
     vtkCellArray,
     vtkUnstructuredGrid,
 )
-
-from vtk.util.numpy_support import vtk_to_numpy
+from vtk.util.numpy_support import (
+    vtk_to_numpy,
+)
 
 import networkx
 
-import vtk_utils
+from . import vtk_utils
 
 
 @dataclass(frozen=True)

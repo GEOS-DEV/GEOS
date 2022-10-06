@@ -10,8 +10,10 @@ from vtkmodules.vtkCommonDataModel import (
     vtkRectilinearGrid,
     vtkUnstructuredGrid,
 )
-
-from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
+from vtk.util.numpy_support import (
+    numpy_to_vtk,
+    vtk_to_numpy,
+)
 
 from checks.generate_fractures import Options, __split_mesh_on_fracture, __find_involved_cells, __color_fracture_sides
 

@@ -13,7 +13,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkIncrementalOctreePointLocator,
 )
 
-import vtk_utils
+from . import vtk_utils
 
 
 @dataclass(frozen=True)
