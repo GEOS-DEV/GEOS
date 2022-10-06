@@ -17,9 +17,9 @@ Semi analytical result for axial stress variation :math:`\delta\sigma_{V}` and l
    \delta\sigma_{V} = \delta\varepsilon_{V} E_{ep}
 
 .. math::
-   \delta\varepsilon_{V} = \delta\varepsilon_{V} - \frac{\delta\sigma_{V}}{E^'_{ep}}
+   \delta\varepsilon_{H} = \delta\varepsilon_{V} - \frac{\delta\sigma_{V}}{E^'_{ep}}
 
-where :math:`E_{ep}` and :math:`E^'_{ep}` are elasto-plastic Young moduli that can be obtained from the elastic Young and shear moduli (`E` and `\mu`), the frictional parameter `b` and the hardening rate `h` of the Drucker-Prager model by:
+where :math:`E_{ep}` and :math:`E^'_{ep}` are elasto-plastic Young moduli that can be obtained from the elastic Young and shear moduli (:math:`E` and :math:`\mu`), the frictional parameter :math:`b` and the hardening rate :math:`h` of the Drucker-Prager model by:
 
 .. math::
    \frac{1}{E_{ep}} = \frac{1}{E} + \frac{(b-3)^2}{9h}
@@ -33,7 +33,7 @@ These solutions are applied only when plastic yield condition is staisfied. The 
    \delta a = \frac{b-3}{3}\delta\sigma_{V}
 
 
-These solutions were etablished for a positive shear stress `q = -(\sigma_{V} - \sigma_{H})` (negative sign convention for compression stress). For the case when the plastic yield occurs at a negative shear stress, we have
+These solutions were etablished for a positive shear stress :math:`q = -(\sigma_{V} - \sigma_{H})` (negative sign convention for compression stress). For the case when the plastic yield occurs at a negative shear stress, we have
 
 .. math::
    \frac{1}{E_{ep}} = \frac{1}{E} + \frac{(b+3)^2}{9h}

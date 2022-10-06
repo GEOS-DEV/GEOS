@@ -70,6 +70,8 @@ def getMechanicalParametersFromXML(xmlFilePath, xmlFilePath_case):
         mechanicalParameters["cohesion"] = float(param.get("defaultCohesion"))
         mechanicalParameters["frictionAngle"] = float(param.get("defaultFrictionAngle"))
         mechanicalParameters["hardeningRate"] = float(param.get("defaultHardeningRate"))
+        mechanicalParameters["relaxationTime"] = float(param.get("relaxationTime"))
+        mechanicalParameters["initialStress"] = float(model.get("initialStress"))
 
     elif model.get("material") == "ViscoExtendedDruckerPrager":
         param = tree.find('Constitutive/ViscoExtendedDruckerPrager')
@@ -105,30 +107,34 @@ def getMechanicalParametersFromXML(xmlFilePath, xmlFilePath_case):
 
     return mechanicalParameters
 
+
 def main():
 	# File paths
-	path = "DruckerPragerResults.txt"
+	path = "ViscoDruckerPragerResults.txt"
+	timeFilePath = "../../../../../../../inputFiles/triaxialDriver/tables/time.geos"
 	xmlFilePath = "../../../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml"
-	xmlFilePath_case = "../../../../../../../inputFiles/triaxialDriver/triaxialDriver_DruckerPrager.xml"
+	xmlFilePath_case = "../../../../../../../inputFiles/triaxialDriver/triaxialDriver_ViscoDruckerPrager.xml"
 	imposedStrainFilePath = "../../../../../../../inputFiles/triaxialDriver/tables/axialStrain.geos"
-	outputPath = "DruckerPrager.png"
-		 
+	outputPath = "ViscoDruckerPrager.png"
+
+	# Extract info from XML
+	mechanicalParameters = getMechanicalParametersFromXML(xmlFilePath, xmlFilePath_case)
+	 
 	# Load GEOSX results
 	time, ax_strain, ra_strain1, ra_strain2, ax_stress, ra_stress1, ra_stress2, newton_iter, residual_norm = np.loadtxt(
 		path, skiprows=5, unpack=True)
 
-	# Extract mechanical parameters from XML file
-	mechanicalParameters = getMechanicalParametersFromXML(xmlFilePath, xmlFilePath_case)
+	# Analytical solution for Drucker-Prager model
 	bulkModulus = mechanicalParameters["bulkModulus"]
 	shearModulus = mechanicalParameters["shearModulus"]
 	cohesion = mechanicalParameters["cohesion"]
 	frictionAngle = mechanicalParameters["frictionAngle"]
 	hardeningRate = mechanicalParameters["hardeningRate"]
+	relaxationTime = mechanicalParameters["relaxationTime"]
 	initialStress = mechanicalParameters["initialStress"]
 
-	# Compute Lamé modulus and Young modulus
 	lameModulus = bulkModulus - 2.0/3.0*shearModulus
-	youngModulus = 1.0 / ( 1.0/9.0/bulkModulus + 1.0/3.0/shearModulus )
+	youngModulus = 1.0/(1.0/9.0/bulkModulus + 1.0/3.0/shearModulus)
 
 	# Extract loading from input tables
 	imp_strain = np.loadtxt(
@@ -142,29 +148,36 @@ def main():
 		loadingPeriod = np.arange(imp_strain[i],imp_strain[i+1]+dStrainPerStep,dStrainPerStep)
 		list_ax_strain_anal = np.concatenate((list_ax_strain_anal, loadingPeriod), axis=0)
 
+	# Extract time from input tables
+	imp_time = np.loadtxt(
+		timeFilePath, skiprows=0, unpack=True)
+
+	list_time_anal = []
+	for i in range(0,len(imp_time)-1):
+		dTimePerStep = (imp_time[i+1]-imp_time[i])/numStepPerLoadingPeriod	
+		timePeriod = np.arange(imp_time[i],imp_time[i+1]+dTimePerStep,dTimePerStep)
+		list_time_anal = np.concatenate((list_time_anal, timePeriod), axis=0)
+
 	list_ra_stress_anal = -10e6*np.ones(len(list_ax_strain_anal))
 	list_ra_strain_anal = np.zeros(len(list_ax_strain_anal))
 	list_ax_stress_anal = np.zeros(len(list_ax_strain_anal))
 
-	# Friction and cohesion parameters
 	frictionAngleRad = frictionAngle*3.1416/180.0
 	cosFrictionAngle = np.cos(frictionAngleRad)
 	sinFrictionAngle = np.sin(frictionAngleRad) 
 	a = 6.0*cohesion/1.0e6*cosFrictionAngle/(3.0-sinFrictionAngle)
 	b = 6.0*sinFrictionAngle/(3.0-sinFrictionAngle)
 
-	# Elasto-plastic modulus
-	plasticYoungModulus = 1.0/(1.0/youngModulus + (b-3.0)*(b-3.0)/9.0/hardeningRate)
-	plasticModulusForRaStrain = 1.0/(1.0/2.0/shearModulus - (b-3.0)/2.0/hardeningRate)
-
-	plasticYoungModulus_unload = 1.0/(1.0/youngModulus + (b+3.0)*(b+3.0)/9.0/hardeningRate)
-	plasticModulusForRaStrain_unload = 1.0/(1.0/2.0/shearModulus + (b+3.0)/2.0/hardeningRate)
+	# See Runesson et al. 1999, see Eq. 56
+	parameter_Aep = 3.0*shearModulus + bulkModulus*b*b + hardeningRate
 	
 	list_ax_stress_anal[0] = initialStress
 	list_ra_strain_anal[0] = 0
 
 	for idx in range(1,len(list_ax_strain_anal)):
 		delta_ax_strain_anal = list_ax_strain_anal[idx]-list_ax_strain_anal[idx-1]
+		delta_time_anal = list_time_anal[idx]-list_time_anal[idx-1]
+
 		delta_ra_stress_anal = 0
 
 		# Elastic trial
@@ -178,48 +191,56 @@ def main():
 		p_anal = (ax_stress_anal + 2.0 * ra_stress_anal) / 3.0 / 1.0e6
 		q_anal = -(ax_stress_anal - ra_stress_anal) / 1.0e6
 
-		# Plastic correction
+		# Verify plastic condition
+		
 		if(q_anal>=0): #loading
+			
 			F_anal = q_anal + b*p_anal - a
 
 			if(F_anal>=0):
+				
+				# See Runesson et al. 1999, see Eq. 4, 80, 62, 63
+				delta_lambda = delta_time_anal / relaxationTime * (F_anal*1e6/parameter_Aep)
+				
 				delta_ax_strain_anal = list_ax_strain_anal[idx] - list_ax_strain_anal[idx-1]
-				delta_ax_stress_anal = delta_ax_strain_anal*plasticYoungModulus 
-			
-				delta_ra_strain_anal = delta_ax_strain_anal	 - 	delta_ax_stress_anal / plasticModulusForRaStrain
+				delta_ax_stress_anal = ( delta_ax_strain_anal-delta_lambda*(b-3.0)/3.0 ) * youngModulus 
+				delta_ra_strain_anal = delta_ax_strain_anal	 - 	delta_ax_stress_anal / 2.0 / shearModulus + 3.0/2.0*delta_lambda
 		
 				ax_stress_anal = list_ax_stress_anal[idx-1] + delta_ax_stress_anal
 				ra_strain_anal = list_ra_strain_anal[idx-1] + delta_ra_strain_anal
 		
-				delta_a = (b-3.0)/3.0*delta_ax_stress_anal/1e6
+				delta_a = hardeningRate*delta_lambda/1e6 #converted to MPa
 		
 				a += delta_a
 		
 		else: #unloading
+			
 			F_anal = -q_anal + b*p_anal - a
 
 			if(F_anal>=0):
+				# See Runesson et al. 1999, Eq. 80 
+				delta_lambda = delta_time_anal / relaxationTime * (F_anal*1e6/parameter_Aep)
+	
 				delta_ax_strain_anal = list_ax_strain_anal[idx] - list_ax_strain_anal[idx-1]
-				delta_ax_stress_anal = delta_ax_strain_anal*plasticYoungModulus_unload 
-			
-				delta_ra_strain_anal = delta_ax_strain_anal	 - 	delta_ax_stress_anal / plasticModulusForRaStrain_unload
+				delta_ax_stress_anal = ( delta_ax_strain_anal-delta_lambda*(b+3.0)/3.0 ) * youngModulus 
+				delta_ra_strain_anal = delta_ax_strain_anal	 - 	delta_ax_stress_anal / 2.0 / shearModulus - 3.0/2.0*delta_lambda
 		
 				ax_stress_anal = list_ax_stress_anal[idx-1] + delta_ax_stress_anal
 				ra_strain_anal = list_ra_strain_anal[idx-1] + delta_ra_strain_anal
 		
-				delta_a = (b+3.0)/3.0*delta_ax_stress_anal/1e6
-		
+				delta_a = hardeningRate*delta_lambda/1e6 #converted to MPa
+
 				a += delta_a	
 
 		list_ax_stress_anal[idx] = ax_stress_anal
 		list_ra_strain_anal[idx] = ra_strain_anal
 			
-	list_p_anal = (list_ax_stress_anal + 2.0 * list_ra_stress_anal) / 3.0 / 1.0e6
+	list_p_anal = -(list_ax_stress_anal + 2.0 * list_ra_stress_anal) / 3.0 / 1.0e6
 	list_q_anal = -(list_ax_stress_anal - list_ra_stress_anal) / 1.0e6
 
 	list_strain_vol_anal = list_ax_strain_anal + 2.0 * list_ra_strain_anal
 
-	p_num = (ax_stress + 2.0 * ra_stress1) / 3.0 / 1.0e6
+	p_num = -(ax_stress + 2.0 * ra_stress1) / 3.0 / 1.0e6
 	q_num = -(ax_stress - ra_stress1) / 1.0e6
 
 	strain_vol = ax_strain + 2.0 * ra_strain1
@@ -287,7 +308,7 @@ def main():
 	ax[1].yaxis.set_tick_params(labelsize=fsize)
 	
 	# Plan p-q
-	ax[2].plot(-p_num,
+	ax[2].plot(p_num,
 		       q_num,
 		       'o',
 		       color=cmap(0),
@@ -295,7 +316,7 @@ def main():
 		       markersize=msize,
 		       alpha=malpha,
 		       label='Triaxial Driver')
-	ax[2].plot(-list_p_anal,
+	ax[2].plot(list_p_anal,
 		       list_q_anal,
 		       '-',
 		       color='r',

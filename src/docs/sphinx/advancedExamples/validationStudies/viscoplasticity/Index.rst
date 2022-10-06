@@ -7,7 +7,8 @@ Viscoplasticity
 .. toctree::
    :maxdepth: 1
 
-   DruckerPrager/Example	
+   DruckerPrager/Example
+   ViscoDruckerPrager/Example		
    modelComparisons/Example	      
 
 
