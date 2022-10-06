@@ -1,17 +1,17 @@
 {
-	"build": {
-		"dockerfile": "Dockerfile"
-	},
-	"runArgs": [
-		"--cap-add=ALL"
-	],
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"ms-vscode.cpptools-extension-pack",
-				"eamodio.gitlens",
-				"fredericbonnet.cmake-test-adapter"
-			]
-		}
-	}
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "runArgs": [
+        "--cap-add=ALL"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools-extension-pack",
+                "eamodio.gitlens",
+                "fredericbonnet.cmake-test-adapter"
+            ]
+        }
+    }
 }
