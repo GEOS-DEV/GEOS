@@ -5,7 +5,7 @@ import numpy as np
 import vtk
 
 
-def perturb(point_array, index_set):
+def perturb(point_array, index_set, max_nudge):
     # Option for later: parameterize spacing and change perturbation size
     nrows = np.size(point_array, 0)
 
@@ -17,7 +17,6 @@ def perturb(point_array, index_set):
     z_nudge = np.zeros((nrows, 1))
 
     # Make each perturbation between +/-0.1, uniform distribution
-    max_nudge = 0.1
     min_nudge = -1 * max_nudge
 
     if 'x' in index_set:
@@ -62,7 +61,7 @@ def get_cube_indices(ncubes, indmap):
     return index_list
 
 
-def make_nxnxn_framework(n):
+def make_nxnxn_framework(n, perturbation_size):
     # Option for later: make axbxc rectangle instead of nxnxn cube
 
     # Generate all categories of points
@@ -107,7 +106,7 @@ def make_nxnxn_framework(n):
     perturbation_list = []
 
     for i in range(0, len(points_list)):
-        perturbation_list.append(perturb(points_list[i], nudge_axes[i]))
+        perturbation_list.append(perturb(points_list[i], nudge_axes[i], perturbation_size))
 
     # print(perturbation_list)
     perturbations = np.concatenate(perturbation_list, axis=0)
@@ -232,8 +231,8 @@ def write_msh(points, inds, fname):
         fout.write('$EndElements')
 
 
-def generate_all_types(n):
-    points, inds = make_nxnxn_framework(n)
+def generate_all_types(n, perturbation_size):
+    points, inds = make_nxnxn_framework(n, perturbation_size)
     # Write hexes
     hex_name = 'hex_' + str(n)
     write_msh(points, inds, hex_name + '.msh')
@@ -265,14 +264,26 @@ if __name__ == "__main__":
                         type=int,
                         nargs='+',
                         help='an integer side length for mesh construction')
-    parser.add_argument('--seed',
+
+    parser.add_argument("-p",
+                        "--perturbation",
+                        dest="perturbation_size",
+                        type=float,
+                        default=0.0,
+                        help='maximu size of the perturbation to generate non rectilinear mesh. default = 0')
+
+    parser.add_argument("-sd",
+                        "--seed",
+                        dest="seed",
                         type=int,
                         nargs='?',
                         const=5,
                         default=5,
-                        help='Integer random number generator seed, default=5')
+                        help='Integer random number generator seed, default=5')                                        
+
+
     args = parser.parse_args()
 
     for ncubes in args.sideLengths:
         np.random.seed(args.seed)
-        generate_all_types(ncubes)
+        generate_all_types(ncubes, args.perturbation_size)
