@@ -280,9 +280,11 @@ public:
       : Base::StackVariables( size, numElems ),
       dCompFlux_dT( size, numComp ),
       energyFlux( 0.0 ),
-      dEnergyFlux_dP( size ),
-      dEnergyFlux_dT( size ),
-      dEnergyFlux_dC( size, numComp )
+      dEnergyFlux_dP( 2 ),
+      dEnergyFlux_dT( 2 ),
+      dEnergyFlux_dC( 2, numComp ),
+      conductiveEnergyFlux( 0.0 ),
+      dConductiveEnergyFlux_dT( 2 )
     {}
 
     using Base::StackVariables::stencilSize;
@@ -296,7 +298,7 @@ public:
     // Component fluxes and derivatives
 
     /// Derivatives of component fluxes wrt temperature
-    stackArray2d< real64, maxStencilSize * numComp > dCompFlux_dT;
+    stackArray2d< real64, 2 * numComp > dCompFlux_dT;
 
     // Thermal transmissibility (for now, no derivatives)
 
@@ -307,12 +309,15 @@ public:
     /// Energy fluxes
     real64 energyFlux;
     /// Derivatives of energy fluxes wrt pressure
-    stackArray1d< real64, maxStencilSize > dEnergyFlux_dP;
+    stackArray1d< real64, 2 > dEnergyFlux_dP;
     /// Derivatives of energy fluxes wrt temperature
-    stackArray1d< real64, maxStencilSize > dEnergyFlux_dT;
+    stackArray1d< real64, 2 > dEnergyFlux_dT;
     /// Derivatives of energy fluxes wrt component densities
-    stackArray2d< real64, maxStencilSize * numComp > dEnergyFlux_dC;
-
+    stackArray2d< real64, 2 * numComp > dEnergyFlux_dC;
+    /// Conductive part of the energy flux
+    real64 conductiveEnergyFlux;
+    /// Derivatives of the conductive energy fluxes wrt temperature
+    stackArray1d< real64, 2 > dConductiveEnergyFlux_dT;
   };
 
   /**
@@ -335,26 +340,40 @@ public:
     // such as potGrad, phaseFlux, and the indices of the upwind cell
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
     Base::computeFlux( iconn, stack, [&] ( integer const ip,
+                                           localIndex const (&k)[2],
+                                           localIndex const (&seri)[2],
+                                           localIndex const (&sesri)[2],
+                                           localIndex const (&sei)[2],
+                                           localIndex const connectionIndex,
                                            localIndex const k_up,
                                            localIndex const er_up,
                                            localIndex const esr_up,
                                            localIndex const ei_up,
                                            real64 const & potGrad,
                                            real64 const & phaseFlux,
-                                           real64 const (&dPhaseFlux_dP)[maxStencilSize],
-                                           real64 const (&dPhaseFlux_dC)[maxStencilSize][numComp] )
+                                           real64 const (&dPhaseFlux_dP)[2],
+                                           real64 const (&dPhaseFlux_dC)[2][numComp] )
     {
       // We are in the loop over phases, ip provides the current phase index.
 
       // Step 1: compute the derivatives of the mean density at the interface wrt temperature
 
-      stackArray1d< real64, maxNumElems > dDensMean_dT( stack.numFluxElems );
+      real64 dDensMean_dT[2];
 
-      for( integer i = 0; i < stack.numFluxElems; ++i )
+      real64 const trans[2] = { stack.transmissibility[connectionIndex][0],
+                                stack.transmissibility[connectionIndex][1] };
+      
+      stack.energyFlux = 0.0;
+      stack.dEnergyFlux_dP.zero();
+      stack.dEnergyFlux_dT.zero();
+      stack.dEnergyFlux_dC.zero();
+      stack.dCompFlux_dT.zero();
+
+      for( integer i = 0; i < 2; ++i )
       {
-        localIndex const er  = m_seri( iconn, i );
-        localIndex const esr = m_sesri( iconn, i );
-        localIndex const ei  = m_sei( iconn, i );
+        localIndex const er  = seri[i];
+        localIndex const esr = sesri[i];
+        localIndex const ei  = sei[i];
 
         real64 const dDens_dT = m_dPhaseMassDens[er][esr][ei][0][ip][Deriv::dT];
         dDensMean_dT[i] = 0.5 * dDens_dT;
@@ -363,15 +382,15 @@ public:
       // Step 2: compute the derivatives of the phase potential difference wrt temperature
       //***** calculation of flux *****
 
-      stackArray1d< real64, maxStencilSize > dPresGrad_dT( stack.stencilSize );
-      stackArray1d< real64, maxStencilSize > dGravHead_dT( stack.numFluxElems );
+      real64 dPresGrad_dT[2]{};
+      real64 dGravHead_dT[2]{};
 
       // compute potential difference MPFA-style
-      for( integer i = 0; i < stack.stencilSize; ++i )
+      for( integer i = 0; i < 2; ++i )
       {
-        localIndex const er  = m_seri( iconn, i );
-        localIndex const esr = m_sesri( iconn, i );
-        localIndex const ei  = m_sei( iconn, i );
+        localIndex const er  = seri[i];
+        localIndex const esr = sesri[i];
+        localIndex const ei  = sei[i];
 
         // Step 2.1: compute derivative of capillary pressure wrt temperature
         real64 dCapPressure_dT = 0.0;
@@ -385,11 +404,11 @@ public:
         }
 
         // Step 2.2: compute derivative of phase pressure difference wrt temperature
-        dPresGrad_dT[i] -= stack.transmissibility[0][i] * dCapPressure_dT;
-        real64 const gravD = stack.transmissibility[0][i] * m_gravCoef[er][esr][ei];
+        dPresGrad_dT[i] -= trans[i] * dCapPressure_dT;
+        real64 const gravD = trans[i] * m_gravCoef[er][esr][ei];
 
         // Step 2.3: compute derivative of gravity potential difference wrt temperature
-        for( integer j = 0; j < stack.numFluxElems; ++j )
+        for( integer j = 0; j < 2; ++j )
         {
           dGravHead_dT[j] += dDensMean_dT[j] * gravD;
         }
@@ -401,18 +420,18 @@ public:
       // note: the upwinding is done in the base class, which is in charge of
       //       computing the following quantities: potGrad, phaseFlux, k_up, er_up, esr_up, ei_up
 
-      real64 dPhaseFlux_dT[maxStencilSize]{};
+      real64 dPhaseFlux_dT[2]{0.0, 0.0};
 
       // Step 3.1: compute the derivative of phase flux wrt temperature
-      for( integer ke = 0; ke < stack.stencilSize; ++ke )
+      for( integer ke = 0; ke < 2; ++ke )
       {
         dPhaseFlux_dT[ke] += dPresGrad_dT[ke];
       }
-      for( integer ke = 0; ke < stack.numFluxElems; ++ke )
+      for( integer ke = 0; ke < 2; ++ke )
       {
         dPhaseFlux_dT[ke] -= dGravHead_dT[ke];
       }
-      for( integer ke = 0; ke < stack.stencilSize; ++ke )
+      for( integer ke = 0; ke < 2; ++ke )
       {
         dPhaseFlux_dT[ke] *= m_phaseMob[er_up][esr_up][ei_up][ip];
       }
@@ -429,19 +448,31 @@ public:
       for( integer ic = 0; ic < numComp; ++ic )
       {
         real64 const ycp = phaseCompFracSub[ic];
-        for( integer ke = 0; ke < stack.stencilSize; ++ke )
+        for( integer ke = 0; ke < 2; ++ke )
         {
-          stack.dCompFlux_dT[ke][ic] += dPhaseFlux_dT[ke] * ycp;
+          stack.dCompFlux_dT[k[ke]][ic] += dPhaseFlux_dT[ke] * ycp;
         }
-        stack.dCompFlux_dT[k_up][ic] += phaseFlux * dPhaseCompFracSub[ic][Deriv::dT];
+        stack.dCompFlux_dT[k[k_up]][ic] += phaseFlux * dPhaseCompFracSub[ic][Deriv::dT];
       }
 
-      // Step 4: compute the enthalpy flux
+      // Step 4: add dCompFlux_dTemp to localFluxJacobian
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        integer const eqIndex0 = k[0]* numEqn + ic;
+        integer const eqIndex1 = k[1]* numEqn + ic;
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          integer const localDofIndexTemp = k[ke] * numDof + numDof - 1;
+          stack.localFluxJacobian[eqIndex0][localDofIndexTemp]  =  m_dt * stack.dCompFlux_dT[ke][ic];
+          stack.localFluxJacobian[eqIndex1][localDofIndexTemp] = -m_dt * stack.dCompFlux_dT[ke][ic];
+        }
+      }
 
+      // Step 5: compute the enthalpy flux
       real64 const enthalpy = m_phaseEnthalpy[er_up][esr_up][ei_up][0][ip];
       stack.energyFlux += phaseFlux * enthalpy;
 
-      for( integer ke = 0; ke < stack.stencilSize; ++ke )
+      for( integer ke = 0; ke < 2; ++ke )
       {
         stack.dEnergyFlux_dP[ke] += dPhaseFlux_dP[ke] * enthalpy;
         stack.dEnergyFlux_dT[ke] += dPhaseFlux_dT[ke] * enthalpy;
@@ -465,7 +496,29 @@ public:
       {
         stack.dEnergyFlux_dC[k_up][jc] += phaseFlux * dProp_dC[jc];
       }
-    } );
+
+      integer const localRowIndexEnergy0 = k[0]*numEqn - 1;
+      integer const localRowIndexEnergy1 = k[1]*numEqn - 1;
+      stack.localFlux[localRowIndexEnergy0] =  m_dt * stack.energyFlux;
+      stack.localFlux[localRowIndexEnergy1] = -m_dt * stack.energyFlux;
+
+      for( integer ke = 0; ke < 2; ++ke )
+      {
+        integer const localDofIndexPres = k[ke] * numDof;
+        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexPres] =  m_dt * stack.dEnergyFlux_dP[ke];
+        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexPres] = -m_dt * stack.dEnergyFlux_dP[ke];
+        integer const localDofIndexTemp = localDofIndexPres + numDof - 1;
+        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] =  m_dt * stack.dEnergyFlux_dT[ke];
+        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] = -m_dt * stack.dEnergyFlux_dT[ke];
+
+        for( integer jc = 0; jc < numComp; ++jc )
+        {
+          integer const localDofIndexComp = localDofIndexPres + jc + 1;
+          stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexComp] =  m_dt * stack.dEnergyFlux_dC[ke][jc];
+          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexComp] = -m_dt * stack.dEnergyFlux_dC[ke][jc];
+        }
+      }
+   } );
 
     // *****************************************************
     // Computation of the conduction term in the energy flux
@@ -482,53 +535,46 @@ public:
                                      stack.thermalTransmissibility,
                                      stack.dTrans_dPres ); // again, we have to pass something here, but this is unused for now
 
+
+
     // Step 2: compute temperature difference at the interface
-    for( integer i = 0; i < stack.stencilSize; ++i )
+    localIndex k[2];
+    localIndex connectionIndex = 0;
+
+    for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
     {
-      localIndex const er  = m_seri( iconn, i );
-      localIndex const esr = m_sesri( iconn, i );
-      localIndex const ei  = m_sei( iconn, i );
-
-      stack.energyFlux += stack.thermalTransmissibility[0][i] * m_temp[er][esr][ei];
-      stack.dEnergyFlux_dT[i] += stack.thermalTransmissibility[0][i];
-    }
-
-    // **********************************************************************************
-    // At this point, we have computed the energyFlux and the compFlux for all components
-    // We have to do two things here:
-    // 1) Add dCompFlux_dTemp to the localFluxJacobian of the component mass balance equations
-    // 2) Add energyFlux and its derivatives to the localFlux(Jacobian) of the energy balance equation
-
-    // Step 1: add dCompFlux_dTemp to localFluxJacobian
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      for( integer ke = 0; ke < stack.stencilSize; ++ke )
+      for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )
       {
-        integer const localDofIndexTemp = ke * numDof + numDof - 1;
-        stack.localFluxJacobian[ic][localDofIndexTemp]          =  m_dt * stack.dCompFlux_dT[ke][ic];
-        stack.localFluxJacobian[numEqn + ic][localDofIndexTemp] = -m_dt * stack.dCompFlux_dT[ke][ic];
-      }
-    }
+        real64 const thermalTrans[2] = { stack.thermalTransmissibility[connectionIndex][0], stack.thermalTransmissibility[connectionIndex][1] };
+        localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
+        localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
+        localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
-    // Step 2: add energyFlux and its derivatives to localFlux and localFluxJacobian
-    integer const localRowIndexEnergy = numEqn-1;
-    stack.localFlux[localRowIndexEnergy]          =  m_dt * stack.energyFlux;
-    stack.localFlux[numEqn + localRowIndexEnergy] = -m_dt * stack.energyFlux;
+        stack.conductiveEnergyFlux = 0.0;
+        stack.dConductiveEnergyFlux_dT.zero();
+        // Step 2: compute temperature difference at the interface
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          localIndex const er  = seri[ke];
+          localIndex const esr = sesri[ke];
+          localIndex const ei  = sei[ke];
 
-    for( integer ke = 0; ke < stack.stencilSize; ++ke )
-    {
-      integer const localDofIndexPres = ke * numDof;
-      stack.localFluxJacobian[localRowIndexEnergy][localDofIndexPres]          =  m_dt * stack.dEnergyFlux_dP[ke];
-      stack.localFluxJacobian[numEqn + localRowIndexEnergy][localDofIndexPres] = -m_dt * stack.dEnergyFlux_dP[ke];
-      integer const localDofIndexTemp = localDofIndexPres + numDof - 1;
-      stack.localFluxJacobian[localRowIndexEnergy][localDofIndexTemp]          =  m_dt * stack.dEnergyFlux_dT[ke];
-      stack.localFluxJacobian[numEqn + localRowIndexEnergy][localDofIndexTemp] = -m_dt * stack.dEnergyFlux_dT[ke];
+          stack.conductiveEnergyFlux += thermalTrans[ke] * m_temp[er][esr][ei];
+          stack.dConductiveEnergyFlux_dT[ke] += thermalTrans[ke];
+        }
 
-      for( integer jc = 0; jc < numComp; ++jc )
-      {
-        integer const localDofIndexComp = localDofIndexPres + jc + 1;
-        stack.localFluxJacobian[localRowIndexEnergy][localDofIndexComp]          =  m_dt * stack.dEnergyFlux_dC[ke][jc];
-        stack.localFluxJacobian[numEqn + localRowIndexEnergy][localDofIndexComp] = -m_dt * stack.dEnergyFlux_dC[ke][jc];
+        // Step 1: add energyFlux and its derivatives to localFlux and localFluxJacobian
+        integer const localRowIndexEnergy0 = k[0]*numEqn - 1;
+        integer const localRowIndexEnergy1 = k[1]*numEqn - 1;
+        stack.localFlux[localRowIndexEnergy0] +=  m_dt * stack.conductiveEnergyFlux;
+        stack.localFlux[localRowIndexEnergy1] += -m_dt * stack.conductiveEnergyFlux;
+
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          integer const localDofIndexTemp = k[ke] * numDof + numDof - 1;
+          stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] +=  m_dt * stack.dConductiveEnergyFlux_dT[ke];
+          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] += -m_dt * stack.dConductiveEnergyFlux_dT[ke];
+        }
       }
     }
   }

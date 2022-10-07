@@ -476,8 +476,8 @@ public:
       : stencilSize( size ),
       numFluxElems( numElems ),
       compFlux( numComp ),
-      dCompFlux_dP( size, numComp ),
-      dCompFlux_dC( size, numComp, numComp ),
+      dCompFlux_dP( 2, numComp ),
+      dCompFlux_dC( 2, numComp, numComp ),
       dofColIndices( size * numDof ),
       localFlux( numElems * numEqn ),
       localFluxJacobian( numElems * numEqn, size * numDof )
@@ -503,9 +503,9 @@ public:
     /// Component fluxes
     stackArray1d< real64, numComp > compFlux;
     /// Derivatives of component fluxes wrt pressure
-    stackArray2d< real64, maxStencilSize * numComp > dCompFlux_dP;
+    stackArray2d< real64, 2 * numComp > dCompFlux_dP;
     /// Derivatives of component fluxes wrt component densities
-    stackArray3d< real64, maxStencilSize * numComp * numComp > dCompFlux_dC;
+    stackArray3d< real64, 2 * numComp * numComp > dCompFlux_dC;
 
     // Local degrees of freedom and local residual/jacobian
 
@@ -582,246 +582,270 @@ public:
                                      stack.transmissibility,
                                      stack.dTrans_dPres );
 
-    // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
-    for( integer ip = 0; ip < m_numPhases; ++ip )
+
+    localIndex k[2];
+    localIndex connectionIndex = 0;
+    for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
     {
-      // clear working arrays
-      real64 densMean{};
-      stackArray1d< real64, maxNumElems > dDensMean_dP( stack.numFluxElems );
-      stackArray2d< real64, maxNumElems * numComp > dDensMean_dC( stack.numFluxElems, numComp );
-
-      // create local work arrays
-      real64 phaseFlux{};
-      real64 dPhaseFlux_dP[maxStencilSize]{};
-      real64 dPhaseFlux_dC[maxStencilSize][numComp]{};
-
-      real64 presGrad{};
-      stackArray1d< real64, maxStencilSize > dPresGrad_dP( stack.stencilSize );
-      stackArray2d< real64, maxStencilSize *numComp > dPresGrad_dC( stack.stencilSize, numComp );
-
-      real64 gravHead{};
-      stackArray1d< real64, maxNumElems > dGravHead_dP( stack.numFluxElems );
-      stackArray2d< real64, maxNumElems * numComp > dGravHead_dC( stack.numFluxElems, numComp );
-
-      real64 dCapPressure_dC[numComp]{};
-
-      // Working array
-      real64 dProp_dC[numComp]{};
-
-      // calculate quantities on primary connected cells
-      for( integer i = 0; i < stack.numFluxElems; ++i )
+      for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )
       {
-        localIndex const er  = m_seri( iconn, i );
-        localIndex const esr = m_sesri( iconn, i );
-        localIndex const ei  = m_sei( iconn, i );
+        /// Cells indexes
+        localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
+        localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
+        localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
-        // density
-        real64 const density  = m_phaseMassDens[er][esr][ei][0][ip];
-        real64 const dDens_dP = m_dPhaseMassDens[er][esr][ei][0][ip][Deriv::dP];
 
-        applyChainRule( numComp,
-                        m_dCompFrac_dCompDens[er][esr][ei],
-                        m_dPhaseMassDens[er][esr][ei][0][ip],
-                        dProp_dC,
-                        Deriv::dC );
+        // clear working arrays
+        
+        stack.compFlux.zero();
+        stack.dCompFlux_dP.zero();
+        stack.dCompFlux_dC.zero();
 
-        // average density and derivatives
-        densMean += 0.5 * density;
-        dDensMean_dP[i] = 0.5 * dDens_dP;
-        for( integer jc = 0; jc < numComp; ++jc )
+        real64 densMean = 0.0;
+        real64 dDensMean_dP[2]{0.0, 0.0};
+        real64 dDensMean_dC[2][numComp]{};
+
+        real64 const trans[2] = { stack.transmissibility[connectionIndex][0],
+                                  stack.transmissibility[connectionIndex][1] };
+
+        real64 const dTrans_dPres[2] = { stack.dTrans_dPres[connectionIndex][0],
+                                         stack.dTrans_dPres[connectionIndex][1] };
+
+        //***** calculation of flux *****
+        // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
+        for( integer ip = 0; ip < m_numPhases; ++ip )
         {
-          dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
-        }
-      }
+          // create local work arrays
+          real64 phaseFlux = 0.0;
+          real64 dPhaseFlux_dP[2]{0.0, 0.0};
+          real64 dPhaseFlux_dC[2][numComp]{};
 
-      //***** calculation of flux *****
+          real64 presGrad = 0.0;
+          real64 dPresGrad_dP[2]{0.0, 0.0};
+          real64 dPresGrad_dC[2][numComp]{};
 
-      // compute potential difference MPFA-style
-      for( integer i = 0; i < stack.stencilSize; ++i )
-      {
-        localIndex const er  = m_seri( iconn, i );
-        localIndex const esr = m_sesri( iconn, i );
-        localIndex const ei  = m_sei( iconn, i );
+          real64 gravHead = 0.0;
+          real64 dGravHead_dP[2]{0.0, 0.0};
+          real64 dGravHead_dC[2][numComp]{};
 
-        // capillary pressure
-        real64 capPressure     = 0.0;
-        real64 dCapPressure_dP = 0.0;
+          real64 dCapPressure_dC[numComp]{};
 
-        for( integer ic = 0; ic < numComp; ++ic )
-        {
-          dCapPressure_dC[ic] = 0.0;
-        }
+          // Working array
+          real64 dProp_dC[numComp]{};
 
-        if( m_hasCapPressure )
-        {
-          capPressure = m_phaseCapPressure[er][esr][ei][0][ip];
-
-          for( integer jp = 0; jp < m_numPhases; ++jp )
+          // calculate quantities on primary connected cells
+          for( integer i = 0; i < 2; ++i )
           {
-            real64 const dCapPressure_dS = m_dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-            dCapPressure_dP += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
+            localIndex const er  = seri[ i ];
+            localIndex const esr = sesri[ i ];
+            localIndex const ei  = sei[ i ];
 
+            // density
+            real64 const density  = m_phaseMassDens[er][esr][ei][0][ip];
+            real64 const dDens_dP = m_dPhaseMassDens[er][esr][ei][0][ip][Deriv::dP];
+
+            applyChainRule( numComp,
+                            m_dCompFrac_dCompDens[er][esr][ei],
+                            m_dPhaseMassDens[er][esr][ei][0][ip],
+                            dProp_dC,
+                            Deriv::dC );
+
+            // average density and derivatives
+            densMean += 0.5 * density;
+            dDensMean_dP[i] = 0.5 * dDens_dP;
             for( integer jc = 0; jc < numComp; ++jc )
             {
-              dCapPressure_dC[jc] += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
+              dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
             }
           }
-        }
 
-        presGrad += stack.transmissibility[0][i] * (m_pres[er][esr][ei] - capPressure);
-        dPresGrad_dP[i] += stack.transmissibility[0][i] * (1 - dCapPressure_dP)
-                           + stack.dTrans_dPres[0][i] * (m_pres[er][esr][ei] - capPressure);
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          dPresGrad_dC[i][jc] += -stack.transmissibility[0][i] * dCapPressure_dC[jc];
-        }
+          ///
+          for( integer i = 0; i < 2; i++ )
+          {
+            localIndex const er  = seri[i];
+            localIndex const esr = sesri[i];
+            localIndex const ei  = sei[i];
 
-        real64 const gravD     = stack.transmissibility[0][i] * m_gravCoef[er][esr][ei];
-        real64 const dGravD_dP = stack.dTrans_dPres[0][i] * m_gravCoef[er][esr][ei];
+            // capillary pressure
+            real64 capPressure     = 0.0;
+            real64 dCapPressure_dP = 0.0;
 
-        // the density used in the potential difference is always a mass density
-        // unlike the density used in the phase mobility, which is a mass density
-        // if useMass == 1 and a molar density otherwise
-        gravHead += densMean * gravD;
+            for( integer ic = 0; ic < numComp; ++ic )
+            {
+              dCapPressure_dC[ic] = 0.0;
+            }
 
-        // need to add contributions from both cells the mean density depends on
-        for( integer j = 0; j < stack.numFluxElems; ++j )
-        {
-          dGravHead_dP[j] += dDensMean_dP[j] * gravD + dGravD_dP * densMean;
+            if( m_hasCapPressure )
+            {
+              capPressure = m_phaseCapPressure[er][esr][ei][0][ip];
+
+              for( integer jp = 0; jp < m_numPhases; ++jp )
+              {
+                real64 const dCapPressure_dS = m_dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
+                dCapPressure_dP += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
+
+                for( integer jc = 0; jc < numComp; ++jc )
+                {
+                  dCapPressure_dC[jc] += dCapPressure_dS * m_dPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
+                }
+              }
+            }
+
+            presGrad += trans[i] * (m_pres[er][esr][ei] - capPressure);
+            dPresGrad_dP[i] += trans[i] * (1 - dCapPressure_dP)
+                               + dTrans_dPres[i] * (m_pres[er][esr][ei] - capPressure);
+            for( integer jc = 0; jc < numComp; ++jc )
+            {
+              dPresGrad_dC[i][jc] += -trans[i] * dCapPressure_dC[jc];
+            }
+
+            real64 const gravD     = trans[i] * m_gravCoef[er][esr][ei];
+            real64 const dGravD_dP = dTrans_dPres[i] * m_gravCoef[er][esr][ei];
+
+            // the density used in the potential difference is always a mass density
+            // unlike the density used in the phase mobility, which is a mass density
+            // if useMass == 1 and a molar density otherwise
+            gravHead += densMean * gravD;
+
+            // need to add contributions from both cells the mean density depends on
+            for( integer j = 0; j < 2; ++j )
+            {
+              dGravHead_dP[j] += dDensMean_dP[j] * gravD + dGravD_dP * densMean;
+              for( integer jc = 0; jc < numComp; ++jc )
+              {
+                dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
+              }
+            }
+
+          }
+
+          // *** upwinding ***
+
+          // compute phase potential gradient
+          real64 const potGrad = presGrad - gravHead;
+
+          // choose upstream cell
+          localIndex const k_up = (potGrad >= 0) ? 0 : 1;
+
+          localIndex const er_up  = seri[ k_up ];
+          localIndex const esr_up = sesri[ k_up ];
+          localIndex const ei_up  = sei[ k_up ];
+
+          real64 const mobility = m_phaseMob[er_up][esr_up][ei_up][ip];
+
+          // skip the phase flux if phase not present or immobile upstream
+          if( LvArray::math::abs( mobility ) < 1e-20 ) // TODO better constant
+          {
+            continue;
+          }
+
+          // pressure gradient depends on all points in the stencil
+          for( integer ke = 0; ke < 2; ++ke )
+          {
+            dPhaseFlux_dP[ke] += dPresGrad_dP[ke];
+            for( integer jc = 0; jc < numComp; ++jc )
+            {
+              dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc];
+            }
+          }
+
+          // compute the phase flux and derivatives using upstream cell mobility
+          phaseFlux = mobility * potGrad;
+          for( integer ke = 0; ke < 2; ++ke )
+          {
+            dPhaseFlux_dP[ke] *= mobility;
+            for( integer jc = 0; jc < numComp; ++jc )
+            {
+              dPhaseFlux_dC[ke][jc] *= mobility;
+            }
+          }
+
+          real64 const dMob_dP  = m_dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
+          arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > dPhaseMobSub =
+            m_dPhaseMob[er_up][esr_up][ei_up][ip];
+
+          // add contribution from upstream cell mobility derivatives
+          dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
           for( integer jc = 0; jc < numComp; ++jc )
           {
-            dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
+            dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
           }
-        }
-      }
 
-      // *** upwinding ***
+          // slice some constitutive arrays to avoid too much indexing in component loop
+          arraySlice1d< real64 const, multifluid::USD_PHASE_COMP-3 > phaseCompFracSub =
+            m_phaseCompFrac[er_up][esr_up][ei_up][0][ip];
+          arraySlice2d< real64 const, multifluid::USD_PHASE_COMP_DC-3 > dPhaseCompFracSub =
+            m_dPhaseCompFrac[er_up][esr_up][ei_up][0][ip];
 
-      // compute phase potential gradient
-      real64 const potGrad = presGrad - gravHead;
-
-      // choose upstream cell
-      localIndex const k_up = (potGrad >= 0) ? 0 : 1;
-
-      localIndex const er_up  = m_seri( iconn, k_up );
-      localIndex const esr_up = m_sesri( iconn, k_up );
-      localIndex const ei_up  = m_sei( iconn, k_up );
-
-      real64 const mobility = m_phaseMob[er_up][esr_up][ei_up][ip];
-
-      // skip the phase flux if phase not present or immobile upstream
-      if( LvArray::math::abs( mobility ) < 1e-20 ) // TODO better constant
-      {
-        continue;
-      }
-
-      // pressure gradient depends on all points in the stencil
-      for( integer ke = 0; ke < stack.stencilSize; ++ke )
-      {
-        dPhaseFlux_dP[ke] += dPresGrad_dP[ke];
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc];
-        }
-      }
-
-      // gravitational head depends only on the two cells connected (same as mean density)
-      for( integer ke = 0; ke < stack.numFluxElems; ++ke )
-      {
-        dPhaseFlux_dP[ke] -= dGravHead_dP[ke];
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          dPhaseFlux_dC[ke][jc] -= dGravHead_dC[ke][jc];
-        }
-      }
-
-      // compute the phase flux and derivatives using upstream cell mobility
-      phaseFlux = mobility * potGrad;
-      for( integer ke = 0; ke < stack.stencilSize; ++ke )
-      {
-        dPhaseFlux_dP[ke] *= mobility;
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          dPhaseFlux_dC[ke][jc] *= mobility;
-        }
-      }
-
-      real64 const dMob_dP  = m_dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
-      arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > dPhaseMobSub =
-        m_dPhaseMob[er_up][esr_up][ei_up][ip];
-
-      // add contribution from upstream cell mobility derivatives
-      dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
-      for( integer jc = 0; jc < numComp; ++jc )
-      {
-        dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
-      }
-
-      // slice some constitutive arrays to avoid too much indexing in component loop
-      arraySlice1d< real64 const, multifluid::USD_PHASE_COMP-3 > phaseCompFracSub =
-        m_phaseCompFrac[er_up][esr_up][ei_up][0][ip];
-      arraySlice2d< real64 const, multifluid::USD_PHASE_COMP_DC-3 > dPhaseCompFracSub =
-        m_dPhaseCompFrac[er_up][esr_up][ei_up][0][ip];
-
-      // compute component fluxes and derivatives using upstream cell composition
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        real64 const ycp = phaseCompFracSub[ic];
-        stack.compFlux[ic] += phaseFlux * ycp;
-
-        // derivatives stemming from phase flux
-        for( integer ke = 0; ke < stack.stencilSize; ++ke )
-        {
-          stack.dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
-          for( integer jc = 0; jc < numComp; ++jc )
+          // compute component fluxes and derivatives using upstream cell composition
+          for( integer ic = 0; ic < numComp; ++ic )
           {
-            stack.dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
+            real64 const ycp = phaseCompFracSub[ic];
+            stack.compFlux[ic] += phaseFlux * ycp;
+
+            // derivatives stemming from phase flux
+            for( integer ke = 0; ke < stack.stencilSize; ++ke )
+            {
+              stack.dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
+              for( integer jc = 0; jc < numComp; ++jc )
+              {
+                stack.dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
+              }
+            }
+
+            // additional derivatives stemming from upstream cell phase composition
+            stack.dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFracSub[ic][Deriv::dP];
+
+            // convert derivatives of comp fraction w.r.t. comp fractions to derivatives w.r.t. comp densities
+            applyChainRule( numComp,
+                            m_dCompFrac_dCompDens[er_up][esr_up][ei_up],
+                            dPhaseCompFracSub[ic],
+                            dProp_dC,
+                            Deriv::dC );
+            for( integer jc = 0; jc < numComp; ++jc )
+            {
+              stack.dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
+            }
           }
-        }
+          // *** end of upwinding
 
-        // additional derivatives stemming from upstream cell phase composition
-        stack.dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFracSub[ic][Deriv::dP];
+          // populate local flux vector and derivatives
+          for( integer ic = 0; ic < numComp; ++ic )
+          {
+            integer const eqIndex0 = k[0]* numEqn + ic;
+            integer const eqIndex1 = k[1]* numEqn + ic;
 
-        // convert derivatives of comp fraction w.r.t. comp fractions to derivatives w.r.t. comp densities
-        applyChainRule( numComp,
-                        m_dCompFrac_dCompDens[er_up][esr_up][ei_up],
-                        dPhaseCompFracSub[ic],
-                        dProp_dC,
-                        Deriv::dC );
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          stack.dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
-        }
-      }
+            stack.localFlux[ eqIndex0 ]  =  m_dt * stack.compFlux[ic];
+            stack.localFlux[ eqIndex1 ]  = -m_dt * stack.compFlux[ic];
 
-      // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
-      // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
-      compFluxKernelOp( ip, k_up, er_up, esr_up, ei_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
+            for( integer ke = 0; ke < 2; ++ke )
+            {
+              localIndex const localDofIndexPres = k[ke] * numDof;
+              stack.localFluxJacobian[eqIndex0][localDofIndexPres] =  m_dt * stack.dCompFlux_dP[ke][ic];
+              stack.localFluxJacobian[eqIndex1][localDofIndexPres] = -m_dt * stack.dCompFlux_dP[ke][ic];
 
-    }
+              for( integer jc = 0; jc < numComp; ++jc )
+              {
+                localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
+                stack.localFluxJacobian[eqIndex0][localDofIndexComp] =  m_dt * stack.dCompFlux_dC[ke][ic][jc];
+                stack.localFluxJacobian[eqIndex1][localDofIndexComp] = -m_dt * stack.dCompFlux_dC[ke][ic][jc];
+              }
+            }
+          }
 
-    // *** end of upwinding
+          // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
+          // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
+          compFluxKernelOp( ip, k, seri, sesri, sei, connectionIndex,
+                            k_up, er_up, esr_up, ei_up, potGrad, 
+                            phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
-    // populate local flux vector and derivatives
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      stack.localFlux[ic]          =  m_dt * stack.compFlux[ic];
-      stack.localFlux[numEqn + ic] = -m_dt * stack.compFlux[ic];
+          connectionIndex++;
+        } // loop over phases
+      }   // loop over k[1]
+    }   // loop over k[0]
 
-      for( integer ke = 0; ke < stack.stencilSize; ++ke )
-      {
-        localIndex const localDofIndexPres = ke * numDof;
-        stack.localFluxJacobian[ic][localDofIndexPres]          =  m_dt * stack.dCompFlux_dP[ke][ic];
-        stack.localFluxJacobian[numEqn + ic][localDofIndexPres] = -m_dt * stack.dCompFlux_dP[ke][ic];
 
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-          stack.localFluxJacobian[ic][localDofIndexComp]          =  m_dt * stack.dCompFlux_dC[ke][ic][jc];
-          stack.localFluxJacobian[numEqn + ic][localDofIndexComp] = -m_dt * stack.dCompFlux_dC[ke][ic][jc];
-        }
-      }
-    }
+
   }
 
   /**
