@@ -82,6 +82,8 @@ public:
 
   void set2dElemToElems( std::vector< std::vector< localIndex > > _2dElemToElems );
 
+  void set2dElemToCellBlock( std::vector< std::vector< localIndex > > _2dElemToCellBlock );
+
 private:
 
   localIndex m_num2dElements;
@@ -94,6 +96,7 @@ private:
   std::vector< localIndex > m_2dFaceToEdge;
 
   std::vector< std::vector< localIndex > > m_2dElemToElems;
+  std::vector< std::vector< localIndex > > m_2dElemToCellBlock;
 };
 
 
