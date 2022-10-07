@@ -274,5 +274,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     for ncubes in args.sideLengths:
-        np.random.seed(seed)
+        np.random.seed(args.seed)
         generate_all_types(ncubes)
