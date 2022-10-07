@@ -14,7 +14,7 @@ This example uses the Triaxial Driver to simulate a triaxial compression test of
 Semi analytical result for axial stress variation :math:`\delta\sigma_{V}` and lateral strain variation :math:`\delta\varepsilon_{V}` can be etablished for the considered triaxial boundary conditions as `(Runesson et al. 1999) <https://onlinelibrary.wiley.com/doi/abs/10.1002/(SICI)1099-1484(199901)4:1%3C75::AID-CFM60%3E3.0.CO;2-4>`__ :
 
 .. math::
-   \delta\sigma_{V} = (\delta\varepsilon_{V}-\delta\lambda\frac{b-3}{3}) E
+   \delta\sigma_{V} = (\delta\varepsilon_{V}-\delta\lambda\frac{b^'-3}{3}) E
 
 .. math::
    \delta\varepsilon_{H} = \delta\varepsilon_{V} - \frac{\delta\sigma_{V}}{2\mu} + \frac{3}{2}\delta\lambda
@@ -22,18 +22,17 @@ Semi analytical result for axial stress variation :math:`\delta\sigma_{V}` and l
 where :math:`E` and :math:`\mu` are the elastic Young and shear moduli. The visco-plastic multiplier :math:`\delta\lambda` can be approximated by:
 
 .. math::
-   \delta\lambda = \frac{\delta t}{t_*} \frac{F}{3\mu + Kb^2 + h}
+   \delta\lambda = \frac{\delta t}{t_*} \frac{F}{3\mu + Kbb^' + h}
 
-in which :math:`\delta t` is the time increment, :math:`t_*` the relaxation time, :math:`F` the stress function defining the visco-plastic yield surface, :math:`K` the elastic bulk modulus, :math:`b` the frictional parameter defining the visco-plastic yield surface and :math:`h` the hardening rate. These solutions are applied only when plastic yield condition is staisfied. The cohesion parameter defining the plastic yield surface is updated with stress change as
+in which :math:`\delta t` is the time increment, :math:`t_*` the relaxation time, :math:`F` the stress function defining the visco-plastic yield surface, :math:`K` the elastic bulk modulus, :math:`b` the frictional parameter defining the visco-plastic yield surface, :math:`b^'` the dilation parameter defining the plastic potential and :math:`h` the hardening rate. These solutions are applied only when plastic yield condition is staisfied. The cohesion parameter defining the plastic yield surface is updated with stress change as
 
 .. math::
    \delta a = h \delta\lambda
 
-
 These solutions were etablished for a positive shear stress `q = -(\sigma_{V} - \sigma_{H})` (negative sign convention for compression stress). For the case when the plastic yield occurs at a negative shear stress, we have
 
 .. math::
-   \delta\sigma_{V} = (\delta\varepsilon_{V}-\delta\lambda\frac{b+3}{3}) E
+   \delta\sigma_{V} = (\delta\varepsilon_{V}-\delta\lambda\frac{b^'+3}{3}) E
 
 .. math::
    \delta\varepsilon_{H} = \delta\varepsilon_{V} - \frac{\delta\sigma_{V}}{2\mu} - \frac{3}{2}\delta\lambda

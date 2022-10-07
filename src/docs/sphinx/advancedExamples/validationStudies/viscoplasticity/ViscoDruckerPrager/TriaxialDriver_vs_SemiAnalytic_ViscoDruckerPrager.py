@@ -1,112 +1,10 @@
 import os
 import sys
+sys.path.append("/data/PLI/sytuan/GEOSX/Libs/matplotlib")
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ElementTree
-
-def getMechanicalParametersFromXML(xmlFilePath, xmlFilePath_case):
-    tree = ElementTree.parse(xmlFilePath)
-    tree_case = ElementTree.parse(xmlFilePath_case)
-
-    model = tree_case.find('Tasks/TriaxialDriver')
-
-    if model.get("material") == "ElasticIsotropic":
-        param = tree.find('Constitutive/ElasticIsotropic')
-
-        mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus"])
-        mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
-        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
-
-    elif model.get("material") == "DruckerPrager":
-        param = tree.find('Constitutive/DruckerPrager')
-
-        mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus", "cohesion", "frictionangle"])
-        mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
-        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
-        mechanicalParameters["cohesion"] = float(param.get("defaultCohesion"))
-        mechanicalParameters["frictionAngle"] = float(param.get("defaultFrictionAngle"))
-        mechanicalParameters["hardeningRate"] = float(param.get("defaultHardeningRate"))
-        mechanicalParameters["initialStress"] = float(model.get("initialStress"))
-
-    elif model.get("material") == "ExtendedDruckerPrager":
-        param = tree.find('Constitutive/ExtendedDruckerPrager')
-
-        mechanicalParameters = dict.fromkeys(
-            ["bulkModulus", "shearModulus", "cohesion", "initialFrictionAngle", "residualFrictionAngle"])
-        mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
-        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
-        mechanicalParameters["cohesion"] = float(param.get("defaultCohesion"))
-        mechanicalParameters["initialFrictionAngle"] = float(param.get("defaultInitialFrictionAngle"))
-        mechanicalParameters["residualFrictionAngle"] = float(param.get("defaultResidualFrictionAngle"))
-
-    elif model.get("material") == "DelftEgg":
-        param = tree.find('Constitutive/DelftEgg')
-
-        mechanicalParameters = dict.fromkeys(
-            ["bulkModulus", "shearModulus", "preConsolidationPressure", "shapeParameter", "cslSlope"])
-        mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
-        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
-        mechanicalParameters["preConsolidationPressure"] = float(param.get("defaultPreConsolidationPressure"))
-        mechanicalParameters["shapeParameter"] = float(param.get("defaultShapeParameter"))
-        mechanicalParameters["cslSlope"] = float(param.get("defaultCslSlope"))
-
-    elif model.get("material") == "ModifiedCamClay":
-        param = tree.find('Constitutive/ModifiedCamClay')
-
-        mechanicalParameters = dict.fromkeys(
-            ["shearModulus", "preConsolidationPressure", "cslSlope", "recompressionIndex"])
-        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
-        mechanicalParameters["preConsolidationPressure"] = float(param.get("defaultPreConsolidationPressure"))
-        mechanicalParameters["cslSlope"] = float(param.get("defaultCslSlope"))
-        mechanicalParameters["recompressionIndex"] = float(param.get("defaultRecompressionIndex"))
-
-    elif model.get("material") == "ViscoDruckerPrager":
-        param = tree.find('Constitutive/ViscoDruckerPrager')
-
-        mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus", "cohesion", "frictionangle"])
-        mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
-        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
-        mechanicalParameters["cohesion"] = float(param.get("defaultCohesion"))
-        mechanicalParameters["frictionAngle"] = float(param.get("defaultFrictionAngle"))
-        mechanicalParameters["hardeningRate"] = float(param.get("defaultHardeningRate"))
-        mechanicalParameters["relaxationTime"] = float(param.get("relaxationTime"))
-        mechanicalParameters["initialStress"] = float(model.get("initialStress"))
-
-    elif model.get("material") == "ViscoExtendedDruckerPrager":
-        param = tree.find('Constitutive/ViscoExtendedDruckerPrager')
-
-        mechanicalParameters = dict.fromkeys(
-            ["bulkModulus", "shearModulus", "cohesion", "initialFrictionAngle", "residualFrictionAngle"])
-        mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
-        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
-        mechanicalParameters["cohesion"] = float(param.get("defaultCohesion"))
-        mechanicalParameters["initialFrictionAngle"] = float(param.get("defaultInitialFrictionAngle"))
-        mechanicalParameters["residualFrictionAngle"] = float(param.get("defaultResidualFrictionAngle"))
-
-    elif model.get("material") == "ViscoDelftEgg":
-        param = tree.find('Constitutive/ViscoDelftEgg')
-
-        mechanicalParameters = dict.fromkeys(
-            ["bulkModulus", "shearModulus", "preConsolidationPressure", "shapeParameter", "cslSlope"])
-        mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
-        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
-        mechanicalParameters["preConsolidationPressure"] = float(param.get("defaultPreConsolidationPressure"))
-        mechanicalParameters["shapeParameter"] = float(param.get("defaultShapeParameter"))
-        mechanicalParameters["cslSlope"] = float(param.get("defaultCslSlope"))
-
-    elif model.get("material") == "ViscoModifiedCamClay":
-        param = tree.find('Constitutive/ViscoModifiedCamClay')
-
-        mechanicalParameters = dict.fromkeys(
-            ["shearModulus", "preConsolidationPressure", "cslSlope", "recompressionIndex"])
-        mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
-        mechanicalParameters["preConsolidationPressure"] = float(param.get("defaultPreConsolidationPressure"))
-        mechanicalParameters["cslSlope"] = float(param.get("defaultCslSlope"))
-        mechanicalParameters["recompressionIndex"] = float(param.get("defaultRecompressionIndex"))
-
-    return mechanicalParameters
-
 
 def main():
 	# File paths
@@ -117,22 +15,25 @@ def main():
 	imposedStrainFilePath = "../../../../../../../inputFiles/triaxialDriver/tables/axialStrain.geos"
 	outputPath = "ViscoDruckerPrager.png"
 
-	# Extract info from XML
-	mechanicalParameters = getMechanicalParametersFromXML(xmlFilePath, xmlFilePath_case)
-	 
 	# Load GEOSX results
 	time, ax_strain, ra_strain1, ra_strain2, ax_stress, ra_stress1, ra_stress2, newton_iter, residual_norm = np.loadtxt(
 		path, skiprows=5, unpack=True)
 
-	# Analytical solution for Drucker-Prager model
-	bulkModulus = mechanicalParameters["bulkModulus"]
-	shearModulus = mechanicalParameters["shearModulus"]
-	cohesion = mechanicalParameters["cohesion"]
-	frictionAngle = mechanicalParameters["frictionAngle"]
-	hardeningRate = mechanicalParameters["hardeningRate"]
-	relaxationTime = mechanicalParameters["relaxationTime"]
-	initialStress = mechanicalParameters["initialStress"]
+	# Extract info from XML
+	tree = ElementTree.parse(xmlFilePath)
+	tree_case = ElementTree.parse(xmlFilePath_case)
+	model = tree_case.find('Tasks/TriaxialDriver')
+	param = tree.find('Constitutive/ViscoDruckerPrager')
 
+	bulkModulus = float(param.get("defaultBulkModulus"))
+	shearModulus = float(param.get("defaultShearModulus"))
+	cohesion = float(param.get("defaultCohesion"))
+	frictionAngle = float(param.get("defaultFrictionAngle"))
+	dilationAngle = float(param.get("defaultDilationAngle")) 
+	hardeningRate = float(param.get("defaultHardeningRate"))
+	relaxationTime = float(param.get("relaxationTime"))
+	initialStress = float(model.get("initialStress"))
+	
 	lameModulus = bulkModulus - 2.0/3.0*shearModulus
 	youngModulus = 1.0/(1.0/9.0/bulkModulus + 1.0/3.0/shearModulus)
 
@@ -162,14 +63,21 @@ def main():
 	list_ra_strain_anal = np.zeros(len(list_ax_strain_anal))
 	list_ax_stress_anal = np.zeros(len(list_ax_strain_anal))
 
+	# Friction and cohesion parameters
 	frictionAngleRad = frictionAngle*3.1416/180.0
 	cosFrictionAngle = np.cos(frictionAngleRad)
 	sinFrictionAngle = np.sin(frictionAngleRad) 
 	a = 6.0*cohesion/1.0e6*cosFrictionAngle/(3.0-sinFrictionAngle)
 	b = 6.0*sinFrictionAngle/(3.0-sinFrictionAngle)
 
+	# Dilation parameter
+	dilationAngleRad = dilationAngle*3.1416/180.0
+	cosDilationAngle = np.cos(dilationAngleRad)
+	sinDilationAngle = np.sin(dilationAngleRad) 
+	b_dilation = 6.0*sinDilationAngle/(3.0-sinDilationAngle)
+	
 	# See Runesson et al. 1999, see Eq. 56
-	parameter_Aep = 3.0*shearModulus + bulkModulus*b*b + hardeningRate
+	parameter_Aep = 3.0*shearModulus + bulkModulus*b*b_dilation + hardeningRate
 	
 	list_ax_stress_anal[0] = initialStress
 	list_ra_strain_anal[0] = 0
@@ -203,7 +111,7 @@ def main():
 				delta_lambda = delta_time_anal / relaxationTime * (F_anal*1e6/parameter_Aep)
 				
 				delta_ax_strain_anal = list_ax_strain_anal[idx] - list_ax_strain_anal[idx-1]
-				delta_ax_stress_anal = ( delta_ax_strain_anal-delta_lambda*(b-3.0)/3.0 ) * youngModulus 
+				delta_ax_stress_anal = ( delta_ax_strain_anal-delta_lambda*(b_dilation-3.0)/3.0 ) * youngModulus 
 				delta_ra_strain_anal = delta_ax_strain_anal	 - 	delta_ax_stress_anal / 2.0 / shearModulus + 3.0/2.0*delta_lambda
 		
 				ax_stress_anal = list_ax_stress_anal[idx-1] + delta_ax_stress_anal
@@ -222,7 +130,7 @@ def main():
 				delta_lambda = delta_time_anal / relaxationTime * (F_anal*1e6/parameter_Aep)
 	
 				delta_ax_strain_anal = list_ax_strain_anal[idx] - list_ax_strain_anal[idx-1]
-				delta_ax_stress_anal = ( delta_ax_strain_anal-delta_lambda*(b+3.0)/3.0 ) * youngModulus 
+				delta_ax_stress_anal = ( delta_ax_strain_anal-delta_lambda*(b_dilation+3.0)/3.0 ) * youngModulus 
 				delta_ra_strain_anal = delta_ax_strain_anal	 - 	delta_ax_stress_anal / 2.0 / shearModulus - 3.0/2.0*delta_lambda
 		
 				ax_stress_anal = list_ax_stress_anal[idx-1] + delta_ax_stress_anal

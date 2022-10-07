@@ -8,7 +8,8 @@ Viscoplasticity
    :maxdepth: 1
 
    DruckerPrager/Example
-   ViscoDruckerPrager/Example		
+   ViscoDruckerPrager/Example
+   ExtendedDruckerPrager/Example		
    modelComparisons/Example	      
 
 

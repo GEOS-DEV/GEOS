@@ -20,7 +20,7 @@
       defaultShearModulus="6.0e9"
       defaultCohesion="0.1e6"
       defaultFrictionAngle="6.0"
-      defaultDilationAngle="6.0"
+      defaultDilationAngle="3.0"
       defaultHardeningRate="0.5e9"
     /> 
 	<!-- SPHINX_MATERIAL_DRUCKER_PRAGER_END -->   
@@ -33,22 +33,26 @@
       defaultShearModulus="6.0e9"
       defaultCohesion="0.1e6"
       defaultFrictionAngle="6.0"
-      defaultDilationAngle="6.0"
+      defaultDilationAngle="3.0"
       defaultHardeningRate="0.5e9"
 	  relaxationTime="0.1"
     />
 	<!-- SPHINX_MATERIAL_VISCO_DRUCKER_PRAGER_END -->
+
+	<!-- SPHINX_MATERIAL_EXTENDED_DRUCKER_PRAGER -->
 	<ExtendedDruckerPrager 
       name="ExtendedDruckerPrager"
       defaultDensity="2700"
       defaultBulkModulus="10.0e9"
       defaultShearModulus="6.0e9"
-      defaultCohesion="6.0e6"
-      defaultInitialFrictionAngle="16.0"
-      defaultResidualFrictionAngle="20.0"
-      defaultDilationRatio="1.0"
+      defaultCohesion="0.1e6"
+      defaultInitialFrictionAngle="6.0"
+      defaultResidualFrictionAngle="10.0"
+      defaultDilationRatio="0.5"
       defaultHardening="0.0001"
     />  
+	<!-- SPHINX_MATERIAL_EXTENDED_DRUCKER_PRAGER_END -->
+
 	<ViscoExtendedDruckerPrager 
       name="ViscoExtendedDruckerPrager"
       defaultDensity="2700"
