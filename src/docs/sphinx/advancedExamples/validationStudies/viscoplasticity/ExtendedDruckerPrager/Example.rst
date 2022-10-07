@@ -9,7 +9,7 @@ Extended Drucker-Prager model: Triaxial Driver versus Semi-analytical solution
 Problem description
 ------------------------------------------------------------------
 
-This example uses the Triaxial Driver to simulate an elasto-plastic traxial compression test of an Extended Drucker-Prager solid. Constant lateral confining stress together with loading/unloading axial strain periods are imposed. Imposed axial strain range are high enough for allowing plastic yield in both loading and unloading period. This complicated senario is optimal for verifying the numerical convergence of the Extended Drucker-Prager constitutive model implimented in GEOSX. 
+This example uses the Triaxial Driver to simulate an elasto-plastic triaxial compression test of an Extended Drucker-Prager solid. Constant lateral confining stress together with loading/unloading axial strain periods are imposed. Imposed axial strain range are high enough for allowing plastic yield in both loading and unloading period. This complicated senario is optimal for verifying the numerical convergence of the Extended Drucker-Prager constitutive model implimented in GEOSX. 
 
 Semi analytical result for axial stress variation :math:`\delta\sigma_{V}` and lateral strain variation :math:`\delta\varepsilon_{V}` can be etablished for the considered triaxial boundary conditions as `(author, year) <https:>`__ :
 
