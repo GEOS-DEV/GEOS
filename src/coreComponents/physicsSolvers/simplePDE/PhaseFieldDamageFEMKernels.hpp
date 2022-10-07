@@ -114,8 +114,8 @@ public:
           inputRhs ),
     m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_quadDamage( inputConstitutiveType.getDamage() ), 
-    m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() ), 
+    m_quadDamage( inputConstitutiveType.getDamage() ),
+    m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() ),
     m_localDissipationOption( localDissipationOption )
   {}
 
@@ -225,7 +225,7 @@ public:
       {
         stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage
                                              + ( ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
-                                                + N[a] * (ell*strainEnergyDensity/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) ) );
+                                                 + N[a] * (ell*strainEnergyDensity/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) ) );
 
       }
       for( localIndex b = 0; b < numNodesPerElem; ++b )
@@ -286,10 +286,10 @@ protected:
   arrayView1d< real64 const > const m_nodalDamage;
 
   /// The array containing the damage on each quadrature point of all elements
-  arrayView2d< real64 const > const m_quadDamage; 
+  arrayView2d< real64 const > const m_quadDamage;
 
   /// The array containing the external driving force on each quadrature point of all elements
-  arrayView2d< real64 const > const m_quadExtDrivingForce; 
+  arrayView2d< real64 const > const m_quadExtDrivingForce;
 
   int const m_localDissipationOption;
 

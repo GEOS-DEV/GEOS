@@ -289,7 +289,7 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  /// *** The interface to get member variables 
+  /// *** The interface to get member variables
   arrayView2d< real64 const > getDamage() const { return m_damage; }
 
   arrayView2d< real64 const > getExtDrivingForce() const { return m_extDrivingForce; }
