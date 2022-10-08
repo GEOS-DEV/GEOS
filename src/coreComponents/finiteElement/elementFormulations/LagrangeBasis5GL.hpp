@@ -63,6 +63,18 @@ public:
                                          (1.0/30.0)*(14.0+sqrt_7_), (1.0/30.0)*(14.0-sqrt_7_), 1.0/15.0 };
 
   /**
+   * @brief The value of the weight for the given support point
+   * @param q The index of the support point
+   * @return The value of the weight
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr static real64 weight( const int q )
+  {
+    return weights[q];
+  }
+
+  /**
    * @brief Calculate the parent coordinates for the xi0 direction, given the
    *   linear index of a support point. Here we hardcode GL points at order 5.
    * @param supportPointIndex The linear index of support point

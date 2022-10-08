@@ -20,7 +20,16 @@
 #define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
+#include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 
+template< typename >
+struct is_sem_formulation : std::false_type {};
+template< typename T >
+struct is_sem_formulation< geosx::finiteElement::Qk_Hexahedron_Lagrange_GaussLobatto< T > > : std::true_type {};
+template< typename >
+struct is_not_sem_formulation : std::true_type {};
+template< typename T >
+struct is_not_sem_formulation< geosx::finiteElement::Qk_Hexahedron_Lagrange_GaussLobatto< T > > : std::false_type {};
 
 namespace geosx
 {
@@ -886,6 +895,39 @@ public:
     GEOSX_UNUSED_VAR( edgeManager );
     GEOSX_UNUSED_VAR( faceManager );
     GEOSX_UNUSED_VAR( targetRegionIndex );
+    GEOSX_THROW( "Invalid type of formulation, the acoustic solver is designed for the SEM formulation", InputError );
+  }
+
+  /**
+   * @brief Constructor
+   * @copydoc geosx::finiteElement::KernelBase::KernelBase
+   * @param nodeManager Reference to the NodeManager object.
+   * @param edgeManager Reference to the EdgeManager object.
+   * @param faceManager Reference to the FaceManager object.
+   * @param targetRegionIndex Index of the region the subregion belongs to.
+   * @param dt The time interval for the step.
+   *   elements to be processed during this kernel launch.
+   */
+  template< typename = std::enable_if< is_sem_formulation< FE_TYPE >::value > >
+  ExplicitAcousticSEM( NodeManager & nodeManager,
+                       EdgeManager const & edgeManager,
+                       FaceManager const & faceManager,
+                       localIndex const targetRegionIndex,
+                       SUBREGION_TYPE const & elementSubRegion,
+                       FE_TYPE const & finiteElementSpace,
+                       CONSTITUTIVE_TYPE & inputConstitutiveType,
+                       real64 const dt ):
+    Base( elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType ),
+    m_X( nodeManager.referencePosition() ),
+    m_p_n( nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >() ),
+    m_stiffnessVector( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >() ),
+    m_dt( dt )
+  {
+    GEOSX_UNUSED_VAR( edgeManager );
+    GEOSX_UNUSED_VAR( faceManager );
+    GEOSX_UNUSED_VAR( targetRegionIndex );
   }
 
 
@@ -945,22 +987,29 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    real64 gradN[ numNodesPerElem ][ 3 ];
-    real32 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
-
-
-    for( localIndex i=0; i<numNodesPerElem; ++i )
-    {
-      for( localIndex j=0; j<numNodesPerElem; ++j )
-      {
-        real32 const Rh_ij = detJ * LvArray::tensorOps::AiBi< 3 >( gradN[ i ], gradN[ j ] );
-        real32 const localIncrement = Rh_ij*m_p_n[m_elemsToNodes[k][j]];
-
-        RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
-      }
-    }
+    // do nothing -- not valid for other formulations
   }
 
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+   *
+   * ### ExplicitAcousticSEM Description
+   * Calculates stiffness vector
+   *
+   */
+  template< typename = std::enable_if< is_sem_formulation< FE_TYPE >::value > >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
+  {
+    m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+      {
+        real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+      } );
+  }
 
 protected:
   /// The array containing the nodal position array.

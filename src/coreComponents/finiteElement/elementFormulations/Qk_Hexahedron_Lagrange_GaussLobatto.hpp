@@ -311,8 +311,23 @@ public:
                     int const qb,
                     int const qc,
                     real64 const (&X)[numNodes][3],
-                    real64 ( & J )[3][3],
-                    real64 ( & B )[6] );
+                    real64 (&J)[3][3],
+                    real64 (&B)[6] );
+
+  /**
+   * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
+   *   stiffness matrix R, i.e., the superposition matrix of first derivatives
+   *   of the shape functions.
+   * @param q The quadrature point index
+   * @param X Array containing the coordinates of the support points.
+   * @param func Callback function accepting three parameters: i, j and R_ij 
+   */
+  template< typename FUNC >
+  GEOSX_HOST_DEVICE
+  static void
+    computeStiffnessTerm( int q,
+                          real64 const (&X)[numNodes][3],
+                          FUNC && func );
 
   /**
    * @brief Apply a Jacobian transformation matrix from the parent space to the
@@ -501,11 +516,12 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
                   int const qb,
                   int const qc,
                   real64 const (&X)[numNodes][3],
-                  real64 ( & J )[3][3],
-                  real64 ( & B )[6] )
+                  real64 (&J)[3][3],
+                  real64 (&B)[6] )
 {
   jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+
   // compute J^T.J/det(J), using Voigt notation for B
   B[0] = (J[0][0]*J[0][0]+J[1][0]*J[1][0]+J[2][0]*J[2][0])/detJ; 
   B[1] = (J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1])/detJ; 
@@ -513,8 +529,102 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
   B[3] = (J[0][1]*J[0][2]+J[1][1]*J[1][2]+J[2][1]*J[2][2])/detJ;
   B[4] = (J[0][0]*J[0][2]+J[1][0]*J[1][2]+J[2][0]*J[2][2])/detJ;
   B[5] = (J[0][0]*J[0][1]+J[1][0]*J[1][1]+J[2][0]*J[2][1])/detJ;
-  // compute J^{1}J^{-T}
+
+  // compute detJ*J^{-1}J^{-T}
   LvArray::tensorOps::symInvert< 3 >(B); 
+}
+
+
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+  computeStiffnessTerm( int q,
+                        real64 const (&X)[numNodes][3],
+                        FUNC && func )
+{
+  real64 B[6] = {0};
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  computeBMatrix( qa, qb, qc, X, J, B );
+  // diagonal terms
+  for(int i=0; i<numNodes; i++ )
+  {
+    for( int j=0; j<numNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( i,qb,qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( j,qb,qc ),
+            GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc)*B[0]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qa ) ) );
+    }
+  }
+  for(int i=0; i<numNodes; i++ )
+  {
+    for( int j=0; j<numNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa,i,qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa,j,qc ),
+            GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc)*B[1]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ) );
+    }
+  }
+  for(int i=0; i<numNodes; i++ )
+  {
+    for( int j=0; j<numNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa,qb,i ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa,qb,j ),
+            GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc)*B[2]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qc ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ) );
+    }
+  }
+  // off-diagonal terms
+  for(int i=0; i<numNodes; i++ )
+  {
+    for( int j=0; j<numNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( qa,i,qc ); 
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa,qb,j );
+      real64 val = GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc)*B[3]*   
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*            
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );            
+      func( ii,jj,val );      
+      func( jj,ii,val );      
+    }
+  }
+  for(int i=0; i<numNodes; i++ )
+  {
+    for( int j=0; j<numNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( i,qb,qc ); 
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa,qb,j );
+      real64 val = GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc)*B[4]*   
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*            
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );            
+      func( ii,jj,val );      
+      func( jj,ii,val );      
+    }
+  }
+  for(int i=0; i<numNodes; i++ )
+  {
+    for( int j=0; j<numNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( i,qb,qc ); 
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa,j,qc );
+      real64 val = GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc)*B[5]*   
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*            
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) );            
+      func( ii,jj,val );      
+      func( jj,ii,val );      
+    }
+  }
 }
 
 
@@ -707,6 +817,7 @@ void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
  *
  */
 using Q1_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >;
+
 /**
  * This class contains the kernel accessible functions specific to the standard
  * Trilinear Hexahedron finite element with a Gaussian quadrature rule. It is
@@ -751,6 +862,7 @@ using Q1_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto<
  *
  */
 using Q3_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >;
+
 /**
  * This class contains the kernel accessible functions specific to the standard
  * Trilinear Hexahedron finite element with a Gauss Lobatto quadrature rule. It is

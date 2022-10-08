@@ -29,7 +29,6 @@
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-#define GEOSX_DISPATCH_SEM /// selects SEM-specific elements (based on Gauss-Lobatto points) in FiniteElementDispatch 
 namespace geosx
 {
 
@@ -304,19 +303,19 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
     GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                    "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
+                    "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
                     InputError );
 
+    finiteElement::FiniteElementBase const &
+    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
 
-    finiteElement::FiniteElementBase const &
-    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
     finiteElement::dispatch3D( fe,
                                [&]
-                                 ( auto const finiteElement )
+                                ( auto const finiteElement )
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
@@ -350,9 +349,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         rickerOrder );
     } );
   } );
-
 }
-
 
 void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
 {
@@ -501,7 +498,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::dispatch3D( fe,
                                  [&]
-                                   ( auto const finiteElement )
+                                  ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
@@ -1169,4 +1166,3 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationSEM, string const &, dataRepository::Group * const )
 
 } /* namespace geosx */
-#undef GEOSX_DISPATCH_SEM
