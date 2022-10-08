@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+
+<Problem>
+ <Included>
+    <File
+      name="./Sneddon_contactMechanics_base_faceblock.xml"/>
+  </Included>
+
+  <!-- SPHINX_SNEDDON_MESH -->
+  <Mesh>
+      <VTKMesh
+          name="mesh1"
+          file="/docker-exchange/sneddon/sneddon-split-global-ids.vtk"
+          faceBlocks="{ fracture_info }"/>
+  </Mesh>
+  <!-- SPHINX_SNEDDON_MESH_END -->
+
+  <!-- SPHINX_SNEDDON_EVENTS -->
+  <Events
+    maxTime="1.0">
+
+    <PeriodicEvent
+      name="solverApplications"
+      beginTime="0.0"
+      forceDt="1.0"
+      target="/Solvers/lagrangiancontact"/>
+      
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
+
+  </Events> 
+  <!-- SPHINX_SNEDDON_EVENTS_END -->
+</Problem>
