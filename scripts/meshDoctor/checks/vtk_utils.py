@@ -6,6 +6,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 from vtkmodules.vtkIOLegacy import (
     vtkUnstructuredGridWriter,
+    vtkUnstructuredGridReader,
 )
 from vtkmodules.vtkIOXML import (
     vtkXMLUnstructuredGridReader,

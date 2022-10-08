@@ -49,7 +49,7 @@ def __build_global_ids(mesh) -> None:
 
 def __check(mesh, options: Options) -> Result:
     __build_global_ids(mesh)
-    vtk_utils.write_mesh(mesh)
+    vtk_utils.write_mesh(mesh, options.output)
     return Result(info=f"Mesh was written to {options.output}")
 
 
