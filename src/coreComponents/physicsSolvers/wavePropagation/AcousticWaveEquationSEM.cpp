@@ -306,16 +306,16 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                     "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
                     InputError );
 
-    finiteElement::FiniteElementBase const &
-    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
 
+    finiteElement::FiniteElementBase const &
+    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
     finiteElement::dispatch3D( fe,
                                [&]
-                                ( auto const finiteElement )
+                                 ( auto const finiteElement )
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
@@ -496,9 +496,10 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
       finiteElement::dispatch3D( fe,
                                  [&]
-                                  ( auto const finiteElement )
+                                   ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
