@@ -41,7 +41,7 @@ namespace geosx
  *@param[out] positivePart Array that stores the positive part of T in Voigt Notation.
  */
 GEOSX_HOST_DEVICE inline
-void PositivePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& positivePart)[6] )
+void positivePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& positivePart)[6] )
 {
   real64 positiveEigs[6]={};
   for( int i=0; i < 3; i++ )
@@ -59,7 +59,7 @@ void PositivePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 
  *@param[out] negativePart Array that stores the negative part of T in Voigt Notation.
  */
 GEOSX_HOST_DEVICE inline
-void NegativePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& negativePart)[6] )
+void negativePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& negativePart)[6] )
 {
   real64 negativeEigs[6]={};
   for( int i=0; i < 3; i++ )
@@ -124,7 +124,7 @@ real64 heaviside( real64 x )
  *@param[out] Q The 4th-order tensor that results of the operation, in Voigt form.
  */
 GEOSX_HOST_DEVICE inline
-void QTensor( real64 const (&eigvector)[3], real64 (& Q)[6][6] )
+void qTensor( real64 const (&eigvector)[3], real64 (& Q)[6][6] )
 {
   real64 M[6]={0};
   LvArray::tensorOps::symRij_eq_AiAj< 3 >( M, eigvector );
@@ -144,7 +144,7 @@ void QTensor( real64 const (&eigvector)[3], real64 (& Q)[6][6] )
  *@param[out] G The 4th-order tensor that results of the operation, in Voigt form.
  */
 GEOSX_HOST_DEVICE inline
-void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
+void gTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
 {
   GEOSX_UNUSED_VAR( eigvec1, eigvec2, G );
   real64 M1[6]={0};
@@ -195,7 +195,7 @@ void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
  *@brief This function takes the eigen-decomposition of a tensor and builds the 4th Positive Projector associated with it
  *@param[in] eigs array with the 3 eigenvalues of a tensor
  *@param[in] eigvecs 3x3 array with the 3 eigenvectors of a tensor (in rows)
- *@param[out] PositiveProjector empty array that will be populated with the voigt form of the Positive Projector
+ *@param[out] positiveProjector empty array that will be populated with the voigt form of the Positive Projector
  *
  * Given a symmetric tensor T, the positive projector is defined as P+ = variation(T+)/variation(T). That is, if we
  * define the function f+ to be the positive spectral part of T, then, P+ is just the variational derivative of f+.
@@ -203,7 +203,7 @@ void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
  *
  */
 GEOSX_HOST_DEVICE inline
-void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& PositiveProjector)[6][6] )
+void positiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& positiveProjector)[6][6] )
 {
   //test for repeated eigenvalues
   bool repeatedEigenvalues = false;
@@ -228,10 +228,10 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
     ithEigenVector[2]=eigvecs[2][i];
     //First Part
     //compute Qi
-    QTensor( ithEigenVector, Qi );
+    qTensor( ithEigenVector, Qi );
     //do update
     LvArray::tensorOps::scale< 6, 6 >( Qi, heaviside( eigs[i] ));
-    LvArray::tensorOps::add< 6, 6 >( PositiveProjector, Qi );
+    LvArray::tensorOps::add< 6, 6 >( positiveProjector, Qi );
     if( !repeatedEigenvalues )
     {
 
@@ -246,12 +246,12 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
           continue;
         }
         //compute Gij and Gji
-        GTensor( ithEigenVector, jthEigenVector, Gsym );
-        GTensor( jthEigenVector, ithEigenVector, Gji );
+        gTensor( ithEigenVector, jthEigenVector, Gsym );
+        gTensor( jthEigenVector, ithEigenVector, Gji );
         LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
         //Do update
         LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (fmax( eigs[i], 0.0 ) - fmax( eigs[j], 0.0 ))/(2*(eigs[i]-eigs[j])));
-        LvArray::tensorOps::add< 6, 6 >( PositiveProjector, Gsym );
+        LvArray::tensorOps::add< 6, 6 >( positiveProjector, Gsym );
       }
     }
     else
@@ -267,12 +267,12 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
           continue;
         }
         //compute Gij and Gji
-        GTensor( ithEigenVector, jthEigenVector, Gsym );
-        GTensor( jthEigenVector, ithEigenVector, Gji );
+        gTensor( ithEigenVector, jthEigenVector, Gsym );
+        gTensor( jthEigenVector, ithEigenVector, Gji );
         LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
         LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (heaviside( eigs[i] ) + heaviside( eigs[j] ))/4 );
         //do update
-        LvArray::tensorOps::add< 6, 6 >( PositiveProjector, Gsym );
+        LvArray::tensorOps::add< 6, 6 >( positiveProjector, Gsym );
       }
     }
   }
@@ -283,7 +283,7 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
  *@brief This function takes the eigen-decomposition of a tensor and builds the 4th order Negative Projector associated with it
  *@param[in] eigs array with the 3 eigenvalues of a tensor
  *@param[in] eigvecs 3x3 array with the 3 eigenvectors of a tensor (in rows)
- *@param[out] NegativeProjector empty array that will be populated with the voigt form of the Negative Projector
+ *@param[out] negativeProjector empty array that will be populated with the voigt form of the Negative Projector
  *
  * Given a symmetric tensor T, the negative projector is defined as P- = variation(T-)/variation(T). That is, if we
  * define the function f- to be the negative spectral part of T, then, P- is just the variational derivative of f-.
@@ -291,7 +291,7 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
  *
  */
 GEOSX_HOST_DEVICE inline
-void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& NegativeProjector)[6][6] )
+void negativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& negativeProjector)[6][6] )
 {
   //test for repeated eigenvalues
   bool repeatedEigenvalues = false;
@@ -316,10 +316,10 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
     ithEigenVector[2]=eigvecs[2][i];
     //First Part
     //compute Qi
-    QTensor( ithEigenVector, Qi );
+    qTensor( ithEigenVector, Qi );
     //do update
     LvArray::tensorOps::scale< 6, 6 >( Qi, heaviside( -eigs[i] ));
-    LvArray::tensorOps::add< 6, 6 >( NegativeProjector, Qi );
+    LvArray::tensorOps::add< 6, 6 >( negativeProjector, Qi );
     if( !repeatedEigenvalues )
     {
 
@@ -334,12 +334,12 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
           continue;
         }
         //compute Gij and Gji
-        GTensor( ithEigenVector, jthEigenVector, Gsym );
-        GTensor( jthEigenVector, ithEigenVector, Gji );
+        gTensor( ithEigenVector, jthEigenVector, Gsym );
+        gTensor( jthEigenVector, ithEigenVector, Gji );
         LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
         //Do update
         LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (fmin( eigs[i], 0.0 ) - fmin( eigs[j], 0.0 ))/(2*(eigs[i]-eigs[j])));
-        LvArray::tensorOps::add< 6, 6 >( NegativeProjector, Gsym );
+        LvArray::tensorOps::add< 6, 6 >( negativeProjector, Gsym );
       }
     }
     else
@@ -355,12 +355,12 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
           continue;
         }
         //compute Gij and Gji
-        GTensor( ithEigenVector, jthEigenVector, Gsym );
-        GTensor( jthEigenVector, ithEigenVector, Gji );
+        gTensor( ithEigenVector, jthEigenVector, Gsym );
+        gTensor( jthEigenVector, ithEigenVector, Gji );
         LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
         LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (heaviside( -eigs[i] ) + heaviside( -eigs[j] ))/4 );
         //do update
-        LvArray::tensorOps::add< 6, 6 >( NegativeProjector, Gsym );
+        LvArray::tensorOps::add< 6, 6 >( negativeProjector, Gsym );
       }
     }
   }
@@ -400,14 +400,14 @@ void getStiffnessTest( real64 (& c)[6][6], real64 (& strain)[6], real64 damage )
   //construct positive part
   real64 cPositive[6][6]={};
   real64 positiveProjector[6][6]={};
-  PositiveProjectorTensor( eigenValues, eigenVectors, positiveProjector );
+  positiveProjectorTensor( eigenValues, eigenVectors, positiveProjector );
   LvArray::tensorOps::scaledCopy< 6, 6 >( cPositive, IxITensor, lambda*heaviside( traceOfStrain ));
   LvArray::tensorOps::scale< 6, 6 >( positiveProjector, 2*mu );
   LvArray::tensorOps::add< 6, 6 >( cPositive, positiveProjector );
 
   //construct negative part
   real64 negativeProjector[6][6]={};
-  NegativeProjectorTensor( eigenValues, eigenVectors, negativeProjector );
+  negativeProjectorTensor( eigenValues, eigenVectors, negativeProjector );
   LvArray::tensorOps::scaledCopy< 6, 6 >( c, IxITensor, lambda*heaviside( -traceOfStrain ));
   LvArray::tensorOps::scale< 6, 6 >( negativeProjector, 2*mu );
   LvArray::tensorOps::add< 6, 6 >( c, negativeProjector );
@@ -450,8 +450,8 @@ void getTestStress( real64 (& strain)[6], real64 (& stress)[6] )
   }
   real64 positivePartOfStrain[6] = {};
   real64 negativePartOfStrain[6] = {};
-  PositivePartOfTensor( eigenValues, eigenVectors, positivePartOfStrain );
-  NegativePartOfTensor( eigenValues, eigenVectors, negativePartOfStrain );
+  positivePartOfTensor( eigenValues, eigenVectors, positivePartOfStrain );
+  negativePartOfTensor( eigenValues, eigenVectors, negativePartOfStrain );
   real64 positiveStress[6] = {};
   real64 negativeStress[6] = {};
   LvArray::tensorOps::scaledCopy< 6 >( positiveStress, Itensor, lambda*tracePlus );

@@ -252,8 +252,8 @@ public:
     real64 positiveProjector[6][6] = {};
     real64 negativeProjector[6][6] = {};
 
-    PositiveProjectorTensor( eigenValues, eigenVectors, positiveProjector );
-    NegativeProjectorTensor( eigenValues, eigenVectors, negativeProjector );
+    positiveProjectorTensor( eigenValues, eigenVectors, positiveProjector );
+    negativeProjectorTensor( eigenValues, eigenVectors, negativeProjector );
 
     LvArray::tensorOps::scaledCopy< 6, 6 >( cPositive, IxITensor, lambda*heaviside( traceOfStrain ));
     LvArray::tensorOps::scaledCopy< 6, 6 >( stiffness, IxITensor, lambda*heaviside( -traceOfStrain ));
@@ -296,7 +296,12 @@ public:
     return m_strainEnergyDensity( k, q );
   }
 
-  ///accessor for the energy threshold, which, in the cohesive formulation, is independent of the regularization length
+  /**
+  * @brief Accessor for the energy threshold, which, in the cohesive formulation, 
+  * is independent of the regularization length.
+  * 
+  * @return the critical energy threshold value.
+  */
   GEOSX_HOST_DEVICE
   virtual real64 getEnergyThreshold() const override final
   {
