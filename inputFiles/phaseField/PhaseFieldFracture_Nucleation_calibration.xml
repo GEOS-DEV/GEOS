@@ -1,0 +1,161 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./PhaseFieldFracture_Nucleation_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 100 }"
+      yCoords="{ -300, -2, 0, 2, 300 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 200 }"
+      ny="{ 20, 20, 20, 20 }"
+      nz="{ 2 }"
+      yBias="{0.75, 0, 0, -0.75}"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="1.0">
+
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="0.02"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      timeFrequency="0.02"
+      target="/Outputs/DamageNucleationCalibration_VTKOutput"/>
+
+    <PeriodicEvent
+      name="siloOutputs"
+      timeFrequency="0.02"
+      target="/Outputs/DamageNucleationCalibration_SiloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.5"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Constitutive>
+    <DamageElasticIsotropic
+      name="rock"
+      defaultDensity="2300"
+      defaultBulkModulus="1.67e4"
+      defaultShearModulus="1.25e4"
+      lengthScale="0.4"
+      criticalFractureEnergy="4e-3"
+      criticalStrainEnergy="0"
+      extDrivingForceFlag="1"
+      tensileStrength="5.0"
+      compressiveStrength="40.0"
+      deltaCoefficient="0.0"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <Traction
+      name="topTraction"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="1.16"
+      functionName="timeFunction"
+      setNames="{ ypos }"/>
+
+    <Traction
+      name="bottomTraction"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="1.16"
+      functionName="timeFunction"
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="fixedY"
+      fieldName="TotalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ rightCenterPointy }"/>
+
+    <FieldSpecification
+      name="fixedX"
+      fieldName="TotalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="fixedZ"
+      fieldName="TotalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ rightCenterPointz }"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 0.0, 1.0 }"/>
+  </Functions>
+
+  <Outputs>
+    <Silo
+      name="DamageNucleationCalibration_SiloOutput"/>
+
+    <VTK
+      name="DamageNucleationCalibration_VTKOutput"
+      plotFileRoot="plot_damage_nucleation_calibration"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Geometry>
+    <Box
+      name="fracture"
+      xMin="{ -0.001, -0.001, -0.001 }"
+      xMax="{ 20.001,  0.001,  1.001 }"/>
+
+    <Box
+      name="rightCenterPointy"
+      xMin="{ 20.001, -0.001, -0.001 }"
+      xMax="{ 100.001, 0.001, 1.001 }"/>
+
+    <Box
+      name="rightCenterPointz"
+      xMin="{ 99.999, -300.001, 0.499 }"
+      xMax="{ 100.001, 300.001, 0.501 }"/>
+  </Geometry>
+</Problem>
