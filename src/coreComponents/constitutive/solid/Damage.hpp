@@ -78,12 +78,12 @@ public:
                  real64 const & inputLengthScale,
                  real64 const & inputCriticalFractureEnergy,
                  real64 const & inputcriticalStrainEnergy,
-                 arrayView1d< real64 > const & inputBiotCoefficient,
                  real64 const & inputDegradationLowerLimit,
                  integer const & inputExtDrivingForceFlag,
                  real64 const & inputTensileStrength,
                  real64 const & inputCompressStrength,
                  real64 const & inputDeltaCoefficient,
+                 arrayView1d< real64 > const & inputBiotCoefficient,
                  PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
     m_newDamage( inputNewDamage ),
@@ -131,7 +131,7 @@ public:
     }
     else
     {
-      pf = m_damage( k, q );
+      pf = m_newDamage( k, q );
     }
 
     // Set a lower bound tolerance for the degradation
@@ -368,8 +368,8 @@ public:
   arrayView2d< real64 > const m_newDamage;
   arrayView3d< real64 > const m_damageGrad;
   arrayView2d< real64 > const m_strainEnergyDensity;
-  arrayView2d< real64 > const m_extDrivingForce;
   arrayView2d< real64 > const m_volStrain;
+  arrayView2d< real64 > const m_extDrivingForce;
   real64 const m_lengthScale;
   real64 const m_criticalFractureEnergy;
   real64 const m_criticalStrainEnergy;
@@ -378,6 +378,7 @@ public:
   real64 const m_tensileStrength;
   real64 const m_compressStrength;
   real64 const m_deltaCoefficient;
+  arrayView1d< real64 > const m_biotCoefficient;
 };
 
 
@@ -405,7 +406,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// *** The interface to get member variables
-  arrayView2d< real64 const > getDamage() const { return m_damage; }
+  arrayView2d< real64 const > getDamage() const { return m_newDamage; }
 
   arrayView2d< real64 const > getExtDrivingForce() const { return m_extDrivingForce; }
 
@@ -415,17 +416,17 @@ public:
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
                                                                        m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
-                                                                       m_extDrivingForce.toView(),
                                                                        m_volStrain.toView(),
+                                                                       m_extDrivingForce.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
                                                                        m_criticalStrainEnergy,
-                                                                       m_biotCoefficient.toView(),
                                                                        m_degradationLowerLimit,
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength,
                                                                        m_compressStrength,
-                                                                       m_deltaCoefficient );
+                                                                       m_deltaCoefficient,
+                                                                       m_biotCoefficient.toView() );
   }
 
   struct viewKeyStruct : public BASE::viewKeyStruct
@@ -465,12 +466,12 @@ protected:
   real64 m_lengthScale;
   real64 m_criticalFractureEnergy;
   real64 m_criticalStrainEnergy;
-  array1d< real64 > m_biotCoefficient;
   real64 m_degradationLowerLimit;
   integer m_extDrivingForceFlag;
   real64 m_tensileStrength;
   real64 m_compressStrength;
   real64 m_deltaCoefficient;
+  array1d< real64 > m_biotCoefficient;
 };
 
 }

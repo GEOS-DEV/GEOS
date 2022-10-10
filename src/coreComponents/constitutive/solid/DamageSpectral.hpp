@@ -43,21 +43,21 @@ public:
   DamageSpectralUpdates( arrayView2d< real64 > const & inputDamage,
                          arrayView3d< real64 > const & inputDamageGrad,
                          arrayView2d< real64 > const & inputStrainEnergyDensity,
-                         arrayView2d< real64 > const & inputExtDrivingForce,
                          arrayView2d< real64 > const & inputVolumetricStrain,
+                         arrayView2d< real64 > const & inputExtDrivingForce,
                          real64 const & inputLengthScale,
                          real64 const & inputCriticalFractureEnergy,
                          real64 const & inputcriticalStrainEnergy,
-                         arrayView1d< real64 > const & inputBiotCoefficient,
                          real64 const & inputDegradationLowerLimit,
                          int const & inputExtDrivingForceFlag,
                          real64 const & inputTensileStrength,
                          real64 const & inputCompressStrength,
                          real64 const & inputDeltaCoefficient,
+                         arrayView1d< real64 > const & inputBiotCoefficient,
                          PARAMS && ... baseParams ):
     DamageUpdates< UPDATE_BASE >( inputDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
-                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputBiotCoefficient, inputDegradationLowerLimit, inputExtDrivingForceFlag,
-                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient,
+                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
+                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient, inputBiotCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
@@ -324,13 +324,13 @@ public:
                                                                        m_volStrain.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
-                                                                       m_criticalStrainEnergy,
-                                                                       m_biotCoefficient.toView(),
+                                                                       m_criticalStrainEnergy,                                                                   
                                                                        m_degradationLowerLimit,
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength,
                                                                        m_compressStrength,
-                                                                       m_deltaCoefficient );
+                                                                       m_deltaCoefficient,
+                                                                       m_biotCoefficient.toView() );
   }
 
 };

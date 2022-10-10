@@ -50,6 +50,11 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Material Damage Variable" );
 
+  this->registerWrapper( viewKeyStruct::damageGradString(), &m_damageGrad ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Material Damage Gradient" );  
+
   this->registerWrapper( viewKeyStruct::strainEnergyDensityString(), &m_strainEnergyDensity ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
