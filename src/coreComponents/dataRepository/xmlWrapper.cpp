@@ -67,6 +67,7 @@ void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValu
   GEOSX_THROW_IF( ss.peek() != std::char_traits< char >::eof(), errorMsg( "Unparsed characters" ), InputError );
 }
 
+template void stringToInputVariable( Tensor< real32, 3 > & target, string const & inputValue );
 template void stringToInputVariable( Tensor< real64, 3 > & target, string const & inputValue );
 template void stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue );
 
