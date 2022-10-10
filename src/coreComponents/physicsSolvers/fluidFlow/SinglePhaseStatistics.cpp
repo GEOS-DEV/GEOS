@@ -113,7 +113,7 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     arrayView1d< real64 const > const deltaPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
     string const & solidName = subRegion.getReference< string >( SinglePhaseBase::viewKeyStruct::solidNamesString() );
-    Group const & constitutiveModels = subRegion.getGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
+    Group const & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
     CoupledSolidBase const & solid = constitutiveModels.getGroup< CoupledSolidBase >( solidName );
     arrayView1d< real64 const > const refPorosity = solid.getReferencePorosity();
     arrayView2d< real64 const > const porosity = solid.getPorosity();

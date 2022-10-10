@@ -1,0 +1,176 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{0.0, 0.0, 0.0}">
+  <!-- SPHINX_SNEDDON_SOLVER -->
+    <LagrangianContact
+      name="lagrangiancontact"
+      solidSolverName="lagsolve"
+      stabilizationName="TPFAstabilization"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region, Fracture }"
+      contactRelationName="fractureMaterial"
+      fractureRegionName="Fracture">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        logLevel="2"
+        newtonMaxIter="10"
+        maxNumConfigurationAttempts="10"
+        lineSearchAction="Require"
+        lineSearchMaxCuts="2"
+        maxTimeStepCuts="2"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
+    </LagrangianContact>
+
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="0"
+      discretization="FE1"
+      targetRegions="{ Region, Fracture }"
+      >
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="5"/>
+      <LinearSolverParameters
+        krylovTol="1.0e-10"
+        logLevel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+  </Solvers>
+  <!-- SPHINX_SNEDDON_SOLVER_END -->
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="TPFAstabilization"/>
+    </FiniteVolume>
+  </NumericalMethods>
+  <Geometry>
+    <BoundedPlane
+      name="core"
+      normal="{1.0, 0.0, 0.0}"
+      origin="{0.0, 0.0, 0.0}"
+      lengthVector="{0.0, 1.0, 0.0}"
+      widthVector="{0.0, 0.0, 1.0}"
+      dimensions="{ 2, 10 }"/>
+    <Box
+      name="xneg"
+      xMin="{ -20.01, -20.01, -0.01 }"
+      xMax="{ -19.99,  20.01,  1.01 }"/>
+    <Box
+      name="xpos"
+      xMin="{ 19.99, -20.01, -0.01 }"
+      xMax="{ 20.01,  20.01,  1.01 }"/>
+    <Box
+      name="yneg"
+      xMin="{ -20.01, -20.01, -0.01 }"
+      xMax="{  20.01, -19.99,  1.01 }"/>
+    <Box
+      name="ypos"
+      xMin="{ -20.01, 19.99, -0.01 }"
+      xMax="{  20.01, 20.01,  1.01 }"/>
+    <Box
+      name="zneg"
+      xMin="{ -20.01, -20.01, -0.01 }"
+      xMax="{  20.01,  20.01,  0.01 }"/>
+    <Box
+      name="zpos"
+      xMin="{ -20.01, -20.01, 0.99 }"
+      xMax="{  20.01,  20.01, 1.01 }"/>
+
+  </Geometry>
+
+  <!-- SPHINX_SNEDDON_REGIONS-->
+  <ElementRegions>
+    <CellElementRegion
+      name="Region"
+      cellBlocks="{ hexahedra }"
+      materialList="{ rock }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      faceBlock="fracture_info"
+      defaultAperture="0.0"
+      materialList="{ fractureMaterial, rock }"/>
+  </ElementRegions>
+  <!-- SPHINX_SNEDDON_REGIONS_END -->
+
+  <!-- SPHINX_SNEDDON_MATERIAL-->
+  <Constitutive>
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultBulkModulus="16.66666666666666e9"
+      defaultShearModulus="1.0e10"/>
+
+    <Coulomb
+      name="fractureMaterial"
+      cohesion="0.0"
+      frictionCoefficient="0.577350269"
+      apertureTableName="apertureTable"/>
+  </Constitutive>
+  <!-- SPHINX_SNEDDON_MATERIAL_END-->
+
+  <!-- SPHINX_SNEDDON_BC -->
+  <FieldSpecifications>
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xpos, xneg }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ ypos, yneg }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zpos, zneg }"/>
+
+    <Traction
+      name="NormalTraction"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-2.0e6"
+      setNames="{ core }"/>
+  </FieldSpecifications>
+
+  <!-- SPHINX_SNEDDON_BC_END -->
+  
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-6, 1.0e-3 }"/>
+  </Functions>
+
+  <Outputs>
+     <VTK
+      name="vtkOutput"
+      plotLevel="2"
+      format="ascii"/>
+   </Outputs>
+</Problem>

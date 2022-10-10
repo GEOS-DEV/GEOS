@@ -63,6 +63,7 @@
 #include <vtkDummyController.h>
 #endif
 
+#include <algorithm>
 #include <numeric>
 #include <unordered_set>
 
@@ -1875,6 +1876,100 @@ private:
 };
 
 /**
+ * @brief This classes helps at building the global (vtk) element indices to the indices local to the cell blocks.
+ * Then the global element to global faces can be be also computed.
+ */
+class E2F
+{
+public:
+  /**
+   * @brief Builds for the cell blocks.
+   * @param cellBlocks The cell blocks group.
+   */
+  E2F( Group const & cellBlocks )
+    : m_localToGlobalMaps( cellBlocks.numSubGroups() ),
+      m_elemToFacesMaps( cellBlocks.numSubGroups() )
+  {
+    // Checking the ranges of the cell blocks.
+    localIndex const numCellBlocks = cellBlocks.numSubGroups();
+    for( int i = 0; i < numCellBlocks; ++i )
+    {
+      CellBlock const * cb = cellBlocks.getGroupPointer< CellBlock >( i );
+      m_localToGlobalMaps[i] = cb->localToGlobalMapConstView();
+      m_elemToFacesMaps[i] = cb->getElemToFacesConstView();
+    }
+
+    for( int i = 0; i < numCellBlocks; ++i )
+    {
+      arrayView1d< globalIndex const > const l2g = m_localToGlobalMaps[i];
+      auto const size = l2g.size();
+      for( int j = 0; j < size - 1; ++j )
+      {
+        GEOSX_ERROR_IF_NE_MSG( l2g[i] + 1, l2g[i + 1], "The code is assuming that the cell block indexing is continuously increasing." );
+      }
+      m_ranges.emplace_back( l2g.front(), l2g.back() );
+    }
+  }
+
+  /**
+   * @brief Given the global (vtk) id, returns the cell block index @p ei belongs to.
+   * @param ei global cell index.
+   * @return The cell block index.
+   */
+  int getCellBlockIndex( int const & ei ) const
+  {
+    auto const it = std::find_if( m_ranges.cbegin(), m_ranges.cend(), [&]( auto const & p ) -> bool
+    {
+      return p.first <= ei and ei <= p.second;
+    } );
+
+    return std::distance( m_ranges.cbegin(), it );
+  }
+
+  /**
+   * @brief Returns the index offset for cell block of index @p iCellBlock
+   * @param iCellBlock The index of the cell block.
+   * @return The offset.
+   * Cell block indices span a continuous range of global indices.
+   * The offset makes possible to compute the cell block local index using a simple subtraction.
+   */
+  int getElementCellBlockOffset( int const & iCellBlock ) const
+  {
+    return m_ranges[iCellBlock].first;
+  }
+
+  /**
+   * @brief Given the global (vtk) id, returns the index local to the cell block @p ei belong to.
+   * @param ei global cell index.
+   * @return The faces for element @p ei.
+   */
+  auto operator[]( int const & ei ) const
+  {
+    const std::size_t iCellBlock = getCellBlockIndex( ei );
+    arrayView2d< localIndex const > const e2f = m_elemToFacesMaps[iCellBlock];
+    return e2f[ei - m_ranges[iCellBlock].first];
+  }
+
+private:
+
+  /**
+   * @brief The cell indices ranges for each cell block.
+   * he range is inclusive since min and max are in the cell block.
+   */
+  std::vector< std::pair< int, int > > m_ranges;
+  /**
+   * @brief The local to global map, for each cell block.
+   * The indexing the the same as the cell block indexing.
+   */
+  std::vector< arrayView1d< globalIndex const > > m_localToGlobalMaps;
+  /**
+   * @brief The element to faces map, for each cell block.
+   * The indexing the the same as the cell block indexing.
+   */
+  std::vector< arrayView2d< localIndex const > > m_elemToFacesMaps;
+};
+
+/**
  * @brief Import face block @p faceBlockName from @p vtkMesh into the @p cellBlockManager.
  * @param faceBlockName
  * @param vtkMesh
@@ -1916,9 +2011,22 @@ void ImportFracture( string const & faceBlockName,
   }
 
   std::vector< std::vector< localIndex > > elem2dToElems; // API
+  std::vector< std::vector< localIndex > > elem2dToCellBlock; // API
+  E2F const e2f( cellBlockManager.getCellBlocks() );
+
   for( int i = 0; i < num2dElements; ++i )
   {
-    elem2dToElems.push_back( { faceData.cell( i, 0 ), faceData.cell( i, 1 ) } );
+    elem2dToCellBlock.push_back( { e2f.getCellBlockIndex( faceData.cell( i, 0 ) ),
+                                   e2f.getCellBlockIndex( faceData.cell( i, 1 ) ) } );
+  }
+  for( int i = 0; i < num2dElements; ++i )
+  {
+    elem2dToElems.push_back({-1, -1});
+    for( int j = 0; j < 2; ++j )
+    {
+      auto const offset = e2f.getElementCellBlockOffset( elem2dToCellBlock[i][j] );
+      elem2dToElems[i][j] = faceData.cell( i, j ) - offset;
+    }
   }
 
   // A utility function to convert a vtkIdList into a std::set< int >.
@@ -1930,10 +2038,7 @@ void ImportFracture( string const & faceBlockName,
     return result;
   };
 
-//  CellBlock & cb = cellBlockManager.getCellBlock( "hexahedra" );
-  CellBlock & cb = cellBlockManager.getCellBlock( "0_tetrahedra" );
   ArrayOfArrays< localIndex > const & f2n = cellBlockManager.getFaceToNodes();
-  array2d< localIndex > const & e2f = cb.getElemToFaces();
   ArrayOfArrays< localIndex > const & n2ed = cellBlockManager.getNodeToEdges();
 
   std::vector< std::vector< localIndex > > elem2dToNodes; // API
@@ -2097,6 +2202,7 @@ void ImportFracture( string const & faceBlockName,
   faceBlock.set2dFaceTo2dElems( face2dToElems2d );
   faceBlock.set2dFaceToEdge( face2dToEdges );
   faceBlock.set2dElemToElems( elem2dToElems );
+  faceBlock.set2dElemToCellBlock( elem2dToCellBlock );
 }
 
 /**

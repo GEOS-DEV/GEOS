@@ -831,6 +831,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
             if( feDiscretization != nullptr )
             {
               elemRegion.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
+//              elemRegion.forElementSubRegions< CellElementSubRegion >( [&]( auto & subRegion )
               {
                 std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
 
@@ -891,12 +892,10 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
                                           ConstitutiveManager const & constitutiveManager,
                                           map< std::tuple< string, string, string, string >, localIndex > const & regionQuadratures )
 {
-
-
-  for( auto regionQuadrature=regionQuadratures.begin(); regionQuadrature!=regionQuadratures.end(); ++regionQuadrature )
+  for( auto const & regionQuadrature: regionQuadratures )
   {
-    std::tuple< string, string, string, string > const key = regionQuadrature->first;
-    localIndex const numQuadraturePoints = regionQuadrature->second;
+    std::tuple< string, string, string, string > const key = regionQuadrature.first;
+    localIndex const numQuadraturePoints = regionQuadrature.second;
     string const meshBodyName = std::get< 0 >( key );
     string const meshLevelName = std::get< 1 >( key );
     string const regionName = std::get< 2 >( key );

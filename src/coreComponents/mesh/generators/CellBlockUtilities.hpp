@@ -32,6 +32,14 @@ struct ToCellRelation
 {
   T toBlockIndex; ///< Map containing a list of cell block indices for each object
   T toCellIndex;  ///< Map containing cell indices, same shape as above
+
+  ToCellRelation( T const & toBlockIndex_,
+                  T const & toCellIndex_ )
+    : toBlockIndex( toBlockIndex_ ),
+      toCellIndex( toCellIndex_ )
+  { }
+
+  ToCellRelation() = default;
 };
 
 /**

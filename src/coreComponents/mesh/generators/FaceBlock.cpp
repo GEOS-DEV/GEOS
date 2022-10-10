@@ -212,11 +212,9 @@ array2d< localIndex > FaceBlock::get2dElemToFaces() const
 
 ToCellRelation< array2d< localIndex > > FaceBlock::get2dElemToElems() const
 {
-  array2d< localIndex > converted = myConvert2d( m_2dElemToElems );
-  array2d< localIndex > blocks( converted );
-  blocks.setValues< serialPolicy >( 0 );
-
-  return { blocks, converted };
+  array2d< localIndex > conv2dElemToElems = myConvert2d( m_2dElemToElems );
+  array2d< localIndex > conv2dElemToCellBlock = myConvert2d( m_2dElemToCellBlock );
+  return ToCellRelation< array2d< localIndex > >( conv2dElemToCellBlock, conv2dElemToElems );
 }
 
 array1d< localIndex > FaceBlock::get2dFaceToEdge() const
@@ -239,34 +237,39 @@ void FaceBlock::setNum2DFaces( localIndex num2DFaces )
   m_num2dFaces = num2DFaces;
 }
 
-void FaceBlock::set2dElemToNodes(std::vector< std::vector< localIndex > > _2dElemToNodes)
+void FaceBlock::set2dElemToNodes( std::vector< std::vector< localIndex > > _2dElemToNodes )
 {
   m_2dElemToNodes = _2dElemToNodes;
 }
 
-void FaceBlock::set2dElemToEdges(std::vector< std::vector< localIndex > > _2dElemToEdges)
+void FaceBlock::set2dElemToEdges( std::vector< std::vector< localIndex > > _2dElemToEdges )
 {
   m_2dElemToEdges = _2dElemToEdges;
 }
 
-void FaceBlock::set2dElemToFaces(std::vector< std::vector< localIndex > > _2dElemToFaces)
+void FaceBlock::set2dElemToFaces( std::vector< std::vector< localIndex > > _2dElemToFaces )
 {
   m_2dElemToFaces = _2dElemToFaces;
 }
 
-void FaceBlock::set2dFaceTo2dElems( std::vector< std::vector< localIndex > > _2dFaceTo2dElems)
+void FaceBlock::set2dFaceTo2dElems( std::vector< std::vector< localIndex > > _2dFaceTo2dElems )
 {
   m_2dFaceTo2dElems = _2dFaceTo2dElems;
 }
 
-void FaceBlock::set2dFaceToEdge( std::vector< localIndex > _2dFaceToEdge)
+void FaceBlock::set2dFaceToEdge( std::vector< localIndex > _2dFaceToEdge )
 {
   m_2dFaceToEdge = _2dFaceToEdge;
 }
 
-void FaceBlock::set2dElemToElems(std::vector< std::vector< localIndex > > _2dElemToElems)
+void FaceBlock::set2dElemToElems( std::vector< std::vector< localIndex > > _2dElemToElems )
 {
   m_2dElemToElems = _2dElemToElems;
+}
+
+void FaceBlock::set2dElemToCellBlock( std::vector< std::vector< localIndex > > _2dElemToCellBlock )
+{
+  m_2dElemToCellBlock = _2dElemToCellBlock;
 }
 
 }

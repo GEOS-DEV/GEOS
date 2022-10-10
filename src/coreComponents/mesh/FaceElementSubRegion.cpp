@@ -38,9 +38,9 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_newFaceElements(),
   m_toFacesRelation()
 {
-//  m_elementType = ElementType::Hexahedron;
+  m_elementType = ElementType::Hexahedron;
 //  m_elementType = ElementType::Tetrahedron;
-  m_elementType = ElementType::Wedge;
+//  m_elementType = ElementType::Wedge;
 
   registerWrapper( viewKeyStruct::dNdXString(), &m_dNdX ).setSizedFromParent( 1 ).reference().resizeDimension< 3 >( 3 );
 
@@ -76,8 +76,8 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
   m_surfaceElementsToCells.resize( 0, 2 );
 
-//  m_numNodesPerElement = 8;
-  m_numNodesPerElement = 6;
+  m_numNodesPerElement = 8;
+//  m_numNodesPerElement = 6;
 }
 
 //ArrayOfArrays< localIndex > convert__( array2d< localIndex > const & vv )
@@ -119,17 +119,64 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
 void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
 {
+  localIndex const num2dElements = faceBlock.num2dElements();
   resize( faceBlock.num2dElements() );
 
   m_toNodesRelation.base() = faceBlock.get2dElemToNodes();
   m_toEdgesRelation.base() = faceBlock.get2dElemToEdges();
 
-  auto elem2dToElems = faceBlock.get2dElemToElems();
+  // `FaceBlockABC` is designed to be heterogeneous.
+  // `FaceElementSubRegion` inherits from `ElementSubRegionBase` which is meant to be homogeneous.
+  // But `FaceElementSubRegion` is sometimes used as an heterogeneous sub region,
+  // which emphasizes the need of a refactoring.
+  // In the meantime, we try to fill the face block into the sub region and hope for the best...
+  {
+    auto const f = []( integer allSizes ) -> ElementType
+    {
+      if( allSizes == 6 )
+      {
+        return ElementType::Wedge;
+      }
+      else if( allSizes == 8 )
+      {
+        return ElementType::Hexahedron;
+      }
+      else
+      {
+        GEOSX_ERROR( "Unsupported type of elements during the face element sub region creation." );
+        return {};
+      }
+    };
+
+    std::vector< integer > sizes( num2dElements );
+    for ( int i = 0; i < num2dElements; ++i)
+    {
+      sizes[i] = m_toNodesRelation.base()[i].size();
+    }
+    std::set< integer > const s( sizes.cbegin(), sizes.cend() );
+
+    if( s.size() > 1 )
+    {
+      GEOSX_WARNING( "Heterogeneous face element sub region found and store as homogeneous. Use at your own risk." );
+    }
+
+    auto const it = std::max_element( s.cbegin(), s.cend() );
+    integer const maxSize = *it;
+    m_elementType = f( maxSize );
+    m_numNodesPerElement = maxSize;
+  }
+
+  // The `m_surfaceElementsToCells` mappings involves element, sub regions and regions indices.
+  // We store the element indices that are correct.
+  // But we only have access to the cell block indices, not the sub regions indices.
+  // Temporarily, and also because they share the same dimensions,
+  // we store the cell block mapping at the sub region mapping location.
+  // It will later be transformed into a sub regions mapping.
+  // Last, we fill the regions mapping with dummy -1 values that should all be replaced eventually.
+  auto const elem2dToElems = faceBlock.get2dElemToElems();
   m_surfaceElementsToCells.m_toElementIndex = elem2dToElems.toCellIndex;
   m_surfaceElementsToCells.m_toElementSubRegion = elem2dToElems.toBlockIndex;
-  // TODO We are hard coding the values of the regions here.
-  //      This is work in progress and we'll correct this soon.
-  m_surfaceElementsToCells.m_toElementRegion.setValues< serialPolicy >( 0 );
+  m_surfaceElementsToCells.m_toElementRegion.setValues< serialPolicy >( -1 );
 
   m_toFacesRelation.base() = faceBlock.get2dElemToFaces();
 
