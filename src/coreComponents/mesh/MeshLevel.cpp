@@ -120,6 +120,7 @@ MeshLevel::MeshLevel( string const & name,
   m_faceManager->edgeList() = source.m_faceManager->edgeList();
   m_faceManager->faceCenter() = source.m_faceManager->faceCenter();
   m_faceManager->faceNormal() = source.m_faceManager->faceNormal();
+  m_faceManager->getDomainBoundaryIndicator() = source.m_faceManager->getDomainBoundaryIndicator();
 
   // Faces
 //  ArrayOfArraysView< localIndex const > const facesToNodesMapSource = m_faceManager->nodeList().toViewConst();
@@ -141,26 +142,14 @@ MeshLevel::MeshLevel( string const & name,
       localIndex const numNonEdgeNodesPerFace = pow( order-1, 2 );
       numInternalFaceNodes += numNonEdgeNodesPerFace;
 
-      // localIndex const numNodesPerFace = pow( order+1, 2 );
-      // faceToNodeMapNew.resizeArray( kf, numNodesPerFace );
+      localIndex const numNodesPerFace = pow( order+1, 2 );
+      faceToNodeMapNew.resizeArray( kf, numNodesPerFace );
     }
     else
     {
       GEOSX_ERROR( "need more support for face geometry" );
     }
   }
-
-  ArrayOfArrays< localIndex > faceToNodeMapNew2;
-  faceToNodeMapNew2.resize(estimatedNumNodesPerFace, m_faceManager->size());
-  for( localIndex korder=0; korder<estimatedNumNodesPerFace; ++korder)
-  {
-    faceToNodeMapNew2.resizeArray( korder, m_faceManager->size() );
-  }
-
-  faceToNodeMapNew=meshMapUtilities::transposeIndexMap< parallelHostPolicy >(
-                                                        faceToNodeMapNew2.toViewConst(),
-                                                        m_faceManager->size(),
-                                                        estimatedNumNodesPerFace);
 
   // add the number of non-face element nodes
   localIndex numInternalElementNodes = 0;
