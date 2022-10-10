@@ -56,7 +56,7 @@ using namespace constitutive;
 PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
-  m_damageName( "Damage" ),
+  m_damageName( "damage" ),
   m_pressureEffectsFlag( 0 )
 {
 
@@ -86,7 +86,7 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodes = mesh.getNodeManager();
 
-    nodes.registerWrapper< real64_array >( "Damage" )
+    nodes.registerWrapper< real64_array >( "damage" )
       .setApplyDefaultValue( 0.0 )
       .setPlotLevel( PlotLevel::LEVEL_0 )
       .setDescription( "Damage variable" );

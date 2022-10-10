@@ -321,74 +321,12 @@ struct Helper< PDEUtilities::FunctionSpace::H1,
       for( int b = 0; b < numTrialDOF; ++b )
       {
         mat[a][b] = mat[a][b] + A * LvArray::tensorOps::AiBi< 3 >( dNvdX[a], dNudX[b] ) * weight;
-        //must verify voigt notation and order of indices in dNvdX and dNudX
-        // mat[a][b] = mat[a][b] + dNvdX[a][0] * A * dNudX[b][0] * weight;
-        // mat[a][b] = mat[a][b] + dNvdX[a][1] * A * dNudX[b][1] * weight;
-        // mat[a][b] = mat[a][b] + dNvdX[a][2] * A * dNudX[b][2] * weight;
-        // mat[a][b] = mat[a][b] + dNvdX[a][0] * A * dNudX[b][1] * weight;
-        // mat[a][b] = mat[a][b] + dNvdX[a][1] * A * dNudX[b][0] * weight;
-        // mat[a][b] = mat[a][b] + dNvdX[a][0] * A * dNudX[b][2] * weight;
-        // mat[a][b] = mat[a][b] + dNvdX[a][2] * A * dNudX[b][0] * weight;
-        // mat[a][b] = mat[a][b] + dNvdX[a][1] * A * dNudX[b][2] * weight;
-        // mat[a][b] = mat[a][b] + dNvdX[a][2] * A * dNudX[b][1] * weight;
       }
     }
   }
 
 };
 
-
-// template<>
-// struct Helper< PDEUtilities::FunctionSpace::H1,
-//                PDEUtilities::FunctionSpace::H1,
-//                PDEUtilities::DifferentialOperator::Identity,
-//                PDEUtilities::DifferentialOperator::Gradient >
-// {
-//   //scalar Trial function x scalar x Grad test function
-//   template< int numTestDOF, int numTrialDOF >
-//   GEOSX_HOST_DEVICE
-//   void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
-//                        real64 const (&Nv)[numTestDOF][3],
-//                        real64 const (&A),
-//                        real64 const (&dNudX)[numTestDOF][3],
-//                        real64 const weight )
-//   {
-//     for( int a = 0; a < numTestDOF/3; ++a )
-//     {
-//       for( int b = 0; b < numTrialDOF/3; ++b )
-//       {
-//         mat[a][b] = mat[a][b] + Nv[a] * A * dNudX[b] * weight;
-//       }
-//     }
-//   }
-
-// };
-
-// template<>
-// struct Helper< PDEUtilities::FunctionSpace::H1,
-//                PDEUtilities::FunctionSpace::H1,
-//                PDEUtilities::DifferentialOperator::Gradient,
-//                PDEUtilities::DifferentialOperator::Identity >
-// {
-//   //scalar Grad trial function x scalar x Test function
-//   template< int numTestDOF, int numTrialDOF >
-//   GEOSX_HOST_DEVICE
-//   void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
-//                        real64 const (&dNvdX)[numTestDOF][3],
-//                        real64 const (&A),
-//                        real64 const (&Nu)[numTestDOF],
-//                        real64 const weight )
-//   {
-//     for( int a = 0; a < numTestDOF/3; ++a )
-//     {
-//       for( int b = 0; b < numTrialDOF/3; ++b )
-//       {
-//         mat[a][b] = mat[a][b] + dNvdX[a] * A * Nu[b] * weight;
-//       }
-//     }
-//   }
-
-// };
 
 template<>
 struct Helper< PDEUtilities::FunctionSpace::H1,

@@ -87,7 +87,7 @@ public:
   /**
    * @brief Constructor
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
-   * @param damageName The name of the damage field, usually just "Damage"
+   * @param damageName The name of the damage field, usually just "damage"
    *                  (i.e. Temperature, Pressure, etc.)
    */
   PhaseFieldDamagePressureKernel( NodeManager const & nodeManager,
