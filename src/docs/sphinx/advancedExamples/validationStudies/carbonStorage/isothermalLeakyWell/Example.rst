@@ -29,7 +29,7 @@ This benchmark test is based on the XML file located below:
 
 .. code-block:: console
 
-  ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_benchmark.xml
+  inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_benchmark.xml
 
 ------------------------------------------------------------------------
 Problem description
@@ -136,10 +136,6 @@ and do not simulate flow in the aquitard, considered as impermeable to flow.
 We only simulate flow in the two aquifers (``aquiferTop`` and ``aquiferBottom``), in the bottom
 part of the injection well (``injectionWell``), and in the leaky well connecting the two aquifers (``leakyWell``).
 
-We list the corresponding solid names and permeability names in the attributes ``solidNames``
-and ``permeabilityNames``, respectively.
-The same fluid and relative permeability models are used in all target regions, which is why the
-attributes ``fluidNames`` and ``relPermNames`` contain only one entry.
 
 ------------------------------
 Constitutive laws

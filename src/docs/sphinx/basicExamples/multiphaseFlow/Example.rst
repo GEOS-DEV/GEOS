@@ -56,13 +56,6 @@ Note that this name is used in the **Events** XML block to trigger the applicati
 Using the ``targetRegions`` attribute, the solver defines the target regions on which it is applied.
 In this example, there is only one region, named ``reservoir``.
 
-The constitutive models defined on these target regions must be listed in the **CompositionalMultiphaseFVM** block.
-This is done by passing the name of the fluid PVT model using the ``fluidNames`` attribute, the name of the solid compressibility model
-using the ``solidNames`` attribute, the name of the rock permeability model using the ``permeabilityNames`` attribute, and the name of
-the relative permeability model using the ``relPermNames`` attribute.
-If a capillary pressure model is employed in the simulation, its name must also be passed here, using the ``capPressureNames`` attribute.
-All the constitutive model names passed here must be defined in the **Constitutive** block of the XML file (see below).
-
 The **CompositionalMultiphaseFVM** block contains two important sub-blocks, namely **NonlinearSolverParameters** and **LinearSolverParameters**.
 In **NonlinearSolverParameters**, one can finely tune the nonlinear tolerance, the application of the linear search algorithm, and the heuristics used to increase the time step size.
 In **LinearSolverParameters**, the user can specify the linear tolerance, the type of (direct or iterative) linear solver, and the

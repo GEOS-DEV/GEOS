@@ -58,10 +58,9 @@ They consist of three blocks **CompositionalMultiphaseFVM**, **CompositionalMult
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_SOLVER_END -->
 
 In the **CompositionalMultiphaseFVM** (:ref:`CompositionalMultiphaseFlow`), a classical multiphase compositional solver with a TPFA discretization is described.
-The flow solver definition includes a list of names to point to fluid constitutive data through ``fluidNames``, solid constitutive data through ``solidNames``, permeability data through ``permeabilityNames`` and relative permeability constitutive data through ``relPermNames`` attributes.
 
 The **CompositionalMultiphaseWell** (:ref:`CompositionalMultiphaseWell`)  consists of wellbore specifications (see :ref:`TutorialDeadOilEgg` for detailed example). As its reservoir counterpart, it includes references to fluid and relative permeability models, but also defines a  **WellControls** sub-tag.
-This sub-tag specifies the CO :sub:`2` injector control mode: the well is initially rate-controlled, with a rate specified in ``targetRate`` and a maximum pressure specified in ``targetBHP``. The injector-specific attribute, ``injectionStream``, describes the composition of the injected mixture (here, pure CO :sub:`2`).
+This sub-tag specifies the CO :sub:`2` injector control mode: the well is initially rate-controlled, with a rate specified in ``targetTotalRate`` and a maximum pressure specified in ``targetBHP``. The injector-specific attribute, ``injectionStream``, describes the composition of the injected mixture (here, pure CO :sub:`2`).
 
 The **CompositionalMultiphaseReservoir** coupling section describes the binding between those two previous elements (see :ref:`TutorialPoroelasticity` for detailed example on coupling physics in GEOSX). In addition to being bound to the previously described blocks through ``flowSolverName`` and ``wellSolverName`` sub-tags, it contains the ``initialDt`` starting time-step size value and defines the **NonlinearSolverParameters** and **LinearSolverParameters** that are used to control Newton-loop and linear solver behaviors (see :ref:`LinearSolvers` for a detailed description of linear solver attributes). 
 
