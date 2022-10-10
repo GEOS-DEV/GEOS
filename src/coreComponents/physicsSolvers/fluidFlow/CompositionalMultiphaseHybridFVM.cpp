@@ -113,8 +113,6 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     GEOSX_ERROR( "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM" );
   }
 
-  m_transMultName = viewKeyStruct::transMultiplierString();
-
   m_lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * 1e-8;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -135,8 +133,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
     // check that multipliers are stricly larger than 0, which would work with SinglePhaseFVM, but not with SinglePhaseHybridFVM.
     // To deal with a 0 multiplier, we would just have to skip the corresponding face in the FluxKernel
-    arrayView1d< real64 const > const & transMultiplier =
-      faceManager.getReference< array1d< real64 > >( m_transMultName );
+    arrayView1d< real64 const > const & transMultiplier = faceManager.getExtrinsicData< extrinsicMeshData::flow::transMultiplier >();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
     forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
@@ -179,7 +176,7 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, arrayVi
   // face data
 
   arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getReference< array1d< real64 > >( m_transMultName );
+    faceManager.getExtrinsicData< extrinsicMeshData::flow::transMultiplier >();
 
   arrayView1d< real64 > const mimFaceGravCoef =
     faceManager.getExtrinsicData< extrinsicMeshData::flow::mimGravityCoefficient >();
@@ -205,8 +202,9 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, arrayVi
     // scheme
     // This one-sided gravity term is currently always treated with TPFA, as in MRST.
     // In the future, I will change that (here and in the FluxKernel) to have a consistent inner product for the gravity term as well
-    singlePhaseHybridFVMKernels::KernelLaunchSelector< mimeticInnerProduct::TPFAInnerProduct,
-                                                       PrecomputeKernel >( subRegion.numFacesPerElement(),
+    compositionalMultiphaseHybridFVMKernels::
+      simpleKernelLaunchSelector< PrecomputeKernel,
+                                  mimeticInnerProduct::TPFAInnerProduct >( subRegion.numFacesPerElement(),
                                                                            subRegion.size(),
                                                                            faceManager.size(),
                                                                            nodePosition,
@@ -339,7 +337,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
 
     // get the face-centered transMultiplier
     arrayView1d< real64 const > const & transMultiplier =
-      faceManager.getReference< array1d< real64 > >( m_transMultName );
+      faceManager.getExtrinsicData< extrinsicMeshData::flow::transMultiplier >();
 
     // get the face-to-nodes connectivity for the transmissibility calculation
     ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
@@ -369,7 +367,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                           [&] ( auto const mimeticInnerProduct )
       {
         using IP_TYPE = TYPEOFREF( mimeticInnerProduct );
-        KernelLaunchSelector< FluxKernel,
+        kernelLaunchSelector< FluxKernel,
                               IP_TYPE >( subRegion.numFacesPerElement(),
                                          m_numComponents, m_numPhases,
                                          er, esr, subRegion,

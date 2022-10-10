@@ -75,8 +75,6 @@ public:
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
-    static constexpr char const * transMultiplierString() { return "permeabilityTransMultiplier"; }
-
   };
 
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;

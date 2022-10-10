@@ -21,6 +21,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+#include "common/FieldSpecificationOps.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
@@ -509,7 +510,8 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
   // control data
 
   WellControls & wellControls = getWellControls( subRegion );
-
+  string const wellControlsName = wellControls.getName();
+  integer const logLevel = wellControls.getLogLevel();
   real64 const & refGravCoef = wellControls.getReferenceGravityCoef();
 
   real64 & currentBHP =
@@ -540,6 +542,13 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
       dCurrentBHP_dCompDens[ic] = dTotalMassDens_dCompDens[iwelemRef][ic] * diffGravCoef;
     }
   } );
+
+  if( logLevel >= 2 )
+  {
+    GEOSX_LOG_RANK( GEOSX_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
+                               wellControlsName, currentBHP ) );
+  }
+
 }
 
 void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubRegion & subRegion )
@@ -588,6 +597,9 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   // control data
 
   WellControls & wellControls = getWellControls( subRegion );
+  string const wellControlsName = wellControls.getName();
+  integer const logLevel = wellControls.getLogLevel();
+  string const massUnit = m_useMass ? "kg" : "mol";
 
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
   real64 const & surfacePres = wellControls.getSurfacePressure();
@@ -641,7 +653,10 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                 dCurrentPhaseVolRate_dPres,
                                 dCurrentPhaseVolRate_dCompDens,
                                 dCurrentPhaseVolRate_dRate,
-                                &iwelemRef] ( localIndex const )
+                                &iwelemRef,
+                                &logLevel,
+                                &wellControlsName,
+                                &massUnit] ( localIndex const )
     {
       using Deriv = multifluid::DerivativeOffset;
 
@@ -656,6 +671,11 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
       {
         // we need to compute the surface density
         fluidWrapper.update( iwelemRef, 0, surfacePres, surfaceTemp, compFrac[iwelemRef] );
+        if( logLevel >= 2 )
+        {
+          GEOSX_LOG_RANK( GEOSX_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
+                                     wellControlsName, surfacePres, surfaceTemp ) );
+        }
       }
       else
       {
@@ -685,6 +705,14 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
       for( integer ic = 0; ic < numComp; ++ic )
       {
         dCurrentTotalVolRate_dCompDens[ic] = currentTotalRate * dTotalDensInv_dCompDens[ic];
+      }
+
+      if( logLevel >= 2 && useSurfaceConditions )
+      {
+        GEOSX_LOG_RANK( GEOSX_FMT( "{}: The total fluid density at surface conditions is {} {}/sm3. \n"
+                                   "The total rate is {} {}/s, which corresponds to a total surface volumetric rate of {} sm3/s",
+                                   wellControlsName, totalDens[iwelemRef][0], massUnit,
+                                   currentTotalRate, massUnit, currentTotalVolRate ) );
       }
 
       // Step 3: update the phase volume rate
@@ -717,6 +745,13 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
           dCurrentPhaseVolRate_dCompDens[ip][ic] *= currentTotalRate;
         }
         applyChainRuleInPlace( numComp, dCompFrac_dCompDens[iwelemRef], dCurrentPhaseVolRate_dCompDens[ip], work.data() );
+
+        if( logLevel >= 2 && useSurfaceConditions )
+        {
+          GEOSX_LOG_RANK( GEOSX_FMT( "{}: The density of phase {} at surface conditions is {} {}/sm3. \n"
+                                     "The phase surface volumetric rate is {} sm3/s",
+                                     wellControlsName, ip, phaseDens[iwelemRef][0][ip], massUnit, currentPhaseVolRate[ip] ) );
+        }
       }
     } );
   } );
@@ -1605,6 +1640,98 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
   } );
 }
 
+void CompositionalMultiphaseWell::shutDownWell( real64 const time_n,
+                                                real64 const dt,
+                                                DomainPartition const & domain,
+                                                DofManager const & dofManager,
+                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_MARK_FUNCTION;
+
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   WellElementSubRegion const & subRegion )
+    {
+
+      // if the well is open, we don't have to do anything, so we just return
+      WellControls const & wellControls = getWellControls( subRegion );
+      if( wellControls.isWellOpen( time_n + dt ) )
+      {
+        return;
+      }
+
+      globalIndex const rankOffset = dofManager.rankOffset();
+
+      arrayView1d< integer const > const ghostRank =
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< globalIndex const > const dofNumber =
+        subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+
+      arrayView1d< real64 const > const pres =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+      arrayView2d< real64 const, compflow::USD_COMP > const compDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
+      arrayView1d< real64 const > const connRate =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::mixtureConnectionRate >();
+
+      integer const numComp = m_numComponents;
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] >= 0 )
+        {
+          return;
+        }
+
+        globalIndex const dofIndex = dofNumber[ei];
+        localIndex const localRow = dofIndex - rankOffset;
+        real64 rhsValue;
+
+        // 4.1. Apply pressure value to the matrix/rhs
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
+                                                    rankOffset,
+                                                    localMatrix,
+                                                    rhsValue,
+                                                    pres[ei], // freeze the current pressure value
+                                                    pres[ei] );
+        localRhs[localRow] = rhsValue;
+
+        // 4.2. For each component, apply target global density value
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
+                                                      rankOffset,
+                                                      localMatrix,
+                                                      rhsValue,
+                                                      compDens[ei][ic], // freeze the current component density values
+                                                      compDens[ei][ic] );
+          localRhs[localRow + ic + 1] = rhsValue;
+        }
+
+        // 4.3. Apply rate value to the matrix/rhs
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex + numComp + 1,
+                                                    rankOffset,
+                                                    localMatrix,
+                                                    rhsValue,
+                                                    connRate[ei], // freeze the current pressure value
+                                                    connRate[ei] );
+        localRhs[localRow + numComp + 1] = rhsValue;
+
+      } );
+    } );
+  } );
+}
+
 void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
                                                      real64 const & dt,
                                                      DomainPartition & domain )
@@ -1654,6 +1781,93 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
       validateWellConstraints( time_n, dt, subRegion );
 
       updateSubRegionState( subRegion );
+    } );
+  } );
+}
+
+void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
+                                                        real64 const & dt,
+                                                        DomainPartition & domain )
+{
+  WellSolverBase::implicitStepComplete( time_n, dt, domain );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   WellElementSubRegion & subRegion )
+    {
+
+      // the rank that owns the reference well element is responsible for the calculations below.
+      if( !subRegion.isLocallyOwned() )
+      {
+        return;
+      }
+
+      integer const numPhase = m_numPhases;
+      localIndex const iwelemRef = subRegion.getTopWellElementIndex();
+      string const massUnit = m_useMass ? "kg" : "mol";
+
+      // subRegion data
+
+      arrayView1d< real64 const > const & connRate =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::mixtureConnectionRate >();
+
+      // control data
+
+      WellControls const & wellControls = getWellControls( subRegion );
+      string const wellControlsName = wellControls.getName();
+
+      if( wellControls.getLogLevel() == 0 )
+      {
+        return;
+      }
+      if( !wellControls.isWellOpen( time_n + dt ) )
+      {
+        GEOSX_LOG( GEOSX_FMT( "{}: well is shut", wellControlsName ) );
+        return;
+      }
+
+      integer const useSurfaceConditions = wellControls.useSurfaceConditions();
+
+      real64 const & currentBHP =
+        wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
+      arrayView1d< real64 const > const & currentPhaseVolRate =
+        wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
+      real64 const & currentTotalVolRate =
+        wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
+
+      // bring everything back to host, capture the scalars by reference
+      forAll< serialPolicy >( 1, [&numPhase,
+                                  &useSurfaceConditions,
+                                  &currentBHP,
+                                  connRate,
+                                  &currentTotalVolRate,
+                                  currentPhaseVolRate,
+                                  &iwelemRef,
+                                  &wellControlsName,
+                                  &massUnit] ( localIndex const )
+      {
+        string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
+        string const unitKey = useSurfaceConditions ? "s" : "r";
+
+        real64 const currentTotalRate = connRate[iwelemRef];
+        GEOSX_LOG( GEOSX_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
+                              wellControlsName, currentBHP ) );
+        GEOSX_LOG( GEOSX_FMT( "{}: Total rate: {} {}/s; total {} volumetric rate: {} {}m3/s",
+                              wellControlsName, currentTotalRate, massUnit, conditionKey, currentTotalVolRate, unitKey ) );
+        for( integer ip = 0; ip < numPhase; ++ip )
+        {
+          GEOSX_LOG( GEOSX_FMT( "{}: Phase {} {} volumetric rate: {} {}m3/s",
+                                wellControlsName, ip, conditionKey, currentPhaseVolRate[ip], unitKey ) );
+        }
+
+      } );
     } );
   } );
 }

@@ -166,9 +166,6 @@ private:
   /// tolerance used in the  computation of the transmissibility matrix
   real64 m_lengthTolerance;
 
-  /// name of the transmissibility multiplier field
-  string m_transMultName;
-
   /// region filter used in flux assembly
   SortedArray< localIndex > m_regionFilter;
 
