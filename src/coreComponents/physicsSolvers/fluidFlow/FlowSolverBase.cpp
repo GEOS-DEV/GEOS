@@ -130,12 +130,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
     FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >( getName() ).
       setApplyDefaultValue( 0.0 );
-
-    faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::transMultiplierString() ).
-      setApplyDefaultValue( 1.0 ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName() ).
-      setDescription( "An array that holds the permeability transmissibility multipliers" );
+    faceManager.registerExtrinsicData< extrinsicMeshData::flow::transMultiplier >( getName() );
 
   } );
 
