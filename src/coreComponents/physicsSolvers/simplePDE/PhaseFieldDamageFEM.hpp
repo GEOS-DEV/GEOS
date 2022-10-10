@@ -117,6 +117,11 @@ public:
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs );
 
+  void applyIrreversibilityConstraint( DofManager const & dofManager,
+                                       DomainPartition & domain,
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs );
+
   enum class timeIntegrationOption
   {
     SteadyState,
@@ -130,6 +135,8 @@ public:
     static constexpr char const * coeffNameString() { return "coeffField"; }
   #endif
     static constexpr char const * localDissipationOptionString() { return "localDissipation"; }
+    static constexpr char const * irreversibilityFlagString() { return "irreversibilityFlag"; }
+    static constexpr char const * damageUpperBoundString() { return "damageUpperBound"; }
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
@@ -165,6 +172,8 @@ private:
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
   integer m_pressureEffectsFlag;
+  integer m_irreversibilityFlag;
+  real64 m_damageUpperBound;
 
 #if 0 //if this still pass the tests, we can get rid of this guy
   array1d< real64 > m_coeff; //can probably get rid of this

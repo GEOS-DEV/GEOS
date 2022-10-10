@@ -208,7 +208,8 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
   registerWrapper( viewKeyStruct::trailingFacesString(), &m_trailingFaces ).
     setDescription( "Set containing all the trailing faces" );
 
-
+  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
+    setInputFlag( InputFlags::FALSE );
 }
 
 SurfaceGenerator::~SurfaceGenerator()
@@ -607,9 +608,9 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
     modifiedObjects.clearNewFromModified();
 
     // 1) Assign new global indices to the new objects
-    CommunicationTools::getInstance().assignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
-    CommunicationTools::getInstance().assignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
-    CommunicationTools::getInstance().assignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
+    CommunicationTools::assignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
+    CommunicationTools::assignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
+    CommunicationTools::assignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
 //    CommunicationTools::getInstance().AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
 
     ModifiedObjectLists receivedObjects;

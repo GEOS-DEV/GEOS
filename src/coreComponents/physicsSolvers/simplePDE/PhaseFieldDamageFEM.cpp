@@ -71,6 +71,16 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
   registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Type of local dissipation function. Can be Linear or Quadratic" );
+
+  registerWrapper( viewKeyStruct::irreversibilityFlagString(), &m_irreversibilityFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether to apply the irreversibility constraint" );
+
+  registerWrapper( viewKeyStruct::damageUpperBoundString(), &m_damageUpperBound ).
+    setApplyDefaultValue( 1.5 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The upper bound of the damage" );
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
@@ -311,6 +321,12 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
   GEOSX_MARK_FUNCTION;
   applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 
+  // Apply the crack irreversibility constraint
+  if( m_irreversibilityFlag )
+  {
+    applyIrreversibilityConstraint( dofManager, domain, localMatrix, localRhs );
+  }
+
   if( getLogLevel() == 2 )
   {
     GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
@@ -441,6 +457,62 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
     //fsManager.applyFieldValue< serialPolicy >( time, mesh, viewKeyStruct::coeffNameString() );
   } );
 }
+
+void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dofManager,
+                                                          DomainPartition & domain,
+                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                          arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_MARK_FUNCTION;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    arrayView1d< globalIndex const > const dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( m_fieldName );
+
+    globalIndex const rankOffSet = dofManager.rankOffset();
+
+    real64 const damangeUpperBound = m_damageUpperBound;
+
+    forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const nodeIndex )
+    {
+      localIndex const dof = dofIndex[nodeIndex];
+
+      if( dof > -1 )
+      {
+        real64 const damageAtNode = nodalDamage[nodeIndex];
+
+        if( damageAtNode >= damangeUpperBound )
+        {
+
+          // Specify the contribution to rhs
+          real64 rhsContribution;
+
+          FieldSpecificationEqual::SpecifyFieldValue( dof,
+                                                      rankOffSet,
+                                                      localMatrix,
+                                                      rhsContribution,
+                                                      damangeUpperBound,
+                                                      damageAtNode );
+
+          globalIndex const localRow = dof - rankOffSet;
+
+          if( localRow >= 0 && localRow < localRhs.size() )
+          {
+            localRhs[ localRow ] = rhsContribution;
+          }
+        }
+      }
+    } );
+
+  } );
+}
+
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,
                         Group * const )

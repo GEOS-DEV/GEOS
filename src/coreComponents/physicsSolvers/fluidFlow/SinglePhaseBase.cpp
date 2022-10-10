@@ -342,17 +342,24 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       computeHydrostaticEquilibrium();
 
       // 1. update porosity, permeability, and density/viscosity
-      SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-
+      // In addition, to avoid multiplying permeability/porosity bay netToGross in the assembly kernel, we do it once and for all here
+      arrayView1d< real64 const > const netToGross = subRegion.template getExtrinsicData< extrinsicMeshData::flow::netToGross >();
+      CoupledSolidBase const & porousSolid =
+        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+      PermeabilityBase const & permeabilityModel =
+        getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
+      permeabilityModel.scaleHorizontalPermeability( netToGross );
+      porousSolid.scaleReferencePorosity( netToGross );
       updatePorosityAndPermeability( subRegion );
+
+      SingleFluidBase const & fluid =
+        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
       updateFluidState( subRegion );
 
       // 2. save the initial density (for use in the single-phase poromechanics solver to compute the deltaBodyForce)
       fluid.initializeState();
 
       // 3. save the initial/old porosity
-      CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-
       porousSolid.initializeState();
 
       // 4. initialize the rock thermal quantities: conductivity and solid internal energy
@@ -559,19 +566,23 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     // Step 4: assign pressure as a function of elevation
     // TODO: this last step should probably be delayed to wait for the creation of FaceElements
-    arrayView2d< real64 const > const elemCenter =
-      subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
+    arrayView1d< real64 > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
 
-    arrayView1d< real64 > const pres =
-      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
-
       pres[k] = presTableWrapper.compute( &elevation );
+      minPressure.min( pres[k] );
     } );
+
+    // For single phase flow, just issue a warning, because the simulation can proceed with a negative pressure
+    GEOSX_WARNING_IF( minPressure.get() <= 0.0,
+                      GEOSX_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                                 minPressure.get(), region.getName(), subRegion.getName() ) );
   } );
 }
 
@@ -896,8 +907,7 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
                                                   subRegion,
                                                   extrinsicBoundaryFieldKey );
 
-    arrayView1d< integer const > const ghostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
     arrayView1d< globalIndex const > const dofNumber =
       subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< real64 const > const bcField =
@@ -1029,8 +1039,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       }
 
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const ghostRank =
-        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       // Step 3.1: get the values of the source boundary condition that need to be added to the rhs
 

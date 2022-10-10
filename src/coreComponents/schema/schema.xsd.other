@@ -8,6 +8,11 @@
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="R1Tensor32">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="R2SymTensor">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
@@ -352,7 +357,6 @@
 	<xsd:complexType name="InternalWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Perforation" type="PerforationType" />
-			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="PerforationType" />
@@ -455,12 +459,14 @@
 			<xsd:element name="CompositionalMultiphaseHybridFVM" type="CompositionalMultiphaseHybridFVMType" />
 			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
+			<xsd:element name="ElasticSEM" type="ElasticSEMType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
 			<xsd:element name="LagrangianContact" type="LagrangianContactType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="MultiphasePoromechanics" type="MultiphasePoromechanicsType" />
+			<xsd:element name="MultiphasePoromechanicsReservoir" type="MultiphasePoromechanicsReservoirType" />
 			<xsd:element name="PhaseFieldDamageFEM" type="PhaseFieldDamageFEMType" />
 			<xsd:element name="PhaseFieldFracture" type="PhaseFieldFractureType" />
 			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
@@ -469,6 +475,7 @@
 			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
 			<xsd:element name="SinglePhasePoromechanics" type="SinglePhasePoromechanicsType" />
 			<xsd:element name="SinglePhasePoromechanicsEmbeddedFractures" type="SinglePhasePoromechanicsEmbeddedFracturesType" />
+			<xsd:element name="SinglePhasePoromechanicsReservoir" type="SinglePhasePoromechanicsReservoirType" />
 			<xsd:element name="SinglePhaseProppantFVM" type="SinglePhaseProppantFVMType" />
 			<xsd:element name="SinglePhaseReservoir" type="SinglePhaseReservoirType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType" />
@@ -491,7 +498,7 @@
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--pressureNp1AtReceivers => Pressure value at each receiver for each timestep-->
-		<xsd:attribute name="pressureNp1AtReceivers" type="real64_array2d" />
+		<xsd:attribute name="pressureNp1AtReceivers" type="real32_array2d" />
 		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
 		<xsd:attribute name="receiverConstants" type="real64_array2d" />
 		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
@@ -505,7 +512,7 @@
 		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
 		<!--sourceValue => Source Value of the sources-->
-		<xsd:attribute name="sourceValue" type="real64_array2d" />
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
 		<!--usePML => Flag to apply PML-->
 		<xsd:attribute name="usePML" type="integer" />
 	</xsd:complexType>
@@ -585,6 +592,39 @@
 			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|uninitialized" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="ElasticSEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--displacementXNp1AtReceivers => Displacement value at each receiver for each timestep (x-component)-->
+		<xsd:attribute name="displacementXNp1AtReceivers" type="real32_array2d" />
+		<!--displacementYNp1AtReceivers => Displacement value at each receiver for each timestep (y-component)-->
+		<xsd:attribute name="displacementYNp1AtReceivers" type="real32_array2d" />
+		<!--displacementZNp1AtReceivers => Displacement value at each receiver for each timestep (z-component)-->
+		<xsd:attribute name="displacementZNp1AtReceivers" type="real32_array2d" />
+		<!--indexSeismoTrace => Count for output pressure at receivers-->
+		<xsd:attribute name="indexSeismoTrace" type="integer" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
+		<xsd:attribute name="receiverIsLocal" type="integer_array" />
+		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
+		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
+		<!--sourceConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<xsd:attribute name="sourceConstants" type="real64_array2d" />
+		<!--sourceIsAccessible => Flag that indicates whether the source is accessible to this MPI rank-->
+		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
+		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
+		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
+		<!--sourceValue => Source Value of the sources-->
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
+		<!--usePML => Flag to apply PML-->
+		<xsd:attribute name="usePML" type="integer" />
+	</xsd:complexType>
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -645,6 +685,19 @@
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiphasePoromechanicsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="string" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="MultiphasePoromechanicsReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -749,6 +802,19 @@
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
+	<xsd:complexType name="SinglePhasePoromechanicsReservoirType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="string" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_pair&lt;string, string&gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseProppantFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -832,6 +898,8 @@
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
 		</xsd:choice>
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="string" />
 		<!--failCriterion => (no description available)-->
 		<xsd:attribute name="failCriterion" type="integer" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
@@ -967,15 +1035,15 @@
 	<xsd:complexType name="BiotPorosityType">
 		<!--biotCoefficient => Biot coefficient.-->
 		<xsd:attribute name="biotCoefficient" type="real64_array" />
-		<!--dPorosity_dPressure => (no description available)-->
+		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
-		<!--initialPorosity => (no description available)-->
+		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
-		<!--porosity => (no description available)-->
+		<!--porosity => Rock porosity-->
 		<xsd:attribute name="porosity" type="real64_array2d" />
-		<!--porosity_n => (no description available)-->
+		<!--porosity_n => Rock porosity at the previous converged time step-->
 		<xsd:attribute name="porosity_n" type="real64_array2d" />
-		<!--referencePorosity => (no description available)-->
+		<!--referencePorosity => Reference porosity-->
 		<xsd:attribute name="referencePorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
@@ -1045,6 +1113,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
+		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
@@ -1069,6 +1139,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
+		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase relative permeability, defined as: one minus the sum of the phase minimum volume fractions.-->
@@ -1375,6 +1447,8 @@
 		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--extDrivingForce => External Driving Force-->
+		<xsd:attribute name="extDrivingForce" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--shearModulus => Elastic Shear Modulus Field-->
@@ -1391,6 +1465,8 @@
 		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--extDrivingForce => External Driving Force-->
+		<xsd:attribute name="extDrivingForce" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--shearModulus => Elastic Shear Modulus Field-->
@@ -1407,6 +1483,8 @@
 		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--extDrivingForce => External Driving Force-->
+		<xsd:attribute name="extDrivingForce" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--shearModulus => Elastic Shear Modulus Field-->
@@ -1710,15 +1788,15 @@
 	<xsd:complexType name="PorousExtendedDruckerPragerType" />
 	<xsd:complexType name="PorousModifiedCamClayType" />
 	<xsd:complexType name="PressurePorosityType">
-		<!--dPorosity_dPressure => (no description available)-->
+		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
-		<!--initialPorosity => (no description available)-->
+		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
-		<!--porosity => (no description available)-->
+		<!--porosity => Rock porosity-->
 		<xsd:attribute name="porosity" type="real64_array2d" />
-		<!--porosity_n => (no description available)-->
+		<!--porosity_n => Rock porosity at the previous converged time step-->
 		<xsd:attribute name="porosity_n" type="real64_array2d" />
-		<!--referencePorosity => (no description available)-->
+		<!--referencePorosity => Reference porosity-->
 		<xsd:attribute name="referencePorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantPermeabilityType">
@@ -1734,15 +1812,15 @@
 		<xsd:attribute name="proppantPackPermeability" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantPorosityType">
-		<!--dPorosity_dPressure => (no description available)-->
+		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
-		<!--initialPorosity => (no description available)-->
+		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
-		<!--porosity => (no description available)-->
+		<!--porosity => Rock porosity-->
 		<xsd:attribute name="porosity" type="real64_array2d" />
-		<!--porosity_n => (no description available)-->
+		<!--porosity_n => Rock porosity at the previous converged time step-->
 		<xsd:attribute name="porosity_n" type="real64_array2d" />
-		<!--referencePorosity => (no description available)-->
+		<!--referencePorosity => Reference porosity-->
 		<xsd:attribute name="referencePorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantSlurryFluidType">
@@ -1845,6 +1923,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
+		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--relPermWrappers => (no description available)-->
@@ -1881,6 +1961,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
+		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 	</xsd:complexType>
@@ -1923,6 +2005,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
+		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
@@ -1943,7 +2027,6 @@
 	<xsd:complexType name="MeshBodiesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
-			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
 			<xsd:element name="PAMELAMesh" type="PAMELAMeshType" />
 			<xsd:element name="VTKMesh" type="VTKMeshType" />
@@ -2147,7 +2230,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="elementSubRegionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="WellElementRegionuniqueSubRegion" type="WellElementRegionuniqueSubRegionType" />
+			<xsd:element name="WellElementRegionUniqueSubRegion" type="WellElementRegionUniqueSubRegionType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceElementRegionType">
@@ -2188,7 +2271,7 @@
 		<!--wellGeneratorName => (no description available)-->
 		<xsd:attribute name="wellGeneratorName" type="string" />
 	</xsd:complexType>
-	<xsd:complexType name="WellElementRegionuniqueSubRegionType">
+	<xsd:complexType name="WellElementRegionUniqueSubRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="ConstitutiveModels" type="ConstitutiveModelsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
