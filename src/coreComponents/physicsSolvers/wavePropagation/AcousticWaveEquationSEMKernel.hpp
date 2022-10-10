@@ -26,10 +26,6 @@ template< typename >
 struct is_sem_formulation : std::false_type {};
 template< typename T >
 struct is_sem_formulation< geosx::finiteElement::Qk_Hexahedron_Lagrange_GaussLobatto< T > > : std::true_type {};
-template< typename >
-struct is_not_sem_formulation : std::true_type {};
-template< typename T >
-struct is_not_sem_formulation< geosx::finiteElement::Qk_Hexahedron_Lagrange_GaussLobatto< T > > : std::false_type {};
 
 namespace geosx
 {
@@ -876,12 +872,45 @@ public:
    * @param dt The time interval for the step.
    *   elements to be processed during this kernel launch.
    */
+  template< typename _FE_TYPE = FE_TYPE >
   ExplicitAcousticSEM( NodeManager & nodeManager,
                        EdgeManager const & edgeManager,
                        FaceManager const & faceManager,
                        localIndex const targetRegionIndex,
                        SUBREGION_TYPE const & elementSubRegion,
-                       FE_TYPE const & finiteElementSpace,
+                       std::enable_if_t< is_sem_formulation< _FE_TYPE>::value, _FE_TYPE > const & finiteElementSpace,
+                       CONSTITUTIVE_TYPE & inputConstitutiveType,
+                       real64 const dt ):
+    Base( elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType ),
+    m_X( nodeManager.referencePosition() ),
+    m_p_n( nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >() ),
+    m_stiffnessVector( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >() ),
+    m_dt( dt )
+  {
+    GEOSX_UNUSED_VAR( edgeManager );
+    GEOSX_UNUSED_VAR( faceManager );
+    GEOSX_UNUSED_VAR( targetRegionIndex );
+  }
+
+  /**
+   * @brief Constructor
+   * @copydoc geosx::finiteElement::KernelBase::KernelBase
+   * @param nodeManager Reference to the NodeManager object.
+   * @param edgeManager Reference to the EdgeManager object.
+   * @param faceManager Reference to the FaceManager object.
+   * @param targetRegionIndex Index of the region the subregion belongs to.
+   * @param dt The time interval for the step.
+   *   elements to be processed during this kernel launch.
+   */
+  template< typename _FE_TYPE = FE_TYPE >
+  ExplicitAcousticSEM( NodeManager & nodeManager,
+                       EdgeManager const & edgeManager,
+                       FaceManager const & faceManager,
+                       localIndex const targetRegionIndex,
+                       SUBREGION_TYPE const & elementSubRegion,
+                       std::enable_if_t< !is_sem_formulation< _FE_TYPE>::value, _FE_TYPE > const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                        real64 const dt ):
     Base( elementSubRegion,
@@ -896,38 +925,6 @@ public:
     GEOSX_UNUSED_VAR( faceManager );
     GEOSX_UNUSED_VAR( targetRegionIndex );
     GEOSX_THROW( "Invalid type of formulation, the acoustic solver is designed for the SEM formulation", InputError );
-  }
-
-  /**
-   * @brief Constructor
-   * @copydoc geosx::finiteElement::KernelBase::KernelBase
-   * @param nodeManager Reference to the NodeManager object.
-   * @param edgeManager Reference to the EdgeManager object.
-   * @param faceManager Reference to the FaceManager object.
-   * @param targetRegionIndex Index of the region the subregion belongs to.
-   * @param dt The time interval for the step.
-   *   elements to be processed during this kernel launch.
-   */
-  template< typename = std::enable_if< is_sem_formulation< FE_TYPE >::value > >
-  ExplicitAcousticSEM( NodeManager & nodeManager,
-                       EdgeManager const & edgeManager,
-                       FaceManager const & faceManager,
-                       localIndex const targetRegionIndex,
-                       SUBREGION_TYPE const & elementSubRegion,
-                       FE_TYPE const & finiteElementSpace,
-                       CONSTITUTIVE_TYPE & inputConstitutiveType,
-                       real64 const dt ):
-    Base( elementSubRegion,
-          finiteElementSpace,
-          inputConstitutiveType ),
-    m_X( nodeManager.referencePosition() ),
-    m_p_n( nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >() ),
-    m_stiffnessVector( nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >() ),
-    m_dt( dt )
-  {
-    GEOSX_UNUSED_VAR( edgeManager );
-    GEOSX_UNUSED_VAR( faceManager );
-    GEOSX_UNUSED_VAR( targetRegionIndex );
   }
 
 
@@ -981,26 +978,11 @@ public:
    * Calculates stiffness vector
    *
    */
+  template< typename U = void> 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointKernel( localIndex const k,
-                              localIndex const q,
-                              StackVariables & stack ) const
-  {
-    // do nothing -- not valid for other formulations
-  }
-
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
-   *
-   * ### ExplicitAcousticSEM Description
-   * Calculates stiffness vector
-   *
-   */
-  template< typename = std::enable_if< is_sem_formulation< FE_TYPE >::value > >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointKernel( localIndex const k,
+  std::enable_if_t< is_sem_formulation< FE_TYPE >::value, U > 
+  quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
   {
@@ -1009,6 +991,23 @@ public:
         real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
       } );
+  }
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+   *
+   * ### ExplicitAcousticSEM Description
+   * Calculates stiffness vector
+   *
+   */
+  template< typename U = void> 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  std::enable_if_t< !is_sem_formulation< FE_TYPE >::value, U > 
+  quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
+  {
+    // do nothing: not implemented for other formulations
   }
 
 protected:

@@ -44,9 +44,6 @@ public:
   /// sqrt(5)
   constexpr static real64 sqrt5 = 2.2360679774997897;
 
-  // The quadrature weights associated to the support points
-  constexpr static real64 weights[4] = { 1.0/6.0, 5.0/6.0, 5.0/6.0, 1.0/6.0 };
-  
   /**
    * @brief The value of the weight for the given support point
    * @param q The index of the support point
@@ -56,7 +53,14 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 weight( const int q )
   {
-    return weights[q];
+    switch( q )
+    {
+      case 1:
+      case 2:
+        return 5.0/6.0;
+      default:
+        return 1.0/6.0;
+    } 
   }
 
   /**

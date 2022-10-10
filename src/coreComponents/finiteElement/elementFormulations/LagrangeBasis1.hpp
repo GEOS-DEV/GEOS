@@ -41,9 +41,6 @@ public:
   /// The number of support points for the basis
   constexpr static localIndex numSupportPoints = 2;
 
-  // The quadrature weights associated to the support points
-  constexpr static real64 weights[2] = { 1.0, 1.0 };
-
   /**
    * @brief The value of the weight for the given support point
    * @param q The index of the support point
@@ -53,7 +50,7 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 weight( const int q )
   {
-    return weights[q];
+    return 1.0;
   }
 
   /**

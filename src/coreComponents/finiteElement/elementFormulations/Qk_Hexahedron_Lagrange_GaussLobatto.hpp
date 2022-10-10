@@ -41,14 +41,17 @@ template< typename GL_BASIS >
 class Qk_Hexahedron_Lagrange_GaussLobatto final : public FiniteElementBase
 {
 public:
+  /// The number of nodes/support points per element per dimension.
+  constexpr static localIndex num1dNodes = GL_BASIS::numSupportPoints;
+
   /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = GL_BASIS::TensorProduct3D::numSupportPoints;
+  constexpr static localIndex numNodes = num1dNodes*num1dNodes*num1dNodes;
 
   /// The maximum number of support points per element.
   constexpr static localIndex maxSupportPoints = numNodes;
 
   /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = numNodes*numNodes*numNodes;
+  constexpr static localIndex numQuadraturePoints = numNodes;
   
   /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
@@ -393,11 +396,11 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( int const qa,
                               GL_BASIS::parentSupportCoord( qb ),
                               GL_BASIS::parentSupportCoord( qc ) };
 
-  for( int c=0; c<numNodes; ++c )
+  for( int c=0; c<num1dNodes; ++c )
   {
-    for( int b=0; b<numNodes; ++b )
+    for( int b=0; b<num1dNodes; ++b )
     {
-      for( int a=0; a<numNodes; ++a )
+      for( int a=0; a<num1dNodes; ++a )
       {
         real64 const dNdXi[3] = { GL_BASIS::gradient( a, qCoords[0] )*
                                   GL_BASIS::value( b, qCoords[1] )*
@@ -427,7 +430,6 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
                                                 real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
-
 
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -552,9 +554,9 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
   computeBMatrix( qa, qb, qc, X, J, B );
   // diagonal terms
-  for(int i=0; i<numNodes; i++ )
+  for(int i=0; i<num1dNodes; i++ )
   {
-    for( int j=0; j<numNodes; j++ )
+    for( int j=0; j<num1dNodes; j++ )
     {
       func( GL_BASIS::TensorProduct3D::linearIndex( i,qb,qc ),
             GL_BASIS::TensorProduct3D::linearIndex( j,qb,qc ),
@@ -563,9 +565,9 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
             GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qa ) ) );
     }
   }
-  for(int i=0; i<numNodes; i++ )
+  for(int i=0; i<num1dNodes; i++ )
   {
-    for( int j=0; j<numNodes; j++ )
+    for( int j=0; j<num1dNodes; j++ )
     {
       func( GL_BASIS::TensorProduct3D::linearIndex( qa,i,qc ),
             GL_BASIS::TensorProduct3D::linearIndex( qa,j,qc ),
@@ -574,9 +576,9 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
             GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ) );
     }
   }
-  for(int i=0; i<numNodes; i++ )
+  for(int i=0; i<num1dNodes; i++ )
   {
-    for( int j=0; j<numNodes; j++ )
+    for( int j=0; j<num1dNodes; j++ )
     {
       func( GL_BASIS::TensorProduct3D::linearIndex( qa,qb,i ),
             GL_BASIS::TensorProduct3D::linearIndex( qa,qb,j ),
@@ -586,9 +588,9 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
     }
   }
   // off-diagonal terms
-  for(int i=0; i<numNodes; i++ )
+  for(int i=0; i<num1dNodes; i++ )
   {
-    for( int j=0; j<numNodes; j++ )
+    for( int j=0; j<num1dNodes; j++ )
     {
       int ii = GL_BASIS::TensorProduct3D::linearIndex( qa,i,qc ); 
       int jj = GL_BASIS::TensorProduct3D::linearIndex( qa,qb,j );
@@ -599,9 +601,9 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
       func( jj,ii,val );      
     }
   }
-  for(int i=0; i<numNodes; i++ )
+  for(int i=0; i<num1dNodes; i++ )
   {
-    for( int j=0; j<numNodes; j++ )
+    for( int j=0; j<num1dNodes; j++ )
     {
       int ii = GL_BASIS::TensorProduct3D::linearIndex( i,qb,qc ); 
       int jj = GL_BASIS::TensorProduct3D::linearIndex( qa,qb,j );
@@ -612,9 +614,9 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
       func( jj,ii,val );      
     }
   }
-  for(int i=0; i<numNodes; i++ )
+  for(int i=0; i<num1dNodes; i++ )
   {
-    for( int j=0; j<numNodes; j++ )
+    for( int j=0; j<num1dNodes; j++ )
     {
       int ii = GL_BASIS::TensorProduct3D::linearIndex( i,qb,qc ); 
       int jj = GL_BASIS::TensorProduct3D::linearIndex( qa,j,qc );

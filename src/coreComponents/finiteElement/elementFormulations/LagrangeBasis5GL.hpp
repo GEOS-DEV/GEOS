@@ -39,6 +39,8 @@ class LagrangeBasis5GL
 {
 public:
 
+  /// The number of support points for the basis
+  constexpr static localIndex numSupportPoints = 6;
 
   /// sqrt(7)
   static constexpr real64 sqrt_7_ = 2.64575131106459059;
@@ -58,10 +60,6 @@ public:
   /// sqrt(1/21)
   static constexpr real64 sqrt_inv21 = 0.218217890235992381;
 
-  // The quadrature weights associated to the support points
-  constexpr static real64 weights[6] = { 1.0/15.0, (1.0/30.0)*(14.0-sqrt_7_), (1.0/30.0)*(14.0+sqrt_7_),
-                                         (1.0/30.0)*(14.0+sqrt_7_), (1.0/30.0)*(14.0-sqrt_7_), 1.0/15.0 };
-
   /**
    * @brief The value of the weight for the given support point
    * @param q The index of the support point
@@ -71,7 +69,17 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 weight( const int q )
   {
-    return weights[q];
+    switch( q )
+    {
+      case 1:
+      case 4:
+        return (1.0/30.0)*(14.0-sqrt_7_);
+      case 2:
+      case 3:
+        return (1.0/30.0)*(14.0+sqrt_7_);
+      default:
+        return 1.0/15.0;
+    }
   }
 
   /**
