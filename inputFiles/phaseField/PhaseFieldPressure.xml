@@ -174,7 +174,7 @@
 
     <FieldSpecification
       name="pointSource"
-      fieldName="Damage"
+      fieldName="damage"
       objectPath="nodeManager"
       scale="1.0"
       setNames="{ centerPoint }"/>
@@ -204,10 +204,15 @@
   </Outputs>
 
   <Geometry>
-    <Box
+    <!-- <Box
       name="centerPoint"
       xMin="{ -0.001, -0.001, -1.001 }"
-      xMax="{ +0.001, +0.001, +1.001 }"/>
+      xMax="{ +0.001, +0.001, +1.001 }"/> -->
+
+    <Box
+      name="centerPoint"
+      xMin="{ -0.3, -0.3, -1.001 }"
+      xMax="{ +0.3, +0.3, +1.001 }"/>   
 
     <Box
       name="corner"
