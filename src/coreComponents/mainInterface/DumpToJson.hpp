@@ -1,15 +1,15 @@
-/*	
- * ------------------------------------------------------------------------------------------------------------	
- * SPDX-License-Identifier: LGPL-2.1-only	
- *	
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC	
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University	
- * Copyright (c) 2018-2020 Total, S.A	
- * Copyright (c) 2020-     GEOSX Contributors	
- * All right reserved	
- *	
- * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.	
- * ------------------------------------------------------------------------------------------------------------	
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2020-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #ifndef GEOSX_DUMPTOJSON_HPP
@@ -46,7 +46,7 @@ std::vector< std::vector< real64 > > convert( array2d< real64, nodes::REFERENCE_
 {
   std::vector< std::vector< real64 > > result;
 
-  for( localIndex i = 0; i < v.size(0); ++i )
+  for( localIndex i = 0; i < v.size( 0 ); ++i )
   {
     auto const & vv = v[i];
     std::vector< real64 > tmp;
@@ -64,7 +64,7 @@ std::vector< std::vector< localIndex > > convert( array2d< localIndex, cells::NO
 {
   std::vector< std::vector< localIndex > > result;
 
-  for( localIndex i = 0; i < v.size(0); ++i )
+  for( localIndex i = 0; i < v.size( 0 ); ++i )
   {
     auto const & vv = v[i];
     std::vector< localIndex > tmp;
@@ -145,7 +145,7 @@ void to_json( json & j,
   }
 
   auto const & cbs = cbm.getCellBlocks();
-  for (localIndex i = 0; i < cbs.numSubGroups(); ++i)
+  for( localIndex i = 0; i < cbs.numSubGroups(); ++i )
   {
     j["cell_blocks"].push_back( cbs.getGroup< CellBlockABC >( i ) );
   }

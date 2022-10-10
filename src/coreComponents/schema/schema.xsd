@@ -1362,6 +1362,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="VTKMeshType">
+		<!--faceBlocks => Names of the VTK faces to import-->
+		<xsd:attribute name="faceBlocks" type="string_array" default="{}" />
 		<!--fieldNamesInGEOSX => Names of fields in GEOSX to import into-->
 		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="{}" />
 		<!--fieldsToImport => Fields to be imported from the external mesh file-->

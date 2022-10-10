@@ -1068,16 +1068,36 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
-    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
-                                                                  ElementSubRegionBase & subRegion )
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames,
+                                                                                                 [&]( localIndex const,
+                                                                                                      auto & subRegion )
     {
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
       fluid.setMassFlag( m_useMass );
+
+      CoupledSolidBase const & porousSolid =
+        getConstitutiveModel< CoupledSolidBase >( subRegion,
+                                                  subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+
+      updatePorosityAndPermeability( subRegion );
+
+      porousSolid.initializeState();
     } );
 
     // Initialize primary variables from applied initial conditions
     initializeFluidState( mesh, regionNames );
+
+    mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                     [&]( localIndex const,
+                                                                          SurfaceElementRegion & region )
+    {
+      region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+      {
+        subRegion.getWrapper< real64_array >( extrinsicMeshData::flow::hydraulicAperture::key() ).
+          setApplyDefaultValue( region.getDefaultAperture() );
+      } );
+    } );
 
   } );
 }

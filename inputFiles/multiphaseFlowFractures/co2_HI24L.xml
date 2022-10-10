@@ -1,0 +1,262 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <CompositionalMultiphaseFVM
+      name="compflow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      temperature="300"
+      useMass="0"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
+      maxCompFractionChange="1"
+      maxRelativePressureChange="1"
+      targetRegions="{ Domain, Faults }"
+      initialDt="10">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-2"
+        newtonMaxIter="15"
+        maxTimeStepCuts="2"
+        lineSearchMaxCuts="2"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        directParallel="0"
+        logLevel="0"/>
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh1"
+      file="../singlePhaseFlow/tmp/hi24l-coarse-fracture-duplicated-nodes-field-data.vtu"
+      useGlobalIds="1"
+      faceBlocks="{ fracture_info }"/>
+  </Mesh>
+
+  <Geometry>
+      <Box
+        name="source"
+        xMin="{ 0,        3273500, -3000 }"
+        xMax="{ 10000000, 3278000, -1000 }"/>
+
+      <Box
+        name="production"
+        xMin="{ 0,        3267200, -3000 }"
+        xMax="{ 10000000, 3267500, -1000 }"/>  
+
+      <Box
+        name="well1"
+        xMin="{ 388500, 3273000, -1700 }"
+        xMax="{ 389000, 3273500, -1200 }"/>
+        
+      <Box 
+        name="well2"
+        xMin="{ 388500, 3267200, -2000 }"
+        xMax="{ 389000, 3267500, -1200 }"/>
+
+      <Box
+        name="well3"
+        xMin="{ 392600, 3273000, -1700 }"
+        xMax="{ 393000, 3273500, -1200 }"/>  
+
+      <Box
+        name="well4"
+        xMin="{ 392600, 3267200, -2000 }"
+        xMax="{ 393000, 3267500, -1200 }"/>     
+  </Geometry>
+
+  <Events
+    maxTime="10e6"
+    logLevel="1">
+    <SoloEvent 
+    name="initialState"
+    target="/Outputs/vtkOutput">
+    </SoloEvent>
+    
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="0"
+      target="/Solvers/compflow"/>
+
+    <PeriodicEvent
+      name="outputs"
+      cycleFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ 0_tetrahedra }"
+      materialList="{ fluid, rock, relperm }"/>
+
+    <SurfaceElementRegion
+      name="Faults"
+      defaultAperture="1.0e-3"
+      subRegionType="faceElement"
+      faceBlock="fracture_info"
+      materialList="{ fluid, relperm, fractureFilling }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CO2BrinePhillipsFluid
+      name="fluid"
+      phaseNames="{ gas, water }"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
+      flashModelParaFile="co2flash.txt"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+
+    <TableRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable,
+                                            gasRelativePermeabilityTable }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <!-- Initial pressure: ~5 bar -->
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="5e6"/>
+
+    <!-- Initial composition -->
+    <FieldSpecification
+      name="initialComposition_gas"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.04"/>
+
+    <FieldSpecification
+      name="initialComposition_water"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.96"/>  
+
+    <!-- Injection pressure: ~10 bar -->
+    <FieldSpecification
+      name="sourceTermPressure"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="1e7"
+      setNames="{ source }"/>
+
+    <!-- Injection stream: mostly co2 -->
+    <FieldSpecification
+      name="sourceTermComposition_gas"
+      setNames="{ source }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.96"/>
+
+    <FieldSpecification
+      name="sourceTermComposition_water"
+      setNames="{ source }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.04"/>
+
+    <!-- Production pressure: ~2 bar, -->
+    <FieldSpecification
+     name="wellTerm2_p"
+     objectPath="ElementRegions"
+     fieldName="pressure"
+     scale="1e6"
+     setNames="{ production }"/>
+    
+    <!-- Production composition: same as initial (does not matter due to upwind) -->
+    <FieldSpecification
+     name="wellTerm2_gas"
+     objectPath="ElementRegions"
+     fieldName="globalCompFraction"
+     scale="0.04"
+     component="0"
+     setNames="{ production }"/>
+
+    <FieldSpecification
+     name="wellTerm2_water"
+     objectPath="ElementRegions"
+     fieldName="globalCompFraction"
+     scale="0.96"
+     component="1"
+     setNames="{ production }"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="waterRelativePermeabilityTable"
+      coordinateFiles="{ phaseVolFraction_water.txt }"
+      voxelFile="relPerm_water.txt"/>
+
+    <TableFunction
+      name="gasRelativePermeabilityTable"
+      coordinateFiles="{ phaseVolFraction_gas.txt }"
+      voxelFile="relPerm_gas.txt"/>       
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="hi24l_co2"
+      onlyPlotSpecifiedFieldNames="1"
+      fieldNames="{pressure, phaseVolumeFraction, globalCompFraction, rockPerm_permeability, fracturePerm_permeability}"
+      plotLevel="1"/>
+  </Outputs>
+</Problem>
