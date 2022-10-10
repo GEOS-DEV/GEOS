@@ -1628,7 +1628,7 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
 
   if( nodeManager.hasExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() )
   {
-    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & totalDisplacement =
+    extrinsicMeshData::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const & totalDisplacement =
       nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
     for( localIndex a = 0; a < numNodes; ++a )
     {

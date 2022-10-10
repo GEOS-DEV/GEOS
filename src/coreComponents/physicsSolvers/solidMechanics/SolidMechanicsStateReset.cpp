@@ -27,6 +27,7 @@ namespace geosx
 
 using namespace constitutive;
 using namespace dataRepository;
+using namespace extrinsicMeshData;
 
 SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
                                                     Group * const parent ):
@@ -85,17 +86,9 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
 
       NodeManager & nodeManager = mesh.getNodeManager();
 
-      arrayView2d< real64, nodes::VELOCITY_USD > const velocity =
-        nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >();
-      arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const totalDisplacement =
-        nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
-      arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & incrementalDisplacement =
-        nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::incrementalDisplacement >();
-
-      velocity.zero();
-      totalDisplacement.zero();
-      incrementalDisplacement.zero();
-
+      nodeManager.getExtrinsicData< solidMechanics::velocity >().zero();
+      nodeManager.getExtrinsicData< solidMechanics::totalDisplacement >().zero();
+      nodeManager.getExtrinsicData< solidMechanics::incrementalDisplacement >().zero();
     }
 
     // Option 2: enable / disable inelastic behavior

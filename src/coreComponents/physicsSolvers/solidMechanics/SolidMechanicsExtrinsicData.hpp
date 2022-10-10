@@ -13,7 +13,7 @@
  */
 
 /**
- * @file FlowSolverBaseExtrinsicData.hpp
+ * @file SolidMechanicsExtrinsicData.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEXTRINSICDATA_HPP_
@@ -34,9 +34,21 @@ namespace solidMechanics
 {
 
 using array2dLayoutTotalDisplacement = array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM >;
-using array2dLayoutIncrementalDisplacement = array2d< real64, nodes::INCR_DISPLACEMENT_PERM >;
+using arrayView2dLayoutTotalDisplacement = arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD >;
+using arrayViewConst2dLayoutTotalDisplacement = arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD >;
+
+using array2dLayoutIncrDisplacement = array2d< real64, nodes::INCR_DISPLACEMENT_PERM >;
+using arrayView2dLayoutIncrDisplacement = arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD >;
+using arrayViewConst2dLayoutIncrDisplacement = arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD >;
+
 using array2dLayoutVelocity = array2d< real64, nodes::VELOCITY_PERM >;
+using arrayView2dLayoutVelocity = arrayView2d< real64, nodes::VELOCITY_USD >;
+using arrayViewConst2dLayoutVelocity = arrayView2d< real64 const, nodes::VELOCITY_USD >;
+
 using array2dLayoutAcceleration = array2d< real64, nodes::ACCELERATION_PERM >;
+using arrayView2dLayoutAcceleration = arrayView2d< real64, nodes::ACCELERATION_USD >;
+using arrayViewConst2dLayoutAcceleration = arrayView2d< real64 const, nodes::ACCELERATION_USD >;
+
 
 EXTRINSIC_MESH_DATA_TRAIT( totalDisplacement,
                            "totalDisplacement",
@@ -48,7 +60,7 @@ EXTRINSIC_MESH_DATA_TRAIT( totalDisplacement,
 
 EXTRINSIC_MESH_DATA_TRAIT( incrementalDisplacement,
                            "incrementalDisplacement",
-                           array2dLayoutIncrementalDisplacement,
+                           array2dLayoutIncrDisplacement,
                            0,
                            LEVEL_3,
                            WRITE_AND_READ,

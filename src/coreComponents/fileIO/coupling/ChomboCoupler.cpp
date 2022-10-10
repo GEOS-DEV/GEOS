@@ -18,6 +18,7 @@
 #include "mesh/FaceManager.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
+#include "physicsSolvers/surfaceGeneration/SurfaceGeneratorExtrinsicData.hpp"
 
 #include <cstdint>
 #include <tuple>
@@ -63,7 +64,8 @@ void ChomboCoupler::write( double dt )
     }
   }
 
-  arrayView1d< integer const > const & ruptureState = faces.getExtrinsicData< extrinsicMeshData::RuptureState >();
+  arrayView1d< integer const > const & ruptureState =
+    faces.getExtrinsicData< extrinsicMeshData::surfaceGeneration::ruptureState >();
   arrayView1d< integer const > const & ghostRank = faces.ghostRank();
 
   localIndex voidRegionIndex = -1;
@@ -81,7 +83,6 @@ void ChomboCoupler::write( double dt )
   {
     bool isVoid = (faceToElementRegionIndex[i][0] == voidRegionIndex) ||
                   (faceToElementRegionIndex[i][1] == voidRegionIndex);
-    //std::cout<<"face "<<i<<" is attached to a void cell"<<std::endl;
     faceMask[i] = (ruptureState[i] > 1) && (ghostRank[i] < 0) && (!isVoid);
   }
 
@@ -160,9 +161,9 @@ void ChomboCoupler::copyNodalData()
   NodeManager const & nodes = m_mesh.getNodeManager();
   localIndex const numNodes = nodes.size();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePos = nodes.referencePosition();
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement =
+  extrinsicMeshData::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const & displacement =
     nodes.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & velocity =
+  extrinsicMeshData::solidMechanics::arrayViewConst2dLayoutVelocity const & velocity =
     nodes.getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >();
 
   GEOSX_ERROR_IF_NE( referencePos.size( 0 ), numNodes );

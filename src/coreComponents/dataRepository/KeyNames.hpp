@@ -31,9 +31,6 @@ namespace keys
 /// @cond DO_NOT_DOCUMENT
 
 static constexpr auto ProblemManager = "Problem";
-static constexpr auto ConstitutiveManager = "Constitutive";
-static constexpr auto schema = "schema";
-static constexpr auto domain  = "domain";
 static constexpr auto cellManager = "cellManager";
 
 /// @endcond
