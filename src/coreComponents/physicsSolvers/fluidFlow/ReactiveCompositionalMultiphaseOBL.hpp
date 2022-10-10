@@ -300,7 +300,7 @@ public:
    *    In that case, the solution will be chopped all the time and Newton will never converge
    * @param domain the physical domain object
    */
-  void chopPrimaryVariablesToOBLLimits( DomainPartition & domain );
+  void chopPrimaryVariables( DomainPartition & domain );
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
