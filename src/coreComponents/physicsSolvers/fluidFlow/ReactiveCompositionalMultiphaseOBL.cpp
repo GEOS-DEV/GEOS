@@ -518,7 +518,7 @@ void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const &
 
   if( m_allowOBLChopping )
   {
-    chopPrimaryVariablesToOBLLimits( domain );
+    chopPrimaryVariables( domain );
   }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -1220,8 +1220,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
   } );
 }
 
-// to be changed into enforceOBLLimits - to chop all primary variables to be within OBL discretization space
-void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariablesToOBLLimits( DomainPartition & domain )
+void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariables( DomainPartition & domain )
 {
   real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
   integer const numComp = m_numComponents;
@@ -1240,6 +1239,8 @@ void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariablesToOBLLimits( Domain
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
         bool isScalingRequired = false;
+
+        // the following code implements the DARTS local chopping of component fractions
 
         // Step 1: chop the component fractions between 0 and 1
         real64 sum = 0.0;
