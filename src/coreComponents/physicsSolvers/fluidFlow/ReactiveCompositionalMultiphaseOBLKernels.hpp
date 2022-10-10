@@ -36,7 +36,7 @@
 namespace geosx
 {
 
-namespace ReactiveCompositionalMultiphaseOBLKernels
+namespace reactiveCompositionalMultiphaseOBLKernels
 {
 
 using namespace constitutive;
