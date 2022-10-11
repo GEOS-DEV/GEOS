@@ -202,10 +202,10 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
     operators[op] = std::to_string( op );
   }
 
-  solver.forMeshTargets( domain.getMeshBodies(),
-                         [&]( string const,
-                              MeshLevel & mesh,
-                              arrayView1d< string const > const & regionNames )
+  solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                         [&]( string const,
+                                              MeshLevel & mesh,
+                                              arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -344,10 +344,10 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
 
   string const dofKey = dofManager.getKey( ReactiveCompositionalMultiphaseOBL::viewKeyStruct::elemDofFieldString() );
 
-  solver.forMeshTargets ( domain.getMeshBodies(),
-                          [&]( string const,
-                               MeshLevel & mesh,
-                               arrayView1d< string const > const & regionNames )
+  solver.forDiscretizationOnMeshTargets ( domain.getMeshBodies(),
+                                          [&]( string const,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -385,10 +385,10 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
           pres.move( LvArray::MemorySpace::cuda, false );
 #endif
 
-          solver.forMeshTargets( domain.getMeshBodies(),
-                                 [&]( string const,
-                                      MeshLevel & mesh2,
-                                      arrayView1d< string const > const & regionNames2 )
+          solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                                 [&]( string const,
+                                                      MeshLevel & mesh2,
+                                                      arrayView1d< string const > const & regionNames2 )
           {
             ElementRegionManager & elementRegionManager2 = mesh2.getElemManager();
             elementRegionManager2.forElementSubRegions( regionNames2,
@@ -421,10 +421,10 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
 #endif
 
 
-          solver.forMeshTargets( domain.getMeshBodies(),
-                                 [&]( string const,
-                                      MeshLevel & mesh2,
-                                      arrayView1d< string const > const & regionNames2 )
+          solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                                 [&]( string const,
+                                                      MeshLevel & mesh2,
+                                                      arrayView1d< string const > const & regionNames2 )
           {
             ElementRegionManager & elementRegionManager2 = mesh2.getElemManager();
             elementRegionManager2.forElementSubRegions( regionNames2,

@@ -169,6 +169,13 @@ Element: CompositionalMultiphaseReservoir
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir.rst
 
 
+.. _XML_CompositionalMultiphaseStatistics:
+
+Element: CompositionalMultiphaseStatistics
+==========================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseStatistics.rst
+
+
 .. _XML_CompositionalMultiphaseWell:
 
 Element: CompositionalMultiphaseWell
@@ -540,6 +547,13 @@ Element: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
 
 
+.. _XML_MultiphasePoromechanicsReservoir:
+
+Element: MultiphasePoromechanicsReservoir
+=========================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsReservoir.rst
+
+
 .. _XML_MultivariableTableFunction:
 
 Element: MultivariableTableFunction
@@ -580,6 +594,13 @@ Element: Outputs
 Element: PAMELAMesh
 ===================
 .. include:: ../../coreComponents/schema/docs/PAMELAMesh.rst
+
+
+.. _XML_PML:
+
+Element: PML
+============
+.. include:: ../../coreComponents/schema/docs/PML.rst
 
 
 .. _XML_PVTDriver:
@@ -827,6 +848,13 @@ Element: SinglePhasePoromechanicsEmbeddedFractures
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures.rst
 
 
+.. _XML_SinglePhasePoromechanicsReservoir:
+
+Element: SinglePhasePoromechanicsReservoir
+==========================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsReservoir.rst
+
+
 .. _XML_SinglePhaseProppantFVM:
 
 Element: SinglePhaseProppantFVM
@@ -839,6 +867,13 @@ Element: SinglePhaseProppantFVM
 Element: SinglePhaseReservoir
 =============================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir.rst
+
+
+.. _XML_SinglePhaseStatistics:
+
+Element: SinglePhaseStatistics
+==============================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseStatistics.rst
 
 
 .. _XML_SinglePhaseWell:
@@ -881,6 +916,13 @@ Element: SolidMechanicsLagrangianSSLE
 Element: SolidMechanicsStateReset
 =================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsStateReset.rst
+
+
+.. _XML_SolidMechanicsStatistics:
+
+Element: SolidMechanicsStatistics
+=================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsStatistics.rst
 
 
 .. _XML_SolidMechanics_LagrangianFEM:
@@ -1230,6 +1272,13 @@ Datastructure: CompositionalMultiphaseReservoir
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir_other.rst
 
 
+.. _DATASTRUCTURE_CompositionalMultiphaseStatistics:
+
+Datastructure: CompositionalMultiphaseStatistics
+================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseStatistics_other.rst
+
+
 .. _DATASTRUCTURE_CompositionalMultiphaseWell:
 
 Datastructure: CompositionalMultiphaseWell
@@ -1417,13 +1466,6 @@ Datastructure: Events
 Datastructure: ExtendedDruckerPrager
 ====================================
 .. include:: ../../coreComponents/schema/docs/ExtendedDruckerPrager_other.rst
-
-
-.. _DATASTRUCTURE_FaceManager:
-
-Datastructure: FaceManager
-==========================
-.. include:: ../../coreComponents/schema/docs/FaceManager_other.rst
 
 
 .. _DATASTRUCTURE_FieldSpecification:
@@ -1629,6 +1671,13 @@ Datastructure: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
 
 
+.. _DATASTRUCTURE_MultiphasePoromechanicsReservoir:
+
+Datastructure: MultiphasePoromechanicsReservoir
+===============================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanicsReservoir_other.rst
+
+
 .. _DATASTRUCTURE_MultivariableTableFunction:
 
 Datastructure: MultivariableTableFunction
@@ -1669,6 +1718,13 @@ Datastructure: Outputs
 Datastructure: PAMELAMesh
 =========================
 .. include:: ../../coreComponents/schema/docs/PAMELAMesh_other.rst
+
+
+.. _DATASTRUCTURE_PML:
+
+Datastructure: PML
+==================
+.. include:: ../../coreComponents/schema/docs/PML_other.rst
 
 
 .. _DATASTRUCTURE_PVTDriver:
@@ -1916,6 +1972,13 @@ Datastructure: SinglePhasePoromechanicsEmbeddedFractures
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures_other.rst
 
 
+.. _DATASTRUCTURE_SinglePhasePoromechanicsReservoir:
+
+Datastructure: SinglePhasePoromechanicsReservoir
+================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsReservoir_other.rst
+
+
 .. _DATASTRUCTURE_SinglePhaseProppantFVM:
 
 Datastructure: SinglePhaseProppantFVM
@@ -1928,6 +1991,13 @@ Datastructure: SinglePhaseProppantFVM
 Datastructure: SinglePhaseReservoir
 ===================================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseStatistics:
+
+Datastructure: SinglePhaseStatistics
+====================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseStatistics_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseWell:
@@ -1972,6 +2042,13 @@ Datastructure: SolidMechanicsStateReset
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsStateReset_other.rst
 
 
+.. _DATASTRUCTURE_SolidMechanicsStatistics:
+
+Datastructure: SolidMechanicsStatistics
+=======================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsStatistics_other.rst
+
+
 .. _DATASTRUCTURE_SolidMechanics_LagrangianFEM:
 
 Datastructure: SolidMechanics_LagrangianFEM
@@ -1984,6 +2061,13 @@ Datastructure: SolidMechanics_LagrangianFEM
 Datastructure: SoloEvent
 ========================
 .. include:: ../../coreComponents/schema/docs/SoloEvent_other.rst
+
+
+.. _DATASTRUCTURE_SolverStatistics:
+
+Datastructure: SolverStatistics
+===============================
+.. include:: ../../coreComponents/schema/docs/SolverStatistics_other.rst
 
 
 .. _DATASTRUCTURE_Solvers:
@@ -2140,11 +2224,11 @@ Datastructure: WellElementRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegion_other.rst
 
 
-.. _DATASTRUCTURE_WellElementRegionuniqueSubRegion:
+.. _DATASTRUCTURE_WellElementRegionUniqueSubRegion:
 
-Datastructure: WellElementRegionuniqueSubRegion
+Datastructure: WellElementRegionUniqueSubRegion
 ===============================================
-.. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
+.. include:: ../../coreComponents/schema/docs/WellElementRegionUniqueSubRegion_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:
@@ -2194,6 +2278,13 @@ Datastructure: embeddedSurfacesEdgeManager
 Datastructure: embeddedSurfacesNodeManager
 ==========================================
 .. include:: ../../coreComponents/schema/docs/embeddedSurfacesNodeManager_other.rst
+
+
+.. _DATASTRUCTURE_faceManager:
+
+Datastructure: faceManager
+==========================
+.. include:: ../../coreComponents/schema/docs/faceManager_other.rst
 
 
 .. _DATASTRUCTURE_lassen:

@@ -10,6 +10,9 @@
       useMass="1"
       isThermal="1"
       initialDt="1e3"
+      targetRelativePressureChangeInTimeStep="1"
+      targetRelativeTemperatureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"      
       maxCompFractionChange="0.5"
       targetRegions="{ region }">
       <NonlinearSolverParameters
@@ -42,9 +45,14 @@
       xMax="{ 101.01, 101.01, 1.01 }"/>
 
     <Box
-      name="source"
+      name="source1"
       xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 10.01, 10.01, 1.01 }"/>
+      xMax="{  0.01, 10.01, 1.01 }"/>
+    <Box
+      name="source2"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 10.01,  0.01, 1.01 }"/>
+    
   </Geometry>
 
   <Events
@@ -187,27 +195,28 @@
 
     <FieldSpecification
       name="sourcePressure"
-      setNames="{ source }"     
-      objectPath="ElementRegions/region/cb"
+      logLevel="1"
+      setNames="{ source1, source2 }"     
+      objectPath="faceManager"
       fieldName="pressure"
       scale="1.45e7"/>
     <FieldSpecification
       name="sourceTemperature"
-      setNames="{ source }"     
-      objectPath="ElementRegions/region/cb"
+      setNames="{ source1, source2 }"     
+      objectPath="faceManager"
       fieldName="temperature"
       scale="300.15"/>
     <FieldSpecification
       name="sourceTermComposition_co2"
-      setNames="{ source }"
-      objectPath="ElementRegions/region/cb"
+      setNames="{ source1, source2 }"
+      objectPath="faceManager"
       fieldName="globalCompFraction"
       component="0"
       scale="0.995"/>
     <FieldSpecification
       name="sourceTermComposition_water"
-      setNames="{ source }"
-      objectPath="ElementRegions/region/cb"
+      setNames="{ source1, source2 }"
+      objectPath="faceManager"
       fieldName="globalCompFraction"
       component="1"
       scale="0.005"/>

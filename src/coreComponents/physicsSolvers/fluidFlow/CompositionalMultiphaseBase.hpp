@@ -23,6 +23,7 @@
 #include "constitutive/fluid/layouts.hpp"
 #include "constitutive/relativePermeability/layouts.hpp"
 #include "constitutive/capillaryPressure/layouts.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 namespace geosx
@@ -103,12 +104,6 @@ public:
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
-
-  virtual void
-  solveLinearSystem( DofManager const & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override;
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
@@ -222,20 +217,26 @@ public:
     // inputs
 
     static constexpr char const * inputTemperatureString() { return "temperature"; }
-
     static constexpr char const * useMassFlagString() { return "useMass"; }
-
-    static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
-
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
-
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
 
-    static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
+    // time stepping controls
+
+    static constexpr char const * solutionChangeScalingFactorString() { return "solutionChangeScalingFactor"; }
+    static constexpr char const * targetRelativePresChangeString() { return "targetRelativePressureChangeInTimeStep"; }
+    static constexpr char const * targetRelativeTempChangeString() { return "targetRelativeTemperatureChangeInTimeStep"; }
+    static constexpr char const * targetPhaseVolFracChangeString() { return "targetPhaseVolFractionChangeInTimeStep"; }
+
+    // nonlinear solver parameters
+
+    static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
+    static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
+    static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
+
   };
 
   /**
@@ -252,12 +253,6 @@ public:
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
    */
   void computeHydrostaticEquilibrium();
-
-  /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param domain the domain containing the mesh and fields
-   */
-  void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const;
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -307,15 +302,23 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
 
+
   /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
    */
   void chopNegativeDensities( DomainPartition & domain );
 
+  virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
+                                              DomainPartition & domain ) override;
+
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
 protected:
+
+  virtual void postProcessInput() override;
+
+  virtual void initializePreSubGroups() override;
 
   /**
    * @brief Utility function that checks the consistency of the constitutive models
@@ -325,17 +328,29 @@ protected:
    */
   void validateConstitutiveModels( DomainPartition const & domain ) const;
 
-  virtual void postProcessInput() override;
-
-  virtual void initializePreSubGroups() override;
-
-
   /**
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
    * @param[in] cm reference to the global constitutive model manager
    */
   void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
+  /**
+   * @brief Utility function that encapsulates the call to FieldSpecificationBase::applyFieldValue in BC application
+   * @param[in] time_n the time at the beginning of the step
+   * @param[in] dt the time step
+   * @param[in] mesh the mesh level object
+   * @param[in] logMessage the log message issued by the solver if the bc is called
+   * @param[in] targetManagerName the name of the manager ("ElementRegions" or "faceManager")
+   * @param[in] extrinsicFieldKey the key of the field specified in the xml file
+   * @param[in] extrinsicBoundaryFieldKey the key of the boundary field
+   */
+  template< typename OBJECT_TYPE >
+  void applyFieldValue( real64 const & time_n,
+                        real64 const & dt,
+                        MeshLevel & mesh,
+                        char const logMessage[],
+                        string const extrinsicFieldKey,
+                        string const extrinsicBoundaryFieldKey ) const;
 
   /// flag to specify whether the sparsity pattern needs to be rebuilt
   bool m_systemSetupDone;
@@ -352,14 +367,29 @@ protected:
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 
-  /// flag indicating whether CFL numbers will be computed or not
-  integer m_computeCFLNumbers;
-
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
 
-  /// maximum (absolute) change in a component fraction between two Newton iterations
+  /// maximum (absolute) change in a component fraction in a Newton iteration
   real64 m_maxCompFracChange;
+
+  /// maximum (relative) change in pressure in a Newton iteration
+  real64 m_maxRelativePresChange;
+
+  /// maximum (relative) change in temperature in a Newton iteration
+  real64 m_maxRelativeTempChange;
+
+  /// damping factor for solution change targets
+  real64 m_solutionChangeScalingFactor;
+
+  /// target (relative) change in pressure in a time step
+  real64 m_targetRelativePresChange;
+
+  /// target (relative) change in temperature in a time step
+  real64 m_targetRelativeTempChange;
+
+  /// target (absolute) change in phase volume fraction in a time step
+  real64 m_targetPhaseVolFracChange;
 
   /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
   real64 m_minScalingFactor;
@@ -371,9 +401,55 @@ protected:
   string m_referenceFluidModelName;
 
 private:
+
+  /**
+   * @brief Utility function to validate the consistency of Dirichlet BC input
+   * @param[in] domain the domain partition
+   * @param[in] time the time at the end of the time step (time_n + dt)
+   */
+  bool validateDirichletBC( DomainPartition & domain,
+                            real64 const time ) const;
+
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
+
+template< typename OBJECT_TYPE >
+void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
+                                                   real64 const & dt,
+                                                   MeshLevel & mesh,
+                                                   char const logMessage[],
+                                                   string const extrinsicFieldKey,
+                                                   string const extrinsicBoundaryFieldKey ) const
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  fsManager.apply< OBJECT_TYPE >( time_n + dt,
+                                  mesh,
+                                  extrinsicFieldKey,
+                                  [&]( FieldSpecificationBase const & fs,
+                                       string const & setName,
+                                       SortedArrayView< localIndex const > const & lset,
+                                       OBJECT_TYPE & targetGroup,
+                                       string const & )
+  {
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( logMessage,
+                                   getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
+    }
+
+    // Specify the bc value of the field
+    fs.applyFieldValue< FieldSpecificationEqual,
+                        parallelDevicePolicy<> >( lset,
+                                                  time_n + dt,
+                                                  targetGroup,
+                                                  extrinsicBoundaryFieldKey );
+  } );
+}
+
 
 } // namespace geosx
 

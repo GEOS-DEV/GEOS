@@ -30,6 +30,8 @@ namespace geosx
 class WaveSolverBase : public SolverBase
 {
 public:
+
+
   WaveSolverBase( const std::string & name,
                   Group * const parent );
 
@@ -58,9 +60,11 @@ public:
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
 
-    static constexpr char const * geometryLinearDASString() { return "geometryLinearDAS"; }
     static constexpr char const * useDASString() { return "useDAS"; }
+    static constexpr char const * geometryLinearDASString() { return "geometryLinearDAS"; }
 
+    static constexpr char const * usePMLString() { return "usePML"; }
+    static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
   };
 
@@ -74,16 +78,29 @@ protected:
   virtual void postProcessInput() override;
 
   /**
-   * @brief Initialize DAS fiber geometry. This will duplicate the number of point receivers to be modeled
-   */
-  virtual void initializeDAS();
-
-  /**
    * @brief Apply free surface condition to the face defined in the geometry box of the xml
    * @param time the time to apply the BC
    * @param domain the partition domain
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) = 0;
+
+  /**
+   * @brief Initialize DAS fiber geometry. This will duplicate the number of point receivers to be modeled
+   */
+  virtual void initializeDAS();
+
+  /**
+   * @brief Initialize Perfectly Matched Layer (PML) information
+   */
+  virtual void initializePML() = 0;
+
+  /**
+   * @brief Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
+   * @param time the time to apply the BC
+   * @param domain the partition domain
+   */
+  virtual void applyPML( real64 const time, DomainPartition & domain ) = 0;
+
 
   /**
    * @brief Compute the value of a Ricker (a Gaussian function)
@@ -92,8 +109,7 @@ protected:
    * @param order order of the ricker
    * @return the value of a Ricker evaluated a time_n with f0
    */
-  virtual
-  real64 evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order );
+  virtual real32 evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order );
 
   /**
    * @brief Locate sources and receivers positions in the mesh elements, evaluate the basis functions at each point and save them to the
@@ -117,9 +133,9 @@ protected:
                                    real64 const dt,
                                    real64 const timeSeismo,
                                    localIndex iSeismo,
-                                   arrayView1d< real64 const > const var_np1,
-                                   arrayView1d< real64 const > const var_n,
-                                   arrayView2d< real64 > varAtReceivers ) = 0;
+                                   arrayView1d< real32 const > const var_np1,
+                                   arrayView1d< real32 const > const var_n,
+                                   arrayView2d< real32 > varAtReceivers ) = 0;
 
   /**
    * @brief Temporary debug function. Saves the sismo trace to a file.
@@ -127,17 +143,18 @@ protected:
    * @param val value to be written in seismo
    * @param filename name of the output file
    */
-  virtual void saveSeismo( localIndex const iSeismo, real64 val, string const & filename ) = 0;
+  virtual void saveSeismo( localIndex const iSeismo, real32 val, string const & filename ) = 0;
 
 
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
 
-  array2d< real64 > m_sourceValue;
+  /// Precomputed value of the source terms
+  array2d< real32 > m_sourceValue;
 
   /// Central frequency for the Ricker time source
-  real64 m_timeSourceFrequency;
+  real32 m_timeSourceFrequency;
 
   /// Coordinates of the receivers in the mesh
   array2d< real64 > m_receiverCoordinates;
@@ -157,11 +174,34 @@ protected:
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
 
+  /// Flag to indicate if DAS type of data will be modeled
+  integer m_useDAS;
+
   /// Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)
   array2d< real64 > m_geometryLinearDAS;
 
-  /// Flag to indicate if DAS type of data will be modeled
-  integer m_useDAS;
+  /// Flag to apply PML
+  integer m_usePML;
+
+  struct parametersPML
+  {
+    /// Mininum (x,y,z) coordinates of inner PML boundaries
+    R1Tensor32 xMinPML;
+
+    /// Maximum (x,y,z) coordinates of inner PML boundaries
+    R1Tensor32 xMaxPML;
+
+    /// Desired reflectivity of the PML region, used to compute the damping profile
+    real32 reflectivityPML;
+
+    /// Thickness of the PML region, used to compute the damping profile
+    R1Tensor32 thicknessMinXYZPML;
+    R1Tensor32 thicknessMaxXYZPML;
+
+    /// Wave speed in the PML region, used to compute the damping profile
+    R1Tensor32 waveSpeedMinXYZPML;
+    R1Tensor32 waveSpeedMaxXYZPML;
+  };
 
 };
 

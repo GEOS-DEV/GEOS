@@ -46,6 +46,7 @@ public:
   using Base = isothermalCompositionalMultiphaseBaseKernels::PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE >;
   using Base::m_dPhaseDens;
   using Base::m_dPhaseFrac;
+  using Base::m_dPhaseVolFrac;
 
   /**
    * @brief Constructor
@@ -54,8 +55,7 @@ public:
    */
   PhaseVolumeFractionKernel( ObjectManagerBase & subRegion,
                              MultiFluidBase const & fluid )
-    : Base( subRegion, fluid ),
-    m_dPhaseVolFrac_dTemp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >() )
+    : Base( subRegion, fluid )
   {}
 
   /**
@@ -70,8 +70,7 @@ public:
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseDens = m_dPhaseDens[ei][0];
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseFrac = m_dPhaseFrac[ei][0];
 
-    arraySlice1d< real64, compflow::USD_PHASE - 1 > const dPhaseVolFrac_dTemp = m_dPhaseVolFrac_dTemp[ei];
-    LvArray::forValuesInSlice( dPhaseVolFrac_dTemp, []( real64 & val ){ val = 0.0; } );
+    arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
     // Call the base compute the compute the phase volume fraction
     Base::compute( ei, [&] ( localIndex const ip,
@@ -81,17 +80,10 @@ public:
     {
       // when this lambda is called, we are in the phase loop
       // for each phase ip, compute the derivative of phase volume fraction wrt temperature
-      dPhaseVolFrac_dTemp[ip] = (dPhaseFrac[ip][Deriv::dT] - phaseVolFrac * dPhaseDens[ip][Deriv::dT]) * phaseDensInv;
-      dPhaseVolFrac_dTemp[ip] *= totalDensity;
+      dPhaseVolFrac[ip][Deriv::dT] = (dPhaseFrac[ip][Deriv::dT] - phaseVolFrac * dPhaseDens[ip][Deriv::dT]) * phaseDensInv;
+      dPhaseVolFrac[ip][Deriv::dT] *= totalDensity;
     } );
   }
-
-protected:
-
-  // outputs
-
-  /// Views on thermal derivatives of phase volume fractions
-  arrayView2d< real64, compflow::USD_PHASE > m_dPhaseVolFrac_dTemp;
 
 };
 
@@ -169,8 +161,7 @@ public:
   using Base::m_dCompFrac_dCompDens;
   using Base::m_phaseVolFrac_n;
   using Base::m_phaseVolFrac;
-  using Base::m_dPhaseVolFrac_dPres;
-  using Base::m_dPhaseVolFrac_dCompDens;
+  using Base::m_dPhaseVolFrac;
   using Base::m_phaseDens_n;
   using Base::m_phaseDens;
   using Base::m_dPhaseDens;
@@ -200,7 +191,6 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
-    m_dPhaseVolFrac_dTemp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >() ),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() ),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy() ),
     m_dPhaseInternalEnergy( fluid.dPhaseInternalEnergy() ),
@@ -293,7 +283,7 @@ public:
       // construct the slices
       arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
-      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dTemp = m_dPhaseVolFrac_dTemp[ei];
+      arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dPhaseVolFrac[ei];
       arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens = m_phaseDens[ei][0];
       arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens = m_dPhaseDens[ei][0];
       arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac = m_phaseCompFrac[ei][0];
@@ -305,7 +295,7 @@ public:
       // Step 1: assemble the derivatives of the component mass balance equations with respect to temperature
 
       real64 const dPhaseAmount_dT = stack.poreVolume
-                                     * (dPhaseVolFrac_dTemp[ip] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
+                                     * (dPhaseVolFrac[ip][Deriv::dT] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
       for( integer ic = 0; ic < numComp; ++ic )
       {
         stack.localJacobian[ic][numDof-1] += dPhaseAmount_dT * phaseCompFrac[ip][ic]
@@ -356,15 +346,17 @@ public:
   void computeVolumeBalance( localIndex const ei,
                              StackVariables & stack ) const
   {
+    using Deriv = multifluid::DerivativeOffset;
+
     Base::computeVolumeBalance( ei, stack, [&] ( real64 const & oneMinusPhaseVolFraction )
     {
       GEOSX_UNUSED_VAR( oneMinusPhaseVolFraction );
 
-      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dTemp = m_dPhaseVolFrac_dTemp[ei];
+      arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
       for( integer ip = 0; ip < m_numPhases; ++ip )
       {
-        stack.localJacobian[numEqn-2][numDof-1] -= dPhaseVolFrac_dTemp[ip];
+        stack.localJacobian[numEqn-2][numDof-1] -= dPhaseVolFrac[ip][Deriv::dT];
       }
     } );
   }
@@ -385,9 +377,6 @@ public:
   }
 
 protected:
-
-  /// Views on derivatives wrt to temperature for phase volume fraction
-  arrayView2d< real64 const, compflow::USD_PHASE > m_dPhaseVolFrac_dTemp;
 
   /// Views on phase internal energy
   arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseInternalEnergy_n;
@@ -504,6 +493,263 @@ struct SolidInternalEnergyUpdateKernel
     } );
   }
 };
+
+/******************************** ScalingForSystemSolutionKernel ********************************/
+
+/**
+ * @class ScalingForSystemSolutionKernel
+ * @brief Define the kernel for scaling the Newton update
+ */
+class ScalingForSystemSolutionKernel : public isothermalCompositionalMultiphaseBaseKernels::ScalingForSystemSolutionKernel
+{
+public:
+
+  using Base = isothermalCompositionalMultiphaseBaseKernels::ScalingForSystemSolutionKernel;
+  using Base::m_numComp;
+  using Base::m_localSolution;
+
+  /**
+   * @brief Create a new kernel instance
+   * @param[in] maxRelativePresChange the max allowed relative pressure change
+   * @param[in] maxRelativeTempChange the max allowed relative temperature change
+   * @param[in] maxCompFracChange the max allowed comp fraction change
+   * @param[in] rankOffset the rank offset
+   * @param[in] numComp the number of components
+   * @param[in] dofKey the dof key to get dof numbers
+   * @param[in] subRegion the subRegion
+   * @param[in] localSolution the Newton update
+   * @param[in] pressure the pressure vector
+   * @param[in] temperature the temperature vector
+   * @param[in] compDens the component density vector
+   */
+  ScalingForSystemSolutionKernel( real64 const maxRelativePresChange,
+                                  real64 const maxRelativeTempChange,
+                                  real64 const maxCompFracChange,
+                                  globalIndex const rankOffset,
+                                  integer const numComp,
+                                  string const dofKey,
+                                  ElementSubRegionBase const & subRegion,
+                                  arrayView1d< real64 const > const localSolution,
+                                  arrayView1d< real64 const > const pressure,
+                                  arrayView1d< real64 const > const temperature,
+                                  arrayView2d< real64 const, compflow::USD_COMP > const compDens )
+    : Base( maxRelativePresChange,
+            maxCompFracChange,
+            rankOffset,
+            numComp,
+            dofKey,
+            subRegion,
+            localSolution,
+            pressure,
+            compDens ),
+    m_maxRelativeTempChange( maxRelativeTempChange ),
+    m_temperature( temperature )
+  {}
+
+  /**
+   * @brief Compute the local value of the scaling factor
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   */
+  GEOSX_HOST_DEVICE
+  void computeScalingFactor( localIndex const ei,
+                             StackVariables & stack ) const
+  {
+    real64 constexpr eps = isothermalCompositionalMultiphaseBaseKernels::minDensForDivision;
+
+    Base::computeScalingFactor( ei, stack, [&] ()
+    {
+      // compute the change in temperature
+      real64 const temp = m_temperature[ei];
+      if( temp > eps )
+      {
+        real64 const absTempChange = LvArray::math::abs( m_localSolution[stack.localRow + m_numComp + 1] );
+        real64 const relativeTempChange = absTempChange / temp;
+        if( relativeTempChange > m_maxRelativeTempChange )
+        {
+          real64 const tempScalingFactor = m_maxRelativeTempChange / relativeTempChange;
+          if( stack.localMinVal > tempScalingFactor )
+          {
+            stack.localMinVal = tempScalingFactor;
+          }
+        }
+      }
+    } );
+  }
+
+protected:
+
+  /// Max allowed changes in primary variables
+  real64 const m_maxRelativeTempChange;
+
+  /// View on the primary variables
+  arrayView1d< real64 const > const m_temperature;
+
+};
+
+/**
+ * @class ScalingForSystemSolutionKernelFactory
+ */
+class ScalingForSystemSolutionKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] maxRelativePresChange the max allowed relative pressure change
+   * @param[in] maxRelativeTempChange the max allowed relative temperature change
+   * @param[in] maxCompFracChange the max allowed comp fraction change
+   * @param[in] rankOffset the rank offset
+   * @param[in] numComp the number of components
+   * @param[in] dofKey the dof key to get dof numbers
+   * @param[in] subRegion the subRegion
+   * @param[in] localSolution the Newton update
+   */
+  template< typename POLICY >
+  static real64
+  createAndLaunch( real64 const maxRelativePresChange,
+                   real64 const maxRelativeTempChange,
+                   real64 const maxCompFracChange,
+                   globalIndex const rankOffset,
+                   integer const numComp,
+                   string const dofKey,
+                   ElementSubRegionBase const & subRegion,
+                   arrayView1d< real64 const > const localSolution )
+  {
+    arrayView1d< real64 const > const pressure = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+    arrayView1d< real64 const > const temperature = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+    ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxRelativeTempChange, maxCompFracChange,
+                                           rankOffset, numComp, dofKey, subRegion, localSolution,
+                                           pressure, temperature, compDens );
+    return ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
+  }
+
+};
+
+/******************************** SolutionCheckKernel ********************************/
+
+/**
+ * @class SolutionCheckKernel
+ * @brief Define the kernel for checking the updated solution
+ */
+class SolutionCheckKernel : public isothermalCompositionalMultiphaseBaseKernels::SolutionCheckKernel
+{
+public:
+
+  using Base = isothermalCompositionalMultiphaseBaseKernels::SolutionCheckKernel;
+  using Base::m_numComp;
+  using Base::m_localSolution;
+  using Base::m_scalingFactor;
+
+  static real64 constexpr minTemperature = 273.15;
+
+  /**
+   * @brief Create a new kernel instance
+   * @param[in] allowCompDensChopping flag to allow the component density chopping
+   * @param[in] scalingFactor the scaling factor
+   * @param[in] rankOffset the rank offset
+   * @param[in] numComp the number of components
+   * @param[in] dofKey the dof key to get dof numbers
+   * @param[in] subRegion the subRegion
+   * @param[in] localSolution the Newton update
+   * @param[in] pressure the pressure vector
+   * @param[in] temperature the temperature vector
+   * @param[in] compDens the component density vector
+   */
+  SolutionCheckKernel( integer const allowCompDensChopping,
+                       real64 const scalingFactor,
+                       globalIndex const rankOffset,
+                       integer const numComp,
+                       string const dofKey,
+                       ElementSubRegionBase const & subRegion,
+                       arrayView1d< real64 const > const localSolution,
+                       arrayView1d< real64 const > const pressure,
+                       arrayView1d< real64 const > const temperature,
+                       arrayView2d< real64 const, compflow::USD_COMP > const compDens )
+    : Base( allowCompDensChopping,
+            scalingFactor,
+            rankOffset,
+            numComp,
+            dofKey,
+            subRegion,
+            localSolution,
+            pressure,
+            compDens ),
+    m_temperature( temperature )
+  {}
+
+  /**
+   * @brief Compute the local value of the solution check
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   */
+  GEOSX_HOST_DEVICE
+  void computeSolutionCheck( localIndex const ei,
+                             StackVariables & stack ) const
+  {
+    Base::computeSolutionCheck( ei, stack, [&] ()
+    {
+      // compute the change in temperature
+      real64 const newTemp = m_temperature[ei] + m_scalingFactor * m_localSolution[stack.localRow + m_numComp + 1];
+      if( newTemp < minTemperature )
+      {
+        stack.localMinVal = 0;
+      }
+    } );
+  }
+
+protected:
+
+  /// View on the primary variables
+  arrayView1d< real64 const > const m_temperature;
+
+};
+
+/**
+ * @class SolutionCheckKernelFactory
+ */
+class SolutionCheckKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] maxRelativePresChange the max allowed relative pressure change
+   * @param[in] maxRelativeTempChange the max allowed relative temperature change
+   * @param[in] maxCompFracChange the max allowed comp fraction change
+   * @param[in] rankOffset the rank offset
+   * @param[in] numComp the number of components
+   * @param[in] dofKey the dof key to get dof numbers
+   * @param[in] subRegion the subRegion
+   * @param[in] localSolution the Newton update
+   */
+  template< typename POLICY >
+  static integer
+  createAndLaunch( integer const allowCompDensChopping,
+                   real64 const scalingFactor,
+                   globalIndex const rankOffset,
+                   integer const numComp,
+                   string const dofKey,
+                   ElementSubRegionBase const & subRegion,
+                   arrayView1d< real64 const > const localSolution )
+  {
+    arrayView1d< real64 const > const pressure =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+    arrayView1d< real64 const > const temperature =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+    arrayView2d< real64 const, compflow::USD_COMP > const compDens =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+    SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor,
+                                rankOffset, numComp, dofKey, subRegion, localSolution,
+                                pressure, temperature, compDens );
+    return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
+  }
+
+};
+
 
 /******************************** ResidualNormKernel ********************************/
 

@@ -30,7 +30,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_type( Type::PRODUCER ),
   m_refElevation( 0.0 ),
   m_refGravCoef( 0.0 ),
-  m_currentControl( Control::BHP ),
+  m_inputControl( Control::UNINITIALIZED ),
+  m_currentControl( Control::UNINITIALIZED ),
   m_targetBHP( 0.0 ),
   m_targetTotalRate( 0.0 ),
   m_targetPhaseRate( 0.0 ),
@@ -45,13 +46,20 @@ WellControls::WellControls( string const & name, Group * const parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
+  enableLogLevelInput();
+
   registerWrapper( viewKeyStruct::typeString(), &m_type ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Well type. Valid options:\n* " + EnumStrings< Type >::concat( "\n* " ) );
 
-  registerWrapper( viewKeyStruct::controlString(), &m_currentControl ).
+  registerWrapper( viewKeyStruct::inputControlString(), &m_inputControl ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Well control. Valid options:\n* " + EnumStrings< Control >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::currentControlString(), &m_currentControl ).
+    setDefaultValue( Control::UNINITIALIZED ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Current well control" );
 
   registerWrapper( viewKeyStruct::targetBHPString(), &m_targetBHP ).
     setDefaultValue( 0.0 ).
@@ -179,6 +187,18 @@ TableFunction * createWellTable( string const & tableName,
 
 void WellControls::postProcessInput()
 {
+  // 0) Assign the value of the current well control
+  // When the simulation starts from a restart file, we don't want to use the inputControl,
+  // because the control may have switched in the simulation that generated the restart
+  GEOSX_THROW_IF( m_inputControl == Control::UNINITIALIZED,
+                  "WellControls '" << getName() << "': Input well control cannot be uninitialized",
+                  InputError );
+
+  if( m_currentControl == Control::UNINITIALIZED )
+  {
+    m_currentControl = m_inputControl;
+  }
+
   // 1.a) check target BHP
   GEOSX_THROW_IF( m_targetBHP < 0,
                   "WellControls '" << getName() << "': Target bottom-hole pressure is negative",
@@ -344,8 +364,7 @@ void WellControls::initializePreSubGroups()
 bool WellControls::isWellOpen( real64 const & currentTime ) const
 {
   bool isOpen = true;
-  if( ( m_currentControl == Control::TOTALVOLRATE && isZero( getTargetTotalRate( currentTime ) ) ) ||
-      ( m_currentControl == Control::PHASEVOLRATE && isZero( getTargetPhaseRate( currentTime ) ) ) )
+  if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) ) )
   {
     isOpen = false;
   }

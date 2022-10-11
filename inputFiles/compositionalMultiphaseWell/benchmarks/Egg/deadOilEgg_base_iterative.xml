@@ -13,9 +13,9 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="25"
-        dtCutIterLimit="0.9"
-        dtIncIterLimit="0.6"
-        timestepCutFactor="0.1"
+        timeStepDecreaseIterLimit="0.9"
+        timeStepIncreaseIterLimit="0.6"
+        timeStepCutFactor="0.1"
         maxTimeStepCuts="10"
         lineSearchAction="None"/>
       <LinearSolverParameters
@@ -226,7 +226,7 @@
   <ElementRegions>
     <CellElementRegion
       name="reservoir"
-      cellBlocks="{ DEFAULT_HEX }"
+      cellBlocks="{ hexahedra }"
       materialList="{ fluid, rock, relperm }"/>
 
     <WellElementRegion
@@ -323,7 +323,7 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/DEFAULT_HEX"
+      objectPath="ElementRegions/reservoir/hexahedra"
       fieldName="pressure"
       scale="4e7"/>
 
@@ -331,7 +331,7 @@
       name="initialComposition_oil"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/DEFAULT_HEX"
+      objectPath="ElementRegions/reservoir/hexahedra"
       fieldName="globalCompFraction"
       component="0"
       scale="0.9"/>
@@ -340,7 +340,7 @@
       name="initialComposition_water"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/DEFAULT_HEX"
+      objectPath="ElementRegions/reservoir/hexahedra"
       fieldName="globalCompFraction"
       component="1"
       scale="0.1"/>
@@ -382,22 +382,22 @@
   <Tasks>
     <PackCollection
       name="wellRateCollection1"
-      objectPath="ElementRegions/wellRegion1/wellRegion1uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion1/wellRegion1UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
 
     <PackCollection
       name="wellRateCollection2"
-      objectPath="ElementRegions/wellRegion2/wellRegion2uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion2/wellRegion2UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
 
     <PackCollection
       name="wellRateCollection3"
-      objectPath="ElementRegions/wellRegion3/wellRegion3uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion3/wellRegion3UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
 
     <PackCollection
       name="wellRateCollection4"
-      objectPath="ElementRegions/wellRegion4/wellRegion4uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion4/wellRegion4UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
   </Tasks>
 

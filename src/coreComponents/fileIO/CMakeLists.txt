@@ -5,6 +5,7 @@ set( fileIO_headers
      Outputs/BlueprintOutput.hpp
      Outputs/OutputBase.hpp
      Outputs/OutputManager.hpp
+     Outputs/OutputUtilities.hpp     
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
      Outputs/SiloOutput.hpp
@@ -25,6 +26,7 @@ set( fileIO_sources
      Outputs/BlueprintOutput.cpp
      Outputs/OutputBase.cpp
      Outputs/OutputManager.cpp
+     Outputs/OutputUtilities.cpp
      Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
      Outputs/SiloOutput.cpp
@@ -39,11 +41,15 @@ set( fileIO_sources
 set( dependencyList mesh constitutive silo hdf5 )
 if( ENABLE_PYGEOSX )
   list( APPEND fileIO_headers
-	python/PyHistoryCollectionType.hpp 
-	python/PyHistoryOutputType.hpp )
+        python/PyHistoryCollectionType.hpp 
+        python/PyHistoryOutputType.hpp 
+        python/PyVTKOutputType.hpp
+	      )
   list( APPEND fileIO_sources 
         python/PyHistoryCollection.cpp 
-        python/PyHistoryOutput.cpp )
+        python/PyHistoryOutput.cpp 
+        python/PyVTKOutput.cpp
+        )
   list( APPEND dependencyList Python3::Python pylvarray ) 
 endif()
 
@@ -76,6 +82,10 @@ endif()
 
 if ( ENABLE_CUDA )
   list( APPEND dependencyList  cuda )
+endif()
+
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
 blt_add_library( NAME       fileIO

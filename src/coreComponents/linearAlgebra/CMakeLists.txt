@@ -128,7 +128,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreVector.cpp
         )
 
-    list( APPEND dependencyList hypre )
+    list( APPEND dependencyList hypre umpire )
 
 endif()
 
@@ -159,6 +159,10 @@ endif()
 
 if ( ENABLE_CUDA )
     list( APPEND dependencyList cuda )
+endif()
+
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
 blt_add_library( NAME       linearAlgebra

@@ -22,6 +22,7 @@
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
@@ -76,15 +77,20 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Count for output pressure at receivers" );
 
-  registerWrapper( viewKeyStruct::geometryLinearDASString(), &m_geometryLinearDAS ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setSizedFromParent( 0 ).
-    setDescription( "Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)" );
+  registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to apply PML" );
 
   registerWrapper( viewKeyStruct::useDASString(), &m_useDAS ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to indicate if DAS type of data will be modeled" );
+
+  registerWrapper( viewKeyStruct::geometryLinearDASString(), &m_geometryLinearDAS ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setDescription( "Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)" );
 
 }
 
@@ -107,40 +113,38 @@ void WaveSolverBase::initializePreSubGroups()
 void WaveSolverBase::postProcessInput()
 {
   SolverBase::postProcessInput();
+
   if( m_geometryLinearDAS.size( 1 ) > 0 )
   {
-    m_useDAS=1;
+    m_useDAS = 1;
   }
 
-  if( m_useDAS>0 )
+  if( m_useDAS )
   {
-    GEOSX_LOG_LEVEL_RANK_0( 1,
-                            "Modeling linear DAS data is activated" );
+    GEOSX_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
 
     GEOSX_ERROR_IF( m_geometryLinearDAS.size( 1 ) != 3,
-                    "Invalid number of geometry parameters for the linear DAS fiber. 3 are required: dip, azimuth, gauge length" );
+                    "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
 
     GEOSX_ERROR_IF( m_geometryLinearDAS.size( 0 ) != m_receiverCoordinates.size( 0 ),
                     "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
-
     /// initialize DAS geometry
     WaveSolverBase::initializeDAS();
-
   }
 }
 
 void WaveSolverBase::initializeDAS()
 {
   /// double the number of receivers and modify their coordinates
-  /// so to have 2 receivers on each side of each DAS channel
+  /// so to have two receivers on each side of each DAS channel
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   m_receiverCoordinates.resize( 2*numReceiversGlobal, 3 );
 
   arrayView2d< real64 > const receiverCoordinates = m_receiverCoordinates.toView();
   arrayView2d< real64 const > const geometryLinearDAS = m_geometryLinearDAS.toViewConst();
 
-  for( localIndex ircv=0; ircv<numReceiversGlobal; ++ircv )
+  for( localIndex ircv = 0; ircv < numReceiversGlobal; ++ircv )
   {
     /// updated xyz of receivers on the far end of a DAS channel
     receiverCoordinates[numReceiversGlobal+ircv][0] = receiverCoordinates[ircv][0]
@@ -159,20 +163,33 @@ void WaveSolverBase::initializeDAS()
                                    - sin( geometryLinearDAS[ircv][0] )*geometryLinearDAS[ircv][2]/2.0;
   }
 
+  /// set flag PML to one if a PML field is specified in the xml
+  /// if counter>1, an error will be thrown as one single PML field is allowed
+  integer counter = 0;
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & )
+  {
+    counter++;
+  } );
+  GEOSX_THROW_IF( counter > 1,
+                  "One single PML field specification is allowed",
+                  InputError );
+
+  m_usePML = counter;
 }
 
 
-real64 WaveSolverBase::evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order )
+real32 WaveSolverBase::evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
 {
-  real64 const o_tpeak = 1.0/f0;
-  real64 pulse = 0.0;
+  real32 const o_tpeak = 1.0/f0;
+  real32 pulse = 0.0;
   if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
   {
     return pulse;
   }
 
-  constexpr real64 pi = M_PI;
-  real64 const lam = (f0*pi)*(f0*pi);
+  constexpr real32 pi = M_PI;
+  real32 const lam = (f0*pi)*(f0*pi);
 
   switch( order )
   {
