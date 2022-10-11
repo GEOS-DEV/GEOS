@@ -83,11 +83,11 @@ def parse_and_set_verbosity(cli_args: List[str]) -> None:
     args = dummy_verbosity_parser.parse_known_args(cli_args[1:])[0]
     d = vars(args)
     v = d[__VERBOSE_KEY] - d[__QUIET_KEY]
-    verbosity = 50 - (10 * v)
-    if verbosity < 10:
-        verbosity = 10
-    elif verbosity > 50:
-        verbosity = 50
+    verbosity = logging.CRITICAL - (10 * v)
+    if verbosity < logging.DEBUG:
+        verbosity = logging.DEBUG
+    elif verbosity > logging.CRITICAL:
+        verbosity = logging.CRITICAL
     logging.getLogger().setLevel(verbosity)
     logging.info(f"Logger level set to \"{logging.getLevelName(verbosity)}\"")
 

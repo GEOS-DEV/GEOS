@@ -1,7 +1,16 @@
 from collections import defaultdict
 from dataclasses import dataclass
 import logging
-from typing import Tuple, Iterable, Dict, FrozenSet, Set, Iterator
+from typing import (
+    Tuple,
+    Iterable,
+    Dict,
+    FrozenSet,
+    Set,
+    Iterator,
+    Sequence,
+    Collection,
+)
 
 import numpy
 
@@ -13,6 +22,9 @@ from vtkmodules.vtkCommonCore import (
 from vtkmodules.vtkCommonDataModel import (
     vtkCellArray,
     vtkUnstructuredGrid,
+)
+from vtkmodules.vtkFiltersGeometry import (
+    vtkMarkBoundaryFilter,
 )
 from vtk.util.numpy_support import (
     vtk_to_numpy,
@@ -28,6 +40,7 @@ class Options:
     policy: str
     field: str
     field_values: FrozenSet[int]
+    split_on_domain_boundary: bool
     output: str
 
 
@@ -38,8 +51,8 @@ class Result:
 
 @dataclass(frozen=True)
 class FractureNodesInfo:
-    is_internal_fracture_node: Tuple[bool]
-    is_boundary_fracture_node: Tuple[bool]
+    is_internal_fracture_node: Sequence[bool]
+    is_boundary_fracture_node: Sequence[bool]
 
 
 class FractureCellsInfo:
@@ -55,7 +68,7 @@ class FractureCellsInfo:
                 face_point_ids = frozenset(_iter(face.GetPointIds()))
                 tmp[face_point_ids] += cell_id, face_id
         # This field is really dedicated to the writing into the vtk field data.
-        self.field_data: Tuple[Tuple[int, int, int, int]] = tuple(tmp.values())
+        self.field_data: Collection[Tuple[int, int, int, int]] = tuple(tmp.values())
         for data in self.field_data:
             assert len(data) == 4
 
@@ -64,10 +77,10 @@ class FractureCellsInfo:
 class DuplicatedNodesInfo:
     # Spans the old number of nodes.
     # Each value is either the new number of the node or `-1` if it's a duplicated node.
-    renumbered_nodes: Tuple[int]
+    renumbered_nodes: Collection[int]
     # For each original node that has been duplicated (or more) as the key,
     # gets all the new numberings of the nodes.
-    duplicated_nodes: Dict[int, Tuple[int]]
+    duplicated_nodes: Dict[int, Collection[int]]
 
 
 def _iter(id_list: vtkIdList) -> Iterator[int]:
@@ -323,6 +336,92 @@ def __color_fracture_sides(mesh: vtkUnstructuredGrid, cell_frac_info: FractureCe
     return tuple(networkx.connected_components(graph))
 
 
+def __find_boundary_nodes(mesh: vtkUnstructuredGrid) -> Sequence[int]:
+    """
+    Find all the points on the boundary of the mesh.
+    :param mesh: the vtk unstructured mesh
+    :return: A boundary point indicator array (value is 1 for a boundary point, 0 otherwise)
+    """
+    f = vtkMarkBoundaryFilter()
+    f.SetBoundaryPointsName("boundary points")
+    f.SetBoundaryCellsName("boundary cells")
+
+    f.SetInputData(mesh)
+    f.Update()
+
+    output_mesh = f.GetOutputDataObject(0)
+    point_data = output_mesh.GetPointData()
+    assert point_data.GetNumberOfArrays() == 1
+    assert point_data.GetArrayName(0) == "boundary points"
+    is_boundary_point = point_data.GetArray(0)
+    return vtk_to_numpy(is_boundary_point)
+
+
+def __build_fracture_nodes(mesh: vtkUnstructuredGrid,
+                           cell_frac_info: FractureCellsInfo,
+                           split_on_domain_boundary: bool) -> FractureNodesInfo:
+    """
+    Given the description of the fracture in @p cell_frac_info, computes the underlying nodes.
+    :param mesh: the vtk unstructured mesh
+    :param cell_frac_info: The geometrical mesh description of the fracture.
+    :param split_on_domain_boundary: If a fracture touches the boundary of the domain, what should we do?
+    :return: The fracture nodes information.
+    """
+    fracture_edges: Dict[Tuple[int, int], int] = defaultdict(int)
+    for c, fs in cell_frac_info.cell_to_faces.items():
+        cell = mesh.GetCell(c)
+        for f in fs:
+            face = cell.GetFace(f)
+            for e in range(face.GetNumberOfEdges()):
+                edge = face.GetEdge(e)
+                edge_nodes = []
+                for i in range(edge.GetNumberOfPoints()):  # TODO, do less pedantic
+                    edge_nodes.append(edge.GetPointId(i))
+                fracture_edges[tuple(sorted(edge_nodes))] += 1  # TODO frozenset?
+
+    boundary_fracture_edges = []
+    # Boundary edges are seen twice because each 2d fracture element is seen twice too.
+    # (Each side of the fracture).
+    for kv in filter(lambda fe: fe[1] == 2, fracture_edges.items()):
+        boundary_fracture_edges.append(kv[0])
+
+    is_fracture_node = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)
+    for nodes in fracture_edges.keys():
+        for n in nodes:
+            is_fracture_node[n] = True
+
+    is_boundary_fracture_node = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)
+    for edge in boundary_fracture_edges:
+        for n in edge:
+            is_boundary_fracture_node[n] = True
+
+    if split_on_domain_boundary:
+        # Here, we split on domain boundaries
+        is_boundary_point = __find_boundary_nodes(mesh)
+        # Here, `is_boundary_fracture_node` is filled properly.
+        # In this `if` branch, we want all the nodes that only belong to boundary edges
+        # to be in fact part of `is_internal_fracture_node`.
+        # But for the nodes of the edges that have one node on the mesh boundary
+        # and one node inside the domain should eventually be `internal fracture nodes`
+        # and not `boundary fracture nodes`.
+        move_to_boundary_fracture_node = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)
+        for n0, n1 in boundary_fracture_edges:
+            if not (is_boundary_point[n0] and is_boundary_point[n1]):
+                move_to_boundary_fracture_node[n0] = True
+                move_to_boundary_fracture_node[n1] = True
+        for n, move in enumerate(move_to_boundary_fracture_node):
+            is_boundary_fracture_node[n] = move
+
+    # Now compute the internal fracture nodes by "difference".
+    is_internal_fracture_node = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)
+    for n in range(mesh.GetNumberOfPoints()):  # TODO duplicated, reorg the code.
+        if is_fracture_node[n] and not is_boundary_fracture_node[n]:
+            is_internal_fracture_node[n] = True
+
+    return FractureNodesInfo(is_internal_fracture_node=is_internal_fracture_node,
+                             is_boundary_fracture_node=is_boundary_fracture_node)
+
+
 def __find_involved_cells(mesh: vtkUnstructuredGrid, options: Options) -> Tuple[FractureCellsInfo, FractureNodesInfo]:
     """
     To do the split, we need to find
@@ -360,14 +459,13 @@ def __find_involved_cells(mesh: vtkUnstructuredGrid, options: Options) -> Tuple[
                     for k in range(face.GetNumberOfPoints()):
                         is_fracture_node[face.GetPointId(k)] = True
 
-    # TODO, dummy values for the moment. We should be searching for those external/boundary nodes.
-    logging.warning("This is still work in progress, the fracture is assumed to completely cross the domain.")
-    is_boundary_fracture_node = numpy.zeros(mesh.GetNumberOfPoints(), dtype=bool)
+    logging.warning("The fracture split feature is still work in progress.")
+    cell_frac_info: FractureCellsInfo = FractureCellsInfo(mesh, cells_to_faces)
+    node_frac_info: FractureNodesInfo = __build_fracture_nodes(mesh, cell_frac_info, options.split_on_domain_boundary)
+    # TODO what should happen if the fracture face of a cell is not to be split at all?
 
-    cell_frac_info = FractureCellsInfo(mesh, cells_to_faces)
-    node_frac_info = FractureNodesInfo(is_internal_fracture_node=is_fracture_node,
-                                       is_boundary_fracture_node=is_boundary_fracture_node)
-
+    logging.warning(cell_frac_info.cell_to_faces)
+    logging.warning(node_frac_info)
     return cell_frac_info, node_frac_info
 
 
@@ -383,6 +481,8 @@ def __check(mesh, options: Options) -> Result:
     output_mesh = __split_mesh_on_fracture(mesh, options)
     if options.output:
         vtk_utils.write_mesh(output_mesh, options.output)
+    # TODO provide statistics about what was actually performed (size of the fracture, number of split nodes...).
+    return Result(info="OK")
 
 
 def check(vtk_input_file: str, options: Options) -> Result:

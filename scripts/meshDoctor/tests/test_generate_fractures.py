@@ -62,10 +62,12 @@ def test_generate_fracture():
     attribute.SetName("attribute")
     mesh.GetCellData().AddArray(attribute)
 
-    options = Options(policy="field", field="attribute", field_values={0, 1, 2}, output="")
+    options = Options(policy="field", field="attribute", field_values={0, 1, 2}, output="", split_on_domain_boundary=True)
     cell_frac_info, node_frac_info = __find_involved_cells(mesh, options)
     assert set(cell_frac_info.cell_to_faces.keys()) == {0, 1, 2, 3, 4, 5, 7, 8}
     assert len(cell_frac_info.field_data) == 5
+    assert numpy.array_equal(node_frac_info.is_internal_fracture_node,
+                             numpy.array(([0, 1, 1, 0, 1, 1, 1, 0] + [0, 0, 1, 0] * 2) * 2, dtype=bool))
 
     connected_cells = __color_fracture_sides(mesh, cell_frac_info, node_frac_info)
     cc = set(map(frozenset, connected_cells))
