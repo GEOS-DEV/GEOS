@@ -184,6 +184,16 @@ EXTRINSIC_MESH_DATA_TRAIT( elementStabConstant,
                            WRITE_AND_READ,
                            "Stabilization constant for pressure jump stabilization" );
 
+EXTRINSIC_MESH_DATA_TRAIT( transMultiplier,
+                           "permeabilityTransMultiplier",
+                           array1d< real64 >,
+                           1,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Permeability transmissibility multipliers" );
+
+
+
 }
 
 }

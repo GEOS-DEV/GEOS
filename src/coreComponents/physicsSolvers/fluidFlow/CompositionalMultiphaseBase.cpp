@@ -1351,8 +1351,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       }
 
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const ghostRank =
-        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       // Step 3.1: get the values of the source boundary condition that need to be added to the rhs
       // We don't use FieldSpecificationBase::applyConditionToSystem here because we want to account for the row permutation used in the

@@ -316,6 +316,13 @@ Element: ElasticOrthotropic
 .. include:: ../../coreComponents/schema/docs/ElasticOrthotropic.rst
 
 
+.. _XML_ElasticSEM:
+
+Element: ElasticSEM
+===================
+.. include:: ../../coreComponents/schema/docs/ElasticSEM.rst
+
+
 .. _XML_ElasticTransverseIsotropic:
 
 Element: ElasticTransverseIsotropic
@@ -1419,6 +1426,13 @@ Datastructure: ElasticOrthotropic
 .. include:: ../../coreComponents/schema/docs/ElasticOrthotropic_other.rst
 
 
+.. _DATASTRUCTURE_ElasticSEM:
+
+Datastructure: ElasticSEM
+=========================
+.. include:: ../../coreComponents/schema/docs/ElasticSEM_other.rst
+
+
 .. _DATASTRUCTURE_ElasticTransverseIsotropic:
 
 Datastructure: ElasticTransverseIsotropic
@@ -2210,11 +2224,11 @@ Datastructure: WellElementRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegion_other.rst
 
 
-.. _DATASTRUCTURE_WellElementRegionuniqueSubRegion:
+.. _DATASTRUCTURE_WellElementRegionUniqueSubRegion:
 
-Datastructure: WellElementRegionuniqueSubRegion
+Datastructure: WellElementRegionUniqueSubRegion
 ===============================================
-.. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
+.. include:: ../../coreComponents/schema/docs/WellElementRegionUniqueSubRegion_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:

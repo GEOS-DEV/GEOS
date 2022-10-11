@@ -8,6 +8,11 @@
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="R1Tensor32">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="R2SymTensor">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
@@ -303,6 +308,10 @@
 				</xsd:unique>
 				<xsd:unique name="SolversCompositionalMultiphaseWellUniqueName">
 					<xsd:selector xpath="CompositionalMultiphaseWell" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversElasticSEMUniqueName">
+					<xsd:selector xpath="ElasticSEM" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="SolversEmbeddedSurfaceGeneratorUniqueName">
@@ -1014,23 +1023,23 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
 		<!--reflectivity => Desired reflectivity of the PML region, used to compute the damping profile-->
-		<xsd:attribute name="reflectivity" type="real64" default="0.001" />
+		<xsd:attribute name="reflectivity" type="real32" default="0.001" />
 		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
 		<!--thicknessMaxXYZ => Thickness of the PML region, at right, back, and bottom sides, used to compute the damping profile-->
-		<xsd:attribute name="thicknessMaxXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<xsd:attribute name="thicknessMaxXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
 		<!--thicknessMinXYZ => Thickness of the PML region, at left, front, and top sides, used to compute the damping profile-->
-		<xsd:attribute name="thicknessMinXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<xsd:attribute name="thicknessMinXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
 		<!--waveSpeedMaxXYZ => Wave speed in the PML, at right, back, and bottom sides, used to compute the damping profile-->
-		<xsd:attribute name="waveSpeedMaxXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<xsd:attribute name="waveSpeedMaxXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
 		<!--waveSpeedMinXYZ => Wave speed in the PML, at left, front, and top sides, used to compute the damping profile-->
-		<xsd:attribute name="waveSpeedMinXYZ" type="R1Tensor" default="{-1,-1,-1}" />
+		<xsd:attribute name="waveSpeedMinXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
 		<!--xMax => Maximum (x,y,z) coordinates of the inner PML boundaries-->
-		<xsd:attribute name="xMax" type="R1Tensor" default="{1.79769e+308,1.79769e+308,1.79769e+308}" />
+		<xsd:attribute name="xMax" type="R1Tensor32" default="{3.40282e+38,3.40282e+38,3.40282e+38}" />
 		<!--xMin => Minimum (x,y,z) coordinates of the inner PML boundaries-->
-		<xsd:attribute name="xMin" type="R1Tensor" default="{-1.79769e+308,-1.79769e+308,-1.79769e+308}" />
+		<xsd:attribute name="xMin" type="R1Tensor32" default="{-3.40282e+38,-3.40282e+38,-3.40282e+38}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1732,6 +1741,7 @@ the relative residual norm satisfies:
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
+			<xsd:element name="ElasticSEM" type="ElasticSEMType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
@@ -1790,7 +1800,7 @@ the relative residual norm satisfies:
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
-		<xsd:attribute name="timeSourceFrequency" type="real64" use="required" />
+		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1942,6 +1952,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--injectionTemperature => Temperature of the injection stream [K]-->
 		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--referenceElevation => Reference elevation where BHP control is enforced [m]-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
 		<!--surfacePressure => Surface pressure used to compute volumetric rates when surface conditions are used [Pa]-->
@@ -1982,6 +1994,36 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:pattern value=".*[\[\]`$].*|producer|injector" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="ElasticSEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--dtSeismoTrace => Time step for output pressure at receivers-->
+		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
+		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
+		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
+		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
+		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
+		<xsd:attribute name="rickerOrder" type="integer" default="2" />
+		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
+		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeSourceFrequency => Central frequency for the time source-->
+		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -2175,12 +2217,16 @@ Local - Add stabilization only to interiors of macro elements.-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--damageUpperBound => The upper bound of the damage-->
+		<xsd:attribute name="damageUpperBound" type="real64" default="1.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fieldName => name of field variable-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--irreversibilityFlag => The flag to indicate whether to apply the irreversibility constraint-->
+		<xsd:attribute name="irreversibilityFlag" type="integer" default="0" />
 		<!--localDissipation => Type of local dissipation function. Can be Linear or Quadratic-->
 		<xsd:attribute name="localDissipation" type="string" use="required" />
 		<!--logLevel => Log level-->
@@ -2592,8 +2638,6 @@ Local - Add stabilization only to interiors of macro elements.-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="Fracture" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -3055,6 +3099,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
+		<!--compressiveStrength => Compressive strength from the uniaxial compression test-->
+		<xsd:attribute name="compressiveStrength" type="real64" default="0" />
 		<!--criticalFractureEnergy => Critical fracture energy-->
 		<xsd:attribute name="criticalFractureEnergy" type="real64" use="required" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
@@ -3069,12 +3115,22 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--degradationLowerLimit => The lower limit of the degradation function-->
+		<xsd:attribute name="degradationLowerLimit" type="real64" default="0" />
+		<!--deltaCoefficient => Coefficient in the calculation of the external driving force-->
+		<xsd:attribute name="deltaCoefficient" type="real64" default="-1" />
+		<!--extDrivingForceFlag => Whether to have external driving force. Can be 0 or 1-->
+		<xsd:attribute name="extDrivingForceFlag" type="integer" default="0" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--tensileStrength => Tensile strength from the uniaxial tension test-->
+		<xsd:attribute name="tensileStrength" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageSpectralElasticIsotropicType">
+		<!--compressiveStrength => Compressive strength from the uniaxial compression test-->
+		<xsd:attribute name="compressiveStrength" type="real64" default="0" />
 		<!--criticalFractureEnergy => Critical fracture energy-->
 		<xsd:attribute name="criticalFractureEnergy" type="real64" use="required" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
@@ -3089,12 +3145,22 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--degradationLowerLimit => The lower limit of the degradation function-->
+		<xsd:attribute name="degradationLowerLimit" type="real64" default="0" />
+		<!--deltaCoefficient => Coefficient in the calculation of the external driving force-->
+		<xsd:attribute name="deltaCoefficient" type="real64" default="-1" />
+		<!--extDrivingForceFlag => Whether to have external driving force. Can be 0 or 1-->
+		<xsd:attribute name="extDrivingForceFlag" type="integer" default="0" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--tensileStrength => Tensile strength from the uniaxial tension test-->
+		<xsd:attribute name="tensileStrength" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
+		<!--compressiveStrength => Compressive strength from the uniaxial compression test-->
+		<xsd:attribute name="compressiveStrength" type="real64" default="0" />
 		<!--criticalFractureEnergy => Critical fracture energy-->
 		<xsd:attribute name="criticalFractureEnergy" type="real64" use="required" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
@@ -3109,8 +3175,16 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--degradationLowerLimit => The lower limit of the degradation function-->
+		<xsd:attribute name="degradationLowerLimit" type="real64" default="0" />
+		<!--deltaCoefficient => Coefficient in the calculation of the external driving force-->
+		<xsd:attribute name="deltaCoefficient" type="real64" default="-1" />
+		<!--extDrivingForceFlag => Whether to have external driving force. Can be 0 or 1-->
+		<xsd:attribute name="extDrivingForceFlag" type="integer" default="0" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--tensileStrength => Tensile strength from the uniaxial tension test-->
+		<xsd:attribute name="tensileStrength" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
