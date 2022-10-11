@@ -696,7 +696,7 @@ public:
    *@return the bulkModulus of all elements
    */
   GEOSX_HOST_DEVICE
-  virtual arrayView1d < real64 const > getBulkModulus( ) const
+  virtual arrayView1d< real64 const > getBulkModulus( ) const
   {
     GEOSX_ERROR( "getBulkModulus() not implemented for this model" );
 
@@ -709,7 +709,7 @@ public:
    *@return the shearModulus of all elements
    */
   GEOSX_HOST_DEVICE
-  virtual arrayView1d < real64 const > getShearModulus( ) const
+  virtual arrayView1d< real64 const > getShearModulus( ) const
   {
     GEOSX_ERROR( "getShearModulus() not implemented for this model" );
 

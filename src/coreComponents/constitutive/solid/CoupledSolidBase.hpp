@@ -135,32 +135,32 @@ public:
   void scaleReferencePorosity( arrayView1d< real64 const > scalingFactors ) const
   { getBasePorosityModel().scaleReferencePorosity( scalingFactors ); }
 
-   /* 
-    * @brief get the current bulk modulus
-    * return a constant arrayView1d to bulk modulus
-    */
+  /*
+   * @brief get the current bulk modulus
+   * return a constant arrayView1d to bulk modulus
+   */
   arrayView1d< real64 const > const getBulkModulus() const
   {
     return getBaseSolidModel().getBulkModulus();
   }
 
-   /* 
-    * @brief get the current bulk modulus
-    * return a constant arrayView1d to bulk modulus
-    */ 
+  /*
+   * @brief get the current bulk modulus
+   * return a constant arrayView1d to bulk modulus
+   */
   arrayView1d< real64 const > const getShearModulus() const
   {
     return getBaseSolidModel().getShearModulus();
   }
 
-  /* 
+  /*
    * @brief get the current biot coefficient
    * return a constant arrayView1d to biotCoefficient
    */
   arrayView1d< real64 const > const getBiotCoefficient() const
   {
     return getBasePorosityModel().getBiotCoefficient();
-  } 
+  }
 
   /**
    * @brief initialize the constitutive models fields.
@@ -219,7 +219,7 @@ private:
 
   /**
    *@brief get a SolidBase constant reference to the solid model
-   *return a constant SolidBase reference to the solid model
+   * return a constant SolidBase reference to the solid model
    */
   SolidBase const & getBaseSolidModel() const
   { return this->getParent().template getGroup< SolidBase >( m_solidModelName ); }

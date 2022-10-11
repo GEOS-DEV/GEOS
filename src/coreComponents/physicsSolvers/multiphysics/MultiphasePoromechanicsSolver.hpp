@@ -21,7 +21,6 @@
 
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
@@ -112,89 +111,7 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
-  void updateStabilizationParams(bool updateMacro, bool updateTau)
-  { 
-
-       DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-       // Step 1: we loop over the regions where stabilization is active and collect their name
-    
-       set< string > regionFilter;
-       for( string const & regionName : m_stabilizationRegionNames )
-       {
-         regionFilter.insert( regionName );
-       }
-
-       // Step 2: loop over the target regions of the solver, and tag the elements belonging to stabilization regions
-       forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & targetRegionNames )
-       {
-         // keep only the target regions that are in the filter
-         array1d< string > filteredTargetRegionNames;
-         filteredTargetRegionNames.reserve( targetRegionNames.size() );
-
-         for( string const & targetRegionName : targetRegionNames )
-         {
-           if( regionFilter.count( targetRegionName ) )
-           {
-             filteredTargetRegionNames.emplace_back( targetRegionName );
-           }
-         }
-
-         // loop over the elements and make stabilization active
-         mesh.getElemManager().forElementSubRegions( filteredTargetRegionNames.toViewConst(), [&]( localIndex const,
-                                                                                                ElementSubRegionBase & subRegion )
-
-         {
-           arrayView1d< integer > macroElementIndex = subRegion.getExtrinsicData< extrinsicMeshData::flow::macroElementIndex >();
-           arrayView1d< real64 > elementStabConstant = subRegion.getExtrinsicData< extrinsicMeshData::flow::elementStabConstant >();
-        
-           geosx::constitutive::CoupledSolidBase const & porousSolid =
-           getConstitutiveModel< geosx::constitutive::CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );
-
-           arrayView1d< real64 const > const bulkModulus = porousSolid.getBulkModulus();
-           arrayView1d< real64 const > const shearModulus = porousSolid.getShearModulus();
-           arrayView1d< real64 const > const biotCoefficient = porousSolid.getBiotCoefficient();
-
-           forAll< parallelDevicePolicy<> >( subRegion.size(), [=] ( localIndex const ei )
-           {
-             if (updateMacro)
-             {
-               macroElementIndex[ei] = 1;
-             }
-
-             if (updateTau)
-             {
-               real64 const bM = bulkModulus[ei];
-               real64 const sM = shearModulus[ei];
-               real64 const bC = biotCoefficient[ei];
-
-               elementStabConstant[ei] = m_stabilizationMultiplier * 9.0 * (bC * bC) / (32.0 * (10.0 * sM / 3.0 + bM));
-
-             }
-           } );
-         } );
- 
-       } );
-  }
-
-  virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override
-  {
-    CoupledSolver< SolidMechanicsLagrangianFEM, CompositionalMultiphaseBase > :: implicitStepSetup(time_n, dt, domain);
-    
-    GEOSX_THROW_IF( m_stabilizationType == StabilizationType::Local,
-                  catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
-                  InputError );
-    
-    if(m_stabilizationType == StabilizationType::Global)
-    {
-      updateStabilizationParams(true, true);
-    }
-  }
+  void updateStabilizationParameters( DomainPartition & domain ) const;
 
   /**@}*/
 

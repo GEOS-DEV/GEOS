@@ -2129,6 +2129,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--stabilizationMultiplier => Constant multiplier of stabilization strength.-->
+		<xsd:attribute name="stabilizationMultiplier" type="real64" default="0" />
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
 		<xsd:attribute name="stabilizationRegionNames" type="string_array" default="{}" />
 		<!--stabilizationType => Stabilization type. Options are:

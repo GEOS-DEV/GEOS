@@ -79,7 +79,7 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
           m_stabilizationType == StabilizationType::Local )
       {
         subRegion.registerExtrinsicData< extrinsicMeshData::flow::macroElementIndex >( getName() );
-	subRegion.registerExtrinsicData< extrinsicMeshData::flow::elementStabConstant >( getName() );
+        subRegion.registerExtrinsicData< extrinsicMeshData::flow::elementStabConstant >( getName() );
       }
     } );
   } );
@@ -140,10 +140,12 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
                                                               kernelFactory );
   } );
 
+
   // Face-based contributions
   if( m_stabilizationType == StabilizationType::Global ||
       m_stabilizationType == StabilizationType::Local )
   {
+    updateStabilizationParameters( domain );
     flowSolver()->assembleStabilizedFluxTerms( dt,
                                                domain,
                                                dofManager,
@@ -199,6 +201,10 @@ void MultiphasePoromechanicsSolver::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
+  GEOSX_THROW_IF( m_stabilizationType == StabilizationType::Local,
+                  catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
+                  InputError );
+
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -216,6 +222,70 @@ void MultiphasePoromechanicsSolver::initializePreSubGroups()
     } );
   } );
 }
+
+void MultiphasePoromechanicsSolver::updateStabilizationParameters( DomainPartition & domain ) const
+{
+  // Step 1: we loop over the regions where stabilization is active and collect their name
+
+  set< string > regionFilter;
+  for( string const & regionName : m_stabilizationRegionNames )
+  {
+    regionFilter.insert( regionName );
+  }
+
+  // Step 2: loop over the target regions of the solver, and tag the elements belonging to stabilization regions
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & targetRegionNames )
+  {
+    // keep only the target regions that are in the filter
+    array1d< string > filteredTargetRegionNames;
+    filteredTargetRegionNames.reserve( targetRegionNames.size() );
+
+    for( string const & targetRegionName : targetRegionNames )
+    {
+      if( regionFilter.count( targetRegionName ) )
+      {
+        filteredTargetRegionNames.emplace_back( targetRegionName );
+      }
+    }
+
+    // loop over the elements and update the stabilization constant
+    mesh.getElemManager().forElementSubRegions( filteredTargetRegionNames.toViewConst(), [&]( localIndex const,
+                                                                                              ElementSubRegionBase & subRegion )
+
+    {
+      arrayView1d< integer > const macroElementIndex = subRegion.getExtrinsicData< extrinsicMeshData::flow::macroElementIndex >();
+      arrayView1d< real64 > const elementStabConstant = subRegion.getExtrinsicData< extrinsicMeshData::flow::elementStabConstant >();
+
+      geosx::constitutive::CoupledSolidBase const & porousSolid =
+        getConstitutiveModel< geosx::constitutive::CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );
+
+      arrayView1d< real64 const > const bulkModulus = porousSolid.getBulkModulus();
+      arrayView1d< real64 const > const shearModulus = porousSolid.getShearModulus();
+      arrayView1d< real64 const > const biotCoefficient = porousSolid.getBiotCoefficient();
+
+      real64 const stabilizationMultiplier = m_stabilizationMultiplier;
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [bulkModulus,
+                                                           shearModulus,
+                                                           biotCoefficient,
+                                                           stabilizationMultiplier,
+                                                           macroElementIndex,
+                                                           elementStabConstant] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        real64 const bM = bulkModulus[ei];
+        real64 const sM = shearModulus[ei];
+        real64 const bC = biotCoefficient[ei];
+
+        macroElementIndex[ei] = 1;
+        elementStabConstant[ei] = stabilizationMultiplier * 9.0 * (bC * bC) / (32.0 * (10.0 * sM / 3.0 + bM));
+
+      } );
+    } );
+  } );
+}
+
 
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanicsSolver, string const &, Group * const )
 
