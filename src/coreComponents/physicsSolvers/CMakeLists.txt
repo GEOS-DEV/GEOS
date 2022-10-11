@@ -98,6 +98,8 @@ set( physicsSolvers_headers
      wavePropagation/WaveSolverBase.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
      wavePropagation/AcousticWaveEquationSEMKernel.hpp
+     wavePropagation/ElasticWaveEquationSEM.hpp
+     wavePropagation/ElasticWaveEquationSEMKernel.hpp
    )
 
 #
@@ -156,6 +158,7 @@ set( physicsSolvers_sources
      surfaceGeneration/SurfaceGenerator.cpp
      wavePropagation/WaveSolverBase.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
+     wavePropagation/ElasticWaveEquationSEM.cpp
    )
 
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
@@ -216,6 +219,10 @@ endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
+endif()
+
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
 blt_add_library( NAME       physicsSolvers
