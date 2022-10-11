@@ -44,7 +44,6 @@
       surfaceGeneratorName="SurfaceGen"
       couplingTypeOption="FIM"
       logLevel="1"
-      discretization="FE1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">

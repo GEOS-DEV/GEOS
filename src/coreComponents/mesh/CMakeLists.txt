@@ -37,6 +37,7 @@ set( mesh_headers
      generators/CellBlockManagerABC.hpp
      generators/CellBlockUtilities.hpp
      generators/ExternalMeshGeneratorBase.hpp
+     generators/FaceBlockABC.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
@@ -117,6 +118,10 @@ set( dependencyList schema dataRepository constitutive finiteElement parmetis me
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
+endif()
+
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
 if( ENABLE_PAMELA )

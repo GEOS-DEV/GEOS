@@ -71,7 +71,7 @@ void LaplaceBaseH1::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    NodeManager & nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
+    NodeManager & nodes = meshBody.getBaseDiscretization().getNodeManager();
 
     nodes.registerWrapper< real64_array >( m_fieldName ).
       setApplyDefaultValue( 0.0 ).
@@ -125,7 +125,7 @@ void LaplaceBaseH1::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domai
   dofManager.addField( m_fieldName,
                        FieldLocation::Node,
                        1,
-                       m_meshTargets );
+                       getMeshTargets() );
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
@@ -143,10 +143,9 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
                                scalingFactor );
 
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
-
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );
@@ -192,9 +191,9 @@ void LaplaceBaseH1::
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
 
-  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & )
   {
 
     fsManager.apply< NodeManager >( time,

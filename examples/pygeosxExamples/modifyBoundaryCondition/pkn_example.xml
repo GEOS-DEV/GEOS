@@ -26,7 +26,6 @@
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       couplingTypeOption="FIM"
-      discretization="FE1"
       targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
         newtonMaxIter="50"
