@@ -21,6 +21,7 @@
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 
+
 namespace geosx
 {
 
@@ -257,15 +258,16 @@ struct PrecomputeSourceAndReceiverKernel
           {
             real64 coordsOnRefElem[3]{};
 
+
             computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                              elemsToNodes[k],
                                                              X,
                                                              coordsOnRefElem );
             sourceIsAccessible[isrc] = 1;
 
-            // Compute source coefficients: this generate a P-wave and an "unwanted" S-wave. It is classical in the case of the elastic wave
+            //Compute source coefficients: this generate a P-wave and an "unwanted" S-wave. It is classical in the case of the elastic wave
             // equation at order 2, the S-wave can be attenuated by refining the mesh or get to high order
-            // However, we will propably use elastic wave at 1st order for the FWI case.
+            //However, we will propably use elastic wave at 1st order for the FWI case.
             for( localIndex c=0; c<2; ++c )
             {
               for( localIndex b=0; b<2; ++b )
@@ -335,6 +337,7 @@ struct PrecomputeSourceAndReceiverKernel
             receiverIsLocal[ircv] = 1;
 
             real64 Ntest[numNodesPerElem];
+            //finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -442,7 +445,7 @@ struct MassAndDampingMatrixKernel
             FE_TYPE::calcN( q, N );
             real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
-            real64 invJ[3][3]{};
+            real64 invJ[3][3]={{0}};
             FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
 
             for( localIndex a=0; a < numNodesPerFace; ++a )
@@ -460,7 +463,7 @@ struct MassAndDampingMatrixKernel
               }
               ds = std::sqrt( ds );
 
-              localIndex const numNodeGl = facesToNodes[iface][a];
+              localIndex numNodeGl = facesToNodes[iface][a];
 
               real32 const localIncrementx = density[k] * (velocityVp[k]*(faceNormal[iface][0]*faceNormal[iface][0]) + velocityVs[k]*(faceNormal[iface][1]*faceNormal[iface][1]) +
                                                            velocityVs[k]*(faceNormal[iface][2]*faceNormal[iface][2]) )*detJ*ds*N[a];
@@ -590,8 +593,8 @@ public:
     {}
     /// C-array stack storage for element local the nodal positions.
     real64 xLocal[ numNodesPerElem ][ 3 ]{};
-    real32 mu = 0;
-    real32 lambda = 0;
+    real32 mu=0;
+    real32 lambda=0;
   };
   //***************************************************************************
 
