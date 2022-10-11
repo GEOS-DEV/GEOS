@@ -229,9 +229,6 @@ public:
 
         stencilMacroElements[i] = m_macroElementIndex[er][esr][ei];
 
-        // tauStab = 9.0 * ( m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei] )
-        //          / ( 32.0 * ( 10.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei] ) );
-
         tauStab = m_elementStabConstant[er][esr][ei];
 
         dPresGradStab += tauStab * stack.stabTransmissibility[0][i] * (m_pres[er][esr][ei] - m_pres_n[er][esr][ei]); // jump in dp, not p
