@@ -19,7 +19,7 @@
       outputSeismoTrace="1"
       dtSeismoTrace="0.001"
       receiverCoordinates="{ { 55, 55, 55 } }"
-      geometryLinearDAS="{ { 0.523599, 0.785398, 8 } }" />
+      linearDASGeometry="{ { 0.523599, 0.785398, 8 } }" />
   </Solvers>
 
   <!-- hexahedral mesh generated internally by GEOSX -->
