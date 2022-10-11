@@ -330,6 +330,13 @@ Element: ElasticOrthotropic
 .. include:: ../../coreComponents/schema/docs/ElasticOrthotropic.rst
 
 
+.. _XML_ElasticSEM:
+
+Element: ElasticSEM
+===================
+.. include:: ../../coreComponents/schema/docs/ElasticSEM.rst
+
+
 .. _XML_ElasticTransverseIsotropic:
 
 Element: ElasticTransverseIsotropic
@@ -1459,6 +1466,13 @@ Datastructure: ElasticIsotropicPressureDependent
 Datastructure: ElasticOrthotropic
 =================================
 .. include:: ../../coreComponents/schema/docs/ElasticOrthotropic_other.rst
+
+
+.. _DATASTRUCTURE_ElasticSEM:
+
+Datastructure: ElasticSEM
+=========================
+.. include:: ../../coreComponents/schema/docs/ElasticSEM_other.rst
 
 
 .. _DATASTRUCTURE_ElasticTransverseIsotropic:
