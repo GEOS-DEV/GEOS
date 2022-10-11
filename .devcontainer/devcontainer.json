@@ -13,5 +13,10 @@
                 "fredericbonnet.cmake-test-adapter"
             ]
         }
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/sshd:1": {
+            "version": "latest"
+        }
     }
 }
