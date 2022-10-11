@@ -151,13 +151,13 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
     std::vector< integer > sizes( num2dElements );
     for ( int i = 0; i < num2dElements; ++i)
     {
-      sizes[i] = m_toNodesRelation.base()[i].size();
+      sizes[i] = m_toNodesRelation[i].size();
     }
     std::set< integer > const s( sizes.cbegin(), sizes.cend() );
 
     if( s.size() > 1 )
     {
-      GEOSX_WARNING( "Heterogeneous face element sub region found and store as homogeneous. Use at your own risk." );
+      GEOSX_WARNING( "Heterogeneous face element sub region found and stored as homogeneous. Use at your own risk." );
     }
 
     auto const it = std::max_element( s.cbegin(), s.cend() );
