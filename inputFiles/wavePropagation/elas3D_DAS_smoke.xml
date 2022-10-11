@@ -13,7 +13,7 @@
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Region }"
-      sourceCoordinates="{ { 45, 45, 45 }}"
+      sourceCoordinates="{ { 45, 45, 45 } }"
       timeSourceFrequency="10.0"
       rickerOrder="2"
       outputSeismoTrace="1"
@@ -30,9 +30,9 @@
       xCoords="{ 0, 20, 80, 100 }"
       yCoords="{ 0, 20, 80, 100 }"
       zCoords="{ 0, 20, 80, 100 }"
-      nx="{ 2, 6, 2}"
-      ny="{ 2, 6, 2}"
-      nz="{ 2, 6, 2}"
+      nx="{ 2, 6, 2 }"
+      ny="{ 2, 6, 2 }"
+      nz="{ 2, 6, 2 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
 
@@ -121,7 +121,7 @@
     <FieldSpecification
       name="cellVelocityVp"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="mediumVelocityVp"
       scale="4000"
       setNames="{ all }"/>
@@ -129,7 +129,7 @@
     <FieldSpecification
       name="cellVelocityVs"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="mediumVelocityVs"
       scale="2000"
       setNames="{ all }"/>
@@ -137,7 +137,7 @@
     <FieldSpecification
       name="cellDensity"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region/cb"
       fieldName="mediumDensity"
       scale="2000"
       setNames="{ all }"/>

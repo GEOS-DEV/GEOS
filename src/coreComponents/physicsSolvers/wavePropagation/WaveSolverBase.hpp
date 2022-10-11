@@ -61,7 +61,7 @@ public:
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
 
     static constexpr char const * useDASString() { return "useDAS"; }
-    static constexpr char const * geometryLinearDASString() { return "geometryLinearDAS"; }
+    static constexpr char const * linearDASGeometryString() { return "linearDASGeometry"; }
 
     static constexpr char const * usePMLString() { return "usePML"; }
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
@@ -178,7 +178,7 @@ protected:
   integer m_useDAS;
 
   /// Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)
-  array2d< real64 > m_geometryLinearDAS;
+  array2d< real64 > m_linearDASGeometry;
 
   /// Flag to apply PML
   integer m_usePML;

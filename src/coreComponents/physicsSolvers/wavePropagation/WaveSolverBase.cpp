@@ -87,7 +87,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to indicate if DAS type of data will be modeled" );
 
-  registerWrapper( viewKeyStruct::geometryLinearDASString(), &m_geometryLinearDAS ).
+  registerWrapper( viewKeyStruct::linearDASGeometryString(), &m_linearDASGeometry ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)" );
@@ -114,7 +114,7 @@ void WaveSolverBase::postProcessInput()
 {
   SolverBase::postProcessInput();
 
-  if( m_geometryLinearDAS.size( 1 ) > 0 )
+  if( m_linearDASGeometry.size( 1 ) > 0 )
   {
     m_useDAS = 1;
   }
@@ -123,14 +123,14 @@ void WaveSolverBase::postProcessInput()
   {
     GEOSX_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
 
-    GEOSX_ERROR_IF( m_geometryLinearDAS.size( 1 ) != 3,
+    GEOSX_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
                     "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
 
-    GEOSX_ERROR_IF( m_geometryLinearDAS.size( 0 ) != m_receiverCoordinates.size( 0 ),
+    GEOSX_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
                     "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
     /// initialize DAS geometry
-    WaveSolverBase::initializeDAS();
+    initializeDAS();
   }
 }
 
@@ -142,25 +142,25 @@ void WaveSolverBase::initializeDAS()
   m_receiverCoordinates.resize( 2*numReceiversGlobal, 3 );
 
   arrayView2d< real64 > const receiverCoordinates = m_receiverCoordinates.toView();
-  arrayView2d< real64 const > const geometryLinearDAS = m_geometryLinearDAS.toViewConst();
+  arrayView2d< real64 const > const linearDASGeometry = m_linearDASGeometry.toViewConst();
 
   for( localIndex ircv = 0; ircv < numReceiversGlobal; ++ircv )
   {
     /// updated xyz of receivers on the far end of a DAS channel
     receiverCoordinates[numReceiversGlobal+ircv][0] = receiverCoordinates[ircv][0]
-                                                      + cos( geometryLinearDAS[ircv][0] )*cos( geometryLinearDAS[ircv][1] )*geometryLinearDAS[ircv][2]/2.0;
+                                                      + cos( linearDASGeometry[ircv][0] ) * cos( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
     receiverCoordinates[numReceiversGlobal+ircv][1] = receiverCoordinates[ircv][1]
-                                                      + cos( geometryLinearDAS[ircv][0] )*sin( geometryLinearDAS[ircv][1] )*geometryLinearDAS[ircv][2]/2.0;
+                                                      + cos( linearDASGeometry[ircv][0] ) * sin( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
     receiverCoordinates[numReceiversGlobal+ircv][2] = receiverCoordinates[ircv][2]
-                                                      + sin( geometryLinearDAS[ircv][0] )*geometryLinearDAS[ircv][2]/2.0;
+                                                      + sin( linearDASGeometry[ircv][0] ) * linearDASGeometry[ircv][2] / 2.0;
 
     /// updated xyz of receivers on the near end of a DAS channel
     receiverCoordinates[ircv][0] = receiverCoordinates[ircv][0]
-                                   - cos( geometryLinearDAS[ircv][0] )*cos( geometryLinearDAS[ircv][1] )*geometryLinearDAS[ircv][2]/2.0;
+                                   - cos( linearDASGeometry[ircv][0] ) * cos( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
     receiverCoordinates[ircv][1] = receiverCoordinates[ircv][1]
-                                   - cos( geometryLinearDAS[ircv][0] )*sin( geometryLinearDAS[ircv][1] )*geometryLinearDAS[ircv][2]/2.0;
+                                   - cos( linearDASGeometry[ircv][0] ) * sin( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
     receiverCoordinates[ircv][2] = receiverCoordinates[ircv][2]
-                                   - sin( geometryLinearDAS[ircv][0] )*geometryLinearDAS[ircv][2]/2.0;
+                                   - sin( linearDASGeometry[ircv][0] ) * linearDASGeometry[ircv][2] / 2.0;
   }
 
   /// set flag PML to one if a PML field is specified in the xml

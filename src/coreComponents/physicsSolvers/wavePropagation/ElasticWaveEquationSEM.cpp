@@ -20,9 +20,8 @@
 #include "ElasticWaveEquationSEM.hpp"
 #include "ElasticWaveEquationSEMKernel.hpp"
 
-#include "dataRepository/KeyNames.hpp"
-#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -224,9 +223,8 @@ void ElasticWaveEquationSEM::postProcessInput()
   m_displacementZNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
   m_sourceValue.resize( nsamples, numSourcesGlobal );
 
-  /// WARNING: the receivers are initialized to zero.
-  /// This is essential for DAS modeling as MPI_Allreduce is called when
-  /// computing DAS data
+  /// The receivers are initialized to zero.
+  /// This is essential for DAS modeling as MPI_Allreduce is called when computing DAS data
   m_displacementXNp1AtReceivers.zero();
   m_displacementYNp1AtReceivers.zero();
   m_displacementZNp1AtReceivers.zero();
@@ -337,10 +335,10 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
                                           arrayView2d< real32 > const zCompRcv )
 {
 
-  arrayView2d< real64 const > const geometryLinearDAS = m_geometryLinearDAS.toViewConst();
+  arrayView2d< real64 const > const linearDASGeometry = m_linearDASGeometry.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  localIndex const numReceiversGlobal = geometryLinearDAS.size( 0 );
+  localIndex const numReceiversGlobal = linearDASGeometry.size( 0 );
   localIndex const nsamplesSeismoTrace = m_nsamplesSeismoTrace;
 
   if( m_nsamplesSeismoTrace > 0 )
@@ -368,24 +366,24 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
     {
       if( receiverIsLocal[ircv] == 1 )
       {
-        real32 const cd = cos( geometryLinearDAS[ircv][0] );
-        real32 const sd = sin( geometryLinearDAS[ircv][0] );
-        real32 const ca = cos( geometryLinearDAS[ircv][1] );
-        real32 const sa = sin( geometryLinearDAS[ircv][1] );
+        real32 const cd = cos( linearDASGeometry[ircv][0] );
+        real32 const sd = sin( linearDASGeometry[ircv][0] );
+        real32 const ca = cos( linearDASGeometry[ircv][1] );
+        real32 const sa = sin( linearDASGeometry[ircv][1] );
 
-        /// convert dipole data (pairs of geophones) to average strain data, and store in the x-component of the receiver
-        /// set the y and z component to zero to avoid any confusion
+        /// convert dipole data (pairs of geophones) to average strain data and
         for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
         {
+          // store strain data in the x-component of the receiver
           xCompRcv[iSample][ircv] =
-            cd*ca*(xCompRcv[iSample][numReceiversGlobal+ircv]-xCompRcv[iSample][ircv])
-            + cd*sa*(yCompRcv[iSample][numReceiversGlobal+ircv] - yCompRcv[iSample][ircv])
-            + sd*(zCompRcv[iSample][numReceiversGlobal+ircv] - zCompRcv[iSample][ircv]);
+            cd * ca * ( xCompRcv[iSample][numReceiversGlobal+ircv] - xCompRcv[iSample][ircv] )
+            + cd * sa * ( yCompRcv[iSample][numReceiversGlobal+ircv] - yCompRcv[iSample][ircv] )
+            + sd * ( zCompRcv[iSample][numReceiversGlobal+ircv] - zCompRcv[iSample][ircv] );
+          xCompRcv[iSample][ircv] /= linearDASGeometry[ircv][2];
 
-          xCompRcv[iSample][ircv] /= geometryLinearDAS[ircv][2];
-
-          yCompRcv[iSample][ircv] = 0;
-          zCompRcv[iSample][ircv] = 0;
+          /// set the y and z components to zero to avoid any confusion
+          yCompRcv[iSample][ircv] = 0.0;
+          zCompRcv[iSample][ircv] = 0.0;
         }
       }
     } );
@@ -842,11 +840,11 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
     computeAllSeismoTraces( time_n, 0, uy_np1, uy_n, uYReceivers );
     computeAllSeismoTraces( time_n, 0, uz_np1, uz_n, uZReceivers );
 
-    /// compute DAS data if requested
+    /// Compute DAS data if requested
     /// Pairs of receivers are assumed to be modeled ( see WaveSolverBase::initializeDAS() )
     if( m_useDAS )
     {
-      ElasticWaveEquationSEM::computeDAS( uXReceivers, uYReceivers, uZReceivers );
+      computeDAS( uXReceivers, uYReceivers, uZReceivers );
     }
   } );
 

@@ -1785,10 +1785,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
-		<!--geometryLinearDAS => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
-		<xsd:attribute name="geometryLinearDAS" type="real64_array2d" default="{{0}}" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
+		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
@@ -2007,10 +2007,10 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
-		<!--geometryLinearDAS => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
-		<xsd:attribute name="geometryLinearDAS" type="real64_array2d" default="{{0}}" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
+		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
