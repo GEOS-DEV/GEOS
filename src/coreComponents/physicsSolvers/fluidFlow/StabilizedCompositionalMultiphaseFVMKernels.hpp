@@ -22,7 +22,6 @@
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
 #include "constitutive/solid/SolidBase.hpp"
-#include "constitutive/solid/SolidExtrinsicData.hpp"
 #include "constitutive/solid/porosity/PorosityExtrinsicData.hpp"
 
 namespace geosx

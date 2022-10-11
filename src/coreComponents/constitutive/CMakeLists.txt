@@ -99,7 +99,6 @@ set( constitutive_headers
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
-     solid/SolidExtrinsicData.hpp
      solid/SolidInternalEnergy.hpp
      solid/SolidModelDiscretizationOps.hpp
      solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
