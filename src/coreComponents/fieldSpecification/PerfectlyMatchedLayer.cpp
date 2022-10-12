@@ -28,16 +28,16 @@ PerfectlyMatchedLayer::PerfectlyMatchedLayer( string const & name, Group * const
 {
   registerWrapper( viewKeyStruct::xMinString(), &m_xMin ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( { -LvArray::NumericLimits< real64 >::max,
-                            -LvArray::NumericLimits< real64 >::max,
-                            -LvArray::NumericLimits< real64 >::max } ).
+    setApplyDefaultValue( { -LvArray::NumericLimits< real32 >::max,
+                            -LvArray::NumericLimits< real32 >::max,
+                            -LvArray::NumericLimits< real32 >::max } ).
     setDescription( "Minimum (x,y,z) coordinates of the inner PML boundaries" );
 
   registerWrapper( viewKeyStruct::xMaxString(), &m_xMax ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( { LvArray::NumericLimits< real64 >::max,
-                            LvArray::NumericLimits< real64 >::max,
-                            LvArray::NumericLimits< real64 >::max } ).
+    setApplyDefaultValue( { LvArray::NumericLimits< real32 >::max,
+                            LvArray::NumericLimits< real32 >::max,
+                            LvArray::NumericLimits< real32 >::max } ).
     setDescription( "Maximum (x,y,z) coordinates of the inner PML boundaries" );
 
   registerWrapper( viewKeyStruct::reflectivityString(), &m_reflectivity ).
