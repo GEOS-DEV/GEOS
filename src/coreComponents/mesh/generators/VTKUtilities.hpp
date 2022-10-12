@@ -64,12 +64,12 @@ ENUM_STRINGS( PartitionMethod,
               "parmetis",
               "ptscotch" );
 
-  /**
-   * @brief Type of map used to store cell lists.
-   *
-   * This should be an unordered_map, but some outdated standard libraries on some systems
-   * do not provide std::hash specialization for enums. This is not performance critical though.
-   */
+/**
+ * @brief Type of map used to store cell lists.
+ *
+ * This should be an unordered_map, but some outdated standard libraries on some systems
+ * do not provide std::hash specialization for enums. This is not performance critical though.
+ */
 using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector< vtkIdType > > >;
 
 namespace vtk
@@ -89,11 +89,17 @@ vtkSmartPointer< vtkDataSet > loadMesh( Path const & filePath );
 /**
  * @brief Get the Cell Array object
  * @details Replaces GetCells() that exist only in vtkUnstructuredGrid
- * @param[in] mesh 
- * @return vtkSmartPointer< vtkCellArray > 
+ * @param[in] mesh
+ * @return vtkSmartPointer< vtkCellArray >
  */
 vtkSmartPointer< vtkCellArray > GetCellArray( vtkDataSet & mesh );
 
+/**
+ * @brief Generate global point and cell ids
+ *
+ * @param[in] mesh
+ * @return vtkSmartPointer< vtkDataSet >
+ */
 vtkSmartPointer< vtkDataSet >
 generateGlobalIDs( vtkDataSet & mesh );
 
@@ -288,12 +294,12 @@ findArraysForImport( vtkDataSet & mesh,
 
 /**
  * @brief Build the Elements to Nodes indexing
- * 
- * @tparam INDEX_TYPE 
- * @tparam POLICY 
- * @param mesh 
- * @param cells 
- * @return ArrayOfArrays< INDEX_TYPE, INDEX_TYPE > 
+ *
+ * @tparam INDEX_TYPE
+ * @tparam POLICY
+ * @param mesh
+ * @param cells
+ * @return ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
  */
 template< typename INDEX_TYPE, typename POLICY >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
@@ -427,14 +433,14 @@ std::vector< T > collectUniqueValues( std::vector< T > const & data )
  * @param[in] cellBlockManager The instance that stores the vertex blocks.
  */
 real64 writeNodes( vtkDataSet & mesh,
-                   string_array& nodesetNames,
+                   string_array & nodesetNames,
                    CellBlockManager & cellBlockManager,
-                   const geosx::R1Tensor& translate,
-                   const geosx::R1Tensor& scale );
+                   const geosx::R1Tensor & translate,
+                   const geosx::R1Tensor & scale );
 
 
-void importNodesets( vtkDataSet & mesh, 
-                     string_array& nodesetNames,
+void importNodesets( vtkDataSet & mesh,
+                     string_array & nodesetNames,
                      CellBlockManager & cellBlockManager );
 
 /**
@@ -442,7 +448,7 @@ void importNodesets( vtkDataSet & mesh,
  * @param[in] cellBlockManager The instance that stores the cell blocks.
  */
 void writeCells( vtkDataSet & mesh,
-                 const geosx::CellMapType &cellMap,
+                 const geosx::CellMapType & cellMap,
                  CellBlockManager & cellBlockManager );
 
 /**
@@ -454,7 +460,7 @@ void writeCells( vtkDataSet & mesh,
  * If the current MPI rank has no cell id for a given surface, then an empty set will be created.
  */
 void writeSurfaces( vtkDataSet & mesh,
-                    const geosx::CellMapType &cellMap,
+                    const geosx::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager );
 
 void importFieldOnCellElementSubRegion( int const regionId,
@@ -469,4 +475,3 @@ void importFieldOnCellElementSubRegion( int const regionId,
 } // namespace geosx
 
 #endif /* GEOSX_MESH_GENERATORS_VTKUTILITIES_HPP */
-

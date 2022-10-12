@@ -1219,12 +1219,12 @@ findArraysForImport( vtkDataSet & mesh,
 
 
 void importFieldOnCellElementSubRegion( int const regionId,
-                                     ElementType const elemType,
-                                     std::vector< vtkIdType > const & cellIds,
-                                     ElementRegionManager & elemManager,
-                                     arrayView1d< string const > const & fieldNames,
-                                     std::vector< vtkDataArray * > const & srcArrays,
-                                     FieldIdentifiers & fieldsToBeSync )
+                                        ElementType const elemType,
+                                        std::vector< vtkIdType > const & cellIds,
+                                        ElementRegionManager & elemManager,
+                                        arrayView1d< string const > const & fieldNames,
+                                        std::vector< vtkDataArray * > const & srcArrays,
+                                        FieldIdentifiers & fieldsToBeSync )
 {
   string const cellBlockName = vtk::buildCellBlockName( elemType, regionId );
 
@@ -1278,8 +1278,8 @@ void importFieldOnCellElementSubRegion( int const regionId,
   } );
 }
 
-void importNodesets( vtkDataSet & mesh, 
-                     string_array& nodesetNames,
+void importNodesets( vtkDataSet & mesh,
+                     string_array & nodesetNames,
                      CellBlockManager & cellBlockManager )
 {
   auto & nodeSets = cellBlockManager.getNodeSets();
@@ -1307,10 +1307,10 @@ void importNodesets( vtkDataSet & mesh,
 }
 
 real64 writeNodes( vtkDataSet & mesh,
-                   string_array& nodesetNames,
+                   string_array & nodesetNames,
                    CellBlockManager & cellBlockManager,
-                   const geosx::R1Tensor& translate,
-                   const geosx::R1Tensor& scale )
+                   const geosx::R1Tensor & translate,
+                   const geosx::R1Tensor & scale )
 {
   localIndex const numPts = LvArray::integerConversion< localIndex >( mesh.GetNumberOfPoints() );
   cellBlockManager.setNumNodes( numPts );
@@ -1374,7 +1374,7 @@ real64 writeNodes( vtkDataSet & mesh,
  * @param[in] cellBlockManager The instance that stores the cell blocks.
  */
 void writeCells( vtkDataSet & mesh,
-                 const geosx::CellMapType &cellMap,
+                 const geosx::CellMapType & cellMap,
                  CellBlockManager & cellBlockManager )
 {
   // Creates a new cell block for each region and for each type of cell.
@@ -1413,7 +1413,7 @@ void writeCells( vtkDataSet & mesh,
  * If the current MPI rank has no cell id for a given surface, then an empty set will be created.
  */
 void writeSurfaces( vtkDataSet & mesh,
-                    const geosx::CellMapType &cellMap,
+                    const geosx::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager )
 {
   if( cellMap.count( ElementType::Polygon ) == 0 )

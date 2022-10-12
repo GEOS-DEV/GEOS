@@ -104,14 +104,14 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_attributeName );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  writing nodes..." );
-  real64 const globalLength = writeNodes(*m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale );
+  real64 const globalLength = writeNodes( *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale );
   meshBody.setGlobalLengthScale( globalLength );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  writing cells..." );
-  writeCells(*m_vtkMesh, m_cellMap, cellBlockManager );
+  writeCells( *m_vtkMesh, m_cellMap, cellBlockManager );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  writing surfaces..." );
-  writeSurfaces(*m_vtkMesh, m_cellMap, cellBlockManager );
+  writeSurfaces( *m_vtkMesh, m_cellMap, cellBlockManager );
 
   GEOSX_LOG_LEVEL_RANK_0( 2, "  building connectivity maps..." );
   cellBlockManager.buildMaps();
