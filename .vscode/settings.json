@@ -6,8 +6,8 @@
         "configureSettings": {
             "BLT_MPI_COMMAND_APPEND": "--allow-run-as-root;--use-hwthread-cpus;--oversubscribe",
             "ENABLE_OPENMP": "OFF",
-            "ENABLE_HYPRE": "OFF",
-            "ENABLE_TRILINOS": "ON",
+            "ENABLE_HYPRE": "ON",
+            "ENABLE_TRILINOS": "OFF",
             "ENABLE_CUDA": "OFF"
         },
         "configurationType": "Debug",
