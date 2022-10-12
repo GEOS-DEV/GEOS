@@ -85,7 +85,12 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
 
       NodeManager & nodeManager = mesh.getNodeManager();
 
-      nodeManager.velocity().zero();
+      
+      if ( nodeManager.hasWrapper( keys::Velocity ) )
+      {
+        nodeManager.velocity().zero();
+      }
+
       nodeManager.incrementalDisplacement().zero();
       nodeManager.totalDisplacement().zero();
     }
