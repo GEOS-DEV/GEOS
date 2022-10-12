@@ -1369,10 +1369,6 @@ real64 writeNodes( vtkDataSet & mesh,
   return LvArray::tensorOps::l2Norm< 3 >( xMax );
 }
 
-/**
- * @brief Build all the cell blocks.
- * @param[in] cellBlockManager The instance that stores the cell blocks.
- */
 void writeCells( vtkDataSet & mesh,
                  const geosx::CellMapType & cellMap,
                  CellBlockManager & cellBlockManager )
@@ -1404,14 +1400,6 @@ void writeCells( vtkDataSet & mesh,
   }
 }
 
-/**
- * @brief Build the "surface" node sets from the surface information.
- * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
- * @param[in] surfacesIdsToCellsIds Map from the surfaces index to the list of cells in this surface in this rank.
- * @param[out] cellBlockManager The instance that stores the node sets.
- * @note @p surfacesIdsToCellsIds will contain all the surface ids across all the MPI ranks, but only its cell ids.
- * If the current MPI rank has no cell id for a given surface, then an empty set will be created.
- */
 void writeSurfaces( vtkDataSet & mesh,
                     const geosx::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager )

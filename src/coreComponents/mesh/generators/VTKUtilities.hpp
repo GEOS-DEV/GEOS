@@ -89,26 +89,41 @@ vtkSmartPointer< vtkDataSet > loadMesh( Path const & filePath );
 /**
  * @brief Get the Cell Array object
  * @details Replaces GetCells() that exist only in vtkUnstructuredGrid
- * @param[in] mesh
- * @return vtkSmartPointer< vtkCellArray >
+ * @param[in] mesh a vtk grid
+ * @return an array of cells
  */
 vtkSmartPointer< vtkCellArray > GetCellArray( vtkDataSet & mesh );
 
 /**
  * @brief Generate global point and cell ids
  *
- * @param[in] mesh
- * @return vtkSmartPointer< vtkDataSet >
+ * @param[in] mesh a vtk grid
+ * @return the vtk grid with global ids attributes
  */
 vtkSmartPointer< vtkDataSet >
 generateGlobalIDs( vtkDataSet & mesh );
 
+/**
+ * @brief Redistributes the mesh using cell graphds methods (ParMETIS or PTScotch)
+ *
+ * @param[in] mesh a vtk grid
+ * @param[in] method the partitionning method
+ * @param[in] comm the MPI communicator
+ * @param[in] numRefinements the number of refinements for PTScotch
+ * @return the vtk grid redistributed
+ */
 vtkSmartPointer< vtkDataSet >
 redistributeByCellGraph( vtkDataSet & mesh,
                          PartitionMethod const method,
                          MPI_Comm const comm,
                          int const numRefinements );
 
+/**
+ * @brief Redistributes the mesh using a Kd-Tree
+ *
+ * @param[in] mesh a vtk grid
+ * @return the vtk grid redistributed
+ */
 vtkSmartPointer< vtkDataSet >
 redistributeByKdTree( vtkDataSet & mesh );
 
@@ -149,13 +164,31 @@ geosx::ElementType buildGeosxPolyhedronType( vtkCell * const cell );
  */
 ElementType convertVtkToGeosxElementType( VTKCellType const cellType );
 
+/**
+ * @brief Split and arrange the cells of a grid by type
+ *
+ * @param[in] mesh a vtk grid
+ * @return a map of cells grouped by type
+ */
 std::map< ElementType, std::vector< vtkIdType > >
 splitCellsByType( vtkDataSet & mesh );
 
+/**
+ * @brief Split and arrange the cells of a grid according to an attribute
+ *
+ * @param[in] typeToCells a map of cells grouped by type
+ * @param attributeDataArray an attribute
+ * @return a map of cell lists grouped by type
+ */
 CellMapType
 splitCellsByTypeAndAttribute( std::map< ElementType, std::vector< vtkIdType > > & typeToCells,
                               vtkDataArray * const attributeDataArray );
 
+/**
+ * @brief Gather all element types encountered on any rank and enrich the local collection
+ *
+ * @param[in] cellMap a map of cell lists grouped by type
+ */
 void extendCellMapWithRemoteKeys( CellMapType & cellMap );
 
 /**
@@ -219,8 +252,21 @@ std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const ce
 CellMapType buildCellMap( vtkDataSet & mesh,
                           string const & attributeName );
 
+/**
+ * @brief Get the Geosx To Vtk Node Ordering object of a type of element
+ *
+ * @param[in] elemType the type of the element
+ * @return an array of the vtk node ordering
+ */
 std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType );
 
+/**
+ * @brief Get the Geosx To Vtk Node Ordering object of a type of element
+ *
+ * @param[in] elemType the type of the element
+ * @param cell
+ * @return an array of the vtk node ordering
+ */
 std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType, vtkCell *cell );
 
 /**
@@ -279,6 +325,13 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          WrapperBase & wrapper );
 
+/**
+ * @brief Print statistics for a vtk mesh
+ *
+ * @param[in] mesh an input mesh
+ * @param cellMap a map of cell lists grouped by type
+ * @param comm the MPI communicator
+ */
 void printMeshStatistics( vtkDataSet & mesh,
                           CellMapType const & cellMap,
                           MPI_Comm const comm );
@@ -295,11 +348,11 @@ findArraysForImport( vtkDataSet & mesh,
 /**
  * @brief Build the Elements to Nodes indexing
  *
- * @tparam INDEX_TYPE
- * @tparam POLICY
- * @param mesh
- * @param cells
- * @return ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
+ * @tparam INDEX_TYPE the type of the indexes
+ * @tparam POLICY The execution policy
+ * @param mesh an input mesh
+ * @param cells an array of the cells
+ * @return An Elements to Nodes indexing
  */
 template< typename INDEX_TYPE, typename POLICY >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
@@ -336,6 +389,13 @@ buildElemToNodesImpl( vtkDataSet & mesh,
   return elemToNodes;
 }
 
+/**
+ * @brief Build the Elements to Nodes indexing depending on the execution policy
+ *
+ * @tparam INDEX_TYPE the type of the indexes
+ * @param mesh an input mesh
+ * @return An Elements to Nodes indexing
+ */
 template< typename INDEX_TYPE >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
 buildElemToNodes( vtkDataSet & mesh )
@@ -349,6 +409,15 @@ buildElemToNodes( vtkDataSet & mesh )
        : buildElemToNodesImpl< INDEX_TYPE, serialPolicy >( mesh, cells );
 }
 
+/**
+ * @brief Split a mesh by partionning it
+ *
+ * @tparam PART_INDEX the type of the partition indexes
+ * @param mesh an input mesh
+ * @param numParts The number of the process
+ * @param part an array of target partitions for each element in local mesh
+ * @return vtkSmartPointer< vtkPartitionedDataSet >
+ */
 template< typename PART_INDEX >
 vtkSmartPointer< vtkPartitionedDataSet >
 splitMeshByPartition( vtkDataSet & mesh,
@@ -430,7 +499,12 @@ std::vector< T > collectUniqueValues( std::vector< T > const & data )
 
 /**
  * @brief Build all the vertex blocks.
+ * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
+ * @param[in] nodesetNames
  * @param[in] cellBlockManager The instance that stores the vertex blocks.
+ * @param[in] translate translate the dataset
+ * @param[in] scale scale the dataset
+ * @return size of the dataset on x-axis
  */
 real64 writeNodes( vtkDataSet & mesh,
                    string_array & nodesetNames,
@@ -438,13 +512,21 @@ real64 writeNodes( vtkDataSet & mesh,
                    const geosx::R1Tensor & translate,
                    const geosx::R1Tensor & scale );
 
-
+/**
+ * @brief Build node sets
+ *
+ * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
+ * @param[in] nodesetNames An array of the node sets names
+ * @param[in] cellBlockManager The instance that stores the node sets.
+ */
 void importNodesets( vtkDataSet & mesh,
                      string_array & nodesetNames,
                      CellBlockManager & cellBlockManager );
 
 /**
  * @brief Build all the cell blocks.
+ * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
+ * @param[in] cellMap Map from the surfaces index to the list of cells in this surface in this rank.
  * @param[in] cellBlockManager The instance that stores the cell blocks.
  */
 void writeCells( vtkDataSet & mesh,
@@ -463,6 +545,17 @@ void writeSurfaces( vtkDataSet & mesh,
                     const geosx::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager );
 
+/**
+ * @brief Import data on 3d cells restricted to cells in a specific region
+ *
+ * @param regionId The id of the region
+ * @param elemType The type of the element to store the data
+ * @param cellIds The cell ids of the specific region
+ * @param elemManager The instance that stores the elements.
+ * @param fieldNames An array of the fields names
+ * @param srcArrays an array of data to import
+ * @param fieldsToBeSync Indentifies the fields to synchronize
+ */
 void importFieldOnCellElementSubRegion( int const regionId,
                                         ElementType const elemType,
                                         std::vector< vtkIdType > const & cellIds,
