@@ -82,8 +82,7 @@ with the two-point flux approximation
 as will be defined in the **NumericalMethods** tag.
 The ``targetRegions`` refers only
 to the Reservoir region because we only solve for flow in this region.
-The ``fluidNames`` and ``solidNames`` refer the materials defined
-in the **Constitutive** tag.
+
 
 The ``NonlinearSolverParameters`` and ``LinearSolverParameters`` are used to set usual
 numerical solver parameters such as the linear and nonlinear tolerances, the preconditioner and solver types or the maximum number of nonlinear iterations.
@@ -160,11 +159,6 @@ Defining the numerical method used in the solver, we will provide information on
   :start-after: <!-- SPHINX_FIELD_CASE_NUMERICAL -->
   :end-before: <!-- SPHINX_FIELD_CASE_NUMERICAL_END -->
 
-The ``TwoPointFluxApproximation`` node should specify
-the primary field to solve for as ``fieldName``.
-For a flow problem, this field is the pressure.
-Here we specified ``targetRegions`` as we only solve flow for reservoir.
-The field under ``coefficientName`` is used during TPFA transmissibilities construction.
 
 .. _ElementRegions_tag_field_case:
 
