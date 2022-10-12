@@ -1005,6 +1005,8 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
+    GEOSX_ERROR( "SolidMechanicsLagrangianFEM::TimeIntegrationOption::ImplicitDynamic is disabled at this time. "
+                 "If you need this capability re-enabled, please contact the developer team with your request." );
     // assemblyLaunch< constitutive::SolidBase,
     //                 solidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
     //                                                                               dofManager,

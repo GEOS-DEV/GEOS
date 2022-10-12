@@ -6,42 +6,24 @@
 #include "policies.hpp"
 
 
+#define INSTANTIATION( NAME )\
+template class NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >; \
+template real64 NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >::kernelLaunch< NAME##Policy, \
+                                                                                        NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > > \
+                                                                                      ( localIndex const, \
+                                                                                        NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > const & ); \
+
+
 namespace geosx
 {
 using namespace constitutive;
 using namespace finiteElement;
 namespace solidMechanicsLagrangianFEMKernels
 {
-template class ExplicitSmallStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >;
-
-template real64 ExplicitSmallStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >::
-kernelLaunch< ExplicitSmallStrainPolicy, 
-              ExplicitSmallStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > >
-              ( localIndex const, 
-                ExplicitSmallStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > const & );
-
-
-
-template class ExplicitFiniteStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >;
-
-template real64 ExplicitFiniteStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >::
-kernelLaunch< ExplicitFiniteStrainPolicy, 
-              ExplicitFiniteStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > >
-              ( localIndex const, 
-                ExplicitFiniteStrain< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > const & );
-
-
-
-
-template class ImplicitSmallStrainQuasiStatic< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >;
-
-template real64 ImplicitSmallStrainQuasiStatic< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >::
-kernelLaunch< ImplicitSmallStrainQuasiStaticPolicy, 
-              ImplicitSmallStrainQuasiStatic< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > >
-              ( localIndex const, 
-                ImplicitSmallStrainQuasiStatic< @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > const & );
-
-
-
+  INSTANTIATION( ExplicitSmallStrain )
+  INSTANTIATION( ExplicitFiniteStrain )
+  INSTANTIATION( ImplicitSmallStrainQuasiStatic )
 }
 }
+
+#undef INSTANTIATION

@@ -2,20 +2,31 @@
 
 
 
-
+set( kernelPath "coreComponents/physicsSolvers/solidMechanics/kernels" )
 
 set( ExplicitSmallStrainPolicy "geosx::parallelDevicePolicy<32>" )
 set( ExplicitFiniteStrainPolicy "geosx::parallelDevicePolicy<32>" )
 set( ImplicitSmallStrainQuasiStaticPolicy "geosx::parallelDevicePolicy<32>" )
 
 
-configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/physicsSolvers/solidMechanics/kernels/policies.hpp.in
-                ${CMAKE_BINARY_DIR}/generatedSrc/coreComponents/physicsSolvers/solidMechanics/kernels/policies.hpp )
+configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
+                ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/policies.hpp )
 
 
 set( kernelNames SolidMechanicsKernels )
 set( subregionList CellElementSubRegion )
-set( solidBaseDispatch "DamageSpectral<ElasticIsotropic>;DamageVolDev<ElasticIsotropic>;Damage<ElasticIsotropic>;DruckerPragerExtended;ModifiedCamClay;DelftEgg;DruckerPrager;ElasticIsotropic;ElasticTransverseIsotropic;ElasticIsotropicPressureDependent;ElasticOrthotropic")
+set( solidBaseDispatch DamageSpectral<ElasticIsotropic>
+                       DamageVolDev<ElasticIsotropic>
+                       Damage<ElasticIsotropic>
+                       DruckerPragerExtended
+                       ModifiedCamClay
+                       DelftEgg
+                       DruckerPrager
+                       ElasticIsotropic
+                       ElasticTransverseIsotropic
+                       ElasticIsotropicPressureDependent
+                       ElasticOrthotropic )
+
 set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
                            H1_Wedge_Lagrange1_Gauss6
                            H1_Tetrahedron_Lagrange1_Gauss1
@@ -37,8 +48,13 @@ set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
       foreach( CONSTITUTIVE_TYPE ${solidBaseDispatch} )
         foreach( FE_TYPE ${finiteElementDispatch} )
 
-        set( filename "${CMAKE_BINARY_DIR}/generatedSrc/coreComponents/physicsSolvers/solidMechanics/kernels/${KERNELNAME}_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
-        configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/physicsSolvers/solidMechanics/kernels/SolidMechanicsKernels.cpp.template
+        set( filename "${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/${KERNELNAME}_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
+        string(REPLACE "<" "-" filename ${filename})
+        string(REPLACE ">" "-" filename ${filename})
+        string(REPLACE "," "-" filename ${filename})
+        string(REPLACE " " "" filename ${filename})
+        message( " -- Generating file: ${filename}")
+        configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/SolidMechanicsKernels.cpp.template
                         ${filename} )
 
           list( APPEND physicsSolvers_sources ${filename} )

@@ -130,6 +130,10 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const;
 
+
+  /**
+   * @copydoc KernelBase::kernelLaunch
+   */
   template< typename POLICY,
             typename KERNEL_TYPE >
   static real64
