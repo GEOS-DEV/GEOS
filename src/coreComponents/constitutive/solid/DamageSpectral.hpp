@@ -324,7 +324,7 @@ public:
                                                                        m_volStrain.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
-                                                                       m_criticalStrainEnergy,                                                                   
+                                                                       m_criticalStrainEnergy,
                                                                        m_degradationLowerLimit,
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength,
