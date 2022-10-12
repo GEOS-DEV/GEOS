@@ -77,12 +77,14 @@ namespace vtk
 
 /**
  * @brief Return a VTK controller for multiprocessing.
+ * @return Return a VTK controller for multiprocessing.
  */
 vtkSmartPointer< vtkMultiProcessController > getController();
 
 /**
  * @brief Load the VTK file into the VTK data structure
  * @param[in] filePath the Path of the file to load
+ * @return a vtk mesh
  */
 vtkSmartPointer< vtkDataSet > loadMesh( Path const & filePath );
 
@@ -139,8 +141,10 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
  * @brief Generate global point/cell IDs and redistribute the mesh among MPI ranks.
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
  * @param[in] comm the MPI communicator
+ * @param[in] method the partitionning method
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
  * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
+ * @return the vtk grid redistributed
  */
 vtkSmartPointer< vtkDataSet >
 redistributeMesh( vtkDataSet & loadedMesh,
@@ -291,7 +295,7 @@ string getElementTypeName( ElementType const type );
 
 /**
  * @brief Builds the cell block name.
- * @param[in] elementName The element name.
+ * @param[in] type The element name.
  * @param[in] regionId The region Id.
  * @return The name.
  * @warning This name will be visible in the input file... Consider refactoring with great care.
@@ -338,6 +342,8 @@ void printMeshStatistics( vtkDataSet & mesh,
 
 /**
  * @brief Collect the data to be imported.
+ * @param[in] mesh an input mesh
+ * @param[in] srcFieldNames an array of field names
  * @return A list of pointers to VTK data arrays.
  */
 std::vector< vtkDataArray * >
@@ -536,7 +542,7 @@ void writeCells( vtkDataSet & mesh,
 /**
  * @brief Build the "surface" node sets from the surface information.
  * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
- * @param[in] surfacesIdsToCellsIds Map from the surfaces index to the list of cells in this surface in this rank.
+ * @param[in] cellMap Map from the surfaces index to the list of cells in this surface in this rank.
  * @param[out] cellBlockManager The instance that stores the node sets.
  * @note @p surfacesIdsToCellsIds will contain all the surface ids across all the MPI ranks, but only its cell ids.
  * If the current MPI rank has no cell id for a given surface, then an empty set will be created.
