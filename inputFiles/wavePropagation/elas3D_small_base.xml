@@ -81,7 +81,7 @@
       <FiniteElementSpace
         name="FE1"
         order="1"
-        discretization="SEM"/>
+        formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
 

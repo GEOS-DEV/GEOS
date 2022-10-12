@@ -21,6 +21,7 @@
 
 #include "FiniteElementBase.hpp"
 #include "LagrangeBasis1.hpp"
+#include "LagrangeBasis2.hpp"
 #include "LagrangeBasis3GL.hpp"
 #include "LagrangeBasis5GL.hpp"
 #include <utility>
@@ -45,14 +46,17 @@ public:
   constexpr static localIndex num1dNodes = GL_BASIS::numSupportPoints;
 
   /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = num1dNodes*num1dNodes*num1dNodes;
+  constexpr static localIndex numNodes = GL_BASIS::TensorProduct3D::numSupportPoints;
+
+  /// The number of nodes/support points per face
+  constexpr static localIndex numNodesPerFace = GL_BASIS::TensorProduct2D::numSupportPoints;
 
   /// The maximum number of support points per element.
   constexpr static localIndex maxSupportPoints = numNodes;
 
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = numNodes;
-  
+
   /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
   /** @endcond Doxygen_Suppress */
@@ -198,6 +202,20 @@ public:
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
 
+  /**
+   * @brief Calculates the isoparametric "Jacobian" transformation
+   *   matrix/mapping from the parent space to the physical space on a 2D domain (face).
+   * @param qa The 1d quadrature point index in xi0 direction (0,1)
+   * @param qb The 1d quadrature point index in xi1 direction (0,1)
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to store the Jacobian transformation.
+   */
+  GEOSX_HOST_DEVICE
+  static void jacobianTransformation2d( int const qa,
+                                        int const qb,
+                                        real64 const (&X)[numNodes][3],
+                                        real64 ( & J )[3][2] );
+                                      
 
   /**
    * @brief Calculates the isoparametric "Jacobian" transformation
@@ -299,6 +317,29 @@ public:
                                       real64 ( &J )[3][3] );
 
   /**
+   * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
+   *   mass matrix M, i.e., the superposition matrix of the shape functions.
+   * @param q The quadrature point index
+   * @param X Array containing the coordinates of the support points.
+   */
+  GEOSX_HOST_DEVICE
+  static void
+    computeMassTerm( int q,
+                     real64 const (&X)[numNodes][3] );
+
+  /**
+   * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
+   *   damping matrix M, i.e., the superposition matrix of the shape functions
+   *   integrated over a face.
+   * @param q The quadrature point index
+   * @param X Array containing the coordinates of the support points.
+   */
+  GEOSX_HOST_DEVICE
+  static void
+    computeDampingTerm( int q,
+                        real64 const (&X)[numNodesPerFace][3] );
+
+  /**
    * @brief computes the matrix B, defined as J^{-T}J^{-1}/det(J), where J is the Jacobian matrix,
    *   at the given Gauss-Lobatto point.
    * @param qa The 1d quadrature point index in xi0 direction (0,1)
@@ -378,6 +419,22 @@ private:
                            FUNC && func,
                            PARAMS &&... params );
 
+  /**
+   * @brief Applies a function inside a generic loop in over the tensor product
+   *   indices, over a 2d domain.
+   * @tparam FUNC The type of function to call within the support loop.
+   * @tparam PARAMS The parameter pack types to pass through to @p FUNC.
+   * @param qa The 1d quadrature point index in xi0 direction (0,1)
+   * @param qb The 1d quadrature point index in xi1 direction (0,1)
+   * @param func The function to call within the support loop.
+   * @param params The parameters to pass to @p func.
+   */
+  template< typename FUNC, typename ... PARAMS >
+  GEOSX_HOST_DEVICE
+  static void supportLoop2d( int const qa,
+                             int const qb,
+                             FUNC && func,
+                             PARAMS &&... params );
 };
 
 /// @cond Doxygen_Suppress
@@ -416,6 +473,33 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( int const qa,
 
         func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
       }
+    }
+  }
+}
+
+template< typename GL_BASIS >
+template< typename FUNC, typename ... PARAMS >
+GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop2d( int const qa,
+                                                  int const qb,
+                                                  FUNC && func,
+                                                  PARAMS &&... params )
+{
+
+  real64 const qCoords[2] = { GL_BASIS::parentSupportCoord( qa ),
+                              GL_BASIS::parentSupportCoord( qb ) };
+
+  for( int b=0; b<num1dNodes; ++b )
+  {
+    for( int a=0; a<num1dNodes; ++a )
+    {
+      real64 const dNdXi[2] = { GL_BASIS::gradient( a, qCoords[0] )*
+                                GL_BASIS::value( b, qCoords[1] ),
+                                GL_BASIS::value( a, qCoords[0] )*
+                                GL_BASIS::gradient( b, qCoords[1] ) };
+
+        localIndex nodeIndex = GL_BASIS::TensorProduct2D::linearIndex( a, b );
+        func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
     }
   }
 }
@@ -497,6 +581,67 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 //    J[2][2] = J[2][2] + dNdXi[2] * Xnode[2];
 
   }, X, J );
+}
+
+template< typename GL_BASIS >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+  jacobianTransformation2d( int const qa,
+                            int const qb,
+                            real64 const (&X)[numNodes][3],
+                            real64 ( & J )[3][2] )
+{
+  supportLoop2d( qa, qb, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                              int const nodeIndex,
+                                              real64 const (&X)[numNodes][3],
+                                              real64 ( & J)[3][2] )
+  {
+    real64 const * const GEOSX_RESTRICT Xnode = X[nodeIndex];
+    for( int i = 0; i < 3; ++i )
+    {
+      for( int j = 0; j < 2; ++j )
+      {
+        J[i][j] = J[i][j] + dNdXi[ j ] * Xnode[i];
+      }
+    }
+  }, X, J );
+}
+
+template< typename GL_BASIS >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+  computeMassTerm( int q,
+                   real64 const (&X)[numNodes][3] )
+{                               
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
+  return std::abs( LvArray::tensorOps::determinant< 3 >( J ) )*GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc);
+}
+
+template< typename GL_BASIS >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+  computeDampingTerm( int q,
+                      real64 const (&X)[numNodesPerFace][3] )
+{
+  real64 B[3];
+  real64 J[3][2] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct2D::multiIndex( q, qa, qb );
+  jacobianTransformation2d( qa, qb, X, J );
+  // compute J^T.J, using Voigt notation for B
+  B[0] = J[0][0]*J[0][0]+J[1][0]*J[1][0]+J[2][0]*J[2][0];
+  B[1] = J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1]; 
+  B[2] = J[0][0]*J[0][1]+J[1][0]*J[1][1]+J[2][0]*J[2][1];
+  return sqrt( LvArray::tensorOps::symDeterminant< 2 >( B ) )*GL_BASIS::weight(qa)*GL_BASIS::weight(qb);
 }
 
 /**
@@ -819,6 +964,50 @@ void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
  *
  */
 using Q1_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >;
+
+/**
+ * This class contains the kernel accessible functions specific to the standard
+ * Trilinear Hexahedron finite element with a Gaussian quadrature rule. It is
+ * assumed that the indexing for the quadrature points mirrors that of the
+ * nodes. Also note that the assumed node ordering is not the standard
+ * right-hand-rule used in the literature. Here we use a Cartesian aligned
+ * numbering in order to simplify the mapping to the parent coordinates and
+ * tensor product indices.
+ *
+ *                                                                  ____________________
+ *                                                                 |Node   xi0  xi1  xi2|
+ *                                                                 |=====  ===  ===  ===|
+ *                                                                 |  0    -1   -1   -1 |
+ *                                                                 |  1     0   -1   -1 |
+ *                                                                 |  2     1   -1   -1 |
+ *              24              25               26                |  3    -1    0   -1 |
+ *                o--------------o--------------o                  |  4     0    0   -1 |
+ *               /.                            /|                  |  5     1    0   -1 |
+ *              / .                           / |                  |  6    -1    1   -1 |
+ *          21 o  .           o 22        23 o  |                  |  7     0    1   -1 |
+ *            /   .                         /   |                  |  8     1    1   -1 |
+ *           /    .         19             /    |                  |  9    -1   -1    0 |
+ *       18 o--------------o--------------o 20  |                  | 10     0   -1    0 |
+ *          |     o              o        |     o                  | 11     1   -1    0 |
+ *          |     .15             16      |     |17                | 12    -1    0    0 |
+ *          |     .                       |     |                  | 13     0    0    0 |
+ *          |  o  .           o           |  o  |                  | 14     1    0    0 |
+ *          |   12.            13         |   14|                  | 15    -1    1    0 |
+ *          |     .                       |     |                  | 16     0    1    0 |
+ *        9 o     .        o 10           o 11  |                  | 17     1    1    0 |
+ *          |     o..............o........|.....o                  | 18    -1   -1    1 |
+ *          |    , 6              7       |    / 8                 | 19     0   -1    1 |
+ *          |   ,                         |   /                    | 20     1   -1    1 |
+ *          |  o              o           |  o         xi2         | 21    -1    0    1 |
+ *          | , 3              4          | / 5        |           | 22     0    0    1 |
+ *          |,                            |/           | / xi1     | 23     1    0    1 |
+ *          o--------------o--------------o            |/          | 24    -1    1    1 |
+ *         0                1              2           o----- xi0  | 25     0    1    1 |
+ *                                                                 | 26     1    1    1 |
+ *                                                                 |____________________|
+ *
+ */
+using Q2_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >;
 
 /**
  * This class contains the kernel accessible functions specific to the standard

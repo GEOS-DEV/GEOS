@@ -20,6 +20,10 @@
 
 #include "common/DataTypes.hpp"
 
+namespace geosx
+{
+namespace finiteElement
+{
 
 /**
  * This class contains the implementation for a second order (quadratic) Lagrange
@@ -32,6 +36,9 @@
  */
 class LagrangeBasis2
 {
+public:
+  /// The number of support points for the basis
+  constexpr static localIndex numSupportPoints = 3;
 
   /**
    * @brief The value of the basis function for support point 0.
@@ -40,9 +47,9 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 value0( constexpr real64 xi )
+  constexpr static real64 value0( const real64 xi )
   {
-    constexpr real64 xi_div2 = 0.5 * xi;
+    const real64 xi_div2 = 0.5 * xi;
     return -xi_div2 + xi_div2 * xi;
   }
 
@@ -53,7 +60,7 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 value1( constexpr real64 xi )
+  constexpr static real64 value1( const real64 xi )
   {
     return 1.0 - xi * xi;
   }
@@ -65,9 +72,9 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 value2( constexpr real64 xi )
+  constexpr static real64 value2( const real64 xi )
   {
-    constexpr real64 xi_div2 = 0.5 * xi;
+    const real64 xi_div2 = 0.5 * xi;
     return xi_div2 + xi_div2 * xi;
   }
 
@@ -79,7 +86,7 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 gradient0( constexpr real64 xi )
+  constexpr static real64 gradient0( const real64 xi )
   {
     return -0.5 + xi;
   }
@@ -92,7 +99,7 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 gradient1( constexpr real64 xi )
+  constexpr static real64 gradient1( const real64 xi )
   {
     return -2 * xi;
   }
@@ -105,10 +112,78 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 gradient2( constexpr real64 xi )
+  constexpr static real64 gradient2( const real64 xi )
   {
     return 0.5 + xi;
   }
+
+  /**
+   * @class TensorProduct2D
+   *                                                                  
+   *        6 o--------------o--------------o 8                        ________________    
+   *          |                             |                         |Node   xi0  xi1 |   
+   *          |                             |                         |=====  ===  === |   
+   *          |                             |                         |  0    -1   -1  |   
+   *          |                             |                         |  1     0   -1  |   
+   *          |                             |                         |  2     1   -1  |   
+   *          |                             |                         |  3    -1    0  |   
+   *        3 o              o 4            o 5                       |  4     0    0  |   
+   *          |                             |                         |  5     1    0  |   
+   *          |                             |                         |  6    -1    1  |   
+   *          |                             |                         |  7     0    1  |   
+   *          |                             |            xi1          |  8     1    1  |   
+   *          |                             |            |            |________________|   
+   *          |                             |            |            
+   *          o--------------o--------------o            |            
+   *         0                1              2           o----- xi0   
+   *                                                                  
+   *                                                                  
+   *                                                                  
+   */                                                                 
+  struct TensorProduct2D                                              
+  {                                                                   
+                                                                      
+    /// The number of support points in the basis.
+    constexpr static localIndex numSupportPoints = 9;
+ 
+   /**                                                               
+     * @brief Calculates the linear index for support/quadrature points from ij
+     *   coordinates.
+     * @param i The index in the xi0 direction (0,1)
+     * @param j The index in the xi1 direction (0,1)
+     * @return The linear index of the support/quadrature point (0-8)
+     */
+    GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
+    constexpr static int linearIndex( const int i,
+                                      const int j )
+    {
+      return i + 3 * j;
+    }
+
+
+
+    /**
+     * @brief Calculate the Cartesian/TensorProduct index given the linear index
+     *   of a support point.
+     * @param a The linear index of support point
+     * @param i0 The Cartesian index of the support point in the xi0 direction.
+     * @param i1 The Cartesian index of the support point in the xi1 direction.
+     * @return
+     */
+    GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
+    constexpr static void multiIndex( const int linearIndex,
+                                      int & i0,
+                                      int & i1 )
+    {
+
+      i1 = ( ( linearIndex * 22 ) >> 6 );
+      //i1 = a/3;
+
+      i0 = linearIndex - i1 * 3;
+    }
+  };
 
   /**
    * @class TensorProduct3D
@@ -149,19 +224,22 @@ class LagrangeBasis2
   struct TensorProduct3D
   {
 
+    /// The number of support points in the basis.
+    constexpr static localIndex numSupportPoints = 27;
+
     /**
      * @brief Calculates the linear index for support/quadrature points from ijk
      *   coordinates.
      * @param i The index in the xi0 direction (0,1)
      * @param j The index in the xi1 direction (0,1)
      * @param k The index in the xi2 direction (0,1)
-     * @return The linear index of the support/quadrature point (0-7)
+     * @return The linear index of the support/quadrature point (0-26)
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    constexpr static int linearIndex( constexpr int i,
-                                      constexpr int j,
-                                      constexpr int k )
+    constexpr static int linearIndex( const int i,
+                                      const int j,
+                                      const int k )
     {
       return i + 3 * j + 9 * k;
     }
@@ -179,7 +257,7 @@ class LagrangeBasis2
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    constexpr static void multiIndex( constexpr int linearIndex,
+    constexpr static void multiIndex( const int linearIndex,
                                       int & i0,
                                       int & i1,
                                       int & i2 )
@@ -197,5 +275,7 @@ class LagrangeBasis2
 
 };
 
+}
+}
 
 #endif /* GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_ */
