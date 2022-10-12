@@ -43,9 +43,6 @@
 #define GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 
 #include "constitutive/solid/SolidBase.hpp"
-#include "constitutive/solid/damage/DegradationFunction.hpp"
-#include "constitutive/solid/damage/Decomposition.hpp"
-#include "constitutive/solid/damage/PressureFunction.hpp"
 #include "InvariantDecompositions.hpp"
 
 namespace geosx
@@ -61,7 +58,7 @@ namespace constitutive
 //       function.  The developer should be very cautious if accessing the stress
 //       directly through an arrayView, as it does not represent the true stress.
 //
-// NOTE: This model is designed to work with phase field implementation where m_newDamage
+// NOTE: This model is designed to work with phase field implementation where m_damage
 //       is updated externally to the material model routine.  A modified implementation
 //       would be required to use this directly within a SolidMechanics-only solver, to
 //       internally update the damage variable and consistently linearize the system.
@@ -71,14 +68,9 @@ class DamageUpdates : public UPDATE_BASE
 {
 public:
   template< typename ... PARAMS >
-  DamageUpdates( arrayView2d< real64 > const & inputNewDamage,
-                 arrayView3d< real64 > const & inputDamageGrad,
+  DamageUpdates( arrayView2d< real64 > const & inputDamage,
                  arrayView2d< real64 > const & inputStrainEnergyDensity,
-                 arrayView2d< real64 > const & inputVolumetricStrain,
                  arrayView2d< real64 > const & inputExtDrivingForce,
-                 string const & inputDegradationFunction,
-                 string const & inputDecomposition,
-                 string const & inputPressureIndicatorFunction,
                  real64 const & inputLengthScale,
                  real64 const & inputCriticalFractureEnergy,
                  real64 const & inputcriticalStrainEnergy,
@@ -87,17 +79,11 @@ public:
                  real64 const & inputTensileStrength,
                  real64 const & inputCompressStrength,
                  real64 const & inputDeltaCoefficient,
-                 arrayView1d< real64 > const & inputBiotCoefficient,
                  PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
-    m_newDamage( inputNewDamage ),
-    m_damageGrad( inputDamageGrad ),
+    m_damage( inputDamage ),
     m_strainEnergyDensity( inputStrainEnergyDensity ),
-    m_volStrain( inputVolumetricStrain ),
     m_extDrivingForce ( inputExtDrivingForce ),
-    m_degradationFunction( inputDegradationFunction ),
-    m_decomposition( inputDecomposition ),
-    m_pressureIndicatorFunction( inputPressureIndicatorFunction ),
     m_lengthScale( inputLengthScale ),
     m_criticalFractureEnergy( inputCriticalFractureEnergy ),
     m_criticalStrainEnergy( inputcriticalStrainEnergy ),
@@ -105,8 +91,7 @@ public:
     m_extDrivingForceFlag( inputExtDrivingForceFlag ),
     m_tensileStrength( inputTensileStrength ),
     m_compressStrength( inputCompressStrength ),
-    m_deltaCoefficient( inputDeltaCoefficient ),
-    m_biotCoefficient( inputBiotCoefficient )
+    m_deltaCoefficient( inputDeltaCoefficient )
   {}
 
   using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
@@ -123,82 +108,47 @@ public:
 
   using UPDATE_BASE::m_disableInelasticity;
 
-  //Degradation function and its derivatives
+  //Standard quadratic degradation functions
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const
   {
-    //this construction of paramValues is very inneficient
-    std::vector<string> paramNames = DegradationFunction<m_degradationFunction>::getParameterList();
-    std::vector<real64> paramValues;
-    for(string name:paramNames)
+    real64 pf;
+
+    if( m_extDrivingForceFlag )
     {
-        paramValues.push_back(getParamByName(name));
+      pf = fmax( fmin( 1.0, m_damage( k, q )), 0.0 );
     }
-    real64 eps = 0.0;//residual stiffness
-    return DegradationFunction<m_degradationFunction>::getValue( m_newDamage( k, q ), eps, paramValues );
+    else
+    {
+      pf = m_damage( k, q );
+    }
+
+    // Set a lower bound tolerance for the degradation
+    real64 const eps = m_degradationLowerLimit;
+
+    return ((1 - eps)*(1 - pf)*(1 - pf) + eps);
   }
+
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationDerivative( real64 const d ) const
   {
-    //this construction of paramValues is very inneficient
-    std::vector<string> paramNames = DegradationFunction<m_degradationFunction>::getParameterList();
-    std::vector<real64> paramValues;
-    for(string name:paramNames)
-    {
-        paramValues.push_back(getParamByName(name));
-    }
-    real64 eps = 0.0;//residual stiffness
-    return DegradationFunction<m_degradationFunction>::getDerivative( d, eps, paramValues );
+    return -2*(1 - d);
   }
+
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( real64 const d ) const
-  //virtual real64 getDegradationSecondDerivative( real64 const GEOSX_UNUSED_PARAM(d) ) const
   {
-    //this construction of paramValues is very inneficient
-    std::vector<string> paramNames = DegradationFunction<m_degradationFunction>::getParameterList();
-    std::vector<real64> paramValues;
-    for(string name:paramNames)
-    {
-        paramValues.push_back(getParamByName(name));
-    }
-    real64 eps = 0.0;//residual stiffness
-    return DegradationFunction<m_degradationFunction>::getSecondDerivative( d, eps, paramValues );
+    GEOSX_UNUSED_VAR( d );
+
+    return 2.0;
   }
-
-  //End degradation functions
-
-  //Pressure indicator function and its derivatives
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 pressureDamageFunction( localIndex const k,
-                                         localIndex const q ) const
-  {
-    return PressureFunction<m_pressureIndicatorFunction>::getValue( m_newDamage( k, q ) );
-  }
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 pressureDamageFunctionDerivative( real64 const d ) const
-  {
-    return PressureFunction<m_pressureIndicatorFunction>::getDerivative( d );
-  }
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 pressureDamageFunctionSecondDerivative( real64 const d ) const
-  {
-    return PressureFunction<m_pressureIndicatorFunction>::getSecondDerivative( d );
-  }
-  //End pressure indicator function 
-
-  //stress and stiffness update
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -206,23 +156,16 @@ public:
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( & stress )[6],
                                   DiscretizationOps & stiffness ) const override
-
   {
-
-    //perform undamaged update
     UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+
     if( m_disableInelasticity )
     {
       return;
     }
-    real64 strain[6] = {0};
-    UPDATE_BASE::getElasticStrain( k, q, strain );
-    m_volStrain( k, q ) =  strain[0] + strain[1] + strain[2];
 
-    //get degradation value
     real64 factor = getDegradationValue( k, q );
 
-    //compute c_e for nucleation model using intact stress and stiffness
     if( m_extDrivingForceFlag )
     {
       real64 stressP;
@@ -257,48 +200,11 @@ public:
       m_extDrivingForce( k, q ) = 1. / (1 + beta3*I1*I1) * (beta2 * sqrt_J2 + beta1*I1 + beta0);
     }
 
-    real64 sed; //placehold for strain energy density
-    //use template class to get decomposition
-    //this will compute the damage stresses and stiffness at the current k,q, and also update sed
-    Decomposition<m_decomposition>::stressCalculator(strain, factor, stress, stiffness.m_c, &sed);
+    LvArray::tensorOps::scale< 6 >( stress, factor );
 
-    //this enforces the history approach
-    if( sed > m_strainEnergyDensity( k, q ) )
-    {
-      m_strainEnergyDensity( k, q ) = sed;
-    }
-
+    stiffness.scaleParams( factor );
   }
 
-  //several accessors
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 getDamage( localIndex const k,
-                            localIndex const q ) const
-  {
-    return m_newDamage( k, q );
-  }
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual void getDamageGrad( localIndex const k,
-                              localIndex const q,
-                              real64 ( & damageGrad )[3] ) const
-  {
-    for( int dim=0; dim < 3; ++dim )
-    {
-      damageGrad[dim] = m_damageGrad[k][q][dim];
-    }
-  }
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual void updateBiotCoefficient( localIndex const k,
-                                      real64 const biotCoefficient ) const
-  {
-    m_biotCoefficient[k] = biotCoefficient;
-  }
 
   // TODO: The code below assumes the strain energy density will never be
   //       evaluated in a non-converged / garbage configuration.
@@ -307,21 +213,14 @@ public:
   virtual real64 getStrainEnergyDensity( localIndex const k,
                                          localIndex const q ) const override
   {
-    // real64 const sed = SolidBaseUpdates::getStrainEnergyDensity( k, q );
+    real64 const sed = SolidBaseUpdates::getStrainEnergyDensity( k, q );
 
-    // if( sed > m_strainEnergyDensity( k, q ) )
-    // {
-    //   m_strainEnergyDensity( k, q ) = sed;
-    // }
+    if( sed > m_strainEnergyDensity( k, q ) )
+    {
+      m_strainEnergyDensity( k, q ) = sed;
+    }
 
     return m_strainEnergyDensity( k, q );
-  }
-
-  GEOSX_HOST_DEVICE
-  virtual real64 getVolStrain( localIndex const k,
-                               localIndex const q ) const
-  {
-    return m_volStrain( k, q );
   }
 
   GEOSX_HOST_DEVICE
@@ -340,49 +239,22 @@ public:
   virtual real64 getEnergyThreshold( localIndex const k,
                                      localIndex const q ) const
   {
-    if(m_degradationFunction == "QuasiQuadratic")
-    {    
-      return m_criticalStrainEnergy;
-    }
+    #if LORENTZ
+    return m_criticalStrainEnergy;
+    #else
     if( m_extDrivingForceFlag )
       return 3*m_criticalFractureEnergy/(16 * m_lengthScale) + 0.5 * m_extDrivingForce( k, q );
     else
       return 3*m_criticalFractureEnergy/(16 * m_lengthScale);
 
+    #endif
+
+
   }
 
-  GEOSX_HOST_DEVICE
-  virtual real64 getBiotCoefficient( localIndex const k ) const
-  {
-    return m_biotCoefficient[k];
-  }
-
-  GEOSX_HOST_DEVICE
-  real64 getParamByName(string const name) const
-  {
-    if(name=="lengthScale")
-    {
-        return m_lengthScale;
-    }
-    if(name=="criticalFractureEnergy")
-    {
-        return m_criticalFractureEnergy;
-    }
-    if(name=="criticalStrainEnergy")
-    {
-        return m_criticalStrainEnergy;
-    }
-    GEOSX_ERROR("no parameter with name "<< name << " was found in DamageUpdates.");
-  }
-
-  arrayView2d< real64 > const m_newDamage;
-  arrayView3d< real64 > const m_damageGrad;
+  arrayView2d< real64 > const m_damage;
   arrayView2d< real64 > const m_strainEnergyDensity;
-  arrayView2d< real64 > const m_volStrain;
   arrayView2d< real64 > const m_extDrivingForce;
-  string const m_degradationFunction;
-  string const m_decomposition;
-  string const m_pressureIndicatorFunction;
   real64 const m_lengthScale;
   real64 const m_criticalFractureEnergy;
   real64 const m_criticalStrainEnergy;
@@ -391,7 +263,6 @@ public:
   real64 const m_tensileStrength;
   real64 const m_compressStrength;
   real64 const m_deltaCoefficient;
-  arrayView1d< real64 > const m_biotCoefficient;
 };
 
 
@@ -419,21 +290,16 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// *** The interface to get member variables
-  arrayView2d< real64 const > getDamage() const { return m_newDamage; }
+  arrayView2d< real64 const > getDamage() const { return m_damage; }
 
   arrayView2d< real64 const > getExtDrivingForce() const { return m_extDrivingForce; }
 
 
   KernelWrapper createKernelUpdates() const
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
-                                                                       m_damageGrad.toView(),
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
                                                                        m_strainEnergyDensity.toView(),
-                                                                       m_volStrain.toView(),
                                                                        m_extDrivingForce.toView(),
-                                                                       m_degradationFunction,
-                                                                       m_decomposition,
-                                                                       m_pressureIndicatorFunction,
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
                                                                        m_criticalStrainEnergy,
@@ -441,23 +307,14 @@ public:
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength,
                                                                        m_compressStrength,
-                                                                       m_deltaCoefficient,
-                                                                       m_biotCoefficient.toView() );
+                                                                       m_deltaCoefficient );
   }
 
   struct viewKeyStruct : public BASE::viewKeyStruct
   {
     static constexpr char const * damageString() { return "damage"; }
-    static constexpr char const * damageGradString() { return "damageGrad"; }
     static constexpr char const * strainEnergyDensityString() { return "strainEnergyDensity"; }
     static constexpr char const * extDrivingForceString() { return "extDrivingForce"; }
-    static constexpr char const * volumetricStrainString() { return "volumetricStrain"; }
-    /// string/key for degradation function
-    static constexpr char const * degradationFunctionString() { return "degradationFunction";}
-    /// string/key for strain decomposition
-    static constexpr char const * decompositionString() { return "decomposition";}
-    /// string/key for pressure indicator function
-    static constexpr char const * pressureIndicatorFunctionString() { return "pressureIndicatorFunction";}
     /// string/key for regularization length
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
     /// string/key for Gc
@@ -474,20 +331,13 @@ public:
     static constexpr char const * compressStrengthString() { return "compressiveStrength"; }
     /// string/key for a delta coefficient in computing the external driving force
     static constexpr char const * deltaCoefficientString() { return "deltaCoefficient"; }
-    /// string/key for the Biot coefficient
-    static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
   };
 
 
 protected:
-  array2d< real64 > m_newDamage;
-  array3d< real64 > m_damageGrad;
+  array2d< real64 > m_damage;
   array2d< real64 > m_strainEnergyDensity;
-  array2d< real64 > m_volStrain;
   array2d< real64 > m_extDrivingForce;
-  string m_degradationFunction;
-  string m_decomposition;
-  string m_pressureIndicatorFunction;
   real64 m_lengthScale;
   real64 m_criticalFractureEnergy;
   real64 m_criticalStrainEnergy;
@@ -496,7 +346,6 @@ protected:
   real64 m_tensileStrength;
   real64 m_compressStrength;
   real64 m_deltaCoefficient;
-  array1d< real64 > m_biotCoefficient;
 };
 
 }

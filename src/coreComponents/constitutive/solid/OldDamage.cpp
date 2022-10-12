@@ -34,9 +34,6 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_strainEnergyDensity(),
   m_extDrivingForce(),
   m_lengthScale(),
-  m_degradationFunction(),
-  m_decompositon(),
-  m_pressureIndicatorFunction(),
   m_criticalFractureEnergy(),
   m_criticalStrainEnergy(),
   m_degradationLowerLimit( 0.0 ),
@@ -59,21 +56,6 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "External Driving Force" );
-
-  this->registerWrapper( viewKeyStruct::degradationFunctionString(), &m_degradationFunction ).
-    setApplyDefaultValue( "Quadratic" ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Type of degradation function" );
-
-  this->registerWrapper( viewKeyStruct::decompositionString(), &m_decomposition ).
-    setApplyDefaultValue( "None" ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Type of strain decomposition" );
-
-  this->registerWrapper( viewKeyStruct::pressureIndicatorFunctionString(), &m_pressureIndicatorFunction ).
-    setApplyDefaultValue( "Linear" ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Type of pressure indicator function" );            
 
   this->registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
     setInputFlag( InputFlags::REQUIRED ).
