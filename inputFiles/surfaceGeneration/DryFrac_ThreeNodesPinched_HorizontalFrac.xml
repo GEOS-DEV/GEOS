@@ -18,7 +18,6 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      
       rockToughness="1e6"
       nodeBasedSIF="1"
       logLevel="1"

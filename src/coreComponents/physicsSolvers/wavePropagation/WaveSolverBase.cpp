@@ -22,6 +22,7 @@
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
@@ -76,6 +77,11 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Count for output pressure at receivers" );
 
+  registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to apply PML" );
+
 }
 
 WaveSolverBase::~WaveSolverBase()
@@ -94,18 +100,37 @@ void WaveSolverBase::initializePreSubGroups()
   SolverBase::initializePreSubGroups();
 }
 
-
-real64 WaveSolverBase::evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order )
+void WaveSolverBase::postProcessInput()
 {
-  real64 const o_tpeak = 1.0/f0;
-  real64 pulse = 0.0;
+  SolverBase::postProcessInput();
+
+  /// set flag PML to one if a PML field is specified in the xml
+  /// if counter>1, an error will be thrown as one single PML field is allowed
+  integer counter = 0;
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & )
+  {
+    counter += 1;
+  } );
+  GEOSX_THROW_IF( counter > 1,
+                  "One single PML field specification is allowed",
+                  InputError );
+
+  m_usePML = counter;
+}
+
+
+real32 WaveSolverBase::evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
+{
+  real32 const o_tpeak = 1.0/f0;
+  real32 pulse = 0.0;
   if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
   {
     return pulse;
   }
 
-  constexpr real64 pi = M_PI;
-  real64 const lam = (f0*pi)*(f0*pi);
+  constexpr real32 pi = M_PI;
+  real32 const lam = (f0*pi)*(f0*pi);
 
   switch( order )
   {
