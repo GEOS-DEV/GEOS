@@ -209,7 +209,7 @@ endif()
 # CAMP ( required before raja on crusher / using spack installed tpls )
 ################################
 if(DEFINED CAMP_DIR)
-    if(  CAMP_STANDALONE )
+    if( CAMP_STANDALONE )
         # Should be found by raja, but it is possible for spack to misconfig raja so we need to find it
         message(STATUS "CAMP_DIR = ${CAMP_DIR}")
         find_package(camp REQUIRED PATHS ${CAMP_DIR} NO_DEFAULT_PATH)
