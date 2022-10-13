@@ -22,17 +22,20 @@
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 
+namespace geosx
+{
+
+// compile-time check on forumlation to remove non-SEM classes via SFINAE 
 template< typename >
 struct is_sem_formulation : std::false_type {};
 template< typename T >
 struct is_sem_formulation< geosx::finiteElement::Qk_Hexahedron_Lagrange_GaussLobatto< T > > : std::true_type {};
 
-namespace geosx
-{
-
 /// Namespace to contain the acoustic wave kernels.
 namespace acousticWaveEquationSEMKernels
 {
+
+    constexpr static char invalidFormulationString[] = "Invalid type of formulation, the acoustic solver is designed for the SEM formulation";
 
 struct PrecomputeSourceAndReceiverKernel
 {
@@ -215,7 +218,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[out] receiverNodeConstants constant part of the receiver term
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
-  static void
+  static typename std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE > >::value, void >
   launch( localIndex const size,
           localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
@@ -332,6 +335,12 @@ struct PrecomputeSourceAndReceiverKernel
     } );
 
   }
+  template< typename EXEC_POLICY, typename FE_TYPE, typename ... ARGS >
+  static typename std::enable_if_t< !geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE > >::value, void >
+  launch(ARGS && ... )
+  {   
+    GEOSX_THROW( invalidFormulationString, InputError );
+  }
 };
 
 template< typename FE_TYPE >
@@ -353,8 +362,8 @@ struct MassMatrixKernel
    * @param[in] velocity cell-wise velocity
    * @param[out] mass diagonal of the mass matrix
    */
-  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename U = void >
-  std::enable_if_t< is_sem_formulation< FE_TYPE >::value, U > 
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE_ = FE_TYPE >
+  std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void > 
   launch( localIndex const size,
           localIndex const numFacesPerElem,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
@@ -381,27 +390,20 @@ struct MassMatrixKernel
 
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
-        real32 const localIncrement = invC2 * m_finiteElement.template computeMassTerm( q, xLocal );
+        real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
         RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
-        printf("Mass matrix: %i, %f\n", q, localIncrement);
+        printf("Mass matrix: %i, %f\n", elemsToNodes[k][q], localIncrement);
       }
     } ); // end loop over element
   }
 
-  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename U = void> 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  std::enable_if_t< !is_sem_formulation< FE_TYPE >::value, U > 
-  launch( localIndex const size,
-          localIndex const numFacesPerElem,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-          arrayView1d< real32 const > const velocity,
-          arrayView1d< real32 > const mass )
-          
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE_ = FE_TYPE, typename ... ARGS >
+  std::enable_if_t< !geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void > 
+  launch( ARGS && ... ) 
   {
-    // do nothing, only implemented for the SEM formulation
-  }
+    GEOSX_THROW( invalidFormulationString, InputError );
+  } 
+  
   /// The finite element space/discretization object for the element type in the subRegion
   FE_TYPE const & m_finiteElement;
 
@@ -429,9 +431,9 @@ struct DampingMatrixKernel
    * @param[in] faceNormal normal vectors at the faces
    * @param[in] velocity cell-wise velocity
    * @param[out] damping diagonal of the damping matrix
-   */
-  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename U = void >
-  std::enable_if_t< is_sem_formulation< FE_TYPE >::value, U > 
+   */  
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE_ = FE_TYPE >
+  std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
   launch( localIndex const size,
           localIndex const numNodesPerFace,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
@@ -442,7 +444,6 @@ struct DampingMatrixKernel
           arrayView2d< real64 const > const faceNormal,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 > const damping )
-          
   {
     printf("number of faces: %i\n",size);
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const f )
@@ -472,29 +473,19 @@ struct DampingMatrixKernel
 
         for( localIndex q = 0; q < numNodesPerFace; ++q )
         {
-          real32 const localIncrement = alpha * m_finiteElement.template computeDampingTerm( q, xLocal );
+          real32 const localIncrement = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
           RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[f][q]], localIncrement );
-          printf("Damping matrix: %i, %f\n", q, localIncrement);
+          printf("Damping matrix: %i, %f\n", facesToNodes[f][q], localIncrement);
         }
       }
     } ); // end loop over element
   }
 
-  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename U = void >
-  std::enable_if_t< !is_sem_formulation< FE_TYPE >::value, U > 
-  launch( localIndex const size,
-          localIndex const numNodesPerFace,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
-          arrayView2d< localIndex const > const facesToElems,
-          ArrayOfArraysView< localIndex const > const facesToNodes,
-          arrayView1d< integer const > const facesDomainBoundaryIndicator,
-          arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
-          arrayView2d< real64 const > const faceNormal,
-          arrayView1d< real32 const > const velocity,
-          arrayView1d< real32 > const damping )
-          
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE_ = FE_TYPE, typename ... ARGS >
+  std::enable_if_t< !geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
+  launch( ARGS && ... )
   {
-    // do nothing, only implemented for the SEM formulation
+    GEOSX_THROW( invalidFormulationString, InputError );
   }
   /// The finite element space/discretization object for the element type in the subRegion
   FE_TYPE const & m_finiteElement;
@@ -512,7 +503,7 @@ struct PMLKernelHelper
    * @param dMax PML thickness, right-back-bottom
    * @param cMin PML wave speed, left-front-top
    * @param cMax PML wave speed, right-back-bottom
-   * @param r desired reflectivity of the PML
+  void* @param r desired reflectivity of the PML
    * @param sigma 3-components array to hold the damping profile in each direction
    */
   GEOSX_HOST_DEVICE
@@ -594,8 +585,8 @@ struct PMLKernel
    * @param[out] grad_n array holding the gradients at time n
    * @param[out] divV_n array holding the divergence at time n
    */
-  template< typename EXEC_POLICY, typename ATOMIC_POLICY >
-  void
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE_ = FE_TYPE >
+  std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
   launch( SortedArrayView< localIndex const > const targetSet,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
@@ -712,6 +703,12 @@ struct PMLKernel
       }
     } );
   }
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE_ = FE_TYPE, typename ... ARGS >
+  std::enable_if_t< !geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
+  launch( ARGS && ... )
+  {
+    GEOSX_THROW( invalidFormulationString, InputError );
+  }
 
   /// The finite element space/discretization object for the element type in the subRegion
   FE_TYPE const & m_finiteElement;
@@ -741,8 +738,8 @@ struct waveSpeedPMLKernel
    * @param[out] counterMin PML wave speed counter, left-front-top
    * @param[out] counterMax PML wave speed counter, left-front-top
    */
-  template< typename EXEC_POLICY, typename ATOMIC_POLICY >
-  void
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE_ = FE_TYPE>
+  std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
   launch( SortedArrayView< localIndex const > const targetSet,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
@@ -853,6 +850,13 @@ struct waveSpeedPMLKernel
     counterMax[2]+=subRegionAvgWaveSpeedCounterBottom.get();
   }
 
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE_ = FE_TYPE, typename ... ARGS >
+  std::enable_if_t< !geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
+  launch( ARGS && ... )
+  {
+    GEOSX_THROW( invalidFormulationString, InputError );
+  }
+
   /// The finite element space/discretization object for the element type in the subRegion
   FE_TYPE const & m_finiteElement;
 };
@@ -917,13 +921,13 @@ public:
    * @param dt The time interval for the step.
    *   elements to be processed during this kernel launch.
    */
-  template< typename _FE_TYPE = FE_TYPE >
+  template< typename FE_TYPE_ = FE_TYPE >
   ExplicitAcousticSEM( NodeManager & nodeManager,
                        EdgeManager const & edgeManager,
                        FaceManager const & faceManager,
                        localIndex const targetRegionIndex,
                        SUBREGION_TYPE const & elementSubRegion,
-                       std::enable_if_t< is_sem_formulation< _FE_TYPE>::value, _FE_TYPE > const & finiteElementSpace,
+                       std::enable_if_t< geosx::is_sem_formulation< FE_TYPE_>::value, FE_TYPE_ > const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                        real64 const dt ):
     Base( elementSubRegion,
@@ -949,13 +953,13 @@ public:
    * @param dt The time interval for the step.
    *   elements to be processed during this kernel launch.
    */
-  template< typename _FE_TYPE = FE_TYPE >
+  template< typename FE_TYPE_ = FE_TYPE >
   ExplicitAcousticSEM( NodeManager & nodeManager,
                        EdgeManager const & edgeManager,
                        FaceManager const & faceManager,
                        localIndex const targetRegionIndex,
                        SUBREGION_TYPE const & elementSubRegion,
-                       std::enable_if_t< !is_sem_formulation< _FE_TYPE>::value, _FE_TYPE > const & finiteElementSpace,
+                       std::enable_if_t< !geosx::is_sem_formulation< FE_TYPE_>::value, FE_TYPE_ > const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                        real64 const dt ):
     Base( elementSubRegion,
@@ -1026,7 +1030,7 @@ public:
   template< typename U = void> 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  std::enable_if_t< is_sem_formulation< FE_TYPE >::value, U > 
+  std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE > >::value, U > 
   quadraturePointKernel( localIndex const k,
                          localIndex const q,
                          StackVariables & stack ) const
@@ -1035,6 +1039,7 @@ public:
       {
         real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+        printf("Stiffness matrix: %i, %i, %f\n", m_elemsToNodes[k][i], m_elemsToNodes[k][j], localIncrement);
       } );
   }
   /**
@@ -1047,7 +1052,7 @@ public:
   template< typename U = void> 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  std::enable_if_t< !is_sem_formulation< FE_TYPE >::value, U > 
+  std::enable_if_t< !geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE > >::value, U > 
   quadraturePointKernel( localIndex const k,
                          localIndex const q,
                          StackVariables & stack ) const

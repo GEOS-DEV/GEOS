@@ -42,6 +42,7 @@ template< typename GL_BASIS >
 class Qk_Hexahedron_Lagrange_GaussLobatto final : public FiniteElementBase
 {
 public:
+ 
   /// The number of nodes/support points per element per dimension.
   constexpr static localIndex num1dNodes = GL_BASIS::numSupportPoints;
 
@@ -213,7 +214,7 @@ public:
   GEOSX_HOST_DEVICE
   static void jacobianTransformation2d( int const qa,
                                         int const qb,
-                                        real64 const (&X)[numNodes][3],
+                                        real64 const (&X)[numNodesPerFace][3],
                                         real64 ( & J )[3][2] );
                                       
 
@@ -323,7 +324,7 @@ public:
    * @param X Array containing the coordinates of the support points.
    */
   GEOSX_HOST_DEVICE
-  static void
+  static real64
     computeMassTerm( int q,
                      real64 const (&X)[numNodes][3] );
 
@@ -335,7 +336,7 @@ public:
    * @param X Array containing the coordinates of the support points.
    */
   GEOSX_HOST_DEVICE
-  static void
+  static real64
     computeDampingTerm( int q,
                         real64 const (&X)[numNodesPerFace][3] );
 
@@ -590,12 +591,12 @@ void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
   jacobianTransformation2d( int const qa,
                             int const qb,
-                            real64 const (&X)[numNodes][3],
+                            real64 const (&X)[numNodesPerFace][3],
                             real64 ( & J )[3][2] )
 {
-  supportLoop2d( qa, qb, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+  supportLoop2d( qa, qb, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[2],
                                               int const nodeIndex,
-                                              real64 const (&X)[numNodes][3],
+                                              real64 const (&X)[numNodesPerFace][3],
                                               real64 ( & J)[3][2] )
   {
     real64 const * const GEOSX_RESTRICT Xnode = X[nodeIndex];
@@ -612,7 +613,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void
+real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
   computeMassTerm( int q,
                    real64 const (&X)[numNodes][3] )
@@ -627,14 +628,14 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void
+real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
   computeDampingTerm( int q,
                       real64 const (&X)[numNodesPerFace][3] )
 {
   real64 B[3];
   real64 J[3][2] = {{0}};
-  int qa, qb, qc;
+  int qa, qb;
   GL_BASIS::TensorProduct2D::multiIndex( q, qa, qb );
   jacobianTransformation2d( qa, qb, X, J );
   // compute J^T.J, using Voigt notation for B
