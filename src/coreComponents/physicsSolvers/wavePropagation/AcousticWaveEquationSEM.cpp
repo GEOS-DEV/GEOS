@@ -253,8 +253,10 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
   X = nodeManager.referencePosition().toViewConst();
-  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
-  arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
+  //TODO: Please make a shallow copy of face normal in the constructo for the new mesh level
+  FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
+  arrayView2d< real64 const > const faceNormal  = faceManager0.faceNormal();
+  arrayView2d< real64 const > const faceCenter  = faceManager0.faceCenter();
 
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
