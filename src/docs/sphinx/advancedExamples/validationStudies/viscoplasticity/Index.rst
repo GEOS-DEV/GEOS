@@ -9,7 +9,8 @@ Viscoplasticity
 
    DruckerPrager/Example
    ViscoDruckerPrager/Example
-   ExtendedDruckerPrager/Example		
+   ExtendedDruckerPrager/Example
+   ViscoExtendedDruckerPrager/Example		
    modelComparisons/Example	      
 
 

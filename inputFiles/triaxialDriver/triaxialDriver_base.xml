@@ -67,11 +67,32 @@
 	  relaxationTime="0.1"
     />  
 	<!-- SPHINX_MATERIAL_VISCO_EXTENDED_DRUCKER_PRAGER_END -->
+
+	<!-- SPHINX_MATERIAL_MODIFIED_CAMCLAY -->
+	<ModifiedCamClay 
+	  name="ModifiedCamClay"
+	  defaultDensity="2700"
+	  defaultRefPressure="-1e5"
+	  defaultRefStrainVol="0.0"
+	  defaultShearModulus="5e7"
+	  defaultPreConsolidationPressure="-1.5e5"
+	  defaultCslSlope="1.2"
+	  defaultRecompressionIndex="0.002"
+	  defaultVirginCompressionIndex="0.003" 
+	/>
+	<!-- SPHINX_MATERIAL_MODIFIED_CAMCLAY_END -->
+
   </Constitutive>
   <!-- SPHINX_MATERIAL_END -->
 
   <!-- SPHINX_FUNCTION -->
   <Functions>
+	<TableFunction
+      name="zeroStrain"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1e9 }"
+      values="{ 0.0, 0.0 }"/>
+
     <TableFunction
       name="strainFunction"
       inputVarNames="{ time }"
