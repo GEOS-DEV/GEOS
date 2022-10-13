@@ -100,7 +100,7 @@
     <FieldSpecification
       name="xconstraintBack"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ back }"/>
@@ -108,7 +108,7 @@
     <FieldSpecification
       name="yconstraintBack"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ back }"/>
@@ -116,7 +116,7 @@
     <FieldSpecification
       name="zconstraintBack"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ back }"/>
@@ -124,7 +124,7 @@
     <FieldSpecification
       name="xconstraintBottom"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ bottom }"/>
@@ -132,7 +132,7 @@
     <FieldSpecification
       name="yconstraintBottom"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ bottom }"/>
@@ -140,7 +140,7 @@
     <FieldSpecification
       name="zconstraintBottom"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ bottom }"/>

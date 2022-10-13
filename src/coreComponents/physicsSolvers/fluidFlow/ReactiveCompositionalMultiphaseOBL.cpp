@@ -37,7 +37,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace ReactiveCompositionalMultiphaseOBLKernels;
+using namespace reactiveCompositionalMultiphaseOBLKernels;
 
 namespace
 {
@@ -374,7 +374,7 @@ real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainParti
     return 1.0;
   }
 
-  real64 constexpr eps = ReactiveCompositionalMultiphaseOBLKernels::minValueForDivision;
+  real64 constexpr eps = minValueForDivision;
   real64 const maxCompFracChange = m_maxCompFracChange;
 
   localIndex const NC = m_numComponents;
@@ -516,6 +516,11 @@ void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const &
                                  extrinsicMeshData::flow::temperature::key(),
                                  scalingFactor,
                                  temperatureMask );
+  }
+
+  if( m_allowOBLChopping )
+  {
+    chopPrimaryVariables( domain );
   }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -1217,12 +1222,67 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
   } );
 }
 
-// to be changed into enforceOBLLimits - to chop all primary variables to be within OBL discretization space
-void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariablesToOBLLimits( DomainPartition & domain )
+void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariables( DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR( domain );
+  real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
+  integer const numComp = m_numComponents;
 
-  // not implemented yet
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView2d< real64, compflow::USD_COMP > const compFrac =
+        subRegion.template getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        bool isScalingRequired = false;
+
+        // the following code implements the DARTS local chopping of component fractions
+
+        // Step 1: chop the component fractions between 0 and 1
+        real64 sum = 0.0;
+        for( integer ic = 0; ic < numComp-1; ++ic )
+        {
+          if( compFrac[ei][ic] > 1.0-eps )
+          {
+            compFrac[ei][ic] = 1.0-eps;
+            isScalingRequired = true;
+          }
+          if( compFrac[ei][ic] < eps )
+          {
+            compFrac[ei][ic] = eps;
+            isScalingRequired = true;
+          }
+          sum += compFrac[ei][ic];
+        }
+
+        // Step 2: compute/chop the last component fraction
+        real64 lastCompFrac = 1.0 - sum;
+        if( lastCompFrac < eps )
+        {
+          lastCompFrac = eps;
+          isScalingRequired = true;
+        }
+        sum += lastCompFrac;
+
+        // Step 3: rescale the component fractions so they sum to 1, if needed
+        if( isScalingRequired )
+        {
+          for( integer ic = 0; ic < numComp-1; ++ic )
+          {
+            compFrac[ei][ic] /= sum;
+          }
+        }
+
+      } );
+    } );
+
+  } );
 }
 
 void ReactiveCompositionalMultiphaseOBL::resetStateToBeginningOfStep( DomainPartition & domain )
