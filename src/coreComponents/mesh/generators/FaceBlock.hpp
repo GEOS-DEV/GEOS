@@ -17,7 +17,8 @@
 
 #include "FaceBlockABC.hpp"
 
-namespace geosx {
+namespace geosx
+{
 
 //class FaceBlock: public FaceBlockABC
 //{
@@ -41,7 +42,7 @@ namespace geosx {
 //  ArrayOfArrays< localIndex > get2dFaceTo2dElems() const override;
 //};
 
-class FaceBlock: public FaceBlockABC
+class FaceBlock : public FaceBlockABC
 {
 public:
   FaceBlock( string const & name,

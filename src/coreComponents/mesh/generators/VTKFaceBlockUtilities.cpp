@@ -341,7 +341,7 @@ void ImportFracture( string const & faceBlockName,
       for( int j = 0; j < 2; ++j )
       {
         int const ei = faceData.cell( i, j );
-        int const fi = faceData.face( i, j );
+//        int const fi = faceData.face( i, j );
         vtkCell * c = vtkMesh->GetCell( faceData.cell( i, j ) );
         vtkCell * f = c->GetFace( faceData.face( i, j ) );
         std::set< int > const vtkPoints = vtkIdListToSet( f->GetPointIds() );
