@@ -304,7 +304,6 @@ struct MassAndDampingMatrixKernel
           arrayView1d< real64 > const mass,
           arrayView1d< real64 > const damping )
   {
-    // auto const & finiteElement = m_finiteElement;
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;

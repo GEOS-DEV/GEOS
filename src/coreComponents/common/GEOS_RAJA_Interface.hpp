@@ -32,8 +32,8 @@ namespace geosx
 auto const hostMemorySpace = LvArray::MemorySpace::host;
 
 using serialPolicy = RAJA::loop_exec;
-using serialReduce = RAJA::seq_reduce;
 using serialAtomic = RAJA::seq_atomic;
+using serialReduce = RAJA::seq_reduce;
 
 using serialStream = RAJA::resources::Host;
 using serialEvent = RAJA::resources::HostEvent;
@@ -94,11 +94,14 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end
 
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::hip;
 
-template< unsigned long BLOCK_SIZE = 128 >
+template< unsigned long BLOCK_SIZE = 64 >
 using parallelDevicePolicy = RAJA::hip_exec< BLOCK_SIZE >;
 
-template< unsigned long BLOCK_SIZE = 128 >
-using parallelDeviceAsyncPolicy = parallelDevicePolicy< BLOCK_SIZE >;//RAJA::hip_exec_async< BLOCK_SIZE >;
+// the async dispatch policy caused runtime issues as of rocm@4.5.2, hasn't been checked in rocm@5:
+// RAJA::hip_exec_async< BLOCK_SIZE >;
+template< unsigned long BLOCK_SIZE = 64 >
+using parallelDeviceAsyncPolicy = parallelDevicePolicy< BLOCK_SIZE >;
+
 
 using parallelDeviceStream = RAJA::resources::Hip;
 using parallelDeviceEvent = RAJA::resources::Event;

@@ -301,7 +301,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   {
     auto kernelFactory = solidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
     rval = finiteElement::
-             regionBasedKernelApplication< parallelDevicePolicy< 256 >,
+             regionBasedKernelApplication< parallelDevicePolicy< 64 >,
                                            constitutive::SolidBase,
                                            CellElementSubRegion >( mesh,
                                                                    targetRegions,
@@ -626,10 +626,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
     CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents );
 
-#ifdef GEOSX_USE_HIP
-    // hip async through raja wasn't working in hip@4.5.2
     waitAllDeviceEvents( packEvents );
-#endif
 
     explicitKernelDispatch( mesh,
                             regionNames,

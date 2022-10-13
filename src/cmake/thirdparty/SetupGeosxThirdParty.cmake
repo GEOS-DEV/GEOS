@@ -488,7 +488,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
     set( HYPRE_DEPENDS blas lapack umpire)
-    if( ${ENABLE_SUPERLU_DIST} )
+    if( ENABLE_SUPERLU_DIST )
         set( HYPRE_DEPENDS ${HYPRE_DEPENDS} superlu_dist )
     endif()
     if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
@@ -644,7 +644,7 @@ if(DEFINED FMT_DIR)
 
     set(ENABLE_FMT ON CACHE BOOL "")
 
-    if(NOT TARGET fmt)
+    if(NOT TARGET fmt AND TARGET fmt::fmt)
         set_target_properties(fmt::fmt PROPERTIES IMPORTED_GLOBAL TRUE)
         add_library(fmt ALIAS fmt::fmt)
     endif()

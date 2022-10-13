@@ -499,7 +499,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && deri
   // Linear interpolation
   if( m_interpolationMethod == TableFunction::InterpolationType::Linear )
   {
-    return this->interpolateLinear( input, derivatives );
+    return interpolateLinear( input, derivatives );
   }
   // Nearest, Upper, Lower interpolation methods
   else
@@ -514,7 +514,7 @@ GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
-  integer const numDimensions = LvArray::integerConversion< integer >( this->m_coordinates.size() );
+  integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
 
   localIndex bounds[maxDimensions][2]{};
   real64 weights[maxDimensions][2]{};
@@ -523,7 +523,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
   // Determine position, weights
   for( integer dim = 0; dim < numDimensions; ++dim )
   {
-    arraySlice1d< real64 const > const coords = this->m_coordinates[dim];
+    arraySlice1d< real64 const > const coords = m_coordinates[dim];
     if( input[dim] <= coords[0] )
     {
       // Coordinate is to the left of this axis
@@ -579,7 +579,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
     {
       integer const corner = (point >> dim) & 1;
       tableIndex += bounds[dim][corner] * stride;
-      stride *= this->m_coordinates.sizeOfArray( dim );
+      stride *= m_coordinates.sizeOfArray( dim );
     }
 
     // Determine weighted value
@@ -596,17 +596,13 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
       cornerValue *= weights[dim][corner];
       for( integer kk = 0; kk < numDimensions; ++kk )
       {
-        auto weight = ( dim == kk ) ? dWeights_dInput[dim][corner] : weights[dim][corner];
-        dCornerValue_dInput[kk] *= weight;
+        dCornerValue_dInput[kk] *= ( dim == kk ) ? dWeights_dInput[dim][corner] : weights[dim][corner];
       }
     }
 
     for( integer dim = 0; dim < numDimensions; ++dim )
     {
-      real64 val = dCornerValue_dInput[dim];
-      real64 & d = derivatives[dim];
-
-      d += val;
+      derivatives[dim] += dCornerValue_dInput[dim];
     }
     value += cornerValue;
   }

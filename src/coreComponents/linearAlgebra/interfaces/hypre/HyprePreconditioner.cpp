@@ -387,7 +387,9 @@ void HyprePreconditioner::setup( Matrix const & mat )
       {
         m_precond->destroy( m_precond->ptr );
       }
-      //hypre_SLUDistSetup( &m_precond->ptr, precondMat.unwrapped(), 0 );
+#if defined(GEOSX_USE_SUPERLU_DIST)
+      hypre_SLUDistSetup( &m_precond->ptr, precondMat.unwrapped(), 0 );
+#endif
     }
   }
 }

@@ -453,7 +453,7 @@ private:
    */
   template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE // required or hip-clang 13 balks when parsing
+  GEOSX_FORCE_INLINE
   static void
     computeProjectors( localIndex const & cellIndex,
                        InputNodeCoords const & nodesCoords,
@@ -476,7 +476,7 @@ private:
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE // required or hip-clang 13 balks when parsing
+  GEOSX_FORCE_INLINE
   static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  localIndex const & numPoints )
   {
@@ -502,7 +502,7 @@ private:
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE, typename POINT_SELECTION_TYPE >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE // required or hip-clang 13 balks when parsing
+  GEOSX_FORCE_INLINE
   static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  POINT_SELECTION_TYPE selectedPoints,
                                  localIndex const & numSelectedPoints )

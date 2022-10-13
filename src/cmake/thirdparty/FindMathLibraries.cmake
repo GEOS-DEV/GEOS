@@ -21,14 +21,6 @@ elseif( ENABLE_ESSL )
     set( BLAS_LIBRARIES "${ESSL_LIBRARIES}" CACHE STRING "" FORCE )
     set( LAPACK_LIBRARIES "${ESSL_LIBRARIES}" CACHE STRING "" FORCE )
 
-# elseif( ENABLE_ROCM )
-#    find_package( rocblas REQUIRED )
-#    find_package( rocsolver REQUIRED )
-#    find_package( rocsparse REQUIRED )
-#    find_package( rocrand REQUIRED )
-#    message( STATUS "rocBLAS / rocSOLVER (lapack equiv) found" )
-#    set( BLAS_LIBRARIES ${ROCBLAS_LIBRARIES} CACHE STRING "" FORCE )
-#    set( LAPACK_LIBRARIES ${ROCSPARSE_LIBRARIES} ${ROCSOLVER_LIBRARIES} CACHE STRING "" FORCE )
 endif()
 
 

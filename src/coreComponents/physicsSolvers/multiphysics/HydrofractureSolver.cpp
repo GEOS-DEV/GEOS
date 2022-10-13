@@ -32,36 +32,6 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-namespace
-{
-
-/**
- * @brief Helper for debug output of linear algebra objects (matrices and vectors)
- * @tparam T type of LA object (must have stream insertion and .write() implemented)
- * @param obj                the object to output
- * @param cycleNumber        event cycle number
- * @param nonlinearIteration nonlinear iteration number
- * @param filePrefix          short filename prefix (e.g. "mat")
- * @param screenName           long name for screen output (e.g. "System matrix")
- * @param toScreen           whether to print on screen
- * @param toFile             whether to write to file
- */
-template< typename T >
-void debugOutputLAObject( T const & obj,
-                          real64 const & GEOSX_UNUSED_PARAM( time ),
-                          integer const cycleNumber,
-                          integer const nonlinearIteration,
-                          string const & filePrefix,
-                          string const & screenName )
-{
-  string const filename = GEOSX_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
-  obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
-  GEOSX_LOG_RANK_0( screenName << " written to " << filename );
-}
-
-}
-
-
 HydrofractureSolver::HydrofractureSolver( const string & name,
                                           Group * const parent )
   : Base( name, parent ),

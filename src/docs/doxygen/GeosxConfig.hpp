@@ -17,6 +17,9 @@
 /// Enables use of Caliper (CMake option ENABLE_CALIPER)
 #define GEOSX_USE_CALIPER
 
+/// Enables use of Caliper (CMake option ENABLE_ADIAK)
+/* #undef GEOSX_USE_ADIAK */
+
 /// Enables use of CHAI (CMake option ENABLE_CHAI)
 #define GEOSX_USE_CHAI
 

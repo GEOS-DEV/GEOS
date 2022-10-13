@@ -316,7 +316,6 @@ DeadOilFluid::KernelWrapper::
     phaseVisc.derivs[ip][Deriv::dP] = dPhaseVisc_dPres;
   }
 
-  // ==========================================
   // 2. Water phase: use the constant viscosity provided by the user
 
   using PT = DeadOilFluid::PhaseType;
@@ -329,7 +328,6 @@ DeadOilFluid::KernelWrapper::
     phaseVisc.value[ipWater] = m_waterParams.viscosity;
     phaseVisc.derivs[ipWater][Deriv::dP] = 0.0;
   }
-  // ==========================================
 }
 
 GEOSX_HOST_DEVICE
@@ -409,7 +407,6 @@ DeadOilFluid::KernelWrapper::
   // 1. Read viscosities and formation volume factors from tables, update mass densities
   computeViscosities( pressure,
                       phaseViscosity );
-  // =====================================
   computeDensities( pressure,
                     phaseMassDensity );
 
@@ -447,7 +444,6 @@ DeadOilFluid::KernelWrapper::
   computeTotalDensity( phaseFraction,
                        phaseDensity,
                        totalDensity );
-  // ======================================
 }
 
 GEOSX_HOST_DEVICE
@@ -460,25 +456,25 @@ DeadOilFluid::KernelWrapper::
           real64 const temperature,
           arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
-  auto phaseFraction = m_phaseFraction( k, q );
-  auto phaseDensity = m_phaseDensity( k, q );
-  auto phaseMassDensity = m_phaseMassDensity( k, q );
-  auto phaseViscosity = m_phaseViscosity( k, q );
-  auto phaseEnthalpy = m_phaseEnthalpy( k, q );
-  auto phaseInternalEnergy = m_phaseInternalEnergy( k, q );
-  auto phaseCompFraction = m_phaseCompFraction( k, q );
-  auto totalDensity = m_totalDensity( k, q );
+  // auto phaseFraction = m_phaseFraction( k, q );
+  // auto phaseDensity = m_phaseDensity( k, q );
+  // auto phaseMassDensity = m_phaseMassDensity( k, q );
+  // auto phaseViscosity = m_phaseViscosity( k, q );
+  // auto phaseEnthalpy = m_phaseEnthalpy( k, q );
+  // auto phaseInternalEnergy = m_phaseInternalEnergy( k, q );
+  // auto phaseCompFraction = m_phaseCompFraction( k, q );
+  // auto totalDensity = m_totalDensity( k, q );
   compute( pressure,
            temperature,
            composition,
-           phaseFraction,
-           phaseDensity,
-           phaseMassDensity,
-           phaseViscosity,
-           phaseEnthalpy,
-           phaseInternalEnergy,
-           phaseCompFraction,
-           totalDensity );
+           m_phaseFraction( k, q ),
+           m_phaseDensity( k, q ),
+           m_phaseMassDensity( k, q ),
+           m_phaseViscosity( k, q ),
+           m_phaseEnthalpy( k, q ),
+           m_phaseInternalEnergy( k, q ),
+           m_phaseCompFraction( k, q ),
+           m_totalDensity( k, q ) );
 }
 
 } //namespace constitutive

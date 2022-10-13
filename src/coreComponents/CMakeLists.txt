@@ -35,7 +35,8 @@ foreach( lib ${subdirs} )
   endif()
 endforeach()
 
-if( NOT GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS ) # if we're building full static libs and not obj_libs
+# if we're building full static libs and not obj_libs
+if( NOT GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS )
   set( geosx_core_list "" )
   foreach( lib ${coreLibs} )
     list( APPEND geosx_core_list ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )

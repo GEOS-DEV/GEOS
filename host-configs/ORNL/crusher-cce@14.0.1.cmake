@@ -20,5 +20,5 @@ else()
 endif()
 
 set( ENABLE_CALIPER ON CACHE BOOL "" FORCE )
-set( ADIAK_DIR "${GEOSX_TPL_DIR}/adiak-0.2.1-zvvjdmdwh3x2wijmwferzyeunujmep46" CACHE PATH "" )
-set( CALIPER_DIR "${GEOSX_TPL_DIR}/caliper-2.8.0-keyadpuonorysb3lh4lq3qcozyel3ghk" CACHE PATH "" )
+#set( ADIAK_DIR "${GEOSX_TPL_DIR}/adiak-0.2.1-zvvjdmdwh3x2wijmwferzyeunujmep46" CACHE PATH "" )
+set( CALIPER_DIR "${GEOSX_TPL_DIR}/caliper-2.8.0-ux2oi5h55i5j7fokzujjst5uwhw2yfeo" CACHE PATH "" )

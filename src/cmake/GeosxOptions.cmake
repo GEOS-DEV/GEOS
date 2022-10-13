@@ -109,9 +109,9 @@ endif()
 #message( "SPHINX_FOUND = ${SPHINX_FOUND}" )
 #message( "SPHINX_EXECUTABLE = ${SPHINX_EXECUTABLE}" )
 
-# if( NOT BLT_CXX_STD STREQUAL c++14 )
-#     MESSAGE( FATAL_ERROR "c++14 is NOT enabled. GEOSX requires c++14" )
-# endif( NOT BLT_CXX_STD STREQUAL c++14 )
+if( NOT BLT_CXX_STD STREQUAL c++14 )
+    MESSAGE( FATAL_ERROR "c++14 is NOT enabled. GEOSX requires c++14" )
+endif( NOT BLT_CXX_STD STREQUAL c++14 )
 
 message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
 
@@ -156,7 +156,7 @@ else()
     set( GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "" )
 endif()
 
-if( ENABLE_HYPRE AND ENABLE_HIP )
+if( ENABLE_HYPRE AND ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
     set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
     set( GEOSX_GLOBALINDEX_TYPE "int" CACHE STRING "" )
 else()

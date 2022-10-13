@@ -40,7 +40,11 @@ if ( ENABLE_MKL )
 endif()
 
 if( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper adiak )
+  set( dependencyList ${dependencyList} caliper )
+endif()
+
+if( ENABLE_ADIAK )
+set( dependencyList ${dependencyList} adiak )
 endif()
 
 blt_add_library( NAME       common
