@@ -28,11 +28,11 @@ Python scripts for post-processing and visualizing the simulation results are al
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracViscosityDominated/pennyFracViscosityDominatedQueries.py
+  inputFiles/hydraulicFracturing/scripts/hydrofractureQueries.py
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracViscosityDominated/pennyFracViscosityDominatedFigure.py
+  inputFiles/hydraulicFracturing/scripts/hydrofractureFigure.py
 
 
 ------------------------------------------------------------------
@@ -186,7 +186,7 @@ In this example, ``pressureCollection``, ``apertureCollection``, ``hydraulicAper
     :end-before: <!-- SPHINX_TASKS_END -->
 
 These tasks are triggered using the ``Event`` manager with a ``PeriodicEvent`` defined for the recurring tasks. 
-GEOSX writes one file named after the string defined in the ``filename`` keyword and formatted as a HDF5 file (``Penny_zeroToughness_output.hdf5``). This TimeHistory file contains the collected time history information from specified time history collector.
+GEOSX writes one file named after the string defined in the ``filename`` keyword and formatted as a HDF5 file (``pennyShapedViscosityDominated_output.hdf5``). This TimeHistory file contains the collected time history information from specified time history collector.
 This file includes datasets for the simulation time, fluid pressure, element aperture, hydraulic aperture and element area for the propagating hydraulic fracture.
 A Python script is prepared to read and query any specified subset of the time history data for verification and visualization. 
 
@@ -246,7 +246,13 @@ The following figure shows the distribution of :math:`\sigma_{zz}` at :math:`t=4
    Simulation result of :math:`\sigma_{zz}` at :math:`t=400 s`
 
 
-First, by running the query script ``pennyFracViscosityDominatedQueries.py``, the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure radius) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
+First, by running the query script 
+
+.. code-block:: console
+
+   python ./hydrofractureQueries.py pennyShapedViscosityDominated
+
+the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure radius) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
 
 .. code-block:: console
 		
@@ -257,11 +263,19 @@ First, by running the query script ``pennyFracViscosityDominatedQueries.py``, th
            8 1.005e+06 0.0007918     13.73
           10 9.482e+05 0.0008189     15.14
 
+Note: GEOSX python tools ``geosx_xml_tools`` should be installed to run the query script (See :ref:`PythonToolsSetup` for details). 
  
 Next, GEOSX simulation results (markers) and asymptotic solutions (curves) for the case with viscosity-storage
-dominated assumptions are plotted together in the following figure, which is generated using the visualization script ``pennyFracViscosityDominatedFigure.py``. As seen, GEOSX predictions of the temporal evolution of fracture radius, wellbore aperture and pressure at fluid inlet are nearly identical to the asymptotic solutions.
+dominated assumptions are plotted together in the following figure, which is generated using the visualization script:
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracViscosityDominated/pennyFracViscosityDominatedFigure.py
+.. code-block:: console
+
+   python ./hydrofractureFigure.py pennyShapedViscosityDominated
+
+
+As seen, GEOSX predictions of the temporal evolution of fracture radius, wellbore aperture and pressure at fluid inlet are nearly identical to the asymptotic solutions.
+
+.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracViscosityDominated/hydrofractureFigure.py pennyShapedViscosityDominated
 
 
 ------------------------------------------------------------------

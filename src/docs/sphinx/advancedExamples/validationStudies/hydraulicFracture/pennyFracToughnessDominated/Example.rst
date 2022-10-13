@@ -28,11 +28,11 @@ Python scripts for post-processing and visualizing the simulation results are al
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracToughnessDominated/pennyFracToughnessDominatedQueries.py
+  inputFiles/hydraulicFracturing/scripts/hydrofractureQueries.py
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracToughnessDominated/pennyFracToughnessDominatedFigure.py
+  inputFiles/hydraulicFracturing/scripts/hydrofractureFigure.py
 
 
 ------------------------------------------------------------------
@@ -181,7 +181,7 @@ In this example, ``pressureCollection``, ``apertureCollection``, ``hydraulicAper
     :end-before: <!-- SPHINX_TASKS_END -->
 
 These tasks are triggered using the ``Event`` manager with a ``PeriodicEvent`` defined for the recurring tasks. 
-GEOSX writes one file named after the string defined in the ``filename`` keyword and formatted as a HDF5 file (``Penny_zeroViscosity_output.hdf5``). This TimeHistory file contains the collected time history information from specified time history collector.
+GEOSX writes one file named after the string defined in the ``filename`` keyword and formatted as a HDF5 file (``pennyShapedToughnessDominated_output.hdf5``). This TimeHistory file contains the collected time history information from specified time history collector.
 This file includes datasets for the simulation time, fluid pressure, element aperture, hydraulic aperture and element area for the propagating hydraulic fracture.
 A Python script is prepared to read and query any specified subset of the time history data for verification and visualization. 
 
@@ -241,7 +241,13 @@ The following figure shows the distribution of :math:`\sigma_{zz}` at :math:`t=4
    Simulation result of :math:`\sigma_{zz}` at :math:`t=400 s`
 
 
-First, by running the query script ``pennyFracToughnessDominatedQueries.py``, the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure radius) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
+First, by running the query script
+
+.. code-block:: console
+
+   python ./hydrofractureQueries.py pennyShapedToughnessDominated
+
+the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure radius) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
 
 .. code-block:: console
 		
@@ -252,10 +258,18 @@ First, by running the query script ``pennyFracToughnessDominatedQueries.py``, th
            8  6.07e+05 0.0006163     13.73
           10  6.32e+05 0.0006827     14.45
 
+Note: GEOSX python tools ``geosx_xml_tools`` should be installed to run the query script (See :ref:`PythonToolsSetup` for details). 
  
-Next, the figure below compares the asymptotic solutions (curves) and the GEOSX simulation results (markers) for this analysis, which is generated using the visualization script ``pennyFracToughnessDominatedFigure.py``. The time history plots of fracture radius, fracture aperture and fluid pressure at the point source match the asymptotic solutions, confirming the accuracy of GEOSX simulations. 
+Next, the figure below compares the asymptotic solutions (curves) and the GEOSX simulation results (markers) for this analysis, which is generated using the visualization script: 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracToughnessDominated/pennyFracToughnessDominatedFigure.py
+.. code-block:: console
+
+   python ./hydrofractureFigure.py pennyShapedToughnessDominated
+
+
+The time history plots of fracture radius, fracture aperture and fluid pressure at the point source match the asymptotic solutions, confirming the accuracy of GEOSX simulations. 
+
+.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracToughnessDominated/hydrofractureFigure.py pennyShapedToughnessDominated
 
 
 ------------------------------------------------------------------

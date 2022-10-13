@@ -28,11 +28,11 @@ Python scripts for post-processing and visualizing the simulation results are al
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pknViscosityDominated/pknViscosityDominatedQueries.py
+  inputFiles/hydraulicFracturing/scripts/hydrofractureQueries.py
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/hydraulicFracture/validationStudies/pknViscosityDominated/pknViscosityDominatedFigure.py
+  inputFiles/hydraulicFracturing/scripts/hydrofractureFigure.py
 
 
 ------------------------------------------------------------------
@@ -175,7 +175,7 @@ In this example, ``pressureCollection``, ``apertureCollection``, ``hydraulicAper
     :end-before: <!-- SPHINX_TASKS_END -->
 
 These tasks are triggered using the ``Event`` manager with a ``PeriodicEvent`` defined for the recurring tasks. 
-GEOSX writes one file named after the string defined in the ``filename`` keyword and formatted as a HDF5 file (``PKN_zeroToughness_output.hdf5``). This TimeHistory file contains the collected time history information from specified time history collector.
+GEOSX writes one file named after the string defined in the ``filename`` keyword and formatted as a HDF5 file (``pknViscosityDominated_output.hdf5``). This TimeHistory file contains the collected time history information from specified time history collector.
 This file includes datasets for the simulation time, fluid pressure, element aperture, hydraulic aperture and element area for the propagating hydraulic fracture.
 A Python script is prepared to read and query any specified subset of the time history data for verification and visualization. 
 
@@ -236,7 +236,13 @@ The following figure shows the distribution of :math:`\sigma_{zz}` at :math:`t=2
 
    Simulation result of :math:`\sigma_{zz}` at :math:`t=200 s`
 
-First, by running the query script ``pknViscosityDominatedQueries.py``, the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure half length) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
+First, by running the query script 
+
+.. code-block:: console
+
+   python ./hydrofractureQueries.py pknViscosityDominated
+
+the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure half length) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
 
 .. code-block:: console
 		
@@ -247,13 +253,20 @@ First, by running the query script ``pknViscosityDominatedQueries.py``, the HDF5
            8 1.044e+06 0.0008482      12.8
           10 1.047e+06 0.0009098      14.8
 
+Note: GEOSX python tools ``geosx_xml_tools`` should be installed to run the query script (See :ref:`PythonToolsSetup` for details). 
  
 Next, figure below shows the comparisons between the results from GEOSX simulations (markers) and the corresponding
-analytical solutions (curves) for the example with viscosity-storage dominated assumptions, which is generated using the visualization script ``pknViscosityDominatedFigure.py``. The evolution in time
-of the fracture half-length, the near-wellbore fracture aperture, and the fluid pressure all correlate well with the analytical
+analytical solutions (curves) for the example with viscosity-storage dominated assumptions, which is generated using the visualization script:
+
+.. code-block:: console
+
+   python ./hydrofractureFigure.py pknViscosityDominated
+
+
+The evolution in time of the fracture half-length, the near-wellbore fracture aperture, and the fluid pressure all correlate well with the analytical
 solutions.  
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pknFracViscosityDominated/pknViscosityDominatedFigure.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pknFracViscosityDominated/hydrofractureFigure.py pknViscosityDominated
 
 
 ------------------------------------------------------------------

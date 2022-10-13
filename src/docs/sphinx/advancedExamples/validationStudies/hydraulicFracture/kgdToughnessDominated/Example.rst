@@ -55,11 +55,11 @@ Python scripts for post-processing and visualizing the simulation results are al
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdToughnessDominated/kgdToughnessDominatedQueries.py
+  inputFiles/hydraulicFracturing/scripts/hydrofractureQueries.py
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdToughnessDominated/kgdToughnessDominatedFigure.py
+  inputFiles/hydraulicFracturing/scripts/hydrofractureFigure.py
 
 -----------------------------------------------------------
 Mechanics solvers
@@ -187,7 +187,7 @@ In this example, ``pressureCollection``, ``apertureCollection``, ``hydraulicAper
     :end-before: <!-- SPHINX_TASKS_END -->
 
 These tasks are triggered using the ``Event`` manager with a ``PeriodicEvent`` defined for the recurring tasks. 
-GEOSX writes one file named after the string defined in the ``filename`` keyword and formatted as a HDF5 file (``KGD_zeroViscosity_output.hdf5``). This TimeHistory file contains the collected time history information from specified time history collector.
+GEOSX writes one file named after the string defined in the ``filename`` keyword and formatted as a HDF5 file (``kgdToughnessDominated_output.hdf5``). This TimeHistory file contains the collected time history information from specified time history collector.
 This file includes datasets for the simulation time, fluid pressure, element aperture, hydraulic aperture and element area for the propagating hydraulic fracture.
 A Python script is prepared to read and query any specified subset of the time history data for verification and visualization. 
 
@@ -219,7 +219,13 @@ Fracture propagation during the fluid injection period is shown in the figure be
    :width: 1000
    :figclass: align-center
 
-First, by running the query script ``kgdToughnessDominatedQueries.py``, the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure half length) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
+First, by running the query script 
+
+.. code-block:: console
+
+   python ./hydrofractureQueries.py kgdToughnessDominated
+
+the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure half length) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
 
 .. code-block:: console
 		
@@ -230,10 +236,16 @@ First, by running the query script ``kgdToughnessDominatedQueries.py``, the HDF5
            8 2.446e+05 0.0001277       4.5
           10 2.411e+05 0.0001409         5
 
+Note: GEOSX python tools ``geosx_xml_tools`` should be installed to run the query script (See :ref:`PythonToolsSetup` for details). 
 
-A good agreement between GEOSX results and analytical solutions is shown in the comparison below, which is generated using the visualization script ``kgdToughnessDominatedFigure.py``:
+A good agreement between GEOSX results and analytical solutions is shown in the comparison below, which is generated using the visualization script:
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdToughnessDominated/kgdToughnessDominatedFigure.py
+.. code-block:: console
+
+   python ./hydrofractureFigure.py kgdToughnessDominated
+
+
+.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdToughnessDominated/hydrofractureFigure.py kgdToughnessDominated
 
 
 ------------------------------------------------------------------

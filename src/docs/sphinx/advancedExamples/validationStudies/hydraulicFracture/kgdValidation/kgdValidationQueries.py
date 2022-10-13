@@ -4,10 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 from math import sin,cos,tan,exp
-import h5py
+import hdf5_wrapper
 import xml.etree.ElementTree as ElementTree
 
-
+# Get mesh settings from xml file
 def getMeshSettings(xmlFilePath):
     
     tree = ElementTree.parse(xmlFilePath)
@@ -40,20 +40,14 @@ def getMeshSettings(xmlFilePath):
     
     return xMin, xMax, yMin, yMax, zMin, zMax, nx, ny, nz
 
-def SaveTimeHistory( name, array, header ):
-    with open(name, 'w') as filehandle:
-        filehandle.write("%s\n" % header )
-        for row in array:
-            for entry in row:
-                filehandle.write("%11.4g" % entry)
-            filehandle.write("\n")
 
 def main():
     # Load and process GEOSX results
     # File path
-    hdf5File1Path = "../../../../../../../inputFiles/hydraulicFracturing/KGD_validation_output.hdf5"
-    xmlFile1Path = "../../../../../../../inputFiles/hydraulicFracturing/kgdValidation_base.xml"
-    xmlFile2Path = "../../../../../../../inputFiles/hydraulicFracturing/kgdValidation_benchmark.xml"
+    prefix = "../../../../../../../inputFiles/hydraulicFracturing/"
+    hdf5File = prefix + "KGD_validation_output.hdf5"
+    xmlFile1Path = prefix + "kgdValidation_base.xml"
+    xmlFile2Path = prefix + "kgdValidation_benchmark.xml"
 
     # Read simulation parameters from XML file
     xMin, xMax, yMin, yMax, zMin, zMax, nx, ny, nz = getMeshSettings(xmlFile2Path)
@@ -65,22 +59,22 @@ def main():
 
     # Read simulation output from HDF5 file
     # Global Coordinate of Element Center
-    hf = h5py.File(hdf5File1Path, 'r')
-    xl = hf.get('pressure elementCenter')
+    hf = hdf5_wrapper.hdf5_wrapper(hdf5File)
+    xl = hf['pressure elementCenter']
     xl = np.array(xl)
     xcord = xl[-1,:,0]
     ycord = xl[-1,:,1]
     zcord = xl[-1,:,2]
-    tl = hf.get('pressure Time')
+    tl = hf['pressure Time']
     tl = np.array(tl)
     # Load pressure
-    fpre = hf.get('pressure')  
+    fpre = hf['pressure']  
     fpre = np.array(fpre)
     # Load elementAperture
-    aper = hf.get('elementAperture')  
+    aper = hf['elementAperture'] 
     aper = np.array(aper)
     # Load elementArea
-    area = hf.get('elementArea')  
+    area = hf['elementArea'] 
     area = np.array(area)
     
     # Query simulation results
@@ -90,9 +84,8 @@ def main():
     wellPressure = np.zeros([len(tl)])
     G58Pressure = np.zeros([len(tl)])
     G57Pressure = np.zeros([len(tl)])
-    LVDTAperture = np.zeros([len(tl)])
-    length = np.zeros([len(tl)]) 
-    farea = np.zeros([len(tl)]) 
+    LVDTAperture = np.zeros([len(tl)])    
+    fracArea = np.zeros([len(tl)]) 
     for j in range(0,len(tl)): 
         xcord = xl[j,:,0]
         ycord = xl[j,:,1]
@@ -114,16 +107,22 @@ def main():
             if aper[j,i]>1.0e-5:
                temp += area[j,i]
         
-        farea[j] = temp        
+        fracArea[j] = temp        
 
 
     # Ouput fracture characteristics
-    header   = [['      time', ' wpressure', '58pressure', '57pressure', ' Laperture', '      area']]    
+    header   = '      time  wpressure 58pressure 57pressure  Laperture       area'  
     timehist = []
     for i in range(0,len(tl)):
-        timehist.append([float(tl[i]), float(wellPressure[i]), float(G58Pressure[i]), float(G57Pressure[i]), float(LVDTAperture[i]), float(farea[i])])
+        time = tl[i]
+        pressure1 = wellPressure[i]
+        pressure2 = G58Pressure[i]
+        pressure3 = G57Pressure[i]
+        aperture = LVDTAperture[i]
+        farea = fracArea[i]
+        timehist.append([float(time), float(pressure1), float(pressure2), float(pressure3), float(aperture), float(farea)])
 
-    SaveTimeHistory('model_results.txt', timehist, header)
+    np.savetxt('model_results.txt', timehist, header=header, fmt='%10.4g', comments='')
 
 
 if __name__ == "__main__":

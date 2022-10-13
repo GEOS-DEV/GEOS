@@ -52,11 +52,11 @@ Python scripts for post-processing and visualizing the simulation results are al
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdViscosityDominated/kgdViscosityDominatedQueries.py
+  inputFiles/hydraulicFracturing/scripts/hydrofractureQueries.py
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdViscosityDominated/kgdViscosityDominatedFigure.py
+  inputFiles/hydraulicFracturing/scripts/hydrofractureFigure.py
 
 
 Fluid rheology and rock toughness are defined in the xml blocks below. Please note that setting an absolute zero value for the rock toughness could lead to instability issue. Therefore, a low value of :math:`K_{Ic}` is used in this example.
@@ -72,7 +72,13 @@ Fluid rheology and rock toughness are defined in the xml blocks below. Please no
   :end-before:  <!-- Sphinx_Constitutive_CompressibleSinglePhaseFluid_End -->
 
 
-First, by running the query script ``kgdViscosityDominatedQueries.py``, the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure half length) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
+First, by running the query script 
+
+.. code-block:: console
+
+   python ./hydrofractureQueries.py kgdViscosityDominated
+
+the HDF5 output is postprocessed and temporal evolution of fracture characterisctics (fluid pressure and fracture width at fluid inlet and fracure half length) are saved into a txt file ``model-results.txt``, which can be used for verification and visualization:
 
 .. code-block:: console
 		
@@ -83,10 +89,17 @@ First, by running the query script ``kgdViscosityDominatedQueries.py``, the HDF5
            8  7.28e+05  0.000209         3
           10 6.512e+05  0.000222       3.5
 
+Note: GEOSX python tools ``geosx_xml_tools`` should be installed to run the query script (See :ref:`PythonToolsSetup` for details). 
 
-A good agreement between GEOSX results and analytical solutions is shown in the comparison below, which is generated using the visualization script ``kgdViscosityDominatedFigure.py``:
+A good agreement between GEOSX results and analytical solutions is shown in the comparison below, which is generated using the visualization script:
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdViscosityDominated/kgdViscosityDominatedFigure.py
+.. code-block:: console
+
+   python ./hydrofractureFigure.py kgdViscosityDominated
+
+
+.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdViscosityDominated/hydrofractureFigure.py kgdViscosityDominated
+
 
 ------------------------------------------------------------------
 To go further
