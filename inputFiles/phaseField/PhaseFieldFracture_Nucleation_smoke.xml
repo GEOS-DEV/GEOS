@@ -150,7 +150,7 @@
 
     <FieldSpecification
       name="pointSource"
-      fieldName="Damage"
+      fieldName="damage"
       objectPath="nodeManager"
       scale="1"
       setNames="{ middle }"/>
