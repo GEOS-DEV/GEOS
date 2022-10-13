@@ -51,7 +51,7 @@ macro(find_and_register)
                        PATHS ${arg_LIBRARY_DIRECTORIES}
                        REQUIRED ON)
 
-    blt_import_library(NAME ${arg_NAME}
+    blt_register_library(NAME ${arg_NAME}
                          INCLUDES ${${arg_NAME}_INCLUDE_DIR}
                          LIBRARIES ${${arg_NAME}_LIBRARIES} ${arg_EXTRA_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON

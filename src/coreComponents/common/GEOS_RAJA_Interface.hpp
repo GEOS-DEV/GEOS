@@ -40,7 +40,7 @@ using serialEvent = RAJA::resources::HostEvent;
 
 #if defined(GEOSX_USE_OPENMP)
 
-auto const parallelDeviceMemorySpace = hostMemorySpace;
+auto const parallelHostMemorySpace = hostMemorySpace;
 
 using parallelHostPolicy = RAJA::omp_parallel_for_exec;
 using parallelHostReduce = RAJA::omp_reduce;
