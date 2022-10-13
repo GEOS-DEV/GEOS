@@ -206,18 +206,16 @@ else()
 endif()
 
 ################################
-# CAMP
+# CAMP ( required before raja on crusher / using spack installed tpls )
 ################################
 if(DEFINED CAMP_DIR)
-    # Should be found by raja, but it is possible for spack to misconfig raja so we need to find it
-    message(STATUS "CAMP_DIR = ${CAMP_DIR}")
-
-    find_package(camp REQUIRED
-                 PATHS ${CAMP_DIR}
-                 NO_DEFAULT_PATH)
-
-    get_target_property(CAMP_INCLUDE_DIRS camp INTERFACE_INCLUDE_DIRECTORIES)
-    set_target_properties(camp PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CAMP_INCLUDE_DIRS}")
+    if(  CAMP_STANDALONE )
+        # Should be found by raja, but it is possible for spack to misconfig raja so we need to find it
+        message(STATUS "CAMP_DIR = ${CAMP_DIR}")
+        find_package(camp REQUIRED PATHS ${CAMP_DIR} NO_DEFAULT_PATH)
+        get_target_property(CAMP_INCLUDE_DIRS camp INTERFACE_INCLUDE_DIRECTORIES)
+        set_target_properties(camp PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CAMP_INCLUDE_DIRS}")
+    endif( )
 endif()
 
 ################################
@@ -225,18 +223,26 @@ endif()
 ################################
 if(DEFINED RAJA_DIR)
     message(STATUS "RAJA_DIR = ${RAJA_DIR}")
-    find_package(RAJA REQUIRED
-                 PATHS ${RAJA_DIR}
-                 NO_DEFAULT_PATH)
-
+    find_package(RAJA REQUIRED PATHS ${RAJA_DIR} NO_DEFAULT_PATH)
     get_target_property(RAJA_INCLUDE_DIRS RAJA INTERFACE_INCLUDE_DIRECTORIES)
-    set_target_properties(RAJA
-                          PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${RAJA_INCLUDE_DIRS}")
-
+    set_target_properties(RAJA PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${RAJA_INCLUDE_DIRS}")
     set(ENABLE_RAJA ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} RAJA )
 else()
     message(FATAL_ERROR "GEOSX requires RAJA, set RAJA_DIR to the RAJA installation directory.")
+endif()
+
+################################
+# CAMP ( required after raja on lassen / using non-spack installed tpls )
+################################
+if(DEFINED CAMP_DIR)
+    if( NOT DEFINED CAMP_STANDALONE OR NOT CAMP_STANDALONE )
+        # Should be found by raja, but it is possible for spack to misconfig raja so we need to find it
+        message(STATUS "CAMP_DIR = ${CAMP_DIR}")
+        find_package(camp REQUIRED PATHS ${CAMP_DIR} NO_DEFAULT_PATH)
+        get_target_property(CAMP_INCLUDE_DIRS camp INTERFACE_INCLUDE_DIRECTORIES)
+        set_target_properties(camp PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CAMP_INCLUDE_DIRS}")
+    endif()
 endif()
 
 ################################
