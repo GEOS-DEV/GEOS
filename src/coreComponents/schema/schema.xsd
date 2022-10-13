@@ -2566,8 +2566,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 * ImplicitDynamic
 * ExplicitDynamic-->
 		<xsd:attribute name="timeIntegrationOption" type="geosx_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
-		<!--useVelocityForQS => Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
-		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2612,8 +2610,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 * ImplicitDynamic
 * ExplicitDynamic-->
 		<xsd:attribute name="timeIntegrationOption" type="geosx_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
-		<!--useVelocityForQS => Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
-		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
