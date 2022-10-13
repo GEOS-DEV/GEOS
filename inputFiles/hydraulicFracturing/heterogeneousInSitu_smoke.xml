@@ -323,7 +323,7 @@
     <FieldSpecification
       name="x_constraint"
       component="0"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       objectPath="nodeManager"
       scale="0.0"
       setNames="{ xneg, xpos }"/>
@@ -331,7 +331,7 @@
     <FieldSpecification
       name="y_constraint"
       component="1"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       objectPath="nodeManager"
       scale="0.0"
       setNames="{ yneg, ypos }"/>
@@ -339,7 +339,7 @@
     <FieldSpecification
       name="z_constraint"
       component="2"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       objectPath="nodeManager"
       scale="0.0"
       setNames="{ zneg, zpos }"/>

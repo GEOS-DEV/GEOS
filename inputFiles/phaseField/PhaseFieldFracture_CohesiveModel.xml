@@ -127,7 +127,7 @@
     <FieldSpecification
       name="xpos"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="1.0e-7"
       functionName="f_b"
@@ -136,7 +136,7 @@
     <FieldSpecification
       name="xneg"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="-1.0e-7"
       functionName="f_b"
@@ -144,7 +144,7 @@
 
     <!-- <FieldSpecification name="xconstraint1"
                objectPath="nodeManager"
-               fieldName="TotalDisplacement"
+               fieldName="totalDisplacement"
                component="0"
                scale="0.0000010"
                functionName="f_b"
@@ -152,14 +152,14 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       setNames="{ all }"/>
 
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       setNames="{ all }"/>
 
