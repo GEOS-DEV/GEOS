@@ -24,7 +24,7 @@
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 
-#if GEOSX_USE_SUPERLU_DIST
+#if defined(GEOSX_USE_SUPERLU_DIST)
 #include "linearAlgebra/interfaces/direct/SuperLUDist.hpp"
 #endif
 
