@@ -490,7 +490,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     {
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-      arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
+      arrayView2d< localIndex const > const facesToElements = faceManager0.elementList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
 
       finiteElement::FiniteElementBase const &

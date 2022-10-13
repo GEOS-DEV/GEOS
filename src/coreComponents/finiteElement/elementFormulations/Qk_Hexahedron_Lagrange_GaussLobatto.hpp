@@ -642,7 +642,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
   B[0] = J[0][0]*J[0][0]+J[1][0]*J[1][0]+J[2][0]*J[2][0];
   B[1] = J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1]; 
   B[2] = J[0][0]*J[0][1]+J[1][0]*J[1][1]+J[2][0]*J[2][1];
-  return sqrt( LvArray::tensorOps::symDeterminant< 2 >( B ) )*GL_BASIS::weight(qa)*GL_BASIS::weight(qb);
+  return sqrt( abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight(qa)*GL_BASIS::weight(qb);
 }
 
 /**
