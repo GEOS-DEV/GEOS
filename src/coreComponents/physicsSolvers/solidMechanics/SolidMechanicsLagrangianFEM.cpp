@@ -55,7 +55,6 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_massDamping( 0.0 ),
   m_stiffnessDamping( 0.0 ),
   m_timeIntegrationOption( TimeIntegrationOption::ExplicitDynamic ),
-  m_useVelocityEstimateForQS( 0 ),
   m_maxForce( 0.0 ),
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
@@ -87,12 +86,6 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_timeIntegrationOption ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
-
-  registerWrapper( viewKeyStruct::useVelocityEstimateForQSString(), &m_useVelocityEstimateForQS ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to indicate the use of the incremental displacement from the previous step as an "
-                    "initial estimate for the incremental displacement of the current step." );
 
   registerWrapper( viewKeyStruct::maxNumResolvesString(), &m_maxNumResolves ).
     setApplyDefaultValue( 10 ).
@@ -160,41 +153,44 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
       setDescription( "An array that holds the incremental displacements for the current time step on the nodes." ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerWrapper< array2d< real64, nodes::VELOCITY_PERM > >( keys::Velocity ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the current velocity on the nodes." ).
-      reference().resizeDimension< 1 >( 3 );
+    if( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic )
+    {
+      nodes.registerWrapper< array2d< real64, nodes::VELOCITY_PERM > >( keys::Velocity ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the current velocity on the nodes." ).
+        reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerWrapper< array2d< real64, nodes::ACCELERATION_PERM > >( keys::Acceleration ).
-      setPlotLevel( PlotLevel::LEVEL_1 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
-                      "to hold the summation of nodal forces resulting from the governing equations." ).
-      reference().resizeDimension< 1 >( 3 );
+      nodes.registerWrapper< array2d< real64, nodes::ACCELERATION_PERM > >( keys::Acceleration ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
+                        "to hold the summation of nodal forces resulting from the governing equations." ).
+        reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::forceExternalString() ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
-                      " conditions as well as coupling forces such as hydraulic forces." ).
-      reference().resizeDimension< 1 >( 3 );
+      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::vTildeString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the velocity predictors on the nodes." ).
+        reference().resizeDimension< 1 >( 3 );
+
+      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::uhatTildeString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the incremental displacement predictors on the nodes." ).
+        reference().resizeDimension< 1 >( 3 );
+    }
 
     nodes.registerWrapper< array1d< real64 > >( keys::Mass ).
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRegisteringObjects( this->getName()).
       setDescription( "An array that holds the mass on the nodes." );
 
-    nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::vTildeString() ).
-      setPlotLevel( PlotLevel::NOPLOT ).
+    nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::forceExternalString() ).
+      setPlotLevel( PlotLevel::LEVEL_0 ).
       setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the velocity predictors on the nodes." ).
-      reference().resizeDimension< 1 >( 3 );
-
-    nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::uhatTildeString() ).
-      setPlotLevel( PlotLevel::NOPLOT ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the incremental displacement predictors on the nodes." ).
+      setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
+                      " conditions as well as coupling forces such as hydraulic forces." ).
       reference().resizeDimension< 1 >( 3 );
 
     nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::contactForceString() ).
@@ -780,7 +776,6 @@ SolidMechanicsLagrangianFEM::
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView2d< real64 const, nodes::VELOCITY_USD > const v_n = nodeManager.velocity();
     arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const uhat = nodeManager.incrementalDisplacement();
     arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
 
@@ -791,6 +786,7 @@ SolidMechanicsLagrangianFEM::
       arrayView2d< real64 const, nodes::ACCELERATION_USD > const a_n = nodeManager.acceleration();
       arrayView2d< real64 > const vtilde = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.vTilde );
       arrayView2d< real64 > const uhatTilde = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.uhatTilde );
+      arrayView2d< real64 const, nodes::VELOCITY_USD > const v_n = nodeManager.velocity();
 
       real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
       real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
@@ -808,27 +804,13 @@ SolidMechanicsLagrangianFEM::
     }
     else if( this->m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
     {
-      if( m_useVelocityEstimateForQS==1 )
+      forAll< parallelDevicePolicy< 32 > >( numNodes, [=] GEOSX_HOST_DEVICE ( localIndex const a )
       {
-        forAll< parallelDevicePolicy< 32 > >( numNodes, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+        for( int i=0; i<3; ++i )
         {
-          for( int i=0; i<3; ++i )
-          {
-            uhat( a, i ) = v_n( a, i ) * dt;
-            disp( a, i ) += uhat( a, i );
-          }
-        } );
-      }
-      else
-      {
-        forAll< parallelDevicePolicy< 32 > >( numNodes, [=] GEOSX_HOST_DEVICE ( localIndex const a )
-        {
-          for( int i=0; i<3; ++i )
-          {
-            uhat( a, i ) = 0.0;
-          }
-        } );
-      }
+          uhat( a, i ) = 0.0;
+        }
+      } );
     }
 
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
@@ -860,7 +842,6 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
     localIndex const numNodes = nodeManager.size();
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
 
-    arrayView2d< real64, nodes::VELOCITY_USD > const v_n = nodeManager.velocity();
     arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const uhat  = nodeManager.incrementalDisplacement();
 
     if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
@@ -868,6 +849,7 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
       arrayView2d< real64, nodes::ACCELERATION_USD > const a_n = nodeManager.acceleration();
       arrayView2d< real64 const > const vtilde    = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.vTilde );
       arrayView2d< real64 const > const uhatTilde = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.uhatTilde );
+      arrayView2d< real64, nodes::VELOCITY_USD > const v_n = nodeManager.velocity();
       real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
       real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
 
@@ -878,17 +860,6 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
         {
           a_n( a, i ) = 1.0 / ( newmarkBeta * dt*dt) * ( uhat( a, i ) - uhatTilde[a][i] );
           v_n[a][i] = vtilde[a][i] + newmarkGamma * a_n( a, i ) * dt;
-        }
-      } );
-    }
-    else if( this->m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic && dt > 0.0 )
-    {
-      RAJA::forall< parallelDevicePolicy<> >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
-                                              [=] GEOSX_HOST_DEVICE ( localIndex const a )
-      {
-        for( int i=0; i<3; ++i )
-        {
-          v_n[a][i] = uhat( a, i ) / dt;
         }
       } );
     }
