@@ -20,28 +20,6 @@
 namespace geosx
 {
 
-//class FaceBlock: public FaceBlockABC
-//{
-//public:
-//  FaceBlock( string const & name, Group * const parent );
-//
-//  localIndex num2dElements() const override;
-//
-//  localIndex num2dFaces() const override;
-//
-//  ArrayOfArrays< localIndex > get2dElemToNodes() const override;
-//
-//  ArrayOfArrays< localIndex > get2dElemToEdges() const override;
-//
-//  array2d< localIndex > get2dElemToFaces() const override;
-//
-//  ToCellRelation< array2d< localIndex > > get2dElemToElems() const override;
-//
-//  array1d< localIndex > get2dFaceToEdge() const override;
-//
-//  ArrayOfArrays< localIndex > get2dFaceTo2dElems() const override;
-//};
-
 class FaceBlock : public FaceBlockABC
 {
 public:
@@ -71,33 +49,33 @@ public:
 
   void setNum2DFaces( localIndex num2DFaces );
 
-  void set2dElemToNodes( std::vector< std::vector< localIndex > > _2dElemToNodes );
+  void set2dElemToNodes( ArrayOfArrays< localIndex > _2dElemToNodes );
 
-  void set2dElemToEdges( std::vector< std::vector< localIndex > > _2dElemToEdges );
+  void set2dElemToEdges( ArrayOfArrays< localIndex > _2dElemToEdges );
 
-  void set2dElemToFaces( std::vector< std::vector< localIndex > > _2dElemToFaces );
+  void set2dElemToFaces( array2d< localIndex > _2dElemToFaces );
 
-  void set2dFaceTo2dElems( std::vector< std::vector< localIndex > > _2dFaceTo2dElems );
+  void set2dFaceTo2dElems( ArrayOfArrays< localIndex > _2dFaceTo2dElems );
 
-  void set2dFaceToEdge( std::vector< localIndex > _2dFaceToEdge );
+  void set2dFaceToEdge( array1d< localIndex > _2dFaceToEdge );
 
-  void set2dElemToElems( std::vector< std::vector< localIndex > > _2dElemToElems );
+  void set2dElemToElems( array2d< localIndex > _2dElemToElems );
 
-  void set2dElemToCellBlock( std::vector< std::vector< localIndex > > _2dElemToCellBlock );
+  void set2dElemToCellBlock( array2d< localIndex > _2dElemToCellBlock );
 
 private:
 
   localIndex m_num2dElements;
   localIndex m_num2dFaces;
 
-  std::vector< std::vector< localIndex > > m_2dElemToNodes;
-  std::vector< std::vector< localIndex > > m_2dElemToEdges;
-  std::vector< std::vector< localIndex > > m_2dElemToFaces;
-  std::vector< std::vector< localIndex > > m_2dFaceTo2dElems;
-  std::vector< localIndex > m_2dFaceToEdge;
+  ArrayOfArrays< localIndex > m_2dElemToNodes;
+  ArrayOfArrays< localIndex > m_2dElemToEdges;
+  array2d< localIndex > m_2dElemToFaces;
+  ArrayOfArrays< localIndex > m_2dFaceTo2dElems;
+  array1d< localIndex > m_2dFaceToEdge;
 
-  std::vector< std::vector< localIndex > > m_2dElemToElems;
-  std::vector< std::vector< localIndex > > m_2dElemToCellBlock;
+  array2d< localIndex > m_2dElemToElems;
+  array2d< localIndex > m_2dElemToCellBlock;
 };
 
 

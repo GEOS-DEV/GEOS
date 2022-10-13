@@ -21,7 +21,7 @@
   <Mesh>
     <VTKMesh
       name="mesh1"
-      file="/tmp/tmp.EtfQgEUXLg/tmp_buffer/frac-t.vtk"
+      file="/tmp/tmp.EtfQgEUXLg/inputFiles/singlePhaseFlow/frac-t.vtk"
       useGlobalIds="1"
       faceBlocks="{ fracture_info }"/>
 

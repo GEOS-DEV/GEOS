@@ -59,7 +59,8 @@ public:
     // TODO use a builder and not the constructor.
     // Formatting the duplicated nodes' information.
     {
-      vtkDataArray * duplicatedNodes = fieldData->GetArray( "duplicated_points_info" );
+      vtkDataArray * duplicatedNodes = fieldData->GetArray( "duplicated_points_info" ); // TODO create constant.
+      GEOSX_ERROR_IF( duplicatedNodes == nullptr, "Mandatory VTK field data array \"duplicated_points_info\" not found." );
       auto const numComponents = duplicatedNodes->GetNumberOfComponents();
 
       int const numDuplicatedLocations = duplicatedNodes->GetNumberOfTuples();
@@ -164,18 +165,20 @@ private:
   std::map< int, int > m_duplicatedNodes;
 };
 
+namespace internal {
+
 /**
  * @brief This classes helps at building the global (vtk) element indices to the indices local to the cell blocks.
  * Then the global element to global faces can be be also computed.
  */
-class E2F
+class ElementToFace
 {
 public:
   /**
    * @brief Builds for the cell blocks.
    * @param cellBlocks The cell blocks group.
    */
-  E2F( dataRepository::Group const & cellBlocks )
+  ElementToFace( dataRepository::Group const & cellBlocks )
     : m_localToGlobalMaps( cellBlocks.numSubGroups() ),
       m_elemToFacesMaps( cellBlocks.numSubGroups() )
   {
@@ -258,6 +261,8 @@ private:
   std::vector< arrayView2d< localIndex const > > m_elemToFacesMaps;
 };
 
+} // end of namespace internal
+
 /**
  * @brief Import face block @p faceBlockName from @p vtkMesh into the @p cellBlockManager.
  * @param faceBlockName
@@ -270,6 +275,7 @@ void ImportFracture( string const & faceBlockName,
                      CellBlockManager & cellBlockManager )
 {
   vtkFieldData * fieldData = vtkMesh->GetFieldData();
+  GEOSX_ERROR_IF( fieldData == nullptr, "Fault and fracture information is supposed to be defined in the VTK field data. None was found." );
 
   FaceData const faceData( fieldData, faceBlockName );
 
@@ -299,18 +305,22 @@ void ImportFracture( string const & faceBlockName,
     num2dFaces = uniquePairs.size();
   }
 
-  std::vector< std::vector< localIndex > > elem2dToElems; // API
-  std::vector< std::vector< localIndex > > elem2dToCellBlock; // API
-  E2F const e2f( cellBlockManager.getCellBlocks() );
+  internal::ElementToFace const e2f( cellBlockManager.getCellBlocks() );
 
+  array2d< localIndex > elem2dToCellBlock( num2dElements, 2 ); // API
+  elem2dToCellBlock.setValues< parallelHostPolicy >( -1 );
   for( int i = 0; i < num2dElements; ++i )
   {
-    elem2dToCellBlock.push_back( { e2f.getCellBlockIndex( faceData.cell( i, 0 ) ),
-                                   e2f.getCellBlockIndex( faceData.cell( i, 1 ) ) } );
+    for( int j = 0; j < 2; ++j )
+    {
+      elem2dToCellBlock[i][j] = e2f.getCellBlockIndex( faceData.cell( i, j ) );
+    }
   }
+
+  array2d< localIndex > elem2dToElems( num2dElements, 2 ); // API
+  elem2dToElems.setValues< parallelHostPolicy >( -1 );
   for( int i = 0; i < num2dElements; ++i )
   {
-    elem2dToElems.push_back( { -1, -1 } );
     for( int j = 0; j < 2; ++j )
     {
       auto const offset = e2f.getElementCellBlockOffset( elem2dToCellBlock[i][j] );
@@ -330,8 +340,8 @@ void ImportFracture( string const & faceBlockName,
   ArrayOfArrays< localIndex > const & f2n = cellBlockManager.getFaceToNodes();
   ArrayOfArrays< localIndex > const & n2ed = cellBlockManager.getNodeToEdges();
 
-  std::vector< std::vector< localIndex > > elem2dToNodes; // API
-  std::vector< std::vector< localIndex > > elem2dToFaces; // API
+  ArrayOfArrays< localIndex > elem2dToNodes( num2dElements ); // API
+  array2d< localIndex > elem2dToFaces( num2dElements, 2 ); // API
   {
     // Standard element/face double loop to find extract the nodes and faces indices required for the mappings.
     for( int i = 0; i < num2dElements; ++i )
@@ -341,7 +351,6 @@ void ImportFracture( string const & faceBlockName,
       for( int j = 0; j < 2; ++j )
       {
         int const ei = faceData.cell( i, j );
-//        int const fi = faceData.face( i, j );
         vtkCell * c = vtkMesh->GetCell( faceData.cell( i, j ) );
         vtkCell * f = c->GetFace( faceData.face( i, j ) );
         std::set< int > const vtkPoints = vtkIdListToSet( f->GetPointIds() );
@@ -358,16 +367,20 @@ void ImportFracture( string const & faceBlockName,
           }
         }
       }
-      elem2dToNodes.push_back( nodeLine );
-      elem2dToFaces.push_back( faceLine );
+      elem2dToNodes.resizeArray( i, nodeLine.size() );
+      std::copy( nodeLine.cbegin(), nodeLine.cend(), elem2dToNodes[i].begin() );
+      GEOSX_ERROR_IF_NE_MSG( faceLine.size(), 2, "Internal error: wrong number of faces in the fracture/fault mesh computation" );
+      elem2dToFaces[i][0] = faceLine[0];
+      elem2dToFaces[i][1] = faceLine[1];
     }
   }
 
   // The order is from the most little edge index to the largest.
   // Since two edges are in the same location, we always take the more little index of the two colocated edges.
   // Computing face 2d -> edges
-  std::vector< localIndex > face2dToEdges; // API
-  std::vector< std::vector< localIndex > > elem2dToEdges; // API
+  array1d< localIndex > face2dToEdges; // API
+  face2dToEdges.reserve( num2dFaces );
+  ArrayOfArrays< localIndex > elem2dToEdges( num2dElements ); // API
   {
     // [2d elem index] -> [left/right index] -> [edges (stored as a pair of ints)]
     // The pairs of `allEdges` do not deal with the duplication challenge: all the edges are there, even duplicates.
@@ -429,7 +442,6 @@ void ImportFracture( string const & faceBlockName,
     // It uses the `pairIdToEdgeId` to remove duplicates.
     for( int i = 0; i < num2dElements; ++i )
     {
-      elem2dToEdges.push_back( {} );
       std::set< int > edges;
       for( std::size_t j = 0; j < allEdges[i].size(); ++j )
       {
@@ -441,7 +453,8 @@ void ImportFracture( string const & faceBlockName,
           edges.insert( edge );
         }
       }
-      std::copy( edges.cbegin(), edges.cend(), std::back_inserter( elem2dToEdges.back() ) );
+      elem2dToEdges.resizeArray( i, edges.size() );
+      std::copy( edges.cbegin(), edges.cend(), elem2dToEdges[i].begin() );
     }
 
     // Here we compute the `face2dToEdges` mapping.
@@ -455,17 +468,18 @@ void ImportFracture( string const & faceBlockName,
     };
     std::set< std::pair< int, int >, decltype( cmp ) > uniqueEdges( cmp );
     uniqueEdges.insert( allEdgesFlat.cbegin(), allEdgesFlat.cend() );
+    GEOSX_ERROR_IF_NE_MSG( LvArray::integerConversion< localIndex >( uniqueEdges.size() ), num2dFaces, "Internal error: wrong number of edges in the fracture/fault mesh computation." );
     for( std::pair< int, int > const & p: uniqueEdges )
     {
-      face2dToEdges.push_back( pairToEdge( p, n2ed ) );
+      face2dToEdges.emplace_back( pairToEdge( p, n2ed ) );
     }
   }
 
-  std::vector< std::vector< localIndex > > face2dToElems2d( num2dFaces ); // API
+  ArrayOfArrays< localIndex > face2dToElems2d( num2dFaces ); // API
   {
     // First, a mapping inversion TODO there are optimized implementations here and there.
     std::map< int, std::vector< int > > edgesToElems2d;
-    for( std::size_t i = 0; i < elem2dToEdges.size(); ++i )
+    for( localIndex i = 0; i < elem2dToEdges.size(); ++i )
     {
       for( int const & e: elem2dToEdges[i] )
       {
@@ -475,9 +489,10 @@ void ImportFracture( string const & faceBlockName,
     // Then we fill chain mappings...
     for( int fi = 0; fi < num2dFaces; ++fi )
     {
-      int const & edge = face2dToEdges[fi];
+      localIndex const & edge = face2dToEdges[fi];
       std::vector< int > const & elems2d = edgesToElems2d[edge];
-      std::copy( elems2d.begin(), elems2d.end(), std::back_inserter( face2dToElems2d[fi] ) );
+      face2dToElems2d.resizeArray( fi, elems2d.size() );
+      std::copy( elems2d.begin(), elems2d.end(), face2dToElems2d[fi].begin() );
     }
   }
 
