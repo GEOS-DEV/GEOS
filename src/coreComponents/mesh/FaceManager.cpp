@@ -453,7 +453,7 @@ void FaceManager::compressRelationMaps()
 
 void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )
 {
-  arrayView1d< localIndex const > const childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  arrayView1d< localIndex const > const childFaceIndices = getExtrinsicData< extrinsicMeshData::childIndex >();
 
   ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange ( targetIndices );
 
