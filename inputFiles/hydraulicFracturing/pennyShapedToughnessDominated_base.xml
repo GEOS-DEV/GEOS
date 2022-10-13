@@ -138,6 +138,7 @@
       values="{ 0.002e-3, 0.02e-3 }"/>
   </Functions>
 
+  <!-- SPHINX_TASKS -->
   <Tasks>
     <PackCollection
       name="pressureCollection"
@@ -159,6 +160,7 @@
       objectPath="ElementRegions/Fracture/FractureSubRegion"
       fieldName="elementArea"/> 
   </Tasks>
+  <!-- SPHINX_TASKS_END -->
 
   <!-- SPHINX_OUTPUT -->    
   <Outputs>
