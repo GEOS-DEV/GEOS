@@ -392,7 +392,6 @@ struct MassMatrixKernel
       {
         real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
         RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
-        printf("Mass matrix: %i, %f\n", elemsToNodes[k][q], localIncrement);
       }
     } ); // end loop over element
   }
@@ -445,7 +444,6 @@ struct DampingMatrixKernel
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 > const damping )
   {
-    printf("number of faces: %i\n",size);
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const f )
     {
       // face on the domain boundary and not on free surface
@@ -457,7 +455,6 @@ struct DampingMatrixKernel
           k = facesToElems(f, 1);
         }
    
-        printf("face %i on element %i\n",f,k);
         real32 const alpha = 1.0 / velocity[k];
 
         constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
@@ -475,7 +472,6 @@ struct DampingMatrixKernel
         {
           real32 const localIncrement = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
           RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[f][q]], localIncrement );
-          printf("Damping matrix: %i, %f\n", facesToNodes[f][q], localIncrement);
         }
       }
     } ); // end loop over element
@@ -1039,7 +1035,6 @@ public:
       {
         real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
-        printf("Stiffness matrix: %i, %i, %f\n", m_elemsToNodes[k][i], m_elemsToNodes[k][j], localIncrement);
       } );
   }
   /**
