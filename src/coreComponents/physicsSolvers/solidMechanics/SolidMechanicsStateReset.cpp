@@ -86,7 +86,10 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
 
       NodeManager & nodeManager = mesh.getNodeManager();
 
-      nodeManager.getExtrinsicData< solidMechanics::velocity >().zero();
+      if( nodeManager.hasExtrinsicData< solidMechanics::velocity >() )
+      {
+        nodeManager.getExtrinsicData< solidMechanics::velocity >().zero();
+      }
       nodeManager.getExtrinsicData< solidMechanics::totalDisplacement >().zero();
       nodeManager.getExtrinsicData< solidMechanics::incrementalDisplacement >().zero();
     }

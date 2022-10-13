@@ -222,7 +222,6 @@ public:
     static constexpr char const * newmarkBetaString() { return "newmarkBeta"; }
     static constexpr char const * massDampingString() { return "massDamping"; }
     static constexpr char const * stiffnessDampingString() { return "stiffnessDamping"; }
-    static constexpr char const * useVelocityEstimateForQSString() { return "useVelocityForQS"; }
     static constexpr char const * timeIntegrationOptionString() { return "timeIntegrationOption"; }
     static constexpr char const * maxNumResolvesString() { return "maxNumResolves"; }
     static constexpr char const * strainTheoryString() { return "strainTheory"; }
@@ -241,7 +240,6 @@ public:
     dataRepository::ViewKey newmarkBeta = { newmarkBetaString() };
     dataRepository::ViewKey massDamping = { massDampingString() };
     dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString() };
-    dataRepository::ViewKey useVelocityEstimateForQS = { useVelocityEstimateForQSString() };
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
 
@@ -279,7 +277,6 @@ protected:
   real64 m_massDamping;
   real64 m_stiffnessDamping;
   TimeIntegrationOption m_timeIntegrationOption;
-  integer m_useVelocityEstimateForQS;
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;

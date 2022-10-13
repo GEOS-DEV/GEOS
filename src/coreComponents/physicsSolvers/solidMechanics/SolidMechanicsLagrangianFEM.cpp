@@ -51,7 +51,6 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_massDamping( 0.0 ),
   m_stiffnessDamping( 0.0 ),
   m_timeIntegrationOption( TimeIntegrationOption::ExplicitDynamic ),
-  m_useVelocityEstimateForQS( 0 ),
   m_maxForce( 0.0 ),
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
@@ -83,12 +82,6 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_timeIntegrationOption ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
-
-  registerWrapper( viewKeyStruct::useVelocityEstimateForQSString(), &m_useVelocityEstimateForQS ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to indicate the use of the incremental displacement from the previous step as an "
-                    "initial estimate for the incremental displacement of the current step." );
 
   registerWrapper( viewKeyStruct::maxNumResolvesString(), &m_maxNumResolves ).
     setApplyDefaultValue( 10 ).
@@ -150,21 +143,24 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
     nodes.registerExtrinsicData< solidMechanics::incrementalDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerExtrinsicData< solidMechanics::velocity >( getName() ).
-      reference().resizeDimension< 1 >( 3 );
+    if( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic )
+    {
+      nodes.registerExtrinsicData< solidMechanics::velocity >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerExtrinsicData< solidMechanics::acceleration >( getName() ).
-      reference().resizeDimension< 1 >( 3 );
+      nodes.registerExtrinsicData< solidMechanics::acceleration >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
 
-    nodes.registerExtrinsicData< solidMechanics::externalForce >( getName() ).
-      reference().resizeDimension< 1 >( 3 );
+      nodes.registerExtrinsicData< solidMechanics::velocityTilde >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
+
+      nodes.registerExtrinsicData< solidMechanics::uhatTilde >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
+    }
 
     nodes.registerExtrinsicData< solidMechanics::mass >( getName() );
 
-    nodes.registerExtrinsicData< solidMechanics::velocityTilde >( getName() ).
-      reference().resizeDimension< 1 >( 3 );
-
-    nodes.registerExtrinsicData< solidMechanics::uhatTilde >( getName() ).
+    nodes.registerExtrinsicData< solidMechanics::externalForce >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
     nodes.registerExtrinsicData< solidMechanics::contactForce >( getName() ).
@@ -752,18 +748,18 @@ SolidMechanicsLagrangianFEM::
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    solidMechanics::arrayView2dLayoutVelocity const v_n =
-      nodeManager.getExtrinsicData< solidMechanics::velocity >();
     solidMechanics::arrayView2dLayoutIncrDisplacement const uhat =
       nodeManager.getExtrinsicData< solidMechanics::incrementalDisplacement >();
     solidMechanics::arrayView2dLayoutTotalDisplacement const disp =
       nodeManager.getExtrinsicData< solidMechanics::totalDisplacement >();
+
 
     localIndex const numNodes = nodeManager.size();
 
     if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
     {
       solidMechanics::arrayViewConst2dLayoutAcceleration const a_n = nodeManager.getExtrinsicData< solidMechanics::acceleration >();
+      solidMechanics::arrayView2dLayoutVelocity const v_n = nodeManager.getExtrinsicData< solidMechanics::velocity >();
       arrayView2d< real64 > const vtilde = nodeManager.getExtrinsicData< solidMechanics::velocityTilde >();
       arrayView2d< real64 > const uhatTilde = nodeManager.getExtrinsicData< solidMechanics::uhatTilde >();
 
@@ -783,27 +779,13 @@ SolidMechanicsLagrangianFEM::
     }
     else if( this->m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
     {
-      if( m_useVelocityEstimateForQS==1 )
+      forAll< parallelDevicePolicy< 32 > >( numNodes, [=] GEOSX_HOST_DEVICE ( localIndex const a )
       {
-        forAll< parallelDevicePolicy< 32 > >( numNodes, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+        for( int i=0; i<3; ++i )
         {
-          for( int i=0; i<3; ++i )
-          {
-            uhat( a, i ) = v_n( a, i ) * dt;
-            disp( a, i ) += uhat( a, i );
-          }
-        } );
-      }
-      else
-      {
-        forAll< parallelDevicePolicy< 32 > >( numNodes, [=] GEOSX_HOST_DEVICE ( localIndex const a )
-        {
-          for( int i=0; i<3; ++i )
-          {
-            uhat( a, i ) = 0.0;
-          }
-        } );
-      }
+          uhat( a, i ) = 0.0;
+        }
+      } );
     }
 
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
@@ -835,16 +817,16 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
     localIndex const numNodes = nodeManager.size();
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
 
-    solidMechanics::arrayView2dLayoutVelocity const v_n =
-      nodeManager.getExtrinsicData< solidMechanics::velocity >();
     solidMechanics::arrayView2dLayoutIncrDisplacement const uhat =
       nodeManager.getExtrinsicData< solidMechanics::incrementalDisplacement >();
 
     if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
     {
       solidMechanics::arrayView2dLayoutAcceleration const a_n = nodeManager.getExtrinsicData< solidMechanics::acceleration >();
+      solidMechanics::arrayView2dLayoutVelocity const v_n = nodeManager.getExtrinsicData< solidMechanics::velocity >();
       arrayView2d< real64 const > const vtilde    = nodeManager.getExtrinsicData< solidMechanics::velocityTilde >();
       arrayView2d< real64 const > const uhatTilde = nodeManager.getExtrinsicData< solidMechanics::uhatTilde >();
+
       real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
       real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
 
@@ -855,17 +837,6 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
         {
           a_n( a, i ) = 1.0 / ( newmarkBeta * dt*dt) * ( uhat( a, i ) - uhatTilde[a][i] );
           v_n[a][i] = vtilde[a][i] + newmarkGamma * a_n( a, i ) * dt;
-        }
-      } );
-    }
-    else if( this->m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic && dt > 0.0 )
-    {
-      RAJA::forall< parallelDevicePolicy<> >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
-                                              [=] GEOSX_HOST_DEVICE ( localIndex const a )
-      {
-        for( int i=0; i<3; ++i )
-        {
-          v_n[a][i] = uhat( a, i ) / dt;
         }
       } );
     }
