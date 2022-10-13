@@ -121,20 +121,20 @@ struct PrecomputeSourceAndReceiverKernel
   }
 
   GEOSX_HOST_DEVICE
-  static real64
+  static real32
   evaluateRicker( real64 const & time_n,
                   real64 const & f0,
                   localIndex const & order )
   {
-    real64 const o_tpeak = 1.0/f0;
-    real64 pulse = 0.0;
+    real32 const o_tpeak = 1.0/f0;
+    real32 pulse = 0.0;
     if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
     {
       return pulse;
     }
 
-    constexpr real64 pi = M_PI;
-    real64 const lam = (f0*pi)*(f0*pi);
+    constexpr real32 pi = M_PI;
+    real32 const lam = (f0*pi)*(f0*pi);
 
     switch( order )
     {
@@ -208,9 +208,9 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView2d< localIndex > const receiverNodeIds,
           arrayView2d< real64 > const receiverConstants,
-          arrayView2d< real64 > const sourceValue, 
+          arrayView2d< real32 > const sourceValue, 
           real64 const dt,
-          real64 const timeSourceFrequency,
+          real32 const timeSourceFrequency,
           localIndex const rickerOrder)
   {
 
@@ -299,8 +299,8 @@ struct PrecomputeSourceAndReceiverKernel
                                                              coordsOnRefElem );
             receiverIsLocal[ircv] = 1;
 
-            real64 Ntest[8];
-            finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
+            real64 Ntest[numNodesPerElem];
+            FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
@@ -357,13 +357,13 @@ struct MassAndDampingMatrixKernel
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
           arrayView2d< real64 const > const faceNormal,
-          arrayView1d< real64 const > const density,
-          arrayView1d< real64 > const velocityVp,
-          arrayView1d< real64 > const velocityVs,
-          arrayView1d< real64 > const dampingx,
-          arrayView1d< real64 > const dampingy,
-          arrayView1d< real64 > const dampingz,
-          arrayView1d< real64 > const mass )
+          arrayView1d< real32 const > const density,
+          arrayView1d< real32 > const velocityVp,
+          arrayView1d< real32 > const velocityVs,
+          arrayView1d< real32 > const dampingx,
+          arrayView1d< real32 > const dampingy,
+          arrayView1d< real32 > const dampingz,
+          arrayView1d< real32 > const mass )
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
@@ -387,11 +387,11 @@ struct MassAndDampingMatrixKernel
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         FE_TYPE::calcN( q, N );
-        real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+        real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
         for( localIndex a = 0; a < numNodesPerElem; ++a )
         {
-          real64 const localIncrement = density[k] * detJ * N[a];
+          real32 const localIncrement = density[k] * detJ * N[a];
           RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][a]], localIncrement );
         }
       }
@@ -405,7 +405,7 @@ struct MassAndDampingMatrixKernel
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
             FE_TYPE::calcN( q, N );
-            real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+            real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
             real64 invJ[3][3]={{0}};
             FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
@@ -427,18 +427,18 @@ struct MassAndDampingMatrixKernel
 
               localIndex numNodeGl = facesToNodes[iface][a];
 
-              real64 const alphax = density[k] * (velocityVp[k]*(faceNormal[iface][0]*faceNormal[iface][0]) + velocityVs[k]*(faceNormal[iface][1]*faceNormal[iface][1]) +
-                                    velocityVs[k]*(faceNormal[iface][2]*faceNormal[iface][2]) );
+              real32 const localIncrementx = density[k] * (velocityVp[k]*(faceNormal[iface][0]*faceNormal[iface][0]) + velocityVs[k]*(faceNormal[iface][1]*faceNormal[iface][1]) +
+                                    velocityVs[k]*(faceNormal[iface][2]*faceNormal[iface][2]) )*detJ*ds*N[a];
 
-              real64 const alphay = density[k] * (velocityVs[k]*(faceNormal[iface][0]*faceNormal[iface][0]) + velocityVp[k]*(faceNormal[iface][1]*faceNormal[iface][1]) +
-                                    velocityVs[k]*(faceNormal[iface][2]*faceNormal[iface][2]) );
+              real32 const localIncrementy = density[k] * (velocityVs[k]*(faceNormal[iface][0]*faceNormal[iface][0]) + velocityVp[k]*(faceNormal[iface][1]*faceNormal[iface][1]) +
+                                    velocityVs[k]*(faceNormal[iface][2]*faceNormal[iface][2]) )*detJ*ds*N[a];
 
-              real64 const alphaz = density[k] * (velocityVs[k]*(faceNormal[iface][0]*faceNormal[iface][0]) + velocityVs[k]*(faceNormal[iface][1]*faceNormal[iface][1]) +
-                                    velocityVp[k]*(faceNormal[iface][2]*faceNormal[iface][2]) );
+              real32 const localIncrementz = density[k] * (velocityVs[k]*(faceNormal[iface][0]*faceNormal[iface][0]) + velocityVs[k]*(faceNormal[iface][1]*faceNormal[iface][1]) +
+                                    velocityVp[k]*(faceNormal[iface][2]*faceNormal[iface][2]) )*detJ*ds*N[a];
 
-              RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[numNodeGl], alphax*detJ*ds*N[a] );
-              RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[numNodeGl], alphay*detJ*ds*N[a] );
-              RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[numNodeGl], alphaz*detJ*ds*N[a] );
+              RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[numNodeGl], localIncrementx );
+              RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[numNodeGl], localIncrementy );
+              RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[numNodeGl], localIncrementz );
 
             }
           }
@@ -470,26 +470,26 @@ struct StressComputation
   launch( localIndex const size,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-          arrayView1d< real64 const > const ux_np1,
-          arrayView1d< real64 const > const uy_np1,
-          arrayView1d< real64 const > const uz_np1,
-          arrayView1d< real64 const > const density,
-          arrayView1d< real64 const > const velocityVp,
-          arrayView1d< real64 const > const velocityVs,
-          arrayView1d< real64  > const lambda,
-          arrayView1d< real64  > const mu,
+          arrayView1d< real32 const > const ux_np1,
+          arrayView1d< real32 const > const uy_np1,
+          arrayView1d< real32 const > const uz_np1,
+          arrayView1d< real32 const > const density,
+          arrayView1d< real32 const > const velocityVp,
+          arrayView1d< real32 const > const velocityVs,
+          arrayView1d< real32  > const lambda,
+          arrayView1d< real32  > const mu,
           arrayView2d< real64 const > const sourceConstants,
           arrayView1d< localIndex const > const sourceIsLocal,
           arrayView1d< localIndex const > const sourceElem,
-          arrayView2d< real64 const > const sourceValue,
+          arrayView2d< real32 const > const sourceValue,
           real64 const dt,
           integer const cycleNumber,
-          arrayView2d< real64 > const stressxx,
-          arrayView2d< real64 > const stressyy,
-          arrayView2d< real64 > const stresszz,
-          arrayView2d< real64 > const stressxy,
-          arrayView2d< real64 > const stressxz,
-          arrayView2d< real64 > const stressyz)
+          arrayView2d< real32 > const stressxx,
+          arrayView2d< real32 > const stressyy,
+          arrayView2d< real32 > const stresszz,
+          arrayView2d< real32 > const stressxy,
+          arrayView2d< real32 > const stressxz,
+          arrayView2d< real32 > const stressyz)
 
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -514,22 +514,22 @@ struct StressComputation
          real64 gradN[ numNodesPerElem ][ 3 ];
      
      
-         real64 uelemxx[numNodesPerElem] = {{0.0}};
-         real64 uelemyy[numNodesPerElem] = {{0.0}};
-         real64 uelemzz[numNodesPerElem] = {{0.0}};
-         real64 uelemxy[numNodesPerElem] = {{0.0}};
-         real64 uelemxz[numNodesPerElem] = {{0.0}};
-         real64 uelemyz[numNodesPerElem] = {{0.0}};
-         real64 auxx[numNodesPerElem] = {{0.0}};
-         real64 auyy[numNodesPerElem] = {{0.0}};
-         real64 auzz[numNodesPerElem] = {{0.0}};
-         real64 auxy[numNodesPerElem] = {{0.0}};
-         real64 auxz[numNodesPerElem] = {{0.0}};
-         real64 auyz[numNodesPerElem] = {{0.0}};
+         real32 uelemxx[numNodesPerElem] = {{0.0}};
+         real32 uelemyy[numNodesPerElem] = {{0.0}};
+         real32 uelemzz[numNodesPerElem] = {{0.0}};
+         real32 uelemxy[numNodesPerElem] = {{0.0}};
+         real32 uelemxz[numNodesPerElem] = {{0.0}};
+         real32 uelemyz[numNodesPerElem] = {{0.0}};
+         real32 auxx[numNodesPerElem] = {{0.0}};
+         real32 auyy[numNodesPerElem] = {{0.0}};
+         real32 auzz[numNodesPerElem] = {{0.0}};
+         real32 auxy[numNodesPerElem] = {{0.0}};
+         real32 auxz[numNodesPerElem] = {{0.0}};
+         real32 auyz[numNodesPerElem] = {{0.0}};
      
      
          FE_TYPE::calcN( q, N );
-         real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+         real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
      
          //Pre-multiplication by mass matrix
          for (localIndex i = 0; i < numNodesPerElem; ++i)
@@ -547,9 +547,9 @@ struct StressComputation
          {
            for (localIndex i = 0; i < numNodesPerElem; ++i)
            {
-             real64 dfx2 = detJ*gradN[j][0]*N[i];
-             real64 dfy2 = detJ*gradN[j][1]*N[i];
-             real64 dfz2 = detJ*gradN[j][2]*N[i];
+             real32 dfx2 = detJ*gradN[j][0]*N[i];
+             real32 dfy2 = detJ*gradN[j][1]*N[i];
+             real32 dfz2 = detJ*gradN[j][2]*N[i];
              auxx[i]+= dfx2*ux_np1[elemsToNodes[k][j]];
              auyy[i]+= dfy2*uy_np1[elemsToNodes[k][j]];
              auzz[i]+= dfz2*uz_np1[elemsToNodes[k][j]];
@@ -563,7 +563,7 @@ struct StressComputation
          //Time integration
          for (localIndex i = 0; i < numNodesPerElem; ++i)
          {
-           real64 diag = lambda[k]*(auxx[i]+auyy[i]+auzz[i]);
+           real32 diag = lambda[k]*(auxx[i]+auyy[i]+auzz[i]);
            uelemxx[i]+= dt*(diag+2*mu[k]*auxx[i]);
            uelemyy[i]+= dt*(diag+2*mu[k]*auyy[i]);
            uelemzz[i]+= dt*(diag+2*mu[k]*auzz[i]);
@@ -593,7 +593,7 @@ struct StressComputation
              {
                for (localIndex i = 0; i < numNodesPerElem; ++i)
                {
-                 real64 const localIncrement = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/(detJ);
+                 real32 const localIncrement = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/(detJ);
                  RAJA::atomicAdd< ATOMIC_POLICY >(&stressxx[k][i],localIncrement);
                  RAJA::atomicAdd< ATOMIC_POLICY >(&stressyy[k][i],localIncrement);
                  RAJA::atomicAdd< ATOMIC_POLICY >(&stresszz[k][i],localIncrement);
@@ -632,17 +632,17 @@ struct VelocityComputation
    launch( localIndex const size,
            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
            arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-           arrayView2d< real64 const > const stressxx,
-           arrayView2d< real64 const > const stressyy,
-           arrayView2d< real64 const > const stresszz,
-           arrayView2d< real64 const > const stressxy,
-           arrayView2d< real64 const > const stressxz,
-           arrayView2d< real64 const > const stressyz,
-           arrayView1d< const real64 > const mass,
+           arrayView2d< real32 const > const stressxx,
+           arrayView2d< real32 const > const stressyy,
+           arrayView2d< real32 const > const stresszz,
+           arrayView2d< real32 const > const stressxy,
+           arrayView2d< real32 const > const stressxz,
+           arrayView2d< real32 const > const stressyz,
+           arrayView1d< const real32 > const mass,
            real64 const dt,
-           arrayView1d< real64 > const  ux_np1,
-           arrayView1d< real64 > const  uy_np1,
-           arrayView1d< real64 > const  uz_np1)
+           arrayView1d< real32 > const  ux_np1,
+           arrayView1d< real32 > const  uy_np1,
+           arrayView1d< real32 > const  uz_np1)
    {
      forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
      {
@@ -665,23 +665,23 @@ struct VelocityComputation
           real64 gradN[ numNodesPerElem ][ 3 ];
       
           FE_TYPE::calcN( q, N );
-          real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+          real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
       
-          real64 uelemx[numNodesPerElem] = {{0.0}};
-          real64 uelemy[numNodesPerElem] = {{0.0}};
-          real64 uelemz[numNodesPerElem] = {{0.0}};
-          real64 flowx[numNodesPerElem] = {{0.0}};
-          real64 flowy[numNodesPerElem] = {{0.0}};
-          real64 flowz[numNodesPerElem] = {{0.0}};
+          real32 uelemx[numNodesPerElem] = {{0.0}};
+          real32 uelemy[numNodesPerElem] = {{0.0}};
+          real32 uelemz[numNodesPerElem] = {{0.0}};
+          real32 flowx[numNodesPerElem] = {{0.0}};
+          real32 flowy[numNodesPerElem] = {{0.0}};
+          real32 flowz[numNodesPerElem] = {{0.0}};
                 
           // Stiffness part
           for (localIndex j = 0; j < numNodesPerElem; ++j)
           {
             for (localIndex i = 0; i < numNodesPerElem; ++i)
             {
-              real64 dfx = detJ*gradN[i][0]*N[j];
-              real64 dfy = detJ*gradN[i][1]*N[j];
-              real64 dfz = detJ*gradN[i][2]*N[j];
+              real32 dfx = detJ*gradN[i][0]*N[j];
+              real32 dfy = detJ*gradN[i][1]*N[j];
+              real32 dfz = detJ*gradN[i][2]*N[j];
               flowx[i] -= stressxx[k][j]*dfx + stressxy[k][j]*dfy + stressxz[k][j]*dfz;
               flowy[i] -= stressxy[k][j]*dfx + stressyy[k][j]*dfy + stressyz[k][j]*dfz;
               flowz[i] -= stressxz[k][j]*dfx + stressyz[k][j]*dfy + stresszz[k][j]*dfz;
@@ -700,9 +700,9 @@ struct VelocityComputation
           // Mult by inverse mass matrix + damping matrix
           for (localIndex i = 0; i < numNodesPerElem; ++i)
           {
-            real64 localIncrement1 = uelemx[i]/mass[elemsToNodes[k][i]];
-            real64 localIncrement2 = uelemy[i]/mass[elemsToNodes[k][i]];
-            real64 localIncrement3 = uelemz[i]/mass[elemsToNodes[k][i]];
+            real32 localIncrement1 = uelemx[i]/mass[elemsToNodes[k][i]];
+            real32 localIncrement2 = uelemy[i]/mass[elemsToNodes[k][i]];
+            real32 localIncrement3 = uelemz[i]/mass[elemsToNodes[k][i]];
             RAJA::atomicAdd< ATOMIC_POLICY >(&ux_np1[elemsToNodes[k][i]],localIncrement1);
             RAJA::atomicAdd< ATOMIC_POLICY >(&uy_np1[elemsToNodes[k][i]],localIncrement2);
             RAJA::atomicAdd< ATOMIC_POLICY >(&uz_np1[elemsToNodes[k][i]],localIncrement3);
