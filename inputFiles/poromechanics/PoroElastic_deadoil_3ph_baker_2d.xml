@@ -288,7 +288,7 @@
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg, xpos }"/>
@@ -296,7 +296,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ yneg, ypos }"/>
@@ -304,7 +304,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg }"/>
@@ -327,12 +327,12 @@
 
     <Silo
       name="siloOutput"
-      fieldNames="{ TotalDisplacement, pressure, skeleton_stress, deltaPressure }"/>
+      fieldNames="{ totalDisplacement, pressure, skeleton_stress, deltaPressure }"/>
 
     <VTK
       name="vtkOutput"
       onlyPlotSpecifiedFieldNames="1"
-      fieldNames="{ TotalDisplacement, pressure, skeleton_stress, skeleton_density }"/>
+      fieldNames="{ totalDisplacement, pressure, skeleton_stress, skeleton_density }"/>
 
     <Restart
       name="restartOutput"/>

@@ -137,7 +137,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="1.0"
       functionName="initialUxFunc"/>
@@ -147,7 +147,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"/>
 
@@ -156,7 +156,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="1.0"
       functionName="initialUzFunc"/>
@@ -164,7 +164,7 @@
     <FieldSpecification
       name="xnegconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg }"/>
@@ -172,7 +172,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ yneg, ypos }"/>
@@ -180,7 +180,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg }"/>
@@ -188,7 +188,7 @@
     <FieldSpecification
       name="NormalDisplacement"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="-1.0e-5"
       setNames="{ zpos }"
@@ -235,7 +235,7 @@
     <PackCollection
       name="displacementCollection"
       objectPath="nodeManager" 
-      fieldName="TotalDisplacement"/>  
+      fieldName="totalDisplacement"/>  
   </Tasks>
   <!-- SPHINX_TASKS_END -->
 
