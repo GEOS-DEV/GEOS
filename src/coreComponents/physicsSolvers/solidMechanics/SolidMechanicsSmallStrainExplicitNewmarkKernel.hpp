@@ -109,9 +109,9 @@ public:
           finiteElementSpace,
           inputConstitutiveType ),
     m_X( nodeManager.referencePosition()),
-    m_u( nodeManager.totalDisplacement()),
-    m_vel( nodeManager.velocity()),
-    m_acc( nodeManager.acceleration() ),
+    m_u( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
+    m_vel( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >() ),
+    m_acc( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::acceleration >() ),
     m_dt( dt ),
     m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
   {
