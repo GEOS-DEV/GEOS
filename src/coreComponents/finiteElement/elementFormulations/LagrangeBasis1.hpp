@@ -158,7 +158,8 @@ public:
    *
    * A 2-dimensional basis formed from the tensor product of the 1d basis.
    *
-   *              2 o-----------------o 3                         _______________
+   *               2                   3
+   *                o-----------------o                           _______________
    *                |                 |                          |Node   xi0  xi1|
    *                |                 |                          |=====  ===  ===|
    *                |                 |                          | 0     -1   -1 |

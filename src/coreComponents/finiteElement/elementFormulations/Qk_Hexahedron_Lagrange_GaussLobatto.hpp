@@ -34,15 +34,15 @@ namespace finiteElement
 {
 
 /**
- * This class is the basis class for the hexahedron finite element cells with 
+ * This class is the basis class for the hexahedron finite element cells with
  * shape functions defined on Gauss-Lobatto quadrature points.
- * All thedegree-specific versions (Q1, Q3, Q5, ...) are defined at the end of this file. 
+ * All the degree-specific versions (Q1, Q2, Q3, ...) are defined at the end of this file.
  */
 template< typename GL_BASIS >
 class Qk_Hexahedron_Lagrange_GaussLobatto final : public FiniteElementBase
 {
 public:
- 
+
   /// The number of nodes/support points per element per dimension.
   constexpr static localIndex num1dNodes = GL_BASIS::numSupportPoints;
 
@@ -215,8 +215,8 @@ public:
   static void jacobianTransformation2d( int const qa,
                                         int const qb,
                                         real64 const (&X)[numNodesPerFace][3],
-                                        real64 ( & J )[3][2] );
-                                      
+                                        real64 ( &J )[3][2] );
+
 
   /**
    * @brief Calculates the isoparametric "Jacobian" transformation
@@ -325,8 +325,8 @@ public:
    */
   GEOSX_HOST_DEVICE
   static real64
-    computeMassTerm( int q,
-                     real64 const (&X)[numNodes][3] );
+  computeMassTerm( int q,
+                   real64 const (&X)[numNodes][3] );
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -337,8 +337,8 @@ public:
    */
   GEOSX_HOST_DEVICE
   static real64
-    computeDampingTerm( int q,
-                        real64 const (&X)[numNodesPerFace][3] );
+  computeDampingTerm( int q,
+                      real64 const (&X)[numNodesPerFace][3] );
 
   /**
    * @brief computes the matrix B, defined as J^{-T}J^{-1}/det(J), where J is the Jacobian matrix,
@@ -356,8 +356,8 @@ public:
                     int const qb,
                     int const qc,
                     real64 const (&X)[numNodes][3],
-                    real64 (&J)[3][3],
-                    real64 (&B)[6] );
+                    real64 ( &J )[3][3],
+                    real64 ( &B )[6] );
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -365,14 +365,14 @@ public:
    *   of the shape functions.
    * @param q The quadrature point index
    * @param X Array containing the coordinates of the support points.
-   * @param func Callback function accepting three parameters: i, j and R_ij 
+   * @param func Callback function accepting three parameters: i, j and R_ij
    */
   template< typename FUNC >
   GEOSX_HOST_DEVICE
   static void
-    computeStiffnessTerm( int q,
-                          real64 const (&X)[numNodes][3],
-                          FUNC && func );
+  computeStiffnessTerm( int q,
+                        real64 const (&X)[numNodes][3],
+                        FUNC && func );
 
   /**
    * @brief Apply a Jacobian transformation matrix from the parent space to the
@@ -444,10 +444,10 @@ template< typename GL_BASIS >
 template< typename FUNC, typename ... PARAMS >
 GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( int const qa,
-                                                  int const qb,
-                                                  int const qc,
-                                                  FUNC && func,
-                                                  PARAMS &&... params )
+                                                              int const qb,
+                                                              int const qc,
+                                                              FUNC && func,
+                                                              PARAMS &&... params )
 {
 
   real64 const qCoords[3] = { GL_BASIS::parentSupportCoord( qa ),
@@ -482,9 +482,9 @@ template< typename GL_BASIS >
 template< typename FUNC, typename ... PARAMS >
 GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop2d( int const qa,
-                                                  int const qb,
-                                                  FUNC && func,
-                                                  PARAMS &&... params )
+                                                                int const qb,
+                                                                FUNC && func,
+                                                                PARAMS &&... params )
 {
 
   real64 const qCoords[2] = { GL_BASIS::parentSupportCoord( qa ),
@@ -499,8 +499,8 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop2d( int const qa,
                                 GL_BASIS::value( a, qCoords[0] )*
                                 GL_BASIS::gradient( b, qCoords[1] ) };
 
-        localIndex nodeIndex = GL_BASIS::TensorProduct2D::linearIndex( a, b );
-        func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
+      localIndex nodeIndex = GL_BASIS::TensorProduct2D::linearIndex( a, b );
+      func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
     }
   }
 }
@@ -511,8 +511,8 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
-                                                real64 const (&X)[numNodes][3],
-                                                real64 (& gradN)[numNodes][3] )
+                                                            real64 const (&X)[numNodes][3],
+                                                            real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
@@ -532,10 +532,10 @@ template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-  calcGradN( localIndex const q,
-             real64 const (&X)[numNodes][3],
-             StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-             real64 ( & gradN )[numNodes][3] )
+calcGradN( localIndex const q,
+           real64 const (&X)[numNodes][3],
+           StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+           real64 ( & gradN )[numNodes][3] )
 {
   return calcGradN( q, X, gradN );
 }
@@ -551,11 +551,11 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-  jacobianTransformation( int const qa,
-                          int const qb,
-                          int const qc,
-                          real64 const (&X)[numNodes][3],
-                          real64 ( & J )[3][3] )
+jacobianTransformation( int const qa,
+                        int const qb,
+                        int const qc,
+                        real64 const (&X)[numNodes][3],
+                        real64 ( & J )[3][3] )
 {
   supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
@@ -589,15 +589,15 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-  jacobianTransformation2d( int const qa,
-                            int const qb,
-                            real64 const (&X)[numNodesPerFace][3],
-                            real64 ( & J )[3][2] )
+jacobianTransformation2d( int const qa,
+                          int const qb,
+                          real64 const (&X)[numNodesPerFace][3],
+                          real64 ( & J )[3][2] )
 {
   supportLoop2d( qa, qb, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[2],
-                                              int const nodeIndex,
-                                              real64 const (&X)[numNodesPerFace][3],
-                                              real64 ( & J)[3][2] )
+                                                int const nodeIndex,
+                                                real64 const (&X)[numNodesPerFace][3],
+                                                real64 ( & J)[3][2] )
   {
     real64 const * const GEOSX_RESTRICT Xnode = X[nodeIndex];
     for( int i = 0; i < 3; ++i )
@@ -615,14 +615,14 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-  computeMassTerm( int q,
-                   real64 const (&X)[numNodes][3] )
-{                               
+computeMassTerm( int q,
+                 real64 const (&X)[numNodes][3] )
+{
   real64 J[3][3] = {{0}};
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
   jacobianTransformation( qa, qb, qc, X, J );
-  return std::abs( LvArray::tensorOps::determinant< 3 >( J ) )*GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc);
+  return std::abs( LvArray::tensorOps::determinant< 3 >( J ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc );
 }
 
 template< typename GL_BASIS >
@@ -630,8 +630,8 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-  computeDampingTerm( int q,
-                      real64 const (&X)[numNodesPerFace][3] )
+computeDampingTerm( int q,
+                    real64 const (&X)[numNodesPerFace][3] )
 {
   real64 B[3];
   real64 J[3][2] = {{0}};
@@ -640,9 +640,9 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
   jacobianTransformation2d( qa, qb, X, J );
   // compute J^T.J, using Voigt notation for B
   B[0] = J[0][0]*J[0][0]+J[1][0]*J[1][0]+J[2][0]*J[2][0];
-  B[1] = J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1]; 
+  B[1] = J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1];
   B[2] = J[0][0]*J[0][1]+J[1][0]*J[1][1]+J[2][0]*J[2][1];
-  return sqrt( abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight(qa)*GL_BASIS::weight(qb);
+  return sqrt( abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb );
 }
 
 /**
@@ -660,26 +660,26 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-  computeBMatrix( int const qa,
-                  int const qb,
-                  int const qc,
-                  real64 const (&X)[numNodes][3],
-                  real64 (&J)[3][3],
-                  real64 (&B)[6] )
+computeBMatrix( int const qa,
+                int const qb,
+                int const qc,
+                real64 const (&X)[numNodes][3],
+                real64 (& J)[3][3],
+                real64 (& B)[6] )
 {
   jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
 
   // compute J^T.J/det(J), using Voigt notation for B
-  B[0] = (J[0][0]*J[0][0]+J[1][0]*J[1][0]+J[2][0]*J[2][0])/detJ; 
-  B[1] = (J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1])/detJ; 
+  B[0] = (J[0][0]*J[0][0]+J[1][0]*J[1][0]+J[2][0]*J[2][0])/detJ;
+  B[1] = (J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1])/detJ;
   B[2] = (J[0][2]*J[0][2]+J[1][2]*J[1][2]+J[2][2]*J[2][2])/detJ;
   B[3] = (J[0][1]*J[0][2]+J[1][1]*J[1][2]+J[2][1]*J[2][2])/detJ;
   B[4] = (J[0][0]*J[0][2]+J[1][0]*J[1][2]+J[2][0]*J[2][2])/detJ;
   B[5] = (J[0][0]*J[0][1]+J[1][0]*J[1][1]+J[2][0]*J[2][1])/detJ;
 
   // compute detJ*J^{-1}J^{-T}
-  LvArray::tensorOps::symInvert< 3 >(B); 
+  LvArray::tensorOps::symInvert< 3 >( B );
 }
 
 
@@ -690,9 +690,9 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-  computeStiffnessTerm( int q,
-                        real64 const (&X)[numNodes][3],
-                        FUNC && func )
+computeStiffnessTerm( int q,
+                      real64 const (&X)[numNodes][3],
+                      FUNC && func )
 {
   real64 B[6] = {0};
   real64 J[3][3] = {{0}};
@@ -700,77 +700,77 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
   computeBMatrix( qa, qb, qc, X, J, B );
   // diagonal terms
-  for(int i=0; i<num1dNodes; i++ )
+  for( int i=0; i<num1dNodes; i++ )
   {
     for( int j=0; j<num1dNodes; j++ )
     {
-      func( GL_BASIS::TensorProduct3D::linearIndex( i,qb,qc ),
-            GL_BASIS::TensorProduct3D::linearIndex( j,qb,qc ),
-            GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc)*B[0]*
+      func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( j, qb, qc ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[0]*
             GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
             GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qa ) ) );
     }
   }
-  for(int i=0; i<num1dNodes; i++ )
+  for( int i=0; i<num1dNodes; i++ )
   {
     for( int j=0; j<num1dNodes; j++ )
     {
-      func( GL_BASIS::TensorProduct3D::linearIndex( qa,i,qc ),
-            GL_BASIS::TensorProduct3D::linearIndex( qa,j,qc ),
-            GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc)*B[1]*
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[1]*
             GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
             GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ) );
     }
   }
-  for(int i=0; i<num1dNodes; i++ )
+  for( int i=0; i<num1dNodes; i++ )
   {
     for( int j=0; j<num1dNodes; j++ )
     {
-      func( GL_BASIS::TensorProduct3D::linearIndex( qa,qb,i ),
-            GL_BASIS::TensorProduct3D::linearIndex( qa,qb,j ),
-            GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc)*B[2]*
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[2]*
             GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qc ) )*
             GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ) );
     }
   }
   // off-diagonal terms
-  for(int i=0; i<num1dNodes; i++ )
+  for( int i=0; i<num1dNodes; i++ )
   {
     for( int j=0; j<num1dNodes; j++ )
     {
-      int ii = GL_BASIS::TensorProduct3D::linearIndex( qa,i,qc ); 
-      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa,qb,j );
-      real64 val = GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc)*B[3]*   
-                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*            
-                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );            
-      func( ii,jj,val );      
-      func( jj,ii,val );      
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[3]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
     }
   }
-  for(int i=0; i<num1dNodes; i++ )
+  for( int i=0; i<num1dNodes; i++ )
   {
     for( int j=0; j<num1dNodes; j++ )
     {
-      int ii = GL_BASIS::TensorProduct3D::linearIndex( i,qb,qc ); 
-      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa,qb,j );
-      real64 val = GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc)*B[4]*   
-                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*            
-                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );            
-      func( ii,jj,val );      
-      func( jj,ii,val );      
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[4]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
     }
   }
-  for(int i=0; i<num1dNodes; i++ )
+  for( int i=0; i<num1dNodes; i++ )
   {
     for( int j=0; j<num1dNodes; j++ )
     {
-      int ii = GL_BASIS::TensorProduct3D::linearIndex( i,qb,qc ); 
-      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa,j,qc );
-      real64 val = GL_BASIS::weight(qa)*GL_BASIS::weight(qb)*GL_BASIS::weight(qc)*B[5]*   
-                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*            
-                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) );            
-      func( ii,jj,val );      
-      func( jj,ii,val );      
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[5]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
     }
   }
 }
@@ -782,11 +782,11 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-  applyTransformationToParentGradients( int const qa,
-                                        int const qb,
-                                        int const qc,
-                                        real64 const ( &invJ )[3][3],
-                                        real64 (& gradN)[numNodes][3] )
+applyTransformationToParentGradients( int const qa,
+                                      int const qb,
+                                      int const qc,
+                                      real64 const ( &invJ )[3][3],
+                                      real64 (& gradN)[numNodes][3] )
 {
   supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
@@ -816,8 +816,8 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-  transformedQuadratureWeight( localIndex const q,
-                               real64 const (&X)[numNodes][3] )
+transformedQuadratureWeight( localIndex const q,
+                             real64 const (&X)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
@@ -835,10 +835,10 @@ template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-  symmetricGradient( int const q,
-                     real64 const (&invJ)[3][3],
-                     real64 const (&var)[numNodes][3],
-                     real64 (& grad)[6] )
+symmetricGradient( int const q,
+                   real64 const (&invJ)[3][3],
+                   real64 const (&var)[numNodes][3],
+                   real64 (& grad)[6] )
 {
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -872,10 +872,10 @@ template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-  plusGradNajAij( int const q,
-                  real64 const (&invJ)[3][3],
-                  real64 const (&var)[6],
-                  real64 (& R)[numNodes][3] )
+plusGradNajAij( int const q,
+                real64 const (&invJ)[3][3],
+                real64 const (&var)[6],
+                real64 (& R)[numNodes][3] )
 {
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -909,10 +909,10 @@ template< typename GL_BASIS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-  gradient( int const q,
-            real64 const (&invJ)[3][3],
-            real64 const (&var)[numNodes][3],
-            real64 (& grad)[3][3] )
+gradient( int const q,
+          real64 const (&invJ)[3][3],
+          real64 const (&var)[numNodes][3],
+          real64 (& grad)[3][3] )
 {
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -1065,36 +1065,66 @@ using Q3_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto<
  * tensor product indices.
  *
  *
- *                210      211      212      213      214      215                  _______________________________________________________________________
- *                   o--------o--------o--------o--------o--------o                |Node      xi0                        xi1                          xi2  |
- *                  /.                                           /|                |=====     ===                        ===                          ===  |
- *            204  / .  205      206      207      208      209 / |                |  0       -1                         -1                           -1   |
- *                o  .     o        o        o        o        o  |                |  1   -sqrt(1/21(7+/sqrt(7))         -1                           -1   |
- *               /   o                                        /   |                |  2    -sqrt(1/21(7-/sqrt(7))        -1                           -1   |
- *         198  /    .199     200      201      202      203 /    o                |  3    sqrt(1/21(7-/sqrt(7))         -1                           -1   |
- *             o     .  o        o        o        o        o     |                |  4    sqrt(1/21(7+/sqrt(7))         -1                           -1   |
- *            /      .                                     /      |                |  5       -1                         -1                           -1   |
- *      192  /   193 o     194      195      196      197 /    o  |                |  6       -1                 -sqrt(1/21(7+/sqrt(7))               -1   |
- *          o        o        o        o        o        o        o                |  7   -sqrt(1/21(7+/sqrt(7)) -sqrt(1/21(7+/sqrt(7))               -1   |
- *         /         .                                  /         |                |  8   -sqrt(1/21(7-/sqrt(7)) -sqrt(1/21(7+/sqrt(7))               -1   |
- *    186 /    187   .  188      189      190      191 /    o     |                |  9    sqrt(1/21(7-/sqrt(7)) -sqrt(1/21(7+/sqrt(7))               -1   |
- *       o        o  o     o        o        o        o        o  |                | 10    sqrt(1/21(7+/sqrt(7)) -sqrt(1/21(7+/sqrt(7))               -1   |
- *      /            .                               /            o                | 11       -1                 -sqrt(1/21(7+/sqrt(7))               -1   |
- * 180 /    181      . 182    183      184      185 /    o        |                | ..       ..                         ..                           ..   |
- *    o--------o--------o--------o--------o--------o        o     |                | ..       ..                         ..                           ..   |
- *    |           o  .                             |           o  |                | 204      -1                  sqrt(1/21(7+/sqrt(7))               1    |
- *    |  o           o        o        o        o  |  o  o        o                | 205  -sqrt(1/21(7+/sqrt(7))  sqrt(1/21(7+/sqrt(7))               1    |
- *    |     o        .                             |     o        |                | 206  -sqrt(1/21(7-/sqrt(7))  sqrt(1/21(7-/sqrt(7))               1    |
- *    |        o     .                             |        o     |                | 207  sqrt(1/21(7+/sqrt(7))   sqrt(1/21(7-/sqrt(7))               1    |
- *    o           o  .                             o           o  |                | 208  sqrt(1/21(7-/sqrt(7))   sqrt(1/21(7+/sqrt(7))               1    |
- *    |  o           .                             |  o           |                | 209       1                  sqrt(1/21(7+/sqrt(                  1    |
- *    |     o        o--------o--------o--------o--|-----o--------o                | 210      -1                          1                           1    |
- *    |        o    ,30       31      32        33 |     34 o    /35               | 211  -sqrt(1/21(7+/sqrt(7))          1                           1    |
- *    o            ,                               o            /                  | 212  -sqrt(1/21(7-/sqrt(7))          1                           1    |
- *    |  o        o        o         o       o     |  o        o                   | 213   sqrt(1/21(7-/sqrt(7))          1                           1    |
- *    |     o    ,24       25        26      27    |  28 o    /29                  | 214   sqrt(1/21(7+/sqrt(7))          1                           1    |
- *    |         ,                                  |         /                     | 215       1                          1                           1    |
- *    o        o        o         o       o     22 o        o                      |_______________________________________________________________________|
+ *                210      211      212      213      214      215
+ *                 _______________________________________________________________________
+ *                   o--------o--------o--------o--------o--------o                |Node      xi0                        xi1
+ *                         xi2  |
+ *                  /.                                           /|                |=====     ===                        ===
+ *                         ===  |
+ *            204  / .  205      206      207      208      209 / |                |  0       -1                         -1
+ *                          -1   |
+ *                o  .     o        o        o        o        o  |                |  1   -sqrt(1/21(7+/sqrt(7))         -1
+ *                          -1   |
+ *               /   o                                        /   |                |  2    -sqrt(1/21(7-/sqrt(7))        -1
+ *                          -1   |
+ *         198  /    .199     200      201      202      203 /    o                |  3    sqrt(1/21(7-/sqrt(7))         -1
+ *                          -1   |
+ *             o     .  o        o        o        o        o     |                |  4    sqrt(1/21(7+/sqrt(7))         -1
+ *                          -1   |
+ *            /      .                                     /      |                |  5       -1                         -1
+ *                          -1   |
+ *      192  /   193 o     194      195      196      197 /    o  |                |  6       -1                 -sqrt(1/21(7+/sqrt(7))
+ *              -1   |
+ *          o        o        o        o        o        o        o                |  7   -sqrt(1/21(7+/sqrt(7)) -sqrt(1/21(7+/sqrt(7))
+ *              -1   |
+ *         /         .                                  /         |                |  8   -sqrt(1/21(7-/sqrt(7)) -sqrt(1/21(7+/sqrt(7))
+ *              -1   |
+ *    186 /    187   .  188      189      190      191 /    o     |                |  9    sqrt(1/21(7-/sqrt(7)) -sqrt(1/21(7+/sqrt(7))
+ *              -1   |
+ *       o        o  o     o        o        o        o        o  |                | 10    sqrt(1/21(7+/sqrt(7)) -sqrt(1/21(7+/sqrt(7))
+ *              -1   |
+ *      /            .                               /            o                | 11       -1                 -sqrt(1/21(7+/sqrt(7))
+ *              -1   |
+ * 180 /    181      . 182    183      184      185 /    o        |                | ..       ..                         ..
+ *                          ..   |
+ *    o--------o--------o--------o--------o--------o        o     |                | ..       ..                         ..
+ *                          ..   |
+ *    |           o  .                             |           o  |                | 204      -1                  sqrt(1/21(7+/sqrt(7))
+ *              1    |
+ *    |  o           o        o        o        o  |  o  o        o                | 205  -sqrt(1/21(7+/sqrt(7))  sqrt(1/21(7+/sqrt(7))
+ *              1    |
+ *    |     o        .                             |     o        |                | 206  -sqrt(1/21(7-/sqrt(7))  sqrt(1/21(7-/sqrt(7))
+ *              1    |
+ *    |        o     .                             |        o     |                | 207  sqrt(1/21(7+/sqrt(7))   sqrt(1/21(7-/sqrt(7))
+ *              1    |
+ *    o           o  .                             o           o  |                | 208  sqrt(1/21(7-/sqrt(7))   sqrt(1/21(7+/sqrt(7))
+ *              1    |
+ *    |  o           .                             |  o           |                | 209       1                  sqrt(1/21(7+/sqrt(
+ *                 1    |
+ *    |     o        o--------o--------o--------o--|-----o--------o                | 210      -1                          1
+ *                          1    |
+ *    |        o    ,30       31      32        33 |     34 o    /35               | 211  -sqrt(1/21(7+/sqrt(7))          1
+ *                          1    |
+ *    o            ,                               o            /                  | 212  -sqrt(1/21(7-/sqrt(7))          1
+ *                          1    |
+ *    |  o        o        o         o       o     |  o        o                   | 213   sqrt(1/21(7-/sqrt(7))          1
+ *                          1    |
+ *    |     o    ,24       25        26      27    |  28 o    /29                  | 214   sqrt(1/21(7+/sqrt(7))          1
+ *                          1    |
+ *    |         ,                                  |         /                     | 215       1                          1
+ *                          1    |
+ *    o        o        o         o       o     22 o        o
+ *                     |_______________________________________________________________________|
  *    |  o    ,18       19        20      21       |  o    /23
  *    |      ,                                     |      /
  *    |     o        o         o       o        o  |     o

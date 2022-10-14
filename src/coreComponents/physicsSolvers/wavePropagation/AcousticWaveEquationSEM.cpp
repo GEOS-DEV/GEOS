@@ -253,7 +253,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
   X = nodeManager.referencePosition().toViewConst();
-  
+
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
 
@@ -318,7 +318,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                                  ( auto const finiteElement )
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
-    
+
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
@@ -511,13 +511,13 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
         kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                              X,
-                                                              facesToElements,
-                                                              facesToNodes,
-                                                              facesDomainBoundaryIndicator,
-                                                              freeSurfaceFaceIndicator,
-                                                              velocity,
-                                                              damping );
+                                                               X,
+                                                               facesToElements,
+                                                               facesToNodes,
+                                                               facesDomainBoundaryIndicator,
+                                                               freeSurfaceFaceIndicator,
+                                                               velocity,
+                                                               damping );
       } );
     } );
   } );

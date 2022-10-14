@@ -35,7 +35,7 @@ struct is_sem_formulation< geosx::finiteElement::Qk_Hexahedron_Lagrange_GaussLob
 namespace acousticWaveEquationSEMKernels
 {
 
-    constexpr static char invalidFormulationString[] = "Invalid type of formulation, the acoustic solver is designed for the SEM formulation";
+constexpr static char invalidFormulationString[] = "Invalid type of formulation, the acoustic solver is designed for the SEM formulation";
 
 struct PrecomputeSourceAndReceiverKernel
 {
@@ -337,7 +337,7 @@ struct PrecomputeSourceAndReceiverKernel
   }
   template< typename EXEC_POLICY, typename FE_TYPE, typename ... ARGS >
   static typename std::enable_if_t< !geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE > >::value, void >
-  launch(ARGS && ... )
+  launch( ARGS && ... )
   {
     GEOSX_THROW( invalidFormulationString, InputError );
   }
@@ -444,10 +444,10 @@ struct DampingMatrixKernel
       // face on the domain boundary and not on free surface
       if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
       {
-        localIndex k = facesToElems(f, 0);
-        if ( k < 0 )
+        localIndex k = facesToElems( f, 0 );
+        if( k < 0 )
         {
-          k = facesToElems(f, 1);
+          k = facesToElems( f, 1 );
         }
 
         real32 const alpha = 1.0 / velocity[k];
@@ -494,7 +494,7 @@ struct PMLKernelHelper
    * @param dMax PML thickness, right-back-bottom
    * @param cMin PML wave speed, left-front-top
    * @param cMax PML wave speed, right-back-bottom
-  void* @param r desired reflectivity of the PML
+     void* @param r desired reflectivity of the PML
    * @param sigma 3-components array to hold the damping profile in each direction
    */
   GEOSX_HOST_DEVICE
@@ -729,7 +729,7 @@ struct waveSpeedPMLKernel
    * @param[out] counterMin PML wave speed counter, left-front-top
    * @param[out] counterMax PML wave speed counter, left-front-top
    */
-  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE_ = FE_TYPE>
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE_ = FE_TYPE >
   std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
   launch( SortedArrayView< localIndex const > const targetSet,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
@@ -918,7 +918,7 @@ public:
                        FaceManager const & faceManager,
                        localIndex const targetRegionIndex,
                        SUBREGION_TYPE const & elementSubRegion,
-                       std::enable_if_t< geosx::is_sem_formulation< FE_TYPE_>::value, FE_TYPE_ > const & finiteElementSpace,
+                       std::enable_if_t< geosx::is_sem_formulation< FE_TYPE_ >::value, FE_TYPE_ > const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                        real64 const dt ):
     Base( elementSubRegion,
@@ -950,7 +950,7 @@ public:
                        FaceManager const & faceManager,
                        localIndex const targetRegionIndex,
                        SUBREGION_TYPE const & elementSubRegion,
-                       std::enable_if_t< !geosx::is_sem_formulation< FE_TYPE_>::value, FE_TYPE_ > const & finiteElementSpace,
+                       std::enable_if_t< !geosx::is_sem_formulation< FE_TYPE_ >::value, FE_TYPE_ > const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                        real64 const dt ):
     Base( elementSubRegion,
@@ -1018,7 +1018,7 @@ public:
    * Calculates stiffness vector
    *
    */
-  template< typename U = void>
+  template< typename U = void >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE > >::value, U >
@@ -1027,10 +1027,10 @@ public:
                          StackVariables & stack ) const
   {
     m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
-      {
-        real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
-        RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
-      } );
+    {
+      real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+    } );
   }
   /**
    * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
@@ -1039,7 +1039,7 @@ public:
    * Calculates stiffness vector
    *
    */
-  template< typename U = void>
+  template< typename U = void >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   std::enable_if_t< !geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE > >::value, U >
@@ -1047,7 +1047,7 @@ public:
                          localIndex const q,
                          StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR(k,q,stack);
+    GEOSX_UNUSED_VAR( k, q, stack );
     // do nothing: not implemented for other formulations
   }
 

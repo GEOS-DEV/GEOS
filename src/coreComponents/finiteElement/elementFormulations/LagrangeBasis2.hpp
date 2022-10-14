@@ -119,34 +119,35 @@ public:
 
   /**
    * @class TensorProduct2D
-   *                                                                  
-   *        6 o--------------o--------------o 8                        ________________    
-   *          |                             |                         |Node   xi0  xi1 |   
-   *          |                             |                         |=====  ===  === |   
-   *          |                             |                         |  0    -1   -1  |   
-   *          |                             |                         |  1     0   -1  |   
-   *          |                             |                         |  2     1   -1  |   
-   *          |                             |                         |  3    -1    0  |   
-   *        3 o              o 4            o 5                       |  4     0    0  |   
-   *          |                             |                         |  5     1    0  |   
-   *          |                             |                         |  6    -1    1  |   
-   *          |                             |                         |  7     0    1  |   
-   *          |                             |            xi1          |  8     1    1  |   
-   *          |                             |            |            |________________|   
-   *          |                             |            |            
-   *          o--------------o--------------o            |            
-   *         0                1              2           o----- xi0   
-   *                                                                  
-   *                                                                  
-   *                                                                  
-   */                                                                 
-  struct TensorProduct2D                                              
-  {                                                                   
-                                                                      
+   *
+   *         6               7               8
+   *          o--------------o--------------o                          ________________
+   *          |                             |                         |Node   xi0  xi1 |
+   *          |                             |                         |=====  ===  === |
+   *          |                             |                         |  0    -1   -1  |
+   *          |                             |                         |  1     0   -1  |
+   *          |                             |                         |  2     1   -1  |
+   *          |                             |                         |  3    -1    0  |
+   *        3 o              o 4            o 5                       |  4     0    0  |
+   *          |                             |                         |  5     1    0  |
+   *          |                             |                         |  6    -1    1  |
+   *          |                             |                         |  7     0    1  |
+   *          |                             |            xi1          |  8     1    1  |
+   *          |                             |            |            |________________|
+   *          |                             |            |
+   *          o--------------o--------------o            |
+   *         0               1               2           o----- xi0
+   *
+   *
+   *
+   */
+  struct TensorProduct2D
+  {
+
     /// The number of support points in the basis.
     constexpr static localIndex numSupportPoints = 9;
- 
-   /**                                                               
+
+    /**
      * @brief Calculates the linear index for support/quadrature points from ij
      *   coordinates.
      * @param i The index in the xi0 direction (0,1)
