@@ -302,7 +302,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   m_fieldSpecificationManager->generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( *m_fieldSpecificationManager, schemaRoot, targetChoiceNode, documentationType );
 
-  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
   schemaUtilities::SchemaConstruction( constitutiveManager, schemaRoot, targetChoiceNode, documentationType );
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
@@ -413,7 +413,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
   // The objects in domain are handled separately for now
   {
     DomainPartition & domain = getDomainPartition();
-    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
     constitutiveManager.processInputFileRecursive( topLevelNode );
 
@@ -610,11 +610,8 @@ void ProblemManager::generateMesh()
 
     meshBody.deregisterGroup( keys::cellManager );
 
-//    GEOSX_THROW_IF_NE( meshBody.getMeshLevels().numSubGroups(), 1, InputError );
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
-//    MeshLevel & meshLevel = meshBody.getMeshLevel(MeshBody::groupStructKeys::baseDiscretizationString() );
-
       FaceManager & faceManager = meshLevel.getFaceManager();
       EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
@@ -643,7 +640,7 @@ void ProblemManager::applyNumericalMethods()
 {
 
   DomainPartition & domain  = getDomainPartition();
-  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
   Group & meshBodies = domain.getMeshBodies();
 
   // this contains a key tuple< mesh body name, mesh level name, region name, subregion name> with a value of the number of quadrature
@@ -975,12 +972,12 @@ bool ProblemManager::runSimulation()
 
 DomainPartition & ProblemManager::getDomainPartition()
 {
-  return getGroup< DomainPartition >( keys::domain );
+  return getGroup< DomainPartition >( groupKeys.domain );
 }
 
 DomainPartition const & ProblemManager::getDomainPartition() const
 {
-  return getGroup< DomainPartition >( keys::domain );
+  return getGroup< DomainPartition >( groupKeys.domain );
 }
 
 void ProblemManager::applyInitialConditions()

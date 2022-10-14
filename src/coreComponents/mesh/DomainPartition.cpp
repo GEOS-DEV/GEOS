@@ -55,8 +55,8 @@ void DomainPartition::initializationOrder( string_array & order )
 {
   SortedArray< string > usedNames;
   {
-    order.emplace_back( keys::ConstitutiveManager );
-    usedNames.insert( keys::ConstitutiveManager );
+    order.emplace_back( string( groupKeysStruct::constitutiveManagerString() ) );
+    usedNames.insert( groupKeysStruct::constitutiveManagerString() );
   }
 
   {
