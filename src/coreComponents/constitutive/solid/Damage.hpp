@@ -249,7 +249,7 @@ public:
 
     m_volStrain( k, q ) = traceOfStrain;
 
-    if( m_extDrivingForceFlag == 1 )
+    if( m_extDrivingForceFlag )
     {
       real64 stressP;
       real64 stressQ;
@@ -304,13 +304,6 @@ public:
     }
 
     return m_strainEnergyDensity( k, q );
-  }
-
-  GEOSX_HOST_DEVICE
-  virtual real64 getExtDrivingForce( localIndex const k,
-                                     localIndex const q ) const
-  {
-    return m_extDrivingForce( k, q );
   }
 
   GEOSX_HOST_DEVICE
@@ -407,6 +400,12 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   virtual void saveConvergedState() const override;
+  /// *** The interface to get member variables
+  arrayView2d< real64 const > getNewDamage() const { return m_newDamage; }
+  arrayView2d< real64 const > getOldDamage() const { return m_oldDamage; }
+
+  arrayView2d< real64 const > getExtDrivingForce() const { return m_extDrivingForce; }
+
 
   KernelWrapper createKernelUpdates() const
   {
