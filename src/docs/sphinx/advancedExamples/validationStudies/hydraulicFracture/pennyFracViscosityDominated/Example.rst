@@ -270,12 +270,12 @@ dominated assumptions are plotted together in the following figure, which is gen
 
 .. code-block:: console
 
-   python ./hydrofractureFigure.py pennyShapedViscosityDominated
+   python ./pennyShapedViscosityDominatedFigure.py
 
 
 As seen, GEOSX predictions of the temporal evolution of fracture radius, wellbore aperture and pressure at fluid inlet are nearly identical to the asymptotic solutions.
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracViscosityDominated/hydrofractureFigure.py pennyShapedViscosityDominated
+.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracViscosityDominated/pennyShapedViscosityDominatedFigure.py
 
 
 ------------------------------------------------------------------

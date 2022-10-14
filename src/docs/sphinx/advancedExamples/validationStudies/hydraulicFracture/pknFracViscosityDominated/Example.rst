@@ -260,13 +260,13 @@ analytical solutions (curves) for the example with viscosity-storage dominated a
 
 .. code-block:: console
 
-   python ./hydrofractureFigure.py pknViscosityDominated
+   python ./pknViscosityDominatedFigure.py
 
 
 The evolution in time of the fracture half-length, the near-wellbore fracture aperture, and the fluid pressure all correlate well with the analytical
 solutions.  
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pknFracViscosityDominated/hydrofractureFigure.py pknViscosityDominated
+.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pknFracViscosityDominated/pknViscosityDominatedFigure.py
 
 
 ------------------------------------------------------------------

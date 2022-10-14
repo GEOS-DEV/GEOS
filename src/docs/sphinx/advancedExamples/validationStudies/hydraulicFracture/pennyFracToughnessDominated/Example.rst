@@ -264,12 +264,12 @@ Next, the figure below compares the asymptotic solutions (curves) and the GEOSX 
 
 .. code-block:: console
 
-   python ./hydrofractureFigure.py pennyShapedToughnessDominated
+   python ./pennyShapedToughnessDominatedFigure.py
 
 
 The time history plots of fracture radius, fracture aperture and fluid pressure at the point source match the asymptotic solutions, confirming the accuracy of GEOSX simulations. 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracToughnessDominated/hydrofractureFigure.py pennyShapedToughnessDominated
+.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/pennyFracToughnessDominated/pennyShapedToughnessDominatedFigure.py
 
 
 ------------------------------------------------------------------

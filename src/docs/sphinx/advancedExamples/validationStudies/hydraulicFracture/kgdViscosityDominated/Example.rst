@@ -95,10 +95,10 @@ A good agreement between GEOSX results and analytical solutions is shown in the 
 
 .. code-block:: console
 
-   python ./hydrofractureFigure.py kgdViscosityDominated
+   python ./kgdViscosityDominatedFigure.py
 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdViscosityDominated/hydrofractureFigure.py kgdViscosityDominated
+.. plot:: docs/sphinx/advancedExamples/validationStudies/hydraulicFracture/kgdViscosityDominated/kgdViscosityDominatedFigure.py
 
 
 ------------------------------------------------------------------
