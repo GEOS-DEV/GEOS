@@ -253,10 +253,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
   X = nodeManager.referencePosition().toViewConst();
-  //TODO: Please make a shallow copy of face normal in the constructo for the new mesh level
-  FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
-  arrayView2d< real64 const > const faceNormal  = faceManager0.faceNormal();
-  arrayView2d< real64 const > const faceCenter  = faceManager0.faceCenter();
+  
+  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
+  arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
 
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
@@ -466,15 +465,13 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
-    //TODO: Please make a shallow copy of face normal in the constructo for the new mesh level
-    FaceManager & faceManager0 = this->getGroupByPath< FaceManager >( "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/faceManager" );
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     /// get table containing all the face normals
-    arrayView2d< real64 const > const faceNormal  = faceManager0.faceNormal();
+    arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
@@ -492,7 +489,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     {
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-      arrayView2d< localIndex const > const facesToElements = faceManager0.elementList();
+      arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
 
       finiteElement::FiniteElementBase const &

@@ -313,7 +313,7 @@ public:
    * or modify the face centers in this FaceManager
    * @return a reference to an arrayView containing all the face centers
    */
-  arrayView2d< real64 > faceCenter() { return m_faceCenter.toView(); }
+  array2d< real64 > & faceCenter() { return m_faceCenter; }
 
 
   /**
