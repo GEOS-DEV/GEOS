@@ -494,7 +494,7 @@ struct PMLKernelHelper
    * @param dMax PML thickness, right-back-bottom
    * @param cMin PML wave speed, left-front-top
    * @param cMax PML wave speed, right-back-bottom
-     void* @param r desired reflectivity of the PML
+   * @param r desired reflectivity of the PML
    * @param sigma 3-components array to hold the damping profile in each direction
    */
   GEOSX_HOST_DEVICE
