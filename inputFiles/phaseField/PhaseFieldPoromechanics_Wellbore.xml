@@ -43,7 +43,7 @@
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="200"
-        newtonTol="1.0e-4"/>
+        newtonTol="1.0e-3"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"/>
@@ -73,37 +73,37 @@
 
 
   <Events
-    maxTime="100.0">
+    maxTime="42.5">
  
     <PeriodicEvent
       name="solverApplication0"
-      endTime="68.0"
+      endTime="41.0"
       forceDt="1.0"
       target="/Solvers/phasefieldPoroSolve"/>
 
     <PeriodicEvent
       name="solverApplication1"
-      beginTime="68.0"
-      endTime="100.0"
-      forceDt="1.0"
+      beginTime="41.0"
+      endTime="42.5"
+      forceDt="0.005"
       target="/Solvers/phasefieldPoroSolve"/>
 
     <PeriodicEvent
       name="vtkOutput0"
-      endTime="68.0"
+      endTime="41.0"
       forceDt="1.0"
       target="/Outputs/VTKOutput"/>
 
     <PeriodicEvent
       name="vtkOutput1"
-      beginTime="68.0"
-      endTime="100.0"
-      forceDt="1.0"
+      beginTime="41.0"
+      endTime="42.5"
+      forceDt="0.005"
       target="/Outputs/VTKOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="50"
+      timeFrequency="20"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
@@ -125,37 +125,33 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ 0_hexahedra, 1_hexahedra, 2_hexahedra, 3_hexahedra }"
-      materialList="{ rock, water }"/>
+      materialList="{ concrete, water }"/>
   </ElementRegions>
 
   <Constitutive>
     <PorousDamageElasticIsotropic
-      name="rock"
-      solidModelName="rockSolid"
-      porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      name="concrete"
+      solidModelName="concreteSolid"
+      porosityModelName="concretePorosity"
+      permeabilityModelName="concretePerm"/>
 
     <DamageElasticIsotropic
-      name="rockSolid"
+      name="concreteSolid"
       defaultDensity="2.7e-9"
-      defaultBulkModulus="4.4e3"
-      defaultShearModulus="4.3e3"
-      lengthScale="1"
-      criticalFractureEnergy="9.1e-2"
+      defaultBulkModulus="1.67e4"
+      defaultShearModulus="1.25e4"
+      lengthScale="0.4"
+      criticalFractureEnergy="4e-3"
       criticalStrainEnergy="0"
-      extDrivingForceFlag="1"
-      degradationLowerLimit="1e-4"
-      tensileStrength="27.0"
-      compressiveStrength="77.0"
-      deltaCoefficient="0.0"/>
+      degradationLowerLimit="1e-4"/>
 
     <BiotPorosity
-      name="rockPorosity"
-      grainBulkModulus="2.0e4"
-      defaultReferencePorosity="0.05"/>
+      name="concretePorosity"
+      grainBulkModulus="1e20"
+      defaultReferencePorosity="0.1"/>
 
     <DamagePermeability
-      name="rockPerm"
+      name="concretePerm"
       bulkPermeability="1.0e-9"/>
 
     <CompressibleSinglePhaseFluid
@@ -175,27 +171,27 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1"
-      fieldName="rockSolid_stress"
+      fieldName="concreteSolid_stress"
       component="0"
-      scale="-9.0"/>
+      scale="-10.0"/>
 
     <FieldSpecification 
       name="SH"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1"
-      fieldName="rockSolid_stress"
+      fieldName="concreteSolid_stress"
       component="1"
-      scale="-12.0"/>
+      scale="-15.0"/>
 
     <FieldSpecification 
       name="Sv"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1"
-      fieldName="rockSolid_stress"
+      fieldName="concreteSolid_stress"
       component="2"
-      scale="-15.0"/>
+      scale="-12.5"/>
 
     <FieldSpecification 
       name="xconstraint"    
@@ -235,7 +231,7 @@
       name="sourceTerm"
       objectPath="ElementRegions/Region1/0_hexahedra"
       fieldName="pressure"
-      scale="150.0"
+      scale="50.0"
       setNames="{ all }"
       functionName="timeFunction"
       />
@@ -244,7 +240,7 @@
       name="pressureUpper"
       objectPath="ElementRegions/Region1/1_hexahedra"
       fieldName="pressure"
-      scale="150.0"
+      scale="0.0"
       setNames="{ all }"
       functionName="timeFunction"
       />
@@ -253,16 +249,16 @@
       name="pressureLower"
       objectPath="ElementRegions/Region1/2_hexahedra"
       fieldName="pressure"
-      scale="150.0"
+      scale="0.0"
       setNames="{ all }"
       functionName="timeFunction"
       />
 
     <Traction 
       name="traction"
-      setNames="{ hole_middle, hole_upper, hole_lower }"
+      setNames="{ hole_middle }"
       objectPath="faceManager"
-      scale="-150.0"
+      scale="-100.0"
       tractionType="normal"
       nodalScaleFlag="1"
       functionName="timeFunction"    
@@ -280,7 +276,7 @@
   <Outputs>
     <VTK
       name="VTKOutput"
-      plotFileRoot="phaseFieldPoro_nucleation_wellbore_benchmark"/>
+      plotFileRoot="phaseFieldPoro_wellboreConcrete"/>
 
     <Restart
       name="restartOutput"/>

@@ -38,6 +38,7 @@
       localDissipation="Linear"
       irreversibilityFlag="1"
       damageUpperBound="1.0"
+      fracturePressureTermFlag="1"
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
@@ -72,37 +73,37 @@
 
 
   <Events
-    maxTime="50.0">
+    maxTime="43.6">
  
     <PeriodicEvent
       name="solverApplication0"
-      endTime="48.0"
+      endTime="42.0"
       forceDt="1.0"
       target="/Solvers/phasefieldPoroSolve"/>
 
     <PeriodicEvent
       name="solverApplication1"
-      beginTime="48.0"
-      endTime="50.0"
-      forceDt="0.01"
+      beginTime="42.0"
+      endTime="43.6"
+      forceDt="0.005"
       target="/Solvers/phasefieldPoroSolve"/>
 
     <PeriodicEvent
       name="vtkOutput0"
-      endTime="48.0"
+      endTime="42.0"
       forceDt="1.0"
       target="/Outputs/VTKOutput"/>
 
     <PeriodicEvent
       name="vtkOutput1"
-      beginTime="48.0"
-      endTime="50.0"
-      forceDt="0.01"
+      beginTime="42.0"
+      endTime="43.6"
+      forceDt="0.005"
       target="/Outputs/VTKOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="25"
+      timeFrequency="20"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
@@ -143,14 +144,14 @@
       criticalFractureEnergy="4e-3"
       criticalStrainEnergy="0"
       extDrivingForceFlag="1"
-      degradationLowerLimit="1e-4"
+      degradationLowerLimit="1e-6"
       tensileStrength="5.0"
       compressiveStrength="40.0"
       deltaCoefficient="0.0"/>
 
     <BiotPorosity
       name="concretePorosity"
-      grainBulkModulus="2.0e4"
+      grainBulkModulus="1e20"
       defaultReferencePorosity="0.1"/>
 
     <DamagePermeability
@@ -176,7 +177,7 @@
       objectPath="ElementRegions/Region1"
       fieldName="concreteSolid_stress"
       component="0"
-      scale="-12.0"/>
+      scale="-10.0"/>
 
     <FieldSpecification 
       name="SH"
@@ -194,7 +195,7 @@
       objectPath="ElementRegions/Region1"
       fieldName="concreteSolid_stress"
       component="2"
-      scale="-20.0"/>
+      scale="-17.5"/>
 
     <FieldSpecification 
       name="xconstraint"    
@@ -261,7 +262,7 @@
       name="traction"
       setNames="{ hole_middle }"
       objectPath="faceManager"
-      scale="-80.0"
+      scale="-160.0"
       tractionType="normal"
       nodalScaleFlag="1"
       functionName="timeFunction"    
@@ -279,7 +280,7 @@
   <Outputs>
     <VTK
       name="VTKOutput"
-      plotFileRoot="phaseFieldPoro_nucleation_wellboreConcrete"/>
+      plotFileRoot="phaseFieldPoro_nucleation_wellboreConcreteNormal"/>
 
     <Restart
       name="restartOutput"/>
