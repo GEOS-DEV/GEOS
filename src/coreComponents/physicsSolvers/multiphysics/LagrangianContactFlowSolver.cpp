@@ -47,6 +47,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 using namespace interpolation;
+using namespace extrinsicMeshData;
 
 LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & name,
                                                           Group * const parent ):
@@ -75,7 +76,7 @@ LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & na
   /*
      m_linearSolverParameters.get().mgr.strategy = "LagrangianContactMechanicsFlow";
      m_linearSolverParameters.get().mgr.separateComponents = true;
-     m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+     m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
      m_linearSolverParameters.get().dofsPerNode = 3;
    */
 }
@@ -256,16 +257,16 @@ void LagrangianContactFlowSolver::updateOpeningForFlow( DomainPartition & domain
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
+      if( subRegion.hasWrapper( flow::pressure::key() ) )
       {
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-        arrayView2d< real64 const > const & dispJump = subRegion.getReference< array2d< real64 > >( extrinsicMeshData::contact::dispJump::key() );
+        arrayView2d< real64 const > const & dispJump = subRegion.getReference< array2d< real64 > >( contact::dispJump::key() );
         arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
         arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
         arrayView1d< real64 > const &
-        aperture = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::hydraulicAperture::key() );
+        aperture = subRegion.getReference< array1d< real64 > >( flow::hydraulicAperture::key() );
         arrayView1d< real64 > const &
-        deltaVolume = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaVolume::key() );
+        deltaVolume = subRegion.getReference< array1d< real64 > >( flow::deltaVolume::key() );
 
         forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
         {
@@ -734,7 +735,7 @@ void LagrangianContactFlowSolver::setupDofs( DomainPartition const & domain,
     meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
   } );
 
-  dofManager.addCoupling( keys::TotalDisplacement,
+  dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
                           m_pressureKey,
                           DofManager::Connector::Elem,
                           meshTargets );
@@ -831,14 +832,14 @@ real64 LagrangianContactFlowSolver::calculateResidualNorm( DomainPartition const
                                                                 MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    string const & tracDofKey = dofManager.getKey( extrinsicMeshData::contact::traction::key() );
+    string const & tracDofKey = dofManager.getKey( contact::traction::key() );
     string const & presDofKey = dofManager.getKey( m_pressureKey );
     globalIndex const rankOffset = dofManager.rankOffset();
 
     NodeManager const & nodeManager = mesh.getNodeManager();
 
     arrayView1d< globalIndex const > const & dispDofNumber =
-      nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( keys::TotalDisplacement ) );
+      nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
 
     arrayView1d< integer const > const & elemGhostRank = nodeManager.ghostRank();
 
@@ -1005,7 +1006,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
                                                                              schurOptions );
 
     precond->setupBlock( 0,
-                         { { extrinsicMeshData::contact::traction::key(), { 3, 0, 3 } } },
+                         { { contact::traction::key(), { 3, 0, 3 } } },
                          std::move( tracPrecond ) );
 
     precond->setupBlock( 1,
@@ -1019,7 +1020,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
         MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
         LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
-                                                   { keys::TotalDisplacement },
+                                                   { solidMechanics::totalDisplacement::key() },
                                                    m_contactSolver->getSolidSolver()->getRigidBodyModes() );
       }
     }
@@ -1027,7 +1028,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
     // Preconditioner for the Schur complement: mechPrecond
     std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_contactSolver->getSolidSolver()->getRigidBodyModes() );
     precond->setupBlock( 2,
-                         { { keys::TotalDisplacement, { 3, 0, 3 } } },
+                         { { solidMechanics::totalDisplacement::key(), { 3, 0, 3 } } },
                          std::move( mechPrecond ) );
 
     m_precond = std::move( precond );
@@ -1078,7 +1079,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
                                                                              schurOptions );
 
     precond->setupBlock( 0,
-                         { { extrinsicMeshData::contact::traction::key(), { 3, 0, 3 } } },
+                         { { contact::traction::key(), { 3, 0, 3 } } },
                          std::move( tracPrecond ) );
 
     if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
@@ -1088,7 +1089,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
         MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
         LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
-                                                   { keys::TotalDisplacement },
+                                                   { solidMechanics::totalDisplacement::key() },
                                                    m_contactSolver->getSolidSolver()->getRigidBodyModes() );
       }
     }
@@ -1096,7 +1097,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
     // Preconditioner for the Schur complement: mechPrecond
     std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_contactSolver->getSolidSolver()->getRigidBodyModes() );
     precond->setupBlock( 1,
-                         { { keys::TotalDisplacement, { 3, 0, 3 } } },
+                         { { solidMechanics::totalDisplacement::key(), { 3, 0, 3 } } },
                          std::move( mechPrecond ) );
 
     precond->setupBlock( 2,
@@ -1193,7 +1194,7 @@ void LagrangianContactFlowSolver::
     NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+    string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
     string const presDofKey = dofManager.getKey( m_pressureKey );
 
     arrayView1d< globalIndex const > const &
@@ -1210,7 +1211,7 @@ void LagrangianContactFlowSolver::
     surfaceGenerator = this->getParent().getGroup< SurfaceGenerator >( "SurfaceGen" );
     SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator.getFractureRegionName() );
     FaceElementSubRegion const & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
-    GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ), "The fracture subregion must contain pressure field." );
+    GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ), "The fracture subregion must contain pressure field." );
     arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
     GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
@@ -1283,7 +1284,7 @@ void LagrangianContactFlowSolver::
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
     arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
 
-    string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+    string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
     string const & presDofKey = dofManager.getKey( m_pressureKey );
 
     arrayView1d< globalIndex > const &
@@ -1295,11 +1296,11 @@ void LagrangianContactFlowSolver::
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
     {
-      if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
+      if( subRegion.hasWrapper( flow::pressure::key() ) )
       {
         arrayView1d< globalIndex const > const &
         presDofNumber = subRegion.getReference< globalIndex_array >( presDofKey );
-        arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+        arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( flow::pressure::key() );
         arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
         forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
@@ -1387,7 +1388,7 @@ void LagrangianContactFlowSolver::
     CRSMatrixView< real64 const, localIndex const > const &
     dFluxResidual_dAperture = getDerivativeFluxResidual_dAperture().toViewConst();
 
-    string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+    string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
     string const & presDofKey = dofManager.getKey( m_pressureKey );
 
     arrayView1d< globalIndex const > const &
@@ -1408,7 +1409,7 @@ void LagrangianContactFlowSolver::
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion const & subRegion )
     {
-      if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
+      if( subRegion.hasWrapper( flow::pressure::key() ) )
       {
 //        string const &
 //        fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
@@ -1553,13 +1554,13 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
     surfaceGenerator = this->getParent().getGroup< SurfaceGenerator >( "SurfaceGen" );
     SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator.getFractureRegionName() );
     FaceElementSubRegion const & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
-    GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ), "The fracture subregion must contain pressure field." );
+    GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ), "The fracture subregion must contain pressure field." );
     arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
     GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
     // Get the pressures
     arrayView1d< real64 const > const &
-    pressure = fractureSubRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+    pressure = fractureSubRegion.getReference< array1d< real64 > >( flow::pressure::key() );
 
     //  string const &
     //  fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( fractureRegion.getName() )];

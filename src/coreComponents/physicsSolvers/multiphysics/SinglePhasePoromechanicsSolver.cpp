@@ -142,7 +142,7 @@ void SinglePhasePoromechanicsSolver::implicitStepComplete( real64 const & time_n
   } );
   // displacement
   NodeManager & nodeManager = mesh.getNodeManager();
-  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
   double * min_disp = std::min_element( disp.begin(), disp.end());
   std::cout << "min disp " << *min_disp << std::endl;
   // end Laura

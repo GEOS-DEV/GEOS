@@ -70,7 +70,7 @@ SinglePhasePoromechanicsLagrangianContactSolver::SinglePhasePoromechanicsLagrang
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
-  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+  m_linearSolverParameters.get().mgr.displacementFieldName = extrinsicMeshData::solidMechanics::totalDisplacement::key();
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
@@ -83,13 +83,13 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
 
   // TODO: stampare m_meshTargets
   // question: from here...
-  dofManager.addField( keys::TotalDisplacement,
+  dofManager.addField( extrinsicMeshData::solidMechanics::totalDisplacement::key(),
                        FieldLocation::Node,
                        3,
                        getMeshTargets() );
 
-  dofManager.addCoupling( keys::TotalDisplacement,
-                          keys::TotalDisplacement,
+  dofManager.addCoupling( extrinsicMeshData::solidMechanics::totalDisplacement::key(),
+                          extrinsicMeshData::solidMechanics::totalDisplacement::key(),
                           DofManager::Connector::Elem );
   // ... to here. Can we replace simply by m_solidSolver->setupDofs( domain, dofManager );   ??
   // OR, considering also the coupling u-t can we simply call m_contactSolver->setupDofs( domain, dofManager ); ??
@@ -121,7 +121,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
                           DofManager::Connector::Face,
                           meshTargets );
 //                          fractureRegions );
-  dofManager.addCoupling( keys::TotalDisplacement,
+  dofManager.addCoupling( extrinsicMeshData::solidMechanics::totalDisplacement::key(),
                           extrinsicMeshData::contact::traction::key(),
                           DofManager::Connector::Elem,
                           meshTargets );
@@ -129,7 +129,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
 
   flowSolver()->setupDofs( domain, dofManager );
 
-  dofManager.addCoupling( keys::TotalDisplacement,
+  dofManager.addCoupling( extrinsicMeshData::solidMechanics::totalDisplacement::key(),
                           SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
   dofManager.addCoupling( SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
@@ -229,7 +229,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete( real
     } );
     // displacement
     NodeManager & nodeManager = mesh.getNodeManager();
-    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
+    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
     double * min_disp = std::min_element( disp.begin(), disp.end());
     GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- min disp {:15.6e}", *min_disp ) );
     double * max_disp = std::max_element( disp.begin(), disp.end());
@@ -426,7 +426,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
 
-    string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+    string const dofKey = dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
     arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
     string const pDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
@@ -588,7 +588,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::createPreconditioner( Doma
         MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
         LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
-                                                   { keys::TotalDisplacement },
+                                                   { extrinsicMeshData::solidMechanics::totalDisplacement::key() },
                                                    m_contactSolver->getSolidSolver()->getRigidBodyModes() );
       }
     }
@@ -596,7 +596,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::createPreconditioner( Doma
     // Preconditioner for the Schur complement: mechPrecond
     std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_contactSolver->getSolidSolver()->getRigidBodyModes() );
     precond->setupBlock( 2,
-                         { { keys::TotalDisplacement, { 3, 0, 3 } } },
+                         { { extrinsicMeshData::solidMechanics::totalDisplacement::key(), { 3, 0, 3 } } },
                          std::move( mechPrecond ) );
 
     m_precond = std::move( precond );
@@ -657,7 +657,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::createPreconditioner( Doma
         MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
         LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
-                                                   { keys::TotalDisplacement },
+                                                   { extrinsicMeshData::solidMechanics::totalDisplacement::key() },
                                                    m_contactSolver->getSolidSolver()->getRigidBodyModes() );
       }
     }
@@ -665,7 +665,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::createPreconditioner( Doma
     // Preconditioner for the Schur complement: mechPrecond
     std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_contactSolver->getSolidSolver()->getRigidBodyModes() );
     precond->setupBlock( 1,
-                         { { keys::TotalDisplacement, { 3, 0, 3 } } },
+                         { { extrinsicMeshData::solidMechanics::totalDisplacement::key(), { 3, 0, 3 } } },
                          std::move( mechPrecond ) );
 
     precond->setupBlock( 2,
@@ -688,7 +688,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::createPreconditioner( Doma
 
      auto mechPrecond = LAInterface::createPreconditioner( m_contactFlowSolver->getLinearSolverParameters() );
      precond->setupBlock( 0,
-                         { { keys::TotalDisplacement, { 3, true } } },
+                         { { extrinsicMeshData::solidMechanics::totalDisplacement::key(), { 3, true } } },
                          std::make_unique< SeparateComponentPreconditioner< LAInterface > >( 3, std::move( mechPrecond ) ) );
 
      auto flowPrecond = LAInterface::createPreconditioner( flowSolver()->getLinearSolverParameters() );

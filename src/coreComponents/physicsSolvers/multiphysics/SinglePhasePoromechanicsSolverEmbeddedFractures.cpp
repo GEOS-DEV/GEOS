@@ -523,7 +523,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::implicitStepComplete( real
   } );
   // displacement
   NodeManager & nodeManager = mesh.getNodeManager();
-  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >();
   double * min_disp = std::min_element( disp.begin(), disp.end());
   //std::cout << "min disp " << * min_disp << std::endl;
   GEOSX_LOG_RANK_0( GEOSX_FMT( "min disp      {:15.6e}", *min_disp ) );
