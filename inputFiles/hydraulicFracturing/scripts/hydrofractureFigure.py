@@ -93,8 +93,16 @@ class PKN_viscosityStorageDominated:
         return [halfLength, inletAperture, inletPressure]
 
 
-def main():
-    xmlFilePathPrefix = sys.argv[1]
+def pknViscosityDominated():
+    """
+    Entry point for sphinx documentation
+    """
+    main(xmlFilePathPrefix='pknViscosityDominated')
+
+
+def main(xmlFilePathPrefix=''):
+    if not xmlFilePathPrefix:
+        xmlFilePathPrefix = sys.argv[1]
 
     tMax, E, nu, KIC, mu, Q0, xSource = getParametersFromXML(xmlFilePathPrefix)
     Ep = E / (1.0 - nu**2.0)
@@ -213,6 +221,7 @@ def main():
     ax[1, 1].axis('off')
    
     plt.show()
+
 
 if __name__ == "__main__":
     main()
