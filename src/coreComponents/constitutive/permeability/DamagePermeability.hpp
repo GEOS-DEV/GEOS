@@ -42,7 +42,7 @@ public:
   void updateDamagePermeability ( localIndex const k,
                                   real64 const & damage ) const
   {
-    real64 const matrixPermeability = m_bulkPermeability*exp(3.0*damage);
+    real64 const matrixPermeability = m_bulkPermeability*exp(7.0*damage);
 
     for( localIndex dim=0; dim<3; ++dim )
     {
