@@ -76,8 +76,10 @@ public:
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::cprLikeBlockDiag; // Non-Galerkin Quasi-IMPES CPR
 
-    // ILU smoothing for the system made of pressure and densities (except the last one)
-    m_levelSmoothType[1]  = 16;
+    m_levelSmoothType[0]  = 16;
+    m_levelSmoothIters[0] = 1;
+    // Block GS smoothing for the system made of pressure and densities (except the last one)
+    m_levelSmoothType[1]  = 1;
     m_levelSmoothIters[1] = 1;
   }
 
