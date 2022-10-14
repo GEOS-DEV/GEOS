@@ -40,11 +40,11 @@ namespace mgr
  * dofLabel: 4 = well pressure
  * dofLabel: 5 = well rate
  *
- * Ingredients:
- * 1. F-points displacement (0,1,2), C-points pressure (3)
- * 2. F-points smoother: AMG, single V-cycle, separate displacement components
- * 3. C-points coarse-grid/Schur complement solver: boomer AMG
- * 4. Global smoother: none
+ * 2-level MGR reduction strategy
+ *   - 1st level: eliminate displacements (0,1,2)
+ *   - 2nd level: eliminate the well block
+ *   - The coarse grid is solved with BoomerAMG.
+ *
  */
 class SinglePhasePoromechanicsReservoirFVM : public MGRStrategyBase< 2 >
 {

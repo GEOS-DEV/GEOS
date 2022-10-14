@@ -41,7 +41,8 @@ namespace mgr
  *   - dofLabel: 4                = density
  *             ...                = densities
  *   - dofLabel: numResLabels + 2 = density
- *   - dofLabel: numResLabels + 3 = well density
+ *   - dofLabel: numResLabels + 3 = well pressure
+ *   - dofLabel: numResLabels + 4 = well density
  *             ...                = well densities
  *   - dofLabel: numResLabels + numWellLabels + 1 = well density
  *   - dofLabel: numResLabels + numWellLabels + 2 = well rate
@@ -49,7 +50,7 @@ namespace mgr
  * 4-level MGR reduction strategy
  *   - 1st level: eliminate displacements (0,1,2)
  *   - 2nd level: eliminate the well block
- *   - 3nd level: eliminate the reservoir density associated with the volume constraint (numLabels - 1)
+ *   - 3nd level: eliminate the reservoir density associated with the volume constraint
  *   - 4nd level: eliminate the other reservoir densities
  *   - The coarse grid is solved with BoomerAMG.
  *
@@ -105,8 +106,8 @@ public:
     m_levelRestrictType[3]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[3] = MGRCoarseGridMethod::cprLikeBlockDiag;
 
-    // Global smoother at each level, only do block-GS for the condensed system
-    m_levelSmoothType[3] = 1;
+    // ILU smoothing for the system made of pressure and densities (except the last one)
+    m_levelSmoothType[3] = 16;
     m_levelSmoothIters[3] = 1;
 
   }
