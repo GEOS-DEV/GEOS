@@ -224,7 +224,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
     propagator->explicitStepBackward( time_n, dt, i, domain, false );
     time_n += dt;
   }
-  // check again the seismo content. 
+  // check again the seismo content.
   for( int i=0; i<11; i++ )
   {
     if( i > 0 )
