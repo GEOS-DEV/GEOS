@@ -18,6 +18,7 @@
 
 #include "PhaseFieldDamageFEM.hpp"
 #include "PhaseFieldDamageFEMKernels.hpp"
+#include "PhaseFieldPressurizedDamageFEMKernels.hpp"
 #include <math.h>
 #include <vector>
 
@@ -242,22 +243,43 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
     localMatrix.zero();
     localRhs.zero();
 
-    PhaseFieldDamageKernelFactory kernelFactory( dofIndex,
-                                                 dofManager.rankOffset(),
-                                                 localMatrix,
-                                                 localRhs,
-                                                 m_fieldName,
-                                                 m_localDissipationOption=="Linear" ? 1 : 2,
-                                                 m_fracturePressureTermFlag );
+    if( m_fracturePressureTermFlag )
+    {
+      PhaseFieldPressurizedDamageKernelFactory kernelFactory( dofIndex,
+                                                              dofManager.rankOffset(),
+                                                              localMatrix,
+                                                              localRhs,
+                                                              m_fieldName,
+                                                              m_localDissipationOption=="Linear" ? 1 : 2 );
 
-    finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy<>,
-                                    constitutive::DamageBase,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            this->getDiscretizationName(),
-                                                            viewKeyStruct::solidModelNamesString(),
-                                                            kernelFactory );
+      finiteElement::
+        regionBasedKernelApplication< parallelDevicePolicy<>,
+                                      constitutive::DamageBase,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              this->getDiscretizationName(),
+                                                              viewKeyStruct::solidModelNamesString(),
+                                                              kernelFactory );
+    }
+    else
+    {
+      PhaseFieldDamageKernelFactory kernelFactory( dofIndex,
+                                                   dofManager.rankOffset(),
+                                                   localMatrix,
+                                                   localRhs,
+                                                   m_fieldName,
+                                                   m_localDissipationOption=="Linear" ? 1 : 2 );
+
+      finiteElement::
+        regionBasedKernelApplication< parallelDevicePolicy<>,
+                                      constitutive::DamageBase,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              this->getDiscretizationName(),
+                                                              viewKeyStruct::solidModelNamesString(),
+                                                              kernelFactory );
+    }
+
 #else // this has your changes to the old base code
     matrix.zero();
     rhs.zero();
