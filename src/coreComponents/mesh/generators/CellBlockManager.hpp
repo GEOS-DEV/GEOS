@@ -155,6 +155,13 @@ public:
   CellBlock & registerCellBlock( string const & name );
 
   /**
+   * @brief Registers and returns a face block of name @p name.
+   * @param name The name of the created face block.
+   * @return A reference to the new face block. The CellBlockManager owns this new instance.
+   */
+  FaceBlock & registerFaceBlock( string const & name );
+
+  /**
    * @brief Launch kernel function over all the sub-regions
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
