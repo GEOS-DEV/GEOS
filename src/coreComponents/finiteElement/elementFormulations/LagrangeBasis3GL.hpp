@@ -314,7 +314,6 @@ public:
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    //MODIF6 : Change linearIndex for 64 nodes
     constexpr static int linearIndex( const int i,
                                       const int j )
     {
@@ -332,7 +331,6 @@ public:
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    //MODIF7 : Change calcul of multiIndex
     constexpr static void multiIndex( int const linearIndex,
                                       int & i0,
                                       int & i1 )

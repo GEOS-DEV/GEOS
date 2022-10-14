@@ -50,6 +50,7 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 weight( const int q )
   {
+    GEOSX_UNUSED_VAR( q );
     return 1.0;
   }
 
