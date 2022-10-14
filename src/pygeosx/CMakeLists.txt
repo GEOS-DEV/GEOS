@@ -32,5 +32,3 @@ target_include_directories( pygeosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 geosx_add_code_checks( PREFIX pygeosx )
 
 install(TARGETS pygeosx LIBRARY DESTINATION lib)
-
-add_subdirectory(unitTests)
