@@ -17,15 +17,15 @@ Semi analytical result for axial stress variation :math:`\delta\sigma_{V}` and l
    \delta\sigma_{V} = \delta\varepsilon_{V} E_{ep}
 
 .. math::
-   \delta\varepsilon_{H} = \delta\varepsilon_{V} - \frac{\delta\sigma_{V}}{E^'_{ep}}
+   \delta\varepsilon_{H} = \delta\varepsilon_{V} - \frac{\delta\sigma_{V}}{E^\prime_{ep}}
 
-where :math:`E_{ep}` and :math:`E^'_{ep}` are elasto-plastic Young moduli that can be obtained from the elastic Young and shear moduli (:math:`E` and :math:`\mu`), the frictional parameter :math:`b` and the dilation ratio :math:`\theta` of the Extended Drucker-Prager model by:
+where :math:`E_{ep}` and :math:`E^\prime_{ep}` are elasto-plastic Young moduli that can be obtained from the elastic Young and shear moduli (:math:`E` and :math:`\mu`), the frictional parameter :math:`b` and the dilation ratio :math:`\theta` of the Extended Drucker-Prager model by:
 
 .. math::
    \frac{1}{E_{ep}} = \frac{1}{E} + \frac{(\theta b-3)(b-3)}{9h}
 
 .. math::
-   \frac{1}{E^'_{ep}} = \frac{1}{2\mu} - \frac{b-3}{2h}
+   \frac{1}{E^\prime_{ep}} = \frac{1}{2\mu} - \frac{b-3}{2h}
 
 The hardening rate :math:`h` is defined by
 
@@ -44,7 +44,7 @@ These solutions were etablished for a positive shear stress :math:`q = -(\sigma_
    \frac{1}{E_{ep}} = \frac{1}{E} + \frac{(\theta b+3)(b+3)}{9h}
 
 .. math::
-   \frac{1}{E^'_{ep}} = \frac{1}{2\mu} + \frac{b+3}{2h}
+   \frac{1}{E^\prime_{ep}} = \frac{1}{2\mu} + \frac{b+3}{2h}
 
 and
 

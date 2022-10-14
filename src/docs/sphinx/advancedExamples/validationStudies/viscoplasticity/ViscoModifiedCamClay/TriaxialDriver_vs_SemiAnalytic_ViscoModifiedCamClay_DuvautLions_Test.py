@@ -8,11 +8,12 @@ import xml.etree.ElementTree as ElementTree
 
 def main():
 	# File paths
-	path = "ModifiedCamClayResults.txt"
+	path = "ViscoModifiedCamClayResults.txt"
+	timeFilePath = "../../../../../../../inputFiles/triaxialDriver/tables/time.geos"
 	xmlFilePath = "../../../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml"
-	xmlFilePath_case = "../../../../../../../inputFiles/triaxialDriver/triaxialDriver_ModifiedCamClay.xml"
+	xmlFilePath_case = "../../../../../../../inputFiles/triaxialDriver/triaxialDriver_ViscoModifiedCamClay.xml"
 	imposedStrainFilePath = "../../../../../../../inputFiles/triaxialDriver/tables/axialStrain.geos"
-	outputPath = "ModifiedCamClay.png"
+	outputPath = "ViscoModifiedCamClay.png"
 		 
 	# Load GEOSX results
 	time, ax_strain, ra_strain1, ra_strain2, ax_stress, ra_stress1, ra_stress2, newton_iter, residual_norm = np.loadtxt(
@@ -22,7 +23,7 @@ def main():
 	tree = ElementTree.parse(xmlFilePath)
 	tree_case = ElementTree.parse(xmlFilePath_case)
 	model = tree_case.find('Tasks/TriaxialDriver')
-	param = tree.find('Constitutive/ModifiedCamClay')
+	param = tree.find('Constitutive/ViscoModifiedCamClay')
 
 	refPressure = float(param.get("defaultRefPressure"))
 	refStrainVol = float(param.get("defaultRefStrainVol"))
@@ -31,6 +32,7 @@ def main():
 	cslSlope = float(param.get("defaultCslSlope"))
 	virginCompressionIndex = float(param.get("defaultVirginCompressionIndex"))
 	recompressionIndex = float(param.get("defaultRecompressionIndex"))
+	relaxationTime = float(param.get("relaxationTime"))
 	initialStress = float(model.get("initialStress"))
 
 	# Extract loading from input tables
@@ -38,12 +40,22 @@ def main():
 		imposedStrainFilePath, skiprows=0, unpack=True)
 
 	list_ax_strain_anal = []
-	numStepPerLoadingPeriod = 10000
+	numStepPerLoadingPeriod = 10001
 
 	for i in range(0,len(imp_strain)-1):
 		dStrainPerStep = (imp_strain[i+1]-imp_strain[i])/numStepPerLoadingPeriod	
 		loadingPeriod = np.arange(imp_strain[i],imp_strain[i+1]+dStrainPerStep,dStrainPerStep)
 		list_ax_strain_anal = np.concatenate((list_ax_strain_anal, loadingPeriod), axis=0)
+	
+	# Extract time from input tables
+	imp_time = np.loadtxt(
+		timeFilePath, skiprows=0, unpack=True)
+
+	list_time_anal = []
+	for i in range(0,len(imp_time)-1):
+		dTimePerStep = (imp_time[i+1]-imp_time[i])/numStepPerLoadingPeriod	
+		timePeriod = np.arange(imp_time[i],imp_time[i+1]+dTimePerStep,dTimePerStep)
+		list_time_anal = np.concatenate((list_time_anal, timePeriod), axis=0)
 	
 	list_ax_stress_anal = np.zeros(len(list_ax_strain_anal))
 	list_ra_stress_anal = np.zeros(len(list_ax_strain_anal))
@@ -72,6 +84,9 @@ def main():
 		p_anal = (ax_stress_anal + 2.0*ra_stress_anal)/3.0
 		q_anal = -(ax_stress_anal - ra_stress_anal)
 
+		delta_p_anal = (delta_ax_stress_anal + 2.0*delta_ra_stress_anal)/3.0
+		delta_q_anal = -(delta_ax_stress_anal - delta_ra_stress_anal)
+	
 		# Plastic correction
 		F_anal = q_anal*q_anal + cslSlope*cslSlope*p_anal*(p_anal-preConsolidationPressure)		
 		
@@ -96,12 +111,18 @@ def main():
 
 			# Compute stress variations
 			delta_ax_strain_anal = list_ax_strain_anal[idx] - list_ax_strain_anal[idx-1]
-		
+			delta_time_anal = list_time_anal[idx]-list_time_anal[idx-1]
+
 			delta_strain_vol = delta_ax_strain_anal
 			delta_strain_shear = -delta_ax_strain_anal
-			delta_p_anal = (coeff_4*delta_strain_vol - coeff_2*delta_strain_shear)/denom
-			delta_q_anal = (coeff_1*delta_strain_shear - coeff_3*delta_strain_vol)/denom
+			delta_p_anal_s = (coeff_4*delta_strain_vol - coeff_2*delta_strain_shear)/denom
+			delta_q_anal_s = (coeff_1*delta_strain_shear - coeff_3*delta_strain_vol)/denom
 			
+			# Duvaut-Lions
+			timeRatio = 1.0/(1.0+delta_time_anal / relaxationTime)
+			delta_p_anal = timeRatio*delta_p_anal+(1.0-timeRatio)*delta_p_anal_s
+			delta_q_anal = timeRatio*delta_q_anal+(1.0-timeRatio)*delta_q_anal_s
+
 			delta_ax_stress_anal = (3.0*delta_p_anal-2*delta_q_anal)/3.0
 			delta_ra_stress_anal = delta_ax_stress_anal+delta_q_anal
 		
@@ -113,9 +134,6 @@ def main():
 			delta_pc = dpc_dlambda * delta_lambda
 			preConsolidationPressure += delta_pc
 			
-			p_anal = (ax_stress_anal + 2.0*ra_stress_anal)/3.0
-			q_anal = -(ax_stress_anal - ra_stress_anal)
-						
 		list_ax_stress_anal[idx] = ax_stress_anal
 		list_ra_stress_anal[idx] = ra_stress_anal
 		
