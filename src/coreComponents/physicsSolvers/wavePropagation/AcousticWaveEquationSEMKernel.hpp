@@ -25,7 +25,7 @@
 namespace geosx
 {
 
-// compile-time check on forumlation to remove non-SEM classes via SFINAE 
+// compile-time check on forumlation to remove non-SEM classes via SFINAE
 template< typename >
 struct is_sem_formulation : std::false_type {};
 template< typename T >
@@ -338,7 +338,7 @@ struct PrecomputeSourceAndReceiverKernel
   template< typename EXEC_POLICY, typename FE_TYPE, typename ... ARGS >
   static typename std::enable_if_t< !geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE > >::value, void >
   launch(ARGS && ... )
-  {   
+  {
     GEOSX_THROW( invalidFormulationString, InputError );
   }
 };
@@ -363,14 +363,13 @@ struct MassMatrixKernel
    * @param[out] mass diagonal of the mass matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE_ = FE_TYPE >
-  std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void > 
+  std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
   launch( localIndex const size,
-          localIndex const numFacesPerElem,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 > const mass )
-          
+
   {
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
@@ -397,12 +396,12 @@ struct MassMatrixKernel
   }
 
   template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE_ = FE_TYPE, typename ... ARGS >
-  std::enable_if_t< !geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void > 
-  launch( ARGS && ... ) 
+  std::enable_if_t< !geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
+  launch( ARGS && ... )
   {
     GEOSX_THROW( invalidFormulationString, InputError );
-  } 
-  
+  }
+
   /// The finite element space/discretization object for the element type in the subRegion
   FE_TYPE const & m_finiteElement;
 
@@ -430,7 +429,7 @@ struct DampingMatrixKernel
    * @param[in] faceNormal normal vectors at the faces
    * @param[in] velocity cell-wise velocity
    * @param[out] damping diagonal of the damping matrix
-   */  
+   */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE_ = FE_TYPE >
   std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
   launch( localIndex const size,
@@ -440,7 +439,6 @@ struct DampingMatrixKernel
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
-          arrayView2d< real64 const > const faceNormal,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 > const damping )
   {
@@ -451,10 +449,10 @@ struct DampingMatrixKernel
       {
         localIndex k = facesToElems(f, 0);
         if ( k < 0 )
-        { 
+        {
           k = facesToElems(f, 1);
         }
-   
+
         real32 const alpha = 1.0 / velocity[k];
 
         constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
@@ -1023,10 +1021,10 @@ public:
    * Calculates stiffness vector
    *
    */
-  template< typename U = void> 
+  template< typename U = void>
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE > >::value, U > 
+  std::enable_if_t< geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE > >::value, U >
   quadraturePointKernel( localIndex const k,
                          localIndex const q,
                          StackVariables & stack ) const
@@ -1044,14 +1042,15 @@ public:
    * Calculates stiffness vector
    *
    */
-  template< typename U = void> 
+  template< typename U = void>
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  std::enable_if_t< !geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE > >::value, U > 
+  std::enable_if_t< !geosx::is_sem_formulation< std::remove_cv_t< FE_TYPE > >::value, U >
   quadraturePointKernel( localIndex const k,
                          localIndex const q,
                          StackVariables & stack ) const
   {
+    GEOSX_UNUSED_VAR(k,q,stack);
     // do nothing: not implemented for other formulations
   }
 
