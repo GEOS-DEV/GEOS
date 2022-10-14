@@ -9,13 +9,13 @@ Modified CamClay model: Triaxial Driver versus Semi-analytical solution
 Problem description
 ------------------------------------------------------------------
 
-This example uses the Triaxial Driver to simulate an elasto-plastic triaxial compression test of a Modified CamClay solid. Oedometric condition with zero lateral strain together with loading/unloading axial strain periods are imposed. Semi analytical results for the mean and shear stress variations :math:`\delta p` and :math:`\delta q` can be obtained from the imposed vertical strain variation by solving the following equation system:
+This example uses the Triaxial Driver to simulate an elasto-plastic triaxial compression test of a Modified CamClay solid. Oedometric condition with zero lateral strain together with loading/unloading axial strain periods are imposed. Semi analytical results for the mean and shear stress variations :math:`\Delta p` and :math:`\Delta q` can be obtained from the imposed vertical strain variation by solving the following equation system:
 
 .. math::
-   \delta \varepsilon_V = \delta p(\frac{1}{K} + \frac{1}{h}\frac{\partial F}{\partial p}\frac{\partial G}{\partial p}) + \delta q \frac{1}{h}\frac{\partial F}{\partial q}\frac{\partial G}{\partial p}
+   \Delta \varepsilon_V = \Delta p(\frac{1}{K} + \frac{1}{h}\frac{\partial F}{\partial p}\frac{\partial G}{\partial p}) + \Delta q \frac{1}{h}\frac{\partial F}{\partial q}\frac{\partial G}{\partial p}
 
 .. math::
-   \delta \varepsilon_V = \delta p \frac{3}{2h}\frac{\partial F}{\partial p}\frac{\partial G}{\partial q} + \delta q(\frac{1}{2\mu} + \frac{1}{h}\frac{\partial F}{\partial q}\frac{\partial G}{\partial q})
+   \Delta \varepsilon_V = \Delta p \frac{3}{2h}\frac{\partial F}{\partial p}\frac{\partial G}{\partial q} + \Delta q(\frac{1}{2\mu} + \frac{1}{h}\frac{\partial F}{\partial q}\frac{\partial G}{\partial q})
 
 where :math:`K` and :math:`\mu` are elastic bulk and shear moduli, :math:`F` and :math:`G` the plastic yield surface and the plastic potential and :math:`h` the hardening rate that is defined by:
 

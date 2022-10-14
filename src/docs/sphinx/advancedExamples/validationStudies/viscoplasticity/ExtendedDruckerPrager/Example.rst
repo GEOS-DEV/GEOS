@@ -11,13 +11,13 @@ Problem description
 
 This example uses the Triaxial Driver to simulate an elasto-plastic triaxial compression test of an Extended Drucker-Prager solid. Constant lateral confining stress together with loading/unloading axial strain periods are imposed. Imposed axial strain range are high enough for allowing plastic yield in both loading and unloading period. This complicated senario is optimal for verifying the numerical convergence of the Extended Drucker-Prager constitutive model implimented in GEOSX. 
 
-Semi analytical result for axial stress variation :math:`\delta\sigma_{V}` and lateral strain variation :math:`\delta\varepsilon_{V}` can be etablished for the considered triaxial boundary conditions as `(author, year) <https:>`__ :
+Semi analytical result for axial stress variation :math:`\Delta\sigma_{V}` and lateral strain variation :math:`\Delta\varepsilon_{V}` can be etablished for the considered triaxial boundary conditions as `(author, year) <https:>`__ :
 
 .. math::
-   \delta\sigma_{V} = \delta\varepsilon_{V} E_{ep}
+   \Delta\sigma_{V} = \Delta\varepsilon_{V} E_{ep}
 
 .. math::
-   \delta\varepsilon_{H} = \delta\varepsilon_{V} - \frac{\delta\sigma_{V}}{E^\prime_{ep}}
+   \Delta\varepsilon_{H} = \Delta\varepsilon_{V} - \frac{\Delta\sigma_{V}}{E^\prime_{ep}}
 
 where :math:`E_{ep}` and :math:`E^\prime_{ep}` are elasto-plastic Young moduli that can be obtained from the elastic Young and shear moduli (:math:`E` and :math:`\mu`), the frictional parameter :math:`b` and the dilation ratio :math:`\theta` of the Extended Drucker-Prager model by:
 
@@ -35,7 +35,7 @@ The hardening rate :math:`h` is defined by
 These solutions are applied only when plastic yield condition is staisfied. The cohesion parameter defining the plastic yield surface is updated with stress change as
 
 .. math::
-   \delta \lambda = \frac{b-3}{3h}\delta\sigma_{V}
+   \Delta \lambda = \frac{b-3}{3h}\Delta\sigma_{V}
 
 
 These solutions were etablished for a positive shear stress :math:`q = -(\sigma_{V} - \sigma_{H})` (negative sign convention for compression stress). For the case when the plastic yield occurs at a negative shear stress, we have
@@ -49,7 +49,7 @@ These solutions were etablished for a positive shear stress :math:`q = -(\sigma_
 and
 
 .. math::
-   \delta \lambda = \frac{b+3}{3h}\delta\sigma_{V} 
+   \Delta \lambda = \frac{b+3}{3h}\Delta\sigma_{V} 
 
 These solutions are implemented in a Python script associated to this DOC for verifying GEOSX results.
 

@@ -1,6 +1,5 @@
 import os
 import sys
-sys.path.append("/data/PLI/sytuan/GEOSX/Libs/matplotlib")
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,7 +12,6 @@ def main():
 	xmlFilePath = "../../../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml"
 	xmlFilePath_case = "../../../../../../../inputFiles/triaxialDriver/triaxialDriver_ViscoModifiedCamClay.xml"
 	imposedStrainFilePath = "../../../../../../../inputFiles/triaxialDriver/tables/axialStrain.geos"
-	outputPath = "ViscoModifiedCamClay.png"
 		 
 	# Load GEOSX results
 	time, ax_strain, ra_strain1, ra_strain2, ax_stress, ra_stress1, ra_stress2, newton_iter, residual_norm = np.loadtxt(
@@ -84,17 +82,14 @@ def main():
 		p_anal = (ax_stress_anal + 2.0*ra_stress_anal)/3.0
 		q_anal = -(ax_stress_anal - ra_stress_anal)
 
-		delta_p_anal = (delta_ax_stress_anal + 2.0*delta_ra_stress_anal)/3.0
-		delta_q_anal = -(delta_ax_stress_anal - delta_ra_stress_anal)
-	
 		# Plastic correction
-		F_anal = q_anal*q_anal + cslSlope*cslSlope*p_anal*(p_anal-preConsolidationPressure)		
+		F_anal = q_anal*q_anal/(cslSlope*cslSlope) + p_anal*(p_anal-preConsolidationPressure)		
 		
 		if(F_anal>=0):
 			# Derivatives
-			dF_dp = cslSlope*cslSlope*(2.0*p_anal-preConsolidationPressure)
-			dF_dq = 2.0*q_anal
-			dF_dpc = -cslSlope*cslSlope*p_anal
+			dF_dp = 2.0*p_anal-preConsolidationPressure
+			dF_dq = 2.0*q_anal/(cslSlope*cslSlope)
+			dF_dpc = -p_anal
 
 			dG_dp = dF_dp # associated plastic rule was considered
 			dG_dq = dF_dq
@@ -102,38 +97,31 @@ def main():
 			dpc_dlambda = -preConsolidationPressure/(virginCompressionIndex-recompressionIndex)*dG_dp
 			hardeningRate = -dF_dpc*dpc_dlambda
 
-			# Elasto-plastic coefficients
-			coeff_1 = 1.0/bulkModulus + dG_dp*dF_dp/hardeningRate
-			coeff_2 = dG_dp*dF_dq/hardeningRate
-			coeff_3 = 3.0/2.0*dG_dq*dF_dp/hardeningRate
-			coeff_4 = 1.0/2.0/shearModulus + 3.0/2.0*dG_dq*dF_dq/hardeningRate		
-			denom = coeff_1*coeff_4 - coeff_2*coeff_3
-
+			# See Runesson et al. 1999, see Eq. 29
+			parameter_Aep = 3.0*shearModulus*dF_dq*dG_dq + bulkModulus*dF_dp*dG_dp + hardeningRate
+			
 			# Compute stress variations
 			delta_ax_strain_anal = list_ax_strain_anal[idx] - list_ax_strain_anal[idx-1]
 			delta_time_anal = list_time_anal[idx]-list_time_anal[idx-1]
 
 			delta_strain_vol = delta_ax_strain_anal
-			delta_strain_shear = -delta_ax_strain_anal
-			delta_p_anal_s = (coeff_4*delta_strain_vol - coeff_2*delta_strain_shear)/denom
-			delta_q_anal_s = (coeff_1*delta_strain_shear - coeff_3*delta_strain_vol)/denom
-			
-			# Duvaut-Lions
-			timeRatio = 1.0/(1.0+delta_time_anal / relaxationTime)
-			delta_p_anal = timeRatio*delta_p_anal+(1.0-timeRatio)*delta_p_anal_s
-			delta_q_anal = timeRatio*delta_q_anal+(1.0-timeRatio)*delta_q_anal_s
+			delta_strain_shear = -delta_ax_strain_anal #3/2*delta_gamma
 
-			delta_ax_stress_anal = (3.0*delta_p_anal-2*delta_q_anal)/3.0
-			delta_ra_stress_anal = delta_ax_stress_anal+delta_q_anal
+			# See Runesson et al. 1999, see Eq. 4, 80, 62, 63
+			delta_lambda = delta_time_anal / relaxationTime * (F_anal/parameter_Aep)
+			delta_p_anal = (delta_strain_vol - delta_lambda*dG_dp)*bulkModulus
+			delta_q_anal = (delta_strain_shear - 3.0/2.0*delta_lambda*dG_dq)*2.0*shearModulus
+			
+			delta_ax_stress_anal = (3.0*delta_p_anal - 2.0*delta_q_anal)/3.0
+			delta_ra_stress_anal = delta_ax_stress_anal + delta_q_anal
 		
 			# Update stress
 			ax_stress_anal = list_ax_stress_anal[idx-1] + delta_ax_stress_anal
 			ra_stress_anal = list_ra_stress_anal[idx-1] + delta_ra_stress_anal
-			
-			delta_lambda = (dF_dq*delta_q_anal + dF_dp*delta_p_anal)/hardeningRate
+
 			delta_pc = dpc_dlambda * delta_lambda
 			preConsolidationPressure += delta_pc
-			
+						
 		list_ax_stress_anal[idx] = ax_stress_anal
 		list_ra_stress_anal[idx] = ra_stress_anal
 		
@@ -170,7 +158,7 @@ def main():
 		       markersize=msize,
 		       alpha=malpha,
 		       label='Semi-Analytic', linewidth=6)
-	
+
 	ax[0].set_xlabel(r'Axial Strain (%)', size=fsize, weight="bold")
 	ax[0].set_ylabel(r'Axial Stress (kPa)', size=fsize, weight="bold")
 	#ax[0].legend(loc='lower right', fontsize=fsize)
@@ -224,8 +212,7 @@ def main():
 	
 	plt.subplots_adjust(left=0.2, bottom=0.1, right=0.9, top=0.9, wspace=0.4, hspace=0.4)
 
-	plt.savefig(outputPath)
-	os.system("xdg-open " + outputPath)
+	plt.show()
 
 if __name__ == "__main__":
     main()

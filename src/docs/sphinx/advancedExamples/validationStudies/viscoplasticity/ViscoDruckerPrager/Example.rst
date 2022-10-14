@@ -11,31 +11,31 @@ Problem description
 
 This example uses the Triaxial Driver to simulate a triaxial compression test of a Visco Drucker-Prager solid. Constant lateral confining stress together with loading/unloading axial strain periods are imposed. Imposed axial strain range are high enough for allowing visco-plastic yield in both loading and unloading period. This complicated senario is optimal for verifying the numerical convergence of the Visco Drucker-Prager constitutive model implimented in GEOSX. 
 
-Semi analytical result for axial stress variation :math:`\delta\sigma_{V}` and lateral strain variation :math:`\delta\varepsilon_{V}` can be etablished for the considered triaxial boundary conditions as `(Runesson et al. 1999) <https://onlinelibrary.wiley.com/doi/abs/10.1002/(SICI)1099-1484(199901)4:1%3C75::AID-CFM60%3E3.0.CO;2-4>`__ :
+Semi analytical result for axial stress variation :math:`\Delta\sigma_{V}` and lateral strain variation :math:`\Delta\varepsilon_{V}` can be etablished for the considered triaxial boundary conditions as `(Runesson et al. 1999) <https://onlinelibrary.wiley.com/doi/abs/10.1002/(SICI)1099-1484(199901)4:1%3C75::AID-CFM60%3E3.0.CO;2-4>`__ :
 
 .. math::
-   \delta\sigma_{V} = (\delta\varepsilon_{V}-\delta\lambda\frac{b^\prime-3}{3}) E
+   \Delta\sigma_{V} = (\Delta\varepsilon_{V}-\Delta\lambda\frac{b^\prime-3}{3}) E
 
 .. math::
-   \delta\varepsilon_{H} = \delta\varepsilon_{V} - \frac{\delta\sigma_{V}}{2\mu} + \frac{3}{2}\delta\lambda
+   \Delta\varepsilon_{H} = \Delta\varepsilon_{V} - \frac{\Delta\sigma_{V}}{2\mu} + \frac{3}{2}\Delta\lambda
 
-where :math:`E` and :math:`\mu` are the elastic Young and shear moduli. The visco-plastic multiplier :math:`\delta\lambda` can be approximated by:
-
-.. math::
-   \delta\lambda = \frac{\delta t}{t_*} \frac{F}{3\mu + Kbb^\prime + h}
-
-in which :math:`\delta t` is the time increment, :math:`t_*` the relaxation time, :math:`F` the stress function defining the visco-plastic yield surface, :math:`K` the elastic bulk modulus, :math:`b` the frictional parameter defining the visco-plastic yield surface, :math:`b^\prime` the dilation parameter defining the plastic potential and :math:`h` the hardening rate. These solutions are applied only when plastic yield condition is staisfied. The cohesion parameter defining the plastic yield surface is updated with stress change as
+where :math:`E` and :math:`\mu` are the elastic Young and shear moduli. The visco-plastic multiplier :math:`\Delta\lambda` can be approximated by:
 
 .. math::
-   \delta a = h \delta\lambda
+   \Delta\lambda = \frac{\Delta t}{t_*} \frac{F}{3\mu + Kbb^\prime + h}
+
+in which :math:`\Delta t` is the time increment, :math:`t_*` the relaxation time, :math:`F` the stress function defining the visco-plastic yield surface, :math:`K` the elastic bulk modulus, :math:`b` the frictional parameter defining the visco-plastic yield surface, :math:`b^\prime` the dilation parameter defining the plastic potential and :math:`h` the hardening rate. These solutions are applied only when plastic yield condition is staisfied. The cohesion parameter defining the plastic yield surface is updated with stress change as
+
+.. math::
+   \Delta a = h \Delta\lambda
 
 These solutions were etablished for a positive shear stress `q = -(\sigma_{V} - \sigma_{H})` (negative sign convention for compression stress). For the case when the plastic yield occurs at a negative shear stress, we have
 
 .. math::
-   \delta\sigma_{V} = (\delta\varepsilon_{V}-\delta\lambda\frac{b^\prime+3}{3}) E
+   \Delta\sigma_{V} = (\Delta\varepsilon_{V}-\Delta\lambda\frac{b^\prime+3}{3}) E
 
 .. math::
-   \delta\varepsilon_{H} = \delta\varepsilon_{V} - \frac{\delta\sigma_{V}}{2\mu} - \frac{3}{2}\delta\lambda
+   \Delta\varepsilon_{H} = \Delta\varepsilon_{V} - \frac{\Delta\sigma_{V}}{2\mu} - \frac{3}{2}\Delta\lambda
 
 These solutions are implemented in a Python script associated to this DOC for verifying GEOSX results.
 
