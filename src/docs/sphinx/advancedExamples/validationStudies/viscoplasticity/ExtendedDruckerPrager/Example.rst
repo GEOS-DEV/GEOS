@@ -99,7 +99,7 @@ The imposed axial strain loading/unloading periods, the constant lateral confini
 Constitutive laws
 ------------------------------
 
-The elasto-plastic parameters such as the elastic moduli, the friction angle and the cohesion defining the plastic yield surface as well as the hardening rate are defined as
+The elasto-plastic parameters are defined as
 
 
 .. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml

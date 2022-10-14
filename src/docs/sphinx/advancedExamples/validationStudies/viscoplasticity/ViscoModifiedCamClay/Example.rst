@@ -1,50 +1,32 @@
-.. _AdvancedExampleDruckerPrager:
+.. _AdvancedExampleViscoModifiedCamClay:
 
 
-#####################################################################
-Drucker-Prager model: Triaxial Driver versus Semi-analytical solution 
-#####################################################################
+#############################################################################
+Visco Modified CamClay model: Triaxial Driver versus Semi-analytical solution 
+#############################################################################
 
 ------------------------------------------------------------------
 Problem description
 ------------------------------------------------------------------
 
-This example uses the Triaxial Driver to simulate an elasto-plastic triaxial compression test of a Drucker-Prager solid. Constant lateral confining stress together with loading/unloading axial strain periods are imposed. Imposed axial strain range are high enough for allowing plastic yield in both loading and unloading period. This complicated senario is optimal for verifying the numerical convergence of the Drucker-Prager constitutive model implimented in GEOSX. 
-
-Semi analytical result for axial stress variation :math:`\delta\sigma_{V}` and lateral strain variation :math:`\delta\varepsilon_{V}` can be etablished for the considered triaxial boundary conditions as `(author, year) <https:>`__ :
+This example uses the Triaxial Driver to simulate a visco-elasto-plastic triaxial compression test of a Visco Modified CamClay solid. Oedometric condition with zero lateral strain together with loading/unloading axial strain periods are imposed. Semi analytical results for the mean and shear stress variations :math:`\delta p` and :math:`\delta q` can be etablished, considering the Perzyna approach, for the considered oedometric boundary conditions as `(Runesson et al. 1999) <https://onlinelibrary.wiley.com/doi/abs/10.1002/(SICI)1099-1484(199901)4:1%3C75::AID-CFM60%3E3.0.CO;2-4>`__ :
 
 .. math::
-   \delta\sigma_{V} = \delta\varepsilon_{V} E_{ep}
+   \delta p = K(\delta\varepsilon_{V} - \delta\lambda \frac{\partial G}{\partial p})
 
 .. math::
-   \delta\varepsilon_{H} = \delta\varepsilon_{V} - \frac{\delta\sigma_{V}}{E^\prime_{ep}}
+   \delta q = 2\mu(\delta\varepsilon_{V} - \delta\lambda \frac{3}{2}\frac{\partial G}{\partial q})
 
-where :math:`E_{ep}` and :math:`E^\prime_{ep}` are elasto-plastic Young moduli that can be obtained from the elastic Young and shear moduli (:math:`E` and :math:`\mu`), the frictional parameter :math:`b`, the dilation parameter :math:`b^\prime` and the hardening rate :math:`h` of the Drucker-Prager model by:
-
-.. math::
-   \frac{1}{E_{ep}} = \frac{1}{E} + \frac{(b^\prime-3)(b-3)}{9h}
+where :math:`K` and :math:`\mu` are elastic bulk and shear moduli, :math:`G` the plastic potential and :math:`\delta\lambda` the visco-plastic multiplier that can be obtained by:
 
 .. math::
-   \frac{1}{E^\prime_{ep}} = \frac{1}{2\mu} - \frac{b-3}{2h}
+   \delta\lambda = \frac{\delta t}{t_*} \frac{F}{3\mu\frac{\partial F}{\partial q}\frac{\partial G}{\partial q} + K\frac{\partial F}{\partial p}\frac{\partial G}{\partial p} + h}
 
-These solutions are applied only when plastic yield condition is staisfied. The cohesion parameter defining the plastic yield surface is updated with stress change as
-
-.. math::
-   \delta a = \frac{b-3}{3}\delta\sigma_{V}
-
-
-These solutions were etablished for a positive shear stress :math:`q = -(\sigma_{V} - \sigma_{H})` (negative sign convention for compression stress). For the case when the plastic yield occurs at a negative shear stress, we have
+in which :math:`\delta t` is the time increment, :math:`t_*` the relaxation time, :math:`F` the stress function defining the visco-plastic yield surface and :math:`h` the hardening rate that is defined by:
 
 .. math::
-   \frac{1}{E_{ep}} = \frac{1}{E} + \frac{(b^\prime+3)(b+3)}{9h}
+   h = -\frac{\partial F}{\partial \lambda}
 
-.. math::
-   \frac{1}{E^\prime_{ep}} = \frac{1}{2\mu} + \frac{b+3}{2h}
-
-and
-
-.. math::
-   \delta a = \frac{b+3}{3}\delta\sigma_{V} 
 
 These solutions are implemented in a Python script associated to this DOC for verifying GEOSX results.
 
@@ -62,7 +44,7 @@ and
 
 .. code-block:: console
 
-  inputFiles/triaxialDriver/triaxialDriver_DruckerPrager.xml
+  inputFiles/triaxialDriver/triaxialDriver_ViscoModifiedCamClay.xml
 
 This example also uses a set of table files located at:
 
@@ -75,7 +57,7 @@ A Python script for the semi-analytical solutions presented above as well as for
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/viscoplasticity/DruckerPrager/TriaxialDriver_vs_SemiAnalytic_DruckerPrager.py
+  src/docs/sphinx/advancedExamples/validationStudies/viscoplasticity/ViscoModifiedCamClay/TriaxialDriver_vs_SemiAnalytic_ViscoModifiedCamClay_Perzyna.py
 
 For this example, we focus on the ``Task`` and the ``Constitutive`` tags.
 
@@ -85,7 +67,7 @@ Task
 
 The imposed axial strain loading/unloading periods, the constant lateral confining stress as well as the initial stress are defined in the ``Task`` block as 
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_DruckerPrager.xml
+.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_ViscoModifiedCamClay.xml
     :language: xml
     :start-after: <!-- SPHINX_TASK -->
     :end-before: <!-- SPHINX_TASK_END -->
@@ -94,13 +76,13 @@ The imposed axial strain loading/unloading periods, the constant lateral confini
 Constitutive laws
 ------------------------------
 
-The elasto-plastic parameters such as the elastic moduli, the friction angle and the cohesion defining the plastic yield surface as well as the hardening rate are defined as
+The elasto-visco-plastic parameters are defined as
 
 
 .. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml
     :language: xml
-    :start-after: <!-- SPHINX_MATERIAL_DRUCKER_PRAGER -->
-    :end-before: <!-- SPHINX_MATERIAL_DRUCKER_PRAGER_END -->
+    :start-after: <!-- SPHINX_MATERIAL_VISCO_MODIFIED_CAMCLAY -->
+    :end-before: <!-- SPHINX_MATERIAL_VISCO_MODIFIED_CAMCLAY_END -->
 
 
 All constitutive parameters such as density, viscosity, bulk modulus, and shear modulus are specified in the International System of Units.
@@ -109,10 +91,10 @@ All constitutive parameters such as density, viscosity, bulk modulus, and shear 
 A comparison between GEOSX results and semi-analytical results
 --------------------------------------------------------------
 
-The simulation results are saved in a text file, named ``DruckerPragerResults.txt``. A perfect comparison between the results given by the TriaxialDriver solver in GEOSX and the semi-analytical results presented above is show below 
+The simulation results are saved in a text file, named ``ViscoModifiedCamClayResults.txt``. A perfect comparison between the results given by the TriaxialDriver solver in GEOSX and the semi-analytical results presented above is show below 
 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/viscoplasticity/DruckerPrager/TriaxialDriver_vs_SemiAnalytic_DruckerPrager.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/viscoplasticity/ViscoModifiedCamClay/TriaxialDriver_vs_SemiAnalytic_ViscoModifiedCamClay_Perzyna.py
 
 
 ------------------------------------------------------------------
