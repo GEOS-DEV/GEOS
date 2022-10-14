@@ -594,16 +594,10 @@ public:
         localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
         localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
-
         // clear working arrays
-        
         stack.compFlux.zero();
         stack.dCompFlux_dP.zero();
         stack.dCompFlux_dC.zero();
-
-        real64 densMean = 0.0;
-        real64 dDensMean_dP[2]{0.0, 0.0};
-        real64 dDensMean_dC[2][numComp]{};
 
         real64 const trans[2] = { stack.transmissibility[connectionIndex][0],
                                   stack.transmissibility[connectionIndex][1] };
@@ -616,6 +610,10 @@ public:
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
           // create local work arrays
+          real64 densMean = 0.0;
+          real64 dDensMean_dP[2]{0.0, 0.0};
+          real64 dDensMean_dC[2][numComp]{};
+
           real64 phaseFlux = 0.0;
           real64 dPhaseFlux_dP[2]{0.0, 0.0};
           real64 dPhaseFlux_dC[2][numComp]{};
@@ -784,7 +782,7 @@ public:
             stack.compFlux[ic] += phaseFlux * ycp;
 
             // derivatives stemming from phase flux
-            for( integer ke = 0; ke < stack.stencilSize; ++ke )
+            for( integer ke = 0; ke < 2; ++ke )
             {
               stack.dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
               for( integer jc = 0; jc < numComp; ++jc )
@@ -812,23 +810,23 @@ public:
           // populate local flux vector and derivatives
           for( integer ic = 0; ic < numComp; ++ic )
           {
-            integer const eqIndex0 = k[0]* numEqn + ic;
-            integer const eqIndex1 = k[1]* numEqn + ic;
+            integer const eqIndex0 = k[0] * numEqn + ic;
+            integer const eqIndex1 = k[1] * numEqn + ic;
 
-            stack.localFlux[ eqIndex0 ]  =  m_dt * stack.compFlux[ic];
-            stack.localFlux[ eqIndex1 ]  = -m_dt * stack.compFlux[ic];
+            stack.localFlux[ eqIndex0 ]  +=  m_dt * stack.compFlux[ic];
+            stack.localFlux[ eqIndex1 ]  -=  m_dt * stack.compFlux[ic];
 
             for( integer ke = 0; ke < 2; ++ke )
             {
               localIndex const localDofIndexPres = k[ke] * numDof;
-              stack.localFluxJacobian[eqIndex0][localDofIndexPres] =  m_dt * stack.dCompFlux_dP[ke][ic];
-              stack.localFluxJacobian[eqIndex1][localDofIndexPres] = -m_dt * stack.dCompFlux_dP[ke][ic];
+              stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * stack.dCompFlux_dP[ke][ic];
+              stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * stack.dCompFlux_dP[ke][ic];
 
               for( integer jc = 0; jc < numComp; ++jc )
               {
                 localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-                stack.localFluxJacobian[eqIndex0][localDofIndexComp] =  m_dt * stack.dCompFlux_dC[ke][ic][jc];
-                stack.localFluxJacobian[eqIndex1][localDofIndexComp] = -m_dt * stack.dCompFlux_dC[ke][ic][jc];
+                stack.localFluxJacobian[eqIndex0][localDofIndexComp] += m_dt * stack.dCompFlux_dC[ke][ic][jc];
+                stack.localFluxJacobian[eqIndex1][localDofIndexComp] -= m_dt * stack.dCompFlux_dC[ke][ic][jc];
               }
             }
           }
@@ -843,8 +841,6 @@ public:
         } // loop over phases
       }   // loop over k[1]
     }   // loop over k[0]
-
-
 
   }
 
@@ -861,12 +857,12 @@ public:
   {
     using namespace compositionalMultiphaseUtilities;
 
-    // Apply equation/variable change transformation(s)
-    stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
-    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numFluxElems,
-                                                             stack.localFluxJacobian, work );
-    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numFluxElems,
-                                                               stack.localFlux );
+    // // Apply equation/variable change transformation(s)
+    // stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
+    // shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numFluxElems,
+    //                                                          stack.localFluxJacobian, work );
+    // shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numFluxElems,
+    //                                                            stack.localFlux );
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)
@@ -1384,10 +1380,10 @@ public:
     using namespace compositionalMultiphaseUtilities;
     using Order = BoundaryStencil::Order;
 
-    // Apply equation/variable change transformation(s)
-    real64 work[numDof]{};
-    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localFluxJacobian, work );
-    shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localFlux );
+    // // Apply equation/variable change transformation(s)
+    // real64 work[numDof]{};
+    // shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localFluxJacobian, work );
+    // shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localFlux );
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)

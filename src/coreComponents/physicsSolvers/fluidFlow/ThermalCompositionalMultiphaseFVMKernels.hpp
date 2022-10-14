@@ -450,9 +450,9 @@ public:
         real64 const ycp = phaseCompFracSub[ic];
         for( integer ke = 0; ke < 2; ++ke )
         {
-          stack.dCompFlux_dT[k[ke]][ic] += dPhaseFlux_dT[ke] * ycp;
+          stack.dCompFlux_dT[ke][ic] += dPhaseFlux_dT[ke] * ycp;
         }
-        stack.dCompFlux_dT[k[k_up]][ic] += phaseFlux * dPhaseCompFracSub[ic][Deriv::dT];
+        stack.dCompFlux_dT[k_up][ic] += phaseFlux * dPhaseCompFracSub[ic][Deriv::dT];
       }
 
       // Step 4: add dCompFlux_dTemp to localFluxJacobian
@@ -463,7 +463,7 @@ public:
         for( integer ke = 0; ke < 2; ++ke )
         {
           integer const localDofIndexTemp = k[ke] * numDof + numDof - 1;
-          stack.localFluxJacobian[eqIndex0][localDofIndexTemp]  =  m_dt * stack.dCompFlux_dT[ke][ic];
+          stack.localFluxJacobian[eqIndex0][localDofIndexTemp] =  m_dt * stack.dCompFlux_dT[ke][ic];
           stack.localFluxJacobian[eqIndex1][localDofIndexTemp] = -m_dt * stack.dCompFlux_dT[ke][ic];
         }
       }
@@ -497,25 +497,25 @@ public:
         stack.dEnergyFlux_dC[k_up][jc] += phaseFlux * dProp_dC[jc];
       }
 
-      integer const localRowIndexEnergy0 = k[0]*numEqn - 1;
-      integer const localRowIndexEnergy1 = k[1]*numEqn - 1;
-      stack.localFlux[localRowIndexEnergy0] =  m_dt * stack.energyFlux;
-      stack.localFlux[localRowIndexEnergy1] = -m_dt * stack.energyFlux;
+      integer const localRowIndexEnergy0 = k[0] * numEqn + numEqn - 1;
+      integer const localRowIndexEnergy1 = k[1] * numEqn + numEqn - 1;
+      stack.localFlux[localRowIndexEnergy0] +=  m_dt * stack.energyFlux;
+      stack.localFlux[localRowIndexEnergy1] -=  m_dt * stack.energyFlux;
 
       for( integer ke = 0; ke < 2; ++ke )
       {
         integer const localDofIndexPres = k[ke] * numDof;
-        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexPres] =  m_dt * stack.dEnergyFlux_dP[ke];
-        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexPres] = -m_dt * stack.dEnergyFlux_dP[ke];
+        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexPres] += m_dt * stack.dEnergyFlux_dP[ke];
+        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexPres] -= m_dt * stack.dEnergyFlux_dP[ke];
         integer const localDofIndexTemp = localDofIndexPres + numDof - 1;
-        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] =  m_dt * stack.dEnergyFlux_dT[ke];
-        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] = -m_dt * stack.dEnergyFlux_dT[ke];
+        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] +=  m_dt * stack.dEnergyFlux_dT[ke];
+        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] -=  m_dt * stack.dEnergyFlux_dT[ke];
 
         for( integer jc = 0; jc < numComp; ++jc )
         {
           integer const localDofIndexComp = localDofIndexPres + jc + 1;
-          stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexComp] =  m_dt * stack.dEnergyFlux_dC[ke][jc];
-          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexComp] = -m_dt * stack.dEnergyFlux_dC[ke][jc];
+          stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexComp] += m_dt * stack.dEnergyFlux_dC[ke][jc];
+          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexComp] -= m_dt * stack.dEnergyFlux_dC[ke][jc];
         }
       }
    } );
@@ -564,16 +564,16 @@ public:
         }
 
         // Step 1: add energyFlux and its derivatives to localFlux and localFluxJacobian
-        integer const localRowIndexEnergy0 = k[0]*numEqn - 1;
-        integer const localRowIndexEnergy1 = k[1]*numEqn - 1;
+        integer const localRowIndexEnergy0 = k[0] * numEqn + numEqn - 1;
+        integer const localRowIndexEnergy1 = k[1] * numEqn + numEqn - 1;
         stack.localFlux[localRowIndexEnergy0] +=  m_dt * stack.conductiveEnergyFlux;
-        stack.localFlux[localRowIndexEnergy1] += -m_dt * stack.conductiveEnergyFlux;
+        stack.localFlux[localRowIndexEnergy1] -=  m_dt * stack.conductiveEnergyFlux;
 
         for( integer ke = 0; ke < 2; ++ke )
         {
           integer const localDofIndexTemp = k[ke] * numDof + numDof - 1;
           stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] +=  m_dt * stack.dConductiveEnergyFlux_dT[ke];
-          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] += -m_dt * stack.dConductiveEnergyFlux_dT[ke];
+          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] -=  m_dt * stack.dConductiveEnergyFlux_dT[ke];
         }
       }
     }
