@@ -33,8 +33,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-FaceManager::FaceManager( string const &, Group * const parent ):
-  ObjectManagerBase( "FaceManager", parent )
+FaceManager::FaceManager( string const & name, Group * const parent ):
+  ObjectManagerBase( name, parent )
 {
   this->registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
   this->registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
@@ -183,7 +183,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
 
   ArrayOfArraysView< localIndex > const facesToNodes = nodeList().toView();
 
-  elemManager.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion const & subRegion )
+  elemManager.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&] ( auto const & subRegion )
   {
     subRegion.calculateElementCenters( X );
   } );
@@ -306,8 +306,8 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
   }
 }
 
-void FaceManager::extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
-                                                                   std::vector< std::vector< globalIndex > > & globalFaceNodes )
+ArrayOfSets< globalIndex >
+FaceManager::extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -315,30 +315,34 @@ void FaceManager::extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager c
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = this->nodeList().toViewConst();
   arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
+  arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeManager.localToGlobalMap();
 
-  globalFaceNodes.resize( numFaces );
-
-  forAll< parallelHostPolicy >( numFaces, [&]( localIndex const & faceIndex )
+  array1d< localIndex > nodeCounts( numFaces );
+  forAll< parallelHostPolicy >( numFaces, [nodeCounts = nodeCounts.toView(),
+                                           faceToNodeMap, isDomainBoundary]( localIndex const & faceIndex )
   {
-    std::vector< globalIndex > & curFaceGlobalNodes = globalFaceNodes[ faceIndex ];
-
     if( isDomainBoundary( faceIndex ) )
     {
-      localIndex const numNodes = faceToNodeMap.sizeOfArray( faceIndex );
-      curFaceGlobalNodes.resize( numNodes );
-
-      for( localIndex a = 0; a < numNodes; ++a )
-      {
-        curFaceGlobalNodes[ a ]= nodeManager.localToGlobalMap()( faceToNodeMap( faceIndex, a ) );
-      }
-
-      std::sort( curFaceGlobalNodes.begin(), curFaceGlobalNodes.end() );
-    }
-    else
-    {
-      curFaceGlobalNodes.resize( 0 );
+      nodeCounts[ faceIndex ] = faceToNodeMap.sizeOfArray( faceIndex );
     }
   } );
+
+  ArrayOfSets< globalIndex > globalFaceNodes;
+  globalFaceNodes.resizeFromCapacities< parallelHostPolicy >( nodeCounts.size(), nodeCounts.data() );
+
+  forAll< parallelHostPolicy >( numFaces, [globalFaceNodes = globalFaceNodes.toView(),
+                                           faceToNodeMap, isDomainBoundary, nodeLocalToGlobal]( localIndex const & faceIndex )
+  {
+    if( isDomainBoundary( faceIndex ) )
+    {
+      for( localIndex const nodeIndex : faceToNodeMap[faceIndex] )
+      {
+        globalFaceNodes.insertIntoSet( faceIndex, nodeLocalToGlobal[nodeIndex] );
+      }
+    }
+  } );
+
+  return globalFaceNodes;
 }
 
 
@@ -391,7 +395,7 @@ localIndex FaceManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           bool const overwriteUpMaps,
                                           bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
-  // GEOSX_MARK_FUNCTION;
+  GEOSX_MARK_FUNCTION;
 
   localIndex unPackedSize = 0;
 
@@ -449,7 +453,7 @@ void FaceManager::compressRelationMaps()
 
 void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )
 {
-  arrayView1d< localIndex const > const childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  arrayView1d< localIndex const > const childFaceIndices = getExtrinsicData< extrinsicMeshData::childIndex >();
 
   ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange ( targetIndices );
 

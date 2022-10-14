@@ -153,7 +153,7 @@ public:
   void addField( string const & fieldName,
                  FieldLocation location,
                  integer components,
-                 map< string, array1d< string > > const & regions );
+                 map< std::pair< string, string >, array1d< string > > const & regions );
 
   /**
    * @brief Add coupling between two fields.
@@ -189,7 +189,7 @@ public:
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
                     Connector connectivity,
-                    map< string, array1d< string > > const & regions,
+                    map< std::pair< string, string >, array1d< string > > const & regions,
                     bool symmetric = true );
 
   /**

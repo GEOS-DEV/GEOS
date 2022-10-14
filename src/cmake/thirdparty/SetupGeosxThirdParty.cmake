@@ -4,10 +4,10 @@
 
 macro(find_and_register)
     set(singleValueArgs NAME HEADER)
-    set(multiValueArgs INCLUDE_DIRECTORIES 
+    set(multiValueArgs INCLUDE_DIRECTORIES
                        LIBRARY_DIRECTORIES
-                       LIBRARIES 
-                       EXTRA_LIBRARIES 
+                       LIBRARIES
+                       EXTRA_LIBRARIES
                        DEPENDS )
 
     ## parse the arguments
@@ -121,7 +121,7 @@ if(DEFINED HDF5_DIR)
     include(FindHDF5)
 
     # On some platforms (Summit) HDF5 lists /usr/include in it's list of include directories.
-    # When this happens you can get really opaque include errors. 
+    # When this happens you can get really opaque include errors.
     list(REMOVE_ITEM HDF5_INCLUDE_DIRS /usr/include)
 
     blt_import_library(NAME hdf5
@@ -147,11 +147,11 @@ if(DEFINED CONDUIT_DIR)
 
     set(CONDUIT_TARGETS conduit conduit_relay conduit_blueprint)
     foreach(targetName ${CONDUIT_TARGETS} )
-        get_target_property(includeDirs 
+        get_target_property(includeDirs
                             ${targetName}
                             INTERFACE_INCLUDE_DIRECTORIES)
-                             
-        set_property(TARGET ${targetName} 
+
+        set_property(TARGET ${targetName}
                      APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                      ${includeDirs})
     endforeach()
@@ -210,7 +210,6 @@ endif()
 ################################
 if(DEFINED RAJA_DIR)
     message(STATUS "RAJA_DIR = ${RAJA_DIR}")
-
     find_package(RAJA REQUIRED
                  PATHS ${RAJA_DIR}
                  NO_DEFAULT_PATH)
@@ -389,6 +388,36 @@ else()
 endif()
 
 ################################
+# SCOTCH
+################################
+if(DEFINED SCOTCH_DIR)
+    message(STATUS "SCOTCH_DIR = ${SCOTCH_DIR}")
+
+    find_and_register(NAME scotch
+                      INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
+                      LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
+                      HEADER scotch.h
+                      LIBRARIES scotch scotcherr )
+
+    find_and_register(NAME ptscotch
+                      INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
+                      LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
+                      DEPENDS scotch
+                      HEADER ptscotch.h
+                      LIBRARIES ptscotch ptscotcherr )
+
+    set(ENABLE_SCOTCH ON CACHE BOOL "")
+    set(thirdPartyLibs ${thirdPartyLibs} scotch ptscotch)
+else()
+    if(ENABLE_SCOTCH)
+        message(WARNING "ENABLE_SCOTCH is ON but SCOTCH_DIR isn't defined.")
+    endif()
+
+    set(ENABLE_SCOTCH OFF CACHE BOOL "" FORCE)
+    message(STATUS "Not using SCOTCH.")
+endif()
+
+################################
 # SUPERLU_DIST
 ################################
 if(DEFINED SUPERLU_DIST_DIR)
@@ -442,17 +471,25 @@ endif()
 if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
+    set( HYPRE_DEPENDS blas lapack superlu_dist )
     if( ENABLE_HYPRE_CUDA )
-        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY} )
+        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} )
+        list( APPEND HYPRE_DEPENDS umpire )
     endif()
 
     find_and_register(NAME hypre
                       INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
-                      LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib 
+                      LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib
                       HEADER HYPRE.h
                       LIBRARIES HYPRE
                       EXTRA_LIBRARIES ${EXTRA_LIBS}
-                      DEPENDS blas lapack superlu_dist)
+                      DEPENDS ${HYPRE_DEPENDS})
+
+
+    # Prepend Hypre to link flags, fix for Umpire appearing before Hypre on the link line
+    if (NOT CMAKE_HOST_APPLE)
+      blt_add_target_link_flags (TO hypre FLAGS "-Wl,--whole-archive ${HYPRE_DIR}/lib/libHYPRE.a -Wl,--no-whole-archive")
+    endif()
 
     # if( ENABLE_CUDA AND ( NOT ENABLE_HYPRE_CUDA ) )
     #   set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
@@ -462,7 +499,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     # else()
     #   set(ENABLE_HYPRE ON CACHE BOOL "")
     # endif()
-    
+
     set(ENABLE_HYPRE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} hypre)
 else()
@@ -479,15 +516,15 @@ endif()
 ################################
 if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
     message(STATUS "TRILINOS_DIR = ${TRILINOS_DIR}")
-  
+
     include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
-  
+
     list(REMOVE_ITEM Trilinos_LIBRARIES "gtest")
     list(REMOVE_DUPLICATES Trilinos_LIBRARIES)
 
     blt_import_library(NAME trilinos
                          DEPENDS_ON ${TRILINOS_DEPENDS}
-                         INCLUDES ${Trilinos_INCLUDE_DIRS} 
+                         INCLUDES ${Trilinos_INCLUDE_DIRS}
                          LIBRARIES ${Trilinos_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON)
 
@@ -549,12 +586,12 @@ if(DEFINED VTK_DIR)
     foreach( targetName ${VTK_TARGETS} )
 
         get_target_property( includeDirs ${targetName}  INTERFACE_INCLUDE_DIRECTORIES)
-    
-        set_property(TARGET ${targetName} 
+
+        set_property(TARGET ${targetName}
                      APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                      ${includeDirs})
     endforeach()
-    
+
     set(ENABLE_VTK ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} vtk)
 else()
@@ -643,5 +680,13 @@ if(NOT ENABLE_${upper_LAI})
   message(FATAL_ERROR "${GEOSX_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF")
 endif()
 option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
+
+###############################
+# NvToolExt
+###############################
+if ( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
+  find_package(CUDAToolkit REQUIRED)
+  set(thirdPartyLibs ${thirdPartyLibs} CUDA::nvToolsExt)
+endif()
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")

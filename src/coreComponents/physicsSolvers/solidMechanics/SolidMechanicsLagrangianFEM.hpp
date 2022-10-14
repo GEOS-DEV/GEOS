@@ -25,8 +25,8 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-
-#include "SolidMechanicsLagrangianFEMKernels.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 
 namespace geosx
 {
@@ -39,6 +39,9 @@ namespace geosx
 class SolidMechanicsLagrangianFEM : public SolverBase
 {
 public:
+
+  /// String used to form the solverName used to register single-physics solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "solid"; }
 
   /**
    * @enum TimeIntegrationOption
@@ -128,12 +131,6 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  solveLinearSystem( DofManager const & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override;
-
-  virtual void
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
@@ -220,41 +217,31 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    static constexpr char const * vTildeString() { return "velocityTilde"; }
-    static constexpr char const * uhatTildeString() { return "uhatTilde"; }
     static constexpr char const * cflFactorString() { return "cflFactor"; }
     static constexpr char const * newmarkGammaString() { return "newmarkGamma"; }
     static constexpr char const * newmarkBetaString() { return "newmarkBeta"; }
     static constexpr char const * massDampingString() { return "massDamping"; }
     static constexpr char const * stiffnessDampingString() { return "stiffnessDamping"; }
-    static constexpr char const * useVelocityEstimateForQSString() { return "useVelocityForQS"; }
     static constexpr char const * timeIntegrationOptionString() { return "timeIntegrationOption"; }
     static constexpr char const * maxNumResolvesString() { return "maxNumResolves"; }
     static constexpr char const * strainTheoryString() { return "strainTheory"; }
     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
-    static constexpr char const * forceExternalString() { return "externalForce"; }
     static constexpr char const * contactRelationNameString() { return "contactRelationName"; }
     static constexpr char const * noContactRelationNameString() { return "NOCONTACT"; }
-    static constexpr char const * contactForceString() { return "contactForce"; }
     static constexpr char const * maxForceString() { return "maxForce"; }
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
-
     static constexpr char const * sendOrReceiveNodesString() { return "sendOrReceiveNodes";}
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
+    static constexpr char const * forceString() { return "Force";}
 
-
-    dataRepository::ViewKey vTilde = { vTildeString() };
-    dataRepository::ViewKey uhatTilde = { uhatTildeString() };
     dataRepository::ViewKey newmarkGamma = { newmarkGammaString() };
     dataRepository::ViewKey newmarkBeta = { newmarkBetaString() };
     dataRepository::ViewKey massDamping = { massDampingString() };
     dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString() };
-    dataRepository::ViewKey useVelocityEstimateForQS = { useVelocityEstimateForQSString() };
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
-
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
@@ -290,7 +277,6 @@ protected:
   real64 m_massDamping;
   real64 m_stiffnessDamping;
   TimeIntegrationOption m_timeIntegrationOption;
-  integer m_useVelocityEstimateForQS;
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
@@ -326,13 +312,13 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
 
-    string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+    string const dofKey = dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
     arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );

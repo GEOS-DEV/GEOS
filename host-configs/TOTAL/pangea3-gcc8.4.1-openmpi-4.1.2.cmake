@@ -49,6 +49,7 @@ endif()
 # Cuda options
 if (DEFINED ENV{CUDA_ROOT})
   set(ENABLE_CUDA ON CACHE BOOL "")
+  set(ENABLE_CUDA_NVTOOLSEXT ON CACHE BOOL "")
   set(CUDA_TOOLKIT_ROOT_DIR $ENV{CUDA_ROOT} CACHE PATH "")
   set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER} CACHE STRING "")
   set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc CACHE STRING "")
@@ -92,23 +93,11 @@ set(ENABLE_ESSL OFF CACHE BOOL "")
 
 set(ENABLE_PYGEOSX ON CACHE BOOL "")
 
-if( ENABLE_ESSL )
-    set(ESSL_DIR /data_local/sw/essl/6.1 CACHE PATH "")
-    set(XL_DIR /data_local/sw/xl/16.1.1.3-190404 CACHE PATH "" )
-    set(ESSL_INCLUDE_DIRS ${ESSL_DIR}/include CACHE PATH "")   
-    set(ESSL_LIBRARIES ${ESSL_DIR}/lib64/libesslsmpcuda.so
-    		       ${XL_DIR}/xlsmp/5.1.1/lib/libxlsmp.so	
-		       ${XL_DIR}/xlf/16.1.1/lib/libxlfmath.so
-       		       ${XL_DIR}/xlf/16.1.1/lib/libxlf90_r.so
-                       ${CUDA_TOOLKIT_ROOT_DIR}/lib64/libcublas_static.a
-                       ${CUDA_TOOLKIT_ROOT_DIR}/lib64/libcudart_static.a
-                       ${CUDA_TOOLKIT_ROOT_DIR}/lib64/libcufft_static.a
-                       ${GEOSX_TPL_ROOT_DIR}/liblapackforessl.a
-		       ${XL_DIR}/xlC/16.1.1/lib/libxl.a
-                       CACHE PATH "")
+if (DEFINED ENV{OPENBLAS_ROOT})
+  set(BLAS_LIBRARIES $ENV{OPENBLAS_ROOT}/lib/libopenblas.a)
+  set(LAPACK_LIBRARIES $ENV{OPENBLAS_ROOT}/lib/libopenblas.a)
 else()
-  set(BLAS_LIBRARIES /data_local/sw/spack/0.17.0/opt/spack/linux-rhel8-power9le/gcc-8.4.1/openblas-0.3.18-udwdz2i4a3zcoyjl63h2wlsoacmifvwk/lib/libopenblas.a)
-  set(LAPACK_LIBRARIES /data_local/sw/spack/0.17.0/opt/spack/linux-rhel8-power9le/gcc-8.4.1/openblas-0.3.18-udwdz2i4a3zcoyjl63h2wlsoacmifvwk/lib/libopenblas.a)
+  message(FATAL_ERROR "You must have OPENBLAS_ROOT environment variable set, we advise loading module openblas/0.3.18")
 endif()
 
 set(ENABLE_DOXYGEN OFF CACHE PATH "")
