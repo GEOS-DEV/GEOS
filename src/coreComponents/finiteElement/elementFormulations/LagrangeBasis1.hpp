@@ -50,6 +50,7 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 weight( const int q )
   {
+    GEOSX_UNUSED_VAR(q);
     return 1.0;
   }
 
@@ -156,16 +157,16 @@ public:
    * @struct TensorProduct2D
    *
    * A 2-dimensional basis formed from the tensor product of the 1d basis.
-   *                                                             
-   *              2 o-----------------o 3                         _______________  
-   *                |                 |                          |Node   xi0  xi1| 
-   *                |                 |                          |=====  ===  ===| 
-   *                |                 |                          | 0     -1   -1 | 
-   *                |                 |                          | 1      1   -1 |                          
-   *                |                 |            xi1           | 2     -1    1 |                       
-   *                |                 |            |             | 3      1    1 |                         
-   *                |                 |            |             |_______________|                          
-   *                o-----------------o            | 
+   *
+   *              2 o-----------------o 3                         _______________
+   *                |                 |                          |Node   xi0  xi1|
+   *                |                 |                          |=====  ===  ===|
+   *                |                 |                          | 0     -1   -1 |
+   *                |                 |                          | 1      1   -1 |
+   *                |                 |            xi1           | 2     -1    1 |
+   *                |                 |            |             | 3      1    1 |
+   *                |                 |            |             |_______________|
+   *                o-----------------o            |
    *               0                   1           ------ xi0
    *
    */

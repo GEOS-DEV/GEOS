@@ -471,7 +471,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     /// get table containing all the face normals
-    arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
@@ -501,13 +500,12 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
+        //localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         localIndex const numNodesPerFace = facesToNodes.sizeOfArray( 0 );
 
         acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
         kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               numFacesPerElem,
                                                                X,
                                                                elemsToNodes,
                                                                velocity,
@@ -522,7 +520,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                               facesToNodes,
                                                               facesDomainBoundaryIndicator,
                                                               freeSurfaceFaceIndicator,
-                                                              faceNormal,
                                                               velocity,
                                                               damping );
       } );
