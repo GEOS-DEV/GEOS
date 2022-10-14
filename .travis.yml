@@ -47,7 +47,7 @@ __geosx_linux_build: &__geosx_linux_build
   - docker run
     --name=${CONTAINER_NAME}
     --volume=${TRAVIS_BUILD_DIR}:${TRAVIS_BUILD_DIR_MOUNT_POINT}
-    --cap-add=ALL
+    --cap-add=SYS_PTRACE
     -e HOST_CONFIG=${HOST_CONFIG:-host-configs/environment.cmake}
     -e CMAKE_BUILD_TYPE
     -e GEOSX_DIR=${GEOSX_DIR}

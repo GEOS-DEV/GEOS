@@ -50,7 +50,7 @@ I like to do
 
 .. code-block:: console
 
-    docker run --cap-add=ALL -d --name ${REMOTE_DEV_IMG}-${VERSION} -p 64000:22 ${REMOTE_DEV_IMG}:${VERSION}
+    docker run --cap-add=SYS_PTRACE -d --name ${REMOTE_DEV_IMG}-${VERSION} -p 64000:22 ${REMOTE_DEV_IMG}:${VERSION}
 
 that creates the container ``remote-dev-ubuntu18.04-gcc8-156-642``, running instance of ``remote-dev-ubuntu18.04-gcc8:156-642``.
 
