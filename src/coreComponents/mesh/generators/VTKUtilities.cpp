@@ -50,13 +50,131 @@
 #include <vtkDummyController.h>
 #endif
 
-
+#include <vtkPointData.h>
+#include <vtkPartitionedDataSet.h>
+#include <vtkExtractCells.h>
 
 namespace geosx
 {
 
 namespace vtk
 {
+
+/**
+ * @brief Build the Elements to Nodes indexing
+ *
+ * @tparam INDEX_TYPE the type of the indexes
+ * @tparam POLICY The execution policy
+ * @param mesh an input mesh
+ * @param cells an array of the cells
+ * @return An Elements to Nodes indexing
+ */
+template< typename INDEX_TYPE, typename POLICY >
+ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
+buildElemToNodesImpl( vtkDataSet & mesh,
+                      vtkSmartPointer< vtkCellArray > const & cells )
+{
+  localIndex const numCells = LvArray::integerConversion< localIndex >( mesh.GetNumberOfCells() );
+  array1d< INDEX_TYPE > nodeCounts( numCells );
+
+  // GetCellSize() is always thread-safe, can run in parallel
+  forAll< parallelHostPolicy >( numCells, [nodeCounts = nodeCounts.toView(), &cells] ( localIndex const cellIdx )
+  {
+    nodeCounts[cellIdx] = LvArray::integerConversion< INDEX_TYPE >( cells->GetCellSize( cellIdx ) );
+  } );
+
+  ArrayOfArrays< INDEX_TYPE, INDEX_TYPE > elemToNodes;
+  elemToNodes.template resizeFromCapacities< parallelHostPolicy >( numCells, nodeCounts.data() );
+
+  vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( mesh.GetPointData()->GetGlobalIds() );
+
+  // GetCellAtId() is conditionally thread-safe, use POLICY argument
+  forAll< POLICY >( numCells, [&cells, &globalPointId, elemToNodes = elemToNodes.toView()] ( localIndex const cellIdx )
+  {
+    vtkIdType numPts;
+    vtkIdType const * points;
+    cells->GetCellAtId( cellIdx, numPts, points );
+    for( int a = 0; a < numPts; ++a )
+    {
+      vtkIdType const pointIdx = globalPointId.GetValue( points[a] );
+      elemToNodes.emplaceBack( cellIdx, LvArray::integerConversion< INDEX_TYPE >( pointIdx ) );
+    }
+  } );
+
+  return elemToNodes;
+}
+
+/**
+ * @brief Build the Elements to Nodes indexing depending on the execution policy
+ *
+ * @tparam INDEX_TYPE the type of the indexes
+ * @param mesh an input mesh
+ * @return An Elements to Nodes indexing
+ */
+template< typename INDEX_TYPE >
+ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
+buildElemToNodes( vtkDataSet & mesh )
+{
+  vtkSmartPointer< vtkCellArray > const & cells = vtk::GetCellArray( mesh );
+  // According to VTK docs, IsStorageShareable() indicates whether pointers extracted via
+  // vtkCellArray::GetCellAtId() are pointers into internal storage rather than temp buffer
+  // and thus results can be used in a thread-safe way.
+  return cells->IsStorageShareable()
+       ? buildElemToNodesImpl< INDEX_TYPE, parallelHostPolicy >( mesh, cells )
+       : buildElemToNodesImpl< INDEX_TYPE, serialPolicy >( mesh, cells );
+}
+
+/**
+ * @brief Split a mesh by partionning it
+ *
+ * @tparam PART_INDEX the type of the partition indexes
+ * @param mesh an input mesh
+ * @param numParts The number of the process
+ * @param part an array of target partitions for each element in local mesh
+ * @return vtkSmartPointer< vtkPartitionedDataSet >
+ */
+template< typename PART_INDEX >
+vtkSmartPointer< vtkPartitionedDataSet >
+splitMeshByPartition( vtkDataSet & mesh,
+                      PART_INDEX const numParts,
+                      arrayView1d< PART_INDEX const > const & part )
+{
+  array1d< localIndex > cellCounts( numParts );
+  forAll< parallelHostPolicy >( part.size(), [part, cellCounts = cellCounts.toView()] ( localIndex const cellIdx )
+  {
+    RAJA::atomicInc< parallelHostAtomic >( &cellCounts[part[cellIdx]] );
+  } );
+
+  ArrayOfArrays< vtkIdType > cellsLists;
+  cellsLists.resizeFromCapacities< serialPolicy >( numParts, cellCounts.data() );
+
+  forAll< parallelHostPolicy >( part.size(), [part, cellsLists = cellsLists.toView()] ( localIndex const cellIdx )
+  {
+    cellsLists.emplaceBackAtomic< parallelHostAtomic >( LvArray::integerConversion< localIndex >( part[cellIdx] ),
+                                                        LvArray::integerConversion< vtkIdType >( cellIdx ) );
+  } );
+
+  vtkNew< vtkPartitionedDataSet > result;
+  result->SetNumberOfPartitions( LvArray::integerConversion< unsigned int >( numParts ) );
+
+  vtkNew< vtkExtractCells > extractor;
+  extractor->SetInputDataObject( &mesh );
+
+  for( localIndex p = 0; p < numParts; ++p )
+  {
+    arraySlice1d< vtkIdType const > const cells = cellsLists[p];
+    if( cells.size() > 0 )
+    {
+      extractor->SetCellIds( cells.dataIfContiguous(), LvArray::integerConversion< vtkIdType >( cells.size() ) );
+      extractor->Update();
+
+      vtkNew< vtkUnstructuredGrid > ug;
+      ug->ShallowCopy( extractor->GetOutputDataObject( 0 ) );
+      result->SetPartition( LvArray::integerConversion< unsigned int >( p ), ug );
+    }
+  }
+  return result;
+}
 
 vtkSmartPointer< vtkMultiProcessController > getController()
 {
@@ -1370,7 +1488,7 @@ real64 writeNodes( vtkDataSet & mesh,
 }
 
 void writeCells( vtkDataSet & mesh,
-                 const geosx::CellMapType & cellMap,
+                 const geosx::vtk::CellMapType & cellMap,
                  CellBlockManager & cellBlockManager )
 {
   // Creates a new cell block for each region and for each type of cell.
@@ -1401,7 +1519,7 @@ void writeCells( vtkDataSet & mesh,
 }
 
 void writeSurfaces( vtkDataSet & mesh,
-                    const geosx::CellMapType & cellMap,
+                    const geosx::vtk::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager )
 {
   if( cellMap.count( ElementType::Polygon ) == 0 )

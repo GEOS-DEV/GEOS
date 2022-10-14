@@ -135,10 +135,10 @@ private:
   integer m_useGlobalIds = 0;
 
   /// Method (library) used to partition the mesh
-  PartitionMethod m_partitionMethod = PartitionMethod::parmetis;
+  vtk::PartitionMethod m_partitionMethod = vtk::PartitionMethod::parmetis;
 
   /// Lists of VTK cell ids, organized by element type, then by region
-  CellMapType m_cellMap;
+  vtk::CellMapType m_cellMap;
 };
 
 } // namespace geosx
