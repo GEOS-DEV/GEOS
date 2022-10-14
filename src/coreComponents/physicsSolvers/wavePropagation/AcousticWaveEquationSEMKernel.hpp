@@ -964,7 +964,7 @@ public:
     GEOSX_UNUSED_VAR( edgeManager );
     GEOSX_UNUSED_VAR( faceManager );
     GEOSX_UNUSED_VAR( targetRegionIndex );
-    GEOSX_THROW( "Invalid type of formulation, the acoustic solver is designed for the SEM formulation", InputError );
+    GEOSX_THROW( invalidFormulationString, InputError );
   }
 
 
