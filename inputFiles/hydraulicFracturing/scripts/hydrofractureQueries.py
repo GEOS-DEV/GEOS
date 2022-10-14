@@ -14,23 +14,23 @@ def getFracHeightFromXML(fracType):
     tree = ElementTree.parse(prefix + fracType + "_benchmark.xml") 
 
     if fracType == 'kgdToughnessDominated' or fracType == 'kgdViscosityDominated':
-       meshElement = tree.find('Mesh/InternalMesh')
-       nodeZCoords = meshElement.get("zCoords")
-       nodeZCoords = [float(i) for i in nodeZCoords[1:-1].split(",")]    
-       zMin = nodeZCoords[0]
-       zMax = nodeZCoords[1]
-       height = zMax - zMin
+        meshElement = tree.find('Mesh/InternalMesh')
+        nodeZCoords = meshElement.get("zCoords")
+        nodeZCoords = [float(i) for i in nodeZCoords[1:-1].split(",")]    
+        zMin = nodeZCoords[0]
+        zMax = nodeZCoords[1]
+        height = zMax - zMin
 
     elif fracType == 'pknViscosityDominated':
-         param = tree.findall('Geometry/Box')
-         found_core = False
-         for elem in param:
-             if elem.get("name") == "core":
-                 source = elem.get("xMax")
-                 source = [float(i) for i in source[1:-1].split(",")]
-                 height = round(source[1])
-                 found_core = True
-             if found_core: break
+        param = tree.findall('Geometry/Box')
+        found_core = False
+        for elem in param:
+            if elem.get("name") == "core":
+                source = elem.get("xMax")
+                source = [float(i) for i in source[1:-1].split(",")]
+                height = round(source[1])
+                found_core = True
+            if found_core: break
 
     return height
 
@@ -44,7 +44,7 @@ def main():
 
     # Get frac height from XML file
     if fracType == 'kgdToughnessDominated' or fracType == 'kgdViscosityDominated' or fracType == 'pknViscosityDominated':
-       fracHeight = getFracHeightFromXML(fracType)
+        fracHeight = getFracHeightFromXML(fracType)
 
     # Read simulation output from HDF5 file
     # Global Coordinate of Element Center
@@ -80,14 +80,14 @@ def main():
         fracArea = 0
         for j in range(0,len(aper[0,:])):
             if aper[i,j]>1.0e-5:
-               fracArea += area[i,j]        
+                fracArea += area[i,j]        
         
         if fracType == 'kgdToughnessDominated' or fracType == 'kgdViscosityDominated':
-           length[i] = fracArea/fracHeight
+            length[i] = fracArea/fracHeight
         elif fracType == 'pennyShapedToughnessDominated' or fracType == 'pennyShapedViscosityDominated':
-             length[i] = (fracArea*4.0/math.pi)**0.5 
+            length[i] = (fracArea*4.0/math.pi)**0.5 
         elif fracType == 'pknViscosityDominated':
-             length[i] = fracArea/fracHeight
+            length[i] = fracArea/fracHeight
 
 
     header   = '      time   pressure   aperture     length'
