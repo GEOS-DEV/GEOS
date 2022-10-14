@@ -19,17 +19,17 @@
 #include "CellBlockManager.hpp"
 
 #include <vtkDataSet.h>
+#include <vtkSmartPointer.h>
 
 namespace geosx {
 
 /**
  * @brief Import face block @p faceBlockName from @p vtkMesh into the @p cellBlockManager.
- * @param faceBlockName
- * @param vtkMesh
- * @param cellBlockManager
- * @deprecated This is most likely not entirely the place to do this.
+ * @param[in] faceBlockName The face block name to include. It's both the name in the vtk file, and it will be the face block name.
+ * @param[in] vtkMesh The vtk mesh.
+ * @param[inout] cellBlockManager The face block instance will be attached to the @p cellBlockManager
  */
-void ImportFracture( string const & faceBlockName,
+void importFracture( string const & faceBlockName,
                      vtkSmartPointer< vtkDataSet > vtkMesh,
                      CellBlockManager & cellBlockManager );
 

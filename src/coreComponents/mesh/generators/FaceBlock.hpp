@@ -20,6 +20,11 @@
 namespace geosx
 {
 
+/**
+ * @brief Simple implementation of the @p FaceBlockABC contract.
+ *
+ * This class contains setters to store the externally computed mappings required by the @p FaceBlockABC contract.
+ */
 class FaceBlock : public FaceBlockABC
 {
 public:
@@ -71,7 +76,6 @@ private:
   array2d< localIndex > m_2dElemToFaces;
   ArrayOfArrays< localIndex > m_2dFaceTo2dElems;
   array1d< localIndex > m_2dFaceToEdge;
-
   ToCellRelation< array2d< localIndex > > m_2dElemToElems;
 };
 

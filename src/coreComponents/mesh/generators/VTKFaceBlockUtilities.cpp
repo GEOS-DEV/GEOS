@@ -19,7 +19,6 @@
 #include <vtkCell.h>
 #include <vtkDataArray.h>
 #include <vtkFieldData.h>
-#include <vtkSmartPointer.h>
 
 #include <algorithm>
 
@@ -29,30 +28,38 @@ namespace geosx
 /**
  * @brief Given a pair @p p of nodes, return the GEOSX edge index made of these 2 nodes.
  * @param p The pair of nodes in no specific order.
- * @param n2ed The nodes to edges mapping.
+ * @param nodeToEdges The nodes to edges mapping.
  * @return The GEOSX index
  */
 int pairToEdge( std::pair< int, int > const & p,
-                ArrayOfArrays< localIndex > const & n2ed )
+                ArrayOfArrays< localIndex > const & nodeToEdges )
 {
   // This functions takes all the edges that have one of the two nodes,
   // and find the unique edge with both nodes.
   // The current implementation can surely be improved,
   // but for the moment it seems to be working.
   int const n0 = p.first, n1 = p.second;
-  auto const & edges0 = n2ed[n0];
-  auto const & edges1 = n2ed[n1];
+  auto const & edges0 = nodeToEdges[n0];
+  auto const & edges1 = nodeToEdges[n1];
   std::set< int > const es0( edges0.begin(), edges0.end() );
   std::set< int > const es1( edges1.begin(), edges1.end() );
   std::vector< int > intersect;
   std::set_intersection( es0.cbegin(), es0.cend(), es1.cbegin(), es1.cend(), std::back_inserter( intersect ) );
-  GEOSX_ERROR_IF_NE_MSG( intersect.size(), 1, "We should only have one element" );
+  GEOSX_ERROR_IF_NE_MSG( intersect.size(), 1, "Internal error: we should only have one element" );
   return intersect.front();
 }
 
+/**
+ * @brief Converts one fault/fracture raw information of the vtk field data input into a C++ class.
+ */
 class FaceData
 {
 public:
+  /**
+   * @brief Builds from the vtk input.
+   * @param fieldData The vtk field data.
+   * @param faceBlockName The face block name to search form in the @p fieldData.
+   */
   FaceData( vtkFieldData * fieldData,
             string const & faceBlockName )
   {
@@ -98,7 +105,7 @@ public:
       m_num2dElements = array->GetNumberOfTuples();
 
       auto const numComponents = array->GetNumberOfComponents();
-      GEOSX_ERROR_IF_NE_MSG( 4, numComponents, "FieldData \"" + faceBlockName + "\" should have 4 components." );
+      GEOSX_ERROR_IF_NE_MSG( 4, numComponents, "FieldData \"" + faceBlockName + "\" should have 4 components. " << numComponents << " were found." );
 
       for( int i = 0; i < m_num2dElements; ++i )
       {
@@ -112,6 +119,10 @@ public:
     }
   }
 
+  /**
+   * @brief Number of 2d elements (geometrical faces in 3d).
+   * @return The integer.
+   */
   vtkIdType num2dElements() const
   {
     return m_num2dElements;
@@ -119,8 +130,8 @@ public:
 
   /**
    * @brief Given the vtk global index @p nodeId, returns the duplicated node with the lowest index.
-   * @param nodeId
-   * @return
+   * @param nodeId The vtk global index.
+   * @return The integer.
    *
    * This functions can be used to identify if two nodes are duplicated one of each other: they share the same lowest index.
    */
@@ -131,8 +142,8 @@ public:
   }
 
   /**
-   * @brief For @p elem2d, returns the global vtk index of @p neighbor.
-   * @param elem2d The local (the the "fracture") index of the 2d element.
+   * @brief For @p elem2d, returns the global vtk index of @p neighbor element.
+   * @param elem2d The local (to the "fracture") index of the 2d element.
    * @param neighbor The neighbor index, can be 0 or 1.
    * @return The global vtk index of the pointed cell.
    */
@@ -144,8 +155,8 @@ public:
   }
 
   /**
-   * @brief For @p elem2d, returns the local (to the vek cell) vtk index of @p neighbor.
-   * @param elem2d The local (the the "fracture") index of the 2d element.
+   * @brief For @p elem2d, returns the local (to the vek cell) vtk index of @p neighbor element.
+   * @param elem2d The local (to the "fracture") index of the 2d element.
    * @param neighbor The neighbor index, can be 0 or 1.
    * @return The local face vtk index of the pointed cell that touches the 2d element.
    */
@@ -157,7 +168,13 @@ public:
   }
 
 private:
+  /**
+   * @brief Number of 2d elements (geometrical faces in 3d).
+   */
   vtkIdType m_num2dElements;
+  /**
+   * @brief Raw vtk table that will be interpreted by @p FaceData.
+   */
   std::vector< std::vector< int > > m_data;
   /**
    * @brief All for any duplicated node, among all duplicated nodes in the same "position", returns the node index with the lowest value.
@@ -171,6 +188,8 @@ namespace internal
 /**
  * @brief This classes helps at building the global (vtk) element indices to the indices local to the cell blocks.
  * Then the global element to global faces can be be also computed.
+ *
+ * This implementation is mostly brittle and is work in progress.
  */
 class ElementToFace
 {
@@ -198,7 +217,7 @@ public:
       auto const size = l2g.size();
       for( int j = 0; j < size - 1; ++j )
       {
-        GEOSX_ERROR_IF_NE_MSG( l2g[i] + 1, l2g[i + 1], "The code is assuming that the cell block indexing is continuously increasing." );
+        GEOSX_ERROR_IF_NE_MSG( l2g[i] + 1, l2g[i + 1], "Internal error: the code is assuming that the cell block indexing is continuously increasing." );
       }
       m_ranges.emplace_back( l2g.front(), l2g.back() );
     }
@@ -266,8 +285,8 @@ private:
 
 /**
  * @brief Computes the number of 2d faces (geometrical edges in 3d) for the fracture defined by @p faceData.
- * @param vtkMesh The vtk mesh.
- * @param faceData The parsed fault/fracture information.
+ * @param[in] vtkMesh The vtk mesh.
+ * @param[in] faceData The parsed fault/fracture information.
  * @return The number of 2d faces.
  */
 localIndex computeNum2dFaces( vtkSmartPointer< vtkDataSet > vtkMesh,
@@ -297,32 +316,32 @@ localIndex computeNum2dFaces( vtkSmartPointer< vtkDataSet > vtkMesh,
 
 /**
  * @brief Compute the mapping from the 2d elements (geometrical faces in 3d) to their 3d element neighbors.
- * @param faceData The parsed fault/fracture information.
- * @param e2f The element to face mapping, across all the cell blocks.
+ * @param[in] faceData The parsed fault/fracture information.
+ * @param[in] elemToFaces The element to face mapping, across all the cell blocks.
  * @return The mappings to both the 3d elements and the cell block they belong to.
  */
 ToCellRelation< array2d< localIndex > > compute2dElemToElems( FaceData const & faceData,
-                                                              internal::ElementToFace const & e2f )
+                                                              internal::ElementToFace const & elemToFaces )
 {
   vtkIdType const num2dElements = faceData.num2dElements();
 
-  array2d< localIndex > elem2dToCellBlock( num2dElements, 2 ); // API
+  array2d< localIndex > elem2dToCellBlock( num2dElements, 2 );
   elem2dToCellBlock.setValues< parallelHostPolicy >( -1 );
   for( int i = 0; i < num2dElements; ++i )
   {
     for( int j = 0; j < 2; ++j )
     {
-      elem2dToCellBlock[i][j] = e2f.getCellBlockIndex( faceData.cell( i, j ) );
+      elem2dToCellBlock[i][j] = elemToFaces.getCellBlockIndex( faceData.cell( i, j ) );
     }
   }
 
-  array2d< localIndex > elem2dToElems( num2dElements, 2 ); // API
+  array2d< localIndex > elem2dToElems( num2dElements, 2 );
   elem2dToElems.setValues< parallelHostPolicy >( -1 );
   for( int i = 0; i < num2dElements; ++i )
   {
     for( int j = 0; j < 2; ++j )
     {
-      auto const offset = e2f.getElementCellBlockOffset( elem2dToCellBlock[i][j] );
+      int const offset = elemToFaces.getElementCellBlockOffset( elem2dToCellBlock[i][j] );
       elem2dToElems[i][j] = faceData.cell( i, j ) - offset;
     }
   }
@@ -332,17 +351,17 @@ ToCellRelation< array2d< localIndex > > compute2dElemToElems( FaceData const & f
 
 /**
  * @brief Compute the 2d elements to nodes and faces
- * @param vtkMesh The vtk mesh.
- * @param faceData The parsed fault/fracture information.
- * @param e2f The element to face mapping, across all the cell blocks.
- * @param f2n The face to nodes mappings.
+ * @param[in] vtkMesh The vtk mesh.
+ * @param[in] faceData The parsed fault/fracture information.
+ * @param[in] elemToFaces The element to face mapping, across all the cell blocks.
+ * @param[in] faceToNodes The face to nodes mappings.
  * @return A tuple. First index being the node mapping, second being the face mapping.
  */
 std::tuple< ArrayOfArrays< localIndex >, array2d< localIndex > >
 compute2dElemToNodesAndFaces( vtkSmartPointer< vtkDataSet > vtkMesh,
                               FaceData const & faceData,
-                              internal::ElementToFace const & e2f,
-                              ArrayOfArrays< localIndex > const & f2n )
+                              internal::ElementToFace const & elemToFaces,
+                              ArrayOfArrays< localIndex > const & faceToNodes )
 {
   // A utility function to convert a vtkIdList into a std::set< int >.
   auto vtkIdListToSet = []( vtkIdList * in ) -> std::set< int >
@@ -355,8 +374,8 @@ compute2dElemToNodesAndFaces( vtkSmartPointer< vtkDataSet > vtkMesh,
 
   vtkIdType const num2dElements = faceData.num2dElements();
 
-  ArrayOfArrays< localIndex > elem2dToNodes( num2dElements ); // API
-  array2d< localIndex > elem2dToFaces( num2dElements, 2 ); // API
+  ArrayOfArrays< localIndex > elem2dToNodes( num2dElements );
+  array2d< localIndex > elem2dToFaces( num2dElements, 2 );
 
   // Standard element/face double loop to find extract the nodes and faces indices required for the mappings.
   for( int i = 0; i < num2dElements; ++i )
@@ -369,10 +388,10 @@ compute2dElemToNodesAndFaces( vtkSmartPointer< vtkDataSet > vtkMesh,
       vtkCell * c = vtkMesh->GetCell( faceData.cell( i, j ) );
       vtkCell * f = c->GetFace( faceData.face( i, j ) );
       std::set< int > const vtkPoints = vtkIdListToSet( f->GetPointIds() );
-      auto faces = e2f[ei];
+      auto faces = elemToFaces[ei];
       for( int const & face: faces )
       {
-        auto const faceNodes = f2n[face];
+        auto const faceNodes = faceToNodes[face];
         std::set< int > const nodes( faceNodes.begin(), faceNodes.end() );
         if( vtkPoints == nodes )
         {
@@ -394,23 +413,30 @@ compute2dElemToNodesAndFaces( vtkSmartPointer< vtkDataSet > vtkMesh,
 
 /**
  * @brief Compute the 2d face and 2d elem to edges mapping.
- * @param vtkMesh The vtk mesh.
- * @param faceData The parsed fault/fracture information.
- * @param num2dFaces The number of 2d faces (geometrical edges in 3d).
- * @param n2ed The nodes to edges mapping.
+ * @param[in] vtkMesh The vtk mesh.
+ * @param[in] faceData The parsed fault/fracture information.
+ * @param[in] num2dFaces The number of 2d faces (geometrical edges in 3d).
+ * @param[in] nodeToEdges The nodes to edges mapping.
  * @return A tuple. First index being the face mapping, second being the elem mapping.
+ *
+ * Actually, for both the 2d face to edges mapping,
+ * it's important to note that there are actually 2 edges that match any 2d face.
+ * But the returned mapping only has one edge value.
+ * For the moment, this value is only used to define some kind of equivalent identification,
+ * and therefore one value is enough.
+ * From the two edges values, we only return the smallest value, to be sure it's unique.
  */
-std::tuple< array1d< localIndex >, ArrayOfArrays< localIndex >>
+std::tuple< array1d< localIndex >, ArrayOfArrays< localIndex > >
 compute2dFaceAnd2dElemToEdges( vtkSmartPointer< vtkDataSet > vtkMesh,
                                FaceData const & faceData,
                                localIndex const num2dFaces,
-                               ArrayOfArrays< localIndex > const & n2ed )
+                               ArrayOfArrays< localIndex > const & nodeToEdges )
 {
   vtkIdType const num2dElements = faceData.num2dElements();
 
-  array1d< localIndex > face2dToEdges; // API
+  array1d< localIndex > face2dToEdges;
   face2dToEdges.reserve( num2dFaces );
-  ArrayOfArrays< localIndex > elem2dToEdges( num2dElements ); // API
+  ArrayOfArrays< localIndex > elem2dToEdges( num2dElements );
 
   // [2d elem index] -> [left/right index] -> [edges (stored as a pair of ints)]
   // The pairs of `allEdges` do not deal with the duplication challenge: all the edges are there, even duplicates.
@@ -459,14 +485,14 @@ compute2dFaceAnd2dElemToEdges( vtkSmartPointer< vtkDataSet > vtkMesh,
     auto const & it = pairIdToEdgeId.find( pairId );
     if( it == pairIdToEdgeId.end() )
     {
-      pairIdToEdgeId[pairId] = pairToEdge( p, n2ed );
+      pairIdToEdgeId[pairId] = pairToEdge( p, nodeToEdges );
     }
     else
     {
-      it->second = std::min( it->second, pairToEdge( p, n2ed ) );
+      it->second = std::min( it->second, pairToEdge( p, nodeToEdges ) );
     }
   }
-  GEOSX_ERROR_IF_NE_MSG( std::size_t(num2dFaces), pairIdToEdgeId.size(), "Something wrong happened" );
+  GEOSX_ERROR_IF_NE_MSG( std::size_t(num2dFaces), pairIdToEdgeId.size(), "Internal error: inconsistency when computing the fault and fracture mappings." );
 
   // This loop build the `elem2dToEdges` mapping.
   // It uses the `pairIdToEdgeId` to remove duplicates.
@@ -501,7 +527,7 @@ compute2dFaceAnd2dElemToEdges( vtkSmartPointer< vtkDataSet > vtkMesh,
   GEOSX_ERROR_IF_NE_MSG( LvArray::integerConversion< localIndex >( uniqueEdges.size() ), num2dFaces, "Internal error: wrong number of edges in the fracture/fault mesh computation." );
   for( std::pair< int, int > const & p: uniqueEdges )
   {
-    face2dToEdges.emplace_back( pairToEdge( p, n2ed ) );
+    face2dToEdges.emplace_back( pairToEdge( p, nodeToEdges ) );
   }
 
   return { face2dToEdges, elem2dToEdges };
@@ -509,16 +535,16 @@ compute2dFaceAnd2dElemToEdges( vtkSmartPointer< vtkDataSet > vtkMesh,
 
 /**
  * @brief Compute the 2d faces (geometrical edges in 2d) to 2d elems (geometrical faces in 3d) mapping.
- * @param num2dFaces The number of 2d faces (geometrical edges in 3d).
- * @param face2dToEdges The 2d faces (geometrical edges in 2d) to edges mapping.
- * @param elem2dToEdges The 2d elem (geometrical faces in 3d) to edges mapping.
- * @return
+ * @param[in] num2dFaces The number of 2d faces (geometrical edges in 3d).
+ * @param[in] face2dToEdges The 2d faces (geometrical edges in 2d) to edges mapping.
+ * @param[in] elem2dToEdges The 2d elem (geometrical faces in 3d) to edges mapping.
+ * @return The mapping.
  */
 ArrayOfArrays <localIndex> computeFace2dToElems2d( localIndex const num2dFaces,
                                                    array1d <localIndex> const & face2dToEdges,
                                                    ArrayOfArrays <localIndex> const & elem2dToEdges )
 {
-  ArrayOfArrays< localIndex > face2dToElems2d( num2dFaces ); // API
+  ArrayOfArrays< localIndex > face2dToElems2d( num2dFaces );
 
   // First, a mapping inversion TODO there are optimized implementations here and there.
   std::map< int, std::vector< int > > edgesToElems2d;
@@ -541,14 +567,7 @@ ArrayOfArrays <localIndex> computeFace2dToElems2d( localIndex const num2dFaces,
   return face2dToElems2d;
 }
 
-/**
- * @brief Import face block @p faceBlockName from @p vtkMesh into the @p cellBlockManager.
- * @param faceBlockName
- * @param vtkMesh
- * @param cellBlockManager
- * @deprecated This is most likely not entirely the place to do this.
- */
-void ImportFracture( string const & faceBlockName,
+void importFracture( string const & faceBlockName,
                      vtkSmartPointer< vtkDataSet > vtkMesh,
                      CellBlockManager & cellBlockManager )
 {
@@ -557,9 +576,9 @@ void ImportFracture( string const & faceBlockName,
 
   FaceData const faceData( fieldData, faceBlockName );
 
-  vtkIdType const num2dElements = faceData.num2dElements(); // API
+  vtkIdType const num2dElements = faceData.num2dElements();
   // Computing the number of 2d faces
-  localIndex const num2dFaces = computeNum2dFaces( vtkMesh, faceData ); // API
+  localIndex const num2dFaces = computeNum2dFaces( vtkMesh, faceData );
 
   internal::ElementToFace const e2f( cellBlockManager.getCellBlocks() );
 
@@ -569,14 +588,11 @@ void ImportFracture( string const & faceBlockName,
   ArrayOfArrays< localIndex > const elem2dToNodes( std::get< 0 >( tmp ) );
   array2d< localIndex > const elem2dToFaces( std::get< 1 >( tmp ) );
 
-  // The order is from the most little edge index to the largest.
-  // Since two edges are in the same location, we always take the more little index of the two colocated edges.
-  // Computing face 2d -> edges
   auto tmp2 = compute2dFaceAnd2dElemToEdges( vtkMesh, faceData, num2dFaces, cellBlockManager.getNodeToEdges() );
-  array1d< localIndex > const face2dToEdges( std::get< 0 >( tmp2 ) ); // API
-  ArrayOfArrays< localIndex > const elem2dToEdges( std::get< 1 >( tmp2 ) ); // API
+  array1d< localIndex > const face2dToEdges( std::get< 0 >( tmp2 ) );
+  ArrayOfArrays< localIndex > const elem2dToEdges( std::get< 1 >( tmp2 ) );
 
-  ArrayOfArrays< localIndex > const face2dToElems2d = computeFace2dToElems2d( num2dFaces, face2dToEdges, elem2dToEdges ); // API
+  ArrayOfArrays< localIndex > const face2dToElems2d = computeFace2dToElems2d( num2dFaces, face2dToEdges, elem2dToEdges );
 
   // Mappings are now computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.getFaceBlocks().registerGroup< FaceBlock >( faceBlockName );
