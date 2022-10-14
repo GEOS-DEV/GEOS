@@ -59,9 +59,7 @@ public:
 
   void set2dFaceToEdge( array1d< localIndex > _2dFaceToEdge );
 
-  void set2dElemToElems( array2d< localIndex > _2dElemToElems );
-
-  void set2dElemToCellBlock( array2d< localIndex > _2dElemToCellBlock );
+  void set2dElemToElems( ToCellRelation< array2d< localIndex > > _2dElemToElems );
 
 private:
 
@@ -74,8 +72,7 @@ private:
   ArrayOfArrays< localIndex > m_2dFaceTo2dElems;
   array1d< localIndex > m_2dFaceToEdge;
 
-  array2d< localIndex > m_2dElemToElems;
-  array2d< localIndex > m_2dElemToCellBlock;
+  ToCellRelation< array2d< localIndex > > m_2dElemToElems;
 };
 
 

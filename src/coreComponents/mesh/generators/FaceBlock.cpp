@@ -30,7 +30,7 @@ array2d< localIndex > FaceBlock::get2dElemToFaces() const
 
 ToCellRelation< array2d< localIndex > > FaceBlock::get2dElemToElems() const
 {
-  return ToCellRelation< array2d< localIndex > >( m_2dElemToCellBlock, m_2dElemToElems );
+  return m_2dElemToElems;
 }
 
 array1d< localIndex > FaceBlock::get2dFaceToEdge() const
@@ -78,14 +78,9 @@ void FaceBlock::set2dFaceToEdge( array1d< localIndex > _2dFaceToEdge )
   m_2dFaceToEdge = _2dFaceToEdge;
 }
 
-void FaceBlock::set2dElemToElems( array2d< localIndex > _2dElemToElems )
+void FaceBlock::set2dElemToElems( ToCellRelation< array2d< localIndex > > _2dElemToElems )
 {
   m_2dElemToElems = _2dElemToElems;
-}
-
-void FaceBlock::set2dElemToCellBlock( array2d< localIndex > _2dElemToCellBlock )
-{
-  m_2dElemToCellBlock = _2dElemToCellBlock;
 }
 
 }
