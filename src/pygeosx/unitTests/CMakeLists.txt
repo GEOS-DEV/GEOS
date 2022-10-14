@@ -7,10 +7,12 @@
 # they specify the couples (python script, xml file) corresponding to each test
 set( pythonFiles
 	testPygeosxAcoustic.py
+   testWaveEquationAdjoint.py
    )
 
 set( xmlFiles
         acous_5x5x5.xml
+        twoLayers2000x2000x2000.xml
    )
 
 set( dependencyList pygeosx )
