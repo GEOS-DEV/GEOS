@@ -22,6 +22,7 @@
 #include "constitutive/solid/PorousSolid.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanicsKernel.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
@@ -29,6 +30,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace extrinsicMeshData;
 
 MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & name,
                                                               Group * const parent )
@@ -36,7 +38,7 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
 {
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
-  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+  m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
@@ -73,7 +75,7 @@ void MultiphasePoromechanicsSolver::useInitializationSolverConfiguration( bool u
 void MultiphasePoromechanicsSolver::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                                    DofManager & dofManager ) const
 {
-  dofManager.addCoupling( keys::TotalDisplacement,
+  dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
                           CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
 }
@@ -93,7 +95,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
 
-    string const displacementDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+    string const displacementDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
     arrayView1d< globalIndex const > const & displacementDofNumber = nodeManager.getReference< globalIndex_array >( displacementDofKey );
 
     string const flowDofKey = dofManager.getKey( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString() );
