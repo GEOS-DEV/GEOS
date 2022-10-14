@@ -36,6 +36,7 @@ template < typename StackVariables,
            typename Field,
            localIndex stride_x, localIndex stride_y, localIndex stride_z >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void readField( StackVariables & stack,
                 Field & field,
                 real64 (& local_field)[stride_x][stride_y][stride_z] )
@@ -61,6 +62,7 @@ template < typename StackVariables,
            typename Field,
            localIndex stride_x, localIndex stride_y, localIndex stride_z, localIndex dim >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void readField( StackVariables & stack,
                 Field & field,
                 real64 (& local_field)[stride_x][stride_y][stride_z][dim] )
@@ -78,7 +80,7 @@ void readField( StackVariables & stack,
         localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
         for (localIndex d = 0; d < dim; d++)
         {
-          local_field[ ind_x ][ ind_y ][ ind_z ][ d ] = field[ global_node_index ][ d ];
+          local_field[ ind_x ][ ind_y ][ ind_z ][ d ] = field( global_node_index, d );
         }
       }
     });

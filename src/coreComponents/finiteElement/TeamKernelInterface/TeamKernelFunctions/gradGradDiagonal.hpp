@@ -40,6 +40,7 @@ template < typename StackVariables,
            localIndex num_dofs_1d,
            localIndex num_quads_1d >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void computeGradGradLocalDiagonal( StackVariables & stack,
                                    real64 const (& basis)[num_dofs_1d][num_quads_1d],
                                    real64 const (& basis_gradient)[num_dofs_1d][num_quads_1d],

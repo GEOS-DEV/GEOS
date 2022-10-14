@@ -144,7 +144,7 @@ public:
     /// Index of the finite element
     localIndex element_index;
 
-    static constexpr localIndex batch_size = 1;
+    static constexpr localIndex batch_size = 8;
     static constexpr localIndex num_quads_1d = 2; // TODO
   };
 
@@ -273,7 +273,7 @@ public:
 
     const localIndex num_blocks = ( numElems + batch_size - 1 ) / batch_size;
     // const localIndex num_SM = 80; // For V100
-    // const localIndex num_blocks = 2 * num_SM;
+    // const localIndex num_hardware_blocks = 2 * num_SM;
 
     constexpr localIndex num_quads_1d = KERNEL_TYPE::StackVariables::num_quads_1d;
 
@@ -289,9 +289,9 @@ public:
       loop<team_x>( ctx, RangeSegment( 0, num_blocks ), [&]( const int block_index )
       {
         // We batch elements over the z-thread dimension
-        loop<thread_z>( ctx, RangeSegment( 0, batch_size ), [&]( const int thread_index_z )
+        loop<thread_z>( ctx, RangeSegment( 0, batch_size ), [&]( const int batch_index )
         {
-          const localIndex element_index = block_index * batch_size + thread_index_z;
+          const localIndex element_index = block_index * batch_size + batch_index;
           if ( element_index >= numElems ) { return; }
 
           kernelComponent.setup( stack, element_index );
@@ -306,7 +306,7 @@ public:
               }
             } );
           } );
-          
+
           maxResidual.max( kernelComponent.complete( stack ) );
         } );
       } );

@@ -36,6 +36,7 @@ template < typename StackVariables,
            typename Field,
            localIndex stride_x, localIndex stride_y, localIndex stride_z >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void writeAddField( StackVariables & stack,
                     real64 const (& local_field)[stride_x][stride_y][stride_z],
                     Field & field )
@@ -51,7 +52,9 @@ void writeAddField( StackVariables & stack,
       {
         localIndex const local_node_index = ind_x + stride_x * ( ind_y + stride_y * ind_z );
         localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
-        RAJA::atomicAdd( RAJA::auto_atomic{}, &field[ global_node_index ], local_field[ ind_x ][ ind_y ][ ind_z ]);
+        RAJA::atomicAdd( RAJA::auto_atomic{},
+                         &field[ global_node_index ],
+                         local_field[ ind_x ][ ind_y ][ ind_z ]);
       }
     });
   });
@@ -61,6 +64,7 @@ template < typename StackVariables,
            typename Field,
            localIndex stride_x, localIndex stride_y, localIndex stride_z, localIndex dim >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void writeAddField( StackVariables & stack,
                     real64 const (& local_field)[stride_x][stride_y][stride_z][dim], 
                     Field & field )
@@ -78,7 +82,9 @@ void writeAddField( StackVariables & stack,
         localIndex const global_node_index = stack.kernelComponent.m_elemsToNodes( stack.element_index, local_node_index );
         for (localIndex d = 0; d < dim; d++)
         {
-          RAJA::atomicAdd( RAJA::auto_atomic{}, &field[ global_node_index ][ d ], local_field[ ind_x ][ ind_y ][ ind_z ][ d ] );
+          RAJA::atomicAdd( RAJA::auto_atomic{},
+                           &field( global_node_index, d ),
+                           local_field[ ind_x ][ ind_y ][ ind_z ][ d ] );
         }
       }
     });

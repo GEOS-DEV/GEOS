@@ -51,6 +51,7 @@ template < typename StackVariables,
            localIndex num_dofs_1d,
            localIndex num_quads_1d>
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void interpolateAtQuadraturePoints( StackVariables & stack,
                                     real64 const (& basis)[num_dofs_1d][num_quads_1d],
                                     real64 const (& dofs)[num_dofs_1d][num_dofs_1d][num_dofs_1d],
@@ -158,6 +159,7 @@ template < typename StackVariables,
            localIndex num_quads_1d,
            localIndex num_comp >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void interpolateAtQuadraturePoints( StackVariables & stack,
                                     real64 const (& basis)[num_dofs_1d][num_quads_1d],
                                     real64 const (& dofs)[num_dofs_1d][num_dofs_1d][num_dofs_1d][num_comp],

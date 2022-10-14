@@ -36,6 +36,7 @@ template < typename StackVariables,
            typename Field,
            localIndex stride_x, localIndex stride_y, localIndex stride_z >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void writeField( StackVariables & stack,
                  real64 const (& local_field)[stride_x][stride_y][stride_z],
                  Field & field )
@@ -61,6 +62,7 @@ template < typename StackVariables,
            typename Field,
            localIndex stride_x, localIndex stride_y, localIndex stride_z, localIndex dim >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void writeField( StackVariables & stack,
                  real64 const (& local_field)[stride_x][stride_y][stride_z][dim], 
                  Field & field )
