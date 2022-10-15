@@ -46,6 +46,17 @@ public:
 
   virtual void initializePreSubGroups() override;
 
+  virtual real64 solverStep( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition & domain ) override;
+
+
+  virtual real64 explicitStep( real64 const & time_n,
+                               real64 const & dt,
+                               integer const cycleNumber,
+                               DomainPartition & domain ) override;
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * sourceCoordinatesString() { return "sourceCoordinates"; }
@@ -59,6 +70,9 @@ public:
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
+    static constexpr char const * forwardString() { return "forward"; }
+    static constexpr char const * saveFieldsString() { return "saveFields"; }
+    static constexpr char const * shotIndexString() { return "shotIndex"; }
 
     static constexpr char const * usePMLString() { return "usePML"; }
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
@@ -140,6 +154,35 @@ protected:
 
 
 
+  /**
+   * @brief Perform forward explicit step
+   * @param time_n time at the beginning of the step
+   * @param dt the perscribed timestep
+   * @param cycleNumber the current cycle number
+   * @param domain the domain object
+   * @param computeGradient Indicates if we want to compute gradient at this step
+   * @return return the timestep that was achieved during the step.
+   */
+  virtual real64 explicitStepForward( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      DomainPartition & domain,
+                                      bool const computeGradient ) = 0;
+  /**
+   * @brief Perform backward explicit step
+   * @param time_n time at the beginning of the step
+   * @param dt the perscribed timestep
+   * @param cycleNumber the current cycle number
+   * @param domain the domain object
+   * @param computeGradient Indicates if we want to compute gradient at this step
+   * @return return the timestep that was achieved during the step.
+   */
+  virtual real64 explicitStepBackward( real64 const & time_n,
+                                       real64 const & dt,
+                                       integer const cycleNumber,
+                                       DomainPartition & domain,
+                                       bool const computeGradient ) = 0;
+
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
 
@@ -165,6 +208,15 @@ protected:
 
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
+
+  /// Indicate if we want to compute forward ou backward
+  localIndex m_forward;
+
+  /// Indicate if we want to save fields to restore them during backward
+  localIndex m_saveFields;
+
+  // Indicate the current shot computed for naming saved temporary data
+  int m_shotIndex;
 
   /// Flag to apply PML
   integer m_usePML;
