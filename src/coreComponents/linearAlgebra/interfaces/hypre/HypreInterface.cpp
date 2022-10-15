@@ -42,7 +42,9 @@ void HypreInterface::initialize()
   hypre_HandleSpgemmUseVendor( hypre_handle() ) = 0;
 #endif
   HYPRE_SetMemoryLocation( hypre::memoryLocation );
+#if defined(HYPRE_DEVELOP_STRING)
   GEOSX_LOG_RANK_0( "Using hypre version: " << HYPRE_DEVELOP_STRING );
+#endif
 }
 
 void HypreInterface::finalize()
