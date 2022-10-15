@@ -320,10 +320,6 @@ void PhaseFieldPoromechanicsSolver::mapDamageAndGradientToQuadrature( DomainPart
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
-    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-
-    ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
-    constitutiveRelations = elemManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
     // begin region loop
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [this, xNodes, nodalDamage]
                                                                 ( localIndex const,

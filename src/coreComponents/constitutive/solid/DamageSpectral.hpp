@@ -71,7 +71,6 @@ public:
   using DamageUpdates< UPDATE_BASE >::getDegradationDerivative;
   using DamageUpdates< UPDATE_BASE >::getDegradationSecondDerivative;
   using DamageUpdates< UPDATE_BASE >::getEnergyThreshold;
-  using DamageUpdates< UPDATE_BASE >::getExtDrivingForce;
 
   using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
   using DamageUpdates< UPDATE_BASE >::m_volStrain;

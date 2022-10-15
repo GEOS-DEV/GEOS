@@ -287,7 +287,7 @@ protected:
   arrayView1d< real64 const > const m_nodalDamage;
 
   /// The array containing the damage on each quadrature point of all elements
-  arrayView2d< real64 const > const m_quadNewDamage;
+  arrayView2d< real64 const > const m_quadDamage;
 
   /// The array containing the external driving force on each quadrature point of all elements
   arrayView2d< real64 const > const m_quadExtDrivingForce;
