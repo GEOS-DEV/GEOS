@@ -118,7 +118,14 @@ void
 CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver >::
 setMGRStrategy()
 {
-  // Not implemented yet
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
+  {
+    GEOSX_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
+  }
+  else
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM;
+  }
 }
 
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
