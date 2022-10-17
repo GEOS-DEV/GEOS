@@ -674,18 +674,35 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   } );
 }
 
-real64 ElasticWaveEquationSEM::solverStep( real64 const & time_n,
-                                           real64 const & dt,
-                                           integer const cycleNumber,
-                                           DomainPartition & domain )
+
+
+real64 ElasticWaveEquationSEM::explicitStepForward( real64 const & time_n,
+                                                    real64 const & dt,
+                                                    integer cycleNumber,
+                                                    DomainPartition & domain,
+                                                    bool GEOSX_UNUSED_PARAM( computeGradient ) )
 {
-  return explicitStep( time_n, dt, cycleNumber, domain );
+  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  return dtOut;
 }
 
-real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
-                                             real64 const & dt,
-                                             integer const cycleNumber,
-                                             DomainPartition & domain )
+
+
+real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
+                                                     real64 const & dt,
+                                                     integer cycleNumber,
+                                                     DomainPartition & domain,
+                                                     bool GEOSX_UNUSED_PARAM( computeGradient ) )
+{
+  GEOSX_ERROR( "Backward propagation for the elastic wave propagator not yet implemented" );
+  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  return dtOut;
+}
+
+real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
+                                                     real64 const & dt,
+                                                     integer const cycleNumber,
+                                                     DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
