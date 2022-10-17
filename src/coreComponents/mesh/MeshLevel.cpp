@@ -123,21 +123,6 @@ MeshLevel::MeshLevel( string const & name,
   ArrayOfArraysView< localIndex const > const & facesToEdges = m_faceManager->edgeList().toViewConst();
   localIndex const numNodesPerFace = pow( order+1, 2 );
 
-
-  // add the number of non-edge face nodes
-  localIndex numInternalFaceNodes = 0;
-  localIndex const numNonEdgeNodesPerFace = pow( order-1, 2 );
-  for( localIndex kf=0; kf<m_faceManager->size(); ++kf )
-  {
-    localIndex const numEdgesPerFace = facesToEdges.sizeOfArray( kf );
-    if( numEdgesPerFace==4 )
-      numInternalFaceNodes += numNonEdgeNodesPerFace;
-    else
-    {
-      GEOSX_ERROR( "need more support for face geometry" );
-    }
-  }
-
   // number of elements in each row of the map as capacity
   array1d< localIndex > counts( faceToNodeMapNew.size());
   counts.setValues< parallelHostPolicy >( numNodesPerFace );
@@ -155,6 +140,19 @@ MeshLevel::MeshLevel( string const & name,
 
   } );
 
+  // add the number of non-edge face nodes
+  localIndex numInternalFaceNodes = 0;
+  localIndex const numNonEdgeNodesPerFace = pow( order-1, 2 );
+  for( localIndex kf=0; kf<m_faceManager->size(); ++kf )
+  {
+    localIndex const numEdgesPerFace = facesToEdges.sizeOfArray( kf );
+    if( numEdgesPerFace==4 )
+      numInternalFaceNodes += numNonEdgeNodesPerFace;
+    else
+    {
+      GEOSX_ERROR( "need more support for face geometry" );
+    }
+  }
 
   // add the number of non-face element nodes
   localIndex numInternalElementNodes = 0;
@@ -350,11 +348,11 @@ MeshLevel::MeshLevel( string const & name,
 
               localIndex face = 0;
               localIndex foundFace = 0;
-              localIndex nindex = i + (order+1)*j + (order+1)*(order+1)*k;
+              localIndex nodeindex = i + (order+1)*j + (order+1)*(order+1)*k;
 
               while( face<6 && foundFace<1 )
               {
-                localIndex m = localElemToLocalFace[face][nindex];
+                localIndex m = localElemToLocalFace[face][nodeindex];
 
                 if( m != -1 )
                 {
@@ -370,7 +368,7 @@ MeshLevel::MeshLevel( string const & name,
                         {
                           if( elemsToNodesNew[elemNeighbour][node] == faceToNodeMapNew[elemToFaces[elem][face]][m] )
                           {
-                            elemsToNodesNew[elem][nindex] = elemsToNodesNew[elemNeighbour][node];
+                            elemsToNodesNew[elem][nodeindex] = elemsToNodesNew[elemNeighbour][node];
                             break;
                           }
                         }
@@ -379,7 +377,7 @@ MeshLevel::MeshLevel( string const & name,
                     }
                     for( localIndex face2 = 0; face2 < 6; ++face2 )
                     {
-                      localIndex m2 = localElemToLocalFace[face2][nindex];
+                      localIndex m2 = localElemToLocalFace[face2][nodeindex];
 
                       if( m2 != -1 && face2!=face )
                       {
@@ -396,7 +394,7 @@ MeshLevel::MeshLevel( string const & name,
               }
               if( face > 5 && foundFace < 1 )
               {
-                elemsToNodesNew[elem][nindex] = count;
+                elemsToNodesNew[elem][nodeindex] = count;
                 count++;
               }
             }
