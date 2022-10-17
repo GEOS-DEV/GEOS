@@ -1,6 +1,5 @@
 import os
 import sys
-import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ElementTree
@@ -133,8 +132,7 @@ def main():
 	p_num = (ax_stress + 2.0 * ra_stress1) / 3.0
 	q_num = -(ax_stress - ra_stress1)
 	
-	#Visualization
-	N1 = 1
+	#Visualization parameters
 	fsize = 30
 	msize = 12
 	lw = 6
@@ -142,8 +140,8 @@ def main():
 	fig, ax = plt.subplots(1, 3, figsize=(37, 10))
 	cmap = plt.get_cmap("tab10")
 
-	ax[0].plot(-ax_strain * 100,
-		       -ax_stress*1e-3,
+	ax[0].plot(-ax_strain * 100, #convert to %
+		       -ax_stress*1e-3,	#convert to kPa
 		       'o',
 		       color=cmap(0),
 		       mec='b',
