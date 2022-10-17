@@ -11,7 +11,7 @@ Problem description
 
 This example uses the Triaxial Driver to simulate an elasto-plastic triaxial compression test of a Drucker-Prager solid. Constant lateral confining stress together with loading/unloading axial strain periods are imposed. Imposed axial strain range are high enough for allowing plastic yield in both loading and unloading period. This complicated senario is optimal for verifying the numerical convergence of the Drucker-Prager constitutive model implimented in GEOSX. 
 
-Semi analytical result for axial stress variation :math:`\Delta\sigma_{V}` and lateral strain variation :math:`\Delta\varepsilon_{V}` can be etablished for the considered triaxial boundary conditions as `(author, year) <https:>`__ :
+Semi analytical result for axial stress variation :math:`\Delta\sigma_{V}` and lateral strain variation :math:`\Delta\varepsilon_{V}` can be etablished for the considered triaxial boundary conditions as:
 
 .. math::
    \Delta\sigma_{V} = \Delta\varepsilon_{V} E_{ep}
@@ -27,7 +27,7 @@ where :math:`E_{ep}` and :math:`E^\prime_{ep}` are elasto-plastic Young moduli t
 .. math::
    \frac{1}{E^\prime_{ep}} = \frac{1}{2\mu} - \frac{b-3}{2h}
 
-These solutions are applied only when plastic yield condition is staisfied. The cohesion parameter defining the plastic yield surface is updated with stress change as
+These solutions are applied only when plastic yield condition is statisfied. The cohesion parameter defining the plastic yield surface is updated with stress change as
 
 .. math::
    \Delta a = \frac{b-3}{3}\Delta\sigma_{V}
@@ -51,8 +51,7 @@ These solutions are implemented in a Python script associated to this DOC for ve
 
 **Input files**
 
-This benchmark example uses no external input files and everything required is
-contained within two GEOSX xml files that are located at:
+This validation example uses two GEOSX xml files that are located at:
 
 .. code-block:: console
 
@@ -64,7 +63,7 @@ and
 
   inputFiles/triaxialDriver/triaxialDriver_DruckerPrager.xml
 
-This example also uses a set of table files located at:
+It also uses a set of table files located at:
 
 .. code-block:: console
 
@@ -85,7 +84,7 @@ Task
 
 The imposed axial strain loading/unloading periods, the constant lateral confining stress as well as the initial stress are defined in the ``Task`` block as 
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_DruckerPrager.xml
+.. literalinclude:: ../../../../../../../inputFiles/triaxialDriver/triaxialDriver_DruckerPrager.xml
     :language: xml
     :start-after: <!-- SPHINX_TASK -->
     :end-before: <!-- SPHINX_TASK_END -->
@@ -97,13 +96,13 @@ Constitutive laws
 The elasto-plastic parameters are defined as
 
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL_DRUCKER_PRAGER -->
     :end-before: <!-- SPHINX_MATERIAL_DRUCKER_PRAGER_END -->
 
 
-All constitutive parameters such as density, viscosity, bulk modulus, and shear modulus are specified in the International System of Units.
+All constitutive parameters such as density, viscosity, and bulk and shear moduli are specified in the International System of Units.
 
 --------------------------------------------------------------
 A comparison between GEOSX results and semi-analytical results

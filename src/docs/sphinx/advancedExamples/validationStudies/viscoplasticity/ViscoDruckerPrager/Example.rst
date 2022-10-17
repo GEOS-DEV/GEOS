@@ -11,7 +11,7 @@ Problem description
 
 This example uses the Triaxial Driver to simulate a triaxial compression test of a Visco Drucker-Prager solid. Constant lateral confining stress together with loading/unloading axial strain periods are imposed. Imposed axial strain range are high enough for allowing visco-plastic yield in both loading and unloading period. This complicated senario is optimal for verifying the numerical convergence of the Visco Drucker-Prager constitutive model implimented in GEOSX. 
 
-Semi analytical result for axial stress variation :math:`\Delta\sigma_{V}` and lateral strain variation :math:`\Delta\varepsilon_{V}` can be etablished for the considered triaxial boundary conditions as `(Runesson et al. 1999) <https://onlinelibrary.wiley.com/doi/abs/10.1002/(SICI)1099-1484(199901)4:1%3C75::AID-CFM60%3E3.0.CO;2-4>`__ :
+Semi analytical result for axial stress variation :math:`\Delta\sigma_{V}` and lateral strain variation :math:`\Delta\varepsilon_{V}` can be etablished for the considered triaxial boundary conditions following the theoretical basis of the Perzyna time dependent approach presented by `(Runesson et al. 1999) <https://onlinelibrary.wiley.com/doi/abs/10.1002/(SICI)1099-1484(199901)4:1%3C75::AID-CFM60%3E3.0.CO;2-4>`__ as:
 
 .. math::
    \Delta\sigma_{V} = (\Delta\varepsilon_{V}-\Delta\lambda\frac{b^\prime-3}{3}) E
@@ -29,7 +29,7 @@ in which :math:`\Delta t` is the time increment, :math:`t_*` the relaxation time
 .. math::
    \Delta a = h \Delta\lambda
 
-These solutions were etablished for a positive shear stress `q = -(\sigma_{V} - \sigma_{H})` (negative sign convention for compression stress). For the case when the plastic yield occurs at a negative shear stress, we have
+These solutions were etablished for a positive shear stress :math:`q = -(\sigma_{V} - \sigma_{H})` (negative sign convention for compression stress). For the case when the plastic yield occurs at a negative shear stress, we have
 
 .. math::
    \Delta\sigma_{V} = (\Delta\varepsilon_{V}-\Delta\lambda\frac{b^\prime+3}{3}) E
@@ -42,8 +42,7 @@ These solutions are implemented in a Python script associated to this DOC for ve
 
 **Input files**
 
-This benchmark example uses no external input files and everything required is
-contained within two GEOSX xml files that are located at:
+This benchmark example uses two GEOSX xml files that are located at:
 
 .. code-block:: console
 
@@ -55,7 +54,7 @@ and
 
   inputFiles/triaxialDriver/triaxialDriver_ViscoDruckerPrager.xml
 
-This example also uses a set of table files located at:
+It also uses a set of table files located at:
 
 .. code-block:: console
 
@@ -76,7 +75,7 @@ Task
 
 The imposed axial strain loading/unloading periods, the constant lateral confining stress as well as the initial stress are defined in the ``Task`` block as 
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_ViscoDruckerPrager.xml
+.. literalinclude:: ../../../../../../../inputFiles/triaxialDriver/triaxialDriver_ViscoDruckerPrager.xml
     :language: xml
     :start-after: <!-- SPHINX_TASK -->
     :end-before: <!-- SPHINX_TASK_END -->
@@ -88,19 +87,19 @@ Constitutive laws
 The elasto-visco-plastic parameters are defined as
 
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL_VISCO_DRUCKER_PRAGER -->
     :end-before: <!-- SPHINX_MATERIAL_VISCO_DRUCKER_PRAGER_END -->
 
 
-All constitutive parameters such as density, viscosity, bulk modulus, and shear modulus are specified in the International System of Units.
+All constitutive parameters such as density, viscosity, and bulk and shear moduli are specified in the International System of Units.
 
 --------------------------------------------------------------
 A comparison between GEOSX results and semi-analytical results
 --------------------------------------------------------------
 
-The simulation results are saved in a text file, named ``ViscoDruckerPragerResults.txt``. A very well comparison between the results given by the TriaxialDriver solver in GEOSX and the approximated semi-analytical results presented above is show below 
+The simulation results are saved in a text file, named ``ViscoDruckerPragerResults.txt``. A comparison between the results given by the TriaxialDriver solver in GEOSX and the approximated semi-analytical results presented above is show below. Interestingly we observed that the Duvaut-Lions approache implemented in GEOSX can fit perfectly with the Perzyna approach that was considered for deriving the analytical results. This consistency between these time dependence approahes is because of the linear hardening law of the considered constitutive model as already discussed by `(Runesson et al. 1999) <https://onlinelibrary.wiley.com/doi/abs/10.1002/(SICI)1099-1484(199901)4:1%3C75::AID-CFM60%3E3.0.CO;2-4>`__ . 
 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/viscoplasticity/ViscoDruckerPrager/TriaxialDriver_vs_SemiAnalytic_ViscoDruckerPrager.py
