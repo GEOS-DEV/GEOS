@@ -322,6 +322,7 @@ public:
    *   mass matrix M, i.e., the superposition matrix of the shape functions.
    * @param q The quadrature point index
    * @param X Array containing the coordinates of the support points.
+   * @return The diagonal mass term associated to q
    */
   GEOSX_HOST_DEVICE
   static real64
@@ -334,6 +335,7 @@ public:
    *   integrated over a face.
    * @param q The quadrature point index
    * @param X Array containing the coordinates of the support points.
+   * @return The diagonal damping term associated to q
    */
   GEOSX_HOST_DEVICE
   static real64
