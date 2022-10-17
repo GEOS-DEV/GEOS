@@ -216,7 +216,9 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
-
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
+   */
   template< typename POLICY,
             typename KERNEL_TYPE >
   static real64

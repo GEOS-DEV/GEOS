@@ -270,7 +270,7 @@ jobs:
     <<: *__geosx_auto_deploy
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu22.04-gcc11
-    - CMAKE_BUILD_TYPE=RelWithDebInfo
+    - CMAKE_BUILD_TYPE=Release
     - GCP_BUCKET=geosx/ubuntu22.04-gcc11
   - stage: return_status
     <<: *__geosx_return_script

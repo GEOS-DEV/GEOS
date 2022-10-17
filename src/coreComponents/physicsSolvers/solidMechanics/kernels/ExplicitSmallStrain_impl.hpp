@@ -43,20 +43,20 @@ ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::ExplicitSmall
                                                                                         CONSTITUTIVE_TYPE & inputConstitutiveType,
                                                                                         real64 const dt,
                                                                                         string const elementListName ):
-    Base( elementSubRegion,
-          finiteElementSpace,
-          inputConstitutiveType ),
-    m_X( nodeManager.referencePosition()),
-    m_u( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
-    m_vel( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >() ),
-    m_acc( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::acceleration >() ),
-    m_dt( dt ),
-    m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
-  {
-    GEOSX_UNUSED_VAR( edgeManager );
-    GEOSX_UNUSED_VAR( faceManager );
-    GEOSX_UNUSED_VAR( targetRegionIndex );
-  }
+  Base( elementSubRegion,
+        finiteElementSpace,
+        inputConstitutiveType ),
+  m_X( nodeManager.referencePosition()),
+  m_u( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::totalDisplacement >() ),
+  m_vel( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::velocity >() ),
+  m_acc( nodeManager.getExtrinsicData< extrinsicMeshData::solidMechanics::acceleration >() ),
+  m_dt( dt ),
+  m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
+{
+  GEOSX_UNUSED_VAR( edgeManager );
+  GEOSX_UNUSED_VAR( faceManager );
+  GEOSX_UNUSED_VAR( targetRegionIndex );
+}
 
 
 template< typename SUBREGION_TYPE,

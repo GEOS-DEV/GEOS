@@ -132,7 +132,7 @@ public:
 
 
   /**
-   * @copydoc KernelBase::kernelLaunch
+   * @copydoc ExplicitSmallStrain::kernelLaunch
    */
   template< typename POLICY,
             typename KERNEL_TYPE >
