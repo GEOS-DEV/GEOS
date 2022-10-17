@@ -45,7 +45,8 @@ void HypreInterface::initialize()
 
   // Hypre version info
 #if defined(HYPRE_DEVELOP_STRING)
-  GEOSX_LOG_RANK_0( "Using hypre development version: " << HYPRE_DEVELOP_STRING );
+  GEOSX_LOG_RANK_0( "  Using hypre version: " << HYPRE_DEVELOP_STRING <<
+                    " (" << HYPRE_DEVELOP_BRANCH << ")");
 #elif defined(HYPRE_RELEASE_VERSION)
   GEOSX_LOG_RANK_0( "Using hypre release version: " << HYPRE_RELEASE_VERSION );
 #endif
