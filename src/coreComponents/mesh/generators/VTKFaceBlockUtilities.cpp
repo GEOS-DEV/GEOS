@@ -238,7 +238,6 @@ public:
       }
       m_ranges.emplace_back( l2g.front(), l2g.back() );
     }
-    // TODO implement that range[i].second == range[i+1].last
   }
 
   /**
@@ -257,6 +256,32 @@ public:
   }
 
   /**
+   * @brief From global index @p ei, returns the local element index in its cell block.
+   * @param ei The global vtk element index.
+   * @return The integer.
+   */
+  localIndex getElementIndexInCellBlock( int const & ei ) const
+  {
+    int const cbi = getCellBlockIndex( ei );
+    int const offset = getElementCellBlockOffset( cbi );
+    return ei - offset;
+  }
+
+  /**
+   * @brief Given the global (vtk) id, returns the index local to the cell block @p ei belong to.
+   * @param[in] ei global cell index.
+   * @return The faces for element @p ei.
+   */
+  auto operator[]( int const & ei ) const
+  {
+    const localIndex iCellBlock = getCellBlockIndex( ei );
+    arrayView2d< localIndex const > const e2f = m_elemToFacesMaps[iCellBlock];
+    return e2f[ei - getElementCellBlockOffset( iCellBlock )];
+  }
+
+private:
+
+  /**
    * @brief Returns the index offset for cell block of index @p iCellBlock
    * @param[in] iCellBlock The index of the cell block.
    * @return The offset.
@@ -267,20 +292,6 @@ public:
   {
     return m_ranges[iCellBlock].first;
   }
-
-  /**
-   * @brief Given the global (vtk) id, returns the index local to the cell block @p ei belong to.
-   * @param[in] ei global cell index.
-   * @return The faces for element @p ei.
-   */
-  auto operator[]( int const & ei ) const
-  {
-    const std::size_t iCellBlock = getCellBlockIndex( ei );
-    arrayView2d< localIndex const > const e2f = m_elemToFacesMaps[iCellBlock];
-    return e2f[ei - m_ranges[iCellBlock].first];
-  }
-
-private:
 
   /**
    * @brief The cell indices ranges for each cell block.
@@ -361,8 +372,7 @@ ToCellRelation< array2d< localIndex > > compute2dElemToElems( FaceData const & f
     {
       // The offset lets us convert the global index to an index local to the cell block.
       // It surely implements a pattern, which is indisputably bad and will need to be updated.
-      int const offset = elemToFaces.getElementCellBlockOffset( elem2dToCellBlock[i][j] );
-      elem2dToElems[i][j] = faceData.cell( i, j ) - offset;
+      elem2dToElems[i][j] = elemToFaces.getElementIndexInCellBlock( faceData.cell( i, j ) );
     }
   }
 
@@ -452,11 +462,12 @@ compute2dFaceAnd2dElemToEdges( vtkSmartPointer< vtkDataSet > vtkMesh,
                                localIndex const num2dFaces,
                                ArrayOfArraysView< localIndex const > nodeToEdges )
 {
-  // What we hereafter call a `pairId` is the pair with the lowest duplicated node indices.
+  // What we hereafter call a `pairSig` (for `pair signature`) the pair
+  // with the lowest duplicated node indices for each of the two indices.
   // It's worth mentioning that such a pair may not be an existing edge.
   // It's a more kind of signature/hash to reconcile duplicated edges.
   // This function computes the pair id for any given pair of nodes (edge).
-  auto const pairToPairId = [&faceData]( std::pair< int, int > const & p ) -> std::pair< int, int >
+  auto const pairToPairSig = [&faceData]( std::pair< int, int > const & p ) -> std::pair< int, int >
   {
     return std::minmax( faceData.uniqueNode( p.first ), faceData.uniqueNode( p.second ) );
   };
@@ -482,20 +493,20 @@ compute2dFaceAnd2dElemToEdges( vtkSmartPointer< vtkDataSet > vtkMesh,
     }
   }
 
-  // We now build the `pairId` -> `edge` mapping.
-  // `edgeId` is the minimal (existing) edge index for the given `pairId` signature.
+  // We now build the `pairSig` -> `edge` mapping.
+  // `edgeId` is the minimal (existing) edge index for the given `pairSig` signature.
   // Two edges sharing the same `edgeId` are therefore duplicated.
-  std::map< std::pair< int, int >, int > pairIdToEdge;
+  std::map< std::pair< int, int >, int > pairSigToEdge;
   for( auto const & edges: allEdges )
   {
     for( std::pair< int, int > const & p: edges )
     {
-      std::pair< int, int > const pairId = pairToPairId( p );
+      std::pair< int, int > const pairSig = pairToPairSig( p );
 
-      auto const & it = pairIdToEdge.find( pairId );
-      if( it == pairIdToEdge.end() )
+      auto const & it = pairSigToEdge.find( pairSig );
+      if( it == pairSigToEdge.end() )
       {
-        pairIdToEdge[pairId] = pairToEdge( p, nodeToEdges );
+        pairSigToEdge[pairSig] = pairToEdge( p, nodeToEdges );
       }
       else
       {
@@ -503,17 +514,17 @@ compute2dFaceAnd2dElemToEdges( vtkSmartPointer< vtkDataSet > vtkMesh,
       }
     }
   }
-  GEOSX_ERROR_IF_NE_MSG( LvArray::integerConversion< std::size_t >( num2dFaces ), pairIdToEdge.size(), "Internal error: inconsistency when computing the fault and fracture mappings." );
+  GEOSX_ERROR_IF_NE_MSG( LvArray::integerConversion< std::size_t >( num2dFaces ), pairSigToEdge.size(), "Internal error: inconsistency when computing the fault and fracture mappings." );
 
   // This loop build the `elem2dToEdges` mapping.
-  // It uses the `pairIdToEdgeId` to remove duplicates.
+  // It uses the `pairSigToEdgeId` to remove duplicates.
   ArrayOfArrays< localIndex > elem2dToEdges( num2dElements );
   for( int i = 0; i < num2dElements; ++i )
   {
     std::set< int > edges;
     for( auto const & p: allEdges[i] )
     {
-      edges.insert( pairIdToEdge.at( pairToPairId( p ) ) );
+      edges.insert( pairSigToEdge.at( pairToPairSig( p ) ) );
     }
     elem2dToEdges.resizeArray( i, edges.size() );
     std::copy( edges.cbegin(), edges.cend(), elem2dToEdges[i].begin() );
@@ -522,10 +533,10 @@ compute2dFaceAnd2dElemToEdges( vtkSmartPointer< vtkDataSet > vtkMesh,
   // Here we compute the `face2dToEdges` mapping.
   // What matters is that each `face2d` matches the proper `edge`.
   // But we do not pay attention to the ordering of the `face2d`, it will be in the sorting order.
-  auto const cmp = [&pairToPairId]( std::pair< int, int > const & p0,
+  auto const cmp = [&pairToPairSig]( std::pair< int, int > const & p0,
                                     std::pair< int, int > const & p1 ) -> bool
   {
-    return pairToPairId( p0 ) < pairToPairId( p1 );
+    return pairToPairSig( p0 ) < pairToPairSig( p1 );
   };
   std::set< std::pair< int, int >, decltype( cmp ) > uniqueEdges( cmp );
   for( std::vector< std::pair< int, int > > const & edges: allEdges )
