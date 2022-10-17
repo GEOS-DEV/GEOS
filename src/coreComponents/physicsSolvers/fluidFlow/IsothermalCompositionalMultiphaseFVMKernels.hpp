@@ -838,10 +838,7 @@ public:
             localIndex const localDofIndexPres = k[ke] * numDof;
             stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * stack.dCompFlux_dP[ke][ic];
             stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * stack.dCompFlux_dP[ke][ic];
-
-            // std::cout << "dCompFlux_dP [" << eqIndex0 << "]" << m_dt * stack.dCompFlux_dP[ke][ic] << std::endl;
-            // std::cout << "dCompFlux_dP [" << eqIndex1 << "]" << -m_dt * stack.dCompFlux_dP[ke][ic] << std::endl;
-
+ 
             for( integer jc = 0; jc < numComp; ++jc )
             {
               localIndex const localDofIndexComp = localDofIndexPres + jc + 1;

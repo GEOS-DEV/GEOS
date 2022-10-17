@@ -279,10 +279,10 @@ public:
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems ),
       dCompFlux_dT( size, numComp ),
-      energyFlux( 0.0 ),
-      dEnergyFlux_dP( 2 ),
-      dEnergyFlux_dT( 2 ),
-      dEnergyFlux_dC( 2, numComp ),
+      convectiveEnergyFlux( 0.0 ),
+      dConvectiveEnergyFlux_dP( 2 ),
+      dConvectiveEnergyFlux_dT( 2 ),
+      dConvectiveEnergyFlux_dC( 2, numComp ),
       conductiveEnergyFlux( 0.0 ),
       dConductiveEnergyFlux_dT( 2 )
     {}
@@ -307,13 +307,13 @@ public:
     // Energy fluxes and derivatives
 
     /// Energy fluxes
-    real64 energyFlux;
+    real64 convectiveEnergyFlux;
     /// Derivatives of energy fluxes wrt pressure
-    stackArray1d< real64, 2 > dEnergyFlux_dP;
+    stackArray1d< real64, 2 > dConvectiveEnergyFlux_dP;
     /// Derivatives of energy fluxes wrt temperature
-    stackArray1d< real64, 2 > dEnergyFlux_dT;
+    stackArray1d< real64, 2 > dConvectiveEnergyFlux_dT;
     /// Derivatives of energy fluxes wrt component densities
-    stackArray2d< real64, 2 * numComp > dEnergyFlux_dC;
+    stackArray2d< real64, 2 * numComp > dConvectiveEnergyFlux_dC;
     /// Conductive part of the energy flux
     real64 conductiveEnergyFlux;
     /// Derivatives of the conductive energy fluxes wrt temperature
@@ -334,7 +334,7 @@ public:
     // ***********************************************
     // First, we call the base computeFlux to compute:
     //  1) compFlux and its derivatives (including derivatives wrt temperature),
-    //  2) enthalpy part of energyFlux  and its derivatives (including derivatives wrt temperature)
+    //  2) enthalpy part of convectiveEnergyFlux  and its derivatives (including derivatives wrt temperature)
     //
     // Computing dCompFlux_dT and the enthalpy flux requires quantities already computed in the base computeFlux,
     // such as potGrad, phaseFlux, and the indices of the upwind cell
@@ -363,10 +363,10 @@ public:
       real64 const trans[2] = { stack.transmissibility[connectionIndex][0],
                                 stack.transmissibility[connectionIndex][1] };
 
-      stack.energyFlux = 0.0;
-      stack.dEnergyFlux_dP.zero();
-      stack.dEnergyFlux_dT.zero();
-      stack.dEnergyFlux_dC.zero();
+      stack.convectiveEnergyFlux = 0.0;
+      stack.dConvectiveEnergyFlux_dP.zero();
+      stack.dConvectiveEnergyFlux_dT.zero();
+      stack.dConvectiveEnergyFlux_dC.zero();
       stack.dCompFlux_dT.zero();
 
       for( integer i = 0; i < 2; ++i )
@@ -470,21 +470,21 @@ public:
 
       // Step 5: compute the enthalpy flux
       real64 const enthalpy = m_phaseEnthalpy[er_up][esr_up][ei_up][0][ip];
-      stack.energyFlux += phaseFlux * enthalpy;
+      stack.convectiveEnergyFlux += phaseFlux * enthalpy;
 
       for( integer ke = 0; ke < 2; ++ke )
       {
-        stack.dEnergyFlux_dP[ke] += dPhaseFlux_dP[ke] * enthalpy;
-        stack.dEnergyFlux_dT[ke] += dPhaseFlux_dT[ke] * enthalpy;
+        stack.dConvectiveEnergyFlux_dP[ke] += dPhaseFlux_dP[ke] * enthalpy;
+        stack.dConvectiveEnergyFlux_dT[ke] += dPhaseFlux_dT[ke] * enthalpy;
 
         for( integer jc = 0; jc < numComp; ++jc )
         {
-          stack.dEnergyFlux_dC[ke][jc] += dPhaseFlux_dC[ke][jc] * enthalpy;
+          stack.dConvectiveEnergyFlux_dC[ke][jc] += dPhaseFlux_dC[ke][jc] * enthalpy;
         }
       }
 
-      stack.dEnergyFlux_dP[k_up] += phaseFlux * m_dPhaseEnthalpy[er_up][esr_up][ei_up][0][ip][Deriv::dP];
-      stack.dEnergyFlux_dT[k_up] += phaseFlux * m_dPhaseEnthalpy[er_up][esr_up][ei_up][0][ip][Deriv::dT];
+      stack.dConvectiveEnergyFlux_dP[k_up] += phaseFlux * m_dPhaseEnthalpy[er_up][esr_up][ei_up][0][ip][Deriv::dP];
+      stack.dConvectiveEnergyFlux_dT[k_up] += phaseFlux * m_dPhaseEnthalpy[er_up][esr_up][ei_up][0][ip][Deriv::dT];
 
       real64 dProp_dC[numComp]{};
       applyChainRule( numComp,
@@ -494,28 +494,28 @@ public:
                       Deriv::dC );
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        stack.dEnergyFlux_dC[k_up][jc] += phaseFlux * dProp_dC[jc];
+        stack.dConvectiveEnergyFlux_dC[k_up][jc] += phaseFlux * dProp_dC[jc];
       }
 
       integer const localRowIndexEnergy0 = k[0] * numEqn + numEqn - 1;
       integer const localRowIndexEnergy1 = k[1] * numEqn + numEqn - 1;
-      stack.localFlux[localRowIndexEnergy0] +=  m_dt * stack.energyFlux;
-      stack.localFlux[localRowIndexEnergy1] -=  m_dt * stack.energyFlux;
+      stack.localFlux[localRowIndexEnergy0] +=  m_dt * stack.convectiveEnergyFlux;
+      stack.localFlux[localRowIndexEnergy1] -=  m_dt * stack.convectiveEnergyFlux;
 
       for( integer ke = 0; ke < 2; ++ke )
       {
         integer const localDofIndexPres = k[ke] * numDof;
-        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexPres] += m_dt * stack.dEnergyFlux_dP[ke];
-        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexPres] -= m_dt * stack.dEnergyFlux_dP[ke];
+        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexPres] += m_dt * stack.dConvectiveEnergyFlux_dP[ke];
+        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexPres] -= m_dt * stack.dConvectiveEnergyFlux_dP[ke];
         integer const localDofIndexTemp = localDofIndexPres + numDof - 1;
-        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] +=  m_dt * stack.dEnergyFlux_dT[ke];
-        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] -=  m_dt * stack.dEnergyFlux_dT[ke];
+        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] +=  m_dt * stack.dConvectiveEnergyFlux_dT[ke];
+        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] -=  m_dt * stack.dConvectiveEnergyFlux_dT[ke];
 
         for( integer jc = 0; jc < numComp; ++jc )
         {
           integer const localDofIndexComp = localDofIndexPres + jc + 1;
-          stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexComp] += m_dt * stack.dEnergyFlux_dC[ke][jc];
-          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexComp] -= m_dt * stack.dEnergyFlux_dC[ke][jc];
+          stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexComp] += m_dt * stack.dConvectiveEnergyFlux_dC[ke][jc];
+          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexComp] -= m_dt * stack.dConvectiveEnergyFlux_dC[ke][jc];
         }
       }
     } );
