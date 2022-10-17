@@ -50,7 +50,7 @@ void HypreInterface::initialize()
                     " (" << HYPRE_DEVELOP_BRANCH << ")");
 #else
   GEOSX_LOG_RANK_0( "  Using hypre development version: " << HYPRE_DEVELOP_STRING <<
-                    "(master)");
+                    " (master)");
 #endif
 #elif defined(HYPRE_RELEASE_VERSION)
   GEOSX_LOG_RANK_0( "  Using hypre release version: " << HYPRE_RELEASE_VERSION );
