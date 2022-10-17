@@ -21,9 +21,6 @@
 
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
-#include "constitutive/solid/SolidBase.hpp"
-#include "constitutive/solid/porosity/PorosityExtrinsicData.hpp"
-
 namespace geosx
 {
 
@@ -217,21 +214,19 @@ public:
       // We are in the loop over phases, ip provides the current phase index.
 
       real64 dPresGradStab = 0.0;
-      real64 tauStab = 0.0;
       integer stencilMacroElements[2]{};
 
-      // compute potential difference MPFA-style
-      for( integer i = 0; i < stack.stencilSize; ++i )
+      for( integer ke = 0; ke < stack.stencilSize; ++ke )
       {
-        localIndex const er  = m_seri( iconn, i );
-        localIndex const esr = m_sesri( iconn, i );
-        localIndex const ei  = m_sei( iconn, i );
+        localIndex const er  = m_seri( iconn, ke );
+        localIndex const esr = m_sesri( iconn, ke );
+        localIndex const ei  = m_sei( iconn, ke );
 
-        stencilMacroElements[i] = m_macroElementIndex[er][esr][ei];
+        stencilMacroElements[ke] = m_macroElementIndex[er][esr][ei];
 
-        tauStab = m_elementStabConstant[er][esr][ei];
-
-        dPresGradStab += tauStab * stack.stabTransmissibility[0][i] * (m_pres[er][esr][ei] - m_pres_n[er][esr][ei]); // jump in dp, not p
+        // use the jump in *delta* pressure in the stabilization term
+        dPresGradStab +=
+          m_elementStabConstant[er][esr][ei] * stack.stabTransmissibility[0][ke] * (m_pres[er][esr][ei] - m_pres_n[er][esr][ei]);
       }
 
       // modify stabilization flux
@@ -250,18 +245,18 @@ public:
 
         for( integer ic = 0; ic < numComp; ++ic )
         {
-          real64 const laggedUpwindCoef = m_phaseDens_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip]
-                                          * m_phaseCompFrac_n[er_up_stab ][esr_up_stab ][ei_up_stab ][0][ip][ic]
-                                          * m_phaseRelPerm_n[er_up_stab ][esr_up_stab ][ei_up_stab][0][ip];
+          real64 const laggedUpwindCoef = m_phaseDens_n[er_up_stab][esr_up_stab][ei_up_stab][0][ip]
+                                          * m_phaseCompFrac_n[er_up_stab][esr_up_stab][ei_up_stab][0][ip][ic]
+                                          * m_phaseRelPerm_n[er_up_stab][esr_up_stab][ei_up_stab][0][ip];
           stack.stabFlux[ic] += dPresGradStab * laggedUpwindCoef;
 
           for( integer ke = 0; ke < stack.stencilSize; ++ke )
           {
+            real64 const tauStab = m_elementStabConstant[m_seri( iconn, ke )][m_sesri( iconn, ke )][m_sei( iconn, ke )];
             stack.dStabFlux_dP[ke][ic] += tauStab * stack.stabTransmissibility[0][ke] * laggedUpwindCoef;
           }
         }
       }
-
 
     } ); // end call to Base::computeFlux
 
@@ -359,7 +354,6 @@ public:
     } );
   }
 };
-
 
 } // namespace stabilizedCompositionalMultiphaseFVMKernels
 

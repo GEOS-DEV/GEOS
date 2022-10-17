@@ -49,6 +49,7 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
     setDescription( "Regions where stabilization is applied." );
 
   registerWrapper ( viewKeyStruct::stabilizationMultiplierString(), &m_stabilizationMultiplier ).
+    setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Constant multiplier of stabilization strength." );
 
@@ -261,7 +262,7 @@ void MultiphasePoromechanicsSolver::updateStabilizationParameters( DomainPartiti
       arrayView1d< real64 > const elementStabConstant = subRegion.getExtrinsicData< extrinsicMeshData::flow::elementStabConstant >();
 
       geosx::constitutive::CoupledSolidBase const & porousSolid =
-        getConstitutiveModel< geosx::constitutive::CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );
+        getConstitutiveModel< geosx::constitutive::CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() ) );
 
       arrayView1d< real64 const > const bulkModulus = porousSolid.getBulkModulus();
       arrayView1d< real64 const > const shearModulus = porousSolid.getShearModulus();

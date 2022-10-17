@@ -47,7 +47,7 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseRelPerm_n,
                            "phaseRelPerm_n",
                            array3dLayoutRelPerm,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "Phase relative permeability at previous time" );
 
