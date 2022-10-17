@@ -714,7 +714,6 @@ public:
                 dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
               }
             }
-
           }
 
           // *** upwinding ***
@@ -744,6 +743,16 @@ public:
             for( integer jc = 0; jc < numComp; ++jc )
             {
               dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc];
+            }
+          }
+
+          // gravitational head depends only on the two cells connected (same as mean density)
+          for( integer ke = 0; ke < 2; ++ke )
+          {
+            dPhaseFlux_dP[ke] -= dGravHead_dP[ke];
+            for( integer jc = 0; jc < numComp; ++jc )
+            {
+              dPhaseFlux_dC[ke][jc] -= dGravHead_dC[ke][jc];
             }
           }
 
@@ -804,41 +813,44 @@ public:
             {
               stack.dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
             }
-          }
-          // *** end of upwinding
-
-          // populate local flux vector and derivatives
-          for( integer ic = 0; ic < numComp; ++ic )
-          {
-            integer const eqIndex0 = k[0] * numEqn + ic;
-            integer const eqIndex1 = k[1] * numEqn + ic;
-
-            stack.localFlux[ eqIndex0 ]  +=  m_dt * stack.compFlux[ic];
-            stack.localFlux[ eqIndex1 ]  -=  m_dt * stack.compFlux[ic];
-
-            for( integer ke = 0; ke < 2; ++ke )
-            {
-              localIndex const localDofIndexPres = k[ke] * numDof;
-              stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * stack.dCompFlux_dP[ke][ic];
-              stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * stack.dCompFlux_dP[ke][ic];
-
-              for( integer jc = 0; jc < numComp; ++jc )
-              {
-                localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-                stack.localFluxJacobian[eqIndex0][localDofIndexComp] += m_dt * stack.dCompFlux_dC[ke][ic][jc];
-                stack.localFluxJacobian[eqIndex1][localDofIndexComp] -= m_dt * stack.dCompFlux_dC[ke][ic][jc];
-              }
-            }
-          }
-
-          // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
+          } // *** end of upwinding
+            // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
           // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
           compFluxKernelOp( ip, k, seri, sesri, sei, connectionIndex,
-                            k_up, er_up, esr_up, ei_up, potGrad, 
+                            k_up, er_up, esr_up, ei_up, potGrad,
                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
-
-          connectionIndex++;
         } // loop over phases
+
+        // populate local flux vector and derivatives
+        // std::cout << "connection index: " << connectionIndex <<std::endl;
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          // std::cout << "ic - " << ic << std::endl;
+
+          integer const eqIndex0 = k[0] * numEqn + ic;
+          integer const eqIndex1 = k[1] * numEqn + ic;
+
+          stack.localFlux[ eqIndex0 ]  +=  m_dt * stack.compFlux[ic];
+          stack.localFlux[ eqIndex1 ]  -=  m_dt * stack.compFlux[ic];
+
+          for( integer ke = 0; ke < 2; ++ke )
+          {
+            localIndex const localDofIndexPres = k[ke] * numDof;
+            stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * stack.dCompFlux_dP[ke][ic];
+            stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * stack.dCompFlux_dP[ke][ic];
+
+            // std::cout << "dCompFlux_dP [" << eqIndex0 << "]" << m_dt * stack.dCompFlux_dP[ke][ic] << std::endl;
+            // std::cout << "dCompFlux_dP [" << eqIndex1 << "]" << -m_dt * stack.dCompFlux_dP[ke][ic] << std::endl;
+
+            for( integer jc = 0; jc < numComp; ++jc )
+            {
+              localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
+              stack.localFluxJacobian[eqIndex0][localDofIndexComp] += m_dt * stack.dCompFlux_dC[ke][ic][jc];
+              stack.localFluxJacobian[eqIndex1][localDofIndexComp] -= m_dt * stack.dCompFlux_dC[ke][ic][jc];
+            }
+          }
+        }
+        connectionIndex++;
       }   // loop over k[1]
     }   // loop over k[0]
 
@@ -857,12 +869,12 @@ public:
   {
     using namespace compositionalMultiphaseUtilities;
 
-    // // Apply equation/variable change transformation(s)
-    // stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
-    // shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numFluxElems,
-    //                                                          stack.localFluxJacobian, work );
-    // shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numFluxElems,
-    //                                                            stack.localFlux );
+    // Apply equation/variable change transformation(s)
+    stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
+    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numFluxElems,
+                                                             stack.localFluxJacobian, work );
+    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numFluxElems,
+                                                               stack.localFlux );
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)
@@ -1380,10 +1392,10 @@ public:
     using namespace compositionalMultiphaseUtilities;
     using Order = BoundaryStencil::Order;
 
-    // // Apply equation/variable change transformation(s)
-    // real64 work[numDof]{};
-    // shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localFluxJacobian, work );
-    // shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localFlux );
+    // Apply equation/variable change transformation(s)
+    real64 work[numDof]{};
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localFluxJacobian, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localFlux );
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)

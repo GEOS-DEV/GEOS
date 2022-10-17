@@ -362,7 +362,7 @@ public:
 
       real64 const trans[2] = { stack.transmissibility[connectionIndex][0],
                                 stack.transmissibility[connectionIndex][1] };
-      
+
       stack.energyFlux = 0.0;
       stack.dEnergyFlux_dP.zero();
       stack.dEnergyFlux_dT.zero();
@@ -463,8 +463,8 @@ public:
         for( integer ke = 0; ke < 2; ++ke )
         {
           integer const localDofIndexTemp = k[ke] * numDof + numDof - 1;
-          stack.localFluxJacobian[eqIndex0][localDofIndexTemp] =  m_dt * stack.dCompFlux_dT[ke][ic];
-          stack.localFluxJacobian[eqIndex1][localDofIndexTemp] = -m_dt * stack.dCompFlux_dT[ke][ic];
+          stack.localFluxJacobian[eqIndex0][localDofIndexTemp] += m_dt * stack.dCompFlux_dT[ke][ic];
+          stack.localFluxJacobian[eqIndex1][localDofIndexTemp] -= m_dt * stack.dCompFlux_dT[ke][ic];
         }
       }
 
@@ -518,7 +518,7 @@ public:
           stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexComp] -= m_dt * stack.dEnergyFlux_dC[ke][jc];
         }
       }
-   } );
+    } );
 
     // *****************************************************
     // Computation of the conduction term in the energy flux
