@@ -76,7 +76,7 @@ Mesh
 The following figure shows the mesh used in this problem.
 
 
-.. _problemSketchFig:
+.. _problemSketchPennyShapedViscosityDominatedFig:
 .. figure:: mesh.png
    :align: center
    :width: 500
@@ -237,7 +237,7 @@ Inspecting results
 
 The following figure shows the distribution of :math:`\sigma_{zz}` at :math:`t=400 s` within the computational domain..
 
-.. _problemVerificationFig1:
+.. _problemVerificationPennyShapedViscosityDominatedFig:
 .. figure:: szz.png
    :align: center
    :width: 500

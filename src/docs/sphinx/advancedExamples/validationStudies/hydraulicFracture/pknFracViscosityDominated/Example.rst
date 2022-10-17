@@ -67,7 +67,7 @@ Mesh
 The following figure shows the mesh used in this problem.
 
 
-.. _problemSketchFig:
+.. _problemSketchpknViscosityDominatedFig:
 .. figure:: mesh.png
    :align: center
    :width: 500
@@ -228,7 +228,7 @@ Inspecting results
 
 The following figure shows the distribution of :math:`\sigma_{zz}` at :math:`t=200 s` within the computational domain..
 
-.. _problemVerificationFig1:
+.. _problemVerificationpknViscosityDominatedFig:
 .. figure:: szz.png
    :align: center
    :width: 500
