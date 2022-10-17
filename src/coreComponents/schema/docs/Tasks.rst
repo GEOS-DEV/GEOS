@@ -3,7 +3,9 @@
 ================================= ==== ======= ============================================ 
 Name                              Type Default Description                                  
 ================================= ==== ======= ============================================ 
+CompositionalMultiphaseStateReset node         :ref:`XML_CompositionalMultiphaseStateReset` 
 CompositionalMultiphaseStatistics node         :ref:`XML_CompositionalMultiphaseStatistics` 
+MultiphasePoromechanicsStateReset node         :ref:`XML_MultiphasePoromechanicsStateReset` 
 PVTDriver                         node         :ref:`XML_PVTDriver`                         
 PackCollection                    node         :ref:`XML_PackCollection`                    
 SinglePhaseStatistics             node         :ref:`XML_SinglePhaseStatistics`             
