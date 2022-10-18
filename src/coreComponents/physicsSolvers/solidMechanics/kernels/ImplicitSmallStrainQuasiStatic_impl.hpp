@@ -186,6 +186,4 @@ ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::ke
 
 } // namespace geosx
 
-#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
-
 #endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINQUASISTATIC_IMPL_HPP_

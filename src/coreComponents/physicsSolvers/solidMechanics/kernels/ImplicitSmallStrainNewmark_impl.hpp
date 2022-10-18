@@ -181,6 +181,4 @@ complete( localIndex const k,
 
 } // namespace geosx
 
-#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
-
 #endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_IMPL_HPP_
