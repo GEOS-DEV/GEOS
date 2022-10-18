@@ -17,8 +17,8 @@
  */
 
 #include "SolidMechanicsLagrangianFEM.hpp"
+#include "kernels/ImplicitSmallStrainNewmark.hpp"
 #include "kernels/ImplicitSmallStrainQuasiStatic.hpp"
-//#include "kernels/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp"
 #include "kernels/ExplicitSmallStrain.hpp"
 #include "kernels/ExplicitFiniteStrain.hpp"
 
@@ -119,6 +119,7 @@ void SolidMechanicsLagrangianFEM::postProcessInput()
   linParams.isSymmetric = true;
   linParams.dofsPerNode = 3;
   linParams.amg.separateComponents = true;
+
 }
 
 SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
@@ -953,18 +954,16 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
-    GEOSX_ERROR( "SolidMechanicsLagrangianFEM::TimeIntegrationOption::ImplicitDynamic is disabled at this time. "
-                 "If you need this capability re-enabled, please contact the developer team with your request." );
-    // assemblyLaunch< constitutive::SolidBase,
-    //                 solidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
-    //                                                                               dofManager,
-    //                                                                               localMatrix,
-    //                                                                               localRhs,
-    //                                                                               m_newmarkGamma,
-    //                                                                               m_newmarkBeta,
-    //                                                                               m_massDamping,
-    //                                                                               m_stiffnessDamping,
-    //                                                                               dt );
+    assemblyLaunch< constitutive::SolidBase,
+                    solidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
+                                                                                  dofManager,
+                                                                                  localMatrix,
+                                                                                  localRhs,
+                                                                                  m_newmarkGamma,
+                                                                                  m_newmarkBeta,
+                                                                                  m_massDamping,
+                                                                                  m_stiffnessDamping,
+                                                                                  dt );
   }
 }
 

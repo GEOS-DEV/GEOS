@@ -3,6 +3,7 @@
 
 using ExplicitSmallStrainPolicy = @ExplicitSmallStrainPolicy@;
 using ExplicitFiniteStrainPolicy = @ExplicitFiniteStrainPolicy@;
+using ImplicitSmallStrainNewmarkPolicy = @ImplicitSmallStrainNewmarkPolicy@;
 using ImplicitSmallStrainQuasiStaticPolicy = @ImplicitSmallStrainQuasiStaticPolicy@;
 
 

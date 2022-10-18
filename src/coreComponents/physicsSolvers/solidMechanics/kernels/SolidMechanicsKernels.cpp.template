@@ -2,6 +2,7 @@
 
 #include "physicsSolvers/solidMechanics/kernels/ExplicitSmallStrain_impl.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp"
+#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic_impl.hpp"
 #include "policies.hpp"
 
@@ -22,6 +23,7 @@ namespace solidMechanicsLagrangianFEMKernels
 {
   INSTANTIATION( ExplicitSmallStrain )
   INSTANTIATION( ExplicitFiniteStrain )
+  INSTANTIATION( ImplicitSmallStrainNewmark )
   INSTANTIATION( ImplicitSmallStrainQuasiStatic )
 }
 }

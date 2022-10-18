@@ -6,6 +6,7 @@ set( kernelPath "coreComponents/physicsSolvers/solidMechanics/kernels" )
 
 set( ExplicitSmallStrainPolicy "geosx::parallelDevicePolicy<32>" )
 set( ExplicitFiniteStrainPolicy "geosx::parallelDevicePolicy<32>" )
+set( ImplicitSmallStrainNewmarkPolicy "geosx::parallelDevicePolicy<32>" )
 set( ImplicitSmallStrainQuasiStaticPolicy "geosx::parallelDevicePolicy<32>" )
 
 

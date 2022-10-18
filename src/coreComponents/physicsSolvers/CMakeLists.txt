@@ -87,6 +87,8 @@ set( physicsSolvers_headers
      solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp
      solidMechanics/kernels/ExplicitSmallStrain.hpp
      solidMechanics/kernels/ExplicitSmallStrain_impl.hpp
+     solidMechanics/kernels/ImplicitSmallStrainNewmark.hpp
+     solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp
      solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp
      solidMechanics/kernels/ImplicitSmallStrainQuasiStatic_impl.hpp
      solidMechanics/SolidMechanicsStateReset.hpp
