@@ -84,8 +84,8 @@ public:
    * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
    * @param cycleNumber the cycle number/step number of evaluation of the source
    * @param rhsx the right hand side vector to be computed (x-component)
-   * @param rhsy the right hand side vector to be computed (x-component)
-   * @param rhsz the right hand side vector to be computed (x-component)
+   * @param rhsy the right hand side vector to be computed (y-component)
+   * @param rhsz the right hand side vector to be computed (z-component)
    */
   void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhsx, arrayView1d< real32 > const rhsy, arrayView1d< real32 > const rhsz );
 
@@ -124,11 +124,26 @@ public:
                                        arrayView1d< real32 const > const var_n,
                                        arrayView2d< real32 > varAtReceivers );
 
+  /**
+   * TODO: move implementation into WaveSolverBase once 'm_receiverIsLocal' is also moved
+   * @brief Compute DAS data from the appropriate three-component receiver pairs
+   * @param xCompRcv the array holding the x-component of pairs of receivers
+   * @param yCompRcv the array holding the y-component of pairs of receivers
+   * @param zCompRcv the array holding the z-component of pairs of receivers
+   */
+  void computeDAS( arrayView2d< real32 > const xCompRcv,
+                   arrayView2d< real32 > const yCompRcv,
+                   arrayView2d< real32 > const zCompRcv );
+
 
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
    */
-  virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain ) override;
+  virtual void cleanup( real64 const time_n,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        DomainPartition & domain ) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -201,7 +216,6 @@ private:
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
 
-
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
   array2d< real64 > m_sourceConstantsx;
 
@@ -231,7 +245,6 @@ private:
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (z-component)
   array2d< real32 > m_displacementZNp1AtReceivers;
-
 };
 
 
