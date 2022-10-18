@@ -9,7 +9,7 @@
       materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
-      name="Fracture"
+      name="Fracture"      
       defaultAperture="0.02e-3"
       materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
@@ -138,13 +138,42 @@
       values="{ 0.002e-3, 0.02e-3 }"/>
   </Functions>
 
+  <!-- SPHINX_TASKS -->
+  <Tasks>
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="pressure"/>
+
+    <PackCollection
+      name="apertureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="elementAperture"/> 
+
+    <PackCollection
+      name="hydraulicApertureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="hydraulicAperture"/>  
+
+    <PackCollection
+      name="areaCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="elementArea"/> 
+  </Tasks>
+  <!-- SPHINX_TASKS_END -->
+
   <!-- SPHINX_OUTPUT -->    
   <Outputs>
-    <Silo
-      name="siloOutput"
+    <VTK
+      name="vtkOutput"
       plotFileRoot="zeroViscosity"
       plotLevel="3"
       parallelThreads="48"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/pressureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection, /Tasks/areaCollection}"
+      filename="pennyShapedToughnessDominated_output" />  
 
     <Restart
       name="restartOutput"/>
