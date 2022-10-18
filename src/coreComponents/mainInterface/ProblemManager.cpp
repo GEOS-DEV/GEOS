@@ -335,7 +335,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   Group & benchmarks = this->registerGroup< Group >( "Benchmarks" );
   benchmarks.setInputFlags( InputFlags::OPTIONAL );
 
-  for( string const machineName : {"quartz", "lassen"} )
+  for( string const machineName : {"quartz", "lassen", "crusher" } )
   {
     Group & machine = benchmarks.registerGroup< Group >( machineName );
     machine.setInputFlags( InputFlags::OPTIONAL );
@@ -346,15 +346,6 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
     run.registerWrapper< string >( "name" ).setInputFlag( InputFlags::REQUIRED ).
       setDescription( "The name of this benchmark." );
 
-    run.registerWrapper< int >( "nodes" ).setInputFlag( InputFlags::REQUIRED ).
-      setDescription( "The number of nodes needed to run the benchmark." );
-
-    run.registerWrapper< int >( "tasksPerNode" ).setInputFlag( InputFlags::REQUIRED ).
-      setDescription( "The number of tasks per node to run the benchmark with." );
-
-    run.registerWrapper< int >( "threadsPerTask" ).setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "The number of threads per task to run the benchmark with." );
-
     run.registerWrapper< int >( "timeLimit" ).setInputFlag( InputFlags::OPTIONAL ).
       setDescription( "The time limit of the benchmark." );
 
@@ -364,8 +355,23 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
     run.registerWrapper< string >( "autoPartition" ).setInputFlag( InputFlags::OPTIONAL ).
       setDescription( "May be 'Off' or 'On', if 'On' partitioning arguments are created automatically. Default is Off." );
 
-    run.registerWrapper< array1d< int > >( "strongScaling" ).setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "Repeat the benchmark N times, scaling the number of nodes in the benchmark by these values." );
+    run.registerWrapper< string >( "scaling" ).setInputFlag( InputFlags::OPTIONAL ).
+      setDescription( "Whether to run a scaling, and which type of scaling to run." );
+
+    run.registerWrapper< int >( "nodes" ).setInputFlag( InputFlags::OPTIONAL ).
+      setDescription( "The number of nodes needed to run the base benchmark, default is 1." );
+
+    run.registerWrapper< int >( "tasksPerNode" ).setInputFlag( InputFlags::REQUIRED ).
+      setDescription( "The number of tasks per node to run the benchmark with." );
+
+    run.registerWrapper< int >( "threadsPerTask" ).setInputFlag( InputFlags::OPTIONAL ).
+      setDescription( "The number of threads per task to run the benchmark with." );
+
+    run.registerWrapper< array1d< int > >( "meshSizes" ).setInputFlag( InputFlags::OPTIONAL ).
+      setDescription( "The target number of elements in the internal mesh (per-process for weak scaling, globally for strong scaling) default doesn't modify the internalMesh." );
+
+    run.registerWrapper< array1d< int > >( "scaleList" ).setInputFlag( InputFlags::OPTIONAL ).
+      setDescription( "The scales at which to run the problem ( scale * nodes * tasksPerNode )." );
   }
 
   schemaUtilities::SchemaConstruction( benchmarks, schemaRoot, targetChoiceNode, documentationType );

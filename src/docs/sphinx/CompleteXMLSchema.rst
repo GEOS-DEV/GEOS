@@ -1093,6 +1093,13 @@ Element: WellElementRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegion.rst
 
 
+.. _XML_crusher:
+
+Element: crusher
+================
+.. include:: ../../coreComponents/schema/docs/crusher.rst
+
+
 .. _XML_lassen:
 
 Element: lassen
@@ -2236,6 +2243,13 @@ Datastructure: WellElementRegionUniqueSubRegion
 Datastructure: commandLine
 ==========================
 .. include:: ../../coreComponents/schema/docs/commandLine_other.rst
+
+
+.. _DATASTRUCTURE_crusher:
+
+Datastructure: crusher
+======================
+.. include:: ../../coreComponents/schema/docs/crusher_other.rst
 
 
 .. _DATASTRUCTURE_domain:
