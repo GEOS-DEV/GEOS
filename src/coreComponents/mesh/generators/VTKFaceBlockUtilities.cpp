@@ -562,7 +562,7 @@ compute2dFaceAnd2dElemToEdges( vtkSmartPointer< vtkDataSet > vtkMesh,
  * @param[in] elem2dToEdges The 2d elem (geometrical faces in 3d) to edges mapping.
  * @return The mapping.
  */
-ArrayOfArrays< localIndex > computeFace2dToElems2d( localIndex const num2dFaces,
+ArrayOfArrays< localIndex > compute2dFaceToElems2d( localIndex const num2dFaces,
                                                     arrayView1d< localIndex const > face2dToEdges,
                                                     ArrayOfArraysView< localIndex const > elem2dToEdges )
 {
@@ -599,7 +599,6 @@ void importFracture( string const & faceBlockName,
   FaceData const faceData( fieldData, faceBlockName );
 
   vtkIdType const num2dElements = faceData.num2dElements();
-  // Computing the number of 2d faces
   localIndex const num2dFaces = computeNum2dFaces( vtkMesh, faceData );
 
   internal::ElementToFace const elemToFaces( cellBlockManager.getCellBlocks() );
@@ -617,7 +616,7 @@ void importFracture( string const & faceBlockName,
   array1d< localIndex > const face2dToEdges( std::get< 0 >( tmp2 ) );
   ArrayOfArrays< localIndex > const elem2dToEdges( std::get< 1 >( tmp2 ) );
 
-  ArrayOfArrays< localIndex > const face2dToElems2d = computeFace2dToElems2d( num2dFaces, face2dToEdges.toViewConst(), elem2dToEdges.toViewConst() );
+  ArrayOfArrays< localIndex > const face2dToElems2d = compute2dFaceToElems2d( num2dFaces, face2dToEdges.toViewConst(), elem2dToEdges.toViewConst() );
 
   // Mappings are now computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( faceBlockName );
