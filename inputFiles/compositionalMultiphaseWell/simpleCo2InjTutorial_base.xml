@@ -195,7 +195,7 @@
   <Tasks>
     <PackCollection
       name="wellPressureCollection"
-      objectPath="ElementRegions/wellRegion/wellRegionuniqueSubRegion"
+      objectPath="ElementRegions/wellRegion/wellRegionUniqueSubRegion"
       fieldName="pressure" />
     
   </Tasks>

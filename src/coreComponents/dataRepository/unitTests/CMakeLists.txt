@@ -11,6 +11,10 @@ set( dataRepository_tests
 
 set( dependencyList ${parallelDeps} gtest dataRepository )
 
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
+endif()
+
 #
 # Add gtest C++ based tests
 #

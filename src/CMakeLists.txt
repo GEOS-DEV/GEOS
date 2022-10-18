@@ -17,6 +17,8 @@ set( BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard" )
 set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "" )
 set( CMAKE_ENABLE_EXPORTS ON )
 
+#set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
+
 ################################
 # Include blt
 ################################
@@ -120,6 +122,10 @@ if( ENABLE_CUDA )
   set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
 endif()
 
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( extraComponentsLinkList ${extraComponentsLinkList} CUDA::nvToolsExt )
+endif()
+
 if( ENABLE_HIP )
   set( extraComponentsLinkList ${extraComponentsLinkList} blt::hip )
 endif()
@@ -167,7 +173,7 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
 
   add_custom_target( geosx_update_rst_tables
                      ALL
-                     COMMAND python ${SCRIPT_DIR}/SchemaToRSTDocumentation.py ${SCHEMA_DIR} >update_rst_tables.log 2>&1 || (cat update_rst_tables.log && exit 1)
+                     COMMAND python3 ${SCRIPT_DIR}/SchemaToRSTDocumentation.py ${SCHEMA_DIR} >update_rst_tables.log 2>&1 || (cat update_rst_tables.log && exit 1)
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_generate_schema
                      COMMENT "Generating schema-dependent RST files"

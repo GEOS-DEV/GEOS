@@ -54,6 +54,8 @@ void RAJA_INLINE parallelHostSync() { RAJA::synchronize< RAJA::omp_synchronize >
 
 #else
 
+auto const parallelHostMemorySpace = hostMemorySpace;
+
 using parallelHostPolicy = serialPolicy;
 using parallelHostReduce = serialReduce;
 using parallelHostAtomic = serialAtomic;
@@ -119,6 +121,8 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOSX_UNUSED_PARAM( stream )
 }
 
 #else
+
+auto const parallelDeviceMemorySpace = parallelHostMemorySpace;
 
 template< unsigned long BLOCK_SIZE = 0 >
 using parallelDevicePolicy = parallelHostPolicy;

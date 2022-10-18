@@ -13,6 +13,10 @@ set( gtest_geosx_tests
 
 set( dependencyList gtest constitutive ${parallelDeps} )
 
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
+endif()
+
 #
 # Add gtest C++ based tests
 #

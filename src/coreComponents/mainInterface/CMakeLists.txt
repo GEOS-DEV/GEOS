@@ -18,6 +18,10 @@ set( mainInterface_sources
 
 set( dependencyList ${parallelDeps} physicsSolvers discretizationMethods fieldSpecification linearAlgebra dataRepository events fileIO optionparser )
 
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
+endif()
+
 blt_add_library( NAME       mainInterface
                  SOURCES    ${mainInterface_sources}
                  HEADERS    ${mainInterface_headers}

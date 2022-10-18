@@ -515,6 +515,12 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
                       EXTRA_LIBRARIES ${EXTRA_LIBS}
                       DEPENDS ${HYPRE_DEPENDS})
 
+
+    # Prepend Hypre to link flags, fix for Umpire appearing before Hypre on the link line
+    # if (NOT CMAKE_HOST_APPLE)
+    #   blt_add_target_link_flags (TO hypre FLAGS "-Wl,--whole-archive ${HYPRE_DIR}/lib/libHYPRE.a -Wl,--no-whole-archive")
+    # endif()
+
     file(READ ${HYPRE_DIR}/include/HYPRE_config.h hypre_config)
     string(REGEX MATCH "HYPRE_RELEASE_VERSION \"([0-9]*).([0-9]*).([0-9]*)\"" hypre_version ${hypre_config} )
     set( HYPRE_VERSION_MAJOR ${CMAKE_MATCH_1} )
@@ -721,6 +727,14 @@ if(NOT ENABLE_${upper_LAI})
   message(FATAL_ERROR "${GEOSX_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF")
 endif()
 option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
+
+###############################
+# NvToolExt
+###############################
+if ( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
+  find_package(CUDAToolkit REQUIRED)
+  set(thirdPartyLibs ${thirdPartyLibs} CUDA::nvToolsExt)
+endif()
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
 

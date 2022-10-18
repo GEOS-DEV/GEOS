@@ -790,14 +790,14 @@ AssemblerKernelHelper::
     // 1) Find if there is a neighbor, and if there is, grab the indices of the neighbor element
 
     localIndex neighborIds[ 3 ] = { localIds[0], localIds[1], localIds[2] };
-    hybridFVMKernels::CellConnectivity::findNeighbor( localIds,
-                                                      ifaceLoc,
-                                                      elemRegionList,
-                                                      elemSubRegionList,
-                                                      elemList,
-                                                      regionFilter,
-                                                      elemToFaces,
-                                                      neighborIds );
+    hybridFVMKernels::CellConnectivity::isNeighborFound( localIds,
+                                                         ifaceLoc,
+                                                         elemRegionList,
+                                                         elemSubRegionList,
+                                                         elemList,
+                                                         regionFilter,
+                                                         elemToFaces,
+                                                         neighborIds );
     localIndex const neighborDofNumber = elemDofNumber[neighborIds[0]][neighborIds[1]][neighborIds[2]];
 
     // 2) *************** Assemble viscous terms ******************

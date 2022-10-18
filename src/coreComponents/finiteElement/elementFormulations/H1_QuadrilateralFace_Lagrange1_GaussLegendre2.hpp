@@ -20,6 +20,7 @@
 #define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1QUADRILATERALFACELAGRANGE1GAUSSLEGENDRE2
 
 #include "FiniteElementBase.hpp"
+#include "LagrangeBasis1.hpp"
 
 
 namespace geosx
@@ -48,6 +49,10 @@ namespace finiteElement
 class H1_QuadrilateralFace_Lagrange1_GaussLegendre2 final : public FiniteElementBase
 {
 public:
+
+  /// The type of basis used for this element
+  using BASIS = LagrangeBasis1;
+
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 4;
   /// The maximum number of support points per element.
@@ -128,6 +133,15 @@ public:
   static void setupStack( localIndex const & cellIndex,
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
+
+  /**
+   * @brief Calculate shape functions values at a single point.
+   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[out] N The shape function values.
+   */
+  GEOSX_HOST_DEVICE
+  static void calcN( real64 const (&coords)[2],
+                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -262,6 +276,21 @@ void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
                             MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
 {}
 
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+  calcN( real64 const (&coords)[2],
+         real64 (& N)[numNodes] )
+{
+  for( localIndex a=0; a<numNodes; ++a )
+  {
+    N[a] = 0.25 *
+           ( 1 + quadratureFactor*coords[0]*parentCoords0( a ) ) *
+           ( 1 + quadratureFactor*coords[1]*parentCoords1( a ) );
+  }
+}
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void

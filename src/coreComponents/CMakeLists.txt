@@ -56,6 +56,10 @@ if ( ENABLE_CUDA )
   set( parallelDeps ${parallelDeps} cuda )
 endif()
 
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( parallelDeps ${parallelDeps} CUDA::nvToolsExt )
+endif()
+
 if( ENABLE_HIP )
   set( parallelDeps ${parallelDeps} blt::hip )
 endif()

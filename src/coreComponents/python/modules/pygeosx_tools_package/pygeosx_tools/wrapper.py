@@ -298,11 +298,9 @@ def get_matching_wrapper_path(problem, filters):
     """
     Recursively search the group and its children for wrappers that match the filters
     A successful match is identified if the wrapper path contains all of the
-    strings in the filter.  Note: multiple matches are possible
-        For example, if filters=['a', 'b', 'c'], the following would match
-            - a/b/c
-            - c/b/a
-            - d/e/c/f/b/a/a
+    strings in the filter.
+    For example, if filters=['a', 'b', 'c'], the following could match any of the following:
+    'a/b/c', 'c/b/a', 'd/e/c/f/b/a/a'
 
     Args:
         problem (pygeosx.Group): GEOSX problem handle
@@ -310,7 +308,6 @@ def get_matching_wrapper_path(problem, filters):
 
     Returns:
         str: Key of the matching wrapper
-
     """
     matching_paths = []
     search_datastructure_wrappers_recursive(problem, filters, matching_paths)
@@ -333,10 +330,10 @@ def run_queries(problem, records):
     Query the current GEOSX datastructure
     Note: The expected record request format is as follows.
     For now, the only supported query is to find the min/max values of the target
-        record = {'path/of/wrapper': {'label': 'aperture (m)', # A label to include with plots
-                  'scale': 1.0,  # Value to scale results by
-                  'history: [],  # A list to store values over time
-                  'fhandle': plt.figure()  # A figure handle }}
+    record = {'path/of/wrapper': {'label': 'aperture (m)', # A label to include with plots
+    'scale': 1.0,  # Value to scale results by
+    'history: [],  # A list to store values over time
+    'fhandle': plt.figure()  # A figure handle }}
 
     Args:
         problem (pygeosx.Group): GEOSX problem handle

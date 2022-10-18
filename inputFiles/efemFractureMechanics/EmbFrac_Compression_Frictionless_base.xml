@@ -30,6 +30,7 @@
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
+      discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="1"
@@ -52,6 +53,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
+      faceBlock="embeddedSurfaceSubRegion"
       subRegionType="embeddedElement"
       materialList="{ fractureContact }"
       defaultAperture="1e-3"/>
@@ -97,7 +99,7 @@
     <FieldSpecification
       name="xnegconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ bottomPoint, topPoint }"/>
@@ -105,7 +107,7 @@
     <FieldSpecification
       name="yposconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ leftPoint, rightPoint }"/>
@@ -113,7 +115,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>   

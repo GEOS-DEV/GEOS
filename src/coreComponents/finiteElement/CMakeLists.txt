@@ -20,6 +20,10 @@ set( finiteElement_headers
      elementFormulations/ConformingVirtualElementOrder1_impl.hpp
      elementFormulations/LagrangeBasis1.hpp
      elementFormulations/LagrangeBasis2.hpp
+     elementFormulations/LagrangeBasis3GL.hpp
+     elementFormulations/LagrangeBasis5GL.hpp
+     elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp
+     elementFormulations/Q5_Hexahedron_Lagrange_GaussLobatto.hpp
      kernelInterface/ImplicitKernelBase.hpp
      kernelInterface/KernelBase.hpp
      kernelInterface/SparsityKernelBase.hpp

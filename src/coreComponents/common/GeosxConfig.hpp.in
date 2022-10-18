@@ -35,6 +35,10 @@
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #cmakedefine GEOSX_USE_CUDA
 
+
+/// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
+#cmakedefine GEOSX_USE_CUDA_NVTOOLSEXT
+
 /// Enables use of HIP (CMake option ENABLE_HIP)
 #cmakedefine GEOSX_USE_HIP
 

@@ -22,6 +22,7 @@
 #include "constitutive/solid/PorousSolid.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanicsKernel.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsExtrinsicData.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
@@ -29,6 +30,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace extrinsicMeshData;
 
 MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & name,
                                                               Group * const parent )
@@ -36,7 +38,7 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
 {
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
-  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+  m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
@@ -44,9 +46,9 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
-  forMeshTargets( meshBodies, [&] ( string const &,
-                                    MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -65,7 +67,7 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
 void MultiphasePoromechanicsSolver::setupCoupling( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                                    DofManager & dofManager ) const
 {
-  dofManager.addCoupling( keys::TotalDisplacement,
+  dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
                           CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
 }
@@ -79,13 +81,13 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
 {
   GEOSX_MARK_FUNCTION;
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
 
-    string const displacementDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+    string const displacementDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
     arrayView1d< globalIndex const > const & displacementDofNumber = nodeManager.getReference< globalIndex_array >( displacementDofKey );
 
     string const flowDofKey = dofManager.getKey( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString() );
@@ -112,7 +114,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const GEOSX_UNUSED_PA
                                       constitutive::PorousSolidBase,
                                       CellElementSubRegion >( mesh,
                                                               regionNames,
-                                                              this->getDiscretizationName(),
+                                                              solidMechanicsSolver()->getDiscretizationName(),
                                                               viewKeyStruct::porousMaterialNamesString(),
                                                               kernelFactory );
   } );
@@ -146,9 +148,9 @@ real64 MultiphasePoromechanicsSolver::solverStep( real64 const & time_n,
 
 void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
 {
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
@@ -166,9 +168,9 @@ void MultiphasePoromechanicsSolver::initializePreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,

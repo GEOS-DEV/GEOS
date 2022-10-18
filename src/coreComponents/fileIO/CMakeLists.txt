@@ -77,6 +77,10 @@ if( ENABLE_VTK )
     list( APPEND dependencyList VTK::IOLegacy VTK::IOXML )
 endif()
 
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
+endif()
+
 blt_add_library( NAME       fileIO
                  SOURCES    ${fileIO_sources}
                  HEADERS    ${fileIO_headers}

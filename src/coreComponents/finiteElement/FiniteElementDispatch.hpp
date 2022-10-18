@@ -20,13 +20,14 @@
 #define GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
 
 
+#include "elementFormulations/ConformingVirtualElementOrder1.hpp"
 #include "elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
 #include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
-#include "elementFormulations/ConformingVirtualElementOrder1.hpp"
+#include "elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
 #include "LvArray/src/system.hpp"
 
 
@@ -57,12 +58,12 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr4 );
   }
-#ifdef GEOSX_DISPATCH_VEM
-  else if( auto const * const ptr5 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 const * >(&input) ) // VEM on Tetrahedron
+  else if( auto const * const ptr5 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
   {
     lambda( *ptr5 );
   }
-  else if( auto const * const ptr6 = dynamic_cast< H1_Pyramid_VEM_Gauss1 const * >(&input) ) // VEM on Pyramid
+#ifdef GEOSX_DISPATCH_VEM
+  else if( auto const * const ptr6 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 const * >(&input) ) // VEM on Tetrahedron
   {
     lambda( *ptr6 );
   }
@@ -81,6 +82,26 @@ dispatch3D( FiniteElementBase const & input,
   else if( auto const * const ptr10 = dynamic_cast< H1_Prism6_VEM_Gauss1 const * >(&input) ) // VEM on Prism6
   {
     lambda( *ptr10 );
+  }
+  else if( auto const * const ptr11 = dynamic_cast< H1_Prism7_VEM_Gauss1 const * >(&input) ) // VEM on Prism7
+  {
+    lambda( *ptr11 );
+  }
+  else if( auto const * const ptr12 = dynamic_cast< H1_Prism8_VEM_Gauss1 const * >(&input) ) // VEM on Prism8
+  {
+    lambda( *ptr12 );
+  }
+  else if( auto const * const ptr13 = dynamic_cast< H1_Prism9_VEM_Gauss1 const * >(&input) ) // VEM on Prism9
+  {
+    lambda( *ptr13 );
+  }
+  else if( auto const * const ptr14 = dynamic_cast< H1_Prism10_VEM_Gauss1 const * >(&input) ) // VEM on Prism10
+  {
+    lambda( *ptr14 );
+  }
+  else if( auto const * const ptr15 = dynamic_cast< H1_Prism11_VEM_Gauss1 const * >(&input) ) // VEM on Prism11
+  {
+    lambda( *ptr15 );
   }
 #endif
   else
@@ -111,12 +132,12 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr4 );
   }
-#ifdef GEOSX_DISPATCH_VEM
-  else if( auto * const ptr5 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 * >(&input) ) // VEM on Tetrahedron
+  else if( auto * const ptr5 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto * >(&input) )
   {
     lambda( *ptr5 );
   }
-  else if( auto * const ptr6 = dynamic_cast< H1_Pyramid_VEM_Gauss1 * >(&input) ) // VEM on Pyramid
+#ifdef GEOSX_DISPATCH_VEM
+  else if( auto * const ptr6 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 * >(&input) ) // VEM on Tetrahedron
   {
     lambda( *ptr6 );
   }
@@ -135,6 +156,26 @@ dispatch3D( FiniteElementBase & input,
   else if( auto * const ptr10 = dynamic_cast< H1_Prism6_VEM_Gauss1 * >(&input) ) // VEM on Prism6
   {
     lambda( *ptr10 );
+  }
+  else if( auto * const ptr11 = dynamic_cast< H1_Prism7_VEM_Gauss1 * >(&input) ) // VEM on Prism7
+  {
+    lambda( *ptr11 );
+  }
+  else if( auto * const ptr12 = dynamic_cast< H1_Prism8_VEM_Gauss1 * >(&input) ) // VEM on Prism8
+  {
+    lambda( *ptr12 );
+  }
+  else if( auto * const ptr13 = dynamic_cast< H1_Prism9_VEM_Gauss1 * >(&input) ) // VEM on Prism9
+  {
+    lambda( *ptr13 );
+  }
+  else if( auto * const ptr14 = dynamic_cast< H1_Prism10_VEM_Gauss1 * >(&input) ) // VEM on Prism10
+  {
+    lambda( *ptr14 );
+  }
+  else if( auto * const ptr15 = dynamic_cast< H1_Prism11_VEM_Gauss1 * >(&input) ) // VEM on Prism11
+  {
+    lambda( *ptr15 );
   }
 #endif
   else

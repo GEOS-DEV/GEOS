@@ -36,9 +36,9 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   arrayView1d< integer > const & edgeGhostRank = edgeManager.ghostRank();
   arrayView1d< integer > const & faceGhostRank = faceManager.ghostRank();
 
-  arrayView1d< localIndex > const & parentNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
-  arrayView1d< localIndex > const & parentEdgeIndices = edgeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
-  arrayView1d< localIndex > const & parentFaceIndices = faceManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
+  arrayView1d< localIndex > const & parentNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+  arrayView1d< localIndex > const & parentEdgeIndices = edgeManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+  arrayView1d< localIndex > const & parentFaceIndices = faceManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
 
   int const neighborRank = neighbor->neighborRank();
 
@@ -458,9 +458,9 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
   localIndex_array & edgeGhostsToSend = edgeManager.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
   localIndex_array & faceGhostsToSend = faceManager.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
 
-  arrayView1d< localIndex > const & nodalParentIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
-  arrayView1d< localIndex > const & edgeParentIndices = edgeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
-  arrayView1d< localIndex > const & faceParentIndices = faceManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
+  arrayView1d< localIndex > const & nodalParentIndices = nodeManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+  arrayView1d< localIndex > const & edgeParentIndices = edgeManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
+  arrayView1d< localIndex > const & faceParentIndices = faceManager.getExtrinsicData< extrinsicMeshData::parentIndex >();
 
   FilterNewObjectsForPackToGhosts( receivedObjects.newNodes, nodalParentIndices, nodeGhostsToSend, newNodesToSend );
   FilterModObjectsForPackToGhosts( receivedObjects.modifiedNodes, nodeGhostsToSend, modNodesToSend );

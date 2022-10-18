@@ -30,10 +30,14 @@
 #define GEOSX_USE_MPI
 
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
-/* #undef GEOSX_USE_OPENMP */
+#define GEOSX_USE_OPENMP
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #define GEOSX_USE_CUDA
+
+
+/// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
+#define GEOSX_USE_CUDA_NVTOOLSEXT
 
 /// Enables use of HIP (CMake option ENABLE_HIP)
 #define GEOSX_USE_HIP
@@ -66,7 +70,7 @@
   /// Parsed hypre version information
   #define HYPRE_VERSION_MAJOR 2
   /// Parsed hypre version information
-  #define HYPRE_VERSION_MINOR 25
+  #define HYPRE_VERSION_MINOR 24
   /// Parsed hypre version information
   #define HYPRE_VERSION_PATCH 0
 #endif
@@ -75,7 +79,7 @@
 #define GEOSX_USE_HYPRE_CPU 0
 #define GEOSX_USE_HYPRE_CUDA 1
 #define GEOSX_USE_HYPRE_HIP 2
-#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_HIP
+#define GEOSX_USE_HYPRE_DEVICE GEOSX_USE_HYPRE_CPU
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #define GEOSX_USE_SUPERLU_DIST
