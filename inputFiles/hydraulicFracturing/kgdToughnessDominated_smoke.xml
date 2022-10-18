@@ -57,12 +57,6 @@
       target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent
-      name="outputs"
-      timeFrequency="10.0"
-      targetExactTimestep="0"
-      target="/Outputs/siloOutput"/>
-
-    <PeriodicEvent
       name="restarts"
       timeFrequency="5.0"
       targetExactTimestep="0"
