@@ -44,17 +44,42 @@
   </Geometry>
 
   <Events
-    maxTime="100.0">
-
-    <SoloEvent 
-      name="initialPlot"
-      target="/Outputs/siloOutput"
-      />
+    maxTime="100.1"> 
 
     <SoloEvent 
       name="preFracture"
       target="/Solvers/SurfaceGen"
       />
+
+    <PeriodicEvent
+      name="outputs"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="timeHistoryCollection0"
+      targetExactTimestep="0"
+      target="/Tasks/pressureCollection" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection1"
+      targetExactTimestep="0"
+      target="/Tasks/apertureCollection" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection2"
+      targetExactTimestep="0"
+      target="/Tasks/hydraulicApertureCollection" /> 
+
+    <PeriodicEvent
+      name="timeHistoryCollection3"
+      targetExactTimestep="0"
+      target="/Tasks/areaCollection" />      
+
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/> 
 
     <PeriodicEvent 
       name="solverApplications1"
@@ -94,15 +119,8 @@
     <PeriodicEvent 
       name="solverApplications6"
       beginTime="60.0"
-      endTime="100.0"
       forceDt="4.0"
-      target="/Solvers/hydrofracture" /> 
-
-    <PeriodicEvent 
-      name="outputs"
-      targetExactTimestep="0"
-      target="/Outputs/siloOutput" />
-    
+      target="/Solvers/hydrofracture" />     
   </Events>
   
 </Problem>
