@@ -52,7 +52,7 @@ if( ENABLE_MPI )
 endif()
 
 if( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper adiak )
+  set( dependencyList ${dependencyList} caliper adiak::adiak )
 endif()
 
 blt_add_library( NAME       common

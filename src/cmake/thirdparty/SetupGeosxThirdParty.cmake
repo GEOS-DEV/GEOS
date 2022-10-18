@@ -320,15 +320,15 @@ if(DEFINED ADIAK_DIR)
                                  MINOR_VERSION_STRING "ADIAK_MINOR_VERSION"
                                  SUBMINOR_VERSION_STRING "ADIAK_POINT_VERSION")
 
-                 set_property(TARGET adiak
+    set_property(TARGET adiak::adiak
                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                  ${adiak_INCLUDE_DIR} )
-    set_property(TARGET adiak
+    set_property(TARGET adiak::adiak
                  APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
                  ${adiak_INCLUDE_DIR} )
 
     set(ENABLE_ADIAK ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} adiak)
+    set(thirdPartyLibs ${thirdPartyLibs} adiak::adiak)
 else()
     if(ENABLE_ADIAK)
         message(WARNING "ENABLE_ADIAK is ON but ADIAK_DIR isn't defined.")
