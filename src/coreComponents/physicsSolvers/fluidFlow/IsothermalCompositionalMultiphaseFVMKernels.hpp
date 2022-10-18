@@ -414,6 +414,8 @@ public:
   /// Maximum number of points in the stencil
   static constexpr localIndex maxStencilSize = STENCILWRAPPER::maxStencilSize;
 
+  static constexpr integer numFluxSupportPoints = 2;
+
   /**
    * @brief Constructor for the kernel interface
    * @param[in] numPhases the number of fluid phases
@@ -474,7 +476,7 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : stencilSize( size ),
-      numFluxElems( numElems ),
+      numConnectedElems( numElems ),
       compFlux( numComp ),
       dCompFlux_dP( 2, numComp ),
       dCompFlux_dC( 2, numComp, numComp ),
@@ -488,15 +490,15 @@ public:
     /// Stencil size for a given connection
     localIndex const stencilSize;
 
-    /// Number of elements for a given connection
-    localIndex const numFluxElems;
+    /// Number of elements connected at a given connection
+    localIndex const numConnectedElems;
 
     // Transmissibility and derivatives
 
     /// Transmissibility
-    real64 transmissibility[maxNumConns][2]{};
+    real64 transmissibility[maxNumConns][numFluxSupportPoints]{};
     /// Derivatives of transmissibility with respect to pressure
-    real64 dTrans_dPres[maxNumConns][2]{};
+    real64 dTrans_dPres[maxNumConns][numFluxSupportPoints]{};
 
     // Component fluxes and derivatives
 
@@ -583,27 +585,27 @@ public:
                                      stack.dTrans_dPres );
 
 
-    localIndex k[2];
+    localIndex k[numFluxSupportPoints];
     localIndex connectionIndex = 0;
-    for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
+    for( k[0] = 0; k[0] < stack.numConnectedElems; ++k[0] )
     {
-      for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )
+      for( k[1] = k[0] + 1; k[1] < stack.numConnectedElems; ++k[1] )
       {
         /// Cells indexes
-        localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
-        localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
-        localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
+        localIndex const seri[numFluxSupportPoints]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
+        localIndex const sesri[numFluxSupportPoints] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
+        localIndex const sei[numFluxSupportPoints]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         // clear working arrays
         stack.compFlux.zero();
         stack.dCompFlux_dP.zero();
         stack.dCompFlux_dC.zero();
 
-        real64 const trans[2] = { stack.transmissibility[connectionIndex][0],
-                                  stack.transmissibility[connectionIndex][1] };
+        real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
+                                                     stack.transmissibility[connectionIndex][1] };
 
-        real64 const dTrans_dPres[2] = { stack.dTrans_dPres[connectionIndex][0],
-                                         stack.dTrans_dPres[connectionIndex][1] };
+        real64 const dTrans_dPres[numFluxSupportPoints] = { stack.dTrans_dPres[connectionIndex][0],
+                                                            stack.dTrans_dPres[connectionIndex][1] };
 
         //***** calculation of flux *****
         // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
@@ -611,20 +613,20 @@ public:
         {
           // create local work arrays
           real64 densMean = 0.0;
-          real64 dDensMean_dP[2]{0.0, 0.0};
-          real64 dDensMean_dC[2][numComp]{};
+          real64 dDensMean_dP[numFluxSupportPoints]{};
+          real64 dDensMean_dC[numFluxSupportPoints][numComp]{};
 
           real64 phaseFlux = 0.0;
-          real64 dPhaseFlux_dP[2]{0.0, 0.0};
-          real64 dPhaseFlux_dC[2][numComp]{};
+          real64 dPhaseFlux_dP[numFluxSupportPoints]{};
+          real64 dPhaseFlux_dC[numFluxSupportPoints][numComp]{};
 
           real64 presGrad = 0.0;
-          real64 dPresGrad_dP[2]{0.0, 0.0};
-          real64 dPresGrad_dC[2][numComp]{};
+          real64 dPresGrad_dP[numFluxSupportPoints]{};
+          real64 dPresGrad_dC[numFluxSupportPoints][numComp]{};
 
           real64 gravHead = 0.0;
-          real64 dGravHead_dP[2]{0.0, 0.0};
-          real64 dGravHead_dC[2][numComp]{};
+          real64 dGravHead_dP[numFluxSupportPoints]{};
+          real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
 
           real64 dCapPressure_dC[numComp]{};
 
@@ -658,7 +660,7 @@ public:
           }
 
           ///
-          for( integer i = 0; i < 2; i++ )
+          for( integer i = 0; i < numFluxSupportPoints; i++ )
           {
             localIndex const er  = seri[i];
             localIndex const esr = sesri[i];
@@ -706,7 +708,7 @@ public:
             gravHead += densMean * gravD;
 
             // need to add contributions from both cells the mean density depends on
-            for( integer j = 0; j < 2; ++j )
+            for( integer j = 0; j < numFluxSupportPoints; ++j )
             {
               dGravHead_dP[j] += dDensMean_dP[j] * gravD + dGravD_dP * densMean;
               for( integer jc = 0; jc < numComp; ++jc )
@@ -717,7 +719,6 @@ public:
           }
 
           // *** upwinding ***
-
           // compute phase potential gradient
           real64 const potGrad = presGrad - gravHead;
 
@@ -737,35 +738,18 @@ public:
           }
 
           // pressure gradient depends on all points in the stencil
-          for( integer ke = 0; ke < 2; ++ke )
+          for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
           {
-            dPhaseFlux_dP[ke] += dPresGrad_dP[ke];
-            for( integer jc = 0; jc < numComp; ++jc )
-            {
-              dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc];
-            }
-          }
-
-          // gravitational head depends only on the two cells connected (same as mean density)
-          for( integer ke = 0; ke < 2; ++ke )
-          {
-            dPhaseFlux_dP[ke] -= dGravHead_dP[ke];
-            for( integer jc = 0; jc < numComp; ++jc )
-            {
-              dPhaseFlux_dC[ke][jc] -= dGravHead_dC[ke][jc];
-            }
-          }
-
-          // compute the phase flux and derivatives using upstream cell mobility
-          phaseFlux = mobility * potGrad;
-          for( integer ke = 0; ke < 2; ++ke )
-          {
+            dPhaseFlux_dP[ke] += dPresGrad_dP[ke] - dGravHead_dP[ke];
             dPhaseFlux_dP[ke] *= mobility;
             for( integer jc = 0; jc < numComp; ++jc )
             {
+              dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc] - dGravHead_dC[ke][jc];
               dPhaseFlux_dC[ke][jc] *= mobility;
             }
           }
+          // compute phase flux using upwind mobility.
+          phaseFlux = mobility * potGrad;
 
           real64 const dMob_dP  = m_dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
           arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > dPhaseMobSub =
@@ -791,7 +775,7 @@ public:
             stack.compFlux[ic] += phaseFlux * ycp;
 
             // derivatives stemming from phase flux
-            for( integer ke = 0; ke < 2; ++ke )
+            for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
             {
               stack.dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
               for( integer jc = 0; jc < numComp; ++jc )
@@ -833,12 +817,12 @@ public:
           stack.localFlux[ eqIndex0 ]  +=  m_dt * stack.compFlux[ic];
           stack.localFlux[ eqIndex1 ]  -=  m_dt * stack.compFlux[ic];
 
-          for( integer ke = 0; ke < 2; ++ke )
+          for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
           {
             localIndex const localDofIndexPres = k[ke] * numDof;
             stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * stack.dCompFlux_dP[ke][ic];
             stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * stack.dCompFlux_dP[ke][ic];
- 
+
             for( integer jc = 0; jc < numComp; ++jc )
             {
               localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
@@ -868,15 +852,15 @@ public:
 
     // Apply equation/variable change transformation(s)
     stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
-    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numFluxElems,
+    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numConnectedElems,
                                                              stack.localFluxJacobian, work );
-    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numFluxElems,
+    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numConnectedElems,
                                                                stack.localFlux );
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)
     // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
-    for( integer i = 0; i < stack.numFluxElems; ++i )
+    for( integer i = 0; i < stack.numConnectedElems; ++i )
     {
       if( m_ghostRank[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] < 0 )
       {

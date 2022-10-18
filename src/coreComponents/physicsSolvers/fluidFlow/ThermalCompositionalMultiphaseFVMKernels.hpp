@@ -202,6 +202,7 @@ public:
   using Base::maxNumElems;
   using Base::maxNumConns;
   using Base::maxStencilSize;
+  using Base::numFluxSupportPoints;
   using Base::m_stencilWrapper;
   using Base::m_seri;
   using Base::m_sesri;
@@ -288,7 +289,7 @@ public:
     {}
 
     using Base::StackVariables::stencilSize;
-    using Base::StackVariables::numFluxElems;
+    using Base::StackVariables::numConnectedElems;
     using Base::StackVariables::transmissibility;
     using Base::StackVariables::dTrans_dPres;
     using Base::StackVariables::dofColIndices;
@@ -358,10 +359,10 @@ public:
 
       // Step 1: compute the derivatives of the mean density at the interface wrt temperature
 
-      real64 dDensMean_dT[2];
+      real64 dDensMean_dT[numFluxSupportPoints];
 
-      real64 const trans[2] = { stack.transmissibility[connectionIndex][0],
-                                stack.transmissibility[connectionIndex][1] };
+      real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
+                                                   stack.transmissibility[connectionIndex][1] };
 
       stack.convectiveEnergyFlux = 0.0;
       stack.dConvectiveEnergyFlux_dP.zero();
@@ -369,7 +370,7 @@ public:
       stack.dConvectiveEnergyFlux_dC.zero();
       stack.dCompFlux_dT.zero();
 
-      for( integer i = 0; i < 2; ++i )
+      for( integer i = 0; i < numFluxSupportPoints; ++i )
       {
         localIndex const er  = seri[i];
         localIndex const esr = sesri[i];
@@ -382,8 +383,8 @@ public:
       // Step 2: compute the derivatives of the phase potential difference wrt temperature
       //***** calculation of flux *****
 
-      real64 dPresGrad_dT[2]{};
-      real64 dGravHead_dT[2]{};
+      real64 dPresGrad_dT[numFluxSupportPoints]{};
+      real64 dGravHead_dT[numFluxSupportPoints]{};
 
       // compute potential difference MPFA-style
       for( integer i = 0; i < 2; ++i )
@@ -408,7 +409,7 @@ public:
         real64 const gravD = trans[i] * m_gravCoef[er][esr][ei];
 
         // Step 2.3: compute derivative of gravity potential difference wrt temperature
-        for( integer j = 0; j < 2; ++j )
+        for( integer j = 0; j < numFluxSupportPoints; ++j )
         {
           dGravHead_dT[j] += dDensMean_dT[j] * gravD;
         }
@@ -420,7 +421,7 @@ public:
       // note: the upwinding is done in the base class, which is in charge of
       //       computing the following quantities: potGrad, phaseFlux, k_up, er_up, esr_up, ei_up
 
-      real64 dPhaseFlux_dT[2]{0.0, 0.0};
+      real64 dPhaseFlux_dT[numFluxSupportPoints]{};
 
       // Step 3.1: compute the derivative of phase flux wrt temperature
       for( integer ke = 0; ke < 2; ++ke )
@@ -448,7 +449,7 @@ public:
       for( integer ic = 0; ic < numComp; ++ic )
       {
         real64 const ycp = phaseCompFracSub[ic];
-        for( integer ke = 0; ke < 2; ++ke )
+        for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           stack.dCompFlux_dT[ke][ic] += dPhaseFlux_dT[ke] * ycp;
         }
@@ -460,7 +461,7 @@ public:
       {
         integer const eqIndex0 = k[0]* numEqn + ic;
         integer const eqIndex1 = k[1]* numEqn + ic;
-        for( integer ke = 0; ke < 2; ++ke )
+        for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           integer const localDofIndexTemp = k[ke] * numDof + numDof - 1;
           stack.localFluxJacobian[eqIndex0][localDofIndexTemp] += m_dt * stack.dCompFlux_dT[ke][ic];
@@ -472,7 +473,7 @@ public:
       real64 const enthalpy = m_phaseEnthalpy[er_up][esr_up][ei_up][0][ip];
       stack.convectiveEnergyFlux += phaseFlux * enthalpy;
 
-      for( integer ke = 0; ke < 2; ++ke )
+      for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
         stack.dConvectiveEnergyFlux_dP[ke] += dPhaseFlux_dP[ke] * enthalpy;
         stack.dConvectiveEnergyFlux_dT[ke] += dPhaseFlux_dT[ke] * enthalpy;
@@ -502,7 +503,7 @@ public:
       stack.localFlux[localRowIndexEnergy0] +=  m_dt * stack.convectiveEnergyFlux;
       stack.localFlux[localRowIndexEnergy1] -=  m_dt * stack.convectiveEnergyFlux;
 
-      for( integer ke = 0; ke < 2; ++ke )
+      for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
         integer const localDofIndexPres = k[ke] * numDof;
         stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexPres] += m_dt * stack.dConvectiveEnergyFlux_dP[ke];
@@ -541,9 +542,9 @@ public:
     localIndex k[2];
     localIndex connectionIndex = 0;
 
-    for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
+    for( k[0] = 0; k[0] < stack.numConnectedElems; ++k[0] )
     {
-      for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )
+      for( k[1] = k[0] + 1; k[1] < stack.numConnectedElems; ++k[1] )
       {
         real64 const thermalTrans[2] = { stack.thermalTransmissibility[connectionIndex][0], stack.thermalTransmissibility[connectionIndex][1] };
         localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
