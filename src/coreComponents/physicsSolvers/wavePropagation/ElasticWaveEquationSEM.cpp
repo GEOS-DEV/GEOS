@@ -20,9 +20,8 @@
 #include "ElasticWaveEquationSEM.hpp"
 #include "ElasticWaveEquationSEMKernel.hpp"
 
-#include "dataRepository/KeyNames.hpp"
-#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -173,6 +172,8 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 void ElasticWaveEquationSEM::postProcessInput()
 {
 
+  WaveSolverBase::postProcessInput();
+
   GEOSX_ERROR_IF( m_sourceCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the sources" );
 
@@ -212,7 +213,6 @@ void ElasticWaveEquationSEM::postProcessInput()
   m_sourceConstantsz.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceIsAccessible.resize( numSourcesGlobal );
 
-
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
@@ -223,7 +223,11 @@ void ElasticWaveEquationSEM::postProcessInput()
   m_displacementZNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
   m_sourceValue.resize( nsamples, numSourcesGlobal );
 
-
+  /// The receivers are initialized to zero.
+  /// This is essential for DAS modeling as MPI_Allreduce is called when computing DAS data
+  m_displacementXNp1AtReceivers.zero();
+  m_displacementYNp1AtReceivers.zero();
+  m_displacementZNp1AtReceivers.zero();
 }
 
 
@@ -237,13 +241,13 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
 
-
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
   arrayView2d< real64 > const sourceConstantsx = m_sourceConstantsx.toView();
   arrayView2d< real64 > const sourceConstantsy = m_sourceConstantsy.toView();
   arrayView2d< real64 > const sourceConstantsz = m_sourceConstantsz.toView();
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
+
   sourceNodeIds.setValues< EXEC_POLICY >( -1 );
   sourceConstantsx.setValues< EXEC_POLICY >( -1 );
   sourceConstantsy.setValues< EXEC_POLICY >( -1 );
@@ -261,6 +265,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   real32 const timeSourceFrequency = this->m_timeSourceFrequency;
   localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
+
   real64 dt = 0;
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
@@ -323,16 +328,101 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
         rickerOrder );
     } );
   } );
-
 }
 
+void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
+                                          arrayView2d< real32 > const yCompRcv,
+                                          arrayView2d< real32 > const zCompRcv )
+{
 
-void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhsx, arrayView1d< real32 > const rhsy, arrayView1d< real32 > const rhsz )
+  arrayView2d< real64 const > const linearDASGeometry = m_linearDASGeometry.toViewConst();
+  arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
+
+  localIndex const numReceiversGlobal = linearDASGeometry.size( 0 );
+  localIndex const nsamplesSeismoTrace = m_nsamplesSeismoTrace;
+
+  if( m_nsamplesSeismoTrace > 0 )
+  {
+    /// synchronize receivers across MPI ranks
+    MpiWrapper::allReduce( xCompRcv.data(),
+                           xCompRcv.data(),
+                           2*numReceiversGlobal*m_nsamplesSeismoTrace,
+                           MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                           MPI_COMM_GEOSX );
+
+    MpiWrapper::allReduce( yCompRcv.data(),
+                           yCompRcv.data(),
+                           2*numReceiversGlobal*m_nsamplesSeismoTrace,
+                           MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                           MPI_COMM_GEOSX );
+
+    MpiWrapper::allReduce( zCompRcv.data(),
+                           zCompRcv.data(),
+                           2*numReceiversGlobal*m_nsamplesSeismoTrace,
+                           MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                           MPI_COMM_GEOSX );
+
+    forAll< EXEC_POLICY >( numReceiversGlobal, [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+    {
+      if( receiverIsLocal[ircv] == 1 )
+      {
+        real32 const cd = cos( linearDASGeometry[ircv][0] );
+        real32 const sd = sin( linearDASGeometry[ircv][0] );
+        real32 const ca = cos( linearDASGeometry[ircv][1] );
+        real32 const sa = sin( linearDASGeometry[ircv][1] );
+
+        /// convert dipole data (pairs of geophones) to average strain data and
+        for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
+        {
+          // store strain data in the x-component of the receiver
+          xCompRcv[iSample][ircv] =
+            cd * ca * ( xCompRcv[iSample][numReceiversGlobal+ircv] - xCompRcv[iSample][ircv] )
+            + cd * sa * ( yCompRcv[iSample][numReceiversGlobal+ircv] - yCompRcv[iSample][ircv] )
+            + sd * ( zCompRcv[iSample][numReceiversGlobal+ircv] - zCompRcv[iSample][ircv] );
+          xCompRcv[iSample][ircv] /= linearDASGeometry[ircv][2];
+
+          /// set the y and z components to zero to avoid any confusion
+          yCompRcv[iSample][ircv] = 0.0;
+          zCompRcv[iSample][ircv] = 0.0;
+        }
+      }
+    } );
+  }
+
+  /// temporary output to txt
+  if( this->m_outputSeismoTrace == 1 )
+  {
+    forAll< serialPolicy >( numReceiversGlobal, [=] ( localIndex const ircv )
+    {
+      if( receiverIsLocal[ircv] == 1 )
+      {
+        std::ofstream f( GEOSX_FMT( "dasTraceReceiver{:03}.txt", ircv ), std::ios::app );
+        for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
+        {
+          f<< iSample << " " << xCompRcv[iSample][ircv] << std::endl;
+        }
+        f.close();
+      }
+    } );
+  }
+
+  /// resize the receiver arrays by dropping the extra pair to avoid confusion
+  /// the remaining x-component contains DAS data, the other components are set to zero
+  m_displacementXNp1AtReceivers.resize( numReceiversGlobal, 3 );
+  m_displacementYNp1AtReceivers.resize( numReceiversGlobal, 3 );
+  m_displacementZNp1AtReceivers.resize( numReceiversGlobal, 3 );
+}
+
+void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber,
+                                                       arrayView1d< real32 > const rhsx,
+                                                       arrayView1d< real32 > const rhsy,
+                                                       arrayView1d< real32 > const rhsz )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstantsx   = m_sourceConstantsx.toViewConst();
   arrayView2d< real64 const > const sourceConstantsy   = m_sourceConstantsy.toViewConst();
   arrayView2d< real64 const > const sourceConstantsz   = m_sourceConstantsz.toViewConst();
+
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
@@ -379,6 +469,7 @@ void ElasticWaveEquationSEM::computeSeismoTrace( real64 const time_n,
         varAtReceivers[iSeismo][ircv] = 0.0;
         real32 vtmp_np1 = 0.0;
         real32 vtmp_n = 0.0;
+
         for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
         {
           vtmp_np1 += var_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
@@ -526,8 +617,6 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   arrayView1d< real32 > const uy_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_nm1 >();
   arrayView1d< real32 > const uz_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_nm1 >();
 
-
-
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// set array of indicators: 1 if a face is on on free surface; 0 otherwise
@@ -646,7 +735,6 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     arrayView1d< real32 > const uy_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_np1 >();
     arrayView1d< real32 > const uz_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementz_np1 >();
 
-
     /// get array of indicators: 1 if node on free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
 
@@ -670,10 +758,10 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
 
 
-    real64 dt2 = dt*dt;
+    real64 const dt2 = dt*dt;
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      if( freeSurfaceNodeIndicator[a]!=1 )
+      if( freeSurfaceNodeIndicator[a] != 1 )
       {
         ux_np1[a] = ux_n[a];
         ux_np1[a] *= 2.0*mass[a];
@@ -768,6 +856,13 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
     computeAllSeismoTraces( time_n, 0, ux_np1, ux_n, uXReceivers );
     computeAllSeismoTraces( time_n, 0, uy_np1, uy_n, uYReceivers );
     computeAllSeismoTraces( time_n, 0, uz_np1, uz_n, uZReceivers );
+
+    /// Compute DAS data if requested
+    /// Pairs of receivers are assumed to be modeled ( see WaveSolverBase::initializeDAS() )
+    if( m_useDAS )
+    {
+      computeDAS( uXReceivers, uYReceivers, uZReceivers );
+    }
   } );
 
   // increment m_indexSeismoTrace

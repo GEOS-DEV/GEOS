@@ -513,6 +513,8 @@
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
 		<!--sourceValue => Source Value of the sources-->
 		<xsd:attribute name="sourceValue" type="real32_array2d" />
+		<!--useDAS => Flag to indicate if DAS type of data will be modeled-->
+		<xsd:attribute name="useDAS" type="integer" />
 		<!--usePML => Flag to apply PML-->
 		<xsd:attribute name="usePML" type="integer" />
 	</xsd:complexType>
@@ -622,6 +624,8 @@
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
 		<!--sourceValue => Source Value of the sources-->
 		<xsd:attribute name="sourceValue" type="real32_array2d" />
+		<!--useDAS => Flag to indicate if DAS type of data will be modeled-->
+		<xsd:attribute name="useDAS" type="integer" />
 		<!--usePML => Flag to apply PML-->
 		<xsd:attribute name="usePML" type="integer" />
 	</xsd:complexType>
