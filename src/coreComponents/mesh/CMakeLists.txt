@@ -157,6 +157,11 @@ blt_add_library( NAME       mesh
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+if( ENABLE_VTK )
+    # Avoid compiling with nvcc which sometimes segfaults in debug
+    set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES LANGUAGE CXX )
+endif()
+
 add_subdirectory( unitTests )
 
 geosx_add_code_checks( PREFIX mesh
