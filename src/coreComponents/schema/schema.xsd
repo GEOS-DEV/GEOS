@@ -1373,7 +1373,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--nodesetNames => Names of the VTK nodesets to import-->
 		<xsd:attribute name="nodesetNames" type="string_array" default="{}" />
 		<!--partitionMethod => Method (library) used to partition the mesh-->
-		<xsd:attribute name="partitionMethod" type="geosx_VTKMeshGenerator_PartitionMethod" default="parmetis" />
+		<xsd:attribute name="partitionMethod" type="geosx_vtk_PartitionMethod" default="parmetis" />
 		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
 		<xsd:attribute name="partitionRefinement" type="integer" default="1" />
 		<!--regionAttribute => Name of the VTK cell attribute to use as region marker-->
@@ -1387,7 +1387,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_VTKMeshGenerator_PartitionMethod">
+	<xsd:simpleType name="geosx_vtk_PartitionMethod">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|parmetis|ptscotch" />
 		</xsd:restriction>
@@ -1789,6 +1789,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="forward" type="integer" default="1" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
+		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
@@ -2015,6 +2017,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="forward" type="integer" default="1" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
+		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
