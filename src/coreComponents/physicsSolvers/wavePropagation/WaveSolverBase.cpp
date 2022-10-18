@@ -130,6 +130,20 @@ void WaveSolverBase::postProcessInput()
 {
   SolverBase::postProcessInput();
 
+  /// set flag PML to one if a PML field is specified in the xml
+  /// if counter>1, an error will be thrown as one single PML field is allowed
+  integer counter = 0;
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & )
+  {
+    counter++;
+  } );
+  GEOSX_THROW_IF( counter > 1,
+                  "One single PML field specification is allowed",
+                  InputError );
+
+  m_usePML = counter;
+
   if( m_linearDASGeometry.size( 1 ) > 0 )
   {
     m_useDAS = 1;
@@ -178,20 +192,6 @@ void WaveSolverBase::initializeDAS()
     receiverCoordinates[ircv][2] = receiverCoordinates[ircv][2]
                                    - sin( linearDASGeometry[ircv][0] ) * linearDASGeometry[ircv][2] / 2.0;
   }
-
-  /// set flag PML to one if a PML field is specified in the xml
-  /// if counter>1, an error will be thrown as one single PML field is allowed
-  integer counter = 0;
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & )
-  {
-    counter++;
-  } );
-  GEOSX_THROW_IF( counter > 1,
-                  "One single PML field specification is allowed",
-                  InputError );
-
-  m_usePML = counter;
 }
 
 
