@@ -451,8 +451,6 @@ void CompositionalMultiphaseFVM::applyBoundaryConditions( real64 time_n,
                                                           arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-
-  // GEOSX_UNUSED_VAR( time_n, dt, domain, dofManager, localMatrix, localRhs );
   CompositionalMultiphaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
   applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
 }
