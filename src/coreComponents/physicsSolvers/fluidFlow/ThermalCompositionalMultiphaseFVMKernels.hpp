@@ -424,15 +424,15 @@ public:
       real64 dPhaseFlux_dT[numFluxSupportPoints]{};
 
       // Step 3.1: compute the derivative of phase flux wrt temperature
-      for( integer ke = 0; ke < 2; ++ke )
+      for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
         dPhaseFlux_dT[ke] += dPresGrad_dT[ke];
       }
-      for( integer ke = 0; ke < 2; ++ke )
+      for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
         dPhaseFlux_dT[ke] -= dGravHead_dT[ke];
       }
-      for( integer ke = 0; ke < 2; ++ke )
+      for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
         dPhaseFlux_dT[ke] *= m_phaseMob[er_up][esr_up][ei_up][ip];
       }
@@ -554,7 +554,7 @@ public:
         stack.conductiveEnergyFlux = 0.0;
         stack.dConductiveEnergyFlux_dT.zero();
         // Step 2: compute temperature difference at the interface
-        for( integer ke = 0; ke < 2; ++ke )
+        for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           localIndex const er  = seri[ke];
           localIndex const esr = sesri[ke];
@@ -570,7 +570,7 @@ public:
         stack.localFlux[localRowIndexEnergy0] +=  m_dt * stack.conductiveEnergyFlux;
         stack.localFlux[localRowIndexEnergy1] -=  m_dt * stack.conductiveEnergyFlux;
 
-        for( integer ke = 0; ke < 2; ++ke )
+        for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           integer const localDofIndexTemp = k[ke] * numDof + numDof - 1;
           stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] +=  m_dt * stack.dConductiveEnergyFlux_dT[ke];
