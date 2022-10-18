@@ -579,9 +579,7 @@ struct PressureComputation
            arrayView2d< real64 const > const sourceConstants,
            arrayView1d< localIndex const > const sourceIsAccessible,
            arrayView1d< localIndex const > const sourceElem,
-           arrayView2d< real32 const > const sourceValue,
            real64 const dt,
-           integer const cycleNumber,
            arrayView1d < real32 > const  p_np1)
 
   {

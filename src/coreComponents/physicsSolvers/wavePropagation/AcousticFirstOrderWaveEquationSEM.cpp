@@ -582,18 +582,31 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
 }
 
 
-
-real64 AcousticFirstOrderWaveEquationSEM::solverStep( real64 const & time_n,
-                                            real64 const & dt,
-                                            integer const cycleNumber,
-                                            DomainPartition & domain )
+real64 AcousticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & time_n,
+                                                    real64 const & dt,
+                                                    integer cycleNumber,
+                                                    DomainPartition & domain,
+                                                    bool GEOSX_UNUSED_PARAM( computeGradient ) )
 {
-  return explicitStep( time_n, dt, cycleNumber, domain );
+  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  return dtOut;
 }
 
 
 
-real64 AcousticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
+real64 AcousticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & time_n,
+                                                     real64 const & dt,
+                                                     integer cycleNumber,
+                                                     DomainPartition & domain,
+                                                     bool GEOSX_UNUSED_PARAM( computeGradient ) )
+{
+  GEOSX_ERROR( "Backward propagation for the elastic wave propagator not yet implemented" );
+  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  return dtOut;
+}
+
+
+real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                               real64 const & dt,
                                               integer const cycleNumber,
                                               DomainPartition & domain )
@@ -690,9 +703,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
             sourceConstants,
             sourceIsAccessible,
             sourceElem,
-            sourceValue,
             dt,
-            cycleNumber,
             p_np1);
 
 
