@@ -68,7 +68,10 @@ public:
   using Base::m_density;
   using Base::m_finiteElementSpace;
 
-
+#if !defined(CALCFEMSHAPE)
+  using Base::m_X;
+#endif
+  using Base::m_gravityVector;
 
   /**
    * @brief Constructor
@@ -140,7 +143,6 @@ public:
    * element local stack storage.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
@@ -150,8 +152,7 @@ public:
    * The ImplcitNewmark kernel adds the calculation of the inertia damping,
    * jacobian and residual contributions.
    */
-  GEOSX_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;
@@ -163,9 +164,17 @@ public:
    * contributions from  stiffness based damping.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
+
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
+   */
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent );
 
 
 

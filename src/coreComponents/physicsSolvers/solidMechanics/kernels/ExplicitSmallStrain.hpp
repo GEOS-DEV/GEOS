@@ -147,7 +147,6 @@ public:
    * Copies the primary variable, and position into the local stack array.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
@@ -161,7 +160,6 @@ public:
    * to allow for some variable reuse.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;
@@ -173,7 +171,6 @@ public:
    * Performs the distribution of the nodal force out to the rank local arrays.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables const & stack ) const;
 

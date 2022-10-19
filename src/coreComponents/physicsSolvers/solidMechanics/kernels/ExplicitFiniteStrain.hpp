@@ -117,7 +117,6 @@ public:
    * @copydoc ExplicitSmallStrain::setup
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
@@ -125,7 +124,6 @@ public:
    * @copydoc ExplicitSmallStrain::quadraturePointKernel
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;

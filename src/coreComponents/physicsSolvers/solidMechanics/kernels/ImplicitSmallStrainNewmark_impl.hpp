@@ -20,7 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_IMPL_HPP_
 
 #include "ImplicitSmallStrainNewmark.hpp"
-
+#include "ImplicitSmallStrainQuasiStatic_impl.hpp"
 
 namespace geosx
 {
@@ -174,6 +174,18 @@ complete( localIndex const k,
   }
 
   return Base::complete( k, stack );
+}
+
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+template< typename POLICY,
+          typename KERNEL_TYPE >
+real64
+ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch( localIndex const numElems,
+                                                                                        KERNEL_TYPE const & kernelComponent )
+{
+  return Base::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernelComponent );
 }
 
 

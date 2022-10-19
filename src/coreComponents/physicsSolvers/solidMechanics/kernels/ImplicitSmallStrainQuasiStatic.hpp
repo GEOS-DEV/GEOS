@@ -153,7 +153,6 @@ public:
    * element local stack storage.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
@@ -202,7 +201,6 @@ public:
    */
   template< typename STRESS_MODIFIER = NoOpFunctors >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack,
@@ -212,7 +210,6 @@ public:
    * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
