@@ -252,22 +252,22 @@ std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const ce
 CellMapType buildCellMap( vtkDataSet & mesh,
                           string const & attributeName );
 
-/**
- * @brief Get the Geosx To Vtk Node Ordering object of a type of element
- *
- * @param[in] elemType the type of the element
- * @return an array of the vtk node ordering
- */
-std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType );
-
-/**
- * @brief Get the Geosx To Vtk Node Ordering object of a type of element
- *
- * @param[in] elemType the type of the element
- * @param cell
- * @return an array of the vtk node ordering
- */
-std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType, vtkCell *cell );
+/////**
+//// * @brief Get the Geosx To Vtk Node Ordering object of a type of element
+//// *
+//// * @param[in] elemType the type of the element
+//// * @return an array of the vtk node ordering
+//// */
+////std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType );
+////
+/////**
+//// * @brief Get the Geosx To Vtk Node Ordering object of a type of element
+//// *
+//// * @param[in] elemType the type of the element
+//// * @param cell
+//// * @return an array of the vtk node ordering
+//// */
+////std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType, vtkCell *cell );
 
 /**
  * @brief Get the Vtk to Geosx Node Ordering object of a type of element
