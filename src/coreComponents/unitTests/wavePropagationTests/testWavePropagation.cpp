@@ -122,7 +122,7 @@ char const * xmlInput =
   "    <FieldSpecification\n"
   "      name=\"cellVelocity\"\n"
   "      initialCondition=\"1\"\n"
-  "      objectPath=\"ElementRegions/Region/elementSubRegions/cb\"\n"
+  "      objectPath=\"ElementRegions/Region/cb\"\n"
   "      fieldName=\"mediumVelocity\"\n"
   "      scale=\"1500\"\n"
   "      setNames=\"{ all }\"/>\n"
@@ -185,14 +185,14 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   // run for 1s (10 steps)
   for( int i=0; i<10; i++ )
   {
-    propagator->solverStep( time_n, dt, i, domain );
+    propagator->explicitStepForward( time_n, dt, i, domain, false );
     time_n += dt;
   }
   // cleanup (triggers calculation of the remaining seismograms data points)
   propagator->cleanup( 1.0, 10, 0, 0, domain );
 
   // retrieve seismo
-  arrayView2d< real64 > const pReceivers = propagator->getReference< array2d< real64 > >( AcousticWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
+  arrayView2d< real32 > const pReceivers = propagator->getReference< array2d< real32 > >( AcousticWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
 
   // move it to CPU, if needed
   pReceivers.move( LvArray::MemorySpace::host, false );
@@ -204,6 +204,27 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   // check seismo content. The pressure values cannot be directly checked as the problem is too small.
   // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
   // to the average of the others.
+  for( int i=0; i<11; i++ )
+  {
+    if( i > 0 )
+    {
+      ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
+    }
+    double avg = 0;
+    for( int r=0; r<8; r++ )
+    {
+      avg += pReceivers[i][r];
+    }
+    avg /=8.0;
+    ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );
+  }
+  // run adjoint solver
+  for( int i=0; i<10; i++ )
+  {
+    propagator->explicitStepBackward( time_n, dt, i, domain, false );
+    time_n += dt;
+  }
+  // check again the seismo content.
   for( int i=0; i<11; i++ )
   {
     if( i > 0 )

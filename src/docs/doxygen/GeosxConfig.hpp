@@ -32,6 +32,9 @@
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #define GEOSX_USE_CUDA
 
+/// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
+#define GEOSX_USE_CUDA_NVTOOLSEXT
+
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
 #define GEOSX_USE_PVTPackage
 
@@ -61,6 +64,9 @@
 
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #define GEOSX_USE_PETSC
+
+/// Enables use of Scotch library (CMake option ENABLE_SCOTCH)
+#define GEOSX_USE_SCOTCH
 
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #define GEOSX_LA_INTERFACE Hypre

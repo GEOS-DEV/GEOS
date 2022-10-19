@@ -9,12 +9,14 @@ CompositionalMultiphaseFVM                node                 :ref:`XML_Composi
 CompositionalMultiphaseHybridFVM          node                 :ref:`XML_CompositionalMultiphaseHybridFVM`          
 CompositionalMultiphaseReservoir          node                 :ref:`XML_CompositionalMultiphaseReservoir`          
 CompositionalMultiphaseWell               node                 :ref:`XML_CompositionalMultiphaseWell`               
+ElasticSEM                                node                 :ref:`XML_ElasticSEM`                                
 EmbeddedSurfaceGenerator                  node                 :ref:`XML_EmbeddedSurfaceGenerator`                  
 FlowProppantTransport                     node                 :ref:`XML_FlowProppantTransport`                     
 Hydrofracture                             node                 :ref:`XML_Hydrofracture`                             
 LagrangianContact                         node                 :ref:`XML_LagrangianContact`                         
 LaplaceFEM                                node                 :ref:`XML_LaplaceFEM`                                
 MultiphasePoromechanics                   node                 :ref:`XML_MultiphasePoromechanics`                   
+MultiphasePoromechanicsReservoir          node                 :ref:`XML_MultiphasePoromechanicsReservoir`          
 PhaseFieldDamageFEM                       node                 :ref:`XML_PhaseFieldDamageFEM`                       
 PhaseFieldFracture                        node                 :ref:`XML_PhaseFieldFracture`                        
 ProppantTransport                         node                 :ref:`XML_ProppantTransport`                         
@@ -23,6 +25,7 @@ SinglePhaseFVM                            node                 :ref:`XML_SingleP
 SinglePhaseHybridFVM                      node                 :ref:`XML_SinglePhaseHybridFVM`                      
 SinglePhasePoromechanics                  node                 :ref:`XML_SinglePhasePoromechanics`                  
 SinglePhasePoromechanicsEmbeddedFractures node                 :ref:`XML_SinglePhasePoromechanicsEmbeddedFractures` 
+SinglePhasePoromechanicsReservoir         node                 :ref:`XML_SinglePhasePoromechanicsReservoir`         
 SinglePhaseProppantFVM                    node                 :ref:`XML_SinglePhaseProppantFVM`                    
 SinglePhaseReservoir                      node                 :ref:`XML_SinglePhaseReservoir`                      
 SinglePhaseWell                           node                 :ref:`XML_SinglePhaseWell`                           

@@ -22,8 +22,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
-#include "physicsSolvers/multiphysics/SinglePhaseReservoir.hpp"
+#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
@@ -153,14 +152,14 @@ char const * xmlInput =
   "</Problem>";
 
 template< typename LAMBDA >
-void testNumericalJacobian( SinglePhaseReservoir & solver,
+void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & solver,
                             DomainPartition & domain,
                             real64 const perturbParameter,
                             real64 const relTol,
                             LAMBDA && assembleFunction )
 {
-  SinglePhaseWell & wellSolver = dynamicCast< SinglePhaseWell & >( *solver.getWellSolver() );
-  SinglePhaseFVM< SinglePhaseBase > & flowSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > & >( *solver.getFlowSolver() );
+  SinglePhaseWell & wellSolver = *solver.wellSolver();
+  SinglePhaseFVM< SinglePhaseBase > & flowSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > & >( *solver.reservoirSolver() );
 
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
@@ -198,7 +197,6 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-
       for( localIndex er = 0; er < elemManager.numRegions(); ++er )
       {
         ElementRegionBase & elemRegion = elemManager.getRegion( er );
@@ -225,9 +223,9 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
               pres[ei] += dP;
 
               // after perturbing, update the pressure-dependent quantities in the reservoir
-              flowSolver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                       MeshLevel & mesh2,
-                                                                       arrayView1d< string const > const & regionNames2 )
+              flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                                       MeshLevel & mesh2,
+                                                                                       arrayView1d< string const > const & regionNames2 )
               {
                 mesh2.getElemManager().forElementSubRegions( regionNames2,
                                                              [&]( localIndex const,
@@ -260,9 +258,9 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
   /////////////////////////////////////////////////
 
   // loop over the wells
-  wellSolver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                           MeshLevel & mesh,
-                                                           arrayView1d< string const > const & regionNames )
+  wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                           MeshLevel & mesh,
+                                                                           arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
                                                                         [&]( localIndex const,
@@ -363,7 +361,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoir >( "reservoirSystem" );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoirAndWells< SinglePhaseBase > >( "reservoirSystem" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
@@ -381,7 +379,7 @@ protected:
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  SinglePhaseReservoir * solver;
+  SinglePhaseReservoirAndWells< SinglePhaseBase > * solver;
 };
 
 real64 constexpr SinglePhaseReservoirSolverTest::time;
@@ -414,7 +412,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Flux )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
@@ -429,7 +427,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_PressureRel )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->assemblePressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assemblePressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
@@ -444,7 +442,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Accum )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->assembleAccumulationTerms( domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assembleAccumulationTerms( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 

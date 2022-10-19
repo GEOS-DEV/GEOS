@@ -16,6 +16,16 @@ import os
 import sys
 import shutil
 
+# Add python modules to be documented
+python_root = './coreComponents/python/modules'
+python_modules = ('geosx_mesh_tools_package',
+                  'geosx_xml_tools_package',
+                  'hdf5_wrapper_package',
+                  'pygeosx_tools_package',
+                  'timehistory_package')
+for m in python_modules:
+    sys.path.insert(0, os.path.abspath(os.path.join(python_root, m)))
+
 # Call doxygen in ReadtheDocs
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 if read_the_docs_build:
@@ -98,22 +108,19 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.inheritance_diagram',
+    'sphinxarg.ext',
     'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.napoleon',
-    'sphinxcontrib.mermaid',
     'sphinxcontrib.plantuml',
 ]
-
-mermaid_output_format = "svg"
-with open('/tmp/puppeteer-config.json', 'w') as f:
-    f.write('{ "args": [ "--no-sandbox" ] }')
-mermaid_params = ['--backgroundColor', 'transparent', '-p', '/tmp/puppeteer-config.json']
 
 plantuml = "/usr/bin/plantuml"
 plantuml_output_format = "svg_img"
 
 plot_html_show_source_link = True
 plot_html_show_formats = False
+
+autodoc_mock_imports = ["pygeosx", "pylvarray", "meshio", "lxml", "mpi4py", "h5py"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -132,7 +139,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

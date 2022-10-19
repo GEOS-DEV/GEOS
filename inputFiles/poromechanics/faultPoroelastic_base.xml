@@ -1,0 +1,155 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <!-- SPHINX_ELEMENTREGIONS -->
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ 94_hexahedra, 95_hexahedra, 96_hexahedra, 97_hexahedra }"
+      materialList="{ water, porousRock }"/>  
+  </ElementRegions> 
+  <!-- SPHINX_ELEMENTREGIONS_END -->
+
+  <!-- SPHINX_NUMERICAL -->
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"
+        />
+    </FiniteVolume>
+  </NumericalMethods>
+  <!-- SPHINX_NUMERICAL_END -->
+
+  <!-- SPHINX_MATERIAL -->
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+    />
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultYoungModulus="14.95e9"
+      defaultPoissonRatio="0.15"
+    />
+
+    <CompressibleSinglePhaseFluid 
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0e6"
+      referenceDensity="1000"
+      compressibility="2.09028227021e-10"
+      referenceViscosity="0.001"
+      viscosibility="0.0"
+    />
+
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="7.12e10"
+      defaultReferencePorosity="0.3"
+    />  
+  
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{1.0e-18, 1.0e-18, 1.0e-18}"
+    /> 
+  </Constitutive>
+  <!-- SPHINX_MATERIAL_END -->
+
+  <!-- SPHINX_BC --> 
+  <FieldSpecifications>
+    <FieldSpecification 
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Domain"
+      fieldName="pressure"
+      scale="35.0e6"
+    />
+    	     
+    <FieldSpecification 
+      name="stressXX"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Domain"
+      fieldName="rock_stress"
+      component="0"
+      scale="-60.0e6"
+    />
+
+    <FieldSpecification 
+      name="stressYY"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Domain"
+      fieldName="rock_stress"
+      component="1"
+      scale="-70.0e6"
+    />
+
+    <FieldSpecification 
+      name="stressZZ"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Domain"
+      fieldName="rock_stress"
+      component="2"
+      scale="-60.0e6"
+    />
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ 89, 88 }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ 90 }"/>
+
+    <FieldSpecification
+      name="zconstraintFront"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ 92, 93 }"/>
+
+    <Traction
+      name="NormalTraction"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-70.0e6"      
+      setNames="{ 91 }"/>  	  
+  </FieldSpecifications>
+  <!-- SPHINX_BC_END -->
+
+  <!-- SPHINX_OUTPUT -->  
+  <Outputs>
+    <VTK 
+      name="vtkOutput"
+      parallelThreads="1"
+      plotFileRoot="faultModel"/>
+
+    <Restart
+      name="restartOutput"
+    />  
+  </Outputs>
+  <!-- SPHINX_OUTPUT_END -->
+</Problem>

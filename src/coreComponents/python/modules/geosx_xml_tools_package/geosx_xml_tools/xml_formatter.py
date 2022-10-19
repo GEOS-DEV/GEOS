@@ -1,10 +1,21 @@
-import argparse
 import os
-from lxml import etree as ElementTree
+from lxml import etree as ElementTree    # type: ignore[import]
 import re
+from typing import List, Any, TextIO
+from geosx_xml_tools import command_line_parsers
 
 
-def format_attribute(attribute_indent, ka, attribute_value):
+def format_attribute(attribute_indent: str, ka: str, attribute_value: str) -> str:
+    """Format xml attribute strings
+
+    Args:
+        attribute_indent (str): Attribute indent string
+        ka (str): Attribute name
+        attribute_value (str): Attribute value
+
+    Returns:
+        str: Formatted attribute value
+    """
     # Make sure that a space follows commas
     attribute_value = re.sub(r",\s*", ", ", attribute_value)
 
@@ -17,7 +28,7 @@ def format_attribute(attribute_indent, ka, attribute_value):
 
     # Identify and split multi-line attributes
     if re.match(r"\s*{\s*({[-+.,0-9a-zA-Z\s]*},?\s*)*\s*}", attribute_value):
-        split_positions = [match.end() for match in re.finditer(r"}\s*,", attribute_value)]
+        split_positions: List[Any] = [match.end() for match in re.finditer(r"}\s*,", attribute_value)]
         newline_indent = '\n%s' % (' ' * (len(attribute_indent) + len(ka) + 4))
         new_values = []
         for a, b in zip([None] + split_positions, split_positions + [None]):
@@ -28,41 +39,42 @@ def format_attribute(attribute_indent, ka, attribute_value):
     return attribute_value
 
 
-def format_xml_level(output,
-                     node,
-                     level,
-                     indent=' '*2,
-                     block_separation_max_depth=2,
-                     modify_attribute_indent=False,
-                     sort_attributes=False,
-                     close_tag_newline=False,
-                     include_namespace=False):
+def format_xml_level(output: TextIO,
+                     node: ElementTree.Element,
+                     level: int,
+                     indent: str = ' ' * 2,
+                     block_separation_max_depth: int = 2,
+                     modify_attribute_indent: bool = False,
+                     sort_attributes: bool = False,
+                     close_tag_newline: bool = False,
+                     include_namespace: bool = False) -> None:
     """Iteratively format the xml file
 
-     @param output the output filename
-     @param node the current xml element
-     @param level the xml depth
-     @param indent the xml indent style
-     @param block_separation_max_depth the maximum depth to separate adjacent elements
-     @param modify_attribute_indent option to have flexible attribute indentation
-     @param sort_attributes option to sort attributes alphabetically
-     @param close_tag_newline option to place close tag on a separate line
-     @param include_namespace option to include the xml namespace in the output
+    Args:
+        output (file): the output text file handle
+        node (lxml.etree.Element): the current xml element
+        level (int): the xml depth
+        indent (str): the xml indent style
+        block_separation_max_depth (int): the maximum depth to separate adjacent elements
+        modify_attribute_indent (bool): option to have flexible attribute indentation
+        sort_attributes (bool): option to sort attributes alphabetically
+        close_tag_newline (bool): option to place close tag on a separate line
+        include_namespace (bool): option to include the xml namespace in the output
     """
 
     # Handle comments
     if node.tag is ElementTree.Comment:
-        output.write('\n%s<!--%s-->' % (indent*level, node.text))
+        output.write('\n%s<!--%s-->' % (indent * level, node.text))
 
     else:
         # Write opening line
-        opening_line = '\n%s<%s' % (indent*level, node.tag)
+        opening_line = '\n%s<%s' % (indent * level, node.tag)
         output.write(opening_line)
 
         # Write attributes
         if (len(node.attrib) > 0):
             # Choose indentation
-            attribute_indent = '%s' % (indent*(level+1))
+            attribute_indent = '%s' % (indent * (level + 1))
             if modify_attribute_indent:
                 attribute_indent = ' ' * (len(opening_line))
 
@@ -99,42 +111,39 @@ def format_xml_level(output,
             output.write('>')
             Nc = len(node)
             for ii, child in zip(range(Nc), node):
-                format_xml_level(output, child, level+1, indent,
-                                 block_separation_max_depth,
-                                 modify_attribute_indent,
-                                 sort_attributes,
-                                 close_tag_newline,
-                                 include_namespace)
+                format_xml_level(output, child, level + 1, indent, block_separation_max_depth, modify_attribute_indent,
+                                 sort_attributes, close_tag_newline, include_namespace)
 
                 # Add space between blocks
-                if ((level < block_separation_max_depth) & (ii < Nc-1) & (child.tag is not ElementTree.Comment)):
+                if ((level < block_separation_max_depth) & (ii < Nc - 1) & (child.tag is not ElementTree.Comment)):
                     output.write('\n')
 
             # Write the end tag
-            output.write('\n%s</%s>' % (indent*level, node.tag))
+            output.write('\n%s</%s>' % (indent * level, node.tag))
         else:
             if close_tag_newline:
-                output.write('\n%s/>' % (indent*level))
+                output.write('\n%s/>' % (indent * level))
             else:
                 output.write('/>')
 
 
-def format_file(input_fname,
-                indent_size=2,
-                indent_style=0,
-                block_separation_max_depth=2,
-                alphebitize_attributes=False,
-                close_style=0,
-                namespace=0):
+def format_file(input_fname: str,
+                indent_size: int = 2,
+                indent_style: bool = False,
+                block_separation_max_depth: int = 2,
+                alphebitize_attributes: bool = False,
+                close_style: bool = False,
+                namespace: bool = False) -> None:
     """Script to format xml files
 
-    @arg input_fname Input file name
-    @arg indent_size Indent size
-    @arg indent_style Style of indentation (0=fixed, 1=hanging)
-    @arg block_separation_max_depth Max depth to separate xml blocks
-    @arg alphebitize_attributes Alphebitize attributes
-    @arg close_style Style of close tag (0=same line, 1=new line)
-    @arg namespace Insert this namespace in the xml description
+    Args:
+        input_fname (str): Input file name
+        indent_size (int): Indent size
+        indent_style (bool): Style of indentation (0=fixed, 1=hanging)
+        block_separation_max_depth (int): Max depth to separate xml blocks
+        alphebitize_attributes (bool): Alphebitize attributes
+        close_style (bool): Style of close tag (0=same line, 1=new line)
+        namespace (bool): Insert this namespace in the xml description
     """
     fname = os.path.expanduser(input_fname)
     try:
@@ -152,7 +161,7 @@ def format_file(input_fname,
             format_xml_level(f,
                              root,
                              0,
-                             indent=' '*indent_size,
+                             indent=' ' * indent_size,
                              block_separation_max_depth=block_separation_max_depth,
                              modify_attribute_indent=indent_style,
                              sort_attributes=alphebitize_attributes,
@@ -169,23 +178,20 @@ def format_file(input_fname,
         raise Exception('\nCheck input file!')
 
 
-def main():
+def main() -> None:
     """Script to format xml files
 
-    @arg input Input file name
+    Args:
+        input (str): Input file name
+        -i/--indent (int): Indent size
+        -s/--style (int): Indent style
+        -d/--depth (int): Block separation depth
+        -a/--alphebitize (int): Alphebitize attributes
+        -c/--close (int): Close tag style
+        -n/--namespace (int): Include namespace
     """
-
-    # Parse the user arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('input', type=str, help='Input file name')
-    parser.add_argument('-i', '--indent', type=int, help='Indent size', default=2)
-    parser.add_argument('-s', '--style', type=int, help='Indent style', default=0)
-    parser.add_argument('-d', '--depth', type=int, help='Block separation depth', default=2)
-    parser.add_argument('-a', '--alphebitize', type=int, help='Alphebetize attributes', default=0)
-    parser.add_argument('-c', '--close', type=int, help='Close tag style', default=0)
-    parser.add_argument('-n', '--namespace', type=int, help='Include namespace', default=0)
+    parser = command_line_parsers.build_xml_formatter_input_parser()
     args = parser.parse_args()
-
     format_file(args.input,
                 indent_size=args.indent,
                 indent_style=args.style,
