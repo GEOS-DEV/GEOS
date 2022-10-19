@@ -92,4 +92,6 @@ if [[ "$*" != *--disable-unit-tests* ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
 
+df -h
+
 exit 0
