@@ -41,7 +41,7 @@ public:
   static constexpr real64 epsilonLoc = 1e-8;
 
   AcousticFirstOrderWaveEquationSEM( const std::string & name,
-                           Group * const parent );
+                                     Group * const parent );
 
   virtual ~AcousticFirstOrderWaveEquationSEM() override;
 
@@ -77,8 +77,6 @@ public:
                                        integer const cycleNumber,
                                        DomainPartition & domain,
                                        bool const computeGradient ) override;
-  /**@}*/
-
   /**@}*/
 
   /**
@@ -152,7 +150,7 @@ public:
 
   } waveEquationViewKeys;
 
- /** internal function to the class to compute explicitStep either for backward or forward.
+  /** internal function to the class to compute explicitStep either for backward or forward.
    * (requires not to be private because it is called from GEOSX_HOST_DEVICE method)
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
@@ -160,10 +158,10 @@ public:
    * @param domain the domain object
    * @return return the timestep that was achieved during the step.
    */
-real64 explicitStepInternal( real64 const & time_n,
-                       real64 const & dt,
-                       integer const cycleNumber,
-                       DomainPartition & domain );
+  real64 explicitStepInternal( real64 const & time_n,
+                               real64 const & dt,
+                               integer const cycleNumber,
+                               DomainPartition & domain );
 
 protected:
 
@@ -187,7 +185,7 @@ private:
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
 
-    /**
+  /**
    * @brief Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
    * @param time the time to apply the BC
    * @param domain the partition domain
@@ -201,7 +199,7 @@ private:
    * @param valPressure value of the pressure for iseismo
    * @param filename name of the output file
    */
-  void saveSeismo( localIndex const iseismo, real32 const  val, string const & filename ) override;
+  void saveSeismo( localIndex const iseismo, real32 const val, string const & filename ) override;
 
   localIndex getNumNodesPerElem();
 
@@ -228,7 +226,7 @@ private:
   array2d< real32 > m_pressureNp1AtReceivers;
 
   /// Array containing the elements which contain a source
-  array1d < localIndex > m_sourceElem;
+  array1d< localIndex > m_sourceElem;
 
 };
 

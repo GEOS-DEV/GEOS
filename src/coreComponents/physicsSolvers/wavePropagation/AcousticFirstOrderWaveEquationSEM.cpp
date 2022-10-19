@@ -182,16 +182,16 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
       finiteElement::dispatch3D( fe,
                                  [&]
-                                    ( auto const finiteElement )
+                                   ( auto const finiteElement )
       {
 
         using FE_TYPE = TYPEOFREF( finiteElement );
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-        subRegion.getExtrinsicData< extrinsicMeshData::Velocity_x >().resizeDimension < 1 > ( numNodesPerElem );
-        subRegion.getExtrinsicData< extrinsicMeshData::Velocity_y >().resizeDimension < 1 > ( numNodesPerElem );
-        subRegion.getExtrinsicData< extrinsicMeshData::Velocity_z >().resizeDimension < 1 > ( numNodesPerElem );
+        subRegion.getExtrinsicData< extrinsicMeshData::Velocity_x >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getExtrinsicData< extrinsicMeshData::Velocity_y >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getExtrinsicData< extrinsicMeshData::Velocity_z >().resizeDimension< 1 >( numNodesPerElem );
 
       } );
 
@@ -258,7 +258,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const 
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
   X = nodeManager.referencePosition().toViewConst();
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
@@ -373,12 +373,12 @@ void AcousticFirstOrderWaveEquationSEM::addSourceToRightHandSide( integer const 
 
 
 void AcousticFirstOrderWaveEquationSEM::computeSeismoTrace( real64 const time_n,
-                                                  real64 const dt,
-                                                  real64 const timeSeismo,
-                                                  localIndex iSeismo,
-                                                  arrayView1d< real32 const > const var_np1,
-                                                  arrayView1d< real32 const > const var_n,
-                                                  arrayView2d< real32 > varAtReceivers )
+                                                            real64 const dt,
+                                                            real64 const timeSeismo,
+                                                            localIndex iSeismo,
+                                                            arrayView1d< real32 const > const var_np1,
+                                                            arrayView1d< real32 const > const var_n,
+                                                            arrayView2d< real32 > varAtReceivers )
 {
   real64 const time_np1 = time_n+dt;
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
@@ -529,8 +529,6 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
 
-  // arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
-  // arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
   arrayView1d< real32 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
@@ -541,18 +539,18 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
   arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
 
-  
+
   freeSurfaceFaceIndicator.zero();
   freeSurfaceNodeIndicator.zero();
 
   fsManager.apply< FaceManager >( time,
-                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                   string( "FreeSurface" ),
-                   [&]( FieldSpecificationBase const & bc,
-                        string const &,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        FaceManager &,
-                        string const & )
+                                  domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
+                                  string( "FreeSurface" ),
+                                  [&]( FieldSpecificationBase const & bc,
+                                       string const &,
+                                       SortedArrayView< localIndex const > const & targetSet,
+                                       FaceManager &,
+                                       string const & )
   {
     string const & functionName = bc.getFunctionName();
 
@@ -572,8 +570,6 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
           freeSurfaceNodeIndicator[dof] = 1;
 
           p_np1[dof] = value;
-          //p_n[dof]   = value;
-          //p_nm1[dof] = value;
         }
       }
     }
@@ -586,10 +582,10 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
 
 
 real64 AcousticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    integer cycleNumber,
-                                                    DomainPartition & domain,
-                                                    bool GEOSX_UNUSED_PARAM( computeGradient ) )
+                                                               real64 const & dt,
+                                                               integer cycleNumber,
+                                                               DomainPartition & domain,
+                                                               bool GEOSX_UNUSED_PARAM( computeGradient ) )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
@@ -598,10 +594,10 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & ti
 
 
 real64 AcousticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & time_n,
-                                                     real64 const & dt,
-                                                     integer cycleNumber,
-                                                     DomainPartition & domain,
-                                                     bool GEOSX_UNUSED_PARAM( computeGradient ) )
+                                                                real64 const & dt,
+                                                                integer cycleNumber,
+                                                                DomainPartition & domain,
+                                                                bool GEOSX_UNUSED_PARAM( computeGradient ) )
 {
   GEOSX_ERROR( "Backward propagation for the elastic wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
@@ -610,9 +606,9 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & t
 
 
 real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & time_n,
-                                              real64 const & dt,
-                                              integer const cycleNumber,
-                                              DomainPartition & domain )
+                                                                real64 const & dt,
+                                                                integer const cycleNumber,
+                                                                DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -636,130 +632,78 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
 
     arrayView1d< real32 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
     arrayView1d< real32 const > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
-    //arrayView1d< real64 const > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
 
-    // arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
-    // arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
     arrayView1d< real32 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
 
     arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
-    //arrayView1d< real64 > const stiffnessVector = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
     arrayView1d< real32 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
 
-    // forTargetRegionsComplete( mesh, [&]( localIndex const,
-    //                                      localIndex const,
-    //                                      ElementRegionBase & elemRegion )
-
-    // {
-       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
+    {
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+      arrayView1d< real32 const > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity >();
+      arrayView1d< real32 const > const mediumVelocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
+      arrayView2d< real32 > const velocity_x = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_x >();
+      arrayView2d< real32 > const velocity_y = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_y >();
+      arrayView2d< real32 > const velocity_z = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_z >();
+      finiteElement::FiniteElementBase const &
+      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+      finiteElement::dispatch3D( fe,
+                                 [&]
+                                   ( auto const finiteElement )
       {
+        using FE_TYPE = TYPEOFREF( finiteElement );
 
-        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-
-        arrayView1d< real32 const > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity >();
-        arrayView1d< real32 const > const mediumVelocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
-
-        arrayView2d< real32 > const velocity_x = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_x >();
-        arrayView2d< real32 > const velocity_y = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_y >();
-        arrayView2d< real32 > const velocity_z = elementSubRegion.getExtrinsicData< extrinsicMeshData::Velocity_z >();
-
-        finiteElement::FiniteElementBase const &
-        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-        finiteElement::dispatch3D( fe,
-                                   [&]
-                                       ( auto const finiteElement )
-        {
-          using FE_TYPE = TYPEOFREF( finiteElement ); 
-          
-
-          acousticFirstOrderWaveEquationSEMKernels::
-            VelocityComputation< FE_TYPE > kernel( finiteElement );
-          kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
-          (elementSubRegion.size(),
-           X,
-           elemsToNodes,
-           p_np1,
-           density,
-           dt,
-           velocity_x,
-           velocity_y,
-           velocity_z);
-
-           acousticFirstOrderWaveEquationSEMKernels::
-             PressureComputation< FE_TYPE > kernel2( finiteElement );
-           kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
-           (elementSubRegion.size(),
-            nodeManager.size(),
-            X,
-            elemsToNodes,
-            velocity_x,
-            velocity_y,
-            velocity_z,
-            mass,
-            damping,
-            mediumVelocity,
-            density,
-            sourceConstants,
-            sourceValue,
-            sourceElem,
-            sourceIsAccessible,
-            dt,
-            cycleNumber,
-            p_np1);
-
-
-        } );
-
-
-      //  auto kernelFactory = acousticFirstOrderWaveEquationSEMKernels::ExplicitAcousticVelocitySEMFactory( velocityx,
-      //                                                                                             velocityy,
-      //                                                                                             velocityz,
-      //                                                                                             dt );
-
-      //   finiteElement::
-      //   regionBasedKernelApplication< EXEC_POLICY,
-      //                                 constitutive::NullModel,
-      //                                 CellElementSubRegion >( mesh,
-      //                                                         regionNames,
-      //                                                         getDiscretizationName(),
-      //                                                         "",
-      //                                                         kernelFactory );
-
-      //   auto kernelFactory2 = acousticFirstOrderWaveEquationSEMKernels::ExplicitAcousticPressureSEMFactory( sourceElem,
-      //                                                                                                       sourceIsLocal,
-      //                                                                                                       sourceConstants,
-      //                                                                                                       sourceValue,
-      //                                                                                                       dt,
-      //                                                                                                       cycleNumber);
-
-      //   finiteElement::
-      //   regionBasedKernelApplication< EXEC_POLICY,
-      //                                 constitutive::NullModel,
-      //                                 CellElementSubRegion >( mesh,
-      //                                                         regionNames,
-      //                                                         getDiscretizationName(),
-      //                                                         "",
-      //                                                         kernelFactory2 );
-
-
-
-
+        acousticFirstOrderWaveEquationSEMKernels::
+          VelocityComputation< FE_TYPE > kernel( finiteElement );
+        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
+          ( elementSubRegion.size(),
+          X,
+          elemsToNodes,
+          p_np1,
+          density,
+          dt,
+          velocity_x,
+          velocity_y,
+          velocity_z );
+        acousticFirstOrderWaveEquationSEMKernels::
+          PressureComputation< FE_TYPE > kernel2( finiteElement );
+        kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
+          ( elementSubRegion.size(),
+          nodeManager.size(),
+          X,
+          elemsToNodes,
+          velocity_x,
+          velocity_y,
+          velocity_z,
+          mass,
+          damping,
+          mediumVelocity,
+          density,
+          sourceConstants,
+          sourceValue,
+          sourceElem,
+          sourceIsAccessible,
+          dt,
+          cycleNumber,
+          p_np1 );
       } );
+    } );
 
-      FieldIdentifiers fieldsToBeSync;
-      fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::Pressure_np1::key() } );
-      fieldsToBeSync.addElementFields({extrinsicMeshData::Velocity_x::key(), extrinsicMeshData::Velocity_y::key(), extrinsicMeshData::Velocity_z::key()}, regionNames);
- 
-      CommunicationTools & syncFields = CommunicationTools::getInstance();
-      syncFields.synchronizeFields( fieldsToBeSync,
-                               domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                               domain.getNeighbors(),
-                               true );
-      
-      // compute the seismic traces since last step.
-      arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-      computeAllSeismoTraces( time_n, dt, p_np1, p_np1, pReceivers );
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addFields( FieldLocation::Node, { extrinsicMeshData::Pressure_np1::key() } );
+    fieldsToBeSync.addElementFields( {extrinsicMeshData::Velocity_x::key(), extrinsicMeshData::Velocity_y::key(), extrinsicMeshData::Velocity_z::key()}, regionNames );
+
+    CommunicationTools & syncFields = CommunicationTools::getInstance();
+    syncFields.synchronizeFields( fieldsToBeSync,
+                                  domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
+                                  domain.getNeighbors(),
+                                  true );
+
+    // compute the seismic traces since last step.
+    arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+    computeAllSeismoTraces( time_n, dt, p_np1, p_np1, pReceivers );
 
   } );
   return dt;
@@ -768,7 +712,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
 void AcousticFirstOrderWaveEquationSEM::cleanup( real64 const time_n, integer const, integer const, real64 const, DomainPartition & domain )
 {
   // compute the remaining seismic traces, if needed
-   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
   {
@@ -780,10 +724,10 @@ void AcousticFirstOrderWaveEquationSEM::cleanup( real64 const time_n, integer co
 }
 
 void AcousticFirstOrderWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
-                                                      real64 const dt,
-                                                      arrayView1d< real32 const > const var_np1,
-                                                      arrayView1d< real32 const > const var_n,
-                                                      arrayView2d< real32 > varAtReceivers )
+                                                                real64 const dt,
+                                                                arrayView1d< real32 const > const var_np1,
+                                                                arrayView1d< real32 const > const var_n,
+                                                                arrayView2d< real32 > varAtReceivers )
 {
   for( real64 timeSeismo;
        (timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace;
