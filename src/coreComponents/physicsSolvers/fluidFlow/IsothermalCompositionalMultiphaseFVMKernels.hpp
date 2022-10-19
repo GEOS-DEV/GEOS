@@ -382,8 +382,6 @@ protected:
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
-
-  GEOSX_HOST_DEVICE void (*m_setToZero)( real64 & val ) { []( real64 & val ){ val = 0.0; }  };
 };
 
 /**
@@ -479,9 +477,6 @@ public:
     StackVariables( localIndex const size, localIndex numElems )
       : stencilSize( size ),
       numConnectedElems( numElems ),
-      compFlux( numComp ),
-      dCompFlux_dP( 2, numComp ),
-      dCompFlux_dC( 2, numComp, numComp ),
       dofColIndices( size * numDof ),
       localFlux( numElems * numEqn ),
       localFluxJacobian( numElems * numEqn, size * numDof )
@@ -501,15 +496,6 @@ public:
     real64 transmissibility[maxNumConns][numFluxSupportPoints]{};
     /// Derivatives of transmissibility with respect to pressure
     real64 dTrans_dPres[maxNumConns][numFluxSupportPoints]{};
-
-    // Component fluxes and derivatives
-
-    /// Component fluxes
-    stackArray1d< real64, numComp > compFlux;
-    /// Derivatives of component fluxes wrt pressure
-    stackArray2d< real64, 2 * numComp > dCompFlux_dP;
-    /// Derivatives of component fluxes wrt component densities
-    stackArray3d< real64, 2 * numComp * numComp > dCompFlux_dC;
 
     // Local degrees of freedom and local residual/jacobian
 
@@ -598,9 +584,9 @@ public:
         localIndex const sei[numFluxSupportPoints]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         // clear working arrays
-        LvArray::forValuesInSlice( stack.compFlux.toSlice(), m_setToZero );
-        LvArray::forValuesInSlice( stack.dCompFlux_dP.toSlice(), m_setToZero );
-        LvArray::forValuesInSlice( stack.dCompFlux_dC.toSlice(), m_setToZero );
+        real64 compFlux[numComp]{};
+        real64 dCompFlux_dP[numFluxSupportPoints][numComp]{};
+        real64 dCompFlux_dC[numFluxSupportPoints][numComp][numComp]{};
 
         real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
                                                      stack.transmissibility[connectionIndex][1] };
@@ -773,20 +759,20 @@ public:
           for( integer ic = 0; ic < numComp; ++ic )
           {
             real64 const ycp = phaseCompFracSub[ic];
-            stack.compFlux[ic] += phaseFlux * ycp;
+            compFlux[ic] += phaseFlux * ycp;
 
             // derivatives stemming from phase flux
             for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
             {
-              stack.dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
+              dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
               for( integer jc = 0; jc < numComp; ++jc )
               {
-                stack.dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
+                dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
               }
             }
 
             // additional derivatives stemming from upstream cell phase composition
-            stack.dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFracSub[ic][Deriv::dP];
+            dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFracSub[ic][Deriv::dP];
 
             // convert derivatives of comp fraction w.r.t. comp fractions to derivatives w.r.t. comp densities
             applyChainRule( numComp,
@@ -796,7 +782,7 @@ public:
                             Deriv::dC );
             for( integer jc = 0; jc < numComp; ++jc )
             {
-              stack.dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
+              dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
             }
           } // *** end of upwinding
             // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
@@ -815,20 +801,20 @@ public:
           integer const eqIndex0 = k[0] * numEqn + ic;
           integer const eqIndex1 = k[1] * numEqn + ic;
 
-          stack.localFlux[ eqIndex0 ]  +=  m_dt * stack.compFlux[ic];
-          stack.localFlux[ eqIndex1 ]  -=  m_dt * stack.compFlux[ic];
+          stack.localFlux[ eqIndex0 ]  +=  m_dt * compFlux[ic];
+          stack.localFlux[ eqIndex1 ]  -=  m_dt * compFlux[ic];
 
           for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
           {
             localIndex const localDofIndexPres = k[ke] * numDof;
-            stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * stack.dCompFlux_dP[ke][ic];
-            stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * stack.dCompFlux_dP[ke][ic];
+            stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * dCompFlux_dP[ke][ic];
+            stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * dCompFlux_dP[ke][ic];
 
             for( integer jc = 0; jc < numComp; ++jc )
             {
               localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-              stack.localFluxJacobian[eqIndex0][localDofIndexComp] += m_dt * stack.dCompFlux_dC[ke][ic][jc];
-              stack.localFluxJacobian[eqIndex1][localDofIndexComp] -= m_dt * stack.dCompFlux_dC[ke][ic][jc];
+              stack.localFluxJacobian[eqIndex0][localDofIndexComp] += m_dt * dCompFlux_dC[ke][ic][jc];
+              stack.localFluxJacobian[eqIndex1][localDofIndexComp] -= m_dt * dCompFlux_dC[ke][ic][jc];
             }
           }
         }
