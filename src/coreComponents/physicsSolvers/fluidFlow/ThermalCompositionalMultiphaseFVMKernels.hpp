@@ -341,7 +341,7 @@ public:
 
       real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
                                                    stack.transmissibility[connectionIndex][1] };
-      
+
       real64 convectiveEnergyFlux = 0.0;
       real64 dConvectiveEnergyFlux_dP[numFluxSupportPoints]{};
       real64 dConvectiveEnergyFlux_dT[numFluxSupportPoints]{};
