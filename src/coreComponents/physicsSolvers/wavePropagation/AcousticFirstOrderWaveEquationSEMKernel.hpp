@@ -224,6 +224,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 const > const faceCenter,
           arrayView2d< real64 const > const sourceCoordinates,
           arrayView1d< localIndex > const sourceIsAccessible,
+          arrayView1d< localIndex > const sourceElem,
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
           arrayView2d< real64 const > const receiverCoordinates,
@@ -267,6 +268,7 @@ struct PrecomputeSourceAndReceiverKernel
           if( sourceFound )
           {
             sourceIsAccessible[isrc] = 1;
+            sourceElem[isrc] = k;
             real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
@@ -573,13 +575,14 @@ struct PressureComputation
            arrayView2d< real32 const > const velocity_z,
            arrayView1d< real32 const > const mass,
            arrayView1d< real32 const > const damping,
-           arrayView1d< real32 const > const rhs,
            arrayView1d< real32 const > const mediumVelocity,
            arrayView1d< real32 const > const density,
            arrayView2d< real64 const > const sourceConstants,
+           arrayView2d< real32 const > const sourceValue,
            arrayView1d< localIndex const > const sourceIsAccessible,
            arrayView1d< localIndex const > const sourceElem,
            real64 const dt,
+           integer const cycleNumber,
            arrayView1d < real32 > const  p_np1)
 
   {
@@ -655,7 +658,7 @@ struct PressureComputation
             {
               for (localIndex i = 0; i < numNodesPerElem; ++i)
               {  
-                real32 const localIncrement2 = dt*(rhs[elemsToNodes[k][i]])/(mass[elemsToNodes[k][i]]*mediumVelocity[k]*mediumVelocity[k]*density[k]);
+                real32 const localIncrement2 = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/(mass[elemsToNodes[k][i]]*mediumVelocity[k]*mediumVelocity[k]*density[k]);
                 RAJA::atomicAdd< ATOMIC_POLICY >(&p_np1[elemsToNodes[k][i]],localIncrement2);
               }
             }

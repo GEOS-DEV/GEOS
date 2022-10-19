@@ -333,6 +333,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
         faceCenter,
         sourceCoordinates,
         sourceIsAccessible,
+        sourceElem,
         sourceNodeIds,
         sourceConstants,
         receiverCoordinates,
@@ -420,10 +421,12 @@ void AcousticFirstOrderWaveEquationSEM::computeSeismoTrace( real64 const time_n,
           // Note: this "manual" output to file is temporary
           //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
           // TODO: remove saveSeismo and replace with TimeHistory
+          std::ofstream f( GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
           for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
           {
-            this->saveSeismo( iSample, varAtReceivers[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+            f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
           }
+          f.close();
         }
       }
     } );
@@ -643,8 +646,6 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
     //arrayView1d< real64 > const stiffnessVector = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
     arrayView1d< real32 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
 
-    addSourceToRightHandSide( cycleNumber, rhs );
-
     // forTargetRegionsComplete( mesh, [&]( localIndex const,
     //                                      localIndex const,
     //                                      ElementRegionBase & elemRegion )
@@ -697,13 +698,14 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
             velocity_z,
             mass,
             damping,
-            rhs,
             mediumVelocity,
             density,
             sourceConstants,
-            sourceIsAccessible,
+            sourceValue,
             sourceElem,
+            sourceIsAccessible,
             dt,
+            cycleNumber,
             p_np1);
 
 
