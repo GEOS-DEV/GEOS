@@ -621,7 +621,7 @@ public:
           real64 dProp_dC[numComp]{};
 
           // calculate quantities on primary connected cells
-          for( integer i = 0; i < 2; ++i )
+          for( integer i = 0; i < numFluxSupportPoints; ++i )
           {
             localIndex const er  = seri[ i ];
             localIndex const esr = sesri[ i ];
