@@ -382,6 +382,8 @@ protected:
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
+
+  GEOSX_HOST_DEVICE void (*m_setToZero)( real64 & val ) { []( real64 & val ){ val = 0.0; }  };
 };
 
 /**
@@ -518,7 +520,6 @@ public:
     stackArray1d< real64, maxNumElems * numEqn > localFlux;
     /// Storage for the face local Jacobian matrix
     stackArray2d< real64, maxNumElems * numEqn * maxStencilSize * numDof > localFluxJacobian;
-
   };
 
 
@@ -597,9 +598,9 @@ public:
         localIndex const sei[numFluxSupportPoints]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         // clear working arrays
-        stack.compFlux.zero();
-        stack.dCompFlux_dP.zero();
-        stack.dCompFlux_dC.zero();
+        LvArray::forValuesInSlice( stack.compFlux.toSlice(), m_setToZero );
+        LvArray::forValuesInSlice( stack.dCompFlux_dP.toSlice(), m_setToZero );
+        LvArray::forValuesInSlice( stack.dCompFlux_dC.toSlice(), m_setToZero );
 
         real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
                                                      stack.transmissibility[connectionIndex][1] };

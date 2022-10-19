@@ -194,6 +194,8 @@ public:
   using AbstractBase::m_dPhaseCompFrac;
   using AbstractBase::m_dCompFrac_dCompDens;
   using AbstractBase::m_dPhaseCapPressure_dPhaseVolFrac;
+  using AbstractBase::m_setToZero;
+
 
   using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
   using Base::numComp;
@@ -365,10 +367,10 @@ public:
                                                    stack.transmissibility[connectionIndex][1] };
 
       stack.convectiveEnergyFlux = 0.0;
-      stack.dConvectiveEnergyFlux_dP.zero();
-      stack.dConvectiveEnergyFlux_dT.zero();
-      stack.dConvectiveEnergyFlux_dC.zero();
-      stack.dCompFlux_dT.zero();
+      LvArray::forValuesInSlice( stack.dConvectiveEnergyFlux_dP.toSlice(), m_setToZero );
+      LvArray::forValuesInSlice( stack.dConvectiveEnergyFlux_dT.toSlice(), m_setToZero );
+      LvArray::forValuesInSlice( stack.dConvectiveEnergyFlux_dC.toSlice(), m_setToZero );
+      LvArray::forValuesInSlice( stack.dCompFlux_dT.toSlice(), m_setToZero );
 
       for( integer i = 0; i < numFluxSupportPoints; ++i )
       {
