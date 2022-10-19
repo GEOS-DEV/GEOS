@@ -12,6 +12,7 @@ free -m
 function or_die () {
     "$@"
     local status=$?
+    df -h
 
     if [[ $status != 0 ]] ; then
         echo ERROR $status command: $@
@@ -92,6 +93,5 @@ if [[ "$*" != *--disable-unit-tests* ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
 
-df -h
 
 exit 0
