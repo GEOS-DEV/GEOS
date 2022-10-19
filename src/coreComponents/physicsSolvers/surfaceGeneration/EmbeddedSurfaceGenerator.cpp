@@ -90,7 +90,7 @@ void EmbeddedSurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
     EmbeddedSurfaceNodeManager & nodeManager = meshLevel.getEmbSurfNodeManager();
 
-    nodeManager.registerExtrinsicData< extrinsicMeshData::ParentEdgeIndex >( this->getName() );
+    nodeManager.registerExtrinsicData< extrinsicMeshData::parentEdgeIndex >( this->getName() );
   } );
 }
 
@@ -218,7 +218,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
       using KERNEL_TYPE = decltype( kernel );
 
-      KERNEL_TYPE::template launchCICompuationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
+      KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
     } );
   } );
 

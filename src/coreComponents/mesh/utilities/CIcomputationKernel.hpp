@@ -76,7 +76,7 @@ public:
   template< typename POLICY,
             typename KERNEL_TYPE >
   static
-  void launchCICompuationKernel( KERNEL_TYPE & kernelComponent )
+  void launchCIComputationKernel( KERNEL_TYPE & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
     forAll< POLICY >( kernelComponent.m_fracturedElems.size(),

@@ -135,8 +135,8 @@ endif()
 
 if( ENABLE_VTK )
     message(STATUS "Adding VTKMeshGenerator sources and headers")
-    set( mesh_headers ${mesh_headers} generators/VTKMeshGenerator.hpp generators/VTKMeshGeneratorTools.hpp )
-    set( mesh_sources ${mesh_sources} generators/VTKMeshGenerator.cpp generators/VTKMeshGeneratorTools.cpp )
+    set( mesh_headers ${mesh_headers} generators/VTKMeshGenerator.hpp generators/VTKMeshGeneratorTools.hpp generators/VTKUtilities.hpp)
+    set( mesh_sources ${mesh_sources} generators/VTKMeshGenerator.cpp generators/VTKMeshGeneratorTools.cpp generators/VTKUtilities.cpp)
     set( dependencyList ${dependencyList} VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
       set( dependencyList ${dependencyList} VTK::IOParallelXML VTK::ParallelMPI )
@@ -157,6 +157,11 @@ blt_add_library( NAME       mesh
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+if( ENABLE_VTK )
+    # Avoid compiling with nvcc which sometimes segfaults in debug
+    set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES LANGUAGE CXX )
+endif()
 
 add_subdirectory( unitTests )
 

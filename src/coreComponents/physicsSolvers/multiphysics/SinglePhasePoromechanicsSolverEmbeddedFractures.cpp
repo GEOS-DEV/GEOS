@@ -93,7 +93,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
   flowSolver()->setupDofs( domain, dofManager );
 
   // Add coupling between displacement and cell pressures
-  dofManager.addCoupling( keys::TotalDisplacement,
+  dofManager.addCoupling( extrinsicMeshData::solidMechanics::totalDisplacement::key(),
                           SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
 
@@ -409,7 +409,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() );
     EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
-    string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+    string const dofKey = dofManager.getKey( extrinsicMeshData::solidMechanics::totalDisplacement::key() );
     string const jumpDofKey = dofManager.getKey( extrinsicMeshData::contact::dispJump::key() );
 
     arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
