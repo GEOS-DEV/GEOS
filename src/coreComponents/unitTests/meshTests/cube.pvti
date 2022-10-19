@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<VTKFile type="PImageData" version="1.0" byte_order="LittleEndian">
+  <PImageData WholeExtent="0 3 0 3 0 3" GhostLevel="0">
+    <PCellData>
+      <PDataArray type="Int32" Name="attribute"/>
+    </PCellData>
+    <Piece Extent="0 2 0 2 0 3" Source="cube/cube_0.vti"/>
+    <Piece Extent="0 2 2 3 0 3" Source="cube/cube_1.vti"/>
+    <Piece Extent="2 3 0 2 0 3" Source="cube/cube_2.vti"/>
+    <Piece Extent="2 3 2 3 0 3" Source="cube/cube_3.vti"/>
+  </PImageData>
+</VTKFile>

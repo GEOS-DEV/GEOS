@@ -157,15 +157,23 @@ TEST( VTKImport, cube )
 
   string const cubeVTK = testMeshDir + "/cube.vtk";
   string const cubeVTU = testMeshDir + "/cube.vtu";
-  // string const cubePVTU = testMeshDir + "/cube.pvtu";
+  //string const cubePVTU = testMeshDir + "/cube.pvtu";
   string const cubeVTS = testMeshDir + "/cube.vts";
   string const cubePVTS = testMeshDir + "/cube.pvts";
+  string const cubeVTR = testMeshDir + "/cube.vtr";
+  string const cubePVTR = testMeshDir + "/cube.pvtr";
+  string const cubeVTI = testMeshDir + "/cube.vti";
+  string const cubePVTI = testMeshDir + "/cube.pvti";
 
   TestMeshImport( cubeVTK, validate );
   TestMeshImport( cubeVTU, validate );
-  // TestMeshImport( cubePVTU, validate );
+  //TestMeshImport( cubePVTU, validate );
   TestMeshImport( cubeVTS, validate );
   TestMeshImport( cubePVTS, validate );
+  TestMeshImport( cubeVTR, validate );
+  TestMeshImport( cubePVTR, validate );
+  TestMeshImport( cubeVTI, validate );
+  TestMeshImport( cubePVTI, validate );
 }
 
 TEST( VTKImport, medley )
