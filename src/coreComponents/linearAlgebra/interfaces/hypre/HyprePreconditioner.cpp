@@ -82,7 +82,7 @@ void createAMG( LinearSolverParameters const & params,
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &precond.ptr ) );
 
   // Hypre's parameters to use BoomerAMG as a preconditioner
-  HYPRE_Int logLevel = (params.logLevel == 2 || params.logLevel == 4) ? 1 : 0;
+  HYPRE_Int logLevel = (params.logLevel == 2 || params.logLevel >= 4) ? 1 : 0;
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( precond.ptr, 0.0 ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( precond.ptr, 1 ) );

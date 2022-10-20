@@ -165,7 +165,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   //if( params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && params.mgr.separateComponents )
   if( params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
   {
-    HYPRE_Int logLevel = (params.logLevel == 2 || params.logLevel == 4) ? 1 : 0;
+    HYPRE_Int logLevel = (params.logLevel == 2 || params.logLevel >= 4) ? 1 : 0;
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 ) );
