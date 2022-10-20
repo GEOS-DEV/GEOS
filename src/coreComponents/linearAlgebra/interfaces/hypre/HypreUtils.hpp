@@ -337,15 +337,15 @@ inline HYPRE_Int getAMGAggressiveInterpolationType( LinearSolverParameters::AMG:
 {
   static map< LinearSolverParameters::AMG::AggInterpType, HYPRE_Int > const typeMap =
   {
-    { LinearSolverParameters::AMG::InterpType::default_, -1 },
-    { LinearSolverParameters::AMG::InterpType::extIStg2, 1 },
-    { LinearSolverParameters::AMG::InterpType::stdStg2, 2 },
-    { LinearSolverParameters::AMG::InterpType::extStg2, 3 },
-    { LinearSolverParameters::AMG::InterpType::multipass, 4 },
-    { LinearSolverParameters::AMG::InterpType::modExt, 5 },
-    { LinearSolverParameters::AMG::InterpType::modExtI, 6 },
-    { LinearSolverParameters::AMG::InterpType::modExtE, 7 },
-    { LinearSolverParameters::AMG::InterpType::modMultipass, 8 },
+    { LinearSolverParameters::AMG::AggInterpType::default_, -1 },
+    { LinearSolverParameters::AMG::AggInterpType::extIStg2, 1 },
+    { LinearSolverParameters::AMG::AggInterpType::stdStg2, 2 },
+    { LinearSolverParameters::AMG::AggInterpType::extStg2, 3 },
+    { LinearSolverParameters::AMG::AggInterpType::multipass, 4 },
+    { LinearSolverParameters::AMG::AggInterpType::modExt, 5 },
+    { LinearSolverParameters::AMG::AggInterpType::modExtI, 6 },
+    { LinearSolverParameters::AMG::AggInterpType::modExtE, 7 },
+    { LinearSolverParameters::AMG::AggInterpType::modMultipass, 8 },
   };
   return findOption( typeMap, type, "multigrid aggressive interpolation", "HyprePreconditioner" );
 }
