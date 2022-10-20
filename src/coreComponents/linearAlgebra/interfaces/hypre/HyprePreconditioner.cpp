@@ -167,7 +167,7 @@ void createAMG( LinearSolverParameters const & params,
   {
      HYPRE_Int const interpType = hypre::getAMGInterpolationType( params.amg.interpolationType );
 
-     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( precond.ptr, interpType );
+     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( precond.ptr, interpType ) );
      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPMaxElmts( precond.ptr, params.amg.interpolationMaxNonZeros ) );
   }
 
