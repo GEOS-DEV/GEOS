@@ -13,13 +13,13 @@
  */
 
 /**
- * @file SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
+ * @file ExplicitFiniteStrain.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSFINITESTRAINEXPLICITNEWMARK_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSFINITESTRAINEXPLICITNEWMARK_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITFINITESTRAIN_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITFINITESTRAIN_HPP_
 
-#include "SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
+#include "ExplicitSmallStrain.hpp"
 #include "finiteElement/Kinematics.h"
 
 namespace geosx
@@ -84,17 +84,7 @@ public:
                         FE_TYPE const & finiteElementSpace,
                         CONSTITUTIVE_TYPE & inputConstitutiveType,
                         real64 const dt,
-                        string const elementListName ):
-    Base( nodeManager,
-          edgeManager,
-          faceManager,
-          targetRegionIndex,
-          elementSubRegion,
-          finiteElementSpace,
-          inputConstitutiveType,
-          dt,
-          elementListName )
-  {}
+                        string const elementListName );
 
 
   //*****************************************************************************
@@ -127,78 +117,30 @@ public:
    * @copydoc ExplicitSmallStrain::setup
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void setup( localIndex const k,
-              StackVariables & stack ) const
-  {
-    for( localIndex a=0; a< numNodesPerElem; ++a )
-    {
-      localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int i=0; i<numDofPerTrialSupportPoint; ++i )
-      {
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
-        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
-#endif
-        stack.uLocal[ a ][ i ] = m_u[ nodeIndex ][ i ];
-        stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ];
-      }
-    }
-  }
+              StackVariables & stack ) const;
 
   /**
    * @copydoc ExplicitSmallStrain::quadraturePointKernel
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
-                              StackVariables & stack ) const
-  {
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+                              StackVariables & stack ) const;
 
-    real64 dUhatdX[3][3] = { {0} };
-    real64 dUdX[3][3] = { {0} };
-    real64 F[3][3] = { {0} };
-    real64 Ldt[3][3] = { {0} };
-    real64 fInv[3][3] = { {0} };
 
-    FE_TYPE::gradient( dNdX, stack.varLocal, dUhatdX );
-    FE_TYPE::gradient( dNdX, stack.uLocal, dUdX );
+  /**
+   * @copydoc ExplicitSmallStrain::kernelLaunch
+   */
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent );
 
-    LvArray::tensorOps::scale< 3, 3 >( dUhatdX, m_dt );
 
-    // calculate du/dX
-    LvArray::tensorOps::scaledCopy< 3, 3 >( F, dUhatdX, 0.5 );
-    LvArray::tensorOps::add< 3, 3 >( F, dUdX );
-    LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
-    LvArray::tensorOps::invert< 3 >( fInv, F );
 
-    // chain rule: calculate dv/dx^(n+1/2) = dv/dX * dX/dx^(n+1/2)
-    LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( Ldt, dUhatdX, fInv );
-
-    // calculate gradient (end of step)
-    LvArray::tensorOps::copy< 3, 3 >( F, dUhatdX );
-    LvArray::tensorOps::add< 3, 3 >( F, dUdX );
-    LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
-    real64 const detF = LvArray::tensorOps::invert< 3 >( fInv, F );
-
-    real64 Rot[ 3 ][ 3 ];
-    real64 Dadt[ 6 ];
-    HughesWinget( Rot, Dadt, Ldt );
-
-    real64 stress[ 6 ] = { };
-    m_constitutiveUpdate.hypoUpdate_StressOnly( k, q, Dadt, Rot, stress );
-
-    real64 P[ 3 ][ 3 ];
-    LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );
-    LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
-
-    FE_TYPE::plusGradNajAij( dNdX, P, stack.fLocal );
-  }
 };
-#undef UPDATE_STRESS
-
 /// The factory used to construct a ExplicitFiniteStrain kernel.
 using ExplicitFiniteStrainFactory = finiteElement::KernelFactory< ExplicitFiniteStrain,
                                                                   real64,
@@ -208,4 +150,4 @@ using ExplicitFiniteStrainFactory = finiteElement::KernelFactory< ExplicitFinite
 
 } // namespace geosx
 
-#endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSFINITESTRAINEXPLICITNEWMARK_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITFINITESTRAIN_HPP_

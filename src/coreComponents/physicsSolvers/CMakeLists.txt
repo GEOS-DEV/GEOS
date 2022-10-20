@@ -80,15 +80,19 @@ set( physicsSolvers_headers
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
      solidMechanics/SolidMechanicsExtrinsicData.hpp	
-     solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
-     solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
-     solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
-     solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
-     solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
+     solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp
+     solidMechanics/kernels/ExplicitFiniteStrain.hpp
+     solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp
+     solidMechanics/kernels/ExplicitSmallStrain.hpp
+     solidMechanics/kernels/ExplicitSmallStrain_impl.hpp
+     solidMechanics/kernels/ImplicitSmallStrainNewmark.hpp
+     solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp
+     solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp
+     solidMechanics/kernels/ImplicitSmallStrainQuasiStatic_impl.hpp
      solidMechanics/SolidMechanicsStateReset.hpp
-     solidMechanics/SolidMechanicsStatistics.hpp	     
+     solidMechanics/SolidMechanicsStatistics.hpp       
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
      surfaceGeneration/ParallelTopologyChange.hpp
@@ -134,8 +138,8 @@ set( physicsSolvers_sources
      fluidFlow/wells/SinglePhaseWellKernels.cpp
      fluidFlow/wells/WellControls.cpp
      fluidFlow/wells/WellSolverBase.cpp
-     multiphysics/CompositionalMultiphaseReservoirAndWells.cpp               
-     multiphysics/CoupledReservoirAndWellsBase.cpp		
+     multiphysics/CompositionalMultiphaseReservoirAndWells.cpp
+     multiphysics/CoupledReservoirAndWellsBase.cpp  
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/MultiphasePoromechanicsSolver.cpp
@@ -150,7 +154,7 @@ set( physicsSolvers_sources
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      solidMechanics/SolidMechanicsStateReset.cpp
-     solidMechanics/SolidMechanicsStatistics.cpp	          
+     solidMechanics/SolidMechanicsStatistics.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.cpp
      surfaceGeneration/ParallelTopologyChange.cpp
@@ -160,13 +164,15 @@ set( physicsSolvers_sources
      wavePropagation/ElasticWaveEquationSEM.cpp
    )
 
+  include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
+
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
-	python/PySolver.hpp 
-	python/PySolverType.hpp ) 
+  python/PySolver.hpp 
+  python/PySolverType.hpp ) 
   list( APPEND physicsSolvers_sources
-	python/PySolver.cpp ) 
+        python/PySolver.cpp ) 
   list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 

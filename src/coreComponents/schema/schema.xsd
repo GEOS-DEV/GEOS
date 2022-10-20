@@ -1787,8 +1787,12 @@ the relative residual norm satisfies:
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
+		<!--forward => Set to 1 to compute forward propagation-->
+		<xsd:attribute name="forward" type="integer" default="1" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
+		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
@@ -1797,6 +1801,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
+		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
+		<xsd:attribute name="saveFields" type="integer" default="0" />
+		<!--shotIndex => Set the current shot for temporary files-->
+		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -2007,8 +2015,12 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
+		<!--forward => Set to 1 to compute forward propagation-->
+		<xsd:attribute name="forward" type="integer" default="1" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
+		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
@@ -2017,6 +2029,10 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
+		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
+		<xsd:attribute name="saveFields" type="integer" default="0" />
+		<!--shotIndex => Set the current shot for temporary files-->
+		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
