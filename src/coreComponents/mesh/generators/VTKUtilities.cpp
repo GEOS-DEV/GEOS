@@ -196,6 +196,49 @@ vtkSmartPointer< vtkMultiProcessController > getController()
   return controller;
 }
 
+VTKMeshExtension stringToVTKMeshExtension( const string & extension )
+{
+  if( extension == "vtk" )
+  {
+    return VTKMeshExtension::vtk;
+  }
+  else if( extension == "vtu" )
+  {
+    return VTKMeshExtension::vtu;
+  }
+  else if( extension == "vtr" )
+  {
+    return VTKMeshExtension::vtr;
+  }
+  else if( extension == "vts" )
+  {
+    return VTKMeshExtension::vts;
+  }
+  else if( extension == "vti" )
+  {
+    return VTKMeshExtension::vti;
+  }
+  else if( extension == "pvtu" )
+  {
+    return VTKMeshExtension::pvtu;
+  }
+  else if( extension == "pvtr" )
+  {
+    return VTKMeshExtension::pvtr;
+  }
+  else if( extension == "pvts" )
+  {
+    return VTKMeshExtension::pvts;
+  }
+  else if( extension == "pvti" )
+  {
+    return VTKMeshExtension::pvti;
+  }
+  else
+  {
+    return VTKMeshExtension::invalid;
+  }
+}
 
 vtkSmartPointer< vtkDataSet >
 loadMesh( Path const & filePath )
@@ -203,82 +246,93 @@ loadMesh( Path const & filePath )
   string const extension = filePath.extension();
   vtkSmartPointer< vtkDataSet > loadedMesh;
 
-  if( extension == "pvtu" )
+  auto const parallelRead = [&]( auto const vtkGridReader )
   {
-    auto const vtkUgReader = vtkSmartPointer< vtkXMLPUnstructuredGridReader >::New();
-    vtkUgReader->SetFileName( filePath.c_str() );
-    vtkUgReader->UpdateInformation();
-    vtkUgReader->UpdatePiece( MpiWrapper::commRank(), MpiWrapper::commSize(), 0 );
-    loadedMesh = vtkUgReader->GetOutput();
+    vtkGridReader->SetFileName( filePath.c_str() );
+    vtkGridReader->UpdateInformation();
+    vtkGridReader->UpdatePiece( MpiWrapper::commRank(), MpiWrapper::commSize(), 0 );
+    return vtkGridReader->GetOutput();
+  };
 
-    // TODO: Apply vtkStaticCleanUnstructuredGrid, once it is included in the next VTK release.
-    //       https://gitlab.kitware.com/vtk/vtk/-/blob/master/Filters/Core/vtkStaticCleanUnstructuredGrid.h
-    //       This removes duplicate points, either present in the dataset, or resulting from merging pieces.
-  }
-  else if( extension == "pvts" )
+  auto const serialRead = [&]( auto const vtkGridReader )
   {
-    auto const vtkSgReader = vtkSmartPointer< vtkXMLPStructuredGridReader >::New();
-    vtkSgReader->SetFileName( filePath.c_str() );
-    vtkSgReader->UpdateInformation();
-    vtkSgReader->UpdatePiece( MpiWrapper::commRank(), MpiWrapper::commSize(), 0 );
-    loadedMesh = vtkSgReader->GetOutput();
-  }
-  else if( extension == "pvtr" )
+    vtkGridReader->SetFileName( filePath.c_str() );
+    vtkGridReader->Update();
+    return vtkGridReader->GetOutput();
+  };
+
+  switch( stringToVTKMeshExtension( extension ) )
   {
-    auto const vtkSgReader = vtkSmartPointer< vtkXMLPRectilinearGridReader >::New();
-    vtkSgReader->SetFileName( filePath.c_str() );
-    vtkSgReader->UpdateInformation();
-    vtkSgReader->UpdatePiece( MpiWrapper::commRank(), MpiWrapper::commSize(), 0 );
-    loadedMesh = vtkSgReader->GetOutput();
-  }
-  else if( extension == "pvti" )
-  {
-    auto const vtkSgReader = vtkSmartPointer< vtkXMLPImageDataReader >::New();
-    vtkSgReader->SetFileName( filePath.c_str() );
-    vtkSgReader->UpdateInformation();
-    vtkSgReader->UpdatePiece( MpiWrapper::commRank(), MpiWrapper::commSize(), 0 );
-    loadedMesh = vtkSgReader->GetOutput();
-  }
-  else
-  {
-    if( MpiWrapper::commRank() == 0 )
+    case VTKMeshExtension::vtk:
     {
-      auto const read = [&]( auto const vtkGridReader )
-      {
-        vtkGridReader->SetFileName( filePath.c_str() );
-        vtkGridReader->Update();
-        return vtkGridReader->GetOutput();
-      };
-
-      if( extension == "vtk" )
-      {
-        loadedMesh = read( vtkSmartPointer< vtkDataSetReader >::New() );
-        //loadedMesh = read( vtkSmartPointer< vtkDataReader >::New() );
-      }
-      else if( extension == "vtu" )
-      {
-        loadedMesh = read( vtkSmartPointer< vtkXMLUnstructuredGridReader >::New() );
-      }
-      else if( extension == "vtr" )
-      {
-        loadedMesh = read( vtkSmartPointer< vtkXMLRectilinearGridReader >::New() );
-      }
-      else if( extension == "vts" )
-      {
-        loadedMesh = read( vtkSmartPointer< vtkXMLStructuredGridReader >::New() );
-      }
-      else if( extension == "vti" )
-      {
-        loadedMesh = read( vtkSmartPointer< vtkXMLImageDataReader >::New() );
-      }
-      else
-      {
-        GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vts, .vti, .pvtu or .ptvs." );
-      }
+      loadedMesh = MpiWrapper::commRank() == 0
+                 ? serialRead( vtkSmartPointer< vtkDataSetReader >::New() )
+                 : vtkSmartPointer< vtkUnstructuredGrid >::New().GetPointer();
+      //if( MpiWrapper::commRank() == 0 )
+      //{
+      //  loadedMesh = serialRead( vtkSmartPointer< vtkDataSetReader >::New() );
+      //}
+      //else
+      //{
+      //  loadedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
+      //}
+      break;
     }
-    else
+    case VTKMeshExtension::vtu:
     {
-      loadedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
+      loadedMesh = MpiWrapper::commRank() == 0
+                 ? serialRead( vtkSmartPointer< vtkXMLUnstructuredGridReader >::New() )
+                 : vtkSmartPointer< vtkUnstructuredGrid >::New().GetPointer();
+      break;
+    }
+    case VTKMeshExtension::vtr:
+    {
+      loadedMesh = MpiWrapper::commRank() == 0
+                 ? serialRead( vtkSmartPointer< vtkXMLRectilinearGridReader >::New() )
+                 : vtkSmartPointer< vtkRectilinearGrid >::New().GetPointer();
+      break;
+    }
+    case VTKMeshExtension::vts:
+    {
+      loadedMesh = MpiWrapper::commRank() == 0
+                 ? serialRead( vtkSmartPointer< vtkXMLStructuredGridReader >::New() )
+                 : vtkSmartPointer< vtkStructuredGrid >::New().GetPointer();
+      break;
+    }
+    case VTKMeshExtension::vti:
+    {
+      loadedMesh = MpiWrapper::commRank() == 0
+                 ? serialRead( vtkSmartPointer< vtkXMLImageDataReader >::New() )
+                 : vtkSmartPointer< vtkImageData >::New().GetPointer();
+      break;
+    }
+    case VTKMeshExtension::pvtu:
+    {
+      loadedMesh = parallelRead( vtkSmartPointer< vtkXMLPUnstructuredGridReader >::New() );
+      // TODO: Apply vtkStaticCleanUnstructuredGrid, once it is included in the next VTK release.
+      //       https://gitlab.kitware.com/vtk/vtk/-/blob/master/Filters/Core/vtkStaticCleanUnstructuredGrid.h
+      //       This removes duplicate points, either present in the dataset, or resulting from merging pieces.
+      break;
+    }
+    case VTKMeshExtension::pvts:
+    {
+      loadedMesh = parallelRead( vtkSmartPointer< vtkXMLPStructuredGridReader >::New() );
+      break;
+    }
+    case VTKMeshExtension::pvtr:
+    {
+      loadedMesh = parallelRead( vtkSmartPointer< vtkXMLPRectilinearGridReader >::New() );
+      break;
+    }
+    case VTKMeshExtension::pvti:
+    {
+      loadedMesh = parallelRead( vtkSmartPointer< vtkXMLPImageDataReader >::New() );
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vtr, .vts, .vti, .pvtu, .pvtr, .pvts or .ptvi." );
+      break;
     }
   }
 
@@ -1103,7 +1157,8 @@ CellMapType buildCellMap( vtkDataSet & mesh, string const & attributeName )
 //
 //std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType, vtkCell *cell )
 //{
-//  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input for getGeosxToVtkNodeOrdering( ElementType const elemType, vtkCell *cell ) must be a VTK_POLYHEDRON." );
+//  GEOSX_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input for getGeosxToVtkNodeOrdering( ElementType const elemType, vtkCell
+// *cell ) must be a VTK_POLYHEDRON." );
 //  switch( elemType )
 //  {
 //    case ElementType::Tetrahedron: return getTetrahedronNodeOrderingFromPolyhedron( cell );
@@ -1127,7 +1182,7 @@ CellMapType buildCellMap( vtkDataSet & mesh, string const & attributeName )
 
 std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType,
                                               VTKCellType const vtkType,
-		                              vtkCell *cell )
+                                              vtkCell *cell )
 {
   switch( vtkType )
   {
@@ -1148,7 +1203,7 @@ std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType,
         case ElementType::Prism11:     return getPrismNodeOrderingFromPolyhedron< 11 >( cell );
         default:
         {
-          GEOSX_ERROR("Unsupported VTK polyhedral cell");
+          GEOSX_ERROR( "Unsupported VTK polyhedral cell" );
           break;
         }
       }
@@ -1178,7 +1233,7 @@ std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType,
         //case ElementType::Polyhedron:       return {};  // TODO
         default:
         {
-          GEOSX_ERROR("Unsupported VTK cell");
+          GEOSX_ERROR( "Unsupported VTK cell" );
           break;
         }
       }
@@ -1221,17 +1276,17 @@ void fillCellBlock( vtkDataSet & mesh,
       case VTK_POLYHEDRON:
       {
         writeCell( c, cell, getVtkToGeosxNodeOrdering( elemType, vtkType, cell ) );
-	break;
+        break;
       }
       case VTK_VOXEL:
       {
         writeCell( c, cell, nodeOrderVoxel );
-	break;
+        break;
       }
       default:
       {
         writeCell( c, cell, nodeOrderFixed );
-	break;
+        break;
       }
     }
   }

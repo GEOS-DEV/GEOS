@@ -64,6 +64,36 @@ ENUM_STRINGS( PartitionMethod,
               "ptscotch" );
 
 /**
+ * @brief Supported VTK Mesh file extensions
+ */
+enum class VTKMeshExtension : integer
+{
+  invalid, ///< ...
+  vtk,     ///< Legacy vtk
+  vtu,     ///< ...
+  vtr,     ///< ...
+  vts,     ///< ...
+  vti,     ///< ...
+  pvtu,    ///< ...
+  pvtr,    ///< ...
+  pvts,    ///< ...
+  pvti,    ///< ...
+};
+
+/// Strings for VTKMeshGenerator::PartitionMethod enumeration
+ENUM_STRINGS( VTKMeshExtension,
+              "invalid",
+              "vtk",
+              "vtu",
+              "vtr",
+              "vts",
+              "vti",
+              "pvtu",
+              "pvtr",
+              "pvts",
+              "pvti" );
+
+/**
  * @brief Type of map used to store cell lists.
  *
  * This should be an unordered_map, but some outdated standard libraries on some systems
@@ -279,7 +309,7 @@ CellMapType buildCellMap( vtkDataSet & mesh,
  */
 std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType,
                                               VTKCellType const vtkType = {},
-		                              vtkCell *cell = {} );
+                                              vtkCell *cell = {} );
 
 /**
  * @brief Fill @p cellBlock with the appropriate nodes and local/global mappings.
