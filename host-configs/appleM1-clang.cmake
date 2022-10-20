@@ -28,7 +28,7 @@ set(GEOSX_BUILD_OBJ_LIBS ON CACHE BOOL "" FORCE)
 set( BLAS_LIBRARIES /opt/homebrew/opt/lapack/lib/libblas.dylib CACHE PATH "" FORCE )
 set( LAPACK_LIBRARIES /opt/homebrew/opt/lapack/lib/liblapack.dylib CACHE PATH "" FORCE )
 
-set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
+#set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
 
 #set( DOXYGEN_EXECUTABLE /usr/local/bin/doxygen CACHE PATH "" FORCE )
 #set( SPHINX_EXECUTABLE /usr/local/bin/sphinx-build CACHE PATH "" FORCE )

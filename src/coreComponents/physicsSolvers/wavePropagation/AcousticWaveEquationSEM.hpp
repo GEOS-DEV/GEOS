@@ -66,17 +66,17 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-  virtual
-  real64 solverStep( real64 const & time_n,
-                     real64 const & dt,
-                     integer const cycleNumber,
-                     DomainPartition & domain ) override;
+  virtual real64 explicitStepForward( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      DomainPartition & domain,
+                                      bool const computeGradient ) override;
 
-  virtual
-  real64 explicitStep( real64 const & time_n,
-                       real64 const & dt,
-                       integer const cycleNumber,
-                       DomainPartition & domain ) override;
+  virtual real64 explicitStepBackward( real64 const & time_n,
+                                       real64 const & dt,
+                                       integer const cycleNumber,
+                                       DomainPartition & domain,
+                                       bool const computeGradient ) override;
 
   /**@}*/
 
@@ -112,9 +112,9 @@ public:
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
    * @param time_n the time corresponding to the field values pressure_n
    * @param dt the simulation timestep
-   * @param var_at_np1 the field values at time_n + dt
-   * @param var_at_n the field values at time_n
-   * @param var_at_receivers the array holding the trace values, where the output is written
+   * @param var_np1 the field values at time_n + dt
+   * @param var_n the field values at time_n
+   * @param varAtReceivers the array holding the trace values, where the output is written
    */
   virtual void computeAllSeismoTraces( real64 const time_n,
                                        real64 const dt,
@@ -148,6 +148,19 @@ public:
 
   } waveEquationViewKeys;
 
+
+  /** internal function to the class to compute explicitStep either for backward or forward.
+   * (requires not to be private because it is called from GEOSX_HOST_DEVICE method)
+   * @param time_n time at the beginning of the step
+   * @param dt the perscribed timestep
+   * @param cycleNumber the current cycle number
+   * @param domain the domain object
+   * @return return the timestep that was achieved during the step.
+   */
+  real64 explicitStepInternal( real64 const & time_n,
+                               real64 const & dt,
+                               integer const cycleNumber,
+                               DomainPartition & domain );
 
 protected:
 
@@ -294,6 +307,22 @@ EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceNodeIndicator,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
+
+EXTRINSIC_MESH_DATA_TRAIT( PressureDoubleDerivative,
+                           "pressureDoubleDerivative",
+                           array1d< real32 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Double derivative of the pressure for each node to compute the gradient" );
+
+EXTRINSIC_MESH_DATA_TRAIT( PartialGradient,
+                           "partialGradient",
+                           array1d< real32 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Partiel gradient computed during backward propagation" );
 
 EXTRINSIC_MESH_DATA_TRAIT( AuxiliaryVar1PML,
                            "auxiliaryVar1PML",

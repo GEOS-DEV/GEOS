@@ -47,7 +47,7 @@ __geosx_linux_build: &__geosx_linux_build
   - docker run
     --name=${CONTAINER_NAME}
     --volume=${TRAVIS_BUILD_DIR}:${TRAVIS_BUILD_DIR_MOUNT_POINT}
-    --cap-add=ALL
+    --cap-add=SYS_PTRACE
     -e HOST_CONFIG=${HOST_CONFIG:-host-configs/environment.cmake}
     -e CMAKE_BUILD_TYPE
     -e GEOSX_DIR=${GEOSX_DIR}
@@ -83,7 +83,7 @@ __geosx_osx_build: &__geosx_osx_build
     -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -bt Release
     -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe" -DENABLE_VTK:BOOL=OFF
   - cd build-darwin-clang-release
-  - make -j $(nproc) VERBOSE=1
+  - make -j $(nproc) 
   - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
 
 __geosx_auto_deploy: &__geosx_auto_deploy
@@ -280,7 +280,7 @@ jobs:
     <<: *__geosx_auto_deploy
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu22.04-gcc11
-    - CMAKE_BUILD_TYPE=RelWithDebInfo
+    - CMAKE_BUILD_TYPE=Release
     - GCP_BUCKET=geosx/ubuntu22.04-gcc11
   - stage: return_status
     <<: *__geosx_return_script
