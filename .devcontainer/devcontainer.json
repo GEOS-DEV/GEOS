@@ -9,6 +9,7 @@
         "vscode": {
             "extensions": [
                 "ms-vscode.cpptools-extension-pack",
+                "GitHub.vscode-pull-request-github",
                 "eamodio.gitlens",
                 "fredericbonnet.cmake-test-adapter"
             ]
