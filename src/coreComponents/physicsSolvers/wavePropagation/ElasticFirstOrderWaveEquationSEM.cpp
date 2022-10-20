@@ -345,12 +345,14 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
       elasticFirstOrderWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
+          numNodesPerElem,
           numFacesPerElem,
           X,
           elemGhostRank,
@@ -617,15 +619,30 @@ void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, Do
   } );
 }
 
-real64 ElasticFirstOrderWaveEquationSEM::solverStep( real64 const & time_n,
-                                            real64 const & dt,
-                                            integer const cycleNumber,
-                                            DomainPartition & domain )
+real64 ElasticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & time_n,
+                                                    real64 const & dt,
+                                                    integer cycleNumber,
+                                                    DomainPartition & domain,
+                                                    bool GEOSX_UNUSED_PARAM( computeGradient ) )
 {
-  return explicitStep( time_n, dt, cycleNumber, domain );
+  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  return dtOut;
 }
 
-real64 ElasticFirstOrderWaveEquationSEM::explicitStep( real64 const & time_n,
+
+
+real64 ElasticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & time_n,
+                                                     real64 const & dt,
+                                                     integer cycleNumber,
+                                                     DomainPartition & domain,
+                                                     bool GEOSX_UNUSED_PARAM( computeGradient ) )
+{
+  GEOSX_ERROR( "Backward propagation for the elastic wave propagator not yet implemented" );
+  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  return dtOut;
+}
+
+real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                               real64 const & dt,
                                               integer const cycleNumber,
                                               DomainPartition & domain )
@@ -813,6 +830,8 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
                                                 real64 const eventProgress,
                                                 DomainPartition & domain )
 {
+  SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+
   // compute the remaining seismic traces, if needed
  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

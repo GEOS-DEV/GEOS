@@ -64,18 +64,25 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-  virtual
-  real64 solverStep( real64 const & time_n,
-                     real64 const & dt,
-                     integer const cycleNumber,
-                     DomainPartition & domain ) override;
+  virtual real64 explicitStepForward( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      DomainPartition & domain,
+                                      bool const computeGradient ) override;
 
-  virtual
-  real64 explicitStep( real64 const & time_n,
-                       real64 const & dt,
-                       integer const cycleNumber,
-                       DomainPartition & domain ) override;
+  virtual real64 explicitStepBackward( real64 const & time_n,
+                                       real64 const & dt,
+                                       integer const cycleNumber,
+                                       DomainPartition & domain,
+                                       bool const computeGradient ) override;
 
+  /**@}*/
+
+   /**
+   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
+   * @param cycleNumber the cycle number/step number of evaluation of the source
+   * @param rhs the right hand side vector to be computed
+   */
   void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
   
   /**
@@ -113,6 +120,11 @@ public:
                                        arrayView1d< real32 const > const var_n,
                                        arrayView2d< real32 > varAtReceivers );
 
+  /**
+   * @brief Initialize Perfectly Matched Layer (PML) information
+   */
+  virtual void initializePML() override;
+
 
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
@@ -136,6 +148,18 @@ public:
 
   } waveEquationViewKeys;
 
+  /** internal function to the class to compute explicitStep either for backward or forward.
+   * (requires not to be private because it is called from GEOSX_HOST_DEVICE method)
+   * @param time_n time at the beginning of the step
+   * @param dt the perscribed timestep
+   * @param cycleNumber the current cycle number
+   * @param domain the domain object
+   * @return return the timestep that was achieved during the step.
+   */
+  real64 explicitStepInternal( real64 const & time_n,
+                               real64 const & dt,
+                               integer const cycleNumber,
+                               DomainPartition & domain );
 
 protected:
 
@@ -159,11 +183,6 @@ private:
    * @param domain the partition domain
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
-
-  /**
-   * @brief Initialize Perfectly Matched Layer (PML) information
-   */
-  virtual void initializePML() override;
 
   /**
    * @brief Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml

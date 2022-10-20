@@ -191,6 +191,7 @@ struct PrecomputeSourceAndReceiverKernel
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
+          localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView1d< integer const > const elemGhostRank,
@@ -200,7 +201,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 const > const faceNormal,
           arrayView2d< real64 const > const faceCenter,
           arrayView2d< real64 const > const sourceCoordinates,
-          arrayView1d< localIndex > const sourceIsLocal,
+          arrayView1d< localIndex > const sourceIsAccessible,
           arrayView1d< localIndex > const sourceElem,
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
@@ -216,9 +217,6 @@ struct PrecomputeSourceAndReceiverKernel
 
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-
       real64 const center[3] = { elemCenter[k][0],
                                  elemCenter[k][1],
                                  elemCenter[k][2] };
@@ -228,13 +226,11 @@ struct PrecomputeSourceAndReceiverKernel
       /// loop over all the source that haven't been found yet
       for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
       {
-        if( sourceIsLocal[isrc] == 0 )
+        if( sourceIsAccessible[isrc] == 0 )
         {
           real64 const coords[3] = { sourceCoordinates[isrc][0],
                                      sourceCoordinates[isrc][1],
                                      sourceCoordinates[isrc][2] };
-
-          real64 coordsOnRefElem[3]{};
 
           bool const sourceFound =
             locateSourceElement( numFacesPerElem,
@@ -244,16 +240,18 @@ struct PrecomputeSourceAndReceiverKernel
                                  elemsToFaces[k],
                                  coords );
 
-          if( sourceFound && elemGhostRank[k] < 0)
-          {
-            sourceElem[isrc] = k;
+          if( sourceFound )
+          {        
+            real64 coordsOnRefElem[3]{};
+
             computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                              elemsToNodes[k],
                                                              X,
                                                              coordsOnRefElem );
-            sourceIsLocal[isrc] = 1;
-            real64 Ntest[8];
-            finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
+            sourceIsAccessible[isrc] = 1;
+            sourceElem[isrc] = k;
+            real64 Ntest[FE_TYPE::numNodes];
+            FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
@@ -299,7 +297,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                              coordsOnRefElem );
             receiverIsLocal[ircv] = 1;
 
-            real64 Ntest[numNodesPerElem];
+            real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
