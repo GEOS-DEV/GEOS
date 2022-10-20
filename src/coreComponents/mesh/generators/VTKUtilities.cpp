@@ -32,6 +32,8 @@
 #include <vtkUnstructuredGridReader.h>
 #include <vtkXMLPUnstructuredGridReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
+//
+#include <vtkDataSetReader.h>
 // for vts import
 #include <vtkNew.h>
 #include <vtkStructuredGrid.h>
@@ -250,7 +252,8 @@ loadMesh( Path const & filePath )
 
       if( extension == "vtk" )
       {
-        loadedMesh = read( vtkSmartPointer< vtkUnstructuredGridReader >::New() );
+        loadedMesh = read( vtkSmartPointer< vtkDataSetReader >::New() );
+        //loadedMesh = read( vtkSmartPointer< vtkDataReader >::New() );
       }
       else if( extension == "vtu" )
       {
@@ -1149,6 +1152,7 @@ std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType,
           break;
         }
       }
+      break;
     }
     case VTK_VOXEL: return { 0, 1, 2, 3, 4, 5, 6, 7 };
     default:
@@ -1178,6 +1182,7 @@ std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType,
           break;
         }
       }
+      break;
     }
   }
   return {};

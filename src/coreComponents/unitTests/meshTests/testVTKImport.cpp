@@ -155,7 +155,11 @@ TEST( VTKImport, cube )
     }
   };
 
-  string const cubeVTK = testMeshDir + "/cube.vtk";
+  //string const cubeVTK = testMeshDir + "/cube.vtk";
+  string const cubeVTK_STRUCTURED_POINTS = testMeshDir + "/cube_STRUCTURED_POINTS.vtk";
+  string const cubeVTK_RECTILINEAR_GRID = testMeshDir + "/cube_RECTILINEAR_GRID.vtk";
+  string const cubeVTK_STRUCTURED_GRID = testMeshDir + "/cube_STRUCTURED_GRID.vtk";
+  string const cubeVTK_UNSTRUCTURED_GRID = testMeshDir + "/cube_UNSTRUCTURED_GRID.vtk";
   string const cubeVTU = testMeshDir + "/cube.vtu";
   //string const cubePVTU = testMeshDir + "/cube.pvtu";
   string const cubeVTS = testMeshDir + "/cube.vts";
@@ -165,7 +169,11 @@ TEST( VTKImport, cube )
   string const cubeVTI = testMeshDir + "/cube.vti";
   string const cubePVTI = testMeshDir + "/cube.pvti";
 
-  TestMeshImport( cubeVTK, validate );
+  //TestMeshImport( cubeVTK, validate );
+  TestMeshImport( cubeVTK_STRUCTURED_POINTS, validate );
+  TestMeshImport( cubeVTK_RECTILINEAR_GRID, validate );
+  TestMeshImport( cubeVTK_STRUCTURED_GRID, validate );
+  TestMeshImport( cubeVTK_UNSTRUCTURED_GRID, validate );
   TestMeshImport( cubeVTU, validate );
   //TestMeshImport( cubePVTU, validate );
   TestMeshImport( cubeVTS, validate );
