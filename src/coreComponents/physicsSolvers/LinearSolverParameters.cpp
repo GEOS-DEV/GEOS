@@ -150,8 +150,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
   registerWrapper( viewKeyStruct::amgInterpMaxNonZerosString(), &m_parameters.amg.interpolationMaxNonZeros ).
     setApplyDefaultValue( 4 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG interpolation maximum number of nonzeros per row\n"
-                    "Available options are: TODO" );
+    setDescription( "AMG interpolation maximum number of nonzeros per row" );
 
   registerWrapper( viewKeyStruct::amgNumFunctionsString(), &m_parameters.amg.numFunctions ).
     setApplyDefaultValue( 1 ).
