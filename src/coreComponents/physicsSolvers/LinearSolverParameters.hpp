@@ -113,14 +113,22 @@ public:
     static constexpr char const * amgThresholdString() { return "amgThreshold"; }
     /// AMG near null space type key
     static constexpr char const * amgNullSpaceTypeString() { return "amgNullSpaceType"; }
-
-    static constexpr char const * amgCoarseningString()           { return "amgCoarseningType";             }   ///< AMG coarsening key
-    static constexpr char const * amgInterpolationString()        { return "amgInterpolationType";          }   ///< AMG interpolation key
-    static constexpr char const * amgInterpMaxNonZerosString()    { return "amgInterpolationMaxNonZeros";   }   ///< AMG interpolation key
-    static constexpr char const * amgNumFunctionsString()         { return "amgNumFunctions";               }   ///< AMG threshold key
-    static constexpr char const * amgAggressiveNumLevelsString()  { return "amgAggressiveCoarseningLevels"; }   ///< AMG threshold key
-    static constexpr char const * amgAggressiveInterpTypeString() { return "amgAggressiveInterpType";       }
-    static constexpr char const * amgSeparateComponentsString()   { return "amgSeparateComponents";         }
+    /// AMG coarsening key
+    static constexpr char const * amgCoarseningString() { return "amgCoarseningType"; }
+    /// AMG interpolation key
+    static constexpr char const * amgInterpolationString() { return "amgInterpolationType"; }
+    /// AMG max. nonzero entries per row
+    static constexpr char const * amgInterpMaxNonZerosString() { return "amgInterpolationMaxNonZeros"; }
+    /// AMG number of functions for unknown-based approach
+    static constexpr char const * amgNumFunctionsString() { return "amgNumFunctions"; }
+    /// AMG number of paths for aggressive coarsening
+    static constexpr char const * amgAggressiveNumPathsString() { return "amgAggressiveCoarseningPaths"; }
+    /// AMG number of levels for aggressive coarsening
+    static constexpr char const * amgAggressiveNumLevelsString() { return "amgAggressiveCoarseningLevels"; }
+    /// AMG interpolation type during aggressive coarsening
+    static constexpr char const * amgAggressiveInterpTypeString() { return "amgAggressiveInterpType"; }
+    /// AMG separate components flag
+    static constexpr char const * amgSeparateComponentsString() { return "amgSeparateComponents"; }
 
     /// ILU fill key
     static constexpr char const * iluFillString() { return "iluFill"; }

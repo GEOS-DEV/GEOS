@@ -226,6 +226,7 @@ struct LinearSolverParameters
     integer       interpolationMaxNonZeros = 4;           ///< Interpolation - Max. nonzeros/row
     integer       numSweeps = 2;                          ///< Number of smoother sweeps
     integer       numFunctions = 1;                       ///< Number of amg functions
+    integer       aggressiveNumPaths = 1;                 ///< Number of paths for agg. coarsening.
     integer       aggressiveNumLevels = 0;                ///< Number of lvls for agg. coarsening.
     AggInterpType aggressiveInterpType = AggInterpType::multipass; ///< Interp. type for agg. coarsening.
     PreOrPost     preOrPostSmoothing = PreOrPost::both;   ///< Pre and/or post smoothing
